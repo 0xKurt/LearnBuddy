@@ -1,0 +1,57 @@
+# macOS
+.DS_Store
+
+# Cowork sandbox leftovers (virtio-fs would not let us delete these)
+.git.broken/
+.git.alsobroken/
+LearnBuddy/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnp.*
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Expo / React Native
+.expo/
+.expo-shared/
+dist/
+web-build/
+ios/Pods/
+android/.gradle/
+android/app/build/
+android/build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Build outputs
+build/
+out/
+.next/
+.turbo/
+.vercel/
+
+# Coverage / test
+coverage/
+.nyc_output/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Misc
+*.log
+.cache/
