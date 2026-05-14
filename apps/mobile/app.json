@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "LearnBuddy",
+    "slug": "learnbuddy",
+    "scheme": "learnbuddy",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f0eee9"
+    },
+    "ios": {
+      "bundleIdentifier": "com.learnbuddy.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Damit du Lernmaterial fotografieren kannst.",
+        "NSMicrophoneUsageDescription": "Damit du Antworten sprechen kannst.",
+        "NSSpeechRecognitionUsageDescription": "Damit deine gesprochenen Antworten erkannt werden."
+      }
+    },
+    "android": {
+      "package": "com.learnbuddy.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f0eee9"
+      },
+      "permissions": ["CAMERA", "RECORD_AUDIO"]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        { "icon": "./assets/notification-icon.png", "color": "#b1715c" }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "welcome": {
+    "title": "Study Companion",
+    "subtitle": "A calm companion while you practice. Snap a photo, work through a few questions — done.",
+    "cta": "Let's go"
+  },
+  "age_check": {
+    "title": "How old are you?",
+    "subtitle": "So we show the right thing for you.",
+    "cta": "Next"
+  },
+  "hand_off_adult": {
+    "title": "We need a grown-up",
+    "body": "Please hand the phone to a parent or other adult. They'll set up the account — and pass it back in a moment.",
+    "cta": "A grown-up has the phone now"
+  },
+  "consent": {
+    "title": "Quick note on privacy",
+    "summary": "We process study data only in the EU. No ads. No data shared for training. You can export or delete anything at any time.",
+    "adult_checkbox": "I am 16 years or older.",
+    "consent_checkbox": "I agree to processing of my data.",
+    "cta": "I agree"
+  },
+  "who_uses": {
+    "title": "Who will use the app?",
+    "self": "Myself",
+    "child": "My child"
+  },
+  "pin": {
+    "title": "Protect the account area",
+    "subtitle": "With Face ID and a 4-digit PIN, so the account area stays with grown-ups.",
+    "cta_face_id": "Set up Face ID",
+    "cta_skip": "Later"
+  },
+  "hand_off_final": {
+    "title": "All set.",
+    "subtitle": "We're glad to be along for the ride.",
+    "cta": "Start"
+  }
+}

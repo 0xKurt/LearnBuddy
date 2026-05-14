@@ -1,0 +1,40 @@
+{
+  "welcome": {
+    "title": "Lern-Begleiter",
+    "subtitle": "Ein ruhiger Begleiter beim Üben. Material fotografieren, ein paar Fragen üben — fertig.",
+    "cta": "Los geht's"
+  },
+  "age_check": {
+    "title": "Wie alt bist du?",
+    "subtitle": "Damit wir das Richtige für dich anzeigen.",
+    "cta": "Weiter"
+  },
+  "hand_off_adult": {
+    "title": "Wir brauchen eine erwachsene Person",
+    "body": "Gib das Handy bitte an einen Elternteil oder eine andere erwachsene Bezugsperson. Sie richtet das Konto ein — und übergibt dir gleich.",
+    "cta": "Mama oder Papa hat das Handy jetzt"
+  },
+  "consent": {
+    "title": "Eine kurze Sache zum Datenschutz",
+    "summary": "Wir verarbeiten Lerndaten ausschließlich in der EU. Keine Werbung. Keine Daten an Dritte zum Training. Du kannst alles jederzeit exportieren oder löschen.",
+    "adult_checkbox": "Ich bin 16 Jahre oder älter.",
+    "consent_checkbox": "Ich willige in die Verarbeitung meiner Daten ein.",
+    "cta": "Einverstanden"
+  },
+  "who_uses": {
+    "title": "Wer wird die App benutzen?",
+    "self": "Ich selbst",
+    "child": "Mein Kind"
+  },
+  "pin": {
+    "title": "Schütze den Konto-Bereich",
+    "subtitle": "Mit Face ID und einer 4-stelligen PIN. So bleibt der Konto-Bereich Erwachsenen vorbehalten.",
+    "cta_face_id": "Face ID einrichten",
+    "cta_skip": "Erst später"
+  },
+  "hand_off_final": {
+    "title": "Es kann losgehen.",
+    "subtitle": "Wir freuen uns, dabei zu sein.",
+    "cta": "Loslegen"
+  }
+}

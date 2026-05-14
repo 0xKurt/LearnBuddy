@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+.expo
+.vercel
+.turbo
+coverage
+pnpm-lock.yaml
+LearnBuddy/
+design-examples/

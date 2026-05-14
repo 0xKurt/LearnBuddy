@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": null,
+  "regions": ["fra1"],
+  "functions": {
+    "api/[[...slug]].ts": {
+      "runtime": "nodejs22.x",
+      "maxDuration": 300,
+      "memory": 1024
+    }
+  },
+  "rewrites": [{ "source": "/v1/(.*)", "destination": "/api/$1" }]
+}

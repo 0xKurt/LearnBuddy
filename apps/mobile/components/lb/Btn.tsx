@@ -1,0 +1,61 @@
+import { Pressable, Text } from 'react-native';
+import { LB } from '../../lib/theme/colors.js';
+
+type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
+type Size = 'sm' | 'md' | 'lg';
+
+type Props = {
+  children: string;
+  onPress?: () => void;
+  variant?: Variant;
+  size?: Size;
+  full?: boolean;
+};
+
+const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
+  sm: { height: 38, paddingHorizontal: 16, fontSize: 13 },
+  md: { height: 48, paddingHorizontal: 22, fontSize: 14 },
+  lg: { height: 54, paddingHorizontal: 26, fontSize: 15 },
+};
+
+const VARIANT_BG: Record<Variant, { bg: string; color: string; border?: string }> = {
+  primary: { bg: LB.primary, color: '#fff' },
+  soft: { bg: LB.primaryLt, color: LB.primaryDk },
+  outline: { bg: '#fff', color: LB.ink, border: LB.hairline },
+  ghost: { bg: 'transparent', color: LB.ink2 },
+  danger: { bg: 'transparent', color: LB.danger, border: 'rgba(177,73,60,0.25)' },
+};
+
+export function Btn({ children, onPress, variant = 'primary', size = 'md', full = false }: Props) {
+  const s = SIZE_STYLE[size];
+  const v = VARIANT_BG[variant];
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        height: s.height,
+        paddingHorizontal: s.paddingHorizontal,
+        backgroundColor: v.bg,
+        borderRadius: 12,
+        borderWidth: v.border ? 1 : 0,
+        borderColor: v.border,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: full ? 'stretch' : 'flex-start',
+        transform: [{ scale: pressed ? 0.97 : 1 }],
+      })}
+    >
+      <Text
+        style={{
+          color: v.color,
+          fontSize: s.fontSize,
+          fontWeight: '600',
+          letterSpacing: -0.1,
+        }}
+      >
+        {children}
+      </Text>
+    </Pressable>
+  );
+}
