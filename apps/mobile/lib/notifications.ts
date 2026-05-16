@@ -47,6 +47,13 @@ export async function saveNotificationPrefs(prefs: NotificationPrefs): Promise<v
 
 // expo-notifications dynamic-required so this module can be loaded under
 // vitest (node env) for tests of loadNotificationPrefs.
+//
+// Expo Go (SDK 53+) removed Android push notifications and the
+// expo-notifications module greets the user with a console.error on load
+// when it detects Expo Go. Detect Expo Go ourselves via expo-constants
+// `appOwnership === 'expo'` and skip the require entirely there — local
+// scheduling will be wired in a dev/preview build of the app where
+// expo-notifications is fully supported.
 type ExpoNotifs = {
   cancelAllScheduledNotificationsAsync: () => Promise<void>;
   scheduleNotificationAsync: (req: {
@@ -55,10 +62,16 @@ type ExpoNotifs = {
   }) => Promise<string>;
   requestPermissionsAsync: () => Promise<{ granted: boolean }>;
 };
+
 let Notifs: ExpoNotifs | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  Notifs = require('expo-notifications') as ExpoNotifs;
+  const Constants = require('expo-constants');
+  const ownership = (Constants?.default ?? Constants)?.appOwnership;
+  if (ownership !== 'expo') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    Notifs = require('expo-notifications') as ExpoNotifs;
+  }
 } catch {
   Notifs = null;
 }

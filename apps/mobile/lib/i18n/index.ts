@@ -5,10 +5,23 @@
 // Legal namespace (onboarding §consent) is hand-translated; UX strings in
 // fr/es/it were translated at slice H1; legal review still pending for
 // each non-DE/EN locale before launch in those markets.
+//
+// Initial-locale resolution:
+//   1. SecureStore-saved locale (picker on first launch / admin settings)
+//   2. Device locale if supported
+//   3. 'de' as the last fallback
+// Step 1 is async; init starts on the device locale and
+// `hydrateSavedLocale()` patches `i18n.language` once SecureStore loads.
 
-import * as Localization from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+
+import {
+  detectDeviceLocale,
+  loadSavedLocale,
+  saveLocale,
+  type AppLocale,
+} from './locale-storage.js';
 
 import deAuth from '../../locales/de/auth.json';
 import deCapture from '../../locales/de/capture.json';
@@ -74,23 +87,33 @@ const resources = {
   },
 } as const;
 
-export type AppLocale = keyof typeof resources;
-
-const SUPPORTED: AppLocale[] = ['de', 'en', 'fr', 'es', 'it'];
-
-function pickInitialLocale(): AppLocale {
-  const code = Localization.getLocales()[0]?.languageCode ?? 'de';
-  return (SUPPORTED as string[]).includes(code) ? (code as AppLocale) : 'de';
-}
+export type { AppLocale };
 
 void i18n.use(initReactI18next).init({
   resources,
-  lng: pickInitialLocale(),
+  lng: detectDeviceLocale(),
   fallbackLng: 'de',
   ns: ['common', 'onboarding', 'auth', 'capture', 'upload'],
   defaultNS: 'common',
   interpolation: { escapeValue: false },
   returnNull: false,
 });
+
+/** Pull any SecureStore-saved locale and apply it. Idempotent — safe to
+ *  call from a useEffect in the root layout. */
+export async function hydrateSavedLocale(): Promise<void> {
+  const saved = await loadSavedLocale();
+  if (saved && saved !== i18n.language) {
+    await i18n.changeLanguage(saved);
+  }
+}
+
+/** Set + persist the active locale. Used by the onboarding picker and the
+ *  admin settings screen. Returns once both i18n and SecureStore are
+ *  updated so the caller can navigate / re-render. */
+export async function setLocale(locale: AppLocale): Promise<void> {
+  await i18n.changeLanguage(locale);
+  await saveLocale(locale);
+}
 
 export { i18n };

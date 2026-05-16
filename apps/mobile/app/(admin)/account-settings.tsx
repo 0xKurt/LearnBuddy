@@ -2,12 +2,15 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { clearSession } from '../../lib/auth/session.js';
+import { setLocale, i18n } from '../../lib/i18n/index.js';
+import { LOCALE_LABELS, SUPPORTED_LOCALES, type AppLocale } from '../../lib/i18n/locale-storage.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -17,6 +20,10 @@ export default function AccountSettingsScreen() {
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const qc = useQueryClient();
+  const [locale, setLocaleState] = useState<AppLocale>(i18n.language as AppLocale);
+  useEffect(() => {
+    setLocaleState(i18n.language as AppLocale);
+  }, []);
 
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
 
@@ -63,7 +70,42 @@ export default function AccountSettingsScreen() {
           </Text>
         </Card>
         <Card title="Sprache">
-          <Text style={{ fontSize: 14, color: LB.ink }}>{accountQuery.data?.locale ?? 'de'}</Text>
+          <View style={{ gap: 6, marginTop: 4 }}>
+            {SUPPORTED_LOCALES.map((code) => (
+              <Pressable
+                key={code}
+                onPress={async () => {
+                  setLocaleState(code);
+                  await setLocale(code);
+                  qc.invalidateQueries({ queryKey: ['account'] });
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  borderRadius: 10,
+                  backgroundColor: locale === code ? LB.primaryLt : LB.bg,
+                  borderColor: locale === code ? LB.primaryDk : 'transparent',
+                  borderWidth: 1,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: locale === code ? LB.primaryDk : LB.ink,
+                    fontWeight: locale === code ? '600' : '400',
+                  }}
+                >
+                  {LOCALE_LABELS[code]}
+                </Text>
+                <Text style={{ fontSize: 11, color: LB.ink3, textTransform: 'uppercase' }}>
+                  {code}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </Card>
         <Btn full variant="danger" onPress={onSignOut}>
           Abmelden

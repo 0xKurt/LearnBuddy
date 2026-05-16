@@ -1,25 +1,19 @@
-// Login. Doc 04 §Auth ("Login and password reset handled client-side via
-// Supabase Auth SDK. No custom API endpoints.") + Doc 05 §login.
+// Login. Doc 04 §Auth + Doc 05 §login.
 //
-// Three signin paths share this screen:
-//   1. Email + password — supabase.auth.signInWithPassword.
-//   2. Magic link — supabase.auth.signInWithOtp, deep-link redirects back here.
-//   3. Forgot password — navigates to /reset-password.
-//
-// On a successful SIGNED_IN (from any path) we persist the session via
-// lib/auth/session.ts and replace to '/' so app/index.tsx routes the user
-// onward via GET /account.
+// Email + password only. Magic link removed — it requires a working email
+// pipeline and adds little for a single-account family-mode app where the
+// password flow is already there. Password reset link is kept for the case
+// the adult forgets the password.
 
-import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn } from '../components/lb/index.js';
 import { getSessionSync, setSession } from '../lib/auth/session.js';
-import { parseAuthTokensFromUrl, supabase } from '../lib/supabase.js';
+import { supabase } from '../lib/supabase.js';
 import { LB } from '../lib/theme/colors.js';
 
 export default function LoginScreen() {
@@ -28,30 +22,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-  const handledRef = useRef(false);
 
   const trimmedEmail = email.trim();
-  const canPassword = trimmedEmail.length > 3 && password.length >= 8 && !busy;
-  const canMagic = trimmedEmail.length > 3 && !busy;
+  const canSubmit = trimmedEmail.length > 3 && password.length >= 8 && !busy;
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function handleUrl(url: string | null) {
-      if (cancelled || handledRef.current || !url) return;
-      const tokens = parseAuthTokensFromUrl(url);
-      if (!tokens) return;
-      handledRef.current = true;
-      const res = await supabase.auth.setSession(tokens);
-      if (res.error) {
-        setError(t('login.error_generic'));
-        handledRef.current = false;
-      }
-    }
-
     const sub = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (cancelled || event !== 'SIGNED_IN' || !session) return;
+      if (event !== 'SIGNED_IN' || !session) return;
       const existing = getSessionSync();
       await setSession({
         access_token: session.access_token,
@@ -61,28 +38,13 @@ export default function LoginScreen() {
       });
       router.replace('/');
     });
+    return () => sub.data.subscription.unsubscribe();
+  }, []);
 
-    Linking.getInitialURL()
-      .then(handleUrl)
-      .catch(() => {
-        /* simulator cold-start sometimes throws; non-fatal */
-      });
-    const urlSub = Linking.addEventListener('url', ({ url }) => {
-      void handleUrl(url);
-    });
-
-    return () => {
-      cancelled = true;
-      sub.data.subscription.unsubscribe();
-      urlSub.remove();
-    };
-  }, [t]);
-
-  async function onPasswordLogin() {
-    if (!canPassword) return;
+  async function onSubmit() {
+    if (!canSubmit) return;
     setBusy(true);
     setError(null);
-    setInfo(null);
     try {
       const { data, error: err } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
@@ -103,31 +65,6 @@ export default function LoginScreen() {
     }
   }
 
-  async function onMagicLink() {
-    if (!canMagic) return;
-    setBusy(true);
-    setError(null);
-    setInfo(null);
-    try {
-      const { error: err } = await supabase.auth.signInWithOtp({
-        email: trimmedEmail,
-        options: { emailRedirectTo: 'learnbuddy://login' },
-      });
-      if (err) {
-        const msg = err.message?.toLowerCase() ?? '';
-        if (msg.includes('rate') || msg.includes('too many')) {
-          setError(t('login.error_rate_limited'));
-        } else {
-          setError(t('login.error_generic'));
-        }
-        return;
-      }
-      setInfo(t('login.magic_link_sent'));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
       <View
@@ -139,14 +76,7 @@ export default function LoginScreen() {
         }}
       >
         <View style={{ gap: 14, marginTop: 24 }}>
-          <Text
-            style={{
-              fontSize: 28,
-              fontWeight: '600',
-              color: LB.ink,
-              letterSpacing: -0.6,
-            }}
-          >
+          <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
             {t('login.title')}
           </Text>
           <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
@@ -170,7 +100,6 @@ export default function LoginScreen() {
               secureTextEntry
               editable={!busy}
             />
-            {info && <Text style={{ color: LB.ink2, fontSize: 12 }}>{info}</Text>}
             {error && <Text style={{ color: LB.danger ?? '#c0392b', fontSize: 12 }}>{error}</Text>}
             <Pressable onPress={() => router.push('/reset-password')} disabled={busy}>
               <Text
@@ -187,14 +116,9 @@ export default function LoginScreen() {
           </View>
         </View>
 
-        <View style={{ gap: 10 }}>
-          <Btn size="lg" full variant={canPassword ? 'primary' : 'ghost'} onPress={onPasswordLogin}>
-            {busy ? 'Moment …' : t('login.password_cta')}
-          </Btn>
-          <Btn size="lg" full variant={canMagic ? 'outline' : 'ghost'} onPress={onMagicLink}>
-            {t('login.magic_link_cta')}
-          </Btn>
-        </View>
+        <Btn size="lg" full variant={canSubmit ? 'primary' : 'ghost'} onPress={onSubmit}>
+          {busy ? 'Moment …' : t('login.password_cta')}
+        </Btn>
       </View>
     </SafeAreaView>
   );
