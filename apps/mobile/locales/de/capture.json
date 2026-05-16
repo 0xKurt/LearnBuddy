@@ -1,0 +1,44 @@
+{
+  "title": "Material aufnehmen",
+  "subtitle": "Foto vom Heft, Buch oder Arbeitsblatt — bis zu 10 Bilder.",
+  "permission": {
+    "title": "Wir brauchen kurz Kamerafreigabe",
+    "body": "Damit du dein Material fotografieren kannst. Du kannst die Erlaubnis jederzeit in den Einstellungen ändern.",
+    "cta": "Einstellungen öffnen"
+  },
+  "chip": {
+    "sharp": "scharf",
+    "ok": "ok",
+    "blur": "verschwommen — Versuch nochmal",
+    "too_dark": "zu dunkel",
+    "too_bright": "zu hell",
+    "too_small": "Bild zu klein",
+    "tilt": "Halt das Handy etwas gerader"
+  },
+  "tilt_warn": "Halt das Handy etwas gerader",
+  "review": {
+    "keep": "Trotzdem behalten",
+    "redo": "Nochmal versuchen",
+    "discard": "Verwerfen"
+  },
+  "strip": {
+    "label_one": "1 Foto",
+    "label_other": "{{count}} Fotos",
+    "max_hint": "Bis zu 10 Bilder pro Material.",
+    "long_press_hint": "Lang drücken, um ein Foto zu löschen."
+  },
+  "cta": {
+    "shutter": "Auslöser",
+    "done": "Fertig",
+    "cancel": "Abbrechen"
+  },
+  "picker": {
+    "title": "Wohin damit?",
+    "folder_title": "Ordner wählen",
+    "no_folder": "Ohne Ordner — direkt im Fach",
+    "no_subjects": "Du hast noch kein Fach. Leg zuerst ein Fach auf dem Startbildschirm an."
+  },
+  "limits": {
+    "max_reached": "Mehr als 10 Bilder pro Material geht nicht."
+  }
+}

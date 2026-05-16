@@ -110,15 +110,23 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 
 ## Phase C — Material capture pipeline (without LLM)
 
-### Slice C1 — Camera + quality scoring
+### Slice C1 — Camera + quality scoring ✅ COMPLETED 2026-05-16
 
-- [ ] `apps/mobile/lib/quality.ts` — local blur/brightness/tilt scoring per Doc 05 §Capture
-- [ ] Mobile `capture.tsx` — `expo-camera` viewfinder, live chip overlay, thumbnail strip
-- [ ] Multi-photo (1–10) with delete in strip
-- [ ] "Trotzdem behalten" override
-- [ ] Subject/folder picker post-capture (when not pre-targeted)
+- [x] `apps/mobile/lib/camera/quality.ts` — local blur (Laplacian variance) / brightness (mean luminance) / tilt scoring per Doc 05 §Capture _(path follows Doc 05 spec, not the older `lib/quality.ts` in this plan doc)_
+- [x] Mobile `capture.tsx` — `expo-camera` viewfinder, post-shot chip overlay, live tilt warning, thumbnail strip
+- [x] Multi-photo (1–10) with long-press delete in strip
+- [x] "Trotzdem behalten" override (red verdict opens non-blocking sheet)
+- [x] Subject/folder picker post-capture (when not pre-targeted); folder/subject screens now pass `subjectId`/`folderId` query params so capture can pre-target
+- [x] Mobile vitest infra wired (`apps/mobile/vitest.config.ts` + boundary-pinned tests in `lib/camera/__tests__/quality.test.ts`) — also unblocks the Slice A3 PIN test follow-up
 
 **Done when:** User can take 1–10 photos, gets live quality feedback, lands on "uploading…" screen.
+
+**Open follow-ups:**
+
+- _C2 owns the "uploading…" screen._ This slice's terminal state is `router.replace('/(learner)/home')` with photos + target stashed in `apps/mobile/lib/store/capture.ts` (`useCaptureStore`). Slice C2 reads `pendingCapture` and runs the upload progress flow. Until C2 lands the user just sees home — the stash is silent.
+- _True per-frame live chip overlay._ `expo-camera` does not expose per-frame pixel data, so the green/yellow/red chip lights up on each thumbnail right after capture rather than streaming during the viewfinder. Real streaming would need `react-native-vision-camera` + a dev client; track for a future polish slice.
+- _Slice A3 §"PIN module unit tests" follow-up is unblocked._ `apps/mobile/vitest.config.ts` now exists; the PIN test file can land directly under `lib/auth/__tests__/pin.test.ts` with no further infra work.
+- _Live verification (CLAUDE.md hard rule #2)._ Real-device exercise required for: camera permission grants on iOS / Android, DeviceMotion tilt readings, shutter → decode latency on a mid-range device, 5-photo / 10-photo strips, the "Trotzdem behalten" red override path, picker behavior when the user has zero subjects. Gates the Phase C "ship" claim alongside A1 / A2 / A3 / B1 / B2.
 
 ### Slice C2 — Upload-URL + materials POST (no LLM yet)
 

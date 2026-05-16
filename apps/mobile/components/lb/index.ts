@@ -13,3 +13,5 @@ export { CircleBtn } from './CircleBtn.js';
 export { PinPad } from './PinPad.js';
 export { FolderEditorModal } from './FolderEditorModal.js';
 export { SessionTopBar } from './SessionTopBar.js';
+export { CaptureChip } from './CaptureChip.js';
+export { SubjectFolderPicker } from './SubjectFolderPicker.js';

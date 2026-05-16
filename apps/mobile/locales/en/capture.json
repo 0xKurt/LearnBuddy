@@ -1,0 +1,44 @@
+{
+  "title": "Capture material",
+  "subtitle": "Snap a page, book, or worksheet — up to 10 photos.",
+  "permission": {
+    "title": "We need camera access for a moment",
+    "body": "So you can photograph your material. You can change this any time in Settings.",
+    "cta": "Open settings"
+  },
+  "chip": {
+    "sharp": "sharp",
+    "ok": "ok",
+    "blur": "blurry — try again",
+    "too_dark": "too dark",
+    "too_bright": "too bright",
+    "too_small": "image too small",
+    "tilt": "Hold the phone a bit straighter"
+  },
+  "tilt_warn": "Hold the phone a bit straighter",
+  "review": {
+    "keep": "Keep anyway",
+    "redo": "Try again",
+    "discard": "Discard"
+  },
+  "strip": {
+    "label_one": "1 photo",
+    "label_other": "{{count}} photos",
+    "max_hint": "Up to 10 photos per material.",
+    "long_press_hint": "Long-press a thumbnail to delete it."
+  },
+  "cta": {
+    "shutter": "Shutter",
+    "done": "Done",
+    "cancel": "Cancel"
+  },
+  "picker": {
+    "title": "Where does this go?",
+    "folder_title": "Pick a folder",
+    "no_folder": "No folder — right in the subject",
+    "no_subjects": "You don't have a subject yet. Add one from the home screen first."
+  },
+  "limits": {
+    "max_reached": "Max 10 photos per material."
+  }
+}

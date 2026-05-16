@@ -214,7 +214,12 @@ export default function SubjectScreen() {
           </Btn>
         </View>
         <View style={{ flex: 1 }}>
-          <Btn size="lg" full variant="outline" onPress={() => router.push('/(learner)/capture')}>
+          <Btn
+            size="lg"
+            full
+            variant="outline"
+            onPress={() => router.push({ pathname: '/(learner)/capture', params: { subjectId } })}
+          >
             Neu
           </Btn>
         </View>
