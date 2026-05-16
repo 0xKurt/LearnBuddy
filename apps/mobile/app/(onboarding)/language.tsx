@@ -42,8 +42,13 @@ export default function LanguageScreen() {
   );
   const labels = LABELS[selected];
 
-  const onConfirm = async () => {
-    await setLocale(selected);
+  const onConfirm = () => {
+    // Persist in the background — SecureStore writes can be slow on cold
+    // start and we don't want the user staring at a frozen button while
+    // they land. Navigation happens immediately.
+    setLocale(selected).catch((err) => {
+      console.warn('[language] setLocale failed', err);
+    });
     router.replace('/(onboarding)/welcome');
   };
 
