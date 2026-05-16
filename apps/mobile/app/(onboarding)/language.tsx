@@ -44,31 +44,49 @@ export default function LanguageScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
       <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 24 }}>
-        <Pressable
-          onLongPress={() => {
-            if (!__DEV__) return;
-            Alert.alert(
-              'Dev reset',
-              'Clear local SecureStore (locale, session, pin, notif prefs)?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Wipe',
-                  style: 'destructive',
-                  onPress: async () => {
-                    await devResetAll();
-                    Alert.alert('Reset done', 'Reload the app from Expo Go (shake → Reload).');
-                  },
-                },
-              ],
-            );
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
-          delayLongPress={600}
         >
           <Text style={{ fontSize: 14, color: LB.ink3, fontWeight: '500', letterSpacing: 0.5 }}>
-            LEARNBUDDY{__DEV__ ? ' · dev' : ''}
+            LEARNBUDDY
           </Text>
-        </Pressable>
+          {__DEV__ && (
+            <Pressable
+              onPress={() => {
+                Alert.alert(
+                  'Dev reset',
+                  'Clear local state (locale, session, pin, notifications)?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Wipe',
+                      style: 'destructive',
+                      onPress: async () => {
+                        await devResetAll();
+                        Alert.alert('Done', 'Shake → Reload in Expo Go to start fresh.');
+                      },
+                    },
+                  ],
+                );
+              }}
+              hitSlop={10}
+              style={{
+                backgroundColor: '#d1361c',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
+                DEV · RESET
+              </Text>
+            </Pressable>
+          )}
+        </View>
         <Text
           style={{
             fontSize: 32,

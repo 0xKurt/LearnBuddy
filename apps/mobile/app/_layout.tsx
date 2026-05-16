@@ -9,7 +9,6 @@ import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { DevOverlay } from '../components/lb/index.js';
 import { getSessionSync } from '../lib/auth/session.js';
 import { configurePurchases } from '../lib/purchases.js';
 import { LB } from '../lib/theme/colors.js';
@@ -41,9 +40,6 @@ export default function RootLayout() {
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>
-      {/* Outside every provider so the Stack screen container can't paint
-          over it on Android (where elevation > zIndex). */}
-      <DevOverlay />
     </GestureHandlerRootView>
   );
 }

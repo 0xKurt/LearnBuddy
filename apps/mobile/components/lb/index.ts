@@ -20,4 +20,3 @@ export { MathKeyboard } from './MathKeyboard.js';
 export { MathInput } from './MathInput.js';
 export { FillBlank } from './FillBlank.js';
 export { FunctionPlot } from './FunctionPlot.js';
-export { DevOverlay } from './DevOverlay.js';
