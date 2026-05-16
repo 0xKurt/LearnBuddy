@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+# LearnBuddy pre-commit gate.
+# Don't bypass with --no-verify. If this is red, the codebase is red — fix it.
+
+set -e
+
+echo "→ typecheck"
+pnpm -r --parallel typecheck
+
+echo "→ lint (staged only)"
+pnpm exec lint-staged
+
+echo "→ tests (affected workspaces)"
+pnpm -r --parallel test
+
+echo "✓ pre-commit gate green"
