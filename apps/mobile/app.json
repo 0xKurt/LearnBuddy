@@ -44,7 +44,16 @@
           "faceIDPermission": "Damit Erwachsene den Konto-Bereich mit Face ID öffnen können."
         }
       ],
-      ["expo-notifications", { "icon": "./assets/notification-icon.png", "color": "#b1715c" }]
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#b1715c"
+        }
+      ],
+      "@sentry/react-native",
+      "expo-localization",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

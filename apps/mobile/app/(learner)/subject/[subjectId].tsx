@@ -178,8 +178,8 @@ export default function SubjectScreen() {
                   folder={f}
                   onPress={() =>
                     router.push({
-                      pathname: `/(learner)/folder/${f.id}`,
-                      params: { subjectId },
+                      pathname: '/(learner)/folder/[folderId]',
+                      params: { folderId: f.id, subjectId },
                     })
                   }
                   onLongPress={() => setEditingFolder(f)}
