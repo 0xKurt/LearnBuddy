@@ -15,7 +15,12 @@
 
 import { z } from 'zod';
 
-import type { VisionDiagram, VisionProblemTemplate, VisionResult } from './gateway.js';
+import type {
+  GeneratedVisionItem,
+  VisionDiagram,
+  VisionProblemTemplate,
+  VisionResult,
+} from './gateway.js';
 
 const AnswerKind = z.enum([
   'short',
@@ -111,6 +116,48 @@ const VisionPayloadSchema = z.object({
 export type ParseResult =
   | { ok: true; value: Omit<VisionResult, 'usage'> }
   | { ok: false; error: string };
+
+export type ParseRegenerateResult =
+  | { ok: true; value: { items: GeneratedVisionItem[] } }
+  | { ok: false; error: string };
+
+const RegeneratePayloadSchema = z.object({
+  items: z.array(VisionItemSchema),
+  problem_templates: z.array(VisionTemplateSchema).default([]),
+});
+
+export async function parseRegeneratePayload(rawText: string): Promise<ParseRegenerateResult> {
+  const trimmed = rawText
+    .trim()
+    .replace(/^```(?:json)?\s*/u, '')
+    .replace(/```\s*$/u, '');
+  let json: unknown;
+  try {
+    json = JSON.parse(trimmed);
+  } catch (e) {
+    return { ok: false, error: `JSON.parse: ${e instanceof Error ? e.message : String(e)}` };
+  }
+  const parsed = RegeneratePayloadSchema.safeParse(json);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: `Zod: ${parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`,
+    };
+  }
+  const items = parsed.data.items
+    .filter((it) => {
+      if (it.question.trim().length < 5) return false;
+      if (it.expected_answer.trim().length < 1) return false;
+      if (it.answer_kind === 'diagram_label') return false;
+      if (it.stimulus_kind === 'study_asset') return false;
+      return true;
+    })
+    .map((it) => {
+      const { problem_template_ref: _t, ...rest } = it;
+      return rest as GeneratedVisionItem;
+    });
+  return { ok: true, value: { items } };
+}
 
 /** Parse + post-process the raw LLM text. Pure — no I/O. */
 export async function parseVisionPayload(rawText: string): Promise<ParseResult> {

@@ -8,7 +8,6 @@
 //   - local dev when no GOOGLE_CLOUD_PROJECT is configured (the factory
 //     falls back to this with a console.warn)
 
-import { ApiError } from '../lib/errors.js';
 import type {
   EvaluateInput,
   EvaluateResult,
@@ -72,15 +71,66 @@ export class FakeLlmGateway implements LLMGateway {
     };
   }
 
-  regenerateFromText(_input: RegenerateInput): Promise<RegenerateResult> {
-    throw new ApiError('not_implemented', 'regenerateFromText fake lands in Slice D2');
+  async regenerateFromText(input: RegenerateInput): Promise<RegenerateResult> {
+    const lang = (input.locale === 'en' ? 'en' : 'de') as 'de' | 'en';
+    return {
+      items: Array.from({ length: Math.min(3, input.targetCount) }, (_, i) => ({
+        question: `Zusätzliche Frage ${i + 1} (fake).`,
+        expected_answer: 'OK',
+        acceptable_answers: [],
+        answer_kind: 'short' as const,
+        stimulus_kind: 'none' as const,
+        stimulus_data: {},
+        difficulty: 2,
+        language: lang,
+      })),
+      usage: {
+        input_tokens: 0,
+        output_tokens: 0,
+        cost_usd_micros: 0,
+        model: 'fake',
+        prompt_version: 'fake',
+      },
+    };
   }
 
-  evaluateAnswer(_input: EvaluateInput): Promise<EvaluateResult> {
-    throw new ApiError('not_implemented', 'evaluateAnswer fake lands in Slice D2');
+  async evaluateAnswer(input: EvaluateInput): Promise<EvaluateResult> {
+    // Deterministic: exact match → correct, else incorrect with hint when allowed.
+    const exact =
+      input.kidAnswer.trim().toLowerCase() === input.expectedAnswer.trim().toLowerCase() ||
+      input.acceptableAnswers.some(
+        (a) => a.trim().toLowerCase() === input.kidAnswer.trim().toLowerCase(),
+      );
+    const correct = exact;
+    return {
+      verdict: correct ? 'correct' : 'incorrect',
+      feedback: correct
+        ? 'Genau richtig — sauber!'
+        : 'Noch nicht ganz. Schau dir die Aufgabe nochmal in Ruhe an.',
+      next_hint:
+        !correct && input.priorHints.length < 2
+          ? 'Versuch, die Frage Schritt für Schritt zu lesen.'
+          : null,
+      usage: {
+        input_tokens: 0,
+        output_tokens: 0,
+        cost_usd_micros: 0,
+        model: 'fake',
+        prompt_version: 'fake',
+      },
+    };
   }
 
-  explain(_input: ExplainInput): Promise<ExplainResult> {
-    throw new ApiError('not_implemented', 'explain fake lands in Slice D2');
+  async explain(input: ExplainInput): Promise<ExplainResult> {
+    return {
+      text: `Erklärung zu "${input.topic}" (fake, ${input.style}). Echte Erklärungen folgen, sobald Vertex konfiguriert ist.`,
+      usage: {
+        input_tokens: 0,
+        output_tokens: 0,
+        cost_usd_micros: 0,
+        model: 'fake',
+        prompt_version: 'fake',
+      },
+    };
   }
 }

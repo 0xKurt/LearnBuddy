@@ -24,6 +24,7 @@
 
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { MaterialCreateRequest, MaterialUploadUrlRequest } from '@learnbuddy/shared-types';
 
 import { refund, settle, tryDebit } from '../lib/credits.js';
@@ -488,11 +489,118 @@ materialRoutes.get('/:id/items', async (c) => {
 // (this slice) rather than by 4 and then re-rising when downstream slices
 // add the missing handlers. Each line names the slice that completes it.
 
-materialRoutes.get('/:id/templates', (c) => notImplemented(c, 'GET /materials/:id/templates')); // D3
+// POST /materials/:id/regenerate-items — Doc 06 §P2. Reuses cached extracted
+// markdown to generate ADDITIONAL items without re-OCRing the photos.
+const RegenerateRequest = zValidator(
+  'json',
+  z.object({
+    target_item_count: z.number().int().min(1).max(25).default(10),
+    style: z.enum(['simpler', 'harder', 'more-variety']).nullable().optional(),
+  }),
+);
+const REGENERATE_ESTIMATE = 8; // Doc 08 §estimated-costs-per-action
+
 materialRoutes.post(
   '/:id/regenerate-items',
   rateLimit({ key: 'materials_regenerate', per_day: 10 }),
-  (c) => notImplemented(c, 'POST /materials/:id/regenerate-items (SSE)'),
-); // D2
+  RegenerateRequest,
+  async (c) => {
+    const { supabase, llm } = getDeps(c);
+    const { account_id } = c.get('auth');
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const material_id = c.req.param('id');
+    const body = c.req.valid('json');
+
+    const material = await ownedMaterial(supabase, learner_id, material_id);
+    const matRow = await supabase
+      .from('materials')
+      .select('extracted_markdown, detected_language')
+      .eq('id', material_id)
+      .maybeSingle();
+    if (matRow.error || !matRow.data) {
+      throw new ApiError('not_found', 'Material not found');
+    }
+    const mat = matRow.data as {
+      extracted_markdown: string | null;
+      detected_language: string | null;
+    };
+    if (!mat.extracted_markdown) {
+      throw new ApiError(
+        'validation_failed',
+        'Material has no extracted_markdown to regenerate from',
+      );
+    }
+
+    const subjRow = await supabase
+      .from('subjects')
+      .select('name, subject_kind')
+      .eq('id', material.subject_id)
+      .maybeSingle();
+    if (subjRow.error || !subjRow.data) throw new ApiError('not_found', 'Subject not found');
+    const subject = subjRow.data as { name: string; subject_kind: VisionInput['subjectKind'] };
+
+    const learnerRow = await supabase
+      .from('learners')
+      .select('grade_level')
+      .eq('id', learner_id)
+      .maybeSingle();
+    const gradeLevel = (learnerRow.data as { grade_level: number | null } | null)?.grade_level ?? 7;
+
+    const existing = await supabase
+      .from('items')
+      .select('question')
+      .eq('material_id', material_id)
+      .is('archived_at', null);
+    const existingQuestions = (existing.data ?? []).map(
+      (r) => (r as { question: string }).question,
+    );
+
+    const debit = {
+      estimate: REGENERATE_ESTIMATE,
+      reason: 'regenerate',
+      learner_id,
+      reference_id: material_id,
+    };
+    await tryDebit(supabase, account_id, debit);
+
+    try {
+      const result = await llm.regenerateFromText({
+        extractedMarkdown: mat.extracted_markdown,
+        locale: (mat.detected_language ?? 'de') as 'de' | 'en' | 'fr' | 'es' | 'it',
+        gradeLevel,
+        subject: subject.name,
+        subjectKind: subject.subject_kind,
+        targetCount: body.target_item_count,
+        style: body.style ?? undefined,
+        excludeQuestions: existingQuestions,
+      });
+      const rows = result.items.map((it) => toItemRow(it, material_id, learner_id, result.usage));
+      const ins = await supabase.from('items').insert(rows).select('*');
+      if (ins.error) {
+        await refund(supabase, account_id, debit);
+        throw new ApiError('internal', 'Failed to insert regenerated items', {
+          cause: ins.error.message,
+        });
+      }
+      const actualCredits = Math.max(1, Math.round(result.usage.cost_usd_micros / 100));
+      await settle(supabase, account_id, debit, actualCredits, result.usage);
+      return c.json({
+        added_items: ins.data ?? [],
+        credits_used: actualCredits,
+      });
+    } catch (err) {
+      await refund(supabase, account_id, debit);
+      throw err instanceof ApiError
+        ? err
+        : new ApiError(
+            'extraction_failed',
+            err instanceof Error ? err.message : 'Regenerate failed',
+          );
+    }
+  },
+);
+
+materialRoutes.get('/:id/templates', (c) => notImplemented(c, 'GET /materials/:id/templates')); // D3
 materialRoutes.patch('/:id', (c) => notImplemented(c, 'PATCH /materials/:id')); // G3
 materialRoutes.delete('/:id', (c) => notImplemented(c, 'DELETE /materials/:id')); // G3
