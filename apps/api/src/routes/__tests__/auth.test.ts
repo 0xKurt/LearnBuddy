@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
 import { createApp } from '../../app.js';
+import { _resetIdempotencyForTests } from '../../lib/idempotency.js';
 import { createTestDeps, getFake } from '../../test/fake-supabase.js';
 
 function setup() {
@@ -16,6 +17,10 @@ function setup() {
   const app = createApp({ deps });
   return { app, deps, fake: getFake(deps) };
 }
+
+beforeEach(() => {
+  _resetIdempotencyForTests();
+});
 
 describe('POST /auth/account/signup', () => {
   it('creates account + subscription + credit bucket on happy path', async () => {
@@ -113,10 +118,43 @@ describe('POST /auth/account/signup', () => {
     });
     expect(res.status).toBe(400);
   });
+
+  it('replays the cached response on duplicate Idempotency-Key', async () => {
+    const { app, fake } = setup();
+    const body = JSON.stringify({
+      email: 'replay@example.com',
+      password: 'super-secret-1',
+      locale: 'de',
+      country_code: 'DE',
+    });
+    const headers = {
+      'content-type': 'application/json',
+      'idempotency-key': 'lb-test-replay-1',
+    };
+
+    const first = await app.request('/auth/account/signup', { method: 'POST', headers, body });
+    expect(first.status).toBe(201);
+    const firstBody = (await first.json()) as { account_id: string; user_id: string };
+
+    const second = await app.request('/auth/account/signup', { method: 'POST', headers, body });
+    expect(second.status).toBe(201);
+    expect(second.headers.get('idempotent-replay')).toBe('true');
+    const secondBody = (await second.json()) as { account_id: string; user_id: string };
+    expect(secondBody.account_id).toBe(firstBody.account_id);
+    expect(secondBody.user_id).toBe(firstBody.user_id);
+
+    // Replay must not double-insert.
+    expect(fake.tables.get('accounts')).toHaveLength(1);
+    expect(fake.tables.get('subscriptions')).toHaveLength(1);
+    expect(fake.tables.get('credit_buckets')).toHaveLength(1);
+  });
 });
 
 describe('POST /auth/account/consent', () => {
-  async function signUpAndAuthenticate(app: ReturnType<typeof setup>['app'], fake: ReturnType<typeof getFake>) {
+  async function signUpAndAuthenticate(
+    app: ReturnType<typeof setup>['app'],
+    fake: ReturnType<typeof getFake>,
+  ) {
     const res = await app.request('/auth/account/signup', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -177,5 +215,24 @@ describe('POST /auth/account/consent', () => {
       body: JSON.stringify({ accepted: true, version: '2024-01-01' }),
     });
     expect(res.status).toBe(422);
+  });
+
+  it('rejects body with accepted: false (consent not given)', async () => {
+    const { app, fake } = setup();
+    const { token, accountId } = await signUpAndAuthenticate(app, fake);
+
+    const res = await app.request('/auth/account/consent', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ accepted: false, version: '2026-05-01' }),
+    });
+    expect(res.status).toBe(400);
+
+    const stored = fake.tables.get('accounts')!.find((a) => a.id === accountId)!;
+    expect(stored.dsgvo_consent_version).toBeUndefined();
+    expect(stored.dsgvo_consent_at).toBeUndefined();
   });
 });

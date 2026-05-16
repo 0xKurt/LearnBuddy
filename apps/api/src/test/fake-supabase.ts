@@ -20,9 +20,10 @@ type FilterOp = 'eq' | 'is';
 
 export class FakeQuery {
   private filters: Array<[FilterOp, string, unknown]> = [];
-  private op: { kind: 'select' | 'insert' | 'update' | 'delete'; values?: unknown; cols?: string } = {
-    kind: 'select',
-  };
+  private op: { kind: 'select' | 'insert' | 'update' | 'delete'; values?: unknown; cols?: string } =
+    {
+      kind: 'select',
+    };
 
   constructor(
     private store: FakeSupabase,
@@ -58,7 +59,9 @@ export class FakeQuery {
   private match(row: FakeRow): boolean {
     return this.filters.every(([op, col, val]) => {
       if (op === 'eq') return row[col] === val;
-      if (op === 'is') return row[col] === val; // val is null in practice
+      // `is(col, null)` in PostgREST means "WHERE col IS NULL", which includes
+      // rows where the column was never set. Mirror that with == null.
+      if (op === 'is') return val === null ? row[col] == null : row[col] === val;
       return true;
     });
   }
@@ -76,8 +79,7 @@ export class FakeQuery {
         if (
           this.table === 'learners' &&
           rows.some(
-            (r) =>
-              r.account_id === (v as FakeRow).account_id && (r.archived_at as unknown) == null,
+            (r) => r.account_id === (v as FakeRow).account_id && (r.archived_at as unknown) == null,
           )
         ) {
           return {
@@ -165,14 +167,7 @@ export class FakeSupabase {
   }
 
   auth = {
-    signUp: async ({
-      email,
-      password,
-    }: {
-      email: string;
-      password: string;
-      options?: unknown;
-    }) => {
+    signUp: async ({ email, password }: { email: string; password: string; options?: unknown }) => {
       if (password.length < 8) {
         return {
           data: { user: null, session: null },

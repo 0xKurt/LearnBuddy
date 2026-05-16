@@ -10,20 +10,27 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 
 ### Slice A1 — Auth: signup, consent, session ✅ STARTED 2026-05-16
 
-- [ ] `apps/api/src/lib/env.ts` — typed env loader (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY)
-- [ ] `apps/api/src/lib/supabase.ts` — server-side client factory (service role for writes, anon for token verify)
-- [ ] `apps/api/src/middleware/auth.ts` — real JWT verification via `auth.getUser(token)`, resolve `account_id` via single query, cache decode per request
-- [ ] `apps/api/src/routes/auth.ts` — `POST /auth/account/signup`, `POST /auth/account/consent`
-- [ ] Trigger creates `accounts` row + `subscriptions` row (`tier='trial'`, 14 days, 1500 credits) + `credit_buckets` row
-- [ ] Idempotency-Key handled per Doc 04 §Conventions
-- [ ] Tests in `apps/api/src/routes/__tests__/auth.test.ts` — happy path, dup email, weak password, missing consent, idempotent replay
-- [ ] Mobile `apps/mobile/lib/api/client.ts` — typed fetch with auth header
-- [ ] Mobile `apps/mobile/lib/auth/session.ts` — token storage via `expo-secure-store`, refresh on 401
-- [ ] Mobile `account-signup.tsx` calls real API
-- [ ] Mobile `consent.tsx` calls real API
-- [ ] Mobile `verify-email.tsx` polls auth state, deep-link returns to app
+- [x] `apps/api/src/lib/env.ts` — typed env loader (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY)
+- [x] `apps/api/src/lib/supabase.ts` — server-side client factory (service role for writes, anon for token verify)
+- [x] `apps/api/src/middleware/auth.ts` — real JWT verification via `auth.getUser(token)`, resolve `account_id` via single query, cache decode per request
+- [x] `apps/api/src/routes/auth.ts` — `POST /auth/account/signup`, `POST /auth/account/consent`
+- [x] Trigger creates `accounts` row + `subscriptions` row (`tier='trial'`, 14 days, 1500 credits) + `credit_buckets` row
+- [x] Idempotency-Key handled per Doc 04 §Conventions
+- [x] Tests in `apps/api/src/routes/__tests__/auth.test.ts` — happy path, dup email, weak password, missing consent, idempotent replay
+- [x] Mobile `apps/mobile/lib/api/client.ts` — typed fetch with auth header
+- [ ] Mobile `apps/mobile/lib/auth/session.ts` — token storage via `expo-secure-store`, refresh on 401 _(storage done; refresh-on-401 deferred to A2 — see Open follow-ups)_
+- [x] Mobile `account-signup.tsx` calls real API
+- [x] Mobile `consent.tsx` calls real API
+- [x] Mobile `verify-email.tsx` polls auth state, deep-link returns to app
 
 **Done when:** Cold install → welcome → age-check → signup → email verification → consent → who-uses lands on `(onboarding)/add-profile` with a real session.
+
+**Open follow-ups:**
+
+- _Refresh-on-401 in `apps/mobile/lib/api/client.ts`_ — Currently 401s throw straight through. Wire refresh via `supabase.auth.refreshSession()` (or `/auth/refresh` if added in A2) and retry once. Pulled into A2 because the returning-user paths there exercise the same code.
+- _Live verification against Supabase_ — Per CLAUDE.md hard rule #2, the slice isn't fully done until exercised against `pnpm db:start`. That dev-DB story has no script yet — track as infrastructure work, gates the whole Phase A "ship" claim.
+- _`apps/mobile/app/(onboarding)/verify-email.tsx`_ — Cannot exercise the deep-link flow from a Claude Code session (no simulator). Requires live verification on iOS/Android before declaring J1 ("cold install → consent") truly green.
+- _Audit doc is stale._ `docs/IMPLEMENTATION-AUDIT.md` claims every route returns 501; auth + learners routes are in fact implemented. Refresh in a docs slice once Phase A closes.
 
 ### Slice A2 — Login + password reset + magic link
 

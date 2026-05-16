@@ -37,7 +37,7 @@ export function createApp(opts: { deps?: Deps } = {}) {
 
   app.use('*', logger());
   app.use('*', cors({ origin: '*' }));
-  app.use('*', errorHandler);
+  app.onError(errorHandler);
   app.use('*', async (c, next) => {
     if (!deps) {
       deps = createProdDeps();
