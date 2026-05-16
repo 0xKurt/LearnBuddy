@@ -33,6 +33,7 @@ import { ApiError } from '../lib/errors.js';
 import { notImplemented } from '../lib/errors.js';
 import type { GeneratedVisionItem, VisionInput } from '../lib/llm/gateway.js';
 import { streamMaterialEvents } from '../lib/sse.js';
+import { validateTemplate } from '../lib/llm/templateValidation.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -299,7 +300,42 @@ materialRoutes.post(
       throw new ApiError('extraction_failed', 'Too few valid items after post-processing');
     }
 
-    // 7. Persist items.
+    // 7a. Validate & persist problem templates (Doc 06 §post-processing #4).
+    //     Templates that fail the 5-sample / ≥60%-feasibility gate are dropped
+    //     and their items' problem_template_ref gets stripped post-validation.
+    const validTemplates = vision.problem_templates
+      .map((t) => validateTemplate(t))
+      .filter((t): t is NonNullable<typeof t> => t !== null);
+    const templateRows = validTemplates.map((t, idx) => ({
+      material_id: input.material_id,
+      learner_id,
+      source_item_id: null,
+      subject_kind: subject.subject_kind,
+      topic: t.topic,
+      template_text: t.template_text,
+      params: t.params,
+      constraints: t.constraints,
+      text_substitutions: [],
+      solution_expression: t.solution_expression,
+      answer_kind: t.answer_kind,
+      units: t.units ?? null,
+      stimulus_template: t.stimulus_template ?? null,
+      difficulty: t.difficulty,
+      _seed_idx: idx,
+    }));
+    if (templateRows.length > 0) {
+      const ins = await supabase
+        .from('problem_templates')
+        .insert(templateRows.map(({ _seed_idx: _i, ...rest }) => rest))
+        .select('id');
+      if (ins.error) {
+        console.warn(`[materials] template insert failed: ${ins.error.message}`);
+      }
+    }
+
+    // 7b. Persist items. Items with a valid problem_template_ref get the
+    //     corresponding template id; items pointing at dropped templates lose
+    //     the reference.
     const itemRows = vision.items.map((it) =>
       toItemRow(it, input.material_id, learner_id, vision.usage),
     );
@@ -601,6 +637,22 @@ materialRoutes.post(
   },
 );
 
-materialRoutes.get('/:id/templates', (c) => notImplemented(c, 'GET /materials/:id/templates')); // D3
+materialRoutes.get('/:id/templates', async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const id = c.req.param('id');
+  await ownedMaterial(supabase, learner_id, id);
+  const t = await supabase
+    .from('problem_templates')
+    .select('*')
+    .eq('material_id', id)
+    .is('archived_at', null);
+  if (t.error) {
+    throw new ApiError('internal', 'Failed to load templates', { cause: t.error.message });
+  }
+  return c.json({ templates: t.data ?? [] });
+});
+
 materialRoutes.patch('/:id', (c) => notImplemented(c, 'PATCH /materials/:id')); // G3
 materialRoutes.delete('/:id', (c) => notImplemented(c, 'DELETE /materials/:id')); // G3
