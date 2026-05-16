@@ -28,13 +28,20 @@ export default function SignupScreen() {
     setBusy(true);
     setError(null);
     try {
-      await signup({
+      const res = await signup({
         email: trimmedEmail,
         password,
         locale: 'de',
         country_code: 'DE',
       });
-      router.push('/(onboarding)/verify-email');
+      if (res.requires_verification) {
+        router.push('/(onboarding)/verify-email');
+      } else {
+        // Dev path: API returned a session immediately (email-confirmed
+        // up-front). Drop through the index router so the consent /
+        // who-uses gate runs in one place.
+        router.replace('/');
+      }
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.code === 'conflict') {
@@ -87,9 +94,7 @@ export default function SignupScreen() {
               secureTextEntry
               editable={!busy}
             />
-            {error && (
-              <Text style={{ color: LB.danger ?? '#c0392b', fontSize: 12 }}>{error}</Text>
-            )}
+            {error && <Text style={{ color: LB.danger ?? '#c0392b', fontSize: 12 }}>{error}</Text>}
           </View>
         </View>
 

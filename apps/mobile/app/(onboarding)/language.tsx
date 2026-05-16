@@ -6,9 +6,10 @@
 // in (admin)/account-settings.
 
 import { router } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { devResetAll } from '../../lib/dev/reset.js';
 import { setLocale, i18n } from '../../lib/i18n/index.js';
 import {
   LOCALE_FLAGS,
@@ -43,9 +44,31 @@ export default function LanguageScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
       <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 24 }}>
-        <Text style={{ fontSize: 14, color: LB.ink3, fontWeight: '500', letterSpacing: 0.5 }}>
-          LEARNBUDDY
-        </Text>
+        <Pressable
+          onLongPress={() => {
+            if (!__DEV__) return;
+            Alert.alert(
+              'Dev reset',
+              'Clear local SecureStore (locale, session, pin, notif prefs)?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Wipe',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await devResetAll();
+                    Alert.alert('Reset done', 'Reload the app from Expo Go (shake → Reload).');
+                  },
+                },
+              ],
+            );
+          }}
+          delayLongPress={600}
+        >
+          <Text style={{ fontSize: 14, color: LB.ink3, fontWeight: '500', letterSpacing: 0.5 }}>
+            LEARNBUDDY{__DEV__ ? ' · dev' : ''}
+          </Text>
+        </Pressable>
         <Text
           style={{
             fontSize: 32,
