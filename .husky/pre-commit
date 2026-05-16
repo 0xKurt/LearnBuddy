@@ -13,4 +13,23 @@ pnpm exec lint-staged
 echo "→ tests (affected workspaces)"
 pnpm -r --parallel test
 
+# Mobile-bundle smoke test. The earlier gates (tsc, vitest) don't actually
+# run the Metro bundler, so module-resolution issues (.js → .ts rewrites,
+# missing assets, dropped transitive deps under pnpm, plugin chain breakage
+# from an Expo SDK bump) sail through and only surface when `expo start`
+# tries to bundle on a real device. The check below catches the same class
+# of error at commit time — adds ~10s once Metro is warm.
+#
+# Skip when no mobile-relevant files are staged so the typical
+# server-only / docs-only commit stays fast.
+mobile_changed=$(git diff --cached --name-only | grep -E '^apps/mobile/|^packages/' || true)
+if [ -n "$mobile_changed" ]; then
+  echo "→ mobile bundle smoke (expo export ios)"
+  pnpm -F @learnbuddy/mobile bundle:check >/tmp/lb-bundle.log 2>&1 || {
+    echo "✗ mobile bundle failed. Last 40 lines:" >&2
+    tail -40 /tmp/lb-bundle.log >&2
+    exit 1
+  }
+fi
+
 echo "✓ pre-commit gate green"

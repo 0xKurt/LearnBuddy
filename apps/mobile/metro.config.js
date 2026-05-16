@@ -17,4 +17,24 @@ config.resolver.nodeModulesPaths = [
 // project's own node_modules under apps/mobile/ is consulted first. Disabling
 // it caused Metro to resolve the bundle entry from the workspace root.
 
+// SDK 54 / Metro 0.83 stopped auto-rewriting `.js` import paths to their
+// `.ts`/`.tsx` source files. The codebase uses NodeNext-style relative
+// imports (`'../lib/foo.js'`) because that's what TypeScript's strict ESM
+// mode requires. Intercept those at resolution time and try the
+// extension-less name (which falls through Metro's normal sourceExts).
+const defaultResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if ((moduleName.startsWith('./') || moduleName.startsWith('../')) && moduleName.endsWith('.js')) {
+    try {
+      return context.resolveRequest(context, moduleName.slice(0, -3), platform);
+    } catch {
+      // fall through to default
+    }
+  }
+  if (defaultResolveRequest) {
+    return defaultResolveRequest(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
 module.exports = withNativeWind(config, { input: './global.css' });
