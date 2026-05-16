@@ -9,6 +9,7 @@ import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { DevOverlay } from '../components/lb/index.js';
 import { getSessionSync } from '../lib/auth/session.js';
 import { configurePurchases } from '../lib/purchases.js';
 import { LB } from '../lib/theme/colors.js';
@@ -39,6 +40,7 @@ export default function RootLayout() {
             <Stack.Screen name="reset-password" />
           </Stack>
         </QueryClientProvider>
+        <DevOverlay />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

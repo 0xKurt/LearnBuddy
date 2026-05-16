@@ -40,7 +40,7 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={{ gap: 14, alignItems: 'center' }}>
-          <Btn size="lg" full onPress={() => router.push('/(onboarding)/age-check')}>
+          <Btn size="lg" full onPress={() => router.push('/(onboarding)/account-signup')}>
             {t('welcome.cta')}
           </Btn>
           <Pressable onPress={() => router.push('/login')} hitSlop={12}>
