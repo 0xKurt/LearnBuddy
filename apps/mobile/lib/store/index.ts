@@ -4,6 +4,12 @@
 
 import { create } from 'zustand';
 
+import type { LearnerCreate } from '@learnbuddy/shared-types';
+
+/** Volatile draft handed from (onboarding)/add-profile to
+ *  (onboarding)/profile-minor-consent. Cleared after the POST. */
+export type ProfileDraft = Omit<LearnerCreate, 'minor_consent_version'>;
+
 type AppState = {
   active_learner_id: string | null;
   set_active_learner: (id: string | null) => void;
@@ -11,6 +17,9 @@ type AppState = {
    *  every (admin)/unlock mount so re-entry forces re-auth. */
   admin_unlocked: boolean;
   set_admin_unlocked: (v: boolean) => void;
+  /** Hand-off for minor-profile creation. */
+  pending_profile_draft: ProfileDraft | null;
+  set_pending_profile_draft: (d: ProfileDraft | null) => void;
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -18,4 +27,6 @@ export const useAppStore = create<AppState>((set) => ({
   set_active_learner: (id) => set({ active_learner_id: id }),
   admin_unlocked: false,
   set_admin_unlocked: (v) => set({ admin_unlocked: v }),
+  pending_profile_draft: null,
+  set_pending_profile_draft: (d) => set({ pending_profile_draft: d }),
 }));

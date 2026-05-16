@@ -1,11 +1,11 @@
 // Profile creation. Doc 04 §learners + doc 05 §8.
 //
 // Collects display_name, birth_year, grade_level, ui_locale, avatar, answer
-// mode. For minor profiles (birth_year < now − 16) the user is routed first
-// to `profile-minor-consent.tsx`, which captures the consent record before
-// this screen submits POST /learners.
+// mode. Adult profiles POST inline and forward to PIN setup. Minor profiles
+// stash the draft in the Zustand store and forward to profile-minor-consent,
+// which captures the consent record and owns the POST itself.
 
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,6 @@ import { Btn } from '../../components/lb/index.js';
 import { LB } from '../../lib/theme/colors.js';
 import { createLearner } from '../../lib/api/learners.js';
 import { ApiError } from '../../lib/api/client.js';
-import { ENV } from '../../lib/env.js';
 import { useAppStore } from '../../lib/store/index.js';
 
 type GradeOption = { value: number; label: string };
@@ -35,8 +34,8 @@ const GRADES: GradeOption[] = [
 ];
 
 export default function AddProfileScreen() {
-  const params = useLocalSearchParams<{ minorConsent?: string }>();
   const setActiveLearner = useAppStore((s) => s.set_active_learner);
+  const setPendingDraft = useAppStore((s) => s.set_pending_profile_draft);
 
   const [name, setName] = useState('');
   const [birthYear, setBirthYear] = useState('');
@@ -55,22 +54,23 @@ export default function AddProfileScreen() {
 
   async function onContinue() {
     if (!canSubmit || parsedYear === null) return;
-    if (isMinor && !params.minorConsent) {
+    const baseDraft = {
+      display_name: name.trim(),
+      birth_year: parsedYear,
+      grade_level: grade,
+      ui_locale: 'de' as const,
+      avatar_id: 1,
+      preferred_answer_mode: 'voice' as const,
+    };
+    if (isMinor) {
+      setPendingDraft(baseDraft);
       router.push('/(onboarding)/profile-minor-consent');
       return;
     }
     setBusy(true);
     setError(null);
     try {
-      const learner = await createLearner({
-        display_name: name.trim(),
-        birth_year: parsedYear,
-        grade_level: grade,
-        ui_locale: 'de',
-        avatar_id: 1,
-        preferred_answer_mode: 'voice',
-        minor_consent_version: isMinor ? ENV.DSGVO_CONSENT_VERSION : null,
-      });
+      const learner = await createLearner({ ...baseDraft, minor_consent_version: null });
       setActiveLearner(learner.id);
       router.push('/(onboarding)/pin-setup');
     } catch (e) {
@@ -135,9 +135,7 @@ export default function AddProfileScreen() {
                       borderWidth: 1,
                     }}
                   >
-                    <Text
-                      style={{ color: grade === g.value ? '#fff' : LB.ink, fontSize: 12 }}
-                    >
+                    <Text style={{ color: grade === g.value ? '#fff' : LB.ink, fontSize: 12 }}>
                       {g.label}
                     </Text>
                   </Pressable>
@@ -149,9 +147,7 @@ export default function AddProfileScreen() {
                 Auf der nächsten Seite holen wir kurz die Einwilligung für ein Profil unter 16 ein.
               </Text>
             )}
-            {error && (
-              <Text style={{ color: LB.danger, fontSize: 12 }}>{error}</Text>
-            )}
+            {error && <Text style={{ color: LB.danger, fontSize: 12 }}>{error}</Text>}
           </View>
         </View>
 
@@ -168,7 +164,9 @@ export default function AddProfileScreen() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={{ gap: 6 }}>
-      <Text style={{ fontSize: 11, color: LB.ink2, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+      <Text
+        style={{ fontSize: 11, color: LB.ink2, textTransform: 'uppercase', letterSpacing: 0.6 }}
+      >
         {label}
       </Text>
       {children}

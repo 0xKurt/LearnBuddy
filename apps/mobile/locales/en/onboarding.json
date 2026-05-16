@@ -27,6 +27,16 @@
     "self": "Myself",
     "child": "My child"
   },
+  "minor_consent": {
+    "title": "Consent for an under-16 profile",
+    "body": "I consent to the processing of {{name}}'s data. {{name}} is under 16 years old.",
+    "checkbox": "Yes, I consent.",
+    "cta": "Create profile",
+    "saving": "Saving …",
+    "error_already": "This account already has a profile.",
+    "error_validation": "Please check the entered fields.",
+    "error_generic": "Couldn't save right now — try again in a moment?"
+  },
   "pin": {
     "title": "Protect the account area",
     "subtitle": "Choose a 4-digit PIN. The account area stays with grown-ups.",

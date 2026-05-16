@@ -27,6 +27,16 @@
     "self": "Ich selbst",
     "child": "Mein Kind"
   },
+  "minor_consent": {
+    "title": "Einwilligung für ein Profil unter 16",
+    "body": "Ich willige in die Verarbeitung der Daten von {{name}} ein. {{name}} ist unter 16 Jahre alt.",
+    "checkbox": "Ja, ich willige ein.",
+    "cta": "Profil anlegen",
+    "saving": "Speichern …",
+    "error_already": "Auf diesem Konto gibt es schon ein Profil.",
+    "error_validation": "Bitte alle Felder prüfen.",
+    "error_generic": "Konnte gerade nicht speichern — gleich nochmal probieren?"
+  },
   "pin": {
     "title": "Schütze den Konto-Bereich",
     "subtitle": "Wähle eine 4-stellige PIN. So bleibt der Konto-Bereich Erwachsenen vorbehalten.",

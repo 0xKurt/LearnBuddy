@@ -69,15 +69,21 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 
 ### Slice B1 — Learners CRUD
 
-- [ ] `POST /learners` — minor consent record handling, 409 on duplicate
-- [ ] `PATCH /learners/:id` — partial update (LearnerUpdate schema)
-- [ ] `DELETE /learners/:id` — soft archive (`archived_at = now()`); 30-day grace
-- [ ] Tests for all three paths
-- [ ] Mobile `who-uses.tsx` → branches to `add-profile` or `profile-minor-consent`
-- [ ] Mobile `add-profile.tsx` calls `POST /learners`
-- [ ] Mobile `profile-minor-consent.tsx` records `minor_consent_version` before POST
+- [x] `POST /learners` — minor consent record handling, 409 on duplicate
+- [x] `PATCH /learners/:id` — partial update (LearnerUpdate schema)
+- [x] `DELETE /learners/:id` — soft archive (`archived_at = now()`); 30-day grace
+- [x] Tests for all three paths
+- [x] Mobile `who-uses.tsx` → branches to `add-profile` or `profile-minor-consent`
+- [x] Mobile `add-profile.tsx` calls `POST /learners`
+- [x] Mobile `profile-minor-consent.tsx` records `minor_consent_version` before POST
 
 **Done when:** A signed-up account can create exactly one learner profile with the right consent record.
+
+**Open follow-ups:**
+
+- _Birth-year flip on edit_ — Doc 05 §profile-edit calls out `[implied — needs design]` for the tone-copy transition when a profile's birth-year is changed to put it under/over 16. Park for the admin profile-edit slice.
+- _30-day hard delete via pg_cron_ — `DELETE /learners/:id` writes `archived_at`, but the daily Edge Function that promotes 30-day-old archives to true deletion is a separate slice (likely G1/G2).
+- _Live verification_ — exercise the full minor-flow on a real device, plus the 409 path (create profile, archive, create again — should succeed because partial unique index is `WHERE archived_at IS NULL`).
 
 ### Slice B2 — Subjects + Folders CRUD
 
