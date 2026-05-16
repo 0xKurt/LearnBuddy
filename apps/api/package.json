@@ -8,9 +8,11 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
-    "eval": "tsx evals/run.ts"
+    "eval": "tsx evals/run.ts",
+    "probe:vertex": "tsx scripts/probe-vertex.ts"
   },
   "dependencies": {
+    "@google-cloud/vertexai": "^1.12.0",
     "@hono/node-server": "^1.13.7",
     "@hono/zod-validator": "^0.4.2",
     "@learnbuddy/shared-math": "workspace:*",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "dotenv": "^17.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

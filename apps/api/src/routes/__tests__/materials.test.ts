@@ -179,11 +179,12 @@ describe('POST /materials', () => {
     };
     expect(done.material_id).toBe(reserved.material_id);
     expect(done.items).toHaveLength(3);
-    expect(done.credits_used).toBe(20);
+    // FakeLlmGateway reports zero token cost; settle() floors at 1 credit.
+    expect(done.credits_used).toBe(1);
 
-    // Bucket should be 1500 (trial grant) − 20.
+    // Bucket: 1500 (trial grant) − 20 estimate + 19 refund-via-settle = 1499.
     const bucket = s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId);
-    expect(bucket?.current_balance).toBe(1480);
+    expect(bucket?.current_balance).toBe(1499);
 
     // material is ready + photo wipe scheduled.
     const m = s.fake.tables.get('materials')?.find((r) => r.id === reserved.material_id);

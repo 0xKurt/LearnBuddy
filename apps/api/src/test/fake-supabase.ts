@@ -22,6 +22,7 @@
 
 import type { Deps } from '../lib/deps.js';
 import type { Env } from '../lib/env.js';
+import { FakeLlmGateway } from './fake-llm.js';
 
 export type FakeUser = { id: string; email: string };
 export type FakeRow = Record<string, unknown>;
@@ -216,6 +217,13 @@ export class FakeSupabase {
         },
         error: null as null | { message: string },
       }),
+      /** Slice D1: vision pipeline needs photo bytes. The fake returns a
+       *  1×1 JPEG so the gateway receives well-formed (if uninformative)
+       *  data; the FakeLlmGateway ignores it anyway. */
+      download: async (_path: string) => ({
+        data: new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: 'image/jpeg' }),
+        error: null as null | { message: string },
+      }),
     }),
   };
 
@@ -264,6 +272,8 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     EMAIL_REDIRECT_URL: 'learnbuddy://verify-email',
     DSGVO_CONSENT_VERSION: '2026-05-01',
     NODE_ENV: 'test',
+    GOOGLE_VERTEX_LOCATION: 'europe-west4',
+    VERTEX_MODEL_ID: 'gemini-2.5-flash-lite',
   };
   return {
     env,
@@ -271,6 +281,7 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     // SupabaseClient surface is much wider, hence the cast.
     supabase: fake as unknown as Deps['supabase'],
     supabaseAnon: fake as unknown as Deps['supabaseAnon'],
+    llm: new FakeLlmGateway(),
     now: () => new Date('2026-05-16T10:00:00Z'),
     uuid: () => `uuid-${Math.random().toString(36).slice(2, 10)}`,
     ...overrides,

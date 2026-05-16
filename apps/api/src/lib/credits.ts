@@ -81,3 +81,45 @@ export async function refund(
     reference_id: e.reference_id ?? null,
   });
 }
+
+/** Settle a successful debit to the actual cost. Doc 08 §atomic-debit step 3.
+ *  Delta = actualCredits - estimate. Negative delta = refund difference.
+ *  Positive delta = additional debit (not balance-gated — already authorized). */
+export async function settle(
+  supabase: Deps['supabase'],
+  account_id: string,
+  e: CreditEstimate,
+  actualCredits: number,
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    cost_usd_micros: number;
+    model: string;
+    prompt_version: string;
+  },
+): Promise<void> {
+  const delta = actualCredits - e.estimate; // negative = give back, positive = take more
+  const bucket = await supabase
+    .from('credit_buckets')
+    .select('current_balance')
+    .eq('account_id', account_id)
+    .maybeSingle();
+  if (bucket.error || !bucket.data) return;
+  const balance = (bucket.data as { current_balance: number }).current_balance;
+  await supabase
+    .from('credit_buckets')
+    .update({ current_balance: balance - delta })
+    .eq('account_id', account_id);
+  await supabase.from('credit_events').insert({
+    account_id,
+    learner_id: e.learner_id ?? null,
+    delta: -delta, // event ledger sign matches debit (negative = spent)
+    reason: `${e.reason}_settle`,
+    reference_id: e.reference_id ?? null,
+    model: usage.model,
+    prompt_version: usage.prompt_version,
+    input_tokens: usage.input_tokens,
+    output_tokens: usage.output_tokens,
+    cost_usd_micros: usage.cost_usd_micros,
+  });
+}

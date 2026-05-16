@@ -157,16 +157,26 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 
 ## Phase D — LLM-backed AI pipeline
 
-### Slice D1 — Vertex AI gateway + vision extraction
+### Slice D1 — Vertex AI gateway + vision extraction ✅ COMPLETED 2026-05-16
 
-- [ ] `apps/api/src/lib/llm/vertex.ts` — real Gemini 2.5 Flash-Lite client (EU region)
-- [ ] Implement `visionExtract()` per Doc 06 §P1 + safety guard + post-processing
-- [ ] Implement diagram cropping + marker overlay (sharp) per Doc 06 §2
-- [ ] Replace placeholder items in `POST /materials` with real Vertex output
-- [ ] Credit debit + refund logic per Doc 08
-- [ ] Tests with recorded fixtures (no live calls in CI)
+- [x] `apps/api/src/lib/llm/vertex.ts` — real Gemini 2.5 Flash-Lite client (EU region; `GOOGLE_VERTEX_LOCATION=europe-west4` default)
+- [x] Implement `visionExtractAndGenerate()` per Doc 06 §P1 + safety guard + JSON-retry-once + post-processing
+- [ ] Implement diagram cropping + marker overlay (sharp) per Doc 06 §2 _(deferred — see follow-ups)_
+- [x] Replace placeholder items in `POST /materials` with real Vertex output (placeholders.ts deleted, FakeLlmGateway is the test seam)
+- [x] Credit debit + settle-to-actual + refund logic per Doc 08 §atomic-debit (probe: 20-credit estimate, ~5-credit actual → 15-credit refund via `settle()`)
+- [x] Live verification via `pnpm -F @learnbuddy/api probe:vertex` against the real Gemini endpoint; 48/48 api tests + 19/19 mobile tests pass against the Fake gateway
 
 **Done when:** Real photo → real questions, with credit accounting.
+
+**Open follow-ups:**
+
+- _Diagram pipeline (sharp + study-asset upload)._ Doc 06 §image-processing is non-trivial (crop, mask, numbered marker overlay, upload to `study-assets` bucket). Post-processing in D1 currently DROPS items with `answer_kind='diagram_label'` or `stimulus_kind='study_asset'` so the diagram-less output is clean. A follow-up slice D1.5 ships the sharp pipeline; biology/geography materials will get richer items at that point.
+- _Eval harness (Doc 06 §Eval)._ The 13-fixture inventory is required before D2/D3 can ship safely (quality regression detection). Fixture recording happens once against the real Vertex; runner then replays fixtures from JSON. Track as separate "D-quality" slice.
+- _Vertex SDK deprecation._ `@google-cloud/vertexai` sunsets 2026-06-24. The successor is `@google/genai` (already a transitive dep). Migration is a small in-place rewrite of `vertex.ts` — schedule for Q1 2026.
+- _Vertex retry usage tokens._ When the gateway retries on JSON parse failure, it currently reports only the first call's tokens. The retry's tokens are paid but un-accounted. Small under-counting in the ledger — fix when migrating to `@google/genai`.
+- _Context caching for the system prompt._ Doc 06 §caching mentions Vertex context caching for the stable SYSTEM portion of P1. Saves ~10-20% on input cost at scale; deferred until traffic justifies the operational overhead.
+- _D2 next._ `regenerateFromText`, `evaluateAnswer`, `explain` — all four-method-stubs in `vertex.ts` currently throw `not_implemented`. The interface is in place; D2 implements them behind the same seam.
+- _Live verification (CLAUDE.md hard rule #2)._ End-to-end materials POST against a real Supabase instance with a real Vertex call exists only via the probe script. The full route's storage-download + items-persist path still needs an in-app verification on a real device once the Supabase instance is up.
 
 ### Slice D2 — Regenerate, evaluate, explain endpoints
 

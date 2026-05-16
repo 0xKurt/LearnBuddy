@@ -16,6 +16,21 @@ export const Env = z.object({
   /** Current DSGVO consent version constant — bumped requires re-consent. */
   DSGVO_CONSENT_VERSION: z.string().default('2026-05-01'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // ── Vertex AI (Doc 06 §provider-configuration, Doc 09 EU-residency) ─────
+  /** GCP project id, e.g. "learnbuddy-496516". Required when LLM_BACKEND='vertex'. */
+  GOOGLE_CLOUD_PROJECT: z.string().optional(),
+  /** Vertex region. europe-west4 (NL) and europe-west3 (DE) are GDPR-OK. */
+  GOOGLE_VERTEX_LOCATION: z.string().default('europe-west4'),
+  /** Path to the service-account JSON. The Google SDK reads this automatically. */
+  GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  /** Same JSON inline (Vercel-friendly). Bootstrap code writes it to a
+   *  tempfile and sets GOOGLE_APPLICATION_CREDENTIALS at cold start. */
+  GOOGLE_APPLICATION_CREDENTIALS_JSON: z.string().optional(),
+  /** Backend selector. 'fake' → tests + dev without GCP; 'vertex' → real LLM.
+   *  Defaults to 'fake' when NODE_ENV=test, else 'vertex'. */
+  LLM_BACKEND: z.enum(['vertex', 'fake']).optional(),
+  /** Gemini model id; pinned to Doc 06 §provider-configuration. */
+  VERTEX_MODEL_ID: z.string().default('gemini-2.5-flash-lite'),
 });
 
 export type Env = z.infer<typeof Env>;

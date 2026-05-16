@@ -8,11 +8,12 @@
 //
 // POST /materials
 //   Confirms the photos are uploaded. Pre-debits the credit estimate per
-//   Doc 08 §estimated-costs-per-action, then streams an SSE: `reading_images`
-//   → `generating_items` → `done`. In Slice C2 the "done" event carries
-//   PLACEHOLDER items (Doc 06 §P1 — real LLM extraction lands in D1). The
-//   placeholder factory lives in lib/placeholders.ts and will be deleted
-//   alongside its caller here in D1.
+//   Doc 08 §estimated-costs-per-action, downloads photo bytes from Supabase
+//   Storage, calls the LLM gateway (Vertex in prod, Fake in tests / when GCP
+//   is unconfigured) for vision extraction, then streams an SSE:
+//   `reading_images` → `generating_items` → `done`. On not_educational,
+//   too_few_items, or any Vertex-side failure the route refunds and marks
+//   the material `failed` (Doc 06 §failure-modes-and-refunds).
 //
 // GET /materials/:id           — full material with items
 // GET /materials/:id/items     — items only
@@ -25,11 +26,11 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { MaterialCreateRequest, MaterialUploadUrlRequest } from '@learnbuddy/shared-types';
 
-import { tryDebit, refund } from '../lib/credits.js';
+import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { notImplemented } from '../lib/errors.js';
-import { generatePlaceholderItems } from '../lib/placeholders.js';
+import type { GeneratedVisionItem, VisionInput } from '../lib/llm/gateway.js';
 import { streamMaterialEvents } from '../lib/sse.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -175,7 +176,7 @@ materialRoutes.post(
   rateLimit({ key: 'materials_create', per_day: 20 }),
   zValidator('json', MaterialCreateRequest),
   async (c) => {
-    const { supabase, now } = getDeps(c);
+    const { supabase, llm, now } = getDeps(c);
     const { account_id } = c.get('auth');
     const learner_id = c.get('learner_id');
     if (!learner_id) {
@@ -192,7 +193,28 @@ materialRoutes.post(
       throw new ApiError('validation_failed', 'client_quality_scores must be non-empty');
     }
 
-    // 2. Atomic credit pre-debit. Throws 402 on insufficient balance.
+    // 2. Look up subject + learner context for the vision prompt.
+    const subjRow = await supabase
+      .from('subjects')
+      .select('name, subject_kind')
+      .eq('id', input.subject_id)
+      .maybeSingle();
+    if (subjRow.error || !subjRow.data) {
+      throw new ApiError('not_found', 'Subject not found');
+    }
+    const subject = subjRow.data as { name: string; subject_kind: VisionInput['subjectKind'] };
+
+    const learnerRow = await supabase
+      .from('learners')
+      .select('grade_level')
+      .eq('id', learner_id)
+      .maybeSingle();
+    if (learnerRow.error || !learnerRow.data) {
+      throw new ApiError('not_found', 'Learner not found');
+    }
+    const gradeLevel = (learnerRow.data as { grade_level: number | null }).grade_level ?? 7;
+
+    // 3. Atomic credit pre-debit. Throws 402 on insufficient balance.
     const debit = {
       estimate: VISION_ESTIMATE,
       reason: 'materials_create',
@@ -201,7 +223,7 @@ materialRoutes.post(
     };
     await tryDebit(supabase, account_id, debit);
 
-    // 3. Persist material_photos rows from the client-side quality scores.
+    // 4. Persist material_photos rows from the client-side quality scores.
     const photoRows = input.client_quality_scores.map((s) => ({
       material_id: input.material_id,
       position: s.position,
@@ -220,21 +242,76 @@ materialRoutes.post(
       });
     }
 
-    // 4. TEMPORARY — Slice D1 swaps this for `llm.visionExtractAndGenerate`.
-    //    Doc 06 §P1. The placeholder factory is the only place in the prod
-    //    path where the API invents content (CLAUDE.md §rule #5 carve-out).
-    const placeholders = generatePlaceholderItems(input.material_id, learner_id, input.locale);
-    const itemsIns = await supabase.from('items').insert(placeholders).select('*');
+    // 5. Download photo bytes from storage (Vertex needs base64-encoded images).
+    //    Failing photos are skipped; if none survive we extraction_failed
+    //    BEFORE the LLM call so the user gets a meaningful error instead of
+    //    a misleading validation 400 from the gateway's images=0 guard.
+    const images = await downloadPhotosAsBase64(
+      supabase,
+      `${account_id}/${input.material_id}`,
+      input.client_quality_scores.length,
+    );
+    if (images.length === 0) {
+      await refund(supabase, account_id, debit);
+      await markFailed(supabase, input.material_id, 'photos_not_retrievable');
+      throw new ApiError(
+        'extraction_failed',
+        'Could not retrieve any photos from storage. Try uploading again.',
+      );
+    }
+
+    // 6. Call the LLM gateway. Doc 06 §P1. Errors mapped to Doc 06 §failure-modes.
+    let vision;
+    try {
+      vision = await llm.visionExtractAndGenerate({
+        images,
+        locale: input.locale as VisionInput['locale'],
+        gradeLevel,
+        subject: subject.name,
+        subjectKind: subject.subject_kind,
+        targetCount: input.target_item_count,
+      });
+    } catch (err) {
+      await refund(supabase, account_id, debit);
+      await markFailed(
+        supabase,
+        input.material_id,
+        err instanceof Error ? err.message : 'Unknown vision failure',
+      );
+      throw err instanceof ApiError
+        ? err
+        : new ApiError(
+            'extraction_failed',
+            err instanceof Error ? err.message : 'Vision call failed',
+          );
+    }
+
+    if (vision.error === 'not_educational') {
+      await refund(supabase, account_id, debit);
+      await markFailed(supabase, input.material_id, 'not_educational');
+      throw new ApiError('not_educational', 'Images do not look like educational material');
+    }
+
+    if (vision.items.length < 3) {
+      await refund(supabase, account_id, debit);
+      await markFailed(supabase, input.material_id, 'too_few_items');
+      throw new ApiError('extraction_failed', 'Too few valid items after post-processing');
+    }
+
+    // 7. Persist items.
+    const itemRows = vision.items.map((it) =>
+      toItemRow(it, input.material_id, learner_id, vision.usage),
+    );
+    const itemsIns = await supabase.from('items').insert(itemRows).select('*');
     if (itemsIns.error) {
       await refund(supabase, account_id, debit);
       throw new ApiError('internal', 'Failed to persist generated items', {
         cause: itemsIns.error.message,
       });
     }
-    const items = (itemsIns.data ?? []) as unknown[];
+    const persistedItems = (itemsIns.data ?? []) as unknown[];
 
-    // 5. Mark the material ready + schedule photo wipe at T+7d. Title is set
-    //    when the client passed one; the LLM run in D1 will refine it.
+    // 8. Mark the material ready + schedule photo wipe at T+7d.
     const updatedAt = now();
     const wipeAt = new Date(updatedAt.getTime() + PHOTO_WIPE_DELAY_MS).toISOString();
     const ready = await supabase
@@ -242,11 +319,12 @@ materialRoutes.post(
       .update({
         extraction_status: 'ready',
         page_count: input.client_quality_scores.length,
-        detected_language: input.locale,
+        detected_language: vision.detected_language ?? input.locale,
+        extracted_markdown: vision.extracted_markdown,
         title: input.title ?? null,
         scheduled_photo_deletion_at: wipeAt,
-        extraction_model: 'placeholder-C2',
-        extraction_prompt_version: 'placeholder-C2',
+        extraction_model: vision.usage.model,
+        extraction_prompt_version: vision.usage.prompt_version,
       })
       .eq('id', input.material_id);
     if (ready.error) {
@@ -256,8 +334,13 @@ materialRoutes.post(
       });
     }
 
-    // 6. Stream the SSE response. C2 fires the phases back-to-back; D1 will
-    //    interleave them with real Vertex calls.
+    // 9. Settle credits to actual cost. Doc 08 §atomic-debit step 3.
+    //    1 credit = 100 micro-dollars (= $0.0001). Round to nearest credit;
+    //    floor at 1 so a zero-token call still records something.
+    const actualCredits = Math.max(1, Math.round(vision.usage.cost_usd_micros / 100));
+    await settle(supabase, account_id, debit, actualCredits, vision.usage);
+
+    // 10. Stream the SSE response.
     return streamMaterialEvents(c, async (push) => {
       await push({ event: 'phase', data: { phase: 'reading_images' } });
       await push({ event: 'phase', data: { phase: 'generating_items' } });
@@ -265,16 +348,85 @@ materialRoutes.post(
         event: 'done',
         data: {
           material_id: input.material_id,
-          items,
+          items: persistedItems,
           templates: [],
           study_assets: [],
-          extracted_language: input.locale,
-          credits_used: VISION_ESTIMATE,
+          extracted_language: vision.detected_language ?? input.locale,
+          credits_used: actualCredits,
         },
       });
     });
   },
 );
+
+// ── helpers ────────────────────────────────────────────────────────────────
+
+/** Mark the material `failed` with an error message. Best-effort: a failure
+ *  here is logged but not re-thrown, because the caller is already in an
+ *  error path that's refunded the credit. Without this guard, an update
+ *  failure would silently strand the material in `pending` after refund. */
+async function markFailed(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  material_id: string,
+  reason: string,
+): Promise<void> {
+  const upd = await supabase
+    .from('materials')
+    .update({ extraction_status: 'failed', extraction_error: reason })
+    .eq('id', material_id);
+  if (upd.error) {
+    console.error(
+      `[materials] markFailed(${material_id}, ${reason}): ${upd.error.message} — material may be stranded in 'pending' state`,
+    );
+  }
+}
+
+async function downloadPhotosAsBase64(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  prefix: string,
+  count: number,
+): Promise<Array<{ mimeType: 'image/jpeg' | 'image/png'; data: string }>> {
+  const out: Array<{ mimeType: 'image/jpeg' | 'image/png'; data: string }> = [];
+  for (let i = 1; i <= count; i++) {
+    const path = `${prefix}/${i}.jpg`;
+    const dl = await supabase.storage.from('materials-raw').download(path);
+    if (dl.error || !dl.data) continue;
+    const buf = Buffer.from(await dl.data.arrayBuffer());
+    out.push({ mimeType: 'image/jpeg', data: buf.toString('base64') });
+  }
+  return out;
+}
+
+function toItemRow(
+  it: GeneratedVisionItem,
+  material_id: string,
+  learner_id: string,
+  usage: { model: string; prompt_version: string },
+): Record<string, unknown> {
+  return {
+    material_id,
+    learner_id,
+    question: it.question,
+    expected_answer: it.expected_answer,
+    acceptable_answers: it.acceptable_answers ?? [],
+    answer_kind: it.answer_kind,
+    mc_options: it.mc_options ?? null,
+    mc_correct_index: it.mc_correct_index ?? null,
+    units: it.units ?? null,
+    latex_expected: it.latex_expected ?? null,
+    latex_acceptable: it.latex_acceptable ?? [],
+    fill_blank_template: it.fill_blank_template ?? null,
+    fill_blank_answers: it.fill_blank_answers ?? [],
+    stimulus_kind: it.stimulus_kind ?? 'none',
+    stimulus_data: it.stimulus_data ?? {},
+    difficulty: it.difficulty,
+    topic: it.topic ?? null,
+    language: it.language,
+    source_excerpt: it.source_excerpt ?? null,
+    generated_by_model: usage.model,
+    generated_by_prompt_version: usage.prompt_version,
+  };
+}
 
 // ── GET /materials/:id ──────────────────────────────────────────────────────
 

@@ -9,6 +9,8 @@
 import type { Context } from 'hono';
 
 import type { Env } from './env.js';
+import type { LLMGateway } from './llm/gateway.js';
+import { createLlmGateway } from './llm/factory.js';
 import type { AnonClient, ServiceClient } from './supabase.js';
 import { createAnonClient, createServiceClient } from './supabase.js';
 import { loadEnv } from './env.js';
@@ -19,6 +21,8 @@ export type Deps = {
   supabase: ServiceClient;
   /** Anon Supabase client. Used for JWT verification and unauthenticated signup. */
   supabaseAnon: AnonClient;
+  /** LLM seam — `vertex` in prod, `fake` in tests + when GCP is unconfigured. */
+  llm: LLMGateway;
   /** Override the current time. Defaults to `Date.now()` in prod, fixed value in tests. */
   now: () => Date;
   /** Generate a UUID v4. Indirection lets tests assert deterministic outputs. */
@@ -45,6 +49,7 @@ export function createProdDeps(): Deps {
     env,
     supabase: createServiceClient(env),
     supabaseAnon: createAnonClient(env),
+    llm: createLlmGateway(env),
     now: () => new Date(),
     uuid: () => crypto.randomUUID(),
   };
