@@ -49,12 +49,19 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 
 ### Slice A3 — PIN + biometric admin gate
 
-- [ ] `apps/mobile/lib/auth/pin.ts` — `expo-secure-store` PIN + bcrypt-on-device verify (or scrypt via `react-native-keychain`)
-- [ ] Mobile `pin-setup.tsx` writes PIN
-- [ ] Mobile `(admin)/unlock.tsx` triggers biometric, fallback PIN, 5-fail lockout per Doc 05 §Unlock
-- [ ] All `(admin)/*` screens gated through `unlock` per `_layout.tsx`
+- [x] `apps/mobile/lib/auth/pin.ts` — `expo-secure-store` PIN + bcrypt-on-device verify (or scrypt via `react-native-keychain`)
+- [x] Mobile `pin-setup.tsx` writes PIN
+- [x] Mobile `(admin)/unlock.tsx` triggers biometric, fallback PIN, 5-fail lockout per Doc 05 §Unlock
+- [x] All `(admin)/*` screens gated through `unlock` per `_layout.tsx`
 
 **Done when:** Admin section can only be entered with biometric / PIN, lockout works.
+
+**Open follow-ups:**
+
+- _PIN module unit tests_ — `lib/auth/pin.ts` is structured for it (pure `hashPin`/`verifyPinHash` next to the SecureStore wrappers), but `apps/mobile` has no vitest setup yet. Lands when mobile test infra slice arrives.
+- _Lock admin on background_ — USER-FLOWS §13.15-13.16. Currently a backgrounded admin stays unlocked until the modal is dismissed. Add an AppState listener that flips `admin_unlocked = false` on background.
+- _Password fallback returns to learner surface, not admin._ "Passwort verwenden" routes to `/login`; after re-auth the user lands at the learner home and must re-enter admin manually. Doc 05 implies a direct return path — capture for the admin polish slice.
+- _Live verification_ — biometric prompt on real device (iOS Face ID, Android fingerprint), 5-fail lockout countdown, lockout persistence across app kills.
 
 ---
 

@@ -10,4 +10,5 @@ export { Banner } from './Banner.js';
 export { EmptyState } from './EmptyState.js';
 export { Progress } from './Progress.js';
 export { CircleBtn } from './CircleBtn.js';
+export { PinPad } from './PinPad.js';
 export { SessionTopBar } from './SessionTopBar.js';

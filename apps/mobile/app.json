@@ -18,7 +18,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Damit du Lernmaterial fotografieren kannst.",
         "NSMicrophoneUsageDescription": "Damit du Antworten sprechen kannst.",
-        "NSSpeechRecognitionUsageDescription": "Damit deine gesprochenen Antworten erkannt werden."
+        "NSSpeechRecognitionUsageDescription": "Damit deine gesprochenen Antworten erkannt werden.",
+        "NSFaceIDUsageDescription": "Damit Erwachsene den Konto-Bereich mit Face ID öffnen können."
       }
     },
     "android": {
@@ -38,9 +39,12 @@
       "expo-camera",
       "expo-secure-store",
       [
-        "expo-notifications",
-        { "icon": "./assets/notification-icon.png", "color": "#b1715c" }
-      ]
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Damit Erwachsene den Konto-Bereich mit Face ID öffnen können."
+        }
+      ],
+      ["expo-notifications", { "icon": "./assets/notification-icon.png", "color": "#b1715c" }]
     ],
     "experiments": {
       "typedRoutes": true

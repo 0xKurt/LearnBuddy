@@ -29,9 +29,15 @@
   },
   "pin": {
     "title": "Protect the account area",
-    "subtitle": "With Face ID and a 4-digit PIN, so the account area stays with grown-ups.",
-    "cta_face_id": "Set up Face ID",
-    "cta_skip": "Later"
+    "subtitle": "Choose a 4-digit PIN. The account area stays with grown-ups.",
+    "confirm_title": "Confirm PIN",
+    "confirm_subtitle": "Tap the same 4 digits once more.",
+    "mismatch": "Doesn't match. Please start over.",
+    "biometric_offer": "Open with Face ID / Touch ID?",
+    "biometric_yes": "Yes, set it up",
+    "biometric_no": "No, PIN only",
+    "cta_save": "Save PIN",
+    "saving": "Saving …"
   },
   "hand_off_final": {
     "title": "All set.",

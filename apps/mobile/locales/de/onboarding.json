@@ -29,9 +29,15 @@
   },
   "pin": {
     "title": "Schütze den Konto-Bereich",
-    "subtitle": "Mit Face ID und einer 4-stelligen PIN. So bleibt der Konto-Bereich Erwachsenen vorbehalten.",
-    "cta_face_id": "Face ID einrichten",
-    "cta_skip": "Erst später"
+    "subtitle": "Wähle eine 4-stellige PIN. So bleibt der Konto-Bereich Erwachsenen vorbehalten.",
+    "confirm_title": "PIN bestätigen",
+    "confirm_subtitle": "Tippe die gleichen 4 Ziffern noch einmal.",
+    "mismatch": "Stimmt nicht überein. Bitte nochmal von vorn.",
+    "biometric_offer": "Mit Face ID / Touch ID öffnen?",
+    "biometric_yes": "Ja, einrichten",
+    "biometric_no": "Nein, nur PIN",
+    "cta_save": "PIN speichern",
+    "saving": "Speichern …"
   },
   "hand_off_final": {
     "title": "Es kann losgehen.",
