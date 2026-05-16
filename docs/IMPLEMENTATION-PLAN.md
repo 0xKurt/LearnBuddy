@@ -34,12 +34,18 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 
 ### Slice A2 — Login + password reset + magic link
 
-- [ ] `POST /auth/login` (or rely on Supabase JS in mobile and just send JWT to API; either works — choose one)
-- [ ] Mobile `login.tsx` form + Supabase JS auth call
-- [ ] Mobile `reset-password.tsx` deep-link handler
-- [ ] Magic-link path documented (uses Supabase out of the box; mobile catches the deep link)
+- [x] `POST /auth/login` (or rely on Supabase JS in mobile and just send JWT to API; either works — choose one) _(chose Supabase JS per Doc 04 §Auth — no custom endpoint added)_
+- [x] Mobile `login.tsx` form + Supabase JS auth call
+- [x] Mobile `reset-password.tsx` deep-link handler
+- [x] Magic-link path documented (uses Supabase out of the box; mobile catches the deep link)
 
 **Done when:** Returning user can log in on a fresh install, recover password, magic-link login.
+
+**Open follow-ups:**
+
+- _OAuth (Apple / Google)_ — `USER-FLOWS.md` bucket 2.7. Out of A2 scope; would need RevenueCat user-id reconciliation work as well. Track for a later slice.
+- _Sign-out_ — `USER-FLOWS.md` bucket 2.8. The admin screen for this lands with the (admin)/settings/account work in Slice G3.
+- _Live verification_ — cold-start magic link, warm-start magic link, password reset on same / different device, refresh-on-401 against a real Supabase. Same "requires live verification" bucket as A1.
 
 ### Slice A3 — PIN + biometric admin gate
 

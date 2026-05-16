@@ -5,26 +5,28 @@ import * as Localization from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+import deAuth from '../../locales/de/auth.json';
 import deCommon from '../../locales/de/common.json';
 import deOnboarding from '../../locales/de/onboarding.json';
+import enAuth from '../../locales/en/auth.json';
 import enCommon from '../../locales/en/common.json';
 import enOnboarding from '../../locales/en/onboarding.json';
 
 const resources = {
-  de: { common: deCommon, onboarding: deOnboarding },
-  en: { common: enCommon, onboarding: enOnboarding },
+  de: { common: deCommon, onboarding: deOnboarding, auth: deAuth },
+  en: { common: enCommon, onboarding: enOnboarding, auth: enAuth },
 } as const;
 
 export type AppLocale = keyof typeof resources;
 
 const deviceLocale = Localization.getLocales()[0]?.languageCode ?? 'de';
-const initialLng: AppLocale = (deviceLocale === 'de' ? 'de' : 'en');
+const initialLng: AppLocale = deviceLocale === 'de' ? 'de' : 'en';
 
 void i18n.use(initReactI18next).init({
   resources,
   lng: initialLng,
   fallbackLng: 'de',
-  ns: ['common', 'onboarding'],
+  ns: ['common', 'onboarding', 'auth'],
   defaultNS: 'common',
   interpolation: { escapeValue: false },
   returnNull: false,

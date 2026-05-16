@@ -1,16 +1,23 @@
-// Typed API client. Doc 02 §api + doc 04 entire.
+// Typed API client. Doc 02 §api + doc 04 entire + doc 09 §8.
 //
 // Single entry point for all server requests. Attaches the bearer token from
 // the in-memory session cache, normalizes errors into `ApiError`, and lets
 // callers pass a zod schema to validate the response shape.
 //
-// Per-endpoint helpers live in `lib/api/auth.ts`, `lib/api/learners.ts`, etc.
+// On 401 we attempt a single refresh via `supabase.auth.refreshSession()`
+// (Doc 09 §8 "API tokens: short-lived 1h JWTs; refresh tokens are rotated"),
+// persist the new tokens, and retry the original request once. Concurrent
+// 401s share one in-flight refresh promise so an expired access-token storm
+// doesn't fan out into N refresh attempts.
+//
+// Per-endpoint helpers live in `lib/api/auth.ts`, `lib/api/account.ts`, etc.
 // Those files own the URL + zod schema; this file owns transport.
 
-import { z, type ZodTypeAny } from 'zod';
+import { type z, type ZodTypeAny } from 'zod';
 
+import { clearSession, getSessionSync, setSession, type Session } from '../auth/session.js';
 import { ENV } from '../env.js';
-import { getSessionSync } from '../auth/session.js';
+import { supabase } from '../supabase.js';
 
 export type ApiErrorBody = {
   error: { code: string; message: string; details?: unknown };
@@ -38,6 +45,43 @@ type RequestOptions<S extends ZodTypeAny> = {
   authOverride?: string | null;
 };
 
+// Coalesce concurrent refreshes — one in-flight attempt, all callers await it.
+let refreshInFlight: Promise<Session | null> | null = null;
+
+async function attemptRefresh(): Promise<Session | null> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const current = getSessionSync();
+      if (!current) return null;
+      const { data, error } = await supabase.auth.refreshSession({
+        refresh_token: current.refresh_token,
+      });
+      if (error || !data.session) {
+        await clearSession();
+        return null;
+      }
+      const next: Session = {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        user_id: current.user_id,
+        account_id: current.account_id,
+      };
+      await setSession(next);
+      return next;
+    } catch {
+      await clearSession();
+      return null;
+    } finally {
+      // null after this microtask so a fresh failure doesn't hang the next call.
+      queueMicrotask(() => {
+        refreshInFlight = null;
+      });
+    }
+  })();
+  return refreshInFlight;
+}
+
 export async function api<S extends ZodTypeAny>(
   path: string,
   opts: RequestOptions<S>,
@@ -48,22 +92,28 @@ export async function api<S extends ZodTypeAny>(
   opts: RequestOptions<S> = {},
 ): Promise<unknown> {
   const url = new URL(path, ENV.API_URL).toString();
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
 
-  const token =
-    opts.authOverride !== undefined ? opts.authOverride : getSessionSync()?.access_token;
-  if (token) {
-    headers.authorization = `Bearer ${token}`;
-  }
-  if (opts.idempotencyKey) {
-    headers['idempotency-key'] = opts.idempotencyKey;
+  async function send(token: string | null | undefined): Promise<Response> {
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (token) headers.authorization = `Bearer ${token}`;
+    if (opts.idempotencyKey) headers['idempotency-key'] = opts.idempotencyKey;
+    return fetch(url, {
+      method: opts.method ?? 'GET',
+      headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    });
   }
 
-  const res = await fetch(url, {
-    method: opts.method ?? 'GET',
-    headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-  });
+  const initialToken =
+    opts.authOverride !== undefined ? opts.authOverride : (getSessionSync()?.access_token ?? null);
+  let res = await send(initialToken);
+
+  if (res.status === 401 && opts.authOverride === undefined && getSessionSync()) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      res = await send(refreshed.access_token);
+    }
+  }
 
   const text = await res.text();
   const json: unknown = text ? JSON.parse(text) : undefined;
@@ -96,5 +146,8 @@ export async function api<S extends ZodTypeAny>(
 /** Generate a UUID-ish idempotency key suitable for retry-safe POSTs. */
 export function newIdempotencyKey(): string {
   // crypto.randomUUID is available in Hermes RN runtime since RN 0.74.
-  return globalThis.crypto?.randomUUID?.() ?? `idemp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `idemp-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 }

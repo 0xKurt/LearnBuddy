@@ -2,7 +2,8 @@
   "welcome": {
     "title": "Study Companion",
     "subtitle": "A calm companion while you practice. Snap a photo, work through a few questions — done.",
-    "cta": "Let's go"
+    "cta": "Let's go",
+    "signin_link": "Already have an account? Sign in"
   },
   "age_check": {
     "title": "How old are you?",
