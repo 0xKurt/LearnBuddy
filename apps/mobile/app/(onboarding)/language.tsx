@@ -30,6 +30,16 @@ const LABELS: Record<AppLocale, { title: string; subtitle: string }> = {
   it: { title: 'Lingua', subtitle: 'Tocca per scegliere.' },
 };
 
+// Soft pastel per locale — gives the picker a maximalist row-by-row feel
+// per docs/DESIGN-BRIEF without slowing the scan.
+const LOCALE_TONE: Record<AppLocale, string> = {
+  de: LB.butter,
+  en: LB.sky,
+  fr: LB.lavender,
+  es: LB.peach,
+  it: LB.mint,
+};
+
 export default function LanguageScreen() {
   const current = (i18n.language as AppLocale) || detectDeviceLocale();
   const labels = LABELS[current];
@@ -102,38 +112,73 @@ export default function LanguageScreen() {
           {labels.subtitle}
         </Text>
 
-        <ScrollView contentContainerStyle={{ gap: 10, paddingTop: 24, paddingBottom: 24 }}>
-          {SUPPORTED_LOCALES.map((code) => (
-            <Pressable
-              key={code}
-              onPress={() => onPick(code)}
-              style={({ pressed }) => ({
-                paddingHorizontal: 18,
-                paddingVertical: 18,
-                borderRadius: 16,
-                backgroundColor: pressed ? LB.primaryLt : '#fff',
-                borderColor: current === code ? LB.primaryDk : LB.hairline,
-                borderWidth: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              })}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Text style={{ fontSize: 28 }}>{LOCALE_FLAGS[code]}</Text>
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: '600',
-                    color: LB.ink,
-                  }}
-                >
-                  {LOCALE_LABELS[code]}
-                </Text>
-              </View>
-              <Text style={{ fontSize: 18, color: LB.ink3 }}>›</Text>
-            </Pressable>
-          ))}
+        <ScrollView contentContainerStyle={{ gap: 12, paddingTop: 24, paddingBottom: 24 }}>
+          {SUPPORTED_LOCALES.map((code) => {
+            const tone = LOCALE_TONE[code];
+            const isCurrent = current === code;
+            return (
+              <Pressable
+                key={code}
+                onPress={() => onPick(code)}
+                style={({ pressed }) => ({
+                  paddingHorizontal: 20,
+                  paddingVertical: 18,
+                  borderRadius: 20,
+                  backgroundColor: tone,
+                  borderColor: isCurrent ? LB.ink : 'transparent',
+                  borderWidth: isCurrent ? 2 : 0,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                  shadowColor: '#000',
+                  shadowOpacity: 0.04,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowRadius: 6,
+                  elevation: 1,
+                })}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      backgroundColor: '#fff',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{ fontSize: 24 }}>{LOCALE_FLAGS[code]}</Text>
+                  </View>
+                  <View style={{ gap: 2 }}>
+                    <Text
+                      style={{
+                        fontSize: 17,
+                        fontWeight: '700',
+                        color: LB.ink,
+                        letterSpacing: -0.2,
+                      }}
+                    >
+                      {LOCALE_LABELS[code]}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: LB.ink2,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.6,
+                        fontWeight: '600',
+                      }}
+                    >
+                      {code}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 22, color: LB.ink2, fontWeight: '300' }}>›</Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       </View>
     </SafeAreaView>
