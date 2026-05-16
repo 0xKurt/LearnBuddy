@@ -1,4 +1,7 @@
 // Local dev server. Runs the same Hono app on @hono/node-server.
+import { config as loadDotenv } from 'dotenv';
+loadDotenv({ path: '.env.local' });
+
 import { serve } from '@hono/node-server';
 import { app } from './app.js';
 
