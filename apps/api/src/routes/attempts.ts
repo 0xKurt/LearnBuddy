@@ -16,6 +16,7 @@ import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { notImplemented } from '../lib/errors.js';
+import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import type { EvaluateInput } from '../lib/llm/gateway.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -164,16 +165,113 @@ attemptRoutes.post(
   },
 );
 
+// POST /attempts/batch — Doc 04 §POST /attempts/batch + Doc 05 §sync-engine.
+//
+// Mobile drains its offline outbox here. Each attempt is persisted; FSRS
+// state is recomputed server-side using ts-fsrs (mirroring mobile's local
+// FSRS). Items the learner does not own → rejected, not thrown.
+const AttemptBatchRequest = z.object({
+  attempts: z
+    .array(
+      z.object({
+        client_attempt_id: z.string().uuid(),
+        session_id: z.string().uuid().nullable().optional(),
+        item_id: z.string().uuid(),
+        mode: z.enum(['voice', 'text', 'multiple_choice']),
+        kid_answer: z.string().max(2000).default(''),
+        verdict: z.enum(['correct', 'partially_correct', 'incorrect', 'skipped']),
+        feedback: z.string().nullable().optional(),
+        hints_used: z.number().int().nonnegative().default(0),
+        duration_ms: z.number().int().nonnegative().default(0),
+        test_mode: z.boolean().default(false),
+        evaluated_by: z.enum(['local', 'llm']),
+        evaluation_model: z.string().nullable().optional(),
+        evaluation_prompt_version: z.string().nullable().optional(),
+        reviewed_at: z.string(),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+
 attemptRoutes.post(
   '/batch',
   rateLimit({ key: 'attempts_batch', per_hour: 60 }),
-  (c) => notImplemented(c, 'POST /attempts/batch'), // E1
+  zValidator('json', AttemptBatchRequest),
+  async (c) => {
+    const { supabase } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const { attempts } = c.req.valid('json');
+
+    const itemIds = [...new Set(attempts.map((a) => a.item_id))];
+    const items = await supabase.from('items').select('id, learner_id').in('id', itemIds);
+    if (items.error) {
+      throw new ApiError('internal', 'Failed to load items', { cause: items.error.message });
+    }
+    const ownedByMe = new Set(
+      ((items.data ?? []) as Array<{ id: string; learner_id: string }>)
+        .filter((r) => r.learner_id === learner_id)
+        .map((r) => r.id),
+    );
+
+    const states = await supabase
+      .from('item_states')
+      .select('*')
+      .eq('learner_id', learner_id)
+      .in('item_id', itemIds);
+    const stateMap = new Map<string, ItemStateRow>();
+    for (const s of (states.data ?? []) as ItemStateRow[]) stateMap.set(s.item_id, s);
+
+    const accepted: string[] = [];
+    const rejected: Array<{ client_attempt_id: string; reason: string }> = [];
+
+    for (const a of attempts) {
+      if (!ownedByMe.has(a.item_id)) {
+        rejected.push({ client_attempt_id: a.client_attempt_id, reason: 'item_not_found' });
+        continue;
+      }
+      await persistAttempt(supabase, {
+        learner_id,
+        item_id: a.item_id,
+        session_id: a.session_id ?? null,
+        mode: a.mode,
+        verdict: a.verdict === 'skipped' ? 'incorrect' : a.verdict,
+        kid_answer: a.kid_answer,
+        feedback: a.feedback ?? null,
+        hints_used: a.hints_used,
+        duration_ms: a.duration_ms,
+        evaluated_by: a.evaluated_by,
+        evaluation_model: a.evaluation_model ?? null,
+        evaluation_prompt_version: a.evaluation_prompt_version ?? null,
+        test_mode: a.test_mode,
+      });
+
+      const prev = stateMap.get(a.item_id) ?? null;
+      const next = applyAttempt(prev, a.verdict, new Date(a.reviewed_at));
+      if (prev) {
+        await supabase
+          .from('item_states')
+          .update(next)
+          .eq('item_id', a.item_id)
+          .eq('learner_id', learner_id);
+      } else {
+        await supabase.from('item_states').insert({
+          item_id: a.item_id,
+          learner_id,
+          ...next,
+        });
+      }
+      accepted.push(a.client_attempt_id);
+    }
+
+    return c.json({ accepted, rejected });
+  },
 );
 
-attemptRoutes.post(
-  '/:client_id/finalize',
-  (c) => notImplemented(c, 'POST /attempts/:client_id/finalize (SSE)'), // E2 (voice polish)
-);
+attemptRoutes.post('/:client_id/finalize', (c) =>
+  notImplemented(c, 'POST /attempts/:client_id/finalize (SSE)'),
+); // voice polish, deferred
 
 async function persistAttempt(
   supabase: ReturnType<typeof getDeps>['supabase'],
