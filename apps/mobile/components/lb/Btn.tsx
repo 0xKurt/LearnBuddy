@@ -10,6 +10,7 @@ type Props = {
   variant?: Variant;
   size?: Size;
   full?: boolean;
+  disabled?: boolean;
 };
 
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
@@ -26,12 +27,19 @@ const VARIANT_BG: Record<Variant, { bg: string; color: string; border?: string }
   danger: { bg: 'transparent', color: LB.danger, border: 'rgba(177,73,60,0.25)' },
 };
 
-export function Btn({ children, onPress, variant = 'primary', size = 'md', full = false }: Props) {
+export function Btn({
+  children,
+  onPress,
+  variant = 'primary',
+  size = 'md',
+  full = false,
+  disabled = false,
+}: Props) {
   const s = SIZE_STYLE[size];
   const v = VARIANT_BG[variant];
   return (
     <Pressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
       style={({ pressed }) => ({
         height: s.height,
         paddingHorizontal: s.paddingHorizontal,
@@ -43,6 +51,7 @@ export function Btn({ children, onPress, variant = 'primary', size = 'md', full 
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: full ? 'stretch' : 'flex-start',
+        opacity: disabled ? 0.4 : 1,
         transform: [{ scale: pressed ? 0.97 : 1 }],
       })}
     >

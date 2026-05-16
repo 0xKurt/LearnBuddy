@@ -85,19 +85,26 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 - _30-day hard delete via pg_cron_ — `DELETE /learners/:id` writes `archived_at`, but the daily Edge Function that promotes 30-day-old archives to true deletion is a separate slice (likely G1/G2).
 - _Live verification_ — exercise the full minor-flow on a real device, plus the 409 path (create profile, archive, create again — should succeed because partial unique index is `WHERE archived_at IS NULL`).
 
-### Slice B2 — Subjects + Folders CRUD
+### Slice B2 — Subjects + Folders CRUD ✅ COMPLETED 2026-05-16
 
-- [ ] `GET /learners/:learnerId/subjects`, `POST /learners/:learnerId/subjects`
-- [ ] `PATCH /subjects/:id`, `DELETE /subjects/:id` (soft archive)
-- [ ] `GET /subjects/:subjectId/folders`, `POST /subjects/:subjectId/folders`
-- [ ] `PATCH /folders/:id`, `DELETE /folders/:id` (soft archive)
-- [ ] `GET /learners/:learnerId/schedule-summary` — returns test-date chips per Doc 04
-- [ ] Tests
-- [ ] Mobile home renders real subjects from API (TanStack Query)
-- [ ] Mobile subject screen with Ordner/Material tabs renders from API
-- [ ] Long-press → rename / archive sheet wired
+- [x] `GET /learners/:learnerId/subjects`, `POST /learners/:learnerId/subjects`
+- [x] `PATCH /subjects/:id`, `DELETE /subjects/:id` (soft archive)
+- [x] `GET /subjects/:subjectId/folders`, `POST /subjects/:subjectId/folders`
+- [x] `PATCH /folders/:id`, `DELETE /folders/:id` (soft archive)
+- [x] `GET /learners/:learnerId/schedule-summary` — returns test-date chips per Doc 04
+- [x] Tests
+- [x] Mobile home renders real subjects from API (TanStack Query)
+- [x] Mobile subject screen with Ordner/Material tabs renders from API
+- [x] Long-press → rename / archive sheet wired
 
 **Done when:** Learner can create subjects, folders with test dates, and the home screen reflects state.
+
+**Open follow-ups:**
+
+- _`(learner)/folder/[folderId].tsx` material list_ — Shows empty state until materials endpoint lands (Phase C2). Once materials are available, the folder screen should show real material rows with thumbnails, rename, and "Uben" affordances.
+- _Captured folder pre-targeting_ — The "+ Material" button on the folder screen routes to `/(learner)/capture`, but the capture flow (Phase C1) must accept a pre-targeted folderId to auto-slot captured materials.
+- _Folder archive from folder screen_ — Long-press menu triggers an Alert with archive option but currently only invalidates the cache and navigates back; actual `archiveFolder()` API call is handled by the `FolderEditorModal` (rename path). Archive from the long-press menu should call `archiveFolder()` directly.
+- _Live verification_ — Real Supabase exercise of the full B2 flow: signup → create learner → create subject → create folder with date → navigate to folder detail screen. Same gating as A1/A2.
 
 ---
 

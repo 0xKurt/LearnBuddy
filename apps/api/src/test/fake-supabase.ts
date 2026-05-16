@@ -1,12 +1,18 @@
 // In-memory Supabase fake for route tests.
 //
 // Implements only the surface the routes actually call: `auth.signUp`,
-// `auth.getUser`, and the chainable `from(table).select/.insert/.update/.eq/.is/.single/.maybeSingle`.
+// `auth.getUser`, and the chainable `from(table).select/.insert/.update/.eq/.is/.in/.order/.single/.maybeSingle`.
 // Add behavior as new routes need it — do not grow this beyond what's used.
 //
 // Returned errors mirror Supabase shape (`{ message, status?, code? }`) so the
 // route layer's branching (e.g. unique-violation `23505`) exercises the same
 // branches as it would in production.
+//
+// Surface extensions (slice B2):
+//   - `in(col, vals)` — IN-list filter used by subjects→folders/materials batch lookups.
+//   - `order(col, opts)` — no-op chain; handlers that need ordering re-sort in JS.
+//   - List-mode await — `await supabase.from('x').select().eq(...)` (no `.single`/`.maybeSingle`)
+//     resolves to `{ data: FakeRow[], error: null }`, matching PostgREST's behavior.
 
 import type { Deps } from '../lib/deps.js';
 import type { Env } from '../lib/env.js';
@@ -16,7 +22,7 @@ export type FakeRow = Record<string, unknown>;
 type FakeError = { message: string; status?: number; code?: string };
 type Outcome<T> = { data: T; error: null } | { data: null; error: FakeError };
 
-type FilterOp = 'eq' | 'is';
+type FilterOp = 'eq' | 'is' | 'in';
 
 export class FakeQuery {
   private filters: Array<[FilterOp, string, unknown]> = [];
@@ -55,6 +61,16 @@ export class FakeQuery {
     this.filters.push(['is', col, val]);
     return this;
   }
+  in(col: string, vals: readonly unknown[]): this {
+    this.filters.push(['in', col, vals]);
+    return this;
+  }
+  // PostgREST exposes `.order()` for server-side sorting. The fake doesn't
+  // need to actually sort — handlers that depend on order re-sort in JS — so
+  // we accept the call and return `this` to keep the chain unbroken.
+  order(_col: string, _opts?: { ascending?: boolean }): this {
+    return this;
+  }
 
   private match(row: FakeRow): boolean {
     return this.filters.every(([op, col, val]) => {
@@ -62,6 +78,7 @@ export class FakeQuery {
       // `is(col, null)` in PostgREST means "WHERE col IS NULL", which includes
       // rows where the column was never set. Mirror that with == null.
       if (op === 'is') return val === null ? row[col] == null : row[col] === val;
+      if (op === 'in') return (val as readonly unknown[]).includes(row[col]);
       return true;
     });
   }
@@ -141,11 +158,15 @@ export class FakeQuery {
   maybeSingle() {
     return this.run('maybeSingle');
   }
+  // Awaiting the query without `.single()` / `.maybeSingle()` resolves to an
+  // array result for SELECT (matching PostgREST), or `{ data: null, error: null }`
+  // for mutations that don't ask to return rows.
   then<TResult1 = unknown, TResult2 = never>(
     onFulfilled?: (value: Outcome<unknown>) => TResult1 | PromiseLike<TResult1>,
     onRejected?: (reason: unknown) => TResult2 | PromiseLike<TResult2>,
   ): Promise<TResult1 | TResult2> {
-    return this.run('void').then(onFulfilled, onRejected);
+    const mode = this.op.kind === 'select' ? 'list' : 'void';
+    return this.run(mode).then(onFulfilled, onRejected);
   }
 }
 

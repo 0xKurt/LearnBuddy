@@ -11,4 +11,5 @@ export { EmptyState } from './EmptyState.js';
 export { Progress } from './Progress.js';
 export { CircleBtn } from './CircleBtn.js';
 export { PinPad } from './PinPad.js';
+export { FolderEditorModal } from './FolderEditorModal.js';
 export { SessionTopBar } from './SessionTopBar.js';

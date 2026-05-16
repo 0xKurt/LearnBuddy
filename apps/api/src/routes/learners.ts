@@ -14,14 +14,18 @@
 //   Soft-archive (sets `archived_at = now()`). 30-day grace before hard delete
 //   is enforced by a daily Edge Function (separate slice).
 //
-// The /subjects sub-resource and /schedule-summary live in their own slice
-// (B2) — left as `notImplemented` here until then.
+// Sub-resources (Slice B2):
+//   GET  /learners/:learnerId/subjects          — subjects list w/ counts + test chip
+//   POST /learners/:learnerId/subjects          — create a subject
+//   GET  /learners/:learnerId/schedule-summary  — folders within 7 days + streak
+// All three resolve the learner via account_id first so cross-account ids
+// return 404 (we do not leak whether the id exists at all).
 
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { LearnerCreate, LearnerUpdate } from '@learnbuddy/shared-types';
+import { LearnerCreate, LearnerUpdate, SubjectCreate } from '@learnbuddy/shared-types';
 
-import { ApiError, notImplemented } from '../lib/errors.js';
+import { ApiError } from '../lib/errors.js';
 import { getDeps } from '../lib/deps.js';
 import { idempotency } from '../lib/idempotency.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -133,14 +137,237 @@ learnerRoutes.delete('/:id', async (c) => {
   return c.json({ id: upd.data.id, archived: true });
 });
 
-// ── Sub-resources still to wire (Slice B2) ───────────────────────────────
+// ── Sub-resources (Slice B2) ─────────────────────────────────────────────
 
-learnerRoutes.get('/:learnerId/subjects', (c) =>
-  notImplemented(c, 'GET /learners/:learnerId/subjects'),
+type SubjectRow = {
+  id: string;
+  learner_id: string;
+  name: string;
+  subject_kind: string;
+  color_hex: string;
+  icon_id: string | null;
+  sort_order: number;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type FolderRow = {
+  id: string;
+  subject_id: string;
+  name: string;
+  scheduled_for: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type MaterialRow = {
+  id: string;
+  subject_id: string;
+  archived_at: string | null;
+};
+
+/** Verify the learner belongs to this account and is active. 404 otherwise. */
+async function resolveLearner(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  accountId: string,
+  learnerId: string,
+): Promise<{ id: string }> {
+  const r = await supabase
+    .from('learners')
+    .select('id')
+    .eq('id', learnerId)
+    .eq('account_id', accountId)
+    .is('archived_at', null)
+    .maybeSingle();
+  if (r.error) {
+    throw new ApiError('internal', 'Failed to resolve learner', { cause: r.error.message });
+  }
+  if (!r.data) {
+    throw new ApiError('not_found', 'Learner not found');
+  }
+  return r.data as { id: string };
+}
+
+/**
+ * Days until a `YYYY-MM-DD` date string from `from`. Returns null when the
+ * date is more than 7 days out, in the past, or unparseable. Inclusive of
+ * today (0) — used by the home-screen "Test in N Tagen" chip per Doc 04 §subjects.
+ */
+function daysUntilWithinWindow(date: string, from: Date, windowDays = 7): number | null {
+  // Anchor both ends at UTC midnight so we don't get half-day drift.
+  const target = new Date(`${date}T00:00:00Z`).getTime();
+  if (Number.isNaN(target)) return null;
+  const today = Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate());
+  const diffDays = Math.round((target - today) / 86_400_000);
+  if (diffDays < 0 || diffDays > windowDays) return null;
+  return diffDays;
+}
+
+learnerRoutes.get('/:learnerId/subjects', async (c) => {
+  const { supabase, now } = getDeps(c);
+  const { account_id } = c.get('auth');
+  const learnerId = c.req.param('learnerId');
+
+  await resolveLearner(supabase, account_id, learnerId);
+
+  const subjectsRes = await supabase
+    .from('subjects')
+    .select('*')
+    .eq('learner_id', learnerId)
+    .is('archived_at', null);
+  if (subjectsRes.error) {
+    throw new ApiError('internal', 'Failed to load subjects', { cause: subjectsRes.error.message });
+  }
+  const subjects = (subjectsRes.data ?? []) as SubjectRow[];
+  if (subjects.length === 0) {
+    return c.json([]);
+  }
+  const subjectIds = subjects.map((s) => s.id);
+
+  // Batch-fetch folders + materials for these subjects. Two extra queries
+  // total — fine for the ≤ ~12 subjects a learner will ever have.
+  const foldersRes = await supabase
+    .from('folders')
+    .select('id, subject_id, scheduled_for, archived_at')
+    .in('subject_id', subjectIds)
+    .is('archived_at', null);
+  if (foldersRes.error) {
+    throw new ApiError('internal', 'Failed to load folders', { cause: foldersRes.error.message });
+  }
+  const folders = (foldersRes.data ?? []) as FolderRow[];
+
+  const materialsRes = await supabase
+    .from('materials')
+    .select('id, subject_id, archived_at')
+    .in('subject_id', subjectIds)
+    .is('archived_at', null);
+  if (materialsRes.error) {
+    throw new ApiError('internal', 'Failed to load materials', {
+      cause: materialsRes.error.message,
+    });
+  }
+  const materials = (materialsRes.data ?? []) as MaterialRow[];
+
+  const today = now();
+  const decorated = subjects
+    .map((s) => {
+      const subjFolders = folders.filter((f) => f.subject_id === s.id);
+      const subjMaterials = materials.filter((m) => m.subject_id === s.id);
+      const upcoming = subjFolders
+        .map((f) => (f.scheduled_for ? daysUntilWithinWindow(f.scheduled_for, today) : null))
+        .filter((d): d is number => d !== null)
+        .sort((a, b) => a - b);
+      return {
+        ...s,
+        folder_count: subjFolders.length,
+        material_count: subjMaterials.length,
+        // Doc 01 explicitly forbids any "due items" count to the learner;
+        // `upcoming_test_in_days` is a calendar fact, not a queue size.
+        upcoming_test_in_days: upcoming.length > 0 ? upcoming[0] : null,
+      };
+    })
+    .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
+
+  return c.json(decorated);
+});
+
+learnerRoutes.post(
+  '/:learnerId/subjects',
+  idempotency,
+  zValidator('json', SubjectCreate),
+  async (c) => {
+    const { supabase } = getDeps(c);
+    const { account_id } = c.get('auth');
+    const learnerId = c.req.param('learnerId');
+    const input = c.req.valid('json');
+
+    await resolveLearner(supabase, account_id, learnerId);
+
+    const insert = await supabase
+      .from('subjects')
+      .insert({
+        learner_id: learnerId,
+        name: input.name,
+        subject_kind: input.subject_kind,
+        color_hex: input.color_hex,
+        icon_id: input.icon_id ?? null,
+        sort_order: input.sort_order ?? 0,
+        archived_at: null,
+      })
+      .select('*')
+      .single();
+    if (insert.error) {
+      throw new ApiError('internal', 'Failed to create subject', { cause: insert.error.message });
+    }
+    return c.json(insert.data, 201);
+  },
 );
-learnerRoutes.post('/:learnerId/subjects', (c) =>
-  notImplemented(c, 'POST /learners/:learnerId/subjects'),
-);
-learnerRoutes.get('/:learnerId/schedule-summary', (c) =>
-  notImplemented(c, 'GET /learners/:learnerId/schedule-summary'),
-);
+
+learnerRoutes.get('/:learnerId/schedule-summary', async (c) => {
+  const { supabase, now } = getDeps(c);
+  const { account_id } = c.get('auth');
+  const learnerId = c.req.param('learnerId');
+
+  await resolveLearner(supabase, account_id, learnerId);
+
+  const subjectsRes = await supabase
+    .from('subjects')
+    .select('id')
+    .eq('learner_id', learnerId)
+    .is('archived_at', null);
+  if (subjectsRes.error) {
+    throw new ApiError('internal', 'Failed to load subjects', {
+      cause: subjectsRes.error.message,
+    });
+  }
+  const subjectIds = ((subjectsRes.data ?? []) as Array<{ id: string }>).map((s) => s.id);
+
+  let upcomingTests: Array<{
+    folder_id: string;
+    subject_id: string;
+    name: string;
+    scheduled_for: string;
+    days_until: number;
+  }> = [];
+
+  if (subjectIds.length > 0) {
+    const foldersRes = await supabase
+      .from('folders')
+      .select('id, subject_id, name, scheduled_for, archived_at')
+      .in('subject_id', subjectIds)
+      .is('archived_at', null);
+    if (foldersRes.error) {
+      throw new ApiError('internal', 'Failed to load folders', {
+        cause: foldersRes.error.message,
+      });
+    }
+    const today = now();
+    upcomingTests = ((foldersRes.data ?? []) as FolderRow[])
+      .filter((f): f is FolderRow & { scheduled_for: string } => f.scheduled_for !== null)
+      .map((f) => {
+        const d = daysUntilWithinWindow(f.scheduled_for, today);
+        return d === null
+          ? null
+          : {
+              folder_id: f.id,
+              subject_id: f.subject_id,
+              name: f.name,
+              scheduled_for: f.scheduled_for,
+              days_until: d,
+            };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null)
+      .sort((a, b) => a.days_until - b.days_until);
+  }
+
+  // Streak fields come from FSRS in Slice E1; until then we return zeros so
+  // the mobile UI can render the (empty) chips without branching on absence.
+  return c.json({
+    upcoming_tests: upcomingTests,
+    streak_current: 0,
+    streak_longest: 0,
+    last_session_at: null,
+  });
+});
