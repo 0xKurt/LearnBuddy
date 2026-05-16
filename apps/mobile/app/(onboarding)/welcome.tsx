@@ -216,13 +216,24 @@ export default function WelcomeScreen() {
               </Pressable>
             )}
           </View>
+        </ScrollView>
 
-          <View style={{ flex: 1 }} />
-
+        {/* CTA pinned to the bottom regardless of scroll position. Sits inside
+            the KeyboardAvoidingView so iOS lifts it above the keyboard. */}
+        <View
+          style={{
+            paddingHorizontal: 24,
+            paddingTop: 12,
+            paddingBottom: 20,
+            backgroundColor: LB.paper,
+            borderTopColor: LB.hairline,
+            borderTopWidth: 1,
+          }}
+        >
           <Btn size="lg" full variant="primary" onPress={onSubmit} disabled={!canSubmit}>
             {busy ? 'Moment …' : mode === 'signup' ? 'Konto erstellen' : 'Anmelden'}
           </Btn>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
