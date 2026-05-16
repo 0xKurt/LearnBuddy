@@ -66,13 +66,11 @@ export default function ConsentScreen() {
               onChange={setConsentOk}
               label={t('consent.consent_checkbox')}
             />
-            {error && (
-              <Text style={{ color: LB.danger ?? '#c0392b', fontSize: 12 }}>{error}</Text>
-            )}
+            {error && <Text style={{ color: LB.danger ?? '#c0392b', fontSize: 12 }}>{error}</Text>}
           </View>
         </View>
 
-        <Btn size="lg" full variant={canContinue ? 'primary' : 'ghost'} onPress={onContinue}>
+        <Btn size="lg" full variant="primary" onPress={onContinue}>
           {busy ? 'Moment …' : t('consent.cta')}
         </Btn>
       </View>

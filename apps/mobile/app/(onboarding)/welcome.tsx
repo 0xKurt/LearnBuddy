@@ -219,13 +219,7 @@ export default function WelcomeScreen() {
 
           <View style={{ flex: 1 }} />
 
-          <Btn
-            size="lg"
-            full
-            variant={canSubmit ? 'primary' : 'ghost'}
-            onPress={onSubmit}
-            disabled={!canSubmit}
-          >
+          <Btn size="lg" full variant="primary" onPress={onSubmit} disabled={!canSubmit}>
             {busy ? 'Moment …' : mode === 'signup' ? 'Konto erstellen' : 'Anmelden'}
           </Btn>
         </ScrollView>

@@ -121,7 +121,7 @@ export default function MinorConsentScreen() {
           )}
         </View>
 
-        <Btn size="lg" full variant={canSubmit ? 'primary' : 'ghost'} onPress={onSubmit}>
+        <Btn size="lg" full variant="primary" onPress={onSubmit}>
           {busy ? t('minor_consent.saving') : t('minor_consent.cta')}
         </Btn>
       </View>

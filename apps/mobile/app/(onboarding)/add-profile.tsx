@@ -152,7 +152,7 @@ export default function AddProfileScreen() {
         </View>
 
         <View style={{ marginTop: 32 }}>
-          <Btn size="lg" full variant={canSubmit ? 'primary' : 'ghost'} onPress={onContinue}>
+          <Btn size="lg" full variant="primary" onPress={onContinue}>
             {busy ? 'Moment …' : 'Weiter'}
           </Btn>
         </View>

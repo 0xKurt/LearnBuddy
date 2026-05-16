@@ -116,7 +116,7 @@ export default function LoginScreen() {
           </View>
         </View>
 
-        <Btn size="lg" full variant={canSubmit ? 'primary' : 'ghost'} onPress={onSubmit}>
+        <Btn size="lg" full variant="primary" onPress={onSubmit}>
           {busy ? 'Moment …' : t('login.password_cta')}
         </Btn>
       </View>

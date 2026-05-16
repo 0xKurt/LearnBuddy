@@ -117,7 +117,7 @@ export default function SignupScreen() {
           <View style={{ flex: 1 }} />
 
           <View style={{ gap: 10 }}>
-            <Btn size="lg" full variant={canSubmit ? 'primary' : 'ghost'} onPress={onSubmit}>
+            <Btn size="lg" full variant="primary" onPress={onSubmit}>
               {busy ? 'Moment …' : 'Konto erstellen'}
             </Btn>
             <Pressable
