@@ -10,7 +10,12 @@ import { Btn, CircleBtn } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { clearSession } from '../../lib/auth/session.js';
 import { setLocale, i18n } from '../../lib/i18n/index.js';
-import { LOCALE_LABELS, SUPPORTED_LOCALES, type AppLocale } from '../../lib/i18n/locale-storage.js';
+import {
+  LOCALE_FLAGS,
+  LOCALE_LABELS,
+  SUPPORTED_LOCALES,
+  type AppLocale,
+} from '../../lib/i18n/locale-storage.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -91,15 +96,18 @@ export default function AccountSettingsScreen() {
                   borderWidth: 1,
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: locale === code ? LB.primaryDk : LB.ink,
-                    fontWeight: locale === code ? '600' : '400',
-                  }}
-                >
-                  {LOCALE_LABELS[code]}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={{ fontSize: 20 }}>{LOCALE_FLAGS[code]}</Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: locale === code ? LB.primaryDk : LB.ink,
+                      fontWeight: locale === code ? '600' : '400',
+                    }}
+                  >
+                    {LOCALE_LABELS[code]}
+                  </Text>
+                </View>
                 <Text style={{ fontSize: 11, color: LB.ink3, textTransform: 'uppercase' }}>
                   {code}
                 </Text>

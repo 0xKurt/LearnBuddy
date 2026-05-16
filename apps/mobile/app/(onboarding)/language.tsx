@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn } from '../../components/lb/index.js';
 import { setLocale, i18n } from '../../lib/i18n/index.js';
 import {
+  LOCALE_FLAGS,
   LOCALE_LABELS,
   SUPPORTED_LOCALES,
   detectDeviceLocale,
@@ -90,15 +91,18 @@ export default function LanguageScreen() {
                 justifyContent: 'space-between',
               }}
             >
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: selected === code ? LB.primaryDk : LB.ink,
-                }}
-              >
-                {LOCALE_LABELS[code]}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={{ fontSize: 24 }}>{LOCALE_FLAGS[code]}</Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: selected === code ? LB.primaryDk : LB.ink,
+                  }}
+                >
+                  {LOCALE_LABELS[code]}
+                </Text>
+              </View>
               <Text style={{ fontSize: 12, color: LB.ink3, textTransform: 'uppercase' }}>
                 {code}
               </Text>

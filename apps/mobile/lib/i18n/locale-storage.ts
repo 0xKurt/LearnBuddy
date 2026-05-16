@@ -21,6 +21,14 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
   it: 'Italiano',
 };
 
+export const LOCALE_FLAGS: Record<AppLocale, string> = {
+  de: '🇩🇪',
+  en: '🇬🇧',
+  fr: '🇫🇷',
+  es: '🇪🇸',
+  it: '🇮🇹',
+};
+
 function isSupported(code: string | null | undefined): code is AppLocale {
   return code != null && (SUPPORTED_LOCALES as string[]).includes(code);
 }
