@@ -26,30 +26,89 @@ authRoutes.post('/account/signup', idempotency, zValidator('json', AccountSignup
   const { env, supabase, supabaseAnon, now } = getDeps(c);
   const input = c.req.valid('json');
 
-  // 1. Create the auth user via the anon client. Supabase sends the
-  //    confirmation email automatically based on the project email template.
-  const signUp = await supabaseAnon.auth.signUp({
-    email: input.email,
-    password: input.password,
-    options: {
-      emailRedirectTo: env.EMAIL_REDIRECT_URL,
-      data: { locale: input.locale, country_code: input.country_code },
-    },
-  });
-  if (signUp.error) {
-    // Supabase returns 422 with `user_already_exists` for duplicates.
-    const msg = signUp.error.message.toLowerCase();
-    if (msg.includes('already') || msg.includes('registered') || signUp.error.status === 422) {
-      throw new ApiError('conflict', 'Email already in use');
+  // 1. Create the auth user.
+  //
+  //    Production path: anon `auth.signUp()` — Supabase sends the
+  //    confirmation email automatically based on the project email
+  //    template, session is null until verified.
+  //
+  //    Dev path (NODE_ENV === 'development'): service-role
+  //    `auth.admin.createUser({ email_confirm: true })` bypasses the
+  //    rate-limited email send entirely, then `signInWithPassword`
+  //    returns an immediate session so cold-install signup→home works
+  //    without an email round-trip during local development.
+  //
+  //    Test path (NODE_ENV === 'test') stays on the standard `signUp`
+  //    so the in-memory fake-supabase (which doesn't model the admin
+  //    API surface) keeps working.
+  const skipEmail = env.NODE_ENV === 'development';
+  let user: { id: string; email?: string } | null = null;
+  let session: { access_token: string; refresh_token: string; expires_at?: number | null } | null =
+    null;
+
+  if (skipEmail) {
+    const adminCreate = await supabase.auth.admin.createUser({
+      email: input.email,
+      password: input.password,
+      email_confirm: true,
+      user_metadata: { locale: input.locale, country_code: input.country_code },
+    });
+    if (adminCreate.error) {
+      const msg = adminCreate.error.message.toLowerCase();
+      if (msg.includes('already') || msg.includes('exists') || adminCreate.error.status === 422) {
+        throw new ApiError('conflict', 'Email already in use');
+      }
+      if (msg.includes('password')) {
+        throw new ApiError('validation_failed', adminCreate.error.message);
+      }
+      throw new ApiError('internal', adminCreate.error.message);
     }
-    if (msg.includes('password')) {
-      throw new ApiError('validation_failed', signUp.error.message);
+    user = adminCreate.data.user;
+    if (!user) {
+      throw new ApiError('internal', 'admin.createUser returned no user');
     }
-    throw new ApiError('internal', signUp.error.message);
-  }
-  const user = signUp.data.user;
-  if (!user) {
-    throw new ApiError('internal', 'Signup returned no user');
+    const signIn = await supabaseAnon.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
+    });
+    if (!signIn.error && signIn.data.session) {
+      session = {
+        access_token: signIn.data.session.access_token,
+        refresh_token: signIn.data.session.refresh_token,
+        expires_at: signIn.data.session.expires_at ?? null,
+      };
+    }
+  } else {
+    const signUp = await supabaseAnon.auth.signUp({
+      email: input.email,
+      password: input.password,
+      options: {
+        emailRedirectTo: env.EMAIL_REDIRECT_URL,
+        data: { locale: input.locale, country_code: input.country_code },
+      },
+    });
+    if (signUp.error) {
+      // Supabase returns 422 with `user_already_exists` for duplicates.
+      const msg = signUp.error.message.toLowerCase();
+      if (msg.includes('already') || msg.includes('registered') || signUp.error.status === 422) {
+        throw new ApiError('conflict', 'Email already in use');
+      }
+      if (msg.includes('password')) {
+        throw new ApiError('validation_failed', signUp.error.message);
+      }
+      throw new ApiError('internal', signUp.error.message);
+    }
+    user = signUp.data.user;
+    if (!user) {
+      throw new ApiError('internal', 'Signup returned no user');
+    }
+    if (signUp.data.session) {
+      session = {
+        access_token: signUp.data.session.access_token,
+        refresh_token: signUp.data.session.refresh_token,
+        expires_at: signUp.data.session.expires_at ?? null,
+      };
+    }
   }
 
   // 2. Create the account, subscription, credit_bucket rows. We do this with
@@ -69,7 +128,9 @@ authRoutes.post('/account/signup', idempotency, zValidator('json', AccountSignup
     .select('id')
     .single();
   if (accountInsert.error) {
-    throw new ApiError('internal', 'Failed to create account', { cause: accountInsert.error.message });
+    throw new ApiError('internal', 'Failed to create account', {
+      cause: accountInsert.error.message,
+    });
   }
   const accountId = accountInsert.data.id as string;
 
@@ -81,7 +142,9 @@ authRoutes.post('/account/signup', idempotency, zValidator('json', AccountSignup
     trial_ends_at: trialEndsAt.toISOString(),
   });
   if (subInsert.error) {
-    throw new ApiError('internal', 'Failed to create subscription', { cause: subInsert.error.message });
+    throw new ApiError('internal', 'Failed to create subscription', {
+      cause: subInsert.error.message,
+    });
   }
 
   const bucketInsert = await supabase.from('credit_buckets').insert({
@@ -104,20 +167,15 @@ authRoutes.post('/account/signup', idempotency, zValidator('json', AccountSignup
     reason: 'monthly_grant',
   });
 
-  // Session is null until the email is confirmed.
-  const session = signUp.data.session;
+  // Session is non-null in dev (admin-confirmed) and on prod *only* once the
+  // user clicks the confirmation link — for cold-install signups the mobile
+  // app polls /account until requires_verification flips false.
   return c.json(
     {
       account_id: accountId,
       user_id: user.id,
       requires_verification: session === null,
-      session: session
-        ? {
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-            expires_at: session.expires_at ?? null,
-          }
-        : null,
+      session,
     },
     201,
   );
