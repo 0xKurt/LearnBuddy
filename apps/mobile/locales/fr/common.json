@@ -1,0 +1,25 @@
+{
+  "app": { "name": "LearnBuddy" },
+  "actions": {
+    "continue": "Continuer",
+    "back": "Retour",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "done": "Terminé",
+    "next": "Suivant",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "ok": "Ok"
+  },
+  "tabs": {
+    "home": "Accueil",
+    "practice": "S'entraîner",
+    "camera": "Photographier",
+    "account": "Compte"
+  },
+  "greeting": {
+    "morning": "Bonjour",
+    "afternoon": "Bonjour",
+    "evening": "Bonsoir"
+  }
+}

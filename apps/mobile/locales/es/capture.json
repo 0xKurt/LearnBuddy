@@ -1,0 +1,44 @@
+{
+  "title": "Capturar material",
+  "subtitle": "Saca una foto de una página, libro o ficha — hasta 10 fotos.",
+  "permission": {
+    "title": "Necesitamos acceso a la cámara",
+    "body": "Para que puedas fotografiar tu material. Puedes cambiarlo en cualquier momento en Ajustes.",
+    "cta": "Abrir ajustes"
+  },
+  "chip": {
+    "sharp": "nítida",
+    "ok": "ok",
+    "blur": "borrosa — vuelve a intentarlo",
+    "too_dark": "muy oscura",
+    "too_bright": "muy clara",
+    "too_small": "imagen muy pequeña",
+    "tilt": "Sujeta el teléfono un poco más recto"
+  },
+  "tilt_warn": "Sujeta el teléfono un poco más recto",
+  "review": {
+    "keep": "Conservar de todas formas",
+    "redo": "Intentar de nuevo",
+    "discard": "Descartar"
+  },
+  "strip": {
+    "label_one": "1 foto",
+    "label_other": "{{count}} fotos",
+    "max_hint": "Hasta 10 fotos por material.",
+    "long_press_hint": "Mantén pulsada una miniatura para eliminarla."
+  },
+  "cta": {
+    "shutter": "Disparador",
+    "done": "Listo",
+    "cancel": "Cancelar"
+  },
+  "picker": {
+    "title": "¿Dónde lo guardamos?",
+    "folder_title": "Elige una carpeta",
+    "no_folder": "Sin carpeta — directo en la asignatura",
+    "no_subjects": "Aún no tienes asignaturas. Añade una desde la pantalla de inicio."
+  },
+  "limits": {
+    "max_reached": "Máximo 10 fotos por material."
+  }
+}

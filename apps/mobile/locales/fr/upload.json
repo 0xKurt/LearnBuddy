@@ -1,0 +1,21 @@
+{
+  "title": "Préparation du matériel",
+  "phases": {
+    "reserving": "Réservation du stockage …",
+    "uploading": "Envoi des photos … {{uploaded}} / {{total}}",
+    "extracting": "Lecture des images …",
+    "generating": "Création des questions …",
+    "finishing": "Dernière touche …",
+    "done": "Prêt — on y va !"
+  },
+  "error": {
+    "title": "Ça n'a pas marché.",
+    "body": "Nous n'avons pas pu envoyer ton matériel. Réessaie — si ça continue, vérifie ta connexion.",
+    "retry": "Réessayer",
+    "back": "Retour"
+  },
+  "insufficient_credits": {
+    "title": "Plus de crédits pour le moment.",
+    "body": "Tu as utilisé tous les crédits de cette période. Un adulte peut recharger dans les réglages, ou attendre la prochaine période."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Preparando el material",
+  "phases": {
+    "reserving": "Reservando almacenamiento …",
+    "uploading": "Subiendo fotos … {{uploaded}} / {{total}}",
+    "extracting": "Leyendo las imágenes …",
+    "generating": "Creando preguntas …",
+    "finishing": "Últimos detalles …",
+    "done": "¡Listo, vamos!"
+  },
+  "error": {
+    "title": "No funcionó.",
+    "body": "No pudimos subir tu material. Inténtalo de nuevo — si sigue fallando, comprueba tu conexión.",
+    "retry": "Intentar de nuevo",
+    "back": "Volver"
+  },
+  "insufficient_credits": {
+    "title": "Sin créditos por ahora.",
+    "body": "Has gastado los créditos de este periodo. Un adulto puede recargar en ajustes, o esperar al siguiente periodo."
+  }
+}

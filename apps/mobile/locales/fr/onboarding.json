@@ -1,0 +1,57 @@
+{
+  "welcome": {
+    "title": "Compagnon d'étude",
+    "subtitle": "Un compagnon calme pendant que tu travailles. Photographie, fais quelques questions — c'est tout.",
+    "cta": "C'est parti",
+    "signin_link": "Déjà un compte ? Se connecter"
+  },
+  "age_check": {
+    "title": "Quel âge as-tu ?",
+    "subtitle": "Pour t'afficher ce qui te convient.",
+    "cta": "Suivant"
+  },
+  "hand_off_adult": {
+    "title": "Il nous faut un adulte",
+    "body": "Donne le téléphone à un parent ou un autre adulte de confiance. Il configurera le compte — puis te le rendra.",
+    "cta": "Un adulte a le téléphone maintenant"
+  },
+  "consent": {
+    "title": "Une note rapide sur la confidentialité",
+    "summary": "Nous traitons les données d'étude uniquement dans l'UE. Pas de publicité. Aucune donnée transmise à des tiers pour entraînement. Tu peux tout exporter ou supprimer à tout moment.",
+    "adult_checkbox": "J'ai 16 ans ou plus.",
+    "consent_checkbox": "J'accepte le traitement de mes données.",
+    "cta": "J'accepte"
+  },
+  "who_uses": {
+    "title": "Qui utilisera l'application ?",
+    "self": "Moi-même",
+    "child": "Mon enfant"
+  },
+  "minor_consent": {
+    "title": "Consentement pour un profil de moins de 16 ans",
+    "body": "Je consens au traitement des données de {{name}}. {{name}} a moins de 16 ans.",
+    "checkbox": "Oui, je consens.",
+    "cta": "Créer le profil",
+    "saving": "Enregistrement …",
+    "error_already": "Ce compte a déjà un profil.",
+    "error_validation": "Vérifie les champs renseignés.",
+    "error_generic": "Impossible d'enregistrer — réessaie dans un instant."
+  },
+  "pin": {
+    "title": "Protéger l'espace compte",
+    "subtitle": "Choisis un code à 4 chiffres. L'espace compte reste pour les adultes.",
+    "confirm_title": "Confirme le code",
+    "confirm_subtitle": "Saisis à nouveau les 4 mêmes chiffres.",
+    "mismatch": "Ne correspond pas. Recommence.",
+    "biometric_offer": "Ouvrir avec Face ID / Touch ID ?",
+    "biometric_yes": "Oui, configurer",
+    "biometric_no": "Non, code uniquement",
+    "cta_save": "Enregistrer le code",
+    "saving": "Enregistrement …"
+  },
+  "hand_off_final": {
+    "title": "Tout est prêt.",
+    "subtitle": "Heureux de t'accompagner.",
+    "cta": "Commencer"
+  }
+}

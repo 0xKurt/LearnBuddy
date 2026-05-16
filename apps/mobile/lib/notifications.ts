@@ -84,4 +84,17 @@ export async function rescheduleNotifications(prefs: NotificationPrefs): Promise
     },
     trigger: { hour, minute, repeats: true },
   });
+  // Streak reminder fires 4h after the daily nudge if no session yet today.
+  // For v1 we approximate "no session" by scheduling regardless; a follow-up
+  // can check the session table before scheduling.
+  if (prefs.streak_enabled) {
+    const streakHour = (hour + 4) % 24;
+    await Notifs.scheduleNotificationAsync({
+      content: {
+        title: 'Reicht heute schon eine Aufgabe?',
+        body: 'Eine Minute zählt auch — wir halten deine Serie am Leben.',
+      },
+      trigger: { hour: streakHour, minute, repeats: true },
+    });
+  }
 }

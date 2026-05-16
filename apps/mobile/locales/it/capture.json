@@ -1,0 +1,44 @@
+{
+  "title": "Acquisisci materiale",
+  "subtitle": "Scatta a una pagina, un libro o una scheda — fino a 10 foto.",
+  "permission": {
+    "title": "Ci serve l'accesso alla fotocamera",
+    "body": "Così puoi fotografare il tuo materiale. Puoi cambiarlo in qualsiasi momento in Impostazioni.",
+    "cta": "Apri impostazioni"
+  },
+  "chip": {
+    "sharp": "nitida",
+    "ok": "ok",
+    "blur": "sfocata — riprova",
+    "too_dark": "troppo scura",
+    "too_bright": "troppo chiara",
+    "too_small": "immagine troppo piccola",
+    "tilt": "Tieni il telefono un po' più dritto"
+  },
+  "tilt_warn": "Tieni il telefono un po' più dritto",
+  "review": {
+    "keep": "Tieni comunque",
+    "redo": "Riprova",
+    "discard": "Scarta"
+  },
+  "strip": {
+    "label_one": "1 foto",
+    "label_other": "{{count}} foto",
+    "max_hint": "Fino a 10 foto per materiale.",
+    "long_press_hint": "Tieni premuta una miniatura per eliminarla."
+  },
+  "cta": {
+    "shutter": "Scatto",
+    "done": "Fatto",
+    "cancel": "Annulla"
+  },
+  "picker": {
+    "title": "Dove lo metti?",
+    "folder_title": "Scegli una cartella",
+    "no_folder": "Senza cartella — direttamente nella materia",
+    "no_subjects": "Non hai ancora una materia. Aggiungine una dalla home."
+  },
+  "limits": {
+    "max_reached": "Massimo 10 foto per materiale."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Preparazione del materiale",
+  "phases": {
+    "reserving": "Riservo lo spazio …",
+    "uploading": "Carico le foto … {{uploaded}} / {{total}}",
+    "extracting": "Leggo le immagini …",
+    "generating": "Creo le domande …",
+    "finishing": "Ultimi ritocchi …",
+    "done": "Pronto, andiamo!"
+  },
+  "error": {
+    "title": "Non ha funzionato.",
+    "body": "Non siamo riusciti a caricare il materiale. Riprova — se continua, controlla la connessione.",
+    "retry": "Riprova",
+    "back": "Indietro"
+  },
+  "insufficient_credits": {
+    "title": "Crediti esauriti per ora.",
+    "body": "Hai usato tutti i crediti di questo periodo. Un adulto può ricaricare in impostazioni, oppure aspetta il prossimo periodo."
+  }
+}

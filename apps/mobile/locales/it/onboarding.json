@@ -1,0 +1,57 @@
+{
+  "welcome": {
+    "title": "Compagno di studio",
+    "subtitle": "Un compagno tranquillo mentre studi. Fotografa, fai qualche domanda — fatto.",
+    "cta": "Iniziamo",
+    "signin_link": "Hai già un account? Accedi"
+  },
+  "age_check": {
+    "title": "Quanti anni hai?",
+    "subtitle": "Per mostrarti la cosa giusta.",
+    "cta": "Avanti"
+  },
+  "hand_off_adult": {
+    "title": "Serve una persona adulta",
+    "body": "Passa il telefono a un genitore o a un'altra persona adulta. Imposterà l'account e te lo restituirà subito.",
+    "cta": "Un adulto ha il telefono adesso"
+  },
+  "consent": {
+    "title": "Nota rapida sulla privacy",
+    "summary": "Elaboriamo i dati di studio solo nell'UE. Niente pubblicità. Nessun dato condiviso con terzi per l'addestramento. Puoi esportare o cancellare tutto in qualsiasi momento.",
+    "adult_checkbox": "Ho 16 anni o più.",
+    "consent_checkbox": "Acconsento al trattamento dei miei dati.",
+    "cta": "Acconsento"
+  },
+  "who_uses": {
+    "title": "Chi userà l'app?",
+    "self": "Io",
+    "child": "Mio figlio / Mia figlia"
+  },
+  "minor_consent": {
+    "title": "Consenso per un profilo under 16",
+    "body": "Acconsento al trattamento dei dati di {{name}}. {{name}} ha meno di 16 anni.",
+    "checkbox": "Sì, acconsento.",
+    "cta": "Crea profilo",
+    "saving": "Sto salvando …",
+    "error_already": "Questo account ha già un profilo.",
+    "error_validation": "Controlla i campi inseriti.",
+    "error_generic": "Non è stato possibile salvare — riprova tra un momento."
+  },
+  "pin": {
+    "title": "Proteggi l'area account",
+    "subtitle": "Scegli un PIN a 4 cifre. L'area account resta per gli adulti.",
+    "confirm_title": "Conferma il PIN",
+    "confirm_subtitle": "Tocca di nuovo le stesse 4 cifre.",
+    "mismatch": "Non corrisponde. Ricomincia.",
+    "biometric_offer": "Aprire con Face ID / Touch ID?",
+    "biometric_yes": "Sì, configura",
+    "biometric_no": "No, solo PIN",
+    "cta_save": "Salva PIN",
+    "saving": "Sto salvando …"
+  },
+  "hand_off_final": {
+    "title": "Tutto pronto.",
+    "subtitle": "Siamo felici di esserci.",
+    "cta": "Inizia"
+  }
+}

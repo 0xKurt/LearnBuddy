@@ -1,0 +1,57 @@
+{
+  "welcome": {
+    "title": "Compañero de estudio",
+    "subtitle": "Un compañero tranquilo mientras practicas. Fotografía, haz unas preguntas — listo.",
+    "cta": "Vamos",
+    "signin_link": "¿Ya tienes cuenta? Inicia sesión"
+  },
+  "age_check": {
+    "title": "¿Cuántos años tienes?",
+    "subtitle": "Para mostrarte lo más adecuado.",
+    "cta": "Siguiente"
+  },
+  "hand_off_adult": {
+    "title": "Necesitamos a una persona adulta",
+    "body": "Pasa el teléfono a una madre, padre u otra persona adulta de confianza. Configurará la cuenta y te lo devolverá enseguida.",
+    "cta": "Mamá o papá tiene el teléfono ahora"
+  },
+  "consent": {
+    "title": "Nota rápida sobre privacidad",
+    "summary": "Procesamos los datos de estudio solo en la UE. Sin publicidad. Sin compartir datos con terceros para entrenamiento. Puedes exportar o borrar todo en cualquier momento.",
+    "adult_checkbox": "Tengo 16 años o más.",
+    "consent_checkbox": "Acepto el tratamiento de mis datos.",
+    "cta": "Aceptar"
+  },
+  "who_uses": {
+    "title": "¿Quién usará la app?",
+    "self": "Yo",
+    "child": "Mi hijo o hija"
+  },
+  "minor_consent": {
+    "title": "Consentimiento para un perfil menor de 16",
+    "body": "Consiento el tratamiento de los datos de {{name}}. {{name}} tiene menos de 16 años.",
+    "checkbox": "Sí, consiento.",
+    "cta": "Crear perfil",
+    "saving": "Guardando …",
+    "error_already": "Esta cuenta ya tiene un perfil.",
+    "error_validation": "Revisa los campos introducidos.",
+    "error_generic": "No se pudo guardar — inténtalo de nuevo en un momento."
+  },
+  "pin": {
+    "title": "Proteger el área de cuenta",
+    "subtitle": "Elige un PIN de 4 dígitos. El área de cuenta es para personas adultas.",
+    "confirm_title": "Confirma el PIN",
+    "confirm_subtitle": "Vuelve a tocar los mismos 4 dígitos.",
+    "mismatch": "No coincide. Vuelve a empezar.",
+    "biometric_offer": "¿Abrir con Face ID / Touch ID?",
+    "biometric_yes": "Sí, configurar",
+    "biometric_no": "No, solo PIN",
+    "cta_save": "Guardar PIN",
+    "saving": "Guardando …"
+  },
+  "hand_off_final": {
+    "title": "Todo listo.",
+    "subtitle": "Encantados de acompañarte.",
+    "cta": "Empezar"
+  }
+}
