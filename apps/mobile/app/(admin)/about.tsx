@@ -1,0 +1,77 @@
+// About. Doc 05 §about. Static info + links.
+
+import * as Application from 'expo-application';
+import { Redirect, router } from 'expo-router';
+import { Linking, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Btn, CircleBtn } from '../../components/lb/index.js';
+import { useAppStore } from '../../lib/store/index.js';
+import { LB } from '../../lib/theme/colors.js';
+
+export default function AboutScreen() {
+  const unlocked = useAppStore((s) => s.admin_unlocked);
+  if (!unlocked) return <Redirect href="/(admin)/unlock" />;
+
+  const version = Application.nativeApplicationVersion ?? '0.0.0';
+  const build = Application.nativeBuildVersion ?? '—';
+
+  return (
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 18,
+          paddingVertical: 12,
+          gap: 10,
+        }}
+      >
+        <CircleBtn icon="back" onPress={() => router.back()} />
+        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>Über LearnBuddy</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 22, gap: 18 }}>
+        <Card title="Version">
+          <Text style={{ fontSize: 14, color: LB.ink }}>
+            {version} ({build})
+          </Text>
+        </Card>
+        <Card title="Datenschutz">
+          <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
+            Alle Lerndaten bleiben in der EU. Keine Werbung, keine Weitergabe an Dritte zu
+            Trainingszwecken.
+          </Text>
+          <Btn
+            variant="ghost"
+            onPress={() => Linking.openURL('https://learnbuddy.app/datenschutz')}
+          >
+            Datenschutzerklärung
+          </Btn>
+        </Card>
+        <Card title="Impressum">
+          <Btn variant="ghost" onPress={() => Linking.openURL('https://learnbuddy.app/impressum')}>
+            Öffnen
+          </Btn>
+        </Card>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View
+      style={{
+        padding: 16,
+        borderRadius: 14,
+        backgroundColor: '#fff',
+        borderColor: LB.hairline,
+        borderWidth: 1,
+        gap: 8,
+      }}
+    >
+      <Text style={{ fontSize: 14, fontWeight: '600', color: LB.ink }}>{title}</Text>
+      {children}
+    </View>
+  );
+}
