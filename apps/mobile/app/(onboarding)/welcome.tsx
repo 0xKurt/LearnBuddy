@@ -1,4 +1,9 @@
-// Welcome — first screen on cold start. Doc 05 §1 + USER-FLOWS §1.4.
+// Welcome — first screen after language pick. Doc 05 §1 + DESIGN-BRIEF.
+//
+// Soft pastel maximalism per the brief: tinted background panel, italic
+// display headline, friendly hero card with feature pills, black-pill
+// primary CTA.
+
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -10,52 +15,113 @@ import { LB } from '../../lib/theme/colors.js';
 export default function WelcomeScreen() {
   const { t } = useTranslation('onboarding');
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
       <View
         style={{
           flex: 1,
-          paddingHorizontal: 28,
-          paddingVertical: 32,
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          paddingBottom: 24,
           justifyContent: 'space-between',
         }}
       >
-        <View style={{ gap: 12, marginTop: 60 }}>
-          <Text style={{ fontSize: 14, color: LB.ink3, fontWeight: '500', letterSpacing: 0.5 }}>
-            LEARNBUDDY
-          </Text>
-          <Text
+        {/* Hero card */}
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: LB.peach,
+            borderRadius: 28,
+            paddingHorizontal: 26,
+            paddingVertical: 32,
+            justifyContent: 'space-between',
+            overflow: 'hidden',
+          }}
+        >
+          <View>
+            <Text
+              style={{
+                fontSize: 12,
+                color: LB.primaryDk,
+                fontWeight: '700',
+                letterSpacing: 1.4,
+              }}
+            >
+              LEARNBUDDY
+            </Text>
+            <Text
+              style={{
+                fontSize: 44,
+                fontWeight: '600',
+                fontStyle: 'italic',
+                color: LB.ink,
+                letterSpacing: -1.2,
+                lineHeight: 50,
+                marginTop: 14,
+              }}
+            >
+              {t('welcome.title')}
+            </Text>
+            <Text
+              style={{
+                fontSize: 16,
+                color: LB.ink2,
+                lineHeight: 24,
+                marginTop: 18,
+              }}
+            >
+              {t('welcome.subtitle')}
+            </Text>
+          </View>
+
+          <View
             style={{
-              fontSize: 36,
-              fontWeight: '600',
-              color: LB.ink,
-              letterSpacing: -0.8,
-              lineHeight: 42,
+              flexDirection: 'row',
+              gap: 10,
+              marginTop: 24,
+              flexWrap: 'wrap',
             }}
           >
-            {t('welcome.title')}
-          </Text>
-          <Text style={{ fontSize: 15, color: LB.ink2, lineHeight: 22, marginTop: 8 }}>
-            {t('welcome.subtitle')}
-          </Text>
+            <Pill emoji="📸" label="Foto" tone={LB.lavender} />
+            <Pill emoji="✍️" label="Üben" tone={LB.mint} />
+            <Pill emoji="🎯" label="Tests" tone={LB.blush} />
+          </View>
         </View>
 
-        <View style={{ gap: 14, alignItems: 'center' }}>
+        {/* CTA block */}
+        <View style={{ gap: 14, marginTop: 22 }}>
           <Btn size="lg" full onPress={() => router.push('/(onboarding)/account-signup')}>
             {t('welcome.cta')}
           </Btn>
-          <Pressable onPress={() => router.push('/login')} hitSlop={12}>
-            <Text
-              style={{
-                fontSize: 13,
-                color: LB.ink2,
-                textDecorationLine: 'underline',
-              }}
-            >
+          <Pressable
+            onPress={() => router.push('/login')}
+            hitSlop={12}
+            style={{ alignSelf: 'center' }}
+          >
+            <Text style={{ fontSize: 13, color: LB.ink2, textDecorationLine: 'underline' }}>
               {t('welcome.signin_link')}
             </Text>
           </Pressable>
         </View>
       </View>
     </SafeAreaView>
+  );
+}
+
+function Pill({ emoji, label, tone }: { emoji: string; label: string; tone: string }) {
+  return (
+    <View
+      style={{
+        backgroundColor: tone,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 999,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <Text style={{ fontSize: 16 }}>{emoji}</Text>
+      <Text style={{ fontSize: 13, color: LB.ink, fontWeight: '600' }}>{label}</Text>
+    </View>
   );
 }

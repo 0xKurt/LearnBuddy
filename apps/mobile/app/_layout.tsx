@@ -40,8 +40,10 @@ export default function RootLayout() {
             <Stack.Screen name="reset-password" />
           </Stack>
         </QueryClientProvider>
-        <DevOverlay />
       </SafeAreaProvider>
+      {/* Outside every provider so the Stack screen container can't paint
+          over it on Android (where elevation > zIndex). */}
+      <DevOverlay />
     </GestureHandlerRootView>
   );
 }

@@ -19,8 +19,12 @@ const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; font
   lg: { height: 54, paddingHorizontal: 26, fontSize: 15 },
 };
 
+// Doc DESIGN-BRIEF + CLAUDE.md §Design-system: "black-pill primary CTAs".
+// `primary` is the high-contrast pill that lives at the bottom of every
+// signup / continue screen — must always be readable. `accent` is the
+// warm-brown variant for secondary cards.
 const VARIANT_BG: Record<Variant, { bg: string; color: string; border?: string }> = {
-  primary: { bg: LB.primary, color: '#fff' },
+  primary: { bg: LB.ink, color: '#fff' },
   soft: { bg: LB.primaryLt, color: LB.primaryDk },
   outline: { bg: '#fff', color: LB.ink, border: LB.hairline },
   ghost: { bg: 'transparent', color: LB.ink2 },
