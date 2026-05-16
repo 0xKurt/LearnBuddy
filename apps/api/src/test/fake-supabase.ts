@@ -13,6 +13,12 @@
 //   - `order(col, opts)` — no-op chain; handlers that need ordering re-sort in JS.
 //   - List-mode await — `await supabase.from('x').select().eq(...)` (no `.single`/`.maybeSingle`)
 //     resolves to `{ data: FakeRow[], error: null }`, matching PostgREST's behavior.
+//
+// Surface extensions (slice C2):
+//   - `storage.from(bucket).createSignedUploadUrl(path)` — returns a
+//     deterministic fake PUT URL so the upload-url route exercises end-to-end.
+//   - The fake's insert path already supports `.select('*').single()` chaining
+//     because `.select()` doesn't reset `.op`; we rely on that for materials.
 
 import type { Deps } from '../lib/deps.js';
 import type { Env } from '../lib/env.js';
@@ -36,9 +42,14 @@ export class FakeQuery {
     private table: string,
   ) {}
 
+  /** Whether `.select(...)` was called after a mutation. Real PostgREST
+   *  returns the affected rows when the `RETURNING` clause is requested via
+   *  `.select(...)` after `.insert`/`.update`; the fake mirrors that. */
+  private selectAfterMutation = false;
+
   select(cols = '*'): this {
     this.op.cols = cols;
-    if (this.op.kind === 'select') this.op.kind = 'select';
+    if (this.op.kind !== 'select') this.selectAfterMutation = true;
     return this;
   }
   insert(values: unknown): this {
@@ -165,10 +176,13 @@ export class FakeQuery {
     onFulfilled?: (value: Outcome<unknown>) => TResult1 | PromiseLike<TResult1>,
     onRejected?: (reason: unknown) => TResult2 | PromiseLike<TResult2>,
   ): Promise<TResult1 | TResult2> {
-    const mode = this.op.kind === 'select' ? 'list' : 'void';
+    const mode = this.op.kind === 'select' || this.selectAfterMutation ? 'list' : 'void';
     return this.run(mode).then(onFulfilled, onRejected);
   }
 }
+
+/** Module-scoped id counter — see FakeSupabase.nextId() for why. */
+let fakeIdCounter = 0;
 
 export class FakeSupabase {
   tables = new Map<string, FakeRow[]>();
@@ -176,16 +190,34 @@ export class FakeSupabase {
   users = new Map<string, FakeUser>();
   /** known signed-up emails for dup-check */
   emails = new Set<string>();
-  private counter = 0;
-
+  // Real-UUID-shaped ids. Several route inputs validate id-typed fields with
+  // `Uuid = z.string().uuid()` in `@learnbuddy/shared-types`; using literal
+  // sentinels like `fake-000007` would 400 at the boundary. The counter is
+  // module-scoped (not per-instance) so two FakeSupabase instances created
+  // in the same test don't collide — cross-account regression tests need
+  // distinct ids across both fakes.
   nextId(): string {
-    this.counter++;
-    return `fake-${String(this.counter).padStart(6, '0')}`;
+    fakeIdCounter++;
+    const hex = fakeIdCounter.toString(16).padStart(12, '0');
+    return `00000000-0000-4000-8000-${hex}`;
   }
 
   from(table: string): FakeQuery {
     return new FakeQuery(this, table);
   }
+
+  storage = {
+    from: (bucket: string) => ({
+      createSignedUploadUrl: async (path: string) => ({
+        data: {
+          signedUrl: `https://fake-storage.local/${bucket}/${path}?sig=fake`,
+          path,
+          token: `fake-token-${this.nextId()}`,
+        },
+        error: null as null | { message: string },
+      }),
+    }),
+  };
 
   auth = {
     signUp: async ({ email, password }: { email: string; password: string; options?: unknown }) => {

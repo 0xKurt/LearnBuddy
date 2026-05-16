@@ -172,7 +172,7 @@ export default function CaptureScreen() {
       folder_id: target.folderId,
       created_at: new Date().toISOString(),
     });
-    router.replace('/(learner)/home');
+    router.replace('/(learner)/upload');
   };
 
   const onDone = () => {

@@ -1,0 +1,21 @@
+{
+  "title": "Material wird vorbereitet",
+  "phases": {
+    "reserving": "Speicher wird reserviert …",
+    "uploading": "Bilder werden hochgeladen … {{uploaded}} / {{total}}",
+    "extracting": "Bilder werden gelesen …",
+    "generating": "Fragen werden erstellt …",
+    "finishing": "Letzter Schliff …",
+    "done": "Fertig — los geht's!"
+  },
+  "error": {
+    "title": "Hat nicht geklappt.",
+    "body": "Wir konnten dein Material nicht hochladen. Versuch es nochmal — falls es weiter hakt, prüf kurz deine Verbindung.",
+    "retry": "Nochmal versuchen",
+    "back": "Zurück"
+  },
+  "insufficient_credits": {
+    "title": "Aktuell sind keine Credits mehr verfügbar.",
+    "body": "Im aktuellen Zeitraum sind alle Credits aufgebraucht. Erwachsene können das Konto in den Einstellungen aufstocken oder bis zum nächsten Zeitraum warten."
+  }
+}

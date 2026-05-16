@@ -128,15 +128,30 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 - _Slice A3 §"PIN module unit tests" follow-up is unblocked._ `apps/mobile/vitest.config.ts` now exists; the PIN test file can land directly under `lib/auth/__tests__/pin.test.ts` with no further infra work.
 - _Live verification (CLAUDE.md hard rule #2)._ Real-device exercise required for: camera permission grants on iOS / Android, DeviceMotion tilt readings, shutter → decode latency on a mid-range device, 5-photo / 10-photo strips, the "Trotzdem behalten" red override path, picker behavior when the user has zero subjects. Gates the Phase C "ship" claim alongside A1 / A2 / A3 / B1 / B2.
 
-### Slice C2 — Upload-URL + materials POST (no LLM yet)
+### Slice C2 — Upload-URL + materials POST (no LLM yet) ✅ COMPLETED 2026-05-16
 
-- [ ] `POST /materials/upload-url` — signed PUT URLs from Supabase Storage
-- [ ] `POST /materials` — accepts upload IDs, creates `materials` row, returns SSE that immediately yields "done" with **placeholder items** (3 fake items for now)
-- [ ] `GET /materials/:id`, `GET /materials/:id/items`
-- [ ] Tests
-- [ ] Mobile capture → uploads → opens material screen with fake items
+- [x] `POST /materials/upload-url` — signed PUT URLs from Supabase Storage; reserves a `materials` row in `pending` state; subject + folder ownership checks
+- [x] `POST /materials` — atomic 20-credit pre-debit (Doc 08), persists `material_photos` from `client_quality_scores`, inserts 3 placeholder items, schedules photo wipe at T+7d (Doc 09 §4), streams SSE phases (`reading_images` → `generating_items` → `done`); refunds on any downstream failure
+- [x] `GET /materials/:id` returns material + items; `GET /materials/:id/items` returns items only
+- [x] Tests — 8 cases in `apps/api/src/routes/__tests__/materials.test.ts` covering happy path, validation, cross-account 404, insufficient credits 402, and persistence assertions
+- [x] Mobile `capture.tsx` → `upload.tsx` (drains `useCaptureStore`, runs the upload pipeline, navigates to `material/[materialId]`); material screen renders real items via `GET /materials/:id`
+- [x] Bonus: aligned `MaterialUploadUrlRequest/Response` + `MaterialCreateRequest` in `@learnbuddy/shared-types` with Doc 04 (shapes had drifted from the spec)
+- [x] Bonus: fake-supabase extended with `storage.from(bucket).createSignedUploadUrl(path)`, real-UUID ids, and `.insert(...).select(...).then()` returning the affected rows (PostgREST-compatible)
 
 **Done when:** Photos upload, material row exists, fake items appear on material screen.
+
+**Open follow-ups:**
+
+- _Real LLM extraction (Slice D1)._ `apps/api/src/lib/placeholders.ts` is the only place in the prod path where the API invents content. D1 deletes this file and its single caller in `routes/materials.ts`, swapping in `llm.visionExtractAndGenerate` per Doc 06 §P1.
+- _Credit debit race (`lib/credits.ts`)._ Pre-debit reads then updates; two concurrent requests on the same account could both observe the same balance. Acceptable for v1 because individual user concurrency on materials creation is near-zero, but the credits-hardening slice should swap for a single SQL statement with a `current_balance >= $estimate` gate.
+- _Materials POST not atomic._ If the final `materials` UPDATE fails after `items` INSERT succeeds, the inserted items remain visible while the material's `extraction_status` stays `pending`. P2 — wrap in a saga or use Postgres RPC once `pg_cron` story lands.
+- _`/upload-url` has no rate limit + reserves rows pre-debit._ A hostile client can flood `materials` rows and burn signed-URL signatures. Add `rateLimit({ key: 'materials_upload_url', per_day: 60 })` and a cheap "have you got >0 credits?" probe before signing.
+- _HEIC content-type mismatch._ The route maps `image/heic` to a `.jpg` extension and the mobile PUT hardcodes `content-type: image/jpeg`. Supabase signed URLs don't enforce content-type, so it works, but the storage object's metadata lies. Either reject HEIC (and have mobile convert before upload) or carry the real mime type through.
+- _Mid-stream PUT failure leaves orphaned `materials` rows._ Pre-debit hasn't fired, but the row + (possibly) some photos in storage are still there. Add a janitor that prunes rows with `extraction_status='pending'` older than 1h.
+- _SSE on RN is whole-body parse._ The mobile transport awaits the full response then `data:` -greps for the `done` event. Slice D1 needs real streaming (token-by-token vision phases over EventSource / XHR chunked); pick `expo-event-source` or hand-roll an XHR reader at that point.
+- _Mid-upload navigation._ If the user backs out of `/(learner)/upload`, the in-flight requests aren't cancelled. P2 — wire an AbortController through `runUpload` and abort on cleanup.
+- _Mobile route guards / typed routes for `/(learner)/upload`._ Direct deep-link to upload without a `pending` capture renders an empty-state — fine — but expo-router typed routes don't know about this screen yet. Lands with the next typed-routes refresh.
+- _Live verification (CLAUDE.md hard rule #2)._ End-to-end against a real Supabase instance: signed PUT, real storage write, SSE round-trip from a phone. Same Phase C gating as C1.
 
 ---
 

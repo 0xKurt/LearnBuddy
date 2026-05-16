@@ -43,6 +43,8 @@ type RequestOptions<S extends ZodTypeAny> = {
   idempotencyKey?: string;
   /** Override the access token (e.g. mid-signup before session is stored). */
   authOverride?: string | null;
+  /** X-Learner-Id header (per doc 04 §auth — required by `requireLearnerContext`). */
+  learnerId?: string;
 };
 
 // Coalesce concurrent refreshes — one in-flight attempt, all callers await it.
@@ -97,6 +99,7 @@ export async function api<S extends ZodTypeAny>(
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     if (token) headers.authorization = `Bearer ${token}`;
     if (opts.idempotencyKey) headers['idempotency-key'] = opts.idempotencyKey;
+    if (opts.learnerId) headers['x-learner-id'] = opts.learnerId;
     return fetch(url, {
       method: opts.method ?? 'GET',
       headers,

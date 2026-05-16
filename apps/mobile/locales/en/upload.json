@@ -1,0 +1,21 @@
+{
+  "title": "Preparing material",
+  "phases": {
+    "reserving": "Reserving storage …",
+    "uploading": "Uploading photos … {{uploaded}} / {{total}}",
+    "extracting": "Reading the images …",
+    "generating": "Building questions …",
+    "finishing": "Last touches …",
+    "done": "Done — let's go!"
+  },
+  "error": {
+    "title": "That didn't work.",
+    "body": "We couldn't upload your material. Try again — if it keeps failing, check your connection.",
+    "retry": "Try again",
+    "back": "Back"
+  },
+  "insufficient_credits": {
+    "title": "Out of credits for now.",
+    "body": "You've used up the credits for this period. An adult can top up in settings, or wait for the next period."
+  }
+}
