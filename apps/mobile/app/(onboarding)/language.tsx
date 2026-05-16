@@ -1,9 +1,8 @@
 // Language picker — first cold-launch screen. Doc 05 §i18n.
 //
-// Single tap on a row picks + persists + navigates. No separate confirm
-// step — five options are short enough that a confirm button was just one
-// more click of confusion. The same picker is reused (with a "stay" mode)
-// in (admin)/account-settings.
+// Tap a row → persist + navigate. Styling restored from commit 2974fbe
+// (rounded white tile, pastel-pink border + bg when current). The same
+// picker is reused (with state-only mode) in (admin)/account-settings.
 
 import { router } from 'expo-router';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
@@ -23,21 +22,11 @@ import { LB } from '../../lib/theme/colors.js';
 // Hard-coded localized titles for THIS screen so it reads in the device
 // language until the user picks one (no i18n round-trip needed).
 const LABELS: Record<AppLocale, { title: string; subtitle: string }> = {
-  de: { title: 'Sprache', subtitle: 'Tippe zum Auswählen.' },
-  en: { title: 'Language', subtitle: 'Tap to pick.' },
-  fr: { title: 'Langue', subtitle: 'Touche pour choisir.' },
-  es: { title: 'Idioma', subtitle: 'Toca para elegir.' },
-  it: { title: 'Lingua', subtitle: 'Tocca per scegliere.' },
-};
-
-// Soft pastel per locale — gives the picker a maximalist row-by-row feel
-// per docs/DESIGN-BRIEF without slowing the scan.
-const LOCALE_TONE: Record<AppLocale, string> = {
-  de: LB.butter,
-  en: LB.sky,
-  fr: LB.lavender,
-  es: LB.peach,
-  it: LB.mint,
+  de: { title: 'Sprache wählen', subtitle: 'Du kannst das später jederzeit ändern.' },
+  en: { title: 'Choose language', subtitle: 'You can change this anytime.' },
+  fr: { title: 'Choisis la langue', subtitle: 'Tu peux changer plus tard.' },
+  es: { title: 'Elige idioma', subtitle: 'Puedes cambiarlo más tarde.' },
+  it: { title: 'Scegli la lingua', subtitle: 'Puoi cambiarla in seguito.' },
 };
 
 export default function LanguageScreen() {
@@ -112,70 +101,40 @@ export default function LanguageScreen() {
           {labels.subtitle}
         </Text>
 
-        <ScrollView contentContainerStyle={{ gap: 12, paddingTop: 24, paddingBottom: 24 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 10, paddingTop: 24 }}>
           {SUPPORTED_LOCALES.map((code) => {
-            const tone = LOCALE_TONE[code];
-            const isCurrent = current === code;
+            const on = current === code;
             return (
               <Pressable
                 key={code}
                 onPress={() => onPick(code)}
-                style={({ pressed }) => ({
-                  paddingHorizontal: 20,
-                  paddingVertical: 18,
-                  borderRadius: 20,
-                  backgroundColor: tone,
-                  borderColor: isCurrent ? LB.ink : 'transparent',
-                  borderWidth: isCurrent ? 2 : 0,
+                style={{
+                  paddingHorizontal: 18,
+                  paddingVertical: 16,
+                  borderRadius: 16,
+                  backgroundColor: on ? LB.primaryLt : '#fff',
+                  borderColor: on ? LB.primaryDk : LB.hairline,
+                  borderWidth: 1,
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
-                  shadowColor: '#000',
-                  shadowOpacity: 0.04,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowRadius: 6,
-                  elevation: 1,
-                })}
+                }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                  <View
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Text style={{ fontSize: 24 }}>{LOCALE_FLAGS[code]}</Text>
+                  <Text
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      backgroundColor: '#fff',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      fontSize: 16,
+                      fontWeight: '600',
+                      color: on ? LB.primaryDk : LB.ink,
                     }}
                   >
-                    <Text style={{ fontSize: 24 }}>{LOCALE_FLAGS[code]}</Text>
-                  </View>
-                  <View style={{ gap: 2 }}>
-                    <Text
-                      style={{
-                        fontSize: 17,
-                        fontWeight: '700',
-                        color: LB.ink,
-                        letterSpacing: -0.2,
-                      }}
-                    >
-                      {LOCALE_LABELS[code]}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: LB.ink2,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.6,
-                        fontWeight: '600',
-                      }}
-                    >
-                      {code}
-                    </Text>
-                  </View>
+                    {LOCALE_LABELS[code]}
+                  </Text>
                 </View>
-                <Text style={{ fontSize: 22, color: LB.ink2, fontWeight: '300' }}>›</Text>
+                <Text style={{ fontSize: 12, color: LB.ink3, textTransform: 'uppercase' }}>
+                  {code}
+                </Text>
               </Pressable>
             );
           })}
