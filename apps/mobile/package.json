@@ -4,7 +4,9 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
+    "prestart": "pnpm run bundle:check",
     "start": "expo start",
+    "start:fast": "expo start",
     "ios": "expo start --ios",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
