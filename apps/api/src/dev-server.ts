@@ -5,7 +5,7 @@ loadDotenv({ path: '.env.local' });
 import { serve } from '@hono/node-server';
 import { app } from './app.js';
 
-const port = Number(process.env.PORT ?? 3001);
+const port = Number(process.env.PORT ?? 6001);
 serve({ fetch: app.fetch, port }, ({ port }) => {
   console.log(`[api] listening on http://localhost:${port}`);
 });

@@ -5,7 +5,7 @@
 // available to the JS bundle.
 
 export const ENV = {
-  API_URL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001',
+  API_URL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:6001',
   SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
   SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
   DSGVO_CONSENT_VERSION: process.env.EXPO_PUBLIC_DSGVO_CONSENT_VERSION ?? '2026-05-01',
