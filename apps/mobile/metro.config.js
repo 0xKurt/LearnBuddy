@@ -13,6 +13,8 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
-config.resolver.disableHierarchicalLookup = true;
+// SDK 54 / Metro 0.83 + pnpm: leave hierarchical lookup ENABLED so that the
+// project's own node_modules under apps/mobile/ is consulted first. Disabling
+// it caused Metro to resolve the bundle entry from the workspace root.
 
 module.exports = withNativeWind(config, { input: './global.css' });
