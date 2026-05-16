@@ -15,3 +15,8 @@ export { FolderEditorModal } from './FolderEditorModal.js';
 export { SessionTopBar } from './SessionTopBar.js';
 export { CaptureChip } from './CaptureChip.js';
 export { SubjectFolderPicker } from './SubjectFolderPicker.js';
+export { LatexText } from './LatexText.js';
+export { MathKeyboard } from './MathKeyboard.js';
+export { MathInput } from './MathInput.js';
+export { FillBlank } from './FillBlank.js';
+export { FunctionPlot } from './FunctionPlot.js';
