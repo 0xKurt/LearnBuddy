@@ -1,16 +1,14 @@
 // Language picker — first cold-launch screen. Doc 05 §i18n.
 //
-// Lists the five supported app languages and persists the choice in
-// SecureStore (lib/i18n/locale-storage.ts). After confirming, the user
-// drops into the welcome screen in the freshly-set language. The same
-// picker is reused in (admin)/account-settings → "Sprache" later.
+// Single tap on a row picks + persists + navigates. No separate confirm
+// step — five options are short enough that a confirm button was just one
+// more click of confusion. The same picker is reused (with a "stay" mode)
+// in (admin)/account-settings.
 
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn } from '../../components/lb/index.js';
 import { setLocale, i18n } from '../../lib/i18n/index.js';
 import {
   LOCALE_FLAGS,
@@ -21,33 +19,22 @@ import {
 } from '../../lib/i18n/locale-storage.js';
 import { LB } from '../../lib/theme/colors.js';
 
-// Hard-coded localized titles for THIS screen so it works before the user
-// has made a choice. (We can't t() something the user hasn't chosen a lang
-// for yet — well, we can, but the heading lands in whichever device locale,
-// which may not be one the user reads at all.)
-const LABELS: Record<AppLocale, { title: string; subtitle: string; cta: string }> = {
-  de: {
-    title: 'Sprache wählen',
-    subtitle: 'Du kannst das später jederzeit ändern.',
-    cta: 'Weiter',
-  },
-  en: { title: 'Choose language', subtitle: 'You can change this anytime.', cta: 'Continue' },
-  fr: { title: 'Choisis la langue', subtitle: 'Tu peux changer plus tard.', cta: 'Continuer' },
-  es: { title: 'Elige idioma', subtitle: 'Puedes cambiarlo más tarde.', cta: 'Continuar' },
-  it: { title: 'Scegli la lingua', subtitle: 'Puoi cambiarla in seguito.', cta: 'Continua' },
+// Hard-coded localized titles for THIS screen so it reads in the device
+// language until the user picks one (no i18n round-trip needed).
+const LABELS: Record<AppLocale, { title: string; subtitle: string }> = {
+  de: { title: 'Sprache', subtitle: 'Tippe zum Auswählen.' },
+  en: { title: 'Language', subtitle: 'Tap to pick.' },
+  fr: { title: 'Langue', subtitle: 'Touche pour choisir.' },
+  es: { title: 'Idioma', subtitle: 'Toca para elegir.' },
+  it: { title: 'Lingua', subtitle: 'Tocca per scegliere.' },
 };
 
 export default function LanguageScreen() {
-  const [selected, setSelected] = useState<AppLocale>(
-    (i18n.language as AppLocale) || detectDeviceLocale(),
-  );
-  const labels = LABELS[selected];
+  const current = (i18n.language as AppLocale) || detectDeviceLocale();
+  const labels = LABELS[current];
 
-  const onConfirm = () => {
-    // Persist in the background — SecureStore writes can be slow on cold
-    // start and we don't want the user staring at a frozen button while
-    // they land. Navigation happens immediately.
-    setLocale(selected).catch((err) => {
+  const onPick = (code: AppLocale) => {
+    setLocale(code).catch((err) => {
       console.warn('[language] setLocale failed', err);
     });
     router.replace('/(onboarding)/welcome');
@@ -74,45 +61,39 @@ export default function LanguageScreen() {
           {labels.subtitle}
         </Text>
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 10, paddingTop: 24 }}>
+        <ScrollView contentContainerStyle={{ gap: 10, paddingTop: 24, paddingBottom: 24 }}>
           {SUPPORTED_LOCALES.map((code) => (
             <Pressable
               key={code}
-              onPress={() => setSelected(code)}
-              style={{
+              onPress={() => onPick(code)}
+              style={({ pressed }) => ({
                 paddingHorizontal: 18,
-                paddingVertical: 16,
+                paddingVertical: 18,
                 borderRadius: 16,
-                backgroundColor: selected === code ? LB.primaryLt : '#fff',
-                borderColor: selected === code ? LB.primaryDk : LB.hairline,
+                backgroundColor: pressed ? LB.primaryLt : '#fff',
+                borderColor: current === code ? LB.primaryDk : LB.hairline,
                 borderWidth: 1,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-              }}
+              })}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Text style={{ fontSize: 24 }}>{LOCALE_FLAGS[code]}</Text>
+                <Text style={{ fontSize: 28 }}>{LOCALE_FLAGS[code]}</Text>
                 <Text
                   style={{
-                    fontSize: 16,
+                    fontSize: 17,
                     fontWeight: '600',
-                    color: selected === code ? LB.primaryDk : LB.ink,
+                    color: LB.ink,
                   }}
                 >
                   {LOCALE_LABELS[code]}
                 </Text>
               </View>
-              <Text style={{ fontSize: 12, color: LB.ink3, textTransform: 'uppercase' }}>
-                {code}
-              </Text>
+              <Text style={{ fontSize: 18, color: LB.ink3 }}>›</Text>
             </Pressable>
           ))}
         </ScrollView>
-
-        <Btn size="lg" full onPress={onConfirm}>
-          {labels.cta}
-        </Btn>
       </View>
     </SafeAreaView>
   );
