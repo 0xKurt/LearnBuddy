@@ -33,12 +33,17 @@
     "summary": "We process study data only in the EU. No ads. No data shared for training. You can export or delete anything at any time.",
     "adult_checkbox": "I am 16 years or older.",
     "consent_checkbox": "I agree to processing of my data.",
-    "cta": "I agree"
+    "cta": "I agree",
+    "error_unauthenticated": "Please confirm your email first, then try again.",
+    "error_generic": "Couldn't save right now — try again in a moment?",
+    "busy": "One moment …"
   },
   "who_uses": {
     "title": "Who will use the app?",
     "self": "Myself",
-    "child": "My child"
+    "child": "My child",
+    "self_subtitle": "Solo learner, 16+",
+    "child_subtitle": "You're setting up your child's profile"
   },
   "minor_consent": {
     "title": "Consent for an under-16 profile",

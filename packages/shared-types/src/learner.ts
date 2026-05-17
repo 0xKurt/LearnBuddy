@@ -1,18 +1,12 @@
 import { z } from 'zod';
-import {
-  AnswerMode,
-  GradeLevel,
-  Iso8601,
-  Locale,
-  Uuid,
-} from './enums.js';
+import { AnswerMode, GradeLevel, Iso8601, Locale, Uuid } from './enums.js';
 
 export const Learner = z.object({
   id: Uuid,
   account_id: Uuid,
   display_name: z.string().min(1),
   birth_year: z.number().int().min(1900).max(2100).nullable(),
-  grade_level: GradeLevel,
+  grade_level: GradeLevel.nullable(),
   ui_locale: Locale,
   preferred_answer_mode: AnswerMode,
   avatar_id: z.number().int().min(1),
@@ -27,8 +21,8 @@ export type Learner = z.infer<typeof Learner>;
 
 export const LearnerCreate = z.object({
   display_name: z.string().min(1),
-  birth_year: z.number().int().min(1900).max(2100),
-  grade_level: GradeLevel,
+  birth_year: z.number().int().min(1920).max(2030),
+  grade_level: GradeLevel.nullable().optional(),
   ui_locale: Locale,
   avatar_id: z.number().int().min(1),
   preferred_answer_mode: AnswerMode,
@@ -39,7 +33,7 @@ export type LearnerCreate = z.infer<typeof LearnerCreate>;
 export const LearnerUpdate = z
   .object({
     display_name: z.string().min(1),
-    grade_level: GradeLevel,
+    grade_level: GradeLevel.nullable(),
     ui_locale: Locale,
     avatar_id: z.number().int().min(1),
     preferred_answer_mode: AnswerMode,

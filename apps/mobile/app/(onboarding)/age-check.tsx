@@ -7,6 +7,7 @@ import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/index.js';
+import { devResetAll } from '../../lib/dev/reset.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function AgeCheckScreen() {
@@ -33,6 +34,24 @@ export default function AgeCheckScreen() {
         }}
       >
         <View style={{ gap: 12, marginTop: 24 }}>
+          {__DEV__ && (
+            <Pressable
+              onPress={() =>
+                void devResetAll().then(() => router.replace('/(onboarding)/language' as never))
+              }
+              style={{
+                alignSelf: 'flex-end',
+                backgroundColor: '#d1361c',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
+                DEV · RESET
+              </Text>
+            </Pressable>
+          )}
           <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
             {t('age_check.title')}
           </Text>

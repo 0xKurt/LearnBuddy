@@ -56,7 +56,7 @@ export default function HandOffToAdultScreen() {
           {t('hand_off_adult.body')}
         </Text>
         <View style={{ marginTop: 24, width: '100%' }}>
-          <Btn size="lg" full onPress={() => router.replace('/(onboarding)/age-check')}>
+          <Btn size="lg" full onPress={() => router.replace('/(onboarding)/welcome')}>
             {t('hand_off_adult.cta')}
           </Btn>
         </View>

@@ -33,12 +33,17 @@
     "summary": "Elaboriamo i dati di studio solo nell'UE. Niente pubblicità. Nessun dato condiviso con terzi per l'addestramento. Puoi esportare o cancellare tutto in qualsiasi momento.",
     "adult_checkbox": "Ho 16 anni o più.",
     "consent_checkbox": "Acconsento al trattamento dei miei dati.",
-    "cta": "Acconsento"
+    "cta": "Acconsento",
+    "error_unauthenticated": "Conferma prima la tua email, poi riprova.",
+    "error_generic": "Non è stato possibile salvare ora — riprovare tra un momento?",
+    "busy": "Un momento …"
   },
   "who_uses": {
     "title": "Chi userà l'app?",
     "self": "Io",
-    "child": "Mio figlio / Mia figlia"
+    "child": "Mio figlio / Mia figlia",
+    "self_subtitle": "Studente autonomo, 16+",
+    "child_subtitle": "Stai creando il profilo di tuo figlio"
   },
   "minor_consent": {
     "title": "Consenso per un profilo under 16",

@@ -9,13 +9,23 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn } from '../../components/lb/index.js';
+import { Btn, Icon } from '../../components/lb/index.js';
 import { signup } from '../../lib/api/auth.js';
 import { ApiError } from '../../lib/api/client.js';
 import { getSessionSync, setSession } from '../../lib/auth/session.js';
 import { devResetAll } from '../../lib/dev/reset.js';
+import { i18n } from '../../lib/i18n/index.js';
+import { type AppLocale } from '../../lib/i18n/locale-storage.js';
 import { supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
+
+const LOCALE_COUNTRY: Record<AppLocale, string> = {
+  de: 'DE',
+  en: 'US',
+  fr: 'FR',
+  es: 'ES',
+  it: 'IT',
+};
 
 type Mode = 'signup' | 'login';
 
@@ -26,6 +36,7 @@ export default function WelcomeScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const trimmedEmail = email.trim();
   const canSubmit = trimmedEmail.length > 3 && password.length >= 8 && !busy;
@@ -51,11 +62,12 @@ export default function WelcomeScreen() {
     setError(null);
     try {
       if (mode === 'signup') {
+        const appLocale = (i18n.language ?? 'de') as AppLocale;
         const res = await signup({
           email: trimmedEmail,
           password,
-          locale: 'de',
-          country_code: 'DE',
+          locale: appLocale,
+          country_code: LOCALE_COUNTRY[appLocale],
         });
         if (res.requires_verification) {
           router.push('/(onboarding)/verify-email');
@@ -201,15 +213,30 @@ export default function WelcomeScreen() {
             />
           </Field>
           <Field label={t('welcome.field_password')}>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder={t('welcome.password_placeholder')}
-              placeholderTextColor={LB.ink3}
-              secureTextEntry
-              editable={!busy}
-              style={inputStyle}
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder={t('welcome.password_placeholder')}
+                placeholderTextColor={LB.ink3}
+                secureTextEntry={!showPassword}
+                editable={!busy}
+                style={[inputStyle, { paddingRight: 48 }]}
+              />
+              <Pressable
+                onPress={() => setShowPassword((v) => !v)}
+                hitSlop={8}
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  top: 0,
+                  bottom: 0,
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name={showPassword ? 'eye-off' : 'eye'} size={20} color={LB.ink3} />
+              </Pressable>
+            </View>
           </Field>
           {error !== null && (
             <Text style={{ color: LB.danger, fontSize: 13, lineHeight: 18 }}>{error}</Text>
@@ -232,7 +259,7 @@ export default function WelcomeScreen() {
 
       {/* ── CTA pinned below scroll, always visible ── */}
       <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 }}>
-        <Btn size="lg" full variant="primary" onPress={onSubmit} disabled={!canSubmit}>
+        <Btn size="lg" full onPress={onSubmit} disabled={!canSubmit}>
           {busy
             ? t('welcome.busy')
             : mode === 'signup'

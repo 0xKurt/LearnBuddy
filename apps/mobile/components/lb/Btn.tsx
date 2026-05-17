@@ -54,7 +54,7 @@ export function Btn({
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
-      style={({ pressed }) => ({
+      style={{
         height: s.height,
         paddingHorizontal: s.paddingHorizontal,
         backgroundColor: v.bg,
@@ -65,12 +65,8 @@ export function Btn({
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: full ? 'stretch' : 'flex-start',
-        // Disabled = still clearly visible (the user needs to SEE the button
-        // is there so they know they have to fill the form). 0.6 was a
-        // common "yeah I'm here but not active" feel; 0.4 made it ghostly.
         opacity: disabled ? 0.6 : 1,
-        transform: [{ scale: pressed ? 0.97 : 1 }],
-      })}
+      }}
     >
       <Text
         style={{

@@ -19,7 +19,8 @@
     "prepare": "husky",
     "db:start": "cd infra/supabase && supabase start",
     "db:stop": "cd infra/supabase && supabase stop",
-    "db:reset": "cd infra/supabase && supabase db reset"
+    "db:reset": "cd infra/supabase && supabase db reset",
+    "db:wipe": "cd infra/supabase && supabase db execute --project-ref mjwsrmnugzbmcwingpey --file wipe-dev-data.sql"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

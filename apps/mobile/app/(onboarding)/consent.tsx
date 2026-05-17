@@ -14,6 +14,7 @@ import { Btn, Icon } from '../../components/lb/index.js';
 import { LB } from '../../lib/theme/colors.js';
 import { recordConsent } from '../../lib/api/auth.js';
 import { ApiError } from '../../lib/api/client.js';
+import { devResetAll } from '../../lib/dev/reset.js';
 import { ENV } from '../../lib/env.js';
 
 export default function ConsentScreen() {
@@ -33,9 +34,9 @@ export default function ConsentScreen() {
       router.push('/(onboarding)/who-uses');
     } catch (e) {
       if (e instanceof ApiError && e.code === 'unauthenticated') {
-        setError('Bitte zuerst E-Mail bestätigen, dann erneut versuchen.');
+        setError(t('consent.error_unauthenticated'));
       } else {
-        setError('Konnte gerade nicht speichern — gleich nochmal probieren?');
+        setError(t('consent.error_generic'));
       }
     } finally {
       setBusy(false);
@@ -53,6 +54,24 @@ export default function ConsentScreen() {
         }}
       >
         <View style={{ gap: 14, marginTop: 24 }}>
+          {__DEV__ && (
+            <Pressable
+              onPress={() =>
+                void devResetAll().then(() => router.replace('/(onboarding)/language' as never))
+              }
+              style={{
+                alignSelf: 'flex-end',
+                backgroundColor: '#d1361c',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
+                DEV · RESET
+              </Text>
+            </Pressable>
+          )}
           <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
             {t('consent.title')}
           </Text>
@@ -70,8 +89,8 @@ export default function ConsentScreen() {
           </View>
         </View>
 
-        <Btn size="lg" full variant="primary" onPress={onContinue}>
-          {busy ? 'Moment …' : t('consent.cta')}
+        <Btn size="lg" full variant="primary" onPress={onContinue} disabled={!canContinue}>
+          {busy ? t('consent.busy') : t('consent.cta')}
         </Btn>
       </View>
     </SafeAreaView>

@@ -20,7 +20,9 @@ type IconName =
   | 'clock'
   | 'flame'
   | 'speak'
-  | 'shield';
+  | 'shield'
+  | 'eye'
+  | 'eye-off';
 
 type IconProps = {
   name: IconName;
@@ -124,13 +126,19 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
     case 'trash':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
-          <Path d="M5 7h14M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M7 7l1 12a2 2 0 002 2h4a2 2 0 002-2l1-12" {...common} />
+          <Path
+            d="M5 7h14M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M7 7l1 12a2 2 0 002 2h4a2 2 0 002-2l1-12"
+            {...common}
+          />
         </Svg>
       );
     case 'folder':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
-          <Path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" {...common} />
+          <Path
+            d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+            {...common}
+          />
         </Svg>
       );
     case 'clock':
@@ -143,7 +151,10 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
     case 'flame':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
-          <Path d="M12 3c1 3.5 4 5 4 8.5 0 2.5-1.8 4.5-4 4.5s-4-2-4-4.5C8 9 9.5 7.5 12 3z" {...common} />
+          <Path
+            d="M12 3c1 3.5 4 5 4 8.5 0 2.5-1.8 4.5-4 4.5s-4-2-4-4.5C8 9 9.5 7.5 12 3z"
+            {...common}
+          />
           <Path d="M9 17c0 2 1.4 3.5 3 3.5s3-1.5 3-3.5" {...common} />
         </Svg>
       );
@@ -158,6 +169,23 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M12 3l8 3v6c0 4.5-3.5 8-8 9-4.5-1-8-4.5-8-9V6l8-3z" {...common} />
+        </Svg>
+      );
+    case 'eye':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" {...common} />
+          <Circle cx={12} cy={12} r={3} {...common} />
+        </Svg>
+      );
+    case 'eye-off':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"
+            {...common}
+          />
+          <Path d="M8.71 8.71a4 4 0 105.58 5.58" {...common} />
         </Svg>
       );
   }

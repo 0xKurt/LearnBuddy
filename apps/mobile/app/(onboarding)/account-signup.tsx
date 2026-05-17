@@ -10,10 +10,20 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn } from '../../components/lb/index.js';
+import { Btn, Icon } from '../../components/lb/index.js';
 import { LB } from '../../lib/theme/colors.js';
 import { signup } from '../../lib/api/auth.js';
 import { ApiError } from '../../lib/api/client.js';
+import { i18n } from '../../lib/i18n/index.js';
+import { type AppLocale } from '../../lib/i18n/locale-storage.js';
+
+const LOCALE_COUNTRY: Record<AppLocale, string> = {
+  de: 'DE',
+  en: 'US',
+  fr: 'FR',
+  es: 'ES',
+  it: 'IT',
+};
 
 export default function SignupScreen() {
   const { t } = useTranslation('onboarding');
@@ -21,6 +31,7 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const trimmedEmail = email.trim();
   const canSubmit = trimmedEmail.length > 3 && password.length >= 8 && !busy;
@@ -30,11 +41,12 @@ export default function SignupScreen() {
     setBusy(true);
     setError(null);
     try {
+      const appLocale = (i18n.language ?? 'de') as AppLocale;
       const res = await signup({
         email: trimmedEmail,
         password,
-        locale: 'de',
-        country_code: 'DE',
+        locale: appLocale,
+        country_code: LOCALE_COUNTRY[appLocale],
       });
       if (res.requires_verification) {
         router.push('/(onboarding)/verify-email');
@@ -90,13 +102,40 @@ export default function SignupScreen() {
               autoCorrect={false}
               editable={!busy}
             />
-            <Input
-              placeholder={t('signup.placeholder_password')}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!busy}
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                placeholder={t('signup.placeholder_password')}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                editable={!busy}
+                placeholderTextColor={LB.ink3}
+                style={{
+                  backgroundColor: LB.bg,
+                  borderColor: LB.hairline,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingRight: 48,
+                  height: 50,
+                  fontSize: 15,
+                  color: LB.ink,
+                }}
+              />
+              <Pressable
+                onPress={() => setShowPassword((v) => !v)}
+                hitSlop={8}
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  top: 0,
+                  bottom: 0,
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name={showPassword ? 'eye-off' : 'eye'} size={20} color={LB.ink3} />
+              </Pressable>
+            </View>
             {error && <Text style={{ color: LB.danger, fontSize: 12 }}>{error}</Text>}
           </View>
         </View>

@@ -20,11 +20,12 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/index.js';
 import { getSessionSync, setSession } from '../../lib/auth/session.js';
+import { devResetAll } from '../../lib/dev/reset.js';
 import { parseAuthTokensFromUrl, supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
 
@@ -103,6 +104,25 @@ export default function VerifyEmailScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
+      {__DEV__ && (
+        <View style={{ alignItems: 'flex-end', paddingHorizontal: 20, paddingTop: 16 }}>
+          <Pressable
+            onPress={() =>
+              void devResetAll().then(() => router.replace('/(onboarding)/language' as never))
+            }
+            style={{
+              backgroundColor: '#d1361c',
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 999,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
+              DEV · RESET
+            </Text>
+          </Pressable>
+        </View>
+      )}
       <View
         style={{
           flex: 1,

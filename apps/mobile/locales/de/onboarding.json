@@ -33,12 +33,17 @@
     "summary": "Wir verarbeiten Lerndaten ausschließlich in der EU. Keine Werbung. Keine Daten an Dritte zum Training. Du kannst alles jederzeit exportieren oder löschen.",
     "adult_checkbox": "Ich bin 16 Jahre oder älter.",
     "consent_checkbox": "Ich willige in die Verarbeitung meiner Daten ein.",
-    "cta": "Einverstanden"
+    "cta": "Einverstanden",
+    "error_unauthenticated": "Bitte zuerst E-Mail bestätigen, dann erneut versuchen.",
+    "error_generic": "Konnte gerade nicht speichern — gleich nochmal probieren?",
+    "busy": "Moment …"
   },
   "who_uses": {
     "title": "Wer wird die App benutzen?",
     "self": "Ich selbst",
-    "child": "Mein Kind"
+    "child": "Mein Kind",
+    "self_subtitle": "Solo-Lerner, 16+",
+    "child_subtitle": "Du legst das Profil deines Kindes an"
   },
   "minor_consent": {
     "title": "Einwilligung für ein Profil unter 16",
