@@ -38,8 +38,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn, CaptureChip, CircleBtn, SubjectFolderPicker } from '../../components/lb/index.js';
+import {
+  Btn,
+  CaptureChip,
+  CircleBtn,
+  CoachMark,
+  SubjectFolderPicker,
+} from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
+import { useFirstTime } from '../../lib/onboarding/coach.js';
 import { decodeForQuality } from '../../lib/camera/decode.js';
 import {
   classify,
@@ -57,6 +64,8 @@ const MAX_PHOTOS = 10;
 
 export default function CaptureScreen() {
   const { t } = useTranslation('capture');
+  const { t: tCoach } = useTranslation('coach');
+  const cameraCoach = useFirstTime('camera');
   const params = useLocalSearchParams<{ subjectId?: string; folderId?: string }>();
   const preSubjectId = params.subjectId ?? null;
   const preFolderId = params.folderId ?? null;
@@ -436,6 +445,15 @@ export default function CaptureScreen() {
           }}
         />
       )}
+
+      <CoachMark
+        visible={cameraCoach.shown && !!permission?.granted}
+        onDismiss={cameraCoach.dismiss}
+        title={tCoach('camera.title')}
+        body={tCoach('camera.body')}
+        ctaLabel={tCoach('dismiss')}
+        glyph="📸"
+      />
     </View>
   );
 }

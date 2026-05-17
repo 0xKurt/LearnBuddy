@@ -6,15 +6,8 @@
 
 import { router } from 'expo-router';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/index.js';
@@ -23,6 +16,7 @@ import { signup } from '../../lib/api/auth.js';
 import { ApiError } from '../../lib/api/client.js';
 
 export default function SignupScreen() {
+  const { t } = useTranslation('onboarding');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -53,14 +47,14 @@ export default function SignupScreen() {
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.code === 'conflict') {
-          setError('Diese E-Mail ist schon vergeben.');
+          setError(t('signup.error_conflict'));
         } else if (e.code === 'validation_failed' || e.status === 400) {
-          setError('Bitte E-Mail und Passwort (≥ 8 Zeichen) prüfen.');
+          setError(t('signup.error_validation'));
         } else {
-          setError('Da ist gerade was schiefgelaufen. Probier’s gleich nochmal.');
+          setError(t('signup.error_generic'));
         }
       } else {
-        setError('Keine Verbindung. Bitte später nochmal versuchen.');
+        setError(t('signup.error_network'));
       }
     } finally {
       setBusy(false);
@@ -69,69 +63,59 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
-      <KeyboardAvoidingView
+      <ScrollView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+        contentContainerStyle={{
+          paddingHorizontal: 28,
+          paddingTop: 32,
+          paddingBottom: 16,
+        }}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingHorizontal: 28,
-            paddingTop: 32,
-            paddingBottom: 32,
-          }}
-          keyboardShouldPersistTaps="handled"
+        <View style={{ gap: 14, marginTop: 24 }}>
+          <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
+            {t('signup.title')}
+          </Text>
+          <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
+            {t('signup.subtitle')}
+          </Text>
+
+          <View style={{ marginTop: 18, gap: 12 }}>
+            <Input
+              placeholder={t('signup.placeholder_email')}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!busy}
+            />
+            <Input
+              placeholder={t('signup.placeholder_password')}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              editable={!busy}
+            />
+            {error && <Text style={{ color: LB.danger, fontSize: 12 }}>{error}</Text>}
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={{ paddingHorizontal: 28, paddingBottom: 24, paddingTop: 8, gap: 10 }}>
+        <Btn size="lg" full variant="primary" onPress={onSubmit} disabled={!canSubmit}>
+          {busy ? t('signup.busy') : t('signup.cta')}
+        </Btn>
+        <Pressable
+          onPress={() => router.push('/(onboarding)/hand-off-to-adult')}
+          hitSlop={12}
+          style={{ alignSelf: 'center', paddingVertical: 6 }}
         >
-          <View style={{ gap: 14, marginTop: 24 }}>
-            <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
-              Konto erstellen
-            </Text>
-            <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
-              Mit deiner E-Mail-Adresse und einem Passwort.
-            </Text>
-
-            <View style={{ marginTop: 18, gap: 12 }}>
-              <Input
-                placeholder="E-Mail"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!busy}
-              />
-              <Input
-                placeholder="Passwort (mindestens 8 Zeichen)"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                editable={!busy}
-              />
-              {error && (
-                <Text style={{ color: LB.danger ?? '#c0392b', fontSize: 12 }}>{error}</Text>
-              )}
-            </View>
-          </View>
-
-          <View style={{ flex: 1 }} />
-
-          <View style={{ gap: 10 }}>
-            <Btn size="lg" full variant="primary" onPress={onSubmit}>
-              {busy ? 'Moment …' : 'Konto erstellen'}
-            </Btn>
-            <Pressable
-              onPress={() => router.push('/(onboarding)/hand-off-to-adult')}
-              hitSlop={12}
-              style={{ alignSelf: 'center', paddingVertical: 6 }}
-            >
-              <Text style={{ fontSize: 12, color: LB.ink2, textDecorationLine: 'underline' }}>
-                Ich bin jünger als 16
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <Text style={{ fontSize: 12, color: LB.ink2, textDecorationLine: 'underline' }}>
+            {t('signup.minor_link')}
+          </Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }

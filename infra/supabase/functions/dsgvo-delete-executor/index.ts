@@ -6,6 +6,7 @@
 
 // @ts-expect-error — Deno-style import resolved at deploy time.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.10';
+import { acquireLock, releaseLock } from '../_shared/lock.ts';
 
 declare const Deno: {
   env: { get: (k: string) => string | undefined };
@@ -15,10 +16,22 @@ declare const Deno: {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const HOLD_DAYS = 7;
+const LOCK = 'dsgvo-delete-executor';
 
 Deno.serve(async () => {
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+  const lock = await acquireLock(supabase, LOCK);
+  if (!lock) return Response.json({ ok: true, skipped: 'locked' });
+  try {
+    return await runDelete(supabase);
+  } finally {
+    await releaseLock(supabase, LOCK);
+  }
+});
 
+async function runDelete(
+  supabase: ReturnType<typeof createClient>,
+): Promise<Response> {
   const cutoff = new Date(Date.now() - HOLD_DAYS * 86_400_000).toISOString();
   const due = await supabase
     .from('dsgvo_requests')
@@ -60,4 +73,4 @@ Deno.serve(async () => {
   }
 
   return Response.json({ ok: true, deleted });
-});
+}

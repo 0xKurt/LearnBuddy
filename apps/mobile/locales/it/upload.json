@@ -1,4 +1,6 @@
 {
+  "no_pending": "Nessun materiale da caricare.",
+  "back": "Indietro",
   "title": "Preparazione del materiale",
   "phases": {
     "reserving": "Riservo lo spazio …",
@@ -12,7 +14,8 @@
     "title": "Non ha funzionato.",
     "body": "Non siamo riusciti a caricare il materiale. Riprova — se continua, controlla la connessione.",
     "retry": "Riprova",
-    "back": "Indietro"
+    "back": "Indietro",
+    "unknown": "Errore sconosciuto"
   },
   "insufficient_credits": {
     "title": "Crediti esauriti per ora.",

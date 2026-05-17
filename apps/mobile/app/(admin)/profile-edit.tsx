@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
@@ -13,6 +14,7 @@ import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ProfileEditScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const qc = useQueryClient();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -40,30 +42,35 @@ export default function ProfileEditScreen() {
       qc.invalidateQueries({ queryKey: ['account'] });
       router.back();
     },
-    onError: (err: Error) => Alert.alert('Ups.', err.message),
+    onError: (err: Error) => Alert.alert(t('profile_edit.error_title'), err.message),
   });
 
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
   if (!learner) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-        <Text style={{ padding: 24 }}>Profil nicht gefunden.</Text>
+        <Text style={{ padding: 24 }}>{t('profile_edit.not_found')}</Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-      <Header title="Profil" />
+      <Header title={t('profile_edit.title')} />
       <ScrollView contentContainerStyle={{ padding: 22, gap: 16 }}>
-        <Field label="Anzeigename" value={name} onChange={setName} />
+        <Field label={t('profile_edit.field_name')} value={name} onChange={setName} />
         <Text style={{ fontSize: 12, color: LB.ink3 }}>
-          Geburtsjahr {birthYear || '—'} (kann nur über Daten-Anfrage geändert werden)
+          {t('profile_edit.birth_year_hint', { year: birthYear || '—' })}
         </Text>
-        <Field label="Klassenstufe" value={grade} onChange={setGrade} keyboardType="number-pad" />
+        <Field
+          label={t('profile_edit.field_grade')}
+          value={grade}
+          onChange={setGrade}
+          keyboardType="number-pad"
+        />
         <View style={{ height: 8 }} />
         <Btn full onPress={() => mut.mutate()} disabled={mut.isPending}>
-          {mut.isPending ? 'Speichere …' : 'Speichern'}
+          {mut.isPending ? t('profile_edit.saving') : t('profile_edit.save')}
         </Btn>
       </ScrollView>
     </SafeAreaView>

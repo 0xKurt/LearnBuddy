@@ -2,18 +2,24 @@
 //
 // RevenueCat fires a server-to-server event on every subscription
 // lifecycle transition (INITIAL_PURCHASE, RENEWAL, CANCELLATION,
-// EXPIRATION, BILLING_ISSUE). We verify the shared-secret header,
-// translate the event to a subscription tier + status update, and grant
-// credits per Doc 08 §grant-logic Path A.
+// EXPIRATION, BILLING_ISSUE). We verify the shared-secret header (using
+// timing-safe equality to avoid byte-timing attacks) and reject events
+// older than the replay window. Then we translate the event to a
+// subscription tier + status update, and grant credits per Doc 08
+// §grant-logic Path A.
 //
 // Configure REVENUECAT_WEBHOOK_SECRET in the deployment env and paste the
 // same string in the RevenueCat dashboard (Project → Webhooks → secret).
+
+import { timingSafeEqual } from 'node:crypto';
 
 import { Hono } from 'hono';
 import { z } from 'zod';
 
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
+
+const REPLAY_WINDOW_MS = 5 * 60_000; // Reject events older than 5 minutes.
 
 const RevenueCatEvent = z.object({
   event: z.object({
@@ -35,8 +41,21 @@ const RevenueCatEvent = z.object({
     product_id: z.string().optional(),
     expiration_at_ms: z.number().int().optional(),
     period_type: z.string().optional(),
+    event_timestamp_ms: z.number().int().optional(),
   }),
 });
+
+function constantTimeEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) {
+    // Still do a fake compare to keep the work proportional to the input
+    // size — no timing oracle on length.
+    timingSafeEqual(aBuf, Buffer.alloc(aBuf.length));
+    return false;
+  }
+  return timingSafeEqual(aBuf, bBuf);
+}
 
 const TIER_FROM_PRODUCT: Record<string, 'standard' | 'plus'> = {
   'learnbuddy.standard.monthly': 'standard',
@@ -61,7 +80,8 @@ webhookRoutes.post('/revenuecat', async (c) => {
   if (!secret) {
     throw new ApiError('internal', 'REVENUECAT_WEBHOOK_SECRET not configured');
   }
-  if (!auth || auth !== `Bearer ${secret}`) {
+  const expected = `Bearer ${secret}`;
+  if (!auth || !constantTimeEqual(auth, expected)) {
     throw new ApiError('unauthenticated', 'Invalid webhook signature');
   }
 
@@ -71,6 +91,20 @@ webhookRoutes.post('/revenuecat', async (c) => {
     throw new ApiError('validation_failed', `Invalid webhook payload: ${parsed.error.message}`);
   }
   const ev = parsed.data.event;
+
+  // Reject events outside the replay window. RevenueCat retries up to 7
+  // days for failed deliveries — anything older than the window is either
+  // a replay attempt or a webhook so stale that the daily reconciliation
+  // Edge Function should be the source of truth instead.
+  if (ev.event_timestamp_ms) {
+    const age = Date.now() - ev.event_timestamp_ms;
+    if (age > REPLAY_WINDOW_MS) {
+      throw new ApiError('validation_failed', `Webhook event too old (${Math.round(age / 1000)}s)`);
+    }
+    if (age < -REPLAY_WINDOW_MS) {
+      throw new ApiError('validation_failed', 'Webhook event timestamp in the future');
+    }
+  }
 
   const { supabase } = getDeps(c);
 

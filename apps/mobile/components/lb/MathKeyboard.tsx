@@ -1,9 +1,16 @@
 // MathKeyboard — soft-keyboard for math input. Doc 05 §components.
 // Inserts tokens at the caret position via an onInsert callback.
+//
+// First-time coach mark (USER-FLOWS-DEEP §10.1): the first time the keyboard
+// mounts for a given learner, a CoachMark explains the special tokens. State
+// is per-device via useFirstTime('math_keyboard').
 
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
+import { useFirstTime } from '../../lib/onboarding/coach.js';
 import { LB } from '../../lib/theme/colors.js';
+import { CoachMark } from './CoachMark.js';
 
 const ROWS: Array<{ label: string; insert: string }[]> = [
   [
@@ -45,6 +52,8 @@ type Props = {
 };
 
 export function MathKeyboard({ onInsert }: Props) {
+  const { t } = useTranslation('coach');
+  const firstTime = useFirstTime('math_keyboard');
   return (
     <View style={{ paddingHorizontal: 14, paddingVertical: 10, gap: 6 }}>
       {ROWS.map((row, i) => (
@@ -69,6 +78,14 @@ export function MathKeyboard({ onInsert }: Props) {
           ))}
         </View>
       ))}
+      <CoachMark
+        visible={firstTime.shown}
+        onDismiss={firstTime.dismiss}
+        title={t('math_keyboard.title')}
+        body={t('math_keyboard.body')}
+        ctaLabel={t('dismiss')}
+        glyph="🧮"
+      />
     </View>
   );
 }

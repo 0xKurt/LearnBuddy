@@ -1,0 +1,8 @@
+{
+  "min_items": 3,
+  "must_answer_kinds": ["short"],
+  "must_template_count": 0,
+  "max_cost_usd": 0.01,
+  "must_diagrams": false,
+  "expect_no_error": true
+}

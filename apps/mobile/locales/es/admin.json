@@ -1,0 +1,166 @@
+{
+  "overview": {
+    "title": "Cuenta",
+    "back_to_learner": "Volver a la vista de aprendizaje",
+    "birth_year_grade": "Año de nacimiento {{year}} · Curso {{grade}}",
+    "grade_unknown": "—",
+    "rows": {
+      "profile_edit": "Editar perfil",
+      "profile_edit_sub": "Nombre, año de nacimiento, curso",
+      "notifications": "Notificaciones",
+      "preferences": "Preferencias",
+      "subscription": "Suscripción",
+      "data": "Datos y privacidad",
+      "archive": "Archivo",
+      "account_settings": "Ajustes de cuenta",
+      "about": "Acerca de la app"
+    }
+  },
+  "preferences": {
+    "title": "Preferencias",
+    "done": "Listo",
+    "haptics": {
+      "label": "Respuesta háptica",
+      "sub": "Vibración suave al acertar/fallar y al avanzar."
+    },
+    "session_length": {
+      "title": "Duración de práctica por defecto",
+      "sub": "¿Cuántas preguntas por sesión de práctica por defecto?",
+      "option_one": "{{count}} pregunta",
+      "option_other": "{{count}} preguntas",
+      "option": "{{count}} preguntas"
+    },
+    "photo_retention": {
+      "title": "Conservar fotos durante",
+      "sub": "Cuánto tiempo guardamos el original antes de borrarlo automáticamente.",
+      "option_one": "{{count}} día",
+      "option_other": "{{count}} días",
+      "option": "{{count}} días",
+      "cap_note": "Privacidad: las fotos originales se eliminan como máximo a los 7 días."
+    },
+    "data_saver": {
+      "label": "Ahorro de datos",
+      "sub": "No descargar las miniaturas durante la sesión de práctica."
+    },
+    "dyslexia_font": {
+      "label": "Fuente OpenDyslexic",
+      "sub": "Tipografía más legible para dislexia (la fuente llega en la próxima actualización)."
+    }
+  },
+  "account_settings": {
+    "title": "Cuenta",
+    "card_display_name": "Nombre visible",
+    "card_country": "País",
+    "card_language": "Idioma",
+    "sign_out": "Cerrar sesión",
+    "sign_out_confirm": {
+      "title": "¿Cerrar sesión?",
+      "cancel": "Cancelar",
+      "confirm": "Cerrar sesión"
+    },
+    "empty": "—"
+  },
+  "data": {
+    "title": "Datos",
+    "export": {
+      "title": "Exportar datos",
+      "body": "Lo metemos todo en un ZIP: cuenta, perfil, preguntas, intentos, estado de la suscripción. Llega por correo y es válido 7 días.",
+      "cta": "Solicitar exportación",
+      "loading": "Cargando …",
+      "requested_title": "Exportación solicitada",
+      "requested_body": "Recibirás un enlace por correo en cuanto los datos estén listos (hasta 24 h).",
+      "error_title": "Vaya.",
+      "error_generic": "La exportación falló."
+    },
+    "delete": {
+      "title": "Eliminar cuenta",
+      "body": "Plazo de 7 días: durante ese tiempo puedes detener la eliminación. Después, todo se borra de forma definitiva.",
+      "cta": "Solicitar eliminación de la cuenta",
+      "confirm_title": "¿Eliminar la cuenta?",
+      "confirm_body": "Tienes 7 días para deshacerlo. Pasado ese tiempo, todos los datos se borran de forma definitiva.",
+      "confirm_cancel": "Cancelar",
+      "confirm_ok": "Solicitar eliminación",
+      "requested_title": "Solicitud de eliminación registrada",
+      "requested_body": "Recibirás una confirmación por correo. Puedes deshacerla en un plazo de 7 días.",
+      "error_title": "Vaya.",
+      "error_generic": "La solicitud falló."
+    }
+  },
+  "about": {
+    "title": "Acerca de LearnBuddy",
+    "version": "Versión",
+    "privacy_title": "Privacidad",
+    "privacy_body": "Todos los datos de aprendizaje permanecen en la UE. Sin publicidad, sin cesión a terceros con fines de entrenamiento.",
+    "privacy_link": "Política de privacidad",
+    "imprint_title": "Aviso legal",
+    "imprint_link": "Abrir"
+  },
+  "archived": {
+    "title": "Archivo",
+    "banner": "Los elementos archivados se pueden restaurar durante 30 días. Después se eliminan definitivamente.",
+    "empty": "Nada en el archivo."
+  },
+  "profile_edit": {
+    "title": "Perfil",
+    "not_found": "Perfil no encontrado.",
+    "field_name": "Nombre visible",
+    "birth_year_hint": "Año de nacimiento {{year}} (solo se puede cambiar mediante una solicitud de datos)",
+    "field_grade": "Curso",
+    "saving": "Guardando …",
+    "save": "Guardar",
+    "error_title": "Vaya."
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "loading": "Cargando …",
+    "daily_label": "Recordatorio diario",
+    "daily_sub": "A las {{time}}. Solo los días sin sesión.",
+    "test_label": "Recordatorios de examen",
+    "test_sub": "3 días / 1 día / la mañana antes de los exámenes en carpetas planificadas.",
+    "streak_label": "Recordatorio de racha",
+    "streak_sub": "Un pequeño empujón cuando la racha de aprendizaje está a punto de romperse.",
+    "done": "Listo"
+  },
+  "material": {
+    "title_fallback": "Material",
+    "not_found": "No encontrado.",
+    "no_questions": "Sin preguntas.",
+    "question_label": "Pregunta {{number}}",
+    "expected_prefix": "Esperado: ",
+    "delete_title": "¿Eliminar pregunta?",
+    "delete_cancel": "Cancelar",
+    "delete_confirm": "Eliminar",
+    "error_title": "Vaya."
+  },
+  "subscription": {
+    "title": "Suscripción",
+    "trial_body": "Estás en la prueba de 14 días. Acceso completo hasta el final.",
+    "active_body": "Tu suscripción actual.",
+    "tiers": {
+      "standard": {
+        "title": "Standard",
+        "price": "4,99 € / mes",
+        "feature_1": "~30 capturas de material al mes",
+        "feature_2": "~150 respuestas evaluadas",
+        "feature_3": "Soporte prioritario",
+        "cta": "Elegir Standard"
+      },
+      "plus": {
+        "title": "Plus",
+        "price": "9,99 € / mes",
+        "feature_1": "Más del doble de capturas de material",
+        "feature_2": "Sesiones libres entre temas",
+        "feature_3": "Práctica ampliada",
+        "cta": "Elegir Plus"
+      }
+    },
+    "restore": "Restaurar compras",
+    "purchase_success_title": "¡Gracias!",
+    "purchase_success_body": "Tu suscripción se activa enseguida.",
+    "purchase_error_title": "Vaya.",
+    "purchase_error_generic": "La compra falló.",
+    "restore_success_title": "Restaurado",
+    "restore_success_body": "Tu suscripción se ha actualizado.",
+    "restore_error_generic": "La restauración falló."
+  }
+}

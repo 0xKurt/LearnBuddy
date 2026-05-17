@@ -1,4 +1,6 @@
 {
+  "no_pending": "No material to upload.",
+  "back": "Back",
   "title": "Preparing material",
   "phases": {
     "reserving": "Reserving storage …",
@@ -12,7 +14,8 @@
     "title": "That didn't work.",
     "body": "We couldn't upload your material. Try again — if it keeps failing, check your connection.",
     "retry": "Try again",
-    "back": "Back"
+    "back": "Back",
+    "unknown": "Unknown error"
   },
   "insufficient_credits": {
     "title": "Out of credits for now.",

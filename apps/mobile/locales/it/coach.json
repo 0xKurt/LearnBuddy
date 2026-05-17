@@ -1,0 +1,24 @@
+{
+  "dismiss": "Capito",
+  "math_keyboard": {
+    "title": "Tastiera matematica",
+    "body": "Qui trovi radici, frazioni e π. Tieni premuto un tasto per altri simboli."
+  },
+  "voice": {
+    "title": "Parla pure",
+    "body": "Tieni premuto il microfono e rispondi a voce alta. 1,5 secondi di silenzio valgono come «fatto»."
+  },
+  "camera": {
+    "title": "Foto del materiale",
+    "body": "Tieni il dispositivo dritto sopra il quaderno. Puoi scattare da 1 a 10 pagine di seguito."
+  },
+  "diagram": {
+    "title": "Guarda l'immagine",
+    "body": "I numeri indicano cosa nominare. Tocca o zooma per vedere meglio."
+  },
+  "streak": {
+    "title": "Prima serie — {{count}} giorno!",
+    "title_other": "Prima serie — {{count}} giorni!",
+    "body": "Esercitarsi giorni di fila crea una serie. Nessun problema se salti un giorno."
+  }
+}

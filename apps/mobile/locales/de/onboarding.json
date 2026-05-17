@@ -1,4 +1,17 @@
 {
+  "signup": {
+    "title": "Konto erstellen",
+    "subtitle": "Mit deiner E-Mail-Adresse und einem Passwort.",
+    "placeholder_email": "E-Mail",
+    "placeholder_password": "Passwort (mindestens 8 Zeichen)",
+    "cta": "Konto erstellen",
+    "busy": "Moment …",
+    "minor_link": "Ich bin jünger als 16",
+    "error_conflict": "Diese E-Mail ist schon vergeben.",
+    "error_validation": "Bitte E-Mail und Passwort (≥ 8 Zeichen) prüfen.",
+    "error_generic": "Da ist gerade was schiefgelaufen. Probier's gleich nochmal.",
+    "error_network": "Keine Verbindung. Bitte später nochmal versuchen."
+  },
   "welcome": {
     "title": "Lern-Begleiter",
     "subtitle": "Ein ruhiger Begleiter beim Üben. Material fotografieren, ein paar Fragen üben — fertig.",
@@ -36,6 +49,36 @@
     "error_already": "Auf diesem Konto gibt es schon ein Profil.",
     "error_validation": "Bitte alle Felder prüfen.",
     "error_generic": "Konnte gerade nicht speichern — gleich nochmal probieren?"
+  },
+  "add_profile": {
+    "title": "Profil anlegen",
+    "body": "Wir brauchen den Vornamen, das Geburtsjahr und die Klasse. Alles anpassbar später.",
+    "field_first_name": "Vorname",
+    "field_birth_year": "Geburtsjahr",
+    "field_grade": "Klasse",
+    "placeholder_first_name": "z. B. Lena",
+    "placeholder_birth_year": "z. B. 2012",
+    "minor_hint": "Auf der nächsten Seite holen wir kurz die Einwilligung für ein Profil unter 16 ein.",
+    "cta": "Weiter",
+    "busy": "Moment …",
+    "error_already": "Auf diesem Konto gibt es schon ein Profil.",
+    "error_validation": "Bitte alle Felder prüfen.",
+    "error_generic": "Konnte gerade nicht speichern — gleich nochmal probieren?",
+    "grades": {
+      "1": "Klasse 1",
+      "2": "Klasse 2",
+      "3": "Klasse 3",
+      "4": "Klasse 4",
+      "5": "Klasse 5",
+      "6": "Klasse 6",
+      "7": "Klasse 7",
+      "8": "Klasse 8",
+      "9": "Klasse 9",
+      "10": "Klasse 10",
+      "11": "Oberstufe 11",
+      "12": "Oberstufe 12",
+      "13": "Studium / Erwachsenenbildung"
+    }
   },
   "pin": {
     "title": "Schütze den Konto-Bereich",

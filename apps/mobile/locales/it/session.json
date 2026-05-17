@@ -1,0 +1,49 @@
+{
+  "no_items": "Al momento non troviamo esercizi. Riprova — o fotografa nuovo materiale.",
+  "back": "Indietro",
+  "badge_test": "Verifica",
+  "badge_practice": "Esercizio",
+  "exit": {
+    "title": "Terminare la sessione?",
+    "keep_going": "Continua",
+    "end": "Termina"
+  },
+  "question_label": "Domanda {{index}}",
+  "submit": "Invia",
+  "checking": "Controllo …",
+  "next": "Avanti",
+  "verdict": {
+    "correct": "Esatto!",
+    "partially_correct": "Quasi",
+    "incorrect": "Non ancora del tutto"
+  },
+  "placeholder": {
+    "answer": "Risposta",
+    "number": "Numero",
+    "formula": "Formula"
+  },
+  "error_title": "Ops.",
+  "stimulus": {
+    "fallback": "Diagramma non visualizzabile al momento"
+  },
+  "voice": {
+    "idle": "Tieni premuto per parlare",
+    "active": "Ti ascolto …",
+    "permission_rationale": "LearnBuddy ascolta un attimo per farti rispondere a voce. L'audio non viene mai salvato.",
+    "unavailable": "La voce non è ancora disponibile — per ora scrivi la tua risposta."
+  },
+  "explain": {
+    "pill": "Spiegamelo",
+    "open": "Apri spiegazione",
+    "title": "Spiegamelo",
+    "subtitle": "Cosa vuoi sapere?",
+    "tabs": {
+      "question": "Cosa chiede la domanda?",
+      "concept": "Spiega il concetto"
+    },
+    "loading": "Un momento …",
+    "error": "Non è andata. Riprova subito.",
+    "hint": "Tocca una scheda e te lo spiego.",
+    "close": "Chiudi"
+  }
+}

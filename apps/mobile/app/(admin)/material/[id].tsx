@@ -4,6 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CircleBtn, EmptyState } from '../../../components/lb/index.js';
@@ -14,6 +15,7 @@ import { useAppStore } from '../../../lib/store/index.js';
 import { LB } from '../../../lib/theme/colors.js';
 
 export default function AdminMaterialScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const { id } = useLocalSearchParams<{ id: string }>();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -31,7 +33,7 @@ export default function AdminMaterialScreen() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-material', id] });
     },
-    onError: (err: Error) => Alert.alert('Ups.', err.message),
+    onError: (err: Error) => Alert.alert(t('material.error_title'), err.message),
   });
 
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
@@ -49,25 +51,25 @@ export default function AdminMaterialScreen() {
       >
         <CircleBtn icon="back" onPress={() => router.back()} />
         <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink, flex: 1 }} numberOfLines={1}>
-          {materialQuery.data?.title ?? 'Material'}
+          {materialQuery.data?.title ?? t('material.title_fallback')}
         </Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 10 }}>
         {materialQuery.isLoading ? (
           <ActivityIndicator color={LB.ink2} />
         ) : !materialQuery.data ? (
-          <EmptyState glyph="🤔" title="Nicht gefunden." />
+          <EmptyState glyph="🤔" title={t('material.not_found')} />
         ) : materialQuery.data.items.length === 0 ? (
-          <EmptyState glyph="📷" title="Keine Fragen." />
+          <EmptyState glyph="📷" title={t('material.no_questions')} />
         ) : (
           materialQuery.data.items.map((it, i) => (
             <Pressable
               key={it.id}
               onLongPress={() =>
-                Alert.alert('Frage löschen?', it.question, [
-                  { text: 'Abbrechen', style: 'cancel' },
+                Alert.alert(t('material.delete_title'), it.question, [
+                  { text: t('material.delete_cancel'), style: 'cancel' },
                   {
-                    text: 'Löschen',
+                    text: t('material.delete_confirm'),
                     style: 'destructive',
                     onPress: () => archiveMut.mutate(it.id),
                   },
@@ -81,12 +83,15 @@ export default function AdminMaterialScreen() {
                 borderWidth: 1,
               }}
             >
-              <Text style={{ fontSize: 11, color: LB.ink3, fontWeight: '600' }}>Frage {i + 1}</Text>
+              <Text style={{ fontSize: 11, color: LB.ink3, fontWeight: '600' }}>
+                {t('material.question_label', { number: i + 1 })}
+              </Text>
               <Text style={{ fontSize: 14, color: LB.ink, marginTop: 4, lineHeight: 20 }}>
                 {it.question}
               </Text>
               <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 6 }}>
-                Erwartet: {it.expected_answer}
+                {t('material.expected_prefix')}
+                {it.expected_answer}
               </Text>
             </Pressable>
           ))

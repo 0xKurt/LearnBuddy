@@ -1,0 +1,13 @@
+{
+  "generic": "Quelque chose s'est mal passé.",
+  "offline": "Pas de connexion internet.",
+  "try_later": "Réessaie un peu plus tard.",
+  "no_connection_retry": "Pas de connexion. Réessaie un peu plus tard.",
+  "validation": "Vérifie tes informations.",
+  "rate_limited": "Trop de tentatives. Patiente quelques minutes.",
+  "unauthorized": "Reconnecte-toi, s'il te plaît.",
+  "not_found": "Rien trouvé.",
+  "save_failed": "Impossible d'enregistrer pour le moment — tu retentes ?",
+  "load_failed": "Impossible de charger pour le moment — tu retentes ?",
+  "title": "Oups."
+}

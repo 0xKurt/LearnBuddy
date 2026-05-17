@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -31,6 +32,7 @@ function daysUntil(scheduled: string | null, now = new Date()): number | null {
 }
 
 export default function FolderScreen() {
+  const { t } = useTranslation('home');
   const { folderId, subjectId } = useLocalSearchParams<{ folderId: string; subjectId: string }>();
   const [editing, setEditing] = useState(false);
 
@@ -47,27 +49,23 @@ export default function FolderScreen() {
   const openFolderMenu = () => {
     if (!folder) return;
     Alert.alert(folder.name, undefined, [
-      { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Umbenennen', onPress: () => setEditing(true) },
+      { text: t('folder.cancel'), style: 'cancel' },
+      { text: t('folder.rename'), onPress: () => setEditing(true) },
       {
-        text: 'Archivieren',
+        text: t('folder.archive'),
         style: 'destructive',
         onPress: () => {
-          Alert.alert(
-            'Ordner archivieren',
-            'Der Ordner wird archiviert und kann 30 Tage lang wiederhergestellt werden.',
-            [
-              { text: 'Abbrechen', style: 'cancel' },
-              {
-                text: 'Archivieren',
-                style: 'destructive',
-                onPress: () => {
-                  qc.invalidateQueries({ queryKey: ['folders', subjectId] });
-                  router.back();
-                },
+          Alert.alert(t('folder.archive_title'), t('folder.archive_body'), [
+            { text: t('folder.cancel'), style: 'cancel' },
+            {
+              text: t('folder.archive'),
+              style: 'destructive',
+              onPress: () => {
+                qc.invalidateQueries({ queryKey: ['folders', subjectId] });
+                router.back();
               },
-            ],
-          );
+            },
+          ]);
         },
       },
     ]);
@@ -78,7 +76,11 @@ export default function FolderScreen() {
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={() => router.back()} />
-          <EmptyState glyph="🤔" title="Ordner nicht gefunden." body="Fehlender Betreff." />
+          <EmptyState
+            glyph="🤔"
+            title={t('folder.not_found_title')}
+            body={t('folder.missing_subject')}
+          />
         </View>
       </SafeAreaView>
     );
@@ -101,8 +103,8 @@ export default function FolderScreen() {
           <CircleBtn icon="back" onPress={() => router.back()} />
           <EmptyState
             glyph="🤔"
-            title="Ordner nicht gefunden."
-            body="Vielleicht wurde er archiviert."
+            title={t('folder.not_found_title')}
+            body={t('folder.not_found_body')}
           />
         </View>
       </SafeAreaView>
@@ -135,7 +137,9 @@ export default function FolderScreen() {
         {folder.scheduled_for && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             <Text style={{ fontSize: 12, color: LB.ink2 }}>{`${folder.scheduled_for}`}</Text>
-            {inDays != null && <Chip tone="warning">{`Test in ${inDays} Tagen`}</Chip>}
+            {inDays != null && (
+              <Chip tone="warning">{t('folder.test_in_days', { count: inDays })}</Chip>
+            )}
           </View>
         )}
 
@@ -148,15 +152,15 @@ export default function FolderScreen() {
           }}
         >
           <Text style={{ fontSize: 13, fontWeight: '600', color: LB.ink2, marginBottom: 12 }}>
-            Materialien
+            {t('folder.materials_section')}
           </Text>
 
           {/* Materials endpoint lands in Phase C. Per CLAUDE.md hard rule #6, render
               the empty state — not fake rows. */}
           <EmptyState
             glyph="📷"
-            title="Noch kein Material in diesem Ordner."
-            body="Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst."
+            title={t('folder.no_material_title')}
+            body={t('folder.no_material_body')}
           />
         </View>
       </ScrollView>
@@ -183,12 +187,12 @@ export default function FolderScreen() {
               })
             }
           >
-            + Material
+            {t('folder.add_material')}
           </Btn>
         </View>
         <View style={{ flex: 2 }}>
           <Btn size="lg" full disabled>
-            Üben starten
+            {t('folder.start_practice')}
           </Btn>
         </View>
       </View>

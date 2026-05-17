@@ -1,4 +1,6 @@
 {
+  "no_pending": "Sin material para subir.",
+  "back": "Volver",
   "title": "Preparando el material",
   "phases": {
     "reserving": "Reservando almacenamiento …",
@@ -12,7 +14,8 @@
     "title": "No funcionó.",
     "body": "No pudimos subir tu material. Inténtalo de nuevo — si sigue fallando, comprueba tu conexión.",
     "retry": "Intentar de nuevo",
-    "back": "Volver"
+    "back": "Volver",
+    "unknown": "Error desconocido"
   },
   "insufficient_credits": {
     "title": "Sin créditos por ahora.",

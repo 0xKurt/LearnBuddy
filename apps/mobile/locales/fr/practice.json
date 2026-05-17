@@ -1,0 +1,22 @@
+{
+  "loading": "On prépare ton entraînement …",
+  "error_title": "Oups.",
+  "error_body": "On n'a pas pu charger cet entraînement. Réessaie.",
+  "back": "Retour",
+  "topic_label": "Thème",
+  "progress": "{{current}} sur {{total}}",
+  "submit": "Vérifier",
+  "next": "Suivant",
+  "verdict": {
+    "correct": "Pile dedans !",
+    "incorrect": "Pas encore tout à fait"
+  },
+  "answer_hint_numeric": "Saisis ta réponse",
+  "answer_hint_formula": "Saisis ta formule",
+  "show_solution": "Voir la solution",
+  "solution_label": "Solution",
+  "finish_title": "Bravo !",
+  "finish_body": "Tu as réussi {{correct}} sur {{total}}. Belle série.",
+  "finish_home": "Retour à l'accueil",
+  "no_template": "Cet entraînement n'est plus disponible."
+}

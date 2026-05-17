@@ -15,6 +15,8 @@ export function Chip({ children, tone = 'gray' }: { children: string; tone?: Ton
   const t = TONES[tone];
   return (
     <View
+      accessibilityRole="text"
+      accessibilityLabel={children}
       style={{
         backgroundColor: t.bg,
         borderColor: t.border ?? 'transparent',

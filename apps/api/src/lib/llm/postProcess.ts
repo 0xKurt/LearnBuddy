@@ -1,14 +1,17 @@
 // Vision-result post-processing. Doc 06 §vision-result-post-processing.
 //
-// In Slice D1 we ship:
+// Slice D1 (initial): drop diagram-dependent items wholesale because the
+// sharp pipeline didn't exist yet. Slice D1.5 wires that pipeline up; the
+// post-processor now keeps diagram items by default and the caller passes
+// `dropDiagrams: true` only on the regenerate path (no images, no diagrams)
+// and the legacy fake path that returns no diagrams.
+//
+// What this still does:
 //   1. JSON.parse + Zod-shape validation
 //   2. Item-level rejection (min question/expected length, Doc 06 §step 2)
-//   3. Drop diagram-dependent items because the diagram processor lands in
-//      a follow-up slice (sharp + study-asset upload). Items with
-//      stimulus_kind='study_asset' or diagram_ref are dropped.
-//   4. Drop problem_templates wholesale (MathLite feasibility validation
-//      lands in D3). Items that referenced a template have their
-//      problem_template_ref stripped.
+//   3. Optionally drop diagram-dependent items (dropDiagrams=true)
+//   4. Strip problem_template_ref on items — templates are validated and
+//      persisted in a separate step in routes/materials.ts.
 //
 // Doc 06 says ≥3 valid items must remain or the call is extraction_failed.
 // We surface that as a sentinel in the parsed result; the route refunds.
@@ -159,8 +162,19 @@ export async function parseRegeneratePayload(rawText: string): Promise<ParseRege
   return { ok: true, value: { items } };
 }
 
+export type ParseVisionOpts = {
+  /** When true (the legacy D1 behavior), drop items whose answer_kind is
+   *  'diagram_label' or stimulus_kind is 'study_asset'. The Vertex gateway
+   *  now defaults this to false because the D1.5 sharp pipeline replaces
+   *  the dropped items with real study_asset_id references downstream. */
+  dropDiagrams?: boolean;
+};
+
 /** Parse + post-process the raw LLM text. Pure — no I/O. */
-export async function parseVisionPayload(rawText: string): Promise<ParseResult> {
+export async function parseVisionPayload(
+  rawText: string,
+  opts: ParseVisionOpts = { dropDiagrams: true },
+): Promise<ParseResult> {
   // Strip Markdown fences if the model added them.
   const trimmed = rawText
     .trim()
@@ -182,17 +196,18 @@ export async function parseVisionPayload(rawText: string): Promise<ParseResult> 
     };
   }
 
+  const dropDiagrams = opts.dropDiagrams ?? true;
   // Doc 06 §post-processing #2 — reject minimal items.
-  // Drop diagram-dependent items (Slice D1 doesn't process diagrams yet).
   const surviving = parsed.data.items.filter((it) => {
     if (it.question.trim().length < 5) return false;
     if (it.expected_answer.trim().length < 1) return false;
-    if (it.answer_kind === 'diagram_label') return false;
-    if (it.stimulus_kind === 'study_asset') return false;
+    if (dropDiagrams && it.answer_kind === 'diagram_label') return false;
+    if (dropDiagrams && it.stimulus_kind === 'study_asset') return false;
     return true;
   });
 
-  // Strip references to problem_templates because D1 drops templates wholesale.
+  // Strip references to problem_templates — the route validates and persists
+  // templates separately, then rewires items to their final DB ids.
   const items = surviving.map((it) => {
     const { problem_template_ref: _t, ...rest } = it;
     return rest;

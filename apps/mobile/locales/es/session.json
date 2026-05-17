@@ -1,0 +1,49 @@
+{
+  "no_items": "Ahora mismo no encontramos preguntas. Inténtalo de nuevo — o haz una foto de material nuevo.",
+  "back": "Volver",
+  "badge_test": "Examen",
+  "badge_practice": "Práctica",
+  "exit": {
+    "title": "¿Terminar la sesión?",
+    "keep_going": "Seguir",
+    "end": "Terminar"
+  },
+  "question_label": "Pregunta {{index}}",
+  "submit": "Enviar",
+  "checking": "Comprobando …",
+  "next": "Siguiente",
+  "verdict": {
+    "correct": "¡Exacto!",
+    "partially_correct": "Casi lo tienes",
+    "incorrect": "Aún no del todo"
+  },
+  "placeholder": {
+    "answer": "Respuesta",
+    "number": "Número",
+    "formula": "Fórmula"
+  },
+  "error_title": "Vaya.",
+  "stimulus": {
+    "fallback": "El diagrama no puede mostrarse ahora"
+  },
+  "voice": {
+    "idle": "Mantén para hablar",
+    "active": "Te escucho …",
+    "permission_rationale": "LearnBuddy escucha un momento para que puedas responder en voz alta. El audio nunca se guarda.",
+    "unavailable": "La voz aún no está disponible — escribe tu respuesta por ahora."
+  },
+  "explain": {
+    "pill": "Explícamelo",
+    "open": "Abrir explicación",
+    "title": "Explícamelo",
+    "subtitle": "¿Qué quieres saber?",
+    "tabs": {
+      "question": "¿Qué pide la pregunta?",
+      "concept": "Explica el concepto"
+    },
+    "loading": "Un momento …",
+    "error": "No ha salido bien. Vuelve a intentarlo enseguida.",
+    "hint": "Toca una pestaña y te lo explico.",
+    "close": "Cerrar"
+  }
+}

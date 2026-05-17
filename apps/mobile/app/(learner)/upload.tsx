@@ -62,7 +62,7 @@ export default function UploadScreen() {
           setState({
             kind: 'error',
             code: 'unknown',
-            message: err instanceof Error ? err.message : 'Unbekannter Fehler',
+            message: err instanceof Error ? err.message : t('error.unknown'),
           });
         }
       }
@@ -74,10 +74,10 @@ export default function UploadScreen() {
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16 }}>
           <Text style={{ fontSize: 18, color: LB.ink2, textAlign: 'center' }}>
-            Kein Material zum Hochladen.
+            {t('no_pending')}
           </Text>
           <Btn onPress={() => router.replace('/(learner)/home')} full>
-            Zurück
+            {t('back')}
           </Btn>
         </View>
       </SafeAreaView>

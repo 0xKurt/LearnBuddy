@@ -1,9 +1,10 @@
 // Drizzle ORM schema for the local SQLite mirror.
-// Doc 03 §mobile-local-sqlite-mirror — strict subset of the server schema
-// plus the local outbox_local and sync_state tables.
+// Doc 03 §mobile-local-sqlite-mirror — strict subset of the server schema.
 //
 // Skeleton: minimum tables needed for the learner surface to boot. Full
-// mirror lands in Step 12 acceptance work.
+// mirror lands when an offline-first slice is scheduled. The previous
+// outbox_local + sync_state tables were removed with the outbox stub —
+// they had no callers and only enabled silent data loss.
 
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
@@ -42,21 +43,4 @@ export const folders = sqliteTable('folders', {
   archived_at: text('archived_at'),
   created_at: text('created_at').notNull(),
   updated_at: text('updated_at').notNull(),
-});
-
-export const outboxLocal = sqliteTable('outbox_local', {
-  id: text('id').primaryKey(),
-  kind: text('kind').notNull(),
-  payload: text('payload').notNull(),
-  run_after: text('run_after').notNull(),
-  attempts: integer('attempts').notNull(),
-  last_error: text('last_error'),
-  done_at: text('done_at'),
-  created_at: text('created_at').notNull(),
-});
-
-export const syncState = sqliteTable('sync_state', {
-  id: integer('id').primaryKey(),
-  last_full_pull_at: text('last_full_pull_at'),
-  last_outbox_drain_at: text('last_outbox_drain_at'),
 });

@@ -1,0 +1,166 @@
+{
+  "overview": {
+    "title": "Account",
+    "back_to_learner": "Back to the learner view",
+    "birth_year_grade": "Born {{year}} · Year {{grade}}",
+    "grade_unknown": "—",
+    "rows": {
+      "profile_edit": "Edit profile",
+      "profile_edit_sub": "Name, birth year, year group",
+      "notifications": "Notifications",
+      "preferences": "Preferences",
+      "subscription": "Subscription",
+      "data": "Data & privacy",
+      "archive": "Archive",
+      "account_settings": "Account settings",
+      "about": "About the app"
+    }
+  },
+  "preferences": {
+    "title": "Preferences",
+    "done": "Done",
+    "haptics": {
+      "label": "Haptic feedback",
+      "sub": "Gentle vibrations on right/wrong and when advancing."
+    },
+    "session_length": {
+      "title": "Default practice length",
+      "sub": "How many questions per practice session by default?",
+      "option_one": "{{count}} question",
+      "option_other": "{{count}} questions",
+      "option": "{{count}} questions"
+    },
+    "photo_retention": {
+      "title": "Keep photos for",
+      "sub": "How long we keep the original before it's automatically deleted.",
+      "option_one": "{{count}} day",
+      "option_other": "{{count}} days",
+      "option": "{{count}} days",
+      "cap_note": "Privacy: original photos are deleted after 7 days at the latest."
+    },
+    "data_saver": {
+      "label": "Data saver",
+      "sub": "Don't fetch preview images for study sessions over the network."
+    },
+    "dyslexia_font": {
+      "label": "OpenDyslexic font",
+      "sub": "Easier-to-read font for dyslexia (font ships in the next update)."
+    }
+  },
+  "account_settings": {
+    "title": "Account",
+    "card_display_name": "Display name",
+    "card_country": "Country",
+    "card_language": "Language",
+    "sign_out": "Sign out",
+    "sign_out_confirm": {
+      "title": "Sign out?",
+      "cancel": "Cancel",
+      "confirm": "Sign out"
+    },
+    "empty": "—"
+  },
+  "data": {
+    "title": "Data",
+    "export": {
+      "title": "Data export",
+      "body": "We'll pack everything into a ZIP: account, profile, questions, attempts, subscription status. Sent by email, valid for 7 days.",
+      "cta": "Request export",
+      "loading": "Loading …",
+      "requested_title": "Export requested",
+      "requested_body": "You'll receive a link by email as soon as the data is ready (up to 24h).",
+      "error_title": "Oops.",
+      "error_generic": "Export failed."
+    },
+    "delete": {
+      "title": "Delete account",
+      "body": "7-day grace period: you can cancel the deletion during this time. After that, everything is permanently removed.",
+      "cta": "Request account deletion",
+      "confirm_title": "Delete account?",
+      "confirm_body": "You have 7 days to undo this. After that, all data is permanently deleted.",
+      "confirm_cancel": "Cancel",
+      "confirm_ok": "Request deletion",
+      "requested_title": "Deletion request received",
+      "requested_body": "We'll send a confirmation by email. You can undo it within 7 days.",
+      "error_title": "Oops.",
+      "error_generic": "Request failed."
+    }
+  },
+  "about": {
+    "title": "About LearnBuddy",
+    "version": "Version",
+    "privacy_title": "Privacy",
+    "privacy_body": "All study data stays in the EU. No ads, no sharing with third parties for training purposes.",
+    "privacy_link": "Privacy policy",
+    "imprint_title": "Legal notice",
+    "imprint_link": "Open"
+  },
+  "archived": {
+    "title": "Archive",
+    "banner": "Archived items can be restored for 30 days. After that they are permanently deleted.",
+    "empty": "Nothing in the archive."
+  },
+  "profile_edit": {
+    "title": "Profile",
+    "not_found": "Profile not found.",
+    "field_name": "Display name",
+    "birth_year_hint": "Birth year {{year}} (can only be changed via a data request)",
+    "field_grade": "Year group",
+    "saving": "Saving …",
+    "save": "Save",
+    "error_title": "Oops."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "loading": "Loading …",
+    "daily_label": "Daily reminder",
+    "daily_sub": "At {{time}}. Only on days without a session.",
+    "test_label": "Test reminders",
+    "test_sub": "3 days / 1 day / morning before tests in scheduled folders.",
+    "streak_label": "Streak reminder",
+    "streak_sub": "A gentle nudge when the learning streak is about to break.",
+    "done": "Done"
+  },
+  "material": {
+    "title_fallback": "Material",
+    "not_found": "Not found.",
+    "no_questions": "No questions.",
+    "question_label": "Question {{number}}",
+    "expected_prefix": "Expected: ",
+    "delete_title": "Delete question?",
+    "delete_cancel": "Cancel",
+    "delete_confirm": "Delete",
+    "error_title": "Oops."
+  },
+  "subscription": {
+    "title": "Subscription",
+    "trial_body": "You're on the 14-day trial. Full access until it ends.",
+    "active_body": "Your current subscription.",
+    "tiers": {
+      "standard": {
+        "title": "Standard",
+        "price": "€4.99 / month",
+        "feature_1": "~30 material captures per month",
+        "feature_2": "~150 evaluated answers",
+        "feature_3": "Priority support",
+        "cta": "Choose Standard"
+      },
+      "plus": {
+        "title": "Plus",
+        "price": "€9.99 / month",
+        "feature_1": "More than double the material captures",
+        "feature_2": "Subject-wide power sessions",
+        "feature_3": "Extended practice",
+        "cta": "Choose Plus"
+      }
+    },
+    "restore": "Restore purchases",
+    "purchase_success_title": "Thank you!",
+    "purchase_success_body": "Your subscription is being activated.",
+    "purchase_error_title": "Oops.",
+    "purchase_error_generic": "Purchase failed.",
+    "restore_success_title": "Restored",
+    "restore_success_body": "Your subscription status has been updated.",
+    "restore_error_generic": "Restore failed."
+  }
+}

@@ -21,5 +21,14 @@
     "morning": "Buenos días",
     "afternoon": "Hola",
     "evening": "Buenas tardes"
+  },
+  "material": {
+    "not_found": "Material no encontrado.",
+    "not_found_body": "Puede que haya sido eliminado.",
+    "no_items": "Sin preguntas.",
+    "no_items_body": "La próxima vez funcionará — inténtalo de nuevo.",
+    "question_count_one": "1 pregunta",
+    "question_count_other": "{{count}} preguntas",
+    "question_label": "Pregunta {{index}}"
   }
 }

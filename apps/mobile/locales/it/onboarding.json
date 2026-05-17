@@ -1,4 +1,17 @@
 {
+  "signup": {
+    "title": "Crea account",
+    "subtitle": "Con il tuo indirizzo email e una password.",
+    "placeholder_email": "Email",
+    "placeholder_password": "Password (almeno 8 caratteri)",
+    "cta": "Crea account",
+    "busy": "Un momento …",
+    "minor_link": "Ho meno di 16 anni",
+    "error_conflict": "Questa email è già in uso.",
+    "error_validation": "Controlla email e password (≥ 8 caratteri).",
+    "error_generic": "Qualcosa è andato storto. Riprova tra un momento.",
+    "error_network": "Nessuna connessione. Riprova più tardi."
+  },
   "welcome": {
     "title": "Compagno di studio",
     "subtitle": "Un compagno tranquillo mentre studi. Fotografa, fai qualche domanda — fatto.",
@@ -36,6 +49,36 @@
     "error_already": "Questo account ha già un profilo.",
     "error_validation": "Controlla i campi inseriti.",
     "error_generic": "Non è stato possibile salvare — riprova tra un momento."
+  },
+  "add_profile": {
+    "title": "Crea profilo",
+    "body": "Ci servono solo il nome, l'anno di nascita e la classe. Si può modificare tutto in seguito.",
+    "field_first_name": "Nome",
+    "field_birth_year": "Anno di nascita",
+    "field_grade": "Classe",
+    "placeholder_first_name": "es. Lena",
+    "placeholder_birth_year": "es. 2012",
+    "minor_hint": "Nella schermata successiva chiediamo brevemente il consenso per un profilo under 16.",
+    "cta": "Continua",
+    "busy": "Un attimo …",
+    "error_already": "Questo account ha già un profilo.",
+    "error_validation": "Controlla tutti i campi.",
+    "error_generic": "Non sono riuscito a salvare ora — riproviamo?",
+    "grades": {
+      "1": "1ª elementare",
+      "2": "2ª elementare",
+      "3": "3ª elementare",
+      "4": "4ª elementare",
+      "5": "5ª elementare",
+      "6": "1ª media",
+      "7": "2ª media",
+      "8": "3ª media",
+      "9": "1ª superiore",
+      "10": "2ª superiore",
+      "11": "3ª superiore",
+      "12": "4ª superiore",
+      "13": "Università / formazione adulta"
+    }
   },
   "pin": {
     "title": "Proteggi l'area account",

@@ -1,0 +1,15 @@
+{
+  "today_at": "Oggi · {{time}}",
+  "title": "Allenamento di oggi — bravissimo.",
+  "summary": "{{minutes}} minuti · {{items}} esercizi",
+  "stats": {
+    "practiced": "fatti",
+    "secure_now": "ora sicuri",
+    "still_unsure": "ancora incerti",
+    "streak": "Serie",
+    "streak_caption": "giorni di fila"
+  },
+  "this_week_label": "Argomenti di questa settimana",
+  "cta_review_hard": "Riprova i più difficili",
+  "cta_overview": "Torna alla panoramica"
+}

@@ -1,0 +1,66 @@
+{
+  "greeting": {
+    "morning": "Buongiorno",
+    "afternoon": "Ciao",
+    "evening": "Buonasera"
+  },
+  "loading_error": {
+    "title": "Non siamo riusciti a caricare le materie.",
+    "body": "Trascina verso il basso per riprovare."
+  },
+  "empty": {
+    "title": "Ancora nessuna materia.",
+    "body": "Aggiungi una materia o fotografa il primo materiale — al resto pensiamo noi."
+  },
+  "test_in_days": "Verifica fra {{count}} giorni",
+  "add_subject_tile": "Aggiungi materia",
+  "modal": {
+    "title": "Nuova materia",
+    "name_label": "Nome",
+    "cancel": "Annulla",
+    "create": "Crea",
+    "creating": "Creazione…",
+    "error_title": "Ops."
+  },
+  "folder": {
+    "not_found_title": "Cartella non trovata.",
+    "not_found_body": "Potrebbe essere stata archiviata.",
+    "missing_subject": "Materia mancante.",
+    "materials_section": "Materiali",
+    "no_material_title": "Ancora nessun materiale in questa cartella.",
+    "no_material_body": "Fotografa un foglio di esercizi o una pagina del libro — il resto lo facciamo noi.",
+    "add_material": "+ Materiale",
+    "start_practice": "Inizia a esercitarti",
+    "archive_title": "Archivia cartella",
+    "archive_body": "La cartella verrà archiviata e potrà essere ripristinata per 30 giorni.",
+    "rename": "Rinomina",
+    "archive": "Archivia",
+    "cancel": "Annulla",
+    "test_in_days": "Verifica fra {{count}} giorni"
+  },
+  "subject": {
+    "not_found_title": "Materia non trovata.",
+    "not_found_body": "Potrebbe essere stata archiviata.",
+    "material_count_one": "{{count}} materiale",
+    "material_count_other": "{{count}} materiali",
+    "tab_folders": "Cartelle",
+    "tab_materials": "Materiale",
+    "no_folders_title": "Ancora nessuna cartella.",
+    "no_folders_body": "Crea una cartella per raggruppare i materiali di una verifica o di un capitolo.",
+    "no_materials_title": "Ancora nessun materiale.",
+    "no_materials_body": "Fotografa un foglio di esercizi o una pagina del libro — il resto lo facciamo noi.",
+    "new_folder": "Cartella",
+    "new_material": "Nuovo",
+    "start_practice": "Inizia a esercitarti",
+    "archive": "Archivia",
+    "cancel": "Annulla"
+  },
+  "subjects": {
+    "math": "Matematica",
+    "biology": "Biologia",
+    "physics": "Fisica",
+    "language_native": "Italiano",
+    "language_foreign": "Lingua",
+    "general": "Altro"
+  }
+}

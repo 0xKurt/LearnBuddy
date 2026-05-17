@@ -14,6 +14,11 @@ import { cors } from 'hono/cors';
 import { errorHandler } from './middleware/error.js';
 import type { Deps } from './lib/deps.js';
 import { createProdDeps } from './lib/deps.js';
+import { initSentry } from './lib/sentry.js';
+
+// Init Sentry as soon as the module loads so a crash in deps construction
+// is still captured.
+initSentry();
 
 import { authRoutes } from './routes/auth.js';
 import { accountRoutes } from './routes/account.js';
@@ -36,7 +41,33 @@ export function createApp(opts: { deps?: Deps } = {}) {
   let deps: Deps | null = opts.deps ?? null;
 
   app.use('*', logger());
-  app.use('*', cors({ origin: '*' }));
+  // Mobile clients send `Origin: null` from RN; localhost origins are dev
+  // tooling (Expo web preview, vitest). Lock CORS to the known set instead
+  // of `*` so a future browser surface doesn't accidentally inherit a
+  // wide-open policy. Override via API_CORS_ORIGINS (comma-separated).
+  const allowedOrigins = (process.env.API_CORS_ORIGINS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const defaultOrigins = [
+    'http://localhost:8081', // Expo dev
+    'http://localhost:19006', // Expo web
+    'http://localhost:3000', // misc dev
+  ];
+  const origins = allowedOrigins.length > 0 ? allowedOrigins : defaultOrigins;
+  app.use(
+    '*',
+    cors({
+      origin: (incoming) => {
+        // RN fetch sends no Origin header — pass through.
+        if (!incoming) return null;
+        return origins.includes(incoming) ? incoming : null;
+      },
+      allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Learner-Id'],
+      maxAge: 86_400,
+    }),
+  );
   app.onError(errorHandler);
   app.use('*', async (c, next) => {
     if (!deps) {

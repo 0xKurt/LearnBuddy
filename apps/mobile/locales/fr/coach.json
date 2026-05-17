@@ -1,0 +1,24 @@
+{
+  "dismiss": "Compris",
+  "math_keyboard": {
+    "title": "Clavier mathématique",
+    "body": "Racines, fractions et π sont ici. Appui long pour plus de symboles."
+  },
+  "voice": {
+    "title": "Parle simplement",
+    "body": "Maintiens le micro et réponds à voix haute. 1,5 seconde de silence signifie « terminé »."
+  },
+  "camera": {
+    "title": "Photo du document",
+    "body": "Tiens l'appareil bien à plat au-dessus du cahier. Tu peux photographier 1 à 10 pages à la suite."
+  },
+  "diagram": {
+    "title": "Regarde l'image",
+    "body": "Les numéros indiquent ce qu'il faut nommer. Touche ou zoome pour plus de détails."
+  },
+  "streak": {
+    "title": "Première série — {{count}} jour !",
+    "title_other": "Première série — {{count}} jours !",
+    "body": "S'entraîner plusieurs jours d'affilée fait monter ta série. Pas grave si tu sautes un jour."
+  }
+}

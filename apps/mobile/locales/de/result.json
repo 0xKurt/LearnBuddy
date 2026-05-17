@@ -1,0 +1,15 @@
+{
+  "today_at": "Heute · {{time}}",
+  "title": "Heute geübt — fein gemacht.",
+  "summary": "{{minutes}} Minuten · {{items}} Aufgaben",
+  "stats": {
+    "practiced": "geübt",
+    "secure_now": "jetzt sicher",
+    "still_unsure": "noch unsicher",
+    "streak": "Streak",
+    "streak_caption": "Tage in Folge"
+  },
+  "this_week_label": "Stoff diese Woche",
+  "cta_review_hard": "Nochmal mit den schwierigen",
+  "cta_overview": "Zur Übersicht"
+}

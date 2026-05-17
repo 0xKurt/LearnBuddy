@@ -7,11 +7,14 @@
 //   to decide whether to drop into the learner surface, finish onboarding,
 //   or re-prompt for consent.
 //
-// GET /account/credits/summary — slice F1.
+// GET /account/credits/summary
+//   Returns the credit_buckets row + the 50 most recent credit_events for
+//   the admin credits screen (Doc 05 §subscription). Account-scoped; the
+//   service-role client bypasses RLS but we filter by the JWT's account_id.
 
 import { Hono } from 'hono';
 
-import { ApiError, notImplemented } from '../lib/errors.js';
+import { ApiError } from '../lib/errors.js';
 import { getDeps } from '../lib/deps.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -76,4 +79,41 @@ accountRoutes.get('/', async (c) => {
   });
 });
 
-accountRoutes.get('/credits/summary', (c) => notImplemented(c, 'GET /account/credits/summary'));
+accountRoutes.get('/credits/summary', async (c) => {
+  const { supabase } = getDeps(c);
+  const { account_id } = c.get('auth');
+
+  const bucket = await supabase
+    .from('credit_buckets')
+    .select('*')
+    .eq('account_id', account_id)
+    .maybeSingle();
+  if (bucket.error) {
+    throw new ApiError('internal', 'Failed to load credit bucket', { cause: bucket.error.message });
+  }
+
+  const events = await supabase
+    .from('credit_events')
+    .select('id, delta, reason, reference_id, learner_id, model, cost_usd_micros, created_at')
+    .eq('account_id', account_id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (events.error) {
+    throw new ApiError('internal', 'Failed to load credit events', { cause: events.error.message });
+  }
+
+  const b = bucket.data as Record<string, unknown> | null;
+  return c.json({
+    bucket: b
+      ? {
+          tier: b.tier,
+          current_balance: b.current_balance,
+          monthly_allotment: b.monthly_allotment,
+          rollover_cap: b.rollover_cap,
+          current_period_start: b.current_period_start,
+          current_period_end: b.current_period_end,
+        }
+      : null,
+    recent_events: events.data ?? [],
+  });
+});

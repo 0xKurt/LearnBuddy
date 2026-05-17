@@ -1,4 +1,17 @@
 {
+  "signup": {
+    "title": "Crear cuenta",
+    "subtitle": "Con tu correo electrónico y una contraseña.",
+    "placeholder_email": "Correo electrónico",
+    "placeholder_password": "Contraseña (mínimo 8 caracteres)",
+    "cta": "Crear cuenta",
+    "busy": "Un momento …",
+    "minor_link": "Tengo menos de 16 años",
+    "error_conflict": "Este correo ya está registrado.",
+    "error_validation": "Comprueba tu correo y contraseña (≥ 8 caracteres).",
+    "error_generic": "Algo salió mal. Inténtalo de nuevo en un momento.",
+    "error_network": "Sin conexión. Inténtalo más tarde."
+  },
   "welcome": {
     "title": "Compañero de estudio",
     "subtitle": "Un compañero tranquilo mientras practicas. Fotografía, haz unas preguntas — listo.",
@@ -36,6 +49,36 @@
     "error_already": "Esta cuenta ya tiene un perfil.",
     "error_validation": "Revisa los campos introducidos.",
     "error_generic": "No se pudo guardar — inténtalo de nuevo en un momento."
+  },
+  "add_profile": {
+    "title": "Crear perfil",
+    "body": "Solo necesitamos el nombre, el año de nacimiento y el curso. Todo se puede cambiar después.",
+    "field_first_name": "Nombre",
+    "field_birth_year": "Año de nacimiento",
+    "field_grade": "Curso",
+    "placeholder_first_name": "p. ej. Lena",
+    "placeholder_birth_year": "p. ej. 2012",
+    "minor_hint": "En la siguiente pantalla pediremos brevemente el consentimiento para un perfil menor de 16.",
+    "cta": "Continuar",
+    "busy": "Un momento …",
+    "error_already": "Esta cuenta ya tiene un perfil.",
+    "error_validation": "Revisa todos los campos.",
+    "error_generic": "No se pudo guardar ahora — ¿lo intentas otra vez?",
+    "grades": {
+      "1": "1.º Primaria",
+      "2": "2.º Primaria",
+      "3": "3.º Primaria",
+      "4": "4.º Primaria",
+      "5": "5.º Primaria",
+      "6": "6.º Primaria",
+      "7": "1.º ESO",
+      "8": "2.º ESO",
+      "9": "3.º ESO",
+      "10": "4.º ESO",
+      "11": "1.º Bachillerato",
+      "12": "2.º Bachillerato",
+      "13": "Universidad / formación adulta"
+    }
   },
   "pin": {
     "title": "Proteger el área de cuenta",

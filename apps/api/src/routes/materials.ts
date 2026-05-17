@@ -30,8 +30,8 @@ import { MaterialCreateRequest, MaterialUploadUrlRequest } from '@learnbuddy/sha
 import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
-import { notImplemented } from '../lib/errors.js';
-import type { GeneratedVisionItem, VisionInput } from '../lib/llm/gateway.js';
+import { cropDiagramsAndUpload, type SourcePage } from '../lib/llm/diagram.js';
+import type { GeneratedVisionItem, VisionInput, VisionResult } from '../lib/llm/gateway.js';
 import { streamMaterialEvents } from '../lib/sse.js';
 import { validateTemplate } from '../lib/llm/templateValidation.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
@@ -111,65 +111,70 @@ async function ownedMaterial(
 
 // ── POST /materials/upload-url ──────────────────────────────────────────────
 
-materialRoutes.post('/upload-url', zValidator('json', MaterialUploadUrlRequest), async (c) => {
-  const { supabase } = getDeps(c);
-  const { account_id } = c.get('auth');
-  const learner_id = c.get('learner_id');
-  if (!learner_id) {
-    throw new ApiError('unauthenticated', 'Missing learner context');
-  }
-  const input = c.req.valid('json');
+materialRoutes.post(
+  '/upload-url',
+  rateLimit({ key: 'materials_upload_url', per_day: 60 }),
+  zValidator('json', MaterialUploadUrlRequest),
+  async (c) => {
+    const { supabase } = getDeps(c);
+    const { account_id } = c.get('auth');
+    const learner_id = c.get('learner_id');
+    if (!learner_id) {
+      throw new ApiError('unauthenticated', 'Missing learner context');
+    }
+    const input = c.req.valid('json');
 
-  await ownedSubject(supabase, learner_id, input.subject_id);
-  if (input.folder_id) {
-    await ownedFolder(supabase, input.subject_id, input.folder_id);
-  }
+    await ownedSubject(supabase, learner_id, input.subject_id);
+    if (input.folder_id) {
+      await ownedFolder(supabase, input.subject_id, input.folder_id);
+    }
 
-  const created = await supabase
-    .from('materials')
-    .insert({
-      subject_id: input.subject_id,
-      folder_id: input.folder_id ?? null,
-      learner_id,
-      source_kind: 'photo',
-      page_count: input.photo_count,
-      extraction_status: 'pending',
-    })
-    .select('id')
-    .single();
-  if (created.error) {
-    throw new ApiError('internal', 'Failed to reserve material', {
-      cause: created.error.message,
-    });
-  }
-  const material_id = (created.data as { id: string }).id;
-
-  const ext = input.mime_type === 'image/png' ? 'png' : 'jpg';
-  const uploads: Array<{
-    position: number;
-    storage_path: string;
-    signed_url: string;
-    expires_at: string;
-  }> = [];
-  const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
-  for (let i = 1; i <= input.photo_count; i++) {
-    const path = `${account_id}/${material_id}/${i}.${ext}`;
-    const signed = await supabase.storage.from('materials-raw').createSignedUploadUrl(path);
-    if (signed.error || !signed.data?.signedUrl) {
-      throw new ApiError('internal', 'Failed to sign upload URL', {
-        cause: signed.error?.message ?? 'no signed url',
+    const created = await supabase
+      .from('materials')
+      .insert({
+        subject_id: input.subject_id,
+        folder_id: input.folder_id ?? null,
+        learner_id,
+        source_kind: 'photo',
+        page_count: input.photo_count,
+        extraction_status: 'pending',
+      })
+      .select('id')
+      .single();
+    if (created.error) {
+      throw new ApiError('internal', 'Failed to reserve material', {
+        cause: created.error.message,
       });
     }
-    uploads.push({
-      position: i,
-      storage_path: `materials-raw/${path}`,
-      signed_url: signed.data.signedUrl,
-      expires_at: expiresAt,
-    });
-  }
+    const material_id = (created.data as { id: string }).id;
 
-  return c.json({ material_id, uploads });
-});
+    const ext = input.mime_type === 'image/png' ? 'png' : 'jpg';
+    const uploads: Array<{
+      position: number;
+      storage_path: string;
+      signed_url: string;
+      expires_at: string;
+    }> = [];
+    const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
+    for (let i = 1; i <= input.photo_count; i++) {
+      const path = `${account_id}/${material_id}/${i}.${ext}`;
+      const signed = await supabase.storage.from('materials-raw').createSignedUploadUrl(path);
+      if (signed.error || !signed.data?.signedUrl) {
+        throw new ApiError('internal', 'Failed to sign upload URL', {
+          cause: signed.error?.message ?? 'no signed url',
+        });
+      }
+      uploads.push({
+        position: i,
+        storage_path: `materials-raw/${path}`,
+        signed_url: signed.data.signedUrl,
+        expires_at: expiresAt,
+      });
+    }
+
+    return c.json({ material_id, uploads });
+  },
+);
 
 // ── POST /materials ─────────────────────────────────────────────────────────
 
@@ -244,16 +249,17 @@ materialRoutes.post(
       });
     }
 
-    // 5. Download photo bytes from storage (Vertex needs base64-encoded images).
+    // 5. Download photo bytes from storage (Vertex needs base64-encoded images,
+    //    the D1.5 sharp pipeline needs raw bytes for diagram cropping).
     //    Failing photos are skipped; if none survive we extraction_failed
     //    BEFORE the LLM call so the user gets a meaningful error instead of
     //    a misleading validation 400 from the gateway's images=0 guard.
-    const images = await downloadPhotosAsBase64(
+    const photos = await downloadPhotos(
       supabase,
       `${account_id}/${input.material_id}`,
       input.client_quality_scores.length,
     );
-    if (images.length === 0) {
+    if (photos.length === 0) {
       await refund(supabase, account_id, debit);
       await markFailed(supabase, input.material_id, 'photos_not_retrievable');
       throw new ApiError(
@@ -263,10 +269,10 @@ materialRoutes.post(
     }
 
     // 6. Call the LLM gateway. Doc 06 §P1. Errors mapped to Doc 06 §failure-modes.
-    let vision;
+    let vision: VisionResult;
     try {
       vision = await llm.visionExtractAndGenerate({
-        images,
+        images: photos.map(({ mimeType, data }) => ({ mimeType, data })),
         locale: input.locale as VisionInput['locale'],
         gradeLevel,
         subject: subject.name,
@@ -299,6 +305,58 @@ materialRoutes.post(
       await markFailed(supabase, input.material_id, 'too_few_items');
       throw new ApiError('extraction_failed', 'Too few valid items after post-processing');
     }
+
+    // 6b. D1.5 — crop diagrams, overlay numbered markers, upload to study-assets,
+    //     insert study_assets rows. Diagrams that fail processing are simply
+    //     omitted from the id map; their dependent items get downgraded below.
+    const pages: SourcePage[] = photos.map((p) => ({ mimeType: p.mimeType, bytes: p.bytes }));
+    const diagramOutcome =
+      vision.diagrams.length > 0
+        ? await cropDiagramsAndUpload({
+            account_id,
+            material_id: input.material_id,
+            learner_id,
+            pages,
+            diagrams: vision.diagrams,
+            supabase,
+          })
+        : { ids: new Map<number, string>(), validLabelCount: new Map<number, number>() };
+
+    // Drop / rewrite items that depend on diagrams the pipeline didn't produce.
+    const resolvedItems = vision.items.flatMap((it): GeneratedVisionItem[] => {
+      const diagramIdx = it.diagram_ref?.diagram_index;
+      const labelIdx = it.diagram_ref?.label_index;
+      const needsAsset = it.stimulus_kind === 'study_asset' || it.answer_kind === 'diagram_label';
+      if (!needsAsset) return [it];
+      if (diagramIdx == null) {
+        // Hint says study_asset but no diagram_ref — can't resolve, drop it.
+        return [];
+      }
+      const assetId = diagramOutcome.ids.get(diagramIdx);
+      if (!assetId) return []; // diagram dropped (processing failed)
+      // For diagram_label items, also confirm the label index is within the
+      // markers we actually placed.
+      if (it.answer_kind === 'diagram_label') {
+        const validLabels = diagramOutcome.validLabelCount.get(diagramIdx) ?? 0;
+        if (labelIdx == null || labelIdx < 0 || labelIdx >= validLabels) return [];
+      }
+      return [
+        {
+          ...it,
+          stimulus_kind: 'study_asset',
+          stimulus_data: { ...(it.stimulus_data ?? {}), study_asset_id: assetId },
+        },
+      ];
+    });
+    if (resolvedItems.length < 3) {
+      await refund(supabase, account_id, debit);
+      await markFailed(supabase, input.material_id, 'too_few_items');
+      throw new ApiError(
+        'extraction_failed',
+        'Too few valid items remained after diagram resolution',
+      );
+    }
+    vision.items = resolvedItems;
 
     // 7a. Validate & persist problem templates (Doc 06 §post-processing #4).
     //     Templates that fail the 5-sample / ≥60%-feasibility gate are dropped
@@ -378,6 +436,7 @@ materialRoutes.post(
     await settle(supabase, account_id, debit, actualCredits, vision.usage);
 
     // 10. Stream the SSE response.
+    const studyAssetIds = Array.from(diagramOutcome.ids.values());
     return streamMaterialEvents(c, async (push) => {
       await push({ event: 'phase', data: { phase: 'reading_images' } });
       await push({ event: 'phase', data: { phase: 'generating_items' } });
@@ -387,7 +446,7 @@ materialRoutes.post(
           material_id: input.material_id,
           items: persistedItems,
           templates: [],
-          study_assets: [],
+          study_assets: studyAssetIds,
           extracted_language: vision.detected_language ?? input.locale,
           credits_used: actualCredits,
         },
@@ -418,20 +477,39 @@ async function markFailed(
   }
 }
 
-async function downloadPhotosAsBase64(
+/** Downloaded photo bytes + the base64 encoding we ship to Vertex. We return
+ *  both so D1.5's diagram pipeline can decode the raw bytes for sharp without
+ *  re-downloading or re-decoding base64. */
+type DownloadedPhoto = {
+  mimeType: 'image/jpeg' | 'image/png';
+  /** base64 (no data: prefix) for the Vertex inlineData part. */
+  data: string;
+  /** Raw bytes for sharp() processing. */
+  bytes: Buffer;
+};
+
+async function downloadPhotos(
   supabase: ReturnType<typeof getDeps>['supabase'],
   prefix: string,
   count: number,
-): Promise<Array<{ mimeType: 'image/jpeg' | 'image/png'; data: string }>> {
-  const out: Array<{ mimeType: 'image/jpeg' | 'image/png'; data: string }> = [];
-  for (let i = 1; i <= count; i++) {
-    const path = `${prefix}/${i}.jpg`;
-    const dl = await supabase.storage.from('materials-raw').download(path);
-    if (dl.error || !dl.data) continue;
-    const buf = Buffer.from(await dl.data.arrayBuffer());
-    out.push({ mimeType: 'image/jpeg', data: buf.toString('base64') });
-  }
-  return out;
+): Promise<DownloadedPhoto[]> {
+  // Photos are 100–300 KB; sequential downloads added ~1–3 s to vision
+  // latency. Parallel keeps order stable via index, drops failures silently.
+  const positions = Array.from({ length: count }, (_, i) => i + 1);
+  const downloads = await Promise.all(
+    positions.map(async (i): Promise<DownloadedPhoto | null> => {
+      const path = `${prefix}/${i}.jpg`;
+      const dl = await supabase.storage.from('materials-raw').download(path);
+      if (dl.error || !dl.data) return null;
+      const buf = Buffer.from(await dl.data.arrayBuffer());
+      return {
+        mimeType: 'image/jpeg',
+        data: buf.toString('base64'),
+        bytes: buf,
+      };
+    }),
+  );
+  return downloads.filter((d): d is DownloadedPhoto => d !== null);
 }
 
 function toItemRow(
@@ -440,6 +518,12 @@ function toItemRow(
   learner_id: string,
   usage: { model: string; prompt_version: string },
 ): Record<string, unknown> {
+  // study_asset_id surfaces both as a first-class FK on items and inside
+  // stimulus_data; populate both so the read path can join either way.
+  const studyAssetIdFromStimulus =
+    typeof it.stimulus_data?.study_asset_id === 'string'
+      ? (it.stimulus_data.study_asset_id as string)
+      : null;
   return {
     material_id,
     learner_id,
@@ -454,6 +538,9 @@ function toItemRow(
     latex_acceptable: it.latex_acceptable ?? [],
     fill_blank_template: it.fill_blank_template ?? null,
     fill_blank_answers: it.fill_blank_answers ?? [],
+    study_asset_id: studyAssetIdFromStimulus,
+    diagram_label_index:
+      it.answer_kind === 'diagram_label' && it.diagram_ref ? it.diagram_ref.label_index : null,
     stimulus_kind: it.stimulus_kind ?? 'none',
     stimulus_data: it.stimulus_data ?? {},
     difficulty: it.difficulty,
@@ -654,5 +741,61 @@ materialRoutes.get('/:id/templates', async (c) => {
   return c.json({ templates: t.data ?? [] });
 });
 
-materialRoutes.patch('/:id', (c) => notImplemented(c, 'PATCH /materials/:id')); // G3
-materialRoutes.delete('/:id', (c) => notImplemented(c, 'DELETE /materials/:id')); // G3
+// PATCH /materials/:id — rename / move-to-folder. Doc 04 §materials.
+const MaterialPatchRequest = z.object({
+  title: z.string().min(1).max(120).optional(),
+  folder_id: z.string().uuid().nullable().optional(),
+});
+
+materialRoutes.patch('/:id', zValidator('json', MaterialPatchRequest), async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const id = c.req.param('id');
+  const body = c.req.valid('json');
+
+  const material = await ownedMaterial(supabase, learner_id, id);
+
+  if (Object.keys(body).length === 0) {
+    throw new ApiError('validation_failed', 'Empty update body');
+  }
+
+  // If moving to a folder, confirm the new folder belongs to the same subject.
+  if (body.folder_id) {
+    await ownedFolder(supabase, material.subject_id, body.folder_id);
+  }
+
+  const upd = await supabase
+    .from('materials')
+    .update({
+      ...(body.title !== undefined ? { title: body.title } : {}),
+      ...(body.folder_id !== undefined ? { folder_id: body.folder_id } : {}),
+    })
+    .eq('id', id)
+    .select('*')
+    .maybeSingle();
+  if (upd.error) {
+    throw new ApiError('internal', 'Failed to update material', { cause: upd.error.message });
+  }
+  if (!upd.data) throw new ApiError('not_found', 'Material not found');
+  return c.json(upd.data);
+});
+
+// DELETE /materials/:id — soft archive (Doc 03 §soft-archive-pattern).
+materialRoutes.delete('/:id', async (c) => {
+  const { supabase, now } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const id = c.req.param('id');
+
+  await ownedMaterial(supabase, learner_id, id);
+
+  const upd = await supabase
+    .from('materials')
+    .update({ archived_at: now().toISOString() })
+    .eq('id', id);
+  if (upd.error) {
+    throw new ApiError('internal', 'Failed to archive material', { cause: upd.error.message });
+  }
+  return c.json({ ok: true });
+});

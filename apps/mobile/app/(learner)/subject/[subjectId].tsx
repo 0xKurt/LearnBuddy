@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -40,6 +41,7 @@ function daysUntil(scheduled: string | null, now = new Date()): number | null {
 }
 
 export default function SubjectScreen() {
+  const { t } = useTranslation('home');
   const { subjectId } = useLocalSearchParams<{ subjectId: string }>();
   const [tab, setTab] = useState<Tab>('ordner');
   const [creatingFolder, setCreatingFolder] = useState(false);
@@ -75,10 +77,10 @@ export default function SubjectScreen() {
   });
 
   const openSubjectMenu = () => {
-    Alert.alert(subject?.name ?? 'Fach', undefined, [
-      { text: 'Abbrechen', style: 'cancel' },
+    Alert.alert(subject?.name ?? '', undefined, [
+      { text: t('subject.cancel'), style: 'cancel' },
       {
-        text: 'Archivieren',
+        text: t('subject.archive'),
         style: 'destructive',
         onPress: () => archiveSubjectMut.mutate(),
       },
@@ -101,8 +103,8 @@ export default function SubjectScreen() {
           <CircleBtn icon="back" onPress={() => router.back()} />
           <EmptyState
             glyph="🤔"
-            title="Fach nicht gefunden."
-            body="Vielleicht wurde es archiviert."
+            title={t('subject.not_found_title')}
+            body={t('subject.not_found_body')}
           />
         </View>
       </SafeAreaView>
@@ -133,7 +135,7 @@ export default function SubjectScreen() {
           {subject.name}
         </Text>
         <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 2 }}>
-          {`${subject.material_count} ${subject.material_count === 1 ? 'Material' : 'Materialien'}`}
+          {t('subject.material_count_other', { count: subject.material_count })}
         </Text>
 
         <View
@@ -150,13 +152,13 @@ export default function SubjectScreen() {
           }}
         >
           <TabBtn
-            label="Ordner"
+            label={t('subject.tab_folders')}
             count={folders.length}
             active={tab === 'ordner'}
             onPress={() => setTab('ordner')}
           />
           <TabBtn
-            label="Material"
+            label={t('subject.tab_materials')}
             count={subject.material_count}
             active={tab === 'material'}
             onPress={() => setTab('material')}
@@ -167,8 +169,8 @@ export default function SubjectScreen() {
           folders.length === 0 ? (
             <EmptyState
               glyph="🗂️"
-              title="Noch keine Ordner."
-              body="Leg einen Ordner an, um Materialien für eine Arbeit oder ein Kapitel zu gruppieren."
+              title={t('subject.no_folders_title')}
+              body={t('subject.no_folders_body')}
             />
           ) : (
             <View style={{ gap: 8 }}>
@@ -192,8 +194,8 @@ export default function SubjectScreen() {
           // empty state instead of fake rows. Doc 05 §subject + CLAUDE.md #6.
           <EmptyState
             glyph="📷"
-            title="Noch keine Materialien."
-            body="Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst."
+            title={t('subject.no_materials_title')}
+            body={t('subject.no_materials_body')}
           />
         )}
       </ScrollView>
@@ -210,7 +212,7 @@ export default function SubjectScreen() {
       >
         <View style={{ flex: 1 }}>
           <Btn size="lg" full variant="outline" onPress={() => setCreatingFolder(true)}>
-            Ordner
+            {t('subject.new_folder')}
           </Btn>
         </View>
         <View style={{ flex: 1 }}>
@@ -220,7 +222,7 @@ export default function SubjectScreen() {
             variant="outline"
             onPress={() => router.push({ pathname: '/(learner)/capture', params: { subjectId } })}
           >
-            Neu
+            {t('subject.new_material')}
           </Btn>
         </View>
         <View style={{ flex: 2 }}>
@@ -230,7 +232,7 @@ export default function SubjectScreen() {
             onPress={() => subject.material_count > 0 && router.push('/(learner)/session/demo')}
             disabled={subject.material_count === 0}
           >
-            Üben starten
+            {t('subject.start_practice')}
           </Btn>
         </View>
       </View>
@@ -301,6 +303,7 @@ function FolderCard({
   onPress: () => void;
   onLongPress: () => void;
 }) {
+  const { t } = useTranslation('home');
   const inDays = daysUntil(folder.scheduled_for);
   return (
     <Pressable onPress={onPress} onLongPress={onLongPress} delayLongPress={350}>
@@ -317,7 +320,9 @@ function FolderCard({
               )}
             </View>
           </View>
-          {inDays != null && <Chip tone="warning">{`Test in ${inDays} Tagen`}</Chip>}
+          {inDays != null && (
+            <Chip tone="warning">{t('folder.test_in_days', { count: inDays })}</Chip>
+          )}
         </View>
       </Card>
     </Pressable>

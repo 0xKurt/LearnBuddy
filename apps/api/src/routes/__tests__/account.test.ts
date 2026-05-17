@@ -36,6 +36,33 @@ async function signUpAndAuthenticate(
   return { token, accountId: body.account_id, userId: body.user_id };
 }
 
+describe('GET /account/credits/summary', () => {
+  it('returns the bucket + recent events for the authenticated account', async () => {
+    const { app, fake } = setup();
+    const { token } = await signUpAndAuthenticate(app, fake, 'creds@example.com');
+
+    const res = await app.request('/account/credits/summary', {
+      method: 'GET',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      bucket: { tier: string; current_balance: number } | null;
+      recent_events: Array<{ delta: number; reason: string }>;
+    };
+    expect(body.bucket?.tier).toBe('trial');
+    expect(body.bucket?.current_balance).toBe(1500);
+    expect(body.recent_events.length).toBeGreaterThan(0);
+    expect(body.recent_events.some((e) => e.reason === 'monthly_grant')).toBe(true);
+  });
+
+  it('returns 401 without bearer', async () => {
+    const { app } = setup();
+    const res = await app.request('/account/credits/summary', { method: 'GET' });
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('GET /account', () => {
   it('rejects unauthenticated', async () => {
     const { app } = setup();

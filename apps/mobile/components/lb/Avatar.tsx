@@ -12,6 +12,8 @@ export function Avatar({
 }) {
   return (
     <View
+      accessibilityRole="image"
+      accessibilityLabel={`Profil ${name}`}
       style={{
         width: size,
         height: size,

@@ -1,0 +1,66 @@
+{
+  "greeting": {
+    "morning": "Guten Morgen",
+    "afternoon": "Hallo",
+    "evening": "Schönen Abend"
+  },
+  "loading_error": {
+    "title": "Konnte Fächer nicht laden.",
+    "body": "Bitte zieh die Liste nach unten, um es erneut zu versuchen."
+  },
+  "empty": {
+    "title": "Noch keine Fächer.",
+    "body": "Leg ein Fach an oder fotografier dein erstes Material — wir kümmern uns um den Rest."
+  },
+  "test_in_days": "Test in {{count}} Tagen",
+  "add_subject_tile": "Fach hinzufügen",
+  "modal": {
+    "title": "Neues Fach",
+    "name_label": "Name",
+    "cancel": "Abbrechen",
+    "create": "Anlegen",
+    "creating": "Wird angelegt…",
+    "error_title": "Ups."
+  },
+  "folder": {
+    "not_found_title": "Ordner nicht gefunden.",
+    "not_found_body": "Vielleicht wurde er archiviert.",
+    "missing_subject": "Fehlender Betreff.",
+    "materials_section": "Materialien",
+    "no_material_title": "Noch kein Material in diesem Ordner.",
+    "no_material_body": "Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst.",
+    "add_material": "+ Material",
+    "start_practice": "Üben starten",
+    "archive_title": "Ordner archivieren",
+    "archive_body": "Der Ordner wird archiviert und kann 30 Tage lang wiederhergestellt werden.",
+    "rename": "Umbenennen",
+    "archive": "Archivieren",
+    "cancel": "Abbrechen",
+    "test_in_days": "Test in {{count}} Tagen"
+  },
+  "subject": {
+    "not_found_title": "Fach nicht gefunden.",
+    "not_found_body": "Vielleicht wurde es archiviert.",
+    "material_count_one": "{{count}} Material",
+    "material_count_other": "{{count}} Materialien",
+    "tab_folders": "Ordner",
+    "tab_materials": "Material",
+    "no_folders_title": "Noch keine Ordner.",
+    "no_folders_body": "Leg einen Ordner an, um Materialien für eine Arbeit oder ein Kapitel zu gruppieren.",
+    "no_materials_title": "Noch keine Materialien.",
+    "no_materials_body": "Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst.",
+    "new_folder": "Ordner",
+    "new_material": "Neu",
+    "start_practice": "Üben starten",
+    "archive": "Archivieren",
+    "cancel": "Abbrechen"
+  },
+  "subjects": {
+    "math": "Mathematik",
+    "biology": "Biologie",
+    "physics": "Physik",
+    "language_native": "Deutsch",
+    "language_foreign": "Sprache",
+    "general": "Anderes"
+  }
+}

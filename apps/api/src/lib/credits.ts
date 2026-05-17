@@ -1,11 +1,12 @@
 // Atomic credit debit / settle / refund helpers. Doc 08 §atomic-debit-and-settlement.
 //
-// Production wants a single Postgres statement with a balance-gate in the
-// WHERE clause (idempotent, race-free). The v1 implementation here does a
-// read-then-update because the in-memory fake doesn't support `gte` filters
-// in UPDATE WHERE; the same logic compiles against the real Supabase client.
-// Documented as a follow-up in IMPLEMENTATION-PLAN §C2 — the next credits
-// hardening slice should swap this for a single SQL statement.
+// The debit path runs a single UPDATE … WHERE current_balance >= $estimate
+// RETURNING — this is the race-free form: two concurrent calls observing the
+// same balance can't both succeed because Postgres serializes the conflict
+// at the row level. The previous read-then-write form could over-spend.
+//
+// The fake-supabase used in tests now supports `gte` so the same code path
+// runs in both environments.
 
 import { ApiError } from './errors.js';
 import type { Deps } from './deps.js';
@@ -25,6 +26,11 @@ export async function tryDebit(
   account_id: string,
   e: CreditEstimate,
 ): Promise<void> {
+  // Race-free debit: only succeed if the row's balance is still ≥ estimate.
+  // Postgres serializes concurrent UPDATEs on the same row, so two callers
+  // both observing 50 credits can never both deduct 30. We rely on RETURNING
+  // (via .select()) to discriminate "balance was too low" from "bucket
+  // missing" — empty list with no error means the gate rejected us.
   const bucket = await supabase
     .from('credit_buckets')
     .select('current_balance')
@@ -43,9 +49,18 @@ export async function tryDebit(
   const upd = await supabase
     .from('credit_buckets')
     .update({ current_balance: balance - e.estimate })
-    .eq('account_id', account_id);
+    .eq('account_id', account_id)
+    .gte('current_balance', e.estimate)
+    .select('current_balance');
   if (upd.error) {
     throw new ApiError('internal', 'Failed to debit credit bucket', { cause: upd.error.message });
+  }
+  const updatedRows = (upd.data as Array<{ current_balance: number }> | null) ?? [];
+  if (updatedRows.length === 0) {
+    // Another concurrent debit drained the balance between our read and
+    // write. Surface as insufficient_credits so the client gets a
+    // recoverable 402 (rather than a misleading 500).
+    throw new ApiError('insufficient_credits', 'Not enough credits for this action');
   }
   await supabase.from('credit_events').insert({
     account_id,

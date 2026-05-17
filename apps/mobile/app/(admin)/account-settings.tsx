@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,6 +22,7 @@ import { supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function AccountSettingsScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -33,10 +35,10 @@ export default function AccountSettingsScreen() {
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
 
   const onSignOut = () => {
-    Alert.alert('Abmelden?', undefined, [
-      { text: 'Abbrechen', style: 'cancel' },
+    Alert.alert(t('account_settings.sign_out_confirm.title'), undefined, [
+      { text: t('account_settings.sign_out_confirm.cancel'), style: 'cancel' },
       {
-        text: 'Abmelden',
+        text: t('account_settings.sign_out_confirm.confirm'),
         style: 'destructive',
         onPress: async () => {
           await supabase.auth.signOut();
@@ -49,6 +51,7 @@ export default function AccountSettingsScreen() {
     ]);
   };
 
+  const empty = t('account_settings.empty');
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
       <View
@@ -61,20 +64,22 @@ export default function AccountSettingsScreen() {
         }}
       >
         <CircleBtn icon="back" onPress={() => router.back()} />
-        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>Konto</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>
+          {t('account_settings.title')}
+        </Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 16 }}>
-        <Card title="Anzeigename">
+        <Card title={t('account_settings.card_display_name')}>
           <Text style={{ fontSize: 14, color: LB.ink }}>
-            {accountQuery.data?.display_name ?? '—'}
+            {accountQuery.data?.display_name ?? empty}
           </Text>
         </Card>
-        <Card title="Land">
+        <Card title={t('account_settings.card_country')}>
           <Text style={{ fontSize: 14, color: LB.ink }}>
-            {accountQuery.data?.country_code ?? '—'}
+            {accountQuery.data?.country_code ?? empty}
           </Text>
         </Card>
-        <Card title="Sprache">
+        <Card title={t('account_settings.card_language')}>
           <View style={{ gap: 6, marginTop: 4 }}>
             {SUPPORTED_LOCALES.map((code) => (
               <Pressable
@@ -116,7 +121,7 @@ export default function AccountSettingsScreen() {
           </View>
         </Card>
         <Btn full variant="danger" onPress={onSignOut}>
-          Abmelden
+          {t('account_settings.sign_out')}
         </Btn>
       </ScrollView>
     </SafeAreaView>

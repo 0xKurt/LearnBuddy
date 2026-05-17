@@ -7,6 +7,7 @@
 
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,24 +17,10 @@ import { createLearner } from '../../lib/api/learners.js';
 import { ApiError } from '../../lib/api/client.js';
 import { useAppStore } from '../../lib/store/index.js';
 
-type GradeOption = { value: number; label: string };
-const GRADES: GradeOption[] = [
-  { value: 1, label: 'Klasse 1' },
-  { value: 2, label: 'Klasse 2' },
-  { value: 3, label: 'Klasse 3' },
-  { value: 4, label: 'Klasse 4' },
-  { value: 5, label: 'Klasse 5' },
-  { value: 6, label: 'Klasse 6' },
-  { value: 7, label: 'Klasse 7' },
-  { value: 8, label: 'Klasse 8' },
-  { value: 9, label: 'Klasse 9' },
-  { value: 10, label: 'Klasse 10' },
-  { value: 11, label: 'Oberstufe 11' },
-  { value: 12, label: 'Oberstufe 12' },
-  { value: 13, label: 'Studium / Erwachsenenbildung' },
-];
+const GRADE_VALUES: ReadonlyArray<number> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
 export default function AddProfileScreen() {
+  const { t } = useTranslation('onboarding');
   const setActiveLearner = useAppStore((s) => s.set_active_learner);
   const setPendingDraft = useAppStore((s) => s.set_pending_profile_draft);
 
@@ -75,11 +62,11 @@ export default function AddProfileScreen() {
       router.push('/(onboarding)/pin-setup');
     } catch (e) {
       if (e instanceof ApiError && e.code === 'learner_already_exists') {
-        setError('Auf diesem Konto gibt es schon ein Profil.');
+        setError(t('add_profile.error_already'));
       } else if (e instanceof ApiError && e.code === 'validation_failed') {
-        setError('Bitte alle Felder prüfen.');
+        setError(t('add_profile.error_validation'));
       } else {
-        setError('Konnte gerade nicht speichern — gleich nochmal probieren?');
+        setError(t('add_profile.error_generic'));
       }
     } finally {
       setBusy(false);
@@ -94,49 +81,55 @@ export default function AddProfileScreen() {
       >
         <View style={{ gap: 14, marginTop: 24 }}>
           <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
-            Profil anlegen
+            {t('add_profile.title')}
           </Text>
           <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
-            Wir brauchen den Vornamen, das Geburtsjahr und die Klasse. Alles anpassbar später.
+            {t('add_profile.body')}
           </Text>
 
           <View style={{ marginTop: 18, gap: 12 }}>
-            <Field label="Vorname">
+            <Field label={t('add_profile.field_first_name')}>
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="z. B. Lena"
+                placeholder={t('add_profile.placeholder_first_name')}
                 placeholderTextColor={LB.ink3}
                 style={inputStyle}
               />
             </Field>
-            <Field label="Geburtsjahr">
+            <Field label={t('add_profile.field_birth_year')}>
               <TextInput
                 value={birthYear}
                 onChangeText={(v) => setBirthYear(v.replace(/\D/g, '').slice(0, 4))}
-                placeholder="z. B. 2012"
+                placeholder={t('add_profile.placeholder_birth_year')}
                 placeholderTextColor={LB.ink3}
                 keyboardType="number-pad"
                 style={inputStyle}
               />
             </Field>
-            <Field label="Klasse">
+            <Field label={t('add_profile.field_grade')}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {GRADES.map((g) => (
+                {GRADE_VALUES.map((value) => (
                   <Pressable
-                    key={g.value}
-                    onPress={() => setGrade(g.value)}
+                    key={value}
+                    onPress={() => setGrade(value)}
                     style={{
                       paddingHorizontal: 12,
                       paddingVertical: 8,
                       borderRadius: 999,
-                      backgroundColor: grade === g.value ? LB.ink : LB.bg,
-                      borderColor: LB.hairline,
+                      backgroundColor: grade === value ? LB.primaryLt : LB.bg,
+                      borderColor: grade === value ? LB.primary : LB.hairline,
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={{ color: grade === g.value ? '#fff' : LB.ink, fontSize: 12 }}>
-                      {g.label}
+                    <Text
+                      style={{
+                        color: grade === value ? LB.primaryDk : LB.ink,
+                        fontSize: 12,
+                        fontWeight: grade === value ? '600' : '400',
+                      }}
+                    >
+                      {t(`add_profile.grades.${value}`)}
                     </Text>
                   </Pressable>
                 ))}
@@ -144,7 +137,7 @@ export default function AddProfileScreen() {
             </Field>
             {isMinor && (
               <Text style={{ fontSize: 12, color: LB.ink2, lineHeight: 18 }}>
-                Auf der nächsten Seite holen wir kurz die Einwilligung für ein Profil unter 16 ein.
+                {t('add_profile.minor_hint')}
               </Text>
             )}
             {error && <Text style={{ color: LB.danger, fontSize: 12 }}>{error}</Text>}
@@ -153,7 +146,7 @@ export default function AddProfileScreen() {
 
         <View style={{ marginTop: 32 }}>
           <Btn size="lg" full variant="primary" onPress={onContinue}>
-            {busy ? 'Moment …' : 'Weiter'}
+            {busy ? t('add_profile.busy') : t('add_profile.cta')}
           </Btn>
         </View>
       </ScrollView>

@@ -1,0 +1,13 @@
+{
+  "generic": "Something went wrong.",
+  "offline": "No internet connection.",
+  "try_later": "Please try again later.",
+  "no_connection_retry": "No connection. Please try again later.",
+  "validation": "Please check your entries.",
+  "rate_limited": "Too many attempts. Please wait a few minutes.",
+  "unauthorized": "Please sign in again.",
+  "not_found": "Nothing found.",
+  "save_failed": "Couldn't save just now — try again in a moment?",
+  "load_failed": "Couldn't load just now — try again in a moment?",
+  "title": "Oops."
+}

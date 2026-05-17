@@ -1,4 +1,6 @@
 {
+  "no_pending": "Aucun support à envoyer.",
+  "back": "Retour",
   "title": "Préparation du matériel",
   "phases": {
     "reserving": "Réservation du stockage …",
@@ -12,7 +14,8 @@
     "title": "Ça n'a pas marché.",
     "body": "Nous n'avons pas pu envoyer ton matériel. Réessaie — si ça continue, vérifie ta connexion.",
     "retry": "Réessayer",
-    "back": "Retour"
+    "back": "Retour",
+    "unknown": "Erreur inconnue"
   },
   "insufficient_credits": {
     "title": "Plus de crédits pour le moment.",

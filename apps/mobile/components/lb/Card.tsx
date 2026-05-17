@@ -10,6 +10,8 @@ type Props = {
   padding?: number;
   radius?: number;
   style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 };
 
 function backgroundFor(tone: Tone): { bg: string; color?: string } {
@@ -20,7 +22,16 @@ function backgroundFor(tone: Tone): { bg: string; color?: string } {
   return { bg: TONE_BG[tone] };
 }
 
-export function Card({ children, tone = 'paper', onPress, padding = 18, radius = 18, style }: Props) {
+export function Card({
+  children,
+  tone = 'paper',
+  onPress,
+  padding = 18,
+  radius = 18,
+  style,
+  accessibilityLabel,
+  accessibilityHint,
+}: Props) {
   const { bg } = backgroundFor(tone);
   const isPaper = tone === 'paper';
   const baseStyle: ViewStyle = {
@@ -32,10 +43,24 @@ export function Card({ children, tone = 'paper', onPress, padding = 18, radius =
   };
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={[baseStyle, style]}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        style={[baseStyle, style]}
+      >
         {children}
       </Pressable>
     );
   }
-  return <View style={[baseStyle, style]}>{children}</View>;
+  return (
+    <View
+      accessibilityRole={accessibilityLabel ? 'summary' : undefined}
+      accessibilityLabel={accessibilityLabel}
+      style={[baseStyle, style]}
+    >
+      {children}
+    </View>
+  );
 }

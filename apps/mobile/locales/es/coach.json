@@ -1,0 +1,24 @@
+{
+  "dismiss": "Entendido",
+  "math_keyboard": {
+    "title": "Teclado matemático",
+    "body": "Aquí están las raíces, fracciones y π. Mantén pulsado para ver más símbolos."
+  },
+  "voice": {
+    "title": "Habla sin más",
+    "body": "Mantén pulsado el micro y responde en voz alta. 1,5 segundos de silencio cuentan como «terminado»."
+  },
+  "camera": {
+    "title": "Foto del material",
+    "body": "Sostén el dispositivo plano sobre tu cuaderno. Puedes hacer de 1 a 10 fotos seguidas."
+  },
+  "diagram": {
+    "title": "Mira la imagen",
+    "body": "Los números indican qué nombrar. Toca o haz zoom para ver detalles."
+  },
+  "streak": {
+    "title": "¡Primera racha — {{count}} día!",
+    "title_other": "¡Primera racha — {{count}} días!",
+    "body": "Practicar varios días seguidos suma una racha. No pasa nada si saltas un día."
+  }
+}

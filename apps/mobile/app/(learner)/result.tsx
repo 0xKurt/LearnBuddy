@@ -1,10 +1,14 @@
 // Result — calm summary, no pressure. Matches handoff ScreenResult.
-// Doc 05 §result.
-import { router } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
+// Doc 05 §result + Doc 04 §sessions.
+import { useQuery } from '@tanstack/react-query';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, Card, Chip } from '../../components/lb/index.js';
+import { getSessionSummary } from '../../lib/api/sessions.js';
+import { useAppStore } from '../../lib/store/index.js';
 import { LB, TONE_BG } from '../../lib/theme/colors.js';
 
 type Stat = {
@@ -14,17 +18,43 @@ type Stat = {
   caption?: string;
 };
 
-const STATS: Stat[] = [
-  { label: 'geübt', value: 18, tone: 'mint' },
-  { label: 'jetzt sicher', value: 11, tone: 'sky' },
-  { label: 'noch unsicher', value: 4, tone: 'butter' },
-  { label: 'Streak', value: 7, tone: 'blush', caption: 'Tage in Folge' },
-];
-
 export default function ResultScreen() {
+  const { t } = useTranslation('result');
+  const params = useLocalSearchParams<{ sessionId?: string }>();
+  const learnerId = useAppStore((s) => s.active_learner_id);
+
+  const summaryQ = useQuery({
+    queryKey: ['session-summary', params.sessionId],
+    queryFn: () => {
+      if (!learnerId || !params.sessionId) {
+        throw new Error('missing learner or session id');
+      }
+      return getSessionSummary(learnerId, params.sessionId);
+    },
+    enabled: Boolean(learnerId && params.sessionId),
+  });
+
+  // Without a sessionId param the screen is reached via the legacy nav
+  // bar — keep the calm headline + the home CTAs but render no stats
+  // rather than fake numbers (CLAUDE.md §rule 6).
+  const data = summaryQ.data;
+  const minutes = data ? Math.max(1, Math.round(data.total_duration_ms / 60_000)) : null;
+  const stats: Stat[] = data
+    ? [
+        { label: t('stats.practiced'), value: data.attempts_count, tone: 'mint' },
+        { label: t('stats.secure_now'), value: data.secure_now, tone: 'sky' },
+        { label: t('stats.still_unsure'), value: data.still_unsure, tone: 'butter' },
+      ]
+    : [];
+
+  const startedAt = data?.started_at ?? new Date().toISOString();
+  const time = new Date(startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 }}
+      >
         <Text
           style={{
             fontSize: 11,
@@ -34,7 +64,7 @@ export default function ResultScreen() {
             letterSpacing: 0.5,
           }}
         >
-          Heute · 15:42
+          {t('today_at', { time })}
         </Text>
         <Text
           style={{
@@ -45,49 +75,65 @@ export default function ResultScreen() {
             letterSpacing: -0.5,
           }}
         >
-          Heute geübt — fein gemacht.
+          {t('title')}
         </Text>
-        <Text style={{ fontSize: 13, color: LB.ink2 }}>15 Minuten · 18 Aufgaben</Text>
+        {data && minutes !== null && (
+          <Text style={{ fontSize: 13, color: LB.ink2 }}>
+            {t('summary', { minutes, items: data.attempts_count })}
+          </Text>
+        )}
 
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            marginTop: 18,
-            rowGap: 10,
-          }}
-        >
-          {STATS.map((s) => (
-            <StatCard key={s.label} stat={s} />
-          ))}
-        </View>
+        {summaryQ.isLoading && (
+          <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+            <ActivityIndicator color={LB.ink2} />
+          </View>
+        )}
 
-        <Card padding={14} style={{ marginTop: 10 }}>
-          <Text
+        {stats.length > 0 && (
+          <View
             style={{
-              fontSize: 11,
-              color: LB.ink3,
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              marginTop: 18,
+              rowGap: 10,
             }}
           >
-            Stoff diese Woche
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-            <Chip tone="success">Lineare Gleichungen</Chip>
-            <Chip tone="success">Funktionen</Chip>
-            <Chip tone="warning">Quadratische Funktionen</Chip>
+            {stats.map((s) => (
+              <StatCard key={s.label} stat={s} />
+            ))}
           </View>
-        </Card>
+        )}
+
+        {data && data.topics.length > 0 && (
+          <Card padding={14} style={{ marginTop: 10 }}>
+            <Text
+              style={{
+                fontSize: 11,
+                color: LB.ink3,
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              {t('this_week_label')}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+              {data.topics.map((tp) => (
+                <Chip key={tp.name} tone={tp.tone === 'secure' ? 'success' : 'warning'}>
+                  {tp.name}
+                </Chip>
+              ))}
+            </View>
+          </Card>
+        )}
 
         <View style={{ gap: 8, marginTop: 18 }}>
           <Btn size="lg" full onPress={() => router.replace('/(learner)/home')}>
-            Nochmal mit den schwierigen
+            {t('cta_review_hard')}
           </Btn>
           <Btn size="md" full variant="ghost" onPress={() => router.replace('/(learner)/home')}>
-            Zur Übersicht
+            {t('cta_overview')}
           </Btn>
         </View>
       </ScrollView>
@@ -106,7 +152,9 @@ function StatCard({ stat }: { stat: Stat }) {
       }}
     >
       <Text style={{ fontSize: 11, color: LB.ink2, fontWeight: '500' }}>{stat.label}</Text>
-      <Text style={{ fontSize: 32, fontWeight: '600', color: LB.ink, marginTop: 2 }}>{stat.value}</Text>
+      <Text style={{ fontSize: 32, fontWeight: '600', color: LB.ink, marginTop: 2 }}>
+        {stat.value}
+      </Text>
       {stat.caption && (
         <Text style={{ fontSize: 11, color: LB.ink2, marginTop: -2 }}>{stat.caption}</Text>
       )}

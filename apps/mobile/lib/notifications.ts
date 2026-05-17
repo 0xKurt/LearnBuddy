@@ -54,11 +54,13 @@ export async function saveNotificationPrefs(prefs: NotificationPrefs): Promise<v
 // `appOwnership === 'expo'` and skip the require entirely there — local
 // scheduling will be wired in a dev/preview build of the app where
 // expo-notifications is fully supported.
+type DailyTrigger = { hour: number; minute: number; repeats: boolean };
+type DateTrigger = { date: Date };
 type ExpoNotifs = {
   cancelAllScheduledNotificationsAsync: () => Promise<void>;
   scheduleNotificationAsync: (req: {
     content: { title: string; body: string };
-    trigger: { hour: number; minute: number; repeats: boolean };
+    trigger: DailyTrigger | DateTrigger;
   }) => Promise<string>;
   requestPermissionsAsync: () => Promise<{ granted: boolean }>;
 };
@@ -82,7 +84,10 @@ export async function ensurePermissions(): Promise<boolean> {
   return granted;
 }
 
-export async function rescheduleNotifications(prefs: NotificationPrefs): Promise<void> {
+export async function rescheduleNotifications(
+  prefs: NotificationPrefs,
+  upcomingTests: UpcomingTest[] = [],
+): Promise<void> {
   if (!Notifs) return;
   await Notifs.cancelAllScheduledNotificationsAsync();
   if (!prefs.daily_enabled) return;
@@ -109,5 +114,58 @@ export async function rescheduleNotifications(prefs: NotificationPrefs): Promise
       },
       trigger: { hour: streakHour, minute, repeats: true },
     });
+  }
+  if (prefs.test_reminders && upcomingTests.length > 0) {
+    await scheduleTestHeadsUp(upcomingTests);
+  }
+}
+
+/** Upcoming test row returned by GET /learners/:id/schedule-summary. */
+export type UpcomingTest = {
+  folder_id: string;
+  name: string;
+  scheduled_for: string;
+};
+
+/**
+ * Schedule three nudges per upcoming test: 3 days before, 1 day before,
+ * morning-of (08:30 local). Doc 05 §notifications + USER-FLOWS-DEEP §1.1.
+ * Tests further than 30 days out are ignored — they create noise without
+ * actionable urgency.
+ */
+export async function scheduleTestHeadsUp(tests: UpcomingTest[]): Promise<void> {
+  if (!Notifs) return;
+  const now = Date.now();
+  const HORIZON_MS = 30 * 86_400_000;
+  for (const t of tests) {
+    const testDate = new Date(`${t.scheduled_for}T08:30:00`);
+    if (Number.isNaN(testDate.getTime())) continue;
+    const ms = testDate.getTime() - now;
+    if (ms <= 0 || ms > HORIZON_MS) continue;
+    const slots: Array<{ daysBefore: number; title: string; body: string }> = [
+      {
+        daysBefore: 3,
+        title: 'Test in 3 Tagen',
+        body: `${t.name} — heute kurz vorbereiten?`,
+      },
+      {
+        daysBefore: 1,
+        title: 'Morgen ist es soweit',
+        body: `${t.name} — ein Probelauf bringt dich rein.`,
+      },
+      {
+        daysBefore: 0,
+        title: 'Heute Test',
+        body: `${t.name} — du kannst das. Atme einmal durch.`,
+      },
+    ];
+    for (const slot of slots) {
+      const fireAt = new Date(testDate.getTime() - slot.daysBefore * 86_400_000);
+      if (fireAt.getTime() <= now) continue;
+      await Notifs.scheduleNotificationAsync({
+        content: { title: slot.title, body: slot.body },
+        trigger: { date: fireAt },
+      });
+    }
   }
 }

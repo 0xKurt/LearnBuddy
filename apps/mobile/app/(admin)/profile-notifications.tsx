@@ -5,6 +5,7 @@
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
@@ -17,6 +18,7 @@ import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ProfileNotificationsScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
 
@@ -29,7 +31,7 @@ export default function ProfileNotificationsScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 24 }}>
-          <Text style={{ color: LB.ink2 }}>Lade …</Text>
+          <Text style={{ color: LB.ink2 }}>{t('notifications.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -42,29 +44,29 @@ export default function ProfileNotificationsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-      <Header title="Benachrichtigungen" />
+      <Header title={t('notifications.title')} />
       <ScrollView contentContainerStyle={{ padding: 22, gap: 14 }}>
         <Row
-          label="Tägliche Erinnerung"
-          sub={`Um ${prefs.daily_time}. Nur an Tagen ohne Sitzung.`}
+          label={t('notifications.daily_label')}
+          sub={t('notifications.daily_sub', { time: prefs.daily_time })}
           value={prefs.daily_enabled}
           onChange={(v) => save({ ...prefs, daily_enabled: v })}
         />
         <Row
-          label="Test-Erinnerungen"
-          sub="3 Tage / 1 Tag / am Morgen vor Tests in geplanten Ordnern."
+          label={t('notifications.test_label')}
+          sub={t('notifications.test_sub')}
           value={prefs.test_reminders}
           onChange={(v) => save({ ...prefs, test_reminders: v })}
         />
         <Row
-          label="Streak-Erinnerung"
-          sub="Sanftes Anstupsen wenn die Lern-Serie abreißen würde."
+          label={t('notifications.streak_label')}
+          sub={t('notifications.streak_sub')}
           value={prefs.streak_enabled}
           onChange={(v) => save({ ...prefs, streak_enabled: v })}
         />
         <View style={{ marginTop: 12 }}>
           <Btn variant="ghost" onPress={() => router.back()}>
-            Fertig
+            {t('notifications.done')}
           </Btn>
         </View>
       </ScrollView>

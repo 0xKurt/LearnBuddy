@@ -1,0 +1,49 @@
+{
+  "no_items": "Wir konnten gerade keine Aufgaben finden. Versuch es nochmal — oder fotografier neues Material.",
+  "back": "Zurück",
+  "badge_test": "Test",
+  "badge_practice": "Üben",
+  "exit": {
+    "title": "Sitzung beenden?",
+    "keep_going": "Weiter üben",
+    "end": "Beenden"
+  },
+  "question_label": "Frage {{index}}",
+  "submit": "Senden",
+  "checking": "Prüfe …",
+  "next": "Weiter",
+  "verdict": {
+    "correct": "Genau!",
+    "partially_correct": "Fast richtig",
+    "incorrect": "Noch nicht ganz"
+  },
+  "placeholder": {
+    "answer": "Antwort",
+    "number": "Zahl",
+    "formula": "Formel"
+  },
+  "error_title": "Ups.",
+  "stimulus": {
+    "fallback": "Diagramm nicht darstellbar"
+  },
+  "voice": {
+    "idle": "Halten zum Sprechen",
+    "active": "Ich höre …",
+    "permission_rationale": "LearnBuddy hört kurz mit, damit du auch laut antworten kannst. Audio wird nicht gespeichert.",
+    "unavailable": "Sprechen ist hier noch nicht aktiv — tippe deine Antwort einfach ein."
+  },
+  "explain": {
+    "pill": "Erklär mir das",
+    "open": "Erklärung öffnen",
+    "title": "Erklär mir das",
+    "subtitle": "Was möchtest du wissen?",
+    "tabs": {
+      "question": "Was bedeutet die Frage?",
+      "concept": "Erklär das Konzept"
+    },
+    "loading": "Einen Moment …",
+    "error": "Das hat gerade nicht geklappt. Probier es gleich nochmal.",
+    "hint": "Tippe oben einen Bereich an, und ich erklär ihn dir.",
+    "close": "Schließen"
+  }
+}

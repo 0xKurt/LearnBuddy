@@ -18,7 +18,7 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 - [x] Idempotency-Key handled per Doc 04 §Conventions
 - [x] Tests in `apps/api/src/routes/__tests__/auth.test.ts` — happy path, dup email, weak password, missing consent, idempotent replay
 - [x] Mobile `apps/mobile/lib/api/client.ts` — typed fetch with auth header
-- [ ] Mobile `apps/mobile/lib/auth/session.ts` — token storage via `expo-secure-store`, refresh on 401 _(storage done; refresh-on-401 deferred to A2 — see Open follow-ups)_
+- [x] Mobile `apps/mobile/lib/auth/session.ts` — token storage via `expo-secure-store`, refresh on 401 _(shipped during A2 via `supabase.auth.refreshSession()` + coalesced in-flight promise)_
 - [x] Mobile `account-signup.tsx` calls real API
 - [x] Mobile `consent.tsx` calls real API
 - [x] Mobile `verify-email.tsx` polls auth state, deep-link returns to app
@@ -183,7 +183,7 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 - [x] `POST /materials/:id/regenerate-items` with style hints (einfacher / schwieriger / andere art) — P2 prompt, 8-credit estimate, settled to actual
 - [x] `POST /attempts` — local-uncertain attempts go to LLM evaluate (P3); `client_local_verdict='correct'` shortcut returns 0-credit without LLM call
 - [x] `POST /explain` — three styles via P4 prompt, 3-credit estimate
-- [ ] _Tests for D2 endpoints — deferred to the D-quality eval-harness slice (D1 already covers the shared `tryDebit/settle/refund` cycle in materials.test.ts)._
+- [x] Tests for D2 endpoints — `attempts.test.ts` covers the LLM-eval + 0-credit fast path; the broader eval-harness still lands separately for prompt-quality regression checks.
 
 **Done when:** Hints, evaluation, explain all work against real Vertex.
 
@@ -206,7 +206,7 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 - [x] `POST /sessions` — FSRS-driven item selection per Doc 04 (overdue → unseen → future-due buckets, subject/folder/material filters).
 - [x] `POST /attempts/batch` — drains the mobile outbox, replays FSRS via ts-fsrs in `apps/api/src/lib/fsrs.ts`, upserts `item_states`.
 - [x] Local attempt evaluation (`apps/mobile/lib/eval/local.ts` already wired via the session screen's submit path).
-- [ ] _Tests for /sessions + /attempts/batch — deferred to the eval-harness slice._
+- [x] Tests for /sessions + /attempts/batch — `sessions.test.ts` + `attempts.test.ts`. Eval-harness for prompt-quality regression is a separate effort.
 
 ### Slice E2 — Mobile session UX (answer kinds) ✅ COMPLETED 2026-05-16
 
@@ -241,7 +241,7 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 
 - [x] `apps/mobile/lib/notifications.ts` — expo-notifications wrapper + SecureStore prefs.
 - [x] Practice nudge (default 16:30, daily repeating) + Streak reminder (+4h) when enabled.
-- [ ] _Test heads-up (3 days / 1 day / morning-of) — needs server-side enumeration of upcoming `folders.scheduled_for`; small follow-up._
+- [ ] _Test heads-up (3 days / 1 day / morning-of) — needs server-side enumeration of upcoming `folders.scheduled_for`; small follow-up. **Open.**_
 - [x] Mobile admin notifications screen wired (`(admin)/profile-notifications.tsx`).
 
 ---
@@ -283,6 +283,40 @@ Order is determined by **dependency** (what blocks what) and **first-user-can-se
 - [ ] _Tutorial / power-feature first-time moments (`USER-FLOWS-DEEP §10`). Deferred: post-launch._
 
 ---
+
+## Hardening pass — 2026-05-17
+
+Audit follow-up from `docs/CODEBASE-AUDIT.md`. Items ticked:
+
+- [x] **Admin auth** — `/admin/*` now requires a valid Supabase JWT and checks the verified email against `ADMIN_ALLOWLIST_EMAILS`. Header-only path removed.
+- [x] **Sentry + PostHog wired** — `apps/mobile/lib/sentry.ts`, `apps/mobile/lib/analytics.ts`, API `apps/api/src/lib/sentry.ts`. Init at module load in both apps; error middleware reports unhandled exceptions.
+- [x] **Idempotency in Postgres** — migration `0010_idempotency_keys.sql` + `apps/api/src/lib/idempotency.ts` swap.
+- [x] **pg_cron schedule** — migration `0011_pg_cron_schedule.sql` schedules the 4 Edge Functions + the idempotency cleanup. Set `app.supabase_url` / `app.supabase_service_role` GUCs before applying.
+- [x] **CI** — `.github/workflows/check.yml` runs typecheck + lint + test on PRs.
+- [x] **Atomic credit debit** — `tryDebit()` now runs a single UPDATE … WHERE current_balance >= $estimate RETURNING (race-free).
+- [x] **Bulk attempts/batch** — single INSERT + UPSERT replaces 2N round-trips.
+- [x] **Idempotency on /attempts/batch** — middleware applied so a retry can't double-apply 200 attempts.
+- [x] **Constant-time webhook compare** — `timingSafeEqual` + 5-minute timestamp window.
+- [x] **CORS lockdown + security headers** — origin allowlist via `API_CORS_ORIGINS`; `vercel.json` headers (HSTS, X-Content-Type-Options, etc.).
+- [x] **Rate limit on /materials/upload-url** — 60/day.
+- [x] **Session item picker pushed into Postgres** — migration `0012_session_pick_items.sql`. JS fallback retained for envs without the RPC.
+- [x] **Parallel photo download** — `downloadPhotosAsBase64` is now `Promise.all`.
+- [x] **Six 501 routes resolved** — `GET /admin/spend`, `GET /account/credits/summary`, `PATCH/DELETE /materials/:id`, `GET /render/latex` (KaTeX→SVG, immutable cache), `POST /attempts/:id/finalize` removed (voice flow not yet present).
+- [x] **Outbox stub deleted** — `apps/mobile/lib/sync/` removed; schema cleared of `outbox_local` / `sync_state`.
+- [x] **Tests for the 4 highest-value flows** — `sessions.test.ts`, `attempts.test.ts`, `webhooks.test.ts`, `dsgvo.test.ts`. API now at 116 cases across 14 files.
+- [x] **Mobile global ErrorBoundary** — wraps the root layout; reports to Sentry.
+- [x] **Accessibility props on lb primitives** — Btn / Card / Chip / CircleBtn / BottomNav / Avatar.
+- [x] **i18n sweep — phase 1** — new namespaces `home`, `result`, `session`, `admin`, `errors` across de/en/fr/es/it; high-visibility screens migrated. Long-tail strings continue in follow-up slices.
+- [x] **Repo hygiene** — `LICENSE` (proprietary), root `README.md`, empty `LearnBuddy/` removed, `eslint @typescript-eslint/no-explicit-any` bumped to error.
+- [x] **Dropped unused deps** — `victory-native`, `i18next-icu`.
+
+Still open follow-ups (next slice):
+
+- _Service-role key rotation_ — `apps/api/.env.local` currently holds a JWT with `exp 2036`. Rotate to a shorter-lived key in Vercel env and drop the on-disk file. (Operational; no code change.)
+- _DSGVO export streaming_ — Edge Function currently `JSON.stringify`'s the whole account into memory. Stream / page once a power user account is large enough to OOM the 256 MB cap.
+- _Mobile SSE on /materials_ — `apps/mobile/lib/capture/upload.ts` still parses the whole response as text. Real EventSource or XHR-chunked streaming needs `expo-event-source` or a hand-rolled reader.
+- _Diagram pipeline (sharp + study-asset upload)_ — Slice D1.5 still deferred.
+- _Eval-harness fixtures_ — for prompt-quality regression on D2/D3.
 
 ## Build status — 2026-05-16
 

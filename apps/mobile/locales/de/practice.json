@@ -1,0 +1,22 @@
+{
+  "loading": "Aufgaben werden vorbereitet …",
+  "error_title": "Ups.",
+  "error_body": "Wir konnten die Aufgabe gerade nicht laden. Versuch es nochmal.",
+  "back": "Zurück",
+  "topic_label": "Thema",
+  "progress": "{{current}} von {{total}}",
+  "submit": "Prüfen",
+  "next": "Weiter",
+  "verdict": {
+    "correct": "Genau!",
+    "incorrect": "Noch nicht ganz"
+  },
+  "answer_hint_numeric": "Tippe deine Antwort ein",
+  "answer_hint_formula": "Tippe deine Formel ein",
+  "show_solution": "Lösung zeigen",
+  "solution_label": "Lösung",
+  "finish_title": "Geschafft!",
+  "finish_body": "Du hast {{correct}} von {{total}} richtig gelöst. Schöne Runde.",
+  "finish_home": "Zurück zur Übersicht",
+  "no_template": "Diese Übung gibt es nicht mehr."
+}

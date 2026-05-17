@@ -13,7 +13,6 @@ export default tseslint.config(
       '**/.vercel/**',
       '**/.turbo/**',
       '**/coverage/**',
-      'LearnBuddy/**',
       'design-examples/**',
       'docs/**',
       // Tool config files loaded as CommonJS by their tools regardless of
@@ -35,7 +34,7 @@ export default tseslint.config(
         'warn',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
   prettier,

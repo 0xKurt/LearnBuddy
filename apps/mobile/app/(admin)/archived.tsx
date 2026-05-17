@@ -5,6 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CircleBtn, EmptyState } from '../../components/lb/index.js';
@@ -14,6 +15,7 @@ import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ArchivedScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id;
@@ -37,7 +39,9 @@ export default function ArchivedScreen() {
         }}
       >
         <CircleBtn icon="back" onPress={() => router.back()} />
-        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>Archiv</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>
+          {t('archived.title')}
+        </Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 12 }}>
         <View
@@ -48,14 +52,13 @@ export default function ArchivedScreen() {
           }}
         >
           <Text style={{ fontSize: 13, color: LB.primaryDk, lineHeight: 19 }}>
-            Archivierte Einträge bleiben 30 Tage lang wiederherstellbar. Danach werden sie
-            automatisch endgültig gelöscht.
+            {t('archived.banner')}
           </Text>
         </View>
         {subjectsQuery.isLoading ? (
           <ActivityIndicator color={LB.ink2} style={{ marginTop: 24 }} />
         ) : (subjectsQuery.data?.length ?? 0) === 0 ? (
-          <EmptyState glyph="🗄️" title="Nichts im Archiv." />
+          <EmptyState glyph="🗄️" title={t('archived.empty')} />
         ) : (
           (subjectsQuery.data ?? []).map((s) => (
             <View

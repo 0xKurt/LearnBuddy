@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn, EmptyState } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
@@ -19,6 +19,7 @@ import { LB } from '../../../lib/theme/colors.js';
 export default function MaterialScreen() {
   const { materialId } = useLocalSearchParams<{ materialId: string }>();
   const { t: tCommon } = useTranslation('common');
+  const insets = useSafeAreaInsets();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id;
 
@@ -45,8 +46,8 @@ export default function MaterialScreen() {
           <CircleBtn icon="back" onPress={() => router.back()} />
           <EmptyState
             glyph="🤔"
-            title="Material nicht gefunden."
-            body="Vielleicht wurde es gelöscht."
+            title={tCommon('material.not_found')}
+            body={tCommon('material.not_found_body')}
           />
         </View>
       </SafeAreaView>
@@ -78,15 +79,15 @@ export default function MaterialScreen() {
           {material.title ?? 'Material'}
         </Text>
         <Text style={{ fontSize: 12, color: LB.ink2 }}>
-          {items.length === 1 ? '1 Frage' : `${items.length} Fragen`}
+          {tCommon('material.question_count', { count: items.length })}
         </Text>
 
         {items.length === 0 ? (
           <View style={{ paddingVertical: 28 }}>
             <EmptyState
               glyph="📷"
-              title="Keine Fragen."
-              body="Beim nächsten Versuch klappt's bestimmt — probier es einfach nochmal."
+              title={tCommon('material.no_items')}
+              body={tCommon('material.no_items_body')}
             />
           </View>
         ) : (
@@ -103,7 +104,7 @@ export default function MaterialScreen() {
                 }}
               >
                 <Text style={{ fontSize: 11, color: LB.ink3, fontWeight: '600' }}>
-                  Frage {idx + 1}
+                  {tCommon('material.question_label', { index: idx + 1 })}
                 </Text>
                 <Text style={{ fontSize: 15, color: LB.ink, marginTop: 6, lineHeight: 21 }}>
                   {item.question}
@@ -119,7 +120,7 @@ export default function MaterialScreen() {
           position: 'absolute',
           left: 20,
           right: 20,
-          bottom: 12,
+          bottom: Math.max(insets.bottom, 12),
           flexDirection: 'row',
           gap: 8,
         }}

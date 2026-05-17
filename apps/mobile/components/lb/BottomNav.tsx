@@ -1,15 +1,20 @@
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { LB } from '../../lib/theme/colors.js';
 import { Icon } from './Icon.js';
 
 export type NavKey = 'home' | 'practice' | 'camera' | 'profile';
 
-const ITEMS: Array<{ key: NavKey; label: string; icon: 'home' | 'practice' | 'camera' | 'profile' }> = [
-  { key: 'home', label: 'Zuhause', icon: 'home' },
-  { key: 'practice', label: 'Üben', icon: 'practice' },
-  { key: 'camera', label: 'Aufnehmen', icon: 'camera' },
-  { key: 'profile', label: 'Konto', icon: 'profile' },
+const ITEMS: Array<{
+  key: NavKey;
+  i18nKey: string;
+  icon: 'home' | 'practice' | 'camera' | 'profile';
+}> = [
+  { key: 'home', i18nKey: 'tabs.home', icon: 'home' },
+  { key: 'practice', i18nKey: 'tabs.practice', icon: 'practice' },
+  { key: 'camera', i18nKey: 'tabs.camera', icon: 'camera' },
+  { key: 'profile', i18nKey: 'tabs.account', icon: 'profile' },
 ];
 
 export function BottomNav({
@@ -20,6 +25,7 @@ export function BottomNav({
   onNavigate?: (key: NavKey) => void;
 }) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation('common');
   return (
     <View
       style={{
@@ -38,6 +44,9 @@ export function BottomNav({
           <Pressable
             key={it.key}
             onPress={() => onNavigate?.(it.key)}
+            accessibilityRole="tab"
+            accessibilityLabel={t(it.i18nKey)}
+            accessibilityState={{ selected: on }}
             style={{
               flex: 1,
               alignItems: 'center',
@@ -55,7 +64,7 @@ export function BottomNav({
                 letterSpacing: 0.1,
               }}
             >
-              {it.label}
+              {t(it.i18nKey)}
             </Text>
           </Pressable>
         );

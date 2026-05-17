@@ -19,6 +19,7 @@
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,6 +29,7 @@ import { parseAuthTokensFromUrl, supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function VerifyEmailScreen() {
+  const { t } = useTranslation('auth');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const handledRef = useRef(false);
@@ -42,7 +44,7 @@ export default function VerifyEmailScreen() {
       handledRef.current = true;
       const res = await supabase.auth.setSession(tokens);
       if (res.error) {
-        setError('Der Bestätigungs-Link ist abgelaufen. Probier es nochmal.');
+        setError(t('verify_email.error_expired'));
         handledRef.current = false;
       }
       // onAuthStateChange fires on success; navigation happens there.
@@ -78,7 +80,7 @@ export default function VerifyEmailScreen() {
       sub.data.subscription.unsubscribe();
       urlSub.remove();
     };
-  }, []);
+  }, [t]);
 
   async function onManualCheck() {
     setBusy(true);
@@ -86,7 +88,7 @@ export default function VerifyEmailScreen() {
     try {
       const { data, error: err } = await supabase.auth.getSession();
       if (err || !data.session) {
-        setError('Noch nicht bestätigt. Tippe den Link in deiner E-Mail an.');
+        setError(t('verify_email.error_not_yet'));
         return;
       }
       // onAuthStateChange will fire and handle navigation; if for some
@@ -120,7 +122,7 @@ export default function VerifyEmailScreen() {
             letterSpacing: -0.4,
           }}
         >
-          Bestätige deine E-Mail
+          {t('verify_email.title')}
         </Text>
         <Text
           style={{
@@ -131,7 +133,7 @@ export default function VerifyEmailScreen() {
             maxWidth: 300,
           }}
         >
-          Wir haben dir einen Link geschickt. Tippe ihn an, dann geht es hier weiter.
+          {t('verify_email.body')}
         </Text>
         {error && (
           <Text
@@ -146,7 +148,7 @@ export default function VerifyEmailScreen() {
           </Text>
         )}
         <Btn size="lg" full variant="ghost" onPress={onManualCheck}>
-          {busy ? 'Moment …' : 'Ich hab’s bestätigt'}
+          {busy ? t('verify_email.busy') : t('verify_email.cta')}
         </Btn>
       </View>
     </SafeAreaView>

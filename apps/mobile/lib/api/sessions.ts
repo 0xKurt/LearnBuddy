@@ -34,6 +34,34 @@ export async function finishSession(learnerId: string, sessionId: string): Promi
   await api(`/sessions/${sessionId}/finish`, { method: 'PATCH', learnerId });
 }
 
+const SessionSummary = z.object({
+  session_id: z.string().uuid(),
+  started_at: z.string(),
+  ended_at: z.string().nullable(),
+  attempts_count: z.number().int().nonnegative(),
+  secure_now: z.number().int().nonnegative(),
+  still_unsure: z.number().int().nonnegative(),
+  total_duration_ms: z.number().int().nonnegative(),
+  topics: z.array(
+    z.object({
+      name: z.string(),
+      tone: z.enum(['secure', 'unsure']),
+    }),
+  ),
+});
+export type SessionSummary = z.infer<typeof SessionSummary>;
+
+export async function getSessionSummary(
+  learnerId: string,
+  sessionId: string,
+): Promise<SessionSummary> {
+  return api(`/sessions/${sessionId}/summary`, {
+    method: 'GET',
+    schema: SessionSummary,
+    learnerId,
+  });
+}
+
 const AttemptResult = z.object({
   verdict: z.enum(['correct', 'partially_correct', 'incorrect']),
   feedback: z.string().nullable(),

@@ -1,0 +1,22 @@
+{
+  "loading": "Preparando tu práctica …",
+  "error_title": "Vaya.",
+  "error_body": "No pudimos cargar esta práctica ahora. Inténtalo de nuevo.",
+  "back": "Volver",
+  "topic_label": "Tema",
+  "progress": "{{current}} de {{total}}",
+  "submit": "Comprobar",
+  "next": "Siguiente",
+  "verdict": {
+    "correct": "¡Exacto!",
+    "incorrect": "Aún no del todo"
+  },
+  "answer_hint_numeric": "Escribe tu respuesta",
+  "answer_hint_formula": "Escribe tu fórmula",
+  "show_solution": "Ver la solución",
+  "solution_label": "Solución",
+  "finish_title": "¡Hecho!",
+  "finish_body": "Acertaste {{correct}} de {{total}}. Buena ronda.",
+  "finish_home": "Volver al inicio",
+  "no_template": "Esta práctica ya no está disponible."
+}

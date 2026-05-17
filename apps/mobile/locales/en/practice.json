@@ -1,0 +1,22 @@
+{
+  "loading": "Getting your practice ready …",
+  "error_title": "Oops.",
+  "error_body": "We couldn't load this practice right now. Give it another try.",
+  "back": "Back",
+  "topic_label": "Topic",
+  "progress": "{{current}} of {{total}}",
+  "submit": "Check",
+  "next": "Next",
+  "verdict": {
+    "correct": "Spot on!",
+    "incorrect": "Not quite yet"
+  },
+  "answer_hint_numeric": "Type your answer",
+  "answer_hint_formula": "Type your formula",
+  "show_solution": "Show the solution",
+  "solution_label": "Solution",
+  "finish_title": "Done!",
+  "finish_body": "You got {{correct}} out of {{total}}. Nice round.",
+  "finish_home": "Back to home",
+  "no_template": "This practice isn't available anymore."
+}

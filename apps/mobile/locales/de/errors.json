@@ -1,0 +1,13 @@
+{
+  "generic": "Etwas ist schiefgegangen.",
+  "offline": "Keine Internetverbindung.",
+  "try_later": "Bitte später erneut versuchen.",
+  "no_connection_retry": "Keine Verbindung. Bitte später nochmal versuchen.",
+  "validation": "Bitte die Eingaben prüfen.",
+  "rate_limited": "Zu viele Versuche. Bitte ein paar Minuten warten.",
+  "unauthorized": "Bitte melde dich erneut an.",
+  "not_found": "Nichts gefunden.",
+  "save_failed": "Konnte gerade nicht speichern — gleich nochmal probieren?",
+  "load_failed": "Konnte gerade nicht laden — gleich nochmal probieren?",
+  "title": "Ups."
+}

@@ -1,0 +1,15 @@
+{
+  "today_at": "Today · {{time}}",
+  "title": "Practised today — nicely done.",
+  "summary": "{{minutes}} minutes · {{items}} questions",
+  "stats": {
+    "practiced": "practised",
+    "secure_now": "now solid",
+    "still_unsure": "still unsure",
+    "streak": "Streak",
+    "streak_caption": "days in a row"
+  },
+  "this_week_label": "This week's topics",
+  "cta_review_hard": "Try the tricky ones again",
+  "cta_overview": "Back to overview"
+}

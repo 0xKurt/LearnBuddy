@@ -29,14 +29,17 @@ export type FakeRow = Record<string, unknown>;
 type FakeError = { message: string; status?: number; code?: string };
 type Outcome<T> = { data: T; error: null } | { data: null; error: FakeError };
 
-type FilterOp = 'eq' | 'is' | 'in';
+type FilterOp = 'eq' | 'is' | 'in' | 'gte' | 'lte' | 'gt' | 'lt';
 
 export class FakeQuery {
   private filters: Array<[FilterOp, string, unknown]> = [];
-  private op: { kind: 'select' | 'insert' | 'update' | 'delete'; values?: unknown; cols?: string } =
-    {
-      kind: 'select',
-    };
+  private op: {
+    kind: 'select' | 'insert' | 'update' | 'delete' | 'upsert';
+    values?: unknown;
+    cols?: string;
+    onConflict?: string;
+  } = { kind: 'select' };
+  private limitN: number | null = null;
 
   constructor(
     private store: FakeSupabase,
@@ -61,6 +64,10 @@ export class FakeQuery {
     this.op = { kind: 'update', values };
     return this;
   }
+  upsert(values: unknown, opts?: { onConflict?: string }): this {
+    this.op = { kind: 'upsert', values, onConflict: opts?.onConflict };
+    return this;
+  }
   delete(): this {
     this.op = { kind: 'delete' };
     return this;
@@ -77,10 +84,30 @@ export class FakeQuery {
     this.filters.push(['in', col, vals]);
     return this;
   }
+  gte(col: string, val: unknown): this {
+    this.filters.push(['gte', col, val]);
+    return this;
+  }
+  lte(col: string, val: unknown): this {
+    this.filters.push(['lte', col, val]);
+    return this;
+  }
+  gt(col: string, val: unknown): this {
+    this.filters.push(['gt', col, val]);
+    return this;
+  }
+  lt(col: string, val: unknown): this {
+    this.filters.push(['lt', col, val]);
+    return this;
+  }
   // PostgREST exposes `.order()` for server-side sorting. The fake doesn't
   // need to actually sort — handlers that depend on order re-sort in JS — so
   // we accept the call and return `this` to keep the chain unbroken.
   order(_col: string, _opts?: { ascending?: boolean }): this {
+    return this;
+  }
+  limit(n: number): this {
+    this.limitN = n;
     return this;
   }
 
@@ -91,6 +118,10 @@ export class FakeQuery {
       // rows where the column was never set. Mirror that with == null.
       if (op === 'is') return val === null ? row[col] == null : row[col] === val;
       if (op === 'in') return (val as readonly unknown[]).includes(row[col]);
+      if (op === 'gte') return (row[col] as string | number) >= (val as string | number);
+      if (op === 'lte') return (row[col] as string | number) <= (val as string | number);
+      if (op === 'gt') return (row[col] as string | number) > (val as string | number);
+      if (op === 'lt') return (row[col] as string | number) < (val as string | number);
       return true;
     });
   }
@@ -146,8 +177,39 @@ export class FakeQuery {
       return { data: null, error: null };
     }
 
+    if (this.op.kind === 'upsert') {
+      const conflictCol = this.op.onConflict ?? 'id';
+      const valuesList: FakeRow[] = Array.isArray(this.op.values)
+        ? (this.op.values as FakeRow[])
+        : ([this.op.values] as FakeRow[]);
+      const affected: FakeRow[] = [];
+      for (const v of valuesList) {
+        const key = (v as FakeRow)[conflictCol];
+        const existing = rows.find((r) => r[conflictCol] === key);
+        if (existing) {
+          Object.assign(existing, v, { updated_at: new Date().toISOString() });
+          affected.push(existing);
+        } else {
+          const row: FakeRow = {
+            id: (v as FakeRow).id ?? this.store.nextId(),
+            ...(v as FakeRow),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          rows.push(row);
+          affected.push(row);
+        }
+      }
+      this.store.tables.set(this.table, rows);
+      if (mode === 'single') return { data: affected[0] ?? null, error: null };
+      if (mode === 'maybeSingle') return { data: affected[0] ?? null, error: null };
+      if (mode === 'list') return { data: affected, error: null };
+      return { data: null, error: null };
+    }
+
     // select / delete
-    const matches = rows.filter((r) => this.match(r));
+    const matchesAll = rows.filter((r) => this.match(r));
+    const matches = this.limitN != null ? matchesAll.slice(0, this.limitN) : matchesAll;
     if (this.op.kind === 'delete') {
       this.store.tables.set(
         this.table,
@@ -222,6 +284,18 @@ export class FakeSupabase {
        *  data; the FakeLlmGateway ignores it anyway. */
       download: async (_path: string) => ({
         data: new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: 'image/jpeg' }),
+        error: null as null | { message: string },
+      }),
+      /** Slice D1.5: diagram pipeline uploads PNGs to study-assets. The
+       *  FakeLlmGateway returns no diagrams so this path isn't exercised in
+       *  the default test setup, but we accept the call so a custom
+       *  llm-override test can pass diagrams without crashing. */
+      upload: async (
+        path: string,
+        _body: unknown,
+        _opts?: { contentType?: string; upsert?: boolean },
+      ) => ({
+        data: { path },
         error: null as null | { message: string },
       }),
     }),

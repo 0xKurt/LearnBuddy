@@ -31,6 +31,16 @@ export const Env = z.object({
   LLM_BACKEND: z.enum(['vertex', 'fake']).optional(),
   /** Gemini model id; pinned to Doc 06 §provider-configuration. */
   VERTEX_MODEL_ID: z.string().default('gemini-2.5-flash-lite'),
+  // ── Observability + ops ─────────────────────────────────────────────────
+  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_RELEASE: z.string().optional(),
+  /** Comma-separated allow-list. Both layers of admin auth must agree:
+   *  the request's JWT email must match an entry here. */
+  ADMIN_ALLOWLIST_EMAILS: z.string().optional(),
+  /** Comma-separated origin allow-list for browser-originated requests. */
+  API_CORS_ORIGINS: z.string().optional(),
+  /** RevenueCat webhook shared secret. Verified with timingSafeEqual. */
+  REVENUECAT_WEBHOOK_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof Env>;

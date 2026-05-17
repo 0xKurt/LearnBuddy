@@ -1,0 +1,66 @@
+{
+  "greeting": {
+    "morning": "Buenos días",
+    "afternoon": "Hola",
+    "evening": "Buenas tardes"
+  },
+  "loading_error": {
+    "title": "No pudimos cargar tus asignaturas.",
+    "body": "Desliza hacia abajo para volver a intentarlo."
+  },
+  "empty": {
+    "title": "Todavía no hay asignaturas.",
+    "body": "Añade una asignatura o haz una foto del primer material — nosotros nos encargamos del resto."
+  },
+  "test_in_days": "Examen en {{count}} días",
+  "add_subject_tile": "Añadir asignatura",
+  "modal": {
+    "title": "Nueva asignatura",
+    "name_label": "Nombre",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "creating": "Creando…",
+    "error_title": "Vaya."
+  },
+  "folder": {
+    "not_found_title": "Carpeta no encontrada.",
+    "not_found_body": "Es posible que haya sido archivada.",
+    "missing_subject": "Asignatura faltante.",
+    "materials_section": "Materiales",
+    "no_material_title": "Todavía no hay material en esta carpeta.",
+    "no_material_body": "Fotografía una ficha o una página del libro — el resto lo hacemos nosotros.",
+    "add_material": "+ Material",
+    "start_practice": "Empezar a practicar",
+    "archive_title": "Archivar carpeta",
+    "archive_body": "La carpeta se archivará y podrá restaurarse durante 30 días.",
+    "rename": "Renombrar",
+    "archive": "Archivar",
+    "cancel": "Cancelar",
+    "test_in_days": "Examen en {{count}} días"
+  },
+  "subject": {
+    "not_found_title": "Asignatura no encontrada.",
+    "not_found_body": "Es posible que haya sido archivada.",
+    "material_count_one": "{{count}} material",
+    "material_count_other": "{{count}} materiales",
+    "tab_folders": "Carpetas",
+    "tab_materials": "Material",
+    "no_folders_title": "Todavía no hay carpetas.",
+    "no_folders_body": "Crea una carpeta para agrupar materiales de un examen o un capítulo.",
+    "no_materials_title": "Todavía no hay materiales.",
+    "no_materials_body": "Fotografía una ficha o una página del libro — el resto lo hacemos nosotros.",
+    "new_folder": "Carpeta",
+    "new_material": "Nuevo",
+    "start_practice": "Empezar a practicar",
+    "archive": "Archivar",
+    "cancel": "Cancelar"
+  },
+  "subjects": {
+    "math": "Matemáticas",
+    "biology": "Biología",
+    "physics": "Física",
+    "language_native": "Español",
+    "language_foreign": "Idioma",
+    "general": "Otra"
+  }
+}

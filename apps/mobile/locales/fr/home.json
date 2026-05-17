@@ -1,0 +1,66 @@
+{
+  "greeting": {
+    "morning": "Bonjour",
+    "afternoon": "Bonjour",
+    "evening": "Bonsoir"
+  },
+  "loading_error": {
+    "title": "Impossible de charger tes matières.",
+    "body": "Tire vers le bas pour réessayer."
+  },
+  "empty": {
+    "title": "Pas encore de matières.",
+    "body": "Ajoute une matière ou prends une photo de ton premier support — on s'occupe du reste."
+  },
+  "test_in_days": "Contrôle dans {{count}} jours",
+  "add_subject_tile": "Ajouter une matière",
+  "modal": {
+    "title": "Nouvelle matière",
+    "name_label": "Nom",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "creating": "Création…",
+    "error_title": "Oups."
+  },
+  "folder": {
+    "not_found_title": "Dossier introuvable.",
+    "not_found_body": "Il a peut-être été archivé.",
+    "missing_subject": "Matière manquante.",
+    "materials_section": "Supports",
+    "no_material_title": "Pas encore de support dans ce dossier.",
+    "no_material_body": "Photographie une fiche ou une page de livre — le reste se fait tout seul.",
+    "add_material": "+ Support",
+    "start_practice": "Commencer l'entraînement",
+    "archive_title": "Archiver le dossier",
+    "archive_body": "Le dossier sera archivé et pourra être restauré pendant 30 jours.",
+    "rename": "Renommer",
+    "archive": "Archiver",
+    "cancel": "Annuler",
+    "test_in_days": "Contrôle dans {{count}} jours"
+  },
+  "subject": {
+    "not_found_title": "Matière introuvable.",
+    "not_found_body": "Elle a peut-être été archivée.",
+    "material_count_one": "{{count}} support",
+    "material_count_other": "{{count}} supports",
+    "tab_folders": "Dossiers",
+    "tab_materials": "Supports",
+    "no_folders_title": "Pas encore de dossiers.",
+    "no_folders_body": "Crée un dossier pour regrouper les supports d'un contrôle ou d'un chapitre.",
+    "no_materials_title": "Pas encore de supports.",
+    "no_materials_body": "Photographie une fiche ou une page de livre — le reste se fait tout seul.",
+    "new_folder": "Dossier",
+    "new_material": "Nouveau",
+    "start_practice": "Commencer l'entraînement",
+    "archive": "Archiver",
+    "cancel": "Annuler"
+  },
+  "subjects": {
+    "math": "Maths",
+    "biology": "Biologie",
+    "physics": "Physique",
+    "language_native": "Français",
+    "language_foreign": "Langue",
+    "general": "Autre"
+  }
+}

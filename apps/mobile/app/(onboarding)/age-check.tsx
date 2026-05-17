@@ -24,7 +24,14 @@ export default function AgeCheckScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
-      <View style={{ flex: 1, paddingHorizontal: 28, paddingVertical: 32, justifyContent: 'space-between' }}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: 28,
+          paddingVertical: 32,
+          justifyContent: 'space-between',
+        }}
+      >
         <View style={{ gap: 12, marginTop: 24 }}>
           <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
             {t('age_check.title')}
@@ -42,7 +49,9 @@ export default function AgeCheckScreen() {
               padding: 4,
             }}
           >
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+            <View
+              style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}
+            >
               {choices.slice(0, 12).map((y) => {
                 const on = y === year;
                 return (
@@ -67,7 +76,7 @@ export default function AgeCheckScreen() {
           </View>
         </View>
 
-        <Btn size="lg" full onPress={onContinue}>
+        <Btn size="lg" full onPress={onContinue} disabled={!year}>
           {t('age_check.cta')}
         </Btn>
       </View>

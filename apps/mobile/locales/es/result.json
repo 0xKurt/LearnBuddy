@@ -1,0 +1,15 @@
+{
+  "today_at": "Hoy · {{time}}",
+  "title": "Práctica hecha — muy bien.",
+  "summary": "{{minutes}} minutos · {{items}} preguntas",
+  "stats": {
+    "practiced": "practicadas",
+    "secure_now": "ya seguras",
+    "still_unsure": "aún por afianzar",
+    "streak": "Racha",
+    "streak_caption": "días seguidos"
+  },
+  "this_week_label": "Temas de esta semana",
+  "cta_review_hard": "Repasar las más difíciles",
+  "cta_overview": "Volver al inicio"
+}

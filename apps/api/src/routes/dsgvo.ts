@@ -23,11 +23,16 @@ export const dsgvoRoutes = new Hono();
 dsgvoRoutes.use('*', requireAuth);
 
 dsgvoRoutes.post('/export', rateLimit({ key: 'dsgvo_export', per_day: 5 }), async (c) => {
-  const { supabase } = getDeps(c);
+  const { supabase, now } = getDeps(c);
   const { account_id } = c.get('auth');
   const ins = await supabase
     .from('dsgvo_requests')
-    .insert({ account_id, kind: 'export', status: 'pending' })
+    .insert({
+      account_id,
+      kind: 'export',
+      status: 'pending',
+      requested_at: now().toISOString(),
+    })
     .select('id')
     .single();
   if (ins.error || !ins.data) {
@@ -56,7 +61,7 @@ dsgvoRoutes.get('/requests/:id', async (c) => {
 });
 
 dsgvoRoutes.post('/delete-account', rateLimit({ key: 'dsgvo_delete', per_day: 2 }), async (c) => {
-  const { supabase } = getDeps(c);
+  const { supabase, now } = getDeps(c);
   const { account_id } = c.get('auth');
 
   // Idempotency: if an active pending delete exists, return that one.
@@ -79,7 +84,12 @@ dsgvoRoutes.post('/delete-account', rateLimit({ key: 'dsgvo_delete', per_day: 2 
 
   const ins = await supabase
     .from('dsgvo_requests')
-    .insert({ account_id, kind: 'delete', status: 'pending' })
+    .insert({
+      account_id,
+      kind: 'delete',
+      status: 'pending',
+      requested_at: now().toISOString(),
+    })
     .select('id, requested_at')
     .single();
   if (ins.error || !ins.data) {

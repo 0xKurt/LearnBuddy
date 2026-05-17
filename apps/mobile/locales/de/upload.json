@@ -1,4 +1,6 @@
 {
+  "no_pending": "Kein Material zum Hochladen.",
+  "back": "Zurück",
   "title": "Material wird vorbereitet",
   "phases": {
     "reserving": "Speicher wird reserviert …",
@@ -12,7 +14,8 @@
     "title": "Hat nicht geklappt.",
     "body": "Wir konnten dein Material nicht hochladen. Versuch es nochmal — falls es weiter hakt, prüf kurz deine Verbindung.",
     "retry": "Nochmal versuchen",
-    "back": "Zurück"
+    "back": "Zurück",
+    "unknown": "Unbekannter Fehler"
   },
   "insufficient_credits": {
     "title": "Aktuell sind keine Credits mehr verfügbar.",

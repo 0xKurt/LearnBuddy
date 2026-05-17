@@ -3,6 +3,7 @@
 import * as Application from 'expo-application';
 import { Redirect, router } from 'expo-router';
 import { Linking, ScrollView, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
@@ -10,6 +11,7 @@ import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function AboutScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
 
@@ -28,29 +30,28 @@ export default function AboutScreen() {
         }}
       >
         <CircleBtn icon="back" onPress={() => router.back()} />
-        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>Über LearnBuddy</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>{t('about.title')}</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 18 }}>
-        <Card title="Version">
+        <Card title={t('about.version')}>
           <Text style={{ fontSize: 14, color: LB.ink }}>
             {version} ({build})
           </Text>
         </Card>
-        <Card title="Datenschutz">
+        <Card title={t('about.privacy_title')}>
           <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
-            Alle Lerndaten bleiben in der EU. Keine Werbung, keine Weitergabe an Dritte zu
-            Trainingszwecken.
+            {t('about.privacy_body')}
           </Text>
           <Btn
             variant="ghost"
             onPress={() => Linking.openURL('https://learnbuddy.app/datenschutz')}
           >
-            Datenschutzerklärung
+            {t('about.privacy_link')}
           </Btn>
         </Card>
-        <Card title="Impressum">
+        <Card title={t('about.imprint_title')}>
           <Btn variant="ghost" onPress={() => Linking.openURL('https://learnbuddy.app/impressum')}>
-            Öffnen
+            {t('about.imprint_link')}
           </Btn>
         </Card>
       </ScrollView>

@@ -1,0 +1,24 @@
+{
+  "dismiss": "Verstanden",
+  "math_keyboard": {
+    "title": "Mathe-Tastatur",
+    "body": "Hier findest du Wurzeln, Brüche und π. Lange Tippen zeigt weitere Zeichen."
+  },
+  "voice": {
+    "title": "Sprich einfach los",
+    "body": "Halte die Sprechtaste und antworte laut. 1,5 Sekunden Stille bedeuten „fertig“."
+  },
+  "camera": {
+    "title": "Foto vom Material",
+    "body": "Halte das Gerät gerade über deinem Heft. Du kannst 1–10 Seiten am Stück fotografieren."
+  },
+  "diagram": {
+    "title": "Schau dir das Bild an",
+    "body": "Zahlen zeigen dir, was du benennen sollst. Tippe oder zoome ins Bild für mehr Details."
+  },
+  "streak": {
+    "title": "Dein erster Streak — {{count}} Tag!",
+    "title_other": "Dein erster Streak — {{count}} Tage!",
+    "body": "Wenn du an mehreren Tagen hintereinander übst, sammelt sich ein Streak an. Keine Sorge, wenn ein Tag dazwischen liegt."
+  }
+}

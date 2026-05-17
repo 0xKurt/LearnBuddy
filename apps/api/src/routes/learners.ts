@@ -362,12 +362,55 @@ learnerRoutes.get('/:learnerId/schedule-summary', async (c) => {
       .sort((a, b) => a.days_until - b.days_until);
   }
 
-  // Streak fields come from FSRS in Slice E1; until then we return zeros so
-  // the mobile UI can render the (empty) chips without branching on absence.
+  // Compute streak from completed sessions.
+  const sessionsRes = await supabase
+    .from('sessions')
+    .select('started_at, ended_at')
+    .eq('learner_id', learnerId);
+
+  type SessionRow = { started_at: string; ended_at: string | null };
+  const completedSessions = (
+    !sessionsRes.error ? ((sessionsRes.data ?? []) as SessionRow[]) : []
+  ).filter((s) => s.ended_at !== null);
+
+  const activeDays = new Set(completedSessions.map((s) => s.started_at.slice(0, 10)));
+  const lastSessionAt =
+    completedSessions.slice().sort((a, b) => (a.started_at < b.started_at ? 1 : -1))[0]
+      ?.started_at ?? null;
+
+  let streakCurrent = 0;
+  let streakLongest = 0;
+
+  if (activeDays.size > 0) {
+    // Current streak: walk backwards from today.
+    let cursor = new Date(now().toISOString().slice(0, 10) + 'T00:00:00Z');
+    while (activeDays.has(cursor.toISOString().slice(0, 10))) {
+      streakCurrent++;
+      cursor = new Date(cursor.getTime() - 86_400_000);
+    }
+
+    // Longest streak: scan chronologically sorted unique days.
+    const sortedDays = [...activeDays].sort();
+    let run = 1;
+    streakLongest = 1;
+    for (let i = 1; i < sortedDays.length; i++) {
+      const prev = sortedDays[i - 1];
+      const curr = sortedDays[i];
+      if (!prev || !curr) continue;
+      const diff = (new Date(curr).getTime() - new Date(prev).getTime()) / 86_400_000;
+      if (diff === 1) {
+        run++;
+        if (run > streakLongest) streakLongest = run;
+      } else if (diff > 1) {
+        run = 1;
+      }
+    }
+  }
+
   return c.json({
     upcoming_tests: upcomingTests,
-    streak_current: 0,
-    streak_longest: 0,
-    last_session_at: null,
+    streak_current: streakCurrent,
+    streak_longest: streakLongest,
+    last_session_at: lastSessionAt,
   });
 });

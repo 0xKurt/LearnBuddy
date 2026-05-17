@@ -1,0 +1,15 @@
+{
+  "today_at": "Aujourd'hui · {{time}}",
+  "title": "Entraînement fait — bravo.",
+  "summary": "{{minutes}} minutes · {{items}} questions",
+  "stats": {
+    "practiced": "exercées",
+    "secure_now": "maîtrisées",
+    "still_unsure": "encore à revoir",
+    "streak": "Série",
+    "streak_caption": "jours d'affilée"
+  },
+  "this_week_label": "Au programme cette semaine",
+  "cta_review_hard": "Reprendre les plus difficiles",
+  "cta_overview": "Retour à l'accueil"
+}

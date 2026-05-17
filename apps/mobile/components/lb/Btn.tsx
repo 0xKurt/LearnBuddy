@@ -11,6 +11,11 @@ type Props = {
   size?: Size;
   full?: boolean;
   disabled?: boolean;
+  /** Overrides the visible label as the accessible name (e.g. when the
+   *  label is an icon-only "→" but the action is "Weiter"). */
+  accessibilityLabel?: string;
+  /** Extra context for screen readers (e.g. "Bestätigt deine Auswahl"). */
+  accessibilityHint?: string;
 };
 
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
@@ -19,17 +24,16 @@ const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; font
   lg: { height: 54, paddingHorizontal: 26, fontSize: 15 },
 };
 
-// Doc DESIGN-BRIEF + CLAUDE.md §Design-system: "black-pill primary CTAs".
-// `primary` is the high-contrast pill that lives at the bottom of every
-// signup / continue screen — must always be readable. `accent` is the
-// warm-brown variant for secondary cards.
-const VARIANT_BG: Record<Variant, { bg: string; color: string; border?: string }> = {
-  primary: { bg: LB.ink, color: '#fff' },
-  soft: { bg: LB.primaryLt, color: LB.primaryDk },
-  outline: { bg: '#fff', color: LB.ink, border: LB.hairline },
-  ghost: { bg: 'transparent', color: LB.ink2 },
-  danger: { bg: 'transparent', color: LB.danger, border: 'rgba(177,73,60,0.25)' },
-};
+// Handoff components.jsx: "Button system — no all-black".
+// primary = warm clay (LB.primary), all variants use radius 12.
+const VARIANT_BG: Record<Variant, { bg: string; color: string; border?: string; radius: number }> =
+  {
+    primary: { bg: LB.primary, color: '#fff', radius: 12 },
+    soft: { bg: LB.primaryLt, color: LB.primaryDk, radius: 12 },
+    outline: { bg: '#fff', color: LB.ink, border: LB.hairline, radius: 12 },
+    ghost: { bg: 'transparent', color: LB.ink2, radius: 12 },
+    danger: { bg: 'transparent', color: LB.danger, border: 'rgba(177,73,60,0.25)', radius: 12 },
+  };
 
 export function Btn({
   children,
@@ -38,17 +42,23 @@ export function Btn({
   size = 'md',
   full = false,
   disabled = false,
+  accessibilityLabel,
+  accessibilityHint,
 }: Props) {
   const s = SIZE_STYLE[size];
   const v = VARIANT_BG[variant];
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? children}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled }}
       style={({ pressed }) => ({
         height: s.height,
         paddingHorizontal: s.paddingHorizontal,
         backgroundColor: v.bg,
-        borderRadius: 12,
+        borderRadius: v.radius,
         borderWidth: v.border ? 1 : 0,
         borderColor: v.border,
         flexDirection: 'row',

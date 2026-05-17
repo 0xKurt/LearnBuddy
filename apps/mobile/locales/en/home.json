@@ -1,0 +1,66 @@
+{
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Hello",
+    "evening": "Good evening"
+  },
+  "loading_error": {
+    "title": "Couldn't load your subjects.",
+    "body": "Pull down to try again."
+  },
+  "empty": {
+    "title": "No subjects yet.",
+    "body": "Add a subject or snap your first photo — we'll take care of the rest."
+  },
+  "test_in_days": "Test in {{count}} days",
+  "add_subject_tile": "Add subject",
+  "modal": {
+    "title": "New subject",
+    "name_label": "Name",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating…",
+    "error_title": "Oops."
+  },
+  "folder": {
+    "not_found_title": "Folder not found.",
+    "not_found_body": "It may have been archived.",
+    "missing_subject": "Missing subject.",
+    "materials_section": "Materials",
+    "no_material_title": "No material in this folder yet.",
+    "no_material_body": "Snap a worksheet or a book page — the rest happens on its own.",
+    "add_material": "+ Material",
+    "start_practice": "Start practice",
+    "archive_title": "Archive folder",
+    "archive_body": "The folder will be archived and can be restored for 30 days.",
+    "rename": "Rename",
+    "archive": "Archive",
+    "cancel": "Cancel",
+    "test_in_days": "Test in {{count}} days"
+  },
+  "subject": {
+    "not_found_title": "Subject not found.",
+    "not_found_body": "It may have been archived.",
+    "material_count_one": "{{count}} material",
+    "material_count_other": "{{count}} materials",
+    "tab_folders": "Folders",
+    "tab_materials": "Material",
+    "no_folders_title": "No folders yet.",
+    "no_folders_body": "Create a folder to group materials for a test or a chapter.",
+    "no_materials_title": "No materials yet.",
+    "no_materials_body": "Snap a worksheet or a book page — the rest happens on its own.",
+    "new_folder": "Folder",
+    "new_material": "New",
+    "start_practice": "Start practice",
+    "archive": "Archive",
+    "cancel": "Cancel"
+  },
+  "subjects": {
+    "math": "Maths",
+    "biology": "Biology",
+    "physics": "Physics",
+    "language_native": "English",
+    "language_foreign": "Language",
+    "general": "Other"
+  }
+}

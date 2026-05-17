@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,6 +14,7 @@ import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function SubscriptionScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
 
@@ -21,17 +23,26 @@ export default function SubscriptionScreen() {
   const handlePurchase = async (sku: 'standard' | 'plus') => {
     try {
       await startPurchase(sku);
-      Alert.alert('Danke!', 'Dein Abo wird gleich freigeschaltet.');
+      Alert.alert(
+        t('subscription.purchase_success_title'),
+        t('subscription.purchase_success_body'),
+      );
     } catch (err) {
-      Alert.alert('Ups.', err instanceof Error ? err.message : 'Kauf fehlgeschlagen.');
+      Alert.alert(
+        t('subscription.purchase_error_title'),
+        err instanceof Error ? err.message : t('subscription.purchase_error_generic'),
+      );
     }
   };
   const handleRestore = async () => {
     try {
       await restorePurchases();
-      Alert.alert('Wiederhergestellt', 'Dein Abo-Status wurde aktualisiert.');
+      Alert.alert(t('subscription.restore_success_title'), t('subscription.restore_success_body'));
     } catch (err) {
-      Alert.alert('Ups.', err instanceof Error ? err.message : 'Wiederherstellung fehlgeschlagen.');
+      Alert.alert(
+        t('subscription.purchase_error_title'),
+        err instanceof Error ? err.message : t('subscription.restore_error_generic'),
+      );
     }
   };
 
@@ -47,7 +58,9 @@ export default function SubscriptionScreen() {
         }}
       >
         <CircleBtn icon="back" onPress={() => router.back()} />
-        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>Abo</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>
+          {t('subscription.title')}
+        </Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 16 }}>
         {accountQuery.isLoading ? (
@@ -57,37 +70,37 @@ export default function SubscriptionScreen() {
             <Chip tone="primary">{accountQuery.data?.subscription?.tier ?? 'trial'}</Chip>
             <Text style={{ marginTop: 10, fontSize: 14, color: LB.ink2 }}>
               {accountQuery.data?.subscription?.status === 'trial'
-                ? 'Du bist im 14-Tage-Trial. Volle Funktion bis Ende der Probezeit.'
-                : 'Dein aktuelles Abo.'}
+                ? t('subscription.trial_body')
+                : t('subscription.active_body')}
             </Text>
           </View>
         )}
 
         <Tier
-          title="Standard"
-          price="€4,99 / Monat"
+          title={t('subscription.tiers.standard.title')}
+          price={t('subscription.tiers.standard.price')}
           features={[
-            '~30 Material-Aufnahmen pro Monat',
-            '~150 ausgewertete Antworten',
-            'Vorrang im Support',
+            t('subscription.tiers.standard.feature_1'),
+            t('subscription.tiers.standard.feature_2'),
+            t('subscription.tiers.standard.feature_3'),
           ]}
-          cta="Standard buchen"
+          cta={t('subscription.tiers.standard.cta')}
           onPress={() => handlePurchase('standard')}
         />
         <Tier
-          title="Plus"
-          price="€9,99 / Monat"
+          title={t('subscription.tiers.plus.title')}
+          price={t('subscription.tiers.plus.price')}
           features={[
-            'Mehr als doppelt so viele Material-Aufnahmen',
-            'Stoffunabhängige Power-Sitzungen',
-            'Erweitertes Üben',
+            t('subscription.tiers.plus.feature_1'),
+            t('subscription.tiers.plus.feature_2'),
+            t('subscription.tiers.plus.feature_3'),
           ]}
-          cta="Plus buchen"
+          cta={t('subscription.tiers.plus.cta')}
           onPress={() => handlePurchase('plus')}
           highlight
         />
         <Btn variant="outline" full onPress={handleRestore}>
-          Käufe wiederherstellen
+          {t('subscription.restore')}
         </Btn>
       </ScrollView>
     </SafeAreaView>

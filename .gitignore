@@ -4,7 +4,6 @@
 # Cowork sandbox leftovers (virtio-fs would not let us delete these)
 .git.broken/
 .git.alsobroken/
-LearnBuddy/
 
 # Node
 node_modules/

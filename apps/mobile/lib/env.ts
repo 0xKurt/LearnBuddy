@@ -10,4 +10,8 @@ export const ENV = {
   SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
   DSGVO_CONSENT_VERSION: process.env.EXPO_PUBLIC_DSGVO_CONSENT_VERSION ?? '2026-05-01',
   REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '',
+  SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+  POSTHOG_API_KEY: process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? '',
+  POSTHOG_HOST: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com',
+  RELEASE: process.env.EXPO_PUBLIC_APP_RELEASE ?? 'dev',
 };

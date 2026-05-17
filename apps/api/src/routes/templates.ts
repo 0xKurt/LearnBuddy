@@ -12,7 +12,6 @@ import { z } from 'zod';
 
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
-import { notImplemented } from '../lib/errors.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -50,6 +49,27 @@ async function ownedTemplate(
   }
   return t.data as { id: string; learner_id: string };
 }
+
+templateRoutes.get('/:id', async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const template_id = c.req.param('id');
+
+  const t = await supabase
+    .from('problem_templates')
+    .select('*')
+    .eq('id', template_id)
+    .is('archived_at', null)
+    .maybeSingle();
+  if (t.error) {
+    throw new ApiError('internal', 'Failed to load template', { cause: t.error.message });
+  }
+  if (!t.data || (t.data as { learner_id: string }).learner_id !== learner_id) {
+    throw new ApiError('not_found', 'Template not found');
+  }
+  return c.json(t.data);
+});
 
 templateRoutes.post(
   '/:id/practice-run',
@@ -147,7 +167,3 @@ templateRoutes.delete('/:id', async (c) => {
   }
   return c.json({ id: template_id, archived: true });
 });
-
-// notImplemented kept for the unused signature warning silence — D3 implements
-// the three above; future polish slices add list/get endpoints if needed.
-void notImplemented;

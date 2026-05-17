@@ -1,4 +1,17 @@
 {
+  "signup": {
+    "title": "Créer un compte",
+    "subtitle": "Avec ton adresse e-mail et un mot de passe.",
+    "placeholder_email": "E-mail",
+    "placeholder_password": "Mot de passe (8 caractères minimum)",
+    "cta": "Créer un compte",
+    "busy": "Un instant …",
+    "minor_link": "J'ai moins de 16 ans",
+    "error_conflict": "Cet e-mail est déjà utilisé.",
+    "error_validation": "Vérifie ton e-mail et ton mot de passe (≥ 8 caractères).",
+    "error_generic": "Quelque chose s'est mal passé. Réessaie dans un instant.",
+    "error_network": "Pas de connexion. Réessaie plus tard."
+  },
   "welcome": {
     "title": "Compagnon d'étude",
     "subtitle": "Un compagnon calme pendant que tu travailles. Photographie, fais quelques questions — c'est tout.",
@@ -36,6 +49,36 @@
     "error_already": "Ce compte a déjà un profil.",
     "error_validation": "Vérifie les champs renseignés.",
     "error_generic": "Impossible d'enregistrer — réessaie dans un instant."
+  },
+  "add_profile": {
+    "title": "Créer le profil",
+    "body": "Il nous faut juste un prénom, une année de naissance et la classe. Tout est modifiable plus tard.",
+    "field_first_name": "Prénom",
+    "field_birth_year": "Année de naissance",
+    "field_grade": "Classe",
+    "placeholder_first_name": "ex. Lena",
+    "placeholder_birth_year": "ex. 2012",
+    "minor_hint": "À l'étape suivante, on recueille brièvement le consentement pour un profil de moins de 16 ans.",
+    "cta": "Continuer",
+    "busy": "Un instant …",
+    "error_already": "Ce compte a déjà un profil.",
+    "error_validation": "Vérifie tous les champs.",
+    "error_generic": "Impossible d'enregistrer pour l'instant — tu retentes ?",
+    "grades": {
+      "1": "CP",
+      "2": "CE1",
+      "3": "CE2",
+      "4": "CM1",
+      "5": "CM2",
+      "6": "6e",
+      "7": "5e",
+      "8": "4e",
+      "9": "3e",
+      "10": "Seconde",
+      "11": "Première",
+      "12": "Terminale",
+      "13": "Études supérieures / formation adulte"
+    }
   },
   "pin": {
     "title": "Protéger l'espace compte",

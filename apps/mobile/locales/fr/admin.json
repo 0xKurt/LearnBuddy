@@ -1,0 +1,166 @@
+{
+  "overview": {
+    "title": "Compte",
+    "back_to_learner": "Retour à l'écran d'apprentissage",
+    "birth_year_grade": "Né(e) en {{year}} · Classe {{grade}}",
+    "grade_unknown": "—",
+    "rows": {
+      "profile_edit": "Modifier le profil",
+      "profile_edit_sub": "Prénom, année de naissance, classe",
+      "notifications": "Notifications",
+      "preferences": "Préférences",
+      "subscription": "Abonnement",
+      "data": "Données et confidentialité",
+      "archive": "Archives",
+      "account_settings": "Paramètres du compte",
+      "about": "À propos"
+    }
+  },
+  "preferences": {
+    "title": "Préférences",
+    "done": "Terminé",
+    "haptics": {
+      "label": "Retour haptique",
+      "sub": "Légères vibrations pour bon/mauvais et au passage à la suite."
+    },
+    "session_length": {
+      "title": "Durée d'exercice par défaut",
+      "sub": "Combien de questions par défaut dans une séance d'entraînement ?",
+      "option_one": "{{count}} question",
+      "option_other": "{{count}} questions",
+      "option": "{{count}} questions"
+    },
+    "photo_retention": {
+      "title": "Conserver les photos pendant",
+      "sub": "Combien de temps nous gardons l'original avant suppression automatique.",
+      "option_one": "{{count}} jour",
+      "option_other": "{{count}} jours",
+      "option": "{{count}} jours",
+      "cap_note": "Confidentialité : les photos originales sont supprimées au plus tard après 7 jours."
+    },
+    "data_saver": {
+      "label": "Économie de données",
+      "sub": "Ne pas charger les aperçus d'images depuis le réseau pendant l'entraînement."
+    },
+    "dyslexia_font": {
+      "label": "Police OpenDyslexic",
+      "sub": "Police plus lisible pour la dyslexie (arrivera dans la prochaine mise à jour)."
+    }
+  },
+  "account_settings": {
+    "title": "Compte",
+    "card_display_name": "Nom affiché",
+    "card_country": "Pays",
+    "card_language": "Langue",
+    "sign_out": "Se déconnecter",
+    "sign_out_confirm": {
+      "title": "Se déconnecter ?",
+      "cancel": "Annuler",
+      "confirm": "Se déconnecter"
+    },
+    "empty": "—"
+  },
+  "data": {
+    "title": "Données",
+    "export": {
+      "title": "Export des données",
+      "body": "On te prépare un ZIP complet : compte, profil, questions, tentatives, statut d'abonnement. Envoyé par e-mail, valable 7 jours.",
+      "cta": "Demander l'export",
+      "loading": "Chargement …",
+      "requested_title": "Export demandé",
+      "requested_body": "Tu recevras un lien par e-mail dès que les données sont prêtes (sous 24 h).",
+      "error_title": "Oups.",
+      "error_generic": "L'export a échoué."
+    },
+    "delete": {
+      "title": "Supprimer le compte",
+      "body": "Délai de 7 jours : tu peux annuler la suppression pendant cette période. Ensuite, tout est effacé définitivement.",
+      "cta": "Demander la suppression du compte",
+      "confirm_title": "Supprimer le compte ?",
+      "confirm_body": "Tu as 7 jours pour annuler. Passé ce délai, toutes les données sont effacées définitivement.",
+      "confirm_cancel": "Annuler",
+      "confirm_ok": "Demander la suppression",
+      "requested_title": "Demande de suppression enregistrée",
+      "requested_body": "Tu recevras une confirmation par e-mail. Tu peux annuler la demande sous 7 jours.",
+      "error_title": "Oups.",
+      "error_generic": "La demande a échoué."
+    }
+  },
+  "about": {
+    "title": "À propos de LearnBuddy",
+    "version": "Version",
+    "privacy_title": "Confidentialité",
+    "privacy_body": "Toutes les données d'apprentissage restent dans l'UE. Pas de publicité, aucune transmission à des tiers à des fins d'entraînement.",
+    "privacy_link": "Politique de confidentialité",
+    "imprint_title": "Mentions légales",
+    "imprint_link": "Ouvrir"
+  },
+  "archived": {
+    "title": "Archives",
+    "banner": "Les éléments archivés peuvent être restaurés pendant 30 jours. Ensuite, ils sont supprimés définitivement.",
+    "empty": "Rien dans les archives."
+  },
+  "profile_edit": {
+    "title": "Profil",
+    "not_found": "Profil introuvable.",
+    "field_name": "Nom affiché",
+    "birth_year_hint": "Année de naissance {{year}} (modifiable uniquement via une demande de données)",
+    "field_grade": "Classe",
+    "saving": "Enregistrement …",
+    "save": "Enregistrer",
+    "error_title": "Oups."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "loading": "Chargement …",
+    "daily_label": "Rappel quotidien",
+    "daily_sub": "À {{time}}. Uniquement les jours sans séance.",
+    "test_label": "Rappels de contrôle",
+    "test_sub": "3 jours / 1 jour / le matin avant les contrôles dans les dossiers planifiés.",
+    "streak_label": "Rappel de série",
+    "streak_sub": "Une douce invitation quand la série d'apprentissage est sur le point de s'interrompre.",
+    "done": "Terminé"
+  },
+  "material": {
+    "title_fallback": "Matériel",
+    "not_found": "Introuvable.",
+    "no_questions": "Pas de questions.",
+    "question_label": "Question {{number}}",
+    "expected_prefix": "Attendu : ",
+    "delete_title": "Supprimer la question ?",
+    "delete_cancel": "Annuler",
+    "delete_confirm": "Supprimer",
+    "error_title": "Oups."
+  },
+  "subscription": {
+    "title": "Abonnement",
+    "trial_body": "Tu es en période d'essai de 14 jours. Accès complet jusqu'à la fin.",
+    "active_body": "Ton abonnement actuel.",
+    "tiers": {
+      "standard": {
+        "title": "Standard",
+        "price": "4,99 € / mois",
+        "feature_1": "~30 prises de supports par mois",
+        "feature_2": "~150 réponses évaluées",
+        "feature_3": "Support prioritaire",
+        "cta": "Choisir Standard"
+      },
+      "plus": {
+        "title": "Plus",
+        "price": "9,99 € / mois",
+        "feature_1": "Plus du double de prises de supports",
+        "feature_2": "Séances libres, toutes matières",
+        "feature_3": "Entraînement étendu",
+        "cta": "Choisir Plus"
+      }
+    },
+    "restore": "Restaurer les achats",
+    "purchase_success_title": "Merci !",
+    "purchase_success_body": "Ton abonnement va être activé.",
+    "purchase_error_title": "Oups.",
+    "purchase_error_generic": "L'achat a échoué.",
+    "restore_success_title": "Restauré",
+    "restore_success_body": "Ton statut d'abonnement a été mis à jour.",
+    "restore_error_generic": "La restauration a échoué."
+  }
+}

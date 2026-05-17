@@ -8,6 +8,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
@@ -20,27 +21,40 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn, Chip, EmptyState, Icon, SubjectGlyph } from '../../components/lb/index.js';
+import { Btn, Chip, CoachMark, EmptyState, Icon, SubjectGlyph } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
-import { createSubject, listSubjects, type SubjectListItem } from '../../lib/api/subjects.js';
+import {
+  createSubject,
+  getScheduleSummary,
+  listSubjects,
+  type SubjectListItem,
+} from '../../lib/api/subjects.js';
+import { useFirstTime } from '../../lib/onboarding/coach.js';
 import { LB, SUBJECT_TONES, TONE_BG, type SubjectTone } from '../../lib/theme/colors.js';
 
+type SubjectKindKey =
+  | 'math'
+  | 'physics'
+  | 'biology'
+  | 'language_native'
+  | 'language_foreign'
+  | 'general';
+
 type SubjectKindOption = {
-  kind: 'math' | 'physics' | 'biology' | 'language_native' | 'language_foreign' | 'general';
-  label: string;
+  kind: SubjectKindKey;
   glyph: string;
 };
 
 const SUBJECT_KINDS: readonly SubjectKindOption[] = [
-  { kind: 'math', label: 'Mathematik', glyph: '📐' },
-  { kind: 'biology', label: 'Biologie', glyph: '🌱' },
-  { kind: 'physics', label: 'Physik', glyph: '🧪' },
-  { kind: 'language_native', label: 'Deutsch', glyph: '📖' },
-  { kind: 'language_foreign', label: 'Sprache', glyph: '🗣️' },
-  { kind: 'general', label: 'Anderes', glyph: '✨' },
+  { kind: 'math', glyph: '📐' },
+  { kind: 'biology', glyph: '🌱' },
+  { kind: 'physics', glyph: '🧪' },
+  { kind: 'language_native', glyph: '📖' },
+  { kind: 'language_foreign', glyph: '🗣️' },
+  { kind: 'general', glyph: '✨' },
 ];
 
-const SUBJECT_COLOR_HEXES: Record<SubjectKindOption['kind'], string> = {
+const SUBJECT_COLOR_HEXES: Record<SubjectKindKey, string> = {
   math: '#6B8AFD',
   physics: '#B58A3C',
   biology: '#3FA876',
@@ -49,11 +63,11 @@ const SUBJECT_COLOR_HEXES: Record<SubjectKindOption['kind'], string> = {
   general: '#928D9C',
 };
 
-function greeting(): string {
+function greetingKey(): 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
-  if (h < 11) return 'Guten Morgen';
-  if (h < 18) return 'Hallo';
-  return 'Schönen Abend';
+  if (h < 11) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'evening';
 }
 
 function toneForIndex(i: number): SubjectTone {
@@ -69,6 +83,8 @@ function isMinor(birthYear: number, now = new Date()): boolean {
 }
 
 export default function HomeScreen() {
+  const { t } = useTranslation('home');
+  const { t: tCoach } = useTranslation('coach');
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id;
   const learnerBirthYear = accountQuery.data?.learner?.birth_year;
@@ -80,6 +96,14 @@ export default function HomeScreen() {
     queryFn: () => listSubjects(learnerId as string),
     enabled: !!learnerId,
   });
+
+  const scheduleQuery = useQuery({
+    queryKey: ['schedule-summary', learnerId],
+    queryFn: () => getScheduleSummary(learnerId as string),
+    enabled: !!learnerId,
+  });
+  const streak = scheduleQuery.data?.streak_current ?? 0;
+  const streakCoach = useFirstTime('streak', { enabled: streak > 0 });
 
   const [creating, setCreating] = useState(false);
 
@@ -112,7 +136,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/(admin)/unlock')}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
           >
-            <Text style={{ fontSize: 12, color: LB.ink3, fontWeight: '500' }}>{greeting()}</Text>
+            <Text style={{ fontSize: 12, color: LB.ink3, fontWeight: '500' }}>
+              {t(`greeting.${greetingKey()}`)}
+            </Text>
             <Text style={{ fontSize: 16, fontWeight: '600', color: LB.ink, letterSpacing: -0.3 }}>
               {learnerName || '…'}
             </Text>
@@ -124,17 +150,9 @@ export default function HomeScreen() {
             <ActivityIndicator color={LB.ink2} />
           </View>
         ) : subjectsQuery.isError ? (
-          <EmptyState
-            glyph="⚠️"
-            title="Konnte Fächer nicht laden."
-            body="Bitte zieh die Liste nach unten, um es erneut zu versuchen."
-          />
+          <EmptyState glyph="⚠️" title={t('loading_error.title')} body={t('loading_error.body')} />
         ) : tiles.length === 0 ? (
-          <EmptyState
-            glyph="🌱"
-            title="Noch keine Fächer."
-            body="Leg ein Fach an oder fotografier dein erstes Material — wir kümmern uns um den Rest."
-          />
+          <EmptyState glyph="🌱" title={t('empty.title')} body={t('empty.body')} />
         ) : (
           <View
             style={{
@@ -157,11 +175,21 @@ export default function HomeScreen() {
         learnerId={learnerId ?? ''}
         onClose={() => setCreating(false)}
       />
+
+      <CoachMark
+        visible={streakCoach.shown}
+        onDismiss={streakCoach.dismiss}
+        title={tCoach('streak.title', { count: streak })}
+        body={tCoach('streak.body')}
+        ctaLabel={tCoach('dismiss')}
+        glyph="🔥"
+      />
     </SafeAreaView>
   );
 }
 
 function SubjectTile({ subject, tone }: { subject: SubjectListItem; tone: SubjectTone }) {
+  const { t } = useTranslation('home');
   return (
     <Pressable
       onPress={() => router.push(`/(learner)/subject/${subject.id}`)}
@@ -180,7 +208,7 @@ function SubjectTile({ subject, tone }: { subject: SubjectListItem; tone: Subjec
           {subject.name}
         </Text>
         {subject.upcoming_test_in_days != null && (
-          <Chip tone="warning">{`Test in ${subject.upcoming_test_in_days} Tagen`}</Chip>
+          <Chip tone="warning">{t('test_in_days', { count: subject.upcoming_test_in_days })}</Chip>
         )}
       </View>
     </Pressable>
@@ -188,6 +216,7 @@ function SubjectTile({ subject, tone }: { subject: SubjectListItem; tone: Subjec
 }
 
 function AddSubjectTile({ onPress }: { onPress: () => void }) {
+  const { t } = useTranslation('home');
   return (
     <Pressable
       onPress={onPress}
@@ -205,7 +234,9 @@ function AddSubjectTile({ onPress }: { onPress: () => void }) {
       }}
     >
       <Icon name="plus" size={24} color={LB.ink3} />
-      <Text style={{ fontSize: 13, color: LB.ink3, fontWeight: '500' }}>Fach hinzufügen</Text>
+      <Text style={{ fontSize: 13, color: LB.ink3, fontWeight: '500' }}>
+        {t('add_subject_tile')}
+      </Text>
     </Pressable>
   );
 }
@@ -219,11 +250,12 @@ function AddSubjectModal({
   learnerId: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation('home');
   const qc = useQueryClient();
   const [name, setName] = useState('');
   const [kindIdx, setKindIdx] = useState(0);
   const kind = SUBJECT_KINDS[kindIdx]!;
-  const placeholder = useMemo(() => kind.label, [kind]);
+  const placeholder = useMemo(() => t(`subjects.${kind.kind}`), [kind, t]);
 
   const mut = useMutation({
     mutationFn: () =>
@@ -241,7 +273,7 @@ function AddSubjectModal({
       onClose();
     },
     onError: (err: Error) => {
-      Alert.alert('Ups.', err.message);
+      Alert.alert(t('modal.error_title'), err.message);
     },
   });
 
@@ -255,7 +287,7 @@ function AddSubjectModal({
       <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22, gap: 18, flex: 1 }}>
           <Text style={{ fontSize: 22, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
-            Neues Fach
+            {t('modal.title')}
           </Text>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -276,13 +308,13 @@ function AddSubjectModal({
                 }}
               >
                 <Text>{k.glyph}</Text>
-                <Text style={{ color: LB.ink, fontWeight: '500' }}>{k.label}</Text>
+                <Text style={{ color: LB.ink, fontWeight: '500' }}>{t(`subjects.${k.kind}`)}</Text>
               </Pressable>
             ))}
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 12, color: LB.ink2 }}>Name</Text>
+            <Text style={{ fontSize: 12, color: LB.ink2 }}>{t('modal.name_label')}</Text>
             <TextInput
               value={name}
               onChangeText={setName}
@@ -307,12 +339,12 @@ function AddSubjectModal({
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <Btn variant="outline" full onPress={onClose}>
-                Abbrechen
+                {t('modal.cancel')}
               </Btn>
             </View>
             <View style={{ flex: 2 }}>
               <Btn full onPress={() => mut.mutate()} disabled={mut.isPending}>
-                {mut.isPending ? 'Wird angelegt…' : 'Anlegen'}
+                {mut.isPending ? t('modal.creating') : t('modal.create')}
               </Btn>
             </View>
           </View>

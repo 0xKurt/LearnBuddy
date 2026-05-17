@@ -1,5 +1,13 @@
 # LearnBuddy — Implementation Audit (vs USER-FLOWS v1+v2)
 
+> **Stale — superseded by `docs/CODEBASE-AUDIT.md` (2026-05-17).** This file
+> captures the 5-day-old skeleton state and is kept as a checkpoint for the
+> early-build retrospective. Do not use it as ground truth — the API is no
+> longer all 501s; migrations 0001–0012 are applied; FSRS-driven sessions,
+> RevenueCat webhook, DSGVO export/delete, Vertex Gemini integration, and
+> 7 of the 8 admin screens are real. See `CODEBASE-AUDIT.md` for the current
+> picture.
+
 Date: 2026-05-16
 Auditor: Claude (subagent, repository read-only sweep)
 Scope: every file under `apps/mobile`, `apps/api`, `packages/*`, `infra/supabase`.
@@ -13,31 +21,31 @@ This is a **skeleton, not a product**. The repository contains a clean architect
 
 ## TL;DR scoreboard (v1 buckets, 23 total)
 
-| # | Bucket | Done | Partial / stub | Missing | Coverage |
-| --- | --- | --- | --- | --- | --- |
-| 1 | First-run / install | 1 | 1 | 4 | ~15 % |
-| 2 | Account creation & auth | 0 | 3 | 8 | ~5 % |
-| 3 | Learner profile creation & mgmt | 0 | 2 | 9 | ~5 % |
-| 4 | Capturing material | 0 | 1 | 10 | ~2 % |
-| 5 | Organizing material | 0 | 1 | 12 | ~3 % |
-| 6 | AI generation | 0 | 0 | 9 | 0 % |
-| 7 | Studying / practicing | 0 | 2 | 14 | ~5 % |
-| 8 | Adaptive review (FSRS) | 1 | 1 | 4 | ~25 % |
-| 9 | Voice & ASR | 0 | 0 | 8 | 0 % |
-| 10 | Math & formula | 1 | 1 | 5 | ~25 % |
-| 11 | Subscription & credits | 0 | 0 | 9 | 0 % |
-| 12 | Privacy / DSGVO | 0 | 1 | 11 | ~3 % |
-| 13 | Admin surface | 0 | 2 | 14 | ~5 % |
-| 14 | Notifications | 0 | 0 | 8 | 0 % |
-| 15 | Errors & offline | 1 | 2 | 8 | ~15 % |
-| 16 | Account holder + minor flows | 0 | 1 | 7 | ~5 % |
-| 17 | Edge cases | 0 | 0 | 12 | 0 % |
-| 18 | Onboarding tutorials / empty states | 0 | 1 | 7 | ~5 % |
-| 19 | Search / discovery | 0 | 0 | 5 | 0 % |
-| 20 | Cross-cutting micro-flows | 0 | 0 | 10 | 0 % |
-| 21 | Header / chrome / nav | 1 | 1 | 4 | ~20 % |
-| 22 | Internationalization | 0 | 1 | 4 | ~10 % |
-| 23 | Observability touchpoints | n/a | n/a | n/a | n/a |
+| #   | Bucket                              | Done | Partial / stub | Missing | Coverage |
+| --- | ----------------------------------- | ---- | -------------- | ------- | -------- |
+| 1   | First-run / install                 | 1    | 1              | 4       | ~15 %    |
+| 2   | Account creation & auth             | 0    | 3              | 8       | ~5 %     |
+| 3   | Learner profile creation & mgmt     | 0    | 2              | 9       | ~5 %     |
+| 4   | Capturing material                  | 0    | 1              | 10      | ~2 %     |
+| 5   | Organizing material                 | 0    | 1              | 12      | ~3 %     |
+| 6   | AI generation                       | 0    | 0              | 9       | 0 %      |
+| 7   | Studying / practicing               | 0    | 2              | 14      | ~5 %     |
+| 8   | Adaptive review (FSRS)              | 1    | 1              | 4       | ~25 %    |
+| 9   | Voice & ASR                         | 0    | 0              | 8       | 0 %      |
+| 10  | Math & formula                      | 1    | 1              | 5       | ~25 %    |
+| 11  | Subscription & credits              | 0    | 0              | 9       | 0 %      |
+| 12  | Privacy / DSGVO                     | 0    | 1              | 11      | ~3 %     |
+| 13  | Admin surface                       | 0    | 2              | 14      | ~5 %     |
+| 14  | Notifications                       | 0    | 0              | 8       | 0 %      |
+| 15  | Errors & offline                    | 1    | 2              | 8       | ~15 %    |
+| 16  | Account holder + minor flows        | 0    | 1              | 7       | ~5 %     |
+| 17  | Edge cases                          | 0    | 0              | 12      | 0 %      |
+| 18  | Onboarding tutorials / empty states | 0    | 1              | 7       | ~5 %     |
+| 19  | Search / discovery                  | 0    | 0              | 5       | 0 %      |
+| 20  | Cross-cutting micro-flows           | 0    | 0              | 10      | 0 %      |
+| 21  | Header / chrome / nav               | 1    | 1              | 4       | ~20 %    |
+| 22  | Internationalization                | 0    | 1              | 4       | ~10 %    |
+| 23  | Observability touchpoints           | n/a  | n/a            | n/a     | n/a      |
 
 **Rough weighted total coverage: ~5–8 %.** Heavy mass in buckets 6 (AI), 9 (Voice), 11 (Subscription), 14 (Notifications), 17 (Edge cases), 20 (Cross-cutting) which are 0 %.
 
@@ -47,38 +55,39 @@ This is a **skeleton, not a product**. The repository contains a clean architect
 
 ### apps/mobile/app (expo-router screens, 27 files)
 
-| File | LOC | Verdict | Notes |
-| --- | --- | --- | --- |
-| `_layout.tsx` | 34 | OK | Stack provider, react-query, gesture root, status bar. |
-| `index.tsx` | 8 | Stub | Always redirects to `(onboarding)/welcome` — no auth/account check. Comment admits: "Production checks the account row via GET /account and routes accordingly." |
-| `login.tsx` | 14 | Placeholder | Renders only the title and "Doc 05 §login — pending implementation." |
-| `reset-password.tsx` | 14 | Placeholder | "Pending implementation." |
-| `(onboarding)/_layout.tsx` | 13 | OK | Stack. |
-| `(onboarding)/welcome.tsx` | 41 | UI shell | Wires to age-check; no analytics, no consent-version check. |
-| `(onboarding)/age-check.tsx` | 76 | Partial | Year grid (only 12 of 20 years visible); routes <16 → hand-off-to-adult, ≥16 → signup. No persistence, no minimum-age error path. |
-| `(onboarding)/hand-off-to-adult.tsx` | 66 | UI shell | Static copy, button loops back to age-check. |
-| `(onboarding)/account-signup.tsx` | 56 | UI shell | Form does **not** call any API; "Weiter" goes to verify-email regardless of input. |
-| `(onboarding)/verify-email.tsx` | 33 | Placeholder | No deep-link handler, no polling. |
-| `(onboarding)/consent.tsx` | 61 | UI shell | Two checkboxes; no version persisted, no API call. |
-| `(onboarding)/who-uses.tsx` | 39 | UI shell | Branch on `?for=self|child`. |
-| `(onboarding)/add-profile.tsx` | 43 | UI shell | Single name input; no validation, no API. |
-| `(onboarding)/profile-minor-consent.tsx` | 26 | UI shell | Single checkbox, no copy of actual DSGVO summary. |
-| `(onboarding)/pin-setup.tsx` | 44 | Placeholder | Both buttons go to hand-off — neither actually sets a PIN nor calls `expo-secure-store` nor invokes Face ID. |
-| `(onboarding)/hand-off.tsx` | 39 | UI shell | "✨" + replace to learner home. |
-| `(learner)/_layout.tsx` | 36 | OK | BottomNav routing; "profile" tab routes to `(admin)/unlock`. |
-| `(learner)/home.tsx` | 136 | Stub w/ demo data | Hardcoded `DEMO_SUBJECTS` array. Add-subject button has empty `onPress={() => {}}`. No data fetching. |
-| `(learner)/capture.tsx` | 18 | Placeholder | Literal text "expo-camera viewfinder + live blur/brightness chips kommen in Schritt 14." Zero camera code. |
-| `(learner)/result.tsx` | 115 | Stub w/ demo data | Hardcoded `STATS` and chips. No real session-result wiring. |
-| `(learner)/session/[sessionId].tsx` | 156 | Stub w/ demo data | Hardcoded "2x + 7 = 15", fake "Mathe-Tastatur" string append, "erkannt" chip is static. No real MathInput, no real evaluator call, no FSRS write. |
-| `(learner)/subject/[subjectId].tsx` | 198 | Stub w/ demo data | Hardcoded `DEMO_FOLDERS`, `DEMO_MATERIALS`. Ordner/Material tabs work visually; nothing fetched. |
-| `(learner)/folder/[folderId].tsx` | 15 | Placeholder | Renders the ID only. |
-| `(learner)/material/[materialId].tsx` | 15 | Placeholder | Renders the ID only. |
-| `(learner)/practice/[templateId].tsx` | 15 | Placeholder | Renders the ID only. |
-| `(admin)/_layout.tsx` | 13 | OK | Empty Stack. |
-| `(admin)/overview.tsx` | 22 | Placeholder | "Doc 05 §overview — pending implementation." |
-| `(admin)/unlock.tsx` | 40 | Placeholder | "Mit Face ID entsperren" goes straight to overview — no actual biometric prompt, no PIN entry. |
+| File                                     | LOC | Verdict           | Notes                                                                                                                                                            |
+| ---------------------------------------- | --- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `_layout.tsx`                            | 34  | OK                | Stack provider, react-query, gesture root, status bar.                                                                                                           |
+| `index.tsx`                              | 8   | Stub              | Always redirects to `(onboarding)/welcome` — no auth/account check. Comment admits: "Production checks the account row via GET /account and routes accordingly." |
+| `login.tsx`                              | 14  | Placeholder       | Renders only the title and "Doc 05 §login — pending implementation."                                                                                             |
+| `reset-password.tsx`                     | 14  | Placeholder       | "Pending implementation."                                                                                                                                        |
+| `(onboarding)/_layout.tsx`               | 13  | OK                | Stack.                                                                                                                                                           |
+| `(onboarding)/welcome.tsx`               | 41  | UI shell          | Wires to age-check; no analytics, no consent-version check.                                                                                                      |
+| `(onboarding)/age-check.tsx`             | 76  | Partial           | Year grid (only 12 of 20 years visible); routes <16 → hand-off-to-adult, ≥16 → signup. No persistence, no minimum-age error path.                                |
+| `(onboarding)/hand-off-to-adult.tsx`     | 66  | UI shell          | Static copy, button loops back to age-check.                                                                                                                     |
+| `(onboarding)/account-signup.tsx`        | 56  | UI shell          | Form does **not** call any API; "Weiter" goes to verify-email regardless of input.                                                                               |
+| `(onboarding)/verify-email.tsx`          | 33  | Placeholder       | No deep-link handler, no polling.                                                                                                                                |
+| `(onboarding)/consent.tsx`               | 61  | UI shell          | Two checkboxes; no version persisted, no API call.                                                                                                               |
+| `(onboarding)/who-uses.tsx`              | 39  | UI shell          | Branch on `?for=self                                                                                                                                             | child`. |
+| `(onboarding)/add-profile.tsx`           | 43  | UI shell          | Single name input; no validation, no API.                                                                                                                        |
+| `(onboarding)/profile-minor-consent.tsx` | 26  | UI shell          | Single checkbox, no copy of actual DSGVO summary.                                                                                                                |
+| `(onboarding)/pin-setup.tsx`             | 44  | Placeholder       | Both buttons go to hand-off — neither actually sets a PIN nor calls `expo-secure-store` nor invokes Face ID.                                                     |
+| `(onboarding)/hand-off.tsx`              | 39  | UI shell          | "✨" + replace to learner home.                                                                                                                                  |
+| `(learner)/_layout.tsx`                  | 36  | OK                | BottomNav routing; "profile" tab routes to `(admin)/unlock`.                                                                                                     |
+| `(learner)/home.tsx`                     | 136 | Stub w/ demo data | Hardcoded `DEMO_SUBJECTS` array. Add-subject button has empty `onPress={() => {}}`. No data fetching.                                                            |
+| `(learner)/capture.tsx`                  | 18  | Placeholder       | Literal text "expo-camera viewfinder + live blur/brightness chips kommen in Schritt 14." Zero camera code.                                                       |
+| `(learner)/result.tsx`                   | 115 | Stub w/ demo data | Hardcoded `STATS` and chips. No real session-result wiring.                                                                                                      |
+| `(learner)/session/[sessionId].tsx`      | 156 | Stub w/ demo data | Hardcoded "2x + 7 = 15", fake "Mathe-Tastatur" string append, "erkannt" chip is static. No real MathInput, no real evaluator call, no FSRS write.                |
+| `(learner)/subject/[subjectId].tsx`      | 198 | Stub w/ demo data | Hardcoded `DEMO_FOLDERS`, `DEMO_MATERIALS`. Ordner/Material tabs work visually; nothing fetched.                                                                 |
+| `(learner)/folder/[folderId].tsx`        | 15  | Placeholder       | Renders the ID only.                                                                                                                                             |
+| `(learner)/material/[materialId].tsx`    | 15  | Placeholder       | Renders the ID only.                                                                                                                                             |
+| `(learner)/practice/[templateId].tsx`    | 15  | Placeholder       | Renders the ID only.                                                                                                                                             |
+| `(admin)/_layout.tsx`                    | 13  | OK                | Empty Stack.                                                                                                                                                     |
+| `(admin)/overview.tsx`                   | 22  | Placeholder       | "Doc 05 §overview — pending implementation."                                                                                                                     |
+| `(admin)/unlock.tsx`                     | 40  | Placeholder       | "Mit Face ID entsperren" goes straight to overview — no actual biometric prompt, no PIN entry.                                                                   |
 
 **Missing screens per 05-mobile §Admin surface:**
+
 - `(admin)/profile/[profileId].tsx`
 - `(admin)/profile/[profileId]/edit.tsx`
 - `(admin)/profile/[profileId]/notifications.tsx`
@@ -94,23 +103,24 @@ That's **8 of 10 admin screens completely absent.**
 
 All thirteen are real UI atoms, mostly 20–65 LOC. Pure presentational, no business logic.
 
-| File | LOC | Notes |
-| --- | --- | --- |
-| `Avatar.tsx` | 36 | Initials + tone bg. |
-| `Banner.tsx` | 31 | Toned banner. |
-| `BottomNav.tsx` | 65 | 4-tab bar. |
-| `Btn.tsx` | 61 | 5 variants × 3 sizes. |
-| `Card.tsx` | 41 | Toned card. |
-| `Chip.tsx` | 31 | Toned chip. |
-| `CircleBtn.tsx` | 30 | Icon button. |
-| `EmptyState.tsx` | 66 | Glyph + title + body. |
-| `Icon.tsx` | 164 | Inline SVG icon set. |
-| `Progress.tsx` | 26 | Progress bar. |
-| `SessionTopBar.tsx` | 48 | Progress + exit. |
-| `SubjectGlyph.tsx` | 21 | Emoji glyph circle. |
-| `index.ts` | 13 | Barrel. |
+| File                | LOC | Notes                 |
+| ------------------- | --- | --------------------- |
+| `Avatar.tsx`        | 36  | Initials + tone bg.   |
+| `Banner.tsx`        | 31  | Toned banner.         |
+| `BottomNav.tsx`     | 65  | 4-tab bar.            |
+| `Btn.tsx`           | 61  | 5 variants × 3 sizes. |
+| `Card.tsx`          | 41  | Toned card.           |
+| `Chip.tsx`          | 31  | Toned chip.           |
+| `CircleBtn.tsx`     | 30  | Icon button.          |
+| `EmptyState.tsx`    | 66  | Glyph + title + body. |
+| `Icon.tsx`          | 164 | Inline SVG icon set.  |
+| `Progress.tsx`      | 26  | Progress bar.         |
+| `SessionTopBar.tsx` | 48  | Progress + exit.      |
+| `SubjectGlyph.tsx`  | 21  | Emoji glyph circle.   |
+| `index.ts`          | 13  | Barrel.               |
 
 **Missing components per 05-mobile §Key components (every one of them):**
+
 - `<LatexText>` — required for question/feedback rendering.
 - `<MathInput>` — required for formula/numeric answer mode.
 - `<MathKeyboard>` — soft keyboard with MEHR layer.
@@ -124,20 +134,21 @@ The fake `KEYS` grid inside `session/[sessionId].tsx` is a static visual mockup,
 
 ### apps/mobile/lib (10 files)
 
-| File | LOC | Verdict |
-| --- | --- | --- |
-| `db/index.ts` | 17 | OK — lazy Drizzle opener. No migration runner. |
-| `db/schema.ts` | 62 | Partial — only 5 tables (learners, subjects, folders, outbox_local, sync_state). Missing materials, items, item_states, sessions, attempts, study_assets, problem_templates, practice_runs. Comment admits: "Skeleton: minimum tables needed for the learner surface to boot. Full mirror lands in Step 12 acceptance work." |
-| `eval/local.ts` | 170 | Real — covers all 6 `answer_kind` branches (mc, numeric, formula via MathLite canon, short/diagram_label via normalized token overlap, long, fill_blank). No tests for it locally. |
-| `fsrs/index.ts` | 95 | Real — ts-fsrs wrapper, verdict→Rating mapping, `pickDueItems` with due-first sort. No "Klassenarbeit folder bias" logic despite comment claiming it. |
-| `i18n/index.ts` | 33 | Partial — only de + en wired; no fr/es/it; no `learner`/`admin`/`errors`/`legal` namespaces. |
-| `legal/consent.ts` | 4 | Stub — single exported constant `CONSENT_VERSION = '2026-01'`. No version comparison, no "did user accept this version?" check. |
-| `store/index.ts` | 15 | Stub — single Zustand store with active_learner_id only. |
-| `sync/connectivity.ts` | 21 | Real — HEAD-ish fetch to /health with timeout. |
-| `sync/outbox.ts` | 100 | Partial stub — enqueue/pending implemented; `drain()` marks rows done without calling any API. Comment: "TODO(Step 17): dispatch to per-kind handler. For the skeleton we mark items done so the outbox doesn't grow during dev." That's worse than a stub — it silently discards work. |
-| `theme/colors.ts` | 66 | Real — pastel palette, tone maps. |
+| File                   | LOC | Verdict                                                                                                                                                                                                                                                                                                                      |
+| ---------------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/index.ts`          | 17  | OK — lazy Drizzle opener. No migration runner.                                                                                                                                                                                                                                                                               |
+| `db/schema.ts`         | 62  | Partial — only 5 tables (learners, subjects, folders, outbox_local, sync_state). Missing materials, items, item_states, sessions, attempts, study_assets, problem_templates, practice_runs. Comment admits: "Skeleton: minimum tables needed for the learner surface to boot. Full mirror lands in Step 12 acceptance work." |
+| `eval/local.ts`        | 170 | Real — covers all 6 `answer_kind` branches (mc, numeric, formula via MathLite canon, short/diagram_label via normalized token overlap, long, fill_blank). No tests for it locally.                                                                                                                                           |
+| `fsrs/index.ts`        | 95  | Real — ts-fsrs wrapper, verdict→Rating mapping, `pickDueItems` with due-first sort. No "Klassenarbeit folder bias" logic despite comment claiming it.                                                                                                                                                                        |
+| `i18n/index.ts`        | 33  | Partial — only de + en wired; no fr/es/it; no `learner`/`admin`/`errors`/`legal` namespaces.                                                                                                                                                                                                                                 |
+| `legal/consent.ts`     | 4   | Stub — single exported constant `CONSENT_VERSION = '2026-01'`. No version comparison, no "did user accept this version?" check.                                                                                                                                                                                              |
+| `store/index.ts`       | 15  | Stub — single Zustand store with active_learner_id only.                                                                                                                                                                                                                                                                     |
+| `sync/connectivity.ts` | 21  | Real — HEAD-ish fetch to /health with timeout.                                                                                                                                                                                                                                                                               |
+| `sync/outbox.ts`       | 100 | Partial stub — enqueue/pending implemented; `drain()` marks rows done without calling any API. Comment: "TODO(Step 17): dispatch to per-kind handler. For the skeleton we mark items done so the outbox doesn't grow during dev." That's worse than a stub — it silently discards work.                                      |
+| `theme/colors.ts`      | 66  | Real — pastel palette, tone maps.                                                                                                                                                                                                                                                                                            |
 
 **Missing lib modules per docs:**
+
 - `lib/asr/` (or `lib/voice/`) — no ASR/SpeechRecognition wrapper anywhere.
 - `lib/tts/` — no `expo-speech` wrapper.
 - `lib/notifications/` — no scheduler.
@@ -150,31 +161,31 @@ The fake `KEYS` grid inside `session/[sessionId].tsx` is a static visual mockup,
 
 ### apps/api/src (15 files)
 
-| File | LOC | Verdict |
-| --- | --- | --- |
-| `app.ts` | 58 | OK — Hono composition, `/health` works, all routes mounted. |
-| `dev-server.ts` | 8 | OK — node-server. |
-| `api/[[...slug]].ts` | (Vercel entry, 13) | OK — Hono Vercel adapter. |
-| `lib/errors.ts` | 66 | OK — ApiError class, 14 error codes mapped to HTTP, `notImplemented()` helper. |
-| `lib/llm/gateway.ts` | 89 | Skeleton — **interface only**, no `vertex.ts` implementation. Comment: "Implementations belong in apps/api/src/lib/llm/vertex.ts" — that file does not exist. |
-| `middleware/auth.ts` | 49 | Stub that always throws — `requireAuth` unconditionally throws `unauthenticated` ("JWT verification not implemented"). Comment is honest about it. |
-| `middleware/error.ts` | 15 | OK. |
-| `middleware/rate-limit.ts` | 30 | Partial — in-memory Map (per docs should be Postgres-backed). Will not survive serverless cold start. |
-| `routes/account.ts` | 9 | All 2 endpoints → 501. |
-| `routes/admin.ts` | 16 | Allowlist check works; `/spend` → 501. |
-| `routes/attempts.ts` | 23 | All 3 endpoints → 501. (POST /, POST /batch, POST /:client_id/finalize) |
-| `routes/auth.ts` | 7 | Both endpoints → 501. (signup, consent) |
-| `routes/dsgvo.ts` | 11 | All 4 endpoints → 501. |
-| `routes/explain.ts` | 13 | → 501. |
-| `routes/folders.ts` | 9 | Both → 501. |
-| `routes/items.ts` | 8 | → 501. |
-| `routes/learners.ts` | 17 | All 6 endpoints → 501. |
-| `routes/materials.ts` | 28 | All 8 endpoints → 501. |
-| `routes/render.ts` | 10 | → 501 (but Cache-Control header is correct). |
-| `routes/sessions.ts` | 13 | → 501. |
-| `routes/subjects.ts` | 11 | All 4 endpoints → 501. |
-| `routes/templates.ts` | 19 | All 3 endpoints → 501. |
-| `routes/webhooks.ts` | 7 | → 501. |
+| File                       | LOC                | Verdict                                                                                                                                                       |
+| -------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.ts`                   | 58                 | OK — Hono composition, `/health` works, all routes mounted.                                                                                                   |
+| `dev-server.ts`            | 8                  | OK — node-server.                                                                                                                                             |
+| `api/[[...slug]].ts`       | (Vercel entry, 13) | OK — Hono Vercel adapter.                                                                                                                                     |
+| `lib/errors.ts`            | 66                 | OK — ApiError class, 14 error codes mapped to HTTP, `notImplemented()` helper.                                                                                |
+| `lib/llm/gateway.ts`       | 89                 | Skeleton — **interface only**, no `vertex.ts` implementation. Comment: "Implementations belong in apps/api/src/lib/llm/vertex.ts" — that file does not exist. |
+| `middleware/auth.ts`       | 49                 | Stub that always throws — `requireAuth` unconditionally throws `unauthenticated` ("JWT verification not implemented"). Comment is honest about it.            |
+| `middleware/error.ts`      | 15                 | OK.                                                                                                                                                           |
+| `middleware/rate-limit.ts` | 30                 | Partial — in-memory Map (per docs should be Postgres-backed). Will not survive serverless cold start.                                                         |
+| `routes/account.ts`        | 9                  | All 2 endpoints → 501.                                                                                                                                        |
+| `routes/admin.ts`          | 16                 | Allowlist check works; `/spend` → 501.                                                                                                                        |
+| `routes/attempts.ts`       | 23                 | All 3 endpoints → 501. (POST /, POST /batch, POST /:client_id/finalize)                                                                                       |
+| `routes/auth.ts`           | 7                  | Both endpoints → 501. (signup, consent)                                                                                                                       |
+| `routes/dsgvo.ts`          | 11                 | All 4 endpoints → 501.                                                                                                                                        |
+| `routes/explain.ts`        | 13                 | → 501.                                                                                                                                                        |
+| `routes/folders.ts`        | 9                  | Both → 501.                                                                                                                                                   |
+| `routes/items.ts`          | 8                  | → 501.                                                                                                                                                        |
+| `routes/learners.ts`       | 17                 | All 6 endpoints → 501.                                                                                                                                        |
+| `routes/materials.ts`      | 28                 | All 8 endpoints → 501.                                                                                                                                        |
+| `routes/render.ts`         | 10                 | → 501 (but Cache-Control header is correct).                                                                                                                  |
+| `routes/sessions.ts`       | 13                 | → 501.                                                                                                                                                        |
+| `routes/subjects.ts`       | 11                 | All 4 endpoints → 501.                                                                                                                                        |
+| `routes/templates.ts`      | 19                 | All 3 endpoints → 501.                                                                                                                                        |
+| `routes/webhooks.ts`       | 7                  | → 501.                                                                                                                                                        |
 
 **Total functional endpoints in the API: exactly one** (`GET /health`). Every domain endpoint returns 501 not-implemented.
 
@@ -182,58 +193,59 @@ The fake `KEYS` grid inside `session/[sessionId].tsx` is a static visual mockup,
 
 All real Zod schemas, well-structured. ~800 lines across the package. Mature.
 
-| File | LOC |
-| --- | --- |
-| `enums.ts` | 98 |
-| `account.ts` | 42 |
-| `learner.ts` | 51 |
-| `subject.ts` | 33 |
-| `folder.ts` | 24 |
-| `material.ts` | 80 |
-| `item.ts` | 150 |
-| `attempt.ts` | 68 |
-| `session.ts` | 28 |
-| `template.ts` | 82 |
-| `credits.ts` | 53 |
-| `subscription.ts` | 14 |
-| `study-asset.ts` | 35 |
-| `error.ts` | 28 |
-| `index.ts` | 16 |
+| File              | LOC |
+| ----------------- | --- |
+| `enums.ts`        | 98  |
+| `account.ts`      | 42  |
+| `learner.ts`      | 51  |
+| `subject.ts`      | 33  |
+| `folder.ts`       | 24  |
+| `material.ts`     | 80  |
+| `item.ts`         | 150 |
+| `attempt.ts`      | 68  |
+| `session.ts`      | 28  |
+| `template.ts`     | 82  |
+| `credits.ts`      | 53  |
+| `subscription.ts` | 14  |
+| `study-asset.ts`  | 35  |
+| `error.ts`        | 28  |
+| `index.ts`        | 16  |
 
 Note: `Locale` enum claims `'de'|'en'|'fr'|'es'|'it'` — but the mobile bundles only de + en JSON. Mobile crashes (or falls back) if a learner record arrives with fr/es/it.
 
 ### packages/shared-math (7 source files + 2 test files)
 
-| File | LOC | Verdict |
-| --- | --- | --- |
-| `mathlite.ts` | 654 | Real, substantial parser. |
-| `normalize.ts` | 73 | Real. |
-| `numeric-input.ts` | 75 | Real. |
-| `units.ts` | 85 | Real. |
-| `index.ts` | 6 | Barrel. |
-| `__tests__/mathlite.test.ts` | 65 | Only test file with mathlite coverage. |
-| `__tests__/numeric-input.test.ts` | 48 | Numeric-input coverage. |
+| File                              | LOC | Verdict                                |
+| --------------------------------- | --- | -------------------------------------- |
+| `mathlite.ts`                     | 654 | Real, substantial parser.              |
+| `normalize.ts`                    | 73  | Real.                                  |
+| `numeric-input.ts`                | 75  | Real.                                  |
+| `units.ts`                        | 85  | Real.                                  |
+| `index.ts`                        | 6   | Barrel.                                |
+| `__tests__/mathlite.test.ts`      | 65  | Only test file with mathlite coverage. |
+| `__tests__/numeric-input.test.ts` | 48  | Numeric-input coverage.                |
 
 **Only tested package in the entire monorepo.** No tests for `lib/eval/local.ts`, no tests for `lib/fsrs/index.ts`, no API tests, no screen tests.
 
 ### infra/supabase/migrations (8 files + .gitkeep)
 
-| File | LOC | Notes |
-| --- | --- | --- |
-| `0001_identity.sql` | 71 | `accounts`, `learners`, RLS, pgcrypto. |
-| `0002_organization.sql` | 78 | `subjects`, `folders`, RLS, subject_kind check. |
+| File                       | LOC | Notes                                                                     |
+| -------------------------- | --- | ------------------------------------------------------------------------- |
+| `0001_identity.sql`        | 71  | `accounts`, `learners`, RLS, pgcrypto.                                    |
+| `0002_organization.sql`    | 78  | `subjects`, `folders`, RLS, subject_kind check.                           |
 | `0003_materials_items.sql` | 180 | `materials`, `material_photos`, `study_assets`, `items`, all enums + RLS. |
-| `0004_templates_runs.sql` | 80 | `problem_templates`, `practice_runs`, RLS. |
-| `0005_fsrs_sessions.sql` | 101 | `item_states`, `sessions`, `attempts`, RLS. |
-| `0006_credits_billing.sql` | 69 | `credit_buckets`, `credit_events`, `subscriptions`, read-only RLS. |
-| `0007_ops_dsgvo.sql` | 35 | `outbox`, `dsgvo_requests`, service-only. |
-| `0008_storage_buckets.sql` | 40 | `materials-raw`, `study-assets` buckets + RLS. |
+| `0004_templates_runs.sql`  | 80  | `problem_templates`, `practice_runs`, RLS.                                |
+| `0005_fsrs_sessions.sql`   | 101 | `item_states`, `sessions`, `attempts`, RLS.                               |
+| `0006_credits_billing.sql` | 69  | `credit_buckets`, `credit_events`, `subscriptions`, read-only RLS.        |
+| `0007_ops_dsgvo.sql`       | 35  | `outbox`, `dsgvo_requests`, service-only.                                 |
+| `0008_storage_buckets.sql` | 40  | `materials-raw`, `study-assets` buckets + RLS.                            |
 
 Migrations are the **healthiest part of the repo**. However: no migration for `subscription_history` (doc 03 mentions it), no pg_cron jobs for photo wipe, no reconciliation cron defined as SQL.
 
 ### infra/supabase/functions
 
 **Empty.** Only a `.gitkeep`. Per the docs the following Edge Functions are expected:
+
 - `photo-wipe` — DSGVO 7-day photo deletion.
 - `reconciliation-cron` — RevenueCat ↔ subscriptions reconcile.
 - `dsgvo-export` — produce export tarball.
@@ -467,6 +479,7 @@ Only `de/common.json`, `de/onboarding.json`, `en/common.json`, `en/onboarding.js
 ### 17. Edge cases (§17) — **0 %**
 
 None addressed. Listing top items:
+
 - Material extraction failed retry, low-confidence extraction, regenerate after delete, conflict on rename, two-device edit, FSRS state divergence reconcile, deep-link to deleted resource, profile-switch mid-session, time-zone change, locale change mid-session, app force-update — all missing.
 
 ### 18. Onboarding tutorials / empty states (§18)
@@ -526,20 +539,20 @@ None addressed. Listing top items:
 
 ### 1. End-to-end named journeys (DEEP §1)
 
-| Journey | State |
-| --- | --- |
-| 1.1 "Klassenarbeit in 2 Wochen" — folder bias, daily ramp-up, day-of test prep | **0 %** — no `scheduled_for` UI, no folder-bias logic in FSRS picker despite the comment claiming so. |
-| 1.2 "Ich vergesse das Wort mitten in der Antwort" — voice tip-of-tongue help | **0 %** — no ASR pipeline. |
-| 1.3 "Erste Lern-Session überhaupt" — novice first interaction | **0 %** — coach marks missing. |
-| 1.4 "Eltern setzen Kind auf" — parent setup then hand-back | **5 %** — branching exists; hand-back UX missing. |
-| 1.5 "Ich war 3 Wochen weg" — gentle re-entry | **0 %** — no re-entry banner, no triage. |
-| 1.6 Confusion recovery dual-tab "Was bedeutet die Frage?" vs "Erklär das Konzept" | **0 %** — explain endpoint is 501; no dual-tab UI. |
-| 1.7 AI verdict appeal path | **0 %** — no appeal action wired. |
-| 1.8 "Quatsch fotografiert" — non-educational rejection | **0 %**. |
-| 1.9 "Vor dem Schlafen kurz" — micro-session | **0 %** — no time-budgeted session config. |
-| 1.10 30 variants of one problem | **0 %** — practice-run endpoint 501. |
-| 1.11 Full offline journey | **20 %** — outbox enqueue real, drain stub. |
-| 1.12 App-update force / migration | **0 %**. |
+| Journey                                                                           | State                                                                                                 |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1.1 "Klassenarbeit in 2 Wochen" — folder bias, daily ramp-up, day-of test prep    | **0 %** — no `scheduled_for` UI, no folder-bias logic in FSRS picker despite the comment claiming so. |
+| 1.2 "Ich vergesse das Wort mitten in der Antwort" — voice tip-of-tongue help      | **0 %** — no ASR pipeline.                                                                            |
+| 1.3 "Erste Lern-Session überhaupt" — novice first interaction                     | **0 %** — coach marks missing.                                                                        |
+| 1.4 "Eltern setzen Kind auf" — parent setup then hand-back                        | **5 %** — branching exists; hand-back UX missing.                                                     |
+| 1.5 "Ich war 3 Wochen weg" — gentle re-entry                                      | **0 %** — no re-entry banner, no triage.                                                              |
+| 1.6 Confusion recovery dual-tab "Was bedeutet die Frage?" vs "Erklär das Konzept" | **0 %** — explain endpoint is 501; no dual-tab UI.                                                    |
+| 1.7 AI verdict appeal path                                                        | **0 %** — no appeal action wired.                                                                     |
+| 1.8 "Quatsch fotografiert" — non-educational rejection                            | **0 %**.                                                                                              |
+| 1.9 "Vor dem Schlafen kurz" — micro-session                                       | **0 %** — no time-budgeted session config.                                                            |
+| 1.10 30 variants of one problem                                                   | **0 %** — practice-run endpoint 501.                                                                  |
+| 1.11 Full offline journey                                                         | **20 %** — outbox enqueue real, drain stub.                                                           |
+| 1.12 App-update force / migration                                                 | **0 %**.                                                                                              |
 
 ### 2. Voice patterns (DEEP §2) — entirely missing
 
@@ -654,4 +667,4 @@ The first 6 items are the critical path to a demo. Items 7–10 are needed for a
 
 ---
 
-*End of audit.*
+_End of audit._

@@ -1,0 +1,166 @@
+{
+  "overview": {
+    "title": "Konto",
+    "back_to_learner": "Zurück zur Lern-Ansicht",
+    "birth_year_grade": "Geburtsjahr {{year}} · Klasse {{grade}}",
+    "grade_unknown": "—",
+    "rows": {
+      "profile_edit": "Profil bearbeiten",
+      "profile_edit_sub": "Name, Geburtsjahr, Stufe",
+      "notifications": "Benachrichtigungen",
+      "preferences": "Einstellungen",
+      "subscription": "Abo",
+      "data": "Daten & Datenschutz",
+      "archive": "Archiv",
+      "account_settings": "Konto-Einstellungen",
+      "about": "Über die App"
+    }
+  },
+  "preferences": {
+    "title": "Einstellungen",
+    "done": "Fertig",
+    "haptics": {
+      "label": "Haptisches Feedback",
+      "sub": "Sanftes Vibrieren bei richtig/falsch und beim Weiterblättern."
+    },
+    "session_length": {
+      "title": "Standard-Übung",
+      "sub": "Wie viele Aufgaben pro Übungssitzung als Standard?",
+      "option_one": "{{count}} Aufgabe",
+      "option_other": "{{count}} Aufgaben",
+      "option": "{{count}} Aufgaben"
+    },
+    "photo_retention": {
+      "title": "Fotos behalten für",
+      "sub": "Wie lange wir das Original behalten, bevor es automatisch gelöscht wird.",
+      "option_one": "{{count}} Tag",
+      "option_other": "{{count}} Tage",
+      "option": "{{count}} Tage",
+      "cap_note": "Datenschutz: Originale werden in jedem Fall spätestens nach 7 Tagen gelöscht."
+    },
+    "data_saver": {
+      "label": "Datensparen",
+      "sub": "Vorschaubilder in Übungen nicht aus dem Netz nachladen."
+    },
+    "dyslexia_font": {
+      "label": "OpenDyslexic-Schrift",
+      "sub": "Leichter zu lesende Schriftart für Legasthenie (Schrift folgt im nächsten Update)."
+    }
+  },
+  "account_settings": {
+    "title": "Konto",
+    "card_display_name": "Anzeigename",
+    "card_country": "Land",
+    "card_language": "Sprache",
+    "sign_out": "Abmelden",
+    "sign_out_confirm": {
+      "title": "Abmelden?",
+      "cancel": "Abbrechen",
+      "confirm": "Abmelden"
+    },
+    "empty": "—"
+  },
+  "data": {
+    "title": "Daten",
+    "export": {
+      "title": "Datenexport",
+      "body": "Wir packen dir alles in eine ZIP-Datei: Konto, Profil, Fragen, Versuche, Abo-Status. Kommt per Email, gültig 7 Tage.",
+      "cta": "Export anfordern",
+      "loading": "Lade …",
+      "requested_title": "Export angefordert",
+      "requested_body": "Du bekommst per Email einen Link, sobald die Daten bereit sind (bis zu 24 Std).",
+      "error_title": "Ups.",
+      "error_generic": "Export fehlgeschlagen."
+    },
+    "delete": {
+      "title": "Konto löschen",
+      "body": "7-Tage-Frist: in dieser Zeit kannst du den Löschvorgang noch stoppen. Danach werden alle Daten endgültig entfernt.",
+      "cta": "Konto löschen anfordern",
+      "confirm_title": "Konto löschen?",
+      "confirm_body": "Wir geben dir 7 Tage Zeit, das zurückzunehmen. Danach werden alle Daten endgültig gelöscht.",
+      "confirm_cancel": "Abbrechen",
+      "confirm_ok": "Löschen anfordern",
+      "requested_title": "Löschanfrage erfasst",
+      "requested_body": "Du erhältst eine Bestätigung per Email. Innerhalb von 7 Tagen kannst du das rückgängig machen.",
+      "error_title": "Ups.",
+      "error_generic": "Anfrage fehlgeschlagen."
+    }
+  },
+  "about": {
+    "title": "Über LearnBuddy",
+    "version": "Version",
+    "privacy_title": "Datenschutz",
+    "privacy_body": "Alle Lerndaten bleiben in der EU. Keine Werbung, keine Weitergabe an Dritte zu Trainingszwecken.",
+    "privacy_link": "Datenschutzerklärung",
+    "imprint_title": "Impressum",
+    "imprint_link": "Öffnen"
+  },
+  "archived": {
+    "title": "Archiv",
+    "banner": "Archivierte Einträge bleiben 30 Tage lang wiederherstellbar. Danach werden sie automatisch endgültig gelöscht.",
+    "empty": "Nichts im Archiv."
+  },
+  "profile_edit": {
+    "title": "Profil",
+    "not_found": "Profil nicht gefunden.",
+    "field_name": "Anzeigename",
+    "birth_year_hint": "Geburtsjahr {{year}} (kann nur über Daten-Anfrage geändert werden)",
+    "field_grade": "Klassenstufe",
+    "saving": "Speichere …",
+    "save": "Speichern",
+    "error_title": "Ups."
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "loading": "Lade …",
+    "daily_label": "Tägliche Erinnerung",
+    "daily_sub": "Um {{time}}. Nur an Tagen ohne Sitzung.",
+    "test_label": "Test-Erinnerungen",
+    "test_sub": "3 Tage / 1 Tag / am Morgen vor Tests in geplanten Ordnern.",
+    "streak_label": "Streak-Erinnerung",
+    "streak_sub": "Sanftes Anstupsen wenn die Lern-Serie abreißen würde.",
+    "done": "Fertig"
+  },
+  "material": {
+    "title_fallback": "Material",
+    "not_found": "Nicht gefunden.",
+    "no_questions": "Keine Fragen.",
+    "question_label": "Frage {{number}}",
+    "expected_prefix": "Erwartet: ",
+    "delete_title": "Frage löschen?",
+    "delete_cancel": "Abbrechen",
+    "delete_confirm": "Löschen",
+    "error_title": "Ups."
+  },
+  "subscription": {
+    "title": "Abo",
+    "trial_body": "Du bist im 14-Tage-Trial. Volle Funktion bis Ende der Probezeit.",
+    "active_body": "Dein aktuelles Abo.",
+    "tiers": {
+      "standard": {
+        "title": "Standard",
+        "price": "€4,99 / Monat",
+        "feature_1": "~30 Material-Aufnahmen pro Monat",
+        "feature_2": "~150 ausgewertete Antworten",
+        "feature_3": "Vorrang im Support",
+        "cta": "Standard buchen"
+      },
+      "plus": {
+        "title": "Plus",
+        "price": "€9,99 / Monat",
+        "feature_1": "Mehr als doppelt so viele Material-Aufnahmen",
+        "feature_2": "Stoffunabhängige Power-Sitzungen",
+        "feature_3": "Erweitertes Üben",
+        "cta": "Plus buchen"
+      }
+    },
+    "restore": "Käufe wiederherstellen",
+    "purchase_success_title": "Danke!",
+    "purchase_success_body": "Dein Abo wird gleich freigeschaltet.",
+    "purchase_error_title": "Ups.",
+    "purchase_error_generic": "Kauf fehlgeschlagen.",
+    "restore_success_title": "Wiederhergestellt",
+    "restore_success_body": "Dein Abo-Status wurde aktualisiert.",
+    "restore_error_generic": "Wiederherstellung fehlgeschlagen."
+  }
+}

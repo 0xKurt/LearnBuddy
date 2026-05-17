@@ -3,6 +3,7 @@
 
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,6 +13,7 @@ import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function DataScreen() {
+  const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const [exporting, setExporting] = useState(false);
 
@@ -21,40 +23,36 @@ export default function DataScreen() {
     setExporting(true);
     try {
       await requestDsgvoExport();
-      Alert.alert(
-        'Export angefordert',
-        'Du bekommst per Email einen Link, sobald die Daten bereit sind (bis zu 24 Std).',
-      );
+      Alert.alert(t('data.export.requested_title'), t('data.export.requested_body'));
     } catch (err) {
-      Alert.alert('Ups.', err instanceof Error ? err.message : 'Export fehlgeschlagen.');
+      Alert.alert(
+        t('data.export.error_title'),
+        err instanceof Error ? err.message : t('data.export.error_generic'),
+      );
     } finally {
       setExporting(false);
     }
   };
 
   const onDelete = () => {
-    Alert.alert(
-      'Konto löschen?',
-      'Wir geben dir 7 Tage Zeit, das zurückzunehmen. Danach werden alle Daten endgültig gelöscht.',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        {
-          text: 'Löschen anfordern',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await requestDsgvoDelete();
-              Alert.alert(
-                'Löschanfrage erfasst',
-                'Du erhältst eine Bestätigung per Email. Innerhalb von 7 Tagen kannst du das rückgängig machen.',
-              );
-            } catch (err) {
-              Alert.alert('Ups.', err instanceof Error ? err.message : 'Anfrage fehlgeschlagen.');
-            }
-          },
+    Alert.alert(t('data.delete.confirm_title'), t('data.delete.confirm_body'), [
+      { text: t('data.delete.confirm_cancel'), style: 'cancel' },
+      {
+        text: t('data.delete.confirm_ok'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await requestDsgvoDelete();
+            Alert.alert(t('data.delete.requested_title'), t('data.delete.requested_body'));
+          } catch (err) {
+            Alert.alert(
+              t('data.delete.error_title'),
+              err instanceof Error ? err.message : t('data.delete.error_generic'),
+            );
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -69,23 +67,17 @@ export default function DataScreen() {
         }}
       >
         <CircleBtn icon="back" onPress={() => router.back()} />
-        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>Daten</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>{t('data.title')}</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 18 }}>
-        <Section
-          title="Datenexport"
-          body="Wir packen dir alles in eine ZIP-Datei: Konto, Profil, Fragen, Versuche, Abo-Status. Kommt per Email, gültig 7 Tage."
-        >
+        <Section title={t('data.export.title')} body={t('data.export.body')}>
           <Btn full onPress={onExport} disabled={exporting}>
-            {exporting ? 'Lade …' : 'Export anfordern'}
+            {exporting ? t('data.export.loading') : t('data.export.cta')}
           </Btn>
         </Section>
-        <Section
-          title="Konto löschen"
-          body="7-Tage-Frist: in dieser Zeit kannst du den Löschvorgang noch stoppen. Danach werden alle Daten endgültig entfernt."
-        >
+        <Section title={t('data.delete.title')} body={t('data.delete.body')}>
           <Btn full variant="danger" onPress={onDelete}>
-            Konto löschen anfordern
+            {t('data.delete.cta')}
           </Btn>
         </Section>
       </ScrollView>

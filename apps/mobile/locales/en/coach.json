@@ -1,0 +1,24 @@
+{
+  "dismiss": "Got it",
+  "math_keyboard": {
+    "title": "Maths keyboard",
+    "body": "Roots, fractions and π live here. Long-press a key for more symbols."
+  },
+  "voice": {
+    "title": "Just start speaking",
+    "body": "Hold the mic and answer out loud. 1.5 seconds of silence means \"done\"."
+  },
+  "camera": {
+    "title": "Photo of your material",
+    "body": "Hold the device flat above your notes. You can shoot 1–10 pages in one go."
+  },
+  "diagram": {
+    "title": "Look at the picture",
+    "body": "Numbers show what to label. Tap or pinch to zoom in for more detail."
+  },
+  "streak": {
+    "title": "First streak — {{count}} day!",
+    "title_other": "First streak — {{count}} days!",
+    "body": "Practising on consecutive days builds a streak. Don't worry if you miss a day in between."
+  }
+}

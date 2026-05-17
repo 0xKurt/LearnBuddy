@@ -16,10 +16,14 @@
     "format:check": "prettier --check .",
     "test": "pnpm -r --parallel test",
     "build": "pnpm -r --parallel build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:start": "cd infra/supabase && supabase start",
+    "db:stop": "cd infra/supabase && supabase stop",
+    "db:reset": "cd infra/supabase && supabase db reset"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
@@ -32,7 +36,12 @@
     "typescript-eslint": "^8.18.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,mjs,cjs}": ["eslint --fix", "prettier --write"],
-    "*.{json,md,yml,yaml}": ["prettier --write"]
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

@@ -21,5 +21,14 @@
     "morning": "Good morning",
     "afternoon": "Hello",
     "evening": "Good evening"
+  },
+  "material": {
+    "not_found": "Material not found.",
+    "not_found_body": "It may have been deleted.",
+    "no_items": "No questions.",
+    "no_items_body": "Next time it'll work — just try again.",
+    "question_count_one": "1 question",
+    "question_count_other": "{{count}} questions",
+    "question_label": "Question {{index}}"
   }
 }

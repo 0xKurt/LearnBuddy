@@ -12,13 +12,14 @@ import {
   reserveMaterial,
   uploadPhoto,
   type DoneEvent,
+  type FinalizePhase,
 } from '../api/materials.js';
 import type { PendingCapture } from '../store/capture.js';
 
 export type UploadProgress =
   | { phase: 'reserving' }
   | { phase: 'uploading'; uploaded: number; total: number }
-  | { phase: 'finalizing' }
+  | { phase: 'finalizing'; step?: FinalizePhase }
   | { phase: 'done'; done: DoneEvent };
 
 export async function runUpload(
@@ -50,22 +51,26 @@ export async function runUpload(
   });
 
   onProgress({ phase: 'finalizing' });
-  const done = await finalizeMaterial(learnerId, {
-    material_id: reservation.material_id,
-    subject_id: capture.subject_id,
-    folder_id: capture.folder_id,
-    title: null,
-    locale: 'de',
-    target_item_count: 10,
-    client_quality_scores: capture.photos.map((p, idx) => ({
-      position: idx + 1,
-      blur: p.quality.blur,
-      brightness: p.quality.brightness,
-      tilt: p.quality.tilt,
-      width: p.quality.width,
-      height: p.quality.height,
-    })),
-  });
+  const done = await finalizeMaterial(
+    learnerId,
+    {
+      material_id: reservation.material_id,
+      subject_id: capture.subject_id,
+      folder_id: capture.folder_id,
+      title: null,
+      locale: 'de',
+      target_item_count: 10,
+      client_quality_scores: capture.photos.map((p, idx) => ({
+        position: idx + 1,
+        blur: p.quality.blur,
+        brightness: p.quality.brightness,
+        tilt: p.quality.tilt,
+        width: p.quality.width,
+        height: p.quality.height,
+      })),
+    },
+    (step) => onProgress({ phase: 'finalizing', step }),
+  );
 
   onProgress({ phase: 'done', done });
   return done;

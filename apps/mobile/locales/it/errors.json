@@ -1,0 +1,13 @@
+{
+  "generic": "Qualcosa è andato storto.",
+  "offline": "Nessuna connessione a internet.",
+  "try_later": "Riprova più tardi.",
+  "no_connection_retry": "Nessuna connessione. Riprova più tardi.",
+  "validation": "Controlla i dati inseriti.",
+  "rate_limited": "Troppi tentativi. Attendi qualche minuto.",
+  "unauthorized": "Effettua di nuovo l'accesso.",
+  "not_found": "Nessun risultato.",
+  "save_failed": "Non sono riuscito a salvare ora — riproviamo tra poco?",
+  "load_failed": "Non sono riuscito a caricare ora — riproviamo tra poco?",
+  "title": "Ops."
+}

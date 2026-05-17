@@ -1,0 +1,13 @@
+{
+  "generic": "Algo ha salido mal.",
+  "offline": "Sin conexión a internet.",
+  "try_later": "Inténtalo de nuevo más tarde.",
+  "no_connection_retry": "Sin conexión. Inténtalo de nuevo más tarde.",
+  "validation": "Revisa los datos, por favor.",
+  "rate_limited": "Demasiados intentos. Espera unos minutos.",
+  "unauthorized": "Vuelve a iniciar sesión, por favor.",
+  "not_found": "No se encontró nada.",
+  "save_failed": "No pude guardar ahora — ¿lo intentas otra vez en un momento?",
+  "load_failed": "No pude cargar ahora — ¿lo intentas otra vez en un momento?",
+  "title": "Vaya."
+}

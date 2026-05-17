@@ -13,6 +13,7 @@
 
 // @ts-expect-error — Deno-style import resolved at deploy time.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.10';
+import { acquireLock, releaseLock } from '../_shared/lock.ts';
 
 declare const Deno: {
   env: { get: (k: string) => string | undefined };
@@ -21,9 +22,22 @@ declare const Deno: {
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const LOCK = 'photo-wipe';
 
 Deno.serve(async (_req) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+  const lock = await acquireLock(supabase, LOCK);
+  if (!lock) return Response.json({ ok: true, skipped: 'locked' });
+  try {
+    return await runWipe(supabase);
+  } finally {
+    await releaseLock(supabase, LOCK);
+  }
+});
+
+async function runWipe(
+  supabase: ReturnType<typeof createClient>,
+): Promise<Response> {
   const nowIso = new Date().toISOString();
 
   const { data: due, error } = await supabase
@@ -52,4 +66,4 @@ Deno.serve(async (_req) => {
     wiped++;
   }
   return Response.json({ ok: true, wiped });
-});
+}

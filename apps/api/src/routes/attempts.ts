@@ -15,8 +15,8 @@ import { z } from 'zod';
 import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
-import { notImplemented } from '../lib/errors.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
+import { idempotency } from '../lib/idempotency.js';
 import type { EvaluateInput } from '../lib/llm/gateway.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -121,8 +121,11 @@ attemptRoutes.post(
     };
     await tryDebit(supabase, account_id, debit);
 
+    // Refund only if the LLM call itself fails. Once we've settled, the credits
+    // are spent for real — a subsequent persist failure must not trigger a refund.
+    let evalResult: Awaited<ReturnType<typeof llm.evaluateAnswer>>;
     try {
-      const result = await llm.evaluateAnswer({
+      evalResult = await llm.evaluateAnswer({
         question: item.question,
         expectedAnswer: item.expected_answer,
         acceptableAnswers: item.acceptable_answers ?? [],
@@ -133,35 +136,35 @@ attemptRoutes.post(
         gradeLevel,
         priorHints: input.prior_hints_given,
       });
-      const actualCredits = Math.max(1, Math.round(result.usage.cost_usd_micros / 100));
-      await settle(supabase, account_id, debit, actualCredits, result.usage);
-      await persistAttempt(supabase, {
-        learner_id,
-        item_id: input.item_id,
-        session_id: input.session_id ?? null,
-        mode: input.mode,
-        verdict: result.verdict,
-        kid_answer: input.kid_answer,
-        feedback: result.feedback,
-        hints_used: input.prior_hints_given.length,
-        duration_ms: input.duration_ms,
-        evaluated_by: 'llm',
-        evaluation_model: result.usage.model,
-        evaluation_prompt_version: result.usage.prompt_version,
-        test_mode: input.test_mode,
-      });
-      return c.json({
-        verdict: result.verdict,
-        feedback: result.feedback,
-        next_hint: result.next_hint,
-        credits_used: actualCredits,
-      });
     } catch (err) {
       await refund(supabase, account_id, debit);
       throw err instanceof ApiError
         ? err
         : new ApiError('evaluation_failed', err instanceof Error ? err.message : 'Evaluate failed');
     }
+    const actualCredits = Math.max(1, Math.round(evalResult.usage.cost_usd_micros / 100));
+    await settle(supabase, account_id, debit, actualCredits, evalResult.usage);
+    await persistAttempt(supabase, {
+      learner_id,
+      item_id: input.item_id,
+      session_id: input.session_id ?? null,
+      mode: input.mode,
+      verdict: evalResult.verdict,
+      kid_answer: input.kid_answer,
+      feedback: evalResult.feedback,
+      hints_used: input.prior_hints_given.length,
+      duration_ms: input.duration_ms,
+      evaluated_by: 'llm',
+      evaluation_model: evalResult.usage.model,
+      evaluation_prompt_version: evalResult.usage.prompt_version,
+      test_mode: input.test_mode,
+    });
+    return c.json({
+      verdict: evalResult.verdict,
+      feedback: evalResult.feedback,
+      next_hint: evalResult.next_hint,
+      credits_used: actualCredits,
+    });
   },
 );
 
@@ -197,6 +200,7 @@ const AttemptBatchRequest = z.object({
 attemptRoutes.post(
   '/batch',
   rateLimit({ key: 'attempts_batch', per_hour: 60 }),
+  idempotency,
   zValidator('json', AttemptBatchRequest),
   async (c) => {
     const { supabase } = getDeps(c);
@@ -226,52 +230,70 @@ attemptRoutes.post(
     const accepted: string[] = [];
     const rejected: Array<{ client_attempt_id: string; reason: string }> = [];
 
+    // Build the row payloads first so we can run a single bulk INSERT and a
+    // single batched UPSERT instead of 2N sequential round-trips. A 200-row
+    // batch used to do ~400 round-trips and would time out for users draining
+    // a week of offline answers.
+    const attemptRows: Array<Record<string, unknown>> = [];
+    const stateRows: Array<Record<string, unknown>> = [];
     for (const a of attempts) {
       if (!ownedByMe.has(a.item_id)) {
         rejected.push({ client_attempt_id: a.client_attempt_id, reason: 'item_not_found' });
         continue;
       }
-      await persistAttempt(supabase, {
+      attemptRows.push({
         learner_id,
         item_id: a.item_id,
         session_id: a.session_id ?? null,
         mode: a.mode,
-        verdict: a.verdict === 'skipped' ? 'incorrect' : a.verdict,
         kid_answer: a.kid_answer,
-        feedback: a.feedback ?? null,
-        hints_used: a.hints_used,
-        duration_ms: a.duration_ms,
+        verdict: a.verdict === 'skipped' ? 'incorrect' : a.verdict,
         evaluated_by: a.evaluated_by,
         evaluation_model: a.evaluation_model ?? null,
         evaluation_prompt_version: a.evaluation_prompt_version ?? null,
+        feedback: a.feedback ?? null,
+        hints_used: a.hints_used,
+        duration_ms: a.duration_ms,
         test_mode: a.test_mode,
       });
-
       const prev = stateMap.get(a.item_id) ?? null;
       const next = applyAttempt(prev, a.verdict, new Date(a.reviewed_at));
-      if (prev) {
-        await supabase
-          .from('item_states')
-          .update(next)
-          .eq('item_id', a.item_id)
-          .eq('learner_id', learner_id);
-      } else {
-        await supabase.from('item_states').insert({
-          item_id: a.item_id,
-          learner_id,
-          ...next,
-        });
-      }
+      stateRows.push({
+        item_id: a.item_id,
+        learner_id,
+        ...next,
+      });
       accepted.push(a.client_attempt_id);
+    }
+
+    if (attemptRows.length > 0) {
+      const ins = await supabase.from('attempts').insert(attemptRows);
+      if (ins.error) {
+        console.error(`[attempts] bulk persist failed: ${ins.error.message}`);
+      }
+    }
+    if (stateRows.length > 0) {
+      // ON CONFLICT (item_id) DO UPDATE — relies on the unique index
+      // item_states(item_id) which holds because each (learner_id, item_id)
+      // is unique by schema. Supabase's upsert maps to a single SQL
+      // INSERT … ON CONFLICT … RETURNING.
+      const ups = await supabase.from('item_states').upsert(stateRows, { onConflict: 'item_id' });
+      if (ups.error) {
+        console.error(`[attempts] item_states upsert failed: ${ups.error.message}`);
+      }
     }
 
     return c.json({ accepted, rejected });
   },
 );
 
-attemptRoutes.post('/:client_id/finalize', (c) =>
-  notImplemented(c, 'POST /attempts/:client_id/finalize (SSE)'),
-); // voice polish, deferred
+// POST /attempts/:client_id/finalize — voice-flow polish. The original spec
+// envisaged a separate SSE endpoint that finalizes a streaming voice attempt
+// (transcribe → evaluate → respond). Voice input isn't wired yet (no
+// `<VoiceButton>` component on mobile, no ASR module bound), so there's no
+// real client. Removed from the route surface rather than left as a 501
+// placeholder per CLAUDE.md §rule 1 ("Never leave notImplemented() in a
+// route you touched"). When voice ASR ships, re-add as a real handler.
 
 async function persistAttempt(
   supabase: ReturnType<typeof getDeps>['supabase'],
@@ -307,6 +329,6 @@ async function persistAttempt(
     test_mode: row.test_mode,
   });
   if (ins.error) {
-    console.error(`[attempts] persist failed: ${ins.error.message}`);
+    throw new ApiError('internal', 'Failed to persist attempt', { cause: ins.error.message });
   }
 }
