@@ -83,11 +83,14 @@ export function Btn({
         >
           <Text
             numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.82}
             style={{
               color: v.color,
               fontSize: s.fontSize,
               fontWeight: '600',
               letterSpacing: -0.1,
+              textAlign: 'center',
             }}
           >
             {children}

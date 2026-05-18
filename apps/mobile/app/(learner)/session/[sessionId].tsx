@@ -470,7 +470,11 @@ export default function SessionScreen() {
           {/* Pin + explain controls */}
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
             {!testMode && item.topic ? (
-              <Pressable onPress={() => void togglePin()} accessibilityRole="button">
+              <Pressable
+                onPress={() => void togglePin()}
+                accessibilityRole="button"
+                hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+              >
                 <View
                   style={{
                     paddingVertical: 6,
@@ -497,6 +501,7 @@ export default function SessionScreen() {
               onPress={() => setExplainOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={t('explain.open')}
+              hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
             >
               <View
                 style={{
@@ -564,7 +569,11 @@ export default function SessionScreen() {
                 onToggleVoice={() => setVoiceOn((v) => !v)}
               />
               {tries >= 1 && !sending ? (
-                <Pressable onPress={advance} accessibilityRole="button" hitSlop={8}>
+                <Pressable
+                  onPress={advance}
+                  accessibilityRole="button"
+                  hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+                >
                   <Text style={{ fontSize: 13, color: LB.ink3, textAlign: 'center' }}>
                     {t('skip')}
                   </Text>
@@ -878,7 +887,11 @@ function Composer({
         </View>
       )}
       {canUseVoice && !voiceUnavailable ? (
-        <Pressable onPress={onToggleVoice} accessibilityRole="button" hitSlop={8}>
+        <Pressable
+          onPress={onToggleVoice}
+          accessibilityRole="button"
+          hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+        >
           <Text style={{ fontSize: 13, color: LB.ink2, textAlign: 'center' }}>
             {voiceOn ? t('voice.use_keyboard') : t('voice.use_voice')}
           </Text>
