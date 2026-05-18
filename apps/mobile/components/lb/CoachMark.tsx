@@ -20,8 +20,8 @@ type Props = {
   onDismiss: () => void;
   title: string;
   body: string;
-  /** Defaults to "Verstanden". */
-  ctaLabel?: string;
+  /** Localised dismiss label — required so no copy is ever hard-coded here. */
+  ctaLabel: string;
   /** Optional emoji at the top-left of the card. */
   glyph?: string;
 };
@@ -68,7 +68,7 @@ export function CoachMark({ visible, onDismiss, title, body, ctaLabel, glyph }: 
                 <Pressable
                   onPress={onDismiss}
                   accessibilityRole="button"
-                  accessibilityLabel={ctaLabel ?? 'Verstanden'}
+                  accessibilityLabel={ctaLabel}
                 >
                   <View
                     style={{
@@ -81,7 +81,7 @@ export function CoachMark({ visible, onDismiss, title, body, ctaLabel, glyph }: 
                     }}
                   >
                     <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
-                      {ctaLabel ?? 'Verstanden'}
+                      {ctaLabel}
                     </Text>
                   </View>
                 </Pressable>

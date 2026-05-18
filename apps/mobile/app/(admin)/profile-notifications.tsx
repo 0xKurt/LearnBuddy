@@ -2,7 +2,7 @@
 // Local toggles + time picker; persisted via expo-secure-store. Real expo-
 // notifications scheduling lives in lib/notifications.ts (Slice F2).
 
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -16,11 +16,13 @@ import {
   saveNotificationPrefs,
   type NotificationPrefs,
 } from '../../lib/notifications.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ProfileNotificationsScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [permGranted, setPermGranted] = useState(true);
@@ -117,7 +119,7 @@ export default function ProfileNotificationsScreen() {
           onChange={(v) => save({ ...prefs, streak_enabled: v })}
         />
         <View style={{ marginTop: 12 }}>
-          <Btn variant="ghost" onPress={() => router.back()}>
+          <Btn variant="ghost" onPress={navigateUp}>
             {t('notifications.done')}
           </Btn>
         </View>
@@ -127,6 +129,7 @@ export default function ProfileNotificationsScreen() {
 }
 
 function Header({ title }: { title: string }) {
+  const navigateUp = useNavigateUp();
   return (
     <View
       style={{
@@ -137,7 +140,7 @@ function Header({ title }: { title: string }) {
         gap: 10,
       }}
     >
-      <CircleBtn icon="back" onPress={() => router.back()} />
+      <CircleBtn icon="back" onPress={navigateUp} />
       <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>{title}</Text>
     </View>
   );

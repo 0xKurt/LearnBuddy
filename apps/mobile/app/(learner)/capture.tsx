@@ -47,6 +47,7 @@ import {
   toast,
 } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useFirstTime } from '../../lib/onboarding/coach.js';
 import { decodeForQuality } from '../../lib/camera/decode.js';
 import {
@@ -65,6 +66,7 @@ const MAX_PHOTOS = 10;
 
 export default function CaptureScreen() {
   const { t } = useTranslation('capture');
+  const navigateUp = useNavigateUp();
   const { t: tCoach } = useTranslation('coach');
   const cameraCoach = useFirstTime('camera');
   const params = useLocalSearchParams<{ subjectId?: string; folderId?: string }>();
@@ -214,7 +216,7 @@ export default function CaptureScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <CircleBtn icon="back" onPress={() => router.back()} />
+          <CircleBtn icon="back" onPress={navigateUp} />
         </View>
         <View style={{ paddingHorizontal: 28, gap: 14 }}>
           <Text style={{ fontSize: 22, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
@@ -249,7 +251,7 @@ export default function CaptureScreen() {
             paddingTop: 8,
           }}
         >
-          <CircleBtn icon="back" onPress={() => router.back()} />
+          <CircleBtn icon="back" onPress={navigateUp} />
           {liveTilt !== null && liveTilt > 25 && (
             <CaptureChip status="yellow" label={t('tilt_warn')} />
           )}

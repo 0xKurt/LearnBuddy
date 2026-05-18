@@ -22,6 +22,23 @@
     "body": "{{name}} wartet auf dich. Tippe hier, um direkt loszulegen."
   },
   "last_session": "Zuletzt gelernt: {{date}}",
+  "resume_banner": "Du warst mitten in einer Sitzung — weitermachen?",
+  "resume_yes": "Weitermachen",
+  "resume_no": "Nein danke",
+  "re_entry": "Schön, dass du wieder da bist — wir fangen ganz sanft an.",
+  "folder_editor": {
+    "title_new": "Neuer Ordner",
+    "title_edit": "Ordner bearbeiten",
+    "name_label": "Name",
+    "name_placeholder": "z.B. Klassenarbeit 14.06.",
+    "date_label": "Termin (optional, JJJJ-MM-TT)",
+    "archive": "Archivieren",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "create": "Anlegen",
+    "pending": "Bitte warten…",
+    "error_title": "Ups."
+  },
   "modal": {
     "title": "Neues Fach",
     "name_label": "Name",

@@ -24,6 +24,7 @@ import {
   verifyPin,
 } from '../../lib/auth/pin.js';
 import { clearSession } from '../../lib/auth/session.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -32,6 +33,7 @@ const LOCK_THRESHOLD = 5;
 
 export default function AdminUnlockScreen() {
   const { t } = useTranslation('auth');
+  const navigateUp = useNavigateUp();
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
   const [biometricReady, setBiometricReady] = useState(false);
   const [pinSet, setPinSet] = useState(true); // optimistic; updated on mount
@@ -62,7 +64,7 @@ export default function AdminUnlockScreen() {
 
       if (ready && !biometricFiredRef.current) {
         biometricFiredRef.current = true;
-        const ok = await authenticateBiometric(t('unlock.title'));
+        const ok = await authenticateBiometric(t('unlock.title'), t('unlock.cancel'));
         if (ok) {
           setAdminUnlocked(true);
           router.replace('/(admin)/overview');
@@ -108,7 +110,7 @@ export default function AdminUnlockScreen() {
   }
 
   async function onBiometricPress() {
-    const ok = await authenticateBiometric(t('unlock.title'));
+    const ok = await authenticateBiometric(t('unlock.title'), t('unlock.cancel'));
     if (ok) {
       setAdminUnlocked(true);
       router.replace('/(admin)/overview');
@@ -211,7 +213,7 @@ export default function AdminUnlockScreen() {
               {t('unlock.password_fallback')}
             </Text>
           </Pressable>
-          <Btn size="lg" full variant="ghost" onPress={() => router.back()}>
+          <Btn size="lg" full variant="ghost" onPress={navigateUp}>
             {t('unlock.cancel')}
           </Btn>
           <Pressable

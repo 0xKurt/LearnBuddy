@@ -2,6 +2,7 @@
   "today_at": "Aujourd'hui · {{time}}",
   "title": "Entraînement fait — bravo.",
   "summary": "{{minutes}} minutes · {{items}} questions",
+  "mastery": "Tout est acquis aujourd'hui — bravo ! 🎉",
   "stats": {
     "practiced": "exercées",
     "secure_now": "maîtrisées",

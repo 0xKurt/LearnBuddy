@@ -94,6 +94,16 @@ export default function ResultScreen() {
           </Text>
         )}
 
+        {data && data.attempts_count > 0 && data.secure_now === data.attempts_count && (
+          <View style={{ marginTop: 14 }}>
+            <Card tone="mint" padding={16}>
+              <Text style={{ fontSize: 15, color: LB.ink, fontWeight: '600', lineHeight: 21 }}>
+                {t('mastery')}
+              </Text>
+            </Card>
+          </View>
+        )}
+
         {summaryQ.isLoading && (
           <View style={{ paddingVertical: 32, alignItems: 'center' }}>
             <ActivityIndicator color={LB.ink2} />

@@ -48,7 +48,7 @@ export default function PinSetupScreen() {
     setBusy(true);
     setError(null);
     try {
-      const ok = await authenticateBiometric(t('pin.biometric_offer'));
+      const ok = await authenticateBiometric(t('pin.biometric_offer'), t('common:actions.cancel'));
       if (ok) {
         await setBiometricEnabled(true);
         router.replace('/(onboarding)/hand-off');
@@ -72,7 +72,10 @@ export default function PinSetupScreen() {
     try {
       await setPin(chosen);
       if (enableBiometric) {
-        const ok = await authenticateBiometric(t('pin.biometric_offer'));
+        const ok = await authenticateBiometric(
+          t('pin.biometric_offer'),
+          t('common:actions.cancel'),
+        );
         await setBiometricEnabled(ok);
       } else {
         await setBiometricEnabled(false);

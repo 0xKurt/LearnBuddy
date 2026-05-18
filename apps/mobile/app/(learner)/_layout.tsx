@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { BottomNav, type NavKey } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { listSubjects } from '../../lib/api/subjects.js';
+import { useHierarchicalBack } from '../../lib/navigation/hierarchy.js';
 import { LB } from '../../lib/theme/colors.js';
 
 function segmentToNavKey(seg: string | undefined): NavKey {
@@ -22,6 +23,8 @@ export default function LearnerLayout() {
   const segments = useSegments();
   const tail = segments[segments.length - 1];
   const active = segmentToNavKey(tail);
+
+  useHierarchicalBack();
 
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id;

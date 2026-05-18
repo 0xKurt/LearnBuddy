@@ -305,7 +305,7 @@ export default function RootLayout() {
                   'DEV · NUKE',
                   'Hard-delete this account from Supabase Auth?\nAll DB rows cascade. Cannot be undone.',
                   [
-                    { text: 'Abbrechen', style: 'cancel' },
+                    { text: 'Cancel', style: 'cancel' },
                     {
                       text: 'NUKE',
                       style: 'destructive',

@@ -1,17 +1,19 @@
 // About. Doc 05 §about. Static info + links.
 
 import * as Application from 'expo-application';
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function AboutScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
 
@@ -29,7 +31,7 @@ export default function AboutScreen() {
           gap: 10,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>{t('about.title')}</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 18 }}>

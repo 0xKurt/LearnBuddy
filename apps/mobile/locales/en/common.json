@@ -18,6 +18,15 @@
     "close": "Close",
     "ok": "Ok"
   },
+  "a11y": {
+    "back": "Back",
+    "close": "Close",
+    "more": "More options",
+    "add": "Add",
+    "mic": "Microphone",
+    "speak": "Read aloud",
+    "avatar": "{{name}}'s profile"
+  },
   "tabs": {
     "home": "Home",
     "practice": "Practice",

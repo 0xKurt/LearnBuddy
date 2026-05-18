@@ -14,11 +14,13 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Btn, CircleBtn, EmptyState } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
 import { getMaterial } from '../../../lib/api/materials.js';
+import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import { LB } from '../../../lib/theme/colors.js';
 import type { Item } from '@learnbuddy/shared-types';
 
 export default function MaterialScreen() {
   const { materialId } = useLocalSearchParams<{ materialId: string }>();
+  const navigateUp = useNavigateUp();
   const { t: tCommon } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -39,7 +41,7 @@ export default function MaterialScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
-          <CircleBtn icon="back" onPress={() => router.back()} />
+          <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
             glyph="😕"
             title={tCommon('material.load_error_title')}
@@ -69,7 +71,7 @@ export default function MaterialScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
-          <CircleBtn icon="back" onPress={() => router.back()} />
+          <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
             glyph="🤔"
             title={tCommon('material.not_found')}
@@ -223,9 +225,9 @@ export default function MaterialScreen() {
           gap: 10,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <Text style={{ fontSize: 14, fontWeight: '600', color: LB.ink, flex: 1 }} numberOfLines={1}>
-          {material.title ?? 'Material'}
+          {material.title ?? tCommon('material.untitled')}
         </Text>
         {items.length > 0 && (
           <Pressable
@@ -250,7 +252,7 @@ export default function MaterialScreen() {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 12 }}>
         <Text style={{ fontSize: 26, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
-          {material.title ?? 'Material'}
+          {material.title ?? tCommon('material.untitled')}
         </Text>
         <Text style={{ fontSize: 12, color: LB.ink2 }}>
           {tCommon('material.question_count', { count: items.length })}

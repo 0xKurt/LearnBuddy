@@ -13,7 +13,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -45,6 +45,7 @@ import { getAccount } from '../../../lib/api/account.js';
 import { finishSession, startSession, submitAttempt } from '../../../lib/api/sessions.js';
 import { localEvaluate, type EvaluatableItem } from '../../../lib/eval/local.js';
 import { useFirstTime } from '../../../lib/onboarding/coach.js';
+import { useAppStore } from '../../../lib/store/index.js';
 import { LB } from '../../../lib/theme/colors.js';
 import type { Item, Locale, SvgStimulus as SvgStimulusData } from '@learnbuddy/shared-types';
 
@@ -91,6 +92,23 @@ export default function SessionScreen() {
   const [feedback, setFeedback] = useState<{ verdict: string; text: string | null } | null>(null);
   const [explainOpen, setExplainOpen] = useState(false);
   const startedAtRef = useRef<number>(Date.now());
+
+  const setPendingSession = useAppStore((s) => s.set_pending_session);
+  const pendingSession = useAppStore((s) => s.pending_session);
+  const idxRestoredRef = useRef(false);
+
+  // Restore progress when re-entering a session that was navigated away from.
+  useEffect(() => {
+    if (
+      !idxRestoredRef.current &&
+      sessionQuery.data &&
+      pendingSession?.session_id === sessionQuery.data.session_id &&
+      pendingSession.idx > 0
+    ) {
+      setIdx(pendingSession.idx);
+      idxRestoredRef.current = true;
+    }
+  }, [sessionQuery.data?.session_id]);
 
   // Diagram coach mark (USER-FLOWS-DEEP §10.4): trigger the moment the
   // learner first lands on a diagram_label item. The current item-kind is
@@ -145,6 +163,7 @@ export default function SessionScreen() {
     // session complete — mark ended_at then navigate to result with the sessionId
     // so the result screen can fetch the real summary. Fire-and-forget: the result
     // screen loads from attempts even if finish fails.
+    setPendingSession(null);
     setTimeout(() => {
       void finishSession(learnerId, sessionQuery.data.session_id).catch(() => null);
       router.replace({
@@ -157,13 +176,28 @@ export default function SessionScreen() {
   const item = items[idx]!;
 
   const resetForNext = () => {
-    setIdx((i) => i + 1);
+    const nextIdx = idx + 1;
+    setIdx(nextIdx);
     setAnswer('');
     setFillValues([]);
     setMcSelected(null);
     setHints([]);
     setFeedback(null);
     startedAtRef.current = Date.now();
+    if (sessionQuery.data && nextIdx < total) {
+      setPendingSession({
+        session_id: sessionQuery.data.session_id,
+        client_id: params.sessionId,
+        learner_id: learnerId,
+        idx: nextIdx,
+        subject_id: params.subjectId ?? null,
+        folder_id: params.folderId ?? null,
+        material_id: params.materialId ?? null,
+        test_mode: testMode,
+      });
+    } else {
+      setPendingSession(null);
+    }
   };
 
   const buildKidAnswer = (): { text: string; mode: 'voice' | 'text' | 'multiple_choice' } => {

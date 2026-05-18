@@ -24,7 +24,9 @@ import {
   SubjectGlyph,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
+import { newIdempotencyKey } from '../../../lib/api/client.js';
 import { listFolders } from '../../../lib/api/folders.js';
+import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import {
   deleteMaterial,
   listMaterials,
@@ -65,6 +67,7 @@ function daysUntil(scheduled: string | null, now = new Date()): number | null {
 
 export default function SubjectScreen() {
   const { t } = useTranslation('home');
+  const navigateUp = useNavigateUp();
   const { subjectId } = useLocalSearchParams<{ subjectId: string }>();
   const [tab, setTab] = useState<Tab>('ordner');
   const [creatingFolder, setCreatingFolder] = useState(false);
@@ -103,7 +106,7 @@ export default function SubjectScreen() {
     Alert.alert(t('material.delete_title'), t('material.delete_body'), [
       { text: t('subject.cancel'), style: 'cancel' },
       {
-        text: t('common:actions.delete') ?? 'Löschen',
+        text: t('common:actions.delete'),
         style: 'destructive',
         onPress: () => {
           void deleteMaterial(learnerId as string, m.id)
@@ -120,7 +123,7 @@ export default function SubjectScreen() {
     mutationFn: () => archiveSubject(subjectId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['subjects', learnerId] });
-      router.back();
+      navigateUp();
     },
   });
 
@@ -148,7 +151,7 @@ export default function SubjectScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
-          <CircleBtn icon="back" onPress={() => router.back()} />
+          <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
             glyph="🤔"
             title={t('subject.not_found_title')}
@@ -170,7 +173,7 @@ export default function SubjectScreen() {
           paddingVertical: 12,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <SubjectGlyph
             glyph={subject?.subject_kind ? glyphForKind(subject.subject_kind) : '📚'}
@@ -257,7 +260,7 @@ export default function SubjectScreen() {
                 onPress={() =>
                   router.push({
                     pathname: '/(learner)/material/[materialId]',
-                    params: { materialId: m.id },
+                    params: { materialId: m.id, subjectId },
                   })
                 }
                 onDelete={() => handleDeleteMaterial(m)}
@@ -290,10 +293,14 @@ export default function SubjectScreen() {
           <Btn
             size="lg"
             full
-            onPress={() =>
-              subject.material_count > 0 &&
-              router.push({ pathname: '/(learner)/practice', params: { subjectId } } as never)
-            }
+            onPress={() => {
+              if (subject.material_count > 0 && learnerId) {
+                router.push({
+                  pathname: '/(learner)/session/[sessionId]',
+                  params: { sessionId: newIdempotencyKey(), learnerId, subjectId },
+                });
+              }
+            }}
             disabled={subject.material_count === 0}
           >
             {t('subject.start_practice')}
@@ -369,6 +376,7 @@ function MaterialRow({
   onDelete: () => void;
 }) {
   const { t } = useTranslation('home');
+  const { t: tCommon } = useTranslation('common');
   const isReady = material.extraction_status === 'ready';
   const isFailed = material.extraction_status === 'failed';
 
@@ -394,7 +402,7 @@ function MaterialRow({
           style={{ fontSize: 14, fontWeight: '500', color: isFailed ? LB.danger : LB.ink }}
           numberOfLines={1}
         >
-          {material.title ?? 'Material'}
+          {material.title ?? tCommon('material.untitled')}
         </Text>
         {isFailed ? (
           <Text style={{ fontSize: 11, color: LB.danger, marginTop: 1 }}>

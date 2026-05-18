@@ -3,7 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
@@ -35,6 +35,8 @@ import {
   type SubjectListItem,
 } from '../../lib/api/subjects.js';
 import { useFirstTime } from '../../lib/onboarding/coach.js';
+import { scheduleTestDateReminders } from '../../lib/notifications.js';
+import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 type SubjectKindKey =
@@ -98,6 +100,13 @@ function glyphForKind(kind: string): string {
   return SUBJECT_KINDS.find((k) => k.kind === kind)?.glyph ?? '✨';
 }
 
+function isLongAbsence(lastSessionAt: string | null, now = Date.now()): boolean {
+  if (!lastSessionAt) return false;
+  const last = new Date(lastSessionAt).getTime();
+  if (Number.isNaN(last)) return false;
+  return now - last > 21 * 86_400_000;
+}
+
 function isMinor(birthYear: number, now = new Date()): boolean {
   return now.getFullYear() - birthYear < 16;
 }
@@ -125,6 +134,27 @@ export default function HomeScreen() {
   const streak = scheduleQuery.data?.streak_current ?? 0;
   const lastSessionAt = scheduleQuery.data?.last_session_at ?? null;
   const streakCoach = useFirstTime('streak', { enabled: streak > 0 });
+
+  const pendingSession = useAppStore((s) => s.pending_session);
+  const setPendingSession = useAppStore((s) => s.set_pending_session);
+
+  // Sync local test-date notifications whenever schedule data changes.
+  const notifKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    const tests = scheduleQuery.data?.upcoming_tests;
+    if (!tests) return;
+    const key = tests.map((t) => `${t.folder_id}:${t.scheduled_for}`).join(',');
+    if (notifKeyRef.current === key) return;
+    notifKeyRef.current = key;
+    void scheduleTestDateReminders(
+      tests.map((t) => ({
+        folder_id: t.folder_id,
+        subject_id: t.subject_id,
+        name: t.name,
+        scheduled_for: t.scheduled_for,
+      })),
+    ).catch(() => null);
+  }, [scheduleQuery.data?.upcoming_tests]);
 
   const [creating, setCreating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -187,6 +217,69 @@ export default function HomeScreen() {
             {learnerName || '…'}
           </Text>
         </Pressable>
+
+        {/* Soft re-entry nudge after a long absence (USER-FLOWS-DEEP §10). */}
+        {isLongAbsence(lastSessionAt) && (
+          <View
+            style={{
+              backgroundColor: LB.bg,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>{t('re_entry')}</Text>
+          </View>
+        )}
+
+        {/* Resume banner — shown when the user navigated away mid-session */}
+        {pendingSession && (
+          <View
+            style={{
+              backgroundColor: LB.lavender,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+              gap: 10,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: LB.ink, fontWeight: '500', lineHeight: 20 }}>
+              {t('resume_banner')}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Btn
+                  size="sm"
+                  full
+                  onPress={() => {
+                    router.push({
+                      pathname: '/(learner)/session/[sessionId]',
+                      params: {
+                        sessionId: pendingSession.client_id,
+                        learnerId: pendingSession.learner_id,
+                        ...(pendingSession.subject_id
+                          ? { subjectId: pendingSession.subject_id }
+                          : {}),
+                        ...(pendingSession.folder_id ? { folderId: pendingSession.folder_id } : {}),
+                        ...(pendingSession.material_id
+                          ? { materialId: pendingSession.material_id }
+                          : {}),
+                        testMode: String(pendingSession.test_mode),
+                      },
+                    });
+                  }}
+                >
+                  {t('resume_yes')}
+                </Btn>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Btn size="sm" full variant="ghost" onPress={() => setPendingSession(null)}>
+                  {t('resume_no')}
+                </Btn>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* "Fang an!" card when subjects exist but no practice session yet */}
         {noPracticeYet && firstSubject && (

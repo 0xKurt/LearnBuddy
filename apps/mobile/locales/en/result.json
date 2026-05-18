@@ -2,6 +2,7 @@
   "today_at": "Today · {{time}}",
   "title": "Practised today — nicely done.",
   "summary": "{{minutes}} minutes · {{items}} questions",
+  "mastery": "All secure today — brilliantly done! 🎉",
   "stats": {
     "practiced": "practised",
     "secure_now": "now solid",

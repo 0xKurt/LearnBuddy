@@ -16,12 +16,14 @@ import {
   SUPPORTED_LOCALES,
   type AppLocale,
 } from '../../lib/i18n/locale-storage.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function AccountSettingsScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
   const qc = useQueryClient();
@@ -60,7 +62,7 @@ export default function AccountSettingsScreen() {
           gap: 10,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>
           {t('account_settings.title')}
         </Text>

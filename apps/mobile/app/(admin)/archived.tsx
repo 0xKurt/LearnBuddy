@@ -2,7 +2,7 @@
 // the account holder restore them (sets archived_at back to null).
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,11 +10,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn, CircleBtn, EmptyState } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { listArchivedSubjects, restoreSubject } from '../../lib/api/subjects.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ArchivedScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const queryClient = useQueryClient();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -46,7 +48,7 @@ export default function ArchivedScreen() {
           gap: 10,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>
           {t('archived.title')}
         </Text>
@@ -81,7 +83,10 @@ export default function ArchivedScreen() {
             >
               <Text style={{ fontSize: 15, color: LB.ink, fontWeight: '500' }}>{s.name}</Text>
               <Text style={{ fontSize: 12, color: LB.ink3, marginTop: 2 }}>
-                {s.folder_count} Ordner · {s.material_count} Material
+                {t('archived.subject_meta', {
+                  folders: s.folder_count,
+                  materials: s.material_count,
+                })}
               </Text>
               {s.archived_at && (
                 <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 2 }}>

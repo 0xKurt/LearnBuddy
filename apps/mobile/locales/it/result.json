@@ -2,6 +2,7 @@
   "today_at": "Oggi · {{time}}",
   "title": "Allenamento di oggi — bravissimo.",
   "summary": "{{minutes}} minuti · {{items}} esercizi",
+  "mastery": "Tutto sicuro oggi — fantastico! 🎉",
   "stats": {
     "practiced": "fatti",
     "secure_now": "ora sicuri",

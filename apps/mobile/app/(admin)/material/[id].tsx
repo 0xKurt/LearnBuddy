@@ -2,7 +2,7 @@
 // with a per-item delete (soft-archive) for cleaning up bad questions.
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,11 +11,13 @@ import { CircleBtn, EmptyState } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
 import { archiveItem } from '../../../lib/api/items.js';
 import { getMaterial } from '../../../lib/api/materials.js';
+import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../../lib/store/index.js';
 import { LB } from '../../../lib/theme/colors.js';
 
 export default function AdminMaterialScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const { id } = useLocalSearchParams<{ id: string }>();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -49,7 +51,7 @@ export default function AdminMaterialScreen() {
           gap: 10,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink, flex: 1 }} numberOfLines={1}>
           {materialQuery.data?.title ?? t('material.title_fallback')}
         </Text>

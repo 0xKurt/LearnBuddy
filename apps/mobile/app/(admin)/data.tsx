@@ -1,7 +1,7 @@
 // Data & privacy. Doc 05 §data + Doc 09 §account-holder-rights.
 // DSGVO export + 7-day-hold delete.
 
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
@@ -9,11 +9,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
 import { requestDsgvoDelete, requestDsgvoExport } from '../../lib/api/dsgvo.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function DataScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const [exporting, setExporting] = useState(false);
 
@@ -66,7 +68,7 @@ export default function DataScreen() {
           gap: 10,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>{t('data.title')}</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 18 }}>

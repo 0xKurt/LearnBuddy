@@ -106,6 +106,7 @@
     "banner": "Archived items can be restored for 30 days. After that they are permanently deleted.",
     "empty": "Nothing in the archive.",
     "archived_on": "Archived on {{date}}",
+    "subject_meta": "{{folders}} folders · {{materials}} materials",
     "restore_cta": "Restore"
   },
   "profile_edit": {

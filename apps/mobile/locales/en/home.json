@@ -22,6 +22,23 @@
     "body": "{{name}} is waiting for you. Tap here to get started."
   },
   "last_session": "Last studied: {{date}}",
+  "resume_banner": "You were in the middle of a session — continue?",
+  "resume_yes": "Continue",
+  "resume_no": "No thanks",
+  "re_entry": "Good to see you back — we'll start nice and gently.",
+  "folder_editor": {
+    "title_new": "New folder",
+    "title_edit": "Edit folder",
+    "name_label": "Name",
+    "name_placeholder": "e.g. Class test 14 Jun",
+    "date_label": "Date (optional, YYYY-MM-DD)",
+    "archive": "Archive",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "pending": "Please wait…",
+    "error_title": "Oops."
+  },
   "modal": {
     "title": "New subject",
     "name_label": "Name",

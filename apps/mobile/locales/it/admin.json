@@ -106,6 +106,7 @@
     "banner": "Gli elementi archiviati possono essere ripristinati per 30 giorni. Dopo vengono eliminati definitivamente.",
     "empty": "Niente nell'archivio.",
     "archived_on": "Archiviato il {{date}}",
+    "subject_meta": "{{folders}} cartelle · {{materials}} materiali",
     "restore_cta": "Ripristina"
   },
   "profile_edit": {

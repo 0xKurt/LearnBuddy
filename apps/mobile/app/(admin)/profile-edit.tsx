@@ -1,7 +1,7 @@
 // Profile edit. Doc 05 §profile-edit. Edits the single learner profile.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -10,11 +10,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn, CircleBtn } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { updateLearner } from '../../lib/api/learners.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ProfileEditScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const qc = useQueryClient();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -37,7 +39,7 @@ export default function ProfileEditScreen() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['account'] });
-      router.back();
+      navigateUp();
     },
     onError: (err: Error) => Alert.alert(t('profile_edit.error_title'), err.message),
   });
@@ -69,6 +71,7 @@ export default function ProfileEditScreen() {
 }
 
 function Header({ title }: { title: string }) {
+  const navigateUp = useNavigateUp();
   return (
     <View
       style={{
@@ -79,7 +82,7 @@ function Header({ title }: { title: string }) {
         gap: 10,
       }}
     >
-      <CircleBtn icon="back" onPress={() => router.back()} />
+      <CircleBtn icon="back" onPress={navigateUp} />
       <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>{title}</Text>
     </View>
   );

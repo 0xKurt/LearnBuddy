@@ -119,14 +119,18 @@ export async function setBiometricEnabled(enabled: boolean): Promise<void> {
   else await SecureStore.deleteItemAsync(KEY_BIOMETRIC);
 }
 
-/** Returns true on a successful biometric prompt. */
-export async function authenticateBiometric(promptMessage: string): Promise<boolean> {
+/** Returns true on a successful biometric prompt. The caller passes both the
+ *  prompt and cancel labels already localised — no copy lives in this module. */
+export async function authenticateBiometric(
+  promptMessage: string,
+  cancelLabel: string,
+): Promise<boolean> {
   try {
     const res = await LocalAuthentication.authenticateAsync({
       promptMessage,
       // Don't fall back to device passcode — we have our own PIN.
       disableDeviceFallback: true,
-      cancelLabel: 'Abbrechen',
+      cancelLabel,
     });
     return res.success;
   } catch {

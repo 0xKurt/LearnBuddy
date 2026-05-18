@@ -1,14 +1,15 @@
+import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { LB } from '../../lib/theme/colors.js';
 import { Icon } from './Icon.js';
 
-const DEFAULT_LABEL: Record<'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak', string> = {
-  back: 'Zurück',
-  close: 'Schließen',
-  more: 'Mehr Optionen',
-  plus: 'Hinzufügen',
-  mic: 'Mikrofon',
-  speak: 'Vorlesen',
+const LABEL_KEY: Record<'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak', string> = {
+  back: 'a11y.back',
+  close: 'a11y.close',
+  more: 'a11y.more',
+  plus: 'a11y.add',
+  mic: 'a11y.mic',
+  speak: 'a11y.speak',
 };
 
 export function CircleBtn({
@@ -22,6 +23,7 @@ export function CircleBtn({
   accessibilityLabel?: string;
   accessibilityHint?: string;
 }) {
+  const { t } = useTranslation('common');
   const inner = (
     <View
       style={{
@@ -43,7 +45,7 @@ export function CircleBtn({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? DEFAULT_LABEL[icon]}
+      accessibilityLabel={accessibilityLabel ?? t(LABEL_KEY[icon])}
       accessibilityHint={accessibilityHint}
     >
       {inner}

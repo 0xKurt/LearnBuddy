@@ -3,6 +3,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Modal, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export function FolderEditorModal({ visible, subjectId, initial, onClose }: Props) {
+  const { t } = useTranslation('home');
   const qc = useQueryClient();
   const [name, setName] = useState(initial?.name ?? '');
   const [date, setDate] = useState(initial?.scheduled_for ?? '');
@@ -35,7 +37,7 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
       qc.invalidateQueries({ queryKey: ['folders', subjectId] });
       onClose();
     },
-    onError: (err: Error) => Alert.alert('Ups.', err.message),
+    onError: (err: Error) => Alert.alert(t('folder_editor.error_title'), err.message),
   });
   const updateMut = useMutation({
     mutationFn: () =>
@@ -47,7 +49,7 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
       qc.invalidateQueries({ queryKey: ['folders', subjectId] });
       onClose();
     },
-    onError: (err: Error) => Alert.alert('Ups.', err.message),
+    onError: (err: Error) => Alert.alert(t('folder_editor.error_title'), err.message),
   });
   const archiveMut = useMutation({
     mutationFn: () => archiveFolder(initial!.id),
@@ -71,15 +73,15 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
       <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22, gap: 18, flex: 1 }}>
           <Text style={{ fontSize: 22, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
-            {isEdit ? 'Ordner bearbeiten' : 'Neuer Ordner'}
+            {isEdit ? t('folder_editor.title_edit') : t('folder_editor.title_new')}
           </Text>
 
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 12, color: LB.ink2 }}>Name</Text>
+            <Text style={{ fontSize: 12, color: LB.ink2 }}>{t('folder_editor.name_label')}</Text>
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="z.B. Klassenarbeit 14.06."
+              placeholder={t('folder_editor.name_placeholder')}
               autoFocus
               placeholderTextColor={LB.ink3}
               style={inputStyle}
@@ -87,7 +89,7 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 12, color: LB.ink2 }}>Termin (optional, JJJJ-MM-TT)</Text>
+            <Text style={{ fontSize: 12, color: LB.ink2 }}>{t('folder_editor.date_label')}</Text>
             <TextInput
               value={date}
               onChangeText={setDate}
@@ -102,19 +104,23 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
 
           {isEdit && (
             <Btn variant="outline" full onPress={() => archiveMut.mutate()}>
-              Archivieren
+              {t('folder_editor.archive')}
             </Btn>
           )}
 
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <Btn variant="outline" full onPress={onClose}>
-                Abbrechen
+                {t('folder_editor.cancel')}
               </Btn>
             </View>
             <View style={{ flex: 2 }}>
               <Btn full onPress={submit} disabled={pending || !name.trim()}>
-                {pending ? 'Bitte warten…' : isEdit ? 'Speichern' : 'Anlegen'}
+                {pending
+                  ? t('folder_editor.pending')
+                  : isEdit
+                    ? t('folder_editor.save')
+                    : t('folder_editor.create')}
               </Btn>
             </View>
           </View>

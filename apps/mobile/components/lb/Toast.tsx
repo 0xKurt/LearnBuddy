@@ -9,7 +9,7 @@
 
 import { create } from 'zustand';
 import { useEffect, useRef } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon.js';
 import { i18n } from '../../lib/i18n/index.js';
@@ -98,15 +98,35 @@ export function ToastHost() {
 
 function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
   const opacity = useRef(new Animated.Value(0)).current;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-    const ms = item.duration ?? (item.tone === 'success' || item.tone === 'info' ? 3500 : 6000);
-    const handle = setTimeout(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => {
-        onDismiss();
+    let cancelled = false;
+    void AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((rm) => {
+        if (cancelled) return;
+        if (rm) {
+          opacity.setValue(1);
+        } else {
+          Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+        }
+        const ms = item.duration ?? (item.tone === 'success' || item.tone === 'info' ? 3500 : 6000);
+        timerRef.current = setTimeout(() => {
+          if (rm) {
+            onDismiss();
+          } else {
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: true,
+            }).start(() => onDismiss());
+          }
+        }, ms);
       });
-    }, ms);
-    return () => clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
 
   return (

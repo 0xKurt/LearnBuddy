@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { LB, TONE_DEEP, type SubjectTone } from '../../lib/theme/colors.js';
 
@@ -10,10 +11,11 @@ export function Avatar({
   tone?: SubjectTone;
   size?: number;
 }) {
+  const { t } = useTranslation('common');
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel={`Profil ${name}`}
+      accessibilityLabel={t('a11y.avatar', { name })}
       style={{
         width: size,
         height: size,

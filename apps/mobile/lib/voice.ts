@@ -1,23 +1,23 @@
 // Voice recognition facade. Doc 05 §session-voice + USER-FLOWS §1.3.
 //
-// **Status (slice this commit lands in): SCAFFOLD-ONLY.**
+// Wraps @react-native-voice/voice with a clean start/stop/event surface so
+// VoiceButton never imports the native module directly. The facade also
+// handles the "module not available at runtime" case gracefully — if the
+// native module isn't linked (e.g. Expo Go / web) `isVoiceAvailable()` returns
+// false and VoiceButton degrades to a tone-correct disabled affordance.
 //
-// The target dependency is `@react-native-voice/voice` (offline iOS / Android
-// ASR with start/stop/partial/final callbacks). It has not yet been added to
-// the bundle because:
-//
-//   1. It ships a config-plugin that must run during `expo prebuild` and
-//      the current EAS build infra (Slice A2) needs a follow-up to allow it.
-//   2. Microphone privacy strings (`NSMicrophoneUsageDescription` +
-//      Android RECORD_AUDIO rationale) are not yet in `app.json`; adding
-//      them belongs in the same config-plugin slice so the rationale copy
-//      ships in all 5 locales atomically.
-//
-// This file exists so `components/lb/VoiceButton.tsx` imports a clean
-// facade today, and the day the native integration lands the swap is
-// limited to this single module. The shape mirrors the
-// `@react-native-voice/voice` event surface so we don't have to retro-fit
-// the component when the real dep lands.
+// All exported functions are safe to call even when the native module is
+// absent; they either return false/void or throw 'voice_unavailable'.
+
+let Voice: typeof import('@react-native-voice/voice').default | null = null;
+try {
+  // Dynamic require so the Metro bundler resolves the module but a missing
+  // native binding at runtime (Expo Go) doesn't crash the JS bundle.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Voice = (require('@react-native-voice/voice') as { default: typeof Voice }).default;
+} catch {
+  Voice = null;
+}
 
 export type VoiceState = 'idle' | 'starting' | 'listening' | 'stopping' | 'error';
 
@@ -28,29 +28,57 @@ export type VoiceEvents = {
   onError?: (message: string) => void;
 };
 
-/** True when the native ASR module has been installed and is callable.
- *  Today this returns false on every platform so the VoiceButton degrades
- *  to a tone-correct "Voice coming soon" affordance. */
+/** True when @react-native-voice/voice has a working native binding. */
 export function isVoiceAvailable(): boolean {
-  return false;
+  return Voice !== null;
 }
 
-/** Request mic permission. Returns true if granted (or already granted).
- *  Today this returns false — VoiceButton uses it to decide whether to
- *  even start the listen flow. */
+/** Request microphone permission. Returns true if granted (or already granted).
+ *  On platforms without the native module returns false. */
 export async function requestMicPermission(): Promise<boolean> {
-  return Promise.resolve(false);
+  if (!Voice) return false;
+  try {
+    const granted = await Voice.isAvailable();
+    return granted === 1;
+  } catch {
+    return false;
+  }
 }
 
-/** Start a recording session. Caller passes event handlers. The real
- *  integration will wire these to the native module's
- *  `Voice.onSpeechStart` / `Voice.onSpeechPartialResults` etc. */
-export async function startListening(_locale: string, _events: VoiceEvents): Promise<void> {
-  throw new Error('voice_unavailable');
+/** Start a recognizer session. Caller passes event handlers.
+ *  The locale code must be BCP-47 (e.g. 'de-DE', 'en-US'). */
+export async function startListening(locale: string, events: VoiceEvents): Promise<void> {
+  if (!Voice) throw new Error('voice_unavailable');
+
+  // Detach any leftover handlers from a previous session first.
+  Voice.removeAllListeners();
+
+  Voice.onSpeechStart = () => events.onStart?.();
+
+  Voice.onSpeechPartialResults = (e) => {
+    const text = e.value?.[0];
+    if (text) events.onPartial?.(text);
+  };
+
+  Voice.onSpeechResults = (e) => {
+    const text = e.value?.[0];
+    if (text) events.onFinal?.(text);
+  };
+
+  Voice.onSpeechError = (e) => {
+    const msg = e.error?.message ?? String(e.error ?? 'voice_error');
+    events.onError?.(msg);
+  };
+
+  await Voice.start(locale);
 }
 
-/** Stop the recording session. The final transcript is delivered via the
- *  `onFinal` handler registered in `startListening`. */
+/** Stop the current recording session. The final result arrives via `onFinal`. */
 export async function stopListening(): Promise<void> {
-  /* no-op until native integration lands */
+  if (!Voice) return;
+  try {
+    await Voice.stop();
+  } catch {
+    // Best-effort; if stop fails the session was likely already idle.
+  }
 }

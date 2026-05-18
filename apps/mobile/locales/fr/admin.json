@@ -106,6 +106,7 @@
     "banner": "Les éléments archivés peuvent être restaurés pendant 30 jours. Ensuite, ils sont supprimés définitivement.",
     "empty": "Rien dans les archives.",
     "archived_on": "Archivé le {{date}}",
+    "subject_meta": "{{folders}} dossiers · {{materials}} matériaux",
     "restore_cta": "Restaurer"
   },
   "profile_edit": {

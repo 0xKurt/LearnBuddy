@@ -22,6 +22,23 @@
     "body": "{{name}} ti aspetta. Tocca qui per cominciare."
   },
   "last_session": "Ultima sessione: {{date}}",
+  "resume_banner": "Eri nel mezzo di una sessione — continuare?",
+  "resume_yes": "Continua",
+  "resume_no": "No grazie",
+  "re_entry": "Bello rivederti — ricominciamo con calma.",
+  "folder_editor": {
+    "title_new": "Nuova cartella",
+    "title_edit": "Modifica cartella",
+    "name_label": "Nome",
+    "name_placeholder": "es. Verifica 14/06",
+    "date_label": "Data (facoltativo, AAAA-MM-GG)",
+    "archive": "Archivia",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "create": "Crea",
+    "pending": "Attendi…",
+    "error_title": "Ops."
+  },
   "modal": {
     "title": "Nuova materia",
     "name_label": "Nome",

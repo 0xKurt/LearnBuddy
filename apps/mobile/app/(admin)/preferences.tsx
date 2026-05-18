@@ -15,18 +15,20 @@
 //
 // Persistence is via lib/prefs.ts (single SecureStore JSON bag).
 
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { SESSION_LENGTH_CHOICES, usePref, type SessionLength } from '../../lib/prefs.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function PreferencesScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
 
   const [haptics, setHaptics] = usePref('haptics');
@@ -66,7 +68,7 @@ export default function PreferencesScreen() {
         />
 
         <View style={{ marginTop: 10 }}>
-          <Btn variant="ghost" onPress={() => router.back()}>
+          <Btn variant="ghost" onPress={navigateUp}>
             {t('preferences.done')}
           </Btn>
         </View>
@@ -76,6 +78,7 @@ export default function PreferencesScreen() {
 }
 
 function Header({ title }: { title: string }) {
+  const navigateUp = useNavigateUp();
   return (
     <View
       style={{
@@ -86,7 +89,7 @@ function Header({ title }: { title: string }) {
         gap: 10,
       }}
     >
-      <CircleBtn icon="back" onPress={() => router.back()} />
+      <CircleBtn icon="back" onPress={navigateUp} />
       <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>{title}</Text>
     </View>
   );

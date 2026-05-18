@@ -22,6 +22,23 @@
     "body": "{{name}} te espera. Toca aquí para comenzar."
   },
   "last_session": "Última sesión: {{date}}",
+  "resume_banner": "Estabas en medio de una sesión — ¿continuar?",
+  "resume_yes": "Continuar",
+  "resume_no": "No, gracias",
+  "re_entry": "Qué bien verte de vuelta — empezamos con mucha calma.",
+  "folder_editor": {
+    "title_new": "Nueva carpeta",
+    "title_edit": "Editar carpeta",
+    "name_label": "Nombre",
+    "name_placeholder": "p. ej. Examen 14/06",
+    "date_label": "Fecha (opcional, AAAA-MM-DD)",
+    "archive": "Archivar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "create": "Crear",
+    "pending": "Espera…",
+    "error_title": "Vaya."
+  },
   "modal": {
     "title": "Nueva asignatura",
     "name_label": "Nombre",

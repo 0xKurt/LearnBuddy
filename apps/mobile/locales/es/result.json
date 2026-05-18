@@ -2,6 +2,7 @@
   "today_at": "Hoy · {{time}}",
   "title": "Práctica hecha — muy bien.",
   "summary": "{{minutes}} minutos · {{items}} preguntas",
+  "mastery": "¡Todo seguro hoy — genial! 🎉",
   "stats": {
     "practiced": "practicadas",
     "secure_now": "ya seguras",

@@ -167,6 +167,16 @@ export type UpcomingTest = {
 };
 
 /**
+ * Convenience: load prefs + reschedule everything including the given tests.
+ * Call from home screen after schedule-summary resolves so the local
+ * notification queue stays in sync with the server's folder dates.
+ */
+export async function scheduleTestDateReminders(tests: UpcomingTest[]): Promise<void> {
+  const prefs = await loadNotificationPrefs();
+  await rescheduleNotifications(prefs, tests);
+}
+
+/**
  * Schedule three nudges per upcoming test: 3 days before, 1 day before,
  * morning-of (08:30 local). Doc 05 §notifications + USER-FLOWS-DEEP §1.1.
  * Tests further than 30 days out are ignored — they create noise without

@@ -106,6 +106,7 @@
     "banner": "Archivierte Einträge bleiben 30 Tage lang wiederherstellbar. Danach werden sie automatisch endgültig gelöscht.",
     "empty": "Nichts im Archiv.",
     "archived_on": "Archiviert am {{date}}",
+    "subject_meta": "{{folders}} Ordner · {{materials}} Material",
     "restore_cta": "Wiederherstellen"
   },
   "profile_edit": {

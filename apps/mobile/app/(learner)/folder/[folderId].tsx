@@ -17,7 +17,9 @@ import {
   Icon,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
+import { newIdempotencyKey } from '../../../lib/api/client.js';
 import { listFolders } from '../../../lib/api/folders.js';
+import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import {
   deleteMaterial,
   listMaterials,
@@ -36,6 +38,7 @@ function daysUntil(scheduled: string | null, now = new Date()): number | null {
 
 export default function FolderScreen() {
   const { t } = useTranslation('home');
+  const navigateUp = useNavigateUp();
   const { folderId, subjectId } = useLocalSearchParams<{ folderId: string; subjectId: string }>();
   const [editing, setEditing] = useState(false);
 
@@ -64,7 +67,7 @@ export default function FolderScreen() {
     Alert.alert(t('material.delete_title'), t('material.delete_body'), [
       { text: t('folder.cancel'), style: 'cancel' },
       {
-        text: t('common:actions.delete') ?? 'Löschen',
+        text: t('common:actions.delete'),
         style: 'destructive',
         onPress: () => {
           void deleteMaterial(learnerId as string, m.id)
@@ -93,7 +96,7 @@ export default function FolderScreen() {
               style: 'destructive',
               onPress: () => {
                 qc.invalidateQueries({ queryKey: ['folders', subjectId] });
-                router.back();
+                navigateUp();
               },
             },
           ]);
@@ -106,7 +109,7 @@ export default function FolderScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
-          <CircleBtn icon="back" onPress={() => router.back()} />
+          <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
             glyph="🤔"
             title={t('folder.not_found_title')}
@@ -131,7 +134,7 @@ export default function FolderScreen() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
-          <CircleBtn icon="back" onPress={() => router.back()} />
+          <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
             glyph="🤔"
             title={t('folder.not_found_title')}
@@ -153,7 +156,7 @@ export default function FolderScreen() {
           paddingVertical: 12,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Icon name="folder" size={20} color={inDays != null ? LB.primary : LB.ink3} />
           <Text style={{ fontSize: 14, fontWeight: '600', color: LB.ink }}>{folder.name}</Text>
@@ -207,7 +210,7 @@ export default function FolderScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/(learner)/material/[materialId]',
-                      params: { materialId: m.id },
+                      params: { materialId: m.id, folderId, subjectId },
                     })
                   }
                   onDelete={() => handleDeleteMaterial(m)}
@@ -248,10 +251,14 @@ export default function FolderScreen() {
             size="lg"
             full
             disabled={readyMaterials.length === 0}
-            onPress={() =>
-              readyMaterials.length > 0 &&
-              router.push({ pathname: '/(learner)/practice', params: { folderId } } as never)
-            }
+            onPress={() => {
+              if (readyMaterials.length > 0 && learnerId) {
+                router.push({
+                  pathname: '/(learner)/session/[sessionId]',
+                  params: { sessionId: newIdempotencyKey(), learnerId, subjectId, folderId },
+                });
+              }
+            }}
           >
             {t('folder.start_practice')}
           </Btn>
@@ -278,6 +285,7 @@ function MaterialRow({
   onDelete: () => void;
 }) {
   const { t } = useTranslation('home');
+  const { t: tCommon } = useTranslation('common');
   const isReady = material.extraction_status === 'ready';
   const isFailed = material.extraction_status === 'failed';
 
@@ -303,7 +311,7 @@ function MaterialRow({
           style={{ fontSize: 14, fontWeight: '500', color: isFailed ? LB.danger : LB.ink }}
           numberOfLines={1}
         >
-          {material.title ?? 'Material'}
+          {material.title ?? tCommon('material.untitled')}
         </Text>
         {isFailed ? (
           <Text style={{ fontSize: 11, color: LB.danger, marginTop: 1 }}>

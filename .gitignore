@@ -54,5 +54,5 @@ coverage/
 # Misc
 *.log
 .cache/
-supabase/
 infra/supabase/.temp/
+infra/supabase/.branches/

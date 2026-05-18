@@ -2,7 +2,7 @@
 // Renders the current tier/balance and the upgrade CTAs.
 
 import { useQuery } from '@tanstack/react-query';
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
@@ -16,11 +16,13 @@ import {
   getOfferings,
   type PurchasePackage,
 } from '../../lib/purchases.js';
+import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function SubscriptionScreen() {
   const { t } = useTranslation('admin');
+  const navigateUp = useNavigateUp();
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
 
@@ -91,7 +93,7 @@ export default function SubscriptionScreen() {
           gap: 10,
         }}
       >
-        <CircleBtn icon="back" onPress={() => router.back()} />
+        <CircleBtn icon="back" onPress={navigateUp} />
         <Text style={{ fontSize: 18, fontWeight: '600', color: LB.ink }}>
           {t('subscription.title')}
         </Text>
