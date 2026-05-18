@@ -151,7 +151,10 @@ export default function RootLayout() {
           }
           const data = response.notification.request.content.data;
           if (typeof data.folder_id === 'string') {
-            router.push(`/(learner)/subject/folder/${data.folder_id}` as never);
+            router.push({
+              pathname: '/(learner)/folder/[folderId]',
+              params: { folderId: data.folder_id, subjectId: data.subject_id ?? '' },
+            } as never);
           }
         });
       }

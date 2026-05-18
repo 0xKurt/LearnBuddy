@@ -36,7 +36,14 @@
     "no_items_body": "La prossima volta funzionerà — riprova.",
     "question_count_one": "1 domanda",
     "question_count_other": "{{count}} domande",
-    "question_label": "Domanda {{index}}"
+    "question_label": "Domanda {{index}}",
+    "flashcards": "Flashcard",
+    "card_question": "DOMANDA",
+    "card_answer": "RISPOSTA",
+    "flip_hint": "Tocca per girare →",
+    "reveal": "Mostra risposta →",
+    "load_error_title": "Impossibile caricare il materiale.",
+    "untitled": "Materiale"
   },
   "update": {
     "title": "Aggiornamento disponibile",

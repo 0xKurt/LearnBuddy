@@ -36,7 +36,14 @@
     "no_items_body": "Beim nächsten Versuch klappt's bestimmt — probier es einfach nochmal.",
     "question_count_one": "1 Frage",
     "question_count_other": "{{count}} Fragen",
-    "question_label": "Frage {{index}}"
+    "question_label": "Frage {{index}}",
+    "flashcards": "Lernkarten",
+    "card_question": "FRAGE",
+    "card_answer": "ANTWORT",
+    "flip_hint": "Tippen zum Umdrehen →",
+    "reveal": "Antwort einblenden →",
+    "load_error_title": "Konnte Material nicht laden.",
+    "untitled": "Material"
   },
   "update": {
     "title": "Update verfügbar",

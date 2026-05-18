@@ -161,6 +161,7 @@ export async function rescheduleNotifications(
 /** Upcoming test row returned by GET /learners/:id/schedule-summary. */
 export type UpcomingTest = {
   folder_id: string;
+  subject_id: string;
   name: string;
   scheduled_for: string;
 };
@@ -202,7 +203,11 @@ export async function scheduleTestHeadsUp(tests: UpcomingTest[]): Promise<void> 
       const fireAt = new Date(testDate.getTime() - slot.daysBefore * 86_400_000);
       if (fireAt.getTime() <= now) continue;
       await Notifs.scheduleNotificationAsync({
-        content: { title: slot.title, body: slot.body, data: { folder_id: t.folder_id } },
+        content: {
+          title: slot.title,
+          body: slot.body,
+          data: { folder_id: t.folder_id, subject_id: t.subject_id },
+        },
         trigger: { date: fireAt },
       });
     }

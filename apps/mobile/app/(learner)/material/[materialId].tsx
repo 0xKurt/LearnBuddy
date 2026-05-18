@@ -35,6 +35,26 @@ export default function MaterialScreen() {
   const [flipped, setFlipped] = useState(false);
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
 
+  if (materialQuery.isError) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+        <View style={{ padding: 22 }}>
+          <CircleBtn icon="back" onPress={() => router.back()} />
+          <EmptyState
+            glyph="😕"
+            title={tCommon('material.load_error_title')}
+            body={tCommon('load_error')}
+            action={
+              <Btn size="sm" onPress={() => void materialQuery.refetch()}>
+                {tCommon('actions.retry')}
+              </Btn>
+            }
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (materialQuery.isLoading || accountQuery.isLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
@@ -93,7 +113,7 @@ export default function MaterialScreen() {
             }}
           />
           <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: LB.ink }}>
-            Lernkarten
+            {tCommon('material.flashcards')}
           </Text>
           <Text style={{ fontSize: 13, color: LB.ink2 }}>
             {flashcardIndex + 1} / {items.length}
@@ -129,7 +149,7 @@ export default function MaterialScreen() {
                 marginBottom: 16,
               }}
             >
-              {flipped ? 'ANTWORT' : 'FRAGE'}
+              {flipped ? tCommon('material.card_answer') : tCommon('material.card_question')}
             </Text>
             <Text
               style={{
@@ -144,7 +164,7 @@ export default function MaterialScreen() {
             </Text>
             {!flipped && (
               <Text style={{ marginTop: 24, fontSize: 12, color: LB.ink3 }}>
-                Tippen zum Umdrehen →
+                {tCommon('material.flip_hint')}
               </Text>
             )}
           </View>
@@ -185,7 +205,7 @@ export default function MaterialScreen() {
               }
             }}
           >
-            {flashcardIndex === items.length - 1 ? 'Fertig' : '→'}
+            {flashcardIndex === items.length - 1 ? tCommon('actions.done') : '→'}
           </Btn>
         </View>
       </SafeAreaView>
@@ -221,7 +241,9 @@ export default function MaterialScreen() {
               borderRadius: 20,
             }}
           >
-            <Text style={{ fontSize: 12, fontWeight: '600', color: LB.ink }}>🃏 Lernkarten</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: LB.ink }}>
+              🃏 {tCommon('material.flashcards')}
+            </Text>
           </Pressable>
         )}
       </View>
@@ -280,7 +302,7 @@ export default function MaterialScreen() {
                       </Text>
                     ) : (
                       <Text style={{ fontSize: 12, color: LB.ink3, fontStyle: 'italic' }}>
-                        Antwort einblenden →
+                        {tCommon('material.reveal')}
                       </Text>
                     )}
                   </Pressable>

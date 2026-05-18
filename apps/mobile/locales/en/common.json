@@ -36,7 +36,14 @@
     "no_items_body": "Next time it'll work — just try again.",
     "question_count_one": "1 question",
     "question_count_other": "{{count}} questions",
-    "question_label": "Question {{index}}"
+    "question_label": "Question {{index}}",
+    "flashcards": "Flashcards",
+    "card_question": "QUESTION",
+    "card_answer": "ANSWER",
+    "flip_hint": "Tap to flip →",
+    "reveal": "Reveal answer →",
+    "load_error_title": "Couldn't load material.",
+    "untitled": "Material"
   },
   "update": {
     "title": "Update available",

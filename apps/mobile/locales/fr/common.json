@@ -36,7 +36,14 @@
     "no_items_body": "Ça marchera la prochaine fois — réessaie.",
     "question_count_one": "1 question",
     "question_count_other": "{{count}} questions",
-    "question_label": "Question {{index}}"
+    "question_label": "Question {{index}}",
+    "flashcards": "Fiches",
+    "card_question": "QUESTION",
+    "card_answer": "RÉPONSE",
+    "flip_hint": "Appuie pour retourner →",
+    "reveal": "Afficher la réponse →",
+    "load_error_title": "Impossible de charger le support.",
+    "untitled": "Support"
   },
   "update": {
     "title": "Mise à jour disponible",
