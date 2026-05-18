@@ -27,8 +27,8 @@
     "fallback": "El diagrama no puede mostrarse ahora"
   },
   "voice": {
-    "idle": "Mantén para hablar",
-    "active": "Te escucho …",
+    "idle": "Toca o mantén para hablar",
+    "active": "Te escucho … (toca para terminar)",
     "permission_rationale": "LearnBuddy escucha un momento para que puedas responder en voz alta. El audio nunca se guarda.",
     "unavailable": "La voz aún no está disponible — escribe tu respuesta por ahora."
   },

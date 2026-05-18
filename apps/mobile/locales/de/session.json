@@ -27,8 +27,8 @@
     "fallback": "Diagramm nicht darstellbar"
   },
   "voice": {
-    "idle": "Halten zum Sprechen",
-    "active": "Ich höre …",
+    "idle": "Tippen oder halten zum Sprechen",
+    "active": "Ich höre … (tippen zum Beenden)",
     "permission_rationale": "LearnBuddy hört kurz mit, damit du auch laut antworten kannst. Audio wird nicht gespeichert.",
     "unavailable": "Sprechen ist hier noch nicht aktiv — tippe deine Antwort einfach ein."
   },

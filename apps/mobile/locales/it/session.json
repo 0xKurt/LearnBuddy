@@ -27,8 +27,8 @@
     "fallback": "Diagramma non visualizzabile al momento"
   },
   "voice": {
-    "idle": "Tieni premuto per parlare",
-    "active": "Ti ascolto …",
+    "idle": "Tocca o tieni premuto per parlare",
+    "active": "Ti ascolto … (tocca per terminare)",
     "permission_rationale": "LearnBuddy ascolta un attimo per farti rispondere a voce. L'audio non viene mai salvato.",
     "unavailable": "La voce non è ancora disponibile — per ora scrivi la tua risposta."
   },

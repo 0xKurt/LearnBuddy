@@ -33,20 +33,14 @@ export function isVoiceAvailable(): boolean {
   return Voice !== null;
 }
 
-/** Request microphone permission. Returns true if granted (or already granted).
- *  On platforms without the native module returns false. */
-export async function requestMicPermission(): Promise<boolean> {
-  if (!Voice) return false;
-  try {
-    const granted = await Voice.isAvailable();
-    return granted === 1;
-  } catch {
-    return false;
-  }
-}
-
 /** Start a recognizer session. Caller passes event handlers.
- *  The locale code must be BCP-47 (e.g. 'de-DE', 'en-US'). */
+ *  The locale code must be BCP-47 (e.g. 'de-DE', 'en-US').
+ *
+ *  On iOS the first invocation triggers the system permission prompt for
+ *  microphone + speech recognition. A denial surfaces via `onError` rather
+ *  than a thrown exception. (Voice.isAvailable() is a capability check, not
+ *  a permission gate — calling it before start() returns 0 on a fresh
+ *  install and is therefore useless as a precondition.) */
 export async function startListening(locale: string, events: VoiceEvents): Promise<void> {
   if (!Voice) throw new Error('voice_unavailable');
 

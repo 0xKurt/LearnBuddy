@@ -27,8 +27,8 @@
     "fallback": "Diagram can't be shown right now"
   },
   "voice": {
-    "idle": "Hold to talk",
-    "active": "I'm listening …",
+    "idle": "Tap or hold to talk",
+    "active": "I'm listening … (tap to finish)",
     "permission_rationale": "LearnBuddy listens briefly so you can answer out loud. Audio is never stored.",
     "unavailable": "Voice isn't available yet — just type your answer for now."
   },

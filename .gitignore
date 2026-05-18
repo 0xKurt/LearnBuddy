@@ -56,3 +56,5 @@ coverage/
 .cache/
 infra/supabase/.temp/
 infra/supabase/.branches/
+supabase/.temp/
+supabase/.branches/
