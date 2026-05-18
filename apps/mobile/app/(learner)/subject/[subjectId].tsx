@@ -127,7 +127,6 @@ export default function SubjectScreen() {
   const openSubjectMenu = () => {
     Alert.alert(subject?.name ?? '', undefined, [
       { text: t('subject.cancel'), style: 'cancel' },
-      { text: t('subject.add_folder_menu'), onPress: () => setCreatingFolder(true) },
       {
         text: t('subject.archive'),
         style: 'destructive',
@@ -276,19 +275,18 @@ export default function SubjectScreen() {
           bottom: 12,
           flexDirection: 'row',
           gap: 8,
+          alignItems: 'center',
         }}
       >
+        <CircleBtn
+          icon="plus"
+          onPress={
+            tab === 'ordner'
+              ? () => setCreatingFolder(true)
+              : () => router.push({ pathname: '/(learner)/capture', params: { subjectId } })
+          }
+        />
         <View style={{ flex: 1 }}>
-          <Btn
-            size="lg"
-            full
-            variant="outline"
-            onPress={() => router.push({ pathname: '/(learner)/capture', params: { subjectId } })}
-          >
-            {t('subject.new_material')}
-          </Btn>
-        </View>
-        <View style={{ flex: 2 }}>
           <Btn
             size="lg"
             full
