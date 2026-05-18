@@ -26,23 +26,31 @@
 --   last_turn_at    — drives the "möchtest du fortsetzen?" resume nudge.
 
 create table conversation_turns (
-  id          uuid primary key default gen_random_uuid(),
-  session_id  uuid not null references sessions(id) on delete cascade,
-  learner_id  uuid not null references learners(id) on delete cascade,
-  item_id     uuid references items(id) on delete set null,
-  turn_index  int  not null,
-  role        text not null check (role in ('learner', 'tutor', 'system')),
-  kind        text not null check (kind in ('question', 'answer', 'hint', 'feedback', 'reveal', 'note')),
-  content     text not null,
-  verdict     text check (verdict in ('correct', 'partially_correct', 'incorrect', 'skipped')),
-  mode        text check (mode in ('voice', 'text', 'multiple_choice')),
-  created_at  timestamptz not null default now()
+  id              uuid primary key default gen_random_uuid(),
+  session_id      uuid not null references sessions(id) on delete cascade,
+  learner_id      uuid not null references learners(id) on delete cascade,
+  item_id         uuid references items(id) on delete set null,
+  turn_index      int  not null,
+  role            text not null check (role in ('learner', 'tutor', 'system')),
+  kind            text not null check (kind in ('question', 'answer', 'hint', 'feedback', 'reveal', 'note')),
+  content         text not null,
+  verdict         text check (verdict in ('correct', 'partially_correct', 'incorrect', 'skipped')),
+  mode            text check (mode in ('voice', 'text', 'multiple_choice')),
+  -- Client-generated id of the learner message. Lets a retried/duplicated
+  -- send (flaky network, offline outbox) replay the original tutor reply
+  -- instead of re-charging credits and re-calling the model.
+  client_turn_id  uuid,
+  created_at      timestamptz not null default now()
 );
 
 -- One row per (session, turn_index); the index is also the natural order
 -- for replaying the thread into the LLM `contents` array.
 create unique index conversation_turns_session_turn_idx
   on conversation_turns(session_id, turn_index);
+-- Idempotency: a learner turn's client id is unique within a session.
+create unique index conversation_turns_client_idx
+  on conversation_turns(session_id, client_turn_id)
+  where client_turn_id is not null and role = 'learner';
 create index conversation_turns_session_created_idx
   on conversation_turns(session_id, created_at);
 

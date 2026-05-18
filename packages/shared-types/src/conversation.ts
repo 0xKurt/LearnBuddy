@@ -28,6 +28,7 @@ export const ConversationTurn = z.object({
   content: z.string(),
   verdict: Verdict.nullable(),
   mode: AnswerMode.nullable(),
+  client_turn_id: Uuid.nullable(),
   created_at: Iso8601,
 });
 export type ConversationTurn = z.infer<typeof ConversationTurn>;
