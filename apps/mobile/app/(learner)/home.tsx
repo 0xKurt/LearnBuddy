@@ -2,8 +2,8 @@
 // No pending counter. No "must do" copy.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
@@ -36,7 +36,11 @@ import {
 } from '../../lib/api/subjects.js';
 import { useFirstTime } from '../../lib/onboarding/coach.js';
 import { scheduleTestDateReminders } from '../../lib/notifications.js';
-import { useAppStore } from '../../lib/store/index.js';
+import {
+  clearPendingSession,
+  loadPendingSession,
+  type PendingSession,
+} from '../../lib/session/pending.js';
 import { LB } from '../../lib/theme/colors.js';
 
 type SubjectKindKey =
@@ -135,8 +139,24 @@ export default function HomeScreen() {
   const lastSessionAt = scheduleQuery.data?.last_session_at ?? null;
   const streakCoach = useFirstTime('streak', { enabled: streak > 0 });
 
-  const pendingSession = useAppStore((s) => s.pending_session);
-  const setPendingSession = useAppStore((s) => s.set_pending_session);
+  // Durable pending pointer (survives a full app restart). Reloaded on every
+  // focus so it appears right after the learner leaves a session.
+  const [pendingSession, setPending] = useState<PendingSession | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      void loadPendingSession().then((p) => {
+        if (alive) setPending(p);
+      });
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+  const dismissResume = useCallback(() => {
+    void clearPendingSession();
+    setPending(null);
+  }, []);
 
   // Sync local test-date notifications whenever schedule data changes.
   const notifKeyRef = useRef<string | null>(null);
@@ -255,15 +275,9 @@ export default function HomeScreen() {
                     router.push({
                       pathname: '/(learner)/session/[sessionId]',
                       params: {
-                        sessionId: pendingSession.client_id,
+                        sessionId: pendingSession.session_id,
+                        resumeSessionId: pendingSession.session_id,
                         learnerId: pendingSession.learner_id,
-                        ...(pendingSession.subject_id
-                          ? { subjectId: pendingSession.subject_id }
-                          : {}),
-                        ...(pendingSession.folder_id ? { folderId: pendingSession.folder_id } : {}),
-                        ...(pendingSession.material_id
-                          ? { materialId: pendingSession.material_id }
-                          : {}),
                         testMode: String(pendingSession.test_mode),
                       },
                     });
@@ -273,7 +287,7 @@ export default function HomeScreen() {
                 </Btn>
               </View>
               <View style={{ flex: 1 }}>
-                <Btn size="sm" full variant="ghost" onPress={() => setPendingSession(null)}>
+                <Btn size="sm" full variant="ghost" onPress={dismissResume}>
                   {t('resume_no')}
                 </Btn>
               </View>

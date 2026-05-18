@@ -10,18 +10,10 @@ import type { LearnerCreate } from '@learnbuddy/shared-types';
  *  (onboarding)/profile-minor-consent. Cleared after the POST. */
 export type ProfileDraft = Omit<LearnerCreate, 'minor_consent_version'>;
 
-/** Persists mid-session progress so the home screen can offer a resume banner.
- *  Lives in-memory only — survives backgrounding but not a full app restart. */
-export type PendingSession = {
-  session_id: string;
-  client_id: string;
-  learner_id: string;
-  idx: number;
-  subject_id: string | null;
-  folder_id: string | null;
-  material_id: string | null;
-  test_mode: boolean;
-};
+// Mid-session resume now lives in `lib/session/pending.ts` (expo-secure-store)
+// so it survives a full app restart and resumes deterministically from the
+// server snapshot — the old in-memory pointer below was lost on restart and
+// re-picked a different item set.
 
 type AppState = {
   active_learner_id: string | null;
@@ -36,9 +28,6 @@ type AppState = {
   /** Birth year collected in welcome.tsx signup form; pre-populates add-profile. */
   pending_birth_year: number | null;
   set_pending_birth_year: (y: number | null) => void;
-  /** Set when the user navigates away mid-session; cleared on completion or dismiss. */
-  pending_session: PendingSession | null;
-  set_pending_session: (s: PendingSession | null) => void;
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -50,6 +39,4 @@ export const useAppStore = create<AppState>((set) => ({
   set_pending_profile_draft: (d) => set({ pending_profile_draft: d }),
   pending_birth_year: null,
   set_pending_birth_year: (y) => set({ pending_birth_year: y }),
-  pending_session: null,
-  set_pending_session: (s) => set({ pending_session: s }),
 }));

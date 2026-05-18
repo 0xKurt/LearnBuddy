@@ -1,33 +1,18 @@
 {
   "loading": "Preparando tu práctica …",
   "error_title": "Vaya.",
-  "error_body": "No pudimos cargar esta práctica ahora. Inténtalo de nuevo.",
+  "error_body": "No pudimos cargar eso ahora. Inténtalo de nuevo.",
   "back": "Volver",
-  "topic_label": "Tema",
-  "progress": "{{current}} de {{total}}",
-  "submit": "Comprobar",
-  "next": "Siguiente",
-  "verdict": {
-    "correct": "¡Exacto!",
-    "incorrect": "Aún no del todo"
-  },
-  "answer_hint_numeric": "Escribe tu respuesta",
-  "answer_hint_formula": "Escribe tu fórmula",
-  "show_solution": "Ver la solución",
-  "solution_label": "Solución",
-  "finish_title": "¡Hecho!",
-  "finish_body": "Acertaste {{correct}} de {{total}}. Buena ronda.",
-  "finish_home": "Volver al inicio",
-  "no_template": "Esta práctica ya no está disponible.",
   "hub": {
     "title": "Practicar",
-    "upcoming_tests": "Próximos exámenes",
-    "test_in_days_one": "En 1 día",
-    "test_in_days_other": "En {{count}} días",
-    "test_today": "Hoy",
-    "go_to_folder": "Abrir carpeta",
-    "empty_title": "Nada urgente",
-    "empty_body": "No hay exámenes próximos. Explora tus materiales para empezar a practicar.",
-    "browse_home": "Ir al inicio"
+    "resume_title": "¿Seguir?",
+    "resume_body": "Aún tienes una práctica abierta.",
+    "resume_yes": "Continuar",
+    "resume_no": "Empezar de nuevo",
+    "choose": "Elige una asignatura",
+    "start": "Practicar",
+    "empty_title": "Nada que practicar todavía",
+    "empty_body": "Haz primero una foto de tu material y practicamos juntos.",
+    "empty_cta": "Ir al inicio"
   }
 }
