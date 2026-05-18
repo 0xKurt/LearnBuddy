@@ -70,7 +70,9 @@
     "delete_title": "Supprimer le support ?",
     "delete_body": "Ce support et toutes ses questions seront supprimés.",
     "processing": "en cours de traitement …",
-    "failed_hint": "Erreur · appui long pour supprimer"
+    "failed_hint": "Erreur · appui long pour supprimer",
+    "page_count_one": "1 page",
+    "page_count_other": "{{count}} pages"
   },
   "subjects": {
     "math": "Maths",

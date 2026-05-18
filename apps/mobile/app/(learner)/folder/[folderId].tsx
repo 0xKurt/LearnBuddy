@@ -309,7 +309,7 @@ function MaterialRow({
           </Text>
         ) : material.page_count != null ? (
           <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 1 }}>
-            {material.page_count} {material.page_count === 1 ? 'Seite' : 'Seiten'}
+            {t('material.page_count', { count: material.page_count })}
           </Text>
         ) : null}
       </View>

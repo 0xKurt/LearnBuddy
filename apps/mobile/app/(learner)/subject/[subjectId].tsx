@@ -185,7 +185,7 @@ export default function SubjectScreen() {
           {subject.name}
         </Text>
         <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 2 }}>
-          {t('subject.material_count_other', { count: subject.material_count })}
+          {t('subject.material_count', { count: subject.material_count })}
         </Text>
 
         <View
@@ -406,7 +406,7 @@ function MaterialRow({
           </Text>
         ) : material.page_count != null ? (
           <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 1 }}>
-            {material.page_count} {material.page_count === 1 ? 'Seite' : 'Seiten'}
+            {t('material.page_count', { count: material.page_count })}
           </Text>
         ) : null}
       </View>

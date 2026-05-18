@@ -70,7 +70,9 @@
     "delete_title": "Eliminare il materiale?",
     "delete_body": "Questo materiale e tutte le sue domande saranno rimossi.",
     "processing": "in elaborazione …",
-    "failed_hint": "Errore · tieni premuto per eliminare"
+    "failed_hint": "Errore · tieni premuto per eliminare",
+    "page_count_one": "1 pagina",
+    "page_count_other": "{{count}} pagine"
   },
   "subjects": {
     "math": "Matematica",
