@@ -159,9 +159,77 @@ export type ExplainResult = {
   usage: VisionResult['usage'];
 };
 
+// ── Conversational tutor (multi-turn). Doc 06 §P3, evolved. ─────────────────
+
+/** One prior message in the session thread, oldest-first. */
+export type ConversationMessage = {
+  role: 'learner' | 'tutor';
+  content: string;
+};
+
+export type ConverseTurnInput = {
+  /** The question currently being worked on. */
+  item: {
+    question: string;
+    expectedAnswer: string;
+    acceptableAnswers: string[];
+    answerKind: GeneratedVisionItem['answer_kind'];
+    units?: string | null;
+    latexExpected?: string | null;
+    latexAcceptable?: string[] | null;
+    mcOptions?: string[] | null;
+    mcCorrectIndex?: number | null;
+    fillBlankTemplate?: string | null;
+    fillBlankAnswers?: string[] | null;
+    diagramLabelIndex?: number | null;
+    sourceExcerpt?: string | null;
+    topic?: string | null;
+  };
+  /** Full prior thread of THIS session (learner/tutor only), oldest-first. */
+  history: ConversationMessage[];
+  /** The new learner message (already transcribed if it came from voice). */
+  learnerMessage: string;
+  learnerName: string | null;
+  locale: Locale;
+  gradeLevel: number;
+  testMode: boolean;
+  pinnedTopic: string | null;
+  /** Hints already given for the current item (drives the staircase). */
+  hintsGivenForItem: number;
+};
+
+export type ConverseTurnResult = {
+  verdict: 'correct' | 'partially_correct' | 'incorrect';
+  /** The learner-visible reply (control line already stripped). */
+  reply: string;
+  /** True when the reply contained a new hint (for staircase accounting). */
+  gaveHint: boolean;
+  usage: VisionResult['usage'];
+};
+
+export type TranscribeInput = {
+  audioBase64: string;
+  mimeType: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
+  locale: Locale;
+};
+
+export type TranscribeResult = {
+  text: string;
+  usage: VisionResult['usage'];
+};
+
 export interface LLMGateway {
   visionExtractAndGenerate(input: VisionInput): Promise<VisionResult>;
   regenerateFromText(input: RegenerateInput): Promise<RegenerateResult>;
   evaluateAnswer(input: EvaluateInput): Promise<EvaluateResult>;
   explain(input: ExplainInput): Promise<ExplainResult>;
+  /** Multi-turn tutor reply. `onToken` receives learner-visible deltas as
+   *  they stream; the returned promise resolves with the final result. */
+  converseTurn(
+    input: ConverseTurnInput,
+    onToken?: (delta: string) => void,
+  ): Promise<ConverseTurnResult>;
+  /** Speech-to-text for voice turns (robust fallback independent of any
+   *  on-device recognizer). */
+  transcribeAudio(input: TranscribeInput): Promise<TranscribeResult>;
 }

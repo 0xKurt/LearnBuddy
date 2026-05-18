@@ -13,10 +13,15 @@
 
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
+import { SessionPatch, SessionTurnRequest } from '@learnbuddy/shared-types';
+import type { ConversationSseEvent } from '@learnbuddy/shared-types';
 
+import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
+import type { ConversationMessage } from '../lib/llm/gateway.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -64,6 +69,9 @@ sessionRoutes.post(
         started_at: nowIso,
         attempts_count: 0,
         correct_count: 0,
+        // Persist the exact chosen set so a resume returns the SAME
+        // questions instead of letting FSRS re-pick under the learner.
+        picked_item_ids: picked.map((p) => p.id as string),
       })
       .select('*')
       .single();
@@ -197,6 +205,137 @@ sessionRoutes.patch('/:id/finish', async (c) => {
   return c.json(upd.data);
 });
 
+// GET /sessions/:id — full snapshot for deterministic resume.
+// Doc 05 §session ("Quit mid-session … state is preserved").
+// Returns the SAME items chosen at start plus the entire conversation
+// thread so the client can rebuild the screen exactly where it left off.
+sessionRoutes.get('/:id', async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const session_id = c.req.param('id');
+
+  const sessRow = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('id', session_id)
+    .eq('learner_id', learner_id)
+    .maybeSingle();
+  if (sessRow.error) {
+    throw new ApiError('internal', 'Failed to load session', { cause: sessRow.error.message });
+  }
+  if (!sessRow.data) throw new ApiError('not_found', 'Session not found');
+  return c.json(await buildSnapshot(supabase, sessRow.data as SessionRow));
+});
+
+// PATCH /sessions/:id — sustained-session controls (Doc 01 §Studying).
+//   { pinned_topic: "…" | null }  → lock onto / release a topic
+//   { keep_going: true }          → refill the queue with more due items
+sessionRoutes.patch('/:id', zValidator('json', SessionPatch), async (c) => {
+  const { supabase, now } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const session_id = c.req.param('id');
+  const input = c.req.valid('json');
+
+  const sessRow = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('id', session_id)
+    .eq('learner_id', learner_id)
+    .maybeSingle();
+  if (sessRow.error) {
+    throw new ApiError('internal', 'Failed to load session', { cause: sessRow.error.message });
+  }
+  if (!sessRow.data) throw new ApiError('not_found', 'Session not found');
+  const session = sessRow.data as SessionRow;
+  if (session.ended_at != null) {
+    throw new ApiError('validation_failed', 'Session has already ended');
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (input.pinned_topic !== undefined) {
+    patch.pinned_topic = input.pinned_topic;
+  }
+
+  if (input.keep_going) {
+    const already = new Set(session.picked_item_ids ?? []);
+    const pinned = input.pinned_topic ?? session.pinned_topic ?? null;
+    const more = await pickItems(supabase, {
+      learner_id,
+      subject_id: session.subject_id ?? null,
+      folder_id: null,
+      material_id: null,
+      max_items: 50,
+      now: now().toISOString(),
+    });
+    const fresh = more
+      .filter((it) => !already.has(it.id as string))
+      .filter((it) => !pinned || (it.topic as string | null) === pinned)
+      .slice(0, 20);
+    patch.picked_item_ids = [...(session.picked_item_ids ?? []), ...fresh.map((f) => f.id)];
+  }
+
+  if (Object.keys(patch).length > 0) {
+    const upd = await supabase
+      .from('sessions')
+      .update(patch)
+      .eq('id', session_id)
+      .eq('learner_id', learner_id)
+      .select('*')
+      .maybeSingle();
+    if (upd.error || !upd.data) {
+      throw new ApiError('internal', 'Failed to update session', {
+        cause: upd.error?.message ?? 'no row',
+      });
+    }
+    return c.json(await buildSnapshot(supabase, upd.data as SessionRow));
+  }
+  return c.json(await buildSnapshot(supabase, session));
+});
+
+type SessionRow = {
+  id: string;
+  test_mode: boolean;
+  ended_at: string | null;
+  subject_id: string | null;
+  pinned_topic: string | null;
+  picked_item_ids: string[] | null;
+};
+
+async function buildSnapshot(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  session: SessionRow,
+): Promise<{
+  session_id: string;
+  test_mode: boolean;
+  pinned_topic: string | null;
+  active: boolean;
+  items: Array<Record<string, unknown>>;
+  turns: TurnRow[];
+}> {
+  const ids = session.picked_item_ids ?? [];
+  let items: Array<Record<string, unknown>> = [];
+  if (ids.length > 0) {
+    const res = await supabase.from('items').select('*').in('id', ids);
+    const byId = new Map(
+      ((res.data ?? []) as Array<Record<string, unknown>>).map((it) => [it.id as string, it]),
+    );
+    items = ids
+      .map((id) => byId.get(id))
+      .filter((it): it is Record<string, unknown> => Boolean(it));
+  }
+  const turns = await loadTurns(supabase, session.id);
+  return {
+    session_id: session.id,
+    test_mode: Boolean(session.test_mode),
+    pinned_topic: session.pinned_topic ?? null,
+    active: session.ended_at == null,
+    items,
+    turns,
+  };
+}
+
 // GET /sessions/:id/summary — Doc 04 §sessions + Doc 05 §result.
 //
 // Renders the post-session "Heute geübt — fein gemacht" screen. We never
@@ -285,3 +424,405 @@ sessionRoutes.get('/:id/summary', async (c) => {
     topics,
   });
 });
+
+// POST /sessions/:id/turn — one conversational turn (streaming SSE).
+// Doc 06 §P3 / Doc 05 §session / Doc 01 §Studying ("Üben ist ein Gespräch").
+//
+// This is THE conversational endpoint. It loads the whole session thread,
+// transcribes voice if needed, replays the full transcript to the tutor so
+// every reply has complete context, streams the tutor's answer token by
+// token, persists both turns, and accounts credits (idempotent on
+// client_turn_id so a flaky retry replays instead of double-charging).
+const ATTEMPT_ESTIMATE = 1; // Doc 08 §estimated-costs-per-action
+// Cap on prior turns replayed to the model per turn (~12 Q/A exchanges).
+const MAX_HISTORY_MESSAGES = 24;
+
+type TurnRow = {
+  id: string;
+  turn_index: number;
+  role: 'learner' | 'tutor' | 'system';
+  kind: 'question' | 'answer' | 'hint' | 'feedback' | 'reveal' | 'note';
+  content: string;
+  verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
+  item_id: string | null;
+};
+
+sessionRoutes.post(
+  '/:id/turn',
+  rateLimit({ key: 'session_turn', per_hour: 1200 }),
+  zValidator('json', SessionTurnRequest),
+  async (c) => {
+    const { supabase, llm, now } = getDeps(c);
+    const { account_id } = c.get('auth');
+    const learner_id = c.get('learner_id');
+    const session_id = c.req.param('id');
+    const input = c.req.valid('json');
+
+    return streamSSE(c, async (stream) => {
+      const push = (e: ConversationSseEvent): Promise<void> =>
+        stream.writeSSE({ data: JSON.stringify(e) });
+
+      if (!learner_id) {
+        await push({ type: 'error', code: 'unauthenticated', message: 'Missing learner context' });
+        return;
+      }
+      if (!input.item_id) {
+        await push({ type: 'error', code: 'validation_failed', message: 'item_id is required' });
+        return;
+      }
+
+      // 1. Session must exist, be owned, and still be open.
+      const sessRow = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', session_id)
+        .eq('learner_id', learner_id)
+        .maybeSingle();
+      if (sessRow.error || !sessRow.data) {
+        await push({ type: 'error', code: 'not_found', message: 'Session not found' });
+        return;
+      }
+      const session = sessRow.data as Record<string, unknown>;
+      if (session.ended_at != null) {
+        await push({ type: 'error', code: 'session_ended', message: 'This session has ended' });
+        return;
+      }
+
+      // 2. Idempotency — a retried send replays the original reply.
+      const dup = await supabase
+        .from('conversation_turns')
+        .select('*')
+        .eq('session_id', session_id)
+        .eq('client_turn_id', input.client_turn_id)
+        .eq('role', 'learner')
+        .maybeSingle();
+      if (!dup.error && dup.data) {
+        const learnerTurn = dup.data as TurnRow;
+        const all = await loadTurns(supabase, session_id);
+        const tutor = all.find(
+          (t) => t.role === 'tutor' && t.turn_index === learnerTurn.turn_index + 1,
+        );
+        if (tutor) {
+          await push({ type: 'token', text: tutor.content });
+          await push({ type: 'verdict', verdict: tutor.verdict ?? 'partially_correct' });
+          await push({ type: 'feedback', text: tutor.content });
+          await push({
+            type: 'done',
+            credits_used: 0,
+            verdict: tutor.verdict ?? 'partially_correct',
+            learner_turn_id: learnerTurn.id,
+            tutor_turn_id: tutor.id,
+            session_active: true,
+          });
+          return;
+        }
+      }
+
+      // 3. Load the item (ownership-checked).
+      const itemRow = await supabase
+        .from('items')
+        .select('*')
+        .eq('id', input.item_id)
+        .is('archived_at', null)
+        .maybeSingle();
+      if (itemRow.error || !itemRow.data) {
+        await push({ type: 'error', code: 'not_found', message: 'Item not found' });
+        return;
+      }
+      const item = itemRow.data as Record<string, unknown> & { learner_id: string };
+      if (item.learner_id !== learner_id) {
+        await push({ type: 'error', code: 'not_found', message: 'Item not found' });
+        return;
+      }
+
+      // 4. Resolve the learner's message (transcribe voice if needed).
+      let learnerText = (input.text ?? '').trim();
+      let transcribeCostMicros = 0;
+      if (!learnerText && input.audio_base64) {
+        try {
+          const tr = await llm.transcribeAudio({
+            audioBase64: input.audio_base64,
+            mimeType: input.audio_mime ?? 'audio/m4a',
+            locale: (item.language as 'de') ?? 'de',
+          });
+          learnerText = tr.text.trim();
+          transcribeCostMicros = tr.usage.cost_usd_micros;
+          await push({ type: 'transcript', text: learnerText });
+        } catch {
+          await push({
+            type: 'error',
+            code: 'transcription_failed',
+            message: 'Could not understand the recording',
+          });
+          return;
+        }
+      }
+      if (!learnerText) {
+        await push({ type: 'error', code: 'empty_answer', message: 'No answer provided' });
+        return;
+      }
+
+      // 5. Build the thread + hint accounting from prior turns.
+      const turns = await loadTurns(supabase, session_id);
+      const nextIndex = turns.reduce((mx, t) => Math.max(mx, t.turn_index), -1) + 1;
+      const fullHistory: ConversationMessage[] = turns
+        .filter(
+          (t) =>
+            (t.role === 'learner' && t.kind === 'answer') ||
+            (t.role === 'tutor' && (t.kind === 'feedback' || t.kind === 'hint')),
+        )
+        .map((t) => ({
+          role: t.role === 'learner' ? ('learner' as const) : ('tutor' as const),
+          content: t.content,
+        }));
+      // Bound the transcript sent to the model so a long "keep going"
+      // marathon doesn't grow input tokens/cost unbounded. The most recent
+      // exchanges carry the conversational coherence; older items are still
+      // recorded server-side and surfaced again via FSRS, not via context.
+      const history =
+        fullHistory.length > MAX_HISTORY_MESSAGES
+          ? fullHistory.slice(-MAX_HISTORY_MESSAGES)
+          : fullHistory;
+      const hintsGivenForItem = turns.filter(
+        (t) =>
+          t.role === 'tutor' &&
+          t.item_id === input.item_id &&
+          (t.verdict === 'incorrect' || t.verdict === 'partially_correct'),
+      ).length;
+
+      const learnerRow = await supabase
+        .from('learners')
+        .select('grade_level, ui_locale, display_name')
+        .eq('id', learner_id)
+        .maybeSingle();
+      const lp =
+        (learnerRow.data as {
+          grade_level: number | null;
+          ui_locale: string | null;
+          display_name: string | null;
+        } | null) ?? null;
+      const gradeLevel = lp?.grade_level ?? 7;
+      const locale = (lp?.ui_locale ?? 'de') as 'de' | 'en' | 'fr' | 'es' | 'it';
+      const testMode = Boolean(session.test_mode);
+
+      const persistTurn = async (row: {
+        turn_index: number;
+        role: 'learner' | 'tutor';
+        kind: 'answer' | 'feedback';
+        content: string;
+        verdict: 'correct' | 'partially_correct' | 'incorrect' | null;
+        client_turn_id: string | null;
+      }): Promise<string> => {
+        const ins = await supabase
+          .from('conversation_turns')
+          .insert({
+            session_id,
+            learner_id,
+            item_id: input.item_id,
+            turn_index: row.turn_index,
+            role: row.role,
+            kind: row.kind,
+            content: row.content,
+            verdict: row.verdict,
+            mode: input.mode,
+            client_turn_id: row.client_turn_id,
+            created_at: now().toISOString(),
+          })
+          .select('id')
+          .single();
+        return (ins.data as { id: string } | null)?.id ?? '';
+      };
+
+      const recordAttempt = async (
+        verdict: 'correct' | 'partially_correct' | 'incorrect',
+        evaluatedBy: 'local' | 'llm',
+        feedback: string,
+        usageModel: string | null,
+        usageVersion: string | null,
+      ): Promise<void> => {
+        await supabase.from('attempts').insert({
+          learner_id,
+          item_id: input.item_id,
+          session_id,
+          mode: input.mode,
+          kid_answer: learnerText,
+          verdict,
+          evaluated_by: evaluatedBy,
+          evaluation_model: usageModel,
+          evaluation_prompt_version: usageVersion,
+          feedback,
+          hints_used: hintsGivenForItem,
+          duration_ms: input.duration_ms,
+          test_mode: testMode,
+        });
+        const prevAttempts = Number(session.attempts_count ?? 0);
+        const prevCorrect = Number(session.correct_count ?? 0);
+        await supabase
+          .from('sessions')
+          .update({
+            attempts_count: prevAttempts + 1,
+            correct_count: prevCorrect + (verdict === 'correct' ? 1 : 0),
+            last_turn_at: now().toISOString(),
+          })
+          .eq('id', session_id);
+      };
+
+      // 6. Fast path: client is confident it's correct → no model, no charge.
+      if (input.client_local_verdict === 'correct') {
+        const praise = pickPraise(locale);
+        const learnerTurnId = await persistTurn({
+          turn_index: nextIndex,
+          role: 'learner',
+          kind: 'answer',
+          content: learnerText,
+          verdict: 'correct',
+          client_turn_id: input.client_turn_id,
+        });
+        const tutorTurnId = await persistTurn({
+          turn_index: nextIndex + 1,
+          role: 'tutor',
+          kind: 'feedback',
+          content: praise,
+          verdict: 'correct',
+          client_turn_id: null,
+        });
+        await recordAttempt('correct', 'local', praise, null, null);
+        await push({ type: 'token', text: praise });
+        await push({ type: 'verdict', verdict: 'correct' });
+        await push({ type: 'feedback', text: praise });
+        await push({
+          type: 'done',
+          credits_used: 0,
+          verdict: 'correct',
+          learner_turn_id: learnerTurnId,
+          tutor_turn_id: tutorTurnId,
+          session_active: true,
+        });
+        return;
+      }
+
+      // 7. Tutor path — debit, stream, persist, settle.
+      const debit = {
+        estimate: ATTEMPT_ESTIMATE,
+        reason: 'evaluation',
+        learner_id,
+        reference_id: input.item_id,
+      };
+      try {
+        await tryDebit(supabase, account_id, debit);
+      } catch (err) {
+        const code = err instanceof ApiError ? err.code : 'internal';
+        const message = err instanceof Error ? err.message : 'Could not start this turn';
+        await push({ type: 'error', code, message });
+        return;
+      }
+
+      let result;
+      try {
+        result = await llm.converseTurn(
+          {
+            item: {
+              question: String(item.question),
+              expectedAnswer: String(item.expected_answer),
+              acceptableAnswers: (item.acceptable_answers as string[] | null) ?? [],
+              answerKind: item.answer_kind as 'short',
+              units: (item.units as string | null) ?? null,
+              latexExpected: (item.latex_expected as string | null) ?? null,
+              latexAcceptable: (item.latex_acceptable as string[] | null) ?? null,
+              mcOptions: (item.mc_options as string[] | null) ?? null,
+              mcCorrectIndex: (item.mc_correct_index as number | null) ?? null,
+              fillBlankTemplate: (item.fill_blank_template as string | null) ?? null,
+              fillBlankAnswers: (item.fill_blank_answers as string[] | null) ?? null,
+              diagramLabelIndex: (item.diagram_label_index as number | null) ?? null,
+              sourceExcerpt: (item.source_excerpt as string | null) ?? null,
+              topic: (item.topic as string | null) ?? null,
+            },
+            history,
+            learnerMessage: learnerText,
+            learnerName: lp?.display_name ?? null,
+            locale,
+            gradeLevel,
+            testMode,
+            pinnedTopic: (session.pinned_topic as string | null) ?? null,
+            hintsGivenForItem,
+          },
+          (delta) => {
+            void push({ type: 'token', text: delta });
+          },
+        );
+      } catch (err) {
+        await refund(supabase, account_id, debit);
+        await push({
+          type: 'error',
+          code: 'evaluation_failed',
+          message: err instanceof Error ? err.message : 'The tutor could not answer',
+        });
+        return;
+      }
+
+      const totalMicros = result.usage.cost_usd_micros + transcribeCostMicros;
+      const actualCredits = Math.max(1, Math.round(totalMicros / 100));
+      await settle(supabase, account_id, debit, actualCredits, {
+        ...result.usage,
+        cost_usd_micros: totalMicros,
+      });
+
+      const learnerTurnId = await persistTurn({
+        turn_index: nextIndex,
+        role: 'learner',
+        kind: 'answer',
+        content: learnerText,
+        verdict: null,
+        client_turn_id: input.client_turn_id,
+      });
+      const tutorTurnId = await persistTurn({
+        turn_index: nextIndex + 1,
+        role: 'tutor',
+        kind: 'feedback',
+        content: result.reply,
+        verdict: result.verdict,
+        client_turn_id: null,
+      });
+      await recordAttempt(
+        result.verdict,
+        'llm',
+        result.reply,
+        result.usage.model,
+        result.usage.prompt_version,
+      );
+
+      await push({ type: 'verdict', verdict: result.verdict });
+      await push({ type: 'feedback', text: result.reply });
+      await push({
+        type: 'done',
+        credits_used: actualCredits,
+        verdict: result.verdict,
+        learner_turn_id: learnerTurnId,
+        tutor_turn_id: tutorTurnId,
+        session_active: true,
+      });
+    });
+  },
+);
+
+async function loadTurns(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  session_id: string,
+): Promise<TurnRow[]> {
+  const res = await supabase.from('conversation_turns').select('*').eq('session_id', session_id);
+  if (res.error) return [];
+  const rows = ((res.data ?? []) as TurnRow[]).slice();
+  rows.sort((a, b) => a.turn_index - b.turn_index);
+  return rows;
+}
+
+function pickPraise(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
+  const map = {
+    de: 'Stimmt — super gemacht!',
+    en: "That's right — nicely done!",
+    fr: "C'est juste — bravo !",
+    es: '¡Correcto, muy bien!',
+    it: 'Esatto — bravissimo!',
+  } as const;
+  return map[locale];
+}

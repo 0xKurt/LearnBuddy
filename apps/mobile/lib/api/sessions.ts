@@ -62,36 +62,6 @@ export async function getSessionSummary(
   });
 }
 
-const AttemptResult = z.object({
-  verdict: z.enum(['correct', 'partially_correct', 'incorrect']),
-  feedback: z.string().nullable(),
-  next_hint: z.string().nullable(),
-  credits_used: z.number().int().nonnegative(),
-});
-export type AttemptResult = z.infer<typeof AttemptResult>;
-
-export async function submitAttempt(
-  learnerId: string,
-  input: {
-    session_id?: string;
-    item_id: string;
-    mode: 'voice' | 'text' | 'multiple_choice';
-    kid_answer: string;
-    parsed_learner_latex?: string | null;
-    prior_hints_given: string[];
-    duration_ms: number;
-    test_mode: boolean;
-    client_local_verdict: 'correct' | null;
-  },
-): Promise<AttemptResult> {
-  return api('/attempts', {
-    method: 'POST',
-    body: input,
-    schema: AttemptResult,
-    learnerId,
-  });
-}
-
 const ExplainResponse = z.object({
   text: z.string(),
   credits_used: z.number().int().nonnegative(),

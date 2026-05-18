@@ -1,33 +1,18 @@
 {
   "loading": "Stiamo preparando l'esercizio …",
   "error_title": "Ops.",
-  "error_body": "Non siamo riusciti a caricare questo esercizio. Riprova.",
+  "error_body": "Non siamo riusciti a caricarlo. Riprova.",
   "back": "Indietro",
-  "topic_label": "Argomento",
-  "progress": "{{current}} di {{total}}",
-  "submit": "Controlla",
-  "next": "Avanti",
-  "verdict": {
-    "correct": "Esatto!",
-    "incorrect": "Non ancora del tutto"
-  },
-  "answer_hint_numeric": "Scrivi la tua risposta",
-  "answer_hint_formula": "Scrivi la tua formula",
-  "show_solution": "Mostra la soluzione",
-  "solution_label": "Soluzione",
-  "finish_title": "Fatto!",
-  "finish_body": "Hai risposto bene a {{correct}} su {{total}}. Bel giro.",
-  "finish_home": "Torna all'home",
-  "no_template": "Questo esercizio non è più disponibile.",
   "hub": {
     "title": "Esercitati",
-    "upcoming_tests": "Prossimi esami",
-    "test_in_days_one": "In 1 giorno",
-    "test_in_days_other": "In {{count}} giorni",
-    "test_today": "Oggi",
-    "go_to_folder": "Apri cartella",
-    "empty_title": "Niente di urgente",
-    "empty_body": "Nessun esame in arrivo. Esplora i tuoi materiali per iniziare un esercizio.",
-    "browse_home": "Vai all'home"
+    "resume_title": "Continuare?",
+    "resume_body": "Hai ancora un esercizio aperto.",
+    "resume_yes": "Continua",
+    "resume_no": "Ricomincia",
+    "choose": "Scegli una materia",
+    "start": "Esercitati",
+    "empty_title": "Ancora niente da esercitare",
+    "empty_body": "Fotografa prima il tuo materiale, poi ci esercitiamo insieme.",
+    "empty_cta": "Vai all'home"
   }
 }

@@ -9,9 +9,9 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, Card, Chip, EmptyState } from '../../components/lb/index.js';
+import { getAccount } from '../../lib/api/account.js';
 import { getSessionSummary } from '../../lib/api/sessions.js';
 import { incrementAndCheckRating } from '../../lib/storage/rating.js';
-import { useAppStore } from '../../lib/store/index.js';
 import { LB, TONE_BG } from '../../lib/theme/colors.js';
 
 type Stat = {
@@ -24,7 +24,11 @@ type Stat = {
 export default function ResultScreen() {
   const { t } = useTranslation('result');
   const params = useLocalSearchParams<{ sessionId?: string }>();
-  const learnerId = useAppStore((s) => s.active_learner_id);
+  // Source the learner from the account (the store value was only ever set
+  // during onboarding, so on a normal cold launch it was null and this
+  // screen showed nothing — the blank-result bug).
+  const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
+  const learnerId = accountQuery.data?.learner?.id ?? null;
 
   const summaryQ = useQuery({
     queryKey: ['session-summary', params.sessionId],
@@ -158,7 +162,23 @@ export default function ResultScreen() {
         )}
 
         <View style={{ gap: 8, marginTop: 18 }}>
-          <Btn size="lg" full onPress={() => router.replace('/(learner)/practice')}>
+          <Btn
+            size="lg"
+            full
+            onPress={() => {
+              // Start a fresh session now — FSRS resurfaces the items just
+              // missed first, so this really is "again with the hard ones"
+              // instead of dumping the learner back at a picker.
+              if (learnerId) {
+                router.replace({
+                  pathname: '/(learner)/session/[sessionId]',
+                  params: { sessionId: `again-${Date.now()}`, learnerId },
+                });
+              } else {
+                router.replace('/(learner)/practice');
+              }
+            }}
+          >
             {t('cta_review_hard')}
           </Btn>
           <Btn size="md" full variant="ghost" onPress={() => router.replace('/(learner)/home')}>

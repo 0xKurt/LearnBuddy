@@ -1,33 +1,18 @@
 {
   "loading": "Aufgaben werden vorbereitet …",
   "error_title": "Ups.",
-  "error_body": "Wir konnten die Aufgabe gerade nicht laden. Versuch es nochmal.",
+  "error_body": "Wir konnten das gerade nicht laden. Versuch es nochmal.",
   "back": "Zurück",
-  "topic_label": "Thema",
-  "progress": "{{current}} von {{total}}",
-  "submit": "Prüfen",
-  "next": "Weiter",
-  "verdict": {
-    "correct": "Genau!",
-    "incorrect": "Noch nicht ganz"
-  },
-  "answer_hint_numeric": "Tippe deine Antwort ein",
-  "answer_hint_formula": "Tippe deine Formel ein",
-  "show_solution": "Lösung zeigen",
-  "solution_label": "Lösung",
-  "finish_title": "Geschafft!",
-  "finish_body": "Du hast {{correct}} von {{total}} richtig gelöst. Schöne Runde.",
-  "finish_home": "Zurück zur Übersicht",
-  "no_template": "Diese Übung gibt es nicht mehr.",
   "hub": {
     "title": "Üben",
-    "upcoming_tests": "Bevorstehende Tests",
-    "test_in_days_one": "In 1 Tag",
-    "test_in_days_other": "In {{count}} Tagen",
-    "test_today": "Heute",
-    "go_to_folder": "Zum Ordner",
-    "empty_title": "Nichts Dringendes",
-    "empty_body": "Du hast keine bevorstehenden Tests. Schau bei deinen Materialien vorbei.",
-    "browse_home": "Zur Startseite"
+    "resume_title": "Weitermachen?",
+    "resume_body": "Du hast noch eine Übung offen.",
+    "resume_yes": "Weiter",
+    "resume_no": "Neu starten",
+    "choose": "Wähle ein Fach",
+    "start": "Üben",
+    "empty_title": "Noch nichts zum Üben",
+    "empty_body": "Fotografier zuerst dein Lernmaterial, dann üben wir gemeinsam.",
+    "empty_cta": "Zur Startseite"
   }
 }

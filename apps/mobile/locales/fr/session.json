@@ -9,9 +9,34 @@
     "end": "Arrêter"
   },
   "question_label": "Question {{index}}",
+  "question_label_short": "Question",
   "submit": "Envoyer",
+  "send": "Envoyer",
   "checking": "Vérification …",
   "next": "Suivant",
+  "skip": "Passer",
+  "keep_going_empty": "C'est tout pour l'instant — bravo !",
+  "stream_error": {
+    "generic": "Ça n'a pas marché. Tu peux retaper ta réponse.",
+    "insufficient_credits": "Le crédit du jour est épuisé. On continue demain.",
+    "session_ended": "Cette séance est déjà terminée.",
+    "evaluation_failed": "Je n'ai pas pu répondre. Réessaie tout de suite.",
+    "transcription_failed": "Je n'ai pas bien entendu. Redis-le ou écris-le.",
+    "empty_answer": "Il n'y avait pas encore de réponse.",
+    "not_found": "Cette question n'existe plus."
+  },
+  "done": {
+    "title": "Terminé !",
+    "body": "Super, tu t'es entraîné. Tu veux continuer ?",
+    "keep_going": "Continuer",
+    "finish": "Terminé"
+  },
+  "pin": {
+    "pin": "Rester sur ce thème",
+    "pinned": "Thème choisi",
+    "on": "On reste sur {{topic}}.",
+    "off": "À nouveau mélangé."
+  },
   "verdict": {
     "correct": "Pile dedans !",
     "partially_correct": "Presque",
@@ -30,7 +55,10 @@
     "idle": "Touche ou maintiens pour parler",
     "active": "Je t'écoute … (touche pour finir)",
     "permission_rationale": "LearnBuddy écoute juste un instant pour que tu puisses répondre à l'oral. L'audio n'est jamais conservé.",
-    "unavailable": "La voix n'est pas encore disponible — saisis ta réponse pour l'instant."
+    "unavailable": "La voix n'est pas encore disponible — saisis ta réponse pour l'instant.",
+    "switched_to_text": "On continue en écrivant.",
+    "use_keyboard": "Plutôt écrire",
+    "use_voice": "Plutôt parler"
   },
   "explain": {
     "pill": "Explique-moi ça",

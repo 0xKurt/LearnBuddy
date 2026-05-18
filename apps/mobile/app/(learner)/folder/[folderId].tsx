@@ -250,7 +250,7 @@ export default function FolderScreen() {
           <Btn
             size="lg"
             full
-            disabled={readyMaterials.length === 0}
+            disabled={readyMaterials.length === 0 || !learnerId}
             onPress={() => {
               if (readyMaterials.length > 0 && learnerId) {
                 router.push({

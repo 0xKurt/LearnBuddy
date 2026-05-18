@@ -1,0 +1,113 @@
+// Tutor — multi-turn conversational evaluation. Doc 06 §P3, evolved.
+//
+// Unlike the old single-shot P3 (one synthetic user message, no thread),
+// the tutor is given the FULL session transcript as real conversation turns
+// plus a system instruction carrying the current item, the learner profile,
+// and the pedagogy rules. The model answers in natural language (this is
+// what the learner reads) and appends one machine-readable control line so
+// the server can record a verdict for FSRS / the result screen without a
+// second model call. The gateway strips that line before anyone sees it.
+
+export const PROMPT_VERSION_TUTOR = 'tutor.1';
+
+// The control line the model must emit last. Chosen so it can never appear
+// in natural German/English/French/Spanish/Italian prose.
+export const TUTOR_SENTINEL = '<<<LB';
+
+export const SYSTEM_TUTOR = `You are LearnBuddy, a warm, patient learning companion talking with a school student. The whole session is ONE ongoing conversation — you can see everything said before and must stay consistent with it.
+
+Voice & tone:
+- Default language is the target language given below. Always reply in it.
+- Never harsh. Never say "Falsch!". Prefer "Fast — dir fehlt nur noch …".
+- Warm and short. 1–3 sentences. Talk like a kind older sibling, not a textbook.
+- Adapt difficulty and warmth to the student's grade level. Younger = slower, gentler.
+
+How to handle an answer:
+- Judge the LATEST student message against the current question, using the whole conversation for context (a one-word reply may answer your previous follow-up).
+- If essentially correct (even phrased differently / partially, as long as the key idea is there): acknowledge it happily, optionally add one short extra fact, and you are done with this question.
+- If partly right: name what IS right first, then point gently toward what's missing WITHOUT stating the missing piece.
+- If wrong, off-topic, empty, or "I don't know": be encouraging and give the NEXT hint in the staircase.
+- If the message is unclear, rambling, or looks like the student is thinking out loud or asking for help (e.g. "wie heißt das nochmal", "keine Ahnung", "hilf mir"): do NOT mark it wrong. Ask one short clarifying question or give a gentle nudge.
+
+Hint staircase (never reveal the answer early):
+- Hints already given for THIS question are stated below. Hint 1 = broad nudge. Hint 2 = specific nudge.
+- Only after 2 hints have been given AND the student is still stuck may you reveal the answer kindly and move on.
+- Never put the exact expected answer in a hint.
+
+Test mode (if enabled below): give only a brief, neutral acknowledgement. No hints, no reveal, no extra teaching. One short sentence.
+
+Pinned topic (if set below): keep the conversation focused on that topic; gently steer back if it drifts.
+
+Output format — IMPORTANT:
+1. First, your natural reply to the student, in the target language. Nothing else on these lines.
+2. Then, on the VERY LAST line, exactly this control line and nothing after it:
+${TUTOR_SENTINEL}{"verdict":"correct"|"partially_correct"|"incorrect","hint":true|false}
+"hint" is true only if your reply contained a new hint (not a reveal, not pure praise). The student never sees this line.`;
+
+export type TutorItemContext = {
+  question: string;
+  expectedAnswer: string;
+  acceptableAnswers: string[];
+  answerKind:
+    | 'short'
+    | 'long'
+    | 'numeric'
+    | 'multiple_choice'
+    | 'formula'
+    | 'fill_blank'
+    | 'diagram_label';
+  units?: string | null;
+  latexExpected?: string | null;
+  latexAcceptable?: string[] | null;
+  mcOptions?: string[] | null;
+  mcCorrectIndex?: number | null;
+  fillBlankTemplate?: string | null;
+  fillBlankAnswers?: string[] | null;
+  diagramLabelIndex?: number | null;
+  sourceExcerpt?: string | null;
+  topic?: string | null;
+};
+
+function kindContext(item: TutorItemContext): string {
+  switch (item.answerKind) {
+    case 'numeric':
+      return `This is a numeric answer. Units (if any): ${item.units ?? 'none'}. Accept ±1% relative error, or ±0.01 absolute when |expected| < 1. Accept unit aliases (km/h ↔ Kilometer pro Stunde).`;
+    case 'formula':
+      return `This is a formula. Canonical LaTeX: ${item.latexExpected ?? item.expectedAnswer}. Acceptable variants: ${(item.latexAcceptable ?? []).join(' | ') || '—'}. The student may answer in plain text, spoken words, or LaTeX. Treat mathematically equivalent forms as correct (e.g. y = mx + b ≡ y = b + mx).`;
+    case 'multiple_choice':
+      return `This is multiple choice. Options: ${(item.mcOptions ?? []).map((o, i) => `[${i}] ${o}`).join('  ') || '—'}. The correct option index is ${item.mcCorrectIndex ?? 0}. The student usually replies with the option index or the option text.`;
+    case 'fill_blank':
+      return `This is a fill-in-the-blank. Template: ${item.fillBlankTemplate ?? '—'}. Correct fillings in order: ${(item.fillBlankAnswers ?? []).join(' | ') || '—'}. The student's blanks are joined in order. Grade each blank, then combine.`;
+    case 'diagram_label':
+      return `The student must name what marker ${item.diagramLabelIndex ?? 0} on a diagram points to. Expected: ${item.expectedAnswer}.`;
+    default:
+      return '';
+  }
+}
+
+export function buildTutorSystemInstruction(ctx: {
+  item: TutorItemContext;
+  learnerName: string | null;
+  locale: string;
+  gradeLevel: number;
+  testMode: boolean;
+  pinnedTopic: string | null;
+  hintsGivenForItem: number;
+}): string {
+  const k = kindContext(ctx.item);
+  return `${SYSTEM_TUTOR}
+
+— Current question context —
+Target language: ${ctx.locale}
+Student grade level: ${ctx.gradeLevel}${ctx.learnerName ? `\nStudent's name: ${ctx.learnerName}` : ''}
+Test mode: ${ctx.testMode ? 'ON — brief neutral acknowledgement only' : 'off'}
+Pinned topic: ${ctx.pinnedTopic ?? 'none'}
+Topic: ${ctx.item.topic ?? '—'}
+Question: ${ctx.item.question}
+Expected answer: ${ctx.item.expectedAnswer}
+Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
+Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
+    ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
+  }
+Hints already given for THIS question: ${ctx.hintsGivenForItem}`;
+}

@@ -38,8 +38,15 @@ import { PROMPT_VERSION, SYSTEM_P1, buildP1UserPrompt } from '../../prompts/p1.j
 import { PROMPT_VERSION_P2, SYSTEM_P2, buildP2UserPrompt } from '../../prompts/p2.js';
 import { PROMPT_VERSION_P3, SYSTEM_P3, buildP3UserPrompt } from '../../prompts/p3.js';
 import { PROMPT_VERSION_P4, SYSTEM_P4, buildP4UserPrompt } from '../../prompts/p4.js';
+import {
+  PROMPT_VERSION_TUTOR,
+  TUTOR_SENTINEL,
+  buildTutorSystemInstruction,
+} from '../../prompts/tutor.js';
 import { parseRegeneratePayload, parseVisionPayload } from './postProcess.js';
 import type {
+  ConverseTurnInput,
+  ConverseTurnResult,
   EvaluateInput,
   EvaluateResult,
   ExplainInput,
@@ -47,6 +54,8 @@ import type {
   LLMGateway,
   RegenerateInput,
   RegenerateResult,
+  TranscribeInput,
+  TranscribeResult,
   VisionInput,
   VisionResult,
 } from './gateway.js';
@@ -371,6 +380,156 @@ export class VertexLlmGateway implements LLMGateway {
         cost_usd_micros: totals.costMicros,
         model: this.modelId,
         prompt_version: PROMPT_VERSION_P4,
+      },
+    };
+  }
+
+  async converseTurn(
+    input: ConverseTurnInput,
+    onToken?: (delta: string) => void,
+  ): Promise<ConverseTurnResult> {
+    const systemInstruction = buildTutorSystemInstruction({
+      item: input.item,
+      learnerName: input.learnerName,
+      locale: input.locale,
+      gradeLevel: input.gradeLevel,
+      testMode: input.testMode,
+      pinnedTopic: input.pinnedTopic,
+      hintsGivenForItem: input.hintsGivenForItem,
+    });
+
+    // Replay the whole session thread as real alternating turns so the
+    // tutor always answers with full conversational context.
+    const contents = [
+      ...input.history.map((m) => ({
+        role: m.role === 'learner' ? ('user' as const) : ('model' as const),
+        parts: [{ text: m.content }],
+      })),
+      { role: 'user' as const, parts: [{ text: input.learnerMessage }] },
+    ];
+
+    let stream: AsyncGenerator<GenerateContentResponse>;
+    try {
+      stream = await this.client.models.generateContentStream({
+        model: this.modelId,
+        contents,
+        config: {
+          systemInstruction,
+          safetySettings: SAFETY,
+          temperature: 0.3,
+          topP: 0.9,
+          maxOutputTokens: 512,
+        },
+      });
+    } catch (err) {
+      throw new ApiError(
+        'evaluation_failed',
+        `Vertex converse failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    // Stream learner-visible text, holding back a tail that might be the
+    // start of the control line so the sentinel never leaks to the screen.
+    const HOLD = TUTOR_SENTINEL.length + 8;
+    let full = '';
+    let emitted = 0;
+    let totals = emptyUsage();
+    try {
+      for await (const chunk of stream) {
+        totals = addUsage(totals, chunk.usageMetadata);
+        const piece = chunk.text;
+        if (typeof piece === 'string') full += piece;
+        if (!onToken) continue;
+        const sIdx = full.indexOf(TUTOR_SENTINEL);
+        const safeEnd = sIdx === -1 ? Math.max(0, full.length - HOLD) : sIdx;
+        if (safeEnd > emitted) {
+          onToken(full.slice(emitted, safeEnd));
+          emitted = safeEnd;
+        }
+      }
+    } catch (err) {
+      throw new ApiError(
+        'evaluation_failed',
+        `Vertex converse stream failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    const sentinelIdx = full.indexOf(TUTOR_SENTINEL);
+    const visible = (sentinelIdx === -1 ? full : full.slice(0, sentinelIdx)).replace(/\s+$/u, '');
+    if (onToken && visible.length > emitted) onToken(visible.slice(emitted));
+
+    let verdict: ConverseTurnResult['verdict'] = 'partially_correct';
+    let gaveHint = false;
+    if (sentinelIdx !== -1) {
+      const tail = full.slice(sentinelIdx + TUTOR_SENTINEL.length).trim();
+      try {
+        const ctrl = JSON.parse(tail) as { verdict?: string; hint?: boolean };
+        if (
+          ctrl.verdict === 'correct' ||
+          ctrl.verdict === 'partially_correct' ||
+          ctrl.verdict === 'incorrect'
+        ) {
+          verdict = ctrl.verdict;
+        }
+        gaveHint = ctrl.hint === true;
+      } catch {
+        console.warn('[tutor] control line unparseable; defaulting verdict=partially_correct');
+      }
+    } else {
+      console.warn('[tutor] no control line in reply; defaulting verdict=partially_correct');
+    }
+
+    return {
+      verdict,
+      reply: visible || 'Erzähl mir, was du dir dabei denkst.',
+      gaveHint,
+      usage: {
+        input_tokens: totals.inputTokens,
+        output_tokens: totals.outputTokens,
+        cost_usd_micros: totals.costMicros,
+        model: this.modelId,
+        prompt_version: PROMPT_VERSION_TUTOR,
+      },
+    };
+  }
+
+  async transcribeAudio(input: TranscribeInput): Promise<TranscribeResult> {
+    let response: GenerateContentResponse;
+    try {
+      response = await this.client.models.generateContent({
+        model: this.modelId,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Transcribe this ${input.locale} audio of a student answering a question. Output ONLY the verbatim transcription, no quotes, no commentary. If nothing intelligible was said, output an empty string.`,
+              },
+              { inlineData: { mimeType: input.mimeType, data: input.audioBase64 } },
+            ],
+          },
+        ],
+        config: {
+          safetySettings: SAFETY,
+          temperature: 0,
+          maxOutputTokens: 256,
+        },
+      });
+    } catch (err) {
+      throw new ApiError(
+        'evaluation_failed',
+        `Vertex transcribe failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+    const totals = addUsage(emptyUsage(), response.usageMetadata);
+    return {
+      text: responseText(response),
+      usage: {
+        input_tokens: totals.inputTokens,
+        output_tokens: totals.outputTokens,
+        cost_usd_micros: totals.costMicros,
+        model: this.modelId,
+        prompt_version: PROMPT_VERSION_TUTOR,
       },
     };
   }

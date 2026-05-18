@@ -1,23 +1,22 @@
-// Session screen — Doc 05 §session. Real flow.
+// Conversational learning session — Doc 05 §session, Doc 01 §Studying
+// ("Das Üben ist ein Gespräch"), Doc 06 §P3.
 //
-// Flow:
-//   1. mount → useQuery startSession (POST /sessions) with material_id or subject_id
-//   2. render current item by answer_kind (short / long / numeric / formula
-//      / multiple_choice / fill_blank)
-//   3. on submit: local eval → if correct, POST /attempts with
-//      client_local_verdict='correct' (zero credits); else POST /attempts
-//      with the kid's answer for LLM evaluation
-//   4. feedback chip with verdict + next_hint (if any); advance on correct
-//      or after the user dismisses
-//   5. session done → router.replace('/(learner)/result')
+// This is the core experience: a real chat with the tutor. The screen shows
+// a transcript of question / learner / tutor bubbles; the tutor reply streams
+// in token-by-token. The learner answers by typing OR by voice (toggleable
+// mid-conversation, always with a text fallback so it can never dead-end).
+// Wrong answers stay on the same question and the tutor walks a hint
+// staircase in-thread. The whole thread is persisted server-side, so the
+// agent always answers with full context and the session resumes exactly.
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -30,7 +29,6 @@ import {
   Btn,
   Card,
   Chip,
-  CoachMark,
   ExplainModal,
   FillBlank,
   FunctionPlot,
@@ -40,19 +38,53 @@ import {
   SessionTopBar,
   SvgStimulus,
   VoiceButton,
+  toast,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
-import { finishSession, startSession, submitAttempt } from '../../../lib/api/sessions.js';
+import { getSessionSnapshot, patchSession, streamTurn } from '../../../lib/api/conversation.js';
+import { finishSession, startSession } from '../../../lib/api/sessions.js';
 import { localEvaluate, type EvaluatableItem } from '../../../lib/eval/local.js';
-import { useFirstTime } from '../../../lib/onboarding/coach.js';
-import { useAppStore } from '../../../lib/store/index.js';
+import { clearPendingSession, savePendingSession } from '../../../lib/session/pending.js';
 import { LB } from '../../../lib/theme/colors.js';
 import type { Item, Locale, SvgStimulus as SvgStimulusData } from '@learnbuddy/shared-types';
+
+type BubbleRole = 'tutor' | 'learner' | 'question';
+type Msg = {
+  id: string;
+  role: BubbleRole;
+  text: string;
+  streaming?: boolean;
+  errored?: boolean;
+  verdict?: DisplayVerdict;
+};
+
+function uuid(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
+      ((+c ^ (Math.floor(Math.random() * 256) & (15 >> (+c / 4)))) as number).toString(16),
+    )
+  );
+}
+
+function voiceLocale(locale: Locale): string {
+  return { de: 'de-DE', en: 'en-US', fr: 'fr-FR', es: 'es-ES', it: 'it-IT' }[locale];
+}
+
+// The shared Verdict includes 'skipped'; the tutor never returns it, but a
+// resumed thread might. Collapse it to the 3 values the UI renders.
+type DisplayVerdict = 'correct' | 'partially_correct' | 'incorrect';
+function normVerdict(
+  v: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null | undefined,
+): DisplayVerdict | undefined {
+  if (v === 'correct' || v === 'partially_correct' || v === 'incorrect') return v;
+  if (v === 'skipped') return 'incorrect';
+  return undefined;
+}
 
 export default function SessionScreen() {
   const { t } = useTranslation('session');
   const insets = useSafeAreaInsets();
-  const { t: tCoach } = useTranslation('coach');
   const params = useLocalSearchParams<{
     sessionId: string;
     subjectId?: string;
@@ -60,82 +92,301 @@ export default function SessionScreen() {
     materialId?: string;
     learnerId?: string;
     testMode?: string;
+    resumeSessionId?: string;
   }>();
-  const learnerId = params.learnerId ?? '';
   const testMode = params.testMode === 'true';
 
-  const sessionQuery = useQuery({
-    queryKey: ['session-start', params.sessionId, params.subjectId, params.materialId],
-    queryFn: () =>
-      startSession(learnerId, {
+  const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
+  const learnerId = params.learnerId || (accountQuery.data?.learner?.id ?? '');
+  const uiLocale: Locale = accountQuery.data?.learner?.ui_locale ?? 'de';
+  const profileVoice = accountQuery.data?.learner?.preferred_answer_mode === 'voice';
+
+  // ── Session bootstrap (start fresh OR resume an existing one) ─────────────
+  const boot = useQuery({
+    queryKey: ['session-boot', params.sessionId, params.resumeSessionId],
+    enabled: !!learnerId,
+    queryFn: async (): Promise<{
+      serverSessionId: string;
+      items: Item[];
+      startIdx: number;
+      priorMsgs: Msg[];
+      pinnedTopic: string | null;
+    }> => {
+      if (params.resumeSessionId) {
+        const snap = await getSessionSnapshot(learnerId, params.resumeSessionId);
+        const items = snap.items as Item[];
+        // Resume at the first item with no 'correct' tutor turn yet.
+        const correctItem = new Set(
+          snap.turns
+            .filter((tn) => tn.role === 'tutor' && tn.verdict === 'correct')
+            .map((tn) => tn.item_id),
+        );
+        let startIdx = items.findIndex((it) => !correctItem.has(it.id));
+        if (startIdx < 0) startIdx = items.length;
+        // Rebuild a readable, chronological transcript: insert each item's
+        // question bubble the first time that item appears in the thread, so
+        // the learner sees Question → answer → feedback → … in order rather
+        // than a contextless wall of answers.
+        const qById = new Map(items.map((it) => [it.id, it.question]));
+        const priorMsgs: Msg[] = [];
+        let lastItemId: string | null = null;
+        for (const tn of snap.turns) {
+          if (tn.role !== 'learner' && tn.role !== 'tutor') continue;
+          if (tn.item_id && tn.item_id !== lastItemId) {
+            const q = qById.get(tn.item_id);
+            if (q) priorMsgs.push({ id: `q-${tn.item_id}`, role: 'question', text: q });
+            lastItemId = tn.item_id;
+          }
+          priorMsgs.push({
+            id: tn.id,
+            role: tn.role === 'learner' ? ('learner' as const) : ('tutor' as const),
+            text: tn.content,
+            verdict: normVerdict(tn.verdict),
+          });
+        }
+        return {
+          serverSessionId: snap.session_id,
+          items,
+          startIdx,
+          priorMsgs,
+          pinnedTopic: snap.pinned_topic,
+        };
+      }
+      const started = await startSession(learnerId, {
         subject_id: params.subjectId ?? null,
         folder_id: params.folderId ?? null,
         material_id: params.materialId ?? null,
         test_mode: testMode,
         max_items: 20,
-      }),
-    enabled: !!learnerId,
+      });
+      return {
+        serverSessionId: started.session_id,
+        items: started.items as Item[],
+        startIdx: 0,
+        priorMsgs: [],
+        pinnedTopic: null,
+      };
+    },
   });
-
-  // Learner profile drives two pieces of UX on this screen: preferred answer
-  // mode (voice vs text/keyboard) and ui_locale (passed to the ASR engine).
-  // The home screen already hydrates this query so it's typically a cache hit.
-  const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
-  const preferredMode = accountQuery.data?.learner?.preferred_answer_mode ?? 'text';
-  const uiLocale: Locale = accountQuery.data?.learner?.ui_locale ?? 'de';
 
   const [idx, setIdx] = useState(0);
+  const [items, setItems] = useState<Item[]>([]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [answer, setAnswer] = useState('');
   const [fillValues, setFillValues] = useState<string[]>([]);
-  const [mcSelected, setMcSelected] = useState<number | null>(null);
-  const [hints, setHints] = useState<string[]>([]);
-  const [feedback, setFeedback] = useState<{ verdict: string; text: string | null } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [canAdvance, setCanAdvance] = useState(false);
+  const [tries, setTries] = useState(0);
+  const [voiceOn, setVoiceOn] = useState(false);
+  const [pinned, setPinned] = useState<string | null>(null);
   const [explainOpen, setExplainOpen] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const serverSessionId = boot.data?.serverSessionId ?? '';
+  const item: Item | undefined = items[idx];
   const startedAtRef = useRef<number>(Date.now());
+  const scrollRef = useRef<ScrollView>(null);
+  const bootedRef = useRef(false);
 
-  const setPendingSession = useAppStore((s) => s.set_pending_session);
-  const pendingSession = useAppStore((s) => s.pending_session);
-  const idxRestoredRef = useRef(false);
-
-  // Restore progress when re-entering a session that was navigated away from.
+  // Apply the bootstrap result once.
   useEffect(() => {
-    if (
-      !idxRestoredRef.current &&
-      sessionQuery.data &&
-      pendingSession?.session_id === sessionQuery.data.session_id &&
-      pendingSession.idx > 0
-    ) {
-      setIdx(pendingSession.idx);
-      idxRestoredRef.current = true;
+    if (!boot.data || bootedRef.current) return;
+    bootedRef.current = true;
+    setVoiceOn(profileVoice);
+    setPinned(boot.data.pinnedTopic);
+    setItems(boot.data.items);
+    setIdx(boot.data.startIdx);
+    const seed = [...boot.data.priorMsgs];
+    if (boot.data.startIdx < boot.data.items.length) {
+      const it = boot.data.items[boot.data.startIdx]!;
+      // On resume the question may already be in the rebuilt thread (the
+      // in-progress item had earlier attempts) — don't show it twice.
+      if (!seed.some((m) => m.id === `q-${it.id}`)) {
+        seed.push({ id: `q-${it.id}`, role: 'question', text: it.question });
+      }
+    } else {
+      setDone(true);
     }
-  }, [sessionQuery.data?.session_id]);
+    setMessages(seed);
+    if (boot.data.serverSessionId && learnerId) {
+      void savePendingSession({
+        session_id: boot.data.serverSessionId,
+        learner_id: learnerId,
+        test_mode: testMode,
+      });
+    }
+  }, [boot.data, learnerId, profileVoice, testMode]);
 
-  // Diagram coach mark (USER-FLOWS-DEEP §10.4): trigger the moment the
-  // learner first lands on a diagram_label item. The current item-kind is
-  // derived from the session payload below; hook is declared up here so it
-  // runs unconditionally regardless of the loading branches further down.
-  const currentItemKind = sessionQuery.data?.items[idx]?.answer_kind ?? null;
-  const diagramCoach = useFirstTime('diagram', {
-    enabled: currentItemKind === 'diagram_label',
-  });
-  // Voice coach mark (USER-FLOWS-DEEP §10.3): fires the first time the
-  // VoiceButton becomes available on this surface, which mirrors `voiceMode`
-  // computed below. Declared here so the hook runs unconditionally.
-  const voiceCoachEnabled =
-    (accountQuery.data?.learner?.preferred_answer_mode ?? 'text') === 'voice' &&
-    (currentItemKind === 'short' || currentItemKind === 'long');
-  const voiceCoach = useFirstTime('voice', { enabled: voiceCoachEnabled });
+  useEffect(() => {
+    const id = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+    return () => clearTimeout(id);
+  }, [messages]);
 
-  const submitMut = useMutation({
-    mutationFn: (input: Parameters<typeof submitAttempt>[1]) => submitAttempt(learnerId, input),
-    onSuccess: (res) => {
-      setFeedback({ verdict: res.verdict, text: res.feedback });
-      if (res.next_hint) setHints((h) => [...h, res.next_hint as string]);
+  const patchMsg = useCallback((id: string, patch: Partial<Msg>) => {
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  }, []);
+
+  const advance = useCallback(() => {
+    setCanAdvance(false);
+    setTries(0);
+    const next = idx + 1;
+    setAnswer('');
+    setFillValues([]);
+    startedAtRef.current = Date.now();
+    if (next >= items.length) {
+      setDone(true);
+      setIdx(next);
+      return;
+    }
+    setIdx(next);
+    const it = items[next]!;
+    setMessages((prev) => [
+      ...prev,
+      { id: `q-${it.id}-${next}`, role: 'question', text: it.question },
+    ]);
+  }, [idx, items]);
+
+  const send = useCallback(
+    async (rawText: string, mode: 'voice' | 'text' | 'multiple_choice') => {
+      const text = rawText.trim();
+      if (!text || sending || !item) return;
+      setSending(true);
+      setCanAdvance(false);
+      setTries((n) => n + 1);
+
+      const localVerdict = localEvaluate(item as EvaluatableItem, text);
+      const learnerMsgId = uuid();
+      const tutorMsgId = uuid();
+      setMessages((prev) => [
+        ...prev,
+        { id: learnerMsgId, role: 'learner', text },
+        { id: tutorMsgId, role: 'tutor', text: '', streaming: true },
+      ]);
+
+      let verdict: Msg['verdict'];
+      try {
+        await streamTurn(
+          learnerId,
+          serverSessionId,
+          {
+            client_turn_id: uuid(),
+            item_id: item.id,
+            mode,
+            text,
+            duration_ms: Date.now() - startedAtRef.current,
+            test_mode: testMode,
+            client_local_verdict: localVerdict === 'correct' ? 'correct' : null,
+          },
+          (e) => {
+            if (e.type === 'transcript' && e.text) patchMsg(learnerMsgId, { text: e.text });
+            else if (e.type === 'token')
+              setMessages((prev) =>
+                prev.map((m) => (m.id === tutorMsgId ? { ...m, text: m.text + e.text } : m)),
+              );
+            else if (e.type === 'feedback') patchMsg(tutorMsgId, { text: e.text });
+            else if (e.type === 'verdict') verdict = normVerdict(e.verdict);
+            else if (e.type === 'done') {
+              verdict = normVerdict(e.verdict);
+              patchMsg(tutorMsgId, { streaming: false, verdict: normVerdict(e.verdict) });
+            } else if (e.type === 'error') {
+              patchMsg(tutorMsgId, {
+                streaming: false,
+                errored: true,
+                text: t(`stream_error.${e.code}`, { defaultValue: t('stream_error.generic') }),
+              });
+            }
+          },
+        );
+        patchMsg(tutorMsgId, { streaming: false, verdict });
+        if (verdict === 'correct') setCanAdvance(true);
+      } catch {
+        patchMsg(tutorMsgId, { streaming: false, errored: true, text: t('stream_error.generic') });
+      } finally {
+        setSending(false);
+      }
     },
-    onError: (err: Error) => Alert.alert(t('error_title'), err.message),
-  });
+    [item, learnerId, serverSessionId, sending, testMode, patchMsg, t],
+  );
 
-  if (sessionQuery.isLoading) {
+  const submitTyped = useCallback(() => {
+    if (!item) return;
+    // '||' matches how lib/eval/local.ts splits fill-blank answers, so the
+    // zero-cost local fast-path can recognise a fully-correct set.
+    if (item.answer_kind === 'fill_blank') void send(fillValues.join('||'), 'text');
+    else void send(answer, 'text');
+  }, [item, answer, fillValues, send]);
+
+  const onVoice = useCallback(
+    (transcript: string) => {
+      void send(transcript, 'voice');
+    },
+    [send],
+  );
+
+  const onVoiceUnavailable = useCallback(() => {
+    // Voice can't be used here (module missing, permission denied, or it
+    // threw). Don't strand the learner waiting for a 2nd failure — fall
+    // back to the keyboard right away. The toggle still lets them retry.
+    setVoiceOn((on) => {
+      if (on) toast.info(t('voice.switched_to_text'));
+      return false;
+    });
+  }, [t]);
+
+  const finish = useCallback(async () => {
+    try {
+      await finishSession(learnerId, serverSessionId);
+    } catch {
+      /* result screen still loads from attempts */
+    }
+    await clearPendingSession();
+    router.replace({
+      pathname: '/(learner)/result',
+      params: { sessionId: serverSessionId },
+    });
+  }, [learnerId, serverSessionId]);
+
+  const keepGoing = useCallback(async () => {
+    try {
+      const snap = await patchSession(learnerId, serverSessionId, { keep_going: true });
+      const nextItems = snap.items as Item[];
+      if (nextItems.length > items.length) {
+        const next = items.length;
+        setItems(nextItems);
+        setDone(false);
+        setIdx(next);
+        const it = nextItems[next]!;
+        setMessages((prev) => [
+          ...prev,
+          { id: `q-${it.id}-${next}`, role: 'question', text: it.question },
+        ]);
+      } else {
+        toast.info(t('keep_going_empty'));
+      }
+    } catch {
+      toast.error(t('error_title'));
+    }
+  }, [learnerId, serverSessionId, items.length, t]);
+
+  const togglePin = useCallback(async () => {
+    if (!item) return;
+    const nextPinned = pinned ? null : (item.topic ?? null);
+    setPinned(nextPinned);
+    try {
+      await patchSession(learnerId, serverSessionId, { pinned_topic: nextPinned });
+      toast.info(nextPinned ? t('pin.on', { topic: nextPinned }) : t('pin.off'));
+    } catch {
+      setPinned(pinned);
+    }
+  }, [item, pinned, learnerId, serverSessionId, t]);
+
+  const exitKeep = useCallback(() => {
+    // Leave but PRESERVE the session — home offers a resume banner.
+    router.replace('/(learner)/home');
+  }, []);
+
+  // ── Render states ────────────────────────────────────────────────────────
+  if (boot.isLoading || accountQuery.isLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -144,152 +395,104 @@ export default function SessionScreen() {
       </SafeAreaView>
     );
   }
-  if (sessionQuery.error || !sessionQuery.data) {
+  if (boot.isError || !boot.data) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View
-          style={{ flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center', gap: 12 }}
+          style={{ flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center', gap: 14 }}
         >
-          <Text style={{ fontSize: 18, color: LB.ink2, textAlign: 'center' }}>{t('no_items')}</Text>
-          <Btn onPress={() => router.replace('/(learner)/home')}>{t('back')}</Btn>
+          <Text style={{ fontSize: 17, color: LB.ink2, textAlign: 'center', lineHeight: 24 }}>
+            {t('no_items')}
+          </Text>
+          <Btn size="lg" onPress={() => router.replace('/(learner)/home')}>
+            {t('back')}
+          </Btn>
         </View>
       </SafeAreaView>
     );
   }
 
-  const items = sessionQuery.data.items;
-  const total = items.length;
-  if (idx >= total) {
-    // session complete — mark ended_at then navigate to result with the sessionId
-    // so the result screen can fetch the real summary. Fire-and-forget: the result
-    // screen loads from attempts even if finish fails.
-    setPendingSession(null);
-    setTimeout(() => {
-      void finishSession(learnerId, sessionQuery.data.session_id).catch(() => null);
-      router.replace({
-        pathname: '/(learner)/result',
-        params: { sessionId: sessionQuery.data.session_id },
-      });
-    }, 0);
-    return null;
+  if (done || !item) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+        <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16 }}>
+          <Card tone="mint" padding={24}>
+            <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
+              {t('done.title')}
+            </Text>
+            <Text style={{ fontSize: 15, color: LB.ink2, marginTop: 8, lineHeight: 22 }}>
+              {t('done.body')}
+            </Text>
+          </Card>
+          {!testMode && (
+            <Btn size="lg" full variant="outline" onPress={() => void keepGoing()}>
+              {t('done.keep_going')}
+            </Btn>
+          )}
+          <Btn size="lg" full onPress={() => void finish()}>
+            {t('done.finish')}
+          </Btn>
+        </View>
+      </SafeAreaView>
+    );
   }
-  const item = items[idx]!;
 
-  const resetForNext = () => {
-    const nextIdx = idx + 1;
-    setIdx(nextIdx);
-    setAnswer('');
-    setFillValues([]);
-    setMcSelected(null);
-    setHints([]);
-    setFeedback(null);
-    startedAtRef.current = Date.now();
-    if (sessionQuery.data && nextIdx < total) {
-      setPendingSession({
-        session_id: sessionQuery.data.session_id,
-        client_id: params.sessionId,
-        learner_id: learnerId,
-        idx: nextIdx,
-        subject_id: params.subjectId ?? null,
-        folder_id: params.folderId ?? null,
-        material_id: params.materialId ?? null,
-        test_mode: testMode,
-      });
-    } else {
-      setPendingSession(null);
-    }
-  };
-
-  const buildKidAnswer = (): { text: string; mode: 'voice' | 'text' | 'multiple_choice' } => {
-    if (item.answer_kind === 'multiple_choice') {
-      return {
-        text: String(mcSelected ?? ''),
-        mode: 'multiple_choice',
-      };
-    }
-    if (item.answer_kind === 'fill_blank') {
-      return { text: fillValues.join(' | '), mode: 'text' };
-    }
-    return { text: answer, mode: 'text' };
-  };
-
-  const fireAttempt = (text: string, mode: 'voice' | 'text' | 'multiple_choice') => {
-    if (!text.trim()) return;
-    const localVerdict = localEvaluate(item as EvaluatableItem, text);
-    const durationMs = Date.now() - startedAtRef.current;
-    submitMut.mutate({
-      session_id: sessionQuery.data.session_id,
-      item_id: item.id,
-      mode,
-      kid_answer: text,
-      prior_hints_given: hints,
-      duration_ms: durationMs,
-      test_mode: testMode,
-      client_local_verdict: localVerdict === 'correct' ? 'correct' : null,
-    });
-  };
-
-  const onSubmit = () => {
-    const { text, mode } = buildKidAnswer();
-    fireAttempt(text, mode);
-  };
-
-  const onVoiceTranscript = (transcript: string) => {
-    setAnswer(transcript);
-    fireAttempt(transcript, 'voice');
-  };
-
-  // Voice replaces the keyboard for free-text answers when the learner opted
-  // into voice mode in their profile. Per Doc 05 §session-voice, voice only
-  // applies to short / long answer kinds (numeric & formula still need the
-  // math keyboard; MC and fill_blank have their own affordances).
-  const voiceMode =
-    preferredMode === 'voice' && (item.answer_kind === 'short' || item.answer_kind === 'long');
-
+  const total = items.length;
   const stimulusSvg =
     item.stimulus_kind === 'svg' && item.stimulus_data
       ? (item.stimulus_data as SvgStimulusData)
       : null;
+  const voiceEligible = voiceOn && (item.answer_kind === 'short' || item.answer_kind === 'long');
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
       <SessionTopBar
-        progress={(idx + 1) / total}
-        index={`${idx + 1} / ${total}`}
+        progress={(idx + (canAdvance ? 1 : 0)) / total}
+        index={`${Math.min(idx + 1, total)} / ${total}`}
         badge={testMode ? t('badge_test') : t('badge_practice')}
-        onExit={() =>
-          Alert.alert(t('exit.title'), undefined, [
-            { text: t('exit.keep_going'), style: 'cancel' },
-            {
-              text: t('exit.end'),
-              style: 'destructive',
-              onPress: () => router.replace('/(learner)/home'),
-            },
-          ])
-        }
+        onExit={exitKeep}
       />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 140 }}>
-        <Card tone="lavender" padding={20}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 11,
-                color: LB.ink2,
-                fontWeight: '600',
-                textTransform: 'uppercase',
-                letterSpacing: 0.6,
-                flex: 1,
-              }}
-            >
-              {t('question_label', { index: idx + 1 })}
-            </Text>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={8}
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: 20,
+            gap: 10,
+          }}
+        >
+          {/* Pin + explain controls */}
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+            {!testMode && item.topic ? (
+              <Pressable onPress={() => void togglePin()} accessibilityRole="button">
+                <View
+                  style={{
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    borderRadius: 999,
+                    backgroundColor: pinned ? LB.primaryLt : '#fff',
+                    borderColor: pinned ? LB.primaryDk : LB.hairline,
+                    borderWidth: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: pinned ? LB.primaryDk : LB.ink,
+                      fontWeight: '600',
+                    }}
+                  >
+                    {pinned ? t('pin.pinned') : t('pin.pin')}
+                  </Text>
+                </View>
+              </Pressable>
+            ) : null}
             <Pressable
               onPress={() => setExplainOpen(true)}
               accessibilityRole="button"
@@ -311,170 +514,65 @@ export default function SessionScreen() {
               </View>
             </Pressable>
           </View>
-          <Text style={{ fontSize: 16, color: LB.ink, marginTop: 6, lineHeight: 22 }}>
-            {item.question}
-          </Text>
-          {item.latex_expected && (
-            <View style={{ marginTop: 12 }}>
-              <LatexText expression={item.latex_expected} displayMode />
+
+          {messages.map((m) => (
+            <Bubble key={m.id} msg={m} item={item} stimulusSvg={stimulusSvg} t={t} />
+          ))}
+
+          {sending && (
+            <View style={{ alignSelf: 'flex-start', paddingLeft: 6, paddingVertical: 4 }}>
+              <ActivityIndicator color={LB.ink3} size="small" />
             </View>
           )}
-          {item.stimulus_kind === 'function_plot' && item.stimulus_data && (
-            <View style={{ marginTop: 14, alignItems: 'center' }}>
-              <FunctionPlot
-                {...(item.stimulus_data as Parameters<typeof FunctionPlot>[0])}
-                width={300}
-                height={200}
-              />
-            </View>
-          )}
-          {stimulusSvg && (
-            <View style={{ marginTop: 14, alignItems: 'center' }}>
-              <SvgStimulus
-                svg={stimulusSvg.content}
-                width={300}
-                height={220}
-                fallbackLabel={t('stimulus.fallback')}
-              />
-            </View>
-          )}
-        </Card>
+        </ScrollView>
 
-        <View style={{ marginTop: 18 }}>
-          {voiceMode ? (
-            <VoiceButton
-              locale={mapVoiceLocale(uiLocale)}
-              labelIdle={t('voice.idle')}
-              labelActive={t('voice.active')}
-              permissionRationale={t('voice.permission_rationale')}
-              unavailableLabel={t('voice.unavailable')}
-              onTranscript={onVoiceTranscript}
-              disabled={submitMut.isPending || !!feedback}
-            />
-          ) : (
-            <AnswerArea
-              item={item}
-              answer={answer}
-              setAnswer={setAnswer}
-              fillValues={fillValues}
-              setFillValues={setFillValues}
-              mcSelected={mcSelected}
-              setMcSelected={setMcSelected}
-            />
-          )}
-        </View>
-
-        {hints.length > 0 && (
-          <View style={{ marginTop: 14, gap: 6 }}>
-            {hints.map((h, i) => (
-              <View
-                key={i}
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  backgroundColor: LB.bg,
-                }}
-              >
-                <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>{h}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {feedback && (
-          <View
-            style={{
-              marginTop: 14,
-              padding: 14,
-              borderRadius: 14,
-              backgroundColor:
-                feedback.verdict === 'correct'
-                  ? 'rgba(107,141,106,0.13)'
-                  : feedback.verdict === 'partially_correct'
-                    ? 'rgba(181,138,60,0.13)'
-                    : 'rgba(177,73,60,0.13)',
-            }}
-          >
-            <Chip
-              tone={
-                feedback.verdict === 'correct'
-                  ? 'success'
-                  : feedback.verdict === 'partially_correct'
-                    ? 'warning'
-                    : 'gray'
-              }
-            >
-              {verdictLabel(feedback.verdict, t)}
-            </Chip>
-            {feedback.text && (
-              <Text style={{ marginTop: 8, fontSize: 14, color: LB.ink, lineHeight: 20 }}>
-                {feedback.text}
-              </Text>
-            )}
-          </View>
-        )}
-
-        <View style={{ marginTop: 18, flexDirection: 'row', gap: 8 }}>
-          {feedback ? (
-            <Btn size="lg" full onPress={resetForNext}>
+        {/* Composer */}
+        <View
+          style={{
+            borderTopColor: LB.hairline,
+            borderTopWidth: 1,
+            backgroundColor: LB.bg,
+            paddingHorizontal: 14,
+            paddingTop: 10,
+            paddingBottom: Math.max(insets.bottom, 10),
+            gap: 10,
+          }}
+        >
+          {canAdvance ? (
+            <Btn size="lg" full onPress={advance}>
               {t('next')}
             </Btn>
-          ) : voiceMode ? (
-            // Voice fires the attempt on release — no manual submit pill —
-            // but keep "Checking …" feedback visible during the LLM round-trip.
-            submitMut.isPending ? (
-              <Btn size="lg" full disabled onPress={undefined}>
-                {t('checking')}
-              </Btn>
-            ) : null
           ) : (
-            <Btn size="lg" full onPress={onSubmit} disabled={submitMut.isPending}>
-              {submitMut.isPending ? t('checking') : t('submit')}
-            </Btn>
+            <>
+              <Composer
+                item={item}
+                t={t}
+                sending={sending}
+                answer={answer}
+                setAnswer={setAnswer}
+                fillValues={fillValues}
+                setFillValues={setFillValues}
+                voiceEligible={voiceEligible}
+                voiceLocaleTag={voiceLocale(uiLocale)}
+                onSubmitTyped={submitTyped}
+                onPickMc={(i) => void send(String(i), 'multiple_choice')}
+                onVoice={onVoice}
+                onVoiceUnavailable={onVoiceUnavailable}
+                voiceOn={voiceOn}
+                canUseVoice={item.answer_kind === 'short' || item.answer_kind === 'long'}
+                onToggleVoice={() => setVoiceOn((v) => !v)}
+              />
+              {tries >= 1 && !sending ? (
+                <Pressable onPress={advance} accessibilityRole="button" hitSlop={8}>
+                  <Text style={{ fontSize: 13, color: LB.ink3, textAlign: 'center' }}>
+                    {t('skip')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </>
           )}
         </View>
-      </ScrollView>
-
-      {(item.answer_kind === 'formula' || item.answer_kind === 'numeric') &&
-        !feedback &&
-        !voiceMode && (
-          <View
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: LB.bg,
-              borderTopColor: LB.hairline,
-              borderTopWidth: 1,
-              paddingBottom: insets.bottom,
-            }}
-          >
-            <MathKeyboard
-              onInsert={(token) =>
-                setAnswer((a) => (token === 'BACKSPACE' ? a.slice(0, -1) : a + token))
-              }
-            />
-          </View>
-        )}
-
-      <CoachMark
-        visible={diagramCoach.shown}
-        onDismiss={diagramCoach.dismiss}
-        title={tCoach('diagram.title')}
-        body={tCoach('diagram.body')}
-        ctaLabel={tCoach('dismiss')}
-        glyph="🖼️"
-      />
-
-      <CoachMark
-        visible={voiceCoach.shown}
-        onDismiss={voiceCoach.dismiss}
-        title={tCoach('voice.title')}
-        body={tCoach('voice.body')}
-        ctaLabel={tCoach('dismiss')}
-        glyph="🎙️"
-      />
+      </KeyboardAvoidingView>
 
       <ExplainModal
         visible={explainOpen}
@@ -488,70 +586,213 @@ export default function SessionScreen() {
   );
 }
 
-/** Map our 2-letter app locale to a BCP-47 tag suitable for the native ASR
- *  engine. The voice module rejects bare ISO-639 codes on iOS. */
-function mapVoiceLocale(locale: Locale): string {
-  switch (locale) {
-    case 'de':
-      return 'de-DE';
-    case 'en':
-      return 'en-US';
-    case 'fr':
-      return 'fr-FR';
-    case 'es':
-      return 'es-ES';
-    case 'it':
-      return 'it-IT';
+function Bubble({
+  msg,
+  item,
+  stimulusSvg,
+  t,
+}: {
+  msg: Msg;
+  item: Item;
+  stimulusSvg: SvgStimulusData | null;
+  t: (k: string, o?: Record<string, unknown>) => string;
+}) {
+  if (msg.role === 'question') {
+    return (
+      <Card tone="lavender" padding={18}>
+        <Text
+          style={{
+            fontSize: 11,
+            color: LB.ink2,
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: 0.6,
+          }}
+        >
+          {t('question_label_short')}
+        </Text>
+        <Text style={{ fontSize: 16, color: LB.ink, marginTop: 6, lineHeight: 23 }}>
+          {msg.text}
+        </Text>
+        {item.latex_expected ? (
+          <View style={{ marginTop: 12 }}>
+            <LatexText expression={item.latex_expected} displayMode />
+          </View>
+        ) : null}
+        {item.stimulus_kind === 'function_plot' && item.stimulus_data ? (
+          <View style={{ marginTop: 14, alignItems: 'center' }}>
+            <FunctionPlot
+              {...(item.stimulus_data as Parameters<typeof FunctionPlot>[0])}
+              width={300}
+              height={200}
+            />
+          </View>
+        ) : null}
+        {stimulusSvg ? (
+          <View style={{ marginTop: 14, alignItems: 'center' }}>
+            <SvgStimulus
+              svg={stimulusSvg.content}
+              width={300}
+              height={220}
+              fallbackLabel={t('stimulus.fallback')}
+            />
+          </View>
+        ) : null}
+      </Card>
+    );
   }
+
+  const mine = msg.role === 'learner';
+  return (
+    <View style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '88%' }}>
+      <View
+        style={{
+          paddingVertical: 11,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          borderBottomRightRadius: mine ? 4 : 18,
+          borderBottomLeftRadius: mine ? 18 : 4,
+          backgroundColor: mine ? LB.primary : msg.errored ? 'rgba(177,73,60,0.10)' : '#fff',
+          borderColor: mine ? LB.primary : LB.hairline,
+          borderWidth: 1,
+        }}
+      >
+        {!mine && msg.verdict ? (
+          <View style={{ marginBottom: 6 }}>
+            <Chip
+              tone={
+                msg.verdict === 'correct'
+                  ? 'success'
+                  : msg.verdict === 'partially_correct'
+                    ? 'warning'
+                    : 'gray'
+              }
+            >
+              {t(`verdict.${msg.verdict}`)}
+            </Chip>
+          </View>
+        ) : null}
+        <Text
+          style={{
+            fontSize: 15,
+            lineHeight: 21,
+            color: mine ? '#fff' : msg.errored ? LB.danger : LB.ink,
+          }}
+        >
+          {msg.text || (msg.streaming ? '…' : '')}
+        </Text>
+      </View>
+    </View>
+  );
 }
 
-function AnswerArea(props: {
+function Composer({
+  item,
+  t,
+  sending,
+  answer,
+  setAnswer,
+  fillValues,
+  setFillValues,
+  voiceEligible,
+  voiceLocaleTag,
+  onSubmitTyped,
+  onPickMc,
+  onVoice,
+  onVoiceUnavailable,
+  voiceOn,
+  canUseVoice,
+  onToggleVoice,
+}: {
   item: Item;
+  t: (k: string, o?: Record<string, unknown>) => string;
+  sending: boolean;
   answer: string;
   setAnswer: (s: string) => void;
   fillValues: string[];
   setFillValues: (v: string[]) => void;
-  mcSelected: number | null;
-  setMcSelected: (i: number | null) => void;
+  voiceEligible: boolean;
+  voiceLocaleTag: string;
+  onSubmitTyped: () => void;
+  onPickMc: (i: number) => void;
+  onVoice: (text: string) => void;
+  onVoiceUnavailable: () => void;
+  voiceOn: boolean;
+  canUseVoice: boolean;
+  onToggleVoice: () => void;
 }) {
-  const { t } = useTranslation('session');
-  const { item, answer, setAnswer, fillValues, setFillValues, mcSelected, setMcSelected } = props;
-  switch (item.answer_kind) {
-    case 'multiple_choice':
-      return (
-        <View style={{ gap: 8 }}>
-          {(item.mc_options ?? []).map((opt, i) => (
-            <Pressable key={i} onPress={() => setMcSelected(i)}>
+  // Brief selected-state feedback before the answer bubble appears.
+  const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => {
+    setPicked(null);
+  }, [item.id]);
+
+  if (item.answer_kind === 'multiple_choice') {
+    return (
+      <View style={{ gap: 8 }}>
+        {(item.mc_options ?? []).map((opt, i) => {
+          const on = picked === i;
+          return (
+            <Pressable
+              key={i}
+              onPress={() => {
+                if (sending) return;
+                setPicked(i);
+                onPickMc(i);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={opt}
+              accessibilityState={{ selected: on }}
+            >
               <View
                 style={{
                   padding: 14,
                   borderRadius: 14,
-                  backgroundColor: mcSelected === i ? LB.primaryLt : '#fff',
-                  borderColor: mcSelected === i ? LB.primaryDk : LB.hairline,
+                  backgroundColor: on ? LB.primaryLt : '#fff',
+                  borderColor: on ? LB.primaryDk : LB.hairline,
                   borderWidth: 1,
+                  opacity: sending && !on ? 0.5 : 1,
                 }}
               >
-                <Text style={{ fontSize: 15, color: LB.ink }}>{opt}</Text>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: on ? LB.primaryDk : LB.ink,
+                    fontWeight: on ? '600' : '400',
+                  }}
+                >
+                  {opt}
+                </Text>
               </View>
             </Pressable>
-          ))}
-        </View>
-      );
-    case 'fill_blank':
-      return (
+          );
+        })}
+      </View>
+    );
+  }
+
+  if (item.answer_kind === 'fill_blank') {
+    return (
+      <View style={{ gap: 10 }}>
         <FillBlank
           template={item.fill_blank_template ?? ''}
           values={fillValues}
-          onChange={(idx, v) => {
+          onChange={(i, v) => {
             const next = [...fillValues];
-            next[idx] = v;
+            next[i] = v;
             setFillValues(next);
           }}
         />
-      );
-    case 'numeric':
-    case 'formula':
-      return (
+        <Btn size="lg" full disabled={sending} onPress={onSubmitTyped}>
+          {sending ? t('checking') : t('submit')}
+        </Btn>
+      </View>
+    );
+  }
+
+  if (item.answer_kind === 'numeric' || item.answer_kind === 'formula') {
+    return (
+      <View style={{ gap: 10 }}>
         <MathInput
           value={answer}
           onChangeText={setAnswer}
@@ -559,34 +800,69 @@ function AnswerArea(props: {
             item.answer_kind === 'numeric' ? t('placeholder.number') : t('placeholder.formula')
           }
         />
-      );
-    case 'short':
-    case 'long':
-    default:
-      return (
-        <TextInput
-          value={answer}
-          onChangeText={setAnswer}
-          placeholder={t('placeholder.answer')}
-          placeholderTextColor={LB.ink3}
-          multiline={item.answer_kind === 'long'}
-          style={{
-            backgroundColor: '#fff',
-            borderColor: LB.hairline,
-            borderWidth: 1,
-            borderRadius: 14,
-            padding: 14,
-            fontSize: 16,
-            color: LB.ink,
-            minHeight: item.answer_kind === 'long' ? 120 : 56,
-          }}
+        <MathKeyboard
+          onInsert={(token) =>
+            setAnswer(token === 'BACKSPACE' ? answer.slice(0, -1) : answer + token)
+          }
         />
-      );
+        <Btn size="lg" full disabled={sending || !answer.trim()} onPress={onSubmitTyped}>
+          {sending ? t('checking') : t('submit')}
+        </Btn>
+      </View>
+    );
   }
-}
 
-function verdictLabel(v: string, t: (key: string) => string): string {
-  if (v === 'correct') return t('verdict.correct');
-  if (v === 'partially_correct') return t('verdict.partially_correct');
-  return t('verdict.incorrect');
+  // short / long / diagram_label → text, with optional voice.
+  return (
+    <View style={{ gap: 10 }}>
+      {voiceEligible ? (
+        <VoiceButton
+          locale={voiceLocaleTag}
+          labelIdle={t('voice.idle')}
+          labelActive={t('voice.active')}
+          permissionRationale={t('voice.permission_rationale')}
+          unavailableLabel={t('voice.unavailable')}
+          onTranscript={onVoice}
+          onUnavailable={onVoiceUnavailable}
+          disabled={sending}
+        />
+      ) : (
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          <View style={{ flex: 1 }}>
+            <TextInput
+              value={answer}
+              onChangeText={setAnswer}
+              placeholder={t('placeholder.answer')}
+              placeholderTextColor={LB.ink3}
+              multiline={item.answer_kind === 'long'}
+              editable={!sending}
+              onSubmitEditing={item.answer_kind === 'long' ? undefined : onSubmitTyped}
+              returnKeyType="send"
+              style={{
+                backgroundColor: '#fff',
+                borderColor: LB.hairline,
+                borderWidth: 1,
+                borderRadius: 16,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                fontSize: 16,
+                color: LB.ink,
+                minHeight: item.answer_kind === 'long' ? 96 : 48,
+              }}
+            />
+          </View>
+          <Btn size="md" disabled={sending || !answer.trim()} onPress={onSubmitTyped}>
+            {sending ? t('checking') : t('send')}
+          </Btn>
+        </View>
+      )}
+      {canUseVoice ? (
+        <Pressable onPress={onToggleVoice} accessibilityRole="button" hitSlop={8}>
+          <Text style={{ fontSize: 13, color: LB.ink2, textAlign: 'center' }}>
+            {voiceOn ? t('voice.use_keyboard') : t('voice.use_voice')}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
 }

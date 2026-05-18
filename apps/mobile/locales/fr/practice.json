@@ -1,33 +1,18 @@
 {
   "loading": "On prépare ton entraînement …",
   "error_title": "Oups.",
-  "error_body": "On n'a pas pu charger cet entraînement. Réessaie.",
+  "error_body": "On n'a pas pu charger ça. Réessaie.",
   "back": "Retour",
-  "topic_label": "Thème",
-  "progress": "{{current}} sur {{total}}",
-  "submit": "Vérifier",
-  "next": "Suivant",
-  "verdict": {
-    "correct": "Pile dedans !",
-    "incorrect": "Pas encore tout à fait"
-  },
-  "answer_hint_numeric": "Saisis ta réponse",
-  "answer_hint_formula": "Saisis ta formule",
-  "show_solution": "Voir la solution",
-  "solution_label": "Solution",
-  "finish_title": "Bravo !",
-  "finish_body": "Tu as réussi {{correct}} sur {{total}}. Belle série.",
-  "finish_home": "Retour à l'accueil",
-  "no_template": "Cet entraînement n'est plus disponible.",
   "hub": {
     "title": "S'entraîner",
-    "upcoming_tests": "Examens à venir",
-    "test_in_days_one": "Dans 1 jour",
-    "test_in_days_other": "Dans {{count}} jours",
-    "test_today": "Aujourd'hui",
-    "go_to_folder": "Ouvrir le dossier",
-    "empty_title": "Rien d'urgent",
-    "empty_body": "Pas d'examen à venir. Parcours tes matériaux pour lancer un entraînement.",
-    "browse_home": "Aller à l'accueil"
+    "resume_title": "Continuer ?",
+    "resume_body": "Tu as encore un entraînement en cours.",
+    "resume_yes": "Continuer",
+    "resume_no": "Recommencer",
+    "choose": "Choisis une matière",
+    "start": "S'entraîner",
+    "empty_title": "Rien à réviser pour l'instant",
+    "empty_body": "Prends d'abord ton support en photo, puis on s'entraîne ensemble.",
+    "empty_cta": "Aller à l'accueil"
   }
 }

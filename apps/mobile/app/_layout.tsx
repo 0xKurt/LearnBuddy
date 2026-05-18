@@ -75,7 +75,23 @@ function semverLt(a: string, b: string): boolean {
 const WHATS_NEW_VERSION = '1.1.0';
 
 export default function RootLayout() {
-  const queryClient = useMemo(() => new QueryClient(), []);
+  // Don't retry client errors (a clean 404 "no items" must surface
+  // immediately, not after 3 backoff rounds); retry transient/5xx twice.
+  const queryClient = useMemo(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: (failureCount, error) => {
+              const status = (error as { status?: number } | null)?.status;
+              if (typeof status === 'number' && status >= 400 && status < 500) return false;
+              return failureCount < 2;
+            },
+          },
+        },
+      }),
+    [],
+  );
   const insets = useSafeAreaInsets();
   const [forceUpdate, setForceUpdate] = useState(false);
   const [obscured, setObscured] = useState(false);

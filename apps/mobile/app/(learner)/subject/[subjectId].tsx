@@ -301,7 +301,7 @@ export default function SubjectScreen() {
                 });
               }
             }}
-            disabled={subject.material_count === 0}
+            disabled={subject.material_count === 0 || !learnerId}
           >
             {t('subject.start_practice')}
           </Btn>

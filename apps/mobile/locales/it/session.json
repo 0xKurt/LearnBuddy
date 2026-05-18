@@ -9,9 +9,34 @@
     "end": "Termina"
   },
   "question_label": "Domanda {{index}}",
+  "question_label_short": "Domanda",
   "submit": "Invia",
+  "send": "Invia",
   "checking": "Controllo …",
   "next": "Avanti",
+  "skip": "Salta",
+  "keep_going_empty": "Per ora è tutto — bravissimo!",
+  "stream_error": {
+    "generic": "Non è andata. Puoi riscrivere la tua risposta.",
+    "insufficient_credits": "Il credito di oggi è finito. Riprendiamo domani.",
+    "session_ended": "Questa sessione è già terminata.",
+    "evaluation_failed": "Non sono riuscito a rispondere. Riprova subito.",
+    "transcription_failed": "Non ho capito bene. Ripetilo o scrivilo.",
+    "empty_answer": "Non c'era ancora nessuna risposta.",
+    "not_found": "Questa domanda non esiste più."
+  },
+  "done": {
+    "title": "Fatto!",
+    "body": "Bravo, ti sei esercitato. Vuoi continuare?",
+    "keep_going": "Continua",
+    "finish": "Fine"
+  },
+  "pin": {
+    "pin": "Resta su questo tema",
+    "pinned": "Tema scelto",
+    "on": "Restiamo su {{topic}}.",
+    "off": "Di nuovo misto."
+  },
   "verdict": {
     "correct": "Esatto!",
     "partially_correct": "Quasi",
@@ -30,7 +55,10 @@
     "idle": "Tocca o tieni premuto per parlare",
     "active": "Ti ascolto … (tocca per terminare)",
     "permission_rationale": "LearnBuddy ascolta un attimo per farti rispondere a voce. L'audio non viene mai salvato.",
-    "unavailable": "La voce non è ancora disponibile — per ora scrivi la tua risposta."
+    "unavailable": "La voce non è ancora disponibile — per ora scrivi la tua risposta.",
+    "switched_to_text": "Continuiamo scrivendo.",
+    "use_keyboard": "Meglio scrivere",
+    "use_voice": "Meglio parlare"
   },
   "explain": {
     "pill": "Spiegamelo",

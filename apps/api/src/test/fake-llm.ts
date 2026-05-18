@@ -9,6 +9,8 @@
 //     falls back to this with a console.warn)
 
 import type {
+  ConverseTurnInput,
+  ConverseTurnResult,
   EvaluateInput,
   EvaluateResult,
   ExplainInput,
@@ -16,9 +18,19 @@ import type {
   LLMGateway,
   RegenerateInput,
   RegenerateResult,
+  TranscribeInput,
+  TranscribeResult,
   VisionInput,
   VisionResult,
 } from '../lib/llm/gateway.js';
+
+const FAKE_USAGE = {
+  input_tokens: 0,
+  output_tokens: 0,
+  cost_usd_micros: 0,
+  model: 'fake',
+  prompt_version: 'fake',
+} as const;
 
 export class FakeLlmGateway implements LLMGateway {
   async visionExtractAndGenerate(input: VisionInput): Promise<VisionResult> {
@@ -132,5 +144,51 @@ export class FakeLlmGateway implements LLMGateway {
         prompt_version: 'fake',
       },
     };
+  }
+
+  async converseTurn(
+    input: ConverseTurnInput,
+    onToken?: (delta: string) => void,
+  ): Promise<ConverseTurnResult> {
+    const said = input.learnerMessage.trim().toLowerCase();
+    const item = input.item;
+    let isCorrect =
+      said === item.expectedAnswer.trim().toLowerCase() ||
+      item.acceptableAnswers.some((a) => a.trim().toLowerCase() === said);
+    if (!isCorrect && item.answerKind === 'multiple_choice' && item.mcCorrectIndex != null) {
+      isCorrect = said === String(item.mcCorrectIndex);
+    }
+
+    const canReveal = input.hintsGivenForItem >= 2;
+    let reply: string;
+    let verdict: ConverseTurnResult['verdict'];
+    let gaveHint = false;
+    if (isCorrect) {
+      reply = 'Genau richtig — stark gemacht!';
+      verdict = 'correct';
+    } else if (input.testMode) {
+      reply = 'Alles klar, notiert. Weiter geht es.';
+      verdict = 'incorrect';
+    } else if (canReveal) {
+      reply = `Kein Problem. Die Lösung ist: ${item.expectedAnswer}. Das merkst du dir bestimmt.`;
+      verdict = 'incorrect';
+    } else {
+      reply = 'Noch nicht ganz — lies die Frage nochmal in Ruhe, du bist nah dran.';
+      verdict = 'incorrect';
+      gaveHint = true;
+    }
+
+    if (onToken) {
+      // Emit in a couple of chunks so streaming consumers are exercised.
+      const mid = Math.ceil(reply.length / 2);
+      onToken(reply.slice(0, mid));
+      onToken(reply.slice(mid));
+    }
+
+    return { verdict, reply, gaveHint, usage: { ...FAKE_USAGE } };
+  }
+
+  async transcribeAudio(_input: TranscribeInput): Promise<TranscribeResult> {
+    return { text: 'gesprochene Antwort', usage: { ...FAKE_USAGE } };
   }
 }
