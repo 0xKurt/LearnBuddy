@@ -5,7 +5,7 @@
 // profiles (< 16) stash the draft and forward to profile-minor-consent.
 
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,25 +25,19 @@ export default function AddProfileScreen() {
   const storedBirthYear = useAppStore((s) => s.pending_birth_year);
 
   const [name, setName] = useState('');
-  const [birthYear, setBirthYear] = useState(storedBirthYear ? String(storedBirthYear) : '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const parsedYear = useMemo(() => {
-    const n = Number.parseInt(birthYear, 10);
-    return Number.isFinite(n) && n >= 1920 && n <= new Date().getUTCFullYear() ? n : null;
-  }, [birthYear]);
-
-  const canSubmit = name.trim().length > 0 && parsedYear !== null && !busy;
+  const canSubmit = name.trim().length > 0 && storedBirthYear !== null && !busy;
 
   async function onContinue() {
-    if (!canSubmit || parsedYear === null) return;
+    if (!canSubmit || storedBirthYear === null) return;
     setBusy(true);
     setError(null);
     try {
       const learner = await createLearner({
         display_name: name.trim(),
-        birth_year: parsedYear,
+        birth_year: storedBirthYear,
         grade_level: null,
         ui_locale: (i18n.language ?? 'de') as AppLocale,
         avatar_id: 1,
@@ -134,16 +128,6 @@ export default function AddProfileScreen() {
                 placeholder={t('add_profile.placeholder_first_name')}
                 placeholderTextColor={LB.ink3}
                 autoCapitalize="words"
-                style={inputStyle}
-              />
-            </Field>
-            <Field label={t('add_profile.field_birth_year')}>
-              <TextInput
-                value={birthYear}
-                onChangeText={(v) => setBirthYear(v.replace(/\D/g, '').slice(0, 4))}
-                placeholder={t('add_profile.placeholder_birth_year')}
-                placeholderTextColor={LB.ink3}
-                keyboardType="number-pad"
                 style={inputStyle}
               />
             </Field>

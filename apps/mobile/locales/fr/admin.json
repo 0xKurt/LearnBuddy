@@ -81,7 +81,7 @@
       "confirm_cancel": "Annuler",
       "confirm_ok": "Demander la suppression",
       "requested_title": "Demande de suppression enregistrée",
-      "requested_body": "Tu recevras une confirmation par e-mail. Tu peux annuler la demande sous 7 jours.",
+      "requested_body": "Tu recevras une confirmation par e-mail. Tu peux annuler la demande sous 7 jours. Ton abonnement sera annulé à la prochaine date de facturation.",
       "error_title": "Oups.",
       "error_generic": "La demande a échoué."
     }

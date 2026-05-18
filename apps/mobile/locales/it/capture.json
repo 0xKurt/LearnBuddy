@@ -40,7 +40,8 @@
     "title": "Dove lo metti?",
     "folder_title": "Scegli una cartella",
     "no_folder": "Senza cartella — direttamente nella materia",
-    "no_subjects": "Non hai ancora una materia. Aggiungine una dalla home."
+    "no_subjects": "Non hai ancora una materia. Aggiungine una dalla home.",
+    "no_subjects_title": "Prima crea una materia"
   },
   "limits": {
     "max_reached": "Massimo 10 foto per materiale."

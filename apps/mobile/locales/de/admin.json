@@ -81,7 +81,7 @@
       "confirm_cancel": "Abbrechen",
       "confirm_ok": "Löschen anfordern",
       "requested_title": "Löschanfrage erfasst",
-      "requested_body": "Du erhältst eine Bestätigung per Email. Innerhalb von 7 Tagen kannst du das rückgängig machen.",
+      "requested_body": "Du erhältst eine Bestätigung per Email. Innerhalb von 7 Tagen kannst du das rückgängig machen. Dein Abo wird zum nächstmöglichen Zeitpunkt gekündigt.",
       "error_title": "Ups.",
       "error_generic": "Anfrage fehlgeschlagen."
     }

@@ -21,13 +21,7 @@ import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
-import {
-  PHOTO_RETENTION_CHOICES,
-  SESSION_LENGTH_CHOICES,
-  usePref,
-  type PhotoRetentionDays,
-  type SessionLength,
-} from '../../lib/prefs.js';
+import { SESSION_LENGTH_CHOICES, usePref, type SessionLength } from '../../lib/prefs.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
@@ -37,9 +31,7 @@ export default function PreferencesScreen() {
 
   const [haptics, setHaptics] = usePref('haptics');
   const [sessionLength, setSessionLength] = usePref('session_length');
-  const [retention, setRetention] = usePref('photo_retention_days');
   const [dataSaver, setDataSaver] = usePref('data_saver');
-  const [dyslexia, setDyslexia] = usePref('dyslexia_font');
 
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
 
@@ -66,33 +58,11 @@ export default function PreferencesScreen() {
           />
         </Section>
 
-        <Section title={t('preferences.photo_retention.title')}>
-          <Text style={{ fontSize: 12, color: LB.ink3, marginBottom: 10 }}>
-            {t('preferences.photo_retention.sub')}
-          </Text>
-          <RadioRow<PhotoRetentionDays>
-            options={PHOTO_RETENTION_CHOICES}
-            value={retention}
-            onChange={(v) => void setRetention(v)}
-            label={(v) => t('preferences.photo_retention.option', { count: v })}
-          />
-          <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 10, lineHeight: 16 }}>
-            {t('preferences.photo_retention.cap_note')}
-          </Text>
-        </Section>
-
         <ToggleRow
           label={t('preferences.data_saver.label')}
           sub={t('preferences.data_saver.sub')}
           value={dataSaver}
           onChange={(v) => void setDataSaver(v)}
-        />
-
-        <ToggleRow
-          label={t('preferences.dyslexia_font.label')}
-          sub={t('preferences.dyslexia_font.sub')}
-          value={dyslexia}
-          onChange={(v) => void setDyslexia(v)}
         />
 
         <View style={{ marginTop: 10 }}>

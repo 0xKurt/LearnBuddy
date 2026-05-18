@@ -22,13 +22,11 @@ export default function ProfileEditScreen() {
 
   const [name, setName] = useState('');
   const [birthYear, setBirthYear] = useState('');
-  const [grade, setGrade] = useState('');
 
   useEffect(() => {
     if (learner) {
       setName(learner.display_name ?? '');
       setBirthYear(String(learner.birth_year ?? ''));
-      setGrade(String(learner.grade_level ?? ''));
     }
   }, [learner]);
 
@@ -36,7 +34,6 @@ export default function ProfileEditScreen() {
     mutationFn: () =>
       updateLearner(learner!.id, {
         display_name: name.trim(),
-        grade_level: grade ? Number(grade) : undefined,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['account'] });
@@ -62,12 +59,6 @@ export default function ProfileEditScreen() {
         <Text style={{ fontSize: 12, color: LB.ink3 }}>
           {t('profile_edit.birth_year_hint', { year: birthYear || '—' })}
         </Text>
-        <Field
-          label={t('profile_edit.field_grade')}
-          value={grade}
-          onChange={setGrade}
-          keyboardType="number-pad"
-        />
         <View style={{ height: 8 }} />
         <Btn full onPress={() => mut.mutate()} disabled={mut.isPending}>
           {mut.isPending ? t('profile_edit.saving') : t('profile_edit.save')}

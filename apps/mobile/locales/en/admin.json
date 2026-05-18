@@ -81,7 +81,7 @@
       "confirm_cancel": "Cancel",
       "confirm_ok": "Request deletion",
       "requested_title": "Deletion request received",
-      "requested_body": "We'll send a confirmation by email. You can undo it within 7 days.",
+      "requested_body": "We'll send a confirmation by email. You can undo it within 7 days. Your subscription will be cancelled at the end of the current billing period.",
       "error_title": "Oops.",
       "error_generic": "Request failed."
     }

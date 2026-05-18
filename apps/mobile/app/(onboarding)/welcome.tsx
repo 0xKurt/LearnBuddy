@@ -265,7 +265,7 @@ export default function WelcomeScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoComplete="email"
-                textContentType="emailAddress"
+                textContentType={mode === 'signup' ? 'emailAddress' : 'username'}
                 returnKeyType="next"
                 onSubmitEditing={() => passwordRef.current?.focus()}
                 editable={!busy}

@@ -81,7 +81,7 @@
       "confirm_cancel": "Cancelar",
       "confirm_ok": "Solicitar eliminación",
       "requested_title": "Solicitud de eliminación registrada",
-      "requested_body": "Recibirás una confirmación por correo. Puedes deshacerla en un plazo de 7 días.",
+      "requested_body": "Recibirás una confirmación por correo. Puedes deshacerla en un plazo de 7 días. Tu suscripción se cancelará al final del período de facturación actual.",
       "error_title": "Vaya.",
       "error_generic": "La solicitud falló."
     }

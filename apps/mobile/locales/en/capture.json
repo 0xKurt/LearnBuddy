@@ -40,7 +40,8 @@
     "title": "Where does this go?",
     "folder_title": "Pick a folder",
     "no_folder": "No folder — right in the subject",
-    "no_subjects": "You don't have a subject yet. Add one from the home screen first."
+    "no_subjects": "You don't have a subject yet. Add one from the home screen first.",
+    "no_subjects_title": "Create a subject first"
   },
   "limits": {
     "max_reached": "Max 10 photos per material."

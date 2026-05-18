@@ -344,18 +344,7 @@ function AddSubjectTile({ onPress }: { onPress: () => void }) {
   );
 }
 
-// Groups kinds into rows of 4 for the grid.
-function chunkKinds<T>(arr: readonly T[], size: number): T[][] {
-  const result: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    result.push(arr.slice(i, i + size) as T[]);
-  }
-  return result;
-}
-const KIND_ROWS = chunkKinds(SUBJECT_KINDS, 4);
-
-const EMOJI_GRID = [
-  // Objects & learning
+const EMOJI_PICKER_GRID = [
   '📌',
   '🔖',
   '📎',
@@ -366,105 +355,46 @@ const EMOJI_GRID = [
   '🧲',
   '🎯',
   '🏆',
-  // Nature & science
   '🌈',
   '🌊',
   '🌋',
   '🌺',
   '🌸',
-  '🍃',
   '🦋',
   '🐬',
   '🦅',
   '⚡',
-  // Math & tech
   '🔢',
   '💯',
-  '∑',
-  'π',
   '🖥️',
   '📱',
-  '⌨️',
-  '🖨️',
-  '💾',
-  '🔌',
-  // Art & culture
   '🎭',
   '🎬',
   '🎵',
   '🎸',
-  '🎺',
-  '🎻',
-  '🎹',
-  '🖼️',
   '🎨',
   '✒️',
-  // Social & people
   '🌍',
   '🗺️',
   '🏛️',
-  '⛪',
-  '🕌',
-  '🗼',
-  '🌃',
-  '🎢',
-  '🏟️',
-  '🎡',
-  // Sports & body
   '⚽',
   '🏀',
   '🏊',
-  '🤸',
   '🥊',
-  '🏋️',
-  '🤺',
-  '🏇',
-  '⛷️',
-  '🎾',
-  // Food & everyday
   '🍎',
-  '🍕',
   '☕',
   '🧪',
-  '⚗️',
   '🧬',
-  '🦠',
-  '🩺',
-  '💊',
-  '🏥',
-  // Symbols & misc
   '⭐',
   '💫',
-  '🌟',
   '✨',
   '🎉',
-  '🎊',
-  '🎁',
   '🔑',
-  '🗝️',
   '🧩',
-  // Faces & expressions
   '🤔',
   '💪',
-  '🙌',
-  '👁️',
   '🧠',
-  '❤️',
-  '💚',
-  '💙',
   '🔥',
-  '💎',
-  // Animals
-  '🦁',
-  '🐯',
-  '🦊',
-  '🐺',
-  '🦝',
-  '🐘',
-  '🦒',
-  '🐪',
-  '🦓',
-  '🦋',
 ] as const;
 
 function AddSubjectModal({
@@ -483,11 +413,9 @@ function AddSubjectModal({
   const [color, setColor] = useState(SUBJECT_KINDS[0]!.color);
   const [customGlyph, setCustomGlyph] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  // Track which kind last auto-filled the name so we can replace it when
-  // the user switches to a different kind without having typed anything custom.
+  const [showKindSheet, setShowKindSheet] = useState(false);
   const [nameAutoFrom, setNameAutoFrom] = useState<SubjectKindKey | null>(null);
 
-  // Reset all state whenever the modal opens.
   useEffect(() => {
     if (!visible) return;
     setName('');
@@ -495,24 +423,23 @@ function AddSubjectModal({
     setColor(SUBJECT_KINDS[0]!.color);
     setCustomGlyph(null);
     setShowEmojiPicker(false);
+    setShowKindSheet(false);
     setNameAutoFrom(null);
   }, [visible]);
 
   const currentKind = SUBJECT_KINDS[kindIdx]!;
+  const activeGlyph = customGlyph ?? currentKind.glyph;
 
   function onKindPress(idx: number) {
     const k = SUBJECT_KINDS[idx]!;
     setKindIdx(idx);
     setColor(k.color);
-    // Auto-fill name only if still empty or the user hasn't manually edited it.
     const prevDefault = nameAutoFrom ? t(`subjects.${nameAutoFrom}`) : null;
     if (!name.trim() || name === prevDefault) {
       setName(t(`subjects.${k.kind}`));
       setNameAutoFrom(k.kind);
     }
   }
-
-  const activeGlyph = customGlyph ?? currentKind.glyph;
 
   const mut = useMutation({
     mutationFn: () =>
@@ -540,117 +467,293 @@ function AddSubjectModal({
       presentationStyle="formSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
-        <ScrollView
-          contentContainerStyle={{ padding: 22 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+      {/* Emoji picker overlay modal */}
+      <Modal
+        visible={showEmojiPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowEmojiPicker(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: '#00000040', justifyContent: 'flex-end' }}
+          onPress={() => setShowEmojiPicker(false)}
         >
-          <View style={{ gap: 20 }}>
-            {/* Header */}
-            <Text style={{ fontSize: 22, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
+          <View
+            style={{
+              backgroundColor: LB.paper,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 20,
+              paddingBottom: 36,
+            }}
+          >
+            <View
+              style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: LB.ink }}>
+                {t('modal.emoji_label')}
+              </Text>
+              {customGlyph && (
+                <Pressable
+                  hitSlop={8}
+                  onPress={() => {
+                    setCustomGlyph(null);
+                    setShowEmojiPicker(false);
+                  }}
+                >
+                  <Text style={{ fontSize: 12, color: LB.ink3 }}>✕ {t('modal.cancel')}</Text>
+                </Pressable>
+              )}
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {EMOJI_PICKER_GRID.map((emoji) => (
+                <Pressable
+                  key={emoji}
+                  onPress={() => {
+                    setCustomGlyph(emoji);
+                    setShowEmojiPicker(false);
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 52,
+                      height: 52,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      backgroundColor: customGlyph === emoji ? `${color}26` : '#fff',
+                      borderWidth: 1,
+                      borderColor: customGlyph === emoji ? color : LB.hairline,
+                    }}
+                  >
+                    <Text style={{ fontSize: 26 }}>{emoji}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
+        <View style={{ flex: 1, padding: 22, gap: 18 }}>
+          {/* Header row */}
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <Text style={{ fontSize: 20, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
               {t('modal.title')}
             </Text>
+            <Pressable hitSlop={12} onPress={onClose}>
+              <View
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
+                  backgroundColor: LB.hairline,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 14, color: LB.ink2, fontWeight: '600' }}>✕</Text>
+              </View>
+            </Pressable>
+          </View>
 
-            {/* Name field with live glyph suffix */}
+          {/* Kind dropdown */}
+          <View style={{ gap: 6 }}>
+            <Text
+              style={{
+                fontSize: 11,
+                color: LB.ink2,
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              {t('modal.kind_label')}
+            </Text>
+            <Pressable onPress={() => setShowKindSheet(true)}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: '#fff',
+                  borderWidth: 1,
+                  borderColor: LB.hairline,
+                  borderRadius: 14,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 5,
+                      backgroundColor: currentKind.color,
+                    }}
+                  />
+                  <Text style={{ fontSize: 22 }}>{currentKind.glyph}</Text>
+                  <Text style={{ fontSize: 16, color: LB.ink, fontWeight: '500' }}>
+                    {t(`subjects.${currentKind.kind}`)}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 13, color: LB.ink3 }}>▾</Text>
+              </View>
+            </Pressable>
+          </View>
+
+          {/* Kind sheet */}
+          <Modal
+            visible={showKindSheet}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowKindSheet(false)}
+          >
+            <Pressable
+              style={{ flex: 1, backgroundColor: '#00000050', justifyContent: 'flex-end' }}
+              onPress={() => setShowKindSheet(false)}
+            >
+              <View
+                style={{
+                  backgroundColor: LB.paper,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 20,
+                  paddingBottom: 36,
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: '600', color: LB.ink, marginBottom: 16 }}>
+                  {t('modal.kind_label')}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {SUBJECT_KINDS.map((k, idx) => {
+                    const selected = idx === kindIdx;
+                    return (
+                      <Pressable
+                        key={k.kind}
+                        onPress={() => {
+                          onKindPress(idx);
+                          setShowKindSheet(false);
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 74,
+                            alignItems: 'center',
+                            paddingVertical: 10,
+                            paddingHorizontal: 4,
+                            borderRadius: 14,
+                            borderWidth: 1.5,
+                            borderColor: selected ? k.color : LB.hairline,
+                            backgroundColor: selected ? `${k.color}18` : '#fff',
+                            gap: 4,
+                          }}
+                        >
+                          <Text style={{ fontSize: 26 }}>{k.glyph}</Text>
+                          <Text
+                            numberOfLines={1}
+                            style={{
+                              fontSize: 10,
+                              color: selected ? k.color : LB.ink2,
+                              fontWeight: selected ? '600' : '400',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {t(`subjects.${k.kind}`)}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            </Pressable>
+          </Modal>
+
+          {/* Name field */}
+          <View style={{ gap: 6 }}>
+            <Text
+              style={{
+                fontSize: 11,
+                color: LB.ink2,
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              {t('modal.name_label')}
+            </Text>
+            <TextInput
+              value={name}
+              onChangeText={(v) => {
+                setName(v);
+                const prevDefault = nameAutoFrom ? t(`subjects.${nameAutoFrom}`) : '';
+                if (v !== prevDefault) setNameAutoFrom(null);
+              }}
+              placeholder={t(`subjects.${currentKind.kind}`)}
+              placeholderTextColor={LB.ink3}
+              returnKeyType="done"
+              style={{
+                borderWidth: 1,
+                borderColor: LB.hairline,
+                borderRadius: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 13,
+                fontSize: 16,
+                color: LB.ink,
+                backgroundColor: '#fff',
+              }}
+            />
+          </View>
+
+          {/* Icon + Color row */}
+          <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+            {/* Emoji tile */}
             <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 12, color: LB.ink2, fontWeight: '500' }}>
-                {t('modal.name_label')}
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: LB.ink2,
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
+                {t('modal.emoji_label')}
               </Text>
-              <View>
-                <TextInput
-                  value={name}
-                  onChangeText={(v) => {
-                    setName(v);
-                    // If the user types something other than the auto-filled default,
-                    // stop treating the name as auto-managed.
-                    const prevDefault = nameAutoFrom ? t(`subjects.${nameAutoFrom}`) : '';
-                    if (v !== prevDefault) setNameAutoFrom(null);
-                  }}
-                  placeholder={t(`subjects.${currentKind.kind}`)}
-                  autoFocus
-                  placeholderTextColor={LB.ink3}
-                  returnKeyType="done"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: LB.hairline,
-                    borderRadius: 12,
-                    paddingHorizontal: 14,
-                    paddingVertical: 13,
-                    paddingRight: 48,
-                    fontSize: 16,
-                    color: LB.ink,
-                    backgroundColor: '#fff',
-                  }}
-                />
+              <Pressable onPress={() => setShowEmojiPicker(true)}>
                 <View
-                  pointerEvents="none"
                   style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: 0,
-                    bottom: 0,
+                    width: 72,
+                    height: 72,
+                    borderRadius: 18,
+                    backgroundColor: `${color}18`,
+                    borderWidth: 1.5,
+                    borderColor: color,
+                    alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ fontSize: 22 }}>{activeGlyph}</Text>
+                  <Text style={{ fontSize: 32 }}>{activeGlyph}</Text>
                 </View>
-              </View>
-            </View>
-
-            {/* Kind grid — 4 columns × 3 rows */}
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontSize: 12, color: LB.ink2, fontWeight: '500' }}>
-                {t('modal.kind_label')}
-              </Text>
-              <View style={{ gap: 8 }}>
-                {KIND_ROWS.map((row, rowIdx) => (
-                  <View key={rowIdx} style={{ flexDirection: 'row', gap: 8 }}>
-                    {row.map((k, colIdx) => {
-                      const idx = rowIdx * 4 + colIdx; // 4-column grid
-                      const selected = idx === kindIdx;
-                      return (
-                        <Pressable
-                          key={k.kind}
-                          onPress={() => onKindPress(idx)}
-                          style={{ flex: 1 }}
-                        >
-                          <View
-                            style={{
-                              alignItems: 'center',
-                              paddingVertical: 10,
-                              paddingHorizontal: 4,
-                              borderRadius: 12,
-                              borderWidth: 1.5,
-                              borderColor: selected ? k.color : LB.hairline,
-                              backgroundColor: selected ? `${k.color}1A` : '#fff',
-                              gap: 4,
-                            }}
-                          >
-                            <Text style={{ fontSize: 22 }}>{k.glyph}</Text>
-                            <Text
-                              numberOfLines={1}
-                              style={{
-                                fontSize: 10,
-                                color: selected ? k.color : LB.ink2,
-                                fontWeight: selected ? '600' : '400',
-                                textAlign: 'center',
-                              }}
-                            >
-                              {t(`subjects.${k.kind}`)}
-                            </Text>
-                          </View>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                ))}
-              </View>
+              </Pressable>
             </View>
 
             {/* Color swatches */}
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontSize: 12, color: LB.ink2, fontWeight: '500' }}>
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: LB.ink2,
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
                 {t('modal.color_label')}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -660,16 +763,16 @@ function AddSubjectModal({
                     <Pressable key={c} onPress={() => setColor(c)}>
                       <View
                         style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 16,
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
                           backgroundColor: c,
-                          borderWidth: selected ? 3 : 0,
-                          borderColor: '#fff',
+                          borderWidth: selected ? 3 : 1.5,
+                          borderColor: selected ? '#fff' : 'transparent',
                           shadowColor: c,
                           shadowOffset: { width: 0, height: 0 },
-                          shadowOpacity: selected ? 0.7 : 0,
-                          shadowRadius: 5,
+                          shadowOpacity: selected ? 0.6 : 0,
+                          shadowRadius: 6,
                           elevation: selected ? 4 : 0,
                         }}
                       />
@@ -678,108 +781,15 @@ function AddSubjectModal({
                 })}
               </View>
             </View>
-
-            {/* Custom emoji picker */}
-            <View style={{ gap: 8 }}>
-              <Pressable
-                onPress={() => setShowEmojiPicker((v) => !v)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-              >
-                <Text style={{ fontSize: 12, color: LB.ink2, fontWeight: '500' }}>
-                  {t('modal.emoji_label')}
-                </Text>
-                {customGlyph && <Text style={{ fontSize: 18 }}>{customGlyph}</Text>}
-                <Text style={{ fontSize: 11, color: LB.primary }}>
-                  {showEmojiPicker ? '▲ schließen' : '▼ wählen'}
-                </Text>
-                {customGlyph && (
-                  <Pressable
-                    hitSlop={6}
-                    onPress={() => {
-                      setCustomGlyph(null);
-                      setShowEmojiPicker(false);
-                    }}
-                  >
-                    <Text style={{ fontSize: 11, color: LB.ink3 }}>✕ zurücksetzen</Text>
-                  </Pressable>
-                )}
-              </Pressable>
-              {showEmojiPicker && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    gap: 4,
-                    backgroundColor: '#fff',
-                    borderRadius: 12,
-                    borderColor: LB.hairline,
-                    borderWidth: 1,
-                    padding: 8,
-                  }}
-                >
-                  {EMOJI_GRID.map((emoji) => (
-                    <Pressable
-                      key={emoji}
-                      onPress={() => {
-                        setCustomGlyph(emoji);
-                        setShowEmojiPicker(false);
-                      }}
-                      style={{
-                        width: 40,
-                        height: 40,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 8,
-                        backgroundColor: customGlyph === emoji ? `${color}26` : 'transparent',
-                      }}
-                    >
-                      <Text style={{ fontSize: 22 }}>{emoji}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            {/* Live tile preview */}
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontSize: 12, color: LB.ink2, fontWeight: '500' }}>
-                {t('modal.preview_label')}
-              </Text>
-              <View
-                style={{
-                  backgroundColor: `${color}26`,
-                  borderRadius: 18,
-                  padding: 16,
-                  width: '50%',
-                  aspectRatio: 1,
-                  justifyContent: 'space-between',
-                }}
-              >
-                <SubjectGlyph glyph={activeGlyph} />
-                <Text
-                  numberOfLines={1}
-                  style={{ fontSize: 15, fontWeight: '600', color: LB.ink, letterSpacing: -0.2 }}
-                >
-                  {name.trim() || t(`subjects.${currentKind.kind}`)}
-                </Text>
-              </View>
-            </View>
-
-            {/* CTAs */}
-            <View style={{ flexDirection: 'row', gap: 8, paddingTop: 4 }}>
-              <View style={{ flex: 1 }}>
-                <Btn variant="outline" full onPress={onClose}>
-                  {t('modal.cancel')}
-                </Btn>
-              </View>
-              <View style={{ flex: 2 }}>
-                <Btn full onPress={() => mut.mutate()} disabled={mut.isPending}>
-                  {mut.isPending ? t('modal.creating') : t('modal.create')}
-                </Btn>
-              </View>
-            </View>
           </View>
-        </ScrollView>
+
+          <View style={{ flex: 1 }} />
+
+          {/* Create button */}
+          <Btn full onPress={() => mut.mutate()} disabled={mut.isPending}>
+            {mut.isPending ? t('modal.creating') : t('modal.create')}
+          </Btn>
+        </View>
       </SafeAreaView>
     </Modal>
   );

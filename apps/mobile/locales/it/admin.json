@@ -81,7 +81,7 @@
       "confirm_cancel": "Annulla",
       "confirm_ok": "Richiedi eliminazione",
       "requested_title": "Richiesta di eliminazione registrata",
-      "requested_body": "Riceverai una conferma via email. Puoi annullare entro 7 giorni.",
+      "requested_body": "Riceverai una conferma via email. Puoi annullare entro 7 giorni. Il tuo abbonamento verrà annullato alla prossima data di fatturazione.",
       "error_title": "Ops.",
       "error_generic": "Richiesta non riuscita."
     }

@@ -40,7 +40,8 @@
     "title": "¿Dónde lo guardamos?",
     "folder_title": "Elige una carpeta",
     "no_folder": "Sin carpeta — directo en la asignatura",
-    "no_subjects": "Aún no tienes asignaturas. Añade una desde la pantalla de inicio."
+    "no_subjects": "Aún no tienes asignaturas. Añade una desde la pantalla de inicio.",
+    "no_subjects_title": "Primero crea una asignatura"
   },
   "limits": {
     "max_reached": "Máximo 10 fotos por material."

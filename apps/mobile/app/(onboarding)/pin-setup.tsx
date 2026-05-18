@@ -33,7 +33,7 @@ export default function PinSetupScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint'>('face');
+  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint' | null>(null);
   const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function PinSetupScreen() {
       setBiometricAvailable(avail);
       if (avail) {
         const type = await getBiometricType();
-        setBiometricType(type ?? 'face');
+        setBiometricType(type);
       }
       setPhase(avail ? 'method' : 'choose');
     })();
@@ -188,9 +188,11 @@ export default function PinSetupScreen() {
             >
               {busy
                 ? t('pin.saving')
-                : biometricType === 'fingerprint'
-                  ? t('pin.method_biometric_fingerprint')
-                  : t('pin.method_biometric_face')}
+                : biometricType === 'face'
+                  ? t('pin.method_biometric_face')
+                  : biometricType === 'fingerprint'
+                    ? t('pin.method_biometric_fingerprint')
+                    : t('pin.method_biometric')}
             </Btn>
             <Btn size="lg" full variant="ghost" onPress={onPickPin}>
               {t('pin.method_pin')}

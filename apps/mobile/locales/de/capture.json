@@ -40,7 +40,8 @@
     "title": "Wohin damit?",
     "folder_title": "Ordner wählen",
     "no_folder": "Ohne Ordner — direkt im Fach",
-    "no_subjects": "Du hast noch kein Fach. Leg zuerst ein Fach auf dem Startbildschirm an."
+    "no_subjects": "Du hast noch kein Fach. Leg zuerst ein Fach auf dem Startbildschirm an.",
+    "no_subjects_title": "Zuerst ein Fach anlegen"
   },
   "limits": {
     "max_reached": "Mehr als 10 Bilder pro Material geht nicht."

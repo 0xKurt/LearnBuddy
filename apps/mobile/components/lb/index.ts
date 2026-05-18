@@ -29,5 +29,6 @@ export { ExplainModal } from './ExplainModal.js';
 export { VoiceButton } from './VoiceButton.js';
 export { CoachMark } from './CoachMark.js';
 export { LbHeader } from './LbHeader.js';
+export { CachedImage } from './CachedImage.js';
 export { ToastHost, toast, useToast, showApiErrorToast } from './Toast.js';
 export type { ToastTone } from './Toast.js';

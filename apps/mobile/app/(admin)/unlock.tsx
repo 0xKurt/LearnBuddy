@@ -35,7 +35,7 @@ export default function AdminUnlockScreen() {
   const { t } = useTranslation('auth');
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
   const [biometricReady, setBiometricReady] = useState(false);
-  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint'>('face');
+  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint' | null>(null);
   const [pinSet, setPinSet] = useState(true); // optimistic; updated on mount
   const [failures, setFailures] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number>(0);
@@ -60,7 +60,7 @@ export default function AdminUnlockScreen() {
       ]);
       const ready = hw && pref;
       setBiometricReady(ready);
-      setBiometricType(bType ?? 'face');
+      setBiometricType(bType);
       setPinSet(pinExists);
       setLockedUntil(lockUntil);
 
@@ -199,9 +199,11 @@ export default function AdminUnlockScreen() {
                 void onBiometricPress();
               }}
             >
-              {biometricType === 'fingerprint'
-                ? t('unlock.biometric_cta_fingerprint')
-                : t('unlock.biometric_cta_face')}
+              {biometricType === 'face'
+                ? t('unlock.biometric_cta_face')
+                : biometricType === 'fingerprint'
+                  ? t('unlock.biometric_cta_fingerprint')
+                  : t('unlock.biometric_cta')}
             </Btn>
           )}
           <Pressable onPress={() => router.replace('/login?unlock=1' as never)} hitSlop={12}>

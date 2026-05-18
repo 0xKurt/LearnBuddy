@@ -40,7 +40,8 @@
     "title": "Où veux-tu le ranger ?",
     "folder_title": "Choisir un dossier",
     "no_folder": "Sans dossier — directement dans la matière",
-    "no_subjects": "Tu n'as pas encore de matière. Ajoutes-en une depuis l'accueil."
+    "no_subjects": "Tu n'as pas encore de matière. Ajoutes-en une depuis l'accueil.",
+    "no_subjects_title": "Crée d'abord une matière"
   },
   "limits": {
     "max_reached": "10 photos maximum par matériel."

@@ -1,6 +1,6 @@
 // Account settings. Doc 05 §account-settings. Email, language, sign-out.
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,6 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
-import { getAccount } from '../../lib/api/account.js';
 import { clearSession } from '../../lib/auth/session.js';
 import { setLocale, i18n } from '../../lib/i18n/index.js';
 import {
@@ -25,7 +24,6 @@ export default function AccountSettingsScreen() {
   const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
-  const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const qc = useQueryClient();
   const [locale, setLocaleState] = useState<AppLocale>(i18n.language as AppLocale);
   useEffect(() => {
@@ -51,7 +49,6 @@ export default function AccountSettingsScreen() {
     ]);
   };
 
-  const empty = t('account_settings.empty');
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
       <View
@@ -69,16 +66,6 @@ export default function AccountSettingsScreen() {
         </Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: 22, gap: 16 }}>
-        <Card title={t('account_settings.card_display_name')}>
-          <Text style={{ fontSize: 14, color: LB.ink }}>
-            {accountQuery.data?.display_name ?? empty}
-          </Text>
-        </Card>
-        <Card title={t('account_settings.card_country')}>
-          <Text style={{ fontSize: 14, color: LB.ink }}>
-            {accountQuery.data?.country_code ?? empty}
-          </Text>
-        </Card>
         <Card title={t('account_settings.card_language')}>
           <View style={{ gap: 6, marginTop: 4 }}>
             {SUPPORTED_LOCALES.map((code) => (

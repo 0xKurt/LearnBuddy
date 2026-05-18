@@ -14,6 +14,8 @@ import {
   type DoneEvent,
   type FinalizePhase,
 } from '../api/materials.js';
+import { i18n } from '../i18n/index.js';
+import type { AppLocale } from '../i18n/locale-storage.js';
 import type { PendingCapture } from '../store/capture.js';
 
 export type UploadProgress =
@@ -58,7 +60,7 @@ export async function runUpload(
       subject_id: capture.subject_id,
       folder_id: capture.folder_id,
       title: null,
-      locale: 'de',
+      locale: (i18n.language ?? 'de') as AppLocale,
       client_quality_scores: capture.photos.map((p, idx) => ({
         position: idx + 1,
         blur: p.quality.blur,
