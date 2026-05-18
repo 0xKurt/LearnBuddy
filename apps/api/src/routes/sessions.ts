@@ -15,7 +15,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
-import { SessionTurnRequest } from '@learnbuddy/shared-types';
+import { SessionPatch, SessionTurnRequest } from '@learnbuddy/shared-types';
 import type { ConversationSseEvent } from '@learnbuddy/shared-types';
 
 import { refund, settle, tryDebit } from '../lib/credits.js';
@@ -69,6 +69,9 @@ sessionRoutes.post(
         started_at: nowIso,
         attempts_count: 0,
         correct_count: 0,
+        // Persist the exact chosen set so a resume returns the SAME
+        // questions instead of letting FSRS re-pick under the learner.
+        picked_item_ids: picked.map((p) => p.id as string),
       })
       .select('*')
       .single();
@@ -201,6 +204,137 @@ sessionRoutes.patch('/:id/finish', async (c) => {
   if (!upd.data) throw new ApiError('not_found', 'Session not found');
   return c.json(upd.data);
 });
+
+// GET /sessions/:id — full snapshot for deterministic resume.
+// Doc 05 §session ("Quit mid-session … state is preserved").
+// Returns the SAME items chosen at start plus the entire conversation
+// thread so the client can rebuild the screen exactly where it left off.
+sessionRoutes.get('/:id', async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const session_id = c.req.param('id');
+
+  const sessRow = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('id', session_id)
+    .eq('learner_id', learner_id)
+    .maybeSingle();
+  if (sessRow.error) {
+    throw new ApiError('internal', 'Failed to load session', { cause: sessRow.error.message });
+  }
+  if (!sessRow.data) throw new ApiError('not_found', 'Session not found');
+  return c.json(await buildSnapshot(supabase, sessRow.data as SessionRow));
+});
+
+// PATCH /sessions/:id — sustained-session controls (Doc 01 §Studying).
+//   { pinned_topic: "…" | null }  → lock onto / release a topic
+//   { keep_going: true }          → refill the queue with more due items
+sessionRoutes.patch('/:id', zValidator('json', SessionPatch), async (c) => {
+  const { supabase, now } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const session_id = c.req.param('id');
+  const input = c.req.valid('json');
+
+  const sessRow = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('id', session_id)
+    .eq('learner_id', learner_id)
+    .maybeSingle();
+  if (sessRow.error) {
+    throw new ApiError('internal', 'Failed to load session', { cause: sessRow.error.message });
+  }
+  if (!sessRow.data) throw new ApiError('not_found', 'Session not found');
+  const session = sessRow.data as SessionRow;
+  if (session.ended_at != null) {
+    throw new ApiError('validation_failed', 'Session has already ended');
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (input.pinned_topic !== undefined) {
+    patch.pinned_topic = input.pinned_topic;
+  }
+
+  if (input.keep_going) {
+    const already = new Set(session.picked_item_ids ?? []);
+    const pinned = input.pinned_topic ?? session.pinned_topic ?? null;
+    const more = await pickItems(supabase, {
+      learner_id,
+      subject_id: session.subject_id ?? null,
+      folder_id: null,
+      material_id: null,
+      max_items: 50,
+      now: now().toISOString(),
+    });
+    const fresh = more
+      .filter((it) => !already.has(it.id as string))
+      .filter((it) => !pinned || (it.topic as string | null) === pinned)
+      .slice(0, 20);
+    patch.picked_item_ids = [...(session.picked_item_ids ?? []), ...fresh.map((f) => f.id)];
+  }
+
+  if (Object.keys(patch).length > 0) {
+    const upd = await supabase
+      .from('sessions')
+      .update(patch)
+      .eq('id', session_id)
+      .eq('learner_id', learner_id)
+      .select('*')
+      .maybeSingle();
+    if (upd.error || !upd.data) {
+      throw new ApiError('internal', 'Failed to update session', {
+        cause: upd.error?.message ?? 'no row',
+      });
+    }
+    return c.json(await buildSnapshot(supabase, upd.data as SessionRow));
+  }
+  return c.json(await buildSnapshot(supabase, session));
+});
+
+type SessionRow = {
+  id: string;
+  test_mode: boolean;
+  ended_at: string | null;
+  subject_id: string | null;
+  pinned_topic: string | null;
+  picked_item_ids: string[] | null;
+};
+
+async function buildSnapshot(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  session: SessionRow,
+): Promise<{
+  session_id: string;
+  test_mode: boolean;
+  pinned_topic: string | null;
+  active: boolean;
+  items: Array<Record<string, unknown>>;
+  turns: TurnRow[];
+}> {
+  const ids = session.picked_item_ids ?? [];
+  let items: Array<Record<string, unknown>> = [];
+  if (ids.length > 0) {
+    const res = await supabase.from('items').select('*').in('id', ids);
+    const byId = new Map(
+      ((res.data ?? []) as Array<Record<string, unknown>>).map((it) => [it.id as string, it]),
+    );
+    items = ids
+      .map((id) => byId.get(id))
+      .filter((it): it is Record<string, unknown> => Boolean(it));
+  }
+  const turns = await loadTurns(supabase, session.id);
+  return {
+    session_id: session.id,
+    test_mode: Boolean(session.test_mode),
+    pinned_topic: session.pinned_topic ?? null,
+    active: session.ended_at == null,
+    items,
+    turns,
+  };
+}
 
 // GET /sessions/:id/summary — Doc 04 §sessions + Doc 05 §result.
 //
