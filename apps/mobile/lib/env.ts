@@ -15,3 +15,12 @@ export const ENV = {
   POSTHOG_HOST: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com',
   RELEASE: process.env.EXPO_PUBLIC_APP_RELEASE ?? 'dev',
 };
+
+// Fail fast on a misconfigured production build that would send traffic
+// (and auth tokens) over cleartext HTTP. The localhost default is dev-only.
+declare const __DEV__: boolean;
+if (typeof __DEV__ !== 'undefined' && !__DEV__ && !ENV.API_URL.startsWith('https://')) {
+  throw new Error(
+    `Production build requires an https:// API_URL — got "${ENV.API_URL}". Set EXPO_PUBLIC_API_URL.`,
+  );
+}

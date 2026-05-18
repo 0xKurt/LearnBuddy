@@ -17,6 +17,7 @@
   "test_in_days_one": "Test in 1 Tag",
   "test_in_days_other": "Test in {{count}} Tagen",
   "add_subject_tile": "Fach hinzufügen",
+  "account_a11y": "Konto & Einstellungen",
   "cta_first_session": {
     "title": "Fang an zu lernen!",
     "body": "{{name}} wartet auf dich. Tippe hier, um direkt loszulegen."
@@ -93,6 +94,7 @@
     "processing": "wird verarbeitet …",
     "failed_hint": "Fehler · lang drücken zum Löschen",
     "delete_failed": "Hat nicht geklappt — bitte nochmal versuchen.",
+    "delete_failed_title": "Löschen fehlgeschlagen",
     "page_count_one": "1 Seite",
     "page_count_other": "{{count}} Seiten"
   },

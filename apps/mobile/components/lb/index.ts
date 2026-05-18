@@ -8,6 +8,7 @@ export { BottomNav } from './BottomNav.js';
 export type { NavKey } from './BottomNav.js';
 export { Banner } from './Banner.js';
 export { EmptyState } from './EmptyState.js';
+export { LoadingState } from './LoadingState.js';
 export { Progress } from './Progress.js';
 export { CircleBtn } from './CircleBtn.js';
 export { PinPad } from './PinPad.js';

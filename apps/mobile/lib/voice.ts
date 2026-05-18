@@ -9,12 +9,17 @@
 // All exported functions are safe to call even when the native module is
 // absent; they either return false/void or throw 'voice_unavailable'.
 
-let Voice: typeof import('@react-native-voice/voice').default | null = null;
+// Type-only import (fully erased at compile time, so it does NOT load the
+// native module — the dynamic require below is still the only runtime load,
+// keeping the Expo-Go-safe degradation intact).
+import type RNVoice from '@react-native-voice/voice';
+
+let Voice: typeof RNVoice | null = null;
 try {
   // Dynamic require so the Metro bundler resolves the module but a missing
   // native binding at runtime (Expo Go) doesn't crash the JS bundle.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  Voice = (require('@react-native-voice/voice') as { default: typeof Voice }).default;
+  Voice = (require('@react-native-voice/voice') as { default: typeof RNVoice }).default;
 } catch {
   Voice = null;
 }

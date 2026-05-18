@@ -8,10 +8,10 @@ import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Btn, CircleBtn, EmptyState } from '../../../components/lb/index.js';
+import { Btn, CircleBtn, EmptyState, LoadingState } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
 import { getMaterial } from '../../../lib/api/materials.js';
 import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
@@ -56,9 +56,7 @@ export default function MaterialScreen() {
   if (materialQuery.isLoading || accountQuery.isLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={LB.ink2} />
-        </View>
+        <LoadingState />
       </SafeAreaView>
     );
   }

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn, Card, EmptyState, SubjectGlyph } from '../../../components/lb/index.js';
+import { Btn, Card, EmptyState, LoadingState, SubjectGlyph } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
 import { listSubjects, type SubjectListItem } from '../../../lib/api/subjects.js';
 import {
@@ -69,6 +69,14 @@ export default function PracticeHubScreen() {
       params: { sessionId: `s-${s.id}-${Date.now()}`, learnerId, subjectId: s.id },
     });
   };
+
+  if (accountQuery.isLoading || subjectsQuery.isLoading) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>

@@ -21,6 +21,7 @@ import {
   EmptyState,
   FolderEditorModal,
   Icon,
+  LoadingState,
   SubjectGlyph,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
@@ -113,7 +114,9 @@ export default function SubjectScreen() {
             .then(() => {
               qc.invalidateQueries({ queryKey: ['materials', 'subject', subjectId] });
             })
-            .catch(() => Alert.alert(t('material.delete_title'), t('material.delete_failed')));
+            .catch(() =>
+              Alert.alert(t('material.delete_failed_title'), t('material.delete_failed')),
+            );
         },
       },
     ]);
@@ -141,9 +144,7 @@ export default function SubjectScreen() {
   if (accountQuery.isLoading || subjectsQuery.isLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={LB.ink2} />
-        </View>
+        <LoadingState />
       </SafeAreaView>
     );
   }

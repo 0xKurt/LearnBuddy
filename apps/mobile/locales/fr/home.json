@@ -17,6 +17,7 @@
   "test_in_days_one": "Contrôle dans 1 jour",
   "test_in_days_other": "Contrôle dans {{count}} jours",
   "add_subject_tile": "Ajouter une matière",
+  "account_a11y": "Compte et réglages",
   "cta_first_session": {
     "title": "Commence à apprendre !",
     "body": "{{name}} t'attend. Appuie ici pour commencer."
@@ -93,6 +94,7 @@
     "processing": "en cours de traitement …",
     "failed_hint": "Erreur · appui long pour supprimer",
     "delete_failed": "Impossible de supprimer — réessaie.",
+    "delete_failed_title": "Échec de la suppression",
     "page_count_one": "1 page",
     "page_count_other": "{{count}} pages"
   },

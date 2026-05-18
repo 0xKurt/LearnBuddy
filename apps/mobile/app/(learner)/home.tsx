@@ -228,6 +228,8 @@ export default function HomeScreen() {
       >
         <Pressable
           onPress={() => router.push('/(admin)/unlock')}
+          accessibilityRole="button"
+          accessibilityLabel={t('account_a11y')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 }}
         >
           <Text style={{ fontSize: 12, color: LB.ink3, fontWeight: '500' }}>
@@ -299,6 +301,8 @@ export default function HomeScreen() {
         {noPracticeYet && firstSubject && (
           <Pressable
             onPress={() => router.push(`/(learner)/subject/${firstSubject.id}`)}
+            accessibilityRole="button"
+            accessibilityLabel={t('cta_first_session.title')}
             style={{ marginBottom: 18 }}
           >
             <View
@@ -431,7 +435,12 @@ function SubjectTile({ subject }: { subject: SubjectListItem }) {
 function AddSubjectTile({ onPress }: { onPress: () => void }) {
   const { t } = useTranslation('home');
   return (
-    <Pressable onPress={onPress} style={{ width: '48%' }}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={t('add_subject_tile')}
+      style={{ width: '48%' }}
+    >
       <View
         style={{
           borderRadius: 18,
@@ -653,7 +662,12 @@ function AddSubjectModal({
             <Text style={{ fontSize: 20, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
               {t('modal.title')}
             </Text>
-            <Pressable hitSlop={12} onPress={onClose}>
+            <Pressable
+              hitSlop={12}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel={t('modal.cancel')}
+            >
               <View
                 style={{
                   width: 30,

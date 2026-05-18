@@ -17,6 +17,7 @@
   "test_in_days_one": "Test in 1 day",
   "test_in_days_other": "Test in {{count}} days",
   "add_subject_tile": "Add subject",
+  "account_a11y": "Account & settings",
   "cta_first_session": {
     "title": "Start learning!",
     "body": "{{name}} is waiting for you. Tap here to get started."
@@ -93,6 +94,7 @@
     "processing": "processing …",
     "failed_hint": "Error · long-press to delete",
     "delete_failed": "Couldn't delete — please try again.",
+    "delete_failed_title": "Delete failed",
     "page_count_one": "1 page",
     "page_count_other": "{{count}} pages"
   },

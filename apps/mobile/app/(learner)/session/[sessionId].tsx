@@ -35,6 +35,7 @@ import {
   FillBlank,
   FunctionPlot,
   LatexText,
+  LoadingState,
   MathInput,
   MathKeyboard,
   SessionTopBar,
@@ -421,9 +422,7 @@ export default function SessionScreen() {
   if (boot.isLoading || accountQuery.isLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={LB.ink2} />
-        </View>
+        <LoadingState />
       </SafeAreaView>
     );
   }

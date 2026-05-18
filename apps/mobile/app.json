@@ -23,6 +23,7 @@
     },
     "android": {
       "package": "com.learnbuddy.app",
+      "predictiveBackGestureEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#f0eee9"
       },

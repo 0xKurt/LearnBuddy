@@ -17,6 +17,7 @@
   "test_in_days_one": "Examen en 1 día",
   "test_in_days_other": "Examen en {{count}} días",
   "add_subject_tile": "Añadir asignatura",
+  "account_a11y": "Cuenta y ajustes",
   "cta_first_session": {
     "title": "¡Empieza a aprender!",
     "body": "{{name}} te espera. Toca aquí para comenzar."
@@ -93,6 +94,7 @@
     "processing": "procesando …",
     "failed_hint": "Error · mantén pulsado para eliminar",
     "delete_failed": "No se pudo eliminar — inténtalo de nuevo.",
+    "delete_failed_title": "Error al eliminar",
     "page_count_one": "1 página",
     "page_count_other": "{{count}} páginas"
   },
