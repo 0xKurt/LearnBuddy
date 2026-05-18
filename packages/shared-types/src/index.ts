@@ -9,6 +9,7 @@ export * from './material.js';
 export * from './item.js';
 export * from './attempt.js';
 export * from './session.js';
+export * from './conversation.js';
 export * from './template.js';
 export * from './credits.js';
 export * from './subscription.js';
