@@ -52,13 +52,19 @@ export function Btn({
 
   return (
     <Pressable
-      onPress={disabled ? undefined : onPress}
+      onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
       android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
-      style={{ alignSelf: full ? 'stretch' : 'flex-start', opacity: disabled ? 0.6 : 1 }}
+      style={{
+        alignSelf: full ? 'stretch' : 'flex-start',
+        opacity: disabled ? 0.6 : 1,
+        borderRadius: 12,
+        overflow: 'hidden',
+      }}
     >
       {({ pressed }) => (
         <View
