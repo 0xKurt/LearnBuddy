@@ -106,9 +106,11 @@ export default function SubjectScreen() {
         text: t('common:actions.delete') ?? 'Löschen',
         style: 'destructive',
         onPress: () => {
-          void deleteMaterial(learnerId as string, m.id).then(() => {
-            qc.invalidateQueries({ queryKey: ['materials', 'subject', subjectId] });
-          });
+          void deleteMaterial(learnerId as string, m.id)
+            .then(() => {
+              qc.invalidateQueries({ queryKey: ['materials', 'subject', subjectId] });
+            })
+            .catch(() => Alert.alert(t('material.delete_title'), t('material.delete_failed')));
         },
       },
     ]);
@@ -443,7 +445,9 @@ function FolderCard({
             </View>
           </View>
           {inDays != null && (
-            <Chip tone="warning">{t('folder.test_in_days', { count: inDays })}</Chip>
+            <Chip tone="warning">
+              {inDays === 0 ? t('folder.test_today') : t('folder.test_in_days', { count: inDays })}
+            </Chip>
           )}
         </View>
       </Card>

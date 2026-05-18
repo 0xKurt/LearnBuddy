@@ -13,7 +13,9 @@
     "title": "No subjects yet.",
     "body": "Add a subject or snap your first photo — we'll take care of the rest."
   },
-  "test_in_days": "Test in {{count}} days",
+  "test_today": "Test today!",
+  "test_in_days_one": "Test in 1 day",
+  "test_in_days_other": "Test in {{count}} days",
   "add_subject_tile": "Add subject",
   "cta_first_session": {
     "title": "Start learning!",
@@ -46,7 +48,9 @@
     "rename": "Rename",
     "archive": "Archive",
     "cancel": "Cancel",
-    "test_in_days": "Test in {{count}} days"
+    "test_today": "Test today!",
+    "test_in_days_one": "Test in 1 day",
+    "test_in_days_other": "Test in {{count}} days"
   },
   "subject": {
     "not_found_title": "Subject not found.",
@@ -71,6 +75,7 @@
     "delete_body": "This material and all its questions will be removed.",
     "processing": "processing …",
     "failed_hint": "Error · long-press to delete",
+    "delete_failed": "Couldn't delete — please try again.",
     "page_count_one": "1 page",
     "page_count_other": "{{count}} pages"
   },

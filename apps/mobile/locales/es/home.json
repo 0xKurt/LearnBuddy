@@ -13,7 +13,9 @@
     "title": "Todavía no hay asignaturas.",
     "body": "Añade una asignatura o haz una foto del primer material — nosotros nos encargamos del resto."
   },
-  "test_in_days": "Examen en {{count}} días",
+  "test_today": "¡Examen hoy!",
+  "test_in_days_one": "Examen en 1 día",
+  "test_in_days_other": "Examen en {{count}} días",
   "add_subject_tile": "Añadir asignatura",
   "cta_first_session": {
     "title": "¡Empieza a aprender!",
@@ -46,7 +48,9 @@
     "rename": "Renombrar",
     "archive": "Archivar",
     "cancel": "Cancelar",
-    "test_in_days": "Examen en {{count}} días"
+    "test_today": "¡Examen hoy!",
+    "test_in_days_one": "Examen en 1 día",
+    "test_in_days_other": "Examen en {{count}} días"
   },
   "subject": {
     "not_found_title": "Asignatura no encontrada.",
@@ -71,6 +75,7 @@
     "delete_body": "Este material y todas sus preguntas serán eliminados.",
     "processing": "procesando …",
     "failed_hint": "Error · mantén pulsado para eliminar",
+    "delete_failed": "No se pudo eliminar — inténtalo de nuevo.",
     "page_count_one": "1 página",
     "page_count_other": "{{count}} páginas"
   },

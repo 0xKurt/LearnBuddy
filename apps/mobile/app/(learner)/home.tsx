@@ -310,7 +310,9 @@ function SubjectTile({ subject }: { subject: SubjectListItem }) {
           </Text>
           {subject.upcoming_test_in_days != null && (
             <Chip tone="warning">
-              {t('test_in_days', { count: subject.upcoming_test_in_days })}
+              {subject.upcoming_test_in_days === 0
+                ? t('test_today')
+                : t('test_in_days', { count: subject.upcoming_test_in_days })}
             </Chip>
           )}
         </View>

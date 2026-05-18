@@ -13,7 +13,9 @@
     "title": "Pas encore de matières.",
     "body": "Ajoute une matière ou prends une photo de ton premier support — on s'occupe du reste."
   },
-  "test_in_days": "Contrôle dans {{count}} jours",
+  "test_today": "Contrôle aujourd'hui !",
+  "test_in_days_one": "Contrôle dans 1 jour",
+  "test_in_days_other": "Contrôle dans {{count}} jours",
   "add_subject_tile": "Ajouter une matière",
   "cta_first_session": {
     "title": "Commence à apprendre !",
@@ -46,7 +48,9 @@
     "rename": "Renommer",
     "archive": "Archiver",
     "cancel": "Annuler",
-    "test_in_days": "Contrôle dans {{count}} jours"
+    "test_today": "Contrôle aujourd'hui !",
+    "test_in_days_one": "Contrôle dans 1 jour",
+    "test_in_days_other": "Contrôle dans {{count}} jours"
   },
   "subject": {
     "not_found_title": "Matière introuvable.",
@@ -71,6 +75,7 @@
     "delete_body": "Ce support et toutes ses questions seront supprimés.",
     "processing": "en cours de traitement …",
     "failed_hint": "Erreur · appui long pour supprimer",
+    "delete_failed": "Impossible de supprimer — réessaie.",
     "page_count_one": "1 page",
     "page_count_other": "{{count}} pages"
   },

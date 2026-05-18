@@ -67,9 +67,11 @@ export default function FolderScreen() {
         text: t('common:actions.delete') ?? 'Löschen',
         style: 'destructive',
         onPress: () => {
-          void deleteMaterial(learnerId as string, m.id).then(() => {
-            qc.invalidateQueries({ queryKey: ['materials', 'folder', folderId] });
-          });
+          void deleteMaterial(learnerId as string, m.id)
+            .then(() => {
+              qc.invalidateQueries({ queryKey: ['materials', 'folder', folderId] });
+            })
+            .catch(() => Alert.alert(t('material.delete_title'), t('material.delete_failed')));
         },
       },
     ]);
@@ -167,7 +169,11 @@ export default function FolderScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             <Text style={{ fontSize: 12, color: LB.ink2 }}>{`${folder.scheduled_for}`}</Text>
             {inDays != null && (
-              <Chip tone="warning">{t('folder.test_in_days', { count: inDays })}</Chip>
+              <Chip tone="warning">
+                {inDays === 0
+                  ? t('folder.test_today')
+                  : t('folder.test_in_days', { count: inDays })}
+              </Chip>
             )}
           </View>
         )}

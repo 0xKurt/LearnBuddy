@@ -13,7 +13,9 @@
     "title": "Ancora nessuna materia.",
     "body": "Aggiungi una materia o fotografa il primo materiale — al resto pensiamo noi."
   },
-  "test_in_days": "Verifica fra {{count}} giorni",
+  "test_today": "Verifica oggi!",
+  "test_in_days_one": "Verifica fra 1 giorno",
+  "test_in_days_other": "Verifica fra {{count}} giorni",
   "add_subject_tile": "Aggiungi materia",
   "cta_first_session": {
     "title": "Inizia a studiare!",
@@ -46,7 +48,9 @@
     "rename": "Rinomina",
     "archive": "Archivia",
     "cancel": "Annulla",
-    "test_in_days": "Verifica fra {{count}} giorni"
+    "test_today": "Verifica oggi!",
+    "test_in_days_one": "Verifica fra 1 giorno",
+    "test_in_days_other": "Verifica fra {{count}} giorni"
   },
   "subject": {
     "not_found_title": "Materia non trovata.",
@@ -71,6 +75,7 @@
     "delete_body": "Questo materiale e tutte le sue domande saranno rimossi.",
     "processing": "in elaborazione …",
     "failed_hint": "Errore · tieni premuto per eliminare",
+    "delete_failed": "Impossibile eliminare — riprova.",
     "page_count_one": "1 pagina",
     "page_count_other": "{{count}} pagine"
   },

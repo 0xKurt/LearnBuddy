@@ -13,7 +13,9 @@
     "title": "Noch keine Fächer.",
     "body": "Leg ein Fach an oder fotografier dein erstes Material — wir kümmern uns um den Rest."
   },
-  "test_in_days": "Test in {{count}} Tagen",
+  "test_today": "Heute Test!",
+  "test_in_days_one": "Test in 1 Tag",
+  "test_in_days_other": "Test in {{count}} Tagen",
   "add_subject_tile": "Fach hinzufügen",
   "cta_first_session": {
     "title": "Fang an zu lernen!",
@@ -35,7 +37,7 @@
   "folder": {
     "not_found_title": "Ordner nicht gefunden.",
     "not_found_body": "Vielleicht wurde er archiviert.",
-    "missing_subject": "Fehlender Betreff.",
+    "missing_subject": "Fehlendes Fach.",
     "materials_section": "Materialien",
     "no_material_title": "Noch kein Material in diesem Ordner.",
     "no_material_body": "Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst.",
@@ -46,7 +48,9 @@
     "rename": "Umbenennen",
     "archive": "Archivieren",
     "cancel": "Abbrechen",
-    "test_in_days": "Test in {{count}} Tagen"
+    "test_today": "Heute Test!",
+    "test_in_days_one": "Test in 1 Tag",
+    "test_in_days_other": "Test in {{count}} Tagen"
   },
   "subject": {
     "not_found_title": "Fach nicht gefunden.",
@@ -71,6 +75,7 @@
     "delete_body": "Dieses Material und alle zugehörigen Fragen werden entfernt.",
     "processing": "wird verarbeitet …",
     "failed_hint": "Fehler · lang drücken zum Löschen",
+    "delete_failed": "Hat nicht geklappt — bitte nochmal versuchen.",
     "page_count_one": "1 Seite",
     "page_count_other": "{{count}} Seiten"
   },
