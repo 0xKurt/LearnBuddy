@@ -84,6 +84,15 @@ async function attemptRefresh(): Promise<Session | null> {
   return refreshInFlight;
 }
 
+/** Force a token refresh and return the fresh access token (or null if the
+ *  session is dead). Used by the streaming turn endpoint, which bypasses
+ *  `api()` and must handle a mid-conversation 401 itself. Shares the same
+ *  in-flight coalescing as `api()`'s 401 path. */
+export async function refreshAuthToken(): Promise<string | null> {
+  const s = await attemptRefresh();
+  return s?.access_token ?? null;
+}
+
 export async function api<S extends ZodTypeAny>(
   path: string,
   opts: RequestOptions<S>,

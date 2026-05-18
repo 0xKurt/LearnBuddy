@@ -123,14 +123,27 @@ export default function SessionScreen() {
         );
         let startIdx = items.findIndex((it) => !correctItem.has(it.id));
         if (startIdx < 0) startIdx = items.length;
-        const priorMsgs: Msg[] = snap.turns
-          .filter((tn) => tn.role === 'learner' || tn.role === 'tutor')
-          .map((tn) => ({
+        // Rebuild a readable, chronological transcript: insert each item's
+        // question bubble the first time that item appears in the thread, so
+        // the learner sees Question → answer → feedback → … in order rather
+        // than a contextless wall of answers.
+        const qById = new Map(items.map((it) => [it.id, it.question]));
+        const priorMsgs: Msg[] = [];
+        let lastItemId: string | null = null;
+        for (const tn of snap.turns) {
+          if (tn.role !== 'learner' && tn.role !== 'tutor') continue;
+          if (tn.item_id && tn.item_id !== lastItemId) {
+            const q = qById.get(tn.item_id);
+            if (q) priorMsgs.push({ id: `q-${tn.item_id}`, role: 'question', text: q });
+            lastItemId = tn.item_id;
+          }
+          priorMsgs.push({
             id: tn.id,
             role: tn.role === 'learner' ? ('learner' as const) : ('tutor' as const),
             text: tn.content,
             verdict: normVerdict(tn.verdict),
-          }));
+          });
+        }
         return {
           serverSessionId: snap.session_id,
           items,
@@ -165,7 +178,6 @@ export default function SessionScreen() {
   const [canAdvance, setCanAdvance] = useState(false);
   const [tries, setTries] = useState(0);
   const [voiceOn, setVoiceOn] = useState(false);
-  const voiceFailsRef = useRef(0);
   const [pinned, setPinned] = useState<string | null>(null);
   const [explainOpen, setExplainOpen] = useState(false);
   const [done, setDone] = useState(false);
@@ -187,7 +199,11 @@ export default function SessionScreen() {
     const seed = [...boot.data.priorMsgs];
     if (boot.data.startIdx < boot.data.items.length) {
       const it = boot.data.items[boot.data.startIdx]!;
-      seed.push({ id: `q-${it.id}`, role: 'question', text: it.question });
+      // On resume the question may already be in the rebuilt thread (the
+      // in-progress item had earlier attempts) — don't show it twice.
+      if (!seed.some((m) => m.id === `q-${it.id}`)) {
+        seed.push({ id: `q-${it.id}`, role: 'question', text: it.question });
+      }
     } else {
       setDone(true);
     }
@@ -308,11 +324,13 @@ export default function SessionScreen() {
   );
 
   const onVoiceUnavailable = useCallback(() => {
-    voiceFailsRef.current += 1;
-    if (voiceFailsRef.current >= 2) {
-      setVoiceOn(false);
-      toast.info(t('voice.switched_to_text'));
-    }
+    // Voice can't be used here (module missing, permission denied, or it
+    // threw). Don't strand the learner waiting for a 2nd failure — fall
+    // back to the keyboard right away. The toggle still lets them retry.
+    setVoiceOn((on) => {
+      if (on) toast.info(t('voice.switched_to_text'));
+      return false;
+    });
   }, [t]);
 
   const finish = useCallback(async () => {
@@ -703,30 +721,52 @@ function Composer({
   canUseVoice: boolean;
   onToggleVoice: () => void;
 }) {
+  // Brief selected-state feedback before the answer bubble appears.
+  const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => {
+    setPicked(null);
+  }, [item.id]);
+
   if (item.answer_kind === 'multiple_choice') {
     return (
       <View style={{ gap: 8 }}>
-        {(item.mc_options ?? []).map((opt, i) => (
-          <Pressable
-            key={i}
-            onPress={() => !sending && onPickMc(i)}
-            accessibilityRole="button"
-            accessibilityLabel={opt}
-          >
-            <View
-              style={{
-                padding: 14,
-                borderRadius: 14,
-                backgroundColor: '#fff',
-                borderColor: LB.hairline,
-                borderWidth: 1,
-                opacity: sending ? 0.5 : 1,
+        {(item.mc_options ?? []).map((opt, i) => {
+          const on = picked === i;
+          return (
+            <Pressable
+              key={i}
+              onPress={() => {
+                if (sending) return;
+                setPicked(i);
+                onPickMc(i);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={opt}
+              accessibilityState={{ selected: on }}
             >
-              <Text style={{ fontSize: 15, color: LB.ink }}>{opt}</Text>
-            </View>
-          </Pressable>
-        ))}
+              <View
+                style={{
+                  padding: 14,
+                  borderRadius: 14,
+                  backgroundColor: on ? LB.primaryLt : '#fff',
+                  borderColor: on ? LB.primaryDk : LB.hairline,
+                  borderWidth: 1,
+                  opacity: sending && !on ? 0.5 : 1,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: on ? LB.primaryDk : LB.ink,
+                    fontWeight: on ? '600' : '400',
+                  }}
+                >
+                  {opt}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
     );
   }

@@ -23,6 +23,10 @@ export default function LearnerLayout() {
   const segments = useSegments();
   const tail = segments[segments.length - 1];
   const active = segmentToNavKey(tail);
+  // The session (chat) and capture (camera) are focused, full-screen flows —
+  // the global tab bar would be clutter and an escape hatch that bypasses
+  // their own exit affordances.
+  const hideNav = segments.includes('session') || segments.includes('capture');
 
   useHierarchicalBack();
 
@@ -51,7 +55,7 @@ export default function LearnerLayout() {
       <View style={{ flex: 1 }}>
         <Slot />
       </View>
-      <BottomNav active={active} onNavigate={onNavigate} />
+      {hideNav ? null : <BottomNav active={active} onNavigate={onNavigate} />}
     </View>
   );
 }

@@ -131,6 +131,7 @@ export function VoiceButton({
     } catch {
       setState('error');
       setError(unavailableLabel);
+      onUnavailable?.(false);
     }
   }, [
     available,

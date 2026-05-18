@@ -162,7 +162,23 @@ export default function ResultScreen() {
         )}
 
         <View style={{ gap: 8, marginTop: 18 }}>
-          <Btn size="lg" full onPress={() => router.replace('/(learner)/practice')}>
+          <Btn
+            size="lg"
+            full
+            onPress={() => {
+              // Start a fresh session now — FSRS resurfaces the items just
+              // missed first, so this really is "again with the hard ones"
+              // instead of dumping the learner back at a picker.
+              if (learnerId) {
+                router.replace({
+                  pathname: '/(learner)/session/[sessionId]',
+                  params: { sessionId: `again-${Date.now()}`, learnerId },
+                });
+              } else {
+                router.replace('/(learner)/practice');
+              }
+            }}
+          >
             {t('cta_review_hard')}
           </Btn>
           <Btn size="md" full variant="ghost" onPress={() => router.replace('/(learner)/home')}>

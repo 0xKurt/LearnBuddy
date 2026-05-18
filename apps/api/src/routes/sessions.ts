@@ -434,6 +434,8 @@ sessionRoutes.get('/:id/summary', async (c) => {
 // token, persists both turns, and accounts credits (idempotent on
 // client_turn_id so a flaky retry replays instead of double-charging).
 const ATTEMPT_ESTIMATE = 1; // Doc 08 §estimated-costs-per-action
+// Cap on prior turns replayed to the model per turn (~12 Q/A exchanges).
+const MAX_HISTORY_MESSAGES = 24;
 
 type TurnRow = {
   id: string;
@@ -563,7 +565,7 @@ sessionRoutes.post(
       // 5. Build the thread + hint accounting from prior turns.
       const turns = await loadTurns(supabase, session_id);
       const nextIndex = turns.reduce((mx, t) => Math.max(mx, t.turn_index), -1) + 1;
-      const history: ConversationMessage[] = turns
+      const fullHistory: ConversationMessage[] = turns
         .filter(
           (t) =>
             (t.role === 'learner' && t.kind === 'answer') ||
@@ -573,6 +575,14 @@ sessionRoutes.post(
           role: t.role === 'learner' ? ('learner' as const) : ('tutor' as const),
           content: t.content,
         }));
+      // Bound the transcript sent to the model so a long "keep going"
+      // marathon doesn't grow input tokens/cost unbounded. The most recent
+      // exchanges carry the conversational coherence; older items are still
+      // recorded server-side and surfaced again via FSRS, not via context.
+      const history =
+        fullHistory.length > MAX_HISTORY_MESSAGES
+          ? fullHistory.slice(-MAX_HISTORY_MESSAGES)
+          : fullHistory;
       const hintsGivenForItem = turns.filter(
         (t) =>
           t.role === 'tutor' &&

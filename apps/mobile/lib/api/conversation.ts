@@ -14,7 +14,7 @@ import {
 
 import { getSessionSync } from '../auth/session.js';
 import { ENV } from '../env.js';
-import { ApiError, api } from './client.js';
+import { ApiError, api, refreshAuthToken } from './client.js';
 
 export type TurnInput = {
   client_turn_id: string;
@@ -40,17 +40,25 @@ export async function streamTurn(
   input: TurnInput,
   onEvent: (e: ConversationSseEventT) => void,
 ): Promise<void> {
-  const session = getSessionSync();
   const url = new URL(`/sessions/${sessionId}/turn`, ENV.API_URL).toString();
-  const res = await streamingFetch(url, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(session ? { authorization: `Bearer ${session.access_token}` } : {}),
-      'x-learner-id': learnerId,
-    },
-    body: JSON.stringify(input),
-  });
+  const doFetch = (token: string | null | undefined) =>
+    streamingFetch(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+        'x-learner-id': learnerId,
+      },
+      body: JSON.stringify(input),
+    });
+
+  let res = await doFetch(getSessionSync()?.access_token);
+  // The access token expired mid-conversation — refresh once and retry,
+  // mirroring api()'s 401 handling (this path bypasses api()).
+  if (res.status === 401) {
+    const fresh = await refreshAuthToken();
+    if (fresh) res = await doFetch(fresh);
+  }
 
   if (!res.ok) {
     let code = 'unknown';
