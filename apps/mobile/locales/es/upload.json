@@ -20,5 +20,10 @@
   "insufficient_credits": {
     "title": "Sin créditos por ahora.",
     "body": "Has gastado los créditos de este periodo. Un adulto puede recargar en ajustes, o esperar al siguiente periodo."
+  },
+  "async": {
+    "title": "Procesando en segundo plano",
+    "body": "La conexión se interrumpió, pero el material se sigue procesando en segundo plano. Comprueba tu lista de materiales en un momento.",
+    "view_list": "Ver materiales"
   }
 }

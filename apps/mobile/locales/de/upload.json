@@ -20,5 +20,10 @@
   "insufficient_credits": {
     "title": "Aktuell sind keine Credits mehr verfügbar.",
     "body": "Im aktuellen Zeitraum sind alle Credits aufgebraucht. Erwachsene können das Konto in den Einstellungen aufstocken oder bis zum nächsten Zeitraum warten."
+  },
+  "async": {
+    "title": "Verarbeitung läuft noch",
+    "body": "Die Verbindung wurde unterbrochen, aber das Material wird im Hintergrund fertig verarbeitet. Schau gleich in deine Materialliste.",
+    "view_list": "Zur Materialliste"
   }
 }

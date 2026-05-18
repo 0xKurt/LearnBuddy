@@ -103,7 +103,7 @@
     "method_biometric_fingerprint": "Mit Fingerabdruck einrichten",
     "method_pin": "Lieber eine PIN",
     "biometric_failed": "Biometrie hat nicht geklappt — bitte nochmal versuchen.",
-    "biometric_offer": "Mit Face ID / Touch ID öffnen?",
+    "biometric_offer": "Mit Biometrie bestätigen",
     "biometric_yes": "Ja, einrichten",
     "biometric_no": "Nein, nur PIN",
     "cta_save": "PIN speichern",

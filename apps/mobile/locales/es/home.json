@@ -62,8 +62,15 @@
     "new_folder": "Carpeta",
     "new_material": "Material",
     "start_practice": "Practicar",
+    "add_folder_menu": "Crear carpeta",
     "archive": "Archivar",
     "cancel": "Cancelar"
+  },
+  "material": {
+    "delete_title": "¿Eliminar material?",
+    "delete_body": "Este material y todas sus preguntas serán eliminados.",
+    "processing": "procesando …",
+    "failed_hint": "Error · mantén pulsado para eliminar"
   },
   "subjects": {
     "math": "Matemáticas",

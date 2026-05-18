@@ -16,6 +16,7 @@
 import bcrypt from 'bcryptjs';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 const KEY_HASH = 'lb.pin.hash';
 const KEY_BIOMETRIC = 'lb.pin.biometric_enabled';
@@ -93,8 +94,15 @@ export async function hasBiometricHardware(): Promise<boolean> {
 export async function getBiometricType(): Promise<'face' | 'fingerprint' | null> {
   try {
     const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-    if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) return 'face';
-    if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) return 'fingerprint';
+    // Android face unlock is class-2 (weaker); fingerprint is class-3 (hardware-backed).
+    // Prefer fingerprint on Android so devices that have both don't get labelled "Face ID".
+    if (Platform.OS === 'android') {
+      if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) return 'fingerprint';
+      if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) return 'face';
+    } else {
+      if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) return 'face';
+      if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) return 'fingerprint';
+    }
     return null;
   } catch {
     return null;

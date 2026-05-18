@@ -16,7 +16,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn, PinPad } from '../../components/lb/index.js';
 import {
   authenticateBiometric,
-  getBiometricType,
   hasPin,
   hasBiometricHardware,
   isBiometricEnabled,
@@ -35,7 +34,6 @@ export default function AdminUnlockScreen() {
   const { t } = useTranslation('auth');
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
   const [biometricReady, setBiometricReady] = useState(false);
-  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint' | null>(null);
   const [pinSet, setPinSet] = useState(true); // optimistic; updated on mount
   const [failures, setFailures] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number>(0);
@@ -51,16 +49,14 @@ export default function AdminUnlockScreen() {
   // Determine biometric availability + persisted lockout once.
   useEffect(() => {
     (async () => {
-      const [hw, pref, pinExists, lockUntil, bType] = await Promise.all([
+      const [hw, pref, pinExists, lockUntil] = await Promise.all([
         hasBiometricHardware(),
         isBiometricEnabled(),
         hasPin(),
         pinLockedUntil(),
-        getBiometricType(),
       ]);
       const ready = hw && pref;
       setBiometricReady(ready);
-      setBiometricType(bType);
       setPinSet(pinExists);
       setLockedUntil(lockUntil);
 
@@ -199,11 +195,7 @@ export default function AdminUnlockScreen() {
                 void onBiometricPress();
               }}
             >
-              {biometricType === 'face'
-                ? t('unlock.biometric_cta_face')
-                : biometricType === 'fingerprint'
-                  ? t('unlock.biometric_cta_fingerprint')
-                  : t('unlock.biometric_cta')}
+              {t('unlock.biometric_cta')}
             </Btn>
           )}
           <Pressable onPress={() => router.replace('/login?unlock=1' as never)} hitSlop={12}>

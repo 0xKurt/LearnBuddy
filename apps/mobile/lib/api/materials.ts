@@ -239,3 +239,11 @@ export async function listMaterialItems(learnerId: string, materialId: string): 
   });
   return res.items;
 }
+
+export async function deleteMaterial(learnerId: string, materialId: string): Promise<void> {
+  await api(`/materials/${materialId}`, {
+    method: 'DELETE',
+    schema: z.object({ ok: z.boolean() }),
+    learnerId,
+  });
+}

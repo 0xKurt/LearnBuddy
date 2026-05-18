@@ -103,7 +103,7 @@
     "method_biometric_fingerprint": "Set up fingerprint",
     "method_pin": "I'd rather use a PIN",
     "biometric_failed": "Biometric didn't work — please try again.",
-    "biometric_offer": "Open with Face ID / Touch ID?",
+    "biometric_offer": "Confirm with biometrics",
     "biometric_yes": "Yes, set it up",
     "biometric_no": "No, PIN only",
     "cta_save": "Save PIN",

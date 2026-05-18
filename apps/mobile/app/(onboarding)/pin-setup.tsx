@@ -16,7 +16,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn, PinPad } from '../../components/lb/index.js';
 import {
   authenticateBiometric,
-  getBiometricType,
   hasBiometricHardware,
   setBiometricEnabled,
   setPin,
@@ -33,17 +32,12 @@ export default function PinSetupScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint' | null>(null);
   const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
     void (async () => {
       const avail = await hasBiometricHardware();
       setBiometricAvailable(avail);
-      if (avail) {
-        const type = await getBiometricType();
-        setBiometricType(type);
-      }
       setPhase(avail ? 'method' : 'choose');
     })();
   }, []);
@@ -199,13 +193,7 @@ export default function PinSetupScreen() {
               }}
               disabled={busy}
             >
-              {busy
-                ? t('pin.saving')
-                : biometricType === 'face'
-                  ? t('pin.method_biometric_face')
-                  : biometricType === 'fingerprint'
-                    ? t('pin.method_biometric_fingerprint')
-                    : t('pin.method_biometric')}
+              {busy ? t('pin.saving') : t('pin.method_biometric')}
             </Btn>
             <Btn size="lg" full variant="ghost" onPress={onPickPin}>
               {t('pin.method_pin')}

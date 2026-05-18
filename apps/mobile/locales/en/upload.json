@@ -20,5 +20,10 @@
   "insufficient_credits": {
     "title": "Out of credits for now.",
     "body": "You've used up the credits for this period. An adult can top up in settings, or wait for the next period."
+  },
+  "async": {
+    "title": "Still processing",
+    "body": "The connection dropped, but your material is being processed in the background. Check your materials list in a moment.",
+    "view_list": "Go to materials"
   }
 }

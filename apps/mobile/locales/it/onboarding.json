@@ -103,7 +103,7 @@
     "method_biometric_fingerprint": "Configura impronta digitale",
     "method_pin": "Preferisco un PIN",
     "biometric_failed": "La biometria non ha funzionato — riprova.",
-    "biometric_offer": "Aprire con Face ID / Touch ID?",
+    "biometric_offer": "Conferma con biometria",
     "biometric_yes": "Sì, configura",
     "biometric_no": "No, solo PIN",
     "cta_save": "Salva PIN",

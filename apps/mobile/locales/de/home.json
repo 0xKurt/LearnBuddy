@@ -62,8 +62,15 @@
     "new_folder": "Ordner",
     "new_material": "Material",
     "start_practice": "Üben",
+    "add_folder_menu": "Ordner anlegen",
     "archive": "Archivieren",
     "cancel": "Abbrechen"
+  },
+  "material": {
+    "delete_title": "Material löschen?",
+    "delete_body": "Dieses Material und alle zugehörigen Fragen werden entfernt.",
+    "processing": "wird verarbeitet …",
+    "failed_hint": "Fehler · lang drücken zum Löschen"
   },
   "subjects": {
     "math": "Mathematik",

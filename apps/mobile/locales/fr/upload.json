@@ -20,5 +20,10 @@
   "insufficient_credits": {
     "title": "Plus de crédits pour le moment.",
     "body": "Tu as utilisé tous les crédits de cette période. Un adulte peut recharger dans les réglages, ou attendre la prochaine période."
+  },
+  "async": {
+    "title": "Traitement en cours",
+    "body": "La connexion s'est interrompue, mais ton support est en cours de traitement en arrière-plan. Vérifie ta liste de supports dans un moment.",
+    "view_list": "Voir les supports"
   }
 }

@@ -18,7 +18,11 @@ import {
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
 import { listFolders } from '../../../lib/api/folders.js';
-import { listMaterials, type MaterialListItem } from '../../../lib/api/materials.js';
+import {
+  deleteMaterial,
+  listMaterials,
+  type MaterialListItem,
+} from '../../../lib/api/materials.js';
 import { LB } from '../../../lib/theme/colors.js';
 
 function daysUntil(scheduled: string | null, now = new Date()): number | null {
@@ -55,6 +59,21 @@ export default function FolderScreen() {
   const readyMaterials = materials.filter((m) => m.extraction_status === 'ready');
 
   const qc = useQueryClient();
+
+  const handleDeleteMaterial = (m: MaterialListItem) => {
+    Alert.alert(t('material.delete_title'), t('material.delete_body'), [
+      { text: t('folder.cancel'), style: 'cancel' },
+      {
+        text: t('common:actions.delete') ?? 'Löschen',
+        style: 'destructive',
+        onPress: () => {
+          void deleteMaterial(learnerId as string, m.id).then(() => {
+            qc.invalidateQueries({ queryKey: ['materials', 'folder', folderId] });
+          });
+        },
+      },
+    ]);
+  };
 
   const openFolderMenu = () => {
     if (!folder) return;
@@ -185,6 +204,7 @@ export default function FolderScreen() {
                       params: { materialId: m.id },
                     })
                   }
+                  onDelete={() => handleDeleteMaterial(m)}
                 />
               ))}
             </View>
@@ -242,46 +262,59 @@ export default function FolderScreen() {
   );
 }
 
-function MaterialRow({ material, onPress }: { material: MaterialListItem; onPress: () => void }) {
-  const statusColor =
-    material.extraction_status === 'ready'
-      ? LB.primary
-      : material.extraction_status === 'failed'
-        ? LB.danger
-        : LB.ink3;
+function MaterialRow({
+  material,
+  onPress,
+  onDelete,
+}: {
+  material: MaterialListItem;
+  onPress: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation('home');
+  const isReady = material.extraction_status === 'ready';
+  const isFailed = material.extraction_status === 'failed';
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={isReady ? onPress : undefined}
+      onLongPress={isFailed ? onDelete : undefined}
+      delayLongPress={400}
       style={{
         padding: 12,
         borderRadius: 12,
-        backgroundColor: '#fff',
-        borderColor: LB.hairline,
+        backgroundColor: isFailed ? 'rgba(177,73,60,0.06)' : '#fff',
+        borderColor: isFailed ? LB.danger : LB.hairline,
         borderWidth: 1,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
       }}
     >
-      <Icon name="camera" size={18} color={LB.ink3} />
+      <Icon name="camera" size={18} color={isFailed ? LB.danger : LB.ink3} />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontWeight: '500', color: LB.ink }} numberOfLines={1}>
+        <Text
+          style={{ fontSize: 14, fontWeight: '500', color: isFailed ? LB.danger : LB.ink }}
+          numberOfLines={1}
+        >
           {material.title ?? 'Material'}
         </Text>
-        {material.page_count != null && (
+        {isFailed ? (
+          <Text style={{ fontSize: 11, color: LB.danger, marginTop: 1 }}>
+            {t('material.failed_hint')}
+          </Text>
+        ) : !isReady ? (
+          <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 1 }}>
+            {t('material.processing')}
+          </Text>
+        ) : material.page_count != null ? (
           <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 1 }}>
             {material.page_count} {material.page_count === 1 ? 'Seite' : 'Seiten'}
           </Text>
-        )}
+        ) : null}
       </View>
-      <View
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: statusColor,
-        }}
-      />
+      {!isReady && !isFailed && <ActivityIndicator size="small" color={LB.ink3} />}
+      {isFailed && <Text style={{ fontSize: 16, color: LB.danger }}>⚠</Text>}
     </Pressable>
   );
 }

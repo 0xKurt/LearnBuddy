@@ -76,6 +76,7 @@ export function Btn({
           }}
         >
           <Text
+            numberOfLines={1}
             style={{
               color: v.color,
               fontSize: s.fontSize,

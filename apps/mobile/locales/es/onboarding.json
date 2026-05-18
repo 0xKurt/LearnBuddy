@@ -103,7 +103,7 @@
     "method_biometric_fingerprint": "Configurar huella dactilar",
     "method_pin": "Prefiero un PIN",
     "biometric_failed": "La biometría no funcionó — inténtalo de nuevo.",
-    "biometric_offer": "¿Abrir con Face ID / Touch ID?",
+    "biometric_offer": "Confirmar con biometría",
     "biometric_yes": "Sí, configurar",
     "biometric_no": "No, solo PIN",
     "cta_save": "Guardar PIN",

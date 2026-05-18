@@ -86,12 +86,15 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    if (__DEV__) return;
     void (async () => {
       const seen = await SecureStore.getItemAsync('lb_whats_new_seen');
-      if (seen !== WHATS_NEW_VERSION) {
+      // First install: seen is null — mark silently, don't show.
+      // Upgrade: seen is an older version — show what's new.
+      if (seen !== null && seen !== WHATS_NEW_VERSION) {
         setShowWhatsNew(true);
-        await SecureStore.setItemAsync('lb_whats_new_seen', WHATS_NEW_VERSION);
       }
+      await SecureStore.setItemAsync('lb_whats_new_seen', WHATS_NEW_VERSION);
     })();
   }, []);
 

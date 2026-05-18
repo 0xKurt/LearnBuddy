@@ -62,8 +62,15 @@
     "new_folder": "Folder",
     "new_material": "Material",
     "start_practice": "Practice",
+    "add_folder_menu": "Create folder",
     "archive": "Archive",
     "cancel": "Cancel"
+  },
+  "material": {
+    "delete_title": "Delete material?",
+    "delete_body": "This material and all its questions will be removed.",
+    "processing": "processing …",
+    "failed_hint": "Error · long-press to delete"
   },
   "subjects": {
     "math": "Maths",
