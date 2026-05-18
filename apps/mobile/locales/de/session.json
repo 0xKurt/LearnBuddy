@@ -9,9 +9,33 @@
     "end": "Beenden"
   },
   "question_label": "Frage {{index}}",
+  "question_label_short": "Frage",
   "submit": "Senden",
+  "send": "Senden",
   "checking": "Prüfe …",
   "next": "Weiter",
+  "keep_going_empty": "Für jetzt ist alles geschafft — fein gemacht!",
+  "stream_error": {
+    "generic": "Das hat gerade nicht geklappt. Tippe deine Antwort gern nochmal.",
+    "insufficient_credits": "Heute ist das Guthaben aufgebraucht. Morgen geht es weiter.",
+    "session_ended": "Diese Sitzung ist schon beendet.",
+    "evaluation_failed": "Ich konnte gerade nicht antworten. Versuch es gleich nochmal.",
+    "transcription_failed": "Ich hab dich nicht ganz verstanden. Sag es nochmal oder tippe.",
+    "empty_answer": "Da war noch keine Antwort dabei.",
+    "not_found": "Diese Aufgabe gibt es nicht mehr."
+  },
+  "done": {
+    "title": "Geschafft!",
+    "body": "Schön, dass du geübt hast. Magst du noch weitermachen?",
+    "keep_going": "Weiter so",
+    "finish": "Fertig"
+  },
+  "pin": {
+    "pin": "Auf dieses Thema",
+    "pinned": "Thema gewählt",
+    "on": "Wir bleiben bei {{topic}}.",
+    "off": "Wieder gemischt."
+  },
   "verdict": {
     "correct": "Genau!",
     "partially_correct": "Fast richtig",
@@ -30,7 +54,10 @@
     "idle": "Tippen oder halten zum Sprechen",
     "active": "Ich höre … (tippen zum Beenden)",
     "permission_rationale": "LearnBuddy hört kurz mit, damit du auch laut antworten kannst. Audio wird nicht gespeichert.",
-    "unavailable": "Sprechen ist hier noch nicht aktiv — tippe deine Antwort einfach ein."
+    "unavailable": "Sprechen ist hier noch nicht aktiv — tippe deine Antwort einfach ein.",
+    "switched_to_text": "Wir tippen jetzt weiter.",
+    "use_keyboard": "Lieber tippen",
+    "use_voice": "Lieber sprechen"
   },
   "explain": {
     "pill": "Erklär mir das",

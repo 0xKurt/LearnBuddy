@@ -44,6 +44,10 @@ type Props = {
   unavailableLabel: string;
   /** Fires exactly once per recording session with the final transcript. */
   onTranscript: (text: string) => void;
+  /** Fires when voice can't be used here (module missing or an error),
+   *  so the parent can fall back to the keyboard. `permission` is true
+   *  when the failure looks like a denied mic/speech permission. */
+  onUnavailable?: (permission: boolean) => void;
   disabled?: boolean;
 };
 
@@ -54,9 +58,16 @@ export function VoiceButton({
   permissionRationale,
   unavailableLabel,
   onTranscript,
+  onUnavailable,
   disabled = false,
 }: Props) {
   const available = isVoiceAvailable();
+
+  // Tell the parent once if the native recognizer isn't linked at all, so
+  // it can switch to the keyboard instead of stranding the learner.
+  useEffect(() => {
+    if (!available) onUnavailable?.(false);
+  }, [available, onUnavailable]);
   const [state, setState] = useState<VoiceState>('idle');
   const [partial, setPartial] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -114,13 +125,23 @@ export function VoiceButton({
           // in the message when authorization was refused.
           const looksLikePermission = /denied|permission|not.?authorized/i.test(msg);
           setError(looksLikePermission ? permissionRationale : msg);
+          onUnavailable?.(looksLikePermission);
         },
       });
     } catch {
       setState('error');
       setError(unavailableLabel);
     }
-  }, [available, disabled, state, locale, permissionRationale, unavailableLabel, finishAndSubmit]);
+  }, [
+    available,
+    disabled,
+    state,
+    locale,
+    permissionRationale,
+    unavailableLabel,
+    finishAndSubmit,
+    onUnavailable,
+  ]);
 
   const onPressOut = useCallback(async () => {
     if (!available || disabled) return;

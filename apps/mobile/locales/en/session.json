@@ -9,9 +9,33 @@
     "end": "End"
   },
   "question_label": "Question {{index}}",
+  "question_label_short": "Question",
   "submit": "Send",
+  "send": "Send",
   "checking": "Checking …",
   "next": "Next",
+  "keep_going_empty": "That's everything for now — nicely done!",
+  "stream_error": {
+    "generic": "That didn't go through. Feel free to type your answer again.",
+    "insufficient_credits": "Today's credits are used up. We'll pick this up tomorrow.",
+    "session_ended": "This session has already ended.",
+    "evaluation_failed": "I couldn't answer just now. Give it another try.",
+    "transcription_failed": "I didn't quite catch that. Say it again or type it.",
+    "empty_answer": "There was no answer in there yet.",
+    "not_found": "That question doesn't exist anymore."
+  },
+  "done": {
+    "title": "All done!",
+    "body": "Great that you practised. Want to keep going?",
+    "keep_going": "Keep going",
+    "finish": "Done"
+  },
+  "pin": {
+    "pin": "Focus this topic",
+    "pinned": "Topic focused",
+    "on": "We'll stay on {{topic}}.",
+    "off": "Mixed again."
+  },
   "verdict": {
     "correct": "Spot on!",
     "partially_correct": "Almost there",
@@ -30,7 +54,10 @@
     "idle": "Tap or hold to talk",
     "active": "I'm listening … (tap to finish)",
     "permission_rationale": "LearnBuddy listens briefly so you can answer out loud. Audio is never stored.",
-    "unavailable": "Voice isn't available yet — just type your answer for now."
+    "unavailable": "Voice isn't available yet — just type your answer for now.",
+    "switched_to_text": "We'll keep typing now.",
+    "use_keyboard": "Rather type",
+    "use_voice": "Rather speak"
   },
   "explain": {
     "pill": "Explain this",
