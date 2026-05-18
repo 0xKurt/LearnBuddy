@@ -16,6 +16,12 @@ export const SubjectKind = z.enum([
   'art_music',
   'general',
   'other',
+  'computer_science',
+  'economics',
+  'law',
+  'philosophy',
+  'literature',
+  'sports',
 ]);
 export type SubjectKind = z.infer<typeof SubjectKind>;
 
@@ -30,13 +36,7 @@ export const AnswerKind = z.enum([
 ]);
 export type AnswerKind = z.infer<typeof AnswerKind>;
 
-export const StimulusKind = z.enum([
-  'none',
-  'study_asset',
-  'function_plot',
-  'svg',
-  'coord_grid',
-]);
+export const StimulusKind = z.enum(['none', 'study_asset', 'function_plot', 'svg', 'coord_grid']);
 export type StimulusKind = z.infer<typeof StimulusKind>;
 
 export const AnswerMode = z.enum(['voice', 'text', 'multiple_choice']);
@@ -51,13 +51,7 @@ export type EvaluatedBy = z.infer<typeof EvaluatedBy>;
 export const Tier = z.enum(['trial', 'standard', 'plus']);
 export type Tier = z.infer<typeof Tier>;
 
-export const SubscriptionStatus = z.enum([
-  'trial',
-  'active',
-  'grace',
-  'expired',
-  'cancelled',
-]);
+export const SubscriptionStatus = z.enum(['trial', 'active', 'grace', 'expired', 'cancelled']);
 export type SubscriptionStatus = z.infer<typeof SubscriptionStatus>;
 
 export const ExtractionStatus = z.enum(['pending', 'ready', 'failed']);

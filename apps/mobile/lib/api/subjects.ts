@@ -41,6 +41,13 @@ export async function listSubjects(learnerId: string): Promise<SubjectListItem[]
   });
 }
 
+export async function listArchivedSubjects(learnerId: string): Promise<SubjectListItem[]> {
+  return api(`/learners/${learnerId}/subjects?show_archived=true`, {
+    method: 'GET',
+    schema: z.array(SubjectListItem),
+  });
+}
+
 export async function createSubject(
   learnerId: string,
   input: SubjectCreateInput,
@@ -69,6 +76,13 @@ export async function updateSubject(
 
 export async function archiveSubject(id: string): Promise<{ id: string; archived: true }> {
   return api(`/subjects/${id}`, { method: 'DELETE' }) as Promise<{ id: string; archived: true }>;
+}
+
+export async function restoreSubject(id: string): Promise<{ id: string; restored: true }> {
+  return api(`/subjects/${id}/restore`, { method: 'POST' }) as Promise<{
+    id: string;
+    restored: true;
+  }>;
 }
 
 export async function getScheduleSummary(learnerId: string): Promise<ScheduleSummary> {

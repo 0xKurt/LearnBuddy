@@ -80,130 +80,136 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
         onPress={handleClose}
         accessibilityRole="button"
         accessibilityLabel={t('explain.close')}
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(20,15,30,0.35)',
-          justifyContent: 'flex-end',
-        }}
+        style={{ flex: 1 }}
       >
-        <Pressable
-          // Inner pressable swallows taps so they don't bubble to the backdrop.
-          onPress={() => undefined}
-          style={{
-            backgroundColor: LB.paper,
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
-            paddingTop: 14,
-            paddingHorizontal: 20,
-            paddingBottom: 24,
-            maxHeight: '80%',
-          }}
+        <View
+          style={{ flex: 1, backgroundColor: 'rgba(20,15,30,0.35)', justifyContent: 'flex-end' }}
         >
-          {/* Handle */}
-          <View
-            style={{
-              alignSelf: 'center',
-              width: 40,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: LB.ink4,
-              marginBottom: 14,
-            }}
-          />
-
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: '600',
-              color: LB.ink,
-              letterSpacing: -0.4,
-              marginBottom: 6,
-            }}
+          <Pressable
+            // Inner pressable swallows taps so they don't bubble to the backdrop.
+            onPress={() => undefined}
           >
-            {t('explain.title')}
-          </Text>
-          <Text style={{ fontSize: 13, color: LB.ink2, marginBottom: 16, lineHeight: 18 }}>
-            {t('explain.subtitle')}
-          </Text>
-
-          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-            {TABS.map((tab) => {
-              const isActive =
-                activeTab === tab.key && (loading || text !== null || error !== null);
-              return (
-                <Pressable
-                  key={tab.key}
-                  onPress={() => requestExplanation(tab.key)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isActive }}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    paddingHorizontal: 14,
-                    borderRadius: 16,
-                    backgroundColor: isActive ? LB.primaryLt : '#fff',
-                    borderColor: isActive ? LB.primaryDk : LB.hairline,
-                    borderWidth: 1,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      color: isActive ? LB.primaryDk : LB.ink,
-                      textAlign: 'center',
-                      letterSpacing: -0.1,
-                    }}
-                  >
-                    {t(`explain.${tab.labelKey}`)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View style={{ minHeight: 120, marginBottom: 16 }}>
-            {loading && (
-              <View style={{ alignItems: 'center', paddingVertical: 28 }}>
-                <ActivityIndicator color={LB.ink2} />
-                <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 10 }}>
-                  {t('explain.loading')}
-                </Text>
-              </View>
-            )}
-            {error && !loading && (
+            <View
+              style={{
+                backgroundColor: LB.paper,
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                paddingTop: 14,
+                paddingHorizontal: 20,
+                paddingBottom: 24,
+                maxHeight: '80%',
+              }}
+            >
+              {/* Handle */}
               <View
                 style={{
-                  padding: 14,
-                  borderRadius: 12,
-                  backgroundColor: 'rgba(177,73,60,0.08)',
-                  borderColor: 'rgba(177,73,60,0.20)',
-                  borderWidth: 1,
+                  alignSelf: 'center',
+                  width: 40,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: LB.ink4,
+                  marginBottom: 14,
+                }}
+              />
+
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: '600',
+                  color: LB.ink,
+                  letterSpacing: -0.4,
+                  marginBottom: 6,
                 }}
               >
-                <Text style={{ fontSize: 13, color: LB.danger, lineHeight: 19 }}>
-                  {t('explain.error')}
-                </Text>
-              </View>
-            )}
-            {text && !loading && !error && (
-              <ScrollView style={{ maxHeight: 360 }}>
-                <Text style={{ fontSize: 15, color: LB.ink, lineHeight: 22 }}>{text}</Text>
-              </ScrollView>
-            )}
-            {!text && !loading && !error && (
-              <View style={{ paddingVertical: 18 }}>
-                <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
-                  {t('explain.hint')}
-                </Text>
-              </View>
-            )}
-          </View>
+                {t('explain.title')}
+              </Text>
+              <Text style={{ fontSize: 13, color: LB.ink2, marginBottom: 16, lineHeight: 18 }}>
+                {t('explain.subtitle')}
+              </Text>
 
-          <Btn full size="lg" variant="outline" onPress={handleClose}>
-            {t('explain.close')}
-          </Btn>
-        </Pressable>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                {TABS.map((tab) => {
+                  const isActive =
+                    activeTab === tab.key && (loading || text !== null || error !== null);
+                  return (
+                    <Pressable
+                      key={tab.key}
+                      onPress={() => requestExplanation(tab.key)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isActive }}
+                      style={{ flex: 1 }}
+                    >
+                      <View
+                        style={{
+                          paddingVertical: 12,
+                          paddingHorizontal: 14,
+                          borderRadius: 16,
+                          backgroundColor: isActive ? LB.primaryLt : '#fff',
+                          borderColor: isActive ? LB.primaryDk : LB.hairline,
+                          borderWidth: 1,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: '600',
+                            color: isActive ? LB.primaryDk : LB.ink,
+                            textAlign: 'center',
+                            letterSpacing: -0.1,
+                          }}
+                        >
+                          {t(`explain.${tab.labelKey}`)}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={{ minHeight: 120, marginBottom: 16 }}>
+                {loading && (
+                  <View style={{ alignItems: 'center', paddingVertical: 28 }}>
+                    <ActivityIndicator color={LB.ink2} />
+                    <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 10 }}>
+                      {t('explain.loading')}
+                    </Text>
+                  </View>
+                )}
+                {error && !loading && (
+                  <View
+                    style={{
+                      padding: 14,
+                      borderRadius: 12,
+                      backgroundColor: 'rgba(177,73,60,0.08)',
+                      borderColor: 'rgba(177,73,60,0.20)',
+                      borderWidth: 1,
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, color: LB.danger, lineHeight: 19 }}>
+                      {t('explain.error')}
+                    </Text>
+                  </View>
+                )}
+                {text && !loading && !error && (
+                  <ScrollView style={{ maxHeight: 360 }}>
+                    <Text style={{ fontSize: 15, color: LB.ink, lineHeight: 22 }}>{text}</Text>
+                  </ScrollView>
+                )}
+                {!text && !loading && !error && (
+                  <View style={{ paddingVertical: 18 }}>
+                    <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
+                      {t('explain.hint')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <Btn full size="lg" variant="outline" onPress={handleClose}>
+                {t('explain.close')}
+              </Btn>
+            </View>
+          </Pressable>
+        </View>
       </Pressable>
     </Modal>
   );

@@ -41,6 +41,8 @@ export const Env = z.object({
   API_CORS_ORIGINS: z.string().optional(),
   /** RevenueCat webhook shared secret. Verified with timingSafeEqual. */
   REVENUECAT_WEBHOOK_SECRET: z.string().optional(),
+  /** Must be the literal string 'true' to mount /dev routes. Never set in production. */
+  ENABLE_DEV_ROUTES: z.string().default('false'),
 });
 
 export type Env = z.infer<typeof Env>;

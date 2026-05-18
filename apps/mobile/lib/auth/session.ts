@@ -27,11 +27,13 @@ export async function loadSession(): Promise<Session | null> {
     SecureStore.getItemAsync(KEY_USER_ID),
     SecureStore.getItemAsync(KEY_ACCOUNT_ID),
   ]);
-  if (!a || !r || !u || !acc) {
+  if (!a || !r || !u) {
     cached = null;
     return null;
   }
-  cached = { access_token: a, refresh_token: r, user_id: u, account_id: acc };
+  // account_id may be empty string on the first login before getAccount() runs —
+  // that's fine; the access_token is all that's needed to authenticate API calls.
+  cached = { access_token: a, refresh_token: r, user_id: u, account_id: acc ?? '' };
   return cached;
 }
 

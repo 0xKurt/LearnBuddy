@@ -133,14 +133,11 @@ export class VertexLlmGateway implements LLMGateway {
     if (input.images.length < 1 || input.images.length > 10) {
       throw new ApiError('validation_failed', 'images must be 1..10');
     }
-    const targetCount = Math.min(25, Math.max(1, input.targetCount));
-
     const userText = buildP1UserPrompt({
       locale: input.locale,
       gradeLevel: input.gradeLevel,
       subject: input.subject,
       subjectKind: input.subjectKind,
-      targetCount,
     });
 
     const userParts: Part[] = [
@@ -227,13 +224,11 @@ export class VertexLlmGateway implements LLMGateway {
   }
 
   async regenerateFromText(input: RegenerateInput): Promise<RegenerateResult> {
-    const targetCount = Math.min(25, Math.max(1, input.targetCount));
     const userText = buildP2UserPrompt({
       locale: input.locale,
       gradeLevel: input.gradeLevel,
       subject: input.subject,
       subjectKind: input.subjectKind,
-      targetCount,
       style: input.style ?? null,
       extractedMarkdown: input.extractedMarkdown,
       existingQuestionStems: input.excludeQuestions,

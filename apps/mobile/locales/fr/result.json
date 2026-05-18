@@ -11,5 +11,8 @@
   },
   "this_week_label": "Au programme cette semaine",
   "cta_review_hard": "Reprendre les plus difficiles",
-  "cta_overview": "Retour à l'accueil"
+  "cta_overview": "Retour à l'accueil",
+  "error_title": "Résultat non chargé",
+  "error_body": "Veuillez réessayer.",
+  "error_retry": "Réessayer"
 }

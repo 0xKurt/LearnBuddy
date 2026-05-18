@@ -14,7 +14,7 @@ import { Btn } from '../../components/lb/index.js';
 import { LB } from '../../lib/theme/colors.js';
 import { createLearner } from '../../lib/api/learners.js';
 import { ApiError } from '../../lib/api/client.js';
-import { devResetAll } from '../../lib/dev/reset.js';
+import { devNukeAccount, devResetAll } from '../../lib/dev/reset.js';
 import { i18n } from '../../lib/i18n/index.js';
 import { type AppLocale } from '../../lib/i18n/locale-storage.js';
 import { useAppStore } from '../../lib/store/index.js';
@@ -22,10 +22,10 @@ import { useAppStore } from '../../lib/store/index.js';
 export default function AddProfileScreen() {
   const { t } = useTranslation('onboarding');
   const setActiveLearner = useAppStore((s) => s.set_active_learner);
-  const setPendingDraft = useAppStore((s) => s.set_pending_profile_draft);
+  const storedBirthYear = useAppStore((s) => s.pending_birth_year);
 
   const [name, setName] = useState('');
-  const [birthYear, setBirthYear] = useState('');
+  const [birthYear, setBirthYear] = useState(storedBirthYear ? String(storedBirthYear) : '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,30 +33,23 @@ export default function AddProfileScreen() {
     const n = Number.parseInt(birthYear, 10);
     return Number.isFinite(n) && n >= 1920 && n <= new Date().getUTCFullYear() ? n : null;
   }, [birthYear]);
-  const ageThisYear = parsedYear ? new Date().getUTCFullYear() - parsedYear : null;
-  const isMinor = ageThisYear !== null && ageThisYear < 16;
 
   const canSubmit = name.trim().length > 0 && parsedYear !== null && !busy;
 
   async function onContinue() {
     if (!canSubmit || parsedYear === null) return;
-    const baseDraft = {
-      display_name: name.trim(),
-      birth_year: parsedYear,
-      grade_level: null as number | null,
-      ui_locale: (i18n.language ?? 'de') as AppLocale,
-      avatar_id: 1,
-      preferred_answer_mode: 'voice' as const,
-    };
-    if (isMinor) {
-      setPendingDraft(baseDraft);
-      router.push('/(onboarding)/profile-minor-consent');
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
-      const learner = await createLearner({ ...baseDraft, minor_consent_version: null });
+      const learner = await createLearner({
+        display_name: name.trim(),
+        birth_year: parsedYear,
+        grade_level: null,
+        ui_locale: (i18n.language ?? 'de') as AppLocale,
+        avatar_id: 1,
+        preferred_answer_mode: 'voice',
+        minor_consent_version: null,
+      });
       setActiveLearner(learner.id);
       router.push('/(onboarding)/pin-setup');
     } catch (e) {
@@ -81,22 +74,50 @@ export default function AddProfileScreen() {
       >
         <View style={{ gap: 14, marginTop: 24 }}>
           {__DEV__ && (
-            <Pressable
-              onPress={() =>
-                void devResetAll().then(() => router.replace('/(onboarding)/language' as never))
-              }
-              style={{
-                alignSelf: 'flex-end',
-                backgroundColor: '#d1361c',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 999,
-              }}
-            >
-              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
-                DEV · RESET
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 8, alignSelf: 'flex-end' }}>
+              <Pressable
+                onPress={() =>
+                  void devResetAll().then(() => router.replace('/(onboarding)/language' as never))
+                }
+              >
+                <View
+                  style={{
+                    backgroundColor: '#d1361c',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Text
+                    style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}
+                  >
+                    DEV · RESET
+                  </Text>
+                </View>
+              </Pressable>
+              <Pressable
+                onPress={() =>
+                  void devNukeAccount().then(() =>
+                    router.replace('/(onboarding)/language' as never),
+                  )
+                }
+              >
+                <View
+                  style={{
+                    backgroundColor: '#7b1fa2',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Text
+                    style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}
+                  >
+                    DEV · NUKE
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
           )}
           <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
             {t('add_profile.title')}
@@ -126,11 +147,6 @@ export default function AddProfileScreen() {
                 style={inputStyle}
               />
             </Field>
-            {isMinor && (
-              <Text style={{ fontSize: 12, color: LB.ink2, lineHeight: 18 }}>
-                {t('add_profile.minor_hint')}
-              </Text>
-            )}
             {error && <Text style={{ color: LB.danger, fontSize: 12 }}>{error}</Text>}
           </View>
         </View>

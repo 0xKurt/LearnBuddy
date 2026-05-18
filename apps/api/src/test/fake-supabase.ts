@@ -346,6 +346,7 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     EMAIL_REDIRECT_URL: 'learnbuddy://verify-email',
     DSGVO_CONSENT_VERSION: '2026-05-01',
     NODE_ENV: 'test',
+    ENABLE_DEV_ROUTES: 'false',
     GOOGLE_VERTEX_LOCATION: 'europe-west4',
     VERTEX_MODEL_ID: 'gemini-2.5-flash-lite',
   };

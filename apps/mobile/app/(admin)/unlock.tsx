@@ -10,19 +10,23 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, PinPad } from '../../components/lb/index.js';
 import {
   authenticateBiometric,
+  getBiometricType,
+  hasPin,
   hasBiometricHardware,
   isBiometricEnabled,
   pinLockedUntil,
   recordPinFailure,
   verifyPin,
 } from '../../lib/auth/pin.js';
+import { clearSession } from '../../lib/auth/session.js';
 import { useAppStore } from '../../lib/store/index.js';
+import { supabase } from '../../lib/supabase.js';
 import { LB } from '../../lib/theme/colors.js';
 
 const LOCK_THRESHOLD = 5;
@@ -31,6 +35,8 @@ export default function AdminUnlockScreen() {
   const { t } = useTranslation('auth');
   const setAdminUnlocked = useAppStore((s) => s.set_admin_unlocked);
   const [biometricReady, setBiometricReady] = useState(false);
+  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint'>('face');
+  const [pinSet, setPinSet] = useState(true); // optimistic; updated on mount
   const [failures, setFailures] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +51,18 @@ export default function AdminUnlockScreen() {
   // Determine biometric availability + persisted lockout once.
   useEffect(() => {
     (async () => {
-      const hw = await hasBiometricHardware();
-      const pref = await isBiometricEnabled();
+      const [hw, pref, pinExists, lockUntil, bType] = await Promise.all([
+        hasBiometricHardware(),
+        isBiometricEnabled(),
+        hasPin(),
+        pinLockedUntil(),
+        getBiometricType(),
+      ]);
       const ready = hw && pref;
       setBiometricReady(ready);
-      setLockedUntil(await pinLockedUntil());
+      setBiometricType(bType ?? 'face');
+      setPinSet(pinExists);
+      setLockedUntil(lockUntil);
 
       if (ready && !biometricFiredRef.current) {
         biometricFiredRef.current = true;
@@ -164,13 +177,17 @@ export default function AdminUnlockScreen() {
           )}
         </View>
 
-        <PinPad
-          resetKey={resetKey}
-          onComplete={(pin) => {
-            void onPinComplete(pin);
-          }}
-          disabled={locked}
-        />
+        {pinSet ? (
+          <PinPad
+            resetKey={resetKey}
+            onComplete={(pin) => {
+              void onPinComplete(pin);
+            }}
+            disabled={locked}
+          />
+        ) : (
+          <View />
+        )}
 
         <View style={{ width: '100%', gap: 10 }}>
           {biometricReady && (
@@ -182,10 +199,12 @@ export default function AdminUnlockScreen() {
                 void onBiometricPress();
               }}
             >
-              {t('unlock.biometric_cta')}
+              {biometricType === 'fingerprint'
+                ? t('unlock.biometric_cta_fingerprint')
+                : t('unlock.biometric_cta_face')}
             </Btn>
           )}
-          <Pressable onPress={() => router.replace('/login')} hitSlop={12}>
+          <Pressable onPress={() => router.replace('/login?unlock=1' as never)} hitSlop={12}>
             <Text
               style={{
                 color: LB.ink2,
@@ -201,6 +220,35 @@ export default function AdminUnlockScreen() {
           <Btn size="lg" full variant="ghost" onPress={() => router.back()}>
             {t('unlock.cancel')}
           </Btn>
+          <Pressable
+            hitSlop={12}
+            onPress={() => {
+              Alert.alert(t('unlock.sign_out_title'), t('unlock.sign_out_body'), [
+                { text: t('unlock.cancel'), style: 'cancel' },
+                {
+                  text: t('unlock.sign_out_confirm'),
+                  style: 'destructive',
+                  onPress: async () => {
+                    await supabase.auth.signOut();
+                    await clearSession();
+                    router.replace('/(onboarding)/welcome');
+                  },
+                },
+              ]);
+            }}
+          >
+            <Text
+              style={{
+                color: LB.ink3,
+                fontSize: 11,
+                textAlign: 'center',
+                textDecorationLine: 'underline',
+                paddingVertical: 4,
+              }}
+            >
+              {t('unlock.sign_out')}
+            </Text>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>

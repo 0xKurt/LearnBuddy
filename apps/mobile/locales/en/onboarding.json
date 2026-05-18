@@ -10,7 +10,11 @@
     "error_conflict": "This email is already taken.",
     "error_validation": "Please check your email and password (≥ 8 characters).",
     "error_generic": "Something went wrong just now. Try again in a moment.",
-    "error_network": "No connection. Please try again later."
+    "error_network": "No connection. Please try again later.",
+    "placeholder_confirm": "Repeat password",
+    "error_password_mismatch": "Passwords don't match.",
+    "error_conflict_link": "Go to sign in",
+    "error_email_format": "Please enter a valid email address."
   },
   "welcome": {
     "title": "Study Companion",
@@ -91,6 +95,13 @@
     "confirm_title": "Confirm PIN",
     "confirm_subtitle": "Tap the same 4 digits once more.",
     "mismatch": "Doesn't match. Please start over.",
+    "method_title": "How do you want to log in?",
+    "method_subtitle": "Face ID is safer and easier — no PIN needed.",
+    "method_biometric": "Set up Face ID",
+    "method_biometric_face": "Set up Face ID",
+    "method_biometric_fingerprint": "Set up fingerprint",
+    "method_pin": "I'd rather use a PIN",
+    "biometric_failed": "Biometric didn't work — please try again.",
     "biometric_offer": "Open with Face ID / Touch ID?",
     "biometric_yes": "Yes, set it up",
     "biometric_no": "No, PIN only",

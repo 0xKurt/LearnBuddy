@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { AnswerMode, GradeLevel, Iso8601, Locale, Uuid } from './enums.js';
 
+const HhMm = z
+  .string()
+  .regex(/^\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/)
+  .transform((s) => s.slice(0, 5));
+
 export const Learner = z.object({
   id: Uuid,
   account_id: Uuid,
@@ -11,7 +16,7 @@ export const Learner = z.object({
   preferred_answer_mode: AnswerMode,
   avatar_id: z.number().int().min(1),
   notifications_practice_nudge_enabled: z.boolean(),
-  notifications_practice_nudge_time: z.string().regex(/^\d{2}:\d{2}$/),
+  notifications_practice_nudge_time: HhMm,
   notifications_test_heads_up_enabled: z.boolean(),
   archived_at: Iso8601.nullable(),
   created_at: Iso8601,

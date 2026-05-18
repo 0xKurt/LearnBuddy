@@ -25,12 +25,16 @@
     "label_one": "1 photo",
     "label_other": "{{count}} photos",
     "max_hint": "Jusqu'à 10 photos par matériel.",
-    "long_press_hint": "Appuie longuement sur une miniature pour la supprimer."
+    "long_press_hint": "Appuie longuement sur une miniature pour la supprimer.",
+    "delete_title": "Supprimer la photo ?",
+    "delete_cancel": "Annuler",
+    "delete_confirm": "Supprimer"
   },
   "cta": {
     "shutter": "Déclencheur",
     "done": "Terminé",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "shutter_error": "Photo échouée — réessaie ?"
   },
   "picker": {
     "title": "Où veux-tu le ranger ?",

@@ -32,6 +32,7 @@ import { attemptRoutes } from './routes/attempts.js';
 import { templateRoutes } from './routes/templates.js';
 import { explainRoutes } from './routes/explain.js';
 import { dsgvoRoutes } from './routes/dsgvo.js';
+import { devRoutes } from './routes/dev.js';
 import { renderRoutes } from './routes/render.js';
 import { webhookRoutes } from './routes/webhooks.js';
 import { adminRoutes } from './routes/admin.js';
@@ -77,7 +78,15 @@ export function createApp(opts: { deps?: Deps } = {}) {
     await next();
   });
 
-  app.get('/health', (c) => c.json({ ok: true, version: '0.0.0' }));
+  app.get('/health', (c) =>
+    c.json({ ok: true, version: process.env.npm_package_version ?? '0.0.0' }),
+  );
+  app.get('/version', (c) =>
+    c.json({
+      api_version: process.env.npm_package_version ?? '0.0.0',
+      min_app_version: process.env.MIN_APP_VERSION ?? '0.0.1',
+    }),
+  );
 
   // Versioned under /v1 via the Vercel rewrite in vercel.json. The dev server
   // serves the same routes without the prefix.
@@ -93,6 +102,7 @@ export function createApp(opts: { deps?: Deps } = {}) {
   app.route('/templates', templateRoutes);
   app.route('/explain', explainRoutes);
   app.route('/dsgvo', dsgvoRoutes);
+  if (process.env.ENABLE_DEV_ROUTES === 'true') app.route('/dev', devRoutes);
   app.route('/render', renderRoutes);
   app.route('/webhooks', webhookRoutes);
   app.route('/admin', adminRoutes);

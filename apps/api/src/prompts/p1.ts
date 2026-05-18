@@ -4,7 +4,7 @@
 
 export const PROMPT_VERSION = 'p1.0';
 
-export const SYSTEM_P1 = `You are a careful, patient learning helper for school children. You read images of learning material and produce study questions in the target language. You never invent facts beyond what is shown in the images. You never produce content inappropriate for children.`;
+export const SYSTEM_P1 = `You are a careful, patient learning helper for students. You read images of learning material and produce study questions in the target language. Extract every meaningful fact, concept, formula, definition, and relationship from the material — generate as many questions as the content warrants. Do not limit yourself to a fixed count. You never invent facts beyond what is shown in the images. You never produce content inappropriate for the student's age group.`;
 
 type SubjectKind =
   | 'math'
@@ -109,13 +109,11 @@ export function buildP1UserPrompt(input: {
   gradeLevel: number;
   subject: string;
   subjectKind: SubjectKind;
-  targetCount: number;
 }): string {
   return `Target language: ${input.locale}
 Student grade level: ${input.gradeLevel}
 Subject: ${input.subject}
 Subject kind: ${input.subjectKind}
-Desired number of questions: ${input.targetCount}
 
 Tasks:
 
@@ -133,8 +131,9 @@ Tasks:
    not part of the lesson.
 
 2. ITEM GENERATION
-   Produce ${input.targetCount} study items in ${input.locale} that test the material.
-   Cover the most important concepts; mix kinds. Each item:
+   Generate study items in ${input.locale} that thoroughly test the material.
+   Extract EVERY meaningful fact, concept, definition, formula, and relationship
+   — there is no fixed count. Cover all important concepts; mix answer kinds. Each item:
      - question: prompt shown to the student
      - expected_answer: a concise correct answer
      - acceptable_answers: array of 1–4 equivalent phrasings or shorter

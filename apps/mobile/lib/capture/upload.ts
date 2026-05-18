@@ -59,7 +59,6 @@ export async function runUpload(
       folder_id: capture.folder_id,
       title: null,
       locale: 'de',
-      target_item_count: 10,
       client_quality_scores: capture.photos.map((p, idx) => ({
         position: idx + 1,
         blur: p.quality.blur,

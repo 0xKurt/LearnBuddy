@@ -1,28 +1,36 @@
-// Archived items. Doc 05 §archived. Lists soft-archived subjects/folders/
-// materials and lets the account holder restore (mocked for now: a banner
-// explains "30-day grace" and the row shows when each item was archived).
+// Archived items. Doc 05 §archived. Lists soft-archived subjects and lets
+// the account holder restore them (sets archived_at back to null).
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CircleBtn, EmptyState } from '../../components/lb/index.js';
+import { Btn, CircleBtn, EmptyState } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
-import { listSubjects } from '../../lib/api/subjects.js';
+import { listArchivedSubjects, restoreSubject } from '../../lib/api/subjects.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ArchivedScreen() {
   const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
+  const queryClient = useQueryClient();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id;
   const subjectsQuery = useQuery({
     queryKey: ['subjects-archived', learnerId],
-    queryFn: () => listSubjects(learnerId as string),
     enabled: !!learnerId,
+    queryFn: () => listArchivedSubjects(learnerId as string),
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (id: string) => restoreSubject(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['subjects-archived', learnerId] });
+      void queryClient.invalidateQueries({ queryKey: ['subjects', learnerId] });
+    },
   });
 
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
@@ -75,6 +83,23 @@ export default function ArchivedScreen() {
               <Text style={{ fontSize: 12, color: LB.ink3, marginTop: 2 }}>
                 {s.folder_count} Ordner · {s.material_count} Material
               </Text>
+              {s.archived_at && (
+                <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 2 }}>
+                  {t('archived.archived_on', {
+                    date: new Date(s.archived_at).toLocaleDateString(),
+                  })}
+                </Text>
+              )}
+              <View style={{ marginTop: 10 }}>
+                <Btn
+                  size="sm"
+                  variant="outline"
+                  disabled={restoreMutation.isPending}
+                  onPress={() => restoreMutation.mutate(s.id)}
+                >
+                  {t('archived.restore_cta')}
+                </Btn>
+              </View>
             </View>
           ))
         )}

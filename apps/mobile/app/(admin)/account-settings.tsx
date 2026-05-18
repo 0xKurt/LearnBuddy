@@ -89,33 +89,39 @@ export default function AccountSettingsScreen() {
                   await setLocale(code);
                   qc.invalidateQueries({ queryKey: ['account'] });
                 }}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                  borderRadius: 10,
-                  backgroundColor: locale === code ? LB.primaryLt : LB.bg,
-                  borderColor: locale === code ? LB.primaryDk : 'transparent',
-                  borderWidth: 1,
-                }}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: locale === code }}
+                accessibilityLabel={LOCALE_LABELS[code]}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Text style={{ fontSize: 20 }}>{LOCALE_FLAGS[code]}</Text>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      color: locale === code ? LB.primaryDk : LB.ink,
-                      fontWeight: locale === code ? '600' : '400',
-                    }}
-                  >
-                    {LOCALE_LABELS[code]}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    borderRadius: 10,
+                    backgroundColor: locale === code ? LB.primaryLt : LB.bg,
+                    borderColor: locale === code ? LB.primaryDk : 'transparent',
+                    borderWidth: 1,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={{ fontSize: 20 }}>{LOCALE_FLAGS[code]}</Text>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: locale === code ? LB.primaryDk : LB.ink,
+                        fontWeight: locale === code ? '600' : '400',
+                      }}
+                    >
+                      {LOCALE_LABELS[code]}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 11, color: LB.ink3, textTransform: 'uppercase' }}>
+                    {code}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 11, color: LB.ink3, textTransform: 'uppercase' }}>
-                  {code}
-                </Text>
               </Pressable>
             ))}
           </View>

@@ -73,16 +73,21 @@ export default function LanguageScreen() {
                 );
               }}
               hitSlop={10}
-              style={{
-                backgroundColor: '#d1361c',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 999,
-              }}
             >
-              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
-                DEV · RESET
-              </Text>
+              <View
+                style={{
+                  backgroundColor: '#d1361c',
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 999,
+                }}
+              >
+                <Text
+                  style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}
+                >
+                  DEV · RESET
+                </Text>
+              </View>
             </Pressable>
           )}
         </View>
@@ -105,36 +110,36 @@ export default function LanguageScreen() {
           {SUPPORTED_LOCALES.map((code) => {
             const on = current === code;
             return (
-              <Pressable
-                key={code}
-                onPress={() => onPick(code)}
-                style={{
-                  paddingHorizontal: 18,
-                  paddingVertical: 16,
-                  borderRadius: 16,
-                  backgroundColor: on ? LB.primaryLt : '#fff',
-                  borderColor: on ? LB.primaryDk : LB.hairline,
-                  borderWidth: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Text style={{ fontSize: 24 }}>{LOCALE_FLAGS[code]}</Text>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: '600',
-                      color: on ? LB.primaryDk : LB.ink,
-                    }}
-                  >
-                    {LOCALE_LABELS[code]}
+              <Pressable key={code} onPress={() => onPick(code)}>
+                <View
+                  style={{
+                    paddingHorizontal: 18,
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    backgroundColor: on ? LB.primaryLt : '#fff',
+                    borderColor: on ? LB.primaryDk : LB.hairline,
+                    borderWidth: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <Text style={{ fontSize: 24 }}>{LOCALE_FLAGS[code]}</Text>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: '600',
+                        color: on ? LB.primaryDk : LB.ink,
+                      }}
+                    >
+                      {LOCALE_LABELS[code]}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 12, color: LB.ink3, textTransform: 'uppercase' }}>
+                    {code}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 12, color: LB.ink3, textTransform: 'uppercase' }}>
-                  {code}
-                </Text>
               </Pressable>
             );
           })}

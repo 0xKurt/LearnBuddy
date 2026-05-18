@@ -48,9 +48,8 @@ export function Card({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
-        style={[baseStyle, style]}
       >
-        {children}
+        <View style={[baseStyle, style]}>{children}</View>
       </Pressable>
     );
   }

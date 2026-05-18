@@ -21,7 +21,7 @@ export default function LearnerLayout() {
   const onNavigate = (k: NavKey) => {
     if (k === 'home') router.push('/(learner)/home');
     else if (k === 'camera') router.push('/(learner)/capture');
-    else if (k === 'practice') router.push('/(learner)/home');
+    else if (k === 'practice') router.push('/(learner)/practice');
     else if (k === 'profile') router.push('/(admin)/unlock');
   };
 

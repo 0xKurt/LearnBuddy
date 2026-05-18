@@ -75,24 +75,27 @@ export default function AdminMaterialScreen() {
                   },
                 ])
               }
-              style={{
-                padding: 14,
-                borderRadius: 14,
-                backgroundColor: '#fff',
-                borderColor: LB.hairline,
-                borderWidth: 1,
-              }}
             >
-              <Text style={{ fontSize: 11, color: LB.ink3, fontWeight: '600' }}>
-                {t('material.question_label', { number: i + 1 })}
-              </Text>
-              <Text style={{ fontSize: 14, color: LB.ink, marginTop: 4, lineHeight: 20 }}>
-                {it.question}
-              </Text>
-              <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 6 }}>
-                {t('material.expected_prefix')}
-                {it.expected_answer}
-              </Text>
+              <View
+                style={{
+                  padding: 14,
+                  borderRadius: 14,
+                  backgroundColor: '#fff',
+                  borderColor: LB.hairline,
+                  borderWidth: 1,
+                }}
+              >
+                <Text style={{ fontSize: 11, color: LB.ink3, fontWeight: '600' }}>
+                  {t('material.question_label', { number: i + 1 })}
+                </Text>
+                <Text style={{ fontSize: 14, color: LB.ink, marginTop: 4, lineHeight: 20 }}>
+                  {it.question}
+                </Text>
+                <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 6 }}>
+                  {t('material.expected_prefix')}
+                  {it.expected_answer}
+                </Text>
+              </View>
             </Pressable>
           ))
         )}

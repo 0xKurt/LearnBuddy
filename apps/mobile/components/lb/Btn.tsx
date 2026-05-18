@@ -1,4 +1,4 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { LB } from '../../lib/theme/colors.js';
 
 type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
@@ -11,29 +11,31 @@ type Props = {
   size?: Size;
   full?: boolean;
   disabled?: boolean;
-  /** Overrides the visible label as the accessible name (e.g. when the
-   *  label is an icon-only "→" but the action is "Weiter"). */
   accessibilityLabel?: string;
-  /** Extra context for screen readers (e.g. "Bestätigt deine Auswahl"). */
   accessibilityHint?: string;
 };
 
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
-  sm: { height: 38, paddingHorizontal: 16, fontSize: 13 },
+  sm: { height: 44, paddingHorizontal: 16, fontSize: 13 },
   md: { height: 48, paddingHorizontal: 22, fontSize: 14 },
   lg: { height: 54, paddingHorizontal: 26, fontSize: 15 },
 };
 
-// Handoff components.jsx: "Button system — no all-black".
-// primary = warm clay (LB.primary), all variants use radius 12.
-const VARIANT_BG: Record<Variant, { bg: string; color: string; border?: string; radius: number }> =
-  {
-    primary: { bg: LB.primary, color: '#fff', radius: 12 },
-    soft: { bg: LB.primaryLt, color: LB.primaryDk, radius: 12 },
-    outline: { bg: '#fff', color: LB.ink, border: LB.hairline, radius: 12 },
-    ghost: { bg: 'transparent', color: LB.ink2, radius: 12 },
-    danger: { bg: 'transparent', color: LB.danger, border: 'rgba(177,73,60,0.25)', radius: 12 },
-  };
+const VARIANT_STYLE: Record<
+  Variant,
+  { bg: string; color: string; borderColor: string; borderWidth: number }
+> = {
+  primary: { bg: LB.primary, color: '#fff', borderColor: 'transparent', borderWidth: 0 },
+  soft: { bg: LB.primaryLt, color: LB.primaryDk, borderColor: 'transparent', borderWidth: 0 },
+  outline: { bg: '#fff', color: LB.ink, borderColor: LB.hairline, borderWidth: 1 },
+  ghost: { bg: 'transparent', color: LB.ink2, borderColor: 'transparent', borderWidth: 0 },
+  danger: {
+    bg: 'transparent',
+    color: LB.danger,
+    borderColor: 'rgba(177,73,60,0.25)',
+    borderWidth: 1,
+  },
+};
 
 export function Btn({
   children,
@@ -46,7 +48,8 @@ export function Btn({
   accessibilityHint,
 }: Props) {
   const s = SIZE_STYLE[size];
-  const v = VARIANT_BG[variant];
+  const v = VARIANT_STYLE[variant];
+
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -54,30 +57,36 @@ export function Btn({
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
-      style={{
-        height: s.height,
-        paddingHorizontal: s.paddingHorizontal,
-        backgroundColor: v.bg,
-        borderRadius: v.radius,
-        borderWidth: v.border ? 1 : 0,
-        borderColor: v.border,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: full ? 'stretch' : 'flex-start',
-        opacity: disabled ? 0.6 : 1,
-      }}
+      android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
+      style={{ alignSelf: full ? 'stretch' : 'flex-start', opacity: disabled ? 0.6 : 1 }}
     >
-      <Text
-        style={{
-          color: v.color,
-          fontSize: s.fontSize,
-          fontWeight: '600',
-          letterSpacing: -0.1,
-        }}
-      >
-        {children}
-      </Text>
+      {({ pressed }) => (
+        <View
+          style={{
+            height: s.height,
+            paddingHorizontal: s.paddingHorizontal,
+            backgroundColor: v.bg,
+            borderRadius: 12,
+            borderWidth: v.borderWidth,
+            borderColor: v.borderColor,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.78 : 1,
+          }}
+        >
+          <Text
+            style={{
+              color: v.color,
+              fontSize: s.fontSize,
+              fontWeight: '600',
+              letterSpacing: -0.1,
+            }}
+          >
+            {children}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }

@@ -110,16 +110,19 @@ export default function VerifyEmailScreen() {
             onPress={() =>
               void devResetAll().then(() => router.replace('/(onboarding)/language' as never))
             }
-            style={{
-              backgroundColor: '#d1361c',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 999,
-            }}
           >
-            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
-              DEV · RESET
-            </Text>
+            <View
+              style={{
+                backgroundColor: '#d1361c',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
+                DEV · RESET
+              </Text>
+            </View>
           </Pressable>
         </View>
       )}

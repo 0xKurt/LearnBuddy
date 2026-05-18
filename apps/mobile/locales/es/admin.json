@@ -93,12 +93,17 @@
     "privacy_body": "Todos los datos de aprendizaje permanecen en la UE. Sin publicidad, sin cesión a terceros con fines de entrenamiento.",
     "privacy_link": "Política de privacidad",
     "imprint_title": "Aviso legal",
-    "imprint_link": "Abrir"
+    "imprint_link": "Abrir",
+    "support_title": "Ayuda & Soporte",
+    "support_contact": "Contactar soporte",
+    "support_faq": "Ayuda & FAQ"
   },
   "archived": {
     "title": "Archivo",
     "banner": "Los elementos archivados se pueden restaurar durante 30 días. Después se eliminan definitivamente.",
-    "empty": "Nada en el archivo."
+    "empty": "Nada en el archivo.",
+    "archived_on": "Archivado el {{date}}",
+    "restore_cta": "Restaurar"
   },
   "profile_edit": {
     "title": "Perfil",
@@ -119,7 +124,11 @@
     "test_sub": "3 días / 1 día / la mañana antes de los exámenes en carpetas planificadas.",
     "streak_label": "Recordatorio de racha",
     "streak_sub": "Un pequeño empujón cuando la racha de aprendizaje está a punto de romperse.",
-    "done": "Listo"
+    "done": "Listo",
+    "permission_title": "Notificaciones aún no permitidas",
+    "permission_body": "Para recordarte exámenes y sesiones de práctica, permite las notificaciones.",
+    "permission_cta": "Permitir ahora",
+    "open_settings": "Abrir ajustes"
   },
   "material": {
     "title_fallback": "Material",

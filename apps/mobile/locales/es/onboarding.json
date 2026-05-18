@@ -10,7 +10,11 @@
     "error_conflict": "Este correo ya está registrado.",
     "error_validation": "Comprueba tu correo y contraseña (≥ 8 caracteres).",
     "error_generic": "Algo salió mal. Inténtalo de nuevo en un momento.",
-    "error_network": "Sin conexión. Inténtalo más tarde."
+    "error_network": "Sin conexión. Inténtalo más tarde.",
+    "placeholder_confirm": "Repetir contraseña",
+    "error_password_mismatch": "Las contraseñas no coinciden.",
+    "error_conflict_link": "Ir al inicio de sesión",
+    "error_email_format": "Introduce una dirección de correo válida."
   },
   "welcome": {
     "title": "Compañero de estudio",
@@ -91,6 +95,13 @@
     "confirm_title": "Confirma el PIN",
     "confirm_subtitle": "Vuelve a tocar los mismos 4 dígitos.",
     "mismatch": "No coincide. Vuelve a empezar.",
+    "method_title": "¿Cómo quieres iniciar sesión?",
+    "method_subtitle": "Face ID es más seguro y cómodo — no necesitas PIN.",
+    "method_biometric": "Configurar Face ID",
+    "method_biometric_face": "Configurar Face ID",
+    "method_biometric_fingerprint": "Configurar huella dactilar",
+    "method_pin": "Prefiero un PIN",
+    "biometric_failed": "La biometría no funcionó — inténtalo de nuevo.",
     "biometric_offer": "¿Abrir con Face ID / Touch ID?",
     "biometric_yes": "Sí, configurar",
     "biometric_no": "No, solo PIN",

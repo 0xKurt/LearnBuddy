@@ -74,7 +74,7 @@ export class FakeLlmGateway implements LLMGateway {
   async regenerateFromText(input: RegenerateInput): Promise<RegenerateResult> {
     const lang = (input.locale === 'en' ? 'en' : 'de') as 'de' | 'en';
     return {
-      items: Array.from({ length: Math.min(3, input.targetCount) }, (_, i) => ({
+      items: Array.from({ length: 3 }, (_, i) => ({
         question: `Zusätzliche Frage ${i + 1} (fake).`,
         expected_answer: 'OK',
         acceptable_answers: [],

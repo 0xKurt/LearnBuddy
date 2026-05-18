@@ -18,5 +18,16 @@
   "finish_title": "Done!",
   "finish_body": "You got {{correct}} out of {{total}}. Nice round.",
   "finish_home": "Back to home",
-  "no_template": "This practice isn't available anymore."
+  "no_template": "This practice isn't available anymore.",
+  "hub": {
+    "title": "Practice",
+    "upcoming_tests": "Upcoming tests",
+    "test_in_days_one": "In 1 day",
+    "test_in_days_other": "In {{count}} days",
+    "test_today": "Today",
+    "go_to_folder": "Open folder",
+    "empty_title": "Nothing urgent",
+    "empty_body": "No upcoming tests. Browse your materials to start a practice run.",
+    "browse_home": "Go to home"
+  }
 }

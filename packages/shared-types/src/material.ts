@@ -86,7 +86,6 @@ export const MaterialCreateRequest = z.object({
   title: z.string().nullable().optional(),
   locale: z.string().default('de'),
   grade_level: z.number().int().min(1).max(13).nullable().optional(),
-  target_item_count: z.number().int().min(1).max(25).default(10),
   client_quality_scores: z.array(ClientQualityScore).min(1).max(10),
 });
 export type MaterialCreateRequest = z.infer<typeof MaterialCreateRequest>;

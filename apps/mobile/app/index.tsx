@@ -14,10 +14,10 @@ import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
-import { clearSession, loadSession } from '../lib/auth/session.js';
+import { clearSession, loadSession, setSession } from '../lib/auth/session.js';
 import { ApiError } from '../lib/api/client.js';
 import { getAccount } from '../lib/api/account.js';
-import { hydrateSavedLocale } from '../lib/i18n/index.js';
+import { hydrateSavedLocale, i18n } from '../lib/i18n/index.js';
 import { loadSavedLocale } from '../lib/i18n/locale-storage.js';
 import { LB } from '../lib/theme/colors.js';
 
@@ -25,7 +25,7 @@ type Destination =
   | '/(onboarding)/language'
   | '/(onboarding)/welcome'
   | '/(onboarding)/consent'
-  | '/(onboarding)/who-uses'
+  | '/(onboarding)/add-profile'
   | '/(learner)/home';
 
 export default function IndexRoute() {
@@ -52,10 +52,15 @@ export default function IndexRoute() {
       try {
         const account = await getAccount();
         if (cancelled) return;
+        // Backfill account_id into the stored session if it wasn't set during
+        // login (first login stores account_id: '' since getAccount hadn't run yet).
+        if (!session.account_id) {
+          await setSession({ ...session, account_id: account.id });
+        }
         if (!account.consent) {
           setDest('/(onboarding)/consent');
         } else if (!account.learner) {
-          setDest('/(onboarding)/who-uses');
+          setDest('/(onboarding)/add-profile');
         } else {
           setDest('/(learner)/home');
         }
@@ -82,7 +87,7 @@ export default function IndexRoute() {
           backgroundColor: LB.paper,
         }}
       >
-        <ActivityIndicator color={LB.ink2} />
+        <ActivityIndicator color={LB.ink2} accessibilityLabel={i18n.t('common:loading')} />
       </View>
     );
   }

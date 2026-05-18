@@ -1,5 +1,4 @@
 // Error envelope. Doc 04 §conventions + §error-codes.
-import type { Context } from 'hono';
 
 export type ApiErrorCode =
   | 'unauthenticated'
@@ -58,9 +57,4 @@ export class ApiError extends Error {
       },
     };
   }
-}
-
-export function notImplemented(c: Context, hint: string) {
-  const err = new ApiError('not_implemented', `Route not implemented: ${hint}`);
-  return c.json(err.toJSON(), 501);
 }

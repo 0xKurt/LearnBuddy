@@ -93,12 +93,17 @@
     "privacy_body": "Alle Lerndaten bleiben in der EU. Keine Werbung, keine Weitergabe an Dritte zu Trainingszwecken.",
     "privacy_link": "Datenschutzerklärung",
     "imprint_title": "Impressum",
-    "imprint_link": "Öffnen"
+    "imprint_link": "Öffnen",
+    "support_title": "Hilfe & Support",
+    "support_contact": "Support kontaktieren",
+    "support_faq": "Hilfe & FAQ"
   },
   "archived": {
     "title": "Archiv",
     "banner": "Archivierte Einträge bleiben 30 Tage lang wiederherstellbar. Danach werden sie automatisch endgültig gelöscht.",
-    "empty": "Nichts im Archiv."
+    "empty": "Nichts im Archiv.",
+    "archived_on": "Archiviert am {{date}}",
+    "restore_cta": "Wiederherstellen"
   },
   "profile_edit": {
     "title": "Profil",
@@ -119,7 +124,11 @@
     "test_sub": "3 Tage / 1 Tag / am Morgen vor Tests in geplanten Ordnern.",
     "streak_label": "Streak-Erinnerung",
     "streak_sub": "Sanftes Anstupsen wenn die Lern-Serie abreißen würde.",
-    "done": "Fertig"
+    "done": "Fertig",
+    "permission_title": "Benachrichtigungen noch nicht erlaubt",
+    "permission_body": "Damit dich LearnBuddy an Tests und Übungen erinnern kann, erlaube bitte Benachrichtigungen.",
+    "permission_cta": "Jetzt erlauben",
+    "open_settings": "Einstellungen öffnen"
   },
   "material": {
     "title_fallback": "Material",

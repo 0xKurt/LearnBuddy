@@ -19,7 +19,6 @@ export function buildP2UserPrompt(input: {
   gradeLevel: number;
   subject: string;
   subjectKind: string;
-  targetCount: number;
   style: 'simpler' | 'harder' | 'more-variety' | null;
   extractedMarkdown: string;
   existingQuestionStems: string[];
@@ -32,12 +31,11 @@ export function buildP2UserPrompt(input: {
 Student grade level: ${input.gradeLevel}
 Subject: ${input.subject}
 Subject kind: ${input.subjectKind}
-Desired number of additional questions: ${input.targetCount}
 Style: ${input.style ?? 'null'}
 
 You are given previously extracted learning material text and the list
-of already-existing question stems. Generate ${input.targetCount} ADDITIONAL
-items that do not duplicate the existing ones.
+of already-existing question stems. Generate as many ADDITIONAL items as
+the material supports without duplicating the existing ones.
 
 ${styleHint}
 

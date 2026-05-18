@@ -8,9 +8,11 @@
 // Tone: never harsh. CLAUDE.md §tone — error copy comes from `errors.json`.
 
 import { create } from 'zustand';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon } from './Icon.js';
+import { i18n } from '../../lib/i18n/index.js';
 
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
 
@@ -19,6 +21,8 @@ type ToastItem = {
   tone: ToastTone;
   title: string;
   body?: string;
+  duration?: number;
+  action?: { label: string; onPress: () => void };
 };
 
 type ToastStore = {
@@ -41,14 +45,14 @@ export const useToastStore = create<ToastStore>((set) => ({
 
 /** Imperative facade so non-React code (api client, sentry hooks) can fire toasts. */
 export const toast = {
-  info: (title: string, body?: string) =>
-    useToastStore.getState().show({ tone: 'info', title, body }),
-  success: (title: string, body?: string) =>
-    useToastStore.getState().show({ tone: 'success', title, body }),
-  warn: (title: string, body?: string) =>
-    useToastStore.getState().show({ tone: 'warning', title, body }),
-  error: (title: string, body?: string) =>
-    useToastStore.getState().show({ tone: 'error', title, body }),
+  info: (title: string, body?: string, action?: ToastItem['action']) =>
+    useToastStore.getState().show({ tone: 'info', title, body, action }),
+  success: (title: string, body?: string, action?: ToastItem['action']) =>
+    useToastStore.getState().show({ tone: 'success', title, body, action }),
+  warn: (title: string, body?: string, action?: ToastItem['action']) =>
+    useToastStore.getState().show({ tone: 'warning', title, body, action, duration: 6000 }),
+  error: (title: string, body?: string, action?: ToastItem['action']) =>
+    useToastStore.getState().show({ tone: 'error', title, body, action, duration: 6000 }),
 };
 
 /** Hook for use inside React components. */
@@ -61,6 +65,13 @@ const TONE_BG: Record<ToastTone, string> = {
   success: '#3f5e3f',
   warning: '#7a5c25',
   error: '#7a2e25',
+};
+
+const TONE_ICON: Record<ToastTone, 'check' | 'shield' | 'clock' | 'close'> = {
+  info: 'clock',
+  success: 'check',
+  warning: 'shield',
+  error: 'close',
 };
 
 export function ToastHost() {
@@ -86,14 +97,15 @@ export function ToastHost() {
 }
 
 function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
-  const opacity = new Animated.Value(0);
+  const opacity = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    const ms = item.duration ?? (item.tone === 'success' || item.tone === 'info' ? 3500 : 6000);
     const handle = setTimeout(() => {
       Animated.timing(opacity, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => {
         onDismiss();
       });
-    }, 3500);
+    }, ms);
     return () => clearTimeout(handle);
   }, []);
 
@@ -117,11 +129,38 @@ function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: () => void 
         accessibilityLabel={`${item.title}${item.body ? `. ${item.body}` : ''}`}
         onPress={onDismiss}
       >
-        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>{item.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name={TONE_ICON[item.tone]} size={16} color="rgba(255,255,255,0.9)" />
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14, flex: 1 }}>
+            {item.title}
+          </Text>
+        </View>
         {item.body && (
-          <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 2 }}>
+          <Text
+            style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4, marginLeft: 24 }}
+          >
             {item.body}
           </Text>
+        )}
+        {item.action && (
+          <Pressable
+            onPress={() => {
+              item.action?.onPress();
+              onDismiss();
+            }}
+            style={{ marginTop: 6, marginLeft: 24 }}
+          >
+            <Text
+              style={{
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: 13,
+                fontWeight: '600',
+                textDecorationLine: 'underline',
+              }}
+            >
+              {item.action.label}
+            </Text>
+          </Pressable>
         )}
       </Pressable>
     </Animated.View>
@@ -131,72 +170,86 @@ function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: () => void 
 /**
  * Maps an ApiError (or any thrown value) to a tone-correct toast.
  * Doc 05 §errors — never harsh, never blame, always actionable.
+ * Strings live in locales/{lang}/errors.json under the "api_*" keys.
  */
-export function showApiErrorToast(err: unknown, fallback = 'Etwas hat nicht geklappt'): string {
+export function showApiErrorToast(
+  err: unknown,
+  fallback?: string,
+  navigateToSubscription?: () => void,
+): string {
   const code = isApiError(err) ? err.code : 'unknown';
-  const known: Record<string, { title: string; body?: string; tone: ToastTone }> = {
+  const t = (k: string) => i18n.t(`errors:${k}`);
+  const fb = fallback ?? t('generic');
+
+  type Entry = { title: string; body?: string; tone: ToastTone; action?: ToastItem['action'] };
+  const known: Record<string, Entry> = {
     insufficient_credits: {
-      title: 'Nicht genug Credits',
-      body: 'Verlängere im Konto, dann geht es weiter.',
+      title: t('api_insufficient_credits_title'),
+      body: t('api_insufficient_credits_body'),
       tone: 'warning',
+      action: navigateToSubscription
+        ? { label: t('api_insufficient_credits_action'), onPress: navigateToSubscription }
+        : undefined,
     },
     not_educational: {
-      title: 'Das sieht nicht nach Schulmaterial aus',
-      body: 'Probier ein anderes Foto — am besten eine Buchseite.',
+      title: t('api_not_educational_title'),
+      body: t('api_not_educational_body'),
       tone: 'warning',
     },
     rate_limited: {
-      title: 'Einen Moment',
-      body: 'Du warst sehr schnell. Probier’s in einer Minute nochmal.',
+      title: t('api_rate_limited_title'),
+      body: t('api_rate_limited_body'),
       tone: 'info',
     },
     safety_blocked: {
-      title: 'Nicht zum Lernen geeignet',
-      body: 'Wähle ein anderes Material.',
+      title: t('api_safety_blocked_title'),
+      body: t('api_safety_blocked_body'),
       tone: 'warning',
     },
     extraction_failed: {
-      title: 'Foto-Auswertung hat nicht geklappt',
-      body: 'Probier es nochmal — vielleicht heller oder näher.',
+      title: t('api_extraction_failed_title'),
+      body: t('api_extraction_failed_body'),
       tone: 'error',
     },
     evaluation_failed: {
-      title: 'Bewertung gerade nicht möglich',
-      body: 'Versuche es in einem Moment nochmal.',
+      title: t('api_evaluation_failed_title'),
+      body: t('api_evaluation_failed_body'),
       tone: 'error',
     },
     upload_failed: {
-      title: 'Hochladen hat nicht geklappt',
-      body: 'Prüf kurz dein Netz und versuch es nochmal.',
+      title: t('api_upload_failed_title'),
+      body: t('api_upload_failed_body'),
       tone: 'error',
     },
     unauthenticated: {
-      title: 'Bitte erneut anmelden',
-      body: 'Deine Sitzung ist abgelaufen.',
+      title: t('api_unauthenticated_title'),
+      body: t('api_unauthenticated_body'),
       tone: 'info',
     },
     forbidden: {
-      title: 'Dafür hast du keine Berechtigung',
+      title: t('api_forbidden_title'),
       tone: 'warning',
     },
     not_found: {
-      title: 'Nicht gefunden',
-      body: 'Vielleicht wurde es schon gelöscht.',
+      title: t('api_not_found_title'),
+      body: t('api_not_found_body'),
       tone: 'info',
     },
     validation_failed: {
-      title: 'Eingabe prüfen',
-      body: 'Da ist etwas nicht ganz richtig.',
+      title: t('api_validation_failed_title'),
+      body: t('api_validation_failed_body'),
       tone: 'warning',
     },
     internal: {
-      title: fallback,
-      body: 'Wir wissen Bescheid und schauen uns das an.',
+      title: fb,
+      body: t('api_internal_body'),
       tone: 'error',
     },
   };
-  const m = known[code] ?? { title: fallback, tone: 'error' as const };
-  return useToastStore.getState().show(m);
+  const m = known[code] ?? { title: fb, tone: 'error' as const };
+  return useToastStore
+    .getState()
+    .show({ ...m, duration: m.tone === 'error' || m.tone === 'warning' ? 6000 : 3500 });
 }
 
 function isApiError(err: unknown): err is { code: string; message: string; status?: number } {

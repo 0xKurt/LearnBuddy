@@ -1,5 +1,10 @@
 {
   "app": { "name": "LearnBuddy" },
+  "loading": "Lädt…",
+  "support": {
+    "contact": "Support kontaktieren",
+    "faq": "Hilfe & FAQ"
+  },
   "actions": {
     "continue": "Weiter",
     "back": "Zurück",
@@ -30,5 +35,28 @@
     "question_count_one": "1 Frage",
     "question_count_other": "{{count}} Fragen",
     "question_label": "Frage {{index}}"
+  },
+  "update": {
+    "title": "Update verfügbar",
+    "body": "Diese Version wird nicht mehr unterstützt. Bitte aktualisiere die App.",
+    "cta": "Jetzt aktualisieren"
+  },
+  "notifications": {
+    "daily_title": "Kurz üben?",
+    "daily_body": "Drei Minuten reichen schon aus.",
+    "streak_title": "Heute noch nicht geübt?",
+    "streak_body": "Eine Aufgabe zählt auch schon.",
+    "test_3days_title": "Test in 3 Tagen",
+    "test_3days_body": "{{name}} — kurz vorbereiten?",
+    "test_1day_title": "Morgen ist es soweit",
+    "test_1day_body": "{{name}} — ein Probelauf hilft.",
+    "test_today_title": "Heute Test!",
+    "test_today_body": "{{name}} — du schaffst das. Atme durch.",
+    "action_practice": "Jetzt üben"
+  },
+  "whats_new": {
+    "title": "Neu in LearnBuddy",
+    "items": ["Passwort-Wiederholung beim Registrieren", "App-Updates werden automatisch erkannt"],
+    "cta": "Los geht's"
   }
 }

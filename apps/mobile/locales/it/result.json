@@ -11,5 +11,8 @@
   },
   "this_week_label": "Argomenti di questa settimana",
   "cta_review_hard": "Riprova i più difficili",
-  "cta_overview": "Torna alla panoramica"
+  "cta_overview": "Torna alla panoramica",
+  "error_title": "Risultato non caricato",
+  "error_body": "Per favore riprova.",
+  "error_retry": "Riprova"
 }

@@ -18,5 +18,16 @@
   "finish_title": "Geschafft!",
   "finish_body": "Du hast {{correct}} von {{total}} richtig gelöst. Schöne Runde.",
   "finish_home": "Zurück zur Übersicht",
-  "no_template": "Diese Übung gibt es nicht mehr."
+  "no_template": "Diese Übung gibt es nicht mehr.",
+  "hub": {
+    "title": "Üben",
+    "upcoming_tests": "Bevorstehende Tests",
+    "test_in_days_one": "In 1 Tag",
+    "test_in_days_other": "In {{count}} Tagen",
+    "test_today": "Heute",
+    "go_to_folder": "Zum Ordner",
+    "empty_title": "Nichts Dringendes",
+    "empty_body": "Du hast keine bevorstehenden Tests. Schau bei deinen Materialien vorbei.",
+    "browse_home": "Zur Startseite"
+  }
 }

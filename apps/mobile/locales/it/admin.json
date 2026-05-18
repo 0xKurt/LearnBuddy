@@ -93,12 +93,17 @@
     "privacy_body": "Tutti i dati di apprendimento rimangono nell'UE. Nessuna pubblicità, nessuna condivisione con terze parti per scopi di addestramento.",
     "privacy_link": "Informativa sulla privacy",
     "imprint_title": "Note legali",
-    "imprint_link": "Apri"
+    "imprint_link": "Apri",
+    "support_title": "Aiuto & Supporto",
+    "support_contact": "Contatta il supporto",
+    "support_faq": "Aiuto & FAQ"
   },
   "archived": {
     "title": "Archivio",
     "banner": "Gli elementi archiviati possono essere ripristinati per 30 giorni. Dopo vengono eliminati definitivamente.",
-    "empty": "Niente nell'archivio."
+    "empty": "Niente nell'archivio.",
+    "archived_on": "Archiviato il {{date}}",
+    "restore_cta": "Ripristina"
   },
   "profile_edit": {
     "title": "Profilo",
@@ -119,7 +124,11 @@
     "test_sub": "3 giorni / 1 giorno / la mattina prima delle verifiche nelle cartelle pianificate.",
     "streak_label": "Promemoria serie",
     "streak_sub": "Un gentile promemoria quando la serie di apprendimento sta per interrompersi.",
-    "done": "Fatto"
+    "done": "Fatto",
+    "permission_title": "Notifiche non ancora consentite",
+    "permission_body": "Per ricordarti di verifiche e sessioni di esercizio, consenti le notifiche.",
+    "permission_cta": "Consenti ora",
+    "open_settings": "Apri impostazioni"
   },
   "material": {
     "title_fallback": "Materiale",

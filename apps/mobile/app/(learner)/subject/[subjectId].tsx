@@ -25,9 +25,28 @@ import {
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
 import { listFolders } from '../../../lib/api/folders.js';
+import { listMaterials, type MaterialListItem } from '../../../lib/api/materials.js';
 import { archiveSubject, listSubjects } from '../../../lib/api/subjects.js';
 import { LB } from '../../../lib/theme/colors.js';
 import type { Folder } from '@learnbuddy/shared-types';
+
+const GLYPH_FOR_KIND: Record<string, string> = {
+  math: '📐',
+  physics: '⚛️',
+  chemistry: '🧪',
+  biology: '🌱',
+  geography: '🌍',
+  history: '🏛️',
+  language_native: '✍️',
+  language_foreign: '🗣️',
+  religion_ethics: '✝️',
+  art_music: '🎨',
+  general: '📖',
+  other: '📚',
+};
+function glyphForKind(kind: string): string {
+  return GLYPH_FOR_KIND[kind] ?? '✨';
+}
 
 type Tab = 'ordner' | 'material';
 
@@ -66,6 +85,13 @@ export default function SubjectScreen() {
     enabled: !!subjectId,
   });
   const folders = foldersQuery.data ?? [];
+
+  const materialsQuery = useQuery({
+    queryKey: ['materials', 'subject', subjectId],
+    queryFn: () => listMaterials(learnerId as string, { subjectId }),
+    enabled: !!learnerId && tab === 'material',
+  });
+  const materials = materialsQuery.data ?? [];
 
   const qc = useQueryClient();
   const archiveSubjectMut = useMutation({
@@ -124,7 +150,10 @@ export default function SubjectScreen() {
       >
         <CircleBtn icon="back" onPress={() => router.back()} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <SubjectGlyph glyph="📐" size={24} />
+          <SubjectGlyph
+            glyph={subject?.subject_kind ? glyphForKind(subject.subject_kind) : '📚'}
+            size={24}
+          />
           <Text style={{ fontSize: 14, fontWeight: '600', color: LB.ink }}>{subject.name}</Text>
         </View>
         <CircleBtn icon="more" onPress={openSubjectMenu} />
@@ -189,14 +218,29 @@ export default function SubjectScreen() {
               ))}
             </View>
           )
-        ) : (
-          // Materials endpoint lands in Phase C; until then the tab shows the
-          // empty state instead of fake rows. Doc 05 §subject + CLAUDE.md #6.
+        ) : materialsQuery.isLoading ? (
+          <ActivityIndicator color={LB.ink2} style={{ marginTop: 16 }} />
+        ) : materials.length === 0 ? (
           <EmptyState
             glyph="📷"
             title={t('subject.no_materials_title')}
             body={t('subject.no_materials_body')}
           />
+        ) : (
+          <View style={{ gap: 8 }}>
+            {materials.map((m) => (
+              <MaterialRow
+                key={m.id}
+                material={m}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(learner)/material/[materialId]',
+                    params: { materialId: m.id },
+                  })
+                }
+              />
+            ))}
+          </View>
         )}
       </ScrollView>
 
@@ -212,7 +256,7 @@ export default function SubjectScreen() {
       >
         <View style={{ flex: 1 }}>
           <Btn size="lg" full variant="outline" onPress={() => setCreatingFolder(true)}>
-            {t('subject.new_folder')}
+            {`📂 ${t('subject.new_folder')}`}
           </Btn>
         </View>
         <View style={{ flex: 1 }}>
@@ -222,17 +266,20 @@ export default function SubjectScreen() {
             variant="outline"
             onPress={() => router.push({ pathname: '/(learner)/capture', params: { subjectId } })}
           >
-            {t('subject.new_material')}
+            {`📸 ${t('subject.new_material')}`}
           </Btn>
         </View>
         <View style={{ flex: 2 }}>
           <Btn
             size="lg"
             full
-            onPress={() => subject.material_count > 0 && router.push('/(learner)/session/demo')}
+            onPress={() =>
+              subject.material_count > 0 &&
+              router.push({ pathname: '/(learner)/practice', params: { subjectId } } as never)
+            }
             disabled={subject.material_count === 0}
           >
-            {t('subject.start_practice')}
+            {`▶ ${t('subject.start_practice')}`}
           </Btn>
         </View>
       </View>
@@ -265,31 +312,69 @@ function TabBtn({
   onPress: () => void;
 }) {
   return (
+    <Pressable onPress={onPress}>
+      <View
+        style={{
+          paddingHorizontal: 14,
+          paddingVertical: 6,
+          borderRadius: 8,
+          backgroundColor: active ? LB.primary : 'transparent',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 5,
+        }}
+      >
+        <Text style={{ fontSize: 12, fontWeight: '600', color: active ? '#fff' : LB.ink2 }}>
+          {label}
+        </Text>
+        <Text
+          style={{
+            fontSize: 12,
+            fontWeight: '500',
+            color: active ? '#fff' : LB.ink2,
+            opacity: 0.7,
+          }}
+        >
+          {count}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function MaterialRow({ material, onPress }: { material: MaterialListItem; onPress: () => void }) {
+  const statusColor =
+    material.extraction_status === 'ready'
+      ? LB.primary
+      : material.extraction_status === 'failed'
+        ? LB.danger
+        : LB.ink3;
+  return (
     <Pressable
       onPress={onPress}
       style={{
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        borderRadius: 8,
-        backgroundColor: active ? LB.primary : 'transparent',
+        padding: 12,
+        borderRadius: 12,
+        backgroundColor: '#fff',
+        borderColor: LB.hairline,
+        borderWidth: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 5,
+        gap: 10,
       }}
     >
-      <Text style={{ fontSize: 12, fontWeight: '600', color: active ? '#fff' : LB.ink2 }}>
-        {label}
-      </Text>
-      <Text
-        style={{
-          fontSize: 12,
-          fontWeight: '500',
-          color: active ? '#fff' : LB.ink2,
-          opacity: 0.7,
-        }}
-      >
-        {count}
-      </Text>
+      <Icon name="camera" size={18} color={LB.ink3} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 14, fontWeight: '500', color: LB.ink }} numberOfLines={1}>
+          {material.title ?? 'Material'}
+        </Text>
+        {material.page_count != null && (
+          <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 1 }}>
+            {material.page_count} {material.page_count === 1 ? 'Seite' : 'Seiten'}
+          </Text>
+        )}
+      </View>
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: statusColor }} />
     </Pressable>
   );
 }

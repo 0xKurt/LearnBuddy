@@ -10,6 +10,7 @@ export const Subject = z.object({
   subject_kind: SubjectKind,
   color_hex: HexColor,
   icon_id: z.string().nullable(),
+  custom_glyph: z.string().nullable().optional(),
   sort_order: z.number().int(),
   archived_at: Iso8601.nullable(),
   folder_count: z.number().int().nonnegative().optional(),
@@ -25,6 +26,7 @@ export const SubjectCreate = z.object({
   subject_kind: SubjectKind,
   color_hex: HexColor,
   icon_id: z.string().nullable().optional(),
+  custom_glyph: z.string().nullable().optional(),
   sort_order: z.number().int().optional(),
 });
 export type SubjectCreate = z.infer<typeof SubjectCreate>;

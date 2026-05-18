@@ -25,12 +25,16 @@
     "label_one": "1 foto",
     "label_other": "{{count}} foto",
     "max_hint": "Fino a 10 foto per materiale.",
-    "long_press_hint": "Tieni premuta una miniatura per eliminarla."
+    "long_press_hint": "Tieni premuta una miniatura per eliminarla.",
+    "delete_title": "Eliminare la foto?",
+    "delete_cancel": "Annulla",
+    "delete_confirm": "Elimina"
   },
   "cta": {
     "shutter": "Scatto",
     "done": "Fatto",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "shutter_error": "Foto non riuscita — riprova?"
   },
   "picker": {
     "title": "Dove lo metti?",

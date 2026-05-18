@@ -90,6 +90,17 @@ export async function hasBiometricHardware(): Promise<boolean> {
   }
 }
 
+export async function getBiometricType(): Promise<'face' | 'fingerprint' | null> {
+  try {
+    const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+    if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) return 'face';
+    if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) return 'fingerprint';
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function isBiometricEnabled(): Promise<boolean> {
   const v = await SecureStore.getItemAsync(KEY_BIOMETRIC);
   return v === '1';

@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn } from '../components/lb/index.js';
+import { Btn, LbTextInput } from '../components/lb/index.js';
 import { getSessionSync, setSession } from '../lib/auth/session.js';
 import { parseAuthTokensFromUrl, supabase } from '../lib/supabase.js';
 import { LB } from '../lib/theme/colors.js';
@@ -30,6 +30,7 @@ export default function ResetPasswordScreen() {
   const [phase, setPhase] = useState<Phase>('request');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -78,7 +79,7 @@ export default function ResetPasswordScreen() {
     setInfo(null);
     try {
       const { error: err } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: 'learnbuddy://reset-password',
+        redirectTo: Linking.createURL('/reset-password'),
       });
       if (err) {
         setError(t('reset.error_generic'));
@@ -145,22 +146,36 @@ export default function ResetPasswordScreen() {
 
           <View style={{ marginTop: 18, gap: 12 }}>
             {phase === 'request' ? (
-              <Input
+              <TextInput
                 placeholder={t('reset.email_placeholder')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                textContentType="emailAddress"
+                returnKeyType="go"
+                onSubmitEditing={onRequestLink}
                 editable={!busy}
+                placeholderTextColor={LB.ink3}
+                style={inputStyle}
               />
             ) : (
-              <Input
+              <LbTextInput
                 placeholder={t('reset.new_placeholder')}
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
+                textContentType="newPassword"
+                returnKeyType="go"
+                onSubmitEditing={onSavePassword}
                 editable={!busy}
+                showToggle
+                shown={showPassword}
+                onToggle={() => setShowPassword((v) => !v)}
+                toggleAccessibilityLabel={
+                  showPassword ? t('reset.hide_password') : t('reset.show_password')
+                }
               />
             )}
             {info && <Text style={{ color: LB.ink2, fontSize: 12 }}>{info}</Text>}
@@ -189,21 +204,13 @@ export default function ResetPasswordScreen() {
   );
 }
 
-function Input(props: React.ComponentProps<typeof TextInput>) {
-  return (
-    <TextInput
-      {...props}
-      placeholderTextColor={LB.ink3}
-      style={{
-        backgroundColor: LB.bg,
-        borderColor: LB.hairline,
-        borderWidth: 1,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        height: 50,
-        fontSize: 15,
-        color: LB.ink,
-      }}
-    />
-  );
-}
+const inputStyle = {
+  backgroundColor: LB.bg,
+  borderColor: LB.hairline,
+  borderWidth: 1,
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  height: 50,
+  fontSize: 15,
+  color: LB.ink,
+} as const;

@@ -277,7 +277,6 @@ materialRoutes.post(
         gradeLevel,
         subject: subject.name,
         subjectKind: subject.subject_kind,
-        targetCount: input.target_item_count,
       });
     } catch (err) {
       await refund(supabase, account_id, debit);
@@ -552,6 +551,35 @@ function toItemRow(
   };
 }
 
+// ── GET /materials ──────────────────────────────────────────────────────────
+
+materialRoutes.get('/', async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+
+  const folder_id = c.req.query('folder_id');
+  const subject_id = c.req.query('subject_id');
+  if (!folder_id && !subject_id) {
+    throw new ApiError('validation_failed', 'folder_id or subject_id is required');
+  }
+
+  const base = supabase
+    .from('materials')
+    .select('id, title, extraction_status, page_count, created_at, subject_id, folder_id')
+    .eq('learner_id', learner_id)
+    .is('archived_at', null)
+    .order('created_at', { ascending: false });
+
+  const result = await (folder_id
+    ? base.eq('folder_id', folder_id)
+    : base.eq('subject_id', subject_id as string));
+  if (result.error) {
+    throw new ApiError('internal', 'Failed to load materials', { cause: result.error.message });
+  }
+  return c.json(result.data ?? []);
+});
+
 // ── GET /materials/:id ──────────────────────────────────────────────────────
 
 materialRoutes.get('/:id', async (c) => {
@@ -617,7 +645,6 @@ materialRoutes.get('/:id/items', async (c) => {
 const RegenerateRequest = zValidator(
   'json',
   z.object({
-    target_item_count: z.number().int().min(1).max(25).default(10),
     style: z.enum(['simpler', 'harder', 'more-variety']).nullable().optional(),
   }),
 );
@@ -694,7 +721,6 @@ materialRoutes.post(
         gradeLevel,
         subject: subject.name,
         subjectKind: subject.subject_kind,
-        targetCount: body.target_item_count,
         style: body.style ?? undefined,
         excludeQuestions: existingQuestions,
       });

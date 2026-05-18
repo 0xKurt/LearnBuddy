@@ -109,6 +109,45 @@ subjectRoutes.delete('/:id', async (c) => {
   return c.json({ id: (upd.data as { id: string }).id, archived: true });
 });
 
+subjectRoutes.post('/:id/restore', async (c) => {
+  const { supabase } = getDeps(c);
+  const { account_id } = c.get('auth');
+  const id = c.req.param('id');
+
+  // Must look up archived subjects (archived_at IS NOT NULL).
+  const s = await supabase
+    .from('subjects')
+    .select('id, learner_id')
+    .eq('id', id)
+    .not('archived_at', 'is', null)
+    .maybeSingle();
+  if (s.error) throw new ApiError('internal', 'Failed to load subject', { cause: s.error.message });
+  if (!s.data) throw new ApiError('not_found', 'Archived subject not found');
+
+  const learner = await supabase
+    .from('learners')
+    .select('id')
+    .eq('id', (s.data as { learner_id: string }).learner_id)
+    .eq('account_id', account_id)
+    .is('archived_at', null)
+    .maybeSingle();
+  if (learner.error)
+    throw new ApiError('internal', 'Failed to resolve ownership', { cause: learner.error.message });
+  if (!learner.data) throw new ApiError('not_found', 'Archived subject not found');
+
+  const upd = await supabase
+    .from('subjects')
+    .update({ archived_at: null })
+    .eq('id', id)
+    .not('archived_at', 'is', null)
+    .select('id')
+    .maybeSingle();
+  if (upd.error)
+    throw new ApiError('internal', 'Failed to restore subject', { cause: upd.error.message });
+  if (!upd.data) throw new ApiError('not_found', 'Archived subject not found');
+  return c.json({ id: (upd.data as { id: string }).id, restored: true });
+});
+
 subjectRoutes.get('/:subjectId/folders', async (c) => {
   const { supabase } = getDeps(c);
   const { account_id } = c.get('auth');

@@ -119,23 +119,23 @@ function SubjectList({
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 8, paddingBottom: 24 }}>
       {subjects.map((s) => (
-        <Pressable
-          key={s.id}
-          onPress={() => onPick(s)}
-          style={{
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            borderRadius: 16,
-            backgroundColor: LB.bg,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Text style={{ fontSize: 15, fontWeight: '500', color: LB.ink }}>{s.name}</Text>
-          <Text style={{ fontSize: 12, color: LB.ink3 }}>
-            {s.folder_count} Ordner · {s.material_count} Material
-          </Text>
+        <Pressable key={s.id} onPress={() => onPick(s)}>
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              borderRadius: 16,
+              backgroundColor: LB.bg,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '500', color: LB.ink }}>{s.name}</Text>
+            <Text style={{ fontSize: 12, color: LB.ink3 }}>
+              {s.folder_count} Ordner · {s.material_count} Material
+            </Text>
+          </View>
         </Pressable>
       ))}
     </ScrollView>
@@ -160,31 +160,32 @@ function FolderList({
   }
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 8, paddingBottom: 24 }}>
-      <Pressable
-        onPress={() => onPick(null)}
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          borderRadius: 16,
-          backgroundColor: LB.primaryLt,
-        }}
-      >
-        <Text style={{ fontSize: 15, fontWeight: '500', color: LB.primaryDk }}>
-          Ohne Ordner — direkt im Fach
-        </Text>
-      </Pressable>
-      {folders.map((f) => (
-        <Pressable
-          key={f.id}
-          onPress={() => onPick(f.id)}
+      <Pressable onPress={() => onPick(null)}>
+        <View
           style={{
             paddingHorizontal: 16,
             paddingVertical: 14,
             borderRadius: 16,
-            backgroundColor: LB.bg,
+            backgroundColor: LB.primaryLt,
           }}
         >
-          <Text style={{ fontSize: 15, fontWeight: '500', color: LB.ink }}>{f.name}</Text>
+          <Text style={{ fontSize: 15, fontWeight: '500', color: LB.primaryDk }}>
+            Ohne Ordner — direkt im Fach
+          </Text>
+        </View>
+      </Pressable>
+      {folders.map((f) => (
+        <Pressable key={f.id} onPress={() => onPick(f.id)}>
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              borderRadius: 16,
+              backgroundColor: LB.bg,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '500', color: LB.ink }}>{f.name}</Text>
+          </View>
         </Pressable>
       ))}
     </ScrollView>

@@ -191,6 +191,31 @@ function parseSseChunks(chunk: string): Array<{ event: string; data: string }> {
   return out;
 }
 
+const MaterialListItem = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  extraction_status: z.string(),
+  page_count: z.number().nullable(),
+  created_at: z.string(),
+  subject_id: z.string(),
+  folder_id: z.string().nullable(),
+});
+export type MaterialListItem = z.infer<typeof MaterialListItem>;
+
+export async function listMaterials(
+  learnerId: string,
+  params: { folderId?: string; subjectId?: string },
+): Promise<MaterialListItem[]> {
+  const qs = new URLSearchParams();
+  if (params.folderId) qs.set('folder_id', params.folderId);
+  else if (params.subjectId) qs.set('subject_id', params.subjectId);
+  return api(`/materials?${qs.toString()}`, {
+    method: 'GET',
+    schema: z.array(MaterialListItem),
+    learnerId,
+  });
+}
+
 export async function getMaterial(
   learnerId: string,
   materialId: string,

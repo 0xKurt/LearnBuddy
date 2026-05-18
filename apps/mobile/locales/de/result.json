@@ -11,5 +11,8 @@
   },
   "this_week_label": "Stoff diese Woche",
   "cta_review_hard": "Nochmal mit den schwierigen",
-  "cta_overview": "Zur Übersicht"
+  "cta_overview": "Zur Übersicht",
+  "error_title": "Ergebnis nicht geladen",
+  "error_body": "Bitte nochmal versuchen.",
+  "error_retry": "Nochmal"
 }

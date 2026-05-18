@@ -32,6 +32,10 @@ If your change diverges from any of these docs, write an ADR (`/engineering:arch
 5. **Never hardcode demo data in production code paths.** Use mock data only inside `__fixtures__/` files referenced by tests.
 6. **Never ship a screen with `useState('hardcoded')` as its primary content.** The skeleton was OK; the next touch wires it.
 7. **Cite the doc** in commit messages and PR bodies. Reviewers need it.
+8. **Never use raw `<Pressable>` for a CTA button.** Always use `<Btn>` from `components/lb/`. Raw Pressables with inline `backgroundColor` bypass the design system and have broken the welcome screen CTAs repeatedly. `_layout.tsx` modals are not exempt — they must use `<Btn>` too.
+9. **Never block user interaction with a transparent modal overlay.** Any `Modal` with a full-screen dismiss `Pressable` must be dismissible via an obvious, correctly-styled in-sheet button using `<Btn>`. The outer Pressable intercepts all taps on screens underneath it.
+10. **Never put `backgroundColor` directly on `<Pressable>`.** In React Native, `backgroundColor` on `Pressable` silently fails to render in some versions (RN 0.73+). The `Btn` component already uses the correct pattern: `backgroundColor` lives on an inner `<View>` inside the `Pressable`, and the `Pressable` only holds `alignSelf` + `opacity`. Never revert this to put background styles on the Pressable itself — this is what caused the "white text on paper background, no button visible" bug that broke the welcome screen multiple times.
+11. **Never remove `KeyboardAvoidingView` from `welcome.tsx`.** The CTA button must be pinned OUTSIDE the `ScrollView` and INSIDE a `KeyboardAvoidingView` (`behavior="padding"` on iOS, `"height"` on Android). Without this, the keyboard covers the CTA and users cannot submit the form. This has been broken and re-fixed multiple times — do not touch the layout structure of welcome.tsx without understanding this constraint.
 
 ## Required quality gates
 

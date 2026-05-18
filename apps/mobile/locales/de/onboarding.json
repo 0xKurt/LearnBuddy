@@ -10,7 +10,11 @@
     "error_conflict": "Diese E-Mail ist schon vergeben.",
     "error_validation": "Bitte E-Mail und Passwort (≥ 8 Zeichen) prüfen.",
     "error_generic": "Da ist gerade was schiefgelaufen. Probier's gleich nochmal.",
-    "error_network": "Keine Verbindung. Bitte später nochmal versuchen."
+    "error_network": "Keine Verbindung. Bitte später nochmal versuchen.",
+    "placeholder_confirm": "Passwort wiederholen",
+    "error_password_mismatch": "Die Passwörter stimmen nicht überein.",
+    "error_conflict_link": "Zum Login",
+    "error_email_format": "Bitte eine gültige E-Mail-Adresse eingeben."
   },
   "welcome": {
     "title": "Lern-Begleiter",
@@ -91,6 +95,13 @@
     "confirm_title": "PIN bestätigen",
     "confirm_subtitle": "Tippe die gleichen 4 Ziffern noch einmal.",
     "mismatch": "Stimmt nicht überein. Bitte nochmal von vorn.",
+    "method_title": "Wie möchtest du dich einloggen?",
+    "method_subtitle": "Face ID ist sicherer und bequemer — du brauchst keine PIN.",
+    "method_biometric": "Mit Face ID einrichten",
+    "method_biometric_face": "Mit Face ID einrichten",
+    "method_biometric_fingerprint": "Mit Fingerabdruck einrichten",
+    "method_pin": "Lieber eine PIN",
+    "biometric_failed": "Biometrie hat nicht geklappt — bitte nochmal versuchen.",
     "biometric_offer": "Mit Face ID / Touch ID öffnen?",
     "biometric_yes": "Ja, einrichten",
     "biometric_no": "Nein, nur PIN",

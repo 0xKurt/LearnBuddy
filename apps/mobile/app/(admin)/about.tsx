@@ -54,6 +54,19 @@ export default function AboutScreen() {
             {t('about.imprint_link')}
           </Btn>
         </Card>
+        <Card title={t('about.support_title')}>
+          <Btn variant="ghost" onPress={() => Linking.openURL('mailto:support@learnbuddy.app')}>
+            {t('about.support_contact')}
+          </Btn>
+          <Btn
+            variant="ghost"
+            onPress={() =>
+              Linking.openURL(process.env.EXPO_PUBLIC_FAQ_URL ?? 'https://learnbuddy.app/help')
+            }
+          >
+            {t('about.support_faq')}
+          </Btn>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );

@@ -6,7 +6,8 @@
   },
   "loading_error": {
     "title": "Konnte Fächer nicht laden.",
-    "body": "Bitte zieh die Liste nach unten, um es erneut zu versuchen."
+    "body": "Bitte zieh die Liste nach unten, um es erneut zu versuchen.",
+    "retry": "Erneut versuchen"
   },
   "empty": {
     "title": "Noch keine Fächer.",
@@ -14,9 +15,18 @@
   },
   "test_in_days": "Test in {{count}} Tagen",
   "add_subject_tile": "Fach hinzufügen",
+  "cta_first_session": {
+    "title": "Fang an zu lernen!",
+    "body": "{{name}} wartet auf dich. Tippe hier, um direkt loszulegen."
+  },
+  "last_session": "Zuletzt gelernt: {{date}}",
   "modal": {
     "title": "Neues Fach",
     "name_label": "Name",
+    "kind_label": "Art des Fachs",
+    "color_label": "Farbe",
+    "emoji_label": "Eigenes Emoji",
+    "preview_label": "Vorschau",
     "cancel": "Abbrechen",
     "create": "Anlegen",
     "creating": "Wird angelegt…",
@@ -50,17 +60,29 @@
     "no_materials_title": "Noch keine Materialien.",
     "no_materials_body": "Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst.",
     "new_folder": "Ordner",
-    "new_material": "Neu",
-    "start_practice": "Üben starten",
+    "new_material": "Material",
+    "start_practice": "Üben",
     "archive": "Archivieren",
     "cancel": "Abbrechen"
   },
   "subjects": {
     "math": "Mathematik",
-    "biology": "Biologie",
     "physics": "Physik",
+    "chemistry": "Chemie",
+    "biology": "Biologie",
+    "geography": "Geographie",
+    "history": "Geschichte",
     "language_native": "Deutsch",
     "language_foreign": "Sprache",
-    "general": "Anderes"
+    "religion_ethics": "Religion",
+    "art_music": "Kunst",
+    "computer_science": "Informatik",
+    "economics": "Wirtschaft",
+    "law": "Recht",
+    "philosophy": "Philosophie",
+    "literature": "Literatur",
+    "sports": "Sport",
+    "general": "Allgemein",
+    "other": "Sonstiges"
   }
 }

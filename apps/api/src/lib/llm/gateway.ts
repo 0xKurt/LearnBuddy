@@ -32,7 +32,6 @@ export type VisionInput = {
     | 'art_music'
     | 'general'
     | 'other';
-  targetCount: number;
 };
 
 /** Item emitted by the vision call, before persistence. Mirrors Doc 06 §P1 OUTPUT. */
@@ -119,7 +118,6 @@ export type RegenerateInput = {
   gradeLevel: number;
   subject: string;
   subjectKind: VisionInput['subjectKind'];
-  targetCount: number;
   style?: 'simpler' | 'harder' | 'more-variety';
   excludeQuestions: string[];
 };

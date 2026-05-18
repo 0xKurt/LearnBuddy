@@ -35,63 +35,60 @@ export function CoachMark({ visible, onDismiss, title, body, ctaLabel, glyph }: 
       onRequestClose={onDismiss}
       accessibilityViewIsModal
     >
-      <Pressable
-        onPress={onDismiss}
-        accessibilityRole="button"
-        accessibilityLabel={ctaLabel ?? 'Verstanden'}
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(10,10,15,0.55)',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <SafeAreaView edges={['bottom']}>
-          <Pressable
-            // Inner Pressable swallows taps so the user can read without the
-            // outer dim immediately swallowing it. Tap the CTA to dismiss.
-            onPress={() => undefined}
-            style={{
-              backgroundColor: LB.paper,
-              borderTopLeftRadius: 22,
-              borderTopRightRadius: 22,
-              padding: 22,
-              gap: 12,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              {glyph ? <Text style={{ fontSize: 26 }}>{glyph}</Text> : null}
-              <Text
+      <Pressable onPress={onDismiss} style={{ flex: 1 }}>
+        <View
+          style={{ flex: 1, backgroundColor: 'rgba(10,10,15,0.55)', justifyContent: 'flex-end' }}
+        >
+          <SafeAreaView edges={['bottom']}>
+            <Pressable onPress={() => undefined}>
+              <View
                 style={{
-                  fontSize: 17,
-                  fontWeight: '600',
-                  color: LB.ink,
-                  letterSpacing: -0.3,
-                  flex: 1,
+                  backgroundColor: LB.paper,
+                  borderTopLeftRadius: 22,
+                  borderTopRightRadius: 22,
+                  padding: 22,
+                  gap: 12,
                 }}
               >
-                {title}
-              </Text>
-            </View>
-            <Text style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>{body}</Text>
-            <Pressable
-              onPress={onDismiss}
-              accessibilityRole="button"
-              accessibilityLabel={ctaLabel ?? 'Verstanden'}
-              style={{
-                marginTop: 6,
-                height: 48,
-                borderRadius: 12,
-                backgroundColor: LB.ink,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
-                {ctaLabel ?? 'Verstanden'}
-              </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  {glyph ? <Text style={{ fontSize: 26 }}>{glyph}</Text> : null}
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: '600',
+                      color: LB.ink,
+                      letterSpacing: -0.3,
+                      flex: 1,
+                    }}
+                  >
+                    {title}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>{body}</Text>
+                <Pressable
+                  onPress={onDismiss}
+                  accessibilityRole="button"
+                  accessibilityLabel={ctaLabel ?? 'Verstanden'}
+                >
+                  <View
+                    style={{
+                      marginTop: 6,
+                      height: 48,
+                      borderRadius: 12,
+                      backgroundColor: LB.ink,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
+                      {ctaLabel ?? 'Verstanden'}
+                    </Text>
+                  </View>
+                </Pressable>
+              </View>
             </Pressable>
-          </Pressable>
-        </SafeAreaView>
+          </SafeAreaView>
+        </View>
       </Pressable>
     </Modal>
   );

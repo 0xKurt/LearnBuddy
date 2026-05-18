@@ -1,10 +1,11 @@
 // PIN + biometric setup. Doc 05 §10 ("Mandatory — cannot be skipped").
 //
-// Three-step flow:
-//   1. Choose PIN — 4-digit pad.
-//   2. Confirm PIN — same 4 digits. Mismatch → restart from step 1.
-//   3. If biometric hardware exists, offer to enable. Either way the PIN is
-//      persisted and we forward to /(onboarding)/hand-off.
+// When Face ID / Touch ID hardware is enrolled, the user picks their method first:
+//   A. Face ID only — authenticates immediately, no PIN needed, goes to hand-off.
+//   B. PIN — 4-digit pad → confirm → done. Biometric is NOT re-offered (user said no).
+//
+// When no biometric hardware exists the method step is skipped and the old
+// 3-step PIN + optional biometric offer runs as before.
 
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -15,26 +16,61 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn, PinPad } from '../../components/lb/index.js';
 import {
   authenticateBiometric,
+  getBiometricType,
   hasBiometricHardware,
   setBiometricEnabled,
   setPin,
 } from '../../lib/auth/pin.js';
 import { LB } from '../../lib/theme/colors.js';
 
-type Phase = 'choose' | 'confirm' | 'biometric';
+type Phase = 'method' | 'choose' | 'confirm' | 'biometric';
 
 export default function PinSetupScreen() {
   const { t } = useTranslation('onboarding');
-  const [phase, setPhase] = useState<Phase>('choose');
+  // null = still detecting hardware (avoids flash of wrong screen)
+  const [phase, setPhase] = useState<Phase | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricType, setBiometricType] = useState<'face' | 'fingerprint'>('face');
   const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
-    hasBiometricHardware().then(setBiometricAvailable);
+    void (async () => {
+      const avail = await hasBiometricHardware();
+      setBiometricAvailable(avail);
+      if (avail) {
+        const type = await getBiometricType();
+        setBiometricType(type ?? 'face');
+      }
+      setPhase(avail ? 'method' : 'choose');
+    })();
   }, []);
+
+  // User chose Face ID as their only method.
+  async function onBiometricSetup() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const ok = await authenticateBiometric(t('pin.biometric_offer'));
+      if (ok) {
+        await setBiometricEnabled(true);
+        router.replace('/(onboarding)/hand-off');
+      } else {
+        setError(t('pin.biometric_failed'));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // User chose PIN; they already said no to biometric so skip that offer later.
+  function onPickPin() {
+    setError(null);
+    setPhase('choose');
+  }
 
   async function finalize(enableBiometric: boolean) {
     if (!chosen || busy) return;
@@ -69,6 +105,8 @@ export default function PinSetupScreen() {
       return;
     }
     setError(null);
+    // Only offer biometric here when hardware exists AND user didn't already
+    // see the method screen (where they picked PIN, meaning they declined biometric).
     if (biometricAvailable) {
       setPhase('biometric');
     } else {
@@ -76,18 +114,27 @@ export default function PinSetupScreen() {
     }
   }
 
+  if (phase === null) return null;
+
   const title =
-    phase === 'biometric'
-      ? t('pin.biometric_offer')
-      : phase === 'confirm'
-        ? t('pin.confirm_title')
-        : t('pin.title');
+    phase === 'method'
+      ? t('pin.method_title')
+      : phase === 'biometric'
+        ? t('pin.biometric_offer')
+        : phase === 'confirm'
+          ? t('pin.confirm_title')
+          : t('pin.title');
+
   const subtitle =
-    phase === 'biometric'
-      ? ''
-      : phase === 'confirm'
-        ? t('pin.confirm_subtitle')
-        : t('pin.subtitle');
+    phase === 'method'
+      ? t('pin.method_subtitle')
+      : phase === 'biometric'
+        ? ''
+        : phase === 'confirm'
+          ? t('pin.confirm_subtitle')
+          : t('pin.subtitle');
+
+  const glyph = phase === 'method' ? '🔐' : '🔒';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
@@ -110,7 +157,7 @@ export default function PinSetupScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ fontSize: 32 }}>🔒</Text>
+            <Text style={{ fontSize: 32 }}>{glyph}</Text>
           </View>
           <Text
             style={{
@@ -128,7 +175,28 @@ export default function PinSetupScreen() {
           {!!error && <Text style={{ color: LB.danger ?? '#c0392b', fontSize: 12 }}>{error}</Text>}
         </View>
 
-        {phase === 'biometric' ? (
+        {phase === 'method' ? (
+          <View style={{ gap: 10 }}>
+            <Btn
+              size="lg"
+              full
+              variant="primary"
+              onPress={() => {
+                void onBiometricSetup();
+              }}
+              disabled={busy}
+            >
+              {busy
+                ? t('pin.saving')
+                : biometricType === 'fingerprint'
+                  ? t('pin.method_biometric_fingerprint')
+                  : t('pin.method_biometric_face')}
+            </Btn>
+            <Btn size="lg" full variant="ghost" onPress={onPickPin}>
+              {t('pin.method_pin')}
+            </Btn>
+          </View>
+        ) : phase === 'biometric' ? (
           <View style={{ gap: 10 }}>
             <Btn
               size="lg"

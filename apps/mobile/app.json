@@ -13,6 +13,7 @@
     "ios": {
       "bundleIdentifier": "com.learnbuddy.app",
       "supportsTablet": false,
+      "associatedDomains": ["applinks:learnbuddy.app"],
       "infoPlist": {
         "NSCameraUsageDescription": "Damit du Lernmaterial fotografieren kannst.",
         "NSMicrophoneUsageDescription": "Damit du Antworten sprechen kannst.",
@@ -25,7 +26,15 @@
       "adaptiveIcon": {
         "backgroundColor": "#f0eee9"
       },
-      "permissions": ["CAMERA", "RECORD_AUDIO"]
+      "permissions": ["CAMERA", "RECORD_AUDIO"],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "learnbuddy.app" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro"

@@ -20,6 +20,9 @@ type AppState = {
   /** Hand-off for minor-profile creation. */
   pending_profile_draft: ProfileDraft | null;
   set_pending_profile_draft: (d: ProfileDraft | null) => void;
+  /** Birth year collected in welcome.tsx signup form; pre-populates add-profile. */
+  pending_birth_year: number | null;
+  set_pending_birth_year: (y: number | null) => void;
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -29,4 +32,6 @@ export const useAppStore = create<AppState>((set) => ({
   set_admin_unlocked: (v) => set({ admin_unlocked: v }),
   pending_profile_draft: null,
   set_pending_profile_draft: (d) => set({ pending_profile_draft: d }),
+  pending_birth_year: null,
+  set_pending_birth_year: (y) => set({ pending_birth_year: y }),
 }));

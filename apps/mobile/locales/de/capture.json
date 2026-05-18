@@ -25,12 +25,16 @@
     "label_one": "1 Foto",
     "label_other": "{{count}} Fotos",
     "max_hint": "Bis zu 10 Bilder pro Material.",
-    "long_press_hint": "Lang drücken, um ein Foto zu löschen."
+    "long_press_hint": "Lang drücken, um ein Foto zu löschen.",
+    "delete_title": "Foto löschen?",
+    "delete_cancel": "Abbrechen",
+    "delete_confirm": "Löschen"
   },
   "cta": {
     "shutter": "Auslöser",
     "done": "Fertig",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "shutter_error": "Foto fehlgeschlagen — nochmal versuchen?"
   },
   "picker": {
     "title": "Wohin damit?",

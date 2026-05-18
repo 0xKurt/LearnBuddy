@@ -25,12 +25,16 @@
     "label_one": "1 foto",
     "label_other": "{{count}} fotos",
     "max_hint": "Hasta 10 fotos por material.",
-    "long_press_hint": "Mantén pulsada una miniatura para eliminarla."
+    "long_press_hint": "Mantén pulsada una miniatura para eliminarla.",
+    "delete_title": "¿Eliminar foto?",
+    "delete_cancel": "Cancelar",
+    "delete_confirm": "Eliminar"
   },
   "cta": {
     "shutter": "Disparador",
     "done": "Listo",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "shutter_error": "Foto fallida — ¿inténtalo de nuevo?"
   },
   "picker": {
     "title": "¿Dónde lo guardamos?",

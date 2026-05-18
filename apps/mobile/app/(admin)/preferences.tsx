@@ -205,24 +205,27 @@ function RadioRow<T extends number>({
             accessibilityRole="radio"
             accessibilityState={{ selected }}
             accessibilityLabel={label(opt)}
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: selected ? LB.primary : LB.hairline,
-              backgroundColor: selected ? LB.primaryLt : '#fff',
-            }}
           >
-            <Text
+            <View
               style={{
-                fontSize: 14,
-                color: selected ? LB.primaryDk : LB.ink,
-                fontWeight: '500',
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: selected ? LB.primary : LB.hairline,
+                backgroundColor: selected ? LB.primaryLt : '#fff',
               }}
             >
-              {label(opt)}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: selected ? LB.primaryDk : LB.ink,
+                  fontWeight: '500',
+                }}
+              >
+                {label(opt)}
+              </Text>
+            </View>
           </Pressable>
         );
       })}

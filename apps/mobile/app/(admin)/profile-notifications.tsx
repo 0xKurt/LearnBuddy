@@ -4,12 +4,14 @@
 
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, Switch, Text, View } from 'react-native';
+import { Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn } from '../../components/lb/index.js';
 import {
+  ensurePermissions,
+  getPermissionStatus,
   loadNotificationPrefs,
   saveNotificationPrefs,
   type NotificationPrefs,
@@ -21,10 +23,34 @@ export default function ProfileNotificationsScreen() {
   const { t } = useTranslation('admin');
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+  const [permGranted, setPermGranted] = useState(true);
+  const [permDenied, setPermDenied] = useState(false);
+  const [requestingPerm, setRequestingPerm] = useState(false);
 
   useEffect(() => {
     void loadNotificationPrefs().then(setPrefs);
+    void getPermissionStatus().then((status) => {
+      setPermGranted(status === 'granted');
+      setPermDenied(status === 'denied');
+    });
   }, []);
+
+  const onRequestPermission = async () => {
+    setRequestingPerm(true);
+    if (permDenied) {
+      // iOS/Android won't re-show the dialog once denied — must go to Settings.
+      await Linking.openSettings();
+      // Re-check status after user returns from Settings.
+      const status = await getPermissionStatus();
+      setPermGranted(status === 'granted');
+      setPermDenied(status === 'denied');
+    } else {
+      const granted = await ensurePermissions();
+      setPermGranted(granted);
+      setPermDenied(!granted);
+    }
+    setRequestingPerm(false);
+  };
 
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
   if (!prefs) {
@@ -46,6 +72,32 @@ export default function ProfileNotificationsScreen() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
       <Header title={t('notifications.title')} />
       <ScrollView contentContainerStyle={{ padding: 22, gap: 14 }}>
+        {!permGranted && (
+          <View
+            style={{
+              backgroundColor: 'rgba(181,138,60,0.10)',
+              borderColor: 'rgba(181,138,60,0.25)',
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 16,
+              gap: 10,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: LB.warning, fontWeight: '600' }}>
+              {t('notifications.permission_title')}
+            </Text>
+            <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
+              {t('notifications.permission_body')}
+            </Text>
+            <Btn size="sm" onPress={() => void onRequestPermission()} disabled={requestingPerm}>
+              {requestingPerm
+                ? t('notifications.loading')
+                : permDenied
+                  ? t('notifications.open_settings')
+                  : t('notifications.permission_cta')}
+            </Btn>
+          </View>
+        )}
         <Row
           label={t('notifications.daily_label')}
           sub={t('notifications.daily_sub', { time: prefs.daily_time })}

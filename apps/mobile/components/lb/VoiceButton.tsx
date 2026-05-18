@@ -156,30 +156,34 @@ export function VoiceButton({
         accessibilityRole="button"
         accessibilityLabel={labelIdle}
         accessibilityState={{ busy: active, disabled }}
-        style={({ pressed }) => ({
-          alignSelf: 'stretch',
-          minHeight: 64,
-          paddingHorizontal: 26,
-          paddingVertical: 18,
-          borderRadius: 32,
-          backgroundColor: active ? LB.primary : LB.primaryLt,
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: disabled ? 0.5 : 1,
-          transform: [{ scale: pressed ? 0.98 : 1 }],
-        })}
+        style={{ alignSelf: 'stretch', opacity: disabled ? 0.5 : 1 }}
       >
-        <Text
-          style={{
-            fontSize: 15,
-            fontWeight: '600',
-            color: active ? '#fff' : LB.primaryDk,
-            letterSpacing: -0.1,
-            textAlign: 'center',
-          }}
-        >
-          {partial || label}
-        </Text>
+        {({ pressed }) => (
+          <View
+            style={{
+              minHeight: 64,
+              paddingHorizontal: 26,
+              paddingVertical: 18,
+              borderRadius: 32,
+              backgroundColor: active ? LB.primary : LB.primaryLt,
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '600',
+                color: active ? '#fff' : LB.primaryDk,
+                letterSpacing: -0.1,
+                textAlign: 'center',
+              }}
+            >
+              {partial || label}
+            </Text>
+          </View>
+        )}
       </Pressable>
       {error && (
         <View

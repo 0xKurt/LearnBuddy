@@ -6,7 +6,8 @@
   },
   "loading_error": {
     "title": "Couldn't load your subjects.",
-    "body": "Pull down to try again."
+    "body": "Pull down to try again.",
+    "retry": "Try again"
   },
   "empty": {
     "title": "No subjects yet.",
@@ -14,9 +15,18 @@
   },
   "test_in_days": "Test in {{count}} days",
   "add_subject_tile": "Add subject",
+  "cta_first_session": {
+    "title": "Start learning!",
+    "body": "{{name}} is waiting for you. Tap here to get started."
+  },
+  "last_session": "Last studied: {{date}}",
   "modal": {
     "title": "New subject",
     "name_label": "Name",
+    "kind_label": "Subject type",
+    "color_label": "Color",
+    "emoji_label": "Custom emoji",
+    "preview_label": "Preview",
     "cancel": "Cancel",
     "create": "Create",
     "creating": "Creating…",
@@ -50,17 +60,29 @@
     "no_materials_title": "No materials yet.",
     "no_materials_body": "Snap a worksheet or a book page — the rest happens on its own.",
     "new_folder": "Folder",
-    "new_material": "New",
-    "start_practice": "Start practice",
+    "new_material": "Material",
+    "start_practice": "Practice",
     "archive": "Archive",
     "cancel": "Cancel"
   },
   "subjects": {
     "math": "Maths",
-    "biology": "Biology",
     "physics": "Physics",
+    "chemistry": "Chemistry",
+    "biology": "Biology",
+    "geography": "Geography",
+    "history": "History",
     "language_native": "English",
     "language_foreign": "Language",
-    "general": "Other"
+    "religion_ethics": "RE",
+    "art_music": "Art",
+    "computer_science": "Computer Science",
+    "economics": "Economics",
+    "law": "Law",
+    "philosophy": "Philosophy",
+    "literature": "Literature",
+    "sports": "Sports",
+    "general": "General",
+    "other": "Other"
   }
 }

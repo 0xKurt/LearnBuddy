@@ -10,7 +10,11 @@
     "error_conflict": "Questa email è già in uso.",
     "error_validation": "Controlla email e password (≥ 8 caratteri).",
     "error_generic": "Qualcosa è andato storto. Riprova tra un momento.",
-    "error_network": "Nessuna connessione. Riprova più tardi."
+    "error_network": "Nessuna connessione. Riprova più tardi.",
+    "placeholder_confirm": "Ripeti la password",
+    "error_password_mismatch": "Le password non coincidono.",
+    "error_conflict_link": "Vai al login",
+    "error_email_format": "Inserisci un indirizzo email valido."
   },
   "welcome": {
     "title": "Compagno di studio",
@@ -91,6 +95,13 @@
     "confirm_title": "Conferma il PIN",
     "confirm_subtitle": "Tocca di nuovo le stesse 4 cifre.",
     "mismatch": "Non corrisponde. Ricomincia.",
+    "method_title": "Come vuoi accedere?",
+    "method_subtitle": "Face ID è più sicuro e comodo — niente PIN necessario.",
+    "method_biometric": "Configura Face ID",
+    "method_biometric_face": "Configura Face ID",
+    "method_biometric_fingerprint": "Configura impronta digitale",
+    "method_pin": "Preferisco un PIN",
+    "biometric_failed": "La biometria non ha funzionato — riprova.",
     "biometric_offer": "Aprire con Face ID / Touch ID?",
     "biometric_yes": "Sì, configura",
     "biometric_no": "No, solo PIN",

@@ -260,18 +260,21 @@ export default function SessionScreen() {
               onPress={() => setExplainOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={t('explain.open')}
-              style={{
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                borderRadius: 999,
-                backgroundColor: '#fff',
-                borderColor: LB.hairline,
-                borderWidth: 1,
-              }}
             >
-              <Text style={{ fontSize: 12, color: LB.ink, fontWeight: '600' }}>
-                {t('explain.pill')}
-              </Text>
+              <View
+                style={{
+                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  borderRadius: 999,
+                  backgroundColor: '#fff',
+                  borderColor: LB.hairline,
+                  borderWidth: 1,
+                }}
+              >
+                <Text style={{ fontSize: 12, color: LB.ink, fontWeight: '600' }}>
+                  {t('explain.pill')}
+                </Text>
+              </View>
             </Pressable>
           </View>
           <Text style={{ fontSize: 16, color: LB.ink, marginTop: 6, lineHeight: 22 }}>
@@ -484,18 +487,18 @@ function AnswerArea(props: {
       return (
         <View style={{ gap: 8 }}>
           {(item.mc_options ?? []).map((opt, i) => (
-            <Pressable
-              key={i}
-              onPress={() => setMcSelected(i)}
-              style={{
-                padding: 14,
-                borderRadius: 14,
-                backgroundColor: mcSelected === i ? LB.primaryLt : '#fff',
-                borderColor: mcSelected === i ? LB.primaryDk : LB.hairline,
-                borderWidth: 1,
-              }}
-            >
-              <Text style={{ fontSize: 15, color: LB.ink }}>{opt}</Text>
+            <Pressable key={i} onPress={() => setMcSelected(i)}>
+              <View
+                style={{
+                  padding: 14,
+                  borderRadius: 14,
+                  backgroundColor: mcSelected === i ? LB.primaryLt : '#fff',
+                  borderColor: mcSelected === i ? LB.primaryDk : LB.hairline,
+                  borderWidth: 1,
+                }}
+              >
+                <Text style={{ fontSize: 15, color: LB.ink }}>{opt}</Text>
+              </View>
             </Pressable>
           ))}
         </View>

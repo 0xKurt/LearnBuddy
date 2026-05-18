@@ -11,5 +11,8 @@
   },
   "this_week_label": "This week's topics",
   "cta_review_hard": "Try the tricky ones again",
-  "cta_overview": "Back to overview"
+  "cta_overview": "Back to overview",
+  "error_title": "Result not loaded",
+  "error_body": "Please try again.",
+  "error_retry": "Retry"
 }

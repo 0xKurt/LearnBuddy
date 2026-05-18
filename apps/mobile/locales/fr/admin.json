@@ -93,12 +93,17 @@
     "privacy_body": "Toutes les données d'apprentissage restent dans l'UE. Pas de publicité, aucune transmission à des tiers à des fins d'entraînement.",
     "privacy_link": "Politique de confidentialité",
     "imprint_title": "Mentions légales",
-    "imprint_link": "Ouvrir"
+    "imprint_link": "Ouvrir",
+    "support_title": "Aide & Support",
+    "support_contact": "Contacter le support",
+    "support_faq": "Aide & FAQ"
   },
   "archived": {
     "title": "Archives",
     "banner": "Les éléments archivés peuvent être restaurés pendant 30 jours. Ensuite, ils sont supprimés définitivement.",
-    "empty": "Rien dans les archives."
+    "empty": "Rien dans les archives.",
+    "archived_on": "Archivé le {{date}}",
+    "restore_cta": "Restaurer"
   },
   "profile_edit": {
     "title": "Profil",
@@ -119,7 +124,11 @@
     "test_sub": "3 jours / 1 jour / le matin avant les contrôles dans les dossiers planifiés.",
     "streak_label": "Rappel de série",
     "streak_sub": "Une douce invitation quand la série d'apprentissage est sur le point de s'interrompre.",
-    "done": "Terminé"
+    "done": "Terminé",
+    "permission_title": "Notifications pas encore autorisées",
+    "permission_body": "Pour te rappeler tes contrôles et séances, autorise les notifications.",
+    "permission_cta": "Autoriser maintenant",
+    "open_settings": "Ouvrir les réglages"
   },
   "material": {
     "title_fallback": "Matériel",

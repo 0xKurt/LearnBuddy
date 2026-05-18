@@ -212,11 +212,11 @@ learnerRoutes.get('/:learnerId/subjects', async (c) => {
 
   await resolveLearner(supabase, account_id, learnerId);
 
-  const subjectsRes = await supabase
-    .from('subjects')
-    .select('*')
-    .eq('learner_id', learnerId)
-    .is('archived_at', null);
+  const showArchived = c.req.query('show_archived') === 'true';
+  const baseQuery = supabase.from('subjects').select('*').eq('learner_id', learnerId);
+  const subjectsRes = await (showArchived
+    ? baseQuery.not('archived_at', 'is', null)
+    : baseQuery.is('archived_at', null));
   if (subjectsRes.error) {
     throw new ApiError('internal', 'Failed to load subjects', { cause: subjectsRes.error.message });
   }
@@ -293,6 +293,7 @@ learnerRoutes.post(
         subject_kind: input.subject_kind,
         color_hex: input.color_hex,
         icon_id: input.icon_id ?? null,
+        custom_glyph: input.custom_glyph ?? null,
         sort_order: input.sort_order ?? 0,
         archived_at: null,
       })

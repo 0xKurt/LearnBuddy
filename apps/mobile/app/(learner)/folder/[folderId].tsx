@@ -1,13 +1,10 @@
 // Folder — detail screen with name, date chip, material list, Üben button.
 // Doc 05 §folder. Long-press → rename/archive sheet.
-//
-// Materials backend lands in Phase C — until then the material list renders
-// the empty state, not demo rows, per CLAUDE.md hard rule #6.
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,7 +16,9 @@ import {
   FolderEditorModal,
   Icon,
 } from '../../../components/lb/index.js';
+import { getAccount } from '../../../lib/api/account.js';
 import { listFolders } from '../../../lib/api/folders.js';
+import { listMaterials, type MaterialListItem } from '../../../lib/api/materials.js';
 import { LB } from '../../../lib/theme/colors.js';
 
 function daysUntil(scheduled: string | null, now = new Date()): number | null {
@@ -36,6 +35,9 @@ export default function FolderScreen() {
   const { folderId, subjectId } = useLocalSearchParams<{ folderId: string; subjectId: string }>();
   const [editing, setEditing] = useState(false);
 
+  const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
+  const learnerId = accountQuery.data?.learner?.id ?? null;
+
   const foldersQuery = useQuery({
     queryKey: ['folders', subjectId],
     queryFn: () => listFolders(subjectId),
@@ -43,6 +45,14 @@ export default function FolderScreen() {
   });
   const folder = foldersQuery.data?.find((f) => f.id === folderId);
   const inDays = daysUntil(folder?.scheduled_for ?? null);
+
+  const materialsQuery = useQuery({
+    queryKey: ['materials', 'folder', folderId],
+    queryFn: () => listMaterials(learnerId as string, { folderId }),
+    enabled: !!learnerId && !!folderId,
+  });
+  const materials = materialsQuery.data ?? [];
+  const readyMaterials = materials.filter((m) => m.extraction_status === 'ready');
 
   const qc = useQueryClient();
 
@@ -155,13 +165,30 @@ export default function FolderScreen() {
             {t('folder.materials_section')}
           </Text>
 
-          {/* Materials endpoint lands in Phase C. Per CLAUDE.md hard rule #6, render
-              the empty state — not fake rows. */}
-          <EmptyState
-            glyph="📷"
-            title={t('folder.no_material_title')}
-            body={t('folder.no_material_body')}
-          />
+          {materialsQuery.isLoading ? (
+            <ActivityIndicator color={LB.ink2} style={{ marginTop: 12 }} />
+          ) : materials.length === 0 ? (
+            <EmptyState
+              glyph="📷"
+              title={t('folder.no_material_title')}
+              body={t('folder.no_material_body')}
+            />
+          ) : (
+            <View style={{ gap: 8 }}>
+              {materials.map((m) => (
+                <MaterialRow
+                  key={m.id}
+                  material={m}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(learner)/material/[materialId]',
+                      params: { materialId: m.id },
+                    })
+                  }
+                />
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -191,7 +218,15 @@ export default function FolderScreen() {
           </Btn>
         </View>
         <View style={{ flex: 2 }}>
-          <Btn size="lg" full disabled>
+          <Btn
+            size="lg"
+            full
+            disabled={readyMaterials.length === 0}
+            onPress={() =>
+              readyMaterials.length > 0 &&
+              router.push({ pathname: '/(learner)/practice', params: { folderId } } as never)
+            }
+          >
             {t('folder.start_practice')}
           </Btn>
         </View>
@@ -204,5 +239,49 @@ export default function FolderScreen() {
         onClose={() => setEditing(false)}
       />
     </SafeAreaView>
+  );
+}
+
+function MaterialRow({ material, onPress }: { material: MaterialListItem; onPress: () => void }) {
+  const statusColor =
+    material.extraction_status === 'ready'
+      ? LB.primary
+      : material.extraction_status === 'failed'
+        ? LB.danger
+        : LB.ink3;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        padding: 12,
+        borderRadius: 12,
+        backgroundColor: '#fff',
+        borderColor: LB.hairline,
+        borderWidth: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+      }}
+    >
+      <Icon name="camera" size={18} color={LB.ink3} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 14, fontWeight: '500', color: LB.ink }} numberOfLines={1}>
+          {material.title ?? 'Material'}
+        </Text>
+        {material.page_count != null && (
+          <Text style={{ fontSize: 11, color: LB.ink3, marginTop: 1 }}>
+            {material.page_count} {material.page_count === 1 ? 'Seite' : 'Seiten'}
+          </Text>
+        )}
+      </View>
+      <View
+        style={{
+          width: 8,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: statusColor,
+        }}
+      />
+    </Pressable>
   );
 }

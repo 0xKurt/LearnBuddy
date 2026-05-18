@@ -59,21 +59,20 @@ export function MathKeyboard({ onInsert }: Props) {
       {ROWS.map((row, i) => (
         <View key={i} style={{ flexDirection: 'row', gap: 6 }}>
           {row.map((key) => (
-            <Pressable
-              key={key.label}
-              onPress={() => onInsert(key.insert)}
-              style={{
-                flex: 1,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: '#fff',
-                borderColor: LB.hairline,
-                borderWidth: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 16, color: LB.ink, fontWeight: '500' }}>{key.label}</Text>
+            <Pressable key={key.label} onPress={() => onInsert(key.insert)} style={{ flex: 1 }}>
+              <View
+                style={{
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: '#fff',
+                  borderColor: LB.hairline,
+                  borderWidth: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 16, color: LB.ink, fontWeight: '500' }}>{key.label}</Text>
+              </View>
             </Pressable>
           ))}
         </View>

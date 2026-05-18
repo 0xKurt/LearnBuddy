@@ -74,17 +74,23 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
             key={`${k.label}-${i}`}
             onPress={() => press(k)}
             disabled={disabled || k.value === 'none'}
-            style={({ pressed }) => ({
-              width: 80,
-              height: 56,
-              borderRadius: 14,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: k.value === 'none' ? 'transparent' : pressed ? LB.primaryLt : LB.bg,
-              opacity: disabled ? 0.4 : 1,
-            })}
+            style={{ opacity: disabled ? 0.4 : 1 }}
           >
-            <Text style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}>{k.label}</Text>
+            {({ pressed }) => (
+              <View
+                style={{
+                  width: 80,
+                  height: 56,
+                  borderRadius: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor:
+                    k.value === 'none' ? 'transparent' : pressed ? LB.primaryLt : LB.bg,
+                }}
+              >
+                <Text style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}>{k.label}</Text>
+              </View>
+            )}
           </Pressable>
         ))}
       </View>

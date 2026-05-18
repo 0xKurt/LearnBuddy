@@ -2,12 +2,15 @@
 // Doc 05 §result + Doc 04 §sessions.
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as StoreReview from 'expo-store-review';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn, Card, Chip } from '../../components/lb/index.js';
+import { Btn, Card, Chip, EmptyState } from '../../components/lb/index.js';
 import { getSessionSummary } from '../../lib/api/sessions.js';
+import { incrementAndCheckRating } from '../../lib/storage/rating.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB, TONE_BG } from '../../lib/theme/colors.js';
 
@@ -33,6 +36,14 @@ export default function ResultScreen() {
     },
     enabled: Boolean(learnerId && params.sessionId),
   });
+
+  useEffect(() => {
+    void incrementAndCheckRating().then(async (shouldPrompt) => {
+      if (shouldPrompt && (await StoreReview.isAvailableAsync())) {
+        void StoreReview.requestReview();
+      }
+    });
+  }, []);
 
   // Without a sessionId param the screen is reached via the legacy nav
   // bar — keep the calm headline + the home CTAs but render no stats
@@ -89,6 +100,14 @@ export default function ResultScreen() {
           </View>
         )}
 
+        {summaryQ.isError && (
+          <EmptyState
+            title={t('error_title')}
+            body={t('error_body')}
+            action={<Btn onPress={() => void summaryQ.refetch()}>{t('error_retry')}</Btn>}
+          />
+        )}
+
         {stats.length > 0 && (
           <View
             style={{
@@ -129,7 +148,7 @@ export default function ResultScreen() {
         )}
 
         <View style={{ gap: 8, marginTop: 18 }}>
-          <Btn size="lg" full onPress={() => router.replace('/(learner)/home')}>
+          <Btn size="lg" full onPress={() => router.replace('/(learner)/practice')}>
             {t('cta_review_hard')}
           </Btn>
           <Btn size="md" full variant="ghost" onPress={() => router.replace('/(learner)/home')}>

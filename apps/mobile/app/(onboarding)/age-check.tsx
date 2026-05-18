@@ -39,17 +39,22 @@ export default function AgeCheckScreen() {
               onPress={() =>
                 void devResetAll().then(() => router.replace('/(onboarding)/language' as never))
               }
-              style={{
-                alignSelf: 'flex-end',
-                backgroundColor: '#d1361c',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 999,
-              }}
+              style={{ alignSelf: 'flex-end' }}
             >
-              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
-                DEV · RESET
-              </Text>
+              <View
+                style={{
+                  backgroundColor: '#d1361c',
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 999,
+                }}
+              >
+                <Text
+                  style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}
+                >
+                  DEV · RESET
+                </Text>
+              </View>
             </Pressable>
           )}
           <Text style={{ fontSize: 28, fontWeight: '600', color: LB.ink, letterSpacing: -0.6 }}>
@@ -77,17 +82,23 @@ export default function AgeCheckScreen() {
                   <Pressable
                     key={y}
                     onPress={() => setYear(y)}
-                    style={{
-                      backgroundColor: on ? LB.primary : '#fff',
-                      paddingVertical: 12,
-                      paddingHorizontal: 18,
-                      borderRadius: 10,
-                      margin: 4,
-                      minWidth: 88,
-                      alignItems: 'center',
-                    }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: y === year }}
+                    accessibilityLabel={String(y)}
+                    style={{ margin: 4 }}
                   >
-                    <Text style={{ color: on ? '#fff' : LB.ink, fontWeight: '600' }}>{y}</Text>
+                    <View
+                      style={{
+                        backgroundColor: on ? LB.primary : '#fff',
+                        paddingVertical: 12,
+                        paddingHorizontal: 18,
+                        borderRadius: 10,
+                        minWidth: 88,
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{ color: on ? '#fff' : LB.ink, fontWeight: '600' }}>{y}</Text>
+                    </View>
                   </Pressable>
                 );
               })}

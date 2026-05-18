@@ -6,7 +6,8 @@
   },
   "loading_error": {
     "title": "Non siamo riusciti a caricare le materie.",
-    "body": "Trascina verso il basso per riprovare."
+    "body": "Trascina verso il basso per riprovare.",
+    "retry": "Riprova"
   },
   "empty": {
     "title": "Ancora nessuna materia.",
@@ -14,9 +15,18 @@
   },
   "test_in_days": "Verifica fra {{count}} giorni",
   "add_subject_tile": "Aggiungi materia",
+  "cta_first_session": {
+    "title": "Inizia a studiare!",
+    "body": "{{name}} ti aspetta. Tocca qui per cominciare."
+  },
+  "last_session": "Ultima sessione: {{date}}",
   "modal": {
     "title": "Nuova materia",
     "name_label": "Nome",
+    "kind_label": "Tipo di materia",
+    "color_label": "Colore",
+    "emoji_label": "Emoji personalizzata",
+    "preview_label": "Anteprima",
     "cancel": "Annulla",
     "create": "Crea",
     "creating": "Creazione…",
@@ -50,17 +60,29 @@
     "no_materials_title": "Ancora nessun materiale.",
     "no_materials_body": "Fotografa un foglio di esercizi o una pagina del libro — il resto lo facciamo noi.",
     "new_folder": "Cartella",
-    "new_material": "Nuovo",
-    "start_practice": "Inizia a esercitarti",
+    "new_material": "Materiale",
+    "start_practice": "Esercitati",
     "archive": "Archivia",
     "cancel": "Annulla"
   },
   "subjects": {
     "math": "Matematica",
-    "biology": "Biologia",
     "physics": "Fisica",
+    "chemistry": "Chimica",
+    "biology": "Biologia",
+    "geography": "Geografia",
+    "history": "Storia",
     "language_native": "Italiano",
     "language_foreign": "Lingua",
-    "general": "Altro"
+    "religion_ethics": "Religione",
+    "art_music": "Arte",
+    "computer_science": "Informatica",
+    "economics": "Economia",
+    "law": "Diritto",
+    "philosophy": "Filosofia",
+    "literature": "Letteratura",
+    "sports": "Sport",
+    "general": "Generale",
+    "other": "Altro"
   }
 }

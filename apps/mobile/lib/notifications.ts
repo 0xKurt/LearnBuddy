@@ -9,6 +9,7 @@
 // these prefs and rebuild the expo-notifications queue.
 
 import * as SecureStore from 'expo-secure-store';
+import { i18n } from './i18n/index.js';
 
 const KEY = 'lb_notification_prefs_v1';
 
@@ -56,13 +57,31 @@ export async function saveNotificationPrefs(prefs: NotificationPrefs): Promise<v
 // expo-notifications is fully supported.
 type DailyTrigger = { hour: number; minute: number; repeats: boolean };
 type DateTrigger = { date: Date };
+type NotificationAction = {
+  identifier: string;
+  buttonTitle: string;
+  options?: { opensAppToForeground?: boolean };
+};
+
 type ExpoNotifs = {
   cancelAllScheduledNotificationsAsync: () => Promise<void>;
   scheduleNotificationAsync: (req: {
-    content: { title: string; body: string };
+    content: {
+      title: string;
+      body: string;
+      data?: Record<string, unknown>;
+      categoryIdentifier?: string;
+    };
     trigger: DailyTrigger | DateTrigger;
   }) => Promise<string>;
-  requestPermissionsAsync: () => Promise<{ granted: boolean }>;
+  getPermissionsAsync: () => Promise<{ status: 'granted' | 'denied' | 'undetermined' }>;
+  requestPermissionsAsync: () => Promise<{ granted: boolean; status: string }>;
+  setNotificationCategoryAsync: (id: string, actions: NotificationAction[]) => Promise<void>;
+  addNotificationResponseReceivedListener: (
+    cb: (response: {
+      notification: { request: { content: { data: Record<string, unknown> } } };
+    }) => void,
+  ) => { remove(): void };
 };
 
 let Notifs: ExpoNotifs | null = null;
@@ -78,9 +97,28 @@ try {
   Notifs = null;
 }
 
+export async function getPermissionStatus(): Promise<'granted' | 'denied' | 'undetermined'> {
+  if (!Notifs) return 'denied';
+  try {
+    const { status } = await Notifs.getPermissionsAsync();
+    return status;
+  } catch {
+    return 'undetermined';
+  }
+}
+
 export async function ensurePermissions(): Promise<boolean> {
   if (!Notifs) return false;
   const { granted } = await Notifs.requestPermissionsAsync();
+  if (granted) {
+    await Notifs.setNotificationCategoryAsync('PRACTICE_REMINDER', [
+      {
+        identifier: 'PRACTICE_NOW',
+        buttonTitle: i18n.t('common:notifications.action_practice'),
+        options: { opensAppToForeground: true },
+      },
+    ]);
+  }
   return granted;
 }
 
@@ -95,22 +133,22 @@ export async function rescheduleNotifications(
   const hour = Number(hStr ?? 16);
   const minute = Number(mStr ?? 30);
   if (Number.isNaN(hour) || Number.isNaN(minute)) return;
+  const t = (k: string) => i18n.t(`common:${k}`);
   await Notifs.scheduleNotificationAsync({
     content: {
-      title: 'Kurz üben?',
-      body: 'Drei Minuten reichen schon — Hauptsache, dranbleiben.',
+      title: t('notifications.daily_title'),
+      body: t('notifications.daily_body'),
+      categoryIdentifier: 'PRACTICE_REMINDER',
     },
     trigger: { hour, minute, repeats: true },
   });
-  // Streak reminder fires 4h after the daily nudge if no session yet today.
-  // For v1 we approximate "no session" by scheduling regardless; a follow-up
-  // can check the session table before scheduling.
   if (prefs.streak_enabled) {
     const streakHour = (hour + 4) % 24;
     await Notifs.scheduleNotificationAsync({
       content: {
-        title: 'Reicht heute schon eine Aufgabe?',
-        body: 'Eine Minute zählt auch — wir halten deine Serie am Leben.',
+        title: t('notifications.streak_title'),
+        body: t('notifications.streak_body'),
+        categoryIdentifier: 'PRACTICE_REMINDER',
       },
       trigger: { hour: streakHour, minute, repeats: true },
     });
@@ -142,28 +180,29 @@ export async function scheduleTestHeadsUp(tests: UpcomingTest[]): Promise<void> 
     if (Number.isNaN(testDate.getTime())) continue;
     const ms = testDate.getTime() - now;
     if (ms <= 0 || ms > HORIZON_MS) continue;
+    const nt = (k: string, opts?: Record<string, string>) => i18n.t(`common:${k}`, opts);
     const slots: Array<{ daysBefore: number; title: string; body: string }> = [
       {
         daysBefore: 3,
-        title: 'Test in 3 Tagen',
-        body: `${t.name} — heute kurz vorbereiten?`,
+        title: nt('notifications.test_3days_title'),
+        body: nt('notifications.test_3days_body', { name: t.name }),
       },
       {
         daysBefore: 1,
-        title: 'Morgen ist es soweit',
-        body: `${t.name} — ein Probelauf bringt dich rein.`,
+        title: nt('notifications.test_1day_title'),
+        body: nt('notifications.test_1day_body', { name: t.name }),
       },
       {
         daysBefore: 0,
-        title: 'Heute Test',
-        body: `${t.name} — du kannst das. Atme einmal durch.`,
+        title: nt('notifications.test_today_title'),
+        body: nt('notifications.test_today_body', { name: t.name }),
       },
     ];
     for (const slot of slots) {
       const fireAt = new Date(testDate.getTime() - slot.daysBefore * 86_400_000);
       if (fireAt.getTime() <= now) continue;
       await Notifs.scheduleNotificationAsync({
-        content: { title: slot.title, body: slot.body },
+        content: { title: slot.title, body: slot.body, data: { folder_id: t.folder_id } },
         trigger: { date: fireAt },
       });
     }

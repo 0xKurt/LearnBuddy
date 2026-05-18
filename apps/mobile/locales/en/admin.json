@@ -93,12 +93,17 @@
     "privacy_body": "All study data stays in the EU. No ads, no sharing with third parties for training purposes.",
     "privacy_link": "Privacy policy",
     "imprint_title": "Legal notice",
-    "imprint_link": "Open"
+    "imprint_link": "Open",
+    "support_title": "Help & Support",
+    "support_contact": "Contact support",
+    "support_faq": "Help & FAQ"
   },
   "archived": {
     "title": "Archive",
     "banner": "Archived items can be restored for 30 days. After that they are permanently deleted.",
-    "empty": "Nothing in the archive."
+    "empty": "Nothing in the archive.",
+    "archived_on": "Archived on {{date}}",
+    "restore_cta": "Restore"
   },
   "profile_edit": {
     "title": "Profile",
@@ -119,7 +124,11 @@
     "test_sub": "3 days / 1 day / morning before tests in scheduled folders.",
     "streak_label": "Streak reminder",
     "streak_sub": "A gentle nudge when the learning streak is about to break.",
-    "done": "Done"
+    "done": "Done",
+    "permission_title": "Notifications not yet allowed",
+    "permission_body": "To remind you about tests and practice sessions, please allow notifications.",
+    "permission_cta": "Allow now",
+    "open_settings": "Open Settings"
   },
   "material": {
     "title_fallback": "Material",

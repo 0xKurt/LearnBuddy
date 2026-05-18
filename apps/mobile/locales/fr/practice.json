@@ -18,5 +18,16 @@
   "finish_title": "Bravo !",
   "finish_body": "Tu as réussi {{correct}} sur {{total}}. Belle série.",
   "finish_home": "Retour à l'accueil",
-  "no_template": "Cet entraînement n'est plus disponible."
+  "no_template": "Cet entraînement n'est plus disponible.",
+  "hub": {
+    "title": "S'entraîner",
+    "upcoming_tests": "Examens à venir",
+    "test_in_days_one": "Dans 1 jour",
+    "test_in_days_other": "Dans {{count}} jours",
+    "test_today": "Aujourd'hui",
+    "go_to_folder": "Ouvrir le dossier",
+    "empty_title": "Rien d'urgent",
+    "empty_body": "Pas d'examen à venir. Parcours tes matériaux pour lancer un entraînement.",
+    "browse_home": "Aller à l'accueil"
+  }
 }

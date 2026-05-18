@@ -24,6 +24,7 @@ const env: Env = {
   // one the fake-supabase actually implements). 'development' would trigger
   // the `auth.admin.createUser` shortcut which the fake doesn't model.
   NODE_ENV: 'test',
+  ENABLE_DEV_ROUTES: 'true',
   GOOGLE_VERTEX_LOCATION: 'europe-west4',
   VERTEX_MODEL_ID: 'gemini-2.5-flash-lite',
 };

@@ -126,7 +126,6 @@ function fixtureToInput(fx: Fixture): VisionInput {
     gradeLevel: fx.meta.grade_level,
     subject: fx.meta.subject,
     subjectKind: fx.meta.subject_kind,
-    targetCount: fx.meta.target_item_count,
   };
 }
 

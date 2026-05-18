@@ -4,11 +4,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, Redirect, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn, Icon } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
+import { devNukeAccount } from '../../lib/dev/reset.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
@@ -58,7 +59,45 @@ export default function AdminOverviewScreen() {
         <Text style={{ fontSize: 14, fontWeight: '600', color: LB.ink }}>
           {t('overview.title')}
         </Text>
-        <View style={{ width: 40 }} />
+        {__DEV__ ? (
+          <Pressable
+            hitSlop={10}
+            onPress={() =>
+              Alert.alert(
+                'DEV · NUKE ACCOUNT',
+                'Hard-delete this user from Supabase Auth?\nAll DB rows cascade. Cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'NUKE',
+                    style: 'destructive',
+                    onPress: () =>
+                      void devNukeAccount()
+                        .then(() => router.replace('/(onboarding)/language' as never))
+                        .catch((e: unknown) =>
+                          Alert.alert('Nuke failed', e instanceof Error ? e.message : String(e)),
+                        ),
+                  },
+                ],
+              )
+            }
+          >
+            <View
+              style={{
+                backgroundColor: '#d1361c',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
+                DEV · NUKE
+              </Text>
+            </View>
+          </Pressable>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 48 }}>
         <Text style={{ fontSize: 26, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
@@ -85,30 +124,32 @@ export default function AdminOverviewScreen() {
         <View style={{ marginTop: 22, gap: 8 }}>
           {ROWS.map((r) => (
             <Link key={r.href} href={r.href as never} asChild>
-              <Pressable
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  borderRadius: 14,
-                  backgroundColor: '#fff',
-                  borderColor: LB.hairline,
-                  borderWidth: 1,
-                }}
-              >
-                <View>
-                  <Text style={{ fontSize: 15, color: LB.ink, fontWeight: '500' }}>
-                    {t(`overview.rows.${r.key}`)}
-                  </Text>
-                  {r.hasSub && (
-                    <Text style={{ fontSize: 12, color: LB.ink3, marginTop: 2 }}>
-                      {t('overview.rows.profile_edit_sub')}
+              <Pressable accessibilityRole="menuitem">
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    borderRadius: 14,
+                    backgroundColor: '#fff',
+                    borderColor: LB.hairline,
+                    borderWidth: 1,
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontSize: 15, color: LB.ink, fontWeight: '500' }}>
+                      {t(`overview.rows.${r.key}`)}
                     </Text>
-                  )}
+                    {r.hasSub && (
+                      <Text style={{ fontSize: 12, color: LB.ink3, marginTop: 2 }}>
+                        {t('overview.rows.profile_edit_sub')}
+                      </Text>
+                    )}
+                  </View>
+                  <Icon name="chevron" size={18} color={LB.ink3} />
                 </View>
-                <Icon name="chevron" size={18} color={LB.ink3} />
               </Pressable>
             </Link>
           ))}

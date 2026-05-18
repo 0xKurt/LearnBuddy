@@ -3,13 +3,19 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, Chip, CircleBtn } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
-import { startPurchase, restorePurchases } from '../../lib/purchases.js';
+import {
+  startPurchase,
+  restorePurchases,
+  getOfferings,
+  type PurchasePackage,
+} from '../../lib/purchases.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
 
@@ -18,7 +24,19 @@ export default function SubscriptionScreen() {
   const unlocked = useAppStore((s) => s.admin_unlocked);
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
 
+  const [packages, setPackages] = useState<PurchasePackage[] | null>(null);
+
+  useEffect(() => {
+    void getOfferings()
+      .then(setPackages)
+      .catch(() => setPackages([]));
+  }, []);
+
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
+
+  const priceFor = (sku: string) =>
+    packages?.find((p) => p.identifier === sku || p.product.identifier.includes(sku))?.product
+      .priceString ?? '—';
 
   const handlePurchase = async (sku: 'standard' | 'plus') => {
     try {
@@ -76,29 +94,35 @@ export default function SubscriptionScreen() {
           </View>
         )}
 
-        <Tier
-          title={t('subscription.tiers.standard.title')}
-          price={t('subscription.tiers.standard.price')}
-          features={[
-            t('subscription.tiers.standard.feature_1'),
-            t('subscription.tiers.standard.feature_2'),
-            t('subscription.tiers.standard.feature_3'),
-          ]}
-          cta={t('subscription.tiers.standard.cta')}
-          onPress={() => handlePurchase('standard')}
-        />
-        <Tier
-          title={t('subscription.tiers.plus.title')}
-          price={t('subscription.tiers.plus.price')}
-          features={[
-            t('subscription.tiers.plus.feature_1'),
-            t('subscription.tiers.plus.feature_2'),
-            t('subscription.tiers.plus.feature_3'),
-          ]}
-          cta={t('subscription.tiers.plus.cta')}
-          onPress={() => handlePurchase('plus')}
-          highlight
-        />
+        {packages === null ? (
+          <ActivityIndicator color={LB.ink2} style={{ marginVertical: 16 }} />
+        ) : (
+          <>
+            <Tier
+              title={t('subscription.tiers.standard.title')}
+              price={priceFor('standard')}
+              features={[
+                t('subscription.tiers.standard.feature_1'),
+                t('subscription.tiers.standard.feature_2'),
+                t('subscription.tiers.standard.feature_3'),
+              ]}
+              cta={t('subscription.tiers.standard.cta')}
+              onPress={() => handlePurchase('standard')}
+            />
+            <Tier
+              title={t('subscription.tiers.plus.title')}
+              price={priceFor('plus')}
+              features={[
+                t('subscription.tiers.plus.feature_1'),
+                t('subscription.tiers.plus.feature_2'),
+                t('subscription.tiers.plus.feature_3'),
+              ]}
+              cta={t('subscription.tiers.plus.cta')}
+              onPress={() => handlePurchase('plus')}
+              highlight
+            />
+          </>
+        )}
         <Btn variant="outline" full onPress={handleRestore}>
           {t('subscription.restore')}
         </Btn>

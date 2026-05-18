@@ -7,11 +7,16 @@
 
 import { ENV } from './env.js';
 
+export type PurchasePackage = {
+  identifier: string;
+  product: { identifier: string; priceString: string };
+};
+
 type PurchasesLib = {
   configure: (opts: { apiKey: string; appUserID?: string }) => void;
   getOfferings: () => Promise<{
     current: null | {
-      availablePackages: Array<{ identifier: string; product: { identifier: string } }>;
+      availablePackages: Array<PurchasePackage>;
     };
   }>;
   purchasePackage: (pkg: unknown) => Promise<unknown>;
@@ -53,4 +58,10 @@ export async function restorePurchases(): Promise<void> {
   if (!Purchases) throw new Error('Purchases nicht verfügbar');
   if (!configured) throw new Error('Purchases nicht konfiguriert.');
   await Purchases.restorePurchases();
+}
+
+export async function getOfferings(): Promise<Array<PurchasePackage>> {
+  if (!Purchases || !configured) return [];
+  const result = await Purchases.getOfferings();
+  return result.current?.availablePackages ?? [];
 }

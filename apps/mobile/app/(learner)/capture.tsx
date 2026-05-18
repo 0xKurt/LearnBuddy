@@ -25,10 +25,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion, type DeviceMotionMeasurement } from 'expo-sensors';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Image } from 'expo-image';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Linking,
   Modal,
   Pressable,
@@ -44,6 +44,7 @@ import {
   CircleBtn,
   CoachMark,
   SubjectFolderPicker,
+  toast,
 } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { useFirstTime } from '../../lib/onboarding/coach.js';
@@ -89,11 +90,8 @@ export default function CaptureScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const setPending = useCaptureStore((s) => s.setPending);
 
-  useEffect(() => {
-    if (permission && !permission.granted && permission.canAskAgain) {
-      void requestPermission();
-    }
-  }, [permission, requestPermission]);
+  // Permission is requested on the first shutter tap, not on mount.
+  // Requesting before the user takes any action is an App Store rejection reason.
 
   useEffect(() => {
     let sub: { remove: () => void } | null = null;
@@ -123,6 +121,12 @@ export default function CaptureScreen() {
 
   const onShutter = async () => {
     if (shutterBusy) return;
+    if (!permission?.granted) {
+      if (permission?.canAskAgain) {
+        await requestPermission();
+      }
+      return;
+    }
     if (photos.length >= MAX_PHOTOS) {
       Alert.alert(t('limits.max_reached'));
       return;
@@ -163,8 +167,8 @@ export default function CaptureScreen() {
         setPhotos((prev) => [...prev, photo]);
         setRecent({ status: verdict.status, reason: verdict.reason });
       }
-    } catch (err) {
-      Alert.alert('Ups.', err instanceof Error ? err.message : 'Foto fehlgeschlagen.');
+    } catch {
+      toast.error(t('cta.shutter_error'));
     } finally {
       setShutterBusy(false);
     }
@@ -280,10 +284,10 @@ export default function CaptureScreen() {
                   <Pressable
                     key={p.localId}
                     onLongPress={() => {
-                      Alert.alert('Foto löschen?', undefined, [
-                        { text: 'Abbrechen', style: 'cancel' },
+                      Alert.alert(t('strip.delete_title'), undefined, [
+                        { text: t('strip.delete_cancel'), style: 'cancel' },
                         {
-                          text: 'Löschen',
+                          text: t('strip.delete_confirm'),
                           style: 'destructive',
                           onPress: () => deletePhoto(p.localId),
                         },
@@ -299,7 +303,12 @@ export default function CaptureScreen() {
                         backgroundColor: '#222',
                       }}
                     >
-                      <Image source={{ uri: p.uri }} style={{ width: 64, height: 64 }} />
+                      <Image
+                        source={{ uri: p.uri }}
+                        style={{ width: 64, height: 64 }}
+                        contentFit="cover"
+                        transition={150}
+                      />
                     </View>
                     <View style={{ position: 'absolute', bottom: 4, left: 4 }}>
                       <CaptureChip
@@ -338,37 +347,49 @@ export default function CaptureScreen() {
               style={{
                 width: 68,
                 height: 68,
-                borderRadius: 999,
-                backgroundColor: '#fff',
-                alignItems: 'center',
-                justifyContent: 'center',
                 opacity: shutterBusy || photos.length >= MAX_PHOTOS ? 0.55 : 1,
               }}
               accessibilityLabel={t('cta.shutter')}
             >
-              <View style={{ width: 54, height: 54, borderRadius: 999, backgroundColor: LB.ink }} />
+              <View
+                style={{
+                  width: 68,
+                  height: 68,
+                  borderRadius: 999,
+                  backgroundColor: '#fff',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <View
+                  style={{ width: 54, height: 54, borderRadius: 999, backgroundColor: LB.ink }}
+                />
+              </View>
             </Pressable>
             <View style={{ minWidth: 64, alignItems: 'flex-end' }}>
               <Pressable
                 onPress={onDone}
                 disabled={doneDisabled}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 999,
-                  backgroundColor: doneDisabled ? 'rgba(255,255,255,0.15)' : '#fff',
-                }}
                 accessibilityLabel={t('cta.done')}
               >
-                <Text
+                <View
                   style={{
-                    color: doneDisabled ? 'rgba(255,255,255,0.55)' : LB.ink,
-                    fontWeight: '600',
-                    fontSize: 13,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 999,
+                    backgroundColor: doneDisabled ? 'rgba(255,255,255,0.15)' : '#fff',
                   }}
                 >
-                  {t('cta.done')}
-                </Text>
+                  <Text
+                    style={{
+                      color: doneDisabled ? 'rgba(255,255,255,0.55)' : LB.ink,
+                      fontWeight: '600',
+                      fontSize: 13,
+                    }}
+                  >
+                    {t('cta.done')}
+                  </Text>
+                </View>
               </Pressable>
             </View>
           </View>
