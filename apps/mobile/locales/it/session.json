@@ -14,6 +14,7 @@
   "send": "Invia",
   "checking": "Controllo …",
   "next": "Avanti",
+  "skip": "Salta",
   "keep_going_empty": "Per ora è tutto — bravissimo!",
   "stream_error": {
     "generic": "Non è andata. Puoi riscrivere la tua risposta.",

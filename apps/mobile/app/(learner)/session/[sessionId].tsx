@@ -163,6 +163,7 @@ export default function SessionScreen() {
   const [fillValues, setFillValues] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [canAdvance, setCanAdvance] = useState(false);
+  const [tries, setTries] = useState(0);
   const [voiceOn, setVoiceOn] = useState(false);
   const voiceFailsRef = useRef(0);
   const [pinned, setPinned] = useState<string | null>(null);
@@ -211,6 +212,7 @@ export default function SessionScreen() {
 
   const advance = useCallback(() => {
     setCanAdvance(false);
+    setTries(0);
     const next = idx + 1;
     setAnswer('');
     setFillValues([]);
@@ -234,6 +236,7 @@ export default function SessionScreen() {
       if (!text || sending || !item) return;
       setSending(true);
       setCanAdvance(false);
+      setTries((n) => n + 1);
 
       const localVerdict = localEvaluate(item as EvaluatableItem, text);
       const learnerMsgId = uuid();
@@ -291,7 +294,9 @@ export default function SessionScreen() {
 
   const submitTyped = useCallback(() => {
     if (!item) return;
-    if (item.answer_kind === 'fill_blank') void send(fillValues.join(' | '), 'text');
+    // '||' matches how lib/eval/local.ts splits fill-blank answers, so the
+    // zero-cost local fast-path can recognise a fully-correct set.
+    if (item.answer_kind === 'fill_blank') void send(fillValues.join('||'), 'text');
     else void send(answer, 'text');
   }, [item, answer, fillValues, send]);
 
@@ -520,24 +525,33 @@ export default function SessionScreen() {
               {t('next')}
             </Btn>
           ) : (
-            <Composer
-              item={item}
-              t={t}
-              sending={sending}
-              answer={answer}
-              setAnswer={setAnswer}
-              fillValues={fillValues}
-              setFillValues={setFillValues}
-              voiceEligible={voiceEligible}
-              voiceLocaleTag={voiceLocale(uiLocale)}
-              onSubmitTyped={submitTyped}
-              onPickMc={(i) => void send(String(i), 'multiple_choice')}
-              onVoice={onVoice}
-              onVoiceUnavailable={onVoiceUnavailable}
-              voiceOn={voiceOn}
-              canUseVoice={item.answer_kind === 'short' || item.answer_kind === 'long'}
-              onToggleVoice={() => setVoiceOn((v) => !v)}
-            />
+            <>
+              <Composer
+                item={item}
+                t={t}
+                sending={sending}
+                answer={answer}
+                setAnswer={setAnswer}
+                fillValues={fillValues}
+                setFillValues={setFillValues}
+                voiceEligible={voiceEligible}
+                voiceLocaleTag={voiceLocale(uiLocale)}
+                onSubmitTyped={submitTyped}
+                onPickMc={(i) => void send(String(i), 'multiple_choice')}
+                onVoice={onVoice}
+                onVoiceUnavailable={onVoiceUnavailable}
+                voiceOn={voiceOn}
+                canUseVoice={item.answer_kind === 'short' || item.answer_kind === 'long'}
+                onToggleVoice={() => setVoiceOn((v) => !v)}
+              />
+              {tries >= 1 && !sending ? (
+                <Pressable onPress={advance} accessibilityRole="button" hitSlop={8}>
+                  <Text style={{ fontSize: 13, color: LB.ink3, textAlign: 'center' }}>
+                    {t('skip')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </>
           )}
         </View>
       </KeyboardAvoidingView>
