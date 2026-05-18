@@ -14,6 +14,7 @@ import {
 
 import { getSessionSync } from '../auth/session.js';
 import { ENV } from '../env.js';
+import { drainSseFrames, flushSseFrame } from '../conversation/sse.js';
 import { ApiError, api, refreshAuthToken } from './client.js';
 
 export type TurnInput = {
@@ -85,27 +86,25 @@ export async function streamTurn(
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buf = '';
+  const emit = (json: string): void => {
+    try {
+      const parsed = ConversationSseEvent.safeParse(JSON.parse(json));
+      if (parsed.success) onEvent(parsed.data);
+    } catch {
+      /* skip a malformed frame rather than abort the whole turn */
+    }
+  };
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
     buf += decoder.decode(value, { stream: true });
-    let sep: number;
-    while ((sep = buf.indexOf('\n\n')) !== -1) {
-      const frame = buf.slice(0, sep);
-      buf = buf.slice(sep + 2);
-      for (const line of frame.split('\n')) {
-        if (!line.startsWith('data:')) continue;
-        const json = line.slice(5).trim();
-        if (!json) continue;
-        try {
-          const parsed = ConversationSseEvent.safeParse(JSON.parse(json));
-          if (parsed.success) onEvent(parsed.data);
-        } catch {
-          /* skip a malformed frame rather than abort the whole turn */
-        }
-      }
-    }
+    const { payloads, rest } = drainSseFrames(buf);
+    buf = rest;
+    for (const json of payloads) emit(json);
   }
+  // The last event (often the terminal `done`) may arrive without a
+  // trailing blank line before the socket closes — don't drop it.
+  for (const json of flushSseFrame(buf)) emit(json);
 }
 
 export async function getSessionSnapshot(

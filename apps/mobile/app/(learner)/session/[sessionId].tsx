@@ -46,6 +46,11 @@ import {
 import { getAccount } from '../../../lib/api/account.js';
 import { ApiError } from '../../../lib/api/client.js';
 import { getSessionSnapshot, patchSession, streamTurn } from '../../../lib/api/conversation.js';
+import {
+  buildResumeTranscript,
+  normVerdict,
+  type DisplayVerdict,
+} from '../../../lib/conversation/transcript.js';
 import { finishSession, startSession } from '../../../lib/api/sessions.js';
 import { localEvaluate, type EvaluatableItem } from '../../../lib/eval/local.js';
 import { clearPendingSession, savePendingSession } from '../../../lib/session/pending.js';
@@ -73,17 +78,6 @@ function uuid(): string {
 
 function voiceLocale(locale: Locale): string {
   return { de: 'de-DE', en: 'en-US', fr: 'fr-FR', es: 'es-ES', it: 'it-IT' }[locale];
-}
-
-// The shared Verdict includes 'skipped'; the tutor never returns it, but a
-// resumed thread might. Collapse it to the 3 values the UI renders.
-type DisplayVerdict = 'correct' | 'partially_correct' | 'incorrect';
-function normVerdict(
-  v: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null | undefined,
-): DisplayVerdict | undefined {
-  if (v === 'correct' || v === 'partially_correct' || v === 'incorrect') return v;
-  if (v === 'skipped') return 'incorrect';
-  return undefined;
 }
 
 export default function SessionScreen() {
@@ -119,40 +113,15 @@ export default function SessionScreen() {
       if (params.resumeSessionId) {
         const snap = await getSessionSnapshot(learnerId, params.resumeSessionId);
         const items = snap.items as Item[];
-        // Resume at the first item with no 'correct' tutor turn yet.
-        const correctItem = new Set(
-          snap.turns
-            .filter((tn) => tn.role === 'tutor' && tn.verdict === 'correct')
-            .map((tn) => tn.item_id),
-        );
-        let startIdx = items.findIndex((it) => !correctItem.has(it.id));
-        if (startIdx < 0) startIdx = items.length;
-        // Rebuild a readable, chronological transcript: insert each item's
-        // question bubble the first time that item appears in the thread, so
-        // the learner sees Question → answer → feedback → … in order rather
-        // than a contextless wall of answers.
-        const qById = new Map(items.map((it) => [it.id, it.question]));
-        const priorMsgs: Msg[] = [];
-        let lastItemId: string | null = null;
-        for (const tn of snap.turns) {
-          if (tn.role !== 'learner' && tn.role !== 'tutor') continue;
-          if (tn.item_id && tn.item_id !== lastItemId) {
-            const q = qById.get(tn.item_id);
-            if (q) priorMsgs.push({ id: `q-${tn.item_id}`, role: 'question', text: q });
-            lastItemId = tn.item_id;
-          }
-          priorMsgs.push({
-            id: tn.id,
-            role: tn.role === 'learner' ? ('learner' as const) : ('tutor' as const),
-            text: tn.content,
-            verdict: normVerdict(tn.verdict),
-          });
-        }
+        // Rebuild a readable, chronological transcript (Question → answer →
+        // feedback → …) and decide which item to resume on. Pure + tested
+        // in lib/conversation/transcript.ts.
+        const { messages, startIdx } = buildResumeTranscript(snap.turns, items);
         return {
           serverSessionId: snap.session_id,
           items,
           startIdx,
-          priorMsgs,
+          priorMsgs: messages as Msg[],
           pinnedTopic: snap.pinned_topic,
         };
       }
