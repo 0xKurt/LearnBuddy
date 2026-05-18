@@ -61,7 +61,10 @@ export default function PracticeHubScreen() {
                 <Pressable
                   key={test.folder_id}
                   onPress={() =>
-                    router.push(`/(learner)/subject/folder/${test.folder_id}` as never)
+                    router.push({
+                      pathname: '/(learner)/folder/[folderId]',
+                      params: { folderId: test.folder_id, subjectId: test.subject_id },
+                    })
                   }
                   accessibilityRole="button"
                   accessibilityLabel={test.name}

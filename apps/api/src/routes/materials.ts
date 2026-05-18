@@ -191,7 +191,12 @@ materialRoutes.post(
     }
     const input = c.req.valid('json');
 
-    // 1. Confirm ownership of the freshly-allocated material row.
+    // Validate + pre-debit BEFORE streaming so the proxy gets a proper HTTP
+    // error code (404 / 402) rather than a 200 with an error SSE event.
+    // The stream opens only once we know the request is valid and credits are
+    // reserved — it just needs to do the LLM work and persist the result.
+
+    // 1. Confirm ownership of the material row.
     const material = await ownedMaterial(supabase, learner_id, input.material_id);
     if (material.subject_id !== input.subject_id) {
       throw new ApiError('validation_failed', 'subject_id does not match material');
@@ -221,7 +226,7 @@ materialRoutes.post(
     }
     const gradeLevel = (learnerRow.data as { grade_level: number | null }).grade_level ?? 7;
 
-    // 3. Atomic credit pre-debit. Throws 402 on insufficient balance.
+    // 3. Atomic credit pre-debit — throws 402 if balance is insufficient.
     const debit = {
       estimate: VISION_ESTIMATE,
       reason: 'materials_create',
@@ -230,215 +235,202 @@ materialRoutes.post(
     };
     await tryDebit(supabase, account_id, debit);
 
-    // 4. Persist material_photos rows from the client-side quality scores.
-    const photoRows = input.client_quality_scores.map((s) => ({
-      material_id: input.material_id,
-      position: s.position,
-      storage_path: `materials-raw/${account_id}/${input.material_id}/${s.position}.jpg`,
-      width: s.width ?? null,
-      height: s.height ?? null,
-      byte_size: null,
-      client_blur_score: s.blur,
-      client_brightness: s.brightness,
-    }));
-    const photosIns = await supabase.from('material_photos').insert(photoRows);
-    if (photosIns.error) {
-      await refund(supabase, account_id, debit);
-      throw new ApiError('internal', 'Failed to persist material photos', {
-        cause: photosIns.error.message,
-      });
-    }
-
-    // 5. Download photo bytes from storage (Vertex needs base64-encoded images,
-    //    the D1.5 sharp pipeline needs raw bytes for diagram cropping).
-    //    Failing photos are skipped; if none survive we extraction_failed
-    //    BEFORE the LLM call so the user gets a meaningful error instead of
-    //    a misleading validation 400 from the gateway's images=0 guard.
-    const photos = await downloadPhotos(
-      supabase,
-      `${account_id}/${input.material_id}`,
-      input.client_quality_scores.length,
-    );
-    if (photos.length === 0) {
-      await refund(supabase, account_id, debit);
-      await markFailed(supabase, input.material_id, 'photos_not_retrievable');
-      throw new ApiError(
-        'extraction_failed',
-        'Could not retrieve any photos from storage. Try uploading again.',
-      );
-    }
-
-    // 6. Call the LLM gateway. Doc 06 §P1. Errors mapped to Doc 06 §failure-modes.
-    let vision: VisionResult;
-    try {
-      vision = await llm.visionExtractAndGenerate({
-        images: photos.map(({ mimeType, data }) => ({ mimeType, data })),
-        locale: input.locale as VisionInput['locale'],
-        gradeLevel,
-        subject: subject.name,
-        subjectKind: subject.subject_kind,
-      });
-    } catch (err) {
-      await refund(supabase, account_id, debit);
-      await markFailed(
-        supabase,
-        input.material_id,
-        err instanceof Error ? err.message : 'Unknown vision failure',
-      );
-      throw err instanceof ApiError
-        ? err
-        : new ApiError(
-            'extraction_failed',
-            err instanceof Error ? err.message : 'Vision call failed',
-          );
-    }
-
-    if (vision.error === 'not_educational') {
-      await refund(supabase, account_id, debit);
-      await markFailed(supabase, input.material_id, 'not_educational');
-      throw new ApiError('not_educational', 'Images do not look like educational material');
-    }
-
-    if (vision.items.length < 3) {
-      await refund(supabase, account_id, debit);
-      await markFailed(supabase, input.material_id, 'too_few_items');
-      throw new ApiError('extraction_failed', 'Too few valid items after post-processing');
-    }
-
-    // 6b. D1.5 — crop diagrams, overlay numbered markers, upload to study-assets,
-    //     insert study_assets rows. Diagrams that fail processing are simply
-    //     omitted from the id map; their dependent items get downgraded below.
-    const pages: SourcePage[] = photos.map((p) => ({ mimeType: p.mimeType, bytes: p.bytes }));
-    const diagramOutcome =
-      vision.diagrams.length > 0
-        ? await cropDiagramsAndUpload({
-            account_id,
-            material_id: input.material_id,
-            learner_id,
-            pages,
-            diagrams: vision.diagrams,
-            supabase,
-          })
-        : { ids: new Map<number, string>(), validLabelCount: new Map<number, number>() };
-
-    // Drop / rewrite items that depend on diagrams the pipeline didn't produce.
-    const resolvedItems = vision.items.flatMap((it): GeneratedVisionItem[] => {
-      const diagramIdx = it.diagram_ref?.diagram_index;
-      const labelIdx = it.diagram_ref?.label_index;
-      const needsAsset = it.stimulus_kind === 'study_asset' || it.answer_kind === 'diagram_label';
-      if (!needsAsset) return [it];
-      if (diagramIdx == null) {
-        // Hint says study_asset but no diagram_ref — can't resolve, drop it.
-        return [];
-      }
-      const assetId = diagramOutcome.ids.get(diagramIdx);
-      if (!assetId) return []; // diagram dropped (processing failed)
-      // For diagram_label items, also confirm the label index is within the
-      // markers we actually placed.
-      if (it.answer_kind === 'diagram_label') {
-        const validLabels = diagramOutcome.validLabelCount.get(diagramIdx) ?? 0;
-        if (labelIdx == null || labelIdx < 0 || labelIdx >= validLabels) return [];
-      }
-      return [
-        {
-          ...it,
-          stimulus_kind: 'study_asset',
-          stimulus_data: { ...(it.stimulus_data ?? {}), study_asset_id: assetId },
-        },
-      ];
-    });
-    if (resolvedItems.length < 3) {
-      await refund(supabase, account_id, debit);
-      await markFailed(supabase, input.material_id, 'too_few_items');
-      throw new ApiError(
-        'extraction_failed',
-        'Too few valid items remained after diagram resolution',
-      );
-    }
-    vision.items = resolvedItems;
-
-    // 7a. Validate & persist problem templates (Doc 06 §post-processing #4).
-    //     Templates that fail the 5-sample / ≥60%-feasibility gate are dropped
-    //     and their items' problem_template_ref gets stripped post-validation.
-    const validTemplates = vision.problem_templates
-      .map((t) => validateTemplate(t))
-      .filter((t): t is NonNullable<typeof t> => t !== null);
-    const templateRows = validTemplates.map((t, idx) => ({
-      material_id: input.material_id,
-      learner_id,
-      source_item_id: null,
-      subject_kind: subject.subject_kind,
-      topic: t.topic,
-      template_text: t.template_text,
-      params: t.params,
-      constraints: t.constraints,
-      text_substitutions: [],
-      solution_expression: t.solution_expression,
-      answer_kind: t.answer_kind,
-      units: t.units ?? null,
-      stimulus_template: t.stimulus_template ?? null,
-      difficulty: t.difficulty,
-      _seed_idx: idx,
-    }));
-    if (templateRows.length > 0) {
-      const ins = await supabase
-        .from('problem_templates')
-        .insert(templateRows.map(({ _seed_idx: _i, ...rest }) => rest))
-        .select('id');
-      if (ins.error) {
-        console.warn(`[materials] template insert failed: ${ins.error.message}`);
-      }
-    }
-
-    // 7b. Persist items. Items with a valid problem_template_ref get the
-    //     corresponding template id; items pointing at dropped templates lose
-    //     the reference.
-    const itemRows = vision.items.map((it) =>
-      toItemRow(it, input.material_id, learner_id, vision.usage),
-    );
-    const itemsIns = await supabase.from('items').insert(itemRows).select('*');
-    if (itemsIns.error) {
-      await refund(supabase, account_id, debit);
-      throw new ApiError('internal', 'Failed to persist generated items', {
-        cause: itemsIns.error.message,
-      });
-    }
-    const persistedItems = (itemsIns.data ?? []) as unknown[];
-
-    // 8. Mark the material ready + schedule photo wipe at T+7d.
-    const updatedAt = now();
-    const wipeAt = new Date(updatedAt.getTime() + PHOTO_WIPE_DELAY_MS).toISOString();
-    const ready = await supabase
-      .from('materials')
-      .update({
-        extraction_status: 'ready',
-        page_count: input.client_quality_scores.length,
-        detected_language: vision.detected_language ?? input.locale,
-        extracted_markdown: vision.extracted_markdown,
-        title: input.title ?? null,
-        scheduled_photo_deletion_at: wipeAt,
-        extraction_model: vision.usage.model,
-        extraction_prompt_version: vision.usage.prompt_version,
-      })
-      .eq('id', input.material_id);
-    if (ready.error) {
-      await refund(supabase, account_id, debit);
-      throw new ApiError('internal', 'Failed to finalize material', {
-        cause: ready.error.message,
-      });
-    }
-
-    // 9. Settle credits to actual cost. Doc 08 §atomic-debit step 3.
-    //    1 credit = 100 micro-dollars (= $0.0001). Round to nearest credit;
-    //    floor at 1 so a zero-token call still records something.
-    const actualCredits = Math.max(1, Math.round(vision.usage.cost_usd_micros / 100));
-    await settle(supabase, account_id, debit, actualCredits, vision.usage);
-
-    // 10. Stream the SSE response.
-    const studyAssetIds = Array.from(diagramOutcome.ids.values());
+    // Open the SSE stream now that all pre-conditions pass. The proxy sees
+    // response headers immediately; LLM work happens inside the callback.
     return streamMaterialEvents(c, async (push) => {
+      const fail = async (code: string, message: string): Promise<void> => {
+        await push({ event: 'error', data: { code, message } });
+      };
+
+      // 4. Persist material_photos rows from the client-side quality scores.
+      const photoRows = input.client_quality_scores.map((s) => ({
+        material_id: input.material_id,
+        position: s.position,
+        storage_path: `materials-raw/${account_id}/${input.material_id}/${s.position}.jpg`,
+        width: s.width ?? null,
+        height: s.height ?? null,
+        byte_size: null,
+        client_blur_score: s.blur,
+        client_brightness: s.brightness,
+      }));
+      const photosIns = await supabase.from('material_photos').insert(photoRows);
+      if (photosIns.error) {
+        await refund(supabase, account_id, debit);
+        await fail('internal', 'Failed to persist material photos');
+        return;
+      }
+
+      // 5. Download photo bytes — signals start of active work to the client.
       await push({ event: 'phase', data: { phase: 'reading_images' } });
+      const photos = await downloadPhotos(
+        supabase,
+        `${account_id}/${input.material_id}`,
+        input.client_quality_scores.length,
+      );
+      if (photos.length === 0) {
+        await refund(supabase, account_id, debit);
+        await markFailed(supabase, input.material_id, 'photos_not_retrievable');
+        await fail(
+          'extraction_failed',
+          'Could not retrieve any photos from storage. Try uploading again.',
+        );
+        return;
+      }
+
+      // 6. Call the LLM gateway. Doc 06 §P1. Errors mapped to Doc 06 §failure-modes.
       await push({ event: 'phase', data: { phase: 'generating_items' } });
+      let vision: VisionResult;
+      try {
+        vision = await llm.visionExtractAndGenerate({
+          images: photos.map(({ mimeType, data }) => ({ mimeType, data })),
+          locale: input.locale as VisionInput['locale'],
+          gradeLevel,
+          subject: subject.name,
+          subjectKind: subject.subject_kind,
+        });
+      } catch (err) {
+        await refund(supabase, account_id, debit);
+        await markFailed(
+          supabase,
+          input.material_id,
+          err instanceof Error ? err.message : 'Unknown vision failure',
+        );
+        await fail('extraction_failed', err instanceof Error ? err.message : 'Vision call failed');
+        return;
+      }
+
+      if (vision.error === 'not_educational') {
+        await refund(supabase, account_id, debit);
+        await markFailed(supabase, input.material_id, 'not_educational');
+        await fail('not_educational', 'Images do not look like educational material');
+        return;
+      }
+
+      if (vision.items.length < 3) {
+        await refund(supabase, account_id, debit);
+        await markFailed(supabase, input.material_id, 'too_few_items');
+        await fail('extraction_failed', 'Too few valid items after post-processing');
+        return;
+      }
+
+      // 6b. D1.5 — crop diagrams, overlay numbered markers, upload to study-assets,
+      //     insert study_assets rows. Diagrams that fail processing are simply
+      //     omitted from the id map; their dependent items get downgraded below.
+      await push({ event: 'phase', data: { phase: 'processing_diagrams' } });
+      const pages: SourcePage[] = photos.map((p) => ({ mimeType: p.mimeType, bytes: p.bytes }));
+      const diagramOutcome =
+        vision.diagrams.length > 0
+          ? await cropDiagramsAndUpload({
+              account_id,
+              material_id: input.material_id,
+              learner_id,
+              pages,
+              diagrams: vision.diagrams,
+              supabase,
+            })
+          : { ids: new Map<number, string>(), validLabelCount: new Map<number, number>() };
+
+      // Drop / rewrite items that depend on diagrams the pipeline didn't produce.
+      const resolvedItems = vision.items.flatMap((it): GeneratedVisionItem[] => {
+        const diagramIdx = it.diagram_ref?.diagram_index;
+        const labelIdx = it.diagram_ref?.label_index;
+        const needsAsset = it.stimulus_kind === 'study_asset' || it.answer_kind === 'diagram_label';
+        if (!needsAsset) return [it];
+        if (diagramIdx == null) {
+          return [];
+        }
+        const assetId = diagramOutcome.ids.get(diagramIdx);
+        if (!assetId) return [];
+        if (it.answer_kind === 'diagram_label') {
+          const validLabels = diagramOutcome.validLabelCount.get(diagramIdx) ?? 0;
+          if (labelIdx == null || labelIdx < 0 || labelIdx >= validLabels) return [];
+        }
+        return [
+          {
+            ...it,
+            stimulus_kind: 'study_asset',
+            stimulus_data: { ...(it.stimulus_data ?? {}), study_asset_id: assetId },
+          },
+        ];
+      });
+      if (resolvedItems.length < 3) {
+        await refund(supabase, account_id, debit);
+        await markFailed(supabase, input.material_id, 'too_few_items');
+        await fail('extraction_failed', 'Too few valid items remained after diagram resolution');
+        return;
+      }
+      vision.items = resolvedItems;
+
+      // 7a. Validate & persist problem templates (Doc 06 §post-processing #4).
+      const validTemplates = vision.problem_templates
+        .map((t) => validateTemplate(t))
+        .filter((t): t is NonNullable<typeof t> => t !== null);
+      const templateRows = validTemplates.map((t, idx) => ({
+        material_id: input.material_id,
+        learner_id,
+        source_item_id: null,
+        subject_kind: subject.subject_kind,
+        topic: t.topic,
+        template_text: t.template_text,
+        params: t.params,
+        constraints: t.constraints,
+        text_substitutions: [],
+        solution_expression: t.solution_expression,
+        answer_kind: t.answer_kind,
+        units: t.units ?? null,
+        stimulus_template: t.stimulus_template ?? null,
+        difficulty: t.difficulty,
+        _seed_idx: idx,
+      }));
+      if (templateRows.length > 0) {
+        const ins = await supabase
+          .from('problem_templates')
+          .insert(templateRows.map(({ _seed_idx: _i, ...rest }) => rest))
+          .select('id');
+        if (ins.error) {
+          console.warn(`[materials] template insert failed: ${ins.error.message}`);
+        }
+      }
+
+      // 7b. Persist items.
+      const itemRows = vision.items.map((it) =>
+        toItemRow(it, input.material_id, learner_id, vision.usage),
+      );
+      const itemsIns = await supabase.from('items').insert(itemRows).select('*');
+      if (itemsIns.error) {
+        await refund(supabase, account_id, debit);
+        await fail('internal', 'Failed to persist generated items');
+        return;
+      }
+      const persistedItems = (itemsIns.data ?? []) as unknown[];
+
+      // 8. Mark the material ready + schedule photo wipe at T+7d.
+      const updatedAt = now();
+      const wipeAt = new Date(updatedAt.getTime() + PHOTO_WIPE_DELAY_MS).toISOString();
+      const ready = await supabase
+        .from('materials')
+        .update({
+          extraction_status: 'ready',
+          page_count: input.client_quality_scores.length,
+          detected_language: vision.detected_language ?? input.locale,
+          extracted_markdown: vision.extracted_markdown,
+          title: input.title ?? null,
+          scheduled_photo_deletion_at: wipeAt,
+          extraction_model: vision.usage.model,
+          extraction_prompt_version: vision.usage.prompt_version,
+        })
+        .eq('id', input.material_id);
+      if (ready.error) {
+        await refund(supabase, account_id, debit);
+        await fail('internal', 'Failed to finalize material');
+        return;
+      }
+
+      // 9. Settle credits to actual cost. Doc 08 §atomic-debit step 3.
+      const actualCredits = Math.max(1, Math.round(vision.usage.cost_usd_micros / 100));
+      await settle(supabase, account_id, debit, actualCredits, vision.usage);
+
+      const studyAssetIds = Array.from(diagramOutcome.ids.values());
       await push({
         event: 'done',
         data: {

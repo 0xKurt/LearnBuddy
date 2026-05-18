@@ -253,7 +253,7 @@ describe('GET /materials/:id and /items', () => {
   it('returns the persisted material + items', async () => {
     const s = await setup();
     const reserved = await reserveMaterial(s, 1);
-    await s.app.request('/materials', {
+    const postRes = await s.app.request('/materials', {
       method: 'POST',
       headers: authed(s),
       body: JSON.stringify({
@@ -267,6 +267,7 @@ describe('GET /materials/:id and /items', () => {
         ],
       }),
     });
+    await postRes.text(); // drain stream so all DB writes complete before GET
 
     const m = await s.app.request(`/materials/${reserved.material_id}`, {
       method: 'GET',
@@ -289,7 +290,7 @@ describe('GET /materials/:id and /items', () => {
   it('GET /materials/:id returns 404 cross-account', async () => {
     const owner = await setup('owner@x.com');
     const reserved = await reserveMaterial(owner, 1);
-    await owner.app.request('/materials', {
+    const ownerPost = await owner.app.request('/materials', {
       method: 'POST',
       headers: authed(owner),
       body: JSON.stringify({
@@ -303,6 +304,7 @@ describe('GET /materials/:id and /items', () => {
         ],
       }),
     });
+    await ownerPost.text();
 
     const stranger = await setup('stranger@y.com');
     const res = await stranger.app.request(`/materials/${reserved.material_id}`, {

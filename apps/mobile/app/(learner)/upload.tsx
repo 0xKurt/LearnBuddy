@@ -23,7 +23,8 @@ import { ApiError } from '../../lib/api/client.js';
 type ScreenState =
   | { kind: 'idle' }
   | { kind: 'progress'; progress: UploadProgress }
-  | { kind: 'error'; code: string; message: string };
+  | { kind: 'error'; code: string; message: string }
+  | { kind: 'async' };
 
 export default function UploadScreen() {
   const { t } = useTranslation('upload');
@@ -38,16 +39,19 @@ export default function UploadScreen() {
   // is gated by `startedRef` so StrictMode double-invokes don't double-fire.
   const [retryNonce, setRetryNonce] = useState(0);
   const startedRef = useRef(false);
+  const finalizingStartedRef = useRef(false);
 
   useEffect(() => {
     if (startedRef.current) return;
     if (!learnerId || !pending) return;
     startedRef.current = true;
+    finalizingStartedRef.current = false;
     void (async () => {
       try {
-        const done = await runUpload(learnerId, pending, (p) =>
-          setState({ kind: 'progress', progress: p }),
-        );
+        const done = await runUpload(learnerId, pending, (p) => {
+          if (p.phase === 'finalizing') finalizingStartedRef.current = true;
+          setState({ kind: 'progress', progress: p });
+        });
         qc.invalidateQueries({ queryKey: ['materials', pending.subject_id] });
         clearPending();
         router.replace({
@@ -56,7 +60,14 @@ export default function UploadScreen() {
         });
       } catch (err) {
         startedRef.current = false; // allow retry
-        if (err instanceof ApiError) {
+        if (finalizingStartedRef.current) {
+          // Server likely finished processing — invalidate cache so user can find their material
+          qc.invalidateQueries({ queryKey: ['materials', pending.subject_id] });
+          if (pending.folder_id) {
+            qc.invalidateQueries({ queryKey: ['materials', 'folder', pending.folder_id] });
+          }
+          setState({ kind: 'async' });
+        } else if (err instanceof ApiError) {
           setState({ kind: 'error', code: err.code, message: err.message });
         } else {
           setState({
@@ -78,6 +89,29 @@ export default function UploadScreen() {
           </Text>
           <Btn onPress={() => router.replace('/(learner)/home')} full>
             {t('back')}
+          </Btn>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (state.kind === 'async') {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+        <View style={{ flex: 1, padding: 26, justifyContent: 'center', gap: 16 }}>
+          <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
+            {t('async.title')}
+          </Text>
+          <Text style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>{t('async.body')}</Text>
+          <View style={{ height: 8 }} />
+          <Btn
+            full
+            onPress={() => {
+              clearPending();
+              router.replace('/(learner)/home');
+            }}
+          >
+            {t('async.view_list')}
           </Btn>
         </View>
       </SafeAreaView>
