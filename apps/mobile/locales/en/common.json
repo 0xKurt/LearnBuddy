@@ -1,6 +1,7 @@
 {
   "app": { "name": "LearnBuddy" },
   "loading": "Loading…",
+  "load_error": "Connection failed. Please try again.",
   "support": {
     "contact": "Contact support",
     "faq": "Help & FAQ"

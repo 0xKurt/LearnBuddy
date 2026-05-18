@@ -197,50 +197,42 @@ export default function RootLayout() {
             <ToastHost />
           </QueryClientProvider>
           <Modal visible={showWhatsNew} transparent animationType="slide" statusBarTranslucent>
-            <Pressable style={{ flex: 1 }} onPress={() => setShowWhatsNew(false)}>
+            <View
+              style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}
+            >
               <View
-                style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}
+                style={{
+                  backgroundColor: LB.paper,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 28,
+                  paddingBottom: Math.max(insets.bottom + 16, 28),
+                  gap: 14,
+                }}
               >
-                <Pressable
-                  onPress={() => {
-                    /* prevent dismiss on inner tap */
+                <Text
+                  style={{
+                    fontSize: 22,
+                    fontWeight: '700',
+                    color: LB.ink,
+                    letterSpacing: -0.5,
                   }}
                 >
-                  <View
-                    style={{
-                      backgroundColor: LB.paper,
-                      borderTopLeftRadius: 24,
-                      borderTopRightRadius: 24,
-                      padding: 28,
-                      paddingBottom: Math.max(insets.bottom + 16, 28),
-                      gap: 14,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 22,
-                        fontWeight: '700',
-                        color: LB.ink,
-                        letterSpacing: -0.5,
-                      }}
-                    >
-                      {t('whats_new.title')}
+                  {t('whats_new.title')}
+                </Text>
+                {(i18n.t('common:whats_new.items', { returnObjects: true }) as string[]).map(
+                  (item, idx) => (
+                    <Text key={idx} style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>
+                      {'• '}
+                      {item}
                     </Text>
-                    {(i18n.t('common:whats_new.items', { returnObjects: true }) as string[]).map(
-                      (item, idx) => (
-                        <Text key={idx} style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>
-                          {'• '}
-                          {item}
-                        </Text>
-                      ),
-                    )}
-                    <Btn full onPress={() => setShowWhatsNew(false)}>
-                      {t('whats_new.cta')}
-                    </Btn>
-                  </View>
-                </Pressable>
+                  ),
+                )}
+                <Btn full onPress={() => setShowWhatsNew(false)}>
+                  {t('whats_new.cta')}
+                </Btn>
               </View>
-            </Pressable>
+            </View>
           </Modal>
           {obscured && (
             <View

@@ -40,6 +40,7 @@
     "cta": "Aceptar",
     "error_unauthenticated": "Confirma primero tu correo electrónico y vuelve a intentarlo.",
     "error_generic": "No se pudo guardar ahora mismo — ¿intentarlo de nuevo en un momento?",
+    "retry": "Intentar de nuevo",
     "busy": "Un momento …"
   },
   "who_uses": {
@@ -106,7 +107,8 @@
     "biometric_yes": "Sí, configurar",
     "biometric_no": "No, solo PIN",
     "cta_save": "Guardar PIN",
-    "saving": "Guardando …"
+    "saving": "Guardando …",
+    "detecting": "Comprobando biometría …"
   },
   "hand_off_final": {
     "title": "Todo listo.",

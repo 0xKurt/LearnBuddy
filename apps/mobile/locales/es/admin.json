@@ -2,6 +2,9 @@
   "overview": {
     "title": "Cuenta",
     "back_to_learner": "Volver a la vista de aprendizaje",
+    "error_title": "No se pudieron cargar los datos de la cuenta.",
+    "error_body": "Por favor, inténtalo de nuevo.",
+    "error_retry": "Intentar de nuevo",
     "birth_year_grade": "Año de nacimiento {{year}} · Curso {{grade}}",
     "grade_unknown": "—",
     "rows": {
@@ -163,6 +166,9 @@
         "cta": "Elegir Plus"
       }
     },
+    "account_error_title": "No se pudieron cargar los datos de suscripción.",
+    "offerings_error": "No se pudieron cargar los planes. Por favor, inténtalo de nuevo.",
+    "retry": "Intentar de nuevo",
     "restore": "Restaurar compras",
     "purchase_success_title": "¡Gracias!",
     "purchase_success_body": "Tu suscripción se activa enseguida.",

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn, CircleBtn, Icon } from '../../components/lb/index.js';
+import { Btn, CircleBtn, EmptyState, Icon } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { devNukeAccount } from '../../lib/dev/reset.js';
 import { useAppStore } from '../../lib/store/index.js';
@@ -107,6 +107,15 @@ export default function AdminOverviewScreen() {
           <View style={{ paddingVertical: 24 }}>
             <ActivityIndicator color={LB.ink2} />
           </View>
+        ) : accountQuery.isError ? (
+          <EmptyState
+            glyph="⚠️"
+            title={t('overview.error_title')}
+            body={t('overview.error_body')}
+            action={
+              <Btn onPress={() => void accountQuery.refetch()}>{t('overview.error_retry')}</Btn>
+            }
+          />
         ) : accountQuery.data?.learner ? (
           <View style={{ marginTop: 8, gap: 2 }}>
             <Text style={{ fontSize: 14, color: LB.ink2 }}>

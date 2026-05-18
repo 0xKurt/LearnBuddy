@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn, Chip, CircleBtn } from '../../components/lb/index.js';
+import { Btn, Chip, CircleBtn, EmptyState } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import {
   startPurchase,
@@ -25,11 +25,19 @@ export default function SubscriptionScreen() {
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
 
   const [packages, setPackages] = useState<PurchasePackage[] | null>(null);
+  const [offeringsError, setOfferingsError] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     void getOfferings()
-      .then(setPackages)
-      .catch(() => setPackages([]));
+      .then((pkgs) => {
+        setPackages(pkgs);
+        setOfferingsError(false);
+      })
+      .catch(() => {
+        setPackages([]);
+        setOfferingsError(true);
+      });
   }, []);
 
   if (!unlocked) return <Redirect href="/(admin)/unlock" />;
@@ -39,6 +47,8 @@ export default function SubscriptionScreen() {
       .priceString ?? '—';
 
   const handlePurchase = async (sku: 'standard' | 'plus') => {
+    if (busy) return;
+    setBusy(true);
     try {
       await startPurchase(sku);
       Alert.alert(
@@ -50,9 +60,13 @@ export default function SubscriptionScreen() {
         t('subscription.purchase_error_title'),
         err instanceof Error ? err.message : t('subscription.purchase_error_generic'),
       );
+    } finally {
+      setBusy(false);
     }
   };
   const handleRestore = async () => {
+    if (busy) return;
+    setBusy(true);
     try {
       await restorePurchases();
       Alert.alert(t('subscription.restore_success_title'), t('subscription.restore_success_body'));
@@ -61,6 +75,8 @@ export default function SubscriptionScreen() {
         t('subscription.purchase_error_title'),
         err instanceof Error ? err.message : t('subscription.restore_error_generic'),
       );
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -83,6 +99,14 @@ export default function SubscriptionScreen() {
       <ScrollView contentContainerStyle={{ padding: 22, gap: 16 }}>
         {accountQuery.isLoading ? (
           <ActivityIndicator color={LB.ink2} />
+        ) : accountQuery.isError ? (
+          <EmptyState
+            glyph="⚠️"
+            title={t('subscription.account_error_title')}
+            action={
+              <Btn onPress={() => void accountQuery.refetch()}>{t('subscription.retry')}</Btn>
+            }
+          />
         ) : (
           <View style={{ padding: 18, borderRadius: 16, backgroundColor: LB.bg }}>
             <Chip tone="primary">{accountQuery.data?.subscription?.tier ?? 'trial'}</Chip>
@@ -96,6 +120,39 @@ export default function SubscriptionScreen() {
 
         {packages === null ? (
           <ActivityIndicator color={LB.ink2} style={{ marginVertical: 16 }} />
+        ) : offeringsError ? (
+          <View
+            style={{
+              padding: 14,
+              borderRadius: 12,
+              backgroundColor: '#FFF3E0',
+              borderWidth: 1,
+              borderColor: '#FFB74D',
+              gap: 10,
+            }}
+          >
+            <Text style={{ fontSize: 13, color: '#E65100' }}>
+              {t('subscription.offerings_error')}
+            </Text>
+            <Btn
+              variant="outline"
+              onPress={() => {
+                setPackages(null);
+                setOfferingsError(false);
+                void getOfferings()
+                  .then((pkgs) => {
+                    setPackages(pkgs);
+                    setOfferingsError(false);
+                  })
+                  .catch(() => {
+                    setPackages([]);
+                    setOfferingsError(true);
+                  });
+              }}
+            >
+              {t('subscription.retry')}
+            </Btn>
+          </View>
         ) : (
           <>
             <Tier
@@ -107,7 +164,8 @@ export default function SubscriptionScreen() {
                 t('subscription.tiers.standard.feature_3'),
               ]}
               cta={t('subscription.tiers.standard.cta')}
-              onPress={() => handlePurchase('standard')}
+              onPress={() => void handlePurchase('standard')}
+              disabled={busy}
             />
             <Tier
               title={t('subscription.tiers.plus.title')}
@@ -118,13 +176,14 @@ export default function SubscriptionScreen() {
                 t('subscription.tiers.plus.feature_3'),
               ]}
               cta={t('subscription.tiers.plus.cta')}
-              onPress={() => handlePurchase('plus')}
+              onPress={() => void handlePurchase('plus')}
               highlight
+              disabled={busy}
             />
           </>
         )}
-        <Btn variant="outline" full onPress={handleRestore}>
-          {t('subscription.restore')}
+        <Btn variant="outline" full onPress={() => void handleRestore()} disabled={busy}>
+          {busy ? '…' : t('subscription.restore')}
         </Btn>
       </ScrollView>
     </SafeAreaView>
@@ -138,6 +197,7 @@ function Tier({
   cta,
   onPress,
   highlight = false,
+  disabled = false,
 }: {
   title: string;
   price: string;
@@ -145,6 +205,7 @@ function Tier({
   cta: string;
   onPress: () => void;
   highlight?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <View
@@ -166,7 +227,7 @@ function Tier({
           </Text>
         ))}
       </View>
-      <Btn full variant={highlight ? 'primary' : 'outline'} onPress={onPress}>
+      <Btn full variant={highlight ? 'primary' : 'outline'} onPress={onPress} disabled={disabled}>
         {cta}
       </Btn>
     </View>

@@ -1,6 +1,7 @@
 {
   "app": { "name": "LearnBuddy" },
   "loading": "Lädt…",
+  "load_error": "Verbindung fehlgeschlagen. Bitte nochmal versuchen.",
   "support": {
     "contact": "Support kontaktieren",
     "faq": "Hilfe & FAQ"

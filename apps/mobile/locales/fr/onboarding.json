@@ -40,6 +40,7 @@
     "cta": "J'accepte",
     "error_unauthenticated": "Confirme d'abord ton e-mail, puis réessaie.",
     "error_generic": "Impossible d'enregistrer pour l'instant — réessaie dans un moment ?",
+    "retry": "Réessayer",
     "busy": "Un instant …"
   },
   "who_uses": {
@@ -106,7 +107,8 @@
     "biometric_yes": "Oui, configurer",
     "biometric_no": "Non, code uniquement",
     "cta_save": "Enregistrer le code",
-    "saving": "Enregistrement …"
+    "saving": "Enregistrement …",
+    "detecting": "Vérification biométrique …"
   },
   "hand_off_final": {
     "title": "Tout est prêt.",

@@ -40,6 +40,7 @@
     "cta": "I agree",
     "error_unauthenticated": "Please confirm your email first, then try again.",
     "error_generic": "Couldn't save right now — try again in a moment?",
+    "retry": "Try again",
     "busy": "One moment …"
   },
   "who_uses": {
@@ -106,7 +107,8 @@
     "biometric_yes": "Yes, set it up",
     "biometric_no": "No, PIN only",
     "cta_save": "Save PIN",
-    "saving": "Saving …"
+    "saving": "Saving …",
+    "detecting": "Checking biometrics …"
   },
   "hand_off_final": {
     "title": "All set.",

@@ -74,7 +74,7 @@ export default function WelcomeScreen() {
     (mode === 'login' || signupReady);
 
   const onEmailBlur = () => {
-    if (trimmedEmail.length > 0 && !trimmedEmail.includes('@')) {
+    if (trimmedEmail.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setEmailFormatError(true);
     } else {
       setEmailFormatError(false);
@@ -327,6 +327,12 @@ export default function WelcomeScreen() {
                   returnKeyType="done"
                   onSubmitEditing={onSubmit}
                   editable={!busy}
+                  error={birthYear.length === 4 && parsedBirthYear === null}
+                  errorMessage={
+                    birthYear.length === 4 && parsedBirthYear === null
+                      ? t('welcome.error_birth_year')
+                      : undefined
+                  }
                 />
               </Field>
             )}

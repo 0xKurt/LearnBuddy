@@ -11,8 +11,8 @@
 //      A 401 means the persisted session is dead; clear it and welcome.
 
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { clearSession, loadSession, setSession } from '../lib/auth/session.js';
 import { ApiError } from '../lib/api/client.js';
@@ -30,12 +30,13 @@ type Destination =
 
 export default function IndexRoute() {
   const [dest, setDest] = useState<Destination | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
-  useEffect(() => {
+  const resolve = useCallback(() => {
+    setLoadError(false);
+    setDest(null);
     let cancelled = false;
-    (async () => {
-      // Apply any saved locale immediately so downstream screens render
-      // in the user's chosen language without a flicker.
+    void (async () => {
       await hydrateSavedLocale();
       const savedLocale = await loadSavedLocale();
       if (cancelled) return;
@@ -68,14 +69,53 @@ export default function IndexRoute() {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
           await clearSession();
+          setDest('/(onboarding)/welcome');
+        } else {
+          setLoadError(true);
         }
-        setDest('/(onboarding)/welcome');
       }
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    return resolve();
+  }, [resolve]);
+
+  if (loadError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: LB.paper,
+          gap: 16,
+          paddingHorizontal: 32,
+        }}
+      >
+        <Text style={{ fontSize: 16, color: LB.ink, textAlign: 'center' }}>
+          {i18n.t('common:load_error')}
+        </Text>
+        <Pressable onPress={resolve} hitSlop={12}>
+          <View
+            style={{
+              backgroundColor: LB.ink,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              borderRadius: 999,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
+              {i18n.t('common:actions.retry')}
+            </Text>
+          </View>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (!dest) {
     return (

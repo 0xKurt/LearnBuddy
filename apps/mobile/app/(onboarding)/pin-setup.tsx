@@ -10,7 +10,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, PinPad } from '../../components/lb/index.js';
@@ -114,7 +114,20 @@ export default function PinSetupScreen() {
     }
   }
 
-  if (phase === null) return null;
+  if (phase === null) {
+    return (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: LB.paper,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <ActivityIndicator color={LB.ink2} accessibilityLabel={t('pin.detecting')} />
+      </SafeAreaView>
+    );
+  }
 
   const title =
     phase === 'method'

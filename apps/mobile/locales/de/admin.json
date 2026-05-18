@@ -2,6 +2,9 @@
   "overview": {
     "title": "Konto",
     "back_to_learner": "Zurück zur Lern-Ansicht",
+    "error_title": "Konto-Daten konnten nicht geladen werden.",
+    "error_body": "Bitte nochmal versuchen.",
+    "error_retry": "Nochmal versuchen",
     "birth_year_grade": "Geburtsjahr {{year}} · Klasse {{grade}}",
     "grade_unknown": "—",
     "rows": {
@@ -163,6 +166,9 @@
         "cta": "Plus buchen"
       }
     },
+    "account_error_title": "Abo-Daten konnten nicht geladen werden.",
+    "offerings_error": "Tarife konnten nicht geladen werden. Bitte nochmal versuchen.",
+    "retry": "Nochmal versuchen",
     "restore": "Käufe wiederherstellen",
     "purchase_success_title": "Danke!",
     "purchase_success_body": "Dein Abo wird gleich freigeschaltet.",

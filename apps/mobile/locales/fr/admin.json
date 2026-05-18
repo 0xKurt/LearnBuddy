@@ -2,6 +2,9 @@
   "overview": {
     "title": "Compte",
     "back_to_learner": "Retour à l'écran d'apprentissage",
+    "error_title": "Impossible de charger les données du compte.",
+    "error_body": "Réessaie.",
+    "error_retry": "Réessayer",
     "birth_year_grade": "Né(e) en {{year}} · Classe {{grade}}",
     "grade_unknown": "—",
     "rows": {
@@ -163,6 +166,9 @@
         "cta": "Choisir Plus"
       }
     },
+    "account_error_title": "Impossible de charger les données d'abonnement.",
+    "offerings_error": "Impossible de charger les offres. Réessaie.",
+    "retry": "Réessayer",
     "restore": "Restaurer les achats",
     "purchase_success_title": "Merci !",
     "purchase_success_body": "Ton abonnement va être activé.",

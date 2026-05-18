@@ -1,6 +1,7 @@
 {
   "app": { "name": "LearnBuddy" },
   "loading": "Chargement…",
+  "load_error": "Échec de connexion. Réessaie.",
   "support": {
     "contact": "Contacter le support",
     "faq": "Aide & FAQ"

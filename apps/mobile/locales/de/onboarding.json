@@ -40,6 +40,7 @@
     "cta": "Einverstanden",
     "error_unauthenticated": "Bitte zuerst E-Mail bestätigen, dann erneut versuchen.",
     "error_generic": "Konnte gerade nicht speichern — gleich nochmal probieren?",
+    "retry": "Nochmal versuchen",
     "busy": "Moment …"
   },
   "who_uses": {
@@ -106,7 +107,8 @@
     "biometric_yes": "Ja, einrichten",
     "biometric_no": "Nein, nur PIN",
     "cta_save": "PIN speichern",
-    "saving": "Speichern …"
+    "saving": "Speichern …",
+    "detecting": "Biometrie wird geprüft …"
   },
   "hand_off_final": {
     "title": "Es kann losgehen.",

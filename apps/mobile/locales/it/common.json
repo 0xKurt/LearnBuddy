@@ -1,6 +1,7 @@
 {
   "app": { "name": "LearnBuddy" },
   "loading": "Caricamento…",
+  "load_error": "Connessione fallita. Per favore, riprova.",
   "support": {
     "contact": "Contatta il supporto",
     "faq": "Aiuto & FAQ"

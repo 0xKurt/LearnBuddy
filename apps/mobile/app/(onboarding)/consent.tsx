@@ -4,6 +4,7 @@
 
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,6 +14,7 @@ import { ENV } from '../../lib/env.js';
 import { LB } from '../../lib/theme/colors.js';
 
 export default function ConsentScreen() {
+  const { t } = useTranslation('onboarding');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
 
@@ -23,7 +25,7 @@ export default function ConsentScreen() {
       await recordConsent({ accepted: true, version: ENV.DSGVO_CONSENT_VERSION });
       router.replace('/(onboarding)/add-profile' as never);
     } catch {
-      setError('Konnte die Einwilligung nicht speichern. Bitte nochmal versuchen.');
+      setError(t('consent.error_generic'));
       setBusy(false);
     }
   }
@@ -58,7 +60,7 @@ export default function ConsentScreen() {
       )}
       <View style={{ paddingHorizontal: 4 }}>
         <Btn size="lg" full variant="primary" onPress={() => void submit()}>
-          Nochmal versuchen
+          {t('consent.retry')}
         </Btn>
       </View>
     </SafeAreaView>

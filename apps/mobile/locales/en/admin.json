@@ -2,6 +2,9 @@
   "overview": {
     "title": "Account",
     "back_to_learner": "Back to the learner view",
+    "error_title": "Couldn't load account data.",
+    "error_body": "Please try again.",
+    "error_retry": "Try again",
     "birth_year_grade": "Born {{year}} · Year {{grade}}",
     "grade_unknown": "—",
     "rows": {
@@ -163,6 +166,9 @@
         "cta": "Choose Plus"
       }
     },
+    "account_error_title": "Couldn't load subscription data.",
+    "offerings_error": "Couldn't load plans. Please try again.",
+    "retry": "Try again",
     "restore": "Restore purchases",
     "purchase_success_title": "Thank you!",
     "purchase_success_body": "Your subscription is being activated.",

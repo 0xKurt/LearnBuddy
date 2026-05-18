@@ -2,6 +2,9 @@
   "overview": {
     "title": "Account",
     "back_to_learner": "Torna alla vista di apprendimento",
+    "error_title": "Impossibile caricare i dati dell'account.",
+    "error_body": "Per favore, riprova.",
+    "error_retry": "Riprova",
     "birth_year_grade": "Anno di nascita {{year}} · Classe {{grade}}",
     "grade_unknown": "—",
     "rows": {
@@ -163,6 +166,9 @@
         "cta": "Scegli Plus"
       }
     },
+    "account_error_title": "Impossibile caricare i dati dell'abbonamento.",
+    "offerings_error": "Impossibile caricare i piani. Riprova.",
+    "retry": "Riprova",
     "restore": "Ripristina acquisti",
     "purchase_success_title": "Grazie!",
     "purchase_success_body": "Il tuo abbonamento sta per essere attivato.",

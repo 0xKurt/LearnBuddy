@@ -40,6 +40,7 @@
     "cta": "Acconsento",
     "error_unauthenticated": "Conferma prima la tua email, poi riprova.",
     "error_generic": "Non è stato possibile salvare ora — riprovare tra un momento?",
+    "retry": "Riprova",
     "busy": "Un momento …"
   },
   "who_uses": {
@@ -106,7 +107,8 @@
     "biometric_yes": "Sì, configura",
     "biometric_no": "No, solo PIN",
     "cta_save": "Salva PIN",
-    "saving": "Sto salvando …"
+    "saving": "Sto salvando …",
+    "detecting": "Verifica biometria …"
   },
   "hand_off_final": {
     "title": "Tutto pronto.",

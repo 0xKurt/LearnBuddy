@@ -15,7 +15,7 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, LbTextInput } from '../components/lb/index.js';
@@ -146,7 +146,7 @@ export default function ResetPasswordScreen() {
 
           <View style={{ marginTop: 18, gap: 12 }}>
             {phase === 'request' ? (
-              <TextInput
+              <LbTextInput
                 placeholder={t('reset.email_placeholder')}
                 value={email}
                 onChangeText={setEmail}
@@ -157,8 +157,6 @@ export default function ResetPasswordScreen() {
                 returnKeyType="go"
                 onSubmitEditing={onRequestLink}
                 editable={!busy}
-                placeholderTextColor={LB.ink3}
-                style={inputStyle}
               />
             ) : (
               <LbTextInput
@@ -197,20 +195,13 @@ export default function ResetPasswordScreen() {
           }
           onPress={phase === 'request' ? onRequestLink : onSavePassword}
         >
-          {busy ? 'Moment …' : phase === 'request' ? t('reset.request_cta') : t('reset.new_cta')}
+          {busy
+            ? t('welcome.busy')
+            : phase === 'request'
+              ? t('reset.request_cta')
+              : t('reset.new_cta')}
         </Btn>
       </View>
     </SafeAreaView>
   );
 }
-
-const inputStyle = {
-  backgroundColor: LB.bg,
-  borderColor: LB.hairline,
-  borderWidth: 1,
-  borderRadius: 12,
-  paddingHorizontal: 16,
-  height: 50,
-  fontSize: 15,
-  color: LB.ink,
-} as const;
