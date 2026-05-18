@@ -5,6 +5,7 @@
   "badge_practice": "Üben",
   "exit": {
     "title": "Sitzung beenden?",
+    "saved_hint": "Dein Fortschritt ist gespeichert — du kannst jederzeit weitermachen.",
     "keep_going": "Weiter üben",
     "end": "Beenden"
   },

@@ -57,7 +57,13 @@ export async function streamTurn(
   // mirroring api()'s 401 handling (this path bypasses api()).
   if (res.status === 401) {
     const fresh = await refreshAuthToken();
-    if (fresh) res = await doFetch(fresh);
+    if (fresh) {
+      res = await doFetch(fresh);
+    } else {
+      // Refresh token is dead too — the session is unrecoverable in place.
+      // Signal the caller to send the user back to sign-in.
+      throw new ApiError('unauthenticated', 'Session expired', 401);
+    }
   }
 
   if (!res.ok) {

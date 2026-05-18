@@ -5,6 +5,7 @@
   "badge_practice": "Practice",
   "exit": {
     "title": "End the session?",
+    "saved_hint": "Your progress is saved — you can pick up again any time.",
     "keep_going": "Keep going",
     "end": "End"
   },

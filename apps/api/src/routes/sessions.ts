@@ -565,24 +565,24 @@ sessionRoutes.post(
       // 5. Build the thread + hint accounting from prior turns.
       const turns = await loadTurns(supabase, session_id);
       const nextIndex = turns.reduce((mx, t) => Math.max(mx, t.turn_index), -1) + 1;
-      const fullHistory: ConversationMessage[] = turns
-        .filter(
-          (t) =>
-            (t.role === 'learner' && t.kind === 'answer') ||
-            (t.role === 'tutor' && (t.kind === 'feedback' || t.kind === 'hint')),
-        )
+      const convoTurns = turns.filter(
+        (t) =>
+          (t.role === 'learner' && t.kind === 'answer') ||
+          (t.role === 'tutor' && (t.kind === 'feedback' || t.kind === 'hint')),
+      );
+      // Bound the transcript so a long "keep going" marathon doesn't grow
+      // input tokens/cost unbounded — BUT never drop the current item's own
+      // exchange (its hint staircase must stay coherent however long the
+      // session is). Keep: every current-item message + a recent window of
+      // the rest, preserving chronological order. Older other-item turns are
+      // still persisted server-side and resurface via FSRS, not via context.
+      const windowStart = Math.max(0, convoTurns.length - MAX_HISTORY_MESSAGES);
+      const history: ConversationMessage[] = convoTurns
+        .filter((t, i) => i >= windowStart || t.item_id === input.item_id)
         .map((t) => ({
           role: t.role === 'learner' ? ('learner' as const) : ('tutor' as const),
           content: t.content,
         }));
-      // Bound the transcript sent to the model so a long "keep going"
-      // marathon doesn't grow input tokens/cost unbounded. The most recent
-      // exchanges carry the conversational coherence; older items are still
-      // recorded server-side and surfaced again via FSRS, not via context.
-      const history =
-        fullHistory.length > MAX_HISTORY_MESSAGES
-          ? fullHistory.slice(-MAX_HISTORY_MESSAGES)
-          : fullHistory;
       const hintsGivenForItem = turns.filter(
         (t) =>
           t.role === 'tutor' &&

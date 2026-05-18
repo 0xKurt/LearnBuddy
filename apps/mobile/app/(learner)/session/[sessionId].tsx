@@ -15,6 +15,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Alert,
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -41,6 +43,7 @@ import {
   toast,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
+import { ApiError } from '../../../lib/api/client.js';
 import { getSessionSnapshot, patchSession, streamTurn } from '../../../lib/api/conversation.js';
 import { finishSession, startSession } from '../../../lib/api/sessions.js';
 import { localEvaluate, type EvaluatableItem } from '../../../lib/eval/local.js';
@@ -178,6 +181,7 @@ export default function SessionScreen() {
   const [canAdvance, setCanAdvance] = useState(false);
   const [tries, setTries] = useState(0);
   const [voiceOn, setVoiceOn] = useState(false);
+  const [voiceUnavailable, setVoiceUnavailable] = useState(false);
   const [pinned, setPinned] = useState<string | null>(null);
   const [explainOpen, setExplainOpen] = useState(false);
   const [done, setDone] = useState(false);
@@ -299,7 +303,13 @@ export default function SessionScreen() {
         );
         patchMsg(tutorMsgId, { streaming: false, verdict });
         if (verdict === 'correct') setCanAdvance(true);
-      } catch {
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          // Session unrecoverable — send the learner back to sign-in
+          // instead of stranding them on a turn that will never succeed.
+          router.replace('/login');
+          return;
+        }
         patchMsg(tutorMsgId, { streaming: false, errored: true, text: t('stream_error.generic') });
       } finally {
         setSending(false);
@@ -325,12 +335,14 @@ export default function SessionScreen() {
 
   const onVoiceUnavailable = useCallback(() => {
     // Voice can't be used here (module missing, permission denied, or it
-    // threw). Don't strand the learner waiting for a 2nd failure — fall
-    // back to the keyboard right away. The toggle still lets them retry.
-    setVoiceOn((on) => {
-      if (on) toast.info(t('voice.switched_to_text'));
-      return false;
+    // threw). Fall back to the keyboard immediately, tell the learner once,
+    // and remember it so the "speak instead" toggle (which would just fail
+    // again) is hidden for the rest of the session.
+    setVoiceUnavailable((already) => {
+      if (!already) toast.info(t('voice.switched_to_text'));
+      return true;
     });
+    setVoiceOn(false);
   }, [t]);
 
   const finish = useCallback(async () => {
@@ -380,10 +392,30 @@ export default function SessionScreen() {
     }
   }, [item, pinned, learnerId, serverSessionId, t]);
 
-  const exitKeep = useCallback(() => {
-    // Leave but PRESERVE the session — home offers a resume banner.
-    router.replace('/(learner)/home');
-  }, []);
+  // Confirm before leaving mid-conversation, and reassure that progress is
+  // kept (the home/practice resume banner brings them right back here).
+  const confirmExit = useCallback(() => {
+    Alert.alert(t('exit.title'), t('exit.saved_hint'), [
+      { text: t('exit.keep_going'), style: 'cancel' },
+      {
+        text: t('exit.end'),
+        style: 'destructive',
+        onPress: () => router.replace('/(learner)/home'),
+      },
+    ]);
+  }, [t]);
+
+  // Android hardware back must hit the same confirm, not silently bail.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (boot.data && !done) {
+        confirmExit();
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [boot.data, done, confirmExit]);
 
   // ── Render states ────────────────────────────────────────────────────────
   if (boot.isLoading || accountQuery.isLoading) {
@@ -450,7 +482,7 @@ export default function SessionScreen() {
         progress={(idx + (canAdvance ? 1 : 0)) / total}
         index={`${Math.min(idx + 1, total)} / ${total}`}
         badge={testMode ? t('badge_test') : t('badge_practice')}
-        onExit={exitKeep}
+        onExit={confirmExit}
       />
 
       <KeyboardAvoidingView
@@ -560,6 +592,7 @@ export default function SessionScreen() {
                 onVoiceUnavailable={onVoiceUnavailable}
                 voiceOn={voiceOn}
                 canUseVoice={item.answer_kind === 'short' || item.answer_kind === 'long'}
+                voiceUnavailable={voiceUnavailable}
                 onToggleVoice={() => setVoiceOn((v) => !v)}
               />
               {tries >= 1 && !sending ? (
@@ -702,6 +735,7 @@ function Composer({
   onVoiceUnavailable,
   voiceOn,
   canUseVoice,
+  voiceUnavailable,
   onToggleVoice,
 }: {
   item: Item;
@@ -719,13 +753,19 @@ function Composer({
   onVoiceUnavailable: () => void;
   voiceOn: boolean;
   canUseVoice: boolean;
+  voiceUnavailable: boolean;
   onToggleVoice: () => void;
 }) {
-  // Brief selected-state feedback before the answer bubble appears.
+  // Brief selected-state feedback while the turn is in flight; cleared once
+  // it resolves so a wrong choice isn't left looking locked-in, and on a
+  // new item.
   const [picked, setPicked] = useState<number | null>(null);
   useEffect(() => {
     setPicked(null);
   }, [item.id]);
+  useEffect(() => {
+    if (!sending) setPicked(null);
+  }, [sending]);
 
   if (item.answer_kind === 'multiple_choice') {
     return (
@@ -783,7 +823,12 @@ function Composer({
             setFillValues(next);
           }}
         />
-        <Btn size="lg" full disabled={sending} onPress={onSubmitTyped}>
+        <Btn
+          size="lg"
+          full
+          disabled={sending || fillValues.every((v) => !v?.trim())}
+          onPress={onSubmitTyped}
+        >
           {sending ? t('checking') : t('submit')}
         </Btn>
       </View>
@@ -793,18 +838,26 @@ function Composer({
   if (item.answer_kind === 'numeric' || item.answer_kind === 'formula') {
     return (
       <View style={{ gap: 10 }}>
-        <MathInput
-          value={answer}
-          onChangeText={setAnswer}
-          placeholder={
-            item.answer_kind === 'numeric' ? t('placeholder.number') : t('placeholder.formula')
-          }
-        />
-        <MathKeyboard
-          onInsert={(token) =>
-            setAnswer(token === 'BACKSPACE' ? answer.slice(0, -1) : answer + token)
-          }
-        />
+        {/* Bounded + scrollable so the math keyboard can't push the submit
+            button off a small screen — the CTA stays outside, always tappable. */}
+        <ScrollView
+          style={{ maxHeight: 320 }}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ gap: 10 }}
+        >
+          <MathInput
+            value={answer}
+            onChangeText={setAnswer}
+            placeholder={
+              item.answer_kind === 'numeric' ? t('placeholder.number') : t('placeholder.formula')
+            }
+          />
+          <MathKeyboard
+            onInsert={(token) =>
+              setAnswer(token === 'BACKSPACE' ? answer.slice(0, -1) : answer + token)
+            }
+          />
+        </ScrollView>
         <Btn size="lg" full disabled={sending || !answer.trim()} onPress={onSubmitTyped}>
           {sending ? t('checking') : t('submit')}
         </Btn>
@@ -856,7 +909,7 @@ function Composer({
           </Btn>
         </View>
       )}
-      {canUseVoice ? (
+      {canUseVoice && !voiceUnavailable ? (
         <Pressable onPress={onToggleVoice} accessibilityRole="button" hitSlop={8}>
           <Text style={{ fontSize: 13, color: LB.ink2, textAlign: 'center' }}>
             {voiceOn ? t('voice.use_keyboard') : t('voice.use_voice')}

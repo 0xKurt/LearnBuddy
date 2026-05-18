@@ -5,6 +5,7 @@
   "badge_practice": "Entraînement",
   "exit": {
     "title": "Arrêter la séance ?",
+    "saved_hint": "Ta progression est enregistrée — tu peux reprendre quand tu veux.",
     "keep_going": "Continuer",
     "end": "Arrêter"
   },
