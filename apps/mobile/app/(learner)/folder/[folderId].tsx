@@ -25,6 +25,7 @@ import {
   listMaterials,
   type MaterialListItem,
 } from '../../../lib/api/materials.js';
+import { isoToDisplay } from '../../../lib/date.js';
 import { LB } from '../../../lib/theme/colors.js';
 
 function daysUntil(scheduled: string | null, now = new Date()): number | null {
@@ -170,7 +171,9 @@ export default function FolderScreen() {
         </Text>
         {folder.scheduled_for && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-            <Text style={{ fontSize: 12, color: LB.ink2 }}>{`${folder.scheduled_for}`}</Text>
+            <Text style={{ fontSize: 12, color: LB.ink2 }}>
+              {isoToDisplay(folder.scheduled_for) ?? folder.scheduled_for}
+            </Text>
             {inDays != null && (
               <Chip tone="warning">
                 {inDays === 0

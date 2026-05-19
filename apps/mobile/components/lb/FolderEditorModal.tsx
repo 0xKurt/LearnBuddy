@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { archiveFolder, createFolder, updateFolder } from '../../lib/api/folders.js';
 import { LB } from '../../lib/theme/colors.js';
 import { Btn } from './Btn.js';
+import { LbDatePicker } from './LbDatePicker.js';
 import type { Folder } from '@learnbuddy/shared-types';
 
 type Props = {
@@ -23,7 +24,7 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
   const { t } = useTranslation('home');
   const qc = useQueryClient();
   const [name, setName] = useState(initial?.name ?? '');
-  const [date, setDate] = useState(initial?.scheduled_for ?? '');
+  const [date, setDate] = useState<string | null>(initial?.scheduled_for ?? null);
 
   useMemoResetOnVisible(visible, initial, setName, setDate);
 
@@ -31,7 +32,7 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
     mutationFn: () =>
       createFolder(subjectId, {
         name: name.trim(),
-        scheduled_for: date.trim() || null,
+        scheduled_for: date,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['folders', subjectId] });
@@ -43,7 +44,7 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
     mutationFn: () =>
       updateFolder(initial!.id, {
         name: name.trim(),
-        scheduled_for: date.trim() || null,
+        scheduled_for: date,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['folders', subjectId] });
@@ -90,13 +91,11 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
 
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 12, color: LB.ink2 }}>{t('folder_editor.date_label')}</Text>
-            <TextInput
+            <LbDatePicker
               value={date}
-              onChangeText={setDate}
-              placeholder="2026-06-14"
-              placeholderTextColor={LB.ink3}
-              autoCapitalize="none"
-              style={inputStyle}
+              onChange={setDate}
+              clearable
+              accessibilityLabel={t('folder_editor.date_label')}
             />
           </View>
 
@@ -134,12 +133,12 @@ function useMemoResetOnVisible(
   visible: boolean,
   initial: Folder | null,
   setName: (v: string) => void,
-  setDate: (v: string) => void,
+  setDate: (v: string | null) => void,
 ) {
   useMemo(() => {
     if (visible) {
       setName(initial?.name ?? '');
-      setDate(initial?.scheduled_for ?? '');
+      setDate(initial?.scheduled_for ?? null);
     }
   }, [visible, initial, setName, setDate]);
 }

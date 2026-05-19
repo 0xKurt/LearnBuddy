@@ -3,6 +3,7 @@
 Postgres on Supabase, region `eu-central-1`. All tables have Row-Level Security enabled. UUIDs throughout. Timestamps `timestamptz` in UTC.
 
 Conventions:
+
 - Every table has `id uuid primary key default gen_random_uuid()`, `created_at timestamptz not null default now()`, and `updated_at timestamptz not null default now()`.
 - An `updated_at` trigger maintains `updated_at` on row updates.
 - Soft-deleted entities use a nullable `archived_at`.
@@ -40,7 +41,7 @@ create table learners (
   id uuid primary key default gen_random_uuid(),
   account_id uuid not null references accounts(id) on delete cascade,
   display_name text not null,
-  birth_year smallint check (birth_year between 2005 and 2025),
+  birth_date date check (birth_date between date '1920-01-01' and date '2035-12-31'),  -- migration 0018 / ADR 0001 (was birth_year smallint)
   grade_level smallint not null check (grade_level between 1 and 13),
   ui_locale text not null default 'de',
   preferred_answer_mode text not null default 'voice'
@@ -616,54 +617,80 @@ Tables omitted from the mirror: `credit_buckets`, `credit_events`, `subscription
 ```ts
 import { z } from 'zod';
 
-export const Locale = z.enum(['de','en','fr','es','it']);
+export const Locale = z.enum(['de', 'en', 'fr', 'es', 'it']);
 export type Locale = z.infer<typeof Locale>;
 
 export const SubjectKind = z.enum([
-  'math','physics','chemistry','biology','geography',
-  'history','language_native','language_foreign',
-  'religion_ethics','art_music','general','other',
+  'math',
+  'physics',
+  'chemistry',
+  'biology',
+  'geography',
+  'history',
+  'language_native',
+  'language_foreign',
+  'religion_ethics',
+  'art_music',
+  'general',
+  'other',
 ]);
 export type SubjectKind = z.infer<typeof SubjectKind>;
 
 export const AnswerKind = z.enum([
-  'short','long','numeric','multiple_choice',
-  'formula','diagram_label','fill_blank',
+  'short',
+  'long',
+  'numeric',
+  'multiple_choice',
+  'formula',
+  'diagram_label',
+  'fill_blank',
 ]);
 export type AnswerKind = z.infer<typeof AnswerKind>;
 
-export const StimulusKind = z.enum([
-  'none','study_asset','function_plot','svg','coord_grid',
-]);
+export const StimulusKind = z.enum(['none', 'study_asset', 'function_plot', 'svg', 'coord_grid']);
 
 export const FunctionPlot = z.object({
-  series: z.array(z.union([
-    z.object({
-      kind: z.literal('line'),
-      expression: z.string(),
-      color: z.string().optional(),
-      label: z.string().optional(),
-    }),
-    z.object({
-      kind: z.literal('points'),
-      points: z.array(z.tuple([z.number(), z.number()])),
-      color: z.string().optional(),
-      label: z.string().optional(),
-    }),
-  ])),
-  x: z.object({ min: z.number(), max: z.number(), tick_step: z.number().optional(), label: z.string().optional() }),
-  y: z.object({ min: z.number(), max: z.number(), tick_step: z.number().optional(), label: z.string().optional() }),
+  series: z.array(
+    z.union([
+      z.object({
+        kind: z.literal('line'),
+        expression: z.string(),
+        color: z.string().optional(),
+        label: z.string().optional(),
+      }),
+      z.object({
+        kind: z.literal('points'),
+        points: z.array(z.tuple([z.number(), z.number()])),
+        color: z.string().optional(),
+        label: z.string().optional(),
+      }),
+    ]),
+  ),
+  x: z.object({
+    min: z.number(),
+    max: z.number(),
+    tick_step: z.number().optional(),
+    label: z.string().optional(),
+  }),
+  y: z.object({
+    min: z.number(),
+    max: z.number(),
+    tick_step: z.number().optional(),
+    label: z.string().optional(),
+  }),
   grid: z.boolean().optional(),
-  highlights: z.array(z.object({ x: z.number(), y: z.number(), label: z.string().optional() })).optional(),
+  highlights: z
+    .array(z.object({ x: z.number(), y: z.number(), label: z.string().optional() }))
+    .optional(),
 });
 
 export const SvgStimulus = z.object({
   viewBox: z.string(),
-  content: z.string(),         // sanitized before persist; see doc 07
+  content: z.string(), // sanitized before persist; see doc 07
 });
 
 export const StimulusData = z.union([
-  z.object({}).strict(),                       // none
+  z.object({}).strict(), // none
   z.object({ study_asset_id: z.string().uuid() }),
   FunctionPlot,
   SvgStimulus,
@@ -682,10 +709,12 @@ export const GeneratedItem = z.object({
   latexAcceptable: z.array(z.string()).default([]).optional(),
   fillBlankTemplate: z.string().optional(),
   fillBlankAnswers: z.array(z.string()).optional(),
-  diagramRef: z.object({
-    diagramIndex: z.number().int().nonnegative(),
-    labelIndex: z.number().int().min(1),
-  }).optional(),
+  diagramRef: z
+    .object({
+      diagramIndex: z.number().int().nonnegative(),
+      labelIndex: z.number().int().min(1),
+    })
+    .optional(),
   stimulusKind: StimulusKind.default('none'),
   stimulusData: StimulusData.default({}),
   difficulty: z.number().int().min(1).max(5),
@@ -697,7 +726,7 @@ export type GeneratedItem = z.infer<typeof GeneratedItem>;
 
 export const ParamSpec = z.object({
   name: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),
-  type: z.enum(['int','real']),
+  type: z.enum(['int', 'real']),
   min: z.number(),
   max: z.number(),
   step: z.number().optional(),
@@ -710,18 +739,20 @@ export const ProblemTemplate = z.object({
   constraints: z.array(z.string()).default([]),
   textSubstitutions: z.array(z.object({ name: z.string(), rule: z.string() })).default([]),
   solutionExpression: z.string(),
-  answerKind: z.enum(['numeric','formula','short']),
+  answerKind: z.enum(['numeric', 'formula', 'short']),
   units: z.string().optional(),
-  stimulusTemplate: z.object({
-    kind: z.enum(['function_plot','svg']),
-    dataTemplate: z.unknown(),     // arbitrary JSON with {param} placeholders
-  }).optional(),
+  stimulusTemplate: z
+    .object({
+      kind: z.enum(['function_plot', 'svg']),
+      dataTemplate: z.unknown(), // arbitrary JSON with {param} placeholders
+    })
+    .optional(),
   topic: z.string(),
   difficulty: z.number().int().min(1).max(5),
 });
 export type ProblemTemplate = z.infer<typeof ProblemTemplate>;
 
-export const Verdict = z.enum(['correct','partially_correct','incorrect','skipped']);
+export const Verdict = z.enum(['correct', 'partially_correct', 'incorrect', 'skipped']);
 export type Verdict = z.infer<typeof Verdict>;
 ```
 

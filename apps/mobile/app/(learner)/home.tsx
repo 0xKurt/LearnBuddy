@@ -28,6 +28,7 @@ import {
   toast,
 } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
+import { ageInYears } from '../../lib/date.js';
 import {
   createSubject,
   getScheduleSummary,
@@ -111,8 +112,8 @@ function isLongAbsence(lastSessionAt: string | null, now = Date.now()): boolean 
   return now - last > 21 * 86_400_000;
 }
 
-function isMinor(birthYear: number, now = new Date()): boolean {
-  return now.getFullYear() - birthYear < 16;
+function isMinor(birthDate: string, now = new Date()): boolean {
+  return ageInYears(birthDate, now) < 16;
 }
 
 export default function HomeScreen() {
@@ -120,9 +121,9 @@ export default function HomeScreen() {
   const { t: tCoach } = useTranslation('coach');
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id;
-  const learnerBirthYear = accountQuery.data?.learner?.birth_year;
+  const learnerBirthDate = accountQuery.data?.learner?.birth_date;
   const learnerName = accountQuery.data?.learner?.display_name ?? '';
-  const minor = learnerBirthYear != null && isMinor(learnerBirthYear);
+  const minor = learnerBirthDate != null && isMinor(learnerBirthDate);
 
   const subjectsQuery = useQuery({
     queryKey: ['subjects', learnerId],

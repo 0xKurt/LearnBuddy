@@ -32,7 +32,7 @@
     "title_edit": "Editar carpeta",
     "name_label": "Nombre",
     "name_placeholder": "p. ej. Examen 14/06",
-    "date_label": "Fecha (opcional, AAAA-MM-DD)",
+    "date_label": "Fecha (opcional)",
     "archive": "Archivar",
     "cancel": "Cancelar",
     "save": "Guardar",

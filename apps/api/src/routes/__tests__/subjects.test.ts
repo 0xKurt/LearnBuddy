@@ -7,7 +7,7 @@ import { createTestDeps, getFake } from '../../test/fake-supabase.js';
 
 const LEARNER_ADULT = {
   display_name: 'Anna',
-  birth_year: 1985,
+  birth_date: '1985-06-15',
   grade_level: 13,
   ui_locale: 'de',
   avatar_id: 1,

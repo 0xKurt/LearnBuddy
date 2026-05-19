@@ -11,7 +11,7 @@ export const learners = sqliteTable('learners', {
   id: text('id').primaryKey(),
   account_id: text('account_id').notNull(),
   display_name: text('display_name').notNull(),
-  birth_year: integer('birth_year'),
+  birth_date: text('birth_date'),
   grade_level: integer('grade_level').notNull(),
   ui_locale: text('ui_locale').notNull(),
   preferred_answer_mode: text('preferred_answer_mode').notNull(),

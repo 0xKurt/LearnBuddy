@@ -62,12 +62,10 @@
   },
   "add_profile": {
     "title": "Crea profilo",
-    "body": "Ci servono solo il nome, l'anno di nascita e la classe. Si può modificare tutto in seguito.",
+    "body": "Ci serve solo il nome. Tutto il resto si può modificare in seguito.",
     "field_first_name": "Nome",
-    "field_birth_year": "Anno di nascita",
     "field_grade": "Classe",
     "placeholder_first_name": "es. Lena",
-    "placeholder_birth_year": "es. 2012",
     "minor_hint": "Nella schermata successiva chiediamo brevemente il consenso per un profilo under 16.",
     "cta": "Continua",
     "busy": "Un attimo …",

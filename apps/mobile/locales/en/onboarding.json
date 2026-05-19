@@ -62,12 +62,10 @@
   },
   "add_profile": {
     "title": "Create profile",
-    "body": "We just need a first name, birth year, and year group. You can change all of it later.",
+    "body": "We just need a first name. You can change everything else later.",
     "field_first_name": "First name",
-    "field_birth_year": "Birth year",
     "field_grade": "Year group",
     "placeholder_first_name": "e.g. Lena",
-    "placeholder_birth_year": "e.g. 2012",
     "minor_hint": "On the next page we'll briefly ask for consent for a profile under 16.",
     "cta": "Continue",
     "busy": "One moment …",

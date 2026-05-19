@@ -131,7 +131,7 @@ describe('GET /account', () => {
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({
         display_name: 'Anna',
-        birth_year: 1985,
+        birth_date: '1985-06-15',
         grade_level: 13,
         ui_locale: 'de',
         avatar_id: 1,
@@ -160,7 +160,7 @@ describe('GET /account', () => {
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({
         display_name: 'Anna',
-        birth_year: 1985,
+        birth_date: '1985-06-15',
         grade_level: 13,
         ui_locale: 'de',
         avatar_id: 1,

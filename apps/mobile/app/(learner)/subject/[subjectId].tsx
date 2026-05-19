@@ -34,6 +34,7 @@ import {
   type MaterialListItem,
 } from '../../../lib/api/materials.js';
 import { archiveSubject, listSubjects } from '../../../lib/api/subjects.js';
+import { isoToDisplay } from '../../../lib/date.js';
 import { LB } from '../../../lib/theme/colors.js';
 import type { Folder } from '@learnbuddy/shared-types';
 
@@ -466,7 +467,7 @@ function FolderCard({
               <Text style={{ fontSize: 14, fontWeight: '600', color: LB.ink }}>{folder.name}</Text>
               {folder.scheduled_for && (
                 <Text style={{ fontSize: 11, color: LB.ink2, marginTop: 1 }}>
-                  {`${folder.scheduled_for}`}
+                  {isoToDisplay(folder.scheduled_for) ?? folder.scheduled_for}
                 </Text>
               )}
             </View>

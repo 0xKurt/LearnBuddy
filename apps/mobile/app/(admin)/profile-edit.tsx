@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn, CircleBtn } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
 import { updateLearner } from '../../lib/api/learners.js';
+import { isoToDisplay } from '../../lib/date.js';
 import { useNavigateUp } from '../../lib/navigation/hierarchy.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -23,12 +24,12 @@ export default function ProfileEditScreen() {
   const learner = accountQuery.data?.learner;
 
   const [name, setName] = useState('');
-  const [birthYear, setBirthYear] = useState('');
+  const [birthDate, setBirthDate] = useState('');
 
   useEffect(() => {
     if (learner) {
       setName(learner.display_name ?? '');
-      setBirthYear(String(learner.birth_year ?? ''));
+      setBirthDate(isoToDisplay(learner.birth_date) ?? '');
     }
   }, [learner]);
 
@@ -59,7 +60,7 @@ export default function ProfileEditScreen() {
       <ScrollView contentContainerStyle={{ padding: 22, gap: 16 }}>
         <Field label={t('profile_edit.field_name')} value={name} onChange={setName} />
         <Text style={{ fontSize: 12, color: LB.ink3 }}>
-          {t('profile_edit.birth_year_hint', { year: birthYear || '—' })}
+          {t('profile_edit.birth_date_hint', { date: birthDate || '—' })}
         </Text>
         <View style={{ height: 8 }} />
         <Btn full onPress={() => mut.mutate()} disabled={mut.isPending}>

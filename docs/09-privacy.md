@@ -24,49 +24,50 @@ No processing relies on Art. 6(1)(f) for content-bearing data (materials, items,
 Germany sets the age of digital consent at **16**. The app:
 
 - Treats every learner profile as belonging to a child under 16 by default.
+- Derives minor status from the learner's full date of birth (`learners.birth_date`), so the 16-year boundary is exact on the birthday rather than off by up to a year (ADR 0001).
 - Requires explicit parental consent at signup (the consent screen described in doc 05 §onboarding).
 - Records `accounts.dsgvo_consent_version` and `accounts.dsgvo_consent_at`.
 - Re-requires consent if the consent text changes (the mobile app compares the stored version to the current constant on every cold launch).
 
 ## 4. Data inventory
 
-| Category | Where | Retention | Notes |
-|---|---|---|---|
-| Account holder email | Supabase Auth (EU) | Until account deletion or 7 days after deletion request | Required for login and DSGVO contact |
-| Account holder password hash | Supabase Auth (EU) | Until account deletion | Argon2id via Supabase Auth |
-| Account metadata (locale, country, consent version) | Postgres `accounts` | Until account deletion | |
-| Learner profile (display name, grade, avatar, settings) | Postgres `learners` | Until learner archived or account deletion | No real name required; display name can be a nickname |
-| Subjects, folders | Postgres | Until the account holder deletes or account deletion | |
-| Material photos (raw) | Supabase Storage `materials-raw` | **7 days** after extraction | Deleted by `pg_cron` + Edge Function `photo-wipe` |
-| Material extracted markdown | Postgres `materials.extracted_markdown` | Until the account holder deletes or account deletion | The persistent record of what was photographed |
-| Study assets (derivative images) | Supabase Storage `study-assets` | Until the account holder deletes the material or account deletion | Numbered diagrams, cropped graphs |
-| Items, problem templates, practice runs | Postgres | Until the account holder deletes or account deletion | |
-| Attempts (incl. learner's text answers) | Postgres `attempts` | Until the account holder deletes or account deletion | Voice answers: ONLY the transcript is stored; audio never leaves the device |
-| FSRS state | Postgres `item_states` | Until item deleted | |
-| Subscription record | Postgres `subscriptions` | Until account deletion | RevenueCat app-user id stored; no card data |
-| Credit ledger | Postgres `credit_buckets`, `credit_events` | 24 months | Required for billing dispute resolution |
-| DSGVO requests | Postgres `dsgvo_requests` | 24 months | Required for accountability under Art. 30 |
-| Sentry events | Sentry EU | 90 days | PII fields scrubbed (see §6) |
-| PostHog events | PostHog EU | 12 months | No PII; per-account pseudonym only |
-| Vertex AI request logs | GCP `europe-west3` | 30 days then auto-purged; paid-tier means content is NOT used for training | Configured via Vertex's data-residency commitments |
-| Local SQLite on device | Device storage | Until app uninstalled or learner switched | Encrypted on iOS by default; Android relies on full-disk encryption |
-| Local audio recordings | None | Never stored | Native speech recognition consumes audio in-process; only the transcript is read by the app |
+| Category                                                | Where                                      | Retention                                                                  | Notes                                                                                       |
+| ------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Account holder email                                    | Supabase Auth (EU)                         | Until account deletion or 7 days after deletion request                    | Required for login and DSGVO contact                                                        |
+| Account holder password hash                            | Supabase Auth (EU)                         | Until account deletion                                                     | Argon2id via Supabase Auth                                                                  |
+| Account metadata (locale, country, consent version)     | Postgres `accounts`                        | Until account deletion                                                     |                                                                                             |
+| Learner profile (display name, grade, avatar, settings) | Postgres `learners`                        | Until learner archived or account deletion                                 | No real name required; display name can be a nickname                                       |
+| Subjects, folders                                       | Postgres                                   | Until the account holder deletes or account deletion                       |                                                                                             |
+| Material photos (raw)                                   | Supabase Storage `materials-raw`           | **7 days** after extraction                                                | Deleted by `pg_cron` + Edge Function `photo-wipe`                                           |
+| Material extracted markdown                             | Postgres `materials.extracted_markdown`    | Until the account holder deletes or account deletion                       | The persistent record of what was photographed                                              |
+| Study assets (derivative images)                        | Supabase Storage `study-assets`            | Until the account holder deletes the material or account deletion          | Numbered diagrams, cropped graphs                                                           |
+| Items, problem templates, practice runs                 | Postgres                                   | Until the account holder deletes or account deletion                       |                                                                                             |
+| Attempts (incl. learner's text answers)                 | Postgres `attempts`                        | Until the account holder deletes or account deletion                       | Voice answers: ONLY the transcript is stored; audio never leaves the device                 |
+| FSRS state                                              | Postgres `item_states`                     | Until item deleted                                                         |                                                                                             |
+| Subscription record                                     | Postgres `subscriptions`                   | Until account deletion                                                     | RevenueCat app-user id stored; no card data                                                 |
+| Credit ledger                                           | Postgres `credit_buckets`, `credit_events` | 24 months                                                                  | Required for billing dispute resolution                                                     |
+| DSGVO requests                                          | Postgres `dsgvo_requests`                  | 24 months                                                                  | Required for accountability under Art. 30                                                   |
+| Sentry events                                           | Sentry EU                                  | 90 days                                                                    | PII fields scrubbed (see §6)                                                                |
+| PostHog events                                          | PostHog EU                                 | 12 months                                                                  | No PII; per-account pseudonym only                                                          |
+| Vertex AI request logs                                  | GCP `europe-west3`                         | 30 days then auto-purged; paid-tier means content is NOT used for training | Configured via Vertex's data-residency commitments                                          |
+| Local SQLite on device                                  | Device storage                             | Until app uninstalled or learner switched                                  | Encrypted on iOS by default; Android relies on full-disk encryption                         |
+| Local audio recordings                                  | None                                       | Never stored                                                               | Native speech recognition consumes audio in-process; only the transcript is read by the app |
 
 ## 5. Subprocessors
 
 Each subprocessor handles only the listed data classes, in the listed regions, under a Data Processing Agreement signed before launch.
 
-| Subprocessor | Role | Region | Data classes |
-|---|---|---|---|
-| Supabase | Database, auth, storage, edge functions | `eu-central-1` (Frankfurt) | All persistent app data |
-| Vercel | API hosting | EU regions (Frankfurt primary) | API requests and responses in transit; access logs |
-| Google Cloud / Vertex AI | LLM inference | `europe-west3` (Frankfurt) | Material photos and text passed to the LLM; LLM responses |
-| RevenueCat | Subscription management | EU region (Ireland) | Account holder email (hashed user id), purchase events |
-| Apple | App Store + StoreKit | EU | Subscription purchase data; the app does not see card data |
-| Google | Play + Play Billing | EU | Same as Apple |
-| PostHog | Aggregate analytics | EU Cloud (Frankfurt) | Anonymized event counts, per-account pseudonym |
-| Sentry | Error monitoring | EU region | Scrubbed error events |
-| Resend or Postmark | Transactional email (verification, DSGVO links) | EU region | Account holder email |
+| Subprocessor             | Role                                            | Region                         | Data classes                                               |
+| ------------------------ | ----------------------------------------------- | ------------------------------ | ---------------------------------------------------------- |
+| Supabase                 | Database, auth, storage, edge functions         | `eu-central-1` (Frankfurt)     | All persistent app data                                    |
+| Vercel                   | API hosting                                     | EU regions (Frankfurt primary) | API requests and responses in transit; access logs         |
+| Google Cloud / Vertex AI | LLM inference                                   | `europe-west3` (Frankfurt)     | Material photos and text passed to the LLM; LLM responses  |
+| RevenueCat               | Subscription management                         | EU region (Ireland)            | Account holder email (hashed user id), purchase events     |
+| Apple                    | App Store + StoreKit                            | EU                             | Subscription purchase data; the app does not see card data |
+| Google                   | Play + Play Billing                             | EU                             | Same as Apple                                              |
+| PostHog                  | Aggregate analytics                             | EU Cloud (Frankfurt)           | Anonymized event counts, per-account pseudonym             |
+| Sentry                   | Error monitoring                                | EU region                      | Scrubbed error events                                      |
+| Resend or Postmark       | Transactional email (verification, DSGVO links) | EU region                      | Account holder email                                       |
 
 Vertex AI is enabled with the paid tier (`europe-west3`); per Google's terms, customer prompt and response data on the paid tier is not used to train Google's foundation models.
 

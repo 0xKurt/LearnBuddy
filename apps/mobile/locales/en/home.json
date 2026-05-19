@@ -32,7 +32,7 @@
     "title_edit": "Edit folder",
     "name_label": "Name",
     "name_placeholder": "e.g. Class test 14 Jun",
-    "date_label": "Date (optional, YYYY-MM-DD)",
+    "date_label": "Date (optional)",
     "archive": "Archive",
     "cancel": "Cancel",
     "save": "Save",

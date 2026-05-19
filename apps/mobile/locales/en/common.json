@@ -1,5 +1,12 @@
 {
   "app": { "name": "LearnBuddy" },
+  "datepicker": {
+    "title": "Pick a date",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "clear": "No date"
+  },
   "loading": "Loading…",
   "load_error": "Connection failed. Please try again.",
   "support": {

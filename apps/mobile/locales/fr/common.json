@@ -1,5 +1,12 @@
 {
   "app": { "name": "LearnBuddy" },
+  "datepicker": {
+    "title": "Choisir une date",
+    "day": "Jour",
+    "month": "Mois",
+    "year": "Année",
+    "clear": "Aucune date"
+  },
   "loading": "Chargement…",
   "load_error": "Échec de connexion. Réessaie.",
   "support": {

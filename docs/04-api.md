@@ -20,12 +20,15 @@ Streaming endpoints use Server-Sent Events (`Content-Type: text/event-stream`).
 ### `POST /auth/account/signup` — public
 
 Body:
+
 ```json
 { "email": "string", "password": "string", "locale": "de|en|fr|es|it", "country_code": "string" }
 ```
+
 Creates the Supabase auth user, the `accounts` row, and the `subscriptions` row with `tier='trial'`. Sends email verification through Supabase Auth.
 
 Response 201:
+
 ```json
 { "account_id": "uuid", "user": { "id": "uuid", "email": "string" } }
 ```
@@ -33,9 +36,11 @@ Response 201:
 ### `POST /auth/account/consent`
 
 Body:
+
 ```json
 { "accepted": true, "version": "2026-01" }
 ```
+
 Records the DSGVO consent for the account. Must succeed before any learner is created.
 
 Response 200: `{}`
@@ -49,20 +54,27 @@ Handled client-side via Supabase Auth SDK. No custom API endpoints.
 ### `GET /account`
 
 Response:
+
 ```json
 {
   "id": "uuid",
   "display_name": "string|null",
   "locale": "de",
   "country_code": "DE",
-  "subscription": { "tier": "standard", "status": "active", "expires_at": "iso8601|null", "trial_ends_at": "iso8601|null" },
+  "subscription": {
+    "tier": "standard",
+    "status": "active",
+    "expires_at": "iso8601|null",
+    "trial_ends_at": "iso8601|null"
+  },
   "consent": { "version": "2026-01", "accepted_at": "iso8601" },
   "learner": null
 }
 ```
 
 `learner` is either the account's single Learner object, or `null` if onboarding hasn't reached the profile-creation step yet, or if the only profile is currently archived.
-```
+
+````
 
 ### `POST /learners`
 
@@ -72,16 +84,16 @@ Body:
 ```json
 {
   "display_name": "string",
-  "birth_year": 2014,
+  "birth_date": "2014-03-09",
   "grade_level": 7,
   "ui_locale": "de",
   "avatar_id": 3,
   "preferred_answer_mode": "voice",
   "minor_consent_version": "v1.2024-11"
 }
-```
+````
 
-`minor_consent_version` is required when the calculated age (`current_year - birth_year`) is under 16; the server stores the consent record alongside the profile. For adult profiles, omit or pass `null`.
+`birth_date` is ISO `YYYY-MM-DD` (shared-types `DateOnly`). `minor_consent_version` is required when the age computed from `birth_date` is under 16 — an exact check on the birthday, not a year subtraction (see ADR 0001); the server stores the consent record alongside the profile. For adult profiles, omit or pass `null`. `birth_date` is immutable post-create (not in `PATCH /learners`).
 
 Response 201: full Learner object.
 
@@ -90,6 +102,7 @@ Response 409 `learner_already_exists`: an active learner profile already exists 
 ### `PATCH /learners/:id`
 
 Body: partial Learner fields. Notifications settings included here:
+
 ```json
 {
   "display_name": "string?",
@@ -112,6 +125,7 @@ Soft-deletes the learner (`archived_at = now()`). Cascades to subjects → folde
 ### `GET /learners/:learnerId/subjects`
 
 Response:
+
 ```json
 [
   {
@@ -134,8 +148,15 @@ The `upcoming_test_in_days` field is the number of days until the nearest folder
 ### `POST /learners/:learnerId/subjects`
 
 Body:
+
 ```json
-{ "name": "Biologie", "subject_kind": "biology", "color_hex": "#3FA876", "icon_id": "leaf", "sort_order": 1 }
+{
+  "name": "Biologie",
+  "subject_kind": "biology",
+  "color_hex": "#3FA876",
+  "icon_id": "leaf",
+  "sort_order": 1
+}
 ```
 
 ### `PATCH /subjects/:id`, `DELETE /subjects/:id`
@@ -155,6 +176,7 @@ Body: `{ "name": "Klassenarbeit 14.06.", "scheduled_for": "2026-06-14" }`. `sche
 Reserves storage and returns signed PUT URLs for the photos.
 
 Body:
+
 ```json
 {
   "subject_id": "uuid",
@@ -165,12 +187,23 @@ Body:
 ```
 
 Response:
+
 ```json
 {
   "material_id": "uuid",
   "uploads": [
-    { "position": 1, "signed_url": "https://...", "storage_path": "materials-raw/{userId}/{materialId}/1.jpg", "expires_at": "iso8601" },
-    { "position": 2, "signed_url": "https://...", "storage_path": "materials-raw/{userId}/{materialId}/2.jpg", "expires_at": "iso8601" }
+    {
+      "position": 1,
+      "signed_url": "https://...",
+      "storage_path": "materials-raw/{userId}/{materialId}/1.jpg",
+      "expires_at": "iso8601"
+    },
+    {
+      "position": 2,
+      "signed_url": "https://...",
+      "storage_path": "materials-raw/{userId}/{materialId}/2.jpg",
+      "expires_at": "iso8601"
+    }
   ]
 }
 ```
@@ -182,6 +215,7 @@ The signed URLs are PUT-only and expire in 10 minutes.
 Confirms photos are uploaded and triggers extraction.
 
 Body:
+
 ```json
 {
   "material_id": "uuid",
@@ -199,6 +233,7 @@ Body:
 ```
 
 Behavior:
+
 1. Atomic credit debit by estimate. On insufficient → 402 `insufficient_credits`.
 2. Insert material with `extraction_status='pending'`.
 3. Call `llm.visionExtractAndGenerate` synchronously, streaming progress events via SSE.
@@ -209,6 +244,7 @@ Behavior:
 8. Schedule photo deletion in `outbox` for T+7 days.
 
 Response (SSE stream):
+
 ```
 event: phase
 data: {"phase":"reading_images"}
@@ -231,10 +267,12 @@ data: {
 ```
 
 If extraction fails after retries:
+
 ```
 event: error
 data: {"code":"extraction_failed","message":"..."}
 ```
+
 The material is marked `failed` and the credit estimate is refunded.
 
 ### `GET /materials/:id`
@@ -252,15 +290,18 @@ Problem templates for the material.
 ### `POST /materials/:id/regenerate-items`
 
 Body:
+
 ```json
 {
   "target_item_count": 10,
   "style": "simpler|harder|more-variety|null"
 }
 ```
+
 Reuses `extracted_markdown` (never re-OCRs). Debits a smaller credit amount.
 
 Response (SSE, similar phases without `reading_images`):
+
 ```
 event: done
 data: { "added_items": [ /* GeneratedItem */ ], "credits_used": 8 }
@@ -287,6 +328,7 @@ Soft-deletes a problem template.
 ### `POST /sessions`
 
 Body:
+
 ```json
 {
   "subject_id": "uuid|null",
@@ -295,13 +337,17 @@ Body:
   "max_items": 20
 }
 ```
+
 Server picks due items using FSRS state. If `test_mode=true`, test-mode rules apply (see doc 05).
 
 Response:
+
 ```json
 {
   "session_id": "uuid",
-  "items": [ /* full item objects including stimulus */ ]
+  "items": [
+    /* full item objects including stimulus */
+  ]
 }
 ```
 
@@ -310,6 +356,7 @@ Response:
 Single-attempt endpoint with LLM evaluation. SSE stream.
 
 Body:
+
 ```json
 {
   "session_id": "uuid",
@@ -325,10 +372,12 @@ Body:
 ```
 
 Behavior:
+
 - If `client_local_verdict='correct'`, the server skips the LLM and records the attempt. Returns immediately with `verdict='correct'` and `credits_used=0`.
 - Otherwise calls `llm.evaluateAnswer` and streams.
 
 Response (SSE):
+
 ```
 event: verdict
 data: {"verdict":"partially_correct"}
@@ -348,11 +397,12 @@ data: {"attempt_id":"uuid","credits_used":1,"fsrs_rating":2}
 Replays locally-evaluated attempts from an offline session.
 
 Body:
+
 ```json
 {
   "attempts": [
     {
-      "client_id": "string",        // dedup key
+      "client_id": "string", // dedup key
       "item_id": "uuid",
       "session_id": "uuid|null",
       "mode": "voice",
@@ -373,8 +423,8 @@ Server re-runs FSRS over each attempt in `created_at` order to produce the canon
 ```json
 {
   "applied": ["client_id1", "client_id2"],
-  "rejected": [{"client_id": "string", "reason": "string"}],
-  "updated_item_states": [{"item_id": "uuid", "due": "iso8601", "state": 2}]
+  "rejected": [{ "client_id": "string", "reason": "string" }],
+  "updated_item_states": [{ "item_id": "uuid", "due": "iso8601", "state": 2 }]
 }
 ```
 
@@ -385,6 +435,7 @@ For attempts that were left pending offline (local verdict unknown). The mobile 
 ### `POST /explain`
 
 Body:
+
 ```json
 {
   "topic": "string",
@@ -394,6 +445,7 @@ Body:
   "style": "simpler|step-by-step|analogy"
 }
 ```
+
 Response (SSE): streaming explanation tokens, then `done` with `credits_used`.
 
 ## Problem templates and practice runs
@@ -403,6 +455,7 @@ Response (SSE): streaming explanation tokens, then `done` with `credits_used`.
 Records the start of a practice run. The client owns variant generation.
 
 Body:
+
 ```json
 {
   "client_id": "string",
@@ -410,6 +463,7 @@ Body:
   "intended_count": 10
 }
 ```
+
 Response: `{ "run_id": "uuid" }`
 
 ### `PATCH /templates/:id/practice-run/:run_id`
@@ -417,6 +471,7 @@ Response: `{ "run_id": "uuid" }`
 Updates the run with results when the learner finishes.
 
 Body:
+
 ```json
 {
   "ended_at": "iso8601",
@@ -434,10 +489,17 @@ Body:
 Returns the data the mobile needs to render gentle, non-pressuring UI: upcoming folder dates and the current streak. **No counts of pending items are exposed** — the learner never sees "X questions due." The repetition engine picks items quietly at session start.
 
 Response:
+
 ```json
 {
   "upcoming_tests": [
-    {"folder_id": "uuid", "subject_id": "uuid", "name": "Klassenarbeit Bio", "scheduled_for": "2026-06-14", "days_until": 3}
+    {
+      "folder_id": "uuid",
+      "subject_id": "uuid",
+      "name": "Klassenarbeit Bio",
+      "scheduled_for": "2026-06-14",
+      "days_until": 3
+    }
   ],
   "streak_current": 5,
   "streak_longest": 12,
@@ -460,6 +522,7 @@ Server renders the LaTeX to SVG using KaTeX in Node and returns `image/svg+xml`.
 ### `GET /account/credits/summary`
 
 Response:
+
 ```json
 {
   "tier": "standard",
@@ -484,6 +547,7 @@ Body: `{}`. Response: `{ "request_id": "uuid", "status": "pending" }`. Email wit
 Polls export/delete request status.
 
 Response:
+
 ```json
 {
   "id": "uuid",
@@ -518,33 +582,33 @@ Header `X-Admin-Email` must match one of the addresses in `ADMIN_ALLOWLIST_EMAIL
 
 ## Error codes
 
-| Code | HTTP | Meaning |
-|---|---|---|
-| `unauthenticated` | 401 | Missing or invalid JWT |
-| `forbidden` | 403 | RLS violation or learner not in account |
-| `not_found` | 404 | Resource missing or archived |
-| `validation_failed` | 422 | Zod validation failed; `details` contains issues |
-| `insufficient_credits` | 402 | Bucket empty, even after rollover |
-| `subscription_required` | 402 | Trial expired and no active subscription |
-| `extraction_failed` | 502 | LLM vision call failed after retries |
-| `evaluation_failed` | 502 | LLM evaluation call failed after retries |
-| `rate_limited` | 429 | See rate limits below |
-| `not_educational` | 422 | Vision identified non-educational content; client should prompt retake |
-| `internal` | 500 | Unexpected; surfaced to Sentry |
+| Code                    | HTTP | Meaning                                                                |
+| ----------------------- | ---- | ---------------------------------------------------------------------- |
+| `unauthenticated`       | 401  | Missing or invalid JWT                                                 |
+| `forbidden`             | 403  | RLS violation or learner not in account                                |
+| `not_found`             | 404  | Resource missing or archived                                           |
+| `validation_failed`     | 422  | Zod validation failed; `details` contains issues                       |
+| `insufficient_credits`  | 402  | Bucket empty, even after rollover                                      |
+| `subscription_required` | 402  | Trial expired and no active subscription                               |
+| `extraction_failed`     | 502  | LLM vision call failed after retries                                   |
+| `evaluation_failed`     | 502  | LLM evaluation call failed after retries                               |
+| `rate_limited`          | 429  | See rate limits below                                                  |
+| `not_educational`       | 422  | Vision identified non-educational content; client should prompt retake |
+| `internal`              | 500  | Unexpected; surfaced to Sentry                                         |
 
 ## Rate limits
 
 Soft caps to catch runaway clients. The real cost cap is the credit bucket.
 
-| Endpoint | Per learner | Per account |
-|---|---|---|
-| `POST /materials` | 20/day | 60/day |
-| `POST /materials/:id/regenerate-items` | 10/day | 30/day |
-| `POST /attempts` | 600/hour | — |
-| `POST /attempts/batch` | 60/hour | — |
-| `POST /explain` | 60/day | 200/day |
-| `POST /sessions` | 60/day | — |
-| `POST /templates/:id/practice-run` | 50/day | — |
+| Endpoint                               | Per learner | Per account |
+| -------------------------------------- | ----------- | ----------- |
+| `POST /materials`                      | 20/day      | 60/day      |
+| `POST /materials/:id/regenerate-items` | 10/day      | 30/day      |
+| `POST /attempts`                       | 600/hour    | —           |
+| `POST /attempts/batch`                 | 60/hour     | —           |
+| `POST /explain`                        | 60/day      | 200/day     |
+| `POST /sessions`                       | 60/day      | —           |
+| `POST /templates/:id/practice-run`     | 50/day      | —           |
 
 Limits are tracked in an in-memory + Postgres-backed sliding-window counter. Exceeding returns 429 with `Retry-After` header.
 

@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn, EmptyState, Icon } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
+import { isoToDisplay } from '../../lib/date.js';
 import { devNukeAccount } from '../../lib/dev/reset.js';
 import { useAppStore } from '../../lib/store/index.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -122,8 +123,8 @@ export default function AdminOverviewScreen() {
               {accountQuery.data.learner.display_name}
             </Text>
             <Text style={{ fontSize: 12, color: LB.ink3 }}>
-              {t('overview.birth_year_grade', {
-                year: accountQuery.data.learner.birth_year,
+              {t('overview.birth_date_grade', {
+                date: isoToDisplay(accountQuery.data.learner.birth_date) ?? '—',
                 grade: accountQuery.data.learner.grade_level ?? t('overview.grade_unknown'),
               })}
             </Text>

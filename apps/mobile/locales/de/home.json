@@ -32,7 +32,7 @@
     "title_edit": "Ordner bearbeiten",
     "name_label": "Name",
     "name_placeholder": "z.B. Klassenarbeit 14.06.",
-    "date_label": "Termin (optional, JJJJ-MM-TT)",
+    "date_label": "Termin (optional)",
     "archive": "Archivieren",
     "cancel": "Abbrechen",
     "save": "Speichern",

@@ -4,11 +4,12 @@
 //   Creates the single learner profile attached to the authenticated account.
 //   A unique index `learners_account_idx` (active rows only) enforces the
 //   one-profile-per-account rule — duplicate creation returns 409.
-//   For minors (birth_year < now − 16), `minor_consent_version` is required.
+//   For minors (age < 16, computed from `birth_date`), `minor_consent_version`
+//   is required.
 //
 // PATCH /learners/:id
-//   Partial update. Editing `birth_year` may flip a profile between adult
-//   and minor; `[implied — needs design]` for the tone/copy transition.
+//   Partial update. `birth_date` is immutable post-create (not in
+//   LearnerUpdate); changing it requires a data request — see docs/09 §3.
 //
 // DELETE /learners/:id
 //   Soft-archive (sets `archived_at = now()`). 30-day grace before hard delete
@@ -25,6 +26,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { LearnerCreate, LearnerUpdate, SubjectCreate } from '@learnbuddy/shared-types';
 
+import { isMinor as isMinorAge } from '../lib/date.js';
 import { ApiError } from '../lib/errors.js';
 import { getDeps } from '../lib/deps.js';
 import { idempotency } from '../lib/idempotency.js';
@@ -41,9 +43,7 @@ learnerRoutes.post('/', idempotency, zValidator('json', LearnerCreate), async (c
   const { account_id } = c.get('auth');
   const input = c.req.valid('json');
 
-  const today = now();
-  const ageThisYear = today.getUTCFullYear() - input.birth_year;
-  const isMinor = ageThisYear < 16;
+  const isMinor = isMinorAge(input.birth_date, now());
   if (isMinor && !input.minor_consent_version) {
     throw new ApiError('validation_failed', 'Minor profile requires explicit consent', {
       field: 'minor_consent_version',
@@ -60,7 +60,7 @@ learnerRoutes.post('/', idempotency, zValidator('json', LearnerCreate), async (c
     .insert({
       account_id,
       display_name: input.display_name,
-      birth_year: input.birth_year,
+      birth_date: input.birth_date,
       grade_level: input.grade_level,
       ui_locale: input.ui_locale,
       preferred_answer_mode: input.preferred_answer_mode,

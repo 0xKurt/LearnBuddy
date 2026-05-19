@@ -32,7 +32,7 @@
     "title_edit": "Modifier le dossier",
     "name_label": "Nom",
     "name_placeholder": "ex. Contrôle 14/06",
-    "date_label": "Date (facultatif, AAAA-MM-JJ)",
+    "date_label": "Date (facultatif)",
     "archive": "Archiver",
     "cancel": "Annuler",
     "save": "Enregistrer",

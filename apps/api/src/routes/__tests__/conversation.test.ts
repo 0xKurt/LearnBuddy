@@ -33,7 +33,7 @@ async function setup(email = 'parent@example.com', llm = new FakeLlmGateway()) {
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
       display_name: 'Anna',
-      birth_year: 2010,
+      birth_date: '2010-01-15',
       grade_level: 7,
       ui_locale: 'de',
       avatar_id: 1,
