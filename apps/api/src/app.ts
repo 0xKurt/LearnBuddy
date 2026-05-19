@@ -34,6 +34,7 @@ import { explainRoutes } from './routes/explain.js';
 import { dsgvoRoutes } from './routes/dsgvo.js';
 import { devRoutes } from './routes/dev.js';
 import { renderRoutes } from './routes/render.js';
+import { studyAssetRoutes } from './routes/study-assets.js';
 import { webhookRoutes } from './routes/webhooks.js';
 import { adminRoutes } from './routes/admin.js';
 
@@ -104,6 +105,7 @@ export function createApp(opts: { deps?: Deps } = {}) {
   app.route('/dsgvo', dsgvoRoutes);
   if (process.env.ENABLE_DEV_ROUTES === 'true') app.route('/dev', devRoutes);
   app.route('/render', renderRoutes);
+  app.route('/study-assets', studyAssetRoutes);
   app.route('/webhooks', webhookRoutes);
   app.route('/admin', adminRoutes);
 

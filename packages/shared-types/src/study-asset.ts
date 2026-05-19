@@ -19,6 +19,26 @@ export const StudyAssetMetadata = z
   .passthrough();
 export type StudyAssetMetadata = z.infer<typeof StudyAssetMetadata>;
 
+// Lean signed view returned by GET /study-assets/:id — what the mobile
+// DiagramQuestion needs to render a numbered diagram for a diagram_label
+// item, without leaking the storage path.
+export const StudyAssetView = z.object({
+  id: Uuid,
+  width: z.number().int(),
+  height: z.number().int(),
+  label_positions: z
+    .array(
+      z.object({
+        index: z.number().int().min(1),
+        x: z.number().min(0).max(1),
+        y: z.number().min(0).max(1),
+      }),
+    )
+    .default([]),
+  signed_url: z.string(),
+});
+export type StudyAssetView = z.infer<typeof StudyAssetView>;
+
 export const StudyAsset = z.object({
   id: Uuid,
   material_id: Uuid,

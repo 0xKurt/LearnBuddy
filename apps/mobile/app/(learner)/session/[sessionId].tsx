@@ -31,6 +31,7 @@ import {
   Btn,
   Card,
   Chip,
+  DiagramQuestion,
   ExplainModal,
   FillBlank,
   FunctionPlot,
@@ -46,6 +47,7 @@ import {
 import { getAccount } from '../../../lib/api/account.js';
 import { ApiError } from '../../../lib/api/client.js';
 import { getSessionSnapshot, patchSession, streamTurn } from '../../../lib/api/conversation.js';
+import { getStudyAsset } from '../../../lib/api/studyAssets.js';
 import {
   buildResumeTranscript,
   normVerdict,
@@ -175,6 +177,15 @@ export default function SessionScreen() {
   const startedAtRef = useRef<number>(Date.now());
   const scrollRef = useRef<ScrollView>(null);
   const bootedRef = useRef(false);
+
+  // Numbered-diagram items: resolve the study asset to a signed image so
+  // the learner can actually see what marker N refers to.
+  const diagramQ = useQuery({
+    queryKey: ['study-asset', item?.study_asset_id ?? null],
+    enabled: !!item?.study_asset_id && !!learnerId,
+    staleTime: 5 * 60_000,
+    queryFn: () => getStudyAsset(learnerId, item!.study_asset_id as string),
+  });
 
   // Apply the bootstrap result once.
   useEffect(() => {
@@ -570,6 +581,28 @@ export default function SessionScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* Active diagram — kept visible above the composer so the learner
+            can see the numbered figure while typing/speaking the label. */}
+        {diagramQ.data ? (
+          <View
+            style={{
+              borderTopColor: LB.hairline,
+              borderTopWidth: 1,
+              backgroundColor: LB.bg,
+              alignItems: 'center',
+              paddingVertical: 10,
+            }}
+          >
+            <DiagramQuestion
+              storage_url={diagramQ.data.signed_url}
+              width={diagramQ.data.width}
+              height={diagramQ.data.height}
+              label_positions={diagramQ.data.label_positions}
+              active_index={item.diagram_label_index ?? null}
+            />
+          </View>
+        ) : null}
 
         {/* Composer */}
         <View
