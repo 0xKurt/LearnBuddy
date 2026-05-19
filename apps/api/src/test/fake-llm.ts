@@ -194,7 +194,27 @@ export class FakeLlmGateway implements LLMGateway {
       onToken(reply.slice(mid));
     }
 
-    return { verdict, reply, gaveHint, usage: { ...FAKE_USAGE } };
+    // Phase D2: when probeContext is set, classify the probe response
+    // deterministically. Keywords that mean "I don't know" → gave_up.
+    // Short single-word or very short replies → rephrased (heuristic).
+    // Otherwise → substantive.
+    let probeAssessment: ConverseTurnResult['probeAssessment'] = null;
+    if (input.probeContext) {
+      const raw = input.learnerMessage.trim();
+      const lower = raw.toLowerCase();
+      const isGaveUp =
+        raw.length === 0 ||
+        /^(weiß nicht|weiss nicht|keine ahnung|idk|i don'?t know|kp|kA|nö|nein|ja)$/i.test(lower);
+      if (isGaveUp) {
+        probeAssessment = 'gave_up';
+      } else if (raw.length < 20) {
+        probeAssessment = 'rephrased';
+      } else {
+        probeAssessment = 'substantive';
+      }
+    }
+
+    return { verdict, reply, gaveHint, probeAssessment, usage: { ...FAKE_USAGE } };
   }
 
   async transcribeAudio(_input: TranscribeInput): Promise<TranscribeResult> {

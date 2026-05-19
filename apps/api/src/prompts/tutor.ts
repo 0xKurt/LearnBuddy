@@ -8,7 +8,7 @@
 // the server can record a verdict for FSRS / the result screen without a
 // second model call. The gateway strips that line before anyone sees it.
 
-export const PROMPT_VERSION_TUTOR = 'tutor.3';
+export const PROMPT_VERSION_TUTOR = 'tutor.4';
 
 // The control line the model must emit last. Chosen so it can never appear
 // in natural German/English/French/Spanish/Italian prose.
@@ -44,8 +44,9 @@ Pinned topic (if set below): keep the conversation focused on that topic; gently
 Output format — IMPORTANT:
 1. First, your natural reply to the student, in the target language. Nothing else on these lines.
 2. Then, on the VERY LAST line, exactly this control line and nothing after it:
-${TUTOR_SENTINEL}{"verdict":"correct"|"partially_correct"|"incorrect"|"skipped","hint":true|false}
-"hint" is true only if your reply contained a new hint (not a reveal, not pure praise). The student never sees this line.`;
+${TUTOR_SENTINEL}{"verdict":"correct"|"partially_correct"|"incorrect"|"skipped","hint":true|false[,"probe_assessment":"substantive"|"rephrased"|"gave_up"]}
+"hint" is true only if your reply contained a new hint (not a reveal, not pure praise). The student never sees this line.
+"probe_assessment" is OMITTED unless a probe-assessment instruction below explicitly asks for it.`;
 
 export type TutorItemContext = {
   question: string;
@@ -117,6 +118,35 @@ export function buildGiveUpModeFragment(mode: GiveUpMode): string | null {
   return null;
 }
 
+/** Phase D2 — probe-response assessment. When the previous tutor turn
+ *  was a probe (confidence_probe / wrong_example_probe / self_explanation_prompt)
+ *  the current learner message IS the probe response. We attach this
+ *  fragment to the system prompt so the model classifies the response
+ *  alongside its normal reply.
+ *
+ *  L1 note: the model labels the WORK ("substantive reasoning",
+ *  "restated the answer", "gave up") — never the learner. The
+ *  classification stays in the control line and is never echoed to
+ *  the student in any form. */
+export type ProbeAssessmentMove =
+  | 'confidence_probe'
+  | 'wrong_example_probe'
+  | 'self_explanation_prompt';
+
+export function buildProbeAssessmentFragment(move: ProbeAssessmentMove | null): string | null {
+  if (!move) return null;
+  const flavor =
+    move === 'wrong_example_probe'
+      ? 'Your previous turn proposed a near-miss ("if someone had said X, would that be right?"). Classify the learner\'s response: did they explain WHY the wrong example is wrong (substantive), did they just say yes/no without reasoning (rephrased), or did they give up?'
+      : 'Your previous turn asked the learner to explain WHY the answer is right. Classify their response: real reasoning that names the rule or principle (substantive), restatement of the answer in different words (rephrased), or "idk"/empty/shrug (gave_up).';
+  return [
+    '— Probe-assessment mode for this turn —',
+    flavor,
+    'In the control line, INCLUDE the field "probe_assessment":"substantive"|"rephrased"|"gave_up". Do NOT mention this classification in your visible reply to the learner.',
+    'The visible reply still follows the normal warmth/format rules — react to the response naturally, then move on.',
+  ].join('\n');
+}
+
 export function buildTutorSystemInstruction(ctx: {
   item: TutorItemContext;
   learnerName: string | null;
@@ -150,6 +180,10 @@ export function buildTutorSystemInstruction(ctx: {
    *  natural connections; it never echoes the block back at the
    *  learner verbatim. L1: observations only. */
   fromLastTime?: string | null;
+  /** Phase D2: when set, the previous tutor turn was a probe; this turn
+   *  classifies the learner's reasoning quality alongside its normal
+   *  verdict. */
+  probeAssessmentMove?: ProbeAssessmentMove | null;
 }): string {
   const k = kindContext(ctx.item);
   const material = ctx.materialContext?.trim()
@@ -165,6 +199,13 @@ export function buildTutorSystemInstruction(ctx: {
   // closest to the model's "current task". If the selector picked
   // continue_natural, moveFragment is null and nothing is appended.
   const move = ctx.moveFragment?.trim() ? `\n\n${ctx.moveFragment.trim()}` : '';
+  // Phase D2: probe-assessment fragment goes AFTER the move fragment so
+  // when the selector picked continue_natural (typical for probe-response
+  // turns) the assessment instruction is the model's primary task.
+  const probeAssess = (() => {
+    const f = buildProbeAssessmentFragment(ctx.probeAssessmentMove ?? null);
+    return f ? `\n\n${f}` : '';
+  })();
   // Phase C3: continuity block. Same L1 rules as recentRhythm — the
   // block carries observations from the reflective layer's summary,
   // never an analytical label about the learner. Goes EARLY in the
@@ -185,5 +226,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${lastTime}${rhythm}${praise}${giveUp}${move}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${lastTime}${rhythm}${praise}${giveUp}${move}${probeAssess}`;
 }

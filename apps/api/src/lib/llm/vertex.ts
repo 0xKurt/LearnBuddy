@@ -418,6 +418,7 @@ export class VertexLlmGateway implements LLMGateway {
       recentRhythm: input.recentRhythm,
       moveFragment: input.moveFragment,
       fromLastTime: input.fromLastTime,
+      probeAssessmentMove: input.probeContext?.probeMove ?? null,
     });
 
     // Replay the whole session thread as real alternating turns so the
@@ -486,10 +487,15 @@ export class VertexLlmGateway implements LLMGateway {
     // a deterministic give-up guard on top of whatever the model claims.
     let verdict: ConverseTurnResult['verdict'] = 'incorrect';
     let gaveHint = false;
+    let probeAssessment: ConverseTurnResult['probeAssessment'] = null;
     if (sentinelIdx !== -1) {
       const tail = full.slice(sentinelIdx + TUTOR_SENTINEL.length).trim();
       try {
-        const ctrl = JSON.parse(tail) as { verdict?: string; hint?: boolean };
+        const ctrl = JSON.parse(tail) as {
+          verdict?: string;
+          hint?: boolean;
+          probe_assessment?: string;
+        };
         if (
           ctrl.verdict === 'correct' ||
           ctrl.verdict === 'partially_correct' ||
@@ -499,6 +505,14 @@ export class VertexLlmGateway implements LLMGateway {
           verdict = ctrl.verdict;
         }
         gaveHint = ctrl.hint === true;
+        if (
+          input.probeContext &&
+          (ctrl.probe_assessment === 'substantive' ||
+            ctrl.probe_assessment === 'rephrased' ||
+            ctrl.probe_assessment === 'gave_up')
+        ) {
+          probeAssessment = ctrl.probe_assessment;
+        }
       } catch {
         console.warn('[tutor] control line unparseable; defaulting verdict=incorrect');
       }
@@ -510,6 +524,7 @@ export class VertexLlmGateway implements LLMGateway {
       verdict,
       reply: visible || 'Erzähl mir, was du dir dabei denkst.',
       gaveHint,
+      probeAssessment,
       usage: {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,

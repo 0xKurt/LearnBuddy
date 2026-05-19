@@ -227,6 +227,18 @@ export type ConverseTurnInput = {
    *  injected on the first ~5 turns of a session that has a prior
    *  episode. Null otherwise. */
   fromLastTime?: string | null;
+  /** Phase D2: when set, the previous tutor turn was a probe
+   *  (confidence_probe / wrong_example_probe / self_explanation_prompt)
+   *  and the current learner message is the probe RESPONSE. The model
+   *  classifies the reasoning quality alongside its normal verdict. */
+  probeContext?: ProbeContext | null;
+};
+
+export type ProbeMove = 'confidence_probe' | 'wrong_example_probe' | 'self_explanation_prompt';
+export type ProbeQuality = 'substantive' | 'rephrased' | 'gave_up';
+
+export type ProbeContext = {
+  probeMove: ProbeMove;
 };
 
 export type ConverseTurnResult = {
@@ -235,6 +247,9 @@ export type ConverseTurnResult = {
   reply: string;
   /** True when the reply contained a new hint (for staircase accounting). */
   gaveHint: boolean;
+  /** Phase D2: present iff `probeContext` was set on the input. The
+   *  model's classification of the learner's reasoning quality. */
+  probeAssessment?: ProbeQuality | null;
   usage: VisionResult['usage'];
 };
 

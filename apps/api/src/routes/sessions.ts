@@ -883,6 +883,35 @@ sessionRoutes.post(
         }
       };
 
+      // Phase D2: detect whether the previous tutor turn was a probe.
+      // Needed in BOTH the give-up short-circuit and the normal LLM path,
+      // so we look it up once up-front. Missing table / RLS issue / network
+      // blip — fall back to null (no probe context attached).
+      let previousProbeMove:
+        | 'confidence_probe'
+        | 'wrong_example_probe'
+        | 'self_explanation_prompt'
+        | null = null;
+      try {
+        const lastDecRes = await supabase
+          .from('strategy_decisions')
+          .select('move_id, turn_index')
+          .eq('session_id', session_id)
+          .order('turn_index', { ascending: false })
+          .limit(1);
+        const lastMove = (lastDecRes?.data as Array<{ move_id: string }> | undefined)?.[0]?.move_id;
+        if (
+          lastMove === 'confidence_probe' ||
+          lastMove === 'wrong_example_probe' ||
+          lastMove === 'self_explanation_prompt'
+        ) {
+          previousProbeMove = lastMove;
+        }
+      } catch {
+        previousProbeMove = null;
+      }
+      const probeContext = previousProbeMove ? { probeMove: previousProbeMove } : null;
+
       // 5.5. Give-up path: progressive escalation (Phase A2).
       //   strike 0 (first "weiß nicht" on this item) → stock encouragement,
       //              0 credits, no Vertex call. Same as the old behavior.
@@ -921,6 +950,27 @@ sessionRoutes.post(
             client_turn_id: null,
           });
           await recordAttempt('skipped', 'local', skipReply, null, null);
+          // Phase D2: if this give-up came RIGHT AFTER a probe, the
+          // kid said "idk" to "wieso stimmt das?" — that's a gave_up
+          // probe assessment, worth recording for pattern_match_signal.
+          if (probeContext) {
+            void supabase
+              .from('probe_assessments')
+              .insert({
+                learner_id,
+                session_id,
+                item_id: input.item_id,
+                turn_index: nextIndex,
+                probe_move: probeContext.probeMove,
+                quality: 'gave_up',
+                response_excerpt: learnerText.slice(0, 280),
+              })
+              .then((res) => {
+                if (res.error) {
+                  console.warn(`[probe] gave_up insert failed: ${res.error.message}`);
+                }
+              });
+          }
           await push({ type: 'token', text: skipReply });
           await push({ type: 'verdict', verdict: 'skipped' });
           await push({ type: 'feedback', text: skipReply });
@@ -1188,6 +1238,10 @@ sessionRoutes.post(
         }
       }
 
+      // Phase D2: probeContext was computed up-front (step 5.5 prelude)
+      // so the give-up short-circuit can use it too. We just thread it
+      // through to the LLM call here.
+
       let result;
       try {
         result = await llm.converseTurn(
@@ -1222,6 +1276,7 @@ sessionRoutes.post(
             recentRhythm,
             moveFragment,
             fromLastTime,
+            probeContext,
           },
           (delta) => {
             void push({ type: 'token', text: delta });
@@ -1294,6 +1349,28 @@ sessionRoutes.post(
             console.error(`[strategy] decision insert failed: ${res.error.message}`);
           }
         });
+
+      // Phase D2: persist probe_assessments row when the LLM returned a
+      // classification. Fire-and-forget — telemetry never blocks the turn.
+      if (probeContext && result.probeAssessment) {
+        const excerpt = learnerText.slice(0, 280);
+        void supabase
+          .from('probe_assessments')
+          .insert({
+            learner_id,
+            session_id,
+            item_id: input.item_id,
+            turn_index: nextIndex, // the LEARNER turn (the probe response)
+            probe_move: probeContext.probeMove,
+            quality: result.probeAssessment,
+            response_excerpt: excerpt,
+          })
+          .then((res) => {
+            if (res.error) {
+              console.warn(`[probe] assessment insert failed: ${res.error.message}`);
+            }
+          });
+      }
 
       // Phase C follow-up: when we just performed misconception_confrontation,
       // bump last_addressed_at so the resolution-tracking cycle is closed.
