@@ -144,6 +144,12 @@ export function buildTutorSystemInstruction(ctx: {
    *  means `continue_natural` — the model uses its base rules
    *  unmodified. */
   moveFragment?: string | null;
+  /** Phase C3: "From last time" block — the prior session's narrative
+   *  arc + active misconceptions. Injected on the first ~5 turns of a
+   *  session that has a prior episode. The tutor uses this to make
+   *  natural connections; it never echoes the block back at the
+   *  learner verbatim. L1: observations only. */
+  fromLastTime?: string | null;
 }): string {
   const k = kindContext(ctx.item);
   const material = ctx.materialContext?.trim()
@@ -159,6 +165,12 @@ export function buildTutorSystemInstruction(ctx: {
   // closest to the model's "current task". If the selector picked
   // continue_natural, moveFragment is null and nothing is appended.
   const move = ctx.moveFragment?.trim() ? `\n\n${ctx.moveFragment.trim()}` : '';
+  // Phase C3: continuity block. Same L1 rules as recentRhythm — the
+  // block carries observations from the reflective layer's summary,
+  // never an analytical label about the learner. Goes EARLY in the
+  // prompt (alongside the question context) so it shapes everything
+  // the model produces — including praise and hint choice.
+  const lastTime = ctx.fromLastTime?.trim() ? `\n\n${ctx.fromLastTime.trim()}` : '';
   return `${SYSTEM_TUTOR}
 
 — Current question context —
@@ -173,5 +185,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${rhythm}${praise}${giveUp}${move}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${lastTime}${rhythm}${praise}${giveUp}${move}`;
 }

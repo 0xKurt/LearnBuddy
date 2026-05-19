@@ -16,6 +16,8 @@ import type {
   ExplainInput,
   ExplainResult,
   LLMGateway,
+  ReflectSessionInput,
+  ReflectSessionResult,
   RegenerateInput,
   RegenerateResult,
   TranscribeInput,
@@ -197,5 +199,25 @@ export class FakeLlmGateway implements LLMGateway {
 
   async transcribeAudio(_input: TranscribeInput): Promise<TranscribeResult> {
     return { text: 'gesprochene Antwort', usage: { ...FAKE_USAGE } };
+  }
+
+  async reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult> {
+    const topics = Array.from(
+      new Set(input.transcript.map((t) => t.item_topic).filter((x): x is string => !!x)),
+    );
+    const verdicts = input.transcript
+      .filter((t) => t.role === 'tutor' && t.verdict)
+      .map((t) => t.verdict);
+    const corrects = verdicts.filter((v) => v === 'correct').length;
+    const skips = verdicts.filter((v) => v === 'skipped').length;
+    return {
+      one_sentence_arc: `Fake session: ${input.transcript.length} turns over ${topics.length || 'no'} topics; ${corrects} correct, ${skips} skipped.`,
+      concepts_touched: topics,
+      high_points: corrects > 0 ? [`${corrects} items answered correctly`] : [],
+      low_points: skips > 0 ? [`${skips} give-ups`] : [],
+      hypothesized_misconceptions: [],
+      open_questions: [],
+      usage: { ...FAKE_USAGE },
+    };
   }
 }

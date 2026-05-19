@@ -36,6 +36,8 @@ import {
   classifyPraise,
   type Locale,
 } from '../lib/praise/build-praise-context.js';
+import { reflectAndPersistSession } from '../lib/reflective/session-reflect.js';
+import { buildOpener, type OpenerLocale } from '../lib/reflective/session-opener.js';
 import { selectMove } from '../lib/strategy/select.js';
 import type { SelectorContext } from '../lib/strategy/moves.js';
 import { captureApiError } from '../lib/sentry.js';
@@ -98,9 +100,43 @@ sessionRoutes.post(
       });
     }
 
+    // Phase C2: warm session opener. If we have a prior learner_episode,
+    // pick a tone-appropriate template referencing the material (never
+    // the learner). For the very first session ever, opener is null and
+    // the client falls into the first item silently.
+    let opener: string | null = null;
+    try {
+      const prior = await supabase
+        .from('learner_episodes')
+        .select('one_sentence_arc, concepts_touched, high_points, low_points')
+        .eq('learner_id', learner_id)
+        .order('ended_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const ep = prior.data as {
+        one_sentence_arc: string;
+        concepts_touched: string[];
+        high_points: string[];
+        low_points: string[];
+      } | null;
+      if (ep) {
+        const learnerRow = await supabase
+          .from('learners')
+          .select('ui_locale')
+          .eq('id', learner_id)
+          .maybeSingle();
+        const locale = ((learnerRow.data as { ui_locale: string | null } | null)?.ui_locale ??
+          'de') as OpenerLocale;
+        opener = buildOpener(ep, locale);
+      }
+    } catch (err) {
+      console.warn(`[opener] failed to build: ${err instanceof Error ? err.message : err}`);
+    }
+
     return c.json({
       session_id: (sess.data as { id: string }).id,
       items: picked,
+      opener,
     });
   },
 );
@@ -203,7 +239,7 @@ async function pickItems(
 }
 
 sessionRoutes.patch('/:id/finish', async (c) => {
-  const { supabase, now } = getDeps(c);
+  const { supabase, llm, now } = getDeps(c);
   const learner_id = c.get('learner_id');
   if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
   const session_id = c.req.param('id');
@@ -219,6 +255,14 @@ sessionRoutes.patch('/:id/finish', async (c) => {
     throw new ApiError('internal', 'Failed to finish session', { cause: upd.error.message });
   }
   if (!upd.data) throw new ApiError('not_found', 'Session not found');
+
+  // Phase C1: fire-and-forget reflective summary. We DO NOT await
+  // because the learner's "Fertig" tap returns immediately. The
+  // module is best-effort — failures land in Sentry, never block.
+  void reflectAndPersistSession({ supabase, llm, now }, { session_id, learner_id }).catch((err) =>
+    console.error(`[reflect] uncaught: ${err instanceof Error ? err.message : err}`),
+  );
+
   return c.json(upd.data);
 });
 
@@ -1002,6 +1046,76 @@ sessionRoutes.post(
       const selectorDecision = selectMove(selectorCtx);
       const moveFragment = selectorDecision.move.promptFragment(selectorCtx);
 
+      // Phase C3: "From last time" continuity block. Only for the first 5
+      // tutor turns of a session (the model already has the context in
+      // history after that) AND only when a prior episode exists. Also
+      // include active recurring misconceptions to "listen for".
+      // Fails open — any read error leaves fromLastTime null and the
+      // tutor uses base rules. This is enrichment, not safety-critical.
+      let fromLastTime: string | null = null;
+      if (runtimeSignal.turns_in_session < 5) {
+        try {
+          const priorEpRes = await supabase
+            .from('learner_episodes')
+            .select('one_sentence_arc, concepts_touched, open_questions, ended_at, session_id')
+            .eq('learner_id', learner_id)
+            .order('ended_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          const priorRaw = priorEpRes?.data as
+            | {
+                one_sentence_arc?: string;
+                concepts_touched?: string[];
+                open_questions?: string[];
+                session_id?: string;
+              }
+            | null
+            | undefined;
+          // Filter: must be a DIFFERENT session than the current one.
+          const prior =
+            priorRaw && priorRaw.session_id && priorRaw.session_id !== session_id ? priorRaw : null;
+          let misc: Array<{ concept_tag: string; description: string; seen_count: number }> = [];
+          try {
+            const miscRes = await supabase
+              .from('recurring_misconceptions')
+              .select('concept_tag, description, seen_count')
+              .eq('learner_id', learner_id)
+              .is('resolved_at', null)
+              .order('seen_count', { ascending: false })
+              .limit(3);
+            misc = (miscRes?.data ?? []) as typeof misc;
+          } catch {
+            misc = [];
+          }
+          if (prior || misc.length > 0) {
+            const lines: string[] = ['— From last time —'];
+            if (prior) {
+              if (prior.one_sentence_arc) {
+                lines.push(`Last session arc: ${prior.one_sentence_arc}`);
+              }
+              if (prior.concepts_touched && prior.concepts_touched.length > 0) {
+                lines.push(`Concepts touched: ${prior.concepts_touched.join(', ')}`);
+              }
+              if (prior.open_questions && prior.open_questions.length > 0) {
+                lines.push(
+                  `Open questions to follow up: ${prior.open_questions.slice(0, 3).join('; ')}`,
+                );
+              }
+            }
+            if (misc.length > 0) {
+              lines.push('Active misconceptions to listen for (do not name them at the student):');
+              for (const m of misc) {
+                lines.push(`  - ${m.concept_tag}: ${m.description} (seen ${m.seen_count}x)`);
+              }
+            }
+            // Only emit if we actually have content beyond the header.
+            if (lines.length > 1) fromLastTime = lines.join('\n');
+          }
+        } catch {
+          fromLastTime = null;
+        }
+      }
+
       let result;
       try {
         result = await llm.converseTurn(
@@ -1035,6 +1149,7 @@ sessionRoutes.post(
             giveUpMode,
             recentRhythm,
             moveFragment,
+            fromLastTime,
           },
           (delta) => {
             void push({ type: 'token', text: delta });

@@ -222,6 +222,11 @@ export type ConverseTurnInput = {
    *  when the selector picked `continue_natural` (no shaping — model
    *  uses base rules). */
   moveFragment?: string | null;
+  /** Phase C3: "From last time" continuity block — narrative arc from
+   *  the most recent learner_episode plus active misconceptions. Only
+   *  injected on the first ~5 turns of a session that has a prior
+   *  episode. Null otherwise. */
+  fromLastTime?: string | null;
 };
 
 export type ConverseTurnResult = {
@@ -244,6 +249,33 @@ export type TranscribeResult = {
   usage: VisionResult['usage'];
 };
 
+/** Phase C1: reflective summary input. One LLM call per finished
+ *  session. Output is a LearnerEpisode JSON that drives the next
+ *  session's opener + the tutor's "from last time" prompt block. */
+export type ReflectSessionInput = {
+  transcript: ReadonlyArray<{
+    role: 'learner' | 'tutor';
+    verdict?: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
+    item_topic?: string | null;
+    content: string;
+  }>;
+  durationMinutes: number;
+};
+
+export type ReflectSessionResult = {
+  one_sentence_arc: string;
+  concepts_touched: string[];
+  high_points: string[];
+  low_points: string[];
+  hypothesized_misconceptions: Array<{
+    concept_tag: string;
+    description: string;
+    confidence: number;
+  }>;
+  open_questions: string[];
+  usage: VisionResult['usage'];
+};
+
 export interface LLMGateway {
   visionExtractAndGenerate(input: VisionInput): Promise<VisionResult>;
   regenerateFromText(input: RegenerateInput): Promise<RegenerateResult>;
@@ -258,4 +290,7 @@ export interface LLMGateway {
   /** Speech-to-text for voice turns (robust fallback independent of any
    *  on-device recognizer). */
   transcribeAudio(input: TranscribeInput): Promise<TranscribeResult>;
+  /** Phase C1: post-session reflection. Off the learner's critical path
+   *  (fire-and-forget from the /finish endpoint). */
+  reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult>;
 }
