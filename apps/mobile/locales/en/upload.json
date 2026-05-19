@@ -15,7 +15,8 @@
     "body": "We couldn't upload your material. Try again — if it keeps failing, check your connection.",
     "retry": "Try again",
     "back": "Back",
-    "unknown": "Unknown error"
+    "unknown": "Unknown error",
+    "max_retries": "This material can't be read. Please take new photos."
   },
   "insufficient_credits": {
     "title": "Out of credits for now.",
@@ -30,6 +31,7 @@
     "processing": "This runs on our servers and usually takes under a minute. You can wait, or check your materials list later.",
     "slow_title": "Taking a little longer",
     "slow_body": "It is still being processed in the background. Check your materials list shortly — it will appear there once it is done.",
+    "check_again": "Check again",
     "failed_title": "That did not work",
     "failed_body": "We could not read this material. Try again — your photos are saved."
   }

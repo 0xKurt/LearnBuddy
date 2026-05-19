@@ -33,6 +33,7 @@
     "name_label": "Nombre",
     "name_placeholder": "p. ej. Examen 14/06",
     "date_label": "Fecha (opcional)",
+    "date_past": "Esa fecha está en el pasado.",
     "archive": "Archivar",
     "cancel": "Cancelar",
     "save": "Guardar",

@@ -3,7 +3,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,51 +36,28 @@ export default function UploadScreen() {
   const qc = useQueryClient();
 
   const [state, setState] = useState<ScreenState>({ kind: 'idle' });
-  const [retryNonce, setRetryNonce] = useState(0);
+  const [uploadNonce, setUploadNonce] = useState(0);
+  const [pollNonce, setPollNonce] = useState(0);
   const startedRef = useRef(false);
   const materialIdRef = useRef<string | null>(null);
 
+  const invalidate = useCallback(() => {
+    if (!pending) return;
+    qc.invalidateQueries({ queryKey: ['materials', pending.subject_id] });
+    if (pending.folder_id) {
+      qc.invalidateQueries({ queryKey: ['materials', 'folder', pending.folder_id] });
+    }
+    const id = materialIdRef.current;
+    if (id) qc.invalidateQueries({ queryKey: ['material', id] });
+  }, [pending, qc]);
+
+  // 1) Upload phase — runs once per uploadNonce. Once successful, the
+  //    material id is in materialIdRef and the poll effect takes over.
   useEffect(() => {
     if (startedRef.current) return;
     if (!learnerId || !pending) return;
     startedRef.current = true;
     let cancelled = false;
-
-    const invalidate = () => {
-      qc.invalidateQueries({ queryKey: ['materials', pending.subject_id] });
-      if (pending.folder_id) {
-        qc.invalidateQueries({ queryKey: ['materials', 'folder', pending.folder_id] });
-      }
-    };
-
-    const poll = async (materialId: string) => {
-      for (let i = 0; i < POLL_MAX; i++) {
-        if (cancelled) return;
-        await new Promise((r) => setTimeout(r, POLL_MS));
-        if (cancelled) return;
-        try {
-          const m = await getMaterial(learnerId, materialId);
-          if (m.extraction_status === 'ready') {
-            invalidate();
-            clearPending();
-            router.replace({
-              pathname: '/(learner)/material/[materialId]',
-              params: { materialId },
-            });
-            return;
-          }
-          if (m.extraction_status === 'failed') {
-            invalidate();
-            setState({ kind: 'failed' });
-            return;
-          }
-        } catch {
-          // transient — keep polling
-        }
-      }
-      invalidate();
-      setState({ kind: 'slow' }); // worker/cron will still finish it
-    };
 
     void (async () => {
       try {
@@ -90,7 +67,7 @@ export default function UploadScreen() {
         materialIdRef.current = res.material_id;
         if (cancelled) return;
         setState({ kind: 'polling' });
-        await poll(res.material_id);
+        setPollNonce((n) => n + 1);
       } catch (err) {
         startedRef.current = false; // allow retry of the upload itself
         if (cancelled) return;
@@ -109,7 +86,99 @@ export default function UploadScreen() {
     return () => {
       cancelled = true;
     };
-  }, [learnerId, pending, clearPending, qc, retryNonce, t]);
+  }, [learnerId, pending, uploadNonce, t]);
+
+  // 2) Poll phase — runs every time pollNonce ticks (initial entry + retry).
+  //    After POLL_MAX iterations we do ONE final fetch so a material that
+  //    flipped to 'failed' just past the window doesn't sit on the 'slow'
+  //    screen indefinitely (the slow screen has no retry — failed does).
+  useEffect(() => {
+    if (pollNonce === 0) return;
+    const id = materialIdRef.current;
+    if (!id || !learnerId) return;
+    let cancelled = false;
+
+    void (async () => {
+      for (let i = 0; i < POLL_MAX; i++) {
+        if (cancelled) return;
+        await new Promise((r) => setTimeout(r, POLL_MS));
+        if (cancelled) return;
+        try {
+          const m = await getMaterial(learnerId, id);
+          if (m.extraction_status === 'ready') {
+            invalidate();
+            clearPending();
+            router.replace({
+              pathname: '/(learner)/material/[materialId]',
+              params: { materialId: id },
+            });
+            return;
+          }
+          if (m.extraction_status === 'failed') {
+            invalidate();
+            setState({ kind: 'failed' });
+            return;
+          }
+        } catch {
+          // transient — keep polling
+        }
+      }
+      // Window expired. Re-fetch once before declaring "slow" — the material
+      // may have just flipped to a terminal state in the last 3 seconds.
+      invalidate();
+      try {
+        const m = await getMaterial(learnerId, id);
+        if (cancelled) return;
+        if (m.extraction_status === 'ready') {
+          clearPending();
+          router.replace({
+            pathname: '/(learner)/material/[materialId]',
+            params: { materialId: id },
+          });
+          return;
+        }
+        if (m.extraction_status === 'failed') {
+          setState({ kind: 'failed' });
+          return;
+        }
+      } catch {
+        /* keep slow on error */
+      }
+      if (!cancelled) setState({ kind: 'slow' }); // worker/cron will still finish it
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pollNonce, learnerId, invalidate, clearPending]);
+
+  const doRetry = useCallback(() => {
+    const id = materialIdRef.current;
+    if (!id || !learnerId) return;
+    setState({ kind: 'polling' });
+    void (async () => {
+      try {
+        await retryMaterial(learnerId, id);
+        setPollNonce((n) => n + 1);
+      } catch (err) {
+        if (err instanceof ApiError && err.code === 'max_attempts_reached') {
+          setState({
+            kind: 'error',
+            code: err.code,
+            message: t('error.max_retries', { defaultValue: err.message }),
+          });
+        } else {
+          setState({ kind: 'failed' });
+        }
+      }
+    })();
+  }, [learnerId, t]);
+
+  const doCheckAgain = useCallback(() => {
+    if (!materialIdRef.current || !learnerId) return;
+    setState({ kind: 'polling' });
+    setPollNonce((n) => n + 1);
+  }, [learnerId]);
 
   if (!pending) {
     return (
@@ -137,23 +206,7 @@ export default function UploadScreen() {
             {t('worker.failed_body')}
           </Text>
           <View style={{ height: 8 }} />
-          <Btn
-            full
-            onPress={() => {
-              const id = materialIdRef.current;
-              if (!id || !learnerId) return;
-              setState({ kind: 'polling' });
-              void (async () => {
-                try {
-                  await retryMaterial(learnerId, id);
-                  startedRef.current = true;
-                  setRetryNonce((n) => n + 1);
-                } catch {
-                  setState({ kind: 'failed' });
-                }
-              })();
-            }}
-          >
+          <Btn full onPress={doRetry}>
             {t('error.retry')}
           </Btn>
           <Btn
@@ -182,8 +235,12 @@ export default function UploadScreen() {
             {t('worker.slow_body')}
           </Text>
           <View style={{ height: 8 }} />
+          <Btn full onPress={doCheckAgain}>
+            {t('worker.check_again', { defaultValue: t('error.retry') })}
+          </Btn>
           <Btn
             full
+            variant="outline"
             onPress={() => {
               clearPending();
               router.replace('/(learner)/home');
@@ -198,6 +255,7 @@ export default function UploadScreen() {
 
   if (state.kind === 'error') {
     const insufficient = state.code === 'insufficient_credits';
+    const maxRetries = state.code === 'max_attempts_reached';
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 26, justifyContent: 'center', gap: 16 }}>
@@ -208,13 +266,13 @@ export default function UploadScreen() {
             {insufficient ? t('insufficient_credits.body') : t('error.body')}
           </Text>
           <View style={{ height: 8 }} />
-          {!insufficient && (
+          {!insufficient && !maxRetries && (
             <Btn
               full
               onPress={() => {
                 startedRef.current = false;
                 setState({ kind: 'idle' });
-                setRetryNonce((n) => n + 1);
+                setUploadNonce((n) => n + 1);
               }}
             >
               {t('error.retry')}

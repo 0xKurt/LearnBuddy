@@ -92,6 +92,20 @@ export const Iso8601 = z.string().datetime({ offset: true });
 export type Iso8601 = z.infer<typeof Iso8601>;
 
 /** Calendar date with no time component, ISO `YYYY-MM-DD`. The app stores
- *  every user-facing date in this shape; the UI renders it as `DD.MM.YYYY`. */
-export const DateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+ *  every user-facing date in this shape; the UI renders it as `DD.MM.YYYY`.
+ *  The `.refine` rejects impossible calendar values (e.g. `2026-02-30`) — the
+ *  regex alone would let them through and the API would write garbage into
+ *  Postgres. */
+export const DateOnly = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((s) => {
+    const [y, m, d] = s.split('-').map((n) => Number.parseInt(n, 10));
+    if (!y || !m || !d) return false;
+    if (m < 1 || m > 12) return false;
+    // Construct a Date in UTC; if Date "rolls over" (e.g. Feb 30 → Mar 2) the
+    // round-trip won't match the inputs.
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  }, 'Invalid calendar date');
 export type DateOnly = z.infer<typeof DateOnly>;

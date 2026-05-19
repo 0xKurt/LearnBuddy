@@ -8,32 +8,6 @@
 // item for more practice; a false "correct" tells a child they've mastered
 // something they don't know. The first is cheap, the second is the bug.
 
-// Strong phrases that, if present anywhere, mean "I'm not answering" — these
-// don't occur inside real answers across de/en/fr/es/it.
-const GIVE_UP_CONTAINS = [
-  'weiss nicht',
-  'weiss es nicht',
-  'keine ahnung',
-  'keinen plan',
-  'keine idee',
-  'ich weiss nicht',
-  'no idea',
-  'not sure',
-  'dont know',
-  'do not know',
-  'dunno',
-  'no se', // "no sé" after diacritic strip
-  'ni idea',
-  'ni puta idea',
-  'no tengo ni idea',
-  'je ne sais pas',
-  'aucune idee',
-  'non lo so',
-  'non saprei',
-  'hilf mir',
-  'help me',
-];
-
 // Whole-message give-ups (the entire normalized text equals one of these).
 const GIVE_UP_EXACT = new Set([
   'ka',
@@ -53,7 +27,43 @@ const GIVE_UP_EXACT = new Set([
   'nada',
   'rien',
   'niente',
+  'dunno',
+  // Short give-ups that would be ambiguous as substrings
+  'weiss nicht',
+  'weiss es nicht',
+  // French / Spanish / Italian short forms safe as whole messages
+  'no se',
+  'ni idea',
+  'boh',
+  'jsp',
 ]);
+
+// Phrases checked as whole-word consecutive sequences anywhere in the message.
+// Only include phrases where there is NO plausible real-answer sentence that
+// contains the same consecutive tokens.  "weiss nicht" is intentionally
+// excluded here and handled as a prefix-only or exact match above, because
+// "Es ist weiß, nicht rot" → normalized "es ist weiss nicht rot" would
+// otherwise be a false positive.
+const GIVE_UP_PHRASES: string[][] = [
+  ['ich', 'weiss', 'nicht'],
+  ['ich', 'weiss', 'es', 'nicht'],
+  ['du', 'weisst', 'nicht'],
+  ['keine', 'ahnung'],
+  ['keinen', 'plan'],
+  ['keine', 'idee'],
+  ['no', 'idea'],
+  ['not', 'sure'],
+  ['dont', 'know'],
+  ['do', 'not', 'know'],
+  ['ni', 'puta', 'idea'],
+  ['no', 'tengo', 'ni', 'idea'],
+  ['je', 'ne', 'sais', 'pas'],
+  ['aucune', 'idee'],
+  ['non', 'lo', 'so'],
+  ['non', 'saprei'],
+  ['hilf', 'mir'],
+  ['help', 'me'],
+];
 
 // U+0300–U+036F = combining diacritical marks. Built from escapes (not a
 // literal char class) so "é"→"e", "ñ"→"n", "ä"→"a" reliably.
@@ -65,10 +75,21 @@ function normalize(text: string): string {
     .normalize('NFD')
     .replace(COMBINING_MARKS, '')
     .toLowerCase()
-    .replace(/['’‘`´]/g, '') // join contractions: "don't" → "dont"
+    .replace(/['''`´]/g, '') // join contractions: "don't" → "dont"
     .replace(/[^\p{L}\p{N}\s]/gu, ' ') // other punctuation → space
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function hasConsecutivePhrase(tokens: string[], phrase: string[]): boolean {
+  if (phrase.length === 0) return false;
+  const first = phrase[0]!;
+  for (let i = 0; i <= tokens.length - phrase.length; i++) {
+    if (tokens[i] === first && phrase.every((w, j) => tokens[i + j] === w)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** True when the message isn't a genuine attempt at the answer. */
@@ -76,5 +97,6 @@ export function isNonAnswer(raw: string): boolean {
   const norm = normalize(raw);
   if (norm.length === 0) return true; // empty or pure punctuation ("?", "...")
   if (GIVE_UP_EXACT.has(norm)) return true;
-  return GIVE_UP_CONTAINS.some((p) => norm.includes(p));
+  const tokens = norm.split(' ');
+  return GIVE_UP_PHRASES.some((phrase) => hasConsecutivePhrase(tokens, phrase));
 }

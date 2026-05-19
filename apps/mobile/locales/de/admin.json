@@ -114,6 +114,7 @@
     "not_found": "Profil nicht gefunden.",
     "field_name": "Anzeigename",
     "birth_date_hint": "Geburtsdatum {{date}} (kann nur über Daten-Anfrage geändert werden)",
+    "birth_date_immutable": "Das Geburtsdatum kann nur über eine Daten-Anfrage geändert werden.",
     "field_grade": "Klassenstufe",
     "saving": "Speichere …",
     "save": "Speichern",

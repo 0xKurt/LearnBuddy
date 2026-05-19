@@ -221,7 +221,13 @@ export default function SessionScreen() {
     }
   }, [boot.data, learnerId, profileVoice, testMode]);
 
+  // Auto-scroll only when the user is already near the bottom — yanking them
+  // away from a paragraph they're reading because a new token streamed in is
+  // worse than the bottom going off-screen. Threshold (40px) approximates one
+  // line of body copy.
+  const nearBottomRef = useRef(true);
   useEffect(() => {
+    if (!nearBottomRef.current) return;
     const id = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     return () => clearTimeout(id);
   }, [messages]);
@@ -580,6 +586,13 @@ export default function SessionScreen() {
       >
         <ScrollView
           ref={scrollRef}
+          onScroll={(e) => {
+            const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+            const distanceFromBottom =
+              contentSize.height - (contentOffset.y + layoutMeasurement.height);
+            nearBottomRef.current = distanceFromBottom < 40;
+          }}
+          scrollEventThrottle={120}
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 8,

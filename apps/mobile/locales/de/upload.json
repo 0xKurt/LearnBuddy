@@ -15,7 +15,8 @@
     "body": "Wir konnten dein Material nicht hochladen. Versuch es nochmal — falls es weiter hakt, prüf kurz deine Verbindung.",
     "retry": "Nochmal versuchen",
     "back": "Zurück",
-    "unknown": "Unbekannter Fehler"
+    "unknown": "Unbekannter Fehler",
+    "max_retries": "Dieses Material lässt sich nicht lesen. Bitte mach neue Fotos."
   },
   "insufficient_credits": {
     "title": "Aktuell sind keine Credits mehr verfügbar.",
@@ -30,6 +31,7 @@
     "processing": "Das passiert auf unseren Servern und dauert meist unter einer Minute. Du kannst warten oder später in deiner Materialliste nachsehen.",
     "slow_title": "Dauert etwas länger",
     "slow_body": "Es wird im Hintergrund weiter verarbeitet. Schau gleich in deiner Materialliste — das Material erscheint dort, sobald es fertig ist.",
+    "check_again": "Nochmal prüfen",
     "failed_title": "Hat nicht geklappt",
     "failed_body": "Wir konnten dieses Material nicht lesen. Versuch es nochmal — deine Fotos sind gespeichert."
   }

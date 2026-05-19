@@ -294,8 +294,14 @@ describe('POST /sessions/:id/turn', () => {
       client_local_verdict: 'correct',
     });
     expect(ev.find((e) => e.type === 'verdict')?.verdict).toBe('skipped');
-    // Did NOT take the free local-correct fast path.
-    expect(ev.find((e) => e.type === 'done')?.credits_used as number).toBeGreaterThanOrEqual(1);
+    // Server detects the non-answer deterministically, so we DO short-circuit
+    // (0 credits) — but with verdict 'skipped', not 'correct'. The local-
+    // correct fast path was correctly rejected: had it been taken, verdict
+    // would be 'correct'.
+    expect(ev.find((e) => e.type === 'done')?.credits_used).toBe(0);
+    const attempts = s.fake.tables.get('attempts') ?? [];
+    expect(attempts).toHaveLength(1);
+    expect(attempts[0]!.verdict).toBe('skipped');
   });
 
   it('updates FSRS item_states on every online attempt (right or wrong)', async () => {

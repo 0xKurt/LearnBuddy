@@ -34,6 +34,10 @@ import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { VISION_ESTIMATE } from '../lib/extraction.js';
+
+// Maximum total claim attempts (initial + retries) before we refuse to keep
+// burning credits on a material that legitimately can't be extracted.
+const MAX_RETRY_ATTEMPTS = 3;
 import type { GeneratedVisionItem, VisionInput } from '../lib/llm/gateway.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -283,6 +287,7 @@ materialRoutes.post('/:id/retry', rateLimit({ key: 'materials_retry', per_day: 2
   const job = jobRow.data as {
     id: string;
     status: string;
+    attempts: number;
     client_quality_scores: unknown;
     locale: string;
     title: string | null;
@@ -293,6 +298,15 @@ materialRoutes.post('/:id/retry', rateLimit({ key: 'materials_retry', per_day: 2
   // Guard a double-tap: an in-flight job must not be re-debited/re-queued.
   if (job.status === 'queued' || job.status === 'running') {
     return c.json({ material_id, status: 'pending' }, 202);
+  }
+  // Cap retries so a learner can't burn credits indefinitely on a material
+  // that legitimately can't be extracted (non-educational page, unreadable
+  // photo). The rate limit alone allows ~20 retries/day × 20 credits each.
+  if (job.attempts >= MAX_RETRY_ATTEMPTS) {
+    throw new ApiError(
+      'max_attempts_reached',
+      'This material has been retried too many times — please re-take the photos',
+    );
   }
 
   // The prior failed attempt was refunded on failure, so a retry is a

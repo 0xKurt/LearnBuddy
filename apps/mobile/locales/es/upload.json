@@ -15,7 +15,8 @@
     "body": "No pudimos subir tu material. Inténtalo de nuevo — si sigue fallando, comprueba tu conexión.",
     "retry": "Intentar de nuevo",
     "back": "Volver",
-    "unknown": "Error desconocido"
+    "unknown": "Error desconocido",
+    "max_retries": "No se puede leer este material. Por favor, toma nuevas fotos."
   },
   "insufficient_credits": {
     "title": "Sin créditos por ahora.",
@@ -30,6 +31,7 @@
     "processing": "Esto ocurre en nuestros servidores y suele tardar menos de un minuto. Puedes esperar o revisar tu lista más tarde.",
     "slow_title": "Está tardando un poco más",
     "slow_body": "Se sigue procesando en segundo plano. Revisa tu lista de materiales en un momento: aparecerá cuando esté listo.",
+    "check_again": "Comprobar de nuevo",
     "failed_title": "No ha funcionado",
     "failed_body": "No pudimos leer este material. Inténtalo de nuevo: tus fotos están guardadas."
   }

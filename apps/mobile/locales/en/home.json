@@ -33,6 +33,7 @@
     "name_label": "Name",
     "name_placeholder": "e.g. Class test 14 Jun",
     "date_label": "Date (optional)",
+    "date_past": "That date is in the past.",
     "archive": "Archive",
     "cancel": "Cancel",
     "save": "Save",

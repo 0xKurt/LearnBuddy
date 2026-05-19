@@ -506,13 +506,25 @@ sessionRoutes.post(
           (t) => t.role === 'tutor' && t.turn_index === learnerTurn.turn_index + 1,
         );
         if (tutor) {
+          // Tutor turns are always persisted with a non-null verdict
+          // (persistTurn callers below pass one explicitly). If we ever see
+          // a null here something's wrong upstream — surface it loudly
+          // instead of silently picking a default that masks bad data.
+          if (!tutor.verdict) {
+            await push({
+              type: 'error',
+              code: 'internal',
+              message: `replay: tutor turn ${tutor.id} has no verdict`,
+            });
+            return;
+          }
           await push({ type: 'token', text: tutor.content });
-          await push({ type: 'verdict', verdict: tutor.verdict ?? 'partially_correct' });
+          await push({ type: 'verdict', verdict: tutor.verdict });
           await push({ type: 'feedback', text: tutor.content });
           await push({
             type: 'done',
             credits_used: 0,
-            verdict: tutor.verdict ?? 'partially_correct',
+            verdict: tutor.verdict,
             learner_turn_id: learnerTurn.id,
             tutor_turn_id: tutor.id,
             session_active: true,
@@ -550,6 +562,19 @@ sessionRoutes.post(
           });
           learnerText = tr.text.trim();
           transcribeCostMicros = tr.usage.cost_usd_micros;
+          // Reject noise-floor transcriptions: a single letter or a single
+          // bare punctuation mark almost always means Vertex transcribed
+          // breath/silence, not a real attempt. Surface as a recoverable
+          // error so the learner can re-record (free) instead of having
+          // gibberish recorded as their answer.
+          if (learnerText.length < 2) {
+            await push({
+              type: 'error',
+              code: 'transcription_failed',
+              message: 'Recording was too short or unclear — please try again',
+            });
+            return;
+          }
           await push({ type: 'transcript', text: learnerText });
         } catch {
           await push({
@@ -586,11 +611,17 @@ sessionRoutes.post(
           role: t.role === 'learner' ? ('learner' as const) : ('tutor' as const),
           content: t.content,
         }));
+      // Count every prior tutor turn on this item that wasn't a "Genau!" — a
+      // give-up ('skipped') still consumes a hint slot, otherwise a "weiss
+      // nicht" cycle resets the staircase and the tutor can hand out 4+ hints
+      // per item instead of the documented 2.
       const hintsGivenForItem = turns.filter(
         (t) =>
           t.role === 'tutor' &&
           t.item_id === input.item_id &&
-          (t.verdict === 'incorrect' || t.verdict === 'partially_correct'),
+          (t.verdict === 'incorrect' ||
+            t.verdict === 'partially_correct' ||
+            t.verdict === 'skipped'),
       ).length;
 
       const learnerRow = await supabase
@@ -692,6 +723,45 @@ sessionRoutes.post(
           }
         }
       };
+
+      // 5.5. Give-up path: the learner said "weiss nicht" / "idk" / hit send
+      //      on whitespace. We DON'T need the tutor model to tell us that
+      //      isn't an attempt — debiting and waiting on Gemini would burn
+      //      credits for an answer we're about to override to 'skipped'
+      //      anyway. Reply with a stock encouragement, count it as a hint
+      //      slot via the staircase, and move on. 0 credits.
+      if (isNonAnswer(learnerText)) {
+        const skipReply = pickGiveUpReply(locale);
+        const learnerTurnId = await persistTurn({
+          turn_index: nextIndex,
+          role: 'learner',
+          kind: 'answer',
+          content: learnerText,
+          verdict: null,
+          client_turn_id: input.client_turn_id,
+        });
+        const tutorTurnId = await persistTurn({
+          turn_index: nextIndex + 1,
+          role: 'tutor',
+          kind: 'feedback',
+          content: skipReply,
+          verdict: 'skipped',
+          client_turn_id: null,
+        });
+        await recordAttempt('skipped', 'local', skipReply, null, null);
+        await push({ type: 'token', text: skipReply });
+        await push({ type: 'verdict', verdict: 'skipped' });
+        await push({ type: 'feedback', text: skipReply });
+        await push({
+          type: 'done',
+          credits_used: 0,
+          verdict: 'skipped',
+          learner_turn_id: learnerTurnId,
+          tutor_turn_id: tutorTurnId,
+          session_active: true,
+        });
+        return;
+      }
 
       // 6. Fast path: client is confident it's correct → no model, no charge.
       //    Guarded so a give-up ("weiss nicht") can never take the no-model
@@ -864,6 +934,21 @@ function pickPraise(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
     fr: "C'est juste — bravo !",
     es: '¡Correcto, muy bien!',
     it: 'Esatto — bravissimo!',
+  } as const;
+  return map[locale];
+}
+
+/** Stock reply for the "I don't know" path. Tone-soft per docs/01-product
+ *  voice rules — never harsh, never "Falsch!". The tutor doesn't see this
+ *  message; it's surfaced as the tutor turn so the chat thread reads
+ *  coherently and the next call still has full context. */
+function pickGiveUpReply(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
+  const map = {
+    de: 'Kein Problem — denk kurz nach oder sag „Tipp", dann helfen wir Schritt für Schritt.',
+    en: "No worries — take a second, or say 'hint' and we'll walk through it.",
+    fr: 'Pas de souci — prends ton temps, ou dis « indice » et on avance ensemble.',
+    es: 'Tranqui — piénsalo o di "pista" y lo hacemos paso a paso.',
+    it: 'Nessun problema — pensaci un attimo o dì "aiuto" e proviamo insieme.',
   } as const;
   return map[locale];
 }

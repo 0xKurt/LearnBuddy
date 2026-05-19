@@ -114,6 +114,7 @@
     "not_found": "Profile not found.",
     "field_name": "Display name",
     "birth_date_hint": "Date of birth {{date}} (can only be changed via a data request)",
+    "birth_date_immutable": "Date of birth can only be changed via a data request.",
     "field_grade": "Year group",
     "saving": "Saving …",
     "save": "Save",

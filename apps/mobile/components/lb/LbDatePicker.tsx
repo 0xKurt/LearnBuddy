@@ -217,10 +217,14 @@ function WheelColumn({
   const ref = useRef<ScrollView>(null);
   const idx = Math.max(0, values.indexOf(selected));
 
+  // Re-snap whenever the target row changes — not just on length change.
+  // Without `idx` in deps, opening the picker after switching months left
+  // the day wheel on a stale index (e.g. user picked Feb 29 → switched to
+  // March → day stays visually on row 28).
   useEffect(() => {
     const id = setTimeout(() => ref.current?.scrollTo({ y: idx * ROW_H, animated: false }), 60);
     return () => clearTimeout(id);
-  }, [values.length]);
+  }, [idx, values.length]);
 
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>

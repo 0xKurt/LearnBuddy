@@ -15,7 +15,8 @@
     "body": "Non siamo riusciti a caricare il materiale. Riprova — se continua, controlla la connessione.",
     "retry": "Riprova",
     "back": "Indietro",
-    "unknown": "Errore sconosciuto"
+    "unknown": "Errore sconosciuto",
+    "max_retries": "Impossibile leggere questo materiale. Scatta nuove foto."
   },
   "insufficient_credits": {
     "title": "Crediti esauriti per ora.",
@@ -30,6 +31,7 @@
     "processing": "Avviene sui nostri server e di solito richiede meno di un minuto. Puoi aspettare o controllare la lista più tardi.",
     "slow_title": "Sta richiedendo un po' di più",
     "slow_body": "L'elaborazione continua in background. Controlla la lista materiali tra poco: comparirà quando è pronto.",
+    "check_again": "Controlla di nuovo",
     "failed_title": "Non ha funzionato",
     "failed_body": "Non siamo riusciti a leggere questo materiale. Riprova: le tue foto sono salvate."
   }

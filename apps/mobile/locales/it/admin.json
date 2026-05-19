@@ -114,6 +114,7 @@
     "not_found": "Profilo non trovato.",
     "field_name": "Nome visualizzato",
     "birth_date_hint": "Data di nascita {{date}} (modificabile solo tramite richiesta dati)",
+    "birth_date_immutable": "La data di nascita può essere modificata solo tramite una richiesta dati.",
     "field_grade": "Classe",
     "saving": "Salvataggio …",
     "save": "Salva",

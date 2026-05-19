@@ -33,6 +33,7 @@
     "name_label": "Name",
     "name_placeholder": "z.B. Klassenarbeit 14.06.",
     "date_label": "Termin (optional)",
+    "date_past": "Das Datum liegt in der Vergangenheit.",
     "archive": "Archivieren",
     "cancel": "Abbrechen",
     "save": "Speichern",

@@ -15,7 +15,8 @@
     "body": "Nous n'avons pas pu envoyer ton matériel. Réessaie — si ça continue, vérifie ta connexion.",
     "retry": "Réessayer",
     "back": "Retour",
-    "unknown": "Erreur inconnue"
+    "unknown": "Erreur inconnue",
+    "max_retries": "Impossible de lire ce support. Reprends des photos."
   },
   "insufficient_credits": {
     "title": "Plus de crédits pour le moment.",
@@ -30,6 +31,7 @@
     "processing": "Cela se passe sur nos serveurs et prend généralement moins d'une minute. Tu peux attendre ou revenir voir ta liste plus tard.",
     "slow_title": "Ça prend un peu plus de temps",
     "slow_body": "Le traitement continue en arrière-plan. Regarde ta liste de supports dans un instant — il apparaîtra une fois prêt.",
+    "check_again": "Vérifier à nouveau",
     "failed_title": "Ça n'a pas marché",
     "failed_body": "Nous n'avons pas pu lire ce support. Réessaie — tes photos sont enregistrées."
   }

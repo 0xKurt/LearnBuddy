@@ -24,14 +24,14 @@ export default function ProfileEditScreen() {
   const learner = accountQuery.data?.learner;
 
   const [name, setName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
 
   useEffect(() => {
     if (learner) {
       setName(learner.display_name ?? '');
-      setBirthDate(isoToDisplay(learner.birth_date) ?? '');
     }
   }, [learner]);
+
+  const birthDateDisplay = isoToDisplay(learner?.birth_date ?? null) ?? '—';
 
   const mut = useMutation({
     mutationFn: () =>
@@ -59,9 +59,7 @@ export default function ProfileEditScreen() {
       <Header title={t('profile_edit.title')} />
       <ScrollView contentContainerStyle={{ padding: 22, gap: 16 }}>
         <Field label={t('profile_edit.field_name')} value={name} onChange={setName} />
-        <Text style={{ fontSize: 12, color: LB.ink3 }}>
-          {t('profile_edit.birth_date_hint', { date: birthDate || '—' })}
-        </Text>
+        <ReadOnlyField label={birthDateDisplay} hint={t('profile_edit.birth_date_immutable')} />
         <View style={{ height: 8 }} />
         <Btn full onPress={() => mut.mutate()} disabled={mut.isPending}>
           {mut.isPending ? t('profile_edit.saving') : t('profile_edit.save')}
@@ -118,6 +116,31 @@ function Field({
           color: LB.ink,
         }}
       />
+    </View>
+  );
+}
+
+/** Read-only field for legally-immutable values (birth date, account email).
+ *  Visually obvious that it's not editable — no input affordance, dimmed,
+ *  with a hint explaining how to change it (via data request). */
+function ReadOnlyField({ label, hint }: { label: string; hint: string }) {
+  return (
+    <View style={{ gap: 6, opacity: 0.7 }}>
+      <View
+        style={{
+          backgroundColor: '#fff',
+          borderColor: LB.hairline,
+          borderWidth: 1,
+          borderRadius: 12,
+          paddingHorizontal: 12,
+          paddingVertical: 12,
+        }}
+        accessibilityRole="text"
+        accessibilityLabel={`${label}, ${hint}`}
+      >
+        <Text style={{ fontSize: 16, color: LB.ink }}>{label}</Text>
+      </View>
+      <Text style={{ fontSize: 11, color: LB.ink3 }}>{hint}</Text>
     </View>
   );
 }

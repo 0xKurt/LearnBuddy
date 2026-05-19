@@ -33,6 +33,7 @@
     "name_label": "Nome",
     "name_placeholder": "es. Verifica 14/06",
     "date_label": "Data (facoltativo)",
+    "date_past": "La data è nel passato.",
     "archive": "Archivia",
     "cancel": "Annulla",
     "save": "Salva",

@@ -25,8 +25,11 @@ export default function LearnerLayout() {
   const active = segmentToNavKey(tail);
   // The session (chat) and capture (camera) are focused, full-screen flows —
   // the global tab bar would be clutter and an escape hatch that bypasses
-  // their own exit affordances.
-  const hideNav = segments.includes('session') || segments.includes('capture');
+  // their own exit affordances. Cast via string[] because expo-router types
+  // useSegments() as a discriminated tuple union where .includes() rejects
+  // string literals not present in every branch.
+  const segs = segments as string[];
+  const hideNav = segs.includes('session') || segs.includes('capture');
 
   useHierarchicalBack();
 

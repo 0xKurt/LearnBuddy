@@ -9,6 +9,7 @@ export type ApiErrorCode =
   | 'subscription_required'
   | 'extraction_failed'
   | 'evaluation_failed'
+  | 'max_attempts_reached'
   | 'rate_limited'
   | 'not_educational'
   | 'not_implemented'
@@ -26,6 +27,7 @@ const HTTP_STATUS: Record<ApiErrorCode, number> = {
   subscription_required: 402,
   extraction_failed: 502,
   evaluation_failed: 502,
+  max_attempts_reached: 422,
   rate_limited: 429,
   not_educational: 422,
   not_implemented: 501,

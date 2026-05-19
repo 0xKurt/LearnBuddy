@@ -23,6 +23,7 @@ type Llm = ReturnType<typeof getDeps>['llm'];
 export type ExtractionDeps = { supabase: Supabase; llm: Llm; now: () => Date };
 
 export type ExtractionParams = {
+  job_id: string;
   account_id: string;
   learner_id: string;
   material_id: string;
@@ -34,7 +35,14 @@ export type ExtractionParams = {
 };
 
 export type ExtractionResult =
-  | { ok: true; items: unknown[]; study_assets: string[]; language: string; credits_used: number }
+  | {
+      ok: true;
+      items: unknown[];
+      study_assets: string[];
+      language: string;
+      credits_used: number;
+      swept?: true;
+    }
   | { ok: false; code: string; message: string };
 
 type DownloadedPhoto = {
@@ -60,10 +68,23 @@ async function downloadPhotos(
   return downloads.filter((d): d is DownloadedPhoto => d !== null);
 }
 
-async function markFailed(supabase: Supabase, material_id: string, reason: string): Promise<void> {
+async function markFailed(
+  supabase: Supabase,
+  material_id: string,
+  reason: string,
+  now: () => Date,
+): Promise<void> {
+  // Schedule photo wipe 7 days out even on failure — DSGVO §4 mandates the
+  // retention window is enforced regardless of extraction outcome. Without
+  // this, failed/abandoned materials leave raw photos in storage forever.
+  const wipeAt = new Date(now().getTime() + PHOTO_WIPE_DELAY_MS).toISOString();
   const upd = await supabase
     .from('materials')
-    .update({ extraction_status: 'failed', extraction_error: reason })
+    .update({
+      extraction_status: 'failed',
+      extraction_error: reason,
+      scheduled_photo_deletion_at: wipeAt,
+    })
     .eq('id', material_id);
   if (upd.error) {
     console.error(
@@ -126,7 +147,7 @@ export async function runExtraction(
   };
   const bail = async (code: string, message: string): Promise<ExtractionResult> => {
     await refund(supabase, p.account_id, debit);
-    await markFailed(supabase, p.material_id, message);
+    await markFailed(supabase, p.material_id, message, now);
     return { ok: false, code, message };
   };
 
@@ -238,6 +259,29 @@ export async function runExtraction(
 
   const updatedAt = now();
   const wipeAt = new Date(updatedAt.getTime() + PHOTO_WIPE_DELAY_MS).toISOString();
+
+  // Atomic commit: flip the job running→done before touching credits. If the
+  // sweep fired while Vertex was working, the job is already 'failed' and this
+  // update returns 0 rows. We still mark the material ready (user has items)
+  // but we SKIP settle — the sweep already refunded the pre-debit, so settling
+  // on top would hand the user (estimate − actual) credits for free.
+  const commit = await supabase
+    .from('extraction_jobs')
+    .update({
+      status: 'done',
+      finished_at: updatedAt.toISOString(),
+      updated_at: updatedAt.toISOString(),
+    })
+    .eq('id', p.job_id)
+    .eq('status', 'running')
+    .select('id');
+  const swept = ((commit.data as Array<{ id: string }> | null) ?? []).length === 0;
+  if (swept) {
+    console.warn(
+      `[extraction] sweep raced job ${p.job_id} — marking material ready without settle`,
+    );
+  }
+
   const ready = await supabase
     .from('materials')
     .update({
@@ -255,7 +299,9 @@ export async function runExtraction(
   if (ready.error) return bail('internal', 'finalize_failed');
 
   const actualCredits = Math.max(1, Math.round(vision.usage.cost_usd_micros / 100));
-  await settle(supabase, p.account_id, debit, actualCredits, vision.usage);
+  if (!swept) {
+    await settle(supabase, p.account_id, debit, actualCredits, vision.usage);
+  }
 
   return {
     ok: true,
@@ -263,5 +309,6 @@ export async function runExtraction(
     study_assets: Array.from(diagramOutcome.ids.values()),
     language: vision.detected_language ?? p.locale,
     credits_used: actualCredits,
+    ...(swept ? { swept: true as const } : {}),
   };
 }

@@ -114,6 +114,7 @@
     "not_found": "Perfil no encontrado.",
     "field_name": "Nombre visible",
     "birth_date_hint": "Fecha de nacimiento {{date}} (solo se puede cambiar mediante una solicitud de datos)",
+    "birth_date_immutable": "La fecha de nacimiento solo se puede cambiar mediante una solicitud de datos.",
     "field_grade": "Curso",
     "saving": "Guardando …",
     "save": "Guardar",

@@ -281,6 +281,147 @@ describe('POST /materials (enqueue) + worker drain', () => {
         ?.current_balance,
     ).toBe(balance); // unchanged — guarded
   });
+
+  it('retry rejects with 422 once max attempts is reached', async () => {
+    const s = await setup();
+    const { material_id } = await reserveMaterial(s, 1);
+    await enqueue(s, material_id, 1);
+
+    // Simulate three failed attempts (worker would have refunded each).
+    const job = s.fake.tables.get('extraction_jobs')?.find((j) => j.material_id === material_id);
+    if (job) {
+      job.status = 'failed';
+      job.attempts = 3;
+    }
+    const m0 = s.fake.tables.get('materials')?.find((r) => r.id === material_id);
+    if (m0) m0.extraction_status = 'failed';
+    const bucket = s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId);
+    if (bucket) bucket.current_balance = 1480; // refunded back to post-debit state
+
+    const retry = await s.app.request(`/materials/${material_id}/retry`, {
+      method: 'POST',
+      headers: authed(s),
+    });
+    expect(retry.status).toBe(422);
+    const body = (await retry.json()) as { error: { code: string } };
+    expect(body.error.code).toBe('max_attempts_reached');
+    // No re-debit on rejection.
+    expect(
+      s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId)
+        ?.current_balance,
+    ).toBe(1480);
+  });
+
+  // A1: sweep ↔ worker race. The sweep fires while extraction is mid-flight,
+  // flips the job to 'failed' and refunds the pre-debit. Worker must NOT then
+  // settle on top — that would hand the user (estimate − actual) free credits.
+  it('skips settle when the sweep flipped the job to failed mid-extraction', async () => {
+    const deps = createTestDeps();
+    const fake = getFake(deps);
+
+    // Wrap the LLM: right before returning, simulate the sweep by flipping
+    // the in-flight job from 'running' → 'failed' and crediting the refund,
+    // exactly as migration 0020's lb_sweep_stale_extractions() would.
+    const baseLlm = deps.llm;
+    deps.llm = {
+      ...baseLlm,
+      async visionExtractAndGenerate(input) {
+        const result = await baseLlm.visionExtractAndGenerate(input);
+        const job = fake.tables.get('extraction_jobs')?.find((j) => j.status === 'running');
+        if (job) {
+          job.status = 'failed';
+          job.last_error = 'stale_sweep';
+        }
+        const bucket = fake.tables
+          .get('credit_buckets')
+          ?.find((r) => Number.isFinite(r.current_balance as number));
+        if (bucket) bucket.current_balance = (bucket.current_balance as number) + 20; // sweep refund
+        return result;
+      },
+    } as typeof baseLlm;
+
+    const app = createApp({ deps });
+
+    const signup = await app.request('/auth/account/signup', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'sweep@example.com',
+        password: 'super-secret-1',
+        locale: 'de',
+        country_code: 'DE',
+      }),
+    });
+    const { user_id } = (await signup.json()) as { user_id: string };
+    const token = fake.authenticate(user_id, 'sweep@example.com');
+    const authHeader = { 'content-type': 'application/json', authorization: `Bearer ${token}` };
+
+    const learnerRes = await app.request('/learners', {
+      method: 'POST',
+      headers: authHeader,
+      body: JSON.stringify({
+        display_name: 'Ben',
+        birth_date: '1990-01-01',
+        grade_level: 13,
+        ui_locale: 'de',
+        avatar_id: 1,
+        preferred_answer_mode: 'voice',
+      }),
+    });
+    const learner = (await learnerRes.json()) as { id: string };
+    const learnerAuth = { ...authHeader, 'x-learner-id': learner.id };
+    const subjectRes = await app.request(`/learners/${learner.id}/subjects`, {
+      method: 'POST',
+      headers: learnerAuth,
+      body: JSON.stringify({ name: 'Mathe', subject_kind: 'math', color_hex: '#6B8AFD' }),
+    });
+    const subject = (await subjectRes.json()) as { id: string };
+
+    const reserved = await app.request('/materials/upload-url', {
+      method: 'POST',
+      headers: learnerAuth,
+      body: JSON.stringify({
+        subject_id: subject.id,
+        folder_id: null,
+        photo_count: 1,
+        mime_type: 'image/jpeg',
+      }),
+    });
+    const { material_id } = (await reserved.json()) as { material_id: string };
+    await app.request('/materials', {
+      method: 'POST',
+      headers: learnerAuth,
+      body: JSON.stringify({
+        material_id,
+        subject_id: subject.id,
+        folder_id: null,
+        title: 'Bruchrechnung',
+        locale: 'de',
+        client_quality_scores: scores(1),
+      }),
+    });
+
+    const balanceBefore = fake.tables
+      .get('credit_buckets')
+      ?.find((r) => Number.isFinite(r.current_balance as number))?.current_balance;
+    expect(balanceBefore).toBe(1480); // 1500 − 20 debit
+
+    await app.request('/materials-worker/drain', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-worker-secret': 'test-worker-secret' },
+    });
+
+    // Material got marked ready (the worker still completes the user's
+    // request) but credits land at 1500 — sweep refunded, settle was SKIPPED.
+    // Without the A1 fix this would have been 1500 + 19 = 1519 (the +15
+    // refund-difference handed out for free).
+    const m = fake.tables.get('materials')?.find((r) => r.id === material_id);
+    expect(m?.extraction_status).toBe('ready');
+    const balanceAfter = fake.tables
+      .get('credit_buckets')
+      ?.find((r) => Number.isFinite(r.current_balance as number))?.current_balance;
+    expect(balanceAfter).toBe(1500); // exact: sweep gave back the 20-credit pre-debit, nothing more
+  });
 });
 
 describe('GET /materials/:id', () => {

@@ -8,6 +8,7 @@ import { Alert, Modal, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { archiveFolder, createFolder, updateFolder } from '../../lib/api/folders.js';
+import { todayIso } from '../../lib/date.js';
 import { LB } from '../../lib/theme/colors.js';
 import { Btn } from './Btn.js';
 import { LbDatePicker } from './LbDatePicker.js';
@@ -61,6 +62,13 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
   });
 
   const isEdit = initial != null;
+  // A test date in the past makes no sense for "scheduled_for". The original
+  // value (when editing an existing folder) is allowed through unchanged so
+  // we don't force the user to fix a date they didn't touch — only freshly
+  // selected past dates are blocked.
+  const today = todayIso();
+  const originalDate = initial?.scheduled_for ?? null;
+  const dateIsPast = date != null && date < today && date !== originalDate;
   const submit = () => (isEdit ? updateMut.mutate() : createMut.mutate());
   const pending = createMut.isPending || updateMut.isPending;
 
@@ -95,6 +103,8 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
               value={date}
               onChange={setDate}
               clearable
+              error={dateIsPast}
+              errorMessage={dateIsPast ? t('folder_editor.date_past') : undefined}
               accessibilityLabel={t('folder_editor.date_label')}
             />
           </View>
@@ -114,7 +124,7 @@ export function FolderEditorModal({ visible, subjectId, initial, onClose }: Prop
               </Btn>
             </View>
             <View style={{ flex: 2 }}>
-              <Btn full onPress={submit} disabled={pending || !name.trim()}>
+              <Btn full onPress={submit} disabled={pending || !name.trim() || dateIsPast}>
                 {pending
                   ? t('folder_editor.pending')
                   : isEdit

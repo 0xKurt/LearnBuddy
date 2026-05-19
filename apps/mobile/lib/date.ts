@@ -40,12 +40,23 @@ export function todayParts(now: Date = new Date()): DateParts {
   return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
 }
 
-/** Whole years between `iso` and `now`. Used for the GDPR under-16 check. */
+/** Today as a `YYYY-MM-DD` ISO string, local timezone. Use for inclusive
+ *  min/max bounds on date pickers (e.g. "tests can't be scheduled in the
+ *  past"). Lexical compare on these strings works because the format is
+ *  zero-padded and fixed-width. */
+export function todayIso(now: Date = new Date()): string {
+  return toIso(todayParts(now));
+}
+
+/** Whole years between `iso` and `now`. Used for the GDPR under-16 check.
+ *  UTC-anchored to match the server: a learner whose 16th birthday is "today"
+ *  in their local timezone but still "yesterday" in UTC must read as 15 on both
+ *  client and server, otherwise the minor-consent flow forks on a TZ boundary. */
 export function ageInYears(iso: string, now: Date = new Date()): number {
   const { year, month, day } = parseIso(iso);
-  let age = now.getFullYear() - year;
+  let age = now.getUTCFullYear() - year;
   const beforeBirthday =
-    now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day);
+    now.getUTCMonth() + 1 < month || (now.getUTCMonth() + 1 === month && now.getUTCDate() < day);
   if (beforeBirthday) age -= 1;
   return age;
 }
