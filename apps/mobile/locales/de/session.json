@@ -44,7 +44,8 @@
   "verdict": {
     "correct": "Genau!",
     "partially_correct": "Fast richtig",
-    "incorrect": "Noch nicht ganz"
+    "incorrect": "Noch nicht ganz",
+    "skipped": "Schauen wir's zusammen an"
   },
   "placeholder": {
     "answer": "Antwort",

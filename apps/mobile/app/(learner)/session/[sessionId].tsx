@@ -371,7 +371,11 @@ export default function SessionScreen() {
           patchMsg(tutorMsgId, { streaming: false, verdict });
           // Count a real, completed attempt (drives the "skip" affordance).
           setTries((n) => n + 1);
-          if (verdict === 'correct') setCanAdvance(true);
+          // Advance on a real success OR once the item is closed out
+          // (gave up / tutor revealed it). Decoupling "Weiter" from
+          // 'correct' removes the pressure that made the model fake a
+          // "Genau!" just so the learner could move on.
+          if (verdict === 'correct' || verdict === 'skipped') setCanAdvance(true);
         }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {

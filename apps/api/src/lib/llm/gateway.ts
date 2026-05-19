@@ -199,7 +199,7 @@ export type ConverseTurnInput = {
 };
 
 export type ConverseTurnResult = {
-  verdict: 'correct' | 'partially_correct' | 'incorrect';
+  verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
   /** The learner-visible reply (control line already stripped). */
   reply: string;
   /** True when the reply contained a new hint (for staircase accounting). */

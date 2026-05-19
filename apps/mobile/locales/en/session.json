@@ -44,7 +44,8 @@
   "verdict": {
     "correct": "Spot on!",
     "partially_correct": "Almost there",
-    "incorrect": "Not quite yet"
+    "incorrect": "Not quite yet",
+    "skipped": "Let's look at it together"
   },
   "placeholder": {
     "answer": "Answer",

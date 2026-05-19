@@ -5,15 +5,17 @@
 
 import type { ConversationTurn, Item } from '@learnbuddy/shared-types';
 
-// The shared Verdict includes 'skipped'; the tutor never returns it, but a
-// resumed thread might. Collapse it to the 3 values the UI renders.
-export type DisplayVerdict = 'correct' | 'partially_correct' | 'incorrect';
+// 'skipped' is now a first-class, honest verdict: the student gave up / the
+// tutor revealed the answer. It must stay distinct from 'incorrect' (an
+// attempted wrong answer) so the chip copy and the "Weiter" gate can be
+// truthful — never show "Genau!" for a give-up.
+export type DisplayVerdict = 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
 
 export function normVerdict(
   v: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null | undefined,
 ): DisplayVerdict | undefined {
-  if (v === 'correct' || v === 'partially_correct' || v === 'incorrect') return v;
-  if (v === 'skipped') return 'incorrect';
+  if (v === 'correct' || v === 'partially_correct' || v === 'incorrect' || v === 'skipped')
+    return v;
   return undefined;
 }
 
@@ -28,11 +30,16 @@ export function buildResumeTranscript(
   turns: ConversationTurn[],
   items: Item[],
 ): { messages: ResumeMsg[]; startIdx: number } {
-  // Resume at the first item with no 'correct' tutor turn yet.
-  const correctItem = new Set(
-    turns.filter((t) => t.role === 'tutor' && t.verdict === 'correct').map((t) => t.item_id),
+  // Resume at the first item that hasn't been closed out yet — either
+  // answered correctly OR given up on (skipped/revealed). Without the
+  // skipped case the learner would resume forever on a question they
+  // already gave up.
+  const closedItem = new Set(
+    turns
+      .filter((t) => t.role === 'tutor' && (t.verdict === 'correct' || t.verdict === 'skipped'))
+      .map((t) => t.item_id),
   );
-  let startIdx = items.findIndex((it) => !correctItem.has(it.id));
+  let startIdx = items.findIndex((it) => !closedItem.has(it.id));
   if (startIdx < 0) startIdx = items.length;
 
   // Be robust to unordered input — the natural order is turn_index.

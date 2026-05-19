@@ -23,6 +23,7 @@ import type {
   VisionInput,
   VisionResult,
 } from '../lib/llm/gateway.js';
+import { isNonAnswer } from '../lib/give-up.js';
 
 const FAKE_USAGE = {
   input_tokens: 0,
@@ -159,6 +160,7 @@ export class FakeLlmGateway implements LLMGateway {
       isCorrect = said === String(item.mcCorrectIndex);
     }
 
+    const gaveUp = !isCorrect && isNonAnswer(input.learnerMessage);
     const canReveal = input.hintsGivenForItem >= 2;
     let reply: string;
     let verdict: ConverseTurnResult['verdict'];
@@ -168,10 +170,15 @@ export class FakeLlmGateway implements LLMGateway {
       verdict = 'correct';
     } else if (input.testMode) {
       reply = 'Alles klar, notiert. Weiter geht es.';
-      verdict = 'incorrect';
+      verdict = gaveUp ? 'skipped' : 'incorrect';
     } else if (canReveal) {
       reply = `Kein Problem. Die Lösung ist: ${item.expectedAnswer}. Das merkst du dir bestimmt.`;
-      verdict = 'incorrect';
+      // A reveal is never the student's own answer.
+      verdict = gaveUp ? 'skipped' : 'incorrect';
+    } else if (gaveUp) {
+      reply = 'Kein Stress — denk nochmal in Ruhe nach, ich helf dir Schritt für Schritt.';
+      verdict = 'skipped';
+      gaveHint = true;
     } else {
       reply = 'Noch nicht ganz — lies die Frage nochmal in Ruhe, du bist nah dran.';
       verdict = 'incorrect';

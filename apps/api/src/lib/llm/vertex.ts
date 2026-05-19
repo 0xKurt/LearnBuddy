@@ -458,7 +458,11 @@ export class VertexLlmGateway implements LLMGateway {
     const visible = (sentinelIdx === -1 ? full : full.slice(0, sentinelIdx)).replace(/\s+$/u, '');
     if (onToken && visible.length > emitted) onToken(visible.slice(emitted));
 
-    let verdict: ConverseTurnResult['verdict'] = 'partially_correct';
+    // Default on a missing/garbled control line is 'incorrect', NOT
+    // 'partially_correct': an unparseable verdict must never silently count
+    // as a near-pass / "secure" on the result screen. The route also applies
+    // a deterministic give-up guard on top of whatever the model claims.
+    let verdict: ConverseTurnResult['verdict'] = 'incorrect';
     let gaveHint = false;
     if (sentinelIdx !== -1) {
       const tail = full.slice(sentinelIdx + TUTOR_SENTINEL.length).trim();
@@ -467,16 +471,17 @@ export class VertexLlmGateway implements LLMGateway {
         if (
           ctrl.verdict === 'correct' ||
           ctrl.verdict === 'partially_correct' ||
-          ctrl.verdict === 'incorrect'
+          ctrl.verdict === 'incorrect' ||
+          ctrl.verdict === 'skipped'
         ) {
           verdict = ctrl.verdict;
         }
         gaveHint = ctrl.hint === true;
       } catch {
-        console.warn('[tutor] control line unparseable; defaulting verdict=partially_correct');
+        console.warn('[tutor] control line unparseable; defaulting verdict=incorrect');
       }
     } else {
-      console.warn('[tutor] no control line in reply; defaulting verdict=partially_correct');
+      console.warn('[tutor] no control line in reply; defaulting verdict=incorrect');
     }
 
     return {

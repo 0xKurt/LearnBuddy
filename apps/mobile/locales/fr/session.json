@@ -44,7 +44,8 @@
   "verdict": {
     "correct": "Pile dedans !",
     "partially_correct": "Presque",
-    "incorrect": "Pas encore tout à fait"
+    "incorrect": "Pas encore tout à fait",
+    "skipped": "Regardons ça ensemble"
   },
   "placeholder": {
     "answer": "Réponse",

@@ -265,4 +265,50 @@ describe('POST /sessions/:id/turn', () => {
       true,
     );
   });
+
+  // ── Grading invariants (the "Weiss nicht → Genau!" class of bug) ─────────
+
+  it('NEVER grades a give-up ("Weiss nicht") as correct/partially_correct', async () => {
+    const s = await setup();
+    const session = seedSession(s);
+    const item = seedItem(s);
+
+    const ev = await turn(s, session, item, C1, { text: 'Weiss nicht' });
+    const verdict = ev.find((e) => e.type === 'verdict')?.verdict;
+    expect(verdict).toBe('skipped');
+    expect(verdict).not.toBe('correct');
+    expect(verdict).not.toBe('partially_correct');
+
+    const attempts = s.fake.tables.get('attempts') ?? [];
+    expect(attempts).toHaveLength(1);
+    expect(attempts[0]!.verdict).toBe('skipped');
+  });
+
+  it('give-up stays skipped even if the client mislabels it correct', async () => {
+    const s = await setup();
+    const session = seedSession(s);
+    const item = seedItem(s);
+
+    const ev = await turn(s, session, item, C1, {
+      text: 'keine Ahnung',
+      client_local_verdict: 'correct',
+    });
+    expect(ev.find((e) => e.type === 'verdict')?.verdict).toBe('skipped');
+    // Did NOT take the free local-correct fast path.
+    expect(ev.find((e) => e.type === 'done')?.credits_used as number).toBeGreaterThanOrEqual(1);
+  });
+
+  it('updates FSRS item_states on every online attempt (right or wrong)', async () => {
+    const s = await setup();
+    const session = seedSession(s);
+    const item = seedItem(s);
+
+    expect(s.fake.tables.get('item_states') ?? []).toHaveLength(0);
+    await turn(s, session, item, C1, { text: '5' }); // wrong
+    const states = s.fake.tables.get('item_states') ?? [];
+    expect(states).toHaveLength(1);
+    expect(states[0]!.item_id).toBe(item);
+    expect(states[0]!.learner_id).toBe(s.learnerId);
+    expect(typeof states[0]!.due).toBe('string');
+  });
 });
