@@ -88,6 +88,50 @@ describe('parseVisionPayload — truncation recovery', () => {
     }
   });
 
+  it('drops malformed problem_templates instead of failing the whole extraction', async () => {
+    // Real-world failure mode: Vertex emitted a problem_templates entry that
+    // was missing template_text/params/constraints/solution_expression/etc.
+    // Pre-fix the whole extraction died on Zod; now the malformed entry is
+    // dropped and the 3 valid items go through.
+    const payload = {
+      detected_language: 'de',
+      extracted_markdown: 'x',
+      items: [
+        JSON.parse(completeItem(1)),
+        JSON.parse(completeItem(2)),
+        JSON.parse(completeItem(3)),
+      ],
+      diagrams: [],
+      problem_templates: [{ topic: 'half-formed', difficulty: 2 }, { still: 'wrong' }],
+    };
+    const res = await parseVisionPayload(JSON.stringify(payload), { dropDiagrams: false });
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.items).toHaveLength(3);
+      expect(res.value.problem_templates).toHaveLength(0);
+    }
+  });
+
+  it('drops malformed diagrams the same way', async () => {
+    const payload = {
+      detected_language: 'de',
+      extracted_markdown: 'x',
+      items: [
+        JSON.parse(completeItem(1)),
+        JSON.parse(completeItem(2)),
+        JSON.parse(completeItem(3)),
+      ],
+      diagrams: [{ malformed: true }],
+      problem_templates: [],
+    };
+    const res = await parseVisionPayload(JSON.stringify(payload), { dropDiagrams: false });
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.items).toHaveLength(3);
+      expect(res.value.diagrams).toHaveLength(0);
+    }
+  });
+
   it('passes through Markdown-fenced JSON', async () => {
     const payload = {
       detected_language: 'en',

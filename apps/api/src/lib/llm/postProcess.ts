@@ -108,12 +108,18 @@ const VisionTemplateSchema = z
   })
   .passthrough();
 
+// Top-level schema deliberately keeps `diagrams` and `problem_templates` as
+// `z.unknown()` arrays — we per-entry safe-parse them below and drop
+// malformed ones, so a single half-emitted template / diagram from Vertex
+// can no longer fail the whole extraction (seen live: a template missing
+// `template_text` + 6 other required fields killed an otherwise-valid
+// 8-item payload).
 const VisionPayloadSchema = z.object({
   detected_language: z.enum(['de', 'en', 'fr', 'es', 'it']).nullable(),
   extracted_markdown: z.string(),
   items: z.array(VisionItemSchema),
-  diagrams: z.array(VisionDiagramSchema).default([]),
-  problem_templates: z.array(VisionTemplateSchema).default([]),
+  diagrams: z.array(z.unknown()).default([]),
+  problem_templates: z.array(z.unknown()).default([]),
   error: z.enum(['not_educational', 'unreadable']).nullable().default(null),
 });
 
@@ -235,14 +241,29 @@ export async function parseVisionPayload(
     return rest;
   });
 
+  // Per-entry safe-parse for diagrams + problem_templates: drop the
+  // malformed ones, keep the rest. Vertex sometimes emits a half-formed
+  // template (missing template_text / params / constraints / …) inside an
+  // otherwise-valid response; pre-fix this would fail the whole extraction.
+  const diagrams: VisionDiagram[] = [];
+  for (const raw of parsed.data.diagrams) {
+    const r = VisionDiagramSchema.safeParse(raw);
+    if (r.success) diagrams.push(r.data as VisionDiagram);
+  }
+  const problem_templates: VisionProblemTemplate[] = [];
+  for (const raw of parsed.data.problem_templates) {
+    const r = VisionTemplateSchema.safeParse(raw);
+    if (r.success) problem_templates.push(r.data as VisionProblemTemplate);
+  }
+
   return {
     ok: true,
     value: {
       detected_language: parsed.data.detected_language,
       extracted_markdown: parsed.data.extracted_markdown,
       items,
-      diagrams: parsed.data.diagrams as VisionDiagram[],
-      problem_templates: parsed.data.problem_templates as VisionProblemTemplate[],
+      diagrams,
+      problem_templates,
       error: parsed.data.error,
     },
   };
