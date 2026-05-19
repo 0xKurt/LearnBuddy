@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn, EmptyState, LoadingState } from '../../../components/lb/index.js';
@@ -32,7 +32,6 @@ export default function MaterialScreen() {
   });
 
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
-  const [footerH, setFooterH] = useState(0);
 
   if (materialQuery.isError) {
     return (
@@ -115,11 +114,19 @@ export default function MaterialScreen() {
       </View>
 
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingBottom: (footerH || 120) + 16,
+          paddingBottom: 24,
           gap: 12,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={materialQuery.isFetching && !materialQuery.isLoading}
+            onRefresh={() => void materialQuery.refetch()}
+            tintColor={LB.ink2}
+          />
+        }
       >
         <Text style={{ fontSize: 26, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
           {material.title ?? tCommon('material.untitled')}
@@ -186,12 +193,7 @@ export default function MaterialScreen() {
       </ScrollView>
 
       <View
-        onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}
         style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
           paddingHorizontal: 20,
           paddingTop: 12,
           paddingBottom: Math.max(insets.bottom, 12),

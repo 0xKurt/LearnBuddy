@@ -36,8 +36,16 @@ export function daysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
+/** UTC-anchored to match the server. `todayIso()` and any consumer that
+ *  compares against server-issued ISO dates (e.g. folder `scheduled_for`,
+ *  age check) MUST agree on what "today" means across the TZ boundary —
+ *  see `ageInYears` below for the same reason. */
 export function todayParts(now: Date = new Date()): DateParts {
-  return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+  return {
+    year: now.getUTCFullYear(),
+    month: now.getUTCMonth() + 1,
+    day: now.getUTCDate(),
+  };
 }
 
 /** Today as a `YYYY-MM-DD` ISO string, local timezone. Use for inclusive

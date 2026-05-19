@@ -8,7 +8,7 @@
 // the server can record a verdict for FSRS / the result screen without a
 // second model call. The gateway strips that line before anyone sees it.
 
-export const PROMPT_VERSION_TUTOR = 'tutor.3';
+export const PROMPT_VERSION_TUTOR = 'tutor.4';
 
 // The control line the model must emit last. Chosen so it can never appear
 // in natural German/English/French/Spanish/Italian prose.
@@ -44,8 +44,9 @@ Pinned topic (if set below): keep the conversation focused on that topic; gently
 Output format — IMPORTANT:
 1. First, your natural reply to the student, in the target language. Nothing else on these lines.
 2. Then, on the VERY LAST line, exactly this control line and nothing after it:
-${TUTOR_SENTINEL}{"verdict":"correct"|"partially_correct"|"incorrect"|"skipped","hint":true|false}
-"hint" is true only if your reply contained a new hint (not a reveal, not pure praise). The student never sees this line.`;
+${TUTOR_SENTINEL}{"verdict":"correct"|"partially_correct"|"incorrect"|"skipped","hint":true|false[,"probe_assessment":"substantive"|"rephrased"|"gave_up"]}
+"hint" is true only if your reply contained a new hint (not a reveal, not pure praise). The student never sees this line.
+"probe_assessment" is OMITTED unless a probe-assessment instruction below explicitly asks for it.`;
 
 export type TutorItemContext = {
   question: string;
@@ -88,6 +89,64 @@ function kindContext(item: TutorItemContext): string {
   }
 }
 
+/** Phase A2 — progressive give-up modes. The give-up branch in
+ *  sessions.ts escalates as the learner repeats "weiß nicht" on the
+ *  same item: stock (strike 0) → gentle_scaffold (strike 1) →
+ *  gentle_reveal (strike 2) → pivot (strike 3+). The two MIDDLE moves
+ *  go through the tutor; this fragment tells the model what to do. */
+export type GiveUpMode = 'gentle_scaffold' | 'gentle_reveal' | null;
+
+export function buildGiveUpModeFragment(mode: GiveUpMode): string | null {
+  if (mode === 'gentle_scaffold') {
+    return [
+      '— Give-up mode: gentle_scaffold —',
+      'The student has just said "I don\'t know" for the SECOND time in a row on this item.',
+      'Do NOT ask another open question. Do NOT give a broad nudge — that already failed twice.',
+      'Pick ONE concrete, small entry point from the Study material — a definition, a single symbol from the question, or the simplest sub-step. Ask about THAT specifically.',
+      'One sentence. Reduce cognitive load, do not add to it. Do NOT reveal the full answer yet.',
+    ].join('\n');
+  }
+  if (mode === 'gentle_reveal') {
+    return [
+      '— Give-up mode: gentle_reveal —',
+      'The student has given up THREE times in a row on this item. Time to lower the stakes.',
+      'Reveal the answer kindly, grounded in the Study material. State it as a fact about the material, not as a judgment on the student.',
+      'Then offer two short choices: "Sollen wir das nochmal ganz langsam durchgehen, oder magst du was anderes probieren?" (adapt to the locale).',
+      'Two short sentences total. Warm. The verdict is "skipped" — do NOT say the student was wrong.',
+    ].join('\n');
+  }
+  return null;
+}
+
+/** Phase D2 — probe-response assessment. When the previous tutor turn
+ *  was a probe (confidence_probe / wrong_example_probe / self_explanation_prompt)
+ *  the current learner message IS the probe response. We attach this
+ *  fragment to the system prompt so the model classifies the response
+ *  alongside its normal reply.
+ *
+ *  L1 note: the model labels the WORK ("substantive reasoning",
+ *  "restated the answer", "gave up") — never the learner. The
+ *  classification stays in the control line and is never echoed to
+ *  the student in any form. */
+export type ProbeAssessmentMove =
+  | 'confidence_probe'
+  | 'wrong_example_probe'
+  | 'self_explanation_prompt';
+
+export function buildProbeAssessmentFragment(move: ProbeAssessmentMove | null): string | null {
+  if (!move) return null;
+  const flavor =
+    move === 'wrong_example_probe'
+      ? 'Your previous turn proposed a near-miss ("if someone had said X, would that be right?"). Classify the learner\'s response: did they explain WHY the wrong example is wrong (substantive), did they just say yes/no without reasoning (rephrased), or did they give up?'
+      : 'Your previous turn asked the learner to explain WHY the answer is right. Classify their response: real reasoning that names the rule or principle (substantive), restatement of the answer in different words (rephrased), or "idk"/empty/shrug (gave_up).';
+  return [
+    '— Probe-assessment mode for this turn —',
+    flavor,
+    'In the control line, INCLUDE the field "probe_assessment":"substantive"|"rephrased"|"gave_up". Do NOT mention this classification in your visible reply to the learner.',
+    'The visible reply still follows the normal warmth/format rules — react to the response naturally, then move on.',
+  ].join('\n');
+}
+
 export function buildTutorSystemInstruction(ctx: {
   item: TutorItemContext;
   learnerName: string | null;
@@ -97,11 +156,62 @@ export function buildTutorSystemInstruction(ctx: {
   pinnedTopic: string | null;
   hintsGivenForItem: number;
   materialContext?: string | null;
+  /** Phase A1: optional rubric fragment that shapes praise tone for THIS
+   *  turn. Only meaningful when the turn ends up with verdict='correct'.
+   *  L1: never names the learner — it instructs HOW to praise, not WHO
+   *  the learner is. */
+  praiseRubric?: string | null;
+  /** Phase A2: progressive give-up mode. When set, this turn is the
+   *  scaffold or reveal step in the give-up escalation. */
+  giveUpMode?: GiveUpMode;
+  /** Phase A3: pre-rendered "Recent rhythm" observations block. The
+   *  caller builds this from the runtime signal; we just splice it in
+   *  before the praise rubric. L1 invariant: this block must contain
+   *  observations only, never analytical labels. */
+  recentRhythm?: string | null;
+  /** Phase B (B3): the strategy selector's chosen move fragment. Goes
+   *  AFTER praise + give-up but BEFORE any closing material. Null
+   *  means `continue_natural` — the model uses its base rules
+   *  unmodified. */
+  moveFragment?: string | null;
+  /** Phase C3: "From last time" block — the prior session's narrative
+   *  arc + active misconceptions. Injected on the first ~5 turns of a
+   *  session that has a prior episode. The tutor uses this to make
+   *  natural connections; it never echoes the block back at the
+   *  learner verbatim. L1: observations only. */
+  fromLastTime?: string | null;
+  /** Phase D2: when set, the previous tutor turn was a probe; this turn
+   *  classifies the learner's reasoning quality alongside its normal
+   *  verdict. */
+  probeAssessmentMove?: ProbeAssessmentMove | null;
 }): string {
   const k = kindContext(ctx.item);
   const material = ctx.materialContext?.trim()
     ? `\n\n— Study material (the worksheet this question is from) —\n${ctx.materialContext.trim()}`
     : '';
+  const praise = ctx.praiseRubric?.trim() ? `\n\n${ctx.praiseRubric.trim()}` : '';
+  const giveUp = (() => {
+    const f = buildGiveUpModeFragment(ctx.giveUpMode ?? null);
+    return f ? `\n\n${f}` : '';
+  })();
+  const rhythm = ctx.recentRhythm?.trim() ? `\n\n${ctx.recentRhythm.trim()}` : '';
+  // Phase B3: the chosen pedagogical move's fragment. Goes LAST so it's
+  // closest to the model's "current task". If the selector picked
+  // continue_natural, moveFragment is null and nothing is appended.
+  const move = ctx.moveFragment?.trim() ? `\n\n${ctx.moveFragment.trim()}` : '';
+  // Phase D2: probe-assessment fragment goes AFTER the move fragment so
+  // when the selector picked continue_natural (typical for probe-response
+  // turns) the assessment instruction is the model's primary task.
+  const probeAssess = (() => {
+    const f = buildProbeAssessmentFragment(ctx.probeAssessmentMove ?? null);
+    return f ? `\n\n${f}` : '';
+  })();
+  // Phase C3: continuity block. Same L1 rules as recentRhythm — the
+  // block carries observations from the reflective layer's summary,
+  // never an analytical label about the learner. Goes EARLY in the
+  // prompt (alongside the question context) so it shapes everything
+  // the model produces — including praise and hint choice.
+  const lastTime = ctx.fromLastTime?.trim() ? `\n\n${ctx.fromLastTime.trim()}` : '';
   return `${SYSTEM_TUTOR}
 
 — Current question context —
@@ -116,5 +226,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${lastTime}${rhythm}${praise}${giveUp}${move}${probeAssess}`;
 }

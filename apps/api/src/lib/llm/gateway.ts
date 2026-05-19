@@ -202,6 +202,43 @@ export type ConverseTurnInput = {
   /** The worksheet text this question came from (clamped). Grounds hints in
    *  the real material instead of the tiny source excerpt. */
   materialContext?: string | null;
+  /** Phase A1: praise rubric fragment for THIS turn. Shapes the tone of
+   *  the model's praise IF the verdict ends up correct. Never references
+   *  the learner in first person — L1 invariant. Null/undefined when no
+   *  shaping needed (e.g. on a turn where verdict is clearly wrong). */
+  praiseRubric?: string | null;
+  /** Phase A2: when set, this turn is the scaffold or reveal step in
+   *  the progressive give-up escalation. Superseded by `moveFragment`
+   *  in Phase B but kept for back-compat. */
+  giveUpMode?: 'gentle_scaffold' | 'gentle_reveal' | null;
+  /** Phase A3: rendered "Recent rhythm" block — observations from the
+   *  runtime signal (verdict streak, latency trend, message length).
+   *  Critically: never carries analytical labels; the model sees raw
+   *  observations and forms its own pedagogical response. */
+  recentRhythm?: string | null;
+  /** Phase B (B3): the chosen pedagogical move's prompt fragment.
+   *  Picked by `lib/strategy/select.ts` from the move registry. Spliced
+   *  into the system prompt under a "Mode for this turn" header. Null
+   *  when the selector picked `continue_natural` (no shaping — model
+   *  uses base rules). */
+  moveFragment?: string | null;
+  /** Phase C3: "From last time" continuity block — narrative arc from
+   *  the most recent learner_episode plus active misconceptions. Only
+   *  injected on the first ~5 turns of a session that has a prior
+   *  episode. Null otherwise. */
+  fromLastTime?: string | null;
+  /** Phase D2: when set, the previous tutor turn was a probe
+   *  (confidence_probe / wrong_example_probe / self_explanation_prompt)
+   *  and the current learner message is the probe RESPONSE. The model
+   *  classifies the reasoning quality alongside its normal verdict. */
+  probeContext?: ProbeContext | null;
+};
+
+export type ProbeMove = 'confidence_probe' | 'wrong_example_probe' | 'self_explanation_prompt';
+export type ProbeQuality = 'substantive' | 'rephrased' | 'gave_up';
+
+export type ProbeContext = {
+  probeMove: ProbeMove;
 };
 
 export type ConverseTurnResult = {
@@ -210,6 +247,9 @@ export type ConverseTurnResult = {
   reply: string;
   /** True when the reply contained a new hint (for staircase accounting). */
   gaveHint: boolean;
+  /** Phase D2: present iff `probeContext` was set on the input. The
+   *  model's classification of the learner's reasoning quality. */
+  probeAssessment?: ProbeQuality | null;
   usage: VisionResult['usage'];
 };
 
@@ -221,6 +261,33 @@ export type TranscribeInput = {
 
 export type TranscribeResult = {
   text: string;
+  usage: VisionResult['usage'];
+};
+
+/** Phase C1: reflective summary input. One LLM call per finished
+ *  session. Output is a LearnerEpisode JSON that drives the next
+ *  session's opener + the tutor's "from last time" prompt block. */
+export type ReflectSessionInput = {
+  transcript: ReadonlyArray<{
+    role: 'learner' | 'tutor';
+    verdict?: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
+    item_topic?: string | null;
+    content: string;
+  }>;
+  durationMinutes: number;
+};
+
+export type ReflectSessionResult = {
+  one_sentence_arc: string;
+  concepts_touched: string[];
+  high_points: string[];
+  low_points: string[];
+  hypothesized_misconceptions: Array<{
+    concept_tag: string;
+    description: string;
+    confidence: number;
+  }>;
+  open_questions: string[];
   usage: VisionResult['usage'];
 };
 
@@ -238,4 +305,7 @@ export interface LLMGateway {
   /** Speech-to-text for voice turns (robust fallback independent of any
    *  on-device recognizer). */
   transcribeAudio(input: TranscribeInput): Promise<TranscribeResult>;
+  /** Phase C1: post-session reflection. Off the learner's critical path
+   *  (fire-and-forget from the /finish endpoint). */
+  reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult>;
 }

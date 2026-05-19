@@ -22,9 +22,25 @@ import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
-import { isNonAnswer } from '../lib/give-up.js';
+import { countTrailingSkipsOnItem, isNonAnswer } from '../lib/give-up.js';
+import {
+  buildRecentRhythmFragment,
+  computeRuntimeSignal,
+  type SignalTurn,
+} from '../lib/learner-state/runtime-signal.js';
 import { loadMaterialContext } from '../lib/material-context.js';
 import type { ConversationMessage } from '../lib/llm/gateway.js';
+import {
+  buildPraiseFastPath,
+  buildPraiseRubricFragment,
+  classifyPraise,
+  type Locale,
+} from '../lib/praise/build-praise-context.js';
+import { reflectAndPersistSession } from '../lib/reflective/session-reflect.js';
+import { buildOpener, type OpenerLocale } from '../lib/reflective/session-opener.js';
+import { selectMove } from '../lib/strategy/select.js';
+import type { SelectorContext } from '../lib/strategy/moves.js';
+import { captureApiError } from '../lib/sentry.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -84,9 +100,43 @@ sessionRoutes.post(
       });
     }
 
+    // Phase C2: warm session opener. If we have a prior learner_episode,
+    // pick a tone-appropriate template referencing the material (never
+    // the learner). For the very first session ever, opener is null and
+    // the client falls into the first item silently.
+    let opener: string | null = null;
+    try {
+      const prior = await supabase
+        .from('learner_episodes')
+        .select('one_sentence_arc, concepts_touched, high_points, low_points')
+        .eq('learner_id', learner_id)
+        .order('ended_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const ep = prior.data as {
+        one_sentence_arc: string;
+        concepts_touched: string[];
+        high_points: string[];
+        low_points: string[];
+      } | null;
+      if (ep) {
+        const learnerRow = await supabase
+          .from('learners')
+          .select('ui_locale')
+          .eq('id', learner_id)
+          .maybeSingle();
+        const locale = ((learnerRow.data as { ui_locale: string | null } | null)?.ui_locale ??
+          'de') as OpenerLocale;
+        opener = buildOpener(ep, locale);
+      }
+    } catch (err) {
+      console.warn(`[opener] failed to build: ${err instanceof Error ? err.message : err}`);
+    }
+
     return c.json({
       session_id: (sess.data as { id: string }).id,
       items: picked,
+      opener,
     });
   },
 );
@@ -189,7 +239,7 @@ async function pickItems(
 }
 
 sessionRoutes.patch('/:id/finish', async (c) => {
-  const { supabase, now } = getDeps(c);
+  const { supabase, llm, now } = getDeps(c);
   const learner_id = c.get('learner_id');
   if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
   const session_id = c.req.param('id');
@@ -205,6 +255,14 @@ sessionRoutes.patch('/:id/finish', async (c) => {
     throw new ApiError('internal', 'Failed to finish session', { cause: upd.error.message });
   }
   if (!upd.data) throw new ApiError('not_found', 'Session not found');
+
+  // Phase C1: fire-and-forget reflective summary. We DO NOT await
+  // because the learner's "Fertig" tap returns immediately. The
+  // module is best-effort — failures land in Sentry, never block.
+  void reflectAndPersistSession({ supabase, llm, now }, { session_id, learner_id }).catch((err) =>
+    console.error(`[reflect] uncaught: ${err instanceof Error ? err.message : err}`),
+  );
+
   return c.json(upd.data);
 });
 
@@ -448,6 +506,7 @@ type TurnRow = {
   content: string;
   verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
   item_id: string | null;
+  created_at: string | null;
 };
 
 sessionRoutes.post(
@@ -591,6 +650,12 @@ sessionRoutes.post(
       }
 
       // 5. Build the thread + hint accounting from prior turns.
+      // NOTE: `activeMisconception` is declared up-front (not inside the
+      // tutor-path block where it's COMPUTED) because recordAttempt's
+      // closure reads it for the resolution mechanic and the fast path
+      // calls recordAttempt before the tutor-path block runs. Declared
+      // with a null default so the fast path is a no-op for resolution.
+      let activeMisconception: SelectorContext['activeMisconception'] = null;
       const turns = await loadTurns(supabase, session_id);
       const nextIndex = turns.reduce((mx, t) => Math.max(mx, t.turn_index), -1) + 1;
       const convoTurns = turns.filter(
@@ -623,6 +688,70 @@ sessionRoutes.post(
             t.verdict === 'partially_correct' ||
             t.verdict === 'skipped'),
       ).length;
+
+      // Phase A1: count prior wrong (or skipped) learner attempts on THIS
+      // item. A non-zero count + correct now = "self_corrected" praise —
+      // the metacognitive move we most want to reinforce.
+      const priorWrongAttemptsOnItem = turns.filter(
+        (t) =>
+          t.role === 'tutor' &&
+          t.item_id === input.item_id &&
+          (t.verdict === 'incorrect' || t.verdict === 'skipped'),
+      ).length;
+
+      // Phase A3: compute the runtime signal from the session's turns.
+      // Pure derivation, no LLM call. Used both for the strategy / picker
+      // overrides (Phase B) and for the "Recent rhythm" prompt block.
+      // We pull difficulty + topic for every item referenced in turns in
+      // one batch so the signal can roll up by topic and gauge ceiling.
+      const itemIdsInTurns = Array.from(
+        new Set(
+          turns
+            .map((t) => t.item_id as string | null)
+            .filter((id): id is string => typeof id === 'string'),
+        ),
+      );
+      const itemDifficulty = new Map<string, number>();
+      const itemTopic = new Map<string, string | null>();
+      if (itemIdsInTurns.length > 0) {
+        const itemsRes = await supabase
+          .from('items')
+          .select('id, difficulty, topic')
+          .in('id', itemIdsInTurns);
+        for (const row of (itemsRes.data ?? []) as Array<{
+          id: string;
+          difficulty: number | null;
+          topic: string | null;
+        }>) {
+          itemDifficulty.set(row.id, row.difficulty ?? 2);
+          itemTopic.set(row.id, row.topic ?? null);
+        }
+      }
+      // Also include the current item's metadata (it may not appear in
+      // `turns` yet — first attempt).
+      itemDifficulty.set(input.item_id, Number(item.difficulty ?? 2));
+      itemTopic.set(input.item_id, (item.topic as string | null) ?? null);
+
+      const sessionStartedAt = (session.created_at as string | undefined) ?? now().toISOString();
+      const signalTurns: SignalTurn[] = turns.map((t) => ({
+        role: t.role as 'learner' | 'tutor',
+        item_id: t.item_id ?? null,
+        verdict: t.role === 'tutor' ? ((t.verdict as SignalTurn['verdict']) ?? null) : null,
+        created_at: (t.created_at as string | undefined) ?? new Date().toISOString(),
+        content_length: t.role === 'learner' ? (t.content?.length ?? 0) : undefined,
+      }));
+      const runtimeSignal = computeRuntimeSignal({
+        turns: signalTurns,
+        itemDifficulty,
+        itemTopic,
+        sessionStartedAt,
+        now: now(),
+      });
+      const recentVerdicts = turns
+        .filter((t) => t.role === 'tutor')
+        .map((t) => (t.verdict as SignalTurn['verdict']) ?? null)
+        .slice(-5);
+      const recentRhythm = buildRecentRhythmFragment(runtimeSignal, recentVerdicts);
 
       const learnerRow = await supabase
         .from('learners')
@@ -714,60 +843,173 @@ sessionRoutes.post(
             .eq('item_id', input.item_id)
             .maybeSingle();
           const prev = (prevState.data as ItemStateRow | null) ?? null;
-          const next = applyAttempt(prev, verdict, reviewedAt);
+          // Phase A5: effort-aware FSRS. A correct after hints / prior
+          // wrong attempts is Hard, not Good — it resurfaces sooner.
+          const next = applyAttempt(prev, verdict, reviewedAt, {
+            hintsUsed: hintsGivenForItem,
+            priorWrongAttempts: priorWrongAttemptsOnItem,
+          });
           const ups = await supabase
             .from('item_states')
             .upsert({ item_id: input.item_id, learner_id, ...next }, { onConflict: 'item_id' });
           if (ups.error) {
             console.error(`[sessions] item_states upsert failed: ${ups.error.message}`);
+            captureApiError(new Error(`session item_states upsert failed: ${ups.error.message}`), {
+              learner_id,
+              item_id: input.item_id,
+              session_id,
+            });
+          }
+
+          // Phase C resolution mechanic: a COLD correct on a topic that
+          // matches an active recurring misconception is the signal we
+          // promote that misconception to resolved. "Cold" = no hints,
+          // no prior wrong attempts — the learner just solved it
+          // unscaffolded. The misconception isn't deleted; we keep the
+          // row + bump resolved_at so future selector queries skip it.
+          if (
+            verdict === 'correct' &&
+            hintsGivenForItem === 0 &&
+            priorWrongAttemptsOnItem === 0 &&
+            activeMisconception
+          ) {
+            await supabase
+              .from('recurring_misconceptions')
+              .update({ resolved_at: reviewedAt.toISOString() })
+              .eq('learner_id', learner_id)
+              .eq('concept_tag', activeMisconception.concept_tag)
+              .is('resolved_at', null);
           }
         }
       };
 
-      // 5.5. Give-up path: the learner said "weiss nicht" / "idk" / hit send
-      //      on whitespace. We DON'T need the tutor model to tell us that
-      //      isn't an attempt — debiting and waiting on Gemini would burn
-      //      credits for an answer we're about to override to 'skipped'
-      //      anyway. Reply with a stock encouragement, count it as a hint
-      //      slot via the staircase, and move on. 0 credits.
+      // Phase D2: detect whether the previous tutor turn was a probe.
+      // Needed in BOTH the give-up short-circuit and the normal LLM path,
+      // so we look it up once up-front. Missing table / RLS issue / network
+      // blip — fall back to null (no probe context attached).
+      let previousProbeMove:
+        | 'confidence_probe'
+        | 'wrong_example_probe'
+        | 'self_explanation_prompt'
+        | null = null;
+      try {
+        const lastDecRes = await supabase
+          .from('strategy_decisions')
+          .select('move_id, turn_index')
+          .eq('session_id', session_id)
+          .order('turn_index', { ascending: false })
+          .limit(1);
+        const lastMove = (lastDecRes?.data as Array<{ move_id: string }> | undefined)?.[0]?.move_id;
+        if (
+          lastMove === 'confidence_probe' ||
+          lastMove === 'wrong_example_probe' ||
+          lastMove === 'self_explanation_prompt'
+        ) {
+          previousProbeMove = lastMove;
+        }
+      } catch {
+        previousProbeMove = null;
+      }
+      const probeContext = previousProbeMove ? { probeMove: previousProbeMove } : null;
+
+      // 5.5. Give-up path: progressive escalation (Phase A2).
+      //   strike 0 (first "weiß nicht" on this item) → stock encouragement,
+      //              0 credits, no Vertex call. Same as the old behavior.
+      //   strike 1 (second in a row)                  → tutor in
+      //              `gentle_scaffold` mode. Don't ask another open question;
+      //              pick one tiny concrete entry point from the material.
+      //   strike 2 (third in a row)                   → tutor in
+      //              `gentle_reveal` mode. Reveal kindly, offer two choices.
+      //   strike 3+ (fourth+)                          → pivot. 0 credits.
+      //              Stock "lass uns das nächstes Mal nochmal anschauen".
+      //              The standard staircase + give-up safety net still
+      //              clamp verdict to 'skipped' in every case.
+      let giveUpMode: 'gentle_scaffold' | 'gentle_reveal' | null = null;
       if (isNonAnswer(learnerText)) {
-        const skipReply = pickGiveUpReply(locale);
-        const learnerTurnId = await persistTurn({
-          turn_index: nextIndex,
-          role: 'learner',
-          kind: 'answer',
-          content: learnerText,
-          verdict: null,
-          client_turn_id: input.client_turn_id,
-        });
-        const tutorTurnId = await persistTurn({
-          turn_index: nextIndex + 1,
-          role: 'tutor',
-          kind: 'feedback',
-          content: skipReply,
-          verdict: 'skipped',
-          client_turn_id: null,
-        });
-        await recordAttempt('skipped', 'local', skipReply, null, null);
-        await push({ type: 'token', text: skipReply });
-        await push({ type: 'verdict', verdict: 'skipped' });
-        await push({ type: 'feedback', text: skipReply });
-        await push({
-          type: 'done',
-          credits_used: 0,
-          verdict: 'skipped',
-          learner_turn_id: learnerTurnId,
-          tutor_turn_id: tutorTurnId,
-          session_active: true,
-        });
-        return;
+        const trailingSkips = countTrailingSkipsOnItem(turns, input.item_id);
+        if (trailingSkips === 1) giveUpMode = 'gentle_scaffold';
+        else if (trailingSkips === 2) giveUpMode = 'gentle_reveal';
+        // strike 0 OR strike 3+ → short-circuit, no Vertex call.
+        if (trailingSkips === 0 || trailingSkips >= 3) {
+          const skipReply =
+            trailingSkips >= 3 ? pickGiveUpPivotReply(locale) : pickGiveUpReply(locale);
+          const learnerTurnId = await persistTurn({
+            turn_index: nextIndex,
+            role: 'learner',
+            kind: 'answer',
+            content: learnerText,
+            verdict: null,
+            client_turn_id: input.client_turn_id,
+          });
+          const tutorTurnId = await persistTurn({
+            turn_index: nextIndex + 1,
+            role: 'tutor',
+            kind: 'feedback',
+            content: skipReply,
+            verdict: 'skipped',
+            client_turn_id: null,
+          });
+          await recordAttempt('skipped', 'local', skipReply, null, null);
+          // Phase D2: if this give-up came RIGHT AFTER a probe, the
+          // kid said "idk" to "wieso stimmt das?" — that's a gave_up
+          // probe assessment, worth recording for pattern_match_signal.
+          if (probeContext) {
+            void supabase
+              .from('probe_assessments')
+              .insert({
+                learner_id,
+                session_id,
+                item_id: input.item_id,
+                turn_index: nextIndex,
+                probe_move: probeContext.probeMove,
+                quality: 'gave_up',
+                response_excerpt: learnerText.slice(0, 280),
+              })
+              .then((res) => {
+                if (res.error) {
+                  console.warn(`[probe] gave_up insert failed: ${res.error.message}`);
+                }
+              });
+          }
+          await push({ type: 'token', text: skipReply });
+          await push({ type: 'verdict', verdict: 'skipped' });
+          await push({ type: 'feedback', text: skipReply });
+          await push({
+            type: 'done',
+            credits_used: 0,
+            verdict: 'skipped',
+            learner_turn_id: learnerTurnId,
+            tutor_turn_id: tutorTurnId,
+            session_active: true,
+          });
+          return;
+        }
+        // strikes 1 or 2: fall through to the tutor path with
+        // giveUpMode set. The model produces a scaffold/reveal turn,
+        // and the verdict safety-net at the bottom forces 'skipped'.
       }
 
       // 6. Fast path: client is confident it's correct → no model, no charge.
       //    Guarded so a give-up ("weiss nicht") can never take the no-model
       //    "correct" path even if a client mislabels it.
       if (input.client_local_verdict === 'correct' && !isNonAnswer(learnerText)) {
-        const praise = pickPraise(locale);
+        // Phase A1: specific praise. Classify the verdict context and
+        // render a locale + kind-appropriate variant. The fast path
+        // never inflates an easy item to "stark!" and never gives the
+        // same line twice in a row (variant rotation by session+item).
+        const praiseClass = classifyPraise({
+          hintsUsed: hintsGivenForItem,
+          itemDifficulty: Number(item.difficulty ?? 2),
+          itemAnswerKind: String(item.answer_kind ?? 'short'),
+          itemTopic: (item.topic as string | null) ?? null,
+          learnerTextWordCount: learnerText.split(/\s+/u).filter(Boolean).length,
+          priorWrongAttemptsOnItem,
+        });
+        const praise = buildPraiseFastPath(
+          praiseClass,
+          locale as Locale,
+          `${session_id}|${input.item_id}|${nextIndex}`,
+        );
         const learnerTurnId = await persistTurn({
           turn_index: nextIndex,
           role: 'learner',
@@ -821,6 +1063,185 @@ sessionRoutes.post(
         (item.material_id as string | null) ?? null,
       );
 
+      // Phase A1: pre-classify praise for THIS turn. The model only USES
+      // the rubric if its verdict ends up correct; for wrong/partial it's
+      // ignored. We classify ahead of time so the system prompt is
+      // complete before the model starts streaming.
+      const praiseClass = classifyPraise({
+        hintsUsed: hintsGivenForItem,
+        itemDifficulty: Number(item.difficulty ?? 2),
+        itemAnswerKind: String(item.answer_kind ?? 'short'),
+        itemTopic: (item.topic as string | null) ?? null,
+        learnerTextWordCount: learnerText.split(/\s+/u).filter(Boolean).length,
+        priorWrongAttemptsOnItem,
+      });
+      const praiseRubric = buildPraiseRubricFragment(praiseClass);
+
+      // Phase B (B3): pick the pedagogical move for this turn. Pure
+      // function over (signal, item state, history). If selector picks
+      // continue_natural, moveFragment is null and the prompt is unchanged.
+      // gentle_scaffold / gentle_reveal already get selected automatically
+      // when trailingSkipsOnItem is 1 or 2 — A2's giveUpMode plumbing is
+      // now redundant on those strikes but harmless (the fragment text
+      // matches; we just don't pass giveUpMode anymore).
+      const trailingSkips = countTrailingSkipsOnItem(turns, input.item_id);
+      const lastTutorOnItem = [...turns]
+        .reverse()
+        .find((t) => t.role === 'tutor' && t.item_id === input.item_id);
+      const isFirstTurnOnItem = !lastTutorOnItem;
+
+      // B4: read the last 3 strategy decisions for this session so the
+      // selector's variety penalty actually has data to work with.
+      // Missing table / RLS issue / network blip — fall back to empty
+      // (selector still works, just no variety penalty).
+      const recentDecisionsRes = await supabase
+        .from('strategy_decisions')
+        .select('move_id, turn_index')
+        .eq('session_id', session_id)
+        .order('turn_index', { ascending: false })
+        .limit(3);
+      const recentMoves: SelectorContext['recentMoves'] = (
+        (recentDecisionsRes.data ?? []) as Array<{ move_id: string }>
+      )
+        .map((r) => r.move_id as SelectorContext['recentMoves'][number])
+        .reverse(); // oldest → newest, matches selector's slice(-2) semantics
+
+      // Phase C follow-up: look up the highest-seen-count active
+      // recurring misconception whose tag is plausibly related to this
+      // item's topic. We do a CASE-INSENSITIVE substring match because
+      // the LLM-generated concept_tag (e.g. "fraction_addition.common_denominator")
+      // won't be an exact match to item.topic ("Bruchaddition") — but
+      // either the tag or description usually contains a related token.
+      // Best-effort; falls back to null on any read error.
+      const currentTopic = ((item.topic as string | null) ?? '').toLowerCase().trim();
+      if (currentTopic.length >= 3) {
+        try {
+          const miscRes = await supabase
+            .from('recurring_misconceptions')
+            .select('concept_tag, description, seen_count')
+            .eq('learner_id', learner_id)
+            .is('resolved_at', null)
+            .order('seen_count', { ascending: false })
+            .limit(8);
+          const rows = (miscRes?.data ?? []) as Array<{
+            concept_tag: string;
+            description: string;
+            seen_count: number;
+          }>;
+          // Match if any meaningful token from the topic appears in
+          // tag or description (or vice versa). 3-char min to filter
+          // out stop-syllables.
+          const topicTokens = currentTopic.split(/[^a-zäöüß0-9]+/u).filter((t) => t.length >= 3);
+          for (const r of rows) {
+            const haystack = `${r.concept_tag} ${r.description}`.toLowerCase();
+            const tagTokens = r.concept_tag
+              .toLowerCase()
+              .split(/[^a-zäöüß0-9]+/u)
+              .filter((t) => t.length >= 3);
+            const matches =
+              topicTokens.some((t) => haystack.includes(t)) ||
+              tagTokens.some((t) => currentTopic.includes(t));
+            if (matches) {
+              activeMisconception = r;
+              break;
+            }
+          }
+        } catch {
+          activeMisconception = null;
+        }
+      }
+
+      const selectorCtx: SelectorContext = {
+        signal: runtimeSignal,
+        hintsGivenForItem,
+        priorWrongAttemptsOnItem,
+        trailingSkipsOnItem: trailingSkips,
+        isFirstTurnOnItem,
+        itemDifficulty: Number(item.difficulty ?? 2),
+        itemAnswerKind: String(item.answer_kind ?? 'short'),
+        itemTopic: (item.topic as string | null) ?? null,
+        lastVerdictOnItem: (lastTutorOnItem?.verdict ??
+          null) as SelectorContext['lastVerdictOnItem'],
+        recentMoves,
+        activeMisconception,
+      };
+      const selectorDecision = selectMove(selectorCtx);
+      const moveFragment = selectorDecision.move.promptFragment(selectorCtx);
+
+      // Phase C3: "From last time" continuity block. Only for the first 5
+      // tutor turns of a session (the model already has the context in
+      // history after that) AND only when a prior episode exists. Also
+      // include active recurring misconceptions to "listen for".
+      // Fails open — any read error leaves fromLastTime null and the
+      // tutor uses base rules. This is enrichment, not safety-critical.
+      let fromLastTime: string | null = null;
+      if (runtimeSignal.turns_in_session < 5) {
+        try {
+          const priorEpRes = await supabase
+            .from('learner_episodes')
+            .select('one_sentence_arc, concepts_touched, open_questions, ended_at, session_id')
+            .eq('learner_id', learner_id)
+            .order('ended_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          const priorRaw = priorEpRes?.data as
+            | {
+                one_sentence_arc?: string;
+                concepts_touched?: string[];
+                open_questions?: string[];
+                session_id?: string;
+              }
+            | null
+            | undefined;
+          // Filter: must be a DIFFERENT session than the current one.
+          const prior =
+            priorRaw && priorRaw.session_id && priorRaw.session_id !== session_id ? priorRaw : null;
+          let misc: Array<{ concept_tag: string; description: string; seen_count: number }> = [];
+          try {
+            const miscRes = await supabase
+              .from('recurring_misconceptions')
+              .select('concept_tag, description, seen_count')
+              .eq('learner_id', learner_id)
+              .is('resolved_at', null)
+              .order('seen_count', { ascending: false })
+              .limit(3);
+            misc = (miscRes?.data ?? []) as typeof misc;
+          } catch {
+            misc = [];
+          }
+          if (prior || misc.length > 0) {
+            const lines: string[] = ['— From last time —'];
+            if (prior) {
+              if (prior.one_sentence_arc) {
+                lines.push(`Last session arc: ${prior.one_sentence_arc}`);
+              }
+              if (prior.concepts_touched && prior.concepts_touched.length > 0) {
+                lines.push(`Concepts touched: ${prior.concepts_touched.join(', ')}`);
+              }
+              if (prior.open_questions && prior.open_questions.length > 0) {
+                lines.push(
+                  `Open questions to follow up: ${prior.open_questions.slice(0, 3).join('; ')}`,
+                );
+              }
+            }
+            if (misc.length > 0) {
+              lines.push('Active misconceptions to listen for (do not name them at the student):');
+              for (const m of misc) {
+                lines.push(`  - ${m.concept_tag}: ${m.description} (seen ${m.seen_count}x)`);
+              }
+            }
+            // Only emit if we actually have content beyond the header.
+            if (lines.length > 1) fromLastTime = lines.join('\n');
+          }
+        } catch {
+          fromLastTime = null;
+        }
+      }
+
+      // Phase D2: probeContext was computed up-front (step 5.5 prelude)
+      // so the give-up short-circuit can use it too. We just thread it
+      // through to the LLM call here.
+
       let result;
       try {
         result = await llm.converseTurn(
@@ -850,6 +1271,12 @@ sessionRoutes.post(
             pinnedTopic: (session.pinned_topic as string | null) ?? null,
             hintsGivenForItem,
             materialContext,
+            praiseRubric,
+            giveUpMode,
+            recentRhythm,
+            moveFragment,
+            fromLastTime,
+            probeContext,
           },
           (delta) => {
             void push({ type: 'token', text: delta });
@@ -902,6 +1329,67 @@ sessionRoutes.post(
         result.usage.prompt_version,
       );
 
+      // B4: persist the selector decision for this turn. Fire-and-
+      // forget — the learner's experience never blocks on telemetry.
+      void supabase
+        .from('strategy_decisions')
+        .insert({
+          session_id,
+          learner_id,
+          item_id: input.item_id,
+          turn_index: nextIndex + 1, // index of the TUTOR turn we just wrote
+          move_id: selectorDecision.move.id,
+          signal_snapshot: runtimeSignal as unknown as Record<string, unknown>,
+          alternates: selectorDecision.alternates as unknown as unknown[],
+          reason: selectorDecision.reason,
+          verdict_after: finalVerdict,
+        })
+        .then((res) => {
+          if (res.error) {
+            console.error(`[strategy] decision insert failed: ${res.error.message}`);
+          }
+        });
+
+      // Phase D2: persist probe_assessments row when the LLM returned a
+      // classification. Fire-and-forget — telemetry never blocks the turn.
+      if (probeContext && result.probeAssessment) {
+        const excerpt = learnerText.slice(0, 280);
+        void supabase
+          .from('probe_assessments')
+          .insert({
+            learner_id,
+            session_id,
+            item_id: input.item_id,
+            turn_index: nextIndex, // the LEARNER turn (the probe response)
+            probe_move: probeContext.probeMove,
+            quality: result.probeAssessment,
+            response_excerpt: excerpt,
+          })
+          .then((res) => {
+            if (res.error) {
+              console.warn(`[probe] assessment insert failed: ${res.error.message}`);
+            }
+          });
+      }
+
+      // Phase C follow-up: when we just performed misconception_confrontation,
+      // bump last_addressed_at so the resolution-tracking cycle is closed.
+      // The same value reads off recentMoves so we don't double-fire if
+      // the selector picks it twice in the same session.
+      if (selectorDecision.move.id === 'misconception_confrontation' && activeMisconception) {
+        void supabase
+          .from('recurring_misconceptions')
+          .update({ last_addressed_at: now().toISOString() })
+          .eq('learner_id', learner_id)
+          .eq('concept_tag', activeMisconception.concept_tag)
+          .is('resolved_at', null)
+          .then((res) => {
+            if (res.error) {
+              console.warn(`[misconception] last_addressed_at bump failed: ${res.error.message}`);
+            }
+          });
+      }
+
       await push({ type: 'verdict', verdict: finalVerdict });
       await push({ type: 'feedback', text: result.reply });
       await push({
@@ -927,17 +1415,6 @@ async function loadTurns(
   return rows;
 }
 
-function pickPraise(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
-  const map = {
-    de: 'Stimmt — super gemacht!',
-    en: "That's right — nicely done!",
-    fr: "C'est juste — bravo !",
-    es: '¡Correcto, muy bien!',
-    it: 'Esatto — bravissimo!',
-  } as const;
-  return map[locale];
-}
-
 /** Stock reply for the "I don't know" path. Tone-soft per docs/01-product
  *  voice rules — never harsh, never "Falsch!". The tutor doesn't see this
  *  message; it's surfaced as the tutor turn so the chat thread reads
@@ -949,6 +1426,22 @@ function pickGiveUpReply(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
     fr: 'Pas de souci — prends ton temps, ou dis « indice » et on avance ensemble.',
     es: 'Tranqui — piénsalo o di "pista" y lo hacemos paso a paso.',
     it: 'Nessun problema — pensaci un attimo o dì "aiuto" e proviamo insieme.',
+  } as const;
+  return map[locale];
+}
+
+/** Phase A2 pivot — strike 4+ give-up. After scaffold and reveal both
+ *  failed to land, the right pedagogical move is to STOP. We don't
+ *  reveal again; we don't push another hint; we just acknowledge and
+ *  signal that this item will come back next time. The session
+ *  continues to the next item via the standard "Weiter" flow. */
+function pickGiveUpPivotReply(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
+  const map = {
+    de: 'Das schauen wir uns nächstes Mal nochmal in Ruhe an — heute lassen wir das so. Magst du die nächste Aufgabe?',
+    en: "Let's revisit this one next time with fresh eyes. Want to try the next question?",
+    fr: 'On reverra ça la prochaine fois au calme. Tu veux passer à la suivante ?',
+    es: 'Lo retomamos la próxima vez con la mente fresca. ¿Pasamos a la siguiente?',
+    it: 'Lo riprendiamo la prossima volta con calma. Andiamo alla prossima?',
   } as const;
   return map[locale];
 }

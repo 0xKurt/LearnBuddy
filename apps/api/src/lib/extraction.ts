@@ -13,6 +13,7 @@ import type { getDeps } from './deps.js';
 import { cropDiagramsAndUpload, type SourcePage } from './llm/diagram.js';
 import type { GeneratedVisionItem, VisionInput, VisionResult } from './llm/gateway.js';
 import { validateTemplate } from './llm/templateValidation.js';
+import { captureApiError } from './sentry.js';
 
 export const VISION_ESTIMATE = 20; // Doc 08 §estimated-costs-per-action
 const PHOTO_WIPE_DELAY_MS = 7 * 86_400_000; // Doc 09 §4 (raw photos T+7d)
@@ -90,6 +91,10 @@ async function markFailed(
     console.error(
       `[extraction] markFailed(${material_id}, ${reason}): ${upd.error.message} — material may be stranded`,
     );
+    captureApiError(new Error(`extraction markFailed update failed: ${upd.error.message}`), {
+      material_id,
+      reason,
+    });
   }
 }
 
@@ -275,6 +280,12 @@ export async function runExtraction(
     .eq('id', p.job_id)
     .eq('status', 'running')
     .select('id');
+  if (commit.error) {
+    // Genuine DB failure during commit — different from "0 rows because the
+    // sweep took it". Bail loudly so the caller can mark the job failed and
+    // refund; we won't leave credits in an undefined state.
+    return bail('internal', `job_commit_failed: ${commit.error.message}`);
+  }
   const swept = ((commit.data as Array<{ id: string }> | null) ?? []).length === 0;
   if (swept) {
     console.warn(

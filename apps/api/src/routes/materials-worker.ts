@@ -35,9 +35,13 @@ function constantTimeEqual(a: string, b: string): boolean {
 materialWorkerRoutes.post('/drain', async (c) => {
   const { supabase, llm, now, env } = getDeps(c);
 
-  const secret = env.EXTRACTION_WORKER_SECRET;
+  // Always run constantTimeEqual against the provided header, even if the
+  // env var is unset — coercing the missing secret to '' keeps the rejection
+  // path timing-uniform, so an attacker can't probe whether the worker secret
+  // is configured by measuring response latency.
+  const secret = env.EXTRACTION_WORKER_SECRET ?? '';
   const provided = c.req.header('x-worker-secret') ?? '';
-  if (!secret || !constantTimeEqual(provided, secret)) {
+  if (secret.length === 0 || !constantTimeEqual(provided, secret)) {
     return c.json({ error: { code: 'unauthenticated', message: 'bad worker secret' } }, 401);
   }
 

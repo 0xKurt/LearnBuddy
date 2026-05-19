@@ -363,4 +363,149 @@ describe('POST /sessions/:id/turn', () => {
     await turn(s, session, itemId, C1, { text: 'hmm' });
     expect(captured[0]?.materialContext).toContain('Photosynthese');
   });
+
+  // Phase D2 — probe response detection and assessment persistence.
+  describe('probe response detection (Phase D2)', () => {
+    it('passes probeContext to the tutor when the previous move was a confidence_probe', async () => {
+      const captured: ConverseTurnInput[] = [];
+      class SpyLlm extends FakeLlmGateway {
+        override async converseTurn(
+          input: ConverseTurnInput,
+          onToken?: (d: string) => void,
+        ): ReturnType<FakeLlmGateway['converseTurn']> {
+          captured.push(input);
+          return super.converseTurn(input, onToken);
+        }
+      }
+      const s = await setup('probe@example.com', new SpyLlm());
+      const session = seedSession(s);
+      const item = seedItem(s);
+
+      // Seed prior turns: a learner answer + the tutor's probe question.
+      const turns = s.fake.tables.get('conversation_turns') ?? [];
+      turns.push({
+        id: s.fake.nextId(),
+        session_id: session,
+        item_id: item,
+        turn_index: 0,
+        role: 'learner',
+        kind: 'answer',
+        content: '4',
+        verdict: null,
+        created_at: '2026-05-16T10:00:01Z',
+        client_turn_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      });
+      turns.push({
+        id: s.fake.nextId(),
+        session_id: session,
+        item_id: item,
+        turn_index: 1,
+        role: 'tutor',
+        kind: 'feedback',
+        content: 'Genau richtig! Kannst du in einem Satz sagen, wieso das stimmt?',
+        verdict: 'correct',
+        created_at: '2026-05-16T10:00:02Z',
+        client_turn_id: null,
+      });
+      s.fake.tables.set('conversation_turns', turns);
+
+      // Seed a strategy_decisions row marking the prior tutor turn as a probe.
+      const decisions = s.fake.tables.get('strategy_decisions') ?? [];
+      decisions.push({
+        id: s.fake.nextId(),
+        session_id: session,
+        learner_id: s.learnerId,
+        item_id: item,
+        turn_index: 1,
+        move_id: 'confidence_probe',
+        signal_snapshot: {},
+        alternates: [],
+        reason: 'test seed',
+        verdict_after: 'correct',
+        created_at: '2026-05-16T10:00:02Z',
+      });
+      s.fake.tables.set('strategy_decisions', decisions);
+
+      // Substantive response — long enough that the fake LLM classifies as substantive.
+      await turn(s, session, item, C1, {
+        text: 'Weil zwei plus zwei vier ergibt nach dem Kommutativgesetz der Addition.',
+      });
+
+      expect(captured[0]?.probeContext).toEqual({ probeMove: 'confidence_probe' });
+      const assessments = s.fake.tables.get('probe_assessments') ?? [];
+      expect(assessments).toHaveLength(1);
+      expect(assessments[0]).toMatchObject({
+        probe_move: 'confidence_probe',
+        quality: 'substantive',
+        session_id: session,
+        learner_id: s.learnerId,
+      });
+    });
+
+    it('does NOT set probeContext when the previous move was not a probe', async () => {
+      const captured: ConverseTurnInput[] = [];
+      class SpyLlm extends FakeLlmGateway {
+        override async converseTurn(
+          input: ConverseTurnInput,
+          onToken?: (d: string) => void,
+        ): ReturnType<FakeLlmGateway['converseTurn']> {
+          captured.push(input);
+          return super.converseTurn(input, onToken);
+        }
+      }
+      const s = await setup('noprobe@example.com', new SpyLlm());
+      const session = seedSession(s);
+      const item = seedItem(s);
+
+      const decisions = s.fake.tables.get('strategy_decisions') ?? [];
+      decisions.push({
+        id: s.fake.nextId(),
+        session_id: session,
+        learner_id: s.learnerId,
+        item_id: item,
+        turn_index: 1,
+        move_id: 'continue_natural',
+        signal_snapshot: {},
+        alternates: [],
+        reason: 'test seed',
+        verdict_after: 'incorrect',
+        created_at: '2026-05-16T10:00:02Z',
+      });
+      s.fake.tables.set('strategy_decisions', decisions);
+
+      await turn(s, session, item, C1, { text: '4' });
+
+      expect(captured[0]?.probeContext ?? null).toBeNull();
+      expect(s.fake.tables.get('probe_assessments') ?? []).toHaveLength(0);
+    });
+
+    it('classifies an "idk" response as gave_up', async () => {
+      const s = await setup('giveup@example.com');
+      const session = seedSession(s);
+      const item = seedItem(s);
+
+      const decisions = s.fake.tables.get('strategy_decisions') ?? [];
+      decisions.push({
+        id: s.fake.nextId(),
+        session_id: session,
+        learner_id: s.learnerId,
+        item_id: item,
+        turn_index: 1,
+        move_id: 'wrong_example_probe',
+        signal_snapshot: {},
+        alternates: [],
+        reason: 'test seed',
+        verdict_after: 'correct',
+        created_at: '2026-05-16T10:00:02Z',
+      });
+      s.fake.tables.set('strategy_decisions', decisions);
+
+      await turn(s, session, item, C1, { text: 'weiß nicht' });
+
+      const assessments = s.fake.tables.get('probe_assessments') ?? [];
+      expect(assessments).toHaveLength(1);
+      expect(assessments[0]?.quality).toBe('gave_up');
+      expect(assessments[0]?.probe_move).toBe('wrong_example_probe');
+    });
+  });
 });

@@ -39,6 +39,11 @@ import { PROMPT_VERSION_P2, SYSTEM_P2, buildP2UserPrompt } from '../../prompts/p
 import { PROMPT_VERSION_P3, SYSTEM_P3, buildP3UserPrompt } from '../../prompts/p3.js';
 import { PROMPT_VERSION_P4, SYSTEM_P4, buildP4UserPrompt } from '../../prompts/p4.js';
 import {
+  PROMPT_VERSION_REFLECT,
+  SYSTEM_REFLECT,
+  buildReflectUserPrompt,
+} from '../../prompts/reflect.js';
+import {
   PROMPT_VERSION_TUTOR,
   TUTOR_SENTINEL,
   buildTutorSystemInstruction,
@@ -52,6 +57,8 @@ import type {
   ExplainInput,
   ExplainResult,
   LLMGateway,
+  ReflectSessionInput,
+  ReflectSessionResult,
   RegenerateInput,
   RegenerateResult,
   TranscribeInput,
@@ -167,7 +174,12 @@ export class VertexLlmGateway implements LLMGateway {
         safetySettings: SAFETY,
         temperature: 0.4,
         topP: 0.95,
-        maxOutputTokens: 4096,
+        // 4096 tokens was clipping the response mid-string on real worksheets
+        // (extracted_markdown + 5–10 items + diagrams + templates routinely
+        // run 6–10k tokens). The clip surfaced to the user as "Verbindung
+        // unterbrochen" because the JSON.parse failed and the worker bailed.
+        // 8192 is Flash-Lite's output ceiling.
+        maxOutputTokens: 8192,
         responseMimeType: 'application/json',
       },
     };
@@ -401,6 +413,12 @@ export class VertexLlmGateway implements LLMGateway {
       pinnedTopic: input.pinnedTopic,
       hintsGivenForItem: input.hintsGivenForItem,
       materialContext: input.materialContext,
+      praiseRubric: input.praiseRubric,
+      giveUpMode: input.giveUpMode ?? null,
+      recentRhythm: input.recentRhythm,
+      moveFragment: input.moveFragment,
+      fromLastTime: input.fromLastTime,
+      probeAssessmentMove: input.probeContext?.probeMove ?? null,
     });
 
     // Replay the whole session thread as real alternating turns so the
@@ -469,10 +487,15 @@ export class VertexLlmGateway implements LLMGateway {
     // a deterministic give-up guard on top of whatever the model claims.
     let verdict: ConverseTurnResult['verdict'] = 'incorrect';
     let gaveHint = false;
+    let probeAssessment: ConverseTurnResult['probeAssessment'] = null;
     if (sentinelIdx !== -1) {
       const tail = full.slice(sentinelIdx + TUTOR_SENTINEL.length).trim();
       try {
-        const ctrl = JSON.parse(tail) as { verdict?: string; hint?: boolean };
+        const ctrl = JSON.parse(tail) as {
+          verdict?: string;
+          hint?: boolean;
+          probe_assessment?: string;
+        };
         if (
           ctrl.verdict === 'correct' ||
           ctrl.verdict === 'partially_correct' ||
@@ -482,6 +505,14 @@ export class VertexLlmGateway implements LLMGateway {
           verdict = ctrl.verdict;
         }
         gaveHint = ctrl.hint === true;
+        if (
+          input.probeContext &&
+          (ctrl.probe_assessment === 'substantive' ||
+            ctrl.probe_assessment === 'rephrased' ||
+            ctrl.probe_assessment === 'gave_up')
+        ) {
+          probeAssessment = ctrl.probe_assessment;
+        }
       } catch {
         console.warn('[tutor] control line unparseable; defaulting verdict=incorrect');
       }
@@ -493,6 +524,7 @@ export class VertexLlmGateway implements LLMGateway {
       verdict,
       reply: visible || 'Erzähl mir, was du dir dabei denkst.',
       gaveHint,
+      probeAssessment,
       usage: {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
@@ -543,4 +575,126 @@ export class VertexLlmGateway implements LLMGateway {
       },
     };
   }
+
+  /** Phase C1 — post-session reflective summary. Cheap JSON-mode call.
+   *  Fails open: on any error, return a minimal episode so the next
+   *  session at least gets the duration / concepts and the opener
+   *  template can still pick a variant. */
+  async reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult> {
+    const userText = buildReflectUserPrompt(input);
+    let response: GenerateContentResponse;
+    try {
+      response = await this.client.models.generateContent({
+        model: this.modelId,
+        contents: [{ role: 'user', parts: [{ text: userText }] }],
+        config: {
+          systemInstruction: SYSTEM_REFLECT,
+          safetySettings: SAFETY,
+          temperature: 0.3,
+          topP: 0.9,
+          maxOutputTokens: 800,
+          responseMimeType: 'application/json',
+        },
+      });
+    } catch (err) {
+      return reflectFallback(
+        `Vertex reflect failed: ${err instanceof Error ? err.message : String(err)}`,
+        input,
+        this.modelId,
+      );
+    }
+    const totals = addUsage(emptyUsage(), response.usageMetadata);
+    const text = responseText(response).trim();
+    if (!text) return reflectFallback('empty reflect response', input, this.modelId);
+
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      // jsonrepair would be defensive here but reflect output is small;
+      // a malformed payload is unusual. Fall back to a minimal episode
+      // rather than block the session-finish path.
+      return reflectFallback(
+        `reflect JSON.parse failed: ${text.slice(0, 80)}`,
+        input,
+        this.modelId,
+      );
+    }
+    const v = parsed;
+    return {
+      one_sentence_arc: asString(v.one_sentence_arc, 'Session abgeschlossen.'),
+      concepts_touched: asStringArray(v.concepts_touched),
+      high_points: asStringArray(v.high_points),
+      low_points: asStringArray(v.low_points),
+      hypothesized_misconceptions: asMisconceptions(v.hypothesized_misconceptions),
+      open_questions: asStringArray(v.open_questions),
+      usage: {
+        input_tokens: totals.inputTokens,
+        output_tokens: totals.outputTokens,
+        cost_usd_micros: totals.costMicros,
+        model: this.modelId,
+        prompt_version: PROMPT_VERSION_REFLECT,
+      },
+    };
+  }
+}
+
+// ── reflect helpers ────────────────────────────────────────────────
+
+function reflectFallback(
+  reason: string,
+  input: ReflectSessionInput,
+  modelId: string,
+): ReflectSessionResult {
+  console.warn(`[reflect] falling back: ${reason}`);
+  // Best-effort minimal episode so the next session at least has
+  // duration + a generic arc. Topics are inferred from the
+  // transcript's item_topic values.
+  const topics = Array.from(
+    new Set(input.transcript.map((t) => t.item_topic).filter((x): x is string => !!x)),
+  );
+  return {
+    one_sentence_arc: `Session über ${input.durationMinutes} Min. mit ${topics.length || 'einigen'} Themen.`,
+    concepts_touched: topics,
+    high_points: [],
+    low_points: [],
+    hypothesized_misconceptions: [],
+    open_questions: [],
+    usage: {
+      input_tokens: 0,
+      output_tokens: 0,
+      cost_usd_micros: 0,
+      model: modelId,
+      prompt_version: PROMPT_VERSION_REFLECT,
+    },
+  };
+}
+
+function asString(v: unknown, fallback: string): string {
+  return typeof v === 'string' && v.trim().length > 0 ? v.trim() : fallback;
+}
+
+function asStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    .map((x) => x.trim());
+}
+
+function asMisconceptions(v: unknown): ReflectSessionResult['hypothesized_misconceptions'] {
+  if (!Array.isArray(v)) return [];
+  const out: ReflectSessionResult['hypothesized_misconceptions'] = [];
+  for (const x of v) {
+    if (typeof x !== 'object' || x === null) continue;
+    const r = x as Record<string, unknown>;
+    const tag = typeof r.concept_tag === 'string' ? r.concept_tag.trim() : '';
+    const desc = typeof r.description === 'string' ? r.description.trim() : '';
+    const conf =
+      typeof r.confidence === 'number' && r.confidence >= 0 && r.confidence <= 1 ? r.confidence : 0;
+    // Drop low-confidence + empty entries — the prompt forbids them
+    // but the model can disregard, so we enforce.
+    if (!tag || !desc || conf < 0.6) continue;
+    out.push({ concept_tag: tag, description: desc, confidence: conf });
+  }
+  return out;
 }
