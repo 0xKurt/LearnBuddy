@@ -134,6 +134,11 @@ export function buildTutorSystemInstruction(ctx: {
   /** Phase A2: progressive give-up mode. When set, this turn is the
    *  scaffold or reveal step in the give-up escalation. */
   giveUpMode?: GiveUpMode;
+  /** Phase A3: pre-rendered "Recent rhythm" observations block. The
+   *  caller builds this from the runtime signal; we just splice it in
+   *  before the praise rubric. L1 invariant: this block must contain
+   *  observations only, never analytical labels. */
+  recentRhythm?: string | null;
 }): string {
   const k = kindContext(ctx.item);
   const material = ctx.materialContext?.trim()
@@ -144,6 +149,7 @@ export function buildTutorSystemInstruction(ctx: {
     const f = buildGiveUpModeFragment(ctx.giveUpMode ?? null);
     return f ? `\n\n${f}` : '';
   })();
+  const rhythm = ctx.recentRhythm?.trim() ? `\n\n${ctx.recentRhythm.trim()}` : '';
   return `${SYSTEM_TUTOR}
 
 — Current question context —
@@ -158,5 +164,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${praise}${giveUp}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${rhythm}${praise}${giveUp}`;
 }

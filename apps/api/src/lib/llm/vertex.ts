@@ -408,6 +408,7 @@ export class VertexLlmGateway implements LLMGateway {
       materialContext: input.materialContext,
       praiseRubric: input.praiseRubric,
       giveUpMode: input.giveUpMode ?? null,
+      recentRhythm: input.recentRhythm,
     });
 
     // Replay the whole session thread as real alternating turns so the

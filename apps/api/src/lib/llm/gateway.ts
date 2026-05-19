@@ -210,6 +210,11 @@ export type ConverseTurnInput = {
   /** Phase A2: when set, this turn is the scaffold or reveal step in
    *  the progressive give-up escalation. */
   giveUpMode?: 'gentle_scaffold' | 'gentle_reveal' | null;
+  /** Phase A3: rendered "Recent rhythm" block — observations from the
+   *  runtime signal (verdict streak, latency trend, message length).
+   *  Critically: never carries analytical labels; the model sees raw
+   *  observations and forms its own pedagogical response. */
+  recentRhythm?: string | null;
 };
 
 export type ConverseTurnResult = {

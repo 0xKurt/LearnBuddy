@@ -23,6 +23,11 @@ import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { countTrailingSkipsOnItem, isNonAnswer } from '../lib/give-up.js';
+import {
+  buildRecentRhythmFragment,
+  computeRuntimeSignal,
+  type SignalTurn,
+} from '../lib/learner-state/runtime-signal.js';
 import { loadMaterialContext } from '../lib/material-context.js';
 import type { ConversationMessage } from '../lib/llm/gateway.js';
 import {
@@ -455,6 +460,7 @@ type TurnRow = {
   content: string;
   verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
   item_id: string | null;
+  created_at: string | null;
 };
 
 sessionRoutes.post(
@@ -640,6 +646,60 @@ sessionRoutes.post(
           t.item_id === input.item_id &&
           (t.verdict === 'incorrect' || t.verdict === 'skipped'),
       ).length;
+
+      // Phase A3: compute the runtime signal from the session's turns.
+      // Pure derivation, no LLM call. Used both for the strategy / picker
+      // overrides (Phase B) and for the "Recent rhythm" prompt block.
+      // We pull difficulty + topic for every item referenced in turns in
+      // one batch so the signal can roll up by topic and gauge ceiling.
+      const itemIdsInTurns = Array.from(
+        new Set(
+          turns
+            .map((t) => t.item_id as string | null)
+            .filter((id): id is string => typeof id === 'string'),
+        ),
+      );
+      const itemDifficulty = new Map<string, number>();
+      const itemTopic = new Map<string, string | null>();
+      if (itemIdsInTurns.length > 0) {
+        const itemsRes = await supabase
+          .from('items')
+          .select('id, difficulty, topic')
+          .in('id', itemIdsInTurns);
+        for (const row of (itemsRes.data ?? []) as Array<{
+          id: string;
+          difficulty: number | null;
+          topic: string | null;
+        }>) {
+          itemDifficulty.set(row.id, row.difficulty ?? 2);
+          itemTopic.set(row.id, row.topic ?? null);
+        }
+      }
+      // Also include the current item's metadata (it may not appear in
+      // `turns` yet — first attempt).
+      itemDifficulty.set(input.item_id, Number(item.difficulty ?? 2));
+      itemTopic.set(input.item_id, (item.topic as string | null) ?? null);
+
+      const sessionStartedAt = (session.created_at as string | undefined) ?? now().toISOString();
+      const signalTurns: SignalTurn[] = turns.map((t) => ({
+        role: t.role as 'learner' | 'tutor',
+        item_id: t.item_id ?? null,
+        verdict: t.role === 'tutor' ? ((t.verdict as SignalTurn['verdict']) ?? null) : null,
+        created_at: (t.created_at as string | undefined) ?? new Date().toISOString(),
+        content_length: t.role === 'learner' ? (t.content?.length ?? 0) : undefined,
+      }));
+      const runtimeSignal = computeRuntimeSignal({
+        turns: signalTurns,
+        itemDifficulty,
+        itemTopic,
+        sessionStartedAt,
+        now: now(),
+      });
+      const recentVerdicts = turns
+        .filter((t) => t.role === 'tutor')
+        .map((t) => (t.verdict as SignalTurn['verdict']) ?? null)
+        .slice(-5);
+      const recentRhythm = buildRecentRhythmFragment(runtimeSignal, recentVerdicts);
 
       const learnerRow = await supabase
         .from('learners')
@@ -921,6 +981,7 @@ sessionRoutes.post(
             materialContext,
             praiseRubric,
             giveUpMode,
+            recentRhythm,
           },
           (delta) => {
             void push({ type: 'token', text: delta });
