@@ -108,8 +108,7 @@ async function turn(s: Setup, sid: string, item: string, cid: string, text: stri
   // before the next turn starts — otherwise turns race.
   await res.text();
 }
-const U = (n: number) =>
-  `${n}${n}${n}${n}${n}${n}${n}${n}-${n}${n}${n}${n}-4${n}${n}${n}-8${n}${n}${n}-${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}${n}`;
+const U = (n: number) => `${String(n).padStart(8, '0')}-0000-4000-8000-000000000000`;
 
 describe('VERIFY: full conversational context reaches the tutor every turn', () => {
   it('case 1 — cumulative misses: turn 3 sees both prior Q/A pairs in order', async () => {
@@ -168,5 +167,27 @@ describe('VERIFY: full conversational context reaches the tutor every turn', () 
     expect(last.history[1]!.role).toBe('tutor');
     expect(last.learnerMessage).toBe('der zweite den du meintest');
     expect(last.history.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('case 4 — long session: the current item’s whole exchange survives the history window', async () => {
+    captured.length = 0;
+    const s = await setup('v4@example.com');
+    const sid = seedSession(s);
+    const it = seedItem(s, 'Wie heißt der größte Planet?', 'Jupiter', 'Astro');
+    // 14 wrong answers → 28 messages, well past MAX_HISTORY_MESSAGES (24).
+    for (let n = 1; n <= 14; n++) {
+      await turn(s, sid, it, U(n), `falsche Antwort Nummer ${n}`);
+    }
+    const lastCall = captured[captured.length - 1]!;
+    // The very first answer is older than the recent window, but because it
+    // belongs to the CURRENT item it must still be in context (coherent
+    // hint staircase regardless of session length).
+    expect(
+      lastCall.history.some(
+        (m) => m.role === 'learner' && m.content === 'falsche Antwort Nummer 1',
+      ),
+    ).toBe(true);
+    // hint accounting still counts every prior miss on this item.
+    expect(lastCall.hintsGivenForItem).toBe(13);
   });
 });

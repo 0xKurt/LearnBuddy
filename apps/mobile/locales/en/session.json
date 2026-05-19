@@ -5,6 +5,7 @@
   "badge_practice": "Practice",
   "exit": {
     "title": "End the session?",
+    "saved_hint": "Your progress is saved — you can pick up again any time.",
     "keep_going": "Keep going",
     "end": "End"
   },
@@ -15,6 +16,9 @@
   "checking": "Checking …",
   "next": "Next",
   "skip": "Skip",
+  "practice_similar": "Practise similar problems",
+  "offline_saved": "Saved offline — it'll sync once you're back online.",
+  "offline_need_connection": "I need a connection for that one. Try again in a moment.",
   "keep_going_empty": "That's everything for now — nicely done!",
   "stream_error": {
     "generic": "That didn't go through. Feel free to type your answer again.",

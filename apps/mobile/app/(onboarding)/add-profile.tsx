@@ -21,7 +21,6 @@ import { useAppStore } from '../../lib/store/index.js';
 
 export default function AddProfileScreen() {
   const { t } = useTranslation('onboarding');
-  const setActiveLearner = useAppStore((s) => s.set_active_learner);
   const storedBirthYear = useAppStore((s) => s.pending_birth_year);
 
   const [name, setName] = useState('');
@@ -35,7 +34,7 @@ export default function AddProfileScreen() {
     setBusy(true);
     setError(null);
     try {
-      const learner = await createLearner({
+      await createLearner({
         display_name: name.trim(),
         birth_year: storedBirthYear,
         grade_level: null,
@@ -44,7 +43,6 @@ export default function AddProfileScreen() {
         preferred_answer_mode: 'voice',
         minor_consent_version: null,
       });
-      setActiveLearner(learner.id);
       router.push('/(onboarding)/pin-setup');
     } catch (e) {
       if (e instanceof ApiError && e.code === 'learner_already_exists') {

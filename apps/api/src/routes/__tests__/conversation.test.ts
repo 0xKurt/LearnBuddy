@@ -242,4 +242,27 @@ describe('POST /sessions/:id/turn', () => {
     expect(s.fake.tables.get('conversation_turns')).toHaveLength(2);
     expect(s.fake.tables.get('attempts')).toHaveLength(1);
   });
+
+  it('transcribes a voice turn server-side and feeds the transcript to the tutor', async () => {
+    const s = await setup();
+    const session = seedSession(s);
+    const item = seedItem(s);
+
+    // No text — only audio. The server must call transcribeAudio, surface
+    // the transcript, then evaluate it as a normal turn.
+    const ev = await turn(s, session, item, C1, {
+      mode: 'voice',
+      audio_base64: 'QUJD',
+      audio_mime: 'audio/m4a',
+    });
+    const transcript = ev.find((e) => e.type === 'transcript');
+    expect(transcript?.text).toBe('gesprochene Antwort'); // FakeLlm transcribeAudio
+    expect(ev.find((e) => e.type === 'verdict')).toBeDefined();
+    expect(ev.find((e) => e.type === 'done')).toBeDefined();
+    // The learner turn was persisted with the transcribed content.
+    const turns = s.fake.tables.get('conversation_turns') ?? [];
+    expect(turns.some((tn) => tn.role === 'learner' && tn.content === 'gesprochene Antwort')).toBe(
+      true,
+    );
+  });
 });

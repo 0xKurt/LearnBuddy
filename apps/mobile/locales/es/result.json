@@ -1,6 +1,7 @@
 {
   "today_at": "Hoy · {{time}}",
   "title": "Práctica hecha — muy bien.",
+  "test_title": "Examen de práctica hecho.",
   "summary": "{{minutes}} minutos · {{items}} preguntas",
   "mastery": "¡Todo seguro hoy — genial! 🎉",
   "stats": {

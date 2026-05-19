@@ -69,6 +69,9 @@ export function resolveParent(segments: string[], params: Params): UpHref | null
     case '(learner)/practice':
       return '/(learner)/home';
 
+    case '(learner)/practice/[templateId]':
+      return '/(learner)/home';
+
     case '(learner)/session/[sessionId]':
       return '/(learner)/home';
 

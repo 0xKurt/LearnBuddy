@@ -9,12 +9,15 @@
 // staircase in-thread. The whole thread is persisted server-side, so the
 // agent always answers with full context and the session resumes exactly.
 
+import NetInfo from '@react-native-community/netinfo';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Alert,
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -29,10 +32,12 @@ import {
   Btn,
   Card,
   Chip,
+  DiagramQuestion,
   ExplainModal,
   FillBlank,
   FunctionPlot,
   LatexText,
+  LoadingState,
   MathInput,
   MathKeyboard,
   SessionTopBar,
@@ -41,7 +46,17 @@ import {
   toast,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
+import { ApiError } from '../../../lib/api/client.js';
 import { getSessionSnapshot, patchSession, streamTurn } from '../../../lib/api/conversation.js';
+import { getStudyAsset } from '../../../lib/api/studyAssets.js';
+import { postAttemptBatch } from '../../../lib/api/attempts.js';
+import { drainOutbox } from '../../../lib/sync/outbox.js';
+import { sqliteOutbox } from '../../../lib/sync/outbox-store.js';
+import {
+  buildResumeTranscript,
+  normVerdict,
+  type DisplayVerdict,
+} from '../../../lib/conversation/transcript.js';
 import { finishSession, startSession } from '../../../lib/api/sessions.js';
 import { localEvaluate, type EvaluatableItem } from '../../../lib/eval/local.js';
 import { clearPendingSession, savePendingSession } from '../../../lib/session/pending.js';
@@ -71,17 +86,6 @@ function voiceLocale(locale: Locale): string {
   return { de: 'de-DE', en: 'en-US', fr: 'fr-FR', es: 'es-ES', it: 'it-IT' }[locale];
 }
 
-// The shared Verdict includes 'skipped'; the tutor never returns it, but a
-// resumed thread might. Collapse it to the 3 values the UI renders.
-type DisplayVerdict = 'correct' | 'partially_correct' | 'incorrect';
-function normVerdict(
-  v: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null | undefined,
-): DisplayVerdict | undefined {
-  if (v === 'correct' || v === 'partially_correct' || v === 'incorrect') return v;
-  if (v === 'skipped') return 'incorrect';
-  return undefined;
-}
-
 export default function SessionScreen() {
   const { t } = useTranslation('session');
   const insets = useSafeAreaInsets();
@@ -105,6 +109,16 @@ export default function SessionScreen() {
   const boot = useQuery({
     queryKey: ['session-boot', params.sessionId, params.resumeSessionId],
     enabled: !!learnerId,
+    // Creating/loading a session is a ONE-SHOT side effect. focusManager is
+    // wired to AppState, so default options would refetch on app foreground
+    // / reconnect and call startSession again → a brand-new server session
+    // id swaps in mid-conversation and the live thread is lost. Pin it.
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: false,
     queryFn: async (): Promise<{
       serverSessionId: string;
       items: Item[];
@@ -115,40 +129,15 @@ export default function SessionScreen() {
       if (params.resumeSessionId) {
         const snap = await getSessionSnapshot(learnerId, params.resumeSessionId);
         const items = snap.items as Item[];
-        // Resume at the first item with no 'correct' tutor turn yet.
-        const correctItem = new Set(
-          snap.turns
-            .filter((tn) => tn.role === 'tutor' && tn.verdict === 'correct')
-            .map((tn) => tn.item_id),
-        );
-        let startIdx = items.findIndex((it) => !correctItem.has(it.id));
-        if (startIdx < 0) startIdx = items.length;
-        // Rebuild a readable, chronological transcript: insert each item's
-        // question bubble the first time that item appears in the thread, so
-        // the learner sees Question → answer → feedback → … in order rather
-        // than a contextless wall of answers.
-        const qById = new Map(items.map((it) => [it.id, it.question]));
-        const priorMsgs: Msg[] = [];
-        let lastItemId: string | null = null;
-        for (const tn of snap.turns) {
-          if (tn.role !== 'learner' && tn.role !== 'tutor') continue;
-          if (tn.item_id && tn.item_id !== lastItemId) {
-            const q = qById.get(tn.item_id);
-            if (q) priorMsgs.push({ id: `q-${tn.item_id}`, role: 'question', text: q });
-            lastItemId = tn.item_id;
-          }
-          priorMsgs.push({
-            id: tn.id,
-            role: tn.role === 'learner' ? ('learner' as const) : ('tutor' as const),
-            text: tn.content,
-            verdict: normVerdict(tn.verdict),
-          });
-        }
+        // Rebuild a readable, chronological transcript (Question → answer →
+        // feedback → …) and decide which item to resume on. Pure + tested
+        // in lib/conversation/transcript.ts.
+        const { messages, startIdx } = buildResumeTranscript(snap.turns, items);
         return {
           serverSessionId: snap.session_id,
           items,
           startIdx,
-          priorMsgs,
+          priorMsgs: messages as Msg[],
           pinnedTopic: snap.pinned_topic,
         };
       }
@@ -178,15 +167,29 @@ export default function SessionScreen() {
   const [canAdvance, setCanAdvance] = useState(false);
   const [tries, setTries] = useState(0);
   const [voiceOn, setVoiceOn] = useState(false);
+  const [voiceUnavailable, setVoiceUnavailable] = useState(false);
   const [pinned, setPinned] = useState<string | null>(null);
   const [explainOpen, setExplainOpen] = useState(false);
   const [done, setDone] = useState(false);
+  // True once the bootstrap effect has applied items/messages to state.
+  // Until then `items` is [] even though boot.data exists — without this
+  // gate the `!item` check below briefly flashes the "All done!" screen.
+  const [booted, setBooted] = useState(false);
 
   const serverSessionId = boot.data?.serverSessionId ?? '';
   const item: Item | undefined = items[idx];
   const startedAtRef = useRef<number>(Date.now());
   const scrollRef = useRef<ScrollView>(null);
   const bootedRef = useRef(false);
+
+  // Numbered-diagram items: resolve the study asset to a signed image so
+  // the learner can actually see what marker N refers to.
+  const diagramQ = useQuery({
+    queryKey: ['study-asset', item?.study_asset_id ?? null],
+    enabled: !!item?.study_asset_id && !!learnerId,
+    staleTime: 5 * 60_000,
+    queryFn: () => getStudyAsset(learnerId, item!.study_asset_id as string),
+  });
 
   // Apply the bootstrap result once.
   useEffect(() => {
@@ -208,6 +211,7 @@ export default function SessionScreen() {
       setDone(true);
     }
     setMessages(seed);
+    setBooted(true);
     if (boot.data.serverSessionId && learnerId) {
       void savePendingSession({
         session_id: boot.data.serverSessionId,
@@ -221,6 +225,22 @@ export default function SessionScreen() {
     const id = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     return () => clearTimeout(id);
   }, [messages]);
+
+  // Drain any offline-queued attempts on mount and whenever connectivity
+  // is regained (Doc 05 §sync-engine). Idempotent server-side.
+  useEffect(() => {
+    if (!learnerId) return;
+    const tryDrain = () => {
+      void drainOutbox(sqliteOutbox, learnerId, (a) => postAttemptBatch(learnerId, a)).catch(
+        () => undefined,
+      );
+    };
+    tryDrain();
+    const unsub = NetInfo.addEventListener((s) => {
+      if (s.isConnected) tryDrain();
+    });
+    return unsub;
+  }, [learnerId]);
 
   const patchMsg = useCallback((id: string, patch: Partial<Msg>) => {
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
@@ -247,23 +267,70 @@ export default function SessionScreen() {
   }, [idx, items]);
 
   const send = useCallback(
-    async (rawText: string, mode: 'voice' | 'text' | 'multiple_choice') => {
+    async (rawText: string, mode: 'voice' | 'text' | 'multiple_choice', displayText?: string) => {
       const text = rawText.trim();
       if (!text || sending || !item) return;
       setSending(true);
       setCanAdvance(false);
-      setTries((n) => n + 1);
 
       const localVerdict = localEvaluate(item as EvaluatableItem, text);
+
+      // Offline-first (Doc 05 §sync-engine): the tutor needs the network,
+      // but a confidently locally-gradeable answer can be queued and synced
+      // later instead of dead-ending. Anything the tutor must judge gets a
+      // calm "needs a connection" message — never a hard block.
+      const net = await NetInfo.fetch();
+      if (net.isConnected === false) {
+        setSending(false);
+        if (localVerdict === 'correct' || localVerdict === 'incorrect') {
+          const shown = displayText?.trim() || text;
+          void sqliteOutbox.enqueue(learnerId, {
+            client_attempt_id: uuid(),
+            item_id: item.id,
+            session_id: serverSessionId || null,
+            mode,
+            kid_answer: text,
+            verdict: localVerdict,
+            evaluated_by: 'local',
+            hints_used: 0,
+            duration_ms: Date.now() - startedAtRef.current,
+            test_mode: testMode,
+            reviewed_at: new Date().toISOString(),
+          });
+          setMessages((prev) => [
+            ...prev,
+            { id: uuid(), role: 'learner', text: shown },
+            {
+              id: uuid(),
+              role: 'tutor',
+              text: t('offline_saved'),
+              verdict: normVerdict(localVerdict),
+            },
+          ]);
+          setTries((n) => n + 1);
+          setCanAdvance(true);
+        } else {
+          toast.info(t('offline_need_connection'));
+        }
+        return;
+      }
+
       const learnerMsgId = uuid();
       const tutorMsgId = uuid();
       setMessages((prev) => [
         ...prev,
-        { id: learnerMsgId, role: 'learner', text },
+        // Show a human-readable bubble (the chosen option / readable
+        // fill-ins) even though the payload sent to the server is the raw
+        // index / "||"-joined string.
+        { id: learnerMsgId, role: 'learner', text: displayText?.trim() || text },
         { id: tutorMsgId, role: 'tutor', text: '', streaming: true },
       ]);
 
+      const dropOptimistic = () =>
+        setMessages((prev) => prev.filter((m) => m.id !== learnerMsgId && m.id !== tutorMsgId));
+
       let verdict: Msg['verdict'];
+      let failedCode: string | null = null;
       try {
         await streamTurn(
           learnerId,
@@ -289,18 +356,32 @@ export default function SessionScreen() {
               verdict = normVerdict(e.verdict);
               patchMsg(tutorMsgId, { streaming: false, verdict: normVerdict(e.verdict) });
             } else if (e.type === 'error') {
-              patchMsg(tutorMsgId, {
-                streaming: false,
-                errored: true,
-                text: t(`stream_error.${e.code}`, { defaultValue: t('stream_error.generic') }),
-              });
+              failedCode = e.code;
             }
           },
         );
-        patchMsg(tutorMsgId, { streaming: false, verdict });
-        if (verdict === 'correct') setCanAdvance(true);
-      } catch {
-        patchMsg(tutorMsgId, { streaming: false, errored: true, text: t('stream_error.generic') });
+        if (failedCode) {
+          // The turn was NOT graded or persisted server-side. Don't leave
+          // an orphaned answer + error in the transcript (it duplicates on
+          // retry) — drop the optimistic pair and surface a calm toast,
+          // consistent with how the app reports transient errors.
+          dropOptimistic();
+          toast.error(t(`stream_error.${failedCode}`, { defaultValue: t('stream_error.generic') }));
+        } else {
+          patchMsg(tutorMsgId, { streaming: false, verdict });
+          // Count a real, completed attempt (drives the "skip" affordance).
+          setTries((n) => n + 1);
+          if (verdict === 'correct') setCanAdvance(true);
+        }
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          // Session unrecoverable — send the learner back to sign-in
+          // instead of stranding them on a turn that will never succeed.
+          router.replace('/login');
+          return;
+        }
+        dropOptimistic();
+        toast.error(t('stream_error.generic'));
       } finally {
         setSending(false);
       }
@@ -312,7 +393,8 @@ export default function SessionScreen() {
     if (!item) return;
     // '||' matches how lib/eval/local.ts splits fill-blank answers, so the
     // zero-cost local fast-path can recognise a fully-correct set.
-    if (item.answer_kind === 'fill_blank') void send(fillValues.join('||'), 'text');
+    if (item.answer_kind === 'fill_blank')
+      void send(fillValues.join('||'), 'text', fillValues.filter((v) => v?.trim()).join(' · '));
     else void send(answer, 'text');
   }, [item, answer, fillValues, send]);
 
@@ -325,12 +407,14 @@ export default function SessionScreen() {
 
   const onVoiceUnavailable = useCallback(() => {
     // Voice can't be used here (module missing, permission denied, or it
-    // threw). Don't strand the learner waiting for a 2nd failure — fall
-    // back to the keyboard right away. The toggle still lets them retry.
-    setVoiceOn((on) => {
-      if (on) toast.info(t('voice.switched_to_text'));
-      return false;
+    // threw). Fall back to the keyboard immediately, tell the learner once,
+    // and remember it so the "speak instead" toggle (which would just fail
+    // again) is hidden for the rest of the session.
+    setVoiceUnavailable((already) => {
+      if (!already) toast.info(t('voice.switched_to_text'));
+      return true;
     });
+    setVoiceOn(false);
   }, [t]);
 
   const finish = useCallback(async () => {
@@ -342,9 +426,9 @@ export default function SessionScreen() {
     await clearPendingSession();
     router.replace({
       pathname: '/(learner)/result',
-      params: { sessionId: serverSessionId },
+      params: { sessionId: serverSessionId, testMode: String(testMode) },
     });
-  }, [learnerId, serverSessionId]);
+  }, [learnerId, serverSessionId, testMode]);
 
   const keepGoing = useCallback(async () => {
     try {
@@ -380,18 +464,36 @@ export default function SessionScreen() {
     }
   }, [item, pinned, learnerId, serverSessionId, t]);
 
-  const exitKeep = useCallback(() => {
-    // Leave but PRESERVE the session — home offers a resume banner.
-    router.replace('/(learner)/home');
-  }, []);
+  // Confirm before leaving mid-conversation, and reassure that progress is
+  // kept (the home/practice resume banner brings them right back here).
+  const confirmExit = useCallback(() => {
+    Alert.alert(t('exit.title'), t('exit.saved_hint'), [
+      { text: t('exit.keep_going'), style: 'cancel' },
+      {
+        text: t('exit.end'),
+        style: 'destructive',
+        onPress: () => router.replace('/(learner)/home'),
+      },
+    ]);
+  }, [t]);
+
+  // Android hardware back must hit the same confirm, not silently bail.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (boot.data && !done) {
+        confirmExit();
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [boot.data, done, confirmExit]);
 
   // ── Render states ────────────────────────────────────────────────────────
   if (boot.isLoading || accountQuery.isLoading) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={LB.ink2} />
-        </View>
+        <LoadingState />
       </SafeAreaView>
     );
   }
@@ -408,6 +510,16 @@ export default function SessionScreen() {
             {t('back')}
           </Btn>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // boot.data has resolved but the bootstrap effect hasn't applied it to
+  // state yet — keep showing the loader instead of flashing "All done!".
+  if (!booted) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+        <LoadingState />
       </SafeAreaView>
     );
   }
@@ -450,7 +562,7 @@ export default function SessionScreen() {
         progress={(idx + (canAdvance ? 1 : 0)) / total}
         index={`${Math.min(idx + 1, total)} / ${total}`}
         badge={testMode ? t('badge_test') : t('badge_practice')}
-        onExit={exitKeep}
+        onExit={confirmExit}
       />
 
       <KeyboardAvoidingView
@@ -470,7 +582,11 @@ export default function SessionScreen() {
           {/* Pin + explain controls */}
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
             {!testMode && item.topic ? (
-              <Pressable onPress={() => void togglePin()} accessibilityRole="button">
+              <Pressable
+                onPress={() => void togglePin()}
+                accessibilityRole="button"
+                hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+              >
                 <View
                   style={{
                     paddingVertical: 6,
@@ -497,6 +613,7 @@ export default function SessionScreen() {
               onPress={() => setExplainOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={t('explain.open')}
+              hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
             >
               <View
                 style={{
@@ -526,6 +643,28 @@ export default function SessionScreen() {
           )}
         </ScrollView>
 
+        {/* Active diagram — kept visible above the composer so the learner
+            can see the numbered figure while typing/speaking the label. */}
+        {diagramQ.data ? (
+          <View
+            style={{
+              borderTopColor: LB.hairline,
+              borderTopWidth: 1,
+              backgroundColor: LB.bg,
+              alignItems: 'center',
+              paddingVertical: 10,
+            }}
+          >
+            <DiagramQuestion
+              storage_url={diagramQ.data.signed_url}
+              width={diagramQ.data.width}
+              height={diagramQ.data.height}
+              label_positions={diagramQ.data.label_positions}
+              active_index={item.diagram_label_index ?? null}
+            />
+          </View>
+        ) : null}
+
         {/* Composer */}
         <View
           style={{
@@ -539,9 +678,27 @@ export default function SessionScreen() {
           }}
         >
           {canAdvance ? (
-            <Btn size="lg" full onPress={advance}>
-              {t('next')}
-            </Btn>
+            <>
+              <Btn size="lg" full onPress={advance}>
+                {t('next')}
+              </Btn>
+              {item.problem_template_id ? (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(learner)/practice/[templateId]',
+                      params: { templateId: item.problem_template_id as string },
+                    })
+                  }
+                  accessibilityRole="button"
+                  hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+                >
+                  <Text style={{ fontSize: 13, color: LB.ink2, textAlign: 'center' }}>
+                    {t('practice_similar')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </>
           ) : (
             <>
               <Composer
@@ -555,15 +712,22 @@ export default function SessionScreen() {
                 voiceEligible={voiceEligible}
                 voiceLocaleTag={voiceLocale(uiLocale)}
                 onSubmitTyped={submitTyped}
-                onPickMc={(i) => void send(String(i), 'multiple_choice')}
+                onPickMc={(i) =>
+                  void send(String(i), 'multiple_choice', item.mc_options?.[i] ?? `#${i + 1}`)
+                }
                 onVoice={onVoice}
                 onVoiceUnavailable={onVoiceUnavailable}
                 voiceOn={voiceOn}
                 canUseVoice={item.answer_kind === 'short' || item.answer_kind === 'long'}
+                voiceUnavailable={voiceUnavailable}
                 onToggleVoice={() => setVoiceOn((v) => !v)}
               />
               {tries >= 1 && !sending ? (
-                <Pressable onPress={advance} accessibilityRole="button" hitSlop={8}>
+                <Pressable
+                  onPress={advance}
+                  accessibilityRole="button"
+                  hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+                >
                   <Text style={{ fontSize: 13, color: LB.ink3, textAlign: 'center' }}>
                     {t('skip')}
                   </Text>
@@ -702,6 +866,7 @@ function Composer({
   onVoiceUnavailable,
   voiceOn,
   canUseVoice,
+  voiceUnavailable,
   onToggleVoice,
 }: {
   item: Item;
@@ -719,13 +884,19 @@ function Composer({
   onVoiceUnavailable: () => void;
   voiceOn: boolean;
   canUseVoice: boolean;
+  voiceUnavailable: boolean;
   onToggleVoice: () => void;
 }) {
-  // Brief selected-state feedback before the answer bubble appears.
+  // Brief selected-state feedback while the turn is in flight; cleared once
+  // it resolves so a wrong choice isn't left looking locked-in, and on a
+  // new item.
   const [picked, setPicked] = useState<number | null>(null);
   useEffect(() => {
     setPicked(null);
   }, [item.id]);
+  useEffect(() => {
+    if (!sending) setPicked(null);
+  }, [sending]);
 
   if (item.answer_kind === 'multiple_choice') {
     return (
@@ -783,7 +954,12 @@ function Composer({
             setFillValues(next);
           }}
         />
-        <Btn size="lg" full disabled={sending} onPress={onSubmitTyped}>
+        <Btn
+          size="lg"
+          full
+          disabled={sending || fillValues.every((v) => !v?.trim())}
+          onPress={onSubmitTyped}
+        >
           {sending ? t('checking') : t('submit')}
         </Btn>
       </View>
@@ -793,18 +969,26 @@ function Composer({
   if (item.answer_kind === 'numeric' || item.answer_kind === 'formula') {
     return (
       <View style={{ gap: 10 }}>
-        <MathInput
-          value={answer}
-          onChangeText={setAnswer}
-          placeholder={
-            item.answer_kind === 'numeric' ? t('placeholder.number') : t('placeholder.formula')
-          }
-        />
-        <MathKeyboard
-          onInsert={(token) =>
-            setAnswer(token === 'BACKSPACE' ? answer.slice(0, -1) : answer + token)
-          }
-        />
+        {/* Bounded + scrollable so the math keyboard can't push the submit
+            button off a small screen — the CTA stays outside, always tappable. */}
+        <ScrollView
+          style={{ maxHeight: 320 }}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ gap: 10 }}
+        >
+          <MathInput
+            value={answer}
+            onChangeText={setAnswer}
+            placeholder={
+              item.answer_kind === 'numeric' ? t('placeholder.number') : t('placeholder.formula')
+            }
+          />
+          <MathKeyboard
+            onInsert={(token) =>
+              setAnswer(token === 'BACKSPACE' ? answer.slice(0, -1) : answer + token)
+            }
+          />
+        </ScrollView>
         <Btn size="lg" full disabled={sending || !answer.trim()} onPress={onSubmitTyped}>
           {sending ? t('checking') : t('submit')}
         </Btn>
@@ -856,8 +1040,12 @@ function Composer({
           </Btn>
         </View>
       )}
-      {canUseVoice ? (
-        <Pressable onPress={onToggleVoice} accessibilityRole="button" hitSlop={8}>
+      {canUseVoice && !voiceUnavailable ? (
+        <Pressable
+          onPress={onToggleVoice}
+          accessibilityRole="button"
+          hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+        >
           <Text style={{ fontSize: 13, color: LB.ink2, textAlign: 'center' }}>
             {voiceOn ? t('voice.use_keyboard') : t('voice.use_voice')}
           </Text>

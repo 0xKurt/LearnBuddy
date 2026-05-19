@@ -17,6 +17,7 @@
   "test_in_days_one": "Test in 1 Tag",
   "test_in_days_other": "Test in {{count}} Tagen",
   "add_subject_tile": "Fach hinzufügen",
+  "account_a11y": "Konto & Einstellungen",
   "cta_first_session": {
     "title": "Fang an zu lernen!",
     "body": "{{name}} wartet auf dich. Tippe hier, um direkt loszulegen."
@@ -60,6 +61,7 @@
     "no_material_body": "Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst.",
     "add_material": "+ Material",
     "start_practice": "Üben starten",
+    "test_mode": "Im Test-Modus üben",
     "archive_title": "Ordner archivieren",
     "archive_body": "Der Ordner wird archiviert und kann 30 Tage lang wiederhergestellt werden.",
     "rename": "Umbenennen",
@@ -83,6 +85,7 @@
     "new_folder": "Ordner",
     "new_material": "Material",
     "start_practice": "Üben",
+    "test_mode": "Im Test-Modus üben",
     "add_folder_menu": "Ordner anlegen",
     "archive": "Archivieren",
     "cancel": "Abbrechen"
@@ -93,6 +96,7 @@
     "processing": "wird verarbeitet …",
     "failed_hint": "Fehler · lang drücken zum Löschen",
     "delete_failed": "Hat nicht geklappt — bitte nochmal versuchen.",
+    "delete_failed_title": "Löschen fehlgeschlagen",
     "page_count_one": "1 Seite",
     "page_count_other": "{{count}} Seiten"
   },

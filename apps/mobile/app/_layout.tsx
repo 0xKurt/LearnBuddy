@@ -8,7 +8,17 @@ import * as SecureStore from 'expo-secure-store';
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, AppState, Linking, Modal, Platform, Pressable, Text, View } from 'react-native';
+import {
+  Alert,
+  AppState,
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -73,6 +83,18 @@ function semverLt(a: string, b: string): boolean {
 }
 
 const WHATS_NEW_VERSION = '1.1.0';
+
+// Accessibility: honour the OS font-size / Dynamic Type setting (default
+// allowFontScaling stays on) but cap the multiplier app-wide so the largest
+// accessibility sizes can't shatter fixed-size layouts. This is the RN-wide
+// hook for Dynamic Type without retokenising every screen.
+type FontScalableDefaults = {
+  defaultProps?: { allowFontScaling?: boolean; maxFontSizeMultiplier?: number };
+};
+const FONT_SCALE_DEFAULTS = { allowFontScaling: true, maxFontSizeMultiplier: 1.4 } as const;
+for (const Comp of [Text, TextInput] as unknown as FontScalableDefaults[]) {
+  Comp.defaultProps = { ...(Comp.defaultProps ?? {}), ...FONT_SCALE_DEFAULTS };
+}
 
 export default function RootLayout() {
   // Don't retry client errors (a clean 404 "no items" must surface

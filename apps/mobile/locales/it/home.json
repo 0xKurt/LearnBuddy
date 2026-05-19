@@ -17,6 +17,7 @@
   "test_in_days_one": "Verifica fra 1 giorno",
   "test_in_days_other": "Verifica fra {{count}} giorni",
   "add_subject_tile": "Aggiungi materia",
+  "account_a11y": "Account e impostazioni",
   "cta_first_session": {
     "title": "Inizia a studiare!",
     "body": "{{name}} ti aspetta. Tocca qui per cominciare."
@@ -60,6 +61,7 @@
     "no_material_body": "Fotografa un foglio di esercizi o una pagina del libro — il resto lo facciamo noi.",
     "add_material": "+ Materiale",
     "start_practice": "Inizia a esercitarti",
+    "test_mode": "Esercitati in modalità verifica",
     "archive_title": "Archivia cartella",
     "archive_body": "La cartella verrà archiviata e potrà essere ripristinata per 30 giorni.",
     "rename": "Rinomina",
@@ -83,6 +85,7 @@
     "new_folder": "Cartella",
     "new_material": "Materiale",
     "start_practice": "Esercitati",
+    "test_mode": "Esercitati in modalità verifica",
     "add_folder_menu": "Crea cartella",
     "archive": "Archivia",
     "cancel": "Annulla"
@@ -93,6 +96,7 @@
     "processing": "in elaborazione …",
     "failed_hint": "Errore · tieni premuto per eliminare",
     "delete_failed": "Impossibile eliminare — riprova.",
+    "delete_failed_title": "Eliminazione non riuscita",
     "page_count_one": "1 pagina",
     "page_count_other": "{{count}} pagine"
   },

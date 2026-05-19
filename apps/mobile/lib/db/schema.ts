@@ -1,10 +1,9 @@
 // Drizzle ORM schema for the local SQLite mirror.
 // Doc 03 §mobile-local-sqlite-mirror — strict subset of the server schema.
 //
-// Skeleton: minimum tables needed for the learner surface to boot. Full
-// mirror lands when an offline-first slice is scheduled. The previous
-// outbox_local + sync_state tables were removed with the outbox stub —
-// they had no callers and only enabled silent data loss.
+// `attempt_outbox` is the offline-first sync queue (Doc 05 §sync-engine):
+// locally-graded attempts made while offline are persisted here and drained
+// to POST /attempts/batch (idempotent, server-side) once back online.
 
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
@@ -43,4 +42,14 @@ export const folders = sqliteTable('folders', {
   archived_at: text('archived_at'),
   created_at: text('created_at').notNull(),
   updated_at: text('updated_at').notNull(),
+});
+
+// Offline sync queue. One row per locally-graded attempt made while
+// offline; `payload` is the JSON server-batch entry, replayed verbatim to
+// POST /attempts/batch (idempotent on client_attempt_id) on reconnect.
+export const attemptOutbox = sqliteTable('attempt_outbox', {
+  client_attempt_id: text('client_attempt_id').primaryKey(),
+  learner_id: text('learner_id').notNull(),
+  payload: text('payload').notNull(),
+  created_at: text('created_at').notNull(),
 });

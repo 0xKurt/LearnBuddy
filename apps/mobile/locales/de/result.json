@@ -1,6 +1,7 @@
 {
   "today_at": "Heute · {{time}}",
   "title": "Heute geübt — fein gemacht.",
+  "test_title": "Übungstest geschafft.",
   "summary": "{{minutes}} Minuten · {{items}} Aufgaben",
   "mastery": "Alles sicher heute — stark gemacht! 🎉",
   "stats": {

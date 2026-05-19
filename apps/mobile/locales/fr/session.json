@@ -5,6 +5,7 @@
   "badge_practice": "Entraînement",
   "exit": {
     "title": "Arrêter la séance ?",
+    "saved_hint": "Ta progression est enregistrée — tu peux reprendre quand tu veux.",
     "keep_going": "Continuer",
     "end": "Arrêter"
   },
@@ -15,6 +16,9 @@
   "checking": "Vérification …",
   "next": "Suivant",
   "skip": "Passer",
+  "practice_similar": "S'entraîner sur des exercices similaires",
+  "offline_saved": "Enregistré hors ligne — synchronisé dès que tu es de nouveau en ligne.",
+  "offline_need_connection": "Pour ça il me faut une connexion. Réessaie dans un instant.",
   "keep_going_empty": "C'est tout pour l'instant — bravo !",
   "stream_error": {
     "generic": "Ça n'a pas marché. Tu peux retaper ta réponse.",

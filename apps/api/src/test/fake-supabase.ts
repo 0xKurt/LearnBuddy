@@ -279,6 +279,10 @@ export class FakeSupabase {
         },
         error: null as null | { message: string },
       }),
+      createSignedUrl: async (path: string, _expiresIn: number) => ({
+        data: { signedUrl: `https://fake-storage.local/${bucket}/${path}?sig=read` },
+        error: null as null | { message: string },
+      }),
       /** Slice D1: vision pipeline needs photo bytes. The fake returns a
        *  1×1 JPEG so the gateway receives well-formed (if uninformative)
        *  data; the FakeLlmGateway ignores it anyway. */

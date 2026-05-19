@@ -5,6 +5,7 @@
   "badge_practice": "Esercizio",
   "exit": {
     "title": "Terminare la sessione?",
+    "saved_hint": "I tuoi progressi sono salvati — puoi riprendere quando vuoi.",
     "keep_going": "Continua",
     "end": "Termina"
   },
@@ -15,6 +16,9 @@
   "checking": "Controllo …",
   "next": "Avanti",
   "skip": "Salta",
+  "practice_similar": "Esercitati su esercizi simili",
+  "offline_saved": "Salvato offline — si sincronizza appena torni online.",
+  "offline_need_connection": "Per questo mi serve la connessione. Riprova tra un attimo.",
   "keep_going_empty": "Per ora è tutto — bravissimo!",
   "stream_error": {
     "generic": "Non è andata. Puoi riscrivere la tua risposta.",

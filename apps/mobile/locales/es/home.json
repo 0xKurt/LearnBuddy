@@ -17,6 +17,7 @@
   "test_in_days_one": "Examen en 1 día",
   "test_in_days_other": "Examen en {{count}} días",
   "add_subject_tile": "Añadir asignatura",
+  "account_a11y": "Cuenta y ajustes",
   "cta_first_session": {
     "title": "¡Empieza a aprender!",
     "body": "{{name}} te espera. Toca aquí para comenzar."
@@ -60,6 +61,7 @@
     "no_material_body": "Fotografía una ficha o una página del libro — el resto lo hacemos nosotros.",
     "add_material": "+ Material",
     "start_practice": "Empezar a practicar",
+    "test_mode": "Practicar en modo examen",
     "archive_title": "Archivar carpeta",
     "archive_body": "La carpeta se archivará y podrá restaurarse durante 30 días.",
     "rename": "Renombrar",
@@ -83,6 +85,7 @@
     "new_folder": "Carpeta",
     "new_material": "Material",
     "start_practice": "Practicar",
+    "test_mode": "Practicar en modo examen",
     "add_folder_menu": "Crear carpeta",
     "archive": "Archivar",
     "cancel": "Cancelar"
@@ -93,6 +96,7 @@
     "processing": "procesando …",
     "failed_hint": "Error · mantén pulsado para eliminar",
     "delete_failed": "No se pudo eliminar — inténtalo de nuevo.",
+    "delete_failed_title": "Error al eliminar",
     "page_count_one": "1 página",
     "page_count_other": "{{count}} páginas"
   },
