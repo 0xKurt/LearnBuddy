@@ -650,6 +650,12 @@ sessionRoutes.post(
       }
 
       // 5. Build the thread + hint accounting from prior turns.
+      // NOTE: `activeMisconception` is declared up-front (not inside the
+      // tutor-path block where it's COMPUTED) because recordAttempt's
+      // closure reads it for the resolution mechanic and the fast path
+      // calls recordAttempt before the tutor-path block runs. Declared
+      // with a null default so the fast path is a no-op for resolution.
+      let activeMisconception: SelectorContext['activeMisconception'] = null;
       const turns = await loadTurns(supabase, session_id);
       const nextIndex = turns.reduce((mx, t) => Math.max(mx, t.turn_index), -1) + 1;
       const convoTurns = turns.filter(
@@ -854,6 +860,26 @@ sessionRoutes.post(
               session_id,
             });
           }
+
+          // Phase C resolution mechanic: a COLD correct on a topic that
+          // matches an active recurring misconception is the signal we
+          // promote that misconception to resolved. "Cold" = no hints,
+          // no prior wrong attempts — the learner just solved it
+          // unscaffolded. The misconception isn't deleted; we keep the
+          // row + bump resolved_at so future selector queries skip it.
+          if (
+            verdict === 'correct' &&
+            hintsGivenForItem === 0 &&
+            priorWrongAttemptsOnItem === 0 &&
+            activeMisconception
+          ) {
+            await supabase
+              .from('recurring_misconceptions')
+              .update({ resolved_at: reviewedAt.toISOString() })
+              .eq('learner_id', learner_id)
+              .eq('concept_tag', activeMisconception.concept_tag)
+              .is('resolved_at', null);
+          }
         }
       };
 
@@ -1030,6 +1056,51 @@ sessionRoutes.post(
         .map((r) => r.move_id as SelectorContext['recentMoves'][number])
         .reverse(); // oldest → newest, matches selector's slice(-2) semantics
 
+      // Phase C follow-up: look up the highest-seen-count active
+      // recurring misconception whose tag is plausibly related to this
+      // item's topic. We do a CASE-INSENSITIVE substring match because
+      // the LLM-generated concept_tag (e.g. "fraction_addition.common_denominator")
+      // won't be an exact match to item.topic ("Bruchaddition") — but
+      // either the tag or description usually contains a related token.
+      // Best-effort; falls back to null on any read error.
+      const currentTopic = ((item.topic as string | null) ?? '').toLowerCase().trim();
+      if (currentTopic.length >= 3) {
+        try {
+          const miscRes = await supabase
+            .from('recurring_misconceptions')
+            .select('concept_tag, description, seen_count')
+            .eq('learner_id', learner_id)
+            .is('resolved_at', null)
+            .order('seen_count', { ascending: false })
+            .limit(8);
+          const rows = (miscRes?.data ?? []) as Array<{
+            concept_tag: string;
+            description: string;
+            seen_count: number;
+          }>;
+          // Match if any meaningful token from the topic appears in
+          // tag or description (or vice versa). 3-char min to filter
+          // out stop-syllables.
+          const topicTokens = currentTopic.split(/[^a-zäöüß0-9]+/u).filter((t) => t.length >= 3);
+          for (const r of rows) {
+            const haystack = `${r.concept_tag} ${r.description}`.toLowerCase();
+            const tagTokens = r.concept_tag
+              .toLowerCase()
+              .split(/[^a-zäöüß0-9]+/u)
+              .filter((t) => t.length >= 3);
+            const matches =
+              topicTokens.some((t) => haystack.includes(t)) ||
+              tagTokens.some((t) => currentTopic.includes(t));
+            if (matches) {
+              activeMisconception = r;
+              break;
+            }
+          }
+        } catch {
+          activeMisconception = null;
+        }
+      }
+
       const selectorCtx: SelectorContext = {
         signal: runtimeSignal,
         hintsGivenForItem,
@@ -1042,6 +1113,7 @@ sessionRoutes.post(
         lastVerdictOnItem: (lastTutorOnItem?.verdict ??
           null) as SelectorContext['lastVerdictOnItem'],
         recentMoves,
+        activeMisconception,
       };
       const selectorDecision = selectMove(selectorCtx);
       const moveFragment = selectorDecision.move.promptFragment(selectorCtx);
@@ -1222,6 +1294,24 @@ sessionRoutes.post(
             console.error(`[strategy] decision insert failed: ${res.error.message}`);
           }
         });
+
+      // Phase C follow-up: when we just performed misconception_confrontation,
+      // bump last_addressed_at so the resolution-tracking cycle is closed.
+      // The same value reads off recentMoves so we don't double-fire if
+      // the selector picks it twice in the same session.
+      if (selectorDecision.move.id === 'misconception_confrontation' && activeMisconception) {
+        void supabase
+          .from('recurring_misconceptions')
+          .update({ last_addressed_at: now().toISOString() })
+          .eq('learner_id', learner_id)
+          .eq('concept_tag', activeMisconception.concept_tag)
+          .is('resolved_at', null)
+          .then((res) => {
+            if (res.error) {
+              console.warn(`[misconception] last_addressed_at bump failed: ${res.error.message}`);
+            }
+          });
+      }
 
       await push({ type: 'verdict', verdict: finalVerdict });
       await push({ type: 'feedback', text: result.reply });

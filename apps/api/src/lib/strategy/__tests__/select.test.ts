@@ -43,6 +43,7 @@ const baseCtx: SelectorContext = {
   itemTopic: 'Brüche',
   lastVerdictOnItem: null,
   recentMoves: [],
+  activeMisconception: null,
 };
 
 describe('selectMove — give-up escalation (highest priority)', () => {
@@ -244,6 +245,76 @@ describe('selectMove — continue_natural fallback', () => {
     });
     expect(d.move.id).toBe('continue_natural');
     expect(d.move.promptFragment(d.move as never)).toBe(null);
+  });
+});
+
+describe('selectMove — misconception_confrontation (Phase C resolution use)', () => {
+  const misc = {
+    concept_tag: 'fraction_addition.common_denominator_missing',
+    description: 'adds numerators and denominators directly',
+    seen_count: 3,
+  };
+
+  it('fires when wrong-answer + active misconception present', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'incorrect',
+      hintsGivenForItem: 0,
+      activeMisconception: misc,
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).toBe('misconception_confrontation');
+  });
+
+  it('also fires on partially_correct + active misconception', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'partially_correct',
+      activeMisconception: misc,
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).toBe('misconception_confrontation');
+  });
+
+  it('does NOT fire when there is no active misconception', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'incorrect',
+      activeMisconception: null,
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).not.toBe('misconception_confrontation');
+  });
+
+  it('does NOT fire when verdict is correct (no need to confront)', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      activeMisconception: misc,
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).not.toBe('misconception_confrontation');
+  });
+
+  it('yields to gentle_scaffold/gentle_reveal on a give-up streak', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'skipped',
+      trailingSkipsOnItem: 1,
+      activeMisconception: misc,
+    });
+    expect(d.move.id).toBe('gentle_scaffold');
+  });
+
+  it('does not repeat itself two turns in a row on the same item', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'incorrect',
+      activeMisconception: misc,
+      recentMoves: ['misconception_confrontation', 'direct_hint_broad'],
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).not.toBe('misconception_confrontation');
   });
 });
 

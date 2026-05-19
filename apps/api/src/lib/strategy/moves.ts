@@ -31,7 +31,17 @@ export type MoveId =
   | 'recovery_pivot_easier'
   | 'gentle_scaffold'
   | 'gentle_reveal'
+  | 'misconception_confrontation'
   | 'continue_natural';
+
+/** Active recurring misconception for THIS item's topic. The selector
+ *  receives at most ONE of these per turn — the most-seen tag whose
+ *  topic matches the current item. Set to null when nothing matches. */
+export type ActiveMisconception = {
+  concept_tag: string;
+  description: string;
+  seen_count: number;
+} | null;
 
 /** Everything the move predicates need to make a decision. Keep this
  *  shape small and pure — no DB handles, no LLM clients. */
@@ -57,6 +67,12 @@ export type SelectorContext = {
    *  the selector apply a recency penalty so the model isn't doing the
    *  same trick three turns in a row. */
   recentMoves: ReadonlyArray<MoveId>;
+  /** Phase C follow-up: the highest-seen-count active misconception
+   *  for this item's topic (or null when nothing matches). When
+   *  non-null AND the learner just got the item wrong, the selector
+   *  fires `misconception_confrontation` to address the pattern
+   *  directly instead of giving a generic hint. */
+  activeMisconception: ActiveMisconception;
 };
 
 export type PedagogicalMove = {
@@ -145,6 +161,29 @@ const selfExplanationPrompt: PedagogicalMove = {
       'Briefly acknowledge correctness, then ask ONE short follow-up: "kannst du in einem Satz sagen, WARUM das so ist?" (locale-adapted).',
       'If their next reply is substantive reasoning, accept. If it just rephrases the answer, gently probe one level deeper. Do not turn this into a lecture.',
     ].join('\n'),
+};
+
+const misconceptionConfrontation: PedagogicalMove = {
+  id: 'misconception_confrontation',
+  priority: 20,
+  applies: (ctx) =>
+    ctx.activeMisconception !== null &&
+    (ctx.lastVerdictOnItem === 'incorrect' || ctx.lastVerdictOnItem === 'partially_correct') &&
+    ctx.trailingSkipsOnItem === 0,
+  // Don't fire twice on the same item — once the model has named the
+  // pattern, the next turn should let the kid try, not lecture again.
+  forbidden: (ctx) => ctx.recentMoves.slice(-2).includes('misconception_confrontation'),
+  promptFragment: (ctx) => {
+    const m = ctx.activeMisconception!;
+    return [
+      '— Mode for this turn: misconception_confrontation —',
+      `The learner has a RECURRING misconception on this concept: "${m.concept_tag}" — ${m.description} (seen ${m.seen_count}× across sessions).`,
+      'Their current wrong answer fits this pattern. Don\'t give a generic hint — name the SHAPE of the mistake gently, using teacher-vernacular like "das ist die Stelle, an der wir schon mal waren" (locale-adapted).',
+      'Describe the WORK pattern, never the learner ("you tend to ..." is banned). Externalize: "diese Art von Aufgabe ist tückisch wenn ...".',
+      'Then ask ONE concrete question that distinguishes the misconception from the correct rule.',
+      '2 short sentences. Warm. Do not state the final answer.',
+    ].join('\n');
+  },
 };
 
 const socraticQuestion: PedagogicalMove = {
@@ -246,6 +285,7 @@ export const MOVE_REGISTRY: ReadonlyArray<PedagogicalMove> = [
   gentleScaffold,
   gentleReveal,
   recoveryPivotEasier,
+  misconceptionConfrontation,
   selfExplanationPrompt,
   socraticQuestion,
   workedExample,
