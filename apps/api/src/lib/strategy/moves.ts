@@ -34,6 +34,7 @@ export type MoveId =
   | 'misconception_confrontation'
   | 'confidence_probe'
   | 'wrong_example_probe'
+  | 'curiosity_hook'
   | 'continue_natural';
 
 /** Active recurring misconception for THIS item's topic. The selector
@@ -253,6 +254,45 @@ const wrongExampleProbe: PedagogicalMove = {
     ].join('\n'),
 };
 
+// Phase E1 — curiosity_hook. When a learner is clearly riding above the
+// FSRS pool (high ceiling, multi-step correct streak) the right thing is
+// NOT to schedule another scheduled item. It's to surface an ADJACENT
+// curiosity — "wusstest du, dass das mit X zusammenhängt?" — and offer a
+// choice. This costs nothing if they decline; it costs a side-quest if
+// they say yes.
+//
+// No concept graph yet (Phase E2 adds that). The model picks the
+// adjacency itself, constrained by the prompt to ONE adjacent fact + a
+// choice question. Without E2 the adjacencies are LLM-imagined — fine
+// for a first cut; E2 will tighten them to a curated graph.
+
+const curiosityHook: PedagogicalMove = {
+  id: 'curiosity_hook',
+  // Priority 24 — above self_explanation_prompt (25). When BOTH apply
+  // (high ceiling + first-try correct conceptual) the curiosity_hook
+  // wins: a sharp kid with a streak benefits more from a side-quest
+  // than from yet another "WARUM?" probe.
+  priority: 24,
+  applies: (ctx) =>
+    ctx.lastVerdictOnItem === 'correct' &&
+    ctx.hintsGivenForItem === 0 &&
+    ctx.priorWrongAttemptsOnItem === 0 &&
+    ctx.signal.ceiling_signal >= 0.6 &&
+    ctx.signal.consecutive_correct >= 3,
+  // Once per session — the surprise is the value. Repetition kills it.
+  forbidden: (ctx) => ctx.recentMoves.includes('curiosity_hook'),
+  promptFragment: (ctx) => {
+    const topic = ctx.itemTopic ?? 'this topic';
+    return [
+      '— Mode for this turn: curiosity_hook —',
+      "The learner is well above the current item's level — fast, accurate, no hints. They earned a side-quest.",
+      `Pick ONE adjacent-but-related concept connected to "${topic}". Surface it as ONE short "wusstest du, dass …?" line (locale-adapted). The fact must be true, age-appropriate, and connected — not a trivia non-sequitur.`,
+      'Then ask: "magst du da kurz reinschauen, oder weiter mit dem Stoff?" (or locale equivalent). The choice is real — if they say "weiter", advance.',
+      'Two short sentences total. Do NOT lecture. Do NOT introduce more than one new idea.',
+    ].join('\n');
+  },
+};
+
 const socraticQuestion: PedagogicalMove = {
   id: 'socratic_question',
   priority: 30,
@@ -353,6 +393,7 @@ export const MOVE_REGISTRY: ReadonlyArray<PedagogicalMove> = [
   gentleReveal,
   recoveryPivotEasier,
   misconceptionConfrontation,
+  curiosityHook,
   selfExplanationPrompt,
   confidenceProbe,
   wrongExampleProbe,

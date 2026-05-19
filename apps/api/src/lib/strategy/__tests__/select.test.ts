@@ -335,7 +335,30 @@ describe('selectMove — wrong_example_probe (Phase D streak check)', () => {
     expect(d.move.id).toBe('confidence_probe');
   });
 
-  it('yields to self_explanation_prompt when ceiling signal is high', () => {
+  it('yields to self_explanation_prompt when ceiling signal is high (but streak too short for curiosity_hook)', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: {
+        ...baseSignal,
+        ceiling_signal: 0.8,
+        // consecutive_correct: 2 — qualifies for wrong_example_probe but
+        // not curiosity_hook (which needs 3+). With high ceiling,
+        // self_explanation_prompt (25) wins over wrong_example_probe (26).
+        consecutive_correct: 2,
+        emotional_temperature: 'curious',
+      },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).toBe('self_explanation_prompt');
+  });
+});
+
+describe('selectMove — curiosity_hook (Phase E1, sharp-kid side-quest)', () => {
+  it('fires on first-try correct + high ceiling + 3+ streak', () => {
     const d = selectMove({
       ...baseCtx,
       lastVerdictOnItem: 'correct',
@@ -350,7 +373,71 @@ describe('selectMove — wrong_example_probe (Phase D streak check)', () => {
       },
       isFirstTurnOnItem: false,
     });
-    // self_explanation (priority 25) > wrong_example (26).
+    expect(d.move.id).toBe('curiosity_hook');
+  });
+
+  it('beats self_explanation_prompt when both qualify (sharp kid)', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: {
+        ...baseSignal,
+        ceiling_signal: 0.9,
+        consecutive_correct: 4,
+        emotional_temperature: 'curious',
+      },
+      isFirstTurnOnItem: false,
+    });
+    // Priority 24 (curiosity_hook) beats 25 (self_explanation_prompt).
+    expect(d.move.id).toBe('curiosity_hook');
+  });
+
+  it('does NOT fire without a streak (correct but not consecutively)', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.8, consecutive_correct: 1 },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).not.toBe('curiosity_hook');
+  });
+
+  it('does NOT fire when ceiling signal is moderate', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.5, consecutive_correct: 3 },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).not.toBe('curiosity_hook');
+  });
+
+  it('fires at most once per session — confidence/self_explanation take over afterward', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: {
+        ...baseSignal,
+        ceiling_signal: 0.9,
+        consecutive_correct: 4,
+        emotional_temperature: 'curious',
+      },
+      isFirstTurnOnItem: false,
+      recentMoves: ['curiosity_hook', 'continue_natural', 'continue_natural'],
+    });
+    expect(d.move.id).not.toBe('curiosity_hook');
     expect(d.move.id).toBe('self_explanation_prompt');
   });
 });
