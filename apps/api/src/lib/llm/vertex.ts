@@ -142,8 +142,8 @@ export class VertexLlmGateway implements LLMGateway {
   }
 
   async visionExtractAndGenerate(input: VisionInput): Promise<VisionResult> {
-    if (input.images.length < 1 || input.images.length > 10) {
-      throw new ApiError('validation_failed', 'images must be 1..10');
+    if (input.images.length < 1 || input.images.length > 20) {
+      throw new ApiError('validation_failed', 'images must be 1..20');
     }
     const userText = buildP1UserPrompt({
       locale: input.locale,

@@ -94,7 +94,7 @@
     "delete_title": "¿Eliminar material?",
     "delete_body": "Este material y todas sus preguntas serán eliminados.",
     "processing": "procesando …",
-    "failed_hint": "Error · mantén pulsado para eliminar",
+    "failed_hint": "Error · toca para reintentar, mantén pulsado para eliminar",
     "delete_failed": "No se pudo eliminar — inténtalo de nuevo.",
     "delete_failed_title": "Error al eliminar",
     "page_count_one": "1 página",

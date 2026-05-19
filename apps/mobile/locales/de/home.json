@@ -94,7 +94,7 @@
     "delete_title": "Material löschen?",
     "delete_body": "Dieses Material und alle zugehörigen Fragen werden entfernt.",
     "processing": "wird verarbeitet …",
-    "failed_hint": "Fehler · lang drücken zum Löschen",
+    "failed_hint": "Fehler · tippen zum Wiederholen, lang drücken zum Löschen",
     "delete_failed": "Hat nicht geklappt — bitte nochmal versuchen.",
     "delete_failed_title": "Löschen fehlgeschlagen",
     "page_count_one": "1 Seite",

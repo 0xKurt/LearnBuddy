@@ -9,7 +9,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,6 +39,7 @@ import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import {
   deleteMaterial,
   listMaterials,
+  retryMaterial,
   type MaterialListItem,
 } from '../../../lib/api/materials.js';
 import { archiveSubject, listSubjects } from '../../../lib/api/subjects.js';
@@ -99,6 +108,13 @@ export default function SubjectScreen() {
     queryKey: ['materials', 'subject', subjectId],
     queryFn: () => listMaterials(learnerId as string, { subjectId }),
     enabled: !!learnerId && tab === 'material',
+    refetchInterval: (query) => {
+      const data = query.state.data as MaterialListItem[] | undefined;
+      const anyPending = data?.some(
+        (m) => m.extraction_status !== 'ready' && m.extraction_status !== 'failed',
+      );
+      return anyPending ? 4000 : false;
+    },
   });
   const materials = materialsQuery.data ?? [];
 
@@ -121,6 +137,12 @@ export default function SubjectScreen() {
         },
       },
     ]);
+  };
+
+  const handleRetryMaterial = (m: MaterialListItem) => {
+    void retryMaterial(learnerId as string, m.id)
+      .then(() => qc.invalidateQueries({ queryKey: ['materials', 'subject', subjectId] }))
+      .catch(() => Alert.alert(t('material.delete_failed_title'), t('material.delete_failed')));
   };
 
   const archiveSubjectMut = useMutation({
@@ -186,7 +208,16 @@ export default function SubjectScreen() {
         <CircleBtn icon="more" onPress={openSubjectMenu} />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={materialsQuery.isRefetching && !materialsQuery.isLoading}
+            onRefresh={() => void materialsQuery.refetch()}
+            tintColor={LB.ink3}
+          />
+        }
+      >
         <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
           {subject.name}
         </Text>
@@ -266,6 +297,7 @@ export default function SubjectScreen() {
                   })
                 }
                 onDelete={() => handleDeleteMaterial(m)}
+                onRetry={() => handleRetryMaterial(m)}
               />
             ))}
           </View>
@@ -392,10 +424,12 @@ function MaterialRow({
   material,
   onPress,
   onDelete,
+  onRetry,
 }: {
   material: MaterialListItem;
   onPress: () => void;
   onDelete: () => void;
+  onRetry: () => void;
 }) {
   const { t } = useTranslation('home');
   const { t: tCommon } = useTranslation('common');
@@ -404,7 +438,7 @@ function MaterialRow({
 
   return (
     <Pressable
-      onPress={isReady ? onPress : undefined}
+      onPress={isReady ? onPress : isFailed ? onRetry : undefined}
       onLongPress={isFailed ? onDelete : undefined}
       delayLongPress={400}
       style={{

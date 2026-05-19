@@ -25,5 +25,12 @@
     "title": "Connection lost",
     "body": "The connection dropped before LearnBuddy finished. This material was probably not processed — check your materials list. If it shows an error, remove it and scan it again.",
     "view_list": "Go to materials"
+  },
+  "worker": {
+    "processing": "This runs on our servers and usually takes under a minute. You can wait, or check your materials list later.",
+    "slow_title": "Taking a little longer",
+    "slow_body": "It is still being processed in the background. Check your materials list shortly — it will appear there once it is done.",
+    "failed_title": "That did not work",
+    "failed_body": "We could not read this material. Try again — your photos are saved."
   }
 }

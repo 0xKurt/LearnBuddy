@@ -14,7 +14,7 @@
 import type { Locale } from '@learnbuddy/shared-types';
 
 export type VisionInput = {
-  /** 1..10 photos as base64 strings (no data: prefix). */
+  /** 1..20 photos as base64 strings (no data: prefix). */
   images: Array<{ mimeType: 'image/jpeg' | 'image/png'; data: string }>;
   locale: Locale;
   gradeLevel: number;

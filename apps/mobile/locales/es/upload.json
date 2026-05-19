@@ -25,5 +25,12 @@
     "title": "Conexión perdida",
     "body": "La conexión se cortó antes de terminar. Probablemente este material no se procesó — revisa tu lista de materiales. Si muestra un error, elimínalo y vuelve a escanearlo.",
     "view_list": "Ver materiales"
+  },
+  "worker": {
+    "processing": "Esto ocurre en nuestros servidores y suele tardar menos de un minuto. Puedes esperar o revisar tu lista más tarde.",
+    "slow_title": "Está tardando un poco más",
+    "slow_body": "Se sigue procesando en segundo plano. Revisa tu lista de materiales en un momento: aparecerá cuando esté listo.",
+    "failed_title": "No ha funcionado",
+    "failed_body": "No pudimos leer este material. Inténtalo de nuevo: tus fotos están guardadas."
   }
 }

@@ -25,5 +25,12 @@
     "title": "Connexion perdue",
     "body": "La connexion s'est interrompue avant la fin. Ce support n'a probablement pas été traité — vérifie ta liste de supports. S'il affiche une erreur, supprime-le et rescanne-le.",
     "view_list": "Voir les supports"
+  },
+  "worker": {
+    "processing": "Cela se passe sur nos serveurs et prend généralement moins d'une minute. Tu peux attendre ou revenir voir ta liste plus tard.",
+    "slow_title": "Ça prend un peu plus de temps",
+    "slow_body": "Le traitement continue en arrière-plan. Regarde ta liste de supports dans un instant — il apparaîtra une fois prêt.",
+    "failed_title": "Ça n'a pas marché",
+    "failed_body": "Nous n'avons pas pu lire ce support. Réessaie — tes photos sont enregistrées."
   }
 }

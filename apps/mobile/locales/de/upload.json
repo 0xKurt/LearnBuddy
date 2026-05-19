@@ -25,5 +25,12 @@
     "title": "Verbindung unterbrochen",
     "body": "Die Verbindung ist abgebrochen, bevor LearnBuddy fertig war. Dieses Material wurde wahrscheinlich nicht verarbeitet — schau in deiner Materialliste. Wenn dort ein Fehler steht, lösche es und scanne es noch einmal.",
     "view_list": "Zur Materialliste"
+  },
+  "worker": {
+    "processing": "Das passiert auf unseren Servern und dauert meist unter einer Minute. Du kannst warten oder später in deiner Materialliste nachsehen.",
+    "slow_title": "Dauert etwas länger",
+    "slow_body": "Es wird im Hintergrund weiter verarbeitet. Schau gleich in deiner Materialliste — das Material erscheint dort, sobald es fertig ist.",
+    "failed_title": "Hat nicht geklappt",
+    "failed_body": "Wir konnten dieses Material nicht lesen. Versuch es nochmal — deine Fotos sind gespeichert."
   }
 }
