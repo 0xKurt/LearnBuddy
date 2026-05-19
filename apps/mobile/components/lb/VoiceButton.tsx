@@ -42,6 +42,9 @@ type Props = {
   permissionRationale: string;
   /** Shown when the native module is missing (e.g. Expo Go). */
   unavailableLabel: string;
+  /** Shown briefly after a transient recognizer hiccup (no speech / timeout /
+   *  busy). Voice stays available — the learner can just tap and try again. */
+  retryHint: string;
   /** Fires exactly once per recording session with the final transcript. */
   onTranscript: (text: string) => void;
   /** Fires when voice can't be used here (module missing or an error),
@@ -57,6 +60,7 @@ export function VoiceButton({
   labelActive,
   permissionRationale,
   unavailableLabel,
+  retryHint,
   onTranscript,
   onUnavailable,
   disabled = false,
@@ -69,6 +73,15 @@ export function VoiceButton({
     if (!available) onUnavailable?.(false);
   }, [available, onUnavailable]);
   const [state, setState] = useState<VoiceState>('idle');
+  // The native recognizer resolves `onStart` asynchronously, so `state` in a
+  // press-handler closure is frequently stale (still 'idle'/'starting' when
+  // the user releases a hold). Mirror it into a ref and read THAT in the
+  // gesture handlers, otherwise hold-release bails before submitting.
+  const stateRef = useRef<VoiceState>('idle');
+  const setVoiceState = useCallback((s: VoiceState) => {
+    stateRef.current = s;
+    setState(s);
+  }, []);
   const [partial, setPartial] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const transcriptRef = useRef<string>('');
@@ -82,23 +95,23 @@ export function VoiceButton({
   }, []);
 
   const finishAndSubmit = useCallback(async () => {
-    setState('stopping');
+    setVoiceState('stopping');
     try {
       await stopListening();
     } catch {
       /* swallow — final transcript was already captured via onFinal */
     }
     const final = transcriptRef.current.trim();
-    setState('idle');
+    setVoiceState('idle');
     setPartial('');
     if (final) onTranscript(final);
-  }, [onTranscript]);
+  }, [onTranscript, setVoiceState]);
 
   const onPressIn = useCallback(async () => {
     if (!available || disabled) return;
 
     // Already recording (latched from a previous tap) → this press stops it.
-    if (state === 'listening' || state === 'starting') {
+    if (stateRef.current === 'listening' || stateRef.current === 'starting') {
       await finishAndSubmit();
       return;
     }
@@ -107,11 +120,11 @@ export function VoiceButton({
     setError(null);
     setPartial('');
     transcriptRef.current = '';
-    setState('starting');
+    setVoiceState('starting');
 
     try {
       await startListening(locale, {
-        onStart: () => setState('listening'),
+        onStart: () => setVoiceState('listening'),
         onPartial: (text) => {
           transcriptRef.current = text;
           setPartial(text);
@@ -120,33 +133,42 @@ export function VoiceButton({
           transcriptRef.current = text;
         },
         onError: (msg) => {
-          setState('error');
-          // Heuristic: iOS / Android both include "denied" or "permission"
-          // in the message when authorization was refused.
-          const looksLikePermission = /denied|permission|not.?authorized/i.test(msg);
-          setError(looksLikePermission ? permissionRationale : msg);
-          onUnavailable?.(looksLikePermission);
+          // Only a real authorization denial should strand the learner on
+          // the keyboard. "No speech", timeout, "recognizer busy", "no
+          // match" etc. are transient — keep voice available and just nudge
+          // them to try again, otherwise one stray hiccup kills voice for
+          // the whole session.
+          const looksLikePermission = /denied|permission|not.?authorized|restricted/i.test(msg);
+          if (looksLikePermission) {
+            setVoiceState('error');
+            setError(permissionRationale);
+            onUnavailable?.(true);
+            return;
+          }
+          setVoiceState('idle');
+          setError(retryHint);
         },
       });
     } catch {
-      setState('error');
+      setVoiceState('error');
       setError(unavailableLabel);
       onUnavailable?.(false);
     }
   }, [
     available,
     disabled,
-    state,
     locale,
     permissionRationale,
     unavailableLabel,
+    retryHint,
     finishAndSubmit,
     onUnavailable,
+    setVoiceState,
   ]);
 
   const onPressOut = useCallback(async () => {
     if (!available || disabled) return;
-    if (state !== 'listening' && state !== 'starting') return;
+    if (stateRef.current !== 'listening' && stateRef.current !== 'starting') return;
 
     const heldFor = Date.now() - pressStartRef.current;
     if (heldFor < TAP_HOLD_THRESHOLD_MS) {
@@ -155,7 +177,7 @@ export function VoiceButton({
     }
     // Long press → stop + submit on release.
     await finishAndSubmit();
-  }, [available, disabled, state, finishAndSubmit]);
+  }, [available, disabled, finishAndSubmit]);
 
   const active = state === 'listening' || state === 'starting';
   const label = active ? labelActive : labelIdle;

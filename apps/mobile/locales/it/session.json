@@ -60,6 +60,7 @@
     "active": "Ti ascolto … (tocca per terminare)",
     "permission_rationale": "LearnBuddy ascolta un attimo per farti rispondere a voce. L'audio non viene mai salvato.",
     "unavailable": "La voce non è ancora disponibile — per ora scrivi la tua risposta.",
+    "retry": "Non ho capito bene — tocca per riparlare.",
     "switched_to_text": "Continuiamo scrivendo.",
     "use_keyboard": "Meglio scrivere",
     "use_voice": "Meglio parlare"
