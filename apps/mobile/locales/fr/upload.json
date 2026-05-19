@@ -22,8 +22,8 @@
     "body": "Tu as utilisé tous les crédits de cette période. Un adulte peut recharger dans les réglages, ou attendre la prochaine période."
   },
   "async": {
-    "title": "Traitement en cours",
-    "body": "La connexion s'est interrompue, mais ton support est en cours de traitement en arrière-plan. Vérifie ta liste de supports dans un moment.",
+    "title": "Connexion perdue",
+    "body": "La connexion s'est interrompue avant la fin. Ce support n'a probablement pas été traité — vérifie ta liste de supports. S'il affiche une erreur, supprime-le et rescanne-le.",
     "view_list": "Voir les supports"
   }
 }
