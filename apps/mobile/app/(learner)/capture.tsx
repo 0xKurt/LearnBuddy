@@ -7,7 +7,8 @@
 //   - chip overlay on each thumbnail; recent-shot status banner above strip
 //   - red verdict opens a "Trotzdem behalten" sheet (Doc 05 says red is
 //     non-blocking; the user always wins)
-//   - long-press strip thumbnail → delete; max 10 photos per material
+//   - long-press strip thumbnail → delete; max 20 photos per material
+//   - "Aus Galerie" import via expo-image-picker for already-taken photos
 //   - "Fertig" → SubjectFolderPicker when no folderId/subjectId param was
 //     passed in by the folder / subject screens. Photos + target are
 //     stashed in the zustand capture store for Slice C2 to consume on
@@ -23,6 +24,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion, type DeviceMotionMeasurement } from 'expo-sensors';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
@@ -178,6 +180,83 @@ export default function CaptureScreen() {
 
   const deletePhoto = (localId: string) => {
     setPhotos((prev) => prev.filter((p) => p.localId !== localId));
+  };
+
+  // Pick from device photo library. We still score each picked image with the
+  // same blur / brightness / tilt path the camera shutter uses, so the worker
+  // sees consistent quality metadata regardless of whether photos were taken
+  // here or already existed on the phone. Tilt is 0 (no device-motion frame
+  // available for a previously-taken photo).
+  const pickFromGallery = async () => {
+    if (shutterBusy) return;
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      Alert.alert(t('limits.max_reached'));
+      return;
+    }
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(t('gallery.permission_title'), t('gallery.permission_body'), [
+        { text: t('gallery.permission_cancel'), style: 'cancel' },
+        ...(perm.canAskAgain
+          ? []
+          : [
+              {
+                text: t('gallery.permission_settings'),
+                onPress: () => void Linking.openSettings(),
+              },
+            ]),
+      ]);
+      return;
+    }
+    setShutterBusy(true);
+    try {
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        selectionLimit: remaining,
+        quality: 0.85,
+        exif: false,
+      });
+      if (res.canceled || res.assets.length === 0) return;
+      const accepted: CapturedPhoto[] = [];
+      for (const asset of res.assets) {
+        try {
+          const { gray } = await decodeForQuality(
+            asset.uri,
+            asset.width ?? 1024,
+            asset.height ?? 1024,
+          );
+          const blur = scoreBlur(gray);
+          const brightness = scoreBrightness(gray);
+          const score: QualityScore = {
+            blur,
+            brightness,
+            tilt: 0,
+            width: asset.width ?? 1024,
+            height: asset.height ?? 1024,
+          };
+          accepted.push({
+            uri: asset.uri,
+            width: asset.width ?? 1024,
+            height: asset.height ?? 1024,
+            quality: score,
+            localId: `gal-${Date.now()}-${accepted.length + 1}`,
+          });
+        } catch {
+          // skip a single bad asset; keep going so the user doesn't lose
+          // the others in the same selection
+        }
+      }
+      if (accepted.length > 0) {
+        setPhotos((prev) => [...prev, ...accepted]);
+        setRecent({ status: 'green', reason: null });
+      }
+    } catch {
+      toast.error(t('gallery.error'));
+    } finally {
+      setShutterBusy(false);
+    }
   };
 
   const commit = (target: { subjectId: string; folderId: string | null }) => {
@@ -336,12 +415,31 @@ export default function CaptureScreen() {
               backgroundColor: 'rgba(0,0,0,0.55)',
             }}
           >
-            <View style={{ minWidth: 64 }}>
+            <View style={{ minWidth: 64, gap: 6 }}>
               <Text style={{ color: '#fff', fontSize: 12 }}>
                 {photos.length === 1
                   ? t('strip.label_one')
                   : t('strip.label_other', { count: photos.length })}
               </Text>
+              <Pressable
+                onPress={() => void pickFromGallery()}
+                disabled={shutterBusy || photos.length >= MAX_PHOTOS}
+                accessibilityRole="button"
+                accessibilityLabel={t('gallery.cta')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                  backgroundColor: 'rgba(255,255,255,0.18)',
+                  alignSelf: 'flex-start',
+                  opacity: shutterBusy || photos.length >= MAX_PHOTOS ? 0.5 : 1,
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>
+                  {t('gallery.cta')}
+                </Text>
+              </Pressable>
             </View>
             <Pressable
               onPress={onShutter}

@@ -1,6 +1,6 @@
 {
   "title": "Capturar material",
-  "subtitle": "Saca una foto de una página, libro o ficha — hasta 10 fotos.",
+  "subtitle": "Saca una foto de una página, libro o ficha — hasta 20 fotos.",
   "permission": {
     "title": "Necesitamos acceso a la cámara",
     "body": "Para que puedas fotografiar tu material. Puedes cambiarlo en cualquier momento en Ajustes.",
@@ -24,7 +24,7 @@
   "strip": {
     "label_one": "1 foto",
     "label_other": "{{count}} fotos",
-    "max_hint": "Hasta 10 fotos por material.",
+    "max_hint": "Hasta 20 fotos por material.",
     "long_press_hint": "Mantén pulsada una miniatura para eliminarla.",
     "delete_title": "¿Eliminar foto?",
     "delete_cancel": "Cancelar",
@@ -44,6 +44,14 @@
     "no_subjects_title": "Primero crea una asignatura"
   },
   "limits": {
-    "max_reached": "Máximo 10 fotos por material."
+    "max_reached": "Máximo 20 fotos por material."
+  },
+  "gallery": {
+    "cta": "De la galería",
+    "permission_title": "Necesitamos acceso a tus fotos",
+    "permission_body": "Para que puedas elegir fotos del material que ya están en tu móvil.",
+    "permission_cancel": "Cancelar",
+    "permission_settings": "Abrir ajustes",
+    "error": "No se pudieron cargar las fotos — ¿intentar de nuevo?"
   }
 }

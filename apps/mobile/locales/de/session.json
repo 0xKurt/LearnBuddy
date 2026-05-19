@@ -77,7 +77,7 @@
     },
     "loading": "Einen Moment …",
     "error": "Das hat gerade nicht geklappt. Probier es gleich nochmal.",
-    "hint": "Tippe oben einen Bereich an, und ich erklär ihn dir.",
+    "hint": "Tippe eine der beiden Optionen oben an.",
     "close": "Schließen"
   }
 }

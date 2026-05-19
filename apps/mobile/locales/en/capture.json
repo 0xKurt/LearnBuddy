@@ -1,6 +1,6 @@
 {
   "title": "Capture material",
-  "subtitle": "Snap a page, book, or worksheet — up to 10 photos.",
+  "subtitle": "Snap a page, book, or worksheet — up to 20 photos.",
   "permission": {
     "title": "We need camera access for a moment",
     "body": "So you can photograph your material. You can change this any time in Settings.",
@@ -24,7 +24,7 @@
   "strip": {
     "label_one": "1 photo",
     "label_other": "{{count}} photos",
-    "max_hint": "Up to 10 photos per material.",
+    "max_hint": "Up to 20 photos per material.",
     "long_press_hint": "Long-press a thumbnail to delete it.",
     "delete_title": "Delete photo?",
     "delete_cancel": "Cancel",
@@ -44,6 +44,14 @@
     "no_subjects_title": "Create a subject first"
   },
   "limits": {
-    "max_reached": "Max 10 photos per material."
+    "max_reached": "Max 20 photos per material."
+  },
+  "gallery": {
+    "cta": "From gallery",
+    "permission_title": "We need permission to read your photos",
+    "permission_body": "So you can pick photos of your material that are already on your phone.",
+    "permission_cancel": "Cancel",
+    "permission_settings": "Open settings",
+    "error": "Couldn't load photos — try again?"
   }
 }
