@@ -36,6 +36,8 @@ import {
   classifyPraise,
   type Locale,
 } from '../lib/praise/build-praise-context.js';
+import { selectMove } from '../lib/strategy/select.js';
+import type { SelectorContext } from '../lib/strategy/moves.js';
 import { captureApiError } from '../lib/sentry.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -955,6 +957,35 @@ sessionRoutes.post(
       });
       const praiseRubric = buildPraiseRubricFragment(praiseClass);
 
+      // Phase B (B3): pick the pedagogical move for this turn. Pure
+      // function over (signal, item state, history). If selector picks
+      // continue_natural, moveFragment is null and the prompt is unchanged.
+      // gentle_scaffold / gentle_reveal already get selected automatically
+      // when trailingSkipsOnItem is 1 or 2 — A2's giveUpMode plumbing is
+      // now redundant on those strikes but harmless (the fragment text
+      // matches; we just don't pass giveUpMode anymore).
+      const trailingSkips = countTrailingSkipsOnItem(turns, input.item_id);
+      const lastTutorOnItem = [...turns]
+        .reverse()
+        .find((t) => t.role === 'tutor' && t.item_id === input.item_id);
+      const isFirstTurnOnItem = !lastTutorOnItem;
+      const recentMoves: SelectorContext['recentMoves'] = []; // B4 will persist + read this
+      const selectorCtx: SelectorContext = {
+        signal: runtimeSignal,
+        hintsGivenForItem,
+        priorWrongAttemptsOnItem,
+        trailingSkipsOnItem: trailingSkips,
+        isFirstTurnOnItem,
+        itemDifficulty: Number(item.difficulty ?? 2),
+        itemAnswerKind: String(item.answer_kind ?? 'short'),
+        itemTopic: (item.topic as string | null) ?? null,
+        lastVerdictOnItem: (lastTutorOnItem?.verdict ??
+          null) as SelectorContext['lastVerdictOnItem'],
+        recentMoves,
+      };
+      const selectorDecision = selectMove(selectorCtx);
+      const moveFragment = selectorDecision.move.promptFragment(selectorCtx);
+
       let result;
       try {
         result = await llm.converseTurn(
@@ -987,6 +1018,7 @@ sessionRoutes.post(
             praiseRubric,
             giveUpMode,
             recentRhythm,
+            moveFragment,
           },
           (delta) => {
             void push({ type: 'token', text: delta });

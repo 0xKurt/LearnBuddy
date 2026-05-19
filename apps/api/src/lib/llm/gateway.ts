@@ -208,13 +208,20 @@ export type ConverseTurnInput = {
    *  shaping needed (e.g. on a turn where verdict is clearly wrong). */
   praiseRubric?: string | null;
   /** Phase A2: when set, this turn is the scaffold or reveal step in
-   *  the progressive give-up escalation. */
+   *  the progressive give-up escalation. Superseded by `moveFragment`
+   *  in Phase B but kept for back-compat. */
   giveUpMode?: 'gentle_scaffold' | 'gentle_reveal' | null;
   /** Phase A3: rendered "Recent rhythm" block — observations from the
    *  runtime signal (verdict streak, latency trend, message length).
    *  Critically: never carries analytical labels; the model sees raw
    *  observations and forms its own pedagogical response. */
   recentRhythm?: string | null;
+  /** Phase B (B3): the chosen pedagogical move's prompt fragment.
+   *  Picked by `lib/strategy/select.ts` from the move registry. Spliced
+   *  into the system prompt under a "Mode for this turn" header. Null
+   *  when the selector picked `continue_natural` (no shaping — model
+   *  uses base rules). */
+  moveFragment?: string | null;
 };
 
 export type ConverseTurnResult = {

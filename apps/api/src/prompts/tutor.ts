@@ -139,6 +139,11 @@ export function buildTutorSystemInstruction(ctx: {
    *  before the praise rubric. L1 invariant: this block must contain
    *  observations only, never analytical labels. */
   recentRhythm?: string | null;
+  /** Phase B (B3): the strategy selector's chosen move fragment. Goes
+   *  AFTER praise + give-up but BEFORE any closing material. Null
+   *  means `continue_natural` — the model uses its base rules
+   *  unmodified. */
+  moveFragment?: string | null;
 }): string {
   const k = kindContext(ctx.item);
   const material = ctx.materialContext?.trim()
@@ -150,6 +155,10 @@ export function buildTutorSystemInstruction(ctx: {
     return f ? `\n\n${f}` : '';
   })();
   const rhythm = ctx.recentRhythm?.trim() ? `\n\n${ctx.recentRhythm.trim()}` : '';
+  // Phase B3: the chosen pedagogical move's fragment. Goes LAST so it's
+  // closest to the model's "current task". If the selector picked
+  // continue_natural, moveFragment is null and nothing is appended.
+  const move = ctx.moveFragment?.trim() ? `\n\n${ctx.moveFragment.trim()}` : '';
   return `${SYSTEM_TUTOR}
 
 — Current question context —
@@ -164,5 +173,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${rhythm}${praise}${giveUp}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${rhythm}${praise}${giveUp}${move}`;
 }
