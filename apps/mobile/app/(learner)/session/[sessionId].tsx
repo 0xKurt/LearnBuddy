@@ -617,9 +617,27 @@ export default function SessionScreen() {
           }}
         >
           {canAdvance ? (
-            <Btn size="lg" full onPress={advance}>
-              {t('next')}
-            </Btn>
+            <>
+              <Btn size="lg" full onPress={advance}>
+                {t('next')}
+              </Btn>
+              {item.problem_template_id ? (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(learner)/practice/[templateId]',
+                      params: { templateId: item.problem_template_id as string },
+                    })
+                  }
+                  accessibilityRole="button"
+                  hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+                >
+                  <Text style={{ fontSize: 13, color: LB.ink2, textAlign: 'center' }}>
+                    {t('practice_similar')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </>
           ) : (
             <>
               <Composer

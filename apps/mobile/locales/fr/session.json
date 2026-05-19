@@ -16,6 +16,7 @@
   "checking": "Vérification …",
   "next": "Suivant",
   "skip": "Passer",
+  "practice_similar": "S'entraîner sur des exercices similaires",
   "keep_going_empty": "C'est tout pour l'instant — bravo !",
   "stream_error": {
     "generic": "Ça n'a pas marché. Tu peux retaper ta réponse.",

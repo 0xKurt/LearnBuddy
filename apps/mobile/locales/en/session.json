@@ -16,6 +16,7 @@
   "checking": "Checking …",
   "next": "Next",
   "skip": "Skip",
+  "practice_similar": "Practise similar problems",
   "keep_going_empty": "That's everything for now — nicely done!",
   "stream_error": {
     "generic": "That didn't go through. Feel free to type your answer again.",
