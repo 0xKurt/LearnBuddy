@@ -165,6 +165,10 @@ export default function SessionScreen() {
   const [pinned, setPinned] = useState<string | null>(null);
   const [explainOpen, setExplainOpen] = useState(false);
   const [done, setDone] = useState(false);
+  // True once the bootstrap effect has applied items/messages to state.
+  // Until then `items` is [] even though boot.data exists — without this
+  // gate the `!item` check below briefly flashes the "All done!" screen.
+  const [booted, setBooted] = useState(false);
 
   const serverSessionId = boot.data?.serverSessionId ?? '';
   const item: Item | undefined = items[idx];
@@ -192,6 +196,7 @@ export default function SessionScreen() {
       setDone(true);
     }
     setMessages(seed);
+    setBooted(true);
     if (boot.data.serverSessionId && learnerId) {
       void savePendingSession({
         session_id: boot.data.serverSessionId,
@@ -236,7 +241,6 @@ export default function SessionScreen() {
       if (!text || sending || !item) return;
       setSending(true);
       setCanAdvance(false);
-      setTries((n) => n + 1);
 
       const localVerdict = localEvaluate(item as EvaluatableItem, text);
       const learnerMsgId = uuid();
@@ -250,7 +254,11 @@ export default function SessionScreen() {
         { id: tutorMsgId, role: 'tutor', text: '', streaming: true },
       ]);
 
+      const dropOptimistic = () =>
+        setMessages((prev) => prev.filter((m) => m.id !== learnerMsgId && m.id !== tutorMsgId));
+
       let verdict: Msg['verdict'];
+      let failedCode: string | null = null;
       try {
         await streamTurn(
           learnerId,
@@ -276,16 +284,23 @@ export default function SessionScreen() {
               verdict = normVerdict(e.verdict);
               patchMsg(tutorMsgId, { streaming: false, verdict: normVerdict(e.verdict) });
             } else if (e.type === 'error') {
-              patchMsg(tutorMsgId, {
-                streaming: false,
-                errored: true,
-                text: t(`stream_error.${e.code}`, { defaultValue: t('stream_error.generic') }),
-              });
+              failedCode = e.code;
             }
           },
         );
-        patchMsg(tutorMsgId, { streaming: false, verdict });
-        if (verdict === 'correct') setCanAdvance(true);
+        if (failedCode) {
+          // The turn was NOT graded or persisted server-side. Don't leave
+          // an orphaned answer + error in the transcript (it duplicates on
+          // retry) — drop the optimistic pair and surface a calm toast,
+          // consistent with how the app reports transient errors.
+          dropOptimistic();
+          toast.error(t(`stream_error.${failedCode}`, { defaultValue: t('stream_error.generic') }));
+        } else {
+          patchMsg(tutorMsgId, { streaming: false, verdict });
+          // Count a real, completed attempt (drives the "skip" affordance).
+          setTries((n) => n + 1);
+          if (verdict === 'correct') setCanAdvance(true);
+        }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
           // Session unrecoverable — send the learner back to sign-in
@@ -293,7 +308,8 @@ export default function SessionScreen() {
           router.replace('/login');
           return;
         }
-        patchMsg(tutorMsgId, { streaming: false, errored: true, text: t('stream_error.generic') });
+        dropOptimistic();
+        toast.error(t('stream_error.generic'));
       } finally {
         setSending(false);
       }
@@ -422,6 +438,16 @@ export default function SessionScreen() {
             {t('back')}
           </Btn>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // boot.data has resolved but the bootstrap effect hasn't applied it to
+  // state yet — keep showing the loader instead of flashing "All done!".
+  if (!booted) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+        <LoadingState />
       </SafeAreaView>
     );
   }
