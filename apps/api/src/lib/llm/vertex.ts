@@ -167,7 +167,12 @@ export class VertexLlmGateway implements LLMGateway {
         safetySettings: SAFETY,
         temperature: 0.4,
         topP: 0.95,
-        maxOutputTokens: 4096,
+        // 4096 tokens was clipping the response mid-string on real worksheets
+        // (extracted_markdown + 5–10 items + diagrams + templates routinely
+        // run 6–10k tokens). The clip surfaced to the user as "Verbindung
+        // unterbrochen" because the JSON.parse failed and the worker bailed.
+        // 8192 is Flash-Lite's output ceiling.
+        maxOutputTokens: 8192,
         responseMimeType: 'application/json',
       },
     };

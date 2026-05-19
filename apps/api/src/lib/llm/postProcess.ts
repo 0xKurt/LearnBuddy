@@ -16,6 +16,7 @@
 // Doc 06 says ≥3 valid items must remain or the call is extraction_failed.
 // We surface that as a sentinel in the parsed result; the route refunds.
 
+import { jsonrepair } from 'jsonrepair';
 import { z } from 'zod';
 
 import type {
@@ -185,7 +186,28 @@ export async function parseVisionPayload(
   try {
     json = JSON.parse(trimmed);
   } catch (e) {
-    return { ok: false, error: `JSON.parse: ${e instanceof Error ? e.message : String(e)}` };
+    // Two real Vertex failure modes we've seen on live worksheets:
+    //   1. Truncation at maxOutputTokens (mid-string) → "Unterminated
+    //      string". Recover by slicing at the last complete item close.
+    //   2. Bad escape sequences inside LaTeX strings (e.g. `\$`, `\K`) →
+    //      "Bad escaped character". jsonrepair fixes these by escaping
+    //      the rogue backslash without changing item count.
+    //
+    // We try the conservative salvage first because it never invents
+    // content. jsonrepair, in contrast, may "complete" a half-written
+    // item with empty fields that then fail zod — but it's the right
+    // tool for non-truncation defects.
+    const salvaged = trySalvageTruncated(trimmed);
+    if (salvaged) {
+      json = salvaged;
+    } else {
+      try {
+        const repaired = jsonrepair(trimmed);
+        json = JSON.parse(repaired);
+      } catch {
+        return { ok: false, error: `JSON.parse: ${e instanceof Error ? e.message : String(e)}` };
+      }
+    }
   }
 
   const parsed = VisionPayloadSchema.safeParse(json);
@@ -223,5 +245,93 @@ export async function parseVisionPayload(
       problem_templates: parsed.data.problem_templates as VisionProblemTemplate[],
       error: parsed.data.error,
     },
+  };
+}
+
+/** Best-effort recovery of a Vertex payload truncated mid-string at
+ *  `maxOutputTokens`. The shape we want is roughly:
+ *
+ *  ```json
+ *  {
+ *    "detected_language": "de",
+ *    "extracted_markdown": "…",
+ *    "items": [ {...}, {...}, … <CUT HERE> ],
+ *    "diagrams": [...],
+ *    "problem_templates": [...]
+ *  }
+ *  ```
+ *
+ *  We find the `"items":` array opening, walk balanced braces, and stop at
+ *  the last well-formed item close. We deliberately discard everything
+ *  after `items`: a truncated tail can't have valid `diagrams` or
+ *  `problem_templates` anyway. detected_language defaults to 'de' if
+ *  we can't find it. extracted_markdown is dropped if it was the field
+ *  being cut — the tutor's material-context degrades gracefully when null.
+ *
+ *  Returns the salvaged object or null if no items can be recovered. */
+function trySalvageTruncated(text: string): Record<string, unknown> | null {
+  const itemsStart = text.indexOf('"items"');
+  if (itemsStart < 0) return null;
+  const arrayStart = text.indexOf('[', itemsStart);
+  if (arrayStart < 0) return null;
+
+  // Walk char-by-char to track string state + brace depth from arrayStart.
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let lastCompleteItemEnd = -1; // index AFTER the last `}` that closes an item
+  for (let i = arrayStart; i < text.length; i++) {
+    const c = text[i]!;
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (c === '\\' && inString) {
+      escape = true;
+      continue;
+    }
+    if (c === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (c === '{' || c === '[') depth++;
+    else if (c === '}' || c === ']') {
+      depth--;
+      // depth === 1 means we just closed an item that lives at the
+      // first level inside the items array (depth 0 = before [, depth 1
+      // = inside [, depth 2 = inside an item). When a `}` brings us back
+      // to depth 1, an item just finished.
+      if (depth === 1 && c === '}') lastCompleteItemEnd = i + 1;
+      // depth 0 means the items array itself closed — that's the happy
+      // path the strict parser would already have handled.
+      if (depth === 0) return null;
+    }
+  }
+
+  if (lastCompleteItemEnd < 0) return null;
+  const itemsSliced = `${text.slice(arrayStart, lastCompleteItemEnd)}]`;
+
+  // Extract detected_language if present and complete (small field, usually
+  // serialized before the big items array).
+  let detected_language: string = 'de';
+  const langMatch = text.match(/"detected_language"\s*:\s*"([a-z]{2})"/);
+  if (langMatch?.[1] && ['de', 'en', 'fr', 'es', 'it'].includes(langMatch[1])) {
+    detected_language = langMatch[1];
+  }
+
+  let itemsJson: unknown;
+  try {
+    itemsJson = JSON.parse(itemsSliced);
+  } catch {
+    return null;
+  }
+
+  return {
+    detected_language,
+    extracted_markdown: '',
+    items: itemsJson,
+    diagrams: [],
+    problem_templates: [],
   };
 }
