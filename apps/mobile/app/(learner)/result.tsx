@@ -23,7 +23,8 @@ type Stat = {
 
 export default function ResultScreen() {
   const { t } = useTranslation('result');
-  const params = useLocalSearchParams<{ sessionId?: string }>();
+  const params = useLocalSearchParams<{ sessionId?: string; testMode?: string }>();
+  const isTest = params.testMode === 'true';
   // Source the learner from the account (the store value was only ever set
   // during onboarding, so on a normal cold launch it was null and this
   // screen showed nothing — the blank-result bug).
@@ -42,12 +43,15 @@ export default function ResultScreen() {
   });
 
   useEffect(() => {
+    // Don't ask for an app review right after an exam-prep test — bad
+    // timing, and the moment isn't a clean positive signal.
+    if (isTest) return;
     void incrementAndCheckRating().then(async (shouldPrompt) => {
       if (shouldPrompt && (await StoreReview.isAvailableAsync())) {
         void StoreReview.requestReview();
       }
     });
-  }, []);
+  }, [isTest]);
 
   // Without a sessionId param the screen is reached via the legacy nav
   // bar — keep the calm headline + the home CTAs but render no stats
@@ -90,7 +94,7 @@ export default function ResultScreen() {
             letterSpacing: -0.5,
           }}
         >
-          {t('title')}
+          {isTest ? t('test_title') : t('title')}
         </Text>
         {data && minutes !== null && (
           <Text style={{ fontSize: 13, color: LB.ink2 }}>

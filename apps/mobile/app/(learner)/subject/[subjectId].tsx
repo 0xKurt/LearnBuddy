@@ -277,35 +277,55 @@ export default function SubjectScreen() {
           left: 20,
           right: 20,
           bottom: 12,
-          flexDirection: 'row',
           gap: 8,
-          alignItems: 'center',
         }}
       >
-        <CircleBtn
-          icon="plus"
-          onPress={
-            tab === 'ordner'
-              ? () => setCreatingFolder(true)
-              : () => router.push({ pathname: '/(learner)/capture', params: { subjectId } })
-          }
-        />
-        <View style={{ flex: 1 }}>
+        {subject.material_count > 0 && learnerId ? (
           <Btn
-            size="lg"
+            size="sm"
             full
-            onPress={() => {
-              if (subject.material_count > 0 && learnerId) {
-                router.push({
-                  pathname: '/(learner)/session/[sessionId]',
-                  params: { sessionId: newIdempotencyKey(), learnerId, subjectId },
-                });
-              }
-            }}
-            disabled={subject.material_count === 0 || !learnerId}
+            variant="ghost"
+            onPress={() =>
+              router.push({
+                pathname: '/(learner)/session/[sessionId]',
+                params: {
+                  sessionId: newIdempotencyKey(),
+                  learnerId,
+                  subjectId,
+                  testMode: 'true',
+                },
+              })
+            }
           >
-            {t('subject.start_practice')}
+            {t('subject.test_mode')}
           </Btn>
+        ) : null}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <CircleBtn
+            icon="plus"
+            onPress={
+              tab === 'ordner'
+                ? () => setCreatingFolder(true)
+                : () => router.push({ pathname: '/(learner)/capture', params: { subjectId } })
+            }
+          />
+          <View style={{ flex: 1 }}>
+            <Btn
+              size="lg"
+              full
+              onPress={() => {
+                if (subject.material_count > 0 && learnerId) {
+                  router.push({
+                    pathname: '/(learner)/session/[sessionId]',
+                    params: { sessionId: newIdempotencyKey(), learnerId, subjectId },
+                  });
+                }
+              }}
+              disabled={subject.material_count === 0 || !learnerId}
+            >
+              {t('subject.start_practice')}
+            </Btn>
+          </View>
         </View>
       </View>
 

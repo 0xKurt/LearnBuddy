@@ -1,6 +1,7 @@
 {
   "today_at": "Today · {{time}}",
   "title": "Practised today — nicely done.",
+  "test_title": "Practice test done.",
   "summary": "{{minutes}} minutes · {{items}} questions",
   "mastery": "All secure today — brilliantly done! 🎉",
   "stats": {

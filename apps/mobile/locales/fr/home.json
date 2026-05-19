@@ -61,6 +61,7 @@
     "no_material_body": "Photographie une fiche ou une page de livre — le reste se fait tout seul.",
     "add_material": "+ Support",
     "start_practice": "Commencer l'entraînement",
+    "test_mode": "S'entraîner en mode test",
     "archive_title": "Archiver le dossier",
     "archive_body": "Le dossier sera archivé et pourra être restauré pendant 30 jours.",
     "rename": "Renommer",
@@ -84,6 +85,7 @@
     "new_folder": "Dossier",
     "new_material": "Matériel",
     "start_practice": "S'entraîner",
+    "test_mode": "S'entraîner en mode test",
     "add_folder_menu": "Créer un dossier",
     "archive": "Archiver",
     "cancel": "Annuler"

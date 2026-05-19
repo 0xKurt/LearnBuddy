@@ -354,9 +354,9 @@ export default function SessionScreen() {
     await clearPendingSession();
     router.replace({
       pathname: '/(learner)/result',
-      params: { sessionId: serverSessionId },
+      params: { sessionId: serverSessionId, testMode: String(testMode) },
     });
-  }, [learnerId, serverSessionId]);
+  }, [learnerId, serverSessionId, testMode]);
 
   const keepGoing = useCallback(async () => {
     try {

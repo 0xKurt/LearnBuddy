@@ -227,41 +227,63 @@ export default function FolderScreen() {
           left: 20,
           right: 20,
           bottom: 12,
-          flexDirection: 'row',
           gap: 8,
         }}
       >
-        <View style={{ flex: 1 }}>
+        {readyMaterials.length > 0 && learnerId ? (
           <Btn
-            size="lg"
+            size="sm"
             full
-            variant="outline"
+            variant="ghost"
             onPress={() =>
               router.push({
-                pathname: '/(learner)/capture',
-                params: { subjectId, folderId },
+                pathname: '/(learner)/session/[sessionId]',
+                params: {
+                  sessionId: newIdempotencyKey(),
+                  learnerId,
+                  subjectId,
+                  folderId,
+                  testMode: 'true',
+                },
               })
             }
           >
-            {t('folder.add_material')}
+            {t('folder.test_mode')}
           </Btn>
-        </View>
-        <View style={{ flex: 2 }}>
-          <Btn
-            size="lg"
-            full
-            disabled={readyMaterials.length === 0 || !learnerId}
-            onPress={() => {
-              if (readyMaterials.length > 0 && learnerId) {
+        ) : null}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flex: 1 }}>
+            <Btn
+              size="lg"
+              full
+              variant="outline"
+              onPress={() =>
                 router.push({
-                  pathname: '/(learner)/session/[sessionId]',
-                  params: { sessionId: newIdempotencyKey(), learnerId, subjectId, folderId },
-                });
+                  pathname: '/(learner)/capture',
+                  params: { subjectId, folderId },
+                })
               }
-            }}
-          >
-            {t('folder.start_practice')}
-          </Btn>
+            >
+              {t('folder.add_material')}
+            </Btn>
+          </View>
+          <View style={{ flex: 2 }}>
+            <Btn
+              size="lg"
+              full
+              disabled={readyMaterials.length === 0 || !learnerId}
+              onPress={() => {
+                if (readyMaterials.length > 0 && learnerId) {
+                  router.push({
+                    pathname: '/(learner)/session/[sessionId]',
+                    params: { sessionId: newIdempotencyKey(), learnerId, subjectId, folderId },
+                  });
+                }
+              }}
+            >
+              {t('folder.start_practice')}
+            </Btn>
+          </View>
         </View>
       </View>
 

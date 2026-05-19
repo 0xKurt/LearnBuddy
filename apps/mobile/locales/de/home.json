@@ -61,6 +61,7 @@
     "no_material_body": "Fotografier ein Übungsblatt oder eine Buchseite — der Rest passiert von selbst.",
     "add_material": "+ Material",
     "start_practice": "Üben starten",
+    "test_mode": "Im Test-Modus üben",
     "archive_title": "Ordner archivieren",
     "archive_body": "Der Ordner wird archiviert und kann 30 Tage lang wiederhergestellt werden.",
     "rename": "Umbenennen",
@@ -84,6 +85,7 @@
     "new_folder": "Ordner",
     "new_material": "Material",
     "start_practice": "Üben",
+    "test_mode": "Im Test-Modus üben",
     "add_folder_menu": "Ordner anlegen",
     "archive": "Archivieren",
     "cancel": "Abbrechen"

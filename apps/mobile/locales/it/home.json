@@ -61,6 +61,7 @@
     "no_material_body": "Fotografa un foglio di esercizi o una pagina del libro — il resto lo facciamo noi.",
     "add_material": "+ Materiale",
     "start_practice": "Inizia a esercitarti",
+    "test_mode": "Esercitati in modalità verifica",
     "archive_title": "Archivia cartella",
     "archive_body": "La cartella verrà archiviata e potrà essere ripristinata per 30 giorni.",
     "rename": "Rinomina",
@@ -84,6 +85,7 @@
     "new_folder": "Cartella",
     "new_material": "Materiale",
     "start_practice": "Esercitati",
+    "test_mode": "Esercitati in modalità verifica",
     "add_folder_menu": "Crea cartella",
     "archive": "Archivia",
     "cancel": "Annulla"

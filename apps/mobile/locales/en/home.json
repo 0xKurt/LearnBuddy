@@ -61,6 +61,7 @@
     "no_material_body": "Snap a worksheet or a book page — the rest happens on its own.",
     "add_material": "+ Material",
     "start_practice": "Start practice",
+    "test_mode": "Practise in test mode",
     "archive_title": "Archive folder",
     "archive_body": "The folder will be archived and can be restored for 30 days.",
     "rename": "Rename",
@@ -84,6 +85,7 @@
     "new_folder": "Folder",
     "new_material": "Material",
     "start_practice": "Practice",
+    "test_mode": "Practise in test mode",
     "add_folder_menu": "Create folder",
     "archive": "Archive",
     "cancel": "Cancel"

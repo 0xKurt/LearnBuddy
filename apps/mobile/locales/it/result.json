@@ -1,6 +1,7 @@
 {
   "today_at": "Oggi · {{time}}",
   "title": "Allenamento di oggi — bravissimo.",
+  "test_title": "Verifica di prova completata.",
   "summary": "{{minutes}} minuti · {{items}} esercizi",
   "mastery": "Tutto sicuro oggi — fantastico! 🎉",
   "stats": {
