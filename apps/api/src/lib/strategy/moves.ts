@@ -32,6 +32,8 @@ export type MoveId =
   | 'gentle_scaffold'
   | 'gentle_reveal'
   | 'misconception_confrontation'
+  | 'confidence_probe'
+  | 'wrong_example_probe'
   | 'continue_natural';
 
 /** Active recurring misconception for THIS item's topic. The selector
@@ -186,6 +188,71 @@ const misconceptionConfrontation: PedagogicalMove = {
   },
 };
 
+// Phase D — fake-understanding catchers.
+//
+// confidence_probe and self_explanation_prompt look superficially the same
+// (both ask "WARUM?"). The distinction is the LEARNER STATE that triggers
+// them:
+//   - self_explanation_prompt: high ceiling_signal — kid looks bored.
+//     "Tell me more, I think you can go deeper."
+//   - confidence_probe: ANY first-try-correct on conceptual, no ceiling
+//     signal needed. Default-on, with variety penalty to avoid
+//     interrogation. "Got it right — but did you get it right for the
+//     right reason?"
+// They never double-fire: self_explanation has higher priority (25 vs 27)
+// and is forbidden after confidence_probe.
+
+const confidenceProbe: PedagogicalMove = {
+  id: 'confidence_probe',
+  priority: 27,
+  applies: (ctx) =>
+    ctx.lastVerdictOnItem === 'correct' &&
+    ctx.hintsGivenForItem === 0 &&
+    ctx.priorWrongAttemptsOnItem === 0 &&
+    isConceptual(ctx.itemAnswerKind) &&
+    ctx.signal.ceiling_signal < 0.4,
+  // Don't interrogate. Don't follow self_explanation either — same probe
+  // shape from a different angle would feel doubled-up.
+  forbidden: (ctx) => {
+    const recent = ctx.recentMoves.slice(-2);
+    return recent.includes('confidence_probe') || recent.includes('self_explanation_prompt');
+  },
+  promptFragment: () =>
+    [
+      '— Mode for this turn: confidence_probe —',
+      'The learner just got a conceptual item right on the first try. This MIGHT be real understanding, or it might be pattern-matching on surface form. Probe to find out — gently.',
+      'One short acknowledgement, then ONE question: "kannst du in einem Satz sagen, WIESO das stimmt?" (locale-adapted).',
+      'Do NOT phrase this as a test. "Lass mich prüfen, ob du es wirklich verstanden hast" is BANNED — it sounds adversarial. Frame as genuine curiosity about their reasoning.',
+      'Maximum 2 short sentences. Then wait.',
+    ].join('\n'),
+};
+
+const wrongExampleProbe: PedagogicalMove = {
+  id: 'wrong_example_probe',
+  // Priority 26 — above confidence_probe (27) so a streak triggers the
+  // sharper probe first. Below self_explanation_prompt (25) so the
+  // ceiling-aware path still wins for bored-genius cases.
+  priority: 26,
+  applies: (ctx) =>
+    ctx.lastVerdictOnItem === 'correct' &&
+    ctx.hintsGivenForItem === 0 &&
+    ctx.priorWrongAttemptsOnItem === 0 &&
+    isConceptual(ctx.itemAnswerKind) &&
+    // A streak signals "looks confident" — pattern-matchers either get
+    // exposed or earn a real check.
+    ctx.signal.consecutive_correct >= 2,
+  // Rare move — ONCE per session. The fact that it appeared anywhere in
+  // recentMoves blocks it. (recentMoves is session-scoped.)
+  forbidden: (ctx) => ctx.recentMoves.includes('wrong_example_probe'),
+  promptFragment: () =>
+    [
+      '— Mode for this turn: wrong_example_probe —',
+      'The learner is on a correct streak on conceptual items. Pose a near-miss: "wenn jemand X gesagt hätte, wäre das richtig?" — where X is a plausible-looking wrong answer that a pattern-matcher would accept.',
+      'X should differ from the correct rule in ONE conceptual dimension: a swapped operation, a dropped sign, an ignored constraint, a related-but-wrong formula.',
+      'One sentence, framed as a real question (not a riddle). Wait for the reasoning. Do NOT confirm or deny in this turn.',
+    ].join('\n'),
+};
+
 const socraticQuestion: PedagogicalMove = {
   id: 'socratic_question',
   priority: 30,
@@ -287,6 +354,8 @@ export const MOVE_REGISTRY: ReadonlyArray<PedagogicalMove> = [
   recoveryPivotEasier,
   misconceptionConfrontation,
   selfExplanationPrompt,
+  confidenceProbe,
+  wrongExampleProbe,
   socraticQuestion,
   workedExample,
   directHintBroad,

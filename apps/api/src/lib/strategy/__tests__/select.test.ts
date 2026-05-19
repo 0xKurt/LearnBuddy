@@ -208,6 +208,153 @@ describe('selectMove — first-turn-on-hard-item (predict_then_check)', () => {
   });
 });
 
+describe('selectMove — confidence_probe (Mira fake-understander catch)', () => {
+  it('fires on first-try correct conceptual + no ceiling signal', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.1 },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).toBe('confidence_probe');
+  });
+
+  it('does NOT fire when ceiling is high — self_explanation_prompt wins', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.8, consecutive_correct: 2 },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).toBe('self_explanation_prompt');
+  });
+
+  it('does NOT fire on numeric items (not conceptual)', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'numeric',
+      signal: { ...baseSignal, ceiling_signal: 0.1 },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).not.toBe('confidence_probe');
+  });
+
+  it('does NOT fire if the kid needed a hint (already not first-try)', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 1,
+      priorWrongAttemptsOnItem: 1,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.1 },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).not.toBe('confidence_probe');
+  });
+
+  it('does NOT repeat itself two turns in a row', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.1 },
+      isFirstTurnOnItem: false,
+      recentMoves: ['confidence_probe', 'continue_natural'],
+    });
+    expect(d.move.id).not.toBe('confidence_probe');
+  });
+
+  it('does NOT follow a self_explanation_prompt (no double-probe)', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.1 },
+      isFirstTurnOnItem: false,
+      recentMoves: ['self_explanation_prompt', 'continue_natural'],
+    });
+    expect(d.move.id).not.toBe('confidence_probe');
+  });
+});
+
+describe('selectMove — wrong_example_probe (Phase D streak check)', () => {
+  it('fires on first-try correct conceptual with a 2+ correct streak', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.1, consecutive_correct: 3 },
+      isFirstTurnOnItem: false,
+    });
+    // Priority 26 — wins over confidence_probe (27) when a streak is on.
+    expect(d.move.id).toBe('wrong_example_probe');
+  });
+
+  it('does NOT fire without a streak (only 1 consecutive correct) — confidence_probe takes over', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.1, consecutive_correct: 1 },
+      isFirstTurnOnItem: false,
+    });
+    expect(d.move.id).toBe('confidence_probe');
+  });
+
+  it('fires at most once per session — confidence_probe takes over afterward', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: { ...baseSignal, ceiling_signal: 0.1, consecutive_correct: 3 },
+      isFirstTurnOnItem: false,
+      // wrong_example_probe fired earlier in the session — still in
+      // recentMoves, forbidden going forward.
+      recentMoves: ['wrong_example_probe', 'continue_natural', 'continue_natural'],
+    });
+    expect(d.move.id).not.toBe('wrong_example_probe');
+    expect(d.move.id).toBe('confidence_probe');
+  });
+
+  it('yields to self_explanation_prompt when ceiling signal is high', () => {
+    const d = selectMove({
+      ...baseCtx,
+      lastVerdictOnItem: 'correct',
+      hintsGivenForItem: 0,
+      priorWrongAttemptsOnItem: 0,
+      itemAnswerKind: 'short',
+      signal: {
+        ...baseSignal,
+        ceiling_signal: 0.8,
+        consecutive_correct: 3,
+        emotional_temperature: 'curious',
+      },
+      isFirstTurnOnItem: false,
+    });
+    // self_explanation (priority 25) > wrong_example (26).
+    expect(d.move.id).toBe('self_explanation_prompt');
+  });
+});
+
 describe('selectMove — variety penalty', () => {
   it('avoids repeating the same move 3 turns in a row when an equal-priority alternative exists', () => {
     // direct_hint_broad and direct_hint_specific share priority 50
