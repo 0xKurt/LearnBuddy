@@ -97,11 +97,17 @@ export function buildTutorSystemInstruction(ctx: {
   pinnedTopic: string | null;
   hintsGivenForItem: number;
   materialContext?: string | null;
+  /** Phase A1: optional rubric fragment that shapes praise tone for THIS
+   *  turn. Only meaningful when the turn ends up with verdict='correct'.
+   *  L1: never names the learner — it instructs HOW to praise, not WHO
+   *  the learner is. */
+  praiseRubric?: string | null;
 }): string {
   const k = kindContext(ctx.item);
   const material = ctx.materialContext?.trim()
     ? `\n\n— Study material (the worksheet this question is from) —\n${ctx.materialContext.trim()}`
     : '';
+  const praise = ctx.praiseRubric?.trim() ? `\n\n${ctx.praiseRubric.trim()}` : '';
   return `${SYSTEM_TUTOR}
 
 — Current question context —
@@ -116,5 +122,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${praise}`;
 }

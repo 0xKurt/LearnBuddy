@@ -25,6 +25,12 @@ import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { isNonAnswer } from '../lib/give-up.js';
 import { loadMaterialContext } from '../lib/material-context.js';
 import type { ConversationMessage } from '../lib/llm/gateway.js';
+import {
+  buildPraiseFastPath,
+  buildPraiseRubricFragment,
+  classifyPraise,
+  type Locale,
+} from '../lib/praise/build-praise-context.js';
 import { captureApiError } from '../lib/sentry.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -625,6 +631,16 @@ sessionRoutes.post(
             t.verdict === 'skipped'),
       ).length;
 
+      // Phase A1: count prior wrong (or skipped) learner attempts on THIS
+      // item. A non-zero count + correct now = "self_corrected" praise —
+      // the metacognitive move we most want to reinforce.
+      const priorWrongAttemptsOnItem = turns.filter(
+        (t) =>
+          t.role === 'tutor' &&
+          t.item_id === input.item_id &&
+          (t.verdict === 'incorrect' || t.verdict === 'skipped'),
+      ).length;
+
       const learnerRow = await supabase
         .from('learners')
         .select('grade_level, ui_locale, display_name')
@@ -773,7 +789,23 @@ sessionRoutes.post(
       //    Guarded so a give-up ("weiss nicht") can never take the no-model
       //    "correct" path even if a client mislabels it.
       if (input.client_local_verdict === 'correct' && !isNonAnswer(learnerText)) {
-        const praise = pickPraise(locale);
+        // Phase A1: specific praise. Classify the verdict context and
+        // render a locale + kind-appropriate variant. The fast path
+        // never inflates an easy item to "stark!" and never gives the
+        // same line twice in a row (variant rotation by session+item).
+        const praiseClass = classifyPraise({
+          hintsUsed: hintsGivenForItem,
+          itemDifficulty: Number(item.difficulty ?? 2),
+          itemAnswerKind: String(item.answer_kind ?? 'short'),
+          itemTopic: (item.topic as string | null) ?? null,
+          learnerTextWordCount: learnerText.split(/\s+/u).filter(Boolean).length,
+          priorWrongAttemptsOnItem,
+        });
+        const praise = buildPraiseFastPath(
+          praiseClass,
+          locale as Locale,
+          `${session_id}|${input.item_id}|${nextIndex}`,
+        );
         const learnerTurnId = await persistTurn({
           turn_index: nextIndex,
           role: 'learner',
@@ -827,6 +859,20 @@ sessionRoutes.post(
         (item.material_id as string | null) ?? null,
       );
 
+      // Phase A1: pre-classify praise for THIS turn. The model only USES
+      // the rubric if its verdict ends up correct; for wrong/partial it's
+      // ignored. We classify ahead of time so the system prompt is
+      // complete before the model starts streaming.
+      const praiseClass = classifyPraise({
+        hintsUsed: hintsGivenForItem,
+        itemDifficulty: Number(item.difficulty ?? 2),
+        itemAnswerKind: String(item.answer_kind ?? 'short'),
+        itemTopic: (item.topic as string | null) ?? null,
+        learnerTextWordCount: learnerText.split(/\s+/u).filter(Boolean).length,
+        priorWrongAttemptsOnItem,
+      });
+      const praiseRubric = buildPraiseRubricFragment(praiseClass);
+
       let result;
       try {
         result = await llm.converseTurn(
@@ -856,6 +902,7 @@ sessionRoutes.post(
             pinnedTopic: (session.pinned_topic as string | null) ?? null,
             hintsGivenForItem,
             materialContext,
+            praiseRubric,
           },
           (delta) => {
             void push({ type: 'token', text: delta });
@@ -931,17 +978,6 @@ async function loadTurns(
   const rows = ((res.data ?? []) as TurnRow[]).slice();
   rows.sort((a, b) => a.turn_index - b.turn_index);
   return rows;
-}
-
-function pickPraise(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
-  const map = {
-    de: 'Stimmt — super gemacht!',
-    en: "That's right — nicely done!",
-    fr: "C'est juste — bravo !",
-    es: '¡Correcto, muy bien!',
-    it: 'Esatto — bravissimo!',
-  } as const;
-  return map[locale];
 }
 
 /** Stock reply for the "I don't know" path. Tone-soft per docs/01-product

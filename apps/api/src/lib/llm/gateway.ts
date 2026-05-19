@@ -202,6 +202,11 @@ export type ConverseTurnInput = {
   /** The worksheet text this question came from (clamped). Grounds hints in
    *  the real material instead of the tiny source excerpt. */
   materialContext?: string | null;
+  /** Phase A1: praise rubric fragment for THIS turn. Shapes the tone of
+   *  the model's praise IF the verdict ends up correct. Never references
+   *  the learner in first person — L1 invariant. Null/undefined when no
+   *  shaping needed (e.g. on a turn where verdict is clearly wrong). */
+  praiseRubric?: string | null;
 };
 
 export type ConverseTurnResult = {
