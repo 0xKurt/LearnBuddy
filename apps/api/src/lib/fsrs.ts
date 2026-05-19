@@ -26,11 +26,31 @@ export type ItemStateRow = {
 
 export type Verdict = 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
 
-function verdictToRating(v: Verdict): Grade {
-  if (v === 'correct') return Rating.Good;
+/** Effort signal — Phase A5. Tells FSRS that a "correct" answer came
+ *  with help, not cold. Two channels:
+ *    - hintsUsed:           tutor turns on THIS item that were non-Genau
+ *                            (incorrect | partially_correct | skipped).
+ *    - priorWrongAttempts:  learner attempts on THIS item that were wrong
+ *                            or skipped BEFORE this correct one. */
+export type EffortSignal = {
+  hintsUsed: number;
+  priorWrongAttempts: number;
+};
+
+/** Map a verdict to an FSRS rating. The effort signal downgrades a
+ *  scaffolded correct from `Good` to `Hard`: a learner who needed help
+ *  to get there is not at the same mastery level as one who got it
+ *  cold. Spaced-rep schedules accordingly — Hard means "re-surface
+ *  sooner". Wrong / skipped verdicts are unaffected (still `Again`). */
+function verdictToRating(v: Verdict, effort: EffortSignal): Grade {
+  if (v === 'correct') {
+    return effort.hintsUsed > 0 || effort.priorWrongAttempts > 0 ? Rating.Hard : Rating.Good;
+  }
   if (v === 'partially_correct') return Rating.Hard;
   return Rating.Again;
 }
+
+const NO_EFFORT: EffortSignal = { hintsUsed: 0, priorWrongAttempts: 0 };
 
 function rowToCard(row: ItemStateRow | null): Card {
   if (!row) return createEmptyCard();
@@ -53,9 +73,10 @@ export function applyAttempt(
   prev: ItemStateRow | null,
   verdict: Verdict,
   reviewedAt: Date,
+  effort: EffortSignal = NO_EFFORT,
 ): Omit<ItemStateRow, 'item_id' | 'learner_id'> {
   const card = rowToCard(prev);
-  const result = scheduler.next(card, reviewedAt, verdictToRating(verdict));
+  const result = scheduler.next(card, reviewedAt, verdictToRating(verdict, effort));
   const next = result.card;
 
   // Mastery score: simple v1 — interval-based 0..100.

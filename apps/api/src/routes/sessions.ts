@@ -791,7 +791,12 @@ sessionRoutes.post(
             .eq('item_id', input.item_id)
             .maybeSingle();
           const prev = (prevState.data as ItemStateRow | null) ?? null;
-          const next = applyAttempt(prev, verdict, reviewedAt);
+          // Phase A5: effort-aware FSRS. A correct after hints / prior
+          // wrong attempts is Hard, not Good — it resurfaces sooner.
+          const next = applyAttempt(prev, verdict, reviewedAt, {
+            hintsUsed: hintsGivenForItem,
+            priorWrongAttempts: priorWrongAttemptsOnItem,
+          });
           const ups = await supabase
             .from('item_states')
             .upsert({ item_id: input.item_id, learner_id, ...next }, { onConflict: 'item_id' });

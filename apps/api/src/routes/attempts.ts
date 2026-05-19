@@ -82,6 +82,12 @@ attemptRoutes.post(
     const accepted: string[] = [];
     const rejected: Array<{ client_attempt_id: string; reason: string }> = [];
 
+    // Phase A5 effort signal: count prior wrong/skipped attempts on the
+    // same item AS THEY APPEAR EARLIER IN THIS BATCH. The outbox is
+    // chronological so a later-in-batch correct after an earlier-in-batch
+    // wrong on the same item is "scaffolded" — FSRS gets Hard, not Good.
+    const wrongAttemptsByItem = new Map<string, number>();
+
     // Build the row payloads first so we can run a single bulk INSERT and a
     // single batched UPSERT instead of 2N sequential round-trips. A 200-row
     // batch used to do ~400 round-trips and would time out for users draining
@@ -109,7 +115,16 @@ attemptRoutes.post(
         test_mode: a.test_mode,
       });
       const prev = stateMap.get(a.item_id) ?? null;
-      const next = applyAttempt(prev, a.verdict, new Date(a.reviewed_at));
+      const priorWrongAttempts = wrongAttemptsByItem.get(a.item_id) ?? 0;
+      const next = applyAttempt(prev, a.verdict, new Date(a.reviewed_at), {
+        hintsUsed: a.hints_used,
+        priorWrongAttempts,
+      });
+      // Update running prior-wrong counter for subsequent attempts on
+      // this same item in this batch.
+      if (a.verdict === 'incorrect' || a.verdict === 'skipped') {
+        wrongAttemptsByItem.set(a.item_id, priorWrongAttempts + 1);
+      }
       stateRows.push({
         item_id: a.item_id,
         learner_id,
