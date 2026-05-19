@@ -969,7 +969,23 @@ sessionRoutes.post(
         .reverse()
         .find((t) => t.role === 'tutor' && t.item_id === input.item_id);
       const isFirstTurnOnItem = !lastTutorOnItem;
-      const recentMoves: SelectorContext['recentMoves'] = []; // B4 will persist + read this
+
+      // B4: read the last 3 strategy decisions for this session so the
+      // selector's variety penalty actually has data to work with.
+      // Missing table / RLS issue / network blip — fall back to empty
+      // (selector still works, just no variety penalty).
+      const recentDecisionsRes = await supabase
+        .from('strategy_decisions')
+        .select('move_id, turn_index')
+        .eq('session_id', session_id)
+        .order('turn_index', { ascending: false })
+        .limit(3);
+      const recentMoves: SelectorContext['recentMoves'] = (
+        (recentDecisionsRes.data ?? []) as Array<{ move_id: string }>
+      )
+        .map((r) => r.move_id as SelectorContext['recentMoves'][number])
+        .reverse(); // oldest → newest, matches selector's slice(-2) semantics
+
       const selectorCtx: SelectorContext = {
         signal: runtimeSignal,
         hintsGivenForItem,
@@ -1070,6 +1086,27 @@ sessionRoutes.post(
         result.usage.model,
         result.usage.prompt_version,
       );
+
+      // B4: persist the selector decision for this turn. Fire-and-
+      // forget — the learner's experience never blocks on telemetry.
+      void supabase
+        .from('strategy_decisions')
+        .insert({
+          session_id,
+          learner_id,
+          item_id: input.item_id,
+          turn_index: nextIndex + 1, // index of the TUTOR turn we just wrote
+          move_id: selectorDecision.move.id,
+          signal_snapshot: runtimeSignal as unknown as Record<string, unknown>,
+          alternates: selectorDecision.alternates as unknown as unknown[],
+          reason: selectorDecision.reason,
+          verdict_after: finalVerdict,
+        })
+        .then((res) => {
+          if (res.error) {
+            console.error(`[strategy] decision insert failed: ${res.error.message}`);
+          }
+        });
 
       await push({ type: 'verdict', verdict: finalVerdict });
       await push({ type: 'feedback', text: result.reply });
