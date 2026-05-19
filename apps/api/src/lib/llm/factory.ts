@@ -4,10 +4,13 @@
 // - 'fake'   → deterministic fixture-style output via apps/api/src/test/fake-llm.ts.
 //
 // Selection rules:
-//   * If env.LLM_BACKEND is set, honor it.
+//   * If env.LLM_BACKEND is set, honor it (explicit opt-in/out).
 //   * Else if NODE_ENV==='test', use 'fake'.
 //   * Else if GOOGLE_CLOUD_PROJECT is set, use 'vertex'.
-//   * Else fall back to 'fake' with a console.warn so the dev sees it.
+//   * Else THROW — in every non-test environment. A silent fake fallback in
+//     dev/preview builds means a parent test-drives canned "Erklärung … (fake)"
+//     tutoring and thinks the AI is broken. Fake is opt-in only
+//     (LLM_BACKEND=fake), never an accident. CLAUDE.md §rule #5.
 //
 // Also handles the Vercel cold-start dance for GOOGLE_APPLICATION_CREDENTIALS_JSON
 // — writes the JSON string to a tempfile and sets the env var the SDK reads.
@@ -33,18 +36,15 @@ function pickBackend(env: Env): 'vertex' | 'fake' {
   if (env.LLM_BACKEND) return env.LLM_BACKEND;
   if (env.NODE_ENV === 'test') return 'fake';
   if (env.GOOGLE_CLOUD_PROJECT) return 'vertex';
-  // CLAUDE.md §rule #5 — never ship fake content in a production path. If
-  // the env is missing in prod, that's a deployment misconfiguration; crash
-  // loudly rather than serve "Wir bereiten dein Material vor" placeholders.
-  if (env.NODE_ENV === 'production') {
-    throw new Error(
-      "LLM factory: GOOGLE_CLOUD_PROJECT missing in production. Set it in the deployment environment (or explicitly LLM_BACKEND=fake if you really want the fake in prod, which you don't).",
-    );
-  }
-  console.warn(
-    '[LLM] No GOOGLE_CLOUD_PROJECT configured — falling back to FakeLlmGateway. Set LLM_BACKEND=vertex once GCP env is in place.',
+  // No silent fake outside tests — a dev/preview build serving canned
+  // FakeLlmGateway tutoring is indistinguishable from "the AI is broken".
+  // Fail loudly everywhere so the misconfiguration is caught at boot, not by
+  // a frustrated user. Fake is explicit opt-in via LLM_BACKEND=fake.
+  throw new Error(
+    'LLM factory: no LLM backend resolvable. Set GOOGLE_CLOUD_PROJECT (real Vertex) ' +
+      'in this environment, or set LLM_BACKEND=fake explicitly if you really want ' +
+      'the deterministic fake. Refusing to silently serve fake tutoring.',
   );
-  return 'fake';
 }
 
 export function createLlmGateway(env: Env): LLMGateway {

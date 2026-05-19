@@ -62,12 +62,10 @@
   },
   "add_profile": {
     "title": "Crear perfil",
-    "body": "Solo necesitamos el nombre, el año de nacimiento y el curso. Todo se puede cambiar después.",
+    "body": "Solo necesitamos el nombre. Todo lo demás se puede cambiar después.",
     "field_first_name": "Nombre",
-    "field_birth_year": "Año de nacimiento",
     "field_grade": "Curso",
     "placeholder_first_name": "p. ej. Lena",
-    "placeholder_birth_year": "p. ej. 2012",
     "minor_hint": "En la siguiente pantalla pediremos brevemente el consentimiento para un perfil menor de 16.",
     "cta": "Continuar",
     "busy": "Un momento …",

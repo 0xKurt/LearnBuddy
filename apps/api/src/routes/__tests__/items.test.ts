@@ -25,7 +25,7 @@ async function setup(email = 'parent@example.com') {
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
       display_name: 'Max',
-      birth_year: 2007,
+      birth_date: '2007-01-15',
       grade_level: 10,
       ui_locale: 'de',
       avatar_id: 1,

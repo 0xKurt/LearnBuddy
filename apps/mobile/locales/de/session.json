@@ -36,7 +36,7 @@
     "finish": "Fertig"
   },
   "pin": {
-    "pin": "Auf dieses Thema",
+    "pin": "Bei diesem Thema bleiben",
     "pinned": "Thema gewählt",
     "on": "Wir bleiben bei {{topic}}.",
     "off": "Wieder gemischt."
@@ -44,7 +44,8 @@
   "verdict": {
     "correct": "Genau!",
     "partially_correct": "Fast richtig",
-    "incorrect": "Noch nicht ganz"
+    "incorrect": "Noch nicht ganz",
+    "skipped": "Schauen wir's zusammen an"
   },
   "placeholder": {
     "answer": "Antwort",
@@ -60,6 +61,7 @@
     "active": "Ich höre … (tippen zum Beenden)",
     "permission_rationale": "LearnBuddy hört kurz mit, damit du auch laut antworten kannst. Audio wird nicht gespeichert.",
     "unavailable": "Sprechen ist hier noch nicht aktiv — tippe deine Antwort einfach ein.",
+    "retry": "Hab dich nicht ganz verstanden — tipp nochmal zum Sprechen.",
     "switched_to_text": "Wir tippen jetzt weiter.",
     "use_keyboard": "Lieber tippen",
     "use_voice": "Lieber sprechen"

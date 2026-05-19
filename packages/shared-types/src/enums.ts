@@ -90,3 +90,8 @@ export type Uuid = z.infer<typeof Uuid>;
 
 export const Iso8601 = z.string().datetime({ offset: true });
 export type Iso8601 = z.infer<typeof Iso8601>;
+
+/** Calendar date with no time component, ISO `YYYY-MM-DD`. The app stores
+ *  every user-facing date in this shape; the UI renders it as `DD.MM.YYYY`. */
+export const DateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+export type DateOnly = z.infer<typeof DateOnly>;

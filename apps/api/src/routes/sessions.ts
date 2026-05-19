@@ -21,6 +21,9 @@ import type { ConversationSseEvent } from '@learnbuddy/shared-types';
 import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
+import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
+import { isNonAnswer } from '../lib/give-up.js';
+import { loadMaterialContext } from '../lib/material-context.js';
 import type { ConversationMessage } from '../lib/llm/gateway.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -392,13 +395,13 @@ sessionRoutes.get('/:id/summary', async (c) => {
   let totalDuration = 0;
   for (const r of rows) {
     if (r.verdict === 'correct' || r.verdict === 'partially_correct') secureNow++;
-    if (r.verdict === 'incorrect') stillUnsure++;
+    if (r.verdict === 'incorrect' || r.verdict === 'skipped') stillUnsure++;
     totalDuration += r.duration_ms ?? 0;
     const topic = topicByItem.get(r.item_id);
     if (topic) {
       const t = byTopic.get(topic) ?? { secure: 0, unsure: 0 };
       if (r.verdict === 'correct' || r.verdict === 'partially_correct') t.secure++;
-      if (r.verdict === 'incorrect') t.unsure++;
+      if (r.verdict === 'incorrect' || r.verdict === 'skipped') t.unsure++;
       byTopic.set(topic, t);
     }
   }
@@ -610,7 +613,7 @@ sessionRoutes.post(
         role: 'learner' | 'tutor';
         kind: 'answer' | 'feedback';
         content: string;
-        verdict: 'correct' | 'partially_correct' | 'incorrect' | null;
+        verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
         client_turn_id: string | null;
       }): Promise<string> => {
         const ins = await supabase
@@ -634,12 +637,13 @@ sessionRoutes.post(
       };
 
       const recordAttempt = async (
-        verdict: 'correct' | 'partially_correct' | 'incorrect',
+        verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped',
         evaluatedBy: 'local' | 'llm',
         feedback: string,
         usageModel: string | null,
         usageVersion: string | null,
       ): Promise<void> => {
+        const reviewedAt = now();
         await supabase.from('attempts').insert({
           learner_id,
           item_id: input.item_id,
@@ -662,13 +666,37 @@ sessionRoutes.post(
           .update({
             attempts_count: prevAttempts + 1,
             correct_count: prevCorrect + (verdict === 'correct' ? 1 : 0),
-            last_turn_at: now().toISOString(),
+            last_turn_at: reviewedAt.toISOString(),
           })
           .eq('id', session_id);
+
+        // Spaced repetition is the whole point of a learning app, yet the
+        // online practice path never updated it — every answer (right OR
+        // wrong) left item_states untouched, so "what to practise next" was
+        // meaningless. Test-mode is excluded (it's an exam simulation, not
+        // a study rep). Mirrors the offline batch drain in attempts.ts.
+        if (!testMode) {
+          const prevState = await supabase
+            .from('item_states')
+            .select('*')
+            .eq('learner_id', learner_id)
+            .eq('item_id', input.item_id)
+            .maybeSingle();
+          const prev = (prevState.data as ItemStateRow | null) ?? null;
+          const next = applyAttempt(prev, verdict, reviewedAt);
+          const ups = await supabase
+            .from('item_states')
+            .upsert({ item_id: input.item_id, learner_id, ...next }, { onConflict: 'item_id' });
+          if (ups.error) {
+            console.error(`[sessions] item_states upsert failed: ${ups.error.message}`);
+          }
+        }
       };
 
       // 6. Fast path: client is confident it's correct → no model, no charge.
-      if (input.client_local_verdict === 'correct') {
+      //    Guarded so a give-up ("weiss nicht") can never take the no-model
+      //    "correct" path even if a client mislabels it.
+      if (input.client_local_verdict === 'correct' && !isNonAnswer(learnerText)) {
         const praise = pickPraise(locale);
         const learnerTurnId = await persistTurn({
           turn_index: nextIndex,
@@ -717,6 +745,12 @@ sessionRoutes.post(
         return;
       }
 
+      // Ground the tutor in the actual worksheet, not a 200-char excerpt.
+      const materialContext = await loadMaterialContext(
+        supabase,
+        (item.material_id as string | null) ?? null,
+      );
+
       let result;
       try {
         result = await llm.converseTurn(
@@ -745,6 +779,7 @@ sessionRoutes.post(
             testMode,
             pinnedTopic: (session.pinned_topic as string | null) ?? null,
             hintsGivenForItem,
+            materialContext,
           },
           (delta) => {
             void push({ type: 'token', text: delta });
@@ -767,6 +802,12 @@ sessionRoutes.post(
         cost_usd_micros: totalMicros,
       });
 
+      // Deterministic safety net over the model's self-reported verdict: if
+      // the learner didn't actually answer (give-up / help-request / empty),
+      // it is `skipped` — NEVER correct or partially_correct — no matter what
+      // the model claimed. This is the fix for "Weiss nicht" → "Genau!".
+      const finalVerdict = isNonAnswer(learnerText) ? 'skipped' : result.verdict;
+
       const learnerTurnId = await persistTurn({
         turn_index: nextIndex,
         role: 'learner',
@@ -780,23 +821,23 @@ sessionRoutes.post(
         role: 'tutor',
         kind: 'feedback',
         content: result.reply,
-        verdict: result.verdict,
+        verdict: finalVerdict,
         client_turn_id: null,
       });
       await recordAttempt(
-        result.verdict,
+        finalVerdict,
         'llm',
         result.reply,
         result.usage.model,
         result.usage.prompt_version,
       );
 
-      await push({ type: 'verdict', verdict: result.verdict });
+      await push({ type: 'verdict', verdict: finalVerdict });
       await push({ type: 'feedback', text: result.reply });
       await push({
         type: 'done',
         credits_used: actualCredits,
-        verdict: result.verdict,
+        verdict: finalVerdict,
         learner_turn_id: learnerTurnId,
         tutor_turn_id: tutorTurnId,
         session_active: true,

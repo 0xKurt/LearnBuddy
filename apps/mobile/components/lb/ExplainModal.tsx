@@ -14,6 +14,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { explainTopic } from '../../lib/api/sessions.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -46,6 +47,7 @@ type Props = {
 
 export function ExplainModal({ visible, onClose, learnerId, itemId, topic, context }: Props) {
   const { t } = useTranslation('session');
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<ExplainStyle>('simpler');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
           <Pressable
             // Inner pressable swallows taps so they don't bubble to the backdrop.
             onPress={() => undefined}
+            style={{ width: '100%' }}
           >
             <View
               style={{
@@ -96,7 +99,7 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
                 borderTopRightRadius: 28,
                 paddingTop: 14,
                 paddingHorizontal: 20,
-                paddingBottom: 24,
+                paddingBottom: Math.max(insets.bottom, 24),
                 maxHeight: '80%',
               }}
             >

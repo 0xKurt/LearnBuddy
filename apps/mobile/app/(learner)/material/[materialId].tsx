@@ -32,6 +32,7 @@ export default function MaterialScreen() {
   });
 
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
+  const [footerH, setFooterH] = useState(0);
 
   if (materialQuery.isError) {
     return (
@@ -113,7 +114,13 @@ export default function MaterialScreen() {
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 12 }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: (footerH || 120) + 16,
+          gap: 12,
+        }}
+      >
         <Text style={{ fontSize: 26, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
           {material.title ?? tCommon('material.untitled')}
         </Text>
@@ -179,12 +186,19 @@ export default function MaterialScreen() {
       </ScrollView>
 
       <View
+        onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}
         style={{
           position: 'absolute',
-          left: 20,
-          right: 20,
-          bottom: Math.max(insets.bottom, 12),
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingHorizontal: 20,
+          paddingTop: 12,
+          paddingBottom: Math.max(insets.bottom, 12),
           gap: 8,
+          backgroundColor: LB.paper,
+          borderTopColor: LB.hairline,
+          borderTopWidth: 1,
         }}
       >
         {items.length > 0 && (

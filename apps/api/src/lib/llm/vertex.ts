@@ -123,6 +123,8 @@ function responseText(response: GenerateContentResponse): string {
 export class VertexLlmGateway implements LLMGateway {
   private readonly client: GoogleGenAI;
   private readonly modelId: string;
+  /** Stronger tier for learner-facing tutoring/explain (ADR 0002). */
+  private readonly tutorModelId: string;
 
   constructor(private readonly env: Env) {
     if (!env.GOOGLE_CLOUD_PROJECT) {
@@ -136,11 +138,12 @@ export class VertexLlmGateway implements LLMGateway {
       location: env.GOOGLE_VERTEX_LOCATION,
     });
     this.modelId = env.VERTEX_MODEL_ID;
+    this.tutorModelId = env.VERTEX_TUTOR_MODEL_ID;
   }
 
   async visionExtractAndGenerate(input: VisionInput): Promise<VisionResult> {
-    if (input.images.length < 1 || input.images.length > 10) {
-      throw new ApiError('validation_failed', 'images must be 1..10');
+    if (input.images.length < 1 || input.images.length > 20) {
+      throw new ApiError('validation_failed', 'images must be 1..20');
     }
     const userText = buildP1UserPrompt({
       locale: input.locale,
@@ -348,12 +351,13 @@ export class VertexLlmGateway implements LLMGateway {
       gradeLevel: input.gradeLevel,
       style: input.style,
       context: input.context,
+      materialContext: input.materialContext,
       topic: input.topic,
     });
     let response: GenerateContentResponse;
     try {
       response = await this.client.models.generateContent({
-        model: this.modelId,
+        model: this.tutorModelId,
         contents: [{ role: 'user', parts: [{ text: userText }] }],
         config: {
           systemInstruction: SYSTEM_P4,
@@ -378,7 +382,7 @@ export class VertexLlmGateway implements LLMGateway {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
         cost_usd_micros: totals.costMicros,
-        model: this.modelId,
+        model: this.tutorModelId,
         prompt_version: PROMPT_VERSION_P4,
       },
     };
@@ -396,6 +400,7 @@ export class VertexLlmGateway implements LLMGateway {
       testMode: input.testMode,
       pinnedTopic: input.pinnedTopic,
       hintsGivenForItem: input.hintsGivenForItem,
+      materialContext: input.materialContext,
     });
 
     // Replay the whole session thread as real alternating turns so the
@@ -411,7 +416,7 @@ export class VertexLlmGateway implements LLMGateway {
     let stream: AsyncGenerator<GenerateContentResponse>;
     try {
       stream = await this.client.models.generateContentStream({
-        model: this.modelId,
+        model: this.tutorModelId,
         contents,
         config: {
           systemInstruction,
@@ -458,7 +463,11 @@ export class VertexLlmGateway implements LLMGateway {
     const visible = (sentinelIdx === -1 ? full : full.slice(0, sentinelIdx)).replace(/\s+$/u, '');
     if (onToken && visible.length > emitted) onToken(visible.slice(emitted));
 
-    let verdict: ConverseTurnResult['verdict'] = 'partially_correct';
+    // Default on a missing/garbled control line is 'incorrect', NOT
+    // 'partially_correct': an unparseable verdict must never silently count
+    // as a near-pass / "secure" on the result screen. The route also applies
+    // a deterministic give-up guard on top of whatever the model claims.
+    let verdict: ConverseTurnResult['verdict'] = 'incorrect';
     let gaveHint = false;
     if (sentinelIdx !== -1) {
       const tail = full.slice(sentinelIdx + TUTOR_SENTINEL.length).trim();
@@ -467,16 +476,17 @@ export class VertexLlmGateway implements LLMGateway {
         if (
           ctrl.verdict === 'correct' ||
           ctrl.verdict === 'partially_correct' ||
-          ctrl.verdict === 'incorrect'
+          ctrl.verdict === 'incorrect' ||
+          ctrl.verdict === 'skipped'
         ) {
           verdict = ctrl.verdict;
         }
         gaveHint = ctrl.hint === true;
       } catch {
-        console.warn('[tutor] control line unparseable; defaulting verdict=partially_correct');
+        console.warn('[tutor] control line unparseable; defaulting verdict=incorrect');
       }
     } else {
-      console.warn('[tutor] no control line in reply; defaulting verdict=partially_correct');
+      console.warn('[tutor] no control line in reply; defaulting verdict=incorrect');
     }
 
     return {
@@ -487,7 +497,7 @@ export class VertexLlmGateway implements LLMGateway {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
         cost_usd_micros: totals.costMicros,
-        model: this.modelId,
+        model: this.tutorModelId,
         prompt_version: PROMPT_VERSION_TUTOR,
       },
     };

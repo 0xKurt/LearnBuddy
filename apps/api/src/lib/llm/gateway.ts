@@ -14,7 +14,7 @@
 import type { Locale } from '@learnbuddy/shared-types';
 
 export type VisionInput = {
-  /** 1..10 photos as base64 strings (no data: prefix). */
+  /** 1..20 photos as base64 strings (no data: prefix). */
   images: Array<{ mimeType: 'image/jpeg' | 'image/png'; data: string }>;
   locale: Locale;
   gradeLevel: number;
@@ -149,6 +149,9 @@ export type EvaluateResult = {
 export type ExplainInput = {
   topic: string;
   context?: string;
+  /** The worksheet text the question came from (clamped), loaded server-side
+   *  from the item's material so explanations stay on the real material. */
+  materialContext?: string | null;
   locale: Locale;
   gradeLevel: number;
   style: 'simpler' | 'step-by-step' | 'analogy';
@@ -196,10 +199,13 @@ export type ConverseTurnInput = {
   pinnedTopic: string | null;
   /** Hints already given for the current item (drives the staircase). */
   hintsGivenForItem: number;
+  /** The worksheet text this question came from (clamped). Grounds hints in
+   *  the real material instead of the tiny source excerpt. */
+  materialContext?: string | null;
 };
 
 export type ConverseTurnResult = {
-  verdict: 'correct' | 'partially_correct' | 'incorrect';
+  verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
   /** The learner-visible reply (control line already stripped). */
   reply: string;
   /** True when the reply contained a new hint (for staircase accounting). */

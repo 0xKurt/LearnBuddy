@@ -62,7 +62,7 @@ import {
 import { useCaptureStore, type CapturedPhoto } from '../../lib/store/capture.js';
 import { LB } from '../../lib/theme/colors.js';
 
-const MAX_PHOTOS = 10;
+const MAX_PHOTOS = 20;
 
 export default function CaptureScreen() {
   const { t } = useTranslation('capture');

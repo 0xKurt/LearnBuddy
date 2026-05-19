@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
+import { loadMaterialContext } from '../lib/material-context.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -48,6 +49,22 @@ explainRoutes.post(
     const gradeLevel = learner.grade_level ?? 7;
     const locale = (learner.ui_locale ?? 'de') as 'de' | 'en' | 'fr' | 'es' | 'it';
 
+    // Pull the real worksheet text behind this item so the explanation is
+    // grounded in the student's actual material — not just the question
+    // string + a tiny client-sent snippet. Also ownership-checks the item.
+    let materialContext: string | null = null;
+    if (input.item_id) {
+      const itemRow = await supabase
+        .from('items')
+        .select('material_id, learner_id')
+        .eq('id', input.item_id)
+        .maybeSingle();
+      const it = itemRow.data as { material_id: string | null; learner_id: string } | null;
+      if (it && it.learner_id === learner_id) {
+        materialContext = await loadMaterialContext(supabase, it.material_id);
+      }
+    }
+
     const debit = {
       estimate: EXPLAIN_ESTIMATE,
       reason: 'explain',
@@ -60,6 +77,7 @@ explainRoutes.post(
       const result = await llm.explain({
         topic: input.topic,
         context: input.context,
+        materialContext,
         locale,
         gradeLevel,
         style: input.style,

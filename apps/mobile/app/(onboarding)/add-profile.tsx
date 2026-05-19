@@ -1,8 +1,8 @@
 // Profile creation. Doc 04 §learners + doc 05 §8.
 //
-// Collects display_name and birth_year. grade_level removed from UI — it's
-// stored as null until a future settings flow lets users set it. Minor
-// profiles (< 16) stash the draft and forward to profile-minor-consent.
+// Collects display_name. birth_date is carried over from the signup form
+// (welcome.tsx) via the store. grade_level removed from UI — stored as null
+// until a future settings flow lets users set it.
 
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -21,22 +21,22 @@ import { useAppStore } from '../../lib/store/index.js';
 
 export default function AddProfileScreen() {
   const { t } = useTranslation('onboarding');
-  const storedBirthYear = useAppStore((s) => s.pending_birth_year);
+  const storedBirthDate = useAppStore((s) => s.pending_birth_date);
 
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = name.trim().length > 0 && storedBirthYear !== null && !busy;
+  const canSubmit = name.trim().length > 0 && storedBirthDate !== null && !busy;
 
   async function onContinue() {
-    if (!canSubmit || storedBirthYear === null) return;
+    if (!canSubmit || storedBirthDate === null) return;
     setBusy(true);
     setError(null);
     try {
       await createLearner({
         display_name: name.trim(),
-        birth_year: storedBirthYear,
+        birth_date: storedBirthDate,
         grade_level: null,
         ui_locale: (i18n.language ?? 'de') as AppLocale,
         avatar_id: 1,

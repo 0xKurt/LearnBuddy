@@ -62,12 +62,10 @@
   },
   "add_profile": {
     "title": "Créer le profil",
-    "body": "Il nous faut juste un prénom, une année de naissance et la classe. Tout est modifiable plus tard.",
+    "body": "Il nous faut juste un prénom. Tu pourras modifier le reste plus tard.",
     "field_first_name": "Prénom",
-    "field_birth_year": "Année de naissance",
     "field_grade": "Classe",
     "placeholder_first_name": "ex. Lena",
-    "placeholder_birth_year": "ex. 2012",
     "minor_hint": "À l'étape suivante, on recueille brièvement le consentement pour un profil de moins de 16 ans.",
     "cta": "Continuer",
     "busy": "Un instant …",

@@ -44,7 +44,8 @@
   "verdict": {
     "correct": "¡Exacto!",
     "partially_correct": "Casi lo tienes",
-    "incorrect": "Aún no del todo"
+    "incorrect": "Aún no del todo",
+    "skipped": "Vamos a verlo juntos"
   },
   "placeholder": {
     "answer": "Respuesta",
@@ -60,6 +61,7 @@
     "active": "Te escucho … (toca para terminar)",
     "permission_rationale": "LearnBuddy escucha un momento para que puedas responder en voz alta. El audio nunca se guarda.",
     "unavailable": "La voz aún no está disponible — escribe tu respuesta por ahora.",
+    "retry": "No te he entendido bien — toca para hablar de nuevo.",
     "switched_to_text": "Seguimos escribiendo.",
     "use_keyboard": "Mejor escribir",
     "use_voice": "Mejor hablar"

@@ -1,4 +1,7 @@
-// Material route tests. Doc 04 §materials + Doc 08 §atomic-debit + Doc 09 §4.
+// Material route tests. Doc 04 §materials + Doc 08 §atomic-debit + ADR 0003.
+//
+// POST /materials now ENQUEUES (202) and a worker drains the queue, so the
+// tests exercise enqueue → drain → ready, plus the retry + worker-auth paths.
 
 import { describe, it, expect } from 'vitest';
 
@@ -15,12 +18,7 @@ async function setup(email = 'parent@example.com') {
   const signup = await app.request('/auth/account/signup', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password: 'super-secret-1',
-      locale: 'de',
-      country_code: 'DE',
-    }),
+    body: JSON.stringify({ email, password: 'super-secret-1', locale: 'de', country_code: 'DE' }),
   });
   const { user_id, account_id } = (await signup.json()) as {
     user_id: string;
@@ -33,7 +31,7 @@ async function setup(email = 'parent@example.com') {
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
       display_name: 'Anna',
-      birth_year: 1985,
+      birth_date: '1985-06-15',
       grade_level: 13,
       ui_locale: 'de',
       avatar_id: 1,
@@ -72,13 +70,7 @@ function authed(s: Setup) {
   } as Record<string, string>;
 }
 
-async function reserveMaterial(
-  s: Setup,
-  photoCount = 2,
-): Promise<{
-  material_id: string;
-  uploads: Array<{ position: number; storage_path: string; signed_url: string }>;
-}> {
+async function reserveMaterial(s: Setup, photoCount = 2): Promise<{ material_id: string }> {
   const res = await s.app.request('/materials/upload-url', {
     method: 'POST',
     headers: authed(s),
@@ -90,24 +82,44 @@ async function reserveMaterial(
     }),
   });
   expect(res.status).toBe(200);
-  return (await res.json()) as {
-    material_id: string;
-    uploads: Array<{ position: number; storage_path: string; signed_url: string }>;
-  };
+  return (await res.json()) as { material_id: string };
+}
+
+function scores(n: number) {
+  return Array.from({ length: n }, (_, i) => ({
+    position: i + 1,
+    blur: 120,
+    brightness: 140,
+    tilt: 0,
+    width: 1024,
+    height: 768,
+  }));
+}
+
+async function enqueue(s: Setup, materialId: string, n = 2) {
+  return s.app.request('/materials', {
+    method: 'POST',
+    headers: authed(s),
+    body: JSON.stringify({
+      material_id: materialId,
+      subject_id: s.subjectId,
+      folder_id: null,
+      title: 'Bruchrechnung',
+      locale: 'de',
+      client_quality_scores: scores(n),
+    }),
+  });
+}
+
+async function drain(s: Setup, secret = 'test-worker-secret') {
+  return s.app.request('/materials-worker/drain', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-worker-secret': secret },
+  });
 }
 
 describe('POST /materials/upload-url', () => {
   it('reserves a material and returns one signed URL per photo', async () => {
-    const s = await setup();
-    const body = await reserveMaterial(s, 3);
-    expect(body.material_id).toBeTypeOf('string');
-    expect(body.uploads).toHaveLength(3);
-    expect(body.uploads[0]?.position).toBe(1);
-    expect(body.uploads[0]?.storage_path).toContain(`materials-raw/${s.accountId}/`);
-    expect(body.uploads[0]?.signed_url).toContain('https://fake-storage.local/materials-raw/');
-  });
-
-  it('rejects photo_count > 10', async () => {
     const s = await setup();
     const res = await s.app.request('/materials/upload-url', {
       method: 'POST',
@@ -115,11 +127,17 @@ describe('POST /materials/upload-url', () => {
       body: JSON.stringify({
         subject_id: s.subjectId,
         folder_id: null,
-        photo_count: 11,
+        photo_count: 3,
         mime_type: 'image/jpeg',
       }),
     });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      material_id: string;
+      uploads: Array<{ position: number; storage_path: string }>;
+    };
+    expect(body.uploads).toHaveLength(3);
+    expect(body.uploads[0]?.storage_path).toContain(`materials-raw/${s.accountId}/`);
   });
 
   it('returns 404 when the subject belongs to another account', async () => {
@@ -139,97 +157,65 @@ describe('POST /materials/upload-url', () => {
   });
 });
 
-describe('POST /materials', () => {
-  it('streams done with placeholder items and debits 20 credits', async () => {
+describe('POST /materials (enqueue) + worker drain', () => {
+  it('enqueues 202, debits 20, then the worker extracts to ready', async () => {
     const s = await setup();
-    const reserved = await reserveMaterial(s, 2);
+    const { material_id } = await reserveMaterial(s, 2);
 
-    const res = await s.app.request('/materials', {
-      method: 'POST',
-      headers: authed(s),
-      body: JSON.stringify({
-        material_id: reserved.material_id,
-        subject_id: s.subjectId,
-        folder_id: null,
-        title: 'Bruchrechnung',
-        locale: 'de',
-        target_item_count: 10,
-        client_quality_scores: [
-          { position: 1, blur: 142.3, brightness: 138, tilt: 4, width: 1024, height: 768 },
-          { position: 2, blur: 98.1, brightness: 145, tilt: 6, width: 1024, height: 768 },
-        ],
-      }),
-    });
-    expect(res.status).toBe(200);
-    const body = await res.text();
-    expect(body).toContain('event: phase');
-    expect(body).toContain('reading_images');
-    expect(body).toContain('generating_items');
-    expect(body).toContain('event: done');
+    const res = await enqueue(s, material_id, 2);
+    expect(res.status).toBe(202);
+    const body = (await res.json()) as { material_id: string; status: string };
+    expect(body).toEqual({ material_id, status: 'pending' });
 
-    // Pull the `done` payload out of the SSE stream.
-    const doneLine = body
-      .split('\n')
-      .find((l) => l.startsWith('data: ') && l.includes('material_id'));
-    expect(doneLine).toBeTruthy();
-    const done = JSON.parse(doneLine!.slice('data: '.length)) as {
-      material_id: string;
-      items: unknown[];
-      credits_used: number;
-    };
-    expect(done.material_id).toBe(reserved.material_id);
-    expect(done.items).toHaveLength(3);
-    // FakeLlmGateway reports zero token cost; settle() floors at 1 credit.
-    expect(done.credits_used).toBe(1);
+    // Debited on enqueue; job queued; photos persisted; NOT yet processed.
+    const bucket0 = s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId);
+    expect(bucket0?.current_balance).toBe(1480); // 1500 − 20
+    const job0 = s.fake.tables.get('extraction_jobs')?.find((j) => j.material_id === material_id);
+    expect(job0?.status).toBe('queued');
+    expect(
+      s.fake.tables.get('material_photos')?.filter((p) => p.material_id === material_id),
+    ).toHaveLength(2);
+    expect(s.fake.tables.get('items') ?? []).toHaveLength(0);
 
-    // Bucket: 1500 (trial grant) − 20 estimate + 19 refund-via-settle = 1499.
-    const bucket = s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId);
-    expect(bucket?.current_balance).toBe(1499);
+    const d = await drain(s);
+    expect(d.status).toBe(200);
+    const dBody = (await d.json()) as { processed: number; results: Array<{ ok: boolean }> };
+    expect(dBody.processed).toBe(1);
+    expect(dBody.results[0]?.ok).toBe(true);
 
-    // material is ready + photo wipe scheduled.
-    const m = s.fake.tables.get('materials')?.find((r) => r.id === reserved.material_id);
+    const m = s.fake.tables.get('materials')?.find((r) => r.id === material_id);
     expect(m?.extraction_status).toBe('ready');
     expect(m?.scheduled_photo_deletion_at).toBeTypeOf('string');
-
-    // material_photos rows persisted with quality scores.
-    const photos = s.fake.tables
-      .get('material_photos')
-      ?.filter((r) => r.material_id === reserved.material_id);
-    expect(photos).toHaveLength(2);
-    expect(photos?.[0]?.client_blur_score).toBe(142.3);
+    expect(s.fake.tables.get('items')?.filter((i) => i.material_id === material_id)).toHaveLength(
+      3,
+    );
+    const job1 = s.fake.tables.get('extraction_jobs')?.find((j) => j.material_id === material_id);
+    expect(job1?.status).toBe('done');
+    // settle: 1480 − (1 − 20) = 1499
+    const bucket1 = s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId);
+    expect(bucket1?.current_balance).toBe(1499);
   });
 
-  it('returns 402 when the credit bucket is empty', async () => {
+  it('drain refuses without the worker secret', async () => {
     const s = await setup();
-    const reserved = await reserveMaterial(s, 1);
-    // Empty the bucket directly via the fake.
+    expect((await drain(s, 'wrong')).status).toBe(401);
+  });
+
+  it('returns 402 at enqueue when credits are insufficient (no job, no debit)', async () => {
+    const s = await setup();
+    const { material_id } = await reserveMaterial(s, 1);
     const bucket = s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId);
     if (bucket) bucket.current_balance = 5;
 
-    const res = await s.app.request('/materials', {
-      method: 'POST',
-      headers: authed(s),
-      body: JSON.stringify({
-        material_id: reserved.material_id,
-        subject_id: s.subjectId,
-        folder_id: null,
-        locale: 'de',
-        target_item_count: 10,
-        client_quality_scores: [
-          { position: 1, blur: 120, brightness: 140, tilt: 0, width: 1024, height: 768 },
-        ],
-      }),
-    });
+    const res = await enqueue(s, material_id, 1);
     expect(res.status).toBe(402);
-    // No items inserted, no debit.
-    expect(s.fake.tables.get('items') ?? []).toHaveLength(0);
+    expect(s.fake.tables.get('extraction_jobs') ?? []).toHaveLength(0);
     expect(bucket?.current_balance).toBe(5);
   });
 
-  it('returns 404 when the material_id belongs to another account', async () => {
+  it('returns 404 when the material belongs to another account', async () => {
     const owner = await setup('owner@x.com');
     const ownerReserved = await reserveMaterial(owner, 1);
-
     const stranger = await setup('stranger@y.com');
     const res = await stranger.app.request('/materials', {
       method: 'POST',
@@ -239,76 +225,89 @@ describe('POST /materials', () => {
         subject_id: stranger.subjectId,
         folder_id: null,
         locale: 'de',
-        target_item_count: 10,
-        client_quality_scores: [
-          { position: 1, blur: 120, brightness: 140, tilt: 0, width: 1024, height: 768 },
-        ],
+        client_quality_scores: scores(1),
       }),
     });
     expect(res.status).toBe(404);
   });
-});
 
-describe('GET /materials/:id and /items', () => {
-  it('returns the persisted material + items', async () => {
+  it('retry re-enqueues a failed material and the worker completes it', async () => {
     const s = await setup();
-    const reserved = await reserveMaterial(s, 1);
-    const postRes = await s.app.request('/materials', {
+    const { material_id } = await reserveMaterial(s, 1);
+    await enqueue(s, material_id, 1);
+
+    // Simulate a failed attempt (worker would have refunded on failure).
+    const job = s.fake.tables.get('extraction_jobs')?.find((j) => j.material_id === material_id);
+    if (job) job.status = 'failed';
+    const m0 = s.fake.tables.get('materials')?.find((r) => r.id === material_id);
+    if (m0) m0.extraction_status = 'failed';
+    const bucket = s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId);
+    if (bucket) bucket.current_balance = 1480; // post-refund state
+
+    const retry = await s.app.request(`/materials/${material_id}/retry`, {
       method: 'POST',
       headers: authed(s),
-      body: JSON.stringify({
-        material_id: reserved.material_id,
-        subject_id: s.subjectId,
-        folder_id: null,
-        locale: 'de',
-        target_item_count: 10,
-        client_quality_scores: [
-          { position: 1, blur: 120, brightness: 140, tilt: 0, width: 1024, height: 768 },
-        ],
-      }),
     });
-    await postRes.text(); // drain stream so all DB writes complete before GET
+    expect(retry.status).toBe(202);
+    const job1 = s.fake.tables.get('extraction_jobs')?.find((j) => j.material_id === material_id);
+    expect(job1?.status).toBe('queued');
+    // Re-debited (fresh attempt, the failed one was refunded).
+    expect(
+      s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId)
+        ?.current_balance,
+    ).toBe(1460);
 
-    const m = await s.app.request(`/materials/${reserved.material_id}`, {
-      method: 'GET',
-      headers: authed(s),
-    });
-    expect(m.status).toBe(200);
-    const mBody = (await m.json()) as { id: string; items: unknown[] };
-    expect(mBody.id).toBe(reserved.material_id);
-    expect(mBody.items).toHaveLength(3);
-
-    const i = await s.app.request(`/materials/${reserved.material_id}/items`, {
-      method: 'GET',
-      headers: authed(s),
-    });
-    expect(i.status).toBe(200);
-    const iBody = (await i.json()) as { items: unknown[] };
-    expect(iBody.items).toHaveLength(3);
+    await drain(s);
+    expect(
+      s.fake.tables.get('materials')?.find((r) => r.id === material_id)?.extraction_status,
+    ).toBe('ready');
   });
 
-  it('GET /materials/:id returns 404 cross-account', async () => {
-    const owner = await setup('owner@x.com');
-    const reserved = await reserveMaterial(owner, 1);
-    const ownerPost = await owner.app.request('/materials', {
-      method: 'POST',
-      headers: authed(owner),
-      body: JSON.stringify({
-        material_id: reserved.material_id,
-        subject_id: owner.subjectId,
-        folder_id: null,
-        locale: 'de',
-        target_item_count: 10,
-        client_quality_scores: [
-          { position: 1, blur: 120, brightness: 140, tilt: 0, width: 1024, height: 768 },
-        ],
-      }),
-    });
-    await ownerPost.text();
+  it('retry is a no-op (202) while a job is still queued — no double charge', async () => {
+    const s = await setup();
+    const { material_id } = await reserveMaterial(s, 1);
+    await enqueue(s, material_id, 1);
+    const balance = s.fake.tables
+      .get('credit_buckets')
+      ?.find((r) => r.account_id === s.accountId)?.current_balance;
 
+    const retry = await s.app.request(`/materials/${material_id}/retry`, {
+      method: 'POST',
+      headers: authed(s),
+    });
+    expect(retry.status).toBe(202);
+    expect(
+      s.fake.tables.get('credit_buckets')?.find((r) => r.account_id === s.accountId)
+        ?.current_balance,
+    ).toBe(balance); // unchanged — guarded
+  });
+});
+
+describe('GET /materials/:id', () => {
+  it('exposes status for polling, then items once ready', async () => {
+    const s = await setup();
+    const { material_id } = await reserveMaterial(s, 1);
+    await enqueue(s, material_id, 1);
+
+    const pending = await s.app.request(`/materials/${material_id}`, { headers: authed(s) });
+    expect(pending.status).toBe(200);
+    expect(((await pending.json()) as { extraction_status: string }).extraction_status).toBe(
+      'pending',
+    );
+
+    await drain(s);
+
+    const ready = await s.app.request(`/materials/${material_id}`, { headers: authed(s) });
+    const body = (await ready.json()) as { extraction_status: string; items: unknown[] };
+    expect(body.extraction_status).toBe('ready');
+    expect(body.items).toHaveLength(3);
+  });
+
+  it('returns 404 cross-account', async () => {
+    const owner = await setup('owner@x.com');
+    const { material_id } = await reserveMaterial(owner, 1);
     const stranger = await setup('stranger@y.com');
-    const res = await stranger.app.request(`/materials/${reserved.material_id}`, {
-      method: 'GET',
+    const res = await stranger.app.request(`/materials/${material_id}`, {
       headers: authed(stranger),
     });
     expect(res.status).toBe(404);

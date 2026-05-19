@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Btn, Icon, LbTextInput } from '../../components/lb/index.js';
+import { Btn, Icon, LbDatePicker, LbTextInput } from '../../components/lb/index.js';
 import { signup } from '../../lib/api/auth.js';
 import { ApiError } from '../../lib/api/client.js';
 import { getSessionSync, setSession } from '../../lib/auth/session.js';
@@ -41,12 +41,12 @@ type Mode = 'signup' | 'login';
 
 export default function WelcomeScreen() {
   const { t } = useTranslation('auth');
-  const setPendingBirthYear = useAppStore((s) => s.set_pending_birth_year);
+  const setPendingBirthDate = useAppStore((s) => s.set_pending_birth_date);
   const [mode, setMode] = useState<Mode>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [birthYear, setBirthYear] = useState('');
+  const [birthDate, setBirthDate] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedAge, setAcceptedAge] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -55,17 +55,10 @@ export default function WelcomeScreen() {
   const [emailFormatError, setEmailFormatError] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
-  const birthYearRef = useRef<TextInput>(null);
 
   const trimmedEmail = email.trim();
   const passwordsMatch = mode === 'login' || password === confirmPassword;
-  const parsedBirthYear = (() => {
-    if (mode !== 'signup') return null;
-    const n = Number.parseInt(birthYear, 10);
-    const currentYear = new Date().getUTCFullYear();
-    return Number.isFinite(n) && n >= 1920 && n <= currentYear ? n : null;
-  })();
-  const signupReady = parsedBirthYear !== null && acceptedTerms && acceptedAge;
+  const signupReady = birthDate !== null && acceptedTerms && acceptedAge;
   const canSubmit =
     trimmedEmail.length > 3 &&
     password.length >= 8 &&
@@ -110,7 +103,7 @@ export default function WelcomeScreen() {
           country_code: LOCALE_COUNTRY[appLocale],
         });
         Keyboard.dismiss();
-        if (parsedBirthYear !== null) setPendingBirthYear(parsedBirthYear);
+        if (birthDate !== null) setPendingBirthDate(birthDate);
         if (res.requires_verification) {
           router.push('/(onboarding)/verify-email');
         } else {
@@ -234,7 +227,7 @@ export default function WelcomeScreen() {
                 setMode('signup');
                 setError(null);
                 setConfirmPassword('');
-                setBirthYear('');
+                setBirthDate(null);
                 setAcceptedTerms(false);
                 setAcceptedAge(false);
               }}
@@ -304,8 +297,8 @@ export default function WelcomeScreen() {
                   secureTextEntry={!showPassword}
                   autoComplete="new-password"
                   textContentType="newPassword"
-                  returnKeyType="next"
-                  onSubmitEditing={() => birthYearRef.current?.focus()}
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
                   editable={!busy}
                   error={confirmPassword.length > 0 && !passwordsMatch}
                   errorMessage={
@@ -317,22 +310,15 @@ export default function WelcomeScreen() {
               </Field>
             )}
             {mode === 'signup' && (
-              <Field label={t('welcome.field_birth_year')}>
-                <LbTextInput
-                  ref={birthYearRef}
-                  value={birthYear}
-                  onChangeText={(v) => setBirthYear(v.replace(/\D/g, '').slice(0, 4))}
-                  placeholder={t('welcome.placeholder_birth_year')}
-                  keyboardType="number-pad"
-                  returnKeyType="done"
-                  onSubmitEditing={onSubmit}
-                  editable={!busy}
-                  error={birthYear.length === 4 && parsedBirthYear === null}
-                  errorMessage={
-                    birthYear.length === 4 && parsedBirthYear === null
-                      ? t('welcome.error_birth_year')
-                      : undefined
-                  }
+              <Field label={t('welcome.field_birth_date')}>
+                <LbDatePicker
+                  value={birthDate}
+                  onChange={setBirthDate}
+                  placeholder={t('welcome.placeholder_birth_date')}
+                  minYear={new Date().getFullYear() - 100}
+                  maxYear={new Date().getFullYear()}
+                  disabled={busy}
+                  accessibilityLabel={t('welcome.field_birth_date')}
                 />
               </Field>
             )}

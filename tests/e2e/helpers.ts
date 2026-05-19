@@ -58,7 +58,7 @@ export async function createLearner(
     headers: { authorization: `Bearer ${account.token}` },
     data: {
       display_name,
-      birth_year: 2010,
+      birth_date: '2010-01-15',
       grade_level: 7,
       ui_locale: 'de',
       avatar_id: 1,

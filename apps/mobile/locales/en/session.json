@@ -44,7 +44,8 @@
   "verdict": {
     "correct": "Spot on!",
     "partially_correct": "Almost there",
-    "incorrect": "Not quite yet"
+    "incorrect": "Not quite yet",
+    "skipped": "Let's look at it together"
   },
   "placeholder": {
     "answer": "Answer",
@@ -60,6 +61,7 @@
     "active": "I'm listening … (tap to finish)",
     "permission_rationale": "LearnBuddy listens briefly so you can answer out loud. Audio is never stored.",
     "unavailable": "Voice isn't available yet — just type your answer for now.",
+    "retry": "Didn't quite catch that — tap to talk again.",
     "switched_to_text": "We'll keep typing now.",
     "use_keyboard": "Rather type",
     "use_voice": "Rather speak"

@@ -62,12 +62,10 @@
   },
   "add_profile": {
     "title": "Profil anlegen",
-    "body": "Wir brauchen den Vornamen, das Geburtsjahr und die Klasse. Alles anpassbar später.",
+    "body": "Wir brauchen nur noch den Vornamen. Alles andere kannst du später anpassen.",
     "field_first_name": "Vorname",
-    "field_birth_year": "Geburtsjahr",
     "field_grade": "Klasse",
     "placeholder_first_name": "z. B. Lena",
-    "placeholder_birth_year": "z. B. 2012",
     "minor_hint": "Auf der nächsten Seite holen wir kurz die Einwilligung für ein Profil unter 16 ein.",
     "cta": "Weiter",
     "busy": "Moment …",

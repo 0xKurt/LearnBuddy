@@ -33,7 +33,7 @@ async function setup(email = 'parent@example.com', llm = new FakeLlmGateway()) {
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
       display_name: 'Anna',
-      birth_year: 2010,
+      birth_date: '2010-01-15',
       grade_level: 7,
       ui_locale: 'de',
       avatar_id: 1,
@@ -264,5 +264,97 @@ describe('POST /sessions/:id/turn', () => {
     expect(turns.some((tn) => tn.role === 'learner' && tn.content === 'gesprochene Antwort')).toBe(
       true,
     );
+  });
+
+  // ── Grading invariants (the "Weiss nicht → Genau!" class of bug) ─────────
+
+  it('NEVER grades a give-up ("Weiss nicht") as correct/partially_correct', async () => {
+    const s = await setup();
+    const session = seedSession(s);
+    const item = seedItem(s);
+
+    const ev = await turn(s, session, item, C1, { text: 'Weiss nicht' });
+    const verdict = ev.find((e) => e.type === 'verdict')?.verdict;
+    expect(verdict).toBe('skipped');
+    expect(verdict).not.toBe('correct');
+    expect(verdict).not.toBe('partially_correct');
+
+    const attempts = s.fake.tables.get('attempts') ?? [];
+    expect(attempts).toHaveLength(1);
+    expect(attempts[0]!.verdict).toBe('skipped');
+  });
+
+  it('give-up stays skipped even if the client mislabels it correct', async () => {
+    const s = await setup();
+    const session = seedSession(s);
+    const item = seedItem(s);
+
+    const ev = await turn(s, session, item, C1, {
+      text: 'keine Ahnung',
+      client_local_verdict: 'correct',
+    });
+    expect(ev.find((e) => e.type === 'verdict')?.verdict).toBe('skipped');
+    // Did NOT take the free local-correct fast path.
+    expect(ev.find((e) => e.type === 'done')?.credits_used as number).toBeGreaterThanOrEqual(1);
+  });
+
+  it('updates FSRS item_states on every online attempt (right or wrong)', async () => {
+    const s = await setup();
+    const session = seedSession(s);
+    const item = seedItem(s);
+
+    expect(s.fake.tables.get('item_states') ?? []).toHaveLength(0);
+    await turn(s, session, item, C1, { text: '5' }); // wrong
+    const states = s.fake.tables.get('item_states') ?? [];
+    expect(states).toHaveLength(1);
+    expect(states[0]!.item_id).toBe(item);
+    expect(states[0]!.learner_id).toBe(s.learnerId);
+    expect(typeof states[0]!.due).toBe('string');
+  });
+
+  it('grounds the tutor in the real worksheet material, not just the snippet', async () => {
+    const captured: ConverseTurnInput[] = [];
+    class SpyLlm extends FakeLlmGateway {
+      override async converseTurn(
+        input: ConverseTurnInput,
+        onToken?: (d: string) => void,
+      ): ReturnType<FakeLlmGateway['converseTurn']> {
+        captured.push(input);
+        return super.converseTurn(input, onToken);
+      }
+    }
+    const s = await setup('ground@example.com', new SpyLlm());
+    const session = seedSession(s);
+
+    const materialId = s.fake.nextId();
+    const materials = s.fake.tables.get('materials') ?? [];
+    materials.push({
+      id: materialId,
+      learner_id: s.learnerId,
+      extracted_markdown: 'KAPITEL 3: Photosynthese. Pflanzen wandeln Licht in Zucker um.',
+    });
+    s.fake.tables.set('materials', materials);
+
+    const itemId = s.fake.nextId();
+    const items = s.fake.tables.get('items') ?? [];
+    items.push({
+      id: itemId,
+      learner_id: s.learnerId,
+      material_id: materialId,
+      question: 'Was machen Pflanzen mit Licht?',
+      expected_answer: 'Zucker',
+      acceptable_answers: [],
+      answer_kind: 'short',
+      stimulus_kind: 'none',
+      stimulus_data: {},
+      difficulty: 1,
+      language: 'de',
+      topic: 'Photosynthese',
+      archived_at: null,
+    });
+    s.fake.tables.set('items', items);
+
+    await turn(s, session, itemId, C1, { text: 'hmm' });
+    expect(captured[0]?.materialContext).toContain('Photosynthese');
   });
 });

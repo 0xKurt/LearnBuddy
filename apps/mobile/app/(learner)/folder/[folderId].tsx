@@ -4,7 +4,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,8 +31,10 @@ import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import {
   deleteMaterial,
   listMaterials,
+  retryMaterial,
   type MaterialListItem,
 } from '../../../lib/api/materials.js';
+import { isoToDisplay } from '../../../lib/date.js';
 import { LB } from '../../../lib/theme/colors.js';
 
 function daysUntil(scheduled: string | null, now = new Date()): number | null {
@@ -57,6 +67,15 @@ export default function FolderScreen() {
     queryKey: ['materials', 'folder', folderId],
     queryFn: () => listMaterials(learnerId as string, { folderId }),
     enabled: !!learnerId && !!folderId,
+    // Poll while anything is still being extracted so a pending → ready /
+    // failed transition surfaces without the user leaving the screen.
+    refetchInterval: (query) => {
+      const data = query.state.data as MaterialListItem[] | undefined;
+      const anyPending = data?.some(
+        (m) => m.extraction_status !== 'ready' && m.extraction_status !== 'failed',
+      );
+      return anyPending ? 4000 : false;
+    },
   });
   const materials = materialsQuery.data ?? [];
   const readyMaterials = materials.filter((m) => m.extraction_status === 'ready');
@@ -78,6 +97,12 @@ export default function FolderScreen() {
         },
       },
     ]);
+  };
+
+  const handleRetryMaterial = (m: MaterialListItem) => {
+    void retryMaterial(learnerId as string, m.id)
+      .then(() => qc.invalidateQueries({ queryKey: ['materials', 'folder', folderId] }))
+      .catch(() => Alert.alert(t('material.delete_title'), t('material.delete_failed')));
   };
 
   const openFolderMenu = () => {
@@ -164,13 +189,27 @@ export default function FolderScreen() {
         <CircleBtn icon="more" onPress={openFolderMenu} />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={materialsQuery.isRefetching && !materialsQuery.isLoading}
+            onRefresh={() => {
+              void materialsQuery.refetch();
+              void foldersQuery.refetch();
+            }}
+            tintColor={LB.ink3}
+          />
+        }
+      >
         <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
           {folder.name}
         </Text>
         {folder.scheduled_for && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-            <Text style={{ fontSize: 12, color: LB.ink2 }}>{`${folder.scheduled_for}`}</Text>
+            <Text style={{ fontSize: 12, color: LB.ink2 }}>
+              {isoToDisplay(folder.scheduled_for) ?? folder.scheduled_for}
+            </Text>
             {inDays != null && (
               <Chip tone="warning">
                 {inDays === 0
@@ -214,6 +253,7 @@ export default function FolderScreen() {
                     })
                   }
                   onDelete={() => handleDeleteMaterial(m)}
+                  onRetry={() => handleRetryMaterial(m)}
                 />
               ))}
             </View>
@@ -301,10 +341,12 @@ function MaterialRow({
   material,
   onPress,
   onDelete,
+  onRetry,
 }: {
   material: MaterialListItem;
   onPress: () => void;
   onDelete: () => void;
+  onRetry: () => void;
 }) {
   const { t } = useTranslation('home');
   const { t: tCommon } = useTranslation('common');
@@ -313,7 +355,7 @@ function MaterialRow({
 
   return (
     <Pressable
-      onPress={isReady ? onPress : undefined}
+      onPress={isReady ? onPress : isFailed ? onRetry : undefined}
       onLongPress={isFailed ? onDelete : undefined}
       delayLongPress={400}
       style={{

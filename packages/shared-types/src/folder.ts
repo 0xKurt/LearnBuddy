@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { Iso8601, Uuid } from './enums.js';
-
-const DateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+import { DateOnly, Iso8601, Uuid } from './enums.js';
 
 export const Folder = z.object({
   id: Uuid,

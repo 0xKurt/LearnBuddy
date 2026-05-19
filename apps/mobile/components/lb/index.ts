@@ -25,6 +25,7 @@ export { DiagramQuestion } from './DiagramQuestion.js';
 export { ErrorBoundary } from './ErrorBoundary.js';
 export { OfflineBanner } from './OfflineBanner.js';
 export { LbTextInput } from './LbTextInput.js';
+export { LbDatePicker } from './LbDatePicker.js';
 export { SvgStimulus } from './SvgStimulus.js';
 export { ExplainModal } from './ExplainModal.js';
 export { VoiceButton } from './VoiceButton.js';

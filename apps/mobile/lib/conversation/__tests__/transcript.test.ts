@@ -23,11 +23,11 @@ function turn(p: Partial<ConversationTurn> & { turn_index: number }): Conversati
 const item = (id: string, question: string): Item => ({ id, question }) as unknown as Item;
 
 describe('normVerdict', () => {
-  it('passes the 3 display verdicts through, maps skipped→incorrect, null→undefined', () => {
+  it('passes all 4 verdicts through (skipped is first-class), null→undefined', () => {
     expect(normVerdict('correct')).toBe('correct');
     expect(normVerdict('partially_correct')).toBe('partially_correct');
     expect(normVerdict('incorrect')).toBe('incorrect');
-    expect(normVerdict('skipped')).toBe('incorrect');
+    expect(normVerdict('skipped')).toBe('skipped');
     expect(normVerdict(null)).toBeUndefined();
     expect(normVerdict(undefined)).toBeUndefined();
   });
@@ -89,11 +89,19 @@ describe('buildResumeTranscript', () => {
     expect(buildResumeTranscript(turns, items).startIdx).toBe(2);
   });
 
-  it('normalises a skipped verdict to incorrect on the bubble', () => {
+  it('keeps a skipped verdict distinct (never shown as a wrong attempt)', () => {
     const turns = [
       turn({ turn_index: 0, item_id: 'i1', role: 'tutor', kind: 'feedback', verdict: 'skipped' }),
     ];
     const tutorMsg = buildResumeTranscript(turns, items).messages.find((m) => m.role === 'tutor');
-    expect(tutorMsg?.verdict).toBe('incorrect');
+    expect(tutorMsg?.verdict).toBe('skipped');
+  });
+
+  it('treats a skipped item as closed → resume moves past it', () => {
+    const turns = [
+      turn({ turn_index: 0, item_id: 'i1', role: 'tutor', kind: 'feedback', verdict: 'skipped' }),
+    ];
+    // i1 was given up on; resume should advance to i2, not loop on i1.
+    expect(buildResumeTranscript(turns, items).startIdx).toBe(1);
   });
 });

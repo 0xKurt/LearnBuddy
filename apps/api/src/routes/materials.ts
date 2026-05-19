@@ -2,25 +2,28 @@
 //
 // POST /materials/upload-url
 //   Reserves a `materials` row in `extraction_status='pending'` and returns
-//   signed PUT URLs into the `materials-raw` bucket (one per photo). The
-//   storage paths are `materials-raw/{accountId}/{materialId}/{position}.jpg`
-//   so the bucket RLS policy (migration 0008) lets the owner read them back.
+//   signed PUT URLs into the `materials-raw` bucket (one per photo).
 //
 // POST /materials
-//   Confirms the photos are uploaded. Pre-debits the credit estimate per
-//   Doc 08 §estimated-costs-per-action, downloads photo bytes from Supabase
-//   Storage, calls the LLM gateway (Vertex in prod, Fake in tests / when GCP
-//   is unconfigured) for vision extraction, then streams an SSE:
-//   `reading_images` → `generating_items` → `done`. On not_educational,
-//   too_few_items, or any Vertex-side failure the route refunds and marks
-//   the material `failed` (Doc 06 §failure-modes-and-refunds).
+//   Confirms the photos are uploaded. Pre-debits the credit estimate, persists
+//   `material_photos`, and ENQUEUES a durable `extraction_jobs` row, then
+//   returns 202 immediately. The heavy Vertex work runs in a worker
+//   (POST /materials-worker/drain) — NOT inside this request — so a dropped
+//   connection or the function budget no longer strands the material. The
+//   client polls GET /materials/:id for status. ADR 0003.
 //
-// GET /materials/:id           — full material with items
+// POST /materials/:id/retry
+//   Re-enqueues a failed/stuck material from the already-uploaded photos
+//   (they live 7 days). Re-debits (the failed attempt was refunded); guarded
+//   so a double-tap can't double-charge or double-enqueue.
+//
+// GET /materials/:id           — full material with items (carries
+//                                extraction_status + extraction_error so the
+//                                client can poll/retry)
 // GET /materials/:id/items     — items only
 //
-// All endpoints require an X-Learner-Id header (requireLearnerContext) and a
-// bearer token (requireAuth). Cross-account access returns 404 (we do not
-// leak that the id exists).
+// All learner endpoints require an X-Learner-Id header + bearer token.
+// Cross-account access returns 404.
 
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
@@ -30,15 +33,10 @@ import { MaterialCreateRequest, MaterialUploadUrlRequest } from '@learnbuddy/sha
 import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
-import { cropDiagramsAndUpload, type SourcePage } from '../lib/llm/diagram.js';
-import type { GeneratedVisionItem, VisionInput, VisionResult } from '../lib/llm/gateway.js';
-import { streamMaterialEvents } from '../lib/sse.js';
-import { validateTemplate } from '../lib/llm/templateValidation.js';
+import { VISION_ESTIMATE } from '../lib/extraction.js';
+import type { GeneratedVisionItem, VisionInput } from '../lib/llm/gateway.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
-
-const VISION_ESTIMATE = 20; // Doc 08 §estimated-costs-per-action
-const PHOTO_WIPE_DELAY_MS = 7 * 86_400_000; // Doc 09 §4 (raw photos T+7d)
 
 export const materialRoutes = new Hono();
 materialRoutes.use('*', requireAuth, requireLearnerContext);
@@ -176,14 +174,14 @@ materialRoutes.post(
   },
 );
 
-// ── POST /materials ─────────────────────────────────────────────────────────
+// ── POST /materials — enqueue (no LLM work in the request) ──────────────────
 
 materialRoutes.post(
   '/',
   rateLimit({ key: 'materials_create', per_day: 20 }),
   zValidator('json', MaterialCreateRequest),
   async (c) => {
-    const { supabase, llm, now } = getDeps(c);
+    const { supabase, now } = getDeps(c);
     const { account_id } = c.get('auth');
     const learner_id = c.get('learner_id');
     if (!learner_id) {
@@ -191,12 +189,7 @@ materialRoutes.post(
     }
     const input = c.req.valid('json');
 
-    // Validate + pre-debit BEFORE streaming so the proxy gets a proper HTTP
-    // error code (404 / 402) rather than a 200 with an error SSE event.
-    // The stream opens only once we know the request is valid and credits are
-    // reserved — it just needs to do the LLM work and persist the result.
-
-    // 1. Confirm ownership of the material row.
+    // 1. Ownership + shape.
     const material = await ownedMaterial(supabase, learner_id, input.material_id);
     if (material.subject_id !== input.subject_id) {
       throw new ApiError('validation_failed', 'subject_id does not match material');
@@ -205,28 +198,8 @@ materialRoutes.post(
       throw new ApiError('validation_failed', 'client_quality_scores must be non-empty');
     }
 
-    // 2. Look up subject + learner context for the vision prompt.
-    const subjRow = await supabase
-      .from('subjects')
-      .select('name, subject_kind')
-      .eq('id', input.subject_id)
-      .maybeSingle();
-    if (subjRow.error || !subjRow.data) {
-      throw new ApiError('not_found', 'Subject not found');
-    }
-    const subject = subjRow.data as { name: string; subject_kind: VisionInput['subjectKind'] };
-
-    const learnerRow = await supabase
-      .from('learners')
-      .select('grade_level')
-      .eq('id', learner_id)
-      .maybeSingle();
-    if (learnerRow.error || !learnerRow.data) {
-      throw new ApiError('not_found', 'Learner not found');
-    }
-    const gradeLevel = (learnerRow.data as { grade_level: number | null }).grade_level ?? 7;
-
-    // 3. Atomic credit pre-debit — throws 402 if balance is insufficient.
+    // 2. Atomic credit pre-debit (Doc 08) — debit on enqueue; the worker
+    //    settles to actual cost, the failure/sweep path refunds.
     const debit = {
       estimate: VISION_ESTIMATE,
       reason: 'materials_create',
@@ -235,273 +208,129 @@ materialRoutes.post(
     };
     await tryDebit(supabase, account_id, debit);
 
-    // Open the SSE stream now that all pre-conditions pass. The proxy sees
-    // response headers immediately; LLM work happens inside the callback.
-    return streamMaterialEvents(c, async (push) => {
-      const fail = async (code: string, message: string): Promise<void> => {
-        await push({ event: 'error', data: { code, message } });
-      };
+    // 3. Persist the photo rows (idempotent-ish; one set per material).
+    const photoRows = input.client_quality_scores.map((s) => ({
+      material_id: input.material_id,
+      position: s.position,
+      storage_path: `materials-raw/${account_id}/${input.material_id}/${s.position}.jpg`,
+      width: s.width ?? null,
+      height: s.height ?? null,
+      byte_size: null,
+      client_blur_score: s.blur,
+      client_brightness: s.brightness,
+    }));
+    const photosIns = await supabase.from('material_photos').insert(photoRows);
+    if (photosIns.error) {
+      await refund(supabase, account_id, debit);
+      throw new ApiError('internal', 'Failed to persist material photos');
+    }
 
-      // 4. Persist material_photos rows from the client-side quality scores.
-      const photoRows = input.client_quality_scores.map((s) => ({
-        material_id: input.material_id,
-        position: s.position,
-        storage_path: `materials-raw/${account_id}/${input.material_id}/${s.position}.jpg`,
-        width: s.width ?? null,
-        height: s.height ?? null,
-        byte_size: null,
-        client_blur_score: s.blur,
-        client_brightness: s.brightness,
-      }));
-      const photosIns = await supabase.from('material_photos').insert(photoRows);
-      if (photosIns.error) {
-        await refund(supabase, account_id, debit);
-        await fail('internal', 'Failed to persist material photos');
-        return;
-      }
-
-      // 5. Download photo bytes — signals start of active work to the client.
-      await push({ event: 'phase', data: { phase: 'reading_images' } });
-      const photos = await downloadPhotos(
-        supabase,
-        `${account_id}/${input.material_id}`,
-        input.client_quality_scores.length,
-      );
-      if (photos.length === 0) {
-        await refund(supabase, account_id, debit);
-        await markFailed(supabase, input.material_id, 'photos_not_retrievable');
-        await fail(
-          'extraction_failed',
-          'Could not retrieve any photos from storage. Try uploading again.',
-        );
-        return;
-      }
-
-      // 6. Call the LLM gateway. Doc 06 §P1. Errors mapped to Doc 06 §failure-modes.
-      await push({ event: 'phase', data: { phase: 'generating_items' } });
-      let vision: VisionResult;
-      try {
-        vision = await llm.visionExtractAndGenerate({
-          images: photos.map(({ mimeType, data }) => ({ mimeType, data })),
-          locale: input.locale as VisionInput['locale'],
-          gradeLevel,
-          subject: subject.name,
-          subjectKind: subject.subject_kind,
-        });
-      } catch (err) {
-        await refund(supabase, account_id, debit);
-        await markFailed(
-          supabase,
-          input.material_id,
-          err instanceof Error ? err.message : 'Unknown vision failure',
-        );
-        await fail('extraction_failed', err instanceof Error ? err.message : 'Vision call failed');
-        return;
-      }
-
-      if (vision.error === 'not_educational') {
-        await refund(supabase, account_id, debit);
-        await markFailed(supabase, input.material_id, 'not_educational');
-        await fail('not_educational', 'Images do not look like educational material');
-        return;
-      }
-
-      if (vision.items.length < 3) {
-        await refund(supabase, account_id, debit);
-        await markFailed(supabase, input.material_id, 'too_few_items');
-        await fail('extraction_failed', 'Too few valid items after post-processing');
-        return;
-      }
-
-      // 6b. D1.5 — crop diagrams, overlay numbered markers, upload to study-assets,
-      //     insert study_assets rows. Diagrams that fail processing are simply
-      //     omitted from the id map; their dependent items get downgraded below.
-      await push({ event: 'phase', data: { phase: 'processing_diagrams' } });
-      const pages: SourcePage[] = photos.map((p) => ({ mimeType: p.mimeType, bytes: p.bytes }));
-      const diagramOutcome =
-        vision.diagrams.length > 0
-          ? await cropDiagramsAndUpload({
-              account_id,
-              material_id: input.material_id,
-              learner_id,
-              pages,
-              diagrams: vision.diagrams,
-              supabase,
-            })
-          : { ids: new Map<number, string>(), validLabelCount: new Map<number, number>() };
-
-      // Drop / rewrite items that depend on diagrams the pipeline didn't produce.
-      const resolvedItems = vision.items.flatMap((it): GeneratedVisionItem[] => {
-        const diagramIdx = it.diagram_ref?.diagram_index;
-        const labelIdx = it.diagram_ref?.label_index;
-        const needsAsset = it.stimulus_kind === 'study_asset' || it.answer_kind === 'diagram_label';
-        if (!needsAsset) return [it];
-        if (diagramIdx == null) {
-          return [];
-        }
-        const assetId = diagramOutcome.ids.get(diagramIdx);
-        if (!assetId) return [];
-        if (it.answer_kind === 'diagram_label') {
-          const validLabels = diagramOutcome.validLabelCount.get(diagramIdx) ?? 0;
-          if (labelIdx == null || labelIdx < 0 || labelIdx >= validLabels) return [];
-        }
-        return [
-          {
-            ...it,
-            stimulus_kind: 'study_asset',
-            stimulus_data: { ...(it.stimulus_data ?? {}), study_asset_id: assetId },
-          },
-        ];
-      });
-      if (resolvedItems.length < 3) {
-        await refund(supabase, account_id, debit);
-        await markFailed(supabase, input.material_id, 'too_few_items');
-        await fail('extraction_failed', 'Too few valid items remained after diagram resolution');
-        return;
-      }
-      vision.items = resolvedItems;
-
-      // 7a. Validate & persist problem templates (Doc 06 §post-processing #4).
-      const validTemplates = vision.problem_templates
-        .map((t) => validateTemplate(t))
-        .filter((t): t is NonNullable<typeof t> => t !== null);
-      const templateRows = validTemplates.map((t, idx) => ({
-        material_id: input.material_id,
-        learner_id,
-        source_item_id: null,
-        subject_kind: subject.subject_kind,
-        topic: t.topic,
-        template_text: t.template_text,
-        params: t.params,
-        constraints: t.constraints,
-        text_substitutions: [],
-        solution_expression: t.solution_expression,
-        answer_kind: t.answer_kind,
-        units: t.units ?? null,
-        stimulus_template: t.stimulus_template ?? null,
-        difficulty: t.difficulty,
-        _seed_idx: idx,
-      }));
-      if (templateRows.length > 0) {
-        const ins = await supabase
-          .from('problem_templates')
-          .insert(templateRows.map(({ _seed_idx: _i, ...rest }) => rest))
-          .select('id');
-        if (ins.error) {
-          console.warn(`[materials] template insert failed: ${ins.error.message}`);
-        }
-      }
-
-      // 7b. Persist items.
-      const itemRows = vision.items.map((it) =>
-        toItemRow(it, input.material_id, learner_id, vision.usage),
-      );
-      const itemsIns = await supabase.from('items').insert(itemRows).select('*');
-      if (itemsIns.error) {
-        await refund(supabase, account_id, debit);
-        await fail('internal', 'Failed to persist generated items');
-        return;
-      }
-      const persistedItems = (itemsIns.data ?? []) as unknown[];
-
-      // 8. Mark the material ready + schedule photo wipe at T+7d.
-      const updatedAt = now();
-      const wipeAt = new Date(updatedAt.getTime() + PHOTO_WIPE_DELAY_MS).toISOString();
-      const ready = await supabase
-        .from('materials')
-        .update({
-          extraction_status: 'ready',
-          page_count: input.client_quality_scores.length,
-          detected_language: vision.detected_language ?? input.locale,
-          extracted_markdown: vision.extracted_markdown,
-          title: input.title ?? null,
-          scheduled_photo_deletion_at: wipeAt,
-          extraction_model: vision.usage.model,
-          extraction_prompt_version: vision.usage.prompt_version,
-        })
-        .eq('id', input.material_id);
-      if (ready.error) {
-        await refund(supabase, account_id, debit);
-        await fail('internal', 'Failed to finalize material');
-        return;
-      }
-
-      // 9. Settle credits to actual cost. Doc 08 §atomic-debit step 3.
-      const actualCredits = Math.max(1, Math.round(vision.usage.cost_usd_micros / 100));
-      await settle(supabase, account_id, debit, actualCredits, vision.usage);
-
-      const studyAssetIds = Array.from(diagramOutcome.ids.values());
-      await push({
-        event: 'done',
-        data: {
-          material_id: input.material_id,
-          items: persistedItems,
-          templates: [],
-          study_assets: studyAssetIds,
-          extracted_language: vision.detected_language ?? input.locale,
-          credits_used: actualCredits,
-        },
-      });
+    // 4. Enqueue the durable job. One row per material (unique index).
+    const jobIns = await supabase.from('extraction_jobs').insert({
+      material_id: input.material_id,
+      learner_id,
+      account_id,
+      subject_id: input.subject_id,
+      status: 'queued',
+      attempts: 0,
+      locale: input.locale,
+      title: input.title ?? null,
+      client_quality_scores: input.client_quality_scores,
+      credit_estimate: VISION_ESTIMATE,
+      created_at: now().toISOString(),
+      updated_at: now().toISOString(),
     });
+    if (jobIns.error) {
+      await refund(supabase, account_id, debit);
+      throw new ApiError('internal', 'Failed to enqueue extraction');
+    }
+
+    await supabase
+      .from('materials')
+      .update({ extraction_status: 'pending', extraction_error: null })
+      .eq('id', input.material_id);
+
+    return c.json({ material_id: input.material_id, status: 'pending' }, 202);
   },
 );
 
-// ── helpers ────────────────────────────────────────────────────────────────
+// ── POST /materials/:id/retry ───────────────────────────────────────────────
 
-/** Mark the material `failed` with an error message. Best-effort: a failure
- *  here is logged but not re-thrown, because the caller is already in an
- *  error path that's refunded the credit. Without this guard, an update
- *  failure would silently strand the material in `pending` after refund. */
-async function markFailed(
-  supabase: ReturnType<typeof getDeps>['supabase'],
-  material_id: string,
-  reason: string,
-): Promise<void> {
-  const upd = await supabase
+materialRoutes.post('/:id/retry', rateLimit({ key: 'materials_retry', per_day: 20 }), async (c) => {
+  const { supabase, now } = getDeps(c);
+  const { account_id } = c.get('auth');
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const material_id = c.req.param('id');
+
+  const material = await ownedMaterial(supabase, learner_id, material_id);
+
+  const statusRow = await supabase
     .from('materials')
-    .update({ extraction_status: 'failed', extraction_error: reason })
-    .eq('id', material_id);
-  if (upd.error) {
-    console.error(
-      `[materials] markFailed(${material_id}, ${reason}): ${upd.error.message} — material may be stranded in 'pending' state`,
-    );
+    .select('extraction_status')
+    .eq('id', material_id)
+    .maybeSingle();
+  const status = (statusRow.data as { extraction_status: string } | null)?.extraction_status;
+  if (status === 'ready') {
+    throw new ApiError('validation_failed', 'Material is already processed');
   }
-}
 
-/** Downloaded photo bytes + the base64 encoding we ship to Vertex. We return
- *  both so D1.5's diagram pipeline can decode the raw bytes for sharp without
- *  re-downloading or re-decoding base64. */
-type DownloadedPhoto = {
-  mimeType: 'image/jpeg' | 'image/png';
-  /** base64 (no data: prefix) for the Vertex inlineData part. */
-  data: string;
-  /** Raw bytes for sharp() processing. */
-  bytes: Buffer;
-};
+  const jobRow = await supabase
+    .from('extraction_jobs')
+    .select('*')
+    .eq('material_id', material_id)
+    .maybeSingle();
+  const job = jobRow.data as {
+    id: string;
+    status: string;
+    client_quality_scores: unknown;
+    locale: string;
+    title: string | null;
+  } | null;
+  if (!job) {
+    throw new ApiError('not_found', 'No extraction job to retry');
+  }
+  // Guard a double-tap: an in-flight job must not be re-debited/re-queued.
+  if (job.status === 'queued' || job.status === 'running') {
+    return c.json({ material_id, status: 'pending' }, 202);
+  }
 
-async function downloadPhotos(
-  supabase: ReturnType<typeof getDeps>['supabase'],
-  prefix: string,
-  count: number,
-): Promise<DownloadedPhoto[]> {
-  // Photos are 100–300 KB; sequential downloads added ~1–3 s to vision
-  // latency. Parallel keeps order stable via index, drops failures silently.
-  const positions = Array.from({ length: count }, (_, i) => i + 1);
-  const downloads = await Promise.all(
-    positions.map(async (i): Promise<DownloadedPhoto | null> => {
-      const path = `${prefix}/${i}.jpg`;
-      const dl = await supabase.storage.from('materials-raw').download(path);
-      if (dl.error || !dl.data) return null;
-      const buf = Buffer.from(await dl.data.arrayBuffer());
-      return {
-        mimeType: 'image/jpeg',
-        data: buf.toString('base64'),
-        bytes: buf,
-      };
-    }),
-  );
-  return downloads.filter((d): d is DownloadedPhoto => d !== null);
-}
+  // The prior failed attempt was refunded on failure, so a retry is a
+  // fresh debit (not a double charge).
+  const debit = {
+    estimate: VISION_ESTIMATE,
+    reason: 'materials_create',
+    learner_id,
+    reference_id: material_id,
+  };
+  await tryDebit(supabase, account_id, debit);
+
+  const reset = await supabase
+    .from('extraction_jobs')
+    .update({
+      status: 'queued',
+      last_error: null,
+      started_at: null,
+      finished_at: null,
+      updated_at: now().toISOString(),
+      subject_id: material.subject_id,
+    })
+    .eq('id', job.id)
+    .eq('status', job.status); // optimistic: only if it hasn't moved
+  if (reset.error) {
+    await refund(supabase, account_id, debit);
+    throw new ApiError('internal', 'Failed to re-enqueue extraction');
+  }
+
+  await supabase
+    .from('materials')
+    .update({ extraction_status: 'pending', extraction_error: null })
+    .eq('id', material_id);
+
+  return c.json({ material_id, status: 'pending' }, 202);
+});
+
+// ── helpers ────────────────────────────────────────────────────────────────
 
 function toItemRow(
   it: GeneratedVisionItem,
@@ -625,12 +454,6 @@ materialRoutes.get('/:id/items', async (c) => {
   }
   return c.json({ items: items.data ?? [] });
 });
-
-// ── Routes deferred to later slices ─────────────────────────────────────────
-// Kept registered as 501 so the surface area matches Doc 04 §materials and
-// the IMPLEMENTATION-AUDIT count of `notImplemented()` routes drops by 4
-// (this slice) rather than by 4 and then re-rising when downstream slices
-// add the missing handlers. Each line names the slice that completes it.
 
 // POST /materials/:id/regenerate-items — Doc 06 §P2. Reuses cached extracted
 // markdown to generate ADDITIONAL items without re-OCRing the photos.

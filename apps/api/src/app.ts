@@ -26,6 +26,7 @@ import { learnerRoutes } from './routes/learners.js';
 import { subjectRoutes } from './routes/subjects.js';
 import { folderRoutes } from './routes/folders.js';
 import { materialRoutes } from './routes/materials.js';
+import { materialWorkerRoutes } from './routes/materials-worker.js';
 import { itemRoutes } from './routes/items.js';
 import { sessionRoutes } from './routes/sessions.js';
 import { attemptRoutes } from './routes/attempts.js';
@@ -97,6 +98,7 @@ export function createApp(opts: { deps?: Deps } = {}) {
   app.route('/subjects', subjectRoutes);
   app.route('/folders', folderRoutes);
   app.route('/materials', materialRoutes);
+  app.route('/materials-worker', materialWorkerRoutes);
   app.route('/items', itemRoutes);
   app.route('/sessions', sessionRoutes);
   app.route('/attempts', attemptRoutes);

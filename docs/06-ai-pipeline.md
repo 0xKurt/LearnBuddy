@@ -18,9 +18,9 @@ export const VERTEX = new VertexAI({
 export const MODEL_ID = 'gemini-2.5-flash-lite';
 
 export const SAFETY = [
-  { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-  { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-  { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE'    },
+  { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+  { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+  { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
   { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
 ];
 
@@ -51,6 +51,7 @@ export interface LLMGateway {
 ```
 
 Each method:
+
 1. Builds the prompt using the templates in §3 below.
 2. Calls Vertex AI with `MODEL_ID`, `SAFETY`, `GENERATION`.
 3. Parses the JSON response with Zod. On parse failure, retries once with the message "Your previous output was not valid JSON. Return only the JSON object."
@@ -63,6 +64,7 @@ Located at `apps/api/lib/diagrams/`. Uses `sharp`.
 ### Inputs
 
 The vision call returns a `diagrams` array (doc 07 §3). For each diagram, we have:
+
 - `page_index` (which input image)
 - `bounding_box` normalized 0..1 in the page
 - `labels[]` with `text`, `label_text_box`, `connector_box`, `target_xy`
@@ -257,6 +259,7 @@ Return strictly valid JSON, no Markdown fences, no commentary, matching:
 Appended to the user prompt as section 5.
 
 **math:**
+
 ```
 For mathematics:
 - Preserve formulas as LaTeX.
@@ -277,6 +280,7 @@ For mathematics:
 ```
 
 **physics:**
+
 ```
 For physics:
 - Same formula handling as math.
@@ -290,6 +294,7 @@ For physics:
 ```
 
 **chemistry:**
+
 ```
 For chemistry:
 - Render chemical equations as LaTeX in `$...$` using `\rightarrow` for
@@ -306,6 +311,7 @@ For chemistry:
 ```
 
 **biology:**
+
 ```
 For biology:
 - Most material includes labeled diagrams (cells, organs, plants, body
@@ -317,6 +323,7 @@ For biology:
 ```
 
 **geography:**
+
 ```
 For geography:
 - Maps are diagrams — treat country / city / river / mountain labels as
@@ -327,6 +334,7 @@ For geography:
 ```
 
 **history:**
+
 ```
 For history:
 - Most items are `short` (dates, names, events) or `long` (causes,
@@ -338,6 +346,7 @@ For history:
 ```
 
 **language_native, language_foreign:**
+
 ```
 For language work:
 - Prefer `fill_blank` for grammar drills (conjugations, declensions,
@@ -349,6 +358,7 @@ For language work:
 ```
 
 **religion_ethics, art_music, general, other:**
+
 ```
 General handling: prefer `short` and `long`; use `multiple_choice` where
 clearly distinguishing options exists.
@@ -400,6 +410,12 @@ Return strictly valid JSON:
 - `more-variety`: "Mix answer kinds: include at least one `multiple_choice`, one `numeric` (if applicable), and one `long` explanation."
 
 ### P3 — Answer evaluation
+
+> **Superseded — see ADR 0002.** The live path is the multi-turn
+> conversational tutor (`prompts/tutor.ts` / `POST /sessions/:id/turn`), not
+> this single-shot evaluator. Grading is server-guarded (give-up ⇒ `skipped`,
+> never `correct`), grounded in the worksheet material, and runs on
+> `VERTEX_TUTOR_MODEL_ID`. This section is kept for reference only.
 
 Used by `POST /attempts` when the local evaluator returns `unknown`. Streams the response.
 
@@ -510,6 +526,7 @@ Located at `apps/api/evals/`. Runnable with `pnpm eval`.
 ### Fixture format
 
 `apps/api/evals/fixtures/{name}/`:
+
 - `images/0.jpg`, `images/1.jpg`, ...
 - `meta.json`:
   ```json
@@ -572,19 +589,20 @@ Each fixture is real material (use stock or own learner's material with permissi
 
 ## Failure modes and refunds
 
-| Condition | Action | Credits |
-|---|---|---|
-| Vertex returns valid JSON, items pass post-processing | Persist, settle to actual cost | charged actual |
-| Vertex returns invalid JSON twice | `extraction_failed`, refund estimate | refunded |
-| Vertex safety blocks all candidates | `extraction_failed`, refund estimate | refunded |
-| Vertex network/5xx after 2 retries with 1s/3s backoff | `extraction_failed`, refund estimate | refunded |
-| Vertex returns `error: "not_educational"` | `not_educational`, refund estimate | refunded |
-| Some items rejected by post-processing but ≥ 3 valid items remain | Persist valid items only | settle to actual cost |
-| Fewer than 3 valid items after post-processing | `extraction_failed`, refund estimate | refunded |
+| Condition                                                         | Action                               | Credits               |
+| ----------------------------------------------------------------- | ------------------------------------ | --------------------- |
+| Vertex returns valid JSON, items pass post-processing             | Persist, settle to actual cost       | charged actual        |
+| Vertex returns invalid JSON twice                                 | `extraction_failed`, refund estimate | refunded              |
+| Vertex safety blocks all candidates                               | `extraction_failed`, refund estimate | refunded              |
+| Vertex network/5xx after 2 retries with 1s/3s backoff             | `extraction_failed`, refund estimate | refunded              |
+| Vertex returns `error: "not_educational"`                         | `not_educational`, refund estimate   | refunded              |
+| Some items rejected by post-processing but ≥ 3 valid items remain | Persist valid items only             | settle to actual cost |
+| Fewer than 3 valid items after post-processing                    | `extraction_failed`, refund estimate | refunded              |
 
 ## Logging
 
 Every gateway call writes a `credit_events` row with:
+
 - `model = 'gemini-2.5-flash-lite'`
 - `prompt_version = PROMPT_VERSION`
 - `input_tokens`, `output_tokens` from the Vertex response

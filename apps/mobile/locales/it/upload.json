@@ -22,8 +22,15 @@
     "body": "Hai usato tutti i crediti di questo periodo. Un adulto può ricaricare in impostazioni, oppure aspetta il prossimo periodo."
   },
   "async": {
-    "title": "Elaborazione in corso",
-    "body": "La connessione si è interrotta, ma il materiale viene elaborato in background. Controlla la tua lista materiali tra poco.",
+    "title": "Connessione persa",
+    "body": "La connessione si è interrotta prima di finire. Questo materiale probabilmente non è stato elaborato — controlla la lista materiali. Se mostra un errore, eliminalo e riscansionalo.",
     "view_list": "Vai ai materiali"
+  },
+  "worker": {
+    "processing": "Avviene sui nostri server e di solito richiede meno di un minuto. Puoi aspettare o controllare la lista più tardi.",
+    "slow_title": "Sta richiedendo un po' di più",
+    "slow_body": "L'elaborazione continua in background. Controlla la lista materiali tra poco: comparirà quando è pronto.",
+    "failed_title": "Non ha funzionato",
+    "failed_body": "Non siamo riusciti a leggere questo materiale. Riprova: le tue foto sono salvate."
   }
 }

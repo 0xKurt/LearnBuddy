@@ -42,7 +42,7 @@ async function setup(email: string) {
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
       display_name: 'Mara',
-      birth_year: 2010,
+      birth_date: '2010-01-15',
       grade_level: 7,
       ui_locale: 'de',
       avatar_id: 1,

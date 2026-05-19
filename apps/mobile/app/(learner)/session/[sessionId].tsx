@@ -371,7 +371,11 @@ export default function SessionScreen() {
           patchMsg(tutorMsgId, { streaming: false, verdict });
           // Count a real, completed attempt (drives the "skip" affordance).
           setTries((n) => n + 1);
-          if (verdict === 'correct') setCanAdvance(true);
+          // Advance on a real success OR once the item is closed out
+          // (gave up / tutor revealed it). Decoupling "Weiter" from
+          // 'correct' removes the pressure that made the model fake a
+          // "Genau!" just so the learner could move on.
+          if (verdict === 'correct' || verdict === 'skipped') setCanAdvance(true);
         }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
@@ -393,9 +397,13 @@ export default function SessionScreen() {
     if (!item) return;
     // '||' matches how lib/eval/local.ts splits fill-blank answers, so the
     // zero-cost local fast-path can recognise a fully-correct set.
-    if (item.answer_kind === 'fill_blank')
+    if (item.answer_kind === 'fill_blank') {
       void send(fillValues.join('||'), 'text', fillValues.filter((v) => v?.trim()).join(' · '));
-    else void send(answer, 'text');
+      setFillValues([]);
+    } else {
+      void send(answer, 'text');
+      setAnswer('');
+    }
   }, [item, answer, fillValues, send]);
 
   const onVoice = useCallback(
@@ -1006,6 +1014,7 @@ function Composer({
           labelActive={t('voice.active')}
           permissionRationale={t('voice.permission_rationale')}
           unavailableLabel={t('voice.unavailable')}
+          retryHint={t('voice.retry')}
           onTranscript={onVoice}
           onUnavailable={onVoiceUnavailable}
           disabled={sending}

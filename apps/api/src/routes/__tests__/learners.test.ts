@@ -40,7 +40,7 @@ describe('POST /learners', () => {
       },
       body: JSON.stringify({
         display_name: 'Anna',
-        birth_year: 1985,
+        birth_date: '1985-06-15',
         grade_level: 13,
         ui_locale: 'de',
         avatar_id: 1,
@@ -64,7 +64,7 @@ describe('POST /learners', () => {
       },
       body: JSON.stringify({
         display_name: 'Mira',
-        birth_year: 2015,
+        birth_date: '2015-03-10',
         grade_level: 4,
         ui_locale: 'de',
         avatar_id: 1,
@@ -84,7 +84,7 @@ describe('POST /learners', () => {
       },
       body: JSON.stringify({
         display_name: 'Mira',
-        birth_year: 2015,
+        birth_date: '2015-03-10',
         grade_level: 4,
         ui_locale: 'de',
         avatar_id: 1,
@@ -99,7 +99,7 @@ describe('POST /learners', () => {
     const { app, token } = await setupAuthed();
     const body = JSON.stringify({
       display_name: 'A',
-      birth_year: 1985,
+      birth_date: '1985-06-15',
       grade_level: 13,
       ui_locale: 'de',
       avatar_id: 1,
@@ -128,7 +128,7 @@ describe('POST /learners', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         display_name: 'Anna',
-        birth_year: 1985,
+        birth_date: '1985-06-15',
         grade_level: 13,
         ui_locale: 'de',
         avatar_id: 1,
@@ -147,7 +147,7 @@ describe('PATCH /learners/:id', () => {
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({
         display_name: 'Anna',
-        birth_year: 1985,
+        birth_date: '1985-06-15',
         grade_level: 13,
         ui_locale: 'de',
         avatar_id: 1,
@@ -189,7 +189,7 @@ describe('DELETE /learners/:id', () => {
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({
         display_name: 'Anna',
-        birth_year: 1985,
+        birth_date: '1985-06-15',
         grade_level: 13,
         ui_locale: 'de',
         avatar_id: 1,
