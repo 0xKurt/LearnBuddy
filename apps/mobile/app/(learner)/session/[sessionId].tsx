@@ -103,6 +103,16 @@ export default function SessionScreen() {
   const boot = useQuery({
     queryKey: ['session-boot', params.sessionId, params.resumeSessionId],
     enabled: !!learnerId,
+    // Creating/loading a session is a ONE-SHOT side effect. focusManager is
+    // wired to AppState, so default options would refetch on app foreground
+    // / reconnect and call startSession again → a brand-new server session
+    // id swaps in mid-conversation and the live thread is lost. Pin it.
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: false,
     queryFn: async (): Promise<{
       serverSessionId: string;
       items: Item[];
@@ -221,7 +231,7 @@ export default function SessionScreen() {
   }, [idx, items]);
 
   const send = useCallback(
-    async (rawText: string, mode: 'voice' | 'text' | 'multiple_choice') => {
+    async (rawText: string, mode: 'voice' | 'text' | 'multiple_choice', displayText?: string) => {
       const text = rawText.trim();
       if (!text || sending || !item) return;
       setSending(true);
@@ -233,7 +243,10 @@ export default function SessionScreen() {
       const tutorMsgId = uuid();
       setMessages((prev) => [
         ...prev,
-        { id: learnerMsgId, role: 'learner', text },
+        // Show a human-readable bubble (the chosen option / readable
+        // fill-ins) even though the payload sent to the server is the raw
+        // index / "||"-joined string.
+        { id: learnerMsgId, role: 'learner', text: displayText?.trim() || text },
         { id: tutorMsgId, role: 'tutor', text: '', streaming: true },
       ]);
 
@@ -292,7 +305,8 @@ export default function SessionScreen() {
     if (!item) return;
     // '||' matches how lib/eval/local.ts splits fill-blank answers, so the
     // zero-cost local fast-path can recognise a fully-correct set.
-    if (item.answer_kind === 'fill_blank') void send(fillValues.join('||'), 'text');
+    if (item.answer_kind === 'fill_blank')
+      void send(fillValues.join('||'), 'text', fillValues.filter((v) => v?.trim()).join(' · '));
     else void send(answer, 'text');
   }, [item, answer, fillValues, send]);
 
@@ -560,7 +574,9 @@ export default function SessionScreen() {
                 voiceEligible={voiceEligible}
                 voiceLocaleTag={voiceLocale(uiLocale)}
                 onSubmitTyped={submitTyped}
-                onPickMc={(i) => void send(String(i), 'multiple_choice')}
+                onPickMc={(i) =>
+                  void send(String(i), 'multiple_choice', item.mc_options?.[i] ?? `#${i + 1}`)
+                }
                 onVoice={onVoice}
                 onVoiceUnavailable={onVoiceUnavailable}
                 voiceOn={voiceOn}
