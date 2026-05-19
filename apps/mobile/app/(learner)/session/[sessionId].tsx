@@ -9,6 +9,7 @@
 // staircase in-thread. The whole thread is persisted server-side, so the
 // agent always answers with full context and the session resumes exactly.
 
+import NetInfo from '@react-native-community/netinfo';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -48,6 +49,9 @@ import { getAccount } from '../../../lib/api/account.js';
 import { ApiError } from '../../../lib/api/client.js';
 import { getSessionSnapshot, patchSession, streamTurn } from '../../../lib/api/conversation.js';
 import { getStudyAsset } from '../../../lib/api/studyAssets.js';
+import { postAttemptBatch } from '../../../lib/api/attempts.js';
+import { drainOutbox } from '../../../lib/sync/outbox.js';
+import { sqliteOutbox } from '../../../lib/sync/outbox-store.js';
 import {
   buildResumeTranscript,
   normVerdict,
@@ -222,6 +226,22 @@ export default function SessionScreen() {
     return () => clearTimeout(id);
   }, [messages]);
 
+  // Drain any offline-queued attempts on mount and whenever connectivity
+  // is regained (Doc 05 §sync-engine). Idempotent server-side.
+  useEffect(() => {
+    if (!learnerId) return;
+    const tryDrain = () => {
+      void drainOutbox(sqliteOutbox, learnerId, (a) => postAttemptBatch(learnerId, a)).catch(
+        () => undefined,
+      );
+    };
+    tryDrain();
+    const unsub = NetInfo.addEventListener((s) => {
+      if (s.isConnected) tryDrain();
+    });
+    return unsub;
+  }, [learnerId]);
+
   const patchMsg = useCallback((id: string, patch: Partial<Msg>) => {
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   }, []);
@@ -254,6 +274,47 @@ export default function SessionScreen() {
       setCanAdvance(false);
 
       const localVerdict = localEvaluate(item as EvaluatableItem, text);
+
+      // Offline-first (Doc 05 §sync-engine): the tutor needs the network,
+      // but a confidently locally-gradeable answer can be queued and synced
+      // later instead of dead-ending. Anything the tutor must judge gets a
+      // calm "needs a connection" message — never a hard block.
+      const net = await NetInfo.fetch();
+      if (net.isConnected === false) {
+        setSending(false);
+        if (localVerdict === 'correct' || localVerdict === 'incorrect') {
+          const shown = displayText?.trim() || text;
+          void sqliteOutbox.enqueue(learnerId, {
+            client_attempt_id: uuid(),
+            item_id: item.id,
+            session_id: serverSessionId || null,
+            mode,
+            kid_answer: text,
+            verdict: localVerdict,
+            evaluated_by: 'local',
+            hints_used: 0,
+            duration_ms: Date.now() - startedAtRef.current,
+            test_mode: testMode,
+            reviewed_at: new Date().toISOString(),
+          });
+          setMessages((prev) => [
+            ...prev,
+            { id: uuid(), role: 'learner', text: shown },
+            {
+              id: uuid(),
+              role: 'tutor',
+              text: t('offline_saved'),
+              verdict: normVerdict(localVerdict),
+            },
+          ]);
+          setTries((n) => n + 1);
+          setCanAdvance(true);
+        } else {
+          toast.info(t('offline_need_connection'));
+        }
+        return;
+      }
+
       const learnerMsgId = uuid();
       const tutorMsgId = uuid();
       setMessages((prev) => [

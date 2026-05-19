@@ -17,6 +17,8 @@
   "next": "Weiter",
   "skip": "Überspringen",
   "practice_similar": "Ähnliche Aufgaben üben",
+  "offline_saved": "Offline gespeichert — wird synchronisiert, sobald du wieder online bist.",
+  "offline_need_connection": "Dafür brauche ich kurz Internet. Probier es gleich nochmal.",
   "keep_going_empty": "Für jetzt ist alles geschafft — fein gemacht!",
   "stream_error": {
     "generic": "Das hat gerade nicht geklappt. Tippe deine Antwort gern nochmal.",
