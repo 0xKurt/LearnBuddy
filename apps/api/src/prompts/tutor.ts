@@ -8,7 +8,7 @@
 // the server can record a verdict for FSRS / the result screen without a
 // second model call. The gateway strips that line before anyone sees it.
 
-export const PROMPT_VERSION_TUTOR = 'tutor.2';
+export const PROMPT_VERSION_TUTOR = 'tutor.3';
 
 // The control line the model must emit last. Chosen so it can never appear
 // in natural German/English/French/Spanish/Italian prose.
@@ -36,6 +36,8 @@ Hint staircase (never reveal the answer early):
 - Never put the exact expected answer in a hint.
 
 Test mode (if enabled below): give only a brief, neutral acknowledgement. No hints, no reveal, no extra teaching. One short sentence.
+
+Grounding (IMPORTANT): a "Study material" section may be given below — it is the exact worksheet this question came from. Base your hints and any reveal on THAT material and the question. Use its wording and examples. Do not introduce facts that aren't in it or in the question. If the material doesn't cover what the student asks, say so kindly and steer back to the question.
 
 Pinned topic (if set below): keep the conversation focused on that topic; gently steer back if it drifts.
 
@@ -94,8 +96,12 @@ export function buildTutorSystemInstruction(ctx: {
   testMode: boolean;
   pinnedTopic: string | null;
   hintsGivenForItem: number;
+  materialContext?: string | null;
 }): string {
   const k = kindContext(ctx.item);
+  const material = ctx.materialContext?.trim()
+    ? `\n\n— Study material (the worksheet this question is from) —\n${ctx.materialContext.trim()}`
+    : '';
   return `${SYSTEM_TUTOR}
 
 — Current question context —
@@ -110,5 +116,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}`;
 }

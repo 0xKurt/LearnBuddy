@@ -149,6 +149,9 @@ export type EvaluateResult = {
 export type ExplainInput = {
   topic: string;
   context?: string;
+  /** The worksheet text the question came from (clamped), loaded server-side
+   *  from the item's material so explanations stay on the real material. */
+  materialContext?: string | null;
   locale: Locale;
   gradeLevel: number;
   style: 'simpler' | 'step-by-step' | 'analogy';
@@ -196,6 +199,9 @@ export type ConverseTurnInput = {
   pinnedTopic: string | null;
   /** Hints already given for the current item (drives the staircase). */
   hintsGivenForItem: number;
+  /** The worksheet text this question came from (clamped). Grounds hints in
+   *  the real material instead of the tiny source excerpt. */
+  materialContext?: string | null;
 };
 
 export type ConverseTurnResult = {

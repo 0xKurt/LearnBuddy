@@ -23,6 +23,7 @@ import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { isNonAnswer } from '../lib/give-up.js';
+import { loadMaterialContext } from '../lib/material-context.js';
 import type { ConversationMessage } from '../lib/llm/gateway.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
@@ -744,6 +745,12 @@ sessionRoutes.post(
         return;
       }
 
+      // Ground the tutor in the actual worksheet, not a 200-char excerpt.
+      const materialContext = await loadMaterialContext(
+        supabase,
+        (item.material_id as string | null) ?? null,
+      );
+
       let result;
       try {
         result = await llm.converseTurn(
@@ -772,6 +779,7 @@ sessionRoutes.post(
             testMode,
             pinnedTopic: (session.pinned_topic as string | null) ?? null,
             hintsGivenForItem,
+            materialContext,
           },
           (delta) => {
             void push({ type: 'token', text: delta });

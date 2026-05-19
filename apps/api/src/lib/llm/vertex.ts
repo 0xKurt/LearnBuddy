@@ -123,6 +123,8 @@ function responseText(response: GenerateContentResponse): string {
 export class VertexLlmGateway implements LLMGateway {
   private readonly client: GoogleGenAI;
   private readonly modelId: string;
+  /** Stronger tier for learner-facing tutoring/explain (ADR 0002). */
+  private readonly tutorModelId: string;
 
   constructor(private readonly env: Env) {
     if (!env.GOOGLE_CLOUD_PROJECT) {
@@ -136,6 +138,7 @@ export class VertexLlmGateway implements LLMGateway {
       location: env.GOOGLE_VERTEX_LOCATION,
     });
     this.modelId = env.VERTEX_MODEL_ID;
+    this.tutorModelId = env.VERTEX_TUTOR_MODEL_ID;
   }
 
   async visionExtractAndGenerate(input: VisionInput): Promise<VisionResult> {
@@ -348,12 +351,13 @@ export class VertexLlmGateway implements LLMGateway {
       gradeLevel: input.gradeLevel,
       style: input.style,
       context: input.context,
+      materialContext: input.materialContext,
       topic: input.topic,
     });
     let response: GenerateContentResponse;
     try {
       response = await this.client.models.generateContent({
-        model: this.modelId,
+        model: this.tutorModelId,
         contents: [{ role: 'user', parts: [{ text: userText }] }],
         config: {
           systemInstruction: SYSTEM_P4,
@@ -378,7 +382,7 @@ export class VertexLlmGateway implements LLMGateway {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
         cost_usd_micros: totals.costMicros,
-        model: this.modelId,
+        model: this.tutorModelId,
         prompt_version: PROMPT_VERSION_P4,
       },
     };
@@ -396,6 +400,7 @@ export class VertexLlmGateway implements LLMGateway {
       testMode: input.testMode,
       pinnedTopic: input.pinnedTopic,
       hintsGivenForItem: input.hintsGivenForItem,
+      materialContext: input.materialContext,
     });
 
     // Replay the whole session thread as real alternating turns so the
@@ -411,7 +416,7 @@ export class VertexLlmGateway implements LLMGateway {
     let stream: AsyncGenerator<GenerateContentResponse>;
     try {
       stream = await this.client.models.generateContentStream({
-        model: this.modelId,
+        model: this.tutorModelId,
         contents,
         config: {
           systemInstruction,
@@ -492,7 +497,7 @@ export class VertexLlmGateway implements LLMGateway {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
         cost_usd_micros: totals.costMicros,
-        model: this.modelId,
+        model: this.tutorModelId,
         prompt_version: PROMPT_VERSION_TUTOR,
       },
     };

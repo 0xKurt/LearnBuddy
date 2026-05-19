@@ -29,8 +29,13 @@ export const Env = z.object({
   /** Backend selector. 'fake' → tests + dev without GCP; 'vertex' → real LLM.
    *  Defaults to 'fake' when NODE_ENV=test, else 'vertex'. */
   LLM_BACKEND: z.enum(['vertex', 'fake']).optional(),
-  /** Gemini model id; pinned to Doc 06 §provider-configuration. */
+  /** Gemini model id for batch/extraction (vision, regenerate). Cheapest
+   *  tier is fine there. Doc 06 §provider-configuration. */
   VERTEX_MODEL_ID: z.string().default('gemini-2.5-flash-lite'),
+  /** Model for the learner-facing pedagogy calls (conversational tutor +
+   *  explain). flash-lite is too weak to teach; this defaults to a stronger
+   *  tier. Divergence from Doc 06 documented in ADR 0002. */
+  VERTEX_TUTOR_MODEL_ID: z.string().default('gemini-2.5-flash'),
   // ── Observability + ops ─────────────────────────────────────────────────
   SENTRY_DSN: z.string().url().optional(),
   SENTRY_RELEASE: z.string().optional(),

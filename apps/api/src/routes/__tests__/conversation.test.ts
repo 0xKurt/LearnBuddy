@@ -311,4 +311,50 @@ describe('POST /sessions/:id/turn', () => {
     expect(states[0]!.learner_id).toBe(s.learnerId);
     expect(typeof states[0]!.due).toBe('string');
   });
+
+  it('grounds the tutor in the real worksheet material, not just the snippet', async () => {
+    const captured: ConverseTurnInput[] = [];
+    class SpyLlm extends FakeLlmGateway {
+      override async converseTurn(
+        input: ConverseTurnInput,
+        onToken?: (d: string) => void,
+      ): ReturnType<FakeLlmGateway['converseTurn']> {
+        captured.push(input);
+        return super.converseTurn(input, onToken);
+      }
+    }
+    const s = await setup('ground@example.com', new SpyLlm());
+    const session = seedSession(s);
+
+    const materialId = s.fake.nextId();
+    const materials = s.fake.tables.get('materials') ?? [];
+    materials.push({
+      id: materialId,
+      learner_id: s.learnerId,
+      extracted_markdown: 'KAPITEL 3: Photosynthese. Pflanzen wandeln Licht in Zucker um.',
+    });
+    s.fake.tables.set('materials', materials);
+
+    const itemId = s.fake.nextId();
+    const items = s.fake.tables.get('items') ?? [];
+    items.push({
+      id: itemId,
+      learner_id: s.learnerId,
+      material_id: materialId,
+      question: 'Was machen Pflanzen mit Licht?',
+      expected_answer: 'Zucker',
+      acceptable_answers: [],
+      answer_kind: 'short',
+      stimulus_kind: 'none',
+      stimulus_data: {},
+      difficulty: 1,
+      language: 'de',
+      topic: 'Photosynthese',
+      archived_at: null,
+    });
+    s.fake.tables.set('items', items);
+
+    await turn(s, session, itemId, C1, { text: 'hmm' });
+    expect(captured[0]?.materialContext).toContain('Photosynthese');
+  });
 });
