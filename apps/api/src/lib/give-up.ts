@@ -65,6 +65,20 @@ const GIVE_UP_PHRASES: string[][] = [
   ['help', 'me'],
 ];
 
+// Phrases that fire ONLY when they LEAD the message (token 0 onward). This
+// catches "weiss nicht aber...", "weiss nicht so genau", "weiss nicht ehrlich"
+// without misfiring on "Es ist weiss, nicht rot" — the descriptive sentence
+// never starts with "weiss nicht" but a real give-up almost always does.
+const GIVE_UP_LEADING: string[][] = [
+  ['weiss', 'nicht'],
+  ['weiss', 'es', 'nicht'],
+];
+
+function startsWith(tokens: string[], phrase: string[]): boolean {
+  if (tokens.length < phrase.length) return false;
+  return phrase.every((w, i) => tokens[i] === w);
+}
+
 // U+0300–U+036F = combining diacritical marks. Built from escapes (not a
 // literal char class) so "é"→"e", "ñ"→"n", "ä"→"a" reliably.
 const COMBINING_MARKS = new RegExp('[\\u0300-\\u036f]', 'g');
@@ -98,5 +112,6 @@ export function isNonAnswer(raw: string): boolean {
   if (norm.length === 0) return true; // empty or pure punctuation ("?", "...")
   if (GIVE_UP_EXACT.has(norm)) return true;
   const tokens = norm.split(' ');
+  if (GIVE_UP_LEADING.some((phrase) => startsWith(tokens, phrase))) return true;
   return GIVE_UP_PHRASES.some((phrase) => hasConsecutivePhrase(tokens, phrase));
 }

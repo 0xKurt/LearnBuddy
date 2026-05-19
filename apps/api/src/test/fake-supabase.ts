@@ -22,6 +22,7 @@
 
 import type { Deps } from '../lib/deps.js';
 import type { Env } from '../lib/env.js';
+import { __clearMaterialContextCache } from '../lib/material-context.js';
 import { FakeLlmGateway } from './fake-llm.js';
 
 export type FakeUser = { id: string; email: string };
@@ -341,6 +342,11 @@ export class FakeSupabase {
 
 /** Build a Deps instance suitable for route tests. */
 export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
+  // Material-context has a process-level LRU cache to spare prod from
+  // repeated row reads per session. In tests, each `createTestDeps()` is a
+  // fresh universe (different ids, different markdown), so we wipe the cache
+  // here to prevent one test's material from poisoning the next.
+  __clearMaterialContextCache();
   const fake = new FakeSupabase();
   const env: Env = {
     SUPABASE_URL: 'http://fake.local',

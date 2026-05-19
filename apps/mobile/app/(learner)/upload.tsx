@@ -64,8 +64,10 @@ export default function UploadScreen() {
         const res = await runUpload(learnerId, pending, (p) => {
           if (!cancelled) setState({ kind: 'progress', progress: p });
         });
-        materialIdRef.current = res.material_id;
+        // Order matters: bail on cancelled FIRST so we don't leave a stale
+        // material id in the ref after the component has torn down.
         if (cancelled) return;
+        materialIdRef.current = res.material_id;
         setState({ kind: 'polling' });
         setPollNonce((n) => n + 1);
       } catch (err) {

@@ -25,6 +25,7 @@ import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { isNonAnswer } from '../lib/give-up.js';
 import { loadMaterialContext } from '../lib/material-context.js';
 import type { ConversationMessage } from '../lib/llm/gateway.js';
+import { captureApiError } from '../lib/sentry.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -720,6 +721,11 @@ sessionRoutes.post(
             .upsert({ item_id: input.item_id, learner_id, ...next }, { onConflict: 'item_id' });
           if (ups.error) {
             console.error(`[sessions] item_states upsert failed: ${ups.error.message}`);
+            captureApiError(new Error(`session item_states upsert failed: ${ups.error.message}`), {
+              learner_id,
+              item_id: input.item_id,
+              session_id,
+            });
           }
         }
       };

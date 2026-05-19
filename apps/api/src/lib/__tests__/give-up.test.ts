@@ -11,6 +11,9 @@ describe('isNonAnswer', () => {
       '...',
       'weiß nicht',
       'Weiss nicht',
+      'weiss nicht aber', // bare "weiss nicht" leading the message
+      'weiss nicht so genau', // leading + tail
+      'weiss es nicht wirklich', // leading "weiss es nicht"
       'ich weiß es nicht',
       'keine Ahnung',
       'kA',

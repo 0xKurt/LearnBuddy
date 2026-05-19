@@ -13,6 +13,7 @@ import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { idempotency } from '../lib/idempotency.js';
+import { captureApiError } from '../lib/sentry.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -121,6 +122,10 @@ attemptRoutes.post(
       const ins = await supabase.from('attempts').insert(attemptRows);
       if (ins.error) {
         console.error(`[attempts] bulk persist failed: ${ins.error.message}`);
+        captureApiError(new Error(`attempts bulk persist failed: ${ins.error.message}`), {
+          attempt_count: attemptRows.length,
+          first_item_id: attemptRows[0]?.item_id,
+        });
       }
     }
     if (stateRows.length > 0) {
@@ -131,6 +136,9 @@ attemptRoutes.post(
       const ups = await supabase.from('item_states').upsert(stateRows, { onConflict: 'item_id' });
       if (ups.error) {
         console.error(`[attempts] item_states upsert failed: ${ups.error.message}`);
+        captureApiError(new Error(`item_states upsert failed: ${ups.error.message}`), {
+          row_count: stateRows.length,
+        });
       }
     }
 
