@@ -88,6 +88,35 @@ function kindContext(item: TutorItemContext): string {
   }
 }
 
+/** Phase A2 — progressive give-up modes. The give-up branch in
+ *  sessions.ts escalates as the learner repeats "weiß nicht" on the
+ *  same item: stock (strike 0) → gentle_scaffold (strike 1) →
+ *  gentle_reveal (strike 2) → pivot (strike 3+). The two MIDDLE moves
+ *  go through the tutor; this fragment tells the model what to do. */
+export type GiveUpMode = 'gentle_scaffold' | 'gentle_reveal' | null;
+
+export function buildGiveUpModeFragment(mode: GiveUpMode): string | null {
+  if (mode === 'gentle_scaffold') {
+    return [
+      '— Give-up mode: gentle_scaffold —',
+      'The student has just said "I don\'t know" for the SECOND time in a row on this item.',
+      'Do NOT ask another open question. Do NOT give a broad nudge — that already failed twice.',
+      'Pick ONE concrete, small entry point from the Study material — a definition, a single symbol from the question, or the simplest sub-step. Ask about THAT specifically.',
+      'One sentence. Reduce cognitive load, do not add to it. Do NOT reveal the full answer yet.',
+    ].join('\n');
+  }
+  if (mode === 'gentle_reveal') {
+    return [
+      '— Give-up mode: gentle_reveal —',
+      'The student has given up THREE times in a row on this item. Time to lower the stakes.',
+      'Reveal the answer kindly, grounded in the Study material. State it as a fact about the material, not as a judgment on the student.',
+      'Then offer two short choices: "Sollen wir das nochmal ganz langsam durchgehen, oder magst du was anderes probieren?" (adapt to the locale).',
+      'Two short sentences total. Warm. The verdict is "skipped" — do NOT say the student was wrong.',
+    ].join('\n');
+  }
+  return null;
+}
+
 export function buildTutorSystemInstruction(ctx: {
   item: TutorItemContext;
   learnerName: string | null;
@@ -102,12 +131,19 @@ export function buildTutorSystemInstruction(ctx: {
    *  L1: never names the learner — it instructs HOW to praise, not WHO
    *  the learner is. */
   praiseRubric?: string | null;
+  /** Phase A2: progressive give-up mode. When set, this turn is the
+   *  scaffold or reveal step in the give-up escalation. */
+  giveUpMode?: GiveUpMode;
 }): string {
   const k = kindContext(ctx.item);
   const material = ctx.materialContext?.trim()
     ? `\n\n— Study material (the worksheet this question is from) —\n${ctx.materialContext.trim()}`
     : '';
   const praise = ctx.praiseRubric?.trim() ? `\n\n${ctx.praiseRubric.trim()}` : '';
+  const giveUp = (() => {
+    const f = buildGiveUpModeFragment(ctx.giveUpMode ?? null);
+    return f ? `\n\n${f}` : '';
+  })();
   return `${SYSTEM_TUTOR}
 
 — Current question context —
@@ -122,5 +158,5 @@ Acceptable variants: ${ctx.item.acceptableAnswers.join(' | ') || '—'}
 Answer kind: ${ctx.item.answerKind}${k ? `\n${k}` : ''}${
     ctx.item.sourceExcerpt ? `\nFrom the material: "${ctx.item.sourceExcerpt}"` : ''
   }
-Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${praise}`;
+Hints already given for THIS question: ${ctx.hintsGivenForItem}${material}${praise}${giveUp}`;
 }

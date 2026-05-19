@@ -115,3 +115,23 @@ export function isNonAnswer(raw: string): boolean {
   if (GIVE_UP_LEADING.some((phrase) => startsWith(tokens, phrase))) return true;
   return GIVE_UP_PHRASES.some((phrase) => hasConsecutivePhrase(tokens, phrase));
 }
+
+/** Count the number of consecutive trailing tutor turns on `itemId` with
+ *  verdict='skipped'. Phase A2 progressive give-up uses this to escalate
+ *  from stock encouragement → scaffold → reveal → pivot as the learner
+ *  keeps saying "weiß nicht" on the same item.
+ *
+ *  Counts from the most recent tutor turn on this item, walking backward,
+ *  stopping at the first non-skipped verdict. */
+export function countTrailingSkipsOnItem(
+  turns: ReadonlyArray<{ role: string; item_id: string | null; verdict: string | null }>,
+  itemId: string,
+): number {
+  const onItem = turns.filter((t) => t.role === 'tutor' && t.item_id === itemId);
+  let count = 0;
+  for (let i = onItem.length - 1; i >= 0; i--) {
+    if (onItem[i]!.verdict === 'skipped') count++;
+    else break;
+  }
+  return count;
+}

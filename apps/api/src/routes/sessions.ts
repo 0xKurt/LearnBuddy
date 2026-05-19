@@ -22,7 +22,7 @@ import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
-import { isNonAnswer } from '../lib/give-up.js';
+import { countTrailingSkipsOnItem, isNonAnswer } from '../lib/give-up.js';
 import { loadMaterialContext } from '../lib/material-context.js';
 import type { ConversationMessage } from '../lib/llm/gateway.js';
 import {
@@ -746,43 +746,60 @@ sessionRoutes.post(
         }
       };
 
-      // 5.5. Give-up path: the learner said "weiss nicht" / "idk" / hit send
-      //      on whitespace. We DON'T need the tutor model to tell us that
-      //      isn't an attempt — debiting and waiting on Gemini would burn
-      //      credits for an answer we're about to override to 'skipped'
-      //      anyway. Reply with a stock encouragement, count it as a hint
-      //      slot via the staircase, and move on. 0 credits.
+      // 5.5. Give-up path: progressive escalation (Phase A2).
+      //   strike 0 (first "weiß nicht" on this item) → stock encouragement,
+      //              0 credits, no Vertex call. Same as the old behavior.
+      //   strike 1 (second in a row)                  → tutor in
+      //              `gentle_scaffold` mode. Don't ask another open question;
+      //              pick one tiny concrete entry point from the material.
+      //   strike 2 (third in a row)                   → tutor in
+      //              `gentle_reveal` mode. Reveal kindly, offer two choices.
+      //   strike 3+ (fourth+)                          → pivot. 0 credits.
+      //              Stock "lass uns das nächstes Mal nochmal anschauen".
+      //              The standard staircase + give-up safety net still
+      //              clamp verdict to 'skipped' in every case.
+      let giveUpMode: 'gentle_scaffold' | 'gentle_reveal' | null = null;
       if (isNonAnswer(learnerText)) {
-        const skipReply = pickGiveUpReply(locale);
-        const learnerTurnId = await persistTurn({
-          turn_index: nextIndex,
-          role: 'learner',
-          kind: 'answer',
-          content: learnerText,
-          verdict: null,
-          client_turn_id: input.client_turn_id,
-        });
-        const tutorTurnId = await persistTurn({
-          turn_index: nextIndex + 1,
-          role: 'tutor',
-          kind: 'feedback',
-          content: skipReply,
-          verdict: 'skipped',
-          client_turn_id: null,
-        });
-        await recordAttempt('skipped', 'local', skipReply, null, null);
-        await push({ type: 'token', text: skipReply });
-        await push({ type: 'verdict', verdict: 'skipped' });
-        await push({ type: 'feedback', text: skipReply });
-        await push({
-          type: 'done',
-          credits_used: 0,
-          verdict: 'skipped',
-          learner_turn_id: learnerTurnId,
-          tutor_turn_id: tutorTurnId,
-          session_active: true,
-        });
-        return;
+        const trailingSkips = countTrailingSkipsOnItem(turns, input.item_id);
+        if (trailingSkips === 1) giveUpMode = 'gentle_scaffold';
+        else if (trailingSkips === 2) giveUpMode = 'gentle_reveal';
+        // strike 0 OR strike 3+ → short-circuit, no Vertex call.
+        if (trailingSkips === 0 || trailingSkips >= 3) {
+          const skipReply =
+            trailingSkips >= 3 ? pickGiveUpPivotReply(locale) : pickGiveUpReply(locale);
+          const learnerTurnId = await persistTurn({
+            turn_index: nextIndex,
+            role: 'learner',
+            kind: 'answer',
+            content: learnerText,
+            verdict: null,
+            client_turn_id: input.client_turn_id,
+          });
+          const tutorTurnId = await persistTurn({
+            turn_index: nextIndex + 1,
+            role: 'tutor',
+            kind: 'feedback',
+            content: skipReply,
+            verdict: 'skipped',
+            client_turn_id: null,
+          });
+          await recordAttempt('skipped', 'local', skipReply, null, null);
+          await push({ type: 'token', text: skipReply });
+          await push({ type: 'verdict', verdict: 'skipped' });
+          await push({ type: 'feedback', text: skipReply });
+          await push({
+            type: 'done',
+            credits_used: 0,
+            verdict: 'skipped',
+            learner_turn_id: learnerTurnId,
+            tutor_turn_id: tutorTurnId,
+            session_active: true,
+          });
+          return;
+        }
+        // strikes 1 or 2: fall through to the tutor path with
+        // giveUpMode set. The model produces a scaffold/reveal turn,
+        // and the verdict safety-net at the bottom forces 'skipped'.
       }
 
       // 6. Fast path: client is confident it's correct → no model, no charge.
@@ -903,6 +920,7 @@ sessionRoutes.post(
             hintsGivenForItem,
             materialContext,
             praiseRubric,
+            giveUpMode,
           },
           (delta) => {
             void push({ type: 'token', text: delta });
@@ -991,6 +1009,22 @@ function pickGiveUpReply(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
     fr: 'Pas de souci — prends ton temps, ou dis « indice » et on avance ensemble.',
     es: 'Tranqui — piénsalo o di "pista" y lo hacemos paso a paso.',
     it: 'Nessun problema — pensaci un attimo o dì "aiuto" e proviamo insieme.',
+  } as const;
+  return map[locale];
+}
+
+/** Phase A2 pivot — strike 4+ give-up. After scaffold and reveal both
+ *  failed to land, the right pedagogical move is to STOP. We don't
+ *  reveal again; we don't push another hint; we just acknowledge and
+ *  signal that this item will come back next time. The session
+ *  continues to the next item via the standard "Weiter" flow. */
+function pickGiveUpPivotReply(locale: 'de' | 'en' | 'fr' | 'es' | 'it'): string {
+  const map = {
+    de: 'Das schauen wir uns nächstes Mal nochmal in Ruhe an — heute lassen wir das so. Magst du die nächste Aufgabe?',
+    en: "Let's revisit this one next time with fresh eyes. Want to try the next question?",
+    fr: 'On reverra ça la prochaine fois au calme. Tu veux passer à la suivante ?',
+    es: 'Lo retomamos la próxima vez con la mente fresca. ¿Pasamos a la siguiente?',
+    it: 'Lo riprendiamo la prossima volta con calma. Andiamo alla prossima?',
   } as const;
   return map[locale];
 }

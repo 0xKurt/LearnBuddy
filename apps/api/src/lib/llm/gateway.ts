@@ -207,6 +207,9 @@ export type ConverseTurnInput = {
    *  the learner in first person — L1 invariant. Null/undefined when no
    *  shaping needed (e.g. on a turn where verdict is clearly wrong). */
   praiseRubric?: string | null;
+  /** Phase A2: when set, this turn is the scaffold or reveal step in
+   *  the progressive give-up escalation. */
+  giveUpMode?: 'gentle_scaffold' | 'gentle_reveal' | null;
 };
 
 export type ConverseTurnResult = {
