@@ -8,6 +8,10 @@ import { api, newIdempotencyKey } from './client.js';
 export const SessionStart = z.object({
   session_id: z.string().uuid(),
   items: z.array(Item),
+  // Phase C2 opener — references the material from the last episode,
+  // null when there's no prior episode. The server may also omit the
+  // field on older builds; treat undefined as null.
+  opener: z.string().nullable().optional(),
 });
 export type SessionStart = z.infer<typeof SessionStart>;
 

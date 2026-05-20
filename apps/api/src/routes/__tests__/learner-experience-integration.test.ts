@@ -290,6 +290,56 @@ describe('LearnerExperience integration — composed slices', () => {
     });
   });
 
+  it('Phase H1: long session (high fatigue) sets session_ending_suggested on the done event', async () => {
+    const s = await setup('fatigued@example.com');
+    // Seed a session started 6h before the fake `now` (2026-05-16T10:00:00Z),
+    // so minutes_in_session = 360, fatigue = 1 - 1/(1 + 360/45) ≈ 0.89 > 0.85.
+    const id = s.fake.nextId();
+    const sessions = s.fake.tables.get('sessions') ?? [];
+    sessions.push({
+      id,
+      learner_id: s.learnerId,
+      subject_id: null,
+      test_mode: false,
+      started_at: '2026-05-16T04:00:00Z',
+      ended_at: null,
+      attempts_count: 0,
+      correct_count: 0,
+      picked_item_ids: [],
+      pinned_topic: null,
+    });
+    s.fake.tables.set('sessions', sessions);
+
+    const item = seedItem(s, {
+      topic: 'Addition',
+      question: 'Was ist 2 + 2?',
+      expected: '4',
+    });
+
+    const events = await turn(s, id, item, C1, { text: '4' });
+    const done = events.find((e) => e.type === 'done');
+    expect(done?.session_ending_suggested).toBe(true);
+    // session_active still true — we suggest, we don't force-end.
+    expect(done?.session_active).toBe(true);
+  });
+
+  it('Phase H1: fresh session leaves session_ending_suggested unset', async () => {
+    const s = await setup('fresh@example.com');
+    // Default seedSession's started_at is 2026-05-19T10:00:00Z, but fake
+    // `now` is 2026-05-16T10:00:00Z — so minutes_in_session computes to 0
+    // (clamped), fatigue is near zero.
+    const session = seedSession(s);
+    const item = seedItem(s, {
+      topic: 'Addition',
+      question: 'Was ist 2 + 2?',
+      expected: '4',
+    });
+
+    const events = await turn(s, session, item, C1, { text: '4' });
+    const done = events.find((e) => e.type === 'done');
+    expect(done?.session_ending_suggested).toBeUndefined();
+  });
+
   it('Multi-turn: strategy_decisions accumulates one row per tutor turn', async () => {
     const s = await setup('strategy-acc@example.com');
     const session = seedSession(s);

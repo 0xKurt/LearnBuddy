@@ -732,7 +732,10 @@ sessionRoutes.post(
       itemDifficulty.set(input.item_id, Number(item.difficulty ?? 2));
       itemTopic.set(input.item_id, (item.topic as string | null) ?? null);
 
-      const sessionStartedAt = (session.created_at as string | undefined) ?? now().toISOString();
+      // Fatigue/minutes-in-session use the elapsed time since the session
+      // actually started, not row creation. `created_at` was the original
+      // (wrong) source and meant minutes_in_session was always ~0 in prod.
+      const sessionStartedAt = (session.started_at as string | undefined) ?? now().toISOString();
       const signalTurns: SignalTurn[] = turns.map((t) => ({
         role: t.role as 'learner' | 'tutor',
         item_id: t.item_id ?? null,
@@ -747,6 +750,14 @@ sessionRoutes.post(
         sessionStartedAt,
         now: now(),
       });
+      // Phase H1: fatigue-driven natural session-end. When the signal
+      // crosses 0.85, attach `session_ending_suggested: true` to the
+      // next `done` event. The mobile client intercepts the next
+      // "Weiter" tap with "lass uns morgen weiter" — the kid still has
+      // a choice. We do NOT force-end; the app actively pushes the
+      // learner to stop, but the decision stays with them.
+      const sessionEndingHint =
+        runtimeSignal.fatigue >= 0.85 ? { session_ending_suggested: true as const } : {};
       const recentVerdicts = turns
         .filter((t) => t.role === 'tutor')
         .map((t) => (t.verdict as SignalTurn['verdict']) ?? null)
@@ -981,6 +992,7 @@ sessionRoutes.post(
             learner_turn_id: learnerTurnId,
             tutor_turn_id: tutorTurnId,
             session_active: true,
+            ...sessionEndingHint,
           });
           return;
         }
@@ -1037,6 +1049,7 @@ sessionRoutes.post(
           learner_turn_id: learnerTurnId,
           tutor_turn_id: tutorTurnId,
           session_active: true,
+          ...sessionEndingHint,
         });
         return;
       }
@@ -1399,6 +1412,7 @@ sessionRoutes.post(
         learner_turn_id: learnerTurnId,
         tutor_turn_id: tutorTurnId,
         session_active: true,
+        ...sessionEndingHint,
       });
     });
   },

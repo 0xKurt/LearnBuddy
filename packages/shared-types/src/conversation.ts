@@ -79,6 +79,12 @@ export const ConversationSseEvent = z.discriminatedUnion('type', [
     // True while the session still has items / the learner asked to keep
     // going; false once it has naturally ended.
     session_active: z.boolean(),
+    // Phase H1: when the runtime fatigue signal crosses a threshold,
+    // the server SUGGESTS the client gently end the session. The client
+    // intercepts the next "Weiter" tap with a "lass uns morgen weiter"
+    // prompt. The session remains active — the choice is the kid's.
+    // Absent on most turns; present (= true) only when the signal fires.
+    session_ending_suggested: z.boolean().optional(),
   }),
   z.object({ type: z.literal('error'), code: z.string(), message: z.string() }),
 ]);
