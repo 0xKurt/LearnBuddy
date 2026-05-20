@@ -12,11 +12,11 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 
@@ -296,28 +296,34 @@ export default function AgentChatScreen() {
     requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
   }, [messages.length]);
 
+  // Top safe-area is owned by (learner)/_layout.tsx — see comment
+  // there. Bottom: the global BottomNav is hidden on /chat, so the
+  // composer at the bottom of this screen needs to pad itself by
+  // insets.bottom so the home-indicator doesn't cover it.
+  const insets = useSafeAreaInsets();
+
   // ── Render guards ─────────────────────────────────────────────────────
   if (accountQuery.isLoading || bootstrapping) {
     return (
-      <SafeAreaView style={styles.centered}>
+      <View style={styles.centered}>
         <ActivityIndicator color={LB.primary} size="large" />
         <Text style={styles.muted}>Vorbereitung läuft …</Text>
-      </SafeAreaView>
+      </View>
     );
   }
   if (!learnerId) {
     return (
-      <SafeAreaView style={styles.centered}>
+      <View style={styles.centered}>
         <Text style={styles.errorText}>Kein Lernerprofil gefunden.</Text>
         <Btn variant="primary" onPress={() => router.replace('/(learner)/home')}>
           Zur Übersicht
         </Btn>
-      </SafeAreaView>
+      </View>
     );
   }
   if (error && messages.length === 0) {
     return (
-      <SafeAreaView style={styles.centered}>
+      <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
         <Btn
           variant="primary"
@@ -329,18 +335,15 @@ export default function AgentChatScreen() {
         >
           Nochmal versuchen
         </Btn>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        // 0 because the bottom tab bar is hidden on /chat (see
-        // app/(learner)/_layout.tsx) — the composer sits flush at the
-        // bottom of the SafeAreaView with no extra chrome below it.
         keyboardVerticalOffset={0}
       >
         <View style={styles.header}>
@@ -410,7 +413,10 @@ export default function AgentChatScreen() {
 
         {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      {/* Home-indicator-safe spacer — composer is flush at the bottom
+       *  and we don't render the global BottomNav on /chat. */}
+      <View style={{ height: insets.bottom, backgroundColor: LB.paper }} />
+    </View>
   );
 }
 

@@ -28,6 +28,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   Alert,
@@ -38,7 +39,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Btn,
@@ -70,6 +70,7 @@ export default function CaptureScreen() {
   const { t } = useTranslation('capture');
   const navigateUp = useNavigateUp();
   const { t: tCoach } = useTranslation('coach');
+  const captureInsets = useSafeAreaInsets();
   const cameraCoach = useFirstTime('camera');
   const params = useLocalSearchParams<{ subjectId?: string; folderId?: string }>();
   const preSubjectId = params.subjectId ?? null;
@@ -283,17 +284,17 @@ export default function CaptureScreen() {
 
   if (!permission) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={LB.ink2} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
         </View>
@@ -309,7 +310,7 @@ export default function CaptureScreen() {
             {t('permission.cta')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -317,10 +318,7 @@ export default function CaptureScreen() {
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" />
 
-      <SafeAreaView
-        pointerEvents="box-none"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0 }}
-      >
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
         <View
           style={{
             flexDirection: 'row',
@@ -336,12 +334,17 @@ export default function CaptureScreen() {
           )}
           <View style={{ width: 40 }} />
         </View>
-      </SafeAreaView>
+      </View>
 
-      <SafeAreaView
-        edges={['bottom']}
+      <View
         pointerEvents="box-none"
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingBottom: captureInsets.bottom,
+        }}
       >
         <View style={{ paddingHorizontal: 14, paddingBottom: 10, gap: 10 }}>
           {recent && (
@@ -494,7 +497,7 @@ export default function CaptureScreen() {
             </View>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       <Modal
         visible={redCandidate !== null}

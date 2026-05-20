@@ -6,7 +6,6 @@ import * as StoreReview from 'expo-store-review';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, Card, Chip, EmptyState } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
@@ -70,7 +69,7 @@ export default function ResultScreen() {
   const time = new Date(startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 }}
       >
@@ -190,7 +189,7 @@ export default function ResultScreen() {
           </Btn>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Slot, router, useSegments } from 'expo-router';
 import { Alert, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { BottomNav, type NavKey } from '../../components/lb/index.js';
@@ -56,9 +57,18 @@ export default function LearnerLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: LB.paper }}>
-      <View style={{ flex: 1 }}>
+      {/* Top safe area handled once for ALL learner screens.  Each
+       *  screen used to wrap itself — that was inconsistent and the
+       *  chat screen even imported the wrong SafeAreaView (from
+       *  'react-native' instead of 'react-native-safe-area-context'),
+       *  which is why headers were slipping under the status bar.
+       *  Bottom safe area: when the global BottomNav is shown it owns
+       *  the bottom inset; on full-screen flows (chat, capture) the
+       *  screen itself adds insets.bottom to its bottom-most chrome
+       *  (e.g. composer paddingBottom). */}
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
         <Slot />
-      </View>
+      </SafeAreaView>
       {hideNav ? null : <BottomNav active={active} onNavigate={onNavigate} />}
     </View>
   );

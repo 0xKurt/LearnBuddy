@@ -9,7 +9,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn, CircleBtn, EmptyState, LoadingState } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
@@ -35,7 +35,7 @@ export default function MaterialScreen() {
 
   if (materialQuery.isError) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
@@ -49,21 +49,21 @@ export default function MaterialScreen() {
             }
           />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (materialQuery.isLoading || accountQuery.isLoading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <LoadingState />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!materialQuery.data) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
@@ -72,7 +72,7 @@ export default function MaterialScreen() {
             body={tCommon('material.not_found_body')}
           />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -97,7 +97,7 @@ export default function MaterialScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <View
         style={{
           flexDirection: 'row',
@@ -212,6 +212,6 @@ export default function MaterialScreen() {
           {tCommon('actions.done')}
         </Btn>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

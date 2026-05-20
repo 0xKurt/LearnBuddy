@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, Card, EmptyState, LoadingState, SubjectGlyph } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
@@ -53,14 +52,14 @@ export default function PracticeHubScreen() {
 
   if (accountQuery.isLoading || subjectsQuery.isLoading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <LoadingState />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 32 }}>
         <Text
           style={{
@@ -133,6 +132,6 @@ export default function PracticeHubScreen() {
           )
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

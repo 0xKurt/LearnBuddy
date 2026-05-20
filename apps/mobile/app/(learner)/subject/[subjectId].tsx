@@ -19,7 +19,6 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Btn,
@@ -165,14 +164,14 @@ export default function SubjectScreen() {
 
   if (accountQuery.isLoading || subjectsQuery.isLoading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <LoadingState />
-      </SafeAreaView>
+      </View>
     );
   }
   if (!subject) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
@@ -181,12 +180,12 @@ export default function SubjectScreen() {
             body={t('subject.not_found_body')}
           />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <View
         style={{
           flexDirection: 'row',
@@ -372,7 +371,7 @@ export default function SubjectScreen() {
         initial={editingFolder}
         onClose={() => setEditingFolder(null)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

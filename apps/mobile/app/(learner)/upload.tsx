@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/index.js';
 import { getAccount } from '../../lib/api/account.js';
@@ -184,7 +183,7 @@ export default function UploadScreen() {
 
   if (!pending) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16 }}>
           <Text style={{ fontSize: 18, color: LB.ink2, textAlign: 'center' }}>
             {t('no_pending')}
@@ -193,13 +192,13 @@ export default function UploadScreen() {
             {t('back')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (state.kind === 'failed') {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 26, justifyContent: 'center', gap: 16 }}>
           <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
             {t('worker.failed_title')}
@@ -222,13 +221,13 @@ export default function UploadScreen() {
             {t('error.back')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (state.kind === 'slow') {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 26, justifyContent: 'center', gap: 16 }}>
           <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
             {t('worker.slow_title')}
@@ -251,7 +250,7 @@ export default function UploadScreen() {
             {t('async.view_list')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -259,7 +258,7 @@ export default function UploadScreen() {
     const insufficient = state.code === 'insufficient_credits';
     const maxRetries = state.code === 'max_attempts_reached';
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 26, justifyContent: 'center', gap: 16 }}>
           <Text style={{ fontSize: 24, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
             {insufficient ? t('insufficient_credits.title') : t('error.title')}
@@ -291,7 +290,7 @@ export default function UploadScreen() {
             {t('error.back')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -303,7 +302,7 @@ export default function UploadScreen() {
         : t('phases.reserving');
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <View style={{ flex: 1, padding: 26, justifyContent: 'center', gap: 22 }}>
         <Text style={{ fontSize: 26, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
           {t('title')}
@@ -313,7 +312,7 @@ export default function UploadScreen() {
         </View>
         <Text style={{ fontSize: 14, color: LB.ink2, textAlign: 'center' }}>{detail}</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

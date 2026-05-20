@@ -14,7 +14,6 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Btn,
@@ -131,7 +130,7 @@ export default function FolderScreen() {
 
   if (!subjectId) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
@@ -140,23 +139,23 @@ export default function FolderScreen() {
             body={t('folder.missing_subject')}
           />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (foldersQuery.isLoading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={LB.ink2} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!folder) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
@@ -165,12 +164,12 @@ export default function FolderScreen() {
             body={t('folder.not_found_body')}
           />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <View
         style={{
           flexDirection: 'row',
@@ -326,7 +325,7 @@ export default function FolderScreen() {
         initial={folder}
         onClose={() => setEditing(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -15,7 +15,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Btn,
@@ -176,7 +175,7 @@ export default function HomeScreen() {
   const noPracticeYet = tiles.length > 0 && !lastSessionAt;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <LbHeader
         right={
           streak > 0 ? (
@@ -324,7 +323,7 @@ export default function HomeScreen() {
         ctaLabel={tCoach('dismiss')}
         glyph="🔥"
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -587,7 +586,7 @@ function AddSubjectModal({
         </Pressable>
       </Modal>
 
-      <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 22, gap: 18 }}>
           {/* Header row */}
           <View
@@ -847,7 +846,7 @@ function AddSubjectModal({
             {mut.isPending ? t('modal.creating') : t('modal.create')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
