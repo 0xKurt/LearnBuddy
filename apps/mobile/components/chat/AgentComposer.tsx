@@ -1,28 +1,32 @@
-// Agent composer — ChatGPT-style input area, polished.
+// Agent composer — one pill, all states inline.
 //
-// Layout (idle / no text):
-//   ┌──────────────────────────────────────────────────────────┐
-//   │  Antwort eingeben …               [ mic ] [ waveform ]   │
-//   └──────────────────────────────────────────────────────────┘
+// Three modes, never a separate layout or a modal:
 //
-// Layout (text being typed — trailing icons collapse to send):
-//   ┌──────────────────────────────────────────────────────────┐
-//   │  Hallo, was kommt bei 2+2 raus?                  [ ↑ ]    │
-//   │  (grows up to 3 lines, then scrolls)                       │
-//   └──────────────────────────────────────────────────────────┘
+//   IDLE
+//   ┌────────────────────────────────────────────────────────┐
+//   │  Antwort eingeben …             [ mic ] [ wave ]        │
+//   └────────────────────────────────────────────────────────┘
 //
-// Recording bar (replaces input):
-//   ┌─── [×] ─[●  Hört zu  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒]─ [ ✓ ] ──┐
+//   TYPING
+//   ┌────────────────────────────────────────────────────────┐
+//   │  2/3 + 1/4 ist …                              [  ↑ ]    │
+//   └────────────────────────────────────────────────────────┘
 //
-// Behaviour:
-//   - mic    → dictation. Audio uploads to /agent/transcribe, the
-//              returned text is APPENDED to the input field. The kid
-//              reads it, optionally edits, then taps send. Never
-//              auto-submits.
-//   - wave   → opens the full Conversation modal (parent handles).
-//   - send   → submit. Only visible when text is present.
+//   MIC RECORDING (dictation — fills the input field on stop)
+//   ┌────────────────────────────────────────────────────────┐
+//   │  ● Hört zu  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒    [ × ] [ ✓ ]            │
+//   └────────────────────────────────────────────────────────┘
+//
+//   CONVERSATION MODE (auto loop — TTS, listen again, no modal)
+//   ┌────────────────────────────────────────────────────────┐
+//   │  ● Hört zu  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒              [ ⏹ ]         │
+//   └────────────────────────────────────────────────────────┘
+//   (the chat history above stays visible — kid sees every turn)
+//
+// The pill (LB.bg, radius 28, minHeight 56) never changes dimensions
+// across states. Only the contents and the trailing buttons swap.
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -33,95 +37,244 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as Speech from 'expo-speech';
 
 import { Icon } from '../lb/Icon';
 import { LB } from '../../lib/theme/colors';
 import { useVoiceRecorder } from '../../lib/voice/use-voice-recorder';
 
-const WAVEFORM_BARS = 36;
+const WAVEFORM_BARS = 30;
+
+type Mode =
+  | 'idle' // typing / nothing happening
+  | 'mic-recording' // single-shot dictation, listening
+  | 'mic-uploading' // single-shot, transcription in flight
+  | 'conv-listening' // conversation mode, mic open
+  | 'conv-uploading' // conversation mode, audio uploaded → server processing
+  | 'conv-speaking'; // conversation mode, TTS playing
 
 export type AgentComposerProps = {
   disabled?: boolean;
+  /** True while the parent is processing a non-voice turn — locks the input. */
   busy?: boolean;
-  /** Audio → text. Optional so the composer still renders if the parent
-   *  hasn't wired it yet (defensive — a stale Metro bundle would
-   *  otherwise crash with "transcribe is not a function"). */
+  /** Single-shot dictation: audio in, text out. Mic mode calls this and
+   *  appends the result to the input field. */
   transcribe?: (audio: {
     base64: string;
     mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
   }) => Promise<string>;
+  /** Conversation mode: submit audio as a learner turn and return the
+   *  agent's reply text. The parent owns the SSE stream + chat bubble
+   *  updates; the composer just plays TTS on the returned text and
+   *  re-opens the mic when speech ends. Return '' to skip TTS. */
+  submitVoiceTurn?: (audio: {
+    base64: string;
+    mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
+  }) => Promise<string>;
   onSubmitText: (text: string) => void;
-  /** Tap on the waveform icon — parent opens the Conversation modal. */
-  onOpenConversation?: () => void;
+  /** UI locale used for TTS voice selection. */
+  locale?: 'de' | 'en' | 'fr' | 'es' | 'it';
 };
+
+function ttsLocale(l: 'de' | 'en' | 'fr' | 'es' | 'it' | undefined): string {
+  switch (l) {
+    case 'en':
+      return 'en-US';
+    case 'fr':
+      return 'fr-FR';
+    case 'es':
+      return 'es-ES';
+    case 'it':
+      return 'it-IT';
+    default:
+      return 'de-DE';
+  }
+}
 
 export function AgentComposer({
   disabled = false,
   busy = false,
   transcribe,
+  submitVoiceTurn,
   onSubmitText,
-  onOpenConversation,
+  locale,
 }: AgentComposerProps) {
   const [text, setText] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [transcribeError, setTranscribeError] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>('idle');
+  const [errorHint, setErrorHint] = useState<string | null>(null);
 
-  const stopRef = useRef<() => Promise<void>>(async () => {});
-  const submitOnSilence = useCallback(async () => {
-    await stopRef.current();
+  // ── Refs for stale-closure-safe callbacks ──────────────────────────
+  const modeRef = useRef<Mode>('idle');
+  modeRef.current = mode;
+  const stopAndProcessRef = useRef<() => Promise<void>>(async () => {});
+
+  // The VAD callback can fire after the recorder closure is stale, so
+  // it always reaches in via ref.
+  const onSilence = useCallback(async () => {
+    const m = modeRef.current;
+    if (m === 'mic-recording' || m === 'conv-listening') {
+      await stopAndProcessRef.current();
+    }
   }, []);
-  const voice = useVoiceRecorder({ onSilence: submitOnSilence, silenceMs: 1800 });
+  const voice = useVoiceRecorder({ onSilence, silenceMs: 1800 });
 
-  const doStop = useCallback(async () => {
-    if (uploading) return;
-    setUploading(true);
-    setTranscribeError(null);
+  // ── Mic mode (single-shot dictation) ──────────────────────────────
+  const stopMicAndTranscribe = useCallback(async () => {
+    if (mode !== 'mic-recording') return;
+    setMode('mic-uploading');
+    setErrorHint(null);
     const result = await voice.stop();
     if (!result || result.durationMs < 250) {
-      setUploading(false);
+      setMode('idle');
       return;
     }
     if (typeof transcribe !== 'function') {
-      // Defensive — the prop is required but a stale bundle (Metro cache)
-      // can leave it undefined. Surface a clear error instead of crashing.
-      setTranscribeError('Aufnahme noch nicht bereit. Bitte neu laden.');
-      setUploading(false);
+      setErrorHint('Aufnahme noch nicht bereit. Bitte App neu laden.');
+      setMode('idle');
       return;
     }
     try {
-      const recognised = await transcribe({ base64: result.base64, mime: result.mime });
-      const cleaned = recognised.trim();
-      if (cleaned) {
-        setText((prev) => (prev.trim() ? `${prev.trim()} ${cleaned}` : cleaned));
+      const recognised = (await transcribe({ base64: result.base64, mime: result.mime })).trim();
+      if (recognised) {
+        setText((prev) => (prev.trim() ? `${prev.trim()} ${recognised}` : recognised));
       }
     } catch (err) {
-      setTranscribeError(err instanceof Error ? err.message : 'Konnte nicht verstehen');
+      setErrorHint(err instanceof Error ? err.message : 'Konnte nicht verstehen');
     } finally {
-      setUploading(false);
+      setMode('idle');
     }
-  }, [voice, uploading, transcribe]);
-  stopRef.current = doStop;
+  }, [mode, voice, transcribe]);
 
-  const doCancel = useCallback(async () => {
-    setTranscribeError(null);
+  const cancelMic = useCallback(async () => {
     await voice.cancel();
+    setErrorHint(null);
+    setMode('idle');
   }, [voice]);
 
+  const startMic = useCallback(async () => {
+    if (mode !== 'idle' || disabled || busy) return;
+    setErrorHint(null);
+    const ok = await voice.start();
+    if (ok) setMode('mic-recording');
+  }, [mode, disabled, busy, voice]);
+
+  // ── Conversation mode (auto loop) ─────────────────────────────────
+  const conversationCancelledRef = useRef(false);
+
+  const beginConvListen = useCallback(async () => {
+    if (conversationCancelledRef.current) return;
+    setErrorHint(null);
+    const ok = await voice.start();
+    if (!ok) {
+      setMode('idle');
+      return;
+    }
+    setMode('conv-listening');
+  }, [voice]);
+
+  const stopConvAndProcess = useCallback(async () => {
+    if (modeRef.current !== 'conv-listening') return;
+    setMode('conv-uploading');
+    const result = await voice.stop();
+    if (conversationCancelledRef.current) return;
+    if (!result || result.durationMs < 250) {
+      // Misfire — listen again.
+      void beginConvListen();
+      return;
+    }
+    if (typeof submitVoiceTurn !== 'function') {
+      setErrorHint('Gespräch noch nicht bereit. Bitte App neu laden.');
+      conversationCancelledRef.current = true;
+      setMode('idle');
+      return;
+    }
+    let reply = '';
+    try {
+      reply = (await submitVoiceTurn({ base64: result.base64, mime: result.mime })).trim();
+    } catch (err) {
+      setErrorHint(err instanceof Error ? err.message : 'Antwort fehlgeschlagen');
+      // Continue the loop — let the kid try again.
+      if (!conversationCancelledRef.current) void beginConvListen();
+      return;
+    }
+    if (conversationCancelledRef.current) return;
+    if (!reply) {
+      // Nothing to speak — go straight back to listening.
+      void beginConvListen();
+      return;
+    }
+    setMode('conv-speaking');
+    Speech.speak(reply, {
+      language: ttsLocale(locale),
+      pitch: 1.0,
+      rate: 1.0,
+      onDone: () => {
+        if (!conversationCancelledRef.current) void beginConvListen();
+      },
+      onStopped: () => {
+        if (!conversationCancelledRef.current) void beginConvListen();
+      },
+      onError: () => {
+        if (!conversationCancelledRef.current) void beginConvListen();
+      },
+    });
+  }, [voice, submitVoiceTurn, locale, beginConvListen]);
+
+  const startConversation = useCallback(async () => {
+    if (mode !== 'idle' || disabled || busy) return;
+    conversationCancelledRef.current = false;
+    await beginConvListen();
+  }, [mode, disabled, busy, beginConvListen]);
+
+  const stopConversation = useCallback(async () => {
+    conversationCancelledRef.current = true;
+    void Speech.stop();
+    await voice.cancel();
+    setMode('idle');
+  }, [voice]);
+
+  // Cleanup on unmount.
+  useEffect(() => {
+    return () => {
+      conversationCancelledRef.current = true;
+      void Speech.stop();
+    };
+  }, []);
+
+  // Centralised "stop the current recording and process accordingly"
+  // — the VAD callback uses this; it dispatches by current mode.
+  stopAndProcessRef.current = async () => {
+    if (modeRef.current === 'mic-recording') {
+      await stopMicAndTranscribe();
+    } else if (modeRef.current === 'conv-listening') {
+      await stopConvAndProcess();
+    }
+  };
+
+  // ── Send text ──────────────────────────────────────────────────────
   const submitText = useCallback(() => {
     const value = text.trim();
-    if (!value || disabled || busy || voice.recording) return;
+    if (!value || disabled || busy || mode !== 'idle') return;
     onSubmitText(value);
     setText('');
-  }, [text, disabled, busy, voice.recording, onSubmitText]);
+  }, [text, disabled, busy, mode, onSubmitText]);
 
-  const startVoice = useCallback(async () => {
-    if (disabled || busy) return;
-    setTranscribeError(null);
-    await voice.start();
-  }, [disabled, busy, voice]);
-
+  // ── Derived UI state ───────────────────────────────────────────────
   const hasText = text.trim().length > 0;
-  const isRecording = voice.recording || uploading;
+  const isRecording = mode === 'mic-recording' || mode === 'conv-listening';
+  const isProcessing = mode === 'mic-uploading' || mode === 'conv-uploading';
+  const isSpeaking = mode === 'conv-speaking';
+  const isConversation =
+    mode === 'conv-listening' || mode === 'conv-uploading' || mode === 'conv-speaking';
+
+  const statusText = (() => {
+    if (mode === 'mic-recording') return 'Hört zu';
+    if (mode === 'mic-uploading') return 'Verstehe …';
+    if (mode === 'conv-listening') return 'Hört zu';
+    if (mode === 'conv-uploading') return 'Denkt …';
+    if (mode === 'conv-speaking') return 'Antwortet';
+    return '';
+  })();
 
   return (
     <KeyboardAvoidingView
@@ -129,91 +282,134 @@ export function AgentComposer({
       keyboardVerticalOffset={90}
     >
       <View style={styles.outer}>
-        {transcribeError ? (
-          <Text style={styles.errorHint}>{transcribeError}</Text>
-        ) : voice.permissionDenied ? (
+        {errorHint || voice.permissionDenied ? (
           <Text style={styles.errorHint}>
-            Mikrofon-Zugriff fehlt. Bitte in den Einstellungen erlauben.
+            {errorHint ?? 'Mikrofon-Zugriff fehlt. Bitte in den Einstellungen erlauben.'}
           </Text>
         ) : null}
 
-        {isRecording ? (
-          <RecordingBar
-            level={voice.level}
-            uploading={uploading}
-            onStop={doStop}
-            onCancel={doCancel}
-          />
-        ) : (
-          <View style={styles.inputPill}>
-            <TextInput
-              value={text}
-              onChangeText={setText}
-              placeholder="Antwort eingeben …"
-              placeholderTextColor={LB.ink3}
-              editable={!disabled && !busy}
-              style={styles.input}
-              multiline
-              scrollEnabled
-              maxLength={4000}
-            />
-            <View style={styles.trailing}>
-              {hasText ? (
-                <TrailingButton
-                  variant="primary"
-                  icon="arrow-up"
-                  iconColor={LB.paper}
-                  onPress={submitText}
-                  disabled={!hasText || disabled || busy}
-                  label="Antwort absenden"
-                />
-              ) : (
-                <>
-                  <TrailingButton
-                    variant="soft"
-                    icon="mic"
-                    iconColor={LB.ink}
-                    onPress={startVoice}
-                    disabled={disabled || busy}
-                    label="Sprachnachricht aufnehmen"
-                  />
-                  {onOpenConversation ? (
-                    <TrailingButton
-                      variant="dark"
-                      icon="waveform"
-                      iconColor={LB.paper}
-                      onPress={onOpenConversation}
-                      disabled={disabled || busy}
-                      label="Sprachgespräch starten"
-                    />
-                  ) : null}
-                </>
-              )}
-            </View>
+        <View style={styles.pill}>
+          {/* CONTENT (input OR status display) */}
+          <View style={styles.contentArea}>
+            {isRecording || isProcessing || isSpeaking ? (
+              <View style={styles.statusBlock}>
+                <View style={styles.statusRow}>
+                  {isRecording ? <View style={styles.dot} /> : null}
+                  {isProcessing ? <ActivityIndicator size="small" color={LB.ink2} /> : null}
+                  <Text style={styles.statusText}>{statusText}</Text>
+                </View>
+                <Waveform level={isRecording ? voice.level : 0.15} dim={!isRecording} />
+              </View>
+            ) : (
+              <TextInput
+                value={text}
+                onChangeText={setText}
+                placeholder="Antwort eingeben …"
+                placeholderTextColor={LB.ink3}
+                editable={!disabled && !busy}
+                style={styles.input}
+                multiline
+                scrollEnabled
+                maxLength={4000}
+              />
+            )}
           </View>
-        )}
+
+          {/* TRAILING BUTTONS */}
+          <View style={styles.trailing}>
+            {/* Conversation active → just the stop pill */}
+            {isConversation ? (
+              <RoundButton
+                variant="stop"
+                icon="close"
+                iconColor={LB.paper}
+                onPress={stopConversation}
+                label="Sprachgespräch beenden"
+              />
+            ) : mode === 'mic-recording' ? (
+              <>
+                <RoundButton
+                  variant="soft"
+                  icon="close"
+                  iconColor={LB.ink}
+                  onPress={cancelMic}
+                  label="Aufnahme abbrechen"
+                />
+                <RoundButton
+                  variant="primary"
+                  icon="check"
+                  iconColor={LB.paper}
+                  onPress={stopMicAndTranscribe}
+                  label="Aufnahme übernehmen"
+                />
+              </>
+            ) : mode === 'mic-uploading' ? (
+              <RoundButton
+                variant="primary"
+                icon="check"
+                iconColor={LB.paper}
+                onPress={() => undefined}
+                disabled
+                showSpinner
+                label="Bitte warten"
+              />
+            ) : hasText ? (
+              <RoundButton
+                variant="primary"
+                icon="arrow-up"
+                iconColor={LB.paper}
+                onPress={submitText}
+                disabled={disabled || busy}
+                label="Antwort absenden"
+              />
+            ) : (
+              <>
+                <RoundButton
+                  variant="soft"
+                  icon="mic"
+                  iconColor={LB.ink}
+                  onPress={startMic}
+                  disabled={disabled || busy}
+                  label="Sprachnachricht aufnehmen"
+                />
+                {submitVoiceTurn ? (
+                  <RoundButton
+                    variant="dark"
+                    icon="waveform"
+                    iconColor={LB.paper}
+                    onPress={startConversation}
+                    disabled={disabled || busy}
+                    label="Sprachgespräch starten"
+                  />
+                ) : null}
+              </>
+            )}
+          </View>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-// ── Trailing buttons ──────────────────────────────────────────────────────
+// ── Round button (one component, four variants) ───────────────────────────
 
-type TrailingVariant = 'primary' | 'dark' | 'soft';
+type Variant = 'primary' | 'dark' | 'soft' | 'stop';
 
-function TrailingButton({
+function RoundButton({
   variant,
   icon,
   iconColor,
   onPress,
   disabled,
+  showSpinner,
   label,
 }: {
-  variant: TrailingVariant;
-  icon: 'arrow-up' | 'mic' | 'waveform';
+  variant: Variant;
+  icon: 'arrow-up' | 'mic' | 'waveform' | 'close' | 'check';
   iconColor: string;
   onPress: () => void;
-  disabled: boolean;
+  disabled?: boolean;
+  showSpinner?: boolean;
   label: string;
 }) {
   return (
@@ -222,92 +418,37 @@ function TrailingButton({
       disabled={disabled}
       hitSlop={8}
       style={({ pressed }) => [
-        styles.trailingBtn,
-        variant === 'primary' && styles.trailingPrimary,
-        variant === 'dark' && styles.trailingDark,
-        variant === 'soft' && styles.trailingSoft,
+        styles.btn,
+        variant === 'primary' && styles.btnPrimary,
+        variant === 'dark' && styles.btnDark,
+        variant === 'soft' && styles.btnSoft,
+        variant === 'stop' && styles.btnStop,
         disabled && styles.dim,
         pressed && !disabled && styles.pressed,
       ]}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Icon name={icon} size={20} color={iconColor} />
+      {showSpinner ? (
+        <ActivityIndicator color={iconColor} />
+      ) : (
+        <Icon name={icon} size={20} color={iconColor} />
+      )}
     </Pressable>
   );
 }
 
-// ── Recording bar (waveform + cancel / stop-and-transcribe) ───────────────
+// ── Waveform ──────────────────────────────────────────────────────────────
 
-function RecordingBar({
-  level,
-  uploading,
-  onStop,
-  onCancel,
-}: {
-  level: number;
-  uploading: boolean;
-  onStop: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <View style={styles.recordingBar}>
-      <Pressable
-        onPress={onCancel}
-        disabled={uploading}
-        hitSlop={8}
-        style={({ pressed }) => [
-          styles.recordingSideBtn,
-          styles.recordingCancel,
-          pressed && !uploading && styles.pressed,
-          uploading && styles.dim,
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel="Aufnahme abbrechen"
-      >
-        <Icon name="close" size={20} color={LB.ink2} />
-      </Pressable>
-      <View style={styles.waveformPill}>
-        <View style={styles.statusRow}>
-          <View style={styles.recordingDot} />
-          <Text style={styles.statusText}>{uploading ? 'Verstehe …' : 'Hört zu'}</Text>
-        </View>
-        <Waveform level={level} />
-      </View>
-      <Pressable
-        onPress={onStop}
-        disabled={uploading}
-        hitSlop={8}
-        style={({ pressed }) => [
-          styles.recordingSideBtn,
-          styles.recordingConfirm,
-          pressed && !uploading && styles.pressed,
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel="Aufnahme stoppen und übernehmen"
-      >
-        {uploading ? (
-          <ActivityIndicator color={LB.paper} />
-        ) : (
-          <Icon name="check" size={20} color={LB.paper} />
-        )}
-      </Pressable>
-    </View>
-  );
-}
-
-function Waveform({ level }: { level: number }) {
-  // Stable per-bar random phases so the waveform looks alive but not
-  // jittery on every re-render.
+function Waveform({ level, dim = false }: { level: number; dim?: boolean }) {
+  // Stable phases so the bars don't jitter wildly on re-render.
   const phasesRef = useRef<number[]>(Array.from({ length: WAVEFORM_BARS }, () => Math.random()));
   return (
     <View style={styles.waveform}>
       {phasesRef.current.map((p, i) => {
         const distanceFromCentre = Math.abs(i - WAVEFORM_BARS / 2) / (WAVEFORM_BARS / 2);
-        // Centre bars get a small amplitude boost so the wave looks
-        // shaped instead of uniformly noisy.
-        const amp = level * (1 - distanceFromCentre * 0.25) + 0.04;
-        const height = 4 + Math.min(26, Math.max(2, amp * 70 * (0.65 + p * 0.7)));
+        const amp = level * (1 - distanceFromCentre * 0.25) + 0.05;
+        const height = 4 + Math.min(22, Math.max(2, amp * 60 * (0.6 + p * 0.7)));
         return (
           <View
             key={i}
@@ -315,8 +456,8 @@ function Waveform({ level }: { level: number }) {
               width: 2,
               height,
               borderRadius: 1,
-              backgroundColor: LB.primary,
-              opacity: 0.85 + p * 0.15,
+              backgroundColor: dim ? LB.ink3 : LB.primary,
+              opacity: dim ? 0.55 : 0.85 + p * 0.15,
             }}
           />
         );
@@ -327,8 +468,7 @@ function Waveform({ level }: { level: number }) {
 
 // ── Styles ────────────────────────────────────────────────────────────────
 
-const TRAILING_SIZE = 44;
-const SIDE_SIZE = 46;
+const BTN_SIZE = 44;
 
 const styles = StyleSheet.create({
   outer: {
@@ -346,113 +486,79 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
 
-  // ── Idle: rounded pill containing input + trailing buttons ──
-  inputPill: {
+  // ── The single pill — same dimensions in every state ──
+  pill: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     backgroundColor: LB.bg,
     borderRadius: 28,
     paddingLeft: 20,
     paddingRight: 6,
     paddingVertical: 6,
     minHeight: 56,
-    // Subtle hairline so the pill reads even on a light background.
     borderWidth: 1,
     borderColor: LB.hairline,
   },
-  input: {
+  contentArea: {
     flex: 1,
-    paddingVertical: 10,
-    paddingRight: 8,
+    paddingRight: 10,
+    justifyContent: 'center',
+  },
+  input: {
+    paddingVertical: 8,
     color: LB.ink,
     fontSize: 16,
     lineHeight: 22,
-    // Roughly 3 lines (22 × 3 + slack); after that the input scrolls.
     maxHeight: 88,
   },
+
+  // ── Recording / processing content (replaces the input area) ──
+  statusBlock: {
+    gap: 4,
+    paddingVertical: 4,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 18,
+  },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LB.danger },
+  statusText: { fontSize: 13, color: LB.ink2, fontWeight: '500' },
+  waveform: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 24,
+  },
+
+  // ── Trailing button row ──
   trailing: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingBottom: 1,
+    alignSelf: 'center',
   },
-  trailingBtn: {
-    width: TRAILING_SIZE,
-    height: TRAILING_SIZE,
-    borderRadius: TRAILING_SIZE / 2,
+  btn: {
+    width: BTN_SIZE,
+    height: BTN_SIZE,
+    borderRadius: BTN_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    // Soft floating feel on iOS; elevation handles Android.
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 1,
   },
-  trailingPrimary: {
-    backgroundColor: LB.primary,
-  },
-  trailingDark: {
-    backgroundColor: LB.ink,
-  },
-  // Soft variant — visible neutral pill against the LB.bg input. The
-  // mic uses this so it's CLEARLY a tappable circle, not a bare icon
-  // floating in the input.
-  trailingSoft: {
+  btnPrimary: { backgroundColor: LB.primary },
+  btnDark: { backgroundColor: LB.ink },
+  btnSoft: {
     backgroundColor: LB.paper,
     borderWidth: 1,
     borderColor: LB.hairline,
   },
+  btnStop: { backgroundColor: LB.danger },
   pressed: { opacity: 0.6 },
-  dim: { opacity: 0.35 },
-
-  // ── Recording state — three slots, fills the width ──
-  recordingBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  recordingSideBtn: {
-    width: SIDE_SIZE,
-    height: SIDE_SIZE,
-    borderRadius: SIDE_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recordingCancel: {
-    backgroundColor: LB.bg,
-    borderWidth: 1,
-    borderColor: LB.hairline,
-  },
-  recordingConfirm: {
-    backgroundColor: LB.primary,
-  },
-  waveformPill: {
-    flex: 1,
-    height: SIDE_SIZE,
-    borderRadius: SIDE_SIZE / 2,
-    backgroundColor: LB.bg,
-    borderWidth: 1,
-    borderColor: LB.hairline,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minWidth: 80,
-  },
-  recordingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LB.danger },
-  statusText: { fontSize: 13, color: LB.ink2, fontWeight: '500' },
-  waveform: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 28,
-  },
+  dim: { opacity: 0.4 },
 });

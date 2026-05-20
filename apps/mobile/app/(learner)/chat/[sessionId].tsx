@@ -22,7 +22,6 @@ import {
 import { Btn } from '../../../components/lb/Btn';
 import { AgentComposer } from '../../../components/chat/AgentComposer';
 import { ChatBubble, AgentThinking } from '../../../components/chat/ChatBubble';
-import { VoiceConversationModal } from '../../../components/chat/VoiceConversationModal';
 import { LB } from '../../../lib/theme/colors';
 
 type Message = {
@@ -64,7 +63,6 @@ export default function AgentChatScreen() {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
-  const [voiceConvOpen, setVoiceConvOpen] = useState(false);
 
   const listRef = useRef<FlatList<Message>>(null);
   const testMode = params.testMode === 'true';
@@ -197,6 +195,92 @@ export default function AgentChatScreen() {
     [learnerId],
   );
 
+  // Conversation mode: audio in → full pedagogy turn → returns the
+  // reply text so the composer can TTS it. The SSE callback updates
+  // the chat bubbles the same way a text turn would, so the kid sees
+  // every exchange in the transcript (no modal, no overlay).
+  const submitVoiceTurn = useCallback(
+    async (audio: {
+      base64: string;
+      mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
+    }): Promise<string> => {
+      if (!sessionId || !learnerId || sessionEnded) return '';
+      setBusy(true);
+      setThinking(true);
+      const learnerMsgId = `lv-${Date.now()}`;
+      const agentMsgId = `av-${Date.now()}`;
+      // Optimistic learner bubble — content gets replaced by the
+      // server transcript once it arrives.
+      setMessages((prev) => [
+        ...prev,
+        { id: learnerMsgId, role: 'learner', content: '🎤 …' },
+        { id: agentMsgId, role: 'agent', content: '', isStreaming: true },
+      ]);
+      let replyText = '';
+      let finalVerdict: Message['verdict'] = null;
+      let advanced = false;
+      const ctid = newClientTurnId();
+      const handle = (e: AgentSseFrame) => {
+        switch (e.type) {
+          case 'transcript':
+            setMessages((prev) =>
+              prev.map((m) => (m.id === learnerMsgId ? { ...m, content: e.text } : m)),
+            );
+            break;
+          case 'reply':
+            replyText = e.text;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === agentMsgId ? { ...m, content: replyText, isStreaming: false } : m,
+              ),
+            );
+            setThinking(false);
+            break;
+          case 'done':
+            finalVerdict = e.verdict;
+            advanced = e.advance;
+            if (advanced) setCompletedItems((n) => n + 1);
+            if (e.session_complete) setSessionEnded(true);
+            break;
+          case 'error':
+            setError(e.message);
+            break;
+          default:
+            break;
+        }
+      };
+      try {
+        await streamAgentTurn(
+          learnerId,
+          sessionId,
+          {
+            client_turn_id: ctid,
+            text: null,
+            audio_base64: audio.base64,
+            audio_mime: audio.mime,
+          },
+          handle,
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Verbindung unterbrochen');
+      } finally {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === agentMsgId ? { ...m, isStreaming: false, verdict: finalVerdict } : m,
+          ),
+        );
+        setBusy(false);
+        setThinking(false);
+      }
+      if (advanced && completedItems + 1 >= totalItems) {
+        setSessionEnded(true);
+        if (sessionId && learnerId) void finishAgentSession(learnerId, sessionId);
+      }
+      return replyText;
+    },
+    [sessionId, learnerId, sessionEnded, completedItems, totalItems],
+  );
+
   // ── Auto-scroll ───────────────────────────────────────────────────────
   useEffect(() => {
     if (messages.length === 0) return;
@@ -285,7 +369,8 @@ export default function AgentChatScreen() {
           busy={busy}
           onSubmitText={onSubmitText}
           transcribe={transcribe}
-          onOpenConversation={() => setVoiceConvOpen(true)}
+          submitVoiceTurn={submitVoiceTurn}
+          locale={accountLocale}
         />
       ) : (
         <View style={styles.endBlock}>
@@ -306,37 +391,6 @@ export default function AgentChatScreen() {
       )}
 
       {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
-
-      {sessionId && learnerId ? (
-        <VoiceConversationModal
-          visible={voiceConvOpen}
-          sessionId={sessionId}
-          learnerId={learnerId}
-          locale={accountLocale}
-          onClose={() => setVoiceConvOpen(false)}
-          onTurnComplete={({ transcript, reply, verdict, advance }) => {
-            // Mirror the turn into the chat transcript so closing the
-            // modal drops the learner into a populated chat. The server
-            // already persisted both turns; this just updates the
-            // on-screen list optimistically.
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `lc-${Date.now()}-${Math.random()}`,
-                role: 'learner',
-                content: transcript || '🎤',
-              },
-              {
-                id: `ac-${Date.now()}-${Math.random()}`,
-                role: 'agent',
-                content: reply,
-                verdict: (verdict as Message['verdict']) ?? null,
-              },
-            ]);
-            if (advance) setCompletedItems((n) => n + 1);
-          }}
-        />
-      ) : null}
     </SafeAreaView>
   );
 }
