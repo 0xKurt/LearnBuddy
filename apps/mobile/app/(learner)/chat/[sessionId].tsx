@@ -7,7 +7,16 @@
 // flags so we can update the progress chip without re-rendering items.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 
@@ -326,77 +335,87 @@ export default function AgentChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Btn variant="ghost" size="sm" onPress={() => router.back()}>
-          ← Zurück
-        </Btn>
-        <View style={styles.progressBox}>
-          <Text style={styles.progressLabel}>
-            {Math.min(completedItems, totalItems)} / {totalItems || '?'}
-          </Text>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${totalItems > 0 ? Math.min((completedItems / totalItems) * 100, 100) : 0}%`,
-                },
-              ]}
-            />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // 0 because the bottom tab bar is hidden on /chat (see
+        // app/(learner)/_layout.tsx) — the composer sits flush at the
+        // bottom of the SafeAreaView with no extra chrome below it.
+        keyboardVerticalOffset={0}
+      >
+        <View style={styles.header}>
+          <Btn variant="ghost" size="sm" onPress={() => router.back()}>
+            ← Zurück
+          </Btn>
+          <View style={styles.progressBox}>
+            <Text style={styles.progressLabel}>
+              {Math.min(completedItems, totalItems)} / {totalItems || '?'}
+            </Text>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${totalItems > 0 ? Math.min((completedItems / totalItems) * 100, 100) : 0}%`,
+                  },
+                ]}
+              />
+            </View>
           </View>
         </View>
-      </View>
 
-      <FlatList
-        ref={listRef}
-        data={messages}
-        keyExtractor={(m) => m.id}
-        renderItem={({ item }) => (
-          <ChatBubble
-            role={item.role}
-            content={item.content}
-            isStreaming={item.isStreaming}
-            verdict={item.verdict ?? null}
-          />
-        )}
-        contentContainerStyle={styles.list}
-        ListFooterComponent={thinking ? <AgentThinking /> : null}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {!sessionEnded ? (
-        <AgentComposer
-          busy={busy}
-          onSubmitText={onSubmitText}
-          transcribe={transcribe}
-          submitVoiceTurn={submitVoiceTurn}
-          locale={accountLocale}
+        <FlatList
+          ref={listRef}
+          data={messages}
+          keyExtractor={(m) => m.id}
+          renderItem={({ item }) => (
+            <ChatBubble
+              role={item.role}
+              content={item.content}
+              isStreaming={item.isStreaming}
+              verdict={item.verdict ?? null}
+            />
+          )}
+          contentContainerStyle={styles.list}
+          ListFooterComponent={thinking ? <AgentThinking /> : null}
+          showsVerticalScrollIndicator={false}
         />
-      ) : (
-        <View style={styles.endBlock}>
-          <Text style={styles.endTitle}>Session beendet</Text>
-          <Text style={styles.muted}>Gut gemacht — bis bald.</Text>
-          <Btn
-            variant="primary"
-            onPress={() =>
-              router.replace({
-                pathname: '/(learner)/result',
-                params: sessionId ? { sessionId } : {},
-              })
-            }
-          >
-            Zur Zusammenfassung
-          </Btn>
-        </View>
-      )}
 
-      {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+        {!sessionEnded ? (
+          <AgentComposer
+            busy={busy}
+            onSubmitText={onSubmitText}
+            transcribe={transcribe}
+            submitVoiceTurn={submitVoiceTurn}
+            locale={accountLocale}
+          />
+        ) : (
+          <View style={styles.endBlock}>
+            <Text style={styles.endTitle}>Session beendet</Text>
+            <Text style={styles.muted}>Gut gemacht — bis bald.</Text>
+            <Btn
+              variant="primary"
+              onPress={() =>
+                router.replace({
+                  pathname: '/(learner)/result',
+                  params: sessionId ? { sessionId } : {},
+                })
+              }
+            >
+              Zur Zusammenfassung
+            </Btn>
+          </View>
+        )}
+
+        {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: LB.bg },
+  flex: { flex: 1 },
   centered: {
     flex: 1,
     justifyContent: 'center',

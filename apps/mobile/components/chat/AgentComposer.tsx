@@ -27,16 +27,7 @@
 // across states. Only the contents and the trailing buttons swap.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Speech from 'expo-speech';
 
 import { Icon } from '../lb/Icon';
@@ -283,123 +274,118 @@ export function AgentComposer({
   })();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={90}
-    >
-      <View style={styles.outer}>
-        {errorHint || voice.permissionDenied ? (
-          <Text style={styles.errorHint}>
-            {errorHint ?? 'Mikrofon-Zugriff fehlt. Bitte in den Einstellungen erlauben.'}
-          </Text>
-        ) : null}
+    <View style={styles.outer}>
+      {errorHint || voice.permissionDenied ? (
+        <Text style={styles.errorHint}>
+          {errorHint ?? 'Mikrofon-Zugriff fehlt. Bitte in den Einstellungen erlauben.'}
+        </Text>
+      ) : null}
 
-        <View style={styles.pill}>
-          {/* CONTENT (input OR status display) */}
-          <View style={styles.contentArea}>
-            {isRecording || isProcessing || isSpeaking ? (
-              <View style={styles.statusBlock}>
-                <View style={styles.statusRow}>
-                  {isRecording ? <View style={styles.dot} /> : null}
-                  {isProcessing ? <ActivityIndicator size="small" color={LB.ink2} /> : null}
-                  <Text style={styles.statusText}>{statusText}</Text>
-                </View>
-                <Waveform level={isRecording ? voice.level : 0.15} dim={!isRecording} />
+      <View style={styles.pill}>
+        {/* CONTENT (input OR status display) */}
+        <View style={styles.contentArea}>
+          {isRecording || isProcessing || isSpeaking ? (
+            <View style={styles.statusBlock}>
+              <View style={styles.statusRow}>
+                {isRecording ? <View style={styles.dot} /> : null}
+                {isProcessing ? <ActivityIndicator size="small" color={LB.ink2} /> : null}
+                <Text style={styles.statusText}>{statusText}</Text>
               </View>
-            ) : (
-              <TextInput
-                value={text}
-                onChangeText={setText}
-                placeholder="Antwort eingeben …"
-                placeholderTextColor={LB.ink3}
-                editable={!disabled && !busy}
-                style={styles.input}
-                multiline
-                scrollEnabled
-                maxLength={4000}
-              />
-            )}
-          </View>
+              <Waveform level={isRecording ? voice.level : 0.15} dim={!isRecording} />
+            </View>
+          ) : (
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="Antwort eingeben …"
+              placeholderTextColor={LB.ink3}
+              editable={!disabled && !busy}
+              style={styles.input}
+              multiline
+              scrollEnabled
+              maxLength={4000}
+            />
+          )}
+        </View>
 
-          {/* TRAILING BUTTONS */}
-          <View style={styles.trailing}>
-            {/* Conversation active → just the stop pill */}
-            {isConversation ? (
+        {/* TRAILING BUTTONS */}
+        <View style={styles.trailing}>
+          {/* Conversation active → just the stop pill */}
+          {isConversation ? (
+            <RoundButton
+              variant="stop"
+              icon="close"
+              iconColor={LB.paper}
+              onPress={stopConversation}
+              label="Sprachgespräch beenden"
+            />
+          ) : mode === 'mic-recording' ? (
+            <>
               <RoundButton
-                variant="stop"
+                variant="soft"
                 icon="close"
-                iconColor={LB.paper}
-                onPress={stopConversation}
-                label="Sprachgespräch beenden"
+                iconColor={LB.ink}
+                onPress={cancelMic}
+                label="Aufnahme abbrechen"
               />
-            ) : mode === 'mic-recording' ? (
-              <>
-                <RoundButton
-                  variant="soft"
-                  icon="close"
-                  iconColor={LB.ink}
-                  onPress={cancelMic}
-                  label="Aufnahme abbrechen"
-                />
-                <RoundButton
-                  variant="primary"
-                  icon="check"
-                  iconColor={LB.paper}
-                  onPress={stopMicAndTranscribe}
-                  label="Aufnahme übernehmen"
-                />
-              </>
-            ) : mode === 'mic-uploading' ? (
               <RoundButton
-                variant="primary"
+                variant="success"
                 icon="check"
                 iconColor={LB.paper}
-                onPress={() => undefined}
-                disabled
-                showSpinner
-                label="Bitte warten"
+                onPress={stopMicAndTranscribe}
+                label="Aufnahme übernehmen"
               />
-            ) : hasText ? (
+            </>
+          ) : mode === 'mic-uploading' ? (
+            <RoundButton
+              variant="success"
+              icon="check"
+              iconColor={LB.paper}
+              onPress={() => undefined}
+              disabled
+              showSpinner
+              label="Bitte warten"
+            />
+          ) : hasText ? (
+            <RoundButton
+              variant="primary"
+              icon="arrow-up"
+              iconColor={LB.paper}
+              onPress={submitText}
+              disabled={disabled || busy}
+              label="Antwort absenden"
+            />
+          ) : (
+            <>
               <RoundButton
-                variant="primary"
-                icon="arrow-up"
+                variant="ink"
+                icon="mic"
                 iconColor={LB.paper}
-                onPress={submitText}
+                onPress={startMic}
                 disabled={disabled || busy}
-                label="Antwort absenden"
+                label="Sprachnachricht aufnehmen"
               />
-            ) : (
-              <>
+              {submitVoiceTurn ? (
                 <RoundButton
-                  variant="peach"
-                  icon="mic"
-                  iconColor={LB.primaryDk}
-                  onPress={startMic}
+                  variant="primary"
+                  icon="waveform"
+                  iconColor={LB.paper}
+                  onPress={startConversation}
                   disabled={disabled || busy}
-                  label="Sprachnachricht aufnehmen"
+                  label="Sprachgespräch starten"
                 />
-                {submitVoiceTurn ? (
-                  <RoundButton
-                    variant="lavender"
-                    icon="waveform"
-                    iconColor={LB.paper}
-                    onPress={startConversation}
-                    disabled={disabled || busy}
-                    label="Sprachgespräch starten"
-                  />
-                ) : null}
-              </>
-            )}
-          </View>
+              ) : null}
+            </>
+          )}
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 // ── Round button (one component, four variants) ───────────────────────────
 
-type Variant = 'primary' | 'soft' | 'stop' | 'peach' | 'lavender';
+type Variant = 'primary' | 'soft' | 'stop' | 'ink' | 'success';
 
 function RoundButton({
   variant,
@@ -428,8 +414,8 @@ function RoundButton({
         variant === 'primary' && styles.btnPrimary,
         variant === 'soft' && styles.btnSoft,
         variant === 'stop' && styles.btnStop,
-        variant === 'peach' && styles.btnPeach,
-        variant === 'lavender' && styles.btnLavender,
+        variant === 'ink' && styles.btnInk,
+        variant === 'success' && styles.btnSuccess,
         disabled && styles.dim,
         pressed && !disabled && styles.pressed,
       ]}
@@ -574,15 +560,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  btnPrimary: { backgroundColor: LB.primary }, // terracotta — Send / Confirm-Take
+  // Saturated colours — pastels were too zart, the user couldn't see
+  // the buttons clearly. These contrast hard against the LB.bg pill.
+  btnPrimary: { backgroundColor: LB.primary }, // terracotta — Send + Conversation start
+  btnInk: { backgroundColor: LB.ink }, // near-black — Mic (clearly different from Wave)
+  btnSuccess: { backgroundColor: LB.success }, // sage green — "Yes, use this take"
+  btnStop: { backgroundColor: LB.danger }, // red — exit conversation
   btnSoft: {
     backgroundColor: LB.paper,
     borderWidth: 1,
     borderColor: LB.hairline,
-  }, // neutral — Cancel during recording
-  btnStop: { backgroundColor: LB.danger }, // red — exit conversation
-  btnPeach: { backgroundColor: LB.peach }, // warm pastel — Mic
-  btnLavender: { backgroundColor: LB.lavenderDeep }, // cool pastel — Conversation
+  }, // neutral white — Cancel during recording
   pressed: { opacity: 0.6 },
   dim: { opacity: 0.4 },
 });

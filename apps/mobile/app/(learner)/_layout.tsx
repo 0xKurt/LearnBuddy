@@ -29,7 +29,7 @@ export default function LearnerLayout() {
   // useSegments() as a discriminated tuple union where .includes() rejects
   // string literals not present in every branch.
   const segs = segments as string[];
-  const hideNav = segs.includes('session') || segs.includes('capture');
+  const hideNav = segs.includes('session') || segs.includes('chat') || segs.includes('capture');
 
   useHierarchicalBack();
 
