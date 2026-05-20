@@ -170,9 +170,9 @@ export function AgentComposer({
               ) : (
                 <>
                   <TrailingButton
-                    variant="ghost"
+                    variant="soft"
                     icon="mic"
-                    iconColor={LB.ink2}
+                    iconColor={LB.ink}
                     onPress={startVoice}
                     disabled={disabled || busy}
                     label="Sprachnachricht aufnehmen"
@@ -199,7 +199,7 @@ export function AgentComposer({
 
 // ── Trailing buttons ──────────────────────────────────────────────────────
 
-type TrailingVariant = 'primary' | 'dark' | 'ghost';
+type TrailingVariant = 'primary' | 'dark' | 'soft';
 
 function TrailingButton({
   variant,
@@ -225,7 +225,7 @@ function TrailingButton({
         styles.trailingBtn,
         variant === 'primary' && styles.trailingPrimary,
         variant === 'dark' && styles.trailingDark,
-        variant === 'ghost' && styles.trailingGhost,
+        variant === 'soft' && styles.trailingSoft,
         disabled && styles.dim,
         pressed && !disabled && styles.pressed,
       ]}
@@ -327,7 +327,7 @@ function Waveform({ level }: { level: number }) {
 
 // ── Styles ────────────────────────────────────────────────────────────────
 
-const TRAILING_SIZE = 42;
+const TRAILING_SIZE = 44;
 const SIDE_SIZE = 46;
 
 const styles = StyleSheet.create({
@@ -382,6 +382,12 @@ const styles = StyleSheet.create({
     borderRadius: TRAILING_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    // Soft floating feel on iOS; elevation handles Android.
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
   },
   trailingPrimary: {
     backgroundColor: LB.primary,
@@ -389,8 +395,13 @@ const styles = StyleSheet.create({
   trailingDark: {
     backgroundColor: LB.ink,
   },
-  trailingGhost: {
-    backgroundColor: 'transparent',
+  // Soft variant — visible neutral pill against the LB.bg input. The
+  // mic uses this so it's CLEARLY a tappable circle, not a bare icon
+  // floating in the input.
+  trailingSoft: {
+    backgroundColor: LB.paper,
+    borderWidth: 1,
+    borderColor: LB.hairline,
   },
   pressed: { opacity: 0.6 },
   dim: { opacity: 0.35 },
