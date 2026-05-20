@@ -11,10 +11,6 @@
 import type {
   AgentGatewayInput,
   AgentGatewayResult,
-  ConverseTurnInput,
-  ConverseTurnResult,
-  EvaluateInput,
-  EvaluateResult,
   ExplainInput,
   ExplainResult,
   LLMGateway,
@@ -22,8 +18,6 @@ import type {
   ReflectSessionResult,
   RegenerateInput,
   RegenerateResult,
-  TranscribeInput,
-  TranscribeResult,
   VisionInput,
   VisionResult,
 } from '../lib/llm/gateway.js';
@@ -111,33 +105,6 @@ export class FakeLlmGateway implements LLMGateway {
     };
   }
 
-  async evaluateAnswer(input: EvaluateInput): Promise<EvaluateResult> {
-    // Deterministic: exact match → correct, else incorrect with hint when allowed.
-    const exact =
-      input.kidAnswer.trim().toLowerCase() === input.expectedAnswer.trim().toLowerCase() ||
-      input.acceptableAnswers.some(
-        (a) => a.trim().toLowerCase() === input.kidAnswer.trim().toLowerCase(),
-      );
-    const correct = exact;
-    return {
-      verdict: correct ? 'correct' : 'incorrect',
-      feedback: correct
-        ? 'Genau richtig — sauber!'
-        : 'Noch nicht ganz. Schau dir die Aufgabe nochmal in Ruhe an.',
-      next_hint:
-        !correct && input.priorHints.length < 2
-          ? 'Versuch, die Frage Schritt für Schritt zu lesen.'
-          : null,
-      usage: {
-        input_tokens: 0,
-        output_tokens: 0,
-        cost_usd_micros: 0,
-        model: 'fake',
-        prompt_version: 'fake',
-      },
-    };
-  }
-
   async explain(input: ExplainInput): Promise<ExplainResult> {
     return {
       text: `Erklärung zu "${input.topic}" (fake, ${input.style}). Echte Erklärungen folgen, sobald Vertex konfiguriert ist.`,
@@ -149,78 +116,6 @@ export class FakeLlmGateway implements LLMGateway {
         prompt_version: 'fake',
       },
     };
-  }
-
-  async converseTurn(
-    input: ConverseTurnInput,
-    onToken?: (delta: string) => void,
-  ): Promise<ConverseTurnResult> {
-    const said = input.learnerMessage.trim().toLowerCase();
-    const item = input.item;
-    let isCorrect =
-      said === item.expectedAnswer.trim().toLowerCase() ||
-      item.acceptableAnswers.some((a) => a.trim().toLowerCase() === said);
-    if (!isCorrect && item.answerKind === 'multiple_choice' && item.mcCorrectIndex != null) {
-      isCorrect = said === String(item.mcCorrectIndex);
-    }
-
-    const gaveUp = !isCorrect && isNonAnswer(input.learnerMessage);
-    const canReveal = input.hintsGivenForItem >= 2;
-    let reply: string;
-    let verdict: ConverseTurnResult['verdict'];
-    let gaveHint = false;
-    if (isCorrect) {
-      reply = 'Genau richtig — stark gemacht!';
-      verdict = 'correct';
-    } else if (input.testMode) {
-      reply = 'Alles klar, notiert. Weiter geht es.';
-      verdict = gaveUp ? 'skipped' : 'incorrect';
-    } else if (canReveal) {
-      reply = `Kein Problem. Die Lösung ist: ${item.expectedAnswer}. Das merkst du dir bestimmt.`;
-      // A reveal is never the student's own answer.
-      verdict = gaveUp ? 'skipped' : 'incorrect';
-    } else if (gaveUp) {
-      reply = 'Kein Stress — denk nochmal in Ruhe nach, ich helf dir Schritt für Schritt.';
-      verdict = 'skipped';
-      gaveHint = true;
-    } else {
-      reply = 'Noch nicht ganz — lies die Frage nochmal in Ruhe, du bist nah dran.';
-      verdict = 'incorrect';
-      gaveHint = true;
-    }
-
-    if (onToken) {
-      // Emit in a couple of chunks so streaming consumers are exercised.
-      const mid = Math.ceil(reply.length / 2);
-      onToken(reply.slice(0, mid));
-      onToken(reply.slice(mid));
-    }
-
-    // Phase D2: when probeContext is set, classify the probe response
-    // deterministically. Keywords that mean "I don't know" → gave_up.
-    // Short single-word or very short replies → rephrased (heuristic).
-    // Otherwise → substantive.
-    let probeAssessment: ConverseTurnResult['probeAssessment'] = null;
-    if (input.probeContext) {
-      const raw = input.learnerMessage.trim();
-      const lower = raw.toLowerCase();
-      const isGaveUp =
-        raw.length === 0 ||
-        /^(weiß nicht|weiss nicht|keine ahnung|idk|i don'?t know|kp|kA|nö|nein|ja)$/i.test(lower);
-      if (isGaveUp) {
-        probeAssessment = 'gave_up';
-      } else if (raw.length < 20) {
-        probeAssessment = 'rephrased';
-      } else {
-        probeAssessment = 'substantive';
-      }
-    }
-
-    return { verdict, reply, gaveHint, probeAssessment, usage: { ...FAKE_USAGE } };
-  }
-
-  async transcribeAudio(_input: TranscribeInput): Promise<TranscribeResult> {
-    return { text: 'gesprochene Antwort', usage: { ...FAKE_USAGE } };
   }
 
   /** Agent v2 — deterministic JSON shape. Inspects the system instruction

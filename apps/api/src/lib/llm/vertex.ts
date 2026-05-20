@@ -36,26 +36,16 @@ import type { Env } from '../env.js';
 import { ApiError } from '../errors.js';
 import { PROMPT_VERSION, SYSTEM_P1, buildP1UserPrompt } from '../../prompts/p1.js';
 import { PROMPT_VERSION_P2, SYSTEM_P2, buildP2UserPrompt } from '../../prompts/p2.js';
-import { PROMPT_VERSION_P3, SYSTEM_P3, buildP3UserPrompt } from '../../prompts/p3.js';
 import { PROMPT_VERSION_P4, SYSTEM_P4, buildP4UserPrompt } from '../../prompts/p4.js';
 import {
   PROMPT_VERSION_REFLECT,
   SYSTEM_REFLECT,
   buildReflectUserPrompt,
 } from '../../prompts/reflect.js';
-import {
-  PROMPT_VERSION_TUTOR,
-  TUTOR_SENTINEL,
-  buildTutorSystemInstruction,
-} from '../../prompts/tutor.js';
 import { parseRegeneratePayload, parseVisionPayload } from './postProcess.js';
 import type {
   AgentGatewayInput,
   AgentGatewayResult,
-  ConverseTurnInput,
-  ConverseTurnResult,
-  EvaluateInput,
-  EvaluateResult,
   ExplainInput,
   ExplainResult,
   LLMGateway,
@@ -63,8 +53,6 @@ import type {
   ReflectSessionResult,
   RegenerateInput,
   RegenerateResult,
-  TranscribeInput,
-  TranscribeResult,
   VisionInput,
   VisionResult,
 } from './gateway.js';
@@ -298,67 +286,6 @@ export class VertexLlmGateway implements LLMGateway {
     };
   }
 
-  async evaluateAnswer(input: EvaluateInput): Promise<EvaluateResult> {
-    const userText = buildP3UserPrompt({
-      locale: input.locale,
-      gradeLevel: input.gradeLevel,
-      question: input.question,
-      expectedAnswer: input.expectedAnswer,
-      acceptableAnswers: input.acceptableAnswers,
-      answerKind: input.answerKind,
-      kidAnswer: input.kidAnswer,
-      parsedKidLatex: input.parsedLearnerLatex,
-      priorHints: input.priorHints,
-    });
-    let response: GenerateContentResponse;
-    try {
-      response = await this.client.models.generateContent({
-        model: this.modelId,
-        contents: [{ role: 'user', parts: [{ text: userText }] }],
-        config: {
-          systemInstruction: SYSTEM_P3,
-          safetySettings: SAFETY,
-          temperature: 0.2,
-          topP: 0.9,
-          maxOutputTokens: 512,
-          responseMimeType: 'application/json',
-        },
-      });
-    } catch (err) {
-      throw new ApiError(
-        'evaluation_failed',
-        `Vertex evaluate failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-    const totals = addUsage(emptyUsage(), response.usageMetadata);
-    const text = responseText(response);
-    if (!text) throw new ApiError('evaluation_failed', 'Vertex evaluate returned empty');
-    let body: { verdict: string; feedback: string; next_hint: string | null };
-    try {
-      body = JSON.parse(text.replace(/^```(?:json)?\s*/u, '').replace(/```\s*$/u, ''));
-    } catch (err) {
-      throw new ApiError(
-        'evaluation_failed',
-        `Evaluate JSON parse: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-    if (!['correct', 'partially_correct', 'incorrect'].includes(body.verdict)) {
-      throw new ApiError('evaluation_failed', `Invalid verdict: ${body.verdict}`);
-    }
-    return {
-      verdict: body.verdict as 'correct' | 'partially_correct' | 'incorrect',
-      feedback: body.feedback,
-      next_hint: body.next_hint ?? null,
-      usage: {
-        input_tokens: totals.inputTokens,
-        output_tokens: totals.outputTokens,
-        cost_usd_micros: totals.costMicros,
-        model: this.modelId,
-        prompt_version: PROMPT_VERSION_P3,
-      },
-    };
-  }
-
   async explain(input: ExplainInput): Promise<ExplainResult> {
     const userText = buildP4UserPrompt({
       locale: input.locale,
@@ -402,183 +329,7 @@ export class VertexLlmGateway implements LLMGateway {
     };
   }
 
-  async converseTurn(
-    input: ConverseTurnInput,
-    onToken?: (delta: string) => void,
-  ): Promise<ConverseTurnResult> {
-    const systemInstruction = buildTutorSystemInstruction({
-      item: input.item,
-      learnerName: input.learnerName,
-      locale: input.locale,
-      gradeLevel: input.gradeLevel,
-      testMode: input.testMode,
-      pinnedTopic: input.pinnedTopic,
-      hintsGivenForItem: input.hintsGivenForItem,
-      materialContext: input.materialContext,
-      praiseRubric: input.praiseRubric,
-      giveUpMode: input.giveUpMode ?? null,
-      recentRhythm: input.recentRhythm,
-      moveFragment: input.moveFragment,
-      fromLastTime: input.fromLastTime,
-      probeAssessmentMove: input.probeContext?.probeMove ?? null,
-    });
-
-    // Replay the whole session thread as real alternating turns so the
-    // tutor always answers with full conversational context.
-    const contents = [
-      ...input.history.map((m) => ({
-        role: m.role === 'learner' ? ('user' as const) : ('model' as const),
-        parts: [{ text: m.content }],
-      })),
-      { role: 'user' as const, parts: [{ text: input.learnerMessage }] },
-    ];
-
-    let stream: AsyncGenerator<GenerateContentResponse>;
-    try {
-      stream = await this.client.models.generateContentStream({
-        model: this.tutorModelId,
-        contents,
-        config: {
-          systemInstruction,
-          safetySettings: SAFETY,
-          temperature: 0.3,
-          topP: 0.9,
-          maxOutputTokens: 512,
-        },
-      });
-    } catch (err) {
-      throw new ApiError(
-        'evaluation_failed',
-        `Vertex converse failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-
-    // Stream learner-visible text, holding back a tail that might be the
-    // start of the control line so the sentinel never leaks to the screen.
-    const HOLD = TUTOR_SENTINEL.length + 8;
-    let full = '';
-    let emitted = 0;
-    let totals = emptyUsage();
-    try {
-      for await (const chunk of stream) {
-        totals = addUsage(totals, chunk.usageMetadata);
-        const piece = chunk.text;
-        if (typeof piece === 'string') full += piece;
-        if (!onToken) continue;
-        const sIdx = full.indexOf(TUTOR_SENTINEL);
-        const safeEnd = sIdx === -1 ? Math.max(0, full.length - HOLD) : sIdx;
-        if (safeEnd > emitted) {
-          onToken(full.slice(emitted, safeEnd));
-          emitted = safeEnd;
-        }
-      }
-    } catch (err) {
-      throw new ApiError(
-        'evaluation_failed',
-        `Vertex converse stream failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-
-    const sentinelIdx = full.indexOf(TUTOR_SENTINEL);
-    const visible = (sentinelIdx === -1 ? full : full.slice(0, sentinelIdx)).replace(/\s+$/u, '');
-    if (onToken && visible.length > emitted) onToken(visible.slice(emitted));
-
-    // Default on a missing/garbled control line is 'incorrect', NOT
-    // 'partially_correct': an unparseable verdict must never silently count
-    // as a near-pass / "secure" on the result screen. The route also applies
-    // a deterministic give-up guard on top of whatever the model claims.
-    let verdict: ConverseTurnResult['verdict'] = 'incorrect';
-    let gaveHint = false;
-    let probeAssessment: ConverseTurnResult['probeAssessment'] = null;
-    if (sentinelIdx !== -1) {
-      const tail = full.slice(sentinelIdx + TUTOR_SENTINEL.length).trim();
-      try {
-        const ctrl = JSON.parse(tail) as {
-          verdict?: string;
-          hint?: boolean;
-          probe_assessment?: string;
-        };
-        if (
-          ctrl.verdict === 'correct' ||
-          ctrl.verdict === 'partially_correct' ||
-          ctrl.verdict === 'incorrect' ||
-          ctrl.verdict === 'skipped'
-        ) {
-          verdict = ctrl.verdict;
-        }
-        gaveHint = ctrl.hint === true;
-        if (
-          input.probeContext &&
-          (ctrl.probe_assessment === 'substantive' ||
-            ctrl.probe_assessment === 'rephrased' ||
-            ctrl.probe_assessment === 'gave_up')
-        ) {
-          probeAssessment = ctrl.probe_assessment;
-        }
-      } catch {
-        console.warn('[tutor] control line unparseable; defaulting verdict=incorrect');
-      }
-    } else {
-      console.warn('[tutor] no control line in reply; defaulting verdict=incorrect');
-    }
-
-    return {
-      verdict,
-      reply: visible || 'Erzähl mir, was du dir dabei denkst.',
-      gaveHint,
-      probeAssessment,
-      usage: {
-        input_tokens: totals.inputTokens,
-        output_tokens: totals.outputTokens,
-        cost_usd_micros: totals.costMicros,
-        model: this.tutorModelId,
-        prompt_version: PROMPT_VERSION_TUTOR,
-      },
-    };
-  }
-
-  async transcribeAudio(input: TranscribeInput): Promise<TranscribeResult> {
-    let response: GenerateContentResponse;
-    try {
-      response = await this.client.models.generateContent({
-        model: this.modelId,
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: `Transcribe this ${input.locale} audio of a student answering a question. Output ONLY the verbatim transcription, no quotes, no commentary. If nothing intelligible was said, output an empty string.`,
-              },
-              { inlineData: { mimeType: input.mimeType, data: input.audioBase64 } },
-            ],
-          },
-        ],
-        config: {
-          safetySettings: SAFETY,
-          temperature: 0,
-          maxOutputTokens: 256,
-        },
-      });
-    } catch (err) {
-      throw new ApiError(
-        'evaluation_failed',
-        `Vertex transcribe failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-    const totals = addUsage(emptyUsage(), response.usageMetadata);
-    return {
-      text: responseText(response),
-      usage: {
-        input_tokens: totals.inputTokens,
-        output_tokens: totals.outputTokens,
-        cost_usd_micros: totals.costMicros,
-        model: this.modelId,
-        prompt_version: PROMPT_VERSION_TUTOR,
-      },
-    };
-  }
-
-  /** Phase C1 — post-session reflective summary. Cheap JSON-mode call.
+  /** Post-session reflective summary. Cheap JSON-mode call.
    *  Fails open: on any error, return a minimal episode so the next
    *  session at least gets the duration / concepts and the opener
    *  template can still pick a variant. */

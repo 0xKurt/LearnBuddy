@@ -127,25 +127,6 @@ export type RegenerateResult = {
   usage: VisionResult['usage'];
 };
 
-export type EvaluateInput = {
-  question: string;
-  expectedAnswer: string;
-  acceptableAnswers: string[];
-  answerKind: GeneratedVisionItem['answer_kind'];
-  kidAnswer: string;
-  parsedLearnerLatex?: string;
-  locale: Locale;
-  gradeLevel: number;
-  priorHints: string[];
-};
-
-export type EvaluateResult = {
-  verdict: 'correct' | 'partially_correct' | 'incorrect';
-  feedback: string;
-  next_hint: string | null;
-  usage: VisionResult['usage'];
-};
-
 export type ExplainInput = {
   topic: string;
   context?: string;
@@ -163,76 +144,6 @@ export type ExplainResult = {
 };
 
 // ── Conversational tutor (multi-turn). Doc 06 §P3, evolved. ─────────────────
-
-/** One prior message in the session thread, oldest-first. */
-export type ConversationMessage = {
-  role: 'learner' | 'tutor';
-  content: string;
-};
-
-export type ConverseTurnInput = {
-  /** The question currently being worked on. */
-  item: {
-    question: string;
-    expectedAnswer: string;
-    acceptableAnswers: string[];
-    answerKind: GeneratedVisionItem['answer_kind'];
-    units?: string | null;
-    latexExpected?: string | null;
-    latexAcceptable?: string[] | null;
-    mcOptions?: string[] | null;
-    mcCorrectIndex?: number | null;
-    fillBlankTemplate?: string | null;
-    fillBlankAnswers?: string[] | null;
-    diagramLabelIndex?: number | null;
-    sourceExcerpt?: string | null;
-    topic?: string | null;
-  };
-  /** Full prior thread of THIS session (learner/tutor only), oldest-first. */
-  history: ConversationMessage[];
-  /** The new learner message (already transcribed if it came from voice). */
-  learnerMessage: string;
-  learnerName: string | null;
-  locale: Locale;
-  gradeLevel: number;
-  testMode: boolean;
-  pinnedTopic: string | null;
-  /** Hints already given for the current item (drives the staircase). */
-  hintsGivenForItem: number;
-  /** The worksheet text this question came from (clamped). Grounds hints in
-   *  the real material instead of the tiny source excerpt. */
-  materialContext?: string | null;
-  /** Phase A1: praise rubric fragment for THIS turn. Shapes the tone of
-   *  the model's praise IF the verdict ends up correct. Never references
-   *  the learner in first person — L1 invariant. Null/undefined when no
-   *  shaping needed (e.g. on a turn where verdict is clearly wrong). */
-  praiseRubric?: string | null;
-  /** Phase A2: when set, this turn is the scaffold or reveal step in
-   *  the progressive give-up escalation. Superseded by `moveFragment`
-   *  in Phase B but kept for back-compat. */
-  giveUpMode?: 'gentle_scaffold' | 'gentle_reveal' | null;
-  /** Phase A3: rendered "Recent rhythm" block — observations from the
-   *  runtime signal (verdict streak, latency trend, message length).
-   *  Critically: never carries analytical labels; the model sees raw
-   *  observations and forms its own pedagogical response. */
-  recentRhythm?: string | null;
-  /** Phase B (B3): the chosen pedagogical move's prompt fragment.
-   *  Picked by `lib/strategy/select.ts` from the move registry. Spliced
-   *  into the system prompt under a "Mode for this turn" header. Null
-   *  when the selector picked `continue_natural` (no shaping — model
-   *  uses base rules). */
-  moveFragment?: string | null;
-  /** Phase C3: "From last time" continuity block — narrative arc from
-   *  the most recent learner_episode plus active misconceptions. Only
-   *  injected on the first ~5 turns of a session that has a prior
-   *  episode. Null otherwise. */
-  fromLastTime?: string | null;
-  /** Phase D2: when set, the previous tutor turn was a probe
-   *  (confidence_probe / wrong_example_probe / self_explanation_prompt)
-   *  and the current learner message is the probe RESPONSE. The model
-   *  classifies the reasoning quality alongside its normal verdict. */
-  probeContext?: ProbeContext | null;
-};
 
 // ── Agent v2 (one-screen chat tutor) ──────────────────────────────────────
 
@@ -252,36 +163,6 @@ export type AgentGatewayResult = {
    *  the JSON parse — token-by-token streaming of strict JSON would
    *  require server-side incremental parsing. */
   reply: string;
-  usage: VisionResult['usage'];
-};
-
-export type ProbeMove = 'confidence_probe' | 'wrong_example_probe' | 'self_explanation_prompt';
-export type ProbeQuality = 'substantive' | 'rephrased' | 'gave_up';
-
-export type ProbeContext = {
-  probeMove: ProbeMove;
-};
-
-export type ConverseTurnResult = {
-  verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
-  /** The learner-visible reply (control line already stripped). */
-  reply: string;
-  /** True when the reply contained a new hint (for staircase accounting). */
-  gaveHint: boolean;
-  /** Phase D2: present iff `probeContext` was set on the input. The
-   *  model's classification of the learner's reasoning quality. */
-  probeAssessment?: ProbeQuality | null;
-  usage: VisionResult['usage'];
-};
-
-export type TranscribeInput = {
-  audioBase64: string;
-  mimeType: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
-  locale: Locale;
-};
-
-export type TranscribeResult = {
-  text: string;
   usage: VisionResult['usage'];
 };
 
@@ -315,19 +196,9 @@ export type ReflectSessionResult = {
 export interface LLMGateway {
   visionExtractAndGenerate(input: VisionInput): Promise<VisionResult>;
   regenerateFromText(input: RegenerateInput): Promise<RegenerateResult>;
-  evaluateAnswer(input: EvaluateInput): Promise<EvaluateResult>;
   explain(input: ExplainInput): Promise<ExplainResult>;
-  /** Multi-turn tutor reply. `onToken` receives learner-visible deltas as
-   *  they stream; the returned promise resolves with the final result. */
-  converseTurn(
-    input: ConverseTurnInput,
-    onToken?: (delta: string) => void,
-  ): Promise<ConverseTurnResult>;
-  /** Speech-to-text for voice turns (robust fallback independent of any
-   *  on-device recognizer). */
-  transcribeAudio(input: TranscribeInput): Promise<TranscribeResult>;
-  /** Phase C1: post-session reflection. Off the learner's critical path
-   *  (fire-and-forget from the /finish endpoint). */
+  /** Post-session reflection. Off the learner's critical path
+   *  (fire-and-forget from /agent/sessions/:id/finish). */
   reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult>;
   /** Agent v2: one structured JSON reply per learner message. Returns
    *  the raw parsed JSON; the route validates the schema and rejects
