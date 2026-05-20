@@ -116,7 +116,11 @@ export function AgentComposer({
       await stopAndProcessRef.current();
     }
   }, []);
-  const voice = useVoiceRecorder({ onSilence, silenceMs: 1800 });
+  // Tighter VAD (1200ms vs the previous 1800ms) so the pause between
+  // "I'm done speaking" and "the agent starts processing" feels
+  // responsive instead of laggy. Combined with the minSpeechMs floor
+  // (800ms) this still avoids cutting off mid-sentence.
+  const voice = useVoiceRecorder({ onSilence, silenceMs: 1200 });
 
   // ── Mic mode (single-shot dictation) ──────────────────────────────
   const stopMicAndTranscribe = useCallback(async () => {
@@ -207,7 +211,9 @@ export function AgentComposer({
     Speech.speak(reply, {
       language: ttsLocale(locale),
       pitch: 1.0,
-      rate: 1.0,
+      // 1.18 ≈ natural conversational pace; the platform default of
+      // 1.0 sounds slow and robotic to a school-aged learner.
+      rate: 1.18,
       onDone: () => {
         if (!conversationCancelledRef.current) void beginConvListen();
       },
@@ -365,16 +371,16 @@ export function AgentComposer({
             ) : (
               <>
                 <RoundButton
-                  variant="soft"
+                  variant="peach"
                   icon="mic"
-                  iconColor={LB.ink}
+                  iconColor={LB.primaryDk}
                   onPress={startMic}
                   disabled={disabled || busy}
                   label="Sprachnachricht aufnehmen"
                 />
                 {submitVoiceTurn ? (
                   <RoundButton
-                    variant="dark"
+                    variant="lavender"
                     icon="waveform"
                     iconColor={LB.paper}
                     onPress={startConversation}
@@ -393,7 +399,7 @@ export function AgentComposer({
 
 // ── Round button (one component, four variants) ───────────────────────────
 
-type Variant = 'primary' | 'dark' | 'soft' | 'stop';
+type Variant = 'primary' | 'soft' | 'stop' | 'peach' | 'lavender';
 
 function RoundButton({
   variant,
@@ -420,9 +426,10 @@ function RoundButton({
       style={({ pressed }) => [
         styles.btn,
         variant === 'primary' && styles.btnPrimary,
-        variant === 'dark' && styles.btnDark,
         variant === 'soft' && styles.btnSoft,
         variant === 'stop' && styles.btnStop,
+        variant === 'peach' && styles.btnPeach,
+        variant === 'lavender' && styles.btnLavender,
         disabled && styles.dim,
         pressed && !disabled && styles.pressed,
       ]}
@@ -468,7 +475,15 @@ function Waveform({ level, dim = false }: { level: number; dim?: boolean }) {
 
 // ── Styles ────────────────────────────────────────────────────────────────
 
-const BTN_SIZE = 44;
+// Material Design min tappable target: 48dp. Apple HIG: 44pt. We go 48
+// so the buttons feel substantial in either world.
+const BTN_SIZE = 48;
+// Pill is sized off the buttons + symmetric padding — that way the
+// recording state, the idle state, and the single-line typing state
+// all render at EXACTLY the same height. Only multiline text grows the
+// pill (via `maxHeight: 88` on the input).
+const PILL_PAD_V = 6;
+const PILL_HEIGHT = BTN_SIZE + PILL_PAD_V * 2; // 60
 
 const styles = StyleSheet.create({
   outer: {
@@ -491,37 +506,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: LB.bg,
-    borderRadius: 28,
-    paddingLeft: 20,
-    paddingRight: 6,
-    paddingVertical: 6,
-    minHeight: 56,
+    borderRadius: PILL_HEIGHT / 2,
+    paddingLeft: 22,
+    paddingRight: PILL_PAD_V,
+    paddingVertical: PILL_PAD_V,
+    minHeight: PILL_HEIGHT,
     borderWidth: 1,
     borderColor: LB.hairline,
   },
   contentArea: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 12,
     justifyContent: 'center',
+    // Locks the idle / recording / processing content to the same
+    // visual height as a single-line input. Multiline lets the input
+    // grow ABOVE this (up to maxHeight 88) — the pill grows with it.
+    minHeight: BTN_SIZE,
   },
   input: {
-    paddingVertical: 8,
+    paddingVertical: 6,
     color: LB.ink,
     fontSize: 16,
     lineHeight: 22,
+    // ~ 3 lines of 22 + a little slack; after that scrolls inside.
     maxHeight: 88,
   },
 
-  // ── Recording / processing content (replaces the input area) ──
+  // ── Recording / processing content (replaces the input area).
+  // Internal heights MUST sum to ≤ BTN_SIZE (48) so the pill stays
+  // the same shape as in idle.
   statusBlock: {
-    gap: 4,
-    paddingVertical: 4,
+    gap: 2,
+    paddingVertical: 0,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    minHeight: 18,
+    minHeight: 16,
+    height: 16,
   },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LB.danger },
   statusText: { fontSize: 13, color: LB.ink2, fontWeight: '500' },
@@ -529,14 +552,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 24,
+    height: 18,
   },
 
   // ── Trailing button row ──
   trailing: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12, // breathing room between buttons
     alignSelf: 'center',
   },
   btn: {
@@ -546,19 +569,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  btnPrimary: { backgroundColor: LB.primary },
-  btnDark: { backgroundColor: LB.ink },
+  btnPrimary: { backgroundColor: LB.primary }, // terracotta — Send / Confirm-Take
   btnSoft: {
     backgroundColor: LB.paper,
     borderWidth: 1,
     borderColor: LB.hairline,
-  },
-  btnStop: { backgroundColor: LB.danger },
+  }, // neutral — Cancel during recording
+  btnStop: { backgroundColor: LB.danger }, // red — exit conversation
+  btnPeach: { backgroundColor: LB.peach }, // warm pastel — Mic
+  btnLavender: { backgroundColor: LB.lavenderDeep }, // cool pastel — Conversation
   pressed: { opacity: 0.6 },
   dim: { opacity: 0.4 },
 });
