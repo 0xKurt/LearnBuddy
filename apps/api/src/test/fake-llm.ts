@@ -9,6 +9,8 @@
 //     falls back to this with a console.warn)
 
 import type {
+  AgentGatewayInput,
+  AgentGatewayResult,
   ConverseTurnInput,
   ConverseTurnResult,
   EvaluateInput,
@@ -221,6 +223,76 @@ export class FakeLlmGateway implements LLMGateway {
     return { text: 'gesprochene Antwort', usage: { ...FAKE_USAGE } };
   }
 
+  /** Agent v2 — deterministic JSON shape. Inspects the system instruction
+   *  to extract the expected answer + hints_given, then reasons about
+   *  the learner message to pick a verdict + intent. Enough realism so
+   *  the route tests can exercise advance / hint / reveal paths. */
+  async agentTurn(
+    input: AgentGatewayInput,
+    onToken?: (delta: string) => void,
+  ): Promise<AgentGatewayResult> {
+    const sys = input.systemInstruction;
+    const expected =
+      matchAfter(sys, /Expected answer:\s*(.+)/i)
+        ?.trim()
+        .toLowerCase() ?? '';
+    const hintsLine = matchAfter(sys, /Hints already given:\s*(\d+)/i) ?? '0';
+    const hintsGiven = Number.parseInt(hintsLine, 10);
+    const said = input.learnerMessage.trim().toLowerCase();
+    const gaveUp = said.length === 0 || isNonAnswer(input.learnerMessage);
+    const correct =
+      !gaveUp && (said === expected || said.includes(expected) || expected.includes(said));
+
+    let verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null = null;
+    let intent: AgentGatewayResult['json'] extends { intent: infer I } ? I : string = 'evaluate';
+    let reply = '';
+    let advance = false;
+    let reveal = false;
+    let hintGiven = false;
+
+    if (gaveUp) {
+      if (hintsGiven >= 2) {
+        verdict = 'skipped';
+        reveal = true;
+        advance = true;
+        intent = 'reveal';
+        reply = `Kein Problem — die Antwort ist „${matchAfter(sys, /Expected answer:\s*(.+)/i)?.trim() ?? '…'}". Magst du das nochmal probieren oder weiter?`;
+      } else {
+        verdict = 'skipped';
+        hintGiven = true;
+        intent = 'give_up_scaffold';
+        reply = 'Kein Stress — schau dir die Frage nochmal in Ruhe an. Welcher Teil ist unklar?';
+      }
+    } else if (correct) {
+      verdict = 'correct';
+      advance = true;
+      intent = 'praise_and_advance';
+      reply = "Genau richtig — stark gemacht! Weiter geht's.";
+    } else if (hintsGiven >= 2) {
+      verdict = 'incorrect';
+      reveal = true;
+      advance = true;
+      intent = 'reveal';
+      reply = `Fast — die Antwort ist „${matchAfter(sys, /Expected answer:\s*(.+)/i)?.trim() ?? '…'}". Lass uns weiterziehen.`;
+    } else {
+      verdict = 'incorrect';
+      hintGiven = true;
+      intent = 'hint';
+      reply = 'Noch nicht ganz — schau dir die Aufgabe nochmal an. Was fällt dir auf?';
+    }
+
+    const json = {
+      reply,
+      verdict,
+      advance,
+      reveal,
+      hint_given: hintGiven,
+      intent,
+    };
+    if (onToken) onToken(reply);
+    return { json, reply, usage: { ...FAKE_USAGE } };
+  }
+
   async reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult> {
     const topics = Array.from(
       new Set(input.transcript.map((t) => t.item_topic).filter((x): x is string => !!x)),
@@ -240,4 +312,9 @@ export class FakeLlmGateway implements LLMGateway {
       usage: { ...FAKE_USAGE },
     };
   }
+}
+
+function matchAfter(text: string, pattern: RegExp): string | null {
+  const m = text.match(pattern);
+  return m?.[1] ?? null;
 }

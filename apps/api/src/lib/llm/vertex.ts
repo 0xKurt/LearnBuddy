@@ -50,6 +50,8 @@ import {
 } from '../../prompts/tutor.js';
 import { parseRegeneratePayload, parseVisionPayload } from './postProcess.js';
 import type {
+  AgentGatewayInput,
+  AgentGatewayResult,
   ConverseTurnInput,
   ConverseTurnResult,
   EvaluateInput,
@@ -634,6 +636,77 @@ export class VertexLlmGateway implements LLMGateway {
         cost_usd_micros: totals.costMicros,
         model: this.modelId,
         prompt_version: PROMPT_VERSION_REFLECT,
+      },
+    };
+  }
+
+  /** Agent v2 — one JSON reply per learner message. */
+  async agentTurn(
+    input: AgentGatewayInput,
+    onToken?: (delta: string) => void,
+  ): Promise<AgentGatewayResult> {
+    const contents = [
+      ...input.history.map((m) => ({
+        role: m.role === 'learner' ? ('user' as const) : ('model' as const),
+        parts: [{ text: m.content }],
+      })),
+      { role: 'user' as const, parts: [{ text: input.learnerMessage }] },
+    ];
+
+    let response: GenerateContentResponse;
+    try {
+      response = await this.client.models.generateContent({
+        model: this.tutorModelId,
+        contents,
+        config: {
+          systemInstruction: input.systemInstruction,
+          safetySettings: SAFETY,
+          temperature: 0.4,
+          topP: 0.9,
+          maxOutputTokens: 800,
+          responseMimeType: 'application/json',
+        },
+      });
+    } catch (err) {
+      throw new ApiError(
+        'evaluation_failed',
+        `Vertex agentTurn failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    const totals = addUsage(emptyUsage(), response.usageMetadata);
+    const text = responseText(response);
+    if (!text) {
+      throw new ApiError('evaluation_failed', 'Vertex agentTurn returned empty text');
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      throw new ApiError(
+        'evaluation_failed',
+        `Vertex agentTurn JSON parse failed: ${err instanceof Error ? err.message : String(err)}; raw="${text.slice(0, 200)}"`,
+      );
+    }
+
+    const reply =
+      parsed &&
+      typeof parsed === 'object' &&
+      'reply' in parsed &&
+      typeof (parsed as { reply: unknown }).reply === 'string'
+        ? (parsed as { reply: string }).reply.trim()
+        : '';
+    if (reply && onToken) onToken(reply);
+
+    return {
+      json: parsed,
+      reply,
+      usage: {
+        input_tokens: totals.inputTokens,
+        output_tokens: totals.outputTokens,
+        cost_usd_micros: totals.costMicros,
+        model: this.tutorModelId,
+        prompt_version: 'agent.v2.0',
       },
     };
   }

@@ -234,6 +234,27 @@ export type ConverseTurnInput = {
   probeContext?: ProbeContext | null;
 };
 
+// ── Agent v2 (one-screen chat tutor) ──────────────────────────────────────
+
+export type AgentGatewayInput = {
+  systemInstruction: string;
+  /** Prior thread, oldest-first. */
+  history: ReadonlyArray<{ role: 'learner' | 'tutor'; content: string }>;
+  /** The new learner message. */
+  learnerMessage: string;
+};
+
+export type AgentGatewayResult = {
+  /** The full structured response — caller validates schema. */
+  json: unknown;
+  /** The raw reply (parsed from json.reply) for streaming consumers that
+   *  prefer the text-only path. The gateway emits a single chunk after
+   *  the JSON parse — token-by-token streaming of strict JSON would
+   *  require server-side incremental parsing. */
+  reply: string;
+  usage: VisionResult['usage'];
+};
+
 export type ProbeMove = 'confidence_probe' | 'wrong_example_probe' | 'self_explanation_prompt';
 export type ProbeQuality = 'substantive' | 'rephrased' | 'gave_up';
 
@@ -308,4 +329,13 @@ export interface LLMGateway {
   /** Phase C1: post-session reflection. Off the learner's critical path
    *  (fire-and-forget from the /finish endpoint). */
   reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult>;
+  /** Agent v2: one structured JSON reply per learner message. Returns
+   *  the raw parsed JSON; the route validates the schema and rejects
+   *  malformed output. Streaming text is emitted as a single chunk
+   *  after parse (streaming strict JSON requires an incremental parser
+   *  that's out of scope for v1). */
+  agentTurn(
+    input: AgentGatewayInput,
+    onToken?: (delta: string) => void,
+  ): Promise<AgentGatewayResult>;
 }
