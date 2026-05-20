@@ -376,6 +376,7 @@ export default function AgentChatScreen() {
               verdict={item.verdict ?? null}
             />
           )}
+          style={styles.listFlex}
           contentContainerStyle={styles.list}
           ListFooterComponent={thinking ? <AgentThinking /> : null}
           showsVerticalScrollIndicator={false}
@@ -441,6 +442,7 @@ const styles = StyleSheet.create({
   progressLabel: { fontSize: 12, color: LB.ink3, marginBottom: 4 },
   progressTrack: { height: 3, backgroundColor: LB.hairline, borderRadius: 2, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: LB.primary, borderRadius: 2 },
+  listFlex: { flex: 1 },
   list: { paddingVertical: 12, flexGrow: 1 },
   endBlock: {
     padding: 24,

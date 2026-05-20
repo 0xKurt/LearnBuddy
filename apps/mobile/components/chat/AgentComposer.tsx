@@ -404,28 +404,42 @@ function RoundButton({
   showSpinner?: boolean;
   label: string;
 }) {
+  // CRITICAL: backgroundColor on Pressable silently fails to render in
+  // RN 0.73+. The bg has to live on an inner View. Pressable only owns
+  // layout (alignSelf, overflow for ripple clipping) and the pressed
+  // opacity. Same pattern as components/lb/Btn.tsx — see CLAUDE.md rule.
+  const variantStyle =
+    variant === 'primary'
+      ? styles.btnPrimary
+      : variant === 'soft'
+        ? styles.btnSoft
+        : variant === 'stop'
+          ? styles.btnStop
+          : variant === 'ink'
+            ? styles.btnInk
+            : styles.btnSuccess;
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       hitSlop={8}
-      style={({ pressed }) => [
-        styles.btn,
-        variant === 'primary' && styles.btnPrimary,
-        variant === 'soft' && styles.btnSoft,
-        variant === 'stop' && styles.btnStop,
-        variant === 'ink' && styles.btnInk,
-        variant === 'success' && styles.btnSuccess,
-        disabled && styles.dim,
-        pressed && !disabled && styles.pressed,
-      ]}
       accessibilityRole="button"
       accessibilityLabel={label}
+      style={{
+        alignSelf: 'center',
+        opacity: disabled ? 0.4 : 1,
+        borderRadius: BTN_SIZE / 2,
+        overflow: 'hidden',
+      }}
     >
-      {showSpinner ? (
-        <ActivityIndicator color={iconColor} />
-      ) : (
-        <Icon name={icon} size={20} color={iconColor} />
+      {({ pressed }) => (
+        <View style={[styles.btn, variantStyle, pressed && !disabled && styles.pressed]}>
+          {showSpinner ? (
+            <ActivityIndicator color={iconColor} />
+          ) : (
+            <Icon name={icon} size={20} color={iconColor} />
+          )}
+        </View>
       )}
     </Pressable>
   );

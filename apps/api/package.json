@@ -13,6 +13,8 @@
     "probe:vertex": "tsx scripts/probe-vertex.ts"
   },
   "dependencies": {
+    "@google-cloud/speech": "^7.3.1",
+    "@google-cloud/text-to-speech": "^6.4.1",
     "@google/genai": "^2.3.0",
     "@hono/node-server": "^1.13.7",
     "@hono/zod-validator": "^0.4.2",

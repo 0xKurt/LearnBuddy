@@ -29,6 +29,11 @@ export const Env = z.object({
   /** Backend selector. 'fake' → tests + dev without GCP; 'vertex' → real LLM.
    *  Defaults to 'fake' when NODE_ENV=test, else 'vertex'. */
   LLM_BACKEND: z.enum(['vertex', 'fake']).optional(),
+  /** STT + TTS backend selector. Same semantics as LLM_BACKEND — 'vertex'
+   *  for the real GCP Speech-to-Text v2 + Text-to-Speech, 'fake' for the
+   *  deterministic stubs used in tests / Expo Go dev. Defaults to 'fake'
+   *  when NODE_ENV=test, else 'vertex'. */
+  VOICE_BACKEND: z.enum(['vertex', 'fake']).optional(),
   /** Gemini model id for batch/extraction (vision, regenerate). Cheapest
    *  tier is fine there. Doc 06 §provider-configuration. */
   VERTEX_MODEL_ID: z.string().default('gemini-2.5-flash-lite'),
