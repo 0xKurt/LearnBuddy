@@ -177,6 +177,39 @@ export async function streamAgentTurn(
   }
 }
 
+/** Transcribe-only — server returns just the recognised text, no
+ *  pedagogy / verdict. Used by the composer's mic button so the kid
+ *  can review the text in the input field before manually sending. */
+export async function transcribeVoice(
+  learnerId: string,
+  audioBase64: string,
+  mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm',
+): Promise<string> {
+  const url = new URL('/agent/transcribe', ENV.API_URL).toString();
+  const tok = getSessionSync()?.access_token;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(tok ? { authorization: `Bearer ${tok}` } : {}),
+      'x-learner-id': learnerId,
+    },
+    body: JSON.stringify({ audio_base64: audioBase64, audio_mime: mime }),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: { code?: string; message?: string };
+    };
+    throw new ApiError(
+      body.error?.code ?? 'evaluation_failed',
+      body.error?.message ?? `HTTP ${res.status}`,
+      res.status,
+    );
+  }
+  const json = (await res.json()) as { text?: unknown };
+  return typeof json.text === 'string' ? json.text : '';
+}
+
 export async function finishAgentSession(learnerId: string, sessionId: string): Promise<void> {
   const url = new URL(`/agent/sessions/${sessionId}/finish`, ENV.API_URL).toString();
   const tok = getSessionSync()?.access_token;

@@ -1,14 +1,28 @@
-// Agent composer — single input area with mic + conversation buttons.
+// Agent composer — ChatGPT-style input area.
 //
-// Three input affordances:
-//   1. Text input + send button → standard typing.
-//   2. Mic button → push-to-talk. Tap to start. VAD auto-stops after
-//      ~1.8s silence (parent receives the recording via onSubmitVoice).
-//      Tap again to cancel/stop early. While recording the row shows
-//      a live waveform + "Hört zu …" status; cancel and stop are split
-//      buttons so you can throw away a botched take.
-//   3. Phone button → opens the full Conversation mode (handled by the
-//      parent via onOpenConversation).
+// Layout (idle / no text):
+//   ┌────────────────────────────────────────────────┐
+//   │  Antwort eingeben …                  [mic] [⌇]  │
+//   └────────────────────────────────────────────────┘
+//
+// Layout (text being typed — mic/waveform fade out, send arrow appears):
+//   ┌────────────────────────────────────────────────┐
+//   │  Hallo, was kommt bei 2+2 raus?           [ ↑ ]  │
+//   │  (grows to 3 lines max)                          │
+//   └────────────────────────────────────────────────┘
+//
+// Layout (mic recording — transcript-to-field flow):
+//   ┌──── [×] [────▒▒▒▒▒ Hört zu] [ ↓ stop] ────────┐
+//
+// Behaviour:
+//   - mic icon  → dictation. Audio uploads to /agent/transcribe, the
+//                 returned text is appended to the input field. The
+//                 kid reads it, optionally edits, then taps send.
+//                 (Does NOT auto-submit.)
+//   - waveform  → opens the full Conversation modal (parent handles).
+//                 In the modal everything is automatic.
+//   - send (↑)  → submit the current text. Only visible when text is
+//                 present.
 
 import { useCallback, useRef, useState } from 'react';
 import {
@@ -22,32 +36,39 @@ import {
   View,
 } from 'react-native';
 
+import { Icon } from '../lb/Icon';
 import { LB } from '../../lib/theme/colors';
-import { useVoiceRecorder, type VoiceRecording } from '../../lib/voice/use-voice-recorder';
+import { useVoiceRecorder } from '../../lib/voice/use-voice-recorder';
+
+const WAVEFORM_BARS = 18;
 
 export type AgentComposerProps = {
   disabled?: boolean;
   /** True while the agent is producing a reply — composer locks input. */
   busy?: boolean;
+  /** Async transcriber the composer calls when the mic recording is done.
+   *  Returns the recognised text which is appended to the input field. */
+  transcribe: (audio: {
+    base64: string;
+    mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
+  }) => Promise<string>;
   onSubmitText: (text: string) => void;
-  onSubmitVoice: (recording: VoiceRecording) => void;
-  /** Tap on the phone icon — parent opens the Conversation modal. */
+  /** Tap on the waveform icon — parent opens the Conversation modal. */
   onOpenConversation?: () => void;
 };
-
-const WAVEFORM_BARS = 18;
 
 export function AgentComposer({
   disabled = false,
   busy = false,
+  transcribe,
   onSubmitText,
-  onSubmitVoice,
   onOpenConversation,
 }: AgentComposerProps) {
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
-  // Capture refs for stop() so the VAD callback can fire even after
-  // the recorder closure is stale.
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
+
+  // Refs so the VAD callback can call stop() even when its closure is stale.
   const stopRef = useRef<() => Promise<void>>(async () => {});
   const submitOnSilence = useCallback(async () => {
     await stopRef.current();
@@ -57,13 +78,30 @@ export function AgentComposer({
   const doStop = useCallback(async () => {
     if (uploading) return;
     setUploading(true);
+    setTranscribeError(null);
     const result = await voice.stop();
-    setUploading(false);
-    if (result && result.durationMs > 250) onSubmitVoice(result);
-  }, [voice, uploading, onSubmitVoice]);
+    if (!result || result.durationMs < 250) {
+      setUploading(false);
+      return;
+    }
+    try {
+      const recognised = await transcribe({ base64: result.base64, mime: result.mime });
+      const cleaned = recognised.trim();
+      if (cleaned) {
+        // Append to the current input — let the kid keep typing or edit
+        // before sending.
+        setText((prev) => (prev.trim() ? `${prev.trim()} ${cleaned}` : cleaned));
+      }
+    } catch (err) {
+      setTranscribeError(err instanceof Error ? err.message : 'Konnte nicht verstehen');
+    } finally {
+      setUploading(false);
+    }
+  }, [voice, uploading, transcribe]);
   stopRef.current = doStop;
 
   const doCancel = useCallback(async () => {
+    setTranscribeError(null);
     await voice.cancel();
   }, [voice]);
 
@@ -74,41 +112,38 @@ export function AgentComposer({
     setText('');
   }, [text, disabled, busy, voice.recording, onSubmitText]);
 
-  const toggleVoice = useCallback(async () => {
+  const startVoice = useCallback(async () => {
     if (disabled || busy) return;
-    if (voice.recording) {
-      await doStop();
-      return;
-    }
+    setTranscribeError(null);
     await voice.start();
-  }, [disabled, busy, voice, doStop]);
+  }, [disabled, busy, voice]);
 
-  const canSendText = text.trim().length > 0 && !disabled && !busy && !voice.recording;
-  const showConversationButton =
-    !voice.recording && !uploading && !busy && !disabled && !!onOpenConversation;
+  const hasText = text.trim().length > 0;
+  const isRecording = voice.recording || uploading;
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={90}
     >
-      <View style={styles.container}>
-        {voice.permissionDenied ? (
-          <Text style={styles.permissionHint}>
+      <View style={styles.outer}>
+        {transcribeError ? (
+          <Text style={styles.errorHint}>{transcribeError}</Text>
+        ) : voice.permissionDenied ? (
+          <Text style={styles.errorHint}>
             Mikrofon-Zugriff fehlt. Bitte in den Einstellungen erlauben.
           </Text>
         ) : null}
 
-        {/* Recording overlay row — replaces the input while recording */}
-        {voice.recording || uploading ? (
+        {isRecording ? (
           <RecordingBar
             level={voice.level}
             uploading={uploading}
-            onStop={toggleVoice}
+            onStop={doStop}
             onCancel={doCancel}
           />
         ) : (
-          <View style={styles.row}>
+          <View style={styles.inputWrap}>
             <TextInput
               value={text}
               onChangeText={setText}
@@ -117,51 +152,21 @@ export function AgentComposer({
               editable={!disabled && !busy}
               style={styles.input}
               multiline
-              onSubmitEditing={submitText}
-              blurOnSubmit={false}
-              returnKeyType="send"
+              scrollEnabled
+              maxLength={4000}
             />
-            {/* Conversation (phone) button */}
-            {showConversationButton ? (
-              <Pressable
-                onPress={onOpenConversation}
-                style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-                accessibilityRole="button"
-                accessibilityLabel="Sprachgespräch starten"
-              >
-                <View style={styles.phone}>
-                  <Text style={styles.phoneGlyph}>📞</Text>
-                </View>
-              </Pressable>
-            ) : null}
-            {/* Mic */}
-            <Pressable
-              onPress={toggleVoice}
-              disabled={disabled || busy}
-              style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-              accessibilityRole="button"
-              accessibilityLabel="Sprachnachricht aufnehmen"
-            >
-              <View style={styles.mic}>
-                <Text style={styles.micGlyph}>🎤</Text>
-              </View>
-            </Pressable>
-            {/* Send */}
-            <Pressable
-              onPress={submitText}
-              disabled={!canSendText}
-              style={({ pressed }) => [
-                styles.iconBtn,
-                !canSendText && styles.sendDisabled,
-                pressed && canSendText && styles.pressed,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Antwort absenden"
-            >
-              <View style={styles.send}>
-                <Text style={styles.sendArrow}>↑</Text>
-              </View>
-            </Pressable>
+            <View style={styles.trailingButtons}>
+              {hasText ? (
+                <SendButton onPress={submitText} disabled={!hasText || disabled || busy} />
+              ) : (
+                <>
+                  <MicButton onPress={startVoice} disabled={disabled || busy} />
+                  {onOpenConversation ? (
+                    <ConversationButton onPress={onOpenConversation} disabled={disabled || busy} />
+                  ) : null}
+                </>
+              )}
+            </View>
           </View>
         )}
       </View>
@@ -169,7 +174,62 @@ export function AgentComposer({
   );
 }
 
-// ── Recording bar (waveform + cancel / stop) ──────────────────────────────
+// ── Trailing buttons ──────────────────────────────────────────────────────
+
+function MicButton({ onPress, disabled }: { onPress: () => void; disabled: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      hitSlop={8}
+      style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed, disabled && styles.dim]}
+      accessibilityRole="button"
+      accessibilityLabel="Sprachnachricht aufnehmen"
+    >
+      <Icon name="mic" size={22} color={LB.ink2} />
+    </Pressable>
+  );
+}
+
+function ConversationButton({ onPress, disabled }: { onPress: () => void; disabled: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.conversationBtn,
+        pressed && styles.pressed,
+        disabled && styles.dim,
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel="Sprachgespräch starten"
+    >
+      <Icon name="waveform" size={20} color={LB.ink} />
+    </Pressable>
+  );
+}
+
+function SendButton({ onPress, disabled }: { onPress: () => void; disabled: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.sendBtn,
+        disabled && styles.dim,
+        pressed && !disabled && styles.pressed,
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel="Antwort absenden"
+    >
+      <Icon name="arrow-up" size={20} color={LB.paper} />
+    </Pressable>
+  );
+}
+
+// ── Recording bar (waveform + cancel / stop-and-transcribe) ───────────────
 
 function RecordingBar({
   level,
@@ -187,46 +247,43 @@ function RecordingBar({
       <Pressable
         onPress={onCancel}
         disabled={uploading}
+        hitSlop={8}
         style={({ pressed }) => [styles.cancelBtn, pressed && styles.pressed]}
         accessibilityRole="button"
         accessibilityLabel="Aufnahme abbrechen"
       >
-        <Text style={styles.cancelGlyph}>×</Text>
+        <Icon name="close" size={20} color={LB.ink2} />
       </Pressable>
       <View style={styles.waveformWrap}>
         <View style={styles.statusRow}>
           <View style={styles.recordingDot} />
-          <Text style={styles.statusText}>{uploading ? 'Sende …' : 'Hört zu …'}</Text>
+          <Text style={styles.statusText}>{uploading ? 'Verstehe …' : 'Hört zu …'}</Text>
         </View>
         <Waveform level={level} />
       </View>
       <Pressable
         onPress={onStop}
         disabled={uploading}
-        style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+        hitSlop={8}
+        style={({ pressed }) => [styles.confirmBtn, pressed && styles.pressed]}
         accessibilityRole="button"
-        accessibilityLabel="Aufnahme stoppen und senden"
+        accessibilityLabel="Aufnahme stoppen und übernehmen"
       >
-        <View style={styles.send}>
-          {uploading ? (
-            <ActivityIndicator color={LB.paper} />
-          ) : (
-            <Text style={styles.sendArrow}>↑</Text>
-          )}
-        </View>
+        {uploading ? (
+          <ActivityIndicator color={LB.paper} />
+        ) : (
+          <Icon name="check" size={20} color={LB.paper} />
+        )}
       </Pressable>
     </View>
   );
 }
 
 function Waveform({ level }: { level: number }) {
-  // Pre-computed bar phases (stable across re-renders for a smooth look).
   const phasesRef = useRef<number[]>(Array.from({ length: WAVEFORM_BARS }, () => Math.random()));
   return (
     <View style={styles.waveform}>
       {phasesRef.current.map((p, i) => {
-        // Each bar oscillates around the live level. Mid bars get
-        // amplified slightly so the centre looks louder than edges.
         const distanceFromCentre = Math.abs(i - WAVEFORM_BARS / 2) / (WAVEFORM_BARS / 2);
         const amp = level * (1 - distanceFromCentre * 0.3) + 0.05;
         const height = 6 + Math.min(28, Math.max(2, amp * 80 * (0.6 + p * 0.8)));
@@ -250,58 +307,74 @@ function Waveform({ level }: { level: number }) {
 // ── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
+  outer: {
     paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
     backgroundColor: LB.paper,
     borderTopWidth: 1,
     borderTopColor: LB.hairline,
   },
-  permissionHint: { fontSize: 12, color: LB.danger, marginBottom: 6, paddingHorizontal: 4 },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  errorHint: {
+    fontSize: 12,
+    color: LB.danger,
+    marginBottom: 6,
+    paddingHorizontal: 8,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: LB.bg,
+    borderRadius: 26,
+    paddingLeft: 18,
+    paddingRight: 6,
+    paddingVertical: 6,
+    minHeight: 52,
+  },
   input: {
     flex: 1,
-    minHeight: 44,
-    maxHeight: 140,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 22,
-    backgroundColor: LB.bg,
+    paddingVertical: 8,
+    paddingRight: 6,
     color: LB.ink,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
+    // Roughly 3 lines * 22 lineHeight + a little padding.
+    maxHeight: 72,
   },
-  iconBtn: { alignSelf: 'flex-end' },
-  pressed: { opacity: 0.7 },
-  sendDisabled: { opacity: 0.35 },
-  mic: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: LB.primaryLt,
+  trailingButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingBottom: 2,
+  },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  micGlyph: { fontSize: 18 },
-  phone: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: LB.lavender,
+  conversationBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: LB.paper,
+    // Soft ring so the white pill stands out against the bg-tinted input
+    borderWidth: 1,
+    borderColor: LB.hairline,
   },
-  phoneGlyph: { fontSize: 18 },
-  send: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  sendBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: LB.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  sendArrow: { color: LB.paper, fontSize: 20, fontWeight: '700', marginTop: -2 },
+  pressed: { opacity: 0.7 },
+  dim: { opacity: 0.35 },
   // Recording bar
   recordingBar: {
     flexDirection: 'row',
@@ -317,10 +390,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelGlyph: { fontSize: 22, color: LB.ink2, marginTop: -2, fontWeight: '700' },
   waveformWrap: {
     flex: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 22,
     backgroundColor: LB.bg,
@@ -332,4 +404,12 @@ const styles = StyleSheet.create({
   recordingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LB.danger },
   statusText: { fontSize: 12, color: LB.ink2 },
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 30 },
+  confirmBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: LB.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

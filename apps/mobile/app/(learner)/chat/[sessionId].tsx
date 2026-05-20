@@ -16,6 +16,7 @@ import {
   createAgentSession,
   finishAgentSession,
   streamAgentTurn,
+  transcribeVoice,
   type AgentSseFrame,
 } from '../../../lib/api/agent';
 import { Btn } from '../../../components/lb/Btn';
@@ -23,7 +24,6 @@ import { AgentComposer } from '../../../components/chat/AgentComposer';
 import { ChatBubble, AgentThinking } from '../../../components/chat/ChatBubble';
 import { VoiceConversationModal } from '../../../components/chat/VoiceConversationModal';
 import { LB } from '../../../lib/theme/colors';
-import type { VoiceRecording } from '../../../lib/voice/use-voice-recorder';
 
 type Message = {
   id: string;
@@ -119,18 +119,17 @@ export default function AgentChatScreen() {
     };
   }, [learnerId, sessionId, params.subjectId, params.folderId, params.materialId, testMode]);
 
-  // ── Send (text or voice) ──────────────────────────────────────────────
-  const send = useCallback(
-    async (payload: { text?: string; voice?: VoiceRecording }) => {
+  // ── Send (text only — voice is transcribed into the field first) ────
+  const onSubmitText = useCallback(
+    async (textToSend: string) => {
       if (!sessionId || !learnerId || busy || sessionEnded) return;
       setBusy(true);
       setThinking(true);
-      const learnerId_msg = `l-${Date.now()}`;
+      const learnerMsgId = `l-${Date.now()}`;
       const agentId = `a-${Date.now()}`;
-      const seedLearnerContent = payload.text ?? '';
       setMessages((prev) => [
         ...prev,
-        { id: learnerId_msg, role: 'learner', content: seedLearnerContent || '…' },
+        { id: learnerMsgId, role: 'learner', content: textToSend },
         { id: agentId, role: 'agent', content: '', isStreaming: true },
       ]);
       let replyText = '';
@@ -139,12 +138,6 @@ export default function AgentChatScreen() {
       const ctid = newClientTurnId();
       const handle = (e: AgentSseFrame) => {
         switch (e.type) {
-          case 'transcript':
-            // Voice transcript — show it as the learner's bubble.
-            setMessages((prev) =>
-              prev.map((m) => (m.id === learnerId_msg ? { ...m, content: e.text } : m)),
-            );
-            break;
           case 'reply':
             replyText = e.text;
             setMessages((prev) =>
@@ -171,12 +164,7 @@ export default function AgentChatScreen() {
         await streamAgentTurn(
           learnerId,
           sessionId,
-          {
-            client_turn_id: ctid,
-            text: payload.text ?? null,
-            audio_base64: payload.voice?.base64 ?? null,
-            audio_mime: payload.voice?.mime ?? null,
-          },
+          { client_turn_id: ctid, text: textToSend, audio_base64: null, audio_mime: null },
           handle,
         );
       } catch (err) {
@@ -191,7 +179,6 @@ export default function AgentChatScreen() {
         setThinking(false);
       }
       if (advanced && completedItems + 1 >= totalItems) {
-        // Last item just finished.
         setSessionEnded(true);
         if (sessionId && learnerId) void finishAgentSession(learnerId, sessionId);
       }
@@ -199,8 +186,16 @@ export default function AgentChatScreen() {
     [sessionId, learnerId, busy, sessionEnded, completedItems, totalItems],
   );
 
-  const onSubmitText = useCallback((text: string) => void send({ text }), [send]);
-  const onSubmitVoice = useCallback((voice: VoiceRecording) => void send({ voice }), [send]);
+  const transcribe = useCallback(
+    async (audio: {
+      base64: string;
+      mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
+    }): Promise<string> => {
+      if (!learnerId) return '';
+      return transcribeVoice(learnerId, audio.base64, audio.mime);
+    },
+    [learnerId],
+  );
 
   // ── Auto-scroll ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -289,7 +284,7 @@ export default function AgentChatScreen() {
         <AgentComposer
           busy={busy}
           onSubmitText={onSubmitText}
-          onSubmitVoice={onSubmitVoice}
+          transcribe={transcribe}
           onOpenConversation={() => setVoiceConvOpen(true)}
         />
       ) : (

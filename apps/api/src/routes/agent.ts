@@ -128,6 +128,52 @@ agentRoutes.post(
   },
 );
 
+// ── Transcribe-only (no LLM tutor call) ────────────────────────────────────
+//
+// The composer's mic button uses this when the kid wants the spoken
+// text to land in the input field for review/edit before sending.
+// `/sessions/:id/turn` always runs the full pedagogy cycle; this route
+// is intentionally narrow — audio in, plain text out.
+
+const TranscribeBody = z.object({
+  audio_base64: z.string().min(1).max(8_000_000),
+  audio_mime: z.enum(['audio/m4a', 'audio/mp4', 'audio/wav', 'audio/webm']),
+});
+
+agentRoutes.post(
+  '/transcribe',
+  rateLimit({ key: 'agent_transcribe', per_hour: 600 }),
+  zValidator('json', TranscribeBody),
+  async (c) => {
+    const { supabase, llm } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const body = c.req.valid('json');
+
+    const learnerRow = await supabase
+      .from('learners')
+      .select('ui_locale')
+      .eq('id', learner_id)
+      .maybeSingle();
+    const locale = ((learnerRow.data as { ui_locale: string | null } | null)?.ui_locale ??
+      'de') as Locale;
+
+    try {
+      const res = await llm.transcribeAudio({
+        audioBase64: body.audio_base64,
+        mimeType: body.audio_mime,
+        locale,
+      });
+      return c.json({ text: res.text });
+    } catch (err) {
+      throw new ApiError(
+        'evaluation_failed',
+        `Transcribe failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  },
+);
+
 // ── Turn (SSE stream) ──────────────────────────────────────────────────────
 
 const TurnBody = z.object({

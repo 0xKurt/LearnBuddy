@@ -13,6 +13,7 @@ type IconName =
   | 'check'
   | 'mic'
   | 'arrow'
+  | 'arrow-up'
   | 'chevron'
   | 'pencil'
   | 'trash'
@@ -20,6 +21,7 @@ type IconName =
   | 'clock'
   | 'flame'
   | 'speak'
+  | 'waveform'
   | 'shield'
   | 'eye'
   | 'eye-off';
@@ -111,6 +113,12 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
           <Path d="M5 12h14M13 6l6 6-6 6" {...common} />
         </Svg>
       );
+    case 'arrow-up':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M12 19V5M6 11l6-6 6 6" {...common} />
+        </Svg>
+      );
     case 'chevron':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -163,6 +171,19 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M11 5L6 9H3v6h3l5 4V5z" {...common} />
           <Path d="M16 8.5a5 5 0 010 7M19 6a8 8 0 010 12" {...common} />
+        </Svg>
+      );
+    case 'waveform':
+      // Five vertical bars of varying heights — the "audio mode" glyph
+      // used in ChatGPT-style composers. Strokes are short rounded lines
+      // so they match the rest of the set at stroke 1.6.
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M5 10v4" {...common} />
+          <Path d="M9 7v10" {...common} />
+          <Path d="M12 4v16" {...common} />
+          <Path d="M15 7v10" {...common} />
+          <Path d="M19 10v4" {...common} />
         </Svg>
       );
     case 'shield':
