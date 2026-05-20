@@ -1,28 +1,26 @@
-// Agent composer — ChatGPT-style input area.
+// Agent composer — ChatGPT-style input area, polished.
 //
 // Layout (idle / no text):
-//   ┌────────────────────────────────────────────────┐
-//   │  Antwort eingeben …                  [mic] [⌇]  │
-//   └────────────────────────────────────────────────┘
+//   ┌──────────────────────────────────────────────────────────┐
+//   │  Antwort eingeben …               [ mic ] [ waveform ]   │
+//   └──────────────────────────────────────────────────────────┘
 //
-// Layout (text being typed — mic/waveform fade out, send arrow appears):
-//   ┌────────────────────────────────────────────────┐
-//   │  Hallo, was kommt bei 2+2 raus?           [ ↑ ]  │
-//   │  (grows to 3 lines max)                          │
-//   └────────────────────────────────────────────────┘
+// Layout (text being typed — trailing icons collapse to send):
+//   ┌──────────────────────────────────────────────────────────┐
+//   │  Hallo, was kommt bei 2+2 raus?                  [ ↑ ]    │
+//   │  (grows up to 3 lines, then scrolls)                       │
+//   └──────────────────────────────────────────────────────────┘
 //
-// Layout (mic recording — transcript-to-field flow):
-//   ┌──── [×] [────▒▒▒▒▒ Hört zu] [ ↓ stop] ────────┐
+// Recording bar (replaces input):
+//   ┌─── [×] ─[●  Hört zu  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒]─ [ ✓ ] ──┐
 //
 // Behaviour:
-//   - mic icon  → dictation. Audio uploads to /agent/transcribe, the
-//                 returned text is appended to the input field. The
-//                 kid reads it, optionally edits, then taps send.
-//                 (Does NOT auto-submit.)
-//   - waveform  → opens the full Conversation modal (parent handles).
-//                 In the modal everything is automatic.
-//   - send (↑)  → submit the current text. Only visible when text is
-//                 present.
+//   - mic    → dictation. Audio uploads to /agent/transcribe, the
+//              returned text is APPENDED to the input field. The kid
+//              reads it, optionally edits, then taps send. Never
+//              auto-submits.
+//   - wave   → opens the full Conversation modal (parent handles).
+//   - send   → submit. Only visible when text is present.
 
 import { useCallback, useRef, useState } from 'react';
 import {
@@ -40,15 +38,15 @@ import { Icon } from '../lb/Icon';
 import { LB } from '../../lib/theme/colors';
 import { useVoiceRecorder } from '../../lib/voice/use-voice-recorder';
 
-const WAVEFORM_BARS = 18;
+const WAVEFORM_BARS = 36;
 
 export type AgentComposerProps = {
   disabled?: boolean;
-  /** True while the agent is producing a reply — composer locks input. */
   busy?: boolean;
-  /** Async transcriber the composer calls when the mic recording is done.
-   *  Returns the recognised text which is appended to the input field. */
-  transcribe: (audio: {
+  /** Audio → text. Optional so the composer still renders if the parent
+   *  hasn't wired it yet (defensive — a stale Metro bundle would
+   *  otherwise crash with "transcribe is not a function"). */
+  transcribe?: (audio: {
     base64: string;
     mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
   }) => Promise<string>;
@@ -68,7 +66,6 @@ export function AgentComposer({
   const [uploading, setUploading] = useState(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
 
-  // Refs so the VAD callback can call stop() even when its closure is stale.
   const stopRef = useRef<() => Promise<void>>(async () => {});
   const submitOnSilence = useCallback(async () => {
     await stopRef.current();
@@ -84,12 +81,17 @@ export function AgentComposer({
       setUploading(false);
       return;
     }
+    if (typeof transcribe !== 'function') {
+      // Defensive — the prop is required but a stale bundle (Metro cache)
+      // can leave it undefined. Surface a clear error instead of crashing.
+      setTranscribeError('Aufnahme noch nicht bereit. Bitte neu laden.');
+      setUploading(false);
+      return;
+    }
     try {
       const recognised = await transcribe({ base64: result.base64, mime: result.mime });
       const cleaned = recognised.trim();
       if (cleaned) {
-        // Append to the current input — let the kid keep typing or edit
-        // before sending.
         setText((prev) => (prev.trim() ? `${prev.trim()} ${cleaned}` : cleaned));
       }
     } catch (err) {
@@ -143,7 +145,7 @@ export function AgentComposer({
             onCancel={doCancel}
           />
         ) : (
-          <View style={styles.inputWrap}>
+          <View style={styles.inputPill}>
             <TextInput
               value={text}
               onChangeText={setText}
@@ -155,14 +157,35 @@ export function AgentComposer({
               scrollEnabled
               maxLength={4000}
             />
-            <View style={styles.trailingButtons}>
+            <View style={styles.trailing}>
               {hasText ? (
-                <SendButton onPress={submitText} disabled={!hasText || disabled || busy} />
+                <TrailingButton
+                  variant="primary"
+                  icon="arrow-up"
+                  iconColor={LB.paper}
+                  onPress={submitText}
+                  disabled={!hasText || disabled || busy}
+                  label="Antwort absenden"
+                />
               ) : (
                 <>
-                  <MicButton onPress={startVoice} disabled={disabled || busy} />
+                  <TrailingButton
+                    variant="ghost"
+                    icon="mic"
+                    iconColor={LB.ink2}
+                    onPress={startVoice}
+                    disabled={disabled || busy}
+                    label="Sprachnachricht aufnehmen"
+                  />
                   {onOpenConversation ? (
-                    <ConversationButton onPress={onOpenConversation} disabled={disabled || busy} />
+                    <TrailingButton
+                      variant="dark"
+                      icon="waveform"
+                      iconColor={LB.paper}
+                      onPress={onOpenConversation}
+                      disabled={disabled || busy}
+                      label="Sprachgespräch starten"
+                    />
                   ) : null}
                 </>
               )}
@@ -176,55 +199,40 @@ export function AgentComposer({
 
 // ── Trailing buttons ──────────────────────────────────────────────────────
 
-function MicButton({ onPress, disabled }: { onPress: () => void; disabled: boolean }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      hitSlop={8}
-      style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed, disabled && styles.dim]}
-      accessibilityRole="button"
-      accessibilityLabel="Sprachnachricht aufnehmen"
-    >
-      <Icon name="mic" size={22} color={LB.ink2} />
-    </Pressable>
-  );
-}
+type TrailingVariant = 'primary' | 'dark' | 'ghost';
 
-function ConversationButton({ onPress, disabled }: { onPress: () => void; disabled: boolean }) {
+function TrailingButton({
+  variant,
+  icon,
+  iconColor,
+  onPress,
+  disabled,
+  label,
+}: {
+  variant: TrailingVariant;
+  icon: 'arrow-up' | 'mic' | 'waveform';
+  iconColor: string;
+  onPress: () => void;
+  disabled: boolean;
+  label: string;
+}) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       hitSlop={8}
       style={({ pressed }) => [
-        styles.conversationBtn,
-        pressed && styles.pressed,
-        disabled && styles.dim,
-      ]}
-      accessibilityRole="button"
-      accessibilityLabel="Sprachgespräch starten"
-    >
-      <Icon name="waveform" size={20} color={LB.ink} />
-    </Pressable>
-  );
-}
-
-function SendButton({ onPress, disabled }: { onPress: () => void; disabled: boolean }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      hitSlop={8}
-      style={({ pressed }) => [
-        styles.sendBtn,
+        styles.trailingBtn,
+        variant === 'primary' && styles.trailingPrimary,
+        variant === 'dark' && styles.trailingDark,
+        variant === 'ghost' && styles.trailingGhost,
         disabled && styles.dim,
         pressed && !disabled && styles.pressed,
       ]}
       accessibilityRole="button"
-      accessibilityLabel="Antwort absenden"
+      accessibilityLabel={label}
     >
-      <Icon name="arrow-up" size={20} color={LB.paper} />
+      <Icon name={icon} size={20} color={iconColor} />
     </Pressable>
   );
 }
@@ -248,16 +256,21 @@ function RecordingBar({
         onPress={onCancel}
         disabled={uploading}
         hitSlop={8}
-        style={({ pressed }) => [styles.cancelBtn, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.recordingSideBtn,
+          styles.recordingCancel,
+          pressed && !uploading && styles.pressed,
+          uploading && styles.dim,
+        ]}
         accessibilityRole="button"
         accessibilityLabel="Aufnahme abbrechen"
       >
         <Icon name="close" size={20} color={LB.ink2} />
       </Pressable>
-      <View style={styles.waveformWrap}>
+      <View style={styles.waveformPill}>
         <View style={styles.statusRow}>
           <View style={styles.recordingDot} />
-          <Text style={styles.statusText}>{uploading ? 'Verstehe …' : 'Hört zu …'}</Text>
+          <Text style={styles.statusText}>{uploading ? 'Verstehe …' : 'Hört zu'}</Text>
         </View>
         <Waveform level={level} />
       </View>
@@ -265,7 +278,11 @@ function RecordingBar({
         onPress={onStop}
         disabled={uploading}
         hitSlop={8}
-        style={({ pressed }) => [styles.confirmBtn, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.recordingSideBtn,
+          styles.recordingConfirm,
+          pressed && !uploading && styles.pressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel="Aufnahme stoppen und übernehmen"
       >
@@ -280,22 +297,26 @@ function RecordingBar({
 }
 
 function Waveform({ level }: { level: number }) {
+  // Stable per-bar random phases so the waveform looks alive but not
+  // jittery on every re-render.
   const phasesRef = useRef<number[]>(Array.from({ length: WAVEFORM_BARS }, () => Math.random()));
   return (
     <View style={styles.waveform}>
       {phasesRef.current.map((p, i) => {
         const distanceFromCentre = Math.abs(i - WAVEFORM_BARS / 2) / (WAVEFORM_BARS / 2);
-        const amp = level * (1 - distanceFromCentre * 0.3) + 0.05;
-        const height = 6 + Math.min(28, Math.max(2, amp * 80 * (0.6 + p * 0.8)));
+        // Centre bars get a small amplitude boost so the wave looks
+        // shaped instead of uniformly noisy.
+        const amp = level * (1 - distanceFromCentre * 0.25) + 0.04;
+        const height = 4 + Math.min(26, Math.max(2, amp * 70 * (0.65 + p * 0.7)));
         return (
           <View
             key={i}
             style={{
-              width: 3,
+              width: 2,
               height,
-              borderRadius: 1.5,
+              borderRadius: 1,
               backgroundColor: LB.primary,
-              opacity: 0.8 + p * 0.2,
+              opacity: 0.85 + p * 0.15,
             }}
           />
         );
@@ -305,6 +326,9 @@ function Waveform({ level }: { level: number }) {
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────
+
+const TRAILING_SIZE = 42;
+const SIDE_SIZE = 46;
 
 const styles = StyleSheet.create({
   outer: {
@@ -321,95 +345,103 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingHorizontal: 8,
   },
-  inputWrap: {
+
+  // ── Idle: rounded pill containing input + trailing buttons ──
+  inputPill: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     backgroundColor: LB.bg,
-    borderRadius: 26,
-    paddingLeft: 18,
+    borderRadius: 28,
+    paddingLeft: 20,
     paddingRight: 6,
     paddingVertical: 6,
-    minHeight: 52,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingRight: 6,
-    color: LB.ink,
-    fontSize: 16,
-    lineHeight: 22,
-    // Roughly 3 lines * 22 lineHeight + a little padding.
-    maxHeight: 72,
-  },
-  trailingButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingBottom: 2,
-  },
-  iconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  conversationBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: LB.paper,
-    // Soft ring so the white pill stands out against the bg-tinted input
+    minHeight: 56,
+    // Subtle hairline so the pill reads even on a light background.
     borderWidth: 1,
     borderColor: LB.hairline,
   },
-  sendBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  input: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingRight: 8,
+    color: LB.ink,
+    fontSize: 16,
+    lineHeight: 22,
+    // Roughly 3 lines (22 × 3 + slack); after that the input scrolls.
+    maxHeight: 88,
+  },
+  trailing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingBottom: 1,
+  },
+  trailingBtn: {
+    width: TRAILING_SIZE,
+    height: TRAILING_SIZE,
+    borderRadius: TRAILING_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  trailingPrimary: {
     backgroundColor: LB.primary,
   },
-  pressed: { opacity: 0.7 },
+  trailingDark: {
+    backgroundColor: LB.ink,
+  },
+  trailingGhost: {
+    backgroundColor: 'transparent',
+  },
+  pressed: { opacity: 0.6 },
   dim: { opacity: 0.35 },
-  // Recording bar
+
+  // ── Recording state — three slots, fills the width ──
   recordingBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 4,
   },
-  cancelBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: LB.bg,
+  recordingSideBtn: {
+    width: SIDE_SIZE,
+    height: SIDE_SIZE,
+    borderRadius: SIDE_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  waveformWrap: {
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 22,
+  recordingCancel: {
     backgroundColor: LB.bg,
-    minHeight: 44,
-    justifyContent: 'center',
-    gap: 4,
+    borderWidth: 1,
+    borderColor: LB.hairline,
   },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  recordingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LB.danger },
-  statusText: { fontSize: 12, color: LB.ink2 },
-  waveform: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 30 },
-  confirmBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  recordingConfirm: {
     backgroundColor: LB.primary,
+  },
+  waveformPill: {
+    flex: 1,
+    height: SIDE_SIZE,
+    borderRadius: SIDE_SIZE / 2,
+    backgroundColor: LB.bg,
+    borderWidth: 1,
+    borderColor: LB.hairline,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 12,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 80,
+  },
+  recordingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LB.danger },
+  statusText: { fontSize: 13, color: LB.ink2, fontWeight: '500' },
+  waveform: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 28,
   },
 });
