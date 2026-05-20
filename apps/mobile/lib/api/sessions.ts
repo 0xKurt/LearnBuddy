@@ -1,42 +1,16 @@
-// Session API helpers. Doc 04 §sessions + §attempts.
+// Session-related API helpers. Most of the legacy quiz-style session
+// surface (startSession, finishSession, the SessionStart schema) was
+// removed when the chat agent became the only conversational tutor —
+// see apps/mobile/lib/api/agent.ts for `createAgentSession`,
+// `streamAgentTurn`, `finishAgentSession`.
+//
+// What remains here is read-only or read-only-ish:
+//   - `getSessionSummary` for the result screen.
+//   - `explainTopic` for the "Erklär mir das" modal.
 
 import { z } from 'zod';
-import { Item } from '@learnbuddy/shared-types';
 
-import { api, newIdempotencyKey } from './client.js';
-
-export const SessionStart = z.object({
-  session_id: z.string().uuid(),
-  items: z.array(Item),
-  // Phase C2 opener — references the material from the last episode,
-  // null when there's no prior episode. The server may also omit the
-  // field on older builds; treat undefined as null.
-  opener: z.string().nullable().optional(),
-});
-export type SessionStart = z.infer<typeof SessionStart>;
-
-export async function startSession(
-  learnerId: string,
-  input: {
-    subject_id?: string | null;
-    folder_id?: string | null;
-    material_id?: string | null;
-    test_mode?: boolean;
-    max_items?: number;
-  },
-): Promise<SessionStart> {
-  return api('/sessions', {
-    method: 'POST',
-    body: input,
-    schema: SessionStart,
-    learnerId,
-    idempotencyKey: newIdempotencyKey(),
-  });
-}
-
-export async function finishSession(learnerId: string, sessionId: string): Promise<void> {
-  await api(`/sessions/${sessionId}/finish`, { method: 'PATCH', learnerId });
-}
+import { api } from './client.js';
 
 const SessionSummary = z.object({
   session_id: z.string().uuid(),

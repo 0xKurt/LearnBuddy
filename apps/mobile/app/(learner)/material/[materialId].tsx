@@ -91,8 +91,8 @@ export default function MaterialScreen() {
   const practise = () => {
     if (!learnerId) return;
     router.push({
-      pathname: '/(learner)/session/[sessionId]',
-      params: { sessionId: `m-${materialId}-${Date.now()}`, learnerId, materialId },
+      pathname: '/(learner)/chat/[sessionId]',
+      params: { sessionId: 'new', materialId },
     });
   };
 

@@ -65,8 +65,8 @@ export default function PracticeHubScreen() {
   const startSubject = (s: SubjectListItem) => {
     if (!learnerId) return;
     router.push({
-      pathname: '/(learner)/session/[sessionId]',
-      params: { sessionId: `s-${s.id}-${Date.now()}`, learnerId, subjectId: s.id },
+      pathname: '/(learner)/chat/[sessionId]',
+      params: { sessionId: 'new', subjectId: s.id },
     });
   };
 
@@ -117,11 +117,9 @@ export default function PracticeHubScreen() {
                   full
                   onPress={() =>
                     router.push({
-                      pathname: '/(learner)/session/[sessionId]',
+                      pathname: '/(learner)/chat/[sessionId]',
                       params: {
                         sessionId: pending.session_id,
-                        resumeSessionId: pending.session_id,
-                        learnerId: pending.learner_id,
                         testMode: String(pending.test_mode),
                       },
                     })

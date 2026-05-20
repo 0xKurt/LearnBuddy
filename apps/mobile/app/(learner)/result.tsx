@@ -175,8 +175,8 @@ export default function ResultScreen() {
               // instead of dumping the learner back at a picker.
               if (learnerId) {
                 router.replace({
-                  pathname: '/(learner)/session/[sessionId]',
-                  params: { sessionId: `again-${Date.now()}`, learnerId },
+                  pathname: '/(learner)/chat/[sessionId]',
+                  params: { sessionId: 'new' },
                 });
               } else {
                 router.replace('/(learner)/practice');

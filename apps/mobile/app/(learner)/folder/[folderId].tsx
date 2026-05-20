@@ -25,7 +25,6 @@ import {
   Icon,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
-import { newIdempotencyKey } from '../../../lib/api/client.js';
 import { listFolders } from '../../../lib/api/folders.js';
 import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import {
@@ -277,14 +276,8 @@ export default function FolderScreen() {
             variant="ghost"
             onPress={() =>
               router.push({
-                pathname: '/(learner)/session/[sessionId]',
-                params: {
-                  sessionId: newIdempotencyKey(),
-                  learnerId,
-                  subjectId,
-                  folderId,
-                  testMode: 'true',
-                },
+                pathname: '/(learner)/chat/[sessionId]',
+                params: { sessionId: 'new', subjectId, folderId, testMode: 'true' },
               })
             }
           >
@@ -315,8 +308,8 @@ export default function FolderScreen() {
               onPress={() => {
                 if (readyMaterials.length > 0 && learnerId) {
                   router.push({
-                    pathname: '/(learner)/session/[sessionId]',
-                    params: { sessionId: newIdempotencyKey(), learnerId, subjectId, folderId },
+                    pathname: '/(learner)/chat/[sessionId]',
+                    params: { sessionId: 'new', subjectId, folderId },
                   });
                 }
               }}
