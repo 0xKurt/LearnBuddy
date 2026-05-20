@@ -1,0 +1,14 @@
+{
+  "pill": "Explícamelo",
+  "open": "Abrir explicación",
+  "title": "Explícamelo",
+  "subtitle": "¿Qué quieres saber?",
+  "tabs": {
+    "question": "¿Qué pide la pregunta?",
+    "concept": "Explica el concepto"
+  },
+  "loading": "Un momento …",
+  "error": "No ha salido bien. Vuelve a intentarlo enseguida.",
+  "hint": "Toca una pestaña y te lo explico.",
+  "close": "Cerrar"
+}

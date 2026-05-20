@@ -2,8 +2,8 @@
 // No pending counter. No "must do" copy.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
@@ -37,11 +37,6 @@ import {
 } from '../../lib/api/subjects.js';
 import { useFirstTime } from '../../lib/onboarding/coach.js';
 import { scheduleTestDateReminders } from '../../lib/notifications.js';
-import {
-  clearPendingSession,
-  loadPendingSession,
-  type PendingSession,
-} from '../../lib/session/pending.js';
 import { LB } from '../../lib/theme/colors.js';
 
 type SubjectKindKey =
@@ -140,25 +135,6 @@ export default function HomeScreen() {
   const lastSessionAt = scheduleQuery.data?.last_session_at ?? null;
   const streakCoach = useFirstTime('streak', { enabled: streak > 0 });
 
-  // Durable pending pointer (survives a full app restart). Reloaded on every
-  // focus so it appears right after the learner leaves a session.
-  const [pendingSession, setPending] = useState<PendingSession | null>(null);
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      void loadPendingSession().then((p) => {
-        if (alive) setPending(p);
-      });
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
-  const dismissResume = useCallback(() => {
-    void clearPendingSession();
-    setPending(null);
-  }, []);
-
   // Sync local test-date notifications whenever schedule data changes.
   const notifKeyRef = useRef<string | null>(null);
   useEffect(() => {
@@ -252,47 +228,6 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>{t('re_entry')}</Text>
-          </View>
-        )}
-
-        {/* Resume banner — shown when the user navigated away mid-session */}
-        {pendingSession && (
-          <View
-            style={{
-              backgroundColor: LB.lavender,
-              borderRadius: 16,
-              padding: 16,
-              marginBottom: 16,
-              gap: 10,
-            }}
-          >
-            <Text style={{ fontSize: 14, color: LB.ink, fontWeight: '500', lineHeight: 20 }}>
-              {t('resume_banner')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Btn
-                  size="sm"
-                  full
-                  onPress={() => {
-                    router.push({
-                      pathname: '/(learner)/chat/[sessionId]',
-                      params: {
-                        sessionId: pendingSession.session_id,
-                        testMode: String(pendingSession.test_mode),
-                      },
-                    });
-                  }}
-                >
-                  {t('resume_yes')}
-                </Btn>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Btn size="sm" full variant="ghost" onPress={dismissResume}>
-                  {t('resume_no')}
-                </Btn>
-              </View>
-            </View>
           </View>
         )}
 

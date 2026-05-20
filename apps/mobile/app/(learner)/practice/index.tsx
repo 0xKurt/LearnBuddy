@@ -4,8 +4,7 @@
 // it says: continue an open conversation, or pick a subject and start one.
 
 import { useQuery } from '@tanstack/react-query';
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,11 +12,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Btn, Card, EmptyState, LoadingState, SubjectGlyph } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
 import { listSubjects, type SubjectListItem } from '../../../lib/api/subjects.js';
-import {
-  clearPendingSession,
-  loadPendingSession,
-  type PendingSession,
-} from '../../../lib/session/pending.js';
 import { LB } from '../../../lib/theme/colors.js';
 
 function glyphForKind(kind: string): string {
@@ -46,19 +40,6 @@ export default function PracticeHubScreen() {
     queryFn: () => listSubjects(learnerId as string),
     enabled: !!learnerId,
   });
-
-  const [pending, setPending] = useState<PendingSession | null>(null);
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      void loadPendingSession().then((p) => {
-        if (alive) setPending(p);
-      });
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
 
   const practisable = (subjectsQuery.data ?? []).filter((s) => s.material_count > 0);
 
@@ -93,57 +74,6 @@ export default function PracticeHubScreen() {
         >
           {t('hub.title')}
         </Text>
-
-        {pending && (
-          <View
-            style={{
-              backgroundColor: LB.lavender,
-              borderRadius: 16,
-              padding: 16,
-              marginBottom: 18,
-              gap: 10,
-            }}
-          >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: LB.ink }}>
-              {t('hub.resume_title')}
-            </Text>
-            <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
-              {t('hub.resume_body')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Btn
-                  size="sm"
-                  full
-                  onPress={() =>
-                    router.push({
-                      pathname: '/(learner)/chat/[sessionId]',
-                      params: {
-                        sessionId: pending.session_id,
-                        testMode: String(pending.test_mode),
-                      },
-                    })
-                  }
-                >
-                  {t('hub.resume_yes')}
-                </Btn>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Btn
-                  size="sm"
-                  full
-                  variant="ghost"
-                  onPress={() => {
-                    void clearPendingSession();
-                    setPending(null);
-                  }}
-                >
-                  {t('hub.resume_no')}
-                </Btn>
-              </View>
-            </View>
-          </View>
-        )}
 
         {practisable.length > 0 ? (
           <>

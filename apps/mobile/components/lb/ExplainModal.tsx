@@ -46,7 +46,7 @@ type Props = {
 };
 
 export function ExplainModal({ visible, onClose, learnerId, itemId, topic, context }: Props) {
-  const { t } = useTranslation('session');
+  const { t } = useTranslation('explain');
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<ExplainStyle>('simpler');
   const [loading, setLoading] = useState<boolean>(false);
@@ -81,7 +81,7 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
       <Pressable
         onPress={handleClose}
         accessibilityRole="button"
-        accessibilityLabel={t('explain.close')}
+        accessibilityLabel={t('close')}
         style={{ flex: 1 }}
       >
         <View
@@ -124,10 +124,10 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
                   marginBottom: 6,
                 }}
               >
-                {t('explain.title')}
+                {t('title')}
               </Text>
               <Text style={{ fontSize: 13, color: LB.ink2, marginBottom: 16, lineHeight: 18 }}>
-                {t('explain.subtitle')}
+                {t('subtitle')}
               </Text>
 
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
@@ -174,7 +174,7 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
                   <View style={{ alignItems: 'center', paddingVertical: 28 }}>
                     <ActivityIndicator color={LB.ink2} />
                     <Text style={{ fontSize: 12, color: LB.ink2, marginTop: 10 }}>
-                      {t('explain.loading')}
+                      {t('loading')}
                     </Text>
                   </View>
                 )}
@@ -189,7 +189,7 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
                     }}
                   >
                     <Text style={{ fontSize: 13, color: LB.danger, lineHeight: 19 }}>
-                      {t('explain.error')}
+                      {t('error')}
                     </Text>
                   </View>
                 )}
@@ -201,14 +201,14 @@ export function ExplainModal({ visible, onClose, learnerId, itemId, topic, conte
                 {!text && !loading && !error && (
                   <View style={{ paddingVertical: 18 }}>
                     <Text style={{ fontSize: 13, color: LB.ink2, lineHeight: 19 }}>
-                      {t('explain.hint')}
+                      {t('hint')}
                     </Text>
                   </View>
                 )}
               </View>
 
               <Btn full size="lg" variant="outline" onPress={handleClose}>
-                {t('explain.close')}
+                {t('close')}
               </Btn>
             </View>
           </Pressable>

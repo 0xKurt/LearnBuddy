@@ -1,0 +1,14 @@
+{
+  "pill": "Erklär mir das",
+  "open": "Erklärung öffnen",
+  "title": "Erklär mir das",
+  "subtitle": "Was möchtest du wissen?",
+  "tabs": {
+    "question": "Was bedeutet die Frage?",
+    "concept": "Erklär das Konzept"
+  },
+  "loading": "Einen Moment …",
+  "error": "Das hat gerade nicht geklappt. Probier es gleich nochmal.",
+  "hint": "Tippe eine der beiden Optionen oben an.",
+  "close": "Schließen"
+}

@@ -1,0 +1,14 @@
+{
+  "pill": "Spiegamelo",
+  "open": "Apri spiegazione",
+  "title": "Spiegamelo",
+  "subtitle": "Cosa vuoi sapere?",
+  "tabs": {
+    "question": "Cosa chiede la domanda?",
+    "concept": "Spiega il concetto"
+  },
+  "loading": "Un momento …",
+  "error": "Non è andata. Riprova subito.",
+  "hint": "Tocca una scheda e te lo spiego.",
+  "close": "Chiudi"
+}

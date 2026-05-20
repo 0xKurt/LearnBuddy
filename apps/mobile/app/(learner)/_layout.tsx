@@ -14,7 +14,7 @@ import { LB } from '../../lib/theme/colors.js';
 
 function segmentToNavKey(seg: string | undefined): NavKey {
   if (seg === 'capture') return 'camera';
-  if (seg === 'session' || seg === 'practice') return 'practice';
+  if (seg === 'practice') return 'practice';
   return 'home';
 }
 
@@ -23,13 +23,14 @@ export default function LearnerLayout() {
   const segments = useSegments();
   const tail = segments[segments.length - 1];
   const active = segmentToNavKey(tail);
-  // The session (chat) and capture (camera) are focused, full-screen flows —
-  // the global tab bar would be clutter and an escape hatch that bypasses
-  // their own exit affordances. Cast via string[] because expo-router types
-  // useSegments() as a discriminated tuple union where .includes() rejects
-  // string literals not present in every branch.
+  // The chat (tutoring session) and capture (camera) are focused,
+  // full-screen flows — the global tab bar would be clutter and an
+  // escape hatch that bypasses their own exit affordances. Cast via
+  // string[] because expo-router types useSegments() as a discriminated
+  // tuple union where .includes() rejects string literals not present
+  // in every branch.
   const segs = segments as string[];
-  const hideNav = segs.includes('session') || segs.includes('chat') || segs.includes('capture');
+  const hideNav = segs.includes('chat') || segs.includes('capture');
 
   useHierarchicalBack();
 
