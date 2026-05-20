@@ -1,18 +1,22 @@
 // Voice recording hook for the agent chat composer.
 //
-// Wraps expo-audio's recorder + provides a single boolean state +
-// start/stop/cancel. On stop, returns base64-encoded audio so the
-// caller can POST it to the agent route as `audio_base64`.
+// Wraps expo-audio's recorder + exposes:
+//   - boolean `recording` state
+//   - live `level` in 0..1 (smoothed amplitude for the UI waveform)
+//   - VAD: when configured with onSilence(), auto-fires the callback
+//     after `silenceMs` of below-threshold audio (after a minimum
+//     speech time so the mic doesn't auto-stop the instant you tap it).
 //
-// MVP scope: tap to start, tap to stop. No VAD. No live transcript.
-// Mic permission handled lazily (request on first start).
+// On stop(): returns base64-encoded audio + mime so the caller can
+// post it to the agent route as `audio_base64`.
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  useAudioRecorder,
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
 } from 'expo-audio';
 import { Platform } from 'react-native';
 
@@ -22,11 +26,71 @@ export type VoiceRecording = {
   durationMs: number;
 };
 
-export function useVoiceRecorder() {
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+export type UseVoiceRecorderOptions = {
+  /** Fire when VAD detects sustained silence. The caller is responsible
+   *  for invoking `stop()` and posting the audio — the hook does NOT
+   *  auto-stop, because we want the parent to coordinate the UI
+   *  transition (e.g. show "Submitting…" before the recording dies). */
+  onSilence?: () => void;
+  /** Milliseconds of sustained below-threshold audio that triggers
+   *  onSilence. Default 1800ms (≈ ChatGPT Voice mode). */
+  silenceMs?: number;
+  /** Minimum speech time before VAD can fire — prevents auto-stop the
+   *  instant the user taps the mic. Default 800ms. */
+  minSpeechMs?: number;
+  /** dBFS threshold under which audio counts as silence. expo-audio
+   *  reports a roughly -160…0 range. -42 is a reasonable speech
+   *  threshold for handheld mics. */
+  silenceThresholdDb?: number;
+};
+
+export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
+  const { onSilence, silenceMs = 1800, minSpeechMs = 800, silenceThresholdDb = -42 } = options;
+
+  // HIGH_QUALITY preset doesn't enable metering by default. Spread it
+  // and turn the flag on — without it `state.metering` stays undefined.
+  const recorder = useAudioRecorder({
+    ...RecordingPresets.HIGH_QUALITY,
+    isMeteringEnabled: true,
+  });
+  // Poll the recorder ~10×/s for metering + isRecording. expo-audio
+  // emits the metering value in dBFS (negative; 0 is loudest).
+  const state = useAudioRecorderState(recorder, 100);
+
   const [recording, setRecording] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [level, setLevel] = useState(0);
+
   const startedAtRef = useRef<number>(0);
+  // Tracks when the last loud sample arrived. We measure the gap
+  // between now and lastLoudRef to detect sustained silence.
+  const lastLoudRef = useRef<number>(0);
+  const firedOnSilenceRef = useRef<boolean>(false);
+
+  // Translate dBFS to a smoothed 0..1 amplitude for the UI bars.
+  // ‑60 dBFS ≈ ambient room, 0 dBFS = peak. Map [-60, 0] → [0, 1].
+  useEffect(() => {
+    if (!recording) {
+      setLevel(0);
+      return;
+    }
+    const meter = state.metering;
+    if (typeof meter !== 'number') return;
+    const norm = Math.max(0, Math.min(1, (meter + 60) / 60));
+    // Light low-pass so the bars don't strobe.
+    setLevel((prev) => prev * 0.6 + norm * 0.4);
+
+    const now = Date.now();
+    if (meter > silenceThresholdDb) lastLoudRef.current = now;
+
+    // VAD check.
+    if (!onSilence || firedOnSilenceRef.current) return;
+    if (now - startedAtRef.current < minSpeechMs) return;
+    if (now - lastLoudRef.current >= silenceMs) {
+      firedOnSilenceRef.current = true;
+      onSilence();
+    }
+  }, [state.metering, recording, onSilence, silenceMs, minSpeechMs, silenceThresholdDb]);
 
   const start = useCallback(async (): Promise<boolean> => {
     const perm = await requestRecordingPermissionsAsync();
@@ -41,6 +105,8 @@ export function useVoiceRecorder() {
     });
     await recorder.prepareToRecordAsync();
     startedAtRef.current = Date.now();
+    lastLoudRef.current = startedAtRef.current;
+    firedOnSilenceRef.current = false;
     recorder.record();
     setRecording(true);
     return true;
@@ -78,7 +144,7 @@ export function useVoiceRecorder() {
     }
   }, [recorder, recording]);
 
-  return { recording, permissionDenied, start, stop, cancel };
+  return { recording, permissionDenied, level, start, stop, cancel };
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -88,7 +154,6 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   for (let i = 0; i < bytes.length; i += CHUNK) {
     binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
   }
-  // RN's btoa polyfill is present via the URL polyfill chain in Expo.
   if (typeof btoa === 'function') return btoa(binary);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buf = (globalThis as any).Buffer;

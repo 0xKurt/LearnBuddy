@@ -21,6 +21,7 @@ import {
 import { Btn } from '../../../components/lb/Btn';
 import { AgentComposer } from '../../../components/chat/AgentComposer';
 import { ChatBubble, AgentThinking } from '../../../components/chat/ChatBubble';
+import { VoiceConversationModal } from '../../../components/chat/VoiceConversationModal';
 import { LB } from '../../../lib/theme/colors';
 import type { VoiceRecording } from '../../../lib/voice/use-voice-recorder';
 
@@ -63,9 +64,16 @@ export default function AgentChatScreen() {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [voiceConvOpen, setVoiceConvOpen] = useState(false);
 
   const listRef = useRef<FlatList<Message>>(null);
   const testMode = params.testMode === 'true';
+  const accountLocale = (accountQuery.data?.learner?.ui_locale ?? 'de') as
+    | 'de'
+    | 'en'
+    | 'fr'
+    | 'es'
+    | 'it';
 
   // ── Bootstrap ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -278,7 +286,12 @@ export default function AgentChatScreen() {
       />
 
       {!sessionEnded ? (
-        <AgentComposer busy={busy} onSubmitText={onSubmitText} onSubmitVoice={onSubmitVoice} />
+        <AgentComposer
+          busy={busy}
+          onSubmitText={onSubmitText}
+          onSubmitVoice={onSubmitVoice}
+          onOpenConversation={() => setVoiceConvOpen(true)}
+        />
       ) : (
         <View style={styles.endBlock}>
           <Text style={styles.endTitle}>Session beendet</Text>
@@ -298,6 +311,37 @@ export default function AgentChatScreen() {
       )}
 
       {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+
+      {sessionId && learnerId ? (
+        <VoiceConversationModal
+          visible={voiceConvOpen}
+          sessionId={sessionId}
+          learnerId={learnerId}
+          locale={accountLocale}
+          onClose={() => setVoiceConvOpen(false)}
+          onTurnComplete={({ transcript, reply, verdict, advance }) => {
+            // Mirror the turn into the chat transcript so closing the
+            // modal drops the learner into a populated chat. The server
+            // already persisted both turns; this just updates the
+            // on-screen list optimistically.
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `lc-${Date.now()}-${Math.random()}`,
+                role: 'learner',
+                content: transcript || '🎤',
+              },
+              {
+                id: `ac-${Date.now()}-${Math.random()}`,
+                role: 'agent',
+                content: reply,
+                verdict: (verdict as Message['verdict']) ?? null,
+              },
+            ]);
+            if (advance) setCompletedItems((n) => n + 1);
+          }}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
