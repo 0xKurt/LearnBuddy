@@ -75,12 +75,6 @@ export default function AgentChatScreen() {
 
   const listRef = useRef<FlatList<Message>>(null);
   const testMode = params.testMode === 'true';
-  const accountLocale = (accountQuery.data?.learner?.ui_locale ?? 'de') as
-    | 'de'
-    | 'en'
-    | 'fr'
-    | 'es'
-    | 'it';
 
   // ── Bootstrap ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -205,15 +199,16 @@ export default function AgentChatScreen() {
   );
 
   // Conversation mode: audio in → full pedagogy turn → returns the
-  // reply text so the composer can TTS it. The SSE callback updates
-  // the chat bubbles the same way a text turn would, so the kid sees
-  // every exchange in the transcript (no modal, no overlay).
+  // reply text + audio (GCP Chirp HD) so the composer can play it.
+  // The SSE callback updates the chat bubbles the same way a text turn
+  // would, so the kid sees every exchange in the transcript (no modal,
+  // no overlay).
   const submitVoiceTurn = useCallback(
     async (audio: {
       base64: string;
       mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
-    }): Promise<string> => {
-      if (!sessionId || !learnerId || sessionEnded) return '';
+    }): Promise<{ reply: string; audio?: { base64: string; mime: string } | null }> => {
+      if (!sessionId || !learnerId || sessionEnded) return { reply: '', audio: null };
       setBusy(true);
       setThinking(true);
       const learnerMsgId = `lv-${Date.now()}`;
@@ -226,6 +221,7 @@ export default function AgentChatScreen() {
         { id: agentMsgId, role: 'agent', content: '', isStreaming: true },
       ]);
       let replyText = '';
+      let replyAudio: { base64: string; mime: string } | null = null;
       let finalVerdict: Message['verdict'] = null;
       let advanced = false;
       const ctid = newClientTurnId();
@@ -248,6 +244,7 @@ export default function AgentChatScreen() {
           case 'done':
             finalVerdict = e.verdict;
             advanced = e.advance;
+            if (e.audio) replyAudio = { base64: e.audio.base64, mime: e.audio.mime };
             if (advanced) setCompletedItems((n) => n + 1);
             if (e.session_complete) setSessionEnded(true);
             break;
@@ -285,7 +282,7 @@ export default function AgentChatScreen() {
         setSessionEnded(true);
         if (sessionId && learnerId) void finishAgentSession(learnerId, sessionId);
       }
-      return replyText;
+      return { reply: replyText, audio: replyAudio };
     },
     [sessionId, learnerId, sessionEnded, completedItems, totalItems],
   );
@@ -391,7 +388,6 @@ export default function AgentChatScreen() {
             onSubmitText={onSubmitText}
             transcribe={transcribe}
             submitVoiceTurn={submitVoiceTurn}
-            locale={accountLocale}
           />
         ) : (
           <View style={styles.endBlock}>

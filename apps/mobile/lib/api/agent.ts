@@ -49,6 +49,16 @@ const AgentSseFrame = z.discriminatedUnion('type', [
     credits_used: z.number().int().nonnegative().optional(),
     replayed: z.boolean().optional(),
     session_complete: z.boolean().optional(),
+    // GCP Chirp HD-synthesised reply audio (MP3 base64). Null when
+    // TTS failed or there's no reply text.
+    audio: z
+      .object({
+        base64: z.string(),
+        mime: z.string(),
+        durationMs: z.number().nonnegative().optional(),
+      })
+      .nullable()
+      .optional(),
   }),
   z.object({ type: z.literal('error'), code: z.string(), message: z.string() }),
 ]);

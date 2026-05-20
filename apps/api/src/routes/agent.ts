@@ -145,32 +145,33 @@ agentRoutes.post(
   rateLimit({ key: 'agent_transcribe', per_hour: 600 }),
   zValidator('json', TranscribeBody),
   async (c) => {
-    const { supabase, llm } = getDeps(c);
+    const { supabase, stt } = getDeps(c);
     const learner_id = c.get('learner_id');
     if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
     const body = c.req.valid('json');
 
+    // Pull learner's UI locale as a HINT only — chirp_2 still auto-
+    // detects, so a German learner answering in English on an English
+    // vocab item still gets transcribed correctly.
     const learnerRow = await supabase
       .from('learners')
       .select('ui_locale')
       .eq('id', learner_id)
       .maybeSingle();
-    const locale = ((learnerRow.data as { ui_locale: string | null } | null)?.ui_locale ??
-      'de') as Locale;
+    const preferredLocale =
+      ((learnerRow.data as { ui_locale: string | null } | null)?.ui_locale as Locale | null) ??
+      null;
 
-    try {
-      const res = await llm.transcribeAudio({
-        audioBase64: body.audio_base64,
-        mimeType: body.audio_mime,
-        locale,
-      });
-      return c.json({ text: res.text });
-    } catch (err) {
-      throw new ApiError(
-        'evaluation_failed',
-        `Transcribe failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+    const res = await stt.recognize({
+      audioBase64: body.audio_base64,
+      mime: body.audio_mime,
+      preferredLocale,
+    });
+    return c.json({
+      text: res.text,
+      detected_locale: res.detectedLocale,
+      confidence: res.confidence,
+    });
   },
 );
 
@@ -188,7 +189,7 @@ agentRoutes.post(
   rateLimit({ key: 'agent_turn', per_hour: 600 }),
   zValidator('json', TurnBody),
   async (c) => {
-    const { supabase, llm, now } = getDeps(c);
+    const { supabase, llm, stt, tts, now } = getDeps(c);
     const learner_id = c.get('learner_id');
     if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
     const session_id = c.req.param('sessionId');
@@ -354,19 +355,26 @@ agentRoutes.post(
         } | null;
         const locale = ((learner?.ui_locale ?? 'de') as Locale) ?? ('de' as Locale);
 
-        // Voice transcription if audio supplied.
+        // Voice transcription if audio supplied. GCP Speech-to-Text v2
+        // chirp_2 with multilingual auto-detect: the German UI locale is
+        // a hint only, the learner can answer in any of the supported
+        // languages and it'll still come through (key feature for a
+        // language-learning app).
         let learnerText = (body.text ?? '').trim();
         if (!learnerText && body.audio_base64) {
-          const transcript = await llm.transcribeAudio({
+          const transcript = await stt.recognize({
             audioBase64: body.audio_base64,
-            mimeType: body.audio_mime ?? 'audio/m4a',
-            locale,
+            mime: body.audio_mime ?? 'audio/m4a',
+            preferredLocale: locale,
           });
           learnerText = transcript.text.trim();
-          await send({ type: 'transcript', text: learnerText });
+          if (learnerText) await send({ type: 'transcript', text: learnerText });
         }
         if (!learnerText) {
-          await send({ type: 'error', code: 'validation_failed', message: 'empty message' });
+          // Empty: either pure silence, hallucination filtered, or noise.
+          // We DON'T fail the turn — just signal end-of-stream gracefully
+          // so the client can re-open the mic without a scary error.
+          await send({ type: 'error', code: 'silent', message: 'no speech detected' });
           return;
         }
 
@@ -520,6 +528,31 @@ agentRoutes.post(
           });
         }
 
+        // Synthesise the reply via GCP TTS (Chirp HD voice) so the
+        // mobile can play it back without expo-speech's robotic voice.
+        // Slightly elevated rate (1.18) reads as natural for school-age
+        // learners. Fire-and-forget — if TTS fails we still send the
+        // done event without audio and the mobile falls back silently.
+        let ttsAudio: { base64: string; mime: string; durationMs: number } | null = null;
+        if (parsed.reply) {
+          try {
+            const synth = await tts.synthesize({
+              text: parsed.reply,
+              locale,
+              rate: 1.18,
+            });
+            ttsAudio = {
+              base64: synth.audioBase64,
+              mime: synth.mime,
+              durationMs: synth.durationMs,
+            };
+          } catch (err) {
+            console.warn(
+              `[agent] TTS synthesize failed: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+
         await send({
           type: 'done',
           verdict: parsed.verdict,
@@ -533,6 +566,7 @@ agentRoutes.post(
           prompt_version: agentResult.usage.prompt_version,
           model: agentResult.usage.model,
           replayed: false,
+          audio: ttsAudio,
         });
       } catch (err) {
         try {

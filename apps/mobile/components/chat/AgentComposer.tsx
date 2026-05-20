@@ -28,10 +28,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import * as Speech from 'expo-speech';
 
 import { Icon } from '../lb/Icon';
 import { LB } from '../../lib/theme/colors';
+import { playTtsAudio, type TtsPlayHandle } from '../../lib/voice/play-tts';
 import { useVoiceRecorder } from '../../lib/voice/use-voice-recorder';
 
 const WAVEFORM_BARS = 30;
@@ -54,33 +54,17 @@ export type AgentComposerProps = {
     base64: string;
     mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
   }) => Promise<string>;
-  /** Conversation mode: submit audio as a learner turn and return the
-   *  agent's reply text. The parent owns the SSE stream + chat bubble
-   *  updates; the composer just plays TTS on the returned text and
-   *  re-opens the mic when speech ends. Return '' to skip TTS. */
+  /** Conversation mode: submit audio as a learner turn. Returns the
+   *  agent's reply text PLUS the synthesised TTS audio (base64 + mime)
+   *  that came back from the server. Parent owns the SSE stream + chat
+   *  bubble updates; the composer plays the audio and re-opens the
+   *  mic when playback finishes. */
   submitVoiceTurn?: (audio: {
     base64: string;
     mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
-  }) => Promise<string>;
+  }) => Promise<{ reply: string; audio?: { base64: string; mime: string } | null }>;
   onSubmitText: (text: string) => void;
-  /** UI locale used for TTS voice selection. */
-  locale?: 'de' | 'en' | 'fr' | 'es' | 'it';
 };
-
-function ttsLocale(l: 'de' | 'en' | 'fr' | 'es' | 'it' | undefined): string {
-  switch (l) {
-    case 'en':
-      return 'en-US';
-    case 'fr':
-      return 'fr-FR';
-    case 'es':
-      return 'es-ES';
-    case 'it':
-      return 'it-IT';
-    default:
-      return 'de-DE';
-  }
-}
 
 export function AgentComposer({
   disabled = false,
@@ -88,7 +72,6 @@ export function AgentComposer({
   transcribe,
   submitVoiceTurn,
   onSubmitText,
-  locale,
 }: AgentComposerProps) {
   const [text, setText] = useState('');
   const [mode, setMode] = useState<Mode>('idle');
@@ -155,6 +138,7 @@ export function AgentComposer({
 
   // ── Conversation mode (auto loop) ─────────────────────────────────
   const conversationCancelledRef = useRef(false);
+  const ttsHandleRef = useRef<TtsPlayHandle | null>(null);
 
   const beginConvListen = useCallback(async () => {
     if (conversationCancelledRef.current) return;
@@ -183,39 +167,32 @@ export function AgentComposer({
       setMode('idle');
       return;
     }
-    let reply = '';
+    let turn: { reply: string; audio?: { base64: string; mime: string } | null } = {
+      reply: '',
+      audio: null,
+    };
     try {
-      reply = (await submitVoiceTurn({ base64: result.base64, mime: result.mime })).trim();
+      turn = await submitVoiceTurn({ base64: result.base64, mime: result.mime });
     } catch (err) {
       setErrorHint(err instanceof Error ? err.message : 'Antwort fehlgeschlagen');
-      // Continue the loop — let the kid try again.
       if (!conversationCancelledRef.current) void beginConvListen();
       return;
     }
     if (conversationCancelledRef.current) return;
-    if (!reply) {
-      // Nothing to speak — go straight back to listening.
+    if (!turn.audio) {
+      // Server didn't synthesise (TTS error, no reply text) — skip
+      // playback and re-open the mic.
       void beginConvListen();
       return;
     }
     setMode('conv-speaking');
-    Speech.speak(reply, {
-      language: ttsLocale(locale),
-      pitch: 1.0,
-      // 1.18 ≈ natural conversational pace; the platform default of
-      // 1.0 sounds slow and robotic to a school-aged learner.
-      rate: 1.18,
-      onDone: () => {
-        if (!conversationCancelledRef.current) void beginConvListen();
-      },
-      onStopped: () => {
-        if (!conversationCancelledRef.current) void beginConvListen();
-      },
-      onError: () => {
-        if (!conversationCancelledRef.current) void beginConvListen();
-      },
+    const handle = playTtsAudio(turn.audio.base64, turn.audio.mime);
+    ttsHandleRef.current = handle;
+    void handle.done.then(() => {
+      ttsHandleRef.current = null;
+      if (!conversationCancelledRef.current) void beginConvListen();
     });
-  }, [voice, submitVoiceTurn, locale, beginConvListen]);
+  }, [voice, submitVoiceTurn, beginConvListen]);
 
   const startConversation = useCallback(async () => {
     if (mode !== 'idle' || disabled || busy) return;
@@ -225,7 +202,8 @@ export function AgentComposer({
 
   const stopConversation = useCallback(async () => {
     conversationCancelledRef.current = true;
-    void Speech.stop();
+    ttsHandleRef.current?.stop();
+    ttsHandleRef.current = null;
     await voice.cancel();
     setMode('idle');
   }, [voice]);
@@ -234,7 +212,8 @@ export function AgentComposer({
   useEffect(() => {
     return () => {
       conversationCancelledRef.current = true;
-      void Speech.stop();
+      ttsHandleRef.current?.stop();
+      ttsHandleRef.current = null;
     };
   }, []);
 

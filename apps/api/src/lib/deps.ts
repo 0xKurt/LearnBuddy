@@ -13,6 +13,8 @@ import type { LLMGateway } from './llm/gateway.js';
 import { createLlmGateway } from './llm/factory.js';
 import type { AnonClient, ServiceClient } from './supabase.js';
 import { createAnonClient, createServiceClient } from './supabase.js';
+import { createSTTGateway, createTTSGateway } from './voice/factory.js';
+import type { STTGateway, TTSGateway } from './voice/gateway.js';
 import { loadEnv } from './env.js';
 
 export type Deps = {
@@ -23,6 +25,10 @@ export type Deps = {
   supabaseAnon: AnonClient;
   /** LLM seam — `vertex` in prod, `fake` in tests + when GCP is unconfigured. */
   llm: LLMGateway;
+  /** Speech-to-Text seam — GCP Speech v2 chirp_2 multilingual auto-detect. */
+  stt: STTGateway;
+  /** Text-to-Speech seam — GCP Chirp HD voices. */
+  tts: TTSGateway;
   /** Override the current time. Defaults to `Date.now()` in prod, fixed value in tests. */
   now: () => Date;
   /** Generate a UUID v4. Indirection lets tests assert deterministic outputs. */
@@ -50,6 +56,8 @@ export function createProdDeps(): Deps {
     supabase: createServiceClient(env),
     supabaseAnon: createAnonClient(env),
     llm: createLlmGateway(env),
+    stt: createSTTGateway(env),
+    tts: createTTSGateway(env),
     now: () => new Date(),
     uuid: () => crypto.randomUUID(),
   };

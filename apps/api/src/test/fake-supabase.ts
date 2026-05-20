@@ -24,6 +24,7 @@ import type { Deps } from '../lib/deps.js';
 import type { Env } from '../lib/env.js';
 import { __clearMaterialContextCache } from '../lib/material-context.js';
 import { FakeLlmGateway } from './fake-llm.js';
+import { FakeSTTGateway, FakeTTSGateway } from '../lib/voice/fake.js';
 
 export type FakeUser = { id: string; email: string };
 export type FakeRow = Record<string, unknown>;
@@ -369,6 +370,8 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     supabase: fake as unknown as Deps['supabase'],
     supabaseAnon: fake as unknown as Deps['supabaseAnon'],
     llm: new FakeLlmGateway(),
+    stt: new FakeSTTGateway(),
+    tts: new FakeTTSGateway(),
     now: () => new Date('2026-05-16T10:00:00Z'),
     uuid: () => `uuid-${Math.random().toString(36).slice(2, 10)}`,
     ...overrides,
