@@ -33,7 +33,6 @@ import {
   SubjectGlyph,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
-import { newIdempotencyKey } from '../../../lib/api/client.js';
 import { listFolders } from '../../../lib/api/folders.js';
 import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import {
@@ -320,10 +319,9 @@ export default function SubjectScreen() {
             variant="ghost"
             onPress={() =>
               router.push({
-                pathname: '/(learner)/session/[sessionId]',
+                pathname: '/(learner)/chat/[sessionId]',
                 params: {
-                  sessionId: newIdempotencyKey(),
-                  learnerId,
+                  sessionId: 'new',
                   subjectId,
                   testMode: 'true',
                 },
@@ -349,8 +347,8 @@ export default function SubjectScreen() {
               onPress={() => {
                 if (subject.material_count > 0 && learnerId) {
                   router.push({
-                    pathname: '/(learner)/session/[sessionId]',
-                    params: { sessionId: newIdempotencyKey(), learnerId, subjectId },
+                    pathname: '/(learner)/chat/[sessionId]',
+                    params: { sessionId: 'new', subjectId },
                   });
                 }
               }}

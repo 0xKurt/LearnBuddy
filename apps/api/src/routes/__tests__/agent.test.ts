@@ -120,9 +120,13 @@ describe('POST /agent/sessions', () => {
     expect(body.opener).toMatch(/Lena/);
     expect(body.first_question).toBe('Was ist 2 + 2?');
     const turns = s.fake.tables.get('conversation_turns') ?? [];
-    // Seeds the opener + the first question as two tutor turns.
-    expect(turns.length).toBe(2);
+    // Single seed tutor turn containing opener + first question
+    // (Gemini convention: alternating user/model — no consecutive
+    // model turns).
+    expect(turns.length).toBe(1);
     expect(turns[0]?.intent).toBe('introduce_next');
+    expect(String(turns[0]?.content)).toContain('Lena');
+    expect(String(turns[0]?.content)).toContain('Was ist 2 + 2?');
   });
 });
 

@@ -62,10 +62,12 @@ export function AgentComposer({
 
   const submitText = useCallback(() => {
     const value = text.trim();
-    if (!value || disabled || busy) return;
+    // Block while voice recording — the text input is dimmed but RN
+    // may still bubble the keyboard return action through.
+    if (!value || disabled || busy || voice.recording) return;
     onSubmitText(value);
     setText('');
-  }, [text, disabled, busy, onSubmitText]);
+  }, [text, disabled, busy, voice.recording, onSubmitText]);
 
   const toggleVoice = useCallback(async () => {
     if (disabled || busy) return;

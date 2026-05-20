@@ -276,11 +276,9 @@ export default function HomeScreen() {
                   full
                   onPress={() => {
                     router.push({
-                      pathname: '/(learner)/session/[sessionId]',
+                      pathname: '/(learner)/chat/[sessionId]',
                       params: {
                         sessionId: pendingSession.session_id,
-                        resumeSessionId: pendingSession.session_id,
-                        learnerId: pendingSession.learner_id,
                         testMode: String(pendingSession.test_mode),
                       },
                     });

@@ -20,6 +20,8 @@ import {
   parseAgentJson,
 } from '../lib/agent/index.js';
 import type { AgentItemContext, AgentThreadMessage } from '../lib/agent/types.js';
+import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
+import { reflectAndPersistSession } from '../lib/reflective/session-reflect.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import type { Locale } from '@learnbuddy/shared-types';
@@ -94,51 +96,25 @@ agentRoutes.post(
     }
     const session = insert.data as { id: string };
 
-    // Friendly opener — composed locally, no LLM. The first question is
-    // ALSO sent as a tutor turn so the chat already shows the prompt
-    // before the learner says anything.
+    // Friendly opener + first question, persisted as ONE tutor turn.
+    // We must not seed two consecutive tutor entries because Gemini's
+    // `contents` requires alternating user/model — back-to-back model
+    // turns produce flaky output. Joining them in one bubble also reads
+    // more naturally on the client.
     const firstItem = items[0]!;
     const opener = buildLocalOpener(learner?.display_name ?? null, locale);
     const firstQuestion = String(firstItem.question);
-
-    // Persist the two seed turns: opener (no item_id) + the first question.
-    const seedTurns: Array<{
-      turn_index: number;
-      role: 'tutor';
-      kind: 'feedback' | 'question';
-      content: string;
-      item_id: string | null;
-      intent: string;
-    }> = [
-      {
-        turn_index: 0,
-        role: 'tutor',
-        kind: 'feedback',
-        content: opener,
-        item_id: null,
-        intent: 'introduce_next',
-      },
-      {
-        turn_index: 1,
-        role: 'tutor',
-        kind: 'question',
-        content: firstQuestion,
-        item_id: firstItem.id as string,
-        intent: 'introduce_next',
-      },
-    ];
-    for (const t of seedTurns) {
-      await supabase.from('conversation_turns').insert({
-        session_id: session.id,
-        learner_id,
-        item_id: t.item_id,
-        turn_index: t.turn_index,
-        role: t.role,
-        kind: t.kind,
-        content: t.content,
-        intent: t.intent,
-      });
-    }
+    const seedContent = `${opener}\n\n${firstQuestion}`;
+    await supabase.from('conversation_turns').insert({
+      session_id: session.id,
+      learner_id,
+      item_id: firstItem.id as string,
+      turn_index: 0,
+      role: 'tutor',
+      kind: 'question',
+      content: seedContent,
+      intent: 'introduce_next',
+    });
 
     return c.json(
       {
@@ -205,7 +181,11 @@ agentRoutes.post(
         }
 
         // Idempotency — if this client_turn_id already produced a tutor
-        // reply, replay it instead of re-charging credits.
+        // reply, replay it instead of re-charging credits. If a prior
+        // attempt inserted the learner row but the LLM call failed
+        // (no tutor row exists), DELETE the orphan learner row and
+        // proceed as a fresh turn — otherwise the client would hang
+        // waiting for a `done` event we can't synthesize honestly.
         const dupRes = await supabase
           .from('conversation_turns')
           .select('id, turn_index')
@@ -244,8 +224,11 @@ agentRoutes.post(
               credits_used: 0,
               replayed: true,
             });
+            return;
           }
-          return;
+          // Orphan learner row — delete it and fall through. Without
+          // this the client retries forever.
+          await supabase.from('conversation_turns').delete().eq('id', dup.id);
         }
 
         // Load turns (oldest first).
@@ -467,11 +450,29 @@ agentRoutes.post(
           .single();
         const tutorTurnId = (tutorInsert.data as { id: string } | null)?.id ?? null;
 
-        // If the model decided to advance, optionally prepend the NEXT
-        // question text as its own tutor turn for clean transcript
-        // segmentation. The model already included the transition in
-        // `reply`, so we don't persist a duplicate question — the next
-        // /turn call will resolve the new currentItemId via the queue.
+        // FSRS update: every verdict advances the item_state row. The
+        // hint-aware effort signal downgrades a scaffolded `correct`
+        // to Hard so the next-due interval reflects partial mastery.
+        // Fire-and-forget — a transient DB hiccup shouldn't fail the
+        // turn the learner already got a reply for.
+        if (parsed.verdict) {
+          void updateItemState(supabase, {
+            learner_id,
+            item_id: currentItemId,
+            verdict: parsed.verdict,
+            reviewedAt: now(),
+            effort: {
+              hintsUsed: hintsGivenForItem + (parsed.hint_given ? 1 : 0),
+              priorWrongAttempts: priorWrongAttemptsOnItem,
+            },
+          }).catch((err: unknown) => {
+            console.warn(
+              `[agent] FSRS update failed for item ${currentItemId}: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          });
+        }
 
         await send({
           type: 'done',
@@ -505,7 +506,7 @@ agentRoutes.post(
 // ── Finish ────────────────────────────────────────────────────────────────
 
 agentRoutes.patch('/sessions/:sessionId/finish', async (c) => {
-  const { supabase, now } = getDeps(c);
+  const { supabase, llm, now } = getDeps(c);
   const learner_id = c.get('learner_id');
   if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
   const session_id = c.req.param('sessionId');
@@ -519,8 +520,17 @@ agentRoutes.patch('/sessions/:sessionId/finish', async (c) => {
   if (upd.error) {
     throw new ApiError('internal', 'Failed to end session', { cause: upd.error.message });
   }
-  // Reflective summary deferred — same fire-and-forget hook can be added
-  // later. Keeping this commit's surface area tight.
+  // Reflective summary — fire-and-forget. Writes a learner_episodes row
+  // + bumps recurring_misconceptions. The opener for the next session
+  // reads from this. Don't block the response on it; the LLM call can
+  // take several seconds.
+  void reflectAndPersistSession({ supabase, llm, now }, { session_id, learner_id }).catch(
+    (err: unknown) => {
+      console.warn(
+        `[agent] reflect failed for ${session_id}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    },
+  );
   return c.json({ session_id, ended: true, prompt_version: AGENT_PROMPT_VERSION });
 });
 
@@ -628,4 +638,40 @@ async function pickItems(
     throw new ApiError('internal', 'Failed to load items', { cause: items.error.message });
   }
   return ((items.data ?? []) as Array<Record<string, unknown>>).slice(0, i.max_items);
+}
+
+/** FSRS bookkeeping. Upserts the `item_states` row for (learner, item)
+ *  based on the verdict + effort signal. Best-effort: any error is
+ *  logged by the caller; the learner's turn already succeeded. */
+async function updateItemState(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  args: {
+    learner_id: string;
+    item_id: string;
+    verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
+    reviewedAt: Date;
+    effort: { hintsUsed: number; priorWrongAttempts: number };
+  },
+): Promise<void> {
+  const prevRes = await supabase
+    .from('item_states')
+    .select('*')
+    .eq('learner_id', args.learner_id)
+    .eq('item_id', args.item_id)
+    .maybeSingle();
+  const prev = (prevRes.data as ItemStateRow | null) ?? null;
+  const next = applyAttempt(prev, args.verdict, args.reviewedAt, args.effort);
+  if (prev) {
+    const upd = await supabase
+      .from('item_states')
+      .update(next)
+      .eq('learner_id', args.learner_id)
+      .eq('item_id', args.item_id);
+    if (upd.error) throw new Error(upd.error.message);
+  } else {
+    const ins = await supabase
+      .from('item_states')
+      .insert({ ...next, learner_id: args.learner_id, item_id: args.item_id });
+    if (ins.error) throw new Error(ins.error.message);
+  }
 }

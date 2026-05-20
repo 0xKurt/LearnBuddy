@@ -50,7 +50,11 @@ export default function AgentChatScreen() {
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id ?? null;
 
-  const [sessionId, setSessionId] = useState<string | null>(params.sessionId ?? null);
+  // The route segment is required by Expo Router. "new" is the sentinel
+  // for "create a fresh session"; anything else is treated as a session
+  // id to resume (resume itself is a stub for now — see Phase 3).
+  const initialSessionId = params.sessionId && params.sessionId !== 'new' ? params.sessionId : null;
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
   const [messages, setMessages] = useState<Message[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [completedItems, setCompletedItems] = useState(0);
@@ -84,9 +88,16 @@ export default function AgentChatScreen() {
         setSessionId(created.session_id);
         setTotalItems(created.items.length);
         setCompletedItems(0);
+        // Server seeds ONE tutor turn that combines opener + first
+        // question. We render it as a single bubble so the screen
+        // matches the persisted thread (and Gemini's alternating-role
+        // convention).
         setMessages([
-          { id: 'opener', role: 'agent', content: created.opener },
-          { id: 'q-0', role: 'agent', content: created.first_question },
+          {
+            id: 'opener',
+            role: 'agent',
+            content: `${created.opener}\n\n${created.first_question}`,
+          },
         ]);
       } catch (err) {
         if (!cancelled)
