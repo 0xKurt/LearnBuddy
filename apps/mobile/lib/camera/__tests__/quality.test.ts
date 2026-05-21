@@ -1,10 +1,8 @@
 // requires live verification in Claude Code session
 //
 // Unit tests for the local photo quality scorers. The mobile workspace has
-// no vitest runner yet (see Slice A3 §"PIN module unit tests" open follow-up
-// in docs/IMPLEMENTATION-PLAN.md). These tests are colocated and will run
-// the day the mobile-test-infra slice lands — they exist now so that slice
-// only has to wire the runner, not rewrite the test cases.
+// no vitest runner yet — these are colocated so that when the runner lands
+// the slice only has to wire it up, not rewrite the cases.
 
 import { describe, expect, it } from 'vitest';
 

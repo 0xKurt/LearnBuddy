@@ -116,10 +116,11 @@ whole thing against real Vertex.
 - **4.3 Token-expiry handling in voice path** — currently only the
   text/no-audio path refreshes the token on 401; verify voice path
   too.
-- **4.4 Live-verify checklist** — adapt
-  `docs/LIVE-VERIFY-LEARNER-EXPERIENCE.md` to the new agent route:
-  manual run-through of voice + text + give-up + reveal against the
-  live API + Vertex. Capture conversation traces.
+- **4.4 Live-verify checklist** — manual run-through of voice + text +
+  give-up + reveal against the live API + Vertex; capture conversation
+  traces. List the device-only paths (camera, biometric, push, voice)
+  alongside the green-on-CI paths. Land the checklist inside this doc
+  rather than spinning up a separate file.
 
 **Acceptance for Phase 4:** a session survives switching off Wi-Fi
 mid-turn (resumes when reconnected). A live trace shows verdicts +
