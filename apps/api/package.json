@@ -13,6 +13,7 @@
     "probe:vertex": "tsx scripts/probe-vertex.ts",
     "probe:stt": "tsx scripts/probe-stt.ts",
     "probe:tts": "tsx scripts/probe-tts.ts",
+    "probe:tutor": "tsx scripts/probe-tutor.ts",
     "probe:items": "tsx scripts/probe-items.ts",
     "probe:vision": "tsx scripts/probe-vision.ts",
     "probe:rescan": "tsx scripts/probe-rescan.ts"

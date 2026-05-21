@@ -13,13 +13,14 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
   AGENT_PROMPT_VERSION,
-  buildAgentSystemInstruction,
+  buildAgentSystemInstructionForVersion,
   parseAgentJson,
 } from '../lib/agent/index.js';
-import type { AgentItemContext, AgentThreadMessage } from '../lib/agent/types.js';
+import type { AgentItemContext, AgentThreadMessage, SubjectKind } from '../lib/agent/types.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { reflectAndPersistSession } from '../lib/reflective/session-reflect.js';
 import { getDeps } from '../lib/deps.js';
@@ -313,7 +314,7 @@ agentRoutes.post(
   rateLimit({ key: 'agent_turn', per_hour: 600 }),
   zValidator('json', TurnBody),
   async (c) => {
-    const { supabase, llm, stt, tts, now } = getDeps(c);
+    const { supabase, llm, stt, tts, env, now } = getDeps(c);
     const learner_id = c.get('learner_id');
     if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
     const session_id = c.req.param('sessionId');
@@ -541,6 +542,11 @@ agentRoutes.post(
           .single();
         const learnerTurnId = (learnerInsert.data as { id: string } | null)?.id ?? null;
 
+        // Subject-kind lookup for the v3 prompt's subject-specific
+        // tutoring block (math vs vocab vs history have different
+        // hint strategies).
+        const subjectKind = await lookupSubjectKind(supabase, item.material_id as string | null);
+
         // Build the agent input and call the LLM.
         const itemCtx: AgentItemContext = {
           itemId: currentItemId,
@@ -550,6 +556,7 @@ agentRoutes.post(
           answerKind: (item.answer_kind as AgentItemContext['answerKind']) ?? 'short',
           topic: (item.topic as string | null) ?? null,
           difficulty: Number(item.difficulty ?? 2),
+          subjectKind,
           mcOptions: (item.mc_options as string[] | null) ?? null,
           mcCorrectIndex: (item.mc_correct_index as number | null) ?? null,
           units: (item.units as string | null) ?? null,
@@ -572,25 +579,34 @@ agentRoutes.post(
           ? Math.max(0, Math.round((now().getTime() - sessionStartedMs) / 60_000))
           : 0;
 
-        const systemInstruction = buildAgentSystemInstruction({
-          learner: {
-            displayName: learner?.display_name ?? null,
-            gradeLevel: learner?.grade_level ?? 7,
-            locale,
-          },
-          currentItem: itemCtx,
-          materialContext,
-          hintsGivenForItem,
-          priorWrongAttemptsOnItem,
-          history,
-          learnerMessage: learnerText,
-          session: {
-            itemsTotal: queue.length,
-            itemsRemaining: Math.max(0, queue.length - itemsAnsweredCount),
-            minutesElapsed,
-            testMode: session.test_mode,
-          },
-        });
+        // Competence signal — drives v3's tone branch (cruising vs
+        // struggling). v2 ignores these fields; safe to always pass.
+        const competence = computeCompetenceSignals(allTurns);
+
+        const { instruction: systemInstruction, version: promptVersionUsed } =
+          buildAgentSystemInstructionForVersion(env.AGENT_PROMPT_VERSION_OVERRIDE, {
+            learner: {
+              displayName: learner?.display_name ?? null,
+              gradeLevel: learner?.grade_level ?? 7,
+              locale,
+            },
+            currentItem: itemCtx,
+            materialContext,
+            hintsGivenForItem,
+            priorWrongAttemptsOnItem,
+            history,
+            learnerMessage: learnerText,
+            session: {
+              itemsTotal: queue.length,
+              itemsRemaining: Math.max(0, queue.length - itemsAnsweredCount),
+              minutesElapsed,
+              testMode: session.test_mode,
+              correctRateSoFar: competence.correctRateSoFar,
+              itemsCompleted: competence.itemsCompleted,
+              currentStreak: competence.currentStreak,
+              hintsUsedTotal: competence.hintsUsedTotal,
+            },
+          });
 
         let agentResult;
         try {
@@ -700,7 +716,10 @@ agentRoutes.post(
           learner_turn_id: learnerTurnId,
           tutor_turn_id: tutorTurnId,
           credits_used: Math.max(1, Math.round(agentResult.usage.cost_usd_micros / 100)),
-          prompt_version: agentResult.usage.prompt_version,
+          // Surface the version we actually composed (v2 / v3) rather
+          // than the gateway's hardcoded label — the gateway doesn't
+          // know which composer the route picked.
+          prompt_version: promptVersionUsed,
           model: agentResult.usage.model,
           replayed: false,
           audio: ttsAudio,
@@ -804,6 +823,97 @@ function countAdvancedItems(
     if (t.role === 'tutor' && t.item_id && t.advance_after === true) advanced.add(t.item_id);
   }
   return advanced.size;
+}
+
+/** Competence signal for the v3 prompt: correct rate, streak (+
+ *  correct in a row / − wrong in a row), hints used total. Derived
+ *  from the server-recorded tutor turns (one tutor row per turn,
+ *  with verdict and hint_given set by the parser). */
+function computeCompetenceSignals(
+  turns: Array<{
+    role: string;
+    verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
+    hint_given: boolean | null;
+    advance_after: boolean | null;
+    item_id: string | null;
+    turn_index: number;
+  }>,
+): {
+  correctRateSoFar: number;
+  itemsCompleted: number;
+  currentStreak: number;
+  hintsUsedTotal: number;
+} {
+  // Per-item OUTCOME = the verdict on the LAST tutor turn that has
+  // advance_after=true. Items still in flight (no advance yet) don't
+  // count. Skipped items count as not-correct.
+  const tutorTurns = turns
+    .filter((t) => t.role === 'tutor')
+    .sort((a, b) => a.turn_index - b.turn_index);
+  const outcomes: Array<'correct' | 'wrong'> = [];
+  for (const t of tutorTurns) {
+    if (t.advance_after === true) {
+      outcomes.push(t.verdict === 'correct' ? 'correct' : 'wrong');
+    }
+  }
+  const itemsCompleted = outcomes.length;
+  const correctCount = outcomes.filter((o) => o === 'correct').length;
+  const correctRateSoFar = itemsCompleted > 0 ? correctCount / itemsCompleted : 0;
+
+  // Streak from the END of outcomes: how many of the latest same
+  // outcome in a row. + correct, − wrong.
+  let currentStreak = 0;
+  if (outcomes.length > 0) {
+    const last = outcomes[outcomes.length - 1]!;
+    for (let i = outcomes.length - 1; i >= 0; i--) {
+      if (outcomes[i] === last) currentStreak += 1;
+      else break;
+    }
+    if (last === 'wrong') currentStreak = -currentStreak;
+  }
+
+  const hintsUsedTotal = tutorTurns.filter((t) => t.hint_given === true).length;
+
+  return { correctRateSoFar, itemsCompleted, currentStreak, hintsUsedTotal };
+}
+
+/** Look up subject_kind for an item via the subjects table. Returns
+ *  'general' when the chain breaks (no material, no subject, etc) so
+ *  the v3 prompt always has a usable value. */
+async function lookupSubjectKind(
+  supabase: SupabaseClient,
+  materialId: string | null,
+): Promise<SubjectKind> {
+  if (!materialId) return 'general';
+  const mat = await supabase
+    .from('materials')
+    .select('subject_id')
+    .eq('id', materialId)
+    .maybeSingle();
+  const subjectId = (mat.data as { subject_id: string | null } | null)?.subject_id ?? null;
+  if (!subjectId) return 'general';
+  const sub = await supabase
+    .from('subjects')
+    .select('subject_kind')
+    .eq('id', subjectId)
+    .maybeSingle();
+  const kind = (sub.data as { subject_kind: string | null } | null)?.subject_kind ?? null;
+  if (!kind) return 'general';
+  const allowed: readonly string[] = [
+    'math',
+    'physics',
+    'chemistry',
+    'biology',
+    'geography',
+    'history',
+    'language_native',
+    'language_foreign',
+    'religion_ethics',
+    'art_music',
+    'general',
+    'other',
+  ];
+  return (allowed.includes(kind) ? kind : 'general') as SubjectKind;
 }
 
 // Shared item picker — reuses the same RPC the legacy /sessions route

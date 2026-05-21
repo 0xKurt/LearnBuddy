@@ -41,6 +41,10 @@ export const Env = z.object({
    *  explain). flash-lite is too weak to teach; this defaults to a stronger
    *  tier. Divergence from Doc 06 documented in ADR 0002. */
   VERTEX_TUTOR_MODEL_ID: z.string().default('gemini-2.5-flash'),
+  /** Tutor prompt version. v3 is the default (designed against
+   *  docs/tutor-research/04-failure-patterns.md); set to 'v2' to fall
+   *  back to the previous prompt without redeploying. */
+  AGENT_PROMPT_VERSION_OVERRIDE: z.enum(['v2', 'v3']).default('v3'),
   // ── Observability + ops ─────────────────────────────────────────────────
   SENTRY_DSN: z.string().url().optional(),
   SENTRY_RELEASE: z.string().optional(),

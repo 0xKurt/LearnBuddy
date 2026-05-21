@@ -28,6 +28,11 @@ const INTENTS = [
   'explain',
   'redirect',
   'break_suggest',
+  // v3 additions (see docs/tutor-research/06-new-prompt-draft.md)
+  'affective_repair',
+  'stay_for_depth',
+  'metacognitive_close',
+  'no_opt_out',
 ] as const;
 
 export function parseAgentJson(raw: unknown): AgentResponseJson {
