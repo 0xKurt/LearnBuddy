@@ -97,6 +97,12 @@ const MaterialListItem = z.object({
   created_at: z.string(),
   subject_id: z.string(),
   folder_id: z.string().nullable(),
+  /** 30-minute signed URL for the first uploaded photo. `null` while no
+   *  photos are stored yet (rare race) or for legacy rows. */
+  cover_url: z.string().nullable().default(null),
+  /** Number of non-archived items extracted from the material — what the
+   *  user actually wants to see ("12 Karten" beats "3 Seiten"). */
+  item_count: z.number().default(0),
 });
 export type MaterialListItem = z.infer<typeof MaterialListItem>;
 
@@ -117,11 +123,14 @@ export async function listMaterials(
 export async function getMaterial(
   learnerId: string,
   materialId: string,
-): Promise<Material & { items: Item[] }> {
+): Promise<Material & { items: Item[]; photo_urls: string[] }> {
   return api(`/materials/${materialId}`, {
     method: 'GET',
     schema: Material.extend({
       items: z.array(Item),
+      /** Signed URLs for every uploaded photo, ordered by position. Used
+       *  to render the photo-strip in the material-detail screen. */
+      photo_urls: z.array(z.string()).default([]),
       templates: z.array(z.unknown()).default([]),
       study_assets: z.array(z.unknown()).default([]),
     }),
@@ -142,6 +151,71 @@ export async function deleteMaterial(learnerId: string, materialId: string): Pro
   await api(`/materials/${materialId}`, {
     method: 'DELETE',
     schema: z.object({ ok: z.boolean() }),
+    learnerId,
+  });
+}
+
+const MaterialUpdateResponse = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  folder_id: z.string().nullable(),
+  subject_id: z.string(),
+});
+
+/** PATCH /materials/:id — rename and/or move to a different folder
+ *  (within the same subject). Pass `folder_id: null` to move out of any
+ *  folder back to the subject root. */
+export async function updateMaterial(
+  learnerId: string,
+  materialId: string,
+  patch: { title?: string | null; folder_id?: string | null },
+): Promise<z.infer<typeof MaterialUpdateResponse>> {
+  return api(`/materials/${materialId}`, {
+    method: 'PATCH',
+    body: patch,
+    schema: MaterialUpdateResponse,
+    learnerId,
+  });
+}
+
+const TopicSummary = z.object({
+  label: z.string(),
+  count: z.number(),
+});
+export type TopicSummary = z.infer<typeof TopicSummary>;
+
+/** GET /materials/topics — Themen-Liste mit Karten-Count pro Subject.
+ *  Topics werden case-insensitive aus items.topic gruppiert. Items ohne
+ *  topic landen in "Allgemein". */
+export async function listTopics(learnerId: string, subjectId: string): Promise<TopicSummary[]> {
+  const qs = new URLSearchParams({ subject_id: subjectId });
+  return api(`/materials/topics?${qs.toString()}`, {
+    method: 'GET',
+    schema: z.array(TopicSummary),
+    learnerId,
+  });
+}
+
+/** GET /materials/topics/:topic/items — list items for a given topic in
+ *  a subject. Used by the Thema-Detail screen to populate the inline
+ *  card list (with reveal pattern). */
+const TopicItem = z.object({
+  id: z.string(),
+  question: z.string(),
+  expected_answer: z.string(),
+  topic: z.string().nullable(),
+});
+export type TopicItem = z.infer<typeof TopicItem>;
+
+export async function listTopicItems(
+  learnerId: string,
+  subjectId: string,
+  topic: string,
+): Promise<TopicItem[]> {
+  const qs = new URLSearchParams({ subject_id: subjectId, topic });
+  return api(`/materials/topic-items?${qs.toString()}`, {
+    method: 'GET',
+    schema: z.array(TopicItem),
     learnerId,
   });
 }

@@ -188,6 +188,15 @@ export default function RootLayout() {
             return;
           }
           const data = response.notification.request.content.data;
+          // Push from the extraction worker → deep-link to the material
+          // detail screen so the user lands directly on what's now ready.
+          if (typeof data.materialId === 'string') {
+            router.push({
+              pathname: '/(learner)/material/[materialId]',
+              params: { materialId: data.materialId },
+            } as never);
+            return;
+          }
           if (typeof data.folder_id === 'string') {
             router.push({
               pathname: '/(learner)/folder/[folderId]',

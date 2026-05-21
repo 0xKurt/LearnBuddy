@@ -64,3 +64,12 @@ export const TONE_DEEP: Record<SubjectTone, string> = {
   butter: LB.butterDeep,
   rose: LB.lavenderDeep, // no rose-deep in source; reuse lavender-deep
 };
+
+/** Pick a stable pastel tone for a string key. Used to colour topic tiles
+ *  so "Bruchrechnung" always lands in the same hue across sessions. */
+export function toneFor(key: string): SubjectTone {
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) | 0;
+  const idx = Math.abs(hash) % SUBJECT_TONES.length;
+  return SUBJECT_TONES[idx]!;
+}

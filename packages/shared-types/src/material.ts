@@ -45,7 +45,7 @@ export type MaterialPhoto = z.infer<typeof MaterialPhoto>;
 export const MaterialUploadUrlRequest = z.object({
   subject_id: Uuid,
   folder_id: Uuid.nullable().optional(),
-  photo_count: z.number().int().min(1).max(20),
+  photo_count: z.number().int().min(1).max(10),
   mime_type: z.string().default('image/jpeg'),
 });
 export type MaterialUploadUrlRequest = z.infer<typeof MaterialUploadUrlRequest>;
@@ -60,7 +60,7 @@ export type MaterialUploadEntry = z.infer<typeof MaterialUploadEntry>;
 
 export const MaterialUploadUrlResponse = z.object({
   material_id: Uuid,
-  uploads: z.array(MaterialUploadEntry).min(1).max(20),
+  uploads: z.array(MaterialUploadEntry).min(1).max(10),
 });
 export type MaterialUploadUrlResponse = z.infer<typeof MaterialUploadUrlResponse>;
 
@@ -86,7 +86,7 @@ export const MaterialCreateRequest = z.object({
   title: z.string().nullable().optional(),
   locale: z.string().default('de'),
   grade_level: z.number().int().min(1).max(13).nullable().optional(),
-  client_quality_scores: z.array(ClientQualityScore).min(1).max(20),
+  client_quality_scores: z.array(ClientQualityScore).min(1).max(10),
 });
 export type MaterialCreateRequest = z.infer<typeof MaterialCreateRequest>;
 

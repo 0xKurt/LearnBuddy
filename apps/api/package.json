@@ -10,7 +10,12 @@
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "eval": "tsx evals/run.ts",
-    "probe:vertex": "tsx scripts/probe-vertex.ts"
+    "probe:vertex": "tsx scripts/probe-vertex.ts",
+    "probe:stt": "tsx scripts/probe-stt.ts",
+    "probe:tts": "tsx scripts/probe-tts.ts",
+    "probe:items": "tsx scripts/probe-items.ts",
+    "probe:vision": "tsx scripts/probe-vision.ts",
+    "probe:rescan": "tsx scripts/probe-rescan.ts"
   },
   "dependencies": {
     "@google-cloud/speech": "^7.3.1",

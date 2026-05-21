@@ -7,7 +7,7 @@
 //   - chip overlay on each thumbnail; recent-shot status banner above strip
 //   - red verdict opens a "Trotzdem behalten" sheet (Doc 05 says red is
 //     non-blocking; the user always wins)
-//   - long-press strip thumbnail → delete; max 20 photos per material
+//   - long-press strip thumbnail → delete; max 10 photos per material
 //   - "Aus Galerie" import via expo-image-picker for already-taken photos
 //   - "Fertig" → SubjectFolderPicker when no folderId/subjectId param was
 //     passed in by the folder / subject screens. Photos + target are
@@ -64,7 +64,7 @@ import {
 import { useCaptureStore, type CapturedPhoto } from '../../lib/store/capture.js';
 import { LB } from '../../lib/theme/colors.js';
 
-const MAX_PHOTOS = 20;
+const MAX_PHOTOS = 10;
 
 export default function CaptureScreen() {
   const { t } = useTranslation('capture');
@@ -272,7 +272,11 @@ export default function CaptureScreen() {
 
   const onDone = () => {
     if (photos.length === 0) return;
-    if (preSubjectId) {
+    // Pre-targeted from a Lernziel screen → commit directly. Pre-
+    // targeted from a subject screen → still open the picker so the
+    // learner picks a Lernziel (the picker auto-skips step 1 because
+    // initialSubjectId is set).
+    if (preSubjectId && preFolderId) {
       commit({ subjectId: preSubjectId, folderId: preFolderId });
       return;
     }
@@ -465,7 +469,7 @@ export default function CaptureScreen() {
                 }}
               >
                 <View
-                  style={{ width: 54, height: 54, borderRadius: 999, backgroundColor: LB.ink }}
+                  style={{ width: 54, height: 54, borderRadius: 999, backgroundColor: LB.primary }}
                 />
               </View>
             </Pressable>
@@ -562,6 +566,7 @@ export default function CaptureScreen() {
         <SubjectFolderPicker
           visible={pickerVisible}
           learnerId={learnerId}
+          initialSubjectId={preSubjectId ?? null}
           onCancel={() => setPickerVisible(false)}
           onChoose={(target) => {
             setPickerVisible(false);

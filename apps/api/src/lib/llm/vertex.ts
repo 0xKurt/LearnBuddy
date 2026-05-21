@@ -31,6 +31,7 @@ import {
   type Part,
   type SafetySetting,
 } from '@google/genai';
+import { jsonrepair } from 'jsonrepair';
 
 import type { Env } from '../env.js';
 import { ApiError } from '../errors.js';
@@ -162,8 +163,12 @@ export class VertexLlmGateway implements LLMGateway {
       config: {
         systemInstruction: SYSTEM_P1,
         safetySettings: SAFETY,
-        temperature: 0.4,
-        topP: 0.95,
+        // Quality-card extraction wants deterministic output. The prompt
+        // is very rule-heavy and we want Gemini to follow the rules the
+        // same way every time, not riff. 0.1 + 0.7 keeps generation
+        // tight without choking on ties in token probability.
+        temperature: 0.1,
+        topP: 0.7,
         // 4096 tokens was clipping the response mid-string on real worksheets
         // (extracted_markdown + 5–10 items + diagrams + templates routinely
         // run 6–10k tokens). The clip surfaced to the user as "Verbindung
@@ -434,10 +439,22 @@ export class VertexLlmGateway implements LLMGateway {
     try {
       parsed = JSON.parse(text);
     } catch (err) {
-      throw new ApiError(
-        'evaluation_failed',
-        `Vertex agentTurn JSON parse failed: ${err instanceof Error ? err.message : String(err)}; raw="${text.slice(0, 200)}"`,
-      );
+      // Common Vertex failure mode on conversational replies: the model
+      // gets cut off mid-string (token limit, mid-stream hiccup, safety
+      // truncation) so the JSON ends with an open string and no closing
+      // brace. jsonrepair closes the dangling string and adds the missing
+      // structural chars — the downstream parser (parseAgentJson) already
+      // tolerates missing fields with a safe fallback, so a partial reply
+      // is still way better than a hard fail.
+      try {
+        const repaired = jsonrepair(text);
+        parsed = JSON.parse(repaired);
+      } catch {
+        throw new ApiError(
+          'evaluation_failed',
+          `Vertex agentTurn JSON parse failed: ${err instanceof Error ? err.message : String(err)}; raw="${text.slice(0, 200)}"`,
+        );
+      }
     }
 
     const reply =

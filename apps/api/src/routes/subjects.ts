@@ -163,7 +163,77 @@ subjectRoutes.get('/:subjectId/folders', async (c) => {
   if (folders.error) {
     throw new ApiError('internal', 'Failed to load folders', { cause: folders.error.message });
   }
-  return c.json(folders.data ?? []);
+  const folderRows = (folders.data ?? []) as Array<{
+    id: string;
+    subject_id: string;
+    name: string;
+    scheduled_for: string | null;
+    archived_at: string | null;
+    created_at: string;
+    updated_at: string;
+  }>;
+  if (folderRows.length === 0) return c.json([]);
+
+  // Aggregate material + item counts per folder so the Lernziel-Liste
+  // can show "3 Materialien · 24 Karten" without N+1 round-trips.
+  const folderIds = folderRows.map((f) => f.id);
+  const materialsRes = await supabase
+    .from('materials')
+    .select('id, folder_id, extraction_status')
+    .in('folder_id', folderIds)
+    .is('archived_at', null);
+  const materials = (materialsRes.data ?? []) as Array<{
+    id: string;
+    folder_id: string | null;
+    extraction_status: string;
+  }>;
+  const matIds = materials.map((m) => m.id);
+  const itemsRes =
+    matIds.length === 0
+      ? { data: [], error: null }
+      : await supabase
+          .from('items')
+          .select('material_id')
+          .in('material_id', matIds)
+          .is('archived_at', null);
+  const itemRows = (itemsRes.data ?? []) as Array<{ material_id: string }>;
+  const itemCountByMat = new Map<string, number>();
+  for (const r of itemRows) {
+    itemCountByMat.set(r.material_id, (itemCountByMat.get(r.material_id) ?? 0) + 1);
+  }
+  const aggByFolder = new Map<
+    string,
+    { material_count: number; item_count: number; has_pending: boolean; has_failed: boolean }
+  >();
+  for (const m of materials) {
+    if (!m.folder_id) continue;
+    const agg = aggByFolder.get(m.folder_id) ?? {
+      material_count: 0,
+      item_count: 0,
+      has_pending: false,
+      has_failed: false,
+    };
+    agg.material_count += 1;
+    agg.item_count += itemCountByMat.get(m.id) ?? 0;
+    if (m.extraction_status !== 'ready' && m.extraction_status !== 'failed') {
+      agg.has_pending = true;
+    }
+    if (m.extraction_status === 'failed') agg.has_failed = true;
+    aggByFolder.set(m.folder_id, agg);
+  }
+
+  return c.json(
+    folderRows.map((f) => {
+      const agg = aggByFolder.get(f.id);
+      return {
+        ...f,
+        material_count: agg?.material_count ?? 0,
+        item_count: agg?.item_count ?? 0,
+        has_pending: agg?.has_pending ?? false,
+        has_failed: agg?.has_failed ?? false,
+      };
+    }),
+  );
 });
 
 subjectRoutes.post(

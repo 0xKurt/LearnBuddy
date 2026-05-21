@@ -35,7 +35,7 @@ import {
   type SubjectListItem,
 } from '../../lib/api/subjects.js';
 import { useFirstTime } from '../../lib/onboarding/coach.js';
-import { scheduleTestDateReminders } from '../../lib/notifications.js';
+import { registerPushTokenForLearner, scheduleTestDateReminders } from '../../lib/notifications.js';
 import { LB } from '../../lib/theme/colors.js';
 
 type SubjectKindKey =
@@ -133,6 +133,18 @@ export default function HomeScreen() {
   const streak = scheduleQuery.data?.streak_current ?? 0;
   const lastSessionAt = scheduleQuery.data?.last_session_at ?? null;
   const streakCoach = useFirstTime('streak', { enabled: streak > 0 });
+
+  // Register the device's Expo push token with the API so the server's
+  // extraction worker can wake us up when async work finishes. Runs once
+  // per learner — guarded by a ref so re-renders don't refire.
+  // No-op in Expo Go (the helper returns silently).
+  const pushRegisteredRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!learnerId) return;
+    if (pushRegisteredRef.current === learnerId) return;
+    pushRegisteredRef.current = learnerId;
+    void registerPushTokenForLearner(learnerId).catch(() => null);
+  }, [learnerId]);
 
   // Sync local test-date notifications whenever schedule data changes.
   const notifKeyRef = useRef<string | null>(null);

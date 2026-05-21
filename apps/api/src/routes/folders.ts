@@ -94,6 +94,62 @@ folderRoutes.patch('/:id', zValidator('json', FolderUpdate), async (c) => {
   return c.json(upd.data);
 });
 
+// GET /folders/:id — single Lernziel detail + all its items.
+//
+// Powers the Lernziel-Detail screen: kid taps a Lernziel and we deliver
+// the folder metadata plus every (non-archived) item across every
+// (non-archived) material inside the folder, ready for inline display
+// + tutor session.
+folderRoutes.get('/:id', async (c) => {
+  const { supabase } = getDeps(c);
+  const { account_id } = c.get('auth');
+  const id = c.req.param('id');
+
+  await ownedFolder(supabase, account_id, id);
+
+  const folderRes = await supabase.from('folders').select('*').eq('id', id).maybeSingle();
+  if (folderRes.error) {
+    throw new ApiError('internal', 'Failed to load folder', { cause: folderRes.error.message });
+  }
+  if (!folderRes.data) throw new ApiError('not_found', 'Folder not found');
+
+  const materialsRes = await supabase
+    .from('materials')
+    .select('id, title, extraction_status, page_count, created_at')
+    .eq('folder_id', id)
+    .is('archived_at', null)
+    .order('created_at', { ascending: false });
+  const materials = (materialsRes.data ?? []) as Array<{
+    id: string;
+    title: string | null;
+    extraction_status: string;
+    page_count: number | null;
+    created_at: string;
+  }>;
+
+  const matIds = materials.map((m) => m.id);
+  const itemsRes =
+    matIds.length === 0
+      ? { data: [], error: null }
+      : await supabase
+          .from('items')
+          .select('id, question, expected_answer, material_id, created_at')
+          .in('material_id', matIds)
+          .is('archived_at', null)
+          .order('created_at', { ascending: true });
+  if (itemsRes.error) {
+    throw new ApiError('internal', 'Failed to load folder items', {
+      cause: itemsRes.error.message,
+    });
+  }
+
+  return c.json({
+    ...(folderRes.data as Record<string, unknown>),
+    materials,
+    items: itemsRes.data ?? [],
+  });
+});
+
 folderRoutes.delete('/:id', async (c) => {
   const { supabase, now } = getDeps(c);
   const { account_id } = c.get('auth');

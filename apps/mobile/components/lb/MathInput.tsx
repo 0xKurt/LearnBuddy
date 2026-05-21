@@ -4,6 +4,7 @@
 
 import { parseMathLite } from '@learnbuddy/shared-math';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export function MathInput({ value, onChangeText, placeholder, displayMode = true }: Props) {
+  const { t } = useTranslation('common');
   const parsed = useMemo(() => parseMathLite(value), [value]);
   return (
     <View style={{ gap: 10 }}>
@@ -32,7 +34,9 @@ export function MathInput({ value, onChangeText, placeholder, displayMode = true
         }}
       >
         {value.trim().length === 0 ? (
-          <Text style={{ color: LB.ink3, fontStyle: 'italic' }}>Vorschau erscheint hier …</Text>
+          <Text style={{ color: LB.ink3, fontStyle: 'italic' }}>
+            {t('math.preview_placeholder')}
+          </Text>
         ) : parsed.errors.length > 0 ? (
           <Text style={{ color: LB.warning, fontSize: 12 }}>{value}</Text>
         ) : (
@@ -42,7 +46,7 @@ export function MathInput({ value, onChangeText, placeholder, displayMode = true
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder ?? 'Antwort'}
+        placeholder={placeholder ?? t('math.answer_placeholder')}
         placeholderTextColor={LB.ink3}
         style={{
           backgroundColor: LB.bg,

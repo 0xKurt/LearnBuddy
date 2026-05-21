@@ -75,7 +75,7 @@ export function CoachMark({ visible, onDismiss, title, body, ctaLabel, glyph }: 
                       marginTop: 6,
                       height: 48,
                       borderRadius: 12,
-                      backgroundColor: LB.ink,
+                      backgroundColor: LB.primary,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}

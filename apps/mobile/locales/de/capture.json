@@ -1,6 +1,6 @@
 {
   "title": "Material aufnehmen",
-  "subtitle": "Foto vom Heft, Buch oder Arbeitsblatt — bis zu 20 Bilder.",
+  "subtitle": "Foto vom Heft, Buch oder Arbeitsblatt — bis zu 10 Bilder.",
   "permission": {
     "title": "Wir brauchen kurz Kamerafreigabe",
     "body": "Damit du dein Material fotografieren kannst. Du kannst die Erlaubnis jederzeit in den Einstellungen ändern.",
@@ -24,7 +24,7 @@
   "strip": {
     "label_one": "1 Foto",
     "label_other": "{{count}} Fotos",
-    "max_hint": "Bis zu 20 Bilder pro Material.",
+    "max_hint": "Bis zu 10 Bilder pro Material.",
     "long_press_hint": "Lang drücken, um ein Foto zu löschen.",
     "delete_title": "Foto löschen?",
     "delete_cancel": "Abbrechen",
@@ -44,7 +44,7 @@
     "no_subjects_title": "Zuerst ein Fach anlegen"
   },
   "limits": {
-    "max_reached": "Mehr als 20 Bilder pro Material geht nicht."
+    "max_reached": "Mehr als 10 Bilder pro Material geht nicht."
   },
   "gallery": {
     "cta": "Aus Galerie",

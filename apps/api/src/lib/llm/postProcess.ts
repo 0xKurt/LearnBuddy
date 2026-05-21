@@ -116,8 +116,13 @@ const VisionTemplateSchema = z
 // 8-item payload).
 const VisionPayloadSchema = z.object({
   detected_language: z.enum(['de', 'en', 'fr', 'es', 'it']).nullable(),
-  extracted_markdown: z.string(),
-  items: z.array(VisionItemSchema),
+  extracted_markdown: z.string().default(''),
+  // Default `items` to [] so a CHECKLIST_OR_META page (or any other case
+  // where Gemini correctly produces zero items) doesn't fail validation
+  // if Gemini omits the field entirely instead of returning an empty
+  // array. Same defensive default already applies to diagrams and
+  // problem_templates.
+  items: z.array(VisionItemSchema).default([]),
   diagrams: z.array(z.unknown()).default([]),
   problem_templates: z.array(z.unknown()).default([]),
   error: z.enum(['not_educational', 'unreadable']).nullable().default(null),

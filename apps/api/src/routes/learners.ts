@@ -24,6 +24,7 @@
 
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { LearnerCreate, LearnerUpdate, SubjectCreate } from '@learnbuddy/shared-types';
 
 import { isMinor as isMinorAge } from '../lib/date.js';
@@ -135,6 +136,61 @@ learnerRoutes.delete('/:id', async (c) => {
   }
 
   return c.json({ id: upd.data.id, archived: true });
+});
+
+// ── Push-token register ─────────────────────────────────────────────────
+//
+// POST /learners/:id/push-tokens — upsert an Expo Push Token for this
+// learner. Mobile calls this after notification permission is granted.
+// Idempotent via the unique (learner_id, token) index — re-registering
+// a still-valid token just refreshes its updated_at.
+
+const PushTokenBody = z.object({
+  token: z.string().min(10).max(200),
+  platform: z.enum(['ios', 'android', 'web']),
+});
+
+learnerRoutes.post('/:id/push-tokens', zValidator('json', PushTokenBody), async (c) => {
+  const { supabase, now } = getDeps(c);
+  const { account_id } = c.get('auth');
+  const learner_id = c.req.param('id');
+  const body = c.req.valid('json');
+
+  // Verify the learner belongs to this account before we let the caller
+  // attach tokens to it (a logged-in user must not be able to pin push
+  // tokens to someone else's learner profile).
+  const owns = await supabase
+    .from('learners')
+    .select('id')
+    .eq('id', learner_id)
+    .eq('account_id', account_id)
+    .is('archived_at', null)
+    .maybeSingle();
+  if (owns.error) {
+    throw new ApiError('internal', 'Failed to resolve learner', { cause: owns.error.message });
+  }
+  if (!owns.data) throw new ApiError('not_found', 'Learner not found');
+
+  const ts = now().toISOString();
+  const upsert = await supabase
+    .from('learner_push_tokens')
+    .upsert(
+      {
+        learner_id,
+        token: body.token,
+        platform: body.platform,
+        updated_at: ts,
+      },
+      { onConflict: 'learner_id,token' },
+    )
+    .select('id, token, platform')
+    .maybeSingle();
+  if (upsert.error) {
+    throw new ApiError('internal', 'Failed to register push token', {
+      cause: upsert.error.message,
+    });
+  }
+  return c.json(upsert.data, 201);
 });
 
 // ── Sub-resources (Slice B2) ─────────────────────────────────────────────

@@ -1,6 +1,6 @@
 {
   "title": "Acquisisci materiale",
-  "subtitle": "Scatta a una pagina, un libro o una scheda — fino a 20 foto.",
+  "subtitle": "Scatta a una pagina, un libro o una scheda — fino a 10 foto.",
   "permission": {
     "title": "Ci serve l'accesso alla fotocamera",
     "body": "Così puoi fotografare il tuo materiale. Puoi cambiarlo in qualsiasi momento in Impostazioni.",
@@ -24,7 +24,7 @@
   "strip": {
     "label_one": "1 foto",
     "label_other": "{{count}} foto",
-    "max_hint": "Fino a 20 foto per materiale.",
+    "max_hint": "Fino a 10 foto per materiale.",
     "long_press_hint": "Tieni premuta una miniatura per eliminarla.",
     "delete_title": "Eliminare la foto?",
     "delete_cancel": "Annulla",
@@ -44,7 +44,7 @@
     "no_subjects_title": "Prima crea una materia"
   },
   "limits": {
-    "max_reached": "Massimo 20 foto per materiale."
+    "max_reached": "Massimo 10 foto per materiale."
   },
   "gallery": {
     "cta": "Dalla galleria",

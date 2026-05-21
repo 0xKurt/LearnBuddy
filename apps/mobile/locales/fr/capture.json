@@ -1,6 +1,6 @@
 {
   "title": "Photographier le matériel",
-  "subtitle": "Prends en photo une page, un livre ou une feuille d'exercices — jusqu'à 20 photos.",
+  "subtitle": "Prends en photo une page, un livre ou une feuille d'exercices — jusqu'à 10 photos.",
   "permission": {
     "title": "Nous avons besoin de l'accès caméra",
     "body": "Pour que tu puisses photographier ton matériel. Tu peux changer cela à tout moment dans Réglages.",
@@ -24,7 +24,7 @@
   "strip": {
     "label_one": "1 photo",
     "label_other": "{{count}} photos",
-    "max_hint": "Jusqu'à 20 photos par matériel.",
+    "max_hint": "Jusqu'à 10 photos par matériel.",
     "long_press_hint": "Appuie longuement sur une miniature pour la supprimer.",
     "delete_title": "Supprimer la photo ?",
     "delete_cancel": "Annuler",
@@ -44,7 +44,7 @@
     "no_subjects_title": "Crée d'abord une matière"
   },
   "limits": {
-    "max_reached": "20 photos maximum par matériel."
+    "max_reached": "10 photos maximum par matériel."
   },
   "gallery": {
     "cta": "Depuis la galerie",
