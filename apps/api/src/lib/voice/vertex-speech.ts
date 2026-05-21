@@ -32,11 +32,30 @@ export class VertexSpeechGateway implements STTGateway {
       throw new Error('VertexSpeechGateway requires GOOGLE_CLOUD_PROJECT in env');
     }
     // Speech-to-Text v2 needs a recogniser resource. We use the default
-    // global recogniser ("_") which doesn't need to be created up-front
-    // — the API auto-provisions one. For per-project tuning later we'd
-    // create a named recogniser via gcloud.
-    this.client = new v2.SpeechClient();
-    this.recognizerPath = `projects/${env.GOOGLE_CLOUD_PROJECT}/locations/global/recognizers/_`;
+    // recogniser ("_") which doesn't need to be created up-front — the
+    // API auto-provisions one. For per-project tuning later we'd create
+    // a named recogniser via gcloud.
+    //
+    // Region: `europe-west4`. chirp_2 has a LIMITED regional rollout —
+    // it doesn't exist in `global` or the `eu` multi-region; only in
+    // specific single-region locations. europe-west4 carries chirp_2
+    // AND is on the same continent as our DE/EU user base, saving the
+    // transatlantic round-trip vs `us-central1`. Verified via
+    // scripts/probe-stt.ts.
+    this.client = new v2.SpeechClient({ apiEndpoint: 'europe-west4-speech.googleapis.com' });
+    this.recognizerPath = `projects/${env.GOOGLE_CLOUD_PROJECT}/locations/europe-west4/recognizers/_`;
+  }
+
+  // Triggered by POST /agent/transcribe/warm right when the user taps
+  // the mic. Opens the gRPC channel so the first recognize() doesn't
+  // pay the cold handshake. Best-effort: any failure is swallowed —
+  // worst case the user just pays the cold path on the real call.
+  async warmup(): Promise<void> {
+    try {
+      await this.client.initialize();
+    } catch {
+      /* ignore */
+    }
   }
 
   async recognize(input: STTInput): Promise<STTResult> {
@@ -45,10 +64,14 @@ export class VertexSpeechGateway implements STTGateway {
     const encoding: 'MP3' | 'OGG_OPUS' | 'LINEAR16' | 'AUTO' =
       input.mime === 'audio/webm' ? 'OGG_OPUS' : 'AUTO';
 
-    // chirp_2 takes a `language_codes` array — pass "auto" for full
-    // multi-lingual detection, OR a single locale if the caller has a
-    // strong hint. We prefer auto for the learning use-case.
-    const language_codes = input.preferredLocale ? [input.preferredLocale, 'auto'] : ['auto'];
+    // chirp_2 in europe-west4 takes language codes in BCP-47 (`de-DE`),
+    // not the 2-letter ISO-639 (`de`) we carry in `preferredLocale`.
+    // Mixing them in the array (`['de', 'auto']`) triggers
+    // INVALID_ARGUMENT: "The language 'de' is not supported by the
+    // model 'chirp_2'". We just always pass `['auto']`: full multilingual
+    // auto-detect is what the product wants anyway (kid might be
+    // learning Chinese, code-switching mid-sentence, etc.).
+    const language_codes = ['auto'];
 
     type RecognizeResp = {
       results?: Array<{
@@ -73,9 +96,8 @@ export class VertexSpeechGateway implements STTGateway {
                 },
           languageCodes: language_codes,
           model: MODEL,
-          features: {
-            enableAutomaticPunctuation: true,
-          },
+          // No `features` block — automatic punctuation costs ~50-100ms
+          // per call and provides little value for short kid utterances.
         },
         content: input.audioBase64,
       });

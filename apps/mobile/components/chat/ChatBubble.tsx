@@ -2,6 +2,7 @@
 // Supports streaming text, tool call visualization, and different bubble styles.
 
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, Animated, Pressable } from 'react-native';
 
 export type BubbleRole = 'learner' | 'agent' | 'system' | 'tool';
@@ -10,6 +11,12 @@ export type ChatBubbleProps = {
   role: BubbleRole;
   content: string;
   isStreaming?: boolean;
+  /** When true, the agent text pulses opacity 0.55 → 1.0 → 0.55 in a
+   *  soft loop to signal "the tutor is reading this aloud right now."
+   *  The chat screen sets it only on the latest agent bubble while
+   *  audio playback is active. Visually pairs with the conv-button
+   *  bar animation in the composer for a synchronised cue. */
+  speaking?: boolean;
   verdict?: string | null;
   toolCall?: { name: string; args: Record<string, unknown> } | null;
   toolResult?: { name: string; result: unknown; error?: string } | null;
@@ -20,11 +27,13 @@ export function ChatBubble({
   role,
   content,
   isStreaming = false,
+  speaking = false,
   verdict,
   toolCall,
   toolResult,
   onToolCallTap,
 }: ChatBubbleProps) {
+  const { t } = useTranslation('home');
   const isLearner = role === 'learner';
   const isSystem = role === 'system';
 
@@ -50,6 +59,49 @@ export function ChatBubble({
       return () => anim.stop();
     }
   }, [isStreaming]);
+
+  // Tutor-speaking text breath. 1.4s round-trip = ~one breath; reads as
+  // alive without being distracting. Returns to 1.0 when speaking stops.
+  const speakingOpacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (speaking) {
+      const anim = Animated.loop(
+        Animated.sequence([
+          Animated.timing(speakingOpacity, {
+            toValue: 0.55,
+            duration: 700,
+            useNativeDriver: true,
+          }),
+          Animated.timing(speakingOpacity, {
+            toValue: 1,
+            duration: 700,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      anim.start();
+      return () => {
+        anim.stop();
+        speakingOpacity.setValue(1);
+      };
+    }
+    speakingOpacity.setValue(1);
+  }, [speaking, speakingOpacity]);
+
+  const verdictLabel = (v: string): string => {
+    switch (v) {
+      case 'correct':
+        return t('chat.verdict.correct');
+      case 'incorrect':
+        return t('chat.verdict.incorrect');
+      case 'partially_correct':
+        return t('chat.verdict.partially_correct');
+      case 'skipped':
+        return t('chat.verdict.skipped');
+      default:
+        return '';
+    }
+  };
 
   if (isSystem) {
     return (
@@ -78,13 +130,18 @@ export function ChatBubble({
       )}
 
       {/* Main Bubble */}
-      <View style={[styles.bubble, isLearner ? styles.learnerBubble : styles.agentBubble]}>
-        {/* Question stimulus - extracted from content if present */}
+      <Animated.View
+        style={[
+          styles.bubble,
+          isLearner ? styles.learnerBubble : styles.agentBubble,
+          speaking && { opacity: speakingOpacity },
+        ]}
+      >
         <Text style={isLearner ? styles.learnerText : styles.agentText}>{content}</Text>
 
         {/* Streaming cursor */}
         {isStreaming && <Animated.View style={[styles.cursor, { opacity: cursorOpacity }]} />}
-      </View>
+      </Animated.View>
 
       {/* Verdict badge */}
       {verdict && (
@@ -97,15 +154,7 @@ export function ChatBubble({
             verdict === 'skipped' && styles.skippedBadge,
           ]}
         >
-          <Text style={styles.verdictText}>
-            {verdict === 'correct'
-              ? '✓'
-              : verdict === 'incorrect'
-                ? 'Try again'
-                : verdict === 'partially_correct'
-                  ? 'Almost'
-                  : ''}
-          </Text>
+          <Text style={styles.verdictText}>{verdictLabel(verdict)}</Text>
         </View>
       )}
     </View>

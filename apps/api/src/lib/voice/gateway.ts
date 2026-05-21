@@ -46,6 +46,10 @@ export type STTResult = {
 
 export interface STTGateway {
   recognize(input: STTInput): Promise<STTResult>;
+  /** Open the underlying connection so the first real recognize call
+   *  doesn't pay the gRPC handshake. Safe to call repeatedly; safe to
+   *  ignore failures. */
+  warmup(): Promise<void>;
 }
 
 // ── TTS ────────────────────────────────────────────────────────────────

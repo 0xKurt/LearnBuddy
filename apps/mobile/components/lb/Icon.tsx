@@ -21,6 +21,7 @@ type IconName =
   | 'clock'
   | 'flame'
   | 'speak'
+  | 'play'
   | 'waveform'
   | 'shield'
   | 'eye'
@@ -171,6 +172,20 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M11 5L6 9H3v6h3l5 4V5z" {...common} />
           <Path d="M16 8.5a5 5 0 010 7M19 6a8 8 0 010 12" {...common} />
+        </Svg>
+      );
+    case 'play':
+      // Filled triangle pointing right. Stroke set to fill on the
+      // path so the icon reads at small sizes (24×24 row buttons).
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M8 5v14l11-7L8 5z"
+            fill={color}
+            stroke={color}
+            strokeWidth={1.6}
+            strokeLinejoin="round"
+          />
         </Svg>
       );
     case 'waveform':

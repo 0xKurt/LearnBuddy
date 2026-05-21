@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import { getAccount } from '../../../lib/api/account';
 import {
@@ -26,12 +27,14 @@ import {
   finishAgentSession,
   streamAgentTurn,
   transcribeVoice,
+  warmTranscribe,
   type AgentSseFrame,
 } from '../../../lib/api/agent';
 import { Btn } from '../../../components/lb/Btn';
 import { AgentComposer } from '../../../components/chat/AgentComposer';
 import { ChatBubble, AgentThinking } from '../../../components/chat/ChatBubble';
 import { LB } from '../../../lib/theme/colors';
+import { playTtsAudio, type TtsPlayHandle } from '../../../lib/voice/play-tts';
 
 type Message = {
   id: string;
@@ -49,11 +52,13 @@ function newClientTurnId(): string {
 }
 
 export default function AgentChatScreen() {
+  const { t } = useTranslation('home');
   const params = useLocalSearchParams<{
     sessionId?: string;
     subjectId?: string;
     folderId?: string;
     materialId?: string;
+    topic?: string;
     testMode?: string;
   }>();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
@@ -76,6 +81,57 @@ export default function AgentChatScreen() {
   const listRef = useRef<FlatList<Message>>(null);
   const testMode = params.testMode === 'true';
 
+  // Tutor TTS playback for non-conversation turns (text submit + single-shot
+  // mic). The conversation auto-loop owns its own playback inside the
+  // composer because it needs to re-open the mic when audio ends.
+  const ttsHandleRef = useRef<TtsPlayHandle | null>(null);
+  // Visible playback state — drives the "🔊 Spricht …" indicator and
+  // gates the composer's mic so the kid can't talk over the tutor.
+  const [tutorSpeaking, setTutorSpeaking] = useState(false);
+  // Sticky diagnostic so a failed playback shows up in the UI without
+  // needing to read logs ("Stimme konnte nicht abgespielt werden — …").
+  const [voicePlaybackError, setVoicePlaybackError] = useState<string | null>(null);
+  // The opener audio is synthesised by the server on session create
+  // and held HERE — NOT auto-played. The kid sees the opener text
+  // immediately; the voice only plays the first time they tap the
+  // conversation button. Text-only learners never hear it. After the
+  // first conv-start the audio is consumed and stop/restart of conv
+  // mode does not replay it.
+  const openerAudioRef = useRef<{ base64: string; mime: string } | null>(null);
+  const startTutorTts = useCallback((audio: { base64: string; mime: string }) => {
+    ttsHandleRef.current?.stop();
+    setVoicePlaybackError(null);
+    const handle = playTtsAudio(audio.base64, audio.mime, (kind, detail) => {
+      setVoicePlaybackError(`${kind}: ${detail}`);
+    });
+    ttsHandleRef.current = handle;
+    setTutorSpeaking(true);
+    void handle.done.then(() => {
+      if (ttsHandleRef.current === handle) {
+        ttsHandleRef.current = null;
+        setTutorSpeaking(false);
+      }
+    });
+  }, []);
+  const stopTutorTts = useCallback(() => {
+    ttsHandleRef.current?.stop();
+    ttsHandleRef.current = null;
+    setTutorSpeaking(false);
+  }, []);
+  useEffect(() => () => stopTutorTts(), [stopTutorTts]);
+
+  // Composer-facing hook: play the opener voice the FIRST time the
+  // kid taps the conversation button, then resolve so the composer
+  // opens the mic. Subsequent calls return immediately so a
+  // stop/restart of conv mode does not replay the opener.
+  const playOpenerOnceBeforeConv = useCallback(async () => {
+    const audio = openerAudioRef.current;
+    if (!audio) return;
+    openerAudioRef.current = null; // consume — never play again
+    startTutorTts(audio);
+    await ttsHandleRef.current?.done;
+  }, [startTutorTts]);
+
   // ── Bootstrap ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!learnerId) return;
@@ -90,6 +146,7 @@ export default function AgentChatScreen() {
           subject_id: params.subjectId ?? null,
           folder_id: params.folderId ?? null,
           material_id: params.materialId ?? null,
+          topic: params.topic ?? null,
           test_mode: testMode,
           max_items: 20,
         });
@@ -108,9 +165,12 @@ export default function AgentChatScreen() {
             content: `${created.opener}\n\n${created.first_question}`,
           },
         ]);
+        // Don't auto-play — stash for the first conv-start, see
+        // playOpenerOnceBeforeConv below. Kids who only type never
+        // hear the opener forced on session open.
+        if (created.audio) openerAudioRef.current = created.audio;
       } catch (err) {
-        if (!cancelled)
-          setError(err instanceof Error ? err.message : 'Konnte Session nicht starten');
+        if (!cancelled) setError(err instanceof Error ? err.message : t('chat.could_not_start'));
       } finally {
         if (!cancelled) setBootstrapping(false);
       }
@@ -118,12 +178,23 @@ export default function AgentChatScreen() {
     return () => {
       cancelled = true;
     };
-  }, [learnerId, sessionId, params.subjectId, params.folderId, params.materialId, testMode]);
+  }, [
+    learnerId,
+    sessionId,
+    params.subjectId,
+    params.folderId,
+    params.materialId,
+    params.topic,
+    testMode,
+  ]);
 
   // ── Send (text only — voice is transcribed into the field first) ────
   const onSubmitText = useCallback(
     async (textToSend: string) => {
       if (!sessionId || !learnerId || busy || sessionEnded) return;
+      // If the previous reply is still being spoken, cut it off so two
+      // tutor voices don't overlap.
+      stopTutorTts();
       setBusy(true);
       setThinking(true);
       const learnerMsgId = `l-${Date.now()}`;
@@ -136,6 +207,9 @@ export default function AgentChatScreen() {
       let replyText = '';
       let finalVerdict: Message['verdict'] = null;
       let advanced = false;
+      // Boxed so the closure assignment survives TS's narrow-to-null
+      // across the awaited stream.
+      const replyAudioBox: { value: { base64: string; mime: string } | null } = { value: null };
       const ctid = newClientTurnId();
       const handle = (e: AgentSseFrame) => {
         switch (e.type) {
@@ -151,6 +225,7 @@ export default function AgentChatScreen() {
           case 'done':
             finalVerdict = e.verdict;
             advanced = e.advance;
+            if (e.audio) replyAudioBox.value = { base64: e.audio.base64, mime: e.audio.mime };
             if (advanced) setCompletedItems((n) => n + 1);
             if (e.session_complete) setSessionEnded(true);
             break;
@@ -169,7 +244,7 @@ export default function AgentChatScreen() {
           handle,
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Verbindung unterbrochen');
+        setError(err instanceof Error ? err.message : t('chat.connection_lost'));
       } finally {
         setMessages((prev) =>
           prev.map((m) =>
@@ -179,12 +254,25 @@ export default function AgentChatScreen() {
         setBusy(false);
         setThinking(false);
       }
+      // Tutor reads the reply aloud whenever the server synthesised
+      // audio — same playback the conversation auto-loop uses, just
+      // without the "re-open mic when done" handler.
+      if (replyAudioBox.value) startTutorTts(replyAudioBox.value);
       if (advanced && completedItems + 1 >= totalItems) {
         setSessionEnded(true);
         if (sessionId && learnerId) void finishAgentSession(learnerId, sessionId);
       }
     },
-    [sessionId, learnerId, busy, sessionEnded, completedItems, totalItems],
+    [
+      sessionId,
+      learnerId,
+      busy,
+      sessionEnded,
+      completedItems,
+      totalItems,
+      stopTutorTts,
+      startTutorTts,
+    ],
   );
 
   const transcribe = useCallback(
@@ -197,6 +285,11 @@ export default function AgentChatScreen() {
     },
     [learnerId],
   );
+
+  const warmStt = useCallback(() => {
+    if (!learnerId) return;
+    warmTranscribe(learnerId);
+  }, [learnerId]);
 
   // Conversation mode: audio in → full pedagogy turn → returns the
   // reply text + audio (GCP Chirp HD) so the composer can play it.
@@ -217,13 +310,14 @@ export default function AgentChatScreen() {
       // server transcript once it arrives.
       setMessages((prev) => [
         ...prev,
-        { id: learnerMsgId, role: 'learner', content: '🎤 …' },
+        { id: learnerMsgId, role: 'learner', content: '…' },
         { id: agentMsgId, role: 'agent', content: '', isStreaming: true },
       ]);
       let replyText = '';
       let replyAudio: { base64: string; mime: string } | null = null;
       let finalVerdict: Message['verdict'] = null;
       let advanced = false;
+      let hadError = false;
       const ctid = newClientTurnId();
       const handle = (e: AgentSseFrame) => {
         switch (e.type) {
@@ -249,7 +343,12 @@ export default function AgentChatScreen() {
             if (e.session_complete) setSessionEnded(true);
             break;
           case 'error':
-            setError(e.message);
+            hadError = true;
+            // 'silent' = noise / no speech detected. In conversation
+            // mode the composer just re-opens the mic on its own, so
+            // showing a red error banner for every bedroom rustle is
+            // pure noise. Drop it; surface every other error.
+            if (e.code !== 'silent') setError(e.message);
             break;
           default:
             break;
@@ -268,13 +367,20 @@ export default function AgentChatScreen() {
           handle,
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Verbindung unterbrochen');
+        hadError = true;
+        setError(err instanceof Error ? err.message : t('chat.connection_lost'));
       } finally {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === agentMsgId ? { ...m, isStreaming: false, verdict: finalVerdict } : m,
-          ),
-        );
+        if (hadError) {
+          // Remove the stale optimistic bubbles so failed attempts don't
+          // accumulate in the transcript.
+          setMessages((prev) => prev.filter((m) => m.id !== learnerMsgId && m.id !== agentMsgId));
+        } else {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === agentMsgId ? { ...m, isStreaming: false, verdict: finalVerdict } : m,
+            ),
+          );
+        }
         setBusy(false);
         setThinking(false);
       }
@@ -304,16 +410,16 @@ export default function AgentChatScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={LB.primary} size="large" />
-        <Text style={styles.muted}>Vorbereitung läuft …</Text>
+        <Text style={styles.muted}>{t('chat.preparing')}</Text>
       </View>
     );
   }
   if (!learnerId) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Kein Lernerprofil gefunden.</Text>
+        <Text style={styles.errorText}>{t('chat.no_learner_title')}</Text>
         <Btn variant="primary" onPress={() => router.replace('/(learner)/home')}>
-          Zur Übersicht
+          {t('chat.to_overview')}
         </Btn>
       </View>
     );
@@ -330,7 +436,7 @@ export default function AgentChatScreen() {
             setSessionId(null);
           }}
         >
-          Nochmal versuchen
+          {t('chat.retry')}
         </Btn>
       </View>
     );
@@ -345,7 +451,7 @@ export default function AgentChatScreen() {
       >
         <View style={styles.header}>
           <Btn variant="ghost" size="sm" onPress={() => router.back()}>
-            ← Zurück
+            {t('chat.back')}
           </Btn>
           <View style={styles.progressBox}>
             <Text style={styles.progressLabel}>
@@ -368,14 +474,22 @@ export default function AgentChatScreen() {
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
-          renderItem={({ item }) => (
-            <ChatBubble
-              role={item.role}
-              content={item.content}
-              isStreaming={item.isStreaming}
-              verdict={item.verdict ?? null}
-            />
-          )}
+          renderItem={({ item, index }) => {
+            // Only the LAST agent bubble breathes while the tutor speaks —
+            // older bubbles keep their static state. Matches what a
+            // reader expects: "this is what's being said right now."
+            const isLast = index === messages.length - 1;
+            const bubbleSpeaking = tutorSpeaking && isLast && item.role === 'agent';
+            return (
+              <ChatBubble
+                role={item.role}
+                content={item.content}
+                isStreaming={item.isStreaming}
+                speaking={bubbleSpeaking}
+                verdict={item.verdict ?? null}
+              />
+            );
+          }}
           style={styles.listFlex}
           contentContainerStyle={styles.list}
           ListFooterComponent={thinking ? <AgentThinking /> : null}
@@ -385,14 +499,18 @@ export default function AgentChatScreen() {
         {!sessionEnded ? (
           <AgentComposer
             busy={busy}
+            disabled={tutorSpeaking}
+            tutorSpeaking={tutorSpeaking}
             onSubmitText={onSubmitText}
             transcribe={transcribe}
             submitVoiceTurn={submitVoiceTurn}
+            warmStt={warmStt}
+            beforeFirstConvListen={playOpenerOnceBeforeConv}
           />
         ) : (
           <View style={styles.endBlock}>
-            <Text style={styles.endTitle}>Session beendet</Text>
-            <Text style={styles.muted}>Gut gemacht — bis bald.</Text>
+            <Text style={styles.endTitle}>{t('chat.session_ended_title')}</Text>
+            <Text style={styles.muted}>{t('chat.session_ended_body')}</Text>
             <Btn
               variant="primary"
               onPress={() =>
@@ -402,11 +520,20 @@ export default function AgentChatScreen() {
                 })
               }
             >
-              Zur Zusammenfassung
+              {t('chat.to_summary')}
             </Btn>
           </View>
         )}
 
+        {/* Banner only on real failures — the "speaking" state is now
+         *  communicated via the bubble's opacity pulse + the conv-
+         *  button's bar animation, so a redundant text banner would
+         *  just be noise. */}
+        {voicePlaybackError ? (
+          <Text style={styles.errorBanner}>
+            {t('chat.voice_playback_failed', { detail: voicePlaybackError })}
+          </Text>
+        ) : null}
         {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
       </KeyboardAvoidingView>
       {/* Home-indicator-safe spacer — composer is flush at the bottom
@@ -460,6 +587,15 @@ const styles = StyleSheet.create({
     color: LB.danger,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    backgroundColor: LB.paper,
+    borderTopWidth: 1,
+    borderTopColor: LB.hairline,
+  },
+  statusBanner: {
+    fontSize: 12,
+    color: LB.ink2,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     backgroundColor: LB.paper,
     borderTopWidth: 1,
     borderTopColor: LB.hairline,

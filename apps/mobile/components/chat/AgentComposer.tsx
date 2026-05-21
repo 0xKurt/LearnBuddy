@@ -28,6 +28,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Icon } from '../lb/Icon';
 import { LB } from '../../lib/theme/colors';
@@ -48,6 +49,12 @@ export type AgentComposerProps = {
   disabled?: boolean;
   /** True while the parent is processing a non-voice turn — locks the input. */
   busy?: boolean;
+  /** True when the chat screen is playing tutor audio that the composer
+   *  itself didn't kick off (e.g. the opener, or a text-turn reply).
+   *  Drives the same "Antwortet" status display + waveform animation
+   *  used during the composer's own conv-speaking phase, so the user
+   *  has one consistent "tutor is talking" visual cue everywhere. */
+  tutorSpeaking?: boolean;
   /** Single-shot dictation: audio in, text out. Mic mode calls this and
    *  appends the result to the input field. */
   transcribe?: (audio: {
@@ -63,19 +70,44 @@ export type AgentComposerProps = {
     base64: string;
     mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
   }) => Promise<{ reply: string; audio?: { base64: string; mime: string } | null }>;
+  /** Fire-and-forget hook called the instant the user taps the mic so
+   *  the parent can pre-warm the STT pipeline (Vercel cold start +
+   *  GCP gRPC handshake). */
+  warmStt?: () => void;
+  /** Optional async step the composer awaits BEFORE opening the mic
+   *  the very first time conversation mode is entered. Used by the
+   *  chat screen to read the opener aloud the first time the kid
+   *  taps the voice button, but never on stop-then-restart. The hook
+   *  resolves immediately on subsequent calls. */
+  beforeFirstConvListen?: () => Promise<void>;
   onSubmitText: (text: string) => void;
 };
 
 export function AgentComposer({
   disabled = false,
   busy = false,
+  tutorSpeaking = false,
   transcribe,
   submitVoiceTurn,
+  warmStt,
+  beforeFirstConvListen,
   onSubmitText,
 }: AgentComposerProps) {
+  const { t } = useTranslation('home');
   const [text, setText] = useState('');
   const [mode, setMode] = useState<Mode>('idle');
   const [errorHint, setErrorHint] = useState<string | null>(null);
+  // Synthetic "level" that breathes 0.2 ↔ 0.7 over ~1.4 s while the
+  // tutor speaks — feeds the Waveform component so the bars rise and
+  // fall in time with the audio (synchronised with the chat-bubble
+  // opacity pulse).
+  const [speakLevel, setSpeakLevel] = useState(0.2);
+  // Dismissable error: every time a NEW error appears, the dismissed
+  // flag resets so the message actually shows again.
+  const [errorDismissed, setErrorDismissed] = useState(false);
+  useEffect(() => {
+    if (errorHint) setErrorDismissed(false);
+  }, [errorHint]);
 
   // ── Refs for stale-closure-safe callbacks ──────────────────────────
   const modeRef = useRef<Mode>('idle');
@@ -90,17 +122,18 @@ export function AgentComposer({
       await stopAndProcessRef.current();
     }
   }, []);
-  // Tighter VAD (1200ms vs the previous 1800ms) so the pause between
-  // "I'm done speaking" and "the agent starts processing" feels
-  // responsive instead of laggy. Combined with the minSpeechMs floor
-  // (800ms) this still avoids cutting off mid-sentence.
-  const voice = useVoiceRecorder({ onSilence, silenceMs: 1200 });
+  // VAD config now lives on the hook default (900ms silence, -30dB
+  // threshold). Tightened on 2026-05-21 because the previous threshold
+  // (-42 dB, 1200ms) treated bedroom rustling as "still talking" and
+  // never auto-stopped.
+  const voice = useVoiceRecorder({ onSilence });
 
   // ── Mic mode (single-shot dictation) ──────────────────────────────
   const stopMicAndTranscribe = useCallback(async () => {
     if (mode !== 'mic-recording') return;
     setMode('mic-uploading');
     setErrorHint(null);
+    setErrorDismissed(false);
     const result = await voice.stop();
     if (!result || result.durationMs < 250) {
       setMode('idle');
@@ -126,15 +159,21 @@ export function AgentComposer({
   const cancelMic = useCallback(async () => {
     await voice.cancel();
     setErrorHint(null);
+    setErrorDismissed(false);
     setMode('idle');
   }, [voice]);
 
   const startMic = useCallback(async () => {
     if (mode !== 'idle' || disabled || busy) return;
     setErrorHint(null);
+    setErrorDismissed(false);
+    // Fire pre-warm BEFORE awaiting the recorder — the gRPC handshake
+    // and Vercel cold start should be running in parallel with the
+    // user's first ~700ms of speech.
+    warmStt?.();
     const ok = await voice.start();
     if (ok) setMode('mic-recording');
-  }, [mode, disabled, busy, voice]);
+  }, [mode, disabled, busy, voice, warmStt]);
 
   // ── Conversation mode (auto loop) ─────────────────────────────────
   const conversationCancelledRef = useRef(false);
@@ -143,6 +182,7 @@ export function AgentComposer({
   const beginConvListen = useCallback(async () => {
     if (conversationCancelledRef.current) return;
     setErrorHint(null);
+    setErrorDismissed(false);
     const ok = await voice.start();
     if (!ok) {
       setMode('idle');
@@ -197,8 +237,22 @@ export function AgentComposer({
   const startConversation = useCallback(async () => {
     if (mode !== 'idle' || disabled || busy) return;
     conversationCancelledRef.current = false;
+    warmStt?.();
+    // The chat screen owns the opener audio. It plays it the FIRST
+    // time the kid enters conv mode (so text-only users never hear it
+    // forced on session open) and resolves immediately on every
+    // subsequent call. We await it so the mic doesn't open while the
+    // opener is still speaking.
+    if (beforeFirstConvListen) {
+      try {
+        await beforeFirstConvListen();
+      } catch {
+        /* opener playback failure shouldn't block conversation start */
+      }
+      if (conversationCancelledRef.current) return;
+    }
     await beginConvListen();
-  }, [mode, disabled, busy, beginConvListen]);
+  }, [mode, disabled, busy, beginConvListen, warmStt, beforeFirstConvListen]);
 
   const stopConversation = useCallback(async () => {
     conversationCancelledRef.current = true;
@@ -239,25 +293,61 @@ export function AgentComposer({
   const hasText = text.trim().length > 0;
   const isRecording = mode === 'mic-recording' || mode === 'conv-listening';
   const isProcessing = mode === 'mic-uploading' || mode === 'conv-uploading';
-  const isSpeaking = mode === 'conv-speaking';
+  // "Speaking" covers BOTH composer-owned playback (conv-speaking mode)
+  // and chat-screen-owned playback (opener / text-turn replies). One
+  // visual cue, two trigger sources — no more separate "Tutor spricht
+  // …" banner.
+  const isSpeaking = mode === 'conv-speaking' || tutorSpeaking;
   const isConversation =
     mode === 'conv-listening' || mode === 'conv-uploading' || mode === 'conv-speaking';
 
+  // Breath cycle while tutor is speaking. SetInterval is cheap here
+  // (one timer, 200 ms cadence) and avoids pulling Animated for a
+  // single numeric value driving downstream rendering.
+  useEffect(() => {
+    if (!isSpeaking) {
+      setSpeakLevel(0.2);
+      return;
+    }
+    const start = Date.now();
+    const id = setInterval(() => {
+      // 1.4 s sine cycle, 0.25 baseline + 0.45 amplitude → bars rise
+      // and fall between 0.25 and 0.7. Same period as the chat-bubble
+      // breath so the two cues feel synchronised even though they're
+      // running on separate animation engines.
+      const phase = ((Date.now() - start) % 1400) / 1400;
+      const wave = 0.25 + 0.45 * (0.5 - 0.5 * Math.cos(phase * Math.PI * 2));
+      setSpeakLevel(wave);
+    }, 80);
+    return () => clearInterval(id);
+  }, [isSpeaking]);
+
   const statusText = (() => {
-    if (mode === 'mic-recording') return 'Hört zu';
-    if (mode === 'mic-uploading') return 'Verstehe …';
-    if (mode === 'conv-listening') return 'Hört zu';
-    if (mode === 'conv-uploading') return 'Denkt …';
-    if (mode === 'conv-speaking') return 'Antwortet';
+    if (mode === 'mic-recording') return t('chat.composer.listening');
+    if (mode === 'mic-uploading') return t('chat.composer.understanding');
+    if (mode === 'conv-listening') return t('chat.composer.listening');
+    if (mode === 'conv-uploading') return t('chat.composer.thinking');
+    if (mode === 'conv-speaking' || tutorSpeaking) return t('chat.composer.answering');
     return '';
   })();
 
   return (
     <View style={styles.outer}>
-      {errorHint || voice.permissionDenied ? (
-        <Text style={styles.errorHint}>
-          {errorHint ?? 'Mikrofon-Zugriff fehlt. Bitte in den Einstellungen erlauben.'}
-        </Text>
+      {(errorHint || voice.permissionDenied) && !errorDismissed ? (
+        <Pressable
+          onPress={() => setErrorDismissed(true)}
+          style={styles.errorRow}
+          accessibilityRole="button"
+          accessibilityLabel={t('chat.composer.a11y.dismiss_error')}
+          hitSlop={4}
+        >
+          <Text style={styles.errorHint} numberOfLines={3}>
+            {errorHint ?? t('chat.composer.mic_denied')}
+          </Text>
+          <View style={styles.errorClose}>
+            <Icon name="close" size={14} color={LB.danger} />
+          </View>
+        </Pressable>
       ) : null}
 
       <View style={styles.pill}>
@@ -270,13 +360,16 @@ export function AgentComposer({
                 {isProcessing ? <ActivityIndicator size="small" color={LB.ink2} /> : null}
                 <Text style={styles.statusText}>{statusText}</Text>
               </View>
-              <Waveform level={isRecording ? voice.level : 0.15} dim={!isRecording} />
+              <Waveform
+                level={isRecording ? voice.level : isSpeaking ? speakLevel : 0.15}
+                dim={!isRecording && !isSpeaking}
+              />
             </View>
           ) : (
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="Antwort eingeben …"
+              placeholder={t('chat.composer.input_placeholder')}
               placeholderTextColor={LB.ink3}
               editable={!disabled && !busy}
               style={styles.input}
@@ -296,23 +389,27 @@ export function AgentComposer({
               icon="close"
               iconColor={LB.paper}
               onPress={stopConversation}
-              label="Sprachgespräch beenden"
+              label={t('chat.composer.a11y.end_conv')}
             />
-          ) : mode === 'mic-recording' ? (
+          ) : tutorSpeaking ? // Chat-screen owns the playback (opener / text-turn reply).
+          // No actionable button here — the kid just waits. The
+          // statusBlock above ("Antwortet" + animated waveform) is
+          // the cue.
+          null : mode === 'mic-recording' ? (
             <>
               <RoundButton
                 variant="soft"
                 icon="close"
                 iconColor={LB.ink}
                 onPress={cancelMic}
-                label="Aufnahme abbrechen"
+                label={t('chat.composer.a11y.cancel_mic')}
               />
               <RoundButton
                 variant="success"
                 icon="check"
                 iconColor={LB.paper}
                 onPress={stopMicAndTranscribe}
-                label="Aufnahme übernehmen"
+                label={t('chat.composer.a11y.confirm_mic')}
               />
             </>
           ) : mode === 'mic-uploading' ? (
@@ -323,7 +420,7 @@ export function AgentComposer({
               onPress={() => undefined}
               disabled
               showSpinner
-              label="Bitte warten"
+              label={t('chat.composer.a11y.please_wait')}
             />
           ) : hasText ? (
             <RoundButton
@@ -332,17 +429,17 @@ export function AgentComposer({
               iconColor={LB.paper}
               onPress={submitText}
               disabled={disabled || busy}
-              label="Antwort absenden"
+              label={t('chat.composer.a11y.send')}
             />
           ) : (
             <>
               <RoundButton
                 variant="ink"
                 icon="mic"
-                iconColor={LB.paper}
+                iconColor={LB.primaryDk}
                 onPress={startMic}
                 disabled={disabled || busy}
-                label="Sprachnachricht aufnehmen"
+                label={t('chat.composer.a11y.start_mic')}
               />
               {submitVoiceTurn ? (
                 <RoundButton
@@ -351,7 +448,7 @@ export function AgentComposer({
                   iconColor={LB.paper}
                   onPress={startConversation}
                   disabled={disabled || busy}
-                  label="Sprachgespräch starten"
+                  label={t('chat.composer.a11y.start_conv')}
                 />
               ) : null}
             </>
@@ -412,7 +509,14 @@ function RoundButton({
       }}
     >
       {({ pressed }) => (
-        <View style={[styles.btn, variantStyle, pressed && !disabled && styles.pressed]}>
+        <View
+          style={[
+            styles.btn,
+            variantStyle,
+            !disabled && styles.btnRaised,
+            pressed && !disabled && styles.pressed,
+          ]}
+        >
           {showSpinner ? (
             <ActivityIndicator color={iconColor} />
           ) : (
@@ -473,11 +577,25 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: LB.hairline,
   },
-  errorHint: {
-    fontSize: 12,
-    color: LB.danger,
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
     marginBottom: 6,
     paddingHorizontal: 8,
+  },
+  errorHint: {
+    flex: 1,
+    fontSize: 12,
+    color: LB.danger,
+  },
+  errorClose: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
   },
 
   // ── The single pill — same dimensions in every state ──
@@ -547,16 +665,24 @@ const styles = StyleSheet.create({
     borderRadius: BTN_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Shadow only when enabled — Android renders `elevation` as a
+  // RECTANGULAR drop-shadow that doesn't respect the parent's
+  // borderRadius. With the disabled `opacity: 0.4` on the Pressable,
+  // that rectangle becomes visible as an octagonal halo around the
+  // circle. Keeping the shadow off in the disabled state hides it.
+  btnRaised: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
-  // Saturated colours — pastels were too zart, the user couldn't see
-  // the buttons clearly. These contrast hard against the LB.bg pill.
+  // Warm-only palette — no black/ink backgrounds anywhere (design rule).
+  // Differentiate buttons via icon shape + saturation level, not by
+  // reaching for an ink contrast.
   btnPrimary: { backgroundColor: LB.primary }, // terracotta — Send + Conversation start
-  btnInk: { backgroundColor: LB.ink }, // near-black — Mic (clearly different from Wave)
+  btnInk: { backgroundColor: LB.primaryLt }, // light terracotta — Mic (softer than Wave)
   btnSuccess: { backgroundColor: LB.success }, // sage green — "Yes, use this take"
   btnStop: { backgroundColor: LB.danger }, // red — exit conversation
   btnSoft: {

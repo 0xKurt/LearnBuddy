@@ -17,16 +17,21 @@ const PROMPT_VERSION = 'gcp-tts.chirp-hd.v1';
 // Chirp HD = $16 per 1 million chars = 16 micros per char.
 const PRICE_MICROS_PER_CHAR = 16;
 
-/** Locale → Chirp HD voice name. The list comes from Google's voice
- *  catalogue; "Chirp3-HD" voices are the latest generation as of 2025.
- *  Falls back to Neural2 when a locale isn't covered (rare for our 5). */
-const VOICE_BY_LOCALE: Record<string, { name: string; languageCode: string }> = {
-  de: { name: 'de-DE-Chirp3-HD-Achernar', languageCode: 'de-DE' },
-  en: { name: 'en-US-Chirp3-HD-Achernar', languageCode: 'en-US' },
-  fr: { name: 'fr-FR-Chirp3-HD-Achernar', languageCode: 'fr-FR' },
-  es: { name: 'es-ES-Chirp3-HD-Achernar', languageCode: 'es-ES' },
-  it: { name: 'it-IT-Chirp3-HD-Achernar', languageCode: 'it-IT' },
+/** Locale → BCP-47 language code used to build a Chirp HD voice name.
+ *  Chirp3-HD voices follow the pattern `<lang>-Chirp3-HD-<character>`,
+ *  so e.g. "Aoede" + de → "de-DE-Chirp3-HD-Aoede". */
+const LANGUAGE_CODE_BY_LOCALE: Record<string, string> = {
+  de: 'de-DE',
+  en: 'en-US',
+  fr: 'fr-FR',
+  es: 'es-ES',
+  it: 'it-IT',
 };
+
+/** Default voice character when the caller doesn't pick one. Aoede is
+ *  Google's calm-warm-female interpretation — kids found "Achernar"
+ *  (our previous default) cold/robotic. */
+const DEFAULT_VOICE_CHARACTER = 'Aoede';
 
 export class VertexTTSGateway implements TTSGateway {
   private readonly client: TextToSpeechClient;
@@ -39,14 +44,15 @@ export class VertexTTSGateway implements TTSGateway {
   }
 
   async synthesize(input: TTSInput): Promise<TTSResult> {
-    // VOICE_BY_LOCALE always has 'en' so the fallback is non-null. Cast
-    // captures the intent for TS — the keys are 'de'/'en'/'fr'/'es'/'it'
-    // and one of them always matches.
-    const voiceLookup =
-      VOICE_BY_LOCALE[input.voiceId ?? input.locale] ??
-      VOICE_BY_LOCALE[input.locale] ??
-      VOICE_BY_LOCALE['en']!;
-    const voice = voiceLookup;
+    // Resolve `<lang>-Chirp3-HD-<character>` from the learner's locale
+    // and (optionally) preferred voice character. Falls back to en-US
+    // and Aoede when something's missing.
+    const languageCode = LANGUAGE_CODE_BY_LOCALE[input.locale] ?? 'en-US';
+    const character = input.voiceId?.trim() || DEFAULT_VOICE_CHARACTER;
+    const voice = {
+      languageCode,
+      name: `${languageCode}-Chirp3-HD-${character}`,
+    };
 
     const rate = input.rate ?? 1.0;
 

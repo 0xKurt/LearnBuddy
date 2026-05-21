@@ -35,6 +35,9 @@ export class FakeSTTGateway implements STTGateway {
       },
     };
   }
+  async warmup(): Promise<void> {
+    /* no-op for the fake gateway */
+  }
 }
 
 export class FakeTTSGateway implements TTSGateway {

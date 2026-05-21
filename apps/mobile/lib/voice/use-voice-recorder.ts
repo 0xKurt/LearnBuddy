@@ -15,10 +15,10 @@
 //     5-second clip is ~15 kB instead of ~80 kB at HIGH_QUALITY.
 //   * Metering enabled so we have amplitude for VAD + the waveform UI.
 //
-// Base64 encoding is delegated to expo-file-system's native `File.base64()`,
-// which runs off the JS thread. The previous JS-loop implementation was
-// the single biggest client-side delay between "you stopped talking" and
-// "the audio leaves the device".
+// Known limitation: amplitude-based VAD can't distinguish speech from
+// continuous background noise (TV, music). For the TV-noise fix, we
+// need native OS speech detection via expo-speech-recognition — which
+// requires a dev client (won't work in Expo Go). Tracked but not active.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -46,8 +46,6 @@ export type UseVoiceRecorderOptions = {
   silenceThresholdDb?: number;
 };
 
-// Speech-optimised recording config — 16 kHz mono AAC at 24 kbps.
-// Tiny files, fast upload, STT-quality unchanged.
 const SPEECH_RECORDING_CONFIG: RecordingOptions = {
   extension: '.m4a',
   sampleRate: 16000,
@@ -72,7 +70,14 @@ const SPEECH_RECORDING_CONFIG: RecordingOptions = {
 };
 
 export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
-  const { onSilence, silenceMs = 1200, minSpeechMs = 600, silenceThresholdDb = -42 } = options;
+  // Threshold tuning (2026-05-21, post bedroom-rustling complaint):
+  //   * silenceThresholdDb = -30: speech sits around -25 to -10 dB, soft
+  //     background noise (rustling sheets, fan hum) around -45 to -38.
+  //     -30 splits cleanly between the two. -42 (the old value) treated
+  //     duvet rustling as "still talking" and never auto-stopped.
+  //   * silenceMs = 900: snappier auto-stop on real silence; was 1200.
+  //   * minSpeechMs = 500: prevents accidental double-tap stop; was 600.
+  const { onSilence, silenceMs = 900, minSpeechMs = 500, silenceThresholdDb = -30 } = options;
 
   const recorder = useAudioRecorder(SPEECH_RECORDING_CONFIG);
   const state = useAudioRecorderState(recorder, 100);
@@ -84,6 +89,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
   const startedAtRef = useRef<number>(0);
   const lastLoudRef = useRef<number>(0);
   const firedOnSilenceRef = useRef<boolean>(false);
+  // Sticky flag: true the moment any frame crosses silenceThresholdDb.
+  // Gates auto-silence so a dead-quiet room can't false-trigger uploads.
+  const hadSpeechRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!recording) {
@@ -96,10 +104,22 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
     setLevel((prev) => prev * 0.6 + norm * 0.4);
 
     const now = Date.now();
-    if (meter > silenceThresholdDb) lastLoudRef.current = now;
+    const isLoud = meter > silenceThresholdDb;
+    if (isLoud) {
+      lastLoudRef.current = now;
+      hadSpeechRef.current = true;
+    }
 
     if (!onSilence || firedOnSilenceRef.current) return;
     if (now - startedAtRef.current < minSpeechMs) return;
+    // CRITICAL: don't fire onSilence until at least one loud sample was
+    // observed. Otherwise a dead-quiet room (below threshold) trips the
+    // silence detector after `silenceMs` and the conv-mode loop spins
+    // forever: open mic → 900ms silence → upload empty audio → STT
+    // returns 'silent' → composer re-opens mic → repeat. The mic
+    // simply waits, indefinitely, until the user actually speaks.
+    // X-button (cancel) is still the user's way out.
+    if (!hadSpeechRef.current) return;
     if (now - lastLoudRef.current >= silenceMs) {
       firedOnSilenceRef.current = true;
       onSilence();
@@ -121,6 +141,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
     startedAtRef.current = Date.now();
     lastLoudRef.current = startedAtRef.current;
     firedOnSilenceRef.current = false;
+    hadSpeechRef.current = false;
     recorder.record();
     setRecording(true);
     return true;
@@ -133,9 +154,6 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}) {
     const uri = recorder.uri;
     if (!uri) return null;
     try {
-      // Native base64 — runs off the JS thread. Much faster than the
-      // previous fetch(uri) → arrayBuffer → JS-loop fromCharCode chain,
-      // especially for clips > 2 seconds.
       const file = new File(uri);
       const b64 = await file.base64();
       const mime: VoiceRecording['mime'] =

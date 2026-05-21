@@ -12,6 +12,7 @@
       "profile_edit_sub": "Name, Geburtsdatum, Stufe",
       "notifications": "Benachrichtigungen",
       "preferences": "Einstellungen",
+      "voice": "Stimme",
       "subscription": "Abo",
       "data": "Daten & Datenschutz",
       "archive": "Archiv",
@@ -48,6 +49,24 @@
     "dyslexia_font": {
       "label": "OpenDyslexic-Schrift",
       "sub": "Leichter zu lesende Schriftart für Legasthenie (Schrift folgt im nächsten Update)."
+    }
+  },
+  "voice": {
+    "title": "Stimme des Tutors",
+    "subtitle": "So klingt der Tutor, wenn er mit dir spricht. Tipp auf die Note, um eine Stimme probezuhören.",
+    "preview_a11y": "{{name}} probehören",
+    "note": "Die Auswahl gilt für alle Sprachen — wenn du die App-Sprache wechselst, behält dieselbe Stimme die gleiche Persönlichkeit.",
+    "gender": {
+      "female": "weiblich",
+      "male": "männlich"
+    },
+    "descriptions": {
+      "aoede": "Ruhig & warm — die Standardstimme",
+      "leda": "Sanft & freundlich, etwas zurückhaltend",
+      "kore": "Hell und lebhaft, mit Energie",
+      "charon": "Tief und ruhig",
+      "fenrir": "Warm und freundlich",
+      "puck": "Frech und spielerisch"
     }
   },
   "account_settings": {

@@ -31,6 +31,16 @@ export const AgentSessionStart = z.object({
   items: z.array(AgentSessionItem),
   opener: z.string(),
   first_question: z.string(),
+  // GCP Chirp HD synthesis of the opener + first question. Null when
+  // TTS failed (chat screen still renders text without).
+  audio: z
+    .object({
+      base64: z.string(),
+      mime: z.string(),
+      durationMs: z.number().nonnegative().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 export type AgentSessionStart = z.infer<typeof AgentSessionStart>;
 
@@ -72,6 +82,10 @@ export async function createAgentSession(
     subject_id?: string | null;
     folder_id?: string | null;
     material_id?: string | null;
+    /** Restrict the session to one topic (e.g. "Bruchrechnung").
+     *  When set, the server bypasses FSRS and pulls items WHERE
+     *  items.topic = X. */
+    topic?: string | null;
     test_mode?: boolean;
     max_items?: number;
   },
@@ -170,11 +184,42 @@ export async function streamAgentTurn(
     }
     return rest;
   };
+  // Per-chunk read timeout — if the server stops sending events
+  // entirely (Vercel cold start hang, ISP proxy idle-kill, GCP STT
+  // wedged) the loop would otherwise block forever. 60 s between
+  // chunks is generous enough for the slowest legitimate turn (cold
+  // start + STT + LLM + TTS) but bounds the worst case.
+  const READ_TIMEOUT_MS = 60_000;
+  const readWithTimeout = (): Promise<{ done: boolean; value?: Uint8Array }> =>
+    new Promise((resolve, reject) => {
+      const t = setTimeout(() => {
+        try {
+          // Cancelling the reader unblocks any in-flight read() so the
+          // underlying connection actually closes.
+          void reader.cancel('stream idle timeout');
+        } catch {
+          /* ignore */
+        }
+        reject(new ApiError('timeout', `Keine Antwort nach ${READ_TIMEOUT_MS / 1000}s.`, 504));
+      }, READ_TIMEOUT_MS);
+      reader.read().then(
+        (r) => {
+          clearTimeout(t);
+          resolve(r);
+        },
+        (err) => {
+          clearTimeout(t);
+          reject(err);
+        },
+      );
+    });
   for (;;) {
-    const { done, value } = await reader.read();
+    const { done, value } = await readWithTimeout();
     if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    buf = flushFrames(buf);
+    if (value) {
+      buf += decoder.decode(value, { stream: true });
+      buf = flushFrames(buf);
+    }
   }
   // Final flush (some servers close without trailing blank line).
   if (buf.trim()) {
@@ -185,6 +230,25 @@ export async function streamAgentTurn(
       .join('');
     if (payload) emit(payload);
   }
+}
+
+/** Fire-and-forget pre-warm. Pinged the instant the user taps the mic
+ *  so the Vercel function + GCP STT gRPC channel are warm when the
+ *  audio arrives. Never throws — silent failures are fine, the worst
+ *  case is just falling back to a cold-path recognize. */
+export function warmTranscribe(learnerId: string): void {
+  const url = new URL('/agent/transcribe/warm', ENV.API_URL).toString();
+  const tok = getSessionSync()?.access_token;
+  void fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(tok ? { authorization: `Bearer ${tok}` } : {}),
+      'x-learner-id': learnerId,
+    },
+  }).catch(() => {
+    /* swallow — pre-warm is best-effort */
+  });
 }
 
 /** Transcribe-only — server returns just the recognised text, no
@@ -218,6 +282,42 @@ export async function transcribeVoice(
   }
   const json = (await res.json()) as { text?: unknown };
   return typeof json.text === 'string' ? json.text : '';
+}
+
+/** Synthesise one short sample phrase in the requested voice + the
+ *  learner's UI locale. Used by the admin → Stimme screen to preview
+ *  a voice before committing it as the default. */
+export async function fetchVoiceSample(
+  learnerId: string,
+  voice: string,
+): Promise<{ base64: string; mime: string }> {
+  const url = new URL('/agent/voice/sample', ENV.API_URL).toString();
+  const tok = getSessionSync()?.access_token;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(tok ? { authorization: `Bearer ${tok}` } : {}),
+      'x-learner-id': learnerId,
+    },
+    body: JSON.stringify({ voice }),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: { code?: string; message?: string };
+    };
+    throw new ApiError(
+      body.error?.code ?? 'evaluation_failed',
+      body.error?.message ?? `HTTP ${res.status}`,
+      res.status,
+    );
+  }
+  const json = (await res.json()) as { audio?: { base64?: string; mime?: string } };
+  const audio = json.audio;
+  if (!audio?.base64 || !audio?.mime) {
+    throw new ApiError('evaluation_failed', 'Empty audio in sample response', 502);
+  }
+  return { base64: audio.base64, mime: audio.mime };
 }
 
 export async function finishAgentSession(learnerId: string, sessionId: string): Promise<void> {

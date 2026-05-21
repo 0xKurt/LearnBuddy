@@ -31,12 +31,41 @@ import { rateLimit } from '../middleware/rate-limit.js';
 export const agentRoutes = new Hono();
 agentRoutes.use('*', requireAuth, requireLearnerContext);
 
+/** Wrap a promise with a hard deadline. On timeout the returned promise
+ *  rejects with an ApiError so the SSE outer try/catch can send a
+ *  proper `error` event instead of letting the stream hang forever.
+ *  Failure modes we've actually hit in prod: GCP STT first-call cold
+ *  start, Vertex regional outage, TTS quota exhausted. */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => {
+      reject(new ApiError('evaluation_failed', `${label} timed out after ${ms}ms`));
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (err) => {
+        clearTimeout(t);
+        reject(err);
+      },
+    );
+  });
+}
+
 // ── Session start ──────────────────────────────────────────────────────────
 
 const SessionCreateBody = z.object({
   subject_id: z.string().uuid().nullable().optional(),
   folder_id: z.string().uuid().nullable().optional(),
   material_id: z.string().uuid().nullable().optional(),
+  /** Filter items by their auto-extracted topic label. Used by the
+   *  Thema-detail screen so the tutor session covers exactly one topic
+   *  (e.g. "Bruchrechnung"). Bypasses the FSRS-aware RPC and pulls items
+   *  directly with topic = X — kids who tap a topic want to study THAT,
+   *  not whatever the scheduler thinks is due. */
+  topic: z.string().min(1).max(120).nullable().optional(),
   test_mode: z.boolean().default(false),
   max_items: z.number().int().min(1).max(50).default(20),
 });
@@ -46,7 +75,7 @@ agentRoutes.post(
   rateLimit({ key: 'agent_sessions_create', per_hour: 60 }),
   zValidator('json', SessionCreateBody),
   async (c) => {
-    const { supabase, now } = getDeps(c);
+    const { supabase, tts, now } = getDeps(c);
     const learner_id = c.get('learner_id');
     if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
     const body = c.req.valid('json');
@@ -54,21 +83,24 @@ agentRoutes.post(
 
     const learnerRow = await supabase
       .from('learners')
-      .select('display_name, grade_level, ui_locale')
+      .select('display_name, grade_level, ui_locale, tts_voice')
       .eq('id', learner_id)
       .maybeSingle();
     const learner = (learnerRow.data ?? null) as {
       display_name: string | null;
       grade_level: number | null;
       ui_locale: string | null;
+      tts_voice: string | null;
     } | null;
     const locale = ((learner?.ui_locale ?? 'de') as Locale) ?? ('de' as Locale);
+    const ttsVoice = learner?.tts_voice ?? null;
 
     const items = await pickItems(supabase, {
       learner_id,
       subject_id: body.subject_id ?? null,
       folder_id: body.folder_id ?? null,
       material_id: body.material_id ?? null,
+      topic: body.topic ?? null,
       max_items: body.max_items,
       now: nowIso,
     });
@@ -116,12 +148,34 @@ agentRoutes.post(
       intent: 'introduce_next',
     });
 
+    // Synthesise the opener so the chat screen reads it aloud on start
+    // — same Chirp HD voice and rate as the per-turn replies. Failure
+    // (incl. timeout) is non-blocking: the screen still shows the text.
+    let openerAudio: { base64: string; mime: string; durationMs: number } | null = null;
+    try {
+      const synth = await withTimeout(
+        tts.synthesize({ text: seedContent, locale, rate: 1.0, voiceId: ttsVoice }),
+        8_000,
+        'opener TTS',
+      );
+      openerAudio = {
+        base64: synth.audioBase64,
+        mime: synth.mime,
+        durationMs: synth.durationMs,
+      };
+    } catch (err) {
+      console.warn(
+        `[agent] opener TTS synthesize failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
     return c.json(
       {
         session_id: session.id,
         items,
         opener,
         first_question: firstQuestion,
+        audio: openerAudio,
       },
       201,
     );
@@ -139,6 +193,21 @@ const TranscribeBody = z.object({
   audio_base64: z.string().min(1).max(8_000_000),
   audio_mime: z.enum(['audio/m4a', 'audio/mp4', 'audio/wav', 'audio/webm']),
 });
+
+// Fire-and-forget pre-warm: the mobile app pings this the instant the
+// user taps the mic so the Vercel function and the GCP STT gRPC channel
+// are both warm by the time the actual audio arrives. Returns 200 fast
+// — the warmup itself is awaited so a cold gRPC handshake doesn't kick
+// over to the user's recognize() call.
+agentRoutes.post(
+  '/transcribe/warm',
+  rateLimit({ key: 'agent_transcribe_warm', per_hour: 6000 }),
+  async (c) => {
+    const { stt } = getDeps(c);
+    await stt.warmup();
+    return c.json({ ok: true });
+  },
+);
 
 agentRoutes.post(
   '/transcribe',
@@ -171,6 +240,61 @@ agentRoutes.post(
       text: res.text,
       detected_locale: res.detectedLocale,
       confidence: res.confidence,
+    });
+  },
+);
+
+// ── Voice sample (preview for the admin → Stimme settings screen) ─────────
+//
+// Synthesises one short, friendly phrase in the requested voice and the
+// learner's UI locale, returns the MP3 base64. The settings screen plays
+// it via the existing `playTtsAudio` helper so the kid hears the voice
+// BEFORE committing to it. No DB writes — selecting is a separate
+// PATCH /learners call.
+
+const VoiceSampleBody = z.object({
+  voice: z.string().min(1).max(40),
+});
+
+// One short, natural-sounding sample per locale. ~2 sentences = ~3–5 s of
+// audio — enough to judge the voice character (pitch, warmth, pacing)
+// without wasting TTS budget. Kept simple and inviting; no brand-name
+// gymnastics ("Ich bin deine LearnBuddy-Stimme" reads weirdly in German
+// and the equivalent in romance languages too).
+const SAMPLE_PHRASE_BY_LOCALE: Record<string, string> = {
+  de: 'Hallo! Schön, dass du da bist. Lass uns gemeinsam etwas Neues lernen.',
+  en: "Hello! I'm glad you're here. Let's learn something new together.",
+  fr: 'Bonjour ! Ravie de te voir. On va apprendre quelque chose de nouveau ensemble.',
+  es: '¡Hola! Qué bien tenerte aquí. Vamos a aprender algo nuevo juntos.',
+  it: 'Ciao! Che bello averti qui. Impariamo qualcosa di nuovo insieme.',
+};
+
+agentRoutes.post(
+  '/voice/sample',
+  rateLimit({ key: 'agent_voice_sample', per_hour: 120 }),
+  zValidator('json', VoiceSampleBody),
+  async (c) => {
+    const { supabase, tts } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const { voice } = c.req.valid('json');
+
+    const learnerRow = await supabase
+      .from('learners')
+      .select('ui_locale')
+      .eq('id', learner_id)
+      .maybeSingle();
+    const locale = (((learnerRow.data as { ui_locale: string | null } | null)
+      ?.ui_locale as Locale | null) ?? 'de') as Locale;
+    const text = SAMPLE_PHRASE_BY_LOCALE[locale] ?? SAMPLE_PHRASE_BY_LOCALE['de']!;
+
+    const synth = await tts.synthesize({ text, locale, rate: 1.0, voiceId: voice });
+    return c.json({
+      audio: {
+        base64: synth.audioBase64,
+        mime: synth.mime,
+        durationMs: synth.durationMs,
+      },
     });
   },
 );
@@ -345,15 +469,17 @@ agentRoutes.post(
 
         const learnerRow = await supabase
           .from('learners')
-          .select('display_name, grade_level, ui_locale')
+          .select('display_name, grade_level, ui_locale, tts_voice')
           .eq('id', learner_id)
           .maybeSingle();
         const learner = (learnerRow.data ?? null) as {
           display_name: string | null;
           grade_level: number | null;
           ui_locale: string | null;
+          tts_voice: string | null;
         } | null;
         const locale = ((learner?.ui_locale ?? 'de') as Locale) ?? ('de' as Locale);
+        const ttsVoice = learner?.tts_voice ?? null;
 
         // Voice transcription if audio supplied. GCP Speech-to-Text v2
         // chirp_2 with multilingual auto-detect: the German UI locale is
@@ -362,11 +488,15 @@ agentRoutes.post(
         // language-learning app).
         let learnerText = (body.text ?? '').trim();
         if (!learnerText && body.audio_base64) {
-          const transcript = await stt.recognize({
-            audioBase64: body.audio_base64,
-            mime: body.audio_mime ?? 'audio/m4a',
-            preferredLocale: locale,
-          });
+          const transcript = await withTimeout(
+            stt.recognize({
+              audioBase64: body.audio_base64,
+              mime: body.audio_mime ?? 'audio/m4a',
+              preferredLocale: locale,
+            }),
+            25_000,
+            'STT',
+          );
           learnerText = transcript.text.trim();
           if (learnerText) await send({ type: 'transcript', text: learnerText });
         }
@@ -464,11 +594,15 @@ agentRoutes.post(
 
         let agentResult;
         try {
-          agentResult = await llm.agentTurn({
-            systemInstruction,
-            history,
-            learnerMessage: learnerText,
-          });
+          agentResult = await withTimeout(
+            llm.agentTurn({
+              systemInstruction,
+              history,
+              learnerMessage: learnerText,
+            }),
+            45_000,
+            'agent LLM',
+          );
         } catch (err) {
           await send({
             type: 'error',
@@ -483,9 +617,14 @@ agentRoutes.post(
         // streaming would need an incremental parser.
         if (parsed.reply) await send({ type: 'reply', text: parsed.reply });
 
-        // Persist tutor turn.
+        // Parallelise tutor-turn persistence and TTS synthesis. They're
+        // independent: the DB write needs only the parsed reply + verdict,
+        // and TTS needs only the reply text + locale + voice. Running
+        // them sequentially used to add ~50-200 ms (DB) on top of the
+        // 1-3 s TTS — pure waste in the gap between text-arrives and
+        // voice-starts that the user perceived as latency.
         const tutorIndex = nextIndex + 1;
-        const tutorInsert = await supabase
+        const persistTutorTurn = supabase
           .from('conversation_turns')
           .insert({
             session_id,
@@ -502,7 +641,30 @@ agentRoutes.post(
           })
           .select('id')
           .single();
+        const synthTts = parsed.reply
+          ? withTimeout(
+              tts.synthesize({ text: parsed.reply, locale, rate: 1.0, voiceId: ttsVoice }),
+              8_000,
+              'per-turn TTS',
+            ).catch((err: unknown) => {
+              console.warn(
+                `[agent] TTS synthesize failed: ${
+                  err instanceof Error ? err.message : String(err)
+                }`,
+              );
+              return null;
+            })
+          : Promise.resolve(null);
+
+        const [tutorInsert, synthResult] = await Promise.all([persistTutorTurn, synthTts]);
         const tutorTurnId = (tutorInsert.data as { id: string } | null)?.id ?? null;
+        const ttsAudio = synthResult
+          ? {
+              base64: synthResult.audioBase64,
+              mime: synthResult.mime,
+              durationMs: synthResult.durationMs,
+            }
+          : null;
 
         // FSRS update: every verdict advances the item_state row. The
         // hint-aware effort signal downgrades a scaffolded `correct`
@@ -526,31 +688,6 @@ agentRoutes.post(
               }`,
             );
           });
-        }
-
-        // Synthesise the reply via GCP TTS (Chirp HD voice) so the
-        // mobile can play it back without expo-speech's robotic voice.
-        // Slightly elevated rate (1.18) reads as natural for school-age
-        // learners. Fire-and-forget — if TTS fails we still send the
-        // done event without audio and the mobile falls back silently.
-        let ttsAudio: { base64: string; mime: string; durationMs: number } | null = null;
-        if (parsed.reply) {
-          try {
-            const synth = await tts.synthesize({
-              text: parsed.reply,
-              locale,
-              rate: 1.18,
-            });
-            ttsAudio = {
-              base64: synth.audioBase64,
-              mime: synth.mime,
-              durationMs: synth.durationMs,
-            };
-          } catch (err) {
-            console.warn(
-              `[agent] TTS synthesize failed: ${err instanceof Error ? err.message : String(err)}`,
-            );
-          }
         }
 
         await send({
@@ -679,10 +816,44 @@ async function pickItems(
     subject_id: string | null;
     folder_id: string | null;
     material_id: string | null;
+    topic: string | null;
     max_items: number;
     now: string;
   },
 ): Promise<Array<Record<string, unknown>>> {
+  // Topic-scoped picks bypass the FSRS RPC: when the kid taps a topic
+  // they want to study THAT topic, not whatever the scheduler thinks is
+  // due. Filter items directly. The "Allgemein" bucket includes items
+  // with NULL/empty topic too — mirrors the topic-items list endpoint
+  // so what the kid sees is what the tutor gets.
+  if (i.topic) {
+    const isAllgemein = i.topic.trim().toLowerCase() === 'allgemein';
+    let q = supabase
+      .from('items')
+      .select('*')
+      .eq('learner_id', i.learner_id)
+      .is('archived_at', null)
+      .limit(i.max_items);
+    if (isAllgemein) {
+      q = q.or('topic.is.null,topic.eq.,topic.ilike.allgemein');
+    } else {
+      q = q.ilike('topic', i.topic);
+    }
+    if (i.subject_id) {
+      // Topic + subject — narrow to subject's materials. We rely on the
+      // join via material_id; items don't carry subject_id directly.
+      const mats = await supabase.from('materials').select('id').eq('subject_id', i.subject_id);
+      const matIds = ((mats.data ?? []) as Array<{ id: string }>).map((m) => m.id);
+      if (matIds.length === 0) return [];
+      q = q.in('material_id', matIds);
+    }
+    const res = await q;
+    if (res.error) {
+      throw new ApiError('internal', 'Failed to load items', { cause: res.error.message });
+    }
+    return (res.data ?? []) as Array<Record<string, unknown>>;
+  }
+
   const supaWithRpc = supabase as unknown as {
     rpc?: (
       name: string,
