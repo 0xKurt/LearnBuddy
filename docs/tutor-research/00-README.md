@@ -26,6 +26,8 @@ support — across math / language / history / sciences.
    regression.
 8. **`08-v3-results.md`** — live v3 transcripts + concrete v2 vs v3
    side-by-side comparison.
+9. **`09-v3_1-results.md`** — v3.1 (compressed v3) results: ~48 %
+   input-token reduction, no quality regression.
 
 ## Status
 
@@ -33,10 +35,13 @@ support — across math / language / history / sciences.
 - Live dialogs captured: ✓ (in `_transcripts/`)
 - Research synthesised: ✓
 - v3 prompt drafted: ✓
-- v3 implemented in code: ✓ (default; v2 reachable via
-  `AGENT_PROMPT_VERSION_OVERRIDE='v2'` for fast rollback)
+- v3 implemented in code: ✓
 - v3 live-verified: ✓ on 6 scenarios; ~30/32 criteria pass
   (vs ~12/30 for v2). See `08-v3-results.md`.
+- v3.1 (compressed) shipped: ✓ — **default**; v3 and v2 reachable
+  via `AGENT_PROMPT_VERSION_OVERRIDE` for fast rollback. ~48 %
+  input-token reduction, no quality regression.
+  See `09-v3_1-results.md`.
 
 ## Owner
 

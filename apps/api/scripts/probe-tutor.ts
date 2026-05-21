@@ -289,8 +289,15 @@ function runCriteria(replies: Reply[], persona: string, scenario: string): Crite
 async function runScenario(
   persona: Persona,
   item: Item,
-  version: 'v2' | 'v3',
-): Promise<{ transcript: string; pass: number; fail: number }> {
+  version: 'v2' | 'v3' | 'v3.1',
+): Promise<{
+  transcript: string;
+  pass: number;
+  fail: number;
+  inputTokensTotal: number;
+  outputTokensTotal: number;
+  turnCount: number;
+}> {
   const env = Env.parse({
     ...process.env,
     GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT ?? 'placeholder',
@@ -334,6 +341,9 @@ async function runScenario(
   let itemsCompleted = 0;
   let currentStreak = 0;
   let hintsUsedTotal = 0;
+  let inputTokensTotal = 0;
+  let outputTokensTotal = 0;
+  let turnCount = 0;
 
   const replies: Reply[] = [];
 
@@ -380,9 +390,12 @@ async function runScenario(
     }
 
     const parsed = parseAgentJson(raw.json);
+    inputTokensTotal += raw.usage.input_tokens;
+    outputTokensTotal += raw.usage.output_tokens;
+    turnCount += 1;
     log(`**Tutor:** ${parsed.reply}`);
     log(
-      `  - verdict=${parsed.verdict}  advance=${parsed.advance}  reveal=${parsed.reveal}  hint_given=${parsed.hint_given}  intent=${parsed.intent}`,
+      `  - verdict=${parsed.verdict}  advance=${parsed.advance}  reveal=${parsed.reveal}  hint_given=${parsed.hint_given}  intent=${parsed.intent}  tokens=${raw.usage.input_tokens}/${raw.usage.output_tokens}`,
     );
     log('');
 
@@ -439,17 +452,30 @@ async function runScenario(
     else fail += 1;
   }
 
-  return { transcript: lines.join('\n'), pass, fail };
+  // Append a small token-usage summary.
+  log('');
+  log(
+    `Tokens (turns ${turnCount}): in=${inputTokensTotal} (avg ${turnCount ? Math.round(inputTokensTotal / turnCount) : 0}) · out=${outputTokensTotal} (avg ${turnCount ? Math.round(outputTokensTotal / turnCount) : 0})`,
+  );
+
+  return {
+    transcript: lines.join('\n'),
+    pass,
+    fail,
+    inputTokensTotal,
+    outputTokensTotal,
+    turnCount,
+  };
 }
 
 async function main() {
-  // Parse args: optional --version v2 | v3 then optional persona + scenario
+  // Parse args: optional --version v2 | v3 | v3.1 then optional persona + scenario
   const args = process.argv.slice(2);
-  let version: 'v2' | 'v3' = 'v3';
+  let version: 'v2' | 'v3' | 'v3.1' = 'v3.1';
   const versionFlagIdx = args.indexOf('--version');
   if (versionFlagIdx !== -1) {
     const v = args[versionFlagIdx + 1];
-    if (v === 'v2' || v === 'v3') version = v;
+    if (v === 'v2' || v === 'v3' || v === 'v3.1') version = v;
     args.splice(versionFlagIdx, 2);
   }
   const personaFilter = args[0]?.toLowerCase();
@@ -461,6 +487,9 @@ async function main() {
   let totalPass = 0;
   let totalFail = 0;
   let runs = 0;
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let totalTurns = 0;
 
   for (const persona of PERSONAS) {
     if (personaFilter && persona.id !== personaFilter) continue;
@@ -480,12 +509,16 @@ async function main() {
       );
       console.log('══════════════════════════════════════════════════════════════\n');
 
-      const { transcript, pass, fail } = await runScenario(persona, item, version);
-      totalPass += pass;
-      totalFail += fail;
+      const result = await runScenario(persona, item, version);
+      totalPass += result.pass;
+      totalFail += result.fail;
       runs += 1;
-      const file = join(outDir, `${persona.id}-${tag}-${version}.md`);
-      writeFileSync(file, transcript, 'utf8');
+      totalInputTokens += result.inputTokensTotal;
+      totalOutputTokens += result.outputTokensTotal;
+      totalTurns += result.turnCount;
+      const tagForFile = version.replace('.', '_'); // v3.1 → v3_1 for filenames
+      const file = join(outDir, `${persona.id}-${tag}-${tagForFile}.md`);
+      writeFileSync(file, result.transcript, 'utf8');
       console.log(`\n(saved to ${file})`);
     }
   }
@@ -494,6 +527,9 @@ async function main() {
     console.log('\n\n══════════════════════════════════════════════════════════════');
     console.log(
       `OVERALL ${version}: ${totalPass} pass, ${totalFail} fail across ${runs} scenarios`,
+    );
+    console.log(
+      `Tokens: in=${totalInputTokens} (avg/turn ${Math.round(totalInputTokens / Math.max(1, totalTurns))}) · out=${totalOutputTokens} (avg/turn ${Math.round(totalOutputTokens / Math.max(1, totalTurns))})`,
     );
     console.log('══════════════════════════════════════════════════════════════');
   }
