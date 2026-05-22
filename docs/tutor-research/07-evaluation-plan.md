@@ -108,7 +108,7 @@ the easiest cut — they're optional per-turn).
 ## Phase 3 — Manual UX read
 
 Run a 5-item full session as each persona on a real device with v3
-flipped on (gated by env var `AGENT_PROMPT_VERSION_OVERRIDE`):
+flipped on (gated by env var `AGENT_PROMPT_VERSION`):
 
 - Listen to the voice playback (the Chirp HD voice + animated bubble
   pulse). Does the "Antwortet" UX read warm or robotic?
@@ -126,7 +126,7 @@ the prompt isn't done.
 `AGENT_PROMPT_VERSION` is a string constant. Add an env variable:
 
 ```ts
-AGENT_PROMPT_VERSION_OVERRIDE: z.enum(['v2', 'v3']).optional();
+AGENT_PROMPT_VERSION: z.enum(['v2', 'v3']).optional();
 ```
 
 Routing:

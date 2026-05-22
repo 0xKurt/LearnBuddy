@@ -39,7 +39,7 @@ support — across math / language / history / sciences.
 - v3 live-verified: ✓ on 6 scenarios; ~30/32 criteria pass
   (vs ~12/30 for v2). See `08-v3-results.md`.
 - v3.1 (compressed) shipped: ✓ — **default**; v3 and v2 reachable
-  via `AGENT_PROMPT_VERSION_OVERRIDE` for fast rollback. ~48 %
+  via `AGENT_PROMPT_VERSION` for fast rollback. ~48 %
   input-token reduction, no quality regression.
   See `09-v3_1-results.md`.
 

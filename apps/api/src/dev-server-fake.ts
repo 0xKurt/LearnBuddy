@@ -28,7 +28,7 @@ const env: Env = {
   GOOGLE_VERTEX_LOCATION: 'europe-west4',
   VERTEX_MODEL_ID: 'gemini-2.5-flash-lite',
   VERTEX_TUTOR_MODEL_ID: 'gemini-2.5-flash',
-  AGENT_PROMPT_VERSION_OVERRIDE: 'v3',
+  AGENT_PROMPT_VERSION: 'v3',
 };
 
 // Re-use the test deps so the fake supports the same surface vitest does.

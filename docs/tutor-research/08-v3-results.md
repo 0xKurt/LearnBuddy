@@ -118,7 +118,7 @@ erhöht, dass es zum Krieg kam. Wer war denn Franz Ferdinand?"
 
 ## Decision
 
-v3 is shipping as the default (`AGENT_PROMPT_VERSION_OVERRIDE='v3'`).
+v3 is shipping as the default (`AGENT_PROMPT_VERSION='v3'`).
 v2 stays reachable via env override for fast rollback if a
 production session hits something the test scenarios didn't.
 

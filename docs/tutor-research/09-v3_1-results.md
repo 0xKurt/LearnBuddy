@@ -93,7 +93,7 @@ direct.
 
 ## Decision
 
-v3.1 is now the default (`AGENT_PROMPT_VERSION_OVERRIDE='v3.1'`).
+v3.1 is now the default (`AGENT_PROMPT_VERSION='v3.1'`).
 v3 stays reachable via env override for fast rollback if a
 production session uncovers something the test scenarios didn't.
 

@@ -33,7 +33,7 @@ export { AGENT_PROMPT_VERSION_V3_1 as AGENT_PROMPT_VERSION };
 
 /** Single entry point: pick the prompt version, build the system
  *  instruction. The version comes from
- *  env.AGENT_PROMPT_VERSION_OVERRIDE ('v2' | 'v3' | 'v3.1'). */
+ *  env.AGENT_PROMPT_VERSION ('v2' | 'v3' | 'v3.1'). */
 export function buildAgentSystemInstructionForVersion(
   version: AgentPromptVersion,
   input: AgentTurnInput,

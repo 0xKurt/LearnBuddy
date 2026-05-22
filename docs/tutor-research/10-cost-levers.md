@@ -45,7 +45,7 @@ Implementation notes:
 - TTL 60 min (Vertex max for flash); refresh ≤ 5 min before expiry.
 - Failure on create (quota / min-token / regional rollout) → return
   null → caller falls back to non-cached path. Never blocks a turn.
-- Only active when `AGENT_PROMPT_VERSION_OVERRIDE='v3.1'`. v2 / v3
+- Only active when `AGENT_PROMPT_VERSION='v3.1'`. v2 / v3
   prompts intermix static + dynamic; would need a refactor we're not
   doing for legacy paths.
 
@@ -157,7 +157,7 @@ At 10 k sessions / month: **~$10-12 / month** on top of the v3.1
 baseline savings. The really big win was v3.1 itself (prompt
 compression) plus Gemini's free implicit caching.
 
-## What `AGENT_PROMPT_VERSION_OVERRIDE` actually controls
+## What `AGENT_PROMPT_VERSION` actually controls
 
 The env var selects the prompt builder, nothing else. Specifically:
 
@@ -175,8 +175,8 @@ from explicit caching (~5-10 % over implicit caching alone).
 
 ## Rollback path
 
-- `AGENT_PROMPT_VERSION_OVERRIDE='v3'` → verbose v3 prompt (still
+- `AGENT_PROMPT_VERSION='v3'` → verbose v3 prompt (still
   benefits from #3 #4 #5 + Gemini's implicit cache).
-- `AGENT_PROMPT_VERSION_OVERRIDE='v2'` → legacy quiz-bot (same
+- `AGENT_PROMPT_VERSION='v2'` → legacy quiz-bot (same
   — still benefits from #3 #4 #5 + implicit cache).
 - Both reachable without redeploy.

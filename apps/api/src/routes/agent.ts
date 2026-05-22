@@ -638,7 +638,7 @@ agentRoutes.post(
         };
 
         const { instruction: systemInstruction, version: promptVersionUsed } =
-          buildAgentSystemInstructionForVersion(env.AGENT_PROMPT_VERSION_OVERRIDE, turnInput);
+          buildAgentSystemInstructionForVersion(env.AGENT_PROMPT_VERSION, turnInput);
 
         // Prompt caching (v3.1 only): cache the static TUTOR_HEADER
         // so it bills at ~25 % of normal. The dynamic per-turn
@@ -648,7 +648,7 @@ agentRoutes.post(
         // so we don't try to cache for them — they'd need a refactor
         // we're not doing for legacy paths.
         let headerCacheName: string | null = null;
-        if (env.AGENT_PROMPT_VERSION_OVERRIDE === 'v3.1') {
+        if (env.AGENT_PROMPT_VERSION === 'v3.1') {
           // Re-build the dynamic-only portion. The cached header is
           // TUTOR_HEADER_V3_1 (constant string).
           const { TUTOR_HEADER_V3_1, buildAgentTurnContextV3_1 } =

@@ -362,7 +362,7 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     VERTEX_MODEL_ID: 'gemini-2.5-flash-lite',
     VERTEX_TUTOR_MODEL_ID: 'gemini-2.5-flash',
     EXTRACTION_WORKER_SECRET: 'test-worker-secret',
-    AGENT_PROMPT_VERSION_OVERRIDE: 'v3',
+    AGENT_PROMPT_VERSION: 'v3',
   };
   return {
     env,

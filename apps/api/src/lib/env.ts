@@ -41,11 +41,14 @@ export const Env = z.object({
    *  explain). flash-lite is too weak to teach; this defaults to a stronger
    *  tier. Divergence from Doc 06 documented in ADR 0002. */
   VERTEX_TUTOR_MODEL_ID: z.string().default('gemini-2.5-flash'),
-  /** Tutor prompt version. v3.1 is the default (compressed v3, same
-   *  behaviour at ~half the input-token cost). Set to 'v3' for the
-   *  verbose v3 baseline, 'v2' for the legacy quiz-bot prompt — both
-   *  reachable without a redeploy for fast rollback. */
-  AGENT_PROMPT_VERSION_OVERRIDE: z.enum(['v2', 'v3', 'v3.1']).default('v3.1'),
+  /** Which tutor prompt to send to the LLM. Default `v3.1` is the
+   *  production prompt (compressed v3, same behaviour at ~half the
+   *  input-token cost). Set to 'v3' to fall back to the verbose v3
+   *  prompt, 'v2' for the legacy quiz-bot prompt — both reachable
+   *  without a redeploy for fast rollback. Does NOT toggle any other
+   *  cost lever; flash-lite routing, history truncation, and
+   *  conditional material context run for every version. */
+  AGENT_PROMPT_VERSION: z.enum(['v2', 'v3', 'v3.1']).default('v3.1'),
   // ── Observability + ops ─────────────────────────────────────────────────
   SENTRY_DSN: z.string().url().optional(),
   SENTRY_RELEASE: z.string().optional(),

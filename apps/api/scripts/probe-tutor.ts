@@ -301,7 +301,7 @@ async function runScenario(
   const env = Env.parse({
     ...process.env,
     GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT ?? 'placeholder',
-    AGENT_PROMPT_VERSION_OVERRIDE: version,
+    AGENT_PROMPT_VERSION: version,
   });
   const llm = createLlmGateway(env);
 
