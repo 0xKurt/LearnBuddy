@@ -12,15 +12,15 @@ Wie viel ist 2/3 + 1/4?
 
 **Learner:** 5/12?
 
-**Tutor:** Nicht ganz — die Brüche haben unterschiedliche Nenner. Weißt du, wie man sie auf einen gemeinsamen Nenner bringt?
+**Tutor:** Das ist nicht richtig. Du hast die Brüche einfach addiert, als wären die Nenner gleich. Aber bei 2/3 und 1/4 sind die Nenner unterschiedlich. Weißt du, was man machen muss, bevor man Brüche addieren kann?
 
-- verdict=incorrect advance=false reveal=false hint_given=true intent=hint tokens=2683/82 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=incorrect advance=false reveal=false hint_given=false intent=explain tokens=2681/111 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** oh stimmt — 11/12?
 
-**Tutor:** Genau! Du hast die Nenner auf 12 erweitert und die Zähler addiert. Warum ist 12 der gemeinsame Nenner?
+**Tutor:** Genau! 11/12 ist richtig. Du hast erkannt, dass man zuerst einen gemeinsamen Nenner braucht. Welchen gemeinsamen Nenner hast du hier verwendet?
 
-- verdict=correct advance=false reveal=false hint_given=false intent=metacognitive_close tokens=2728/86 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=correct advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2755/82 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -32,4 +32,4 @@ Wie viel ist 2/3 + 1/4?
 - ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 2): in=5411 (avg 2706) · out=168 (avg 84)
+Tokens (turns 2): in=5436 (avg 2718) · out=193 (avg 97)

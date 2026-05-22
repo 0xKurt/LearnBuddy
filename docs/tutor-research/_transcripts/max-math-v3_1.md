@@ -12,21 +12,21 @@ Wie viel ist 2/3 + 1/4?
 
 **Learner:** 11/7
 
-**Tutor:** 11/7 ist nicht richtig. Lass uns einen Schritt zurückgehen: Um Brüche zu addieren, müssen sie denselben Nenner haben. Welchen gemeinsamen Nenner könnten 3 und 4 haben?
+**Tutor:** Hmm, 11/7 ist nicht richtig. Lass uns einen Schritt zurückgehen: Weißt du, wie man Brüche addiert, wenn sie unterschiedliche Nenner haben?
 
-- verdict=incorrect advance=false reveal=false hint_given=true intent=hint tokens=2682/99 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=incorrect advance=false reveal=false hint_given=false intent=explain tokens=2680/90 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** ich kann das nicht
 
-**Tutor:** Das ist echt knifflig, wenn man den gemeinsamen Nenner suchen muss. Kein Wunder, dass es gerade hakt. Lass uns einen ganz kleinen Schritt machen: Nimm die beiden Nenner 3 und 4. Kannst du mir eine Zahl nennen, durch die sich beide teilen lassen?
+**Tutor:** Das ist okay, Bruchaddition mit unterschiedlichen Nennern ist für viele erstmal knifflig. Lass uns einen ganz kleinen Schritt machen: Siehst du, dass die Nenner 3 und 4 unterschiedlich sind? Um sie zu addieren, müssen wir sie auf einen gemeinsamen Nenner bringen. Weißt du, wie man einen gemeinsamen Nenner für 3 und 4 findet?
 
-- verdict=incorrect advance=false reveal=false hint_given=true intent=affective_repair tokens=2753/113 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=incorrect advance=false reveal=false hint_given=false intent=affective_repair tokens=2742/142 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** das nervt
 
-**Tutor:** Ja, das nervt, wenn man den gemeinsamen Nenner nicht sofort sieht. Das ist normal. Mach wir's konkret: Bei 3 und 4 ist die kleinste gemeinsame Zahl die 12. Jetzt der nächste Schritt: Was ist 2/3, wenn der Nenner 12 ist?
+**Tutor:** Ja, das kann echt nerven, wenn man nicht weiterkommt. Das ist völlig normal. Lass uns nur eine einzige Sache klären: Der gemeinsame Nenner ist die kleinste Zahl, die sowohl durch 3 als auch durch 4 teilbar ist. Kannst du eine solche Zahl nennen?
 
-- verdict=null advance=false reveal=false hint_given=true intent=affective_repair tokens=2829/111 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=false intent=affective_repair tokens=2838/110 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -40,4 +40,4 @@ Wie viel ist 2/3 + 1/4?
 - ✓ **SC-max-math-affect** — Max math: affective_repair fires on "das nervt": fired
 - ✓ **SC-max-math-far** — Max math: "11/7" not greeted with "Fast": ok
 
-Tokens (turns 3): in=8264 (avg 2755) · out=323 (avg 108)
+Tokens (turns 3): in=8260 (avg 2753) · out=342 (avg 114)

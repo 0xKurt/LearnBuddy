@@ -12,24 +12,24 @@ Was heißt "die Uhr" auf Französisch?
 
 **Learner:** l'heure
 
-**Tutor:** Genau! «l'heure» ist das französische Wort für die Uhr im Sinne der Zeit. Welche Regel hilft dir, um sich das zu merken?
+**Tutor:** Richtig! Das ist die Übersetzung für 'die Uhr' im Sinne von Uhrzeit. Was ist der Unterschied zwischen 'l'heure' und 'la montre'?
 
-- verdict=correct advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2661/88 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=correct advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2659/86 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** warum ist das weiblich?
 
-**Tutor:** Das ist eine gute Frage. Im Französischen hat das grammatische Geschlecht oft keine direkte Verbindung zur Bedeutung. «L'heure» ist weiblich, weil es vom lateinischen «hora» kommt, das auch weiblich war. Kannst du dir eine Eselsbrücke für «l'heure» überlegen?
+**Tutor:** Gute Frage! Im Französischen hat jedes Substantiv ein grammatikalisches Geschlecht – das muss man einfach mitlernen. 'Heure' ist weiblich, daher heißt es 'la heure'. Weil aber 'la' vor einem Vokal zu 'l'' wird, sagt man 'l'heure'. Weißt du noch, wie man 'die Uhr' als Gegenstand (die Armbanduhr) auf Französisch sagt?
 
-- verdict=null advance=false reveal=false hint_given=false intent=explain tokens=2711/113 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=false intent=explain tokens=2707/142 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
 ## Auto-criteria
 
 - ✓ **C1** — No "schau im Material / lies nochmal" redirect: ok
-- ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
+- ✗ **C2** — Economy of language (≤ 4 sentences per reply): Long reply: "Gute Frage! Im Französischen hat jedes Substantiv ein grammatikalisches Geschlec…"
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
 - ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 2): in=5372 (avg 2686) · out=201 (avg 101)
+Tokens (turns 2): in=5366 (avg 2683) · out=228 (avg 114)

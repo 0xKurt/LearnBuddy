@@ -12,21 +12,21 @@ Wie heißt "aller" in der ersten Person Singular Präsens?
 
 **Learner:** je aller
 
-**Tutor:** Fast! Du hast den Infinitiv erkannt. Jetzt brauchen wir die konjugierte Form für 'ich'. Wie lautet die erste Person Singular von 'aller'?
+**Tutor:** Fast! Du hast den Infinitiv 'aller' genannt. Jetzt brauchst du die konjugierte Form für 'ich' im Präsens. Welche Endung gehört bei -er Verben in der ersten Person Singular dazu?
 
-- verdict=incorrect advance=false reveal=false hint_given=false intent=explain tokens=2663/88 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=incorrect advance=false reveal=false hint_given=true intent=hint tokens=2661/99 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** fränzosich ist dumm
 
-**Tutor:** Ich verstehe, Französisch kann sich manchmal echt nervig anfühlen. Lass uns einen Schritt zurückgehen und ganz einfach anfangen: Welches deutsche Wort bedeutet 'ich' auf Französisch?
+**Tutor:** Okay, Französisch nervt gerade. Das ist echt normal – die Konjugationen können am Anfang verwirrend sein. Lass uns einen ganz kleinen Schritt machen: Sag mir einfach die Endung für 'ich' bei französischen -er Verben im Präsens. Das ist nur eine Silbe.
 
-- verdict=null advance=false reveal=false hint_given=false intent=affective_repair tokens=2712/90 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=false intent=affective_repair tokens=2721/114 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** ich kann das nicht
 
-**Tutor:** Das ist okay, wenn es gerade nicht klappt. 'Ich' heißt auf Französisch 'je'. Jetzt versuchen wir es zusammen: 'je' + die richtige Form von 'aller'. Kannst du 'aller' für 'ich' sagen?
+**Tutor:** Das ist okay, wenn es gerade nicht klappt. Die Endung für 'ich' bei -er Verben im Präsens ist «-e». Also: Infinitiv 'aller' → Stamm 'all-' + Endung «-e». Wie lautet dann die Form?
 
-- verdict=null advance=false reveal=false hint_given=true intent=affective_repair tokens=2782/97 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=true intent=affective_repair tokens=2807/102 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -38,4 +38,4 @@ Wie heißt "aller" in der ersten Person Singular Präsens?
 - ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 3): in=8157 (avg 2719) · out=275 (avg 92)
+Tokens (turns 3): in=8189 (avg 2730) · out=315 (avg 105)

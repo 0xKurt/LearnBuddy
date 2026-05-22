@@ -12,21 +12,25 @@ Was heißt "die Uhr" auf Französisch?
 
 **Learner:** la temps
 
-**Tutor:** Fast! 'La temps' ist nicht ganz richtig – 'temps' bedeutet 'Zeit' oder 'Wetter'. Das französische Wort für 'die Uhr' (im Sinne der Uhrzeit) ist ein anderes. Kannst du nochmal versuchen?
+**Tutor:** «la temps» ist nicht richtig. Das französische Wort für „die Uhr“ ist ein anderes. Denkst du an die Uhrzeit oder den Gegenstand?
 
-- verdict=incorrect advance=false reveal=false hint_given=false intent=evaluate tokens=2660/106 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=incorrect advance=false reveal=false hint_given=false intent=redirect tokens=2658/86 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** die uhrzeit ist scheisse
 
-**Tutor:** Ja, das kann echt nerven, wenn die Wörter sich nicht sofort einprägen. Lass uns einen kleinen Schritt machen: Das französische Wort für 'die Uhr' (im Sinne der Uhrzeit) fängt mit 'l' ' an und hat fünf Buchstaben.
+**Tutor:** Ja, die Uhrzeit kann echt knifflig sein. Das ist okay, dass es gerade nicht klappt. Lass uns einen ganz kleinen Schritt machen: Das französische Wort für „die Uhr“ (im Sinne der Uhrzeit) ist ein weibliches Hauptwort, das mit einem Vokal beginnt. Wie könnte es wohl lauten?
 
-- verdict=incorrect advance=false reveal=false hint_given=true intent=affective_repair tokens=2741/106 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=true intent=affective_repair tokens=2720/117 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** ich gebs auf
 
-**Tutor:** l'heure. Das französische Wort für die Uhrzeit ist 'l'heure'. Es kommt von lateinisch 'hora'. Welches Wort würdest du für 'die Uhr' als Gegenstand (wie eine Armbanduhr) verwenden?
+**Tutor:** l'heure
 
-- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2811/96 model=deepseek-ai/deepseek-v3.2-maas
+Der Grund: Im Französischen heißt „die Uhr“ (im Sinne der Zeit) «l'heure». Das ist ein weibliches Wort, und weil es mit einem Vokal (h) beginnt, wird der Artikel verkürzt. Das Wort für den Gegenstand (die Armbanduhr) wäre «la montre».
+
+Kannst du mir sagen, wie man „die Uhr“ (die Armbanduhr) auf Französisch sagt?
+
+- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2803/145 model=deepseek-ai/deepseek-v3.2-maas
 
 _(server would now pop the next item — scenario ends)_
 
@@ -40,4 +44,4 @@ _(server would now pop the next item — scenario ends)_
 - ✓ **C5** — Every reveal includes a micro-check question: ok
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 3): in=8212 (avg 2737) · out=308 (avg 103)
+Tokens (turns 3): in=8181 (avg 2727) · out=348 (avg 116)

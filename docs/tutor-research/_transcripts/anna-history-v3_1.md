@@ -12,15 +12,17 @@ Welches Ereignis im Juni 1914 löste den Ersten Weltkrieg aus?
 
 **Learner:** Attentat von Sarajevo
 
-**Tutor:** Richtig! Das Attentat von Sarajevo auf den österreichisch-ungarischen Thronfolger Franz Ferdinand gilt als der unmittelbare Auslöser. Warum führte gerade dieses Ereignis so schnell zum Krieg?
+**Tutor:** Genau richtig. Das Attentat von Sarajevo auf Franz Ferdinand war der unmittelbare Auslöser.
 
-- verdict=correct advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2857/101 model=deepseek-ai/deepseek-v3.2-maas
+Was war an diesem Ereignis so folgenschwer, dass es zum Krieg führte?
+
+- verdict=correct advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2855/97 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** warum führte das gerade zum Krieg?
 
-**Tutor:** Das lag an den bestehenden Bündnissystemen und Spannungen zwischen den Großmächten. Österreich-Ungarn stellte Serbien nach dem Attentat ein Ultimatum, das diese nicht vollständig erfüllen konnten. Welche zwei großen Bündnisse standen sich damals gegenüber?
+**Tutor:** Das ist eine sehr gute Frage. Es war nicht nur ein Mord, sondern ein politischer Funke in einem Pulverfass. Welche zwei Großmächte standen sich damals besonders feindlich gegenüber?
 
-- verdict=null advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2921/116 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2913/93 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -32,4 +34,4 @@ Welches Ereignis im Juni 1914 löste den Ersten Weltkrieg aus?
 - ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 2): in=5778 (avg 2889) · out=217 (avg 109)
+Tokens (turns 2): in=5768 (avg 2884) · out=190 (avg 95)

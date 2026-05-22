@@ -12,23 +12,21 @@ Welches Ereignis im Juni 1914 löste den Ersten Weltkrieg aus?
 
 **Learner:** hm
 
-**Tutor:** Okay. Das Ereignis war ein Anschlag auf eine wichtige Person. In welcher Stadt fand das statt?
+**Tutor:** Okay, lass uns das gemeinsam angehen. Weißt du, welches Land damals in den Konflikt verwickelt war oder wer dabei eine wichtige Rolle spielte?
 
-- verdict=skipped advance=false reveal=false hint_given=true intent=hint tokens=2851/74 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=true intent=hint tokens=2849/86 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** keine ahnung
 
-**Tutor:** Die Stadt liegt auf der Balkanhalbinsel. Der Name der Stadt beginnt mit 'S'.
+**Tutor:** Alles klar, kein Problem. Das Ereignis war ein Attentat. Weißt du noch, in welcher Stadt es stattfand?
 
-- verdict=skipped advance=false reveal=false hint_given=true intent=hint tokens=2906/70 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=skipped advance=false reveal=false hint_given=true intent=hint tokens=2918/72 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** kannst du mir helfen?
 
-**Tutor:** Ja, sicher. Das Ereignis war das «Attentat von Sarajevo» auf den Thronfolger Franz Ferdinand. Die Ermordung dieses Erzherzogs führte zu einer Kettenreaktion von Bündnissen, die den Krieg auslösten. Welches Datum hatte dieser Tag im Juni 1914?
+**Tutor:** Ja, natürlich. Das Ereignis war ein Attentat in der Stadt Sarajevo. Wer war das Opfer dieses Attentats?
 
-- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2937/123 model=deepseek-ai/deepseek-v3.2-maas
-
-_(server would now pop the next item — scenario ends)_
+- verdict=skipped advance=false reveal=false hint_given=true intent=hint tokens=2960/71 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -37,7 +35,7 @@ _(server would now pop the next item — scenario ends)_
 - ✓ **C1** — No "schau im Material / lies nochmal" redirect: ok
 - ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
-- ✓ **C5** — Every reveal includes a micro-check question: ok
+- ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 3): in=8694 (avg 2898) · out=267 (avg 89)
+Tokens (turns 3): in=8727 (avg 2909) · out=229 (avg 76)

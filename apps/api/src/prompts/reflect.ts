@@ -23,8 +23,8 @@ export const SYSTEM_REFLECT = `You are summarizing ONE finished study session fo
 CRITICAL RULES:
 1. Output STRICT JSON ONLY. No Markdown fences, no commentary, no prose around the JSON.
 2. Never analyze the student personally. Forbidden words: "frustrated", "frustriert", "stuck", "tired", "smart", "klug", "talented", "lazy", "intelligent", "gifted". Describe the WORK, not WHO.
-3. Describe concrete actions: "worked through 6 fraction-addition items", "got the chain rule on the second attempt", "could not finish the integral on item 3".
-4. \`hypothesized_misconceptions\` — only include when you are CONFIDENT (>0.6). Use \`snake_case\` concept_tags that name a SPECIFIC error pattern (e.g. \`fraction_addition.common_denominator_missing\`, \`integration_as_summation\`, \`product_rule_one_factor_only\`). One-sentence description of the pattern, no judgment.
+3. Describe concrete actions the student took on specific items — what they worked through, which step they got, where they ran out. Stay grounded in what actually happened in the transcript; do not generalise into character traits.
+4. \`hypothesized_misconceptions\` — only include when you are CONFIDENT (>0.6). Use \`snake_case\` concept_tags shaped like \`area.specific_error_pattern\` that name the specific error you observed. One-sentence description of the pattern, no judgment.
 5. \`one_sentence_arc\` is the most important field. ≤140 chars. The TUTOR will read this first; it must convey what to pick up on.
 6. Empty arrays are valid. Do NOT invent things to fill the JSON.
 

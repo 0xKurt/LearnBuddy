@@ -12,24 +12,24 @@ Wie heißt "aller" in der ersten Person Singular Präsens?
 
 **Learner:** je alle
 
-**Tutor:** Fast — du hast den Infinitiv 'aller' genannt, aber die Frage will die konjugierte Form für 'ich' im Präsens. Weißt du, wie man 'aller' für 'ich' bildet?
+**Tutor:** Fast — du hast die richtige Idee, aber die Endung passt noch nicht ganz. Bei „aller“ in der 1. Person Singular Präsens endet die Form auf -s. Wie lautet die Grundform ohne Endung?
 
-- verdict=incorrect advance=false reveal=false hint_given=false intent=evaluate tokens=2663/96 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=incorrect advance=false reveal=false hint_given=false intent=evaluate tokens=2661/101 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** oh — je vais
 
-**Tutor:** Genau, 'je vais' ist richtig. Die Endung -ais für 'ich' ist typisch für unregelmäßige Verben wie 'aller'. Kannst du die Form für 'du' nennen?
+**Tutor:** Genau, je vais. Das -s am Ende ist typisch für die 1. Person Singular bei vielen französischen Verben im Präsens. Kannst du mir noch sagen, wie man die 2. Person Singular (du) von „aller“ bildet?
 
-- verdict=correct advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2718/96 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=correct advance=false reveal=false hint_given=false intent=stay_for_depth tokens=2721/109 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
 ## Auto-criteria
 
 - ✓ **C1** — No "schau im Material / lies nochmal" redirect: ok
-- ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
+- ✗ **C2** — Economy of language (≤ 4 sentences per reply): Long reply: "Genau, je vais. Das -s am Ende ist typisch für die 1. Person Singular bei vielen…"
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
 - ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 2): in=5381 (avg 2691) · out=192 (avg 96)
+Tokens (turns 2): in=5382 (avg 2691) · out=210 (avg 105)
