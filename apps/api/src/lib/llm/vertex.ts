@@ -45,6 +45,7 @@ import {
 } from '../../prompts/reflect.js';
 import { ensureAgentCache } from './agent-cache.js';
 import { parseRegeneratePayload, parseVisionPayload } from './postProcess.js';
+import { isOpenAICompatModel, vertexOpenAIChat } from './vertex-openai.js';
 import type {
   AgentGatewayInput,
   AgentGatewayResult,
@@ -134,8 +135,14 @@ function responseText(response: GenerateContentResponse): string {
 
 export class VertexLlmGateway implements LLMGateway {
   private readonly client: GoogleGenAI;
+  /** Used for non-vision text generation (regenerate / reflect). May be
+   *  a partner MaaS id like `deepseek-ai/deepseek-v3.2-maas`. */
   private readonly modelId: string;
-  /** Stronger tier for learner-facing tutoring/explain (ADR 0002). */
+  /** Vision-only pin. Always a multimodal Gemini id — partner MaaS
+   *  models have no vision endpoint. */
+  private readonly visionModelId: string;
+  /** Stronger tier for learner-facing tutoring/explain (ADR 0002).
+   *  May be a partner MaaS id. */
   private readonly tutorModelId: string;
 
   constructor(private readonly env: Env) {
@@ -150,6 +157,7 @@ export class VertexLlmGateway implements LLMGateway {
       location: env.GOOGLE_VERTEX_LOCATION,
     });
     this.modelId = env.VERTEX_MODEL_ID;
+    this.visionModelId = env.VISION_MODEL_ID;
     this.tutorModelId = env.VERTEX_TUTOR_MODEL_ID;
   }
 
@@ -172,7 +180,7 @@ export class VertexLlmGateway implements LLMGateway {
     ];
 
     const params: GenerateContentParameters = {
-      model: this.modelId,
+      model: this.visionModelId,
       contents: [{ role: 'user', parts: userParts }],
       config: {
         systemInstruction: SYSTEM_P1,
@@ -250,7 +258,7 @@ export class VertexLlmGateway implements LLMGateway {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
         cost_usd_micros: totals.costMicros,
-        model: this.modelId,
+        model: this.visionModelId,
         prompt_version: PROMPT_VERSION,
       },
     };
@@ -266,6 +274,13 @@ export class VertexLlmGateway implements LLMGateway {
       extractedMarkdown: input.extractedMarkdown,
       existingQuestionStems: input.excludeQuestions,
     });
+
+    // Partner MaaS path (DeepSeek, Llama, …) — OpenAI-compatible
+    // Chat Completions endpoint. P2 is text-only, so we can route it.
+    if (isOpenAICompatModel(this.modelId)) {
+      return this.regenerateOpenAICompat(userText);
+    }
+
     let response: GenerateContentResponse;
     try {
       response = await this.client.models.generateContent({
@@ -299,6 +314,56 @@ export class VertexLlmGateway implements LLMGateway {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
         cost_usd_micros: totals.costMicros,
+        model: this.modelId,
+        prompt_version: PROMPT_VERSION_P2,
+      },
+    };
+  }
+
+  /** Regenerate via Vertex OpenAI-compatible endpoint (DeepSeek et al).
+   *  Same input contract, but no Gemini SDK features (no safetySettings,
+   *  no systemInstruction kwarg — system goes in the messages array). */
+  private async regenerateOpenAICompat(userText: string): Promise<RegenerateResult> {
+    const project = this.env.GOOGLE_CLOUD_PROJECT!;
+    const location = this.env.PARTNER_MODEL_LOCATION;
+    const completion = await vertexOpenAIChat({
+      project,
+      location,
+      body: {
+        model: this.modelId,
+        messages: [
+          { role: 'system', content: SYSTEM_P2 },
+          { role: 'user', content: userText },
+        ],
+        temperature: 0.5,
+        top_p: 0.95,
+        max_tokens: 4096,
+        response_format: { type: 'json_object' },
+      },
+    });
+    const text = completion.choices[0]?.message.content ?? '';
+    if (!text) {
+      throw new ApiError('extraction_failed', `Partner LLM (${this.modelId}) returned empty`);
+    }
+    const parsed = await parseRegeneratePayload(text);
+    if (!parsed.ok) {
+      throw new ApiError('extraction_failed', `Regenerate JSON invalid: ${parsed.error}`);
+    }
+    const u = completion.usage ?? {};
+    const inputTokens = u.prompt_tokens ?? 0;
+    const cachedTokens = u.prompt_cache_hit_tokens ?? 0;
+    const outputTokens = u.completion_tokens ?? 0;
+    // Cost is unknown without provider-specific pricing — leave at 0
+    // and trust the per-model dashboard for the actual bill. We could
+    // hardcode DeepSeek's $0.56/$1.68 here but ledger consumers
+    // (admin spend page) treat 0 as "n/a" rather than misleading data.
+    return {
+      items: parsed.value.items,
+      usage: {
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        cached_input_tokens: cachedTokens,
+        cost_usd_micros: 0,
         model: this.modelId,
         prompt_version: PROMPT_VERSION_P2,
       },
@@ -411,6 +476,12 @@ export class VertexLlmGateway implements LLMGateway {
   }
 
   async ensureAgentHeaderCache(header: string, model: string): Promise<string | null> {
+    // Vertex context caching is Gemini-only — partner MaaS models
+    // (DeepSeek, Llama, …) don't have a cachedContents endpoint at
+    // all. Return null so the agent route falls through to the
+    // non-cached path; the partner's own prompt-prefix caching (e.g.
+    // DeepSeek's automatic 64-token-aligned cache) kicks in for free.
+    if (isOpenAICompatModel(model)) return null;
     return ensureAgentCache(this.client, header, model);
   }
 
@@ -419,6 +490,17 @@ export class VertexLlmGateway implements LLMGateway {
     input: AgentGatewayInput,
     onToken?: (delta: string) => void,
   ): Promise<AgentGatewayResult> {
+    // Pick the model — caller may override (e.g. flash-lite for
+    // trivial advance turns). Default is the tutor tier.
+    const modelToUse = input.modelOverride ?? this.tutorModelId;
+
+    // Partner MaaS path (DeepSeek, Llama, …) — OpenAI-compatible
+    // Chat Completions. No Gemini-specific features (no cachedContent,
+    // no safetySettings, system goes in messages array).
+    if (isOpenAICompatModel(modelToUse)) {
+      return this.agentTurnOpenAICompat(input, modelToUse, onToken);
+    }
+
     const contents = [
       ...input.history.map((m) => ({
         role: m.role === 'learner' ? ('user' as const) : ('model' as const),
@@ -426,10 +508,6 @@ export class VertexLlmGateway implements LLMGateway {
       })),
       { role: 'user' as const, parts: [{ text: input.learnerMessage }] },
     ];
-
-    // Pick the model — caller may override (e.g. flash-lite for
-    // trivial advance turns). Default is the tutor tier.
-    const modelToUse = input.modelOverride ?? this.tutorModelId;
 
     // When the static header is served via a Vertex cached-content
     // ref, we MUST omit the systemInstruction field — Vertex rejects
@@ -523,6 +601,101 @@ export class VertexLlmGateway implements LLMGateway {
         output_tokens: totals.outputTokens,
         cached_input_tokens: totals.cachedInputTokens,
         cost_usd_micros: totals.costMicros,
+        model: modelToUse,
+        prompt_version: 'agent.v2.0',
+      },
+    };
+  }
+
+  /** Agent turn via Vertex OpenAI-compatible endpoint (DeepSeek et al).
+   *  Cannot use Vertex context caching (Gemini-only feature) — the
+   *  cached header is sent as a regular system message and the
+   *  partner provider's native prompt caching (DeepSeek caches
+   *  long static prefixes automatically) kicks in instead. */
+  private async agentTurnOpenAICompat(
+    input: AgentGatewayInput,
+    modelToUse: string,
+    onToken?: (delta: string) => void,
+  ): Promise<AgentGatewayResult> {
+    const project = this.env.GOOGLE_CLOUD_PROJECT!;
+    const location = this.env.PARTNER_MODEL_LOCATION;
+
+    // OpenAI shape: system → user → assistant → user → … We fold the
+    // full system instruction into a single system message. When the
+    // caller passed `headerCacheName` they ALSO sent the dynamic
+    // portion as `systemInstruction` (see agent.ts route) — for the
+    // partner path we just concatenate them since there's no cache
+    // reference to honour.
+    const systemContent = input.systemInstruction;
+    const messages = [
+      { role: 'system' as const, content: systemContent },
+      ...input.history.map((m) => ({
+        role: m.role === 'learner' ? ('user' as const) : ('assistant' as const),
+        content: m.content,
+      })),
+      { role: 'user' as const, content: input.learnerMessage },
+    ];
+
+    const completion = await vertexOpenAIChat({
+      project,
+      location,
+      body: {
+        model: modelToUse,
+        messages,
+        temperature: 0.4,
+        top_p: 0.9,
+        max_tokens: 800,
+        response_format: { type: 'json_object' },
+      },
+    });
+
+    const text = completion.choices[0]?.message.content ?? '';
+    if (!text) {
+      throw new ApiError(
+        'evaluation_failed',
+        `Partner LLM (${modelToUse}) agentTurn returned empty text`,
+      );
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      try {
+        parsed = JSON.parse(jsonrepair(text));
+      } catch {
+        throw new ApiError(
+          'evaluation_failed',
+          `Partner agentTurn JSON parse failed: ${
+            err instanceof Error ? err.message : String(err)
+          }; raw="${text.slice(0, 200)}"`,
+        );
+      }
+    }
+
+    const reply =
+      parsed &&
+      typeof parsed === 'object' &&
+      'reply' in parsed &&
+      typeof (parsed as { reply: unknown }).reply === 'string'
+        ? (parsed as { reply: string }).reply.trim()
+        : '';
+    if (reply && onToken) onToken(reply);
+
+    const u = completion.usage ?? {};
+    const inputTokens = u.prompt_tokens ?? 0;
+    const cachedInputTokens = u.prompt_cache_hit_tokens ?? 0;
+    const outputTokens = u.completion_tokens ?? 0;
+    return {
+      json: parsed,
+      reply,
+      usage: {
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        cached_input_tokens: cachedInputTokens,
+        // See regenerateOpenAICompat — partner cost left at 0; the
+        // GCP billing dashboard is the source of truth here.
+        cost_usd_micros: 0,
         model: modelToUse,
         prompt_version: 'agent.v2.0',
       },

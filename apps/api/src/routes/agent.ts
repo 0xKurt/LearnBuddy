@@ -647,8 +647,17 @@ agentRoutes.post(
         // v2 / v3 prompts intermix static + dynamic in one big blob,
         // so we don't try to cache for them — they'd need a refactor
         // we're not doing for legacy paths.
+        // Gemini-specific cost levers: context caching + flash-lite
+        // trivial-correct routing. Both require a Gemini tutor model —
+        // partner MaaS providers (DeepSeek et al) have neither a Vertex
+        // cachedContents endpoint nor an analogous cheap tier on Vertex.
+        // When the tutor is a partner model, skip both and rely on the
+        // partner's own prefix caching (e.g. DeepSeek caches 64-token-
+        // aligned static prefixes automatically at $0.06/M).
+        const tutorIsGemini = env.VERTEX_TUTOR_MODEL_ID.startsWith('gemini-');
+
         let headerCacheName: string | null = null;
-        if (env.AGENT_PROMPT_VERSION === 'v3.1') {
+        if (env.AGENT_PROMPT_VERSION === 'v3.1' && tutorIsGemini) {
           // Re-build the dynamic-only portion. The cached header is
           // TUTOR_HEADER_V3_1 (constant string).
           const { TUTOR_HEADER_V3_1, buildAgentTurnContextV3_1 } =
@@ -665,16 +674,17 @@ agentRoutes.post(
         // Model routing: route a turn that LOOKS LIKE a straight
         // correct answer (learner message matches an acceptable
         // answer loosely) to flash-lite — ~75 % cheaper per call.
-        // The model still does the praise_and_advance work but for
-        // a near-trivial turn the lite tier is plenty. Anything
-        // pedagogical (hints, affective, give-up) stays on flash.
+        // Gemini-only: DeepSeek has no "lite" tier on Vertex.
         const looksLikeCorrectAnswer = isLooseAnswerMatch(
           learnerText,
           itemCtx.expectedAnswer,
           itemCtx.acceptableAnswers,
         );
         const modelOverride =
-          looksLikeCorrectAnswer && hintsGivenForItem === 0 && priorWrongAttemptsOnItem === 0
+          tutorIsGemini &&
+          looksLikeCorrectAnswer &&
+          hintsGivenForItem === 0 &&
+          priorWrongAttemptsOnItem === 0
             ? 'gemini-2.5-flash-lite'
             : undefined;
 

@@ -27,7 +27,9 @@ const env: Env = {
   ENABLE_DEV_ROUTES: 'true',
   GOOGLE_VERTEX_LOCATION: 'europe-west4',
   VERTEX_MODEL_ID: 'gemini-2.5-flash-lite',
+  VISION_MODEL_ID: 'gemini-2.5-flash-lite',
   VERTEX_TUTOR_MODEL_ID: 'gemini-2.5-flash',
+  PARTNER_MODEL_LOCATION: 'europe-west4',
   AGENT_PROMPT_VERSION: 'v3',
 };
 

@@ -12,23 +12,21 @@ Was heißt "die Uhr" auf Französisch?
 
 **Learner:** weiß ich nicht
 
-**Tutor:** Kein Problem! Wir suchen das französische Wort für 'die Uhr'. Hast du eine Idee, wie man im Französischen oft ein 'l'' vor ein Wort setzt, wenn es mit einem Vokal anfängt?
+**Tutor:** Das klingt frustrierend — viele finden die französischen Wörter erstmal fremd. Lass uns nur einen kleinen Schritt machen: Wir suchen das französische Wort für 'die Uhr' — es ist ein Hauptwort, das man bei der Zeitangabe verwendet.
 
-- verdict=null advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2187/98 model=gemini-2.5-flash
+- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2215/112 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** hilf mir bitte
 
-**Tutor:** Kein Problem! Das französische Wort für 'U
+**Tutor:** Genau, 'Uhr' kann man auf zwei Arten sagen: die Zeit-Uhr (wie 'Es ist drei Uhr') und die Armbanduhr. Hier geht es um die Zeit-Uhr. Kannst du dir vorstellen, wie das französische Wort für 'Stunde' klingen könnte?
 
-- verdict=incorrect advance=false reveal=false hint_given=false intent=evaluate tokens=2358 (cached=1955)/18 model=gemini-2.5-flash
+- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2408/109 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** kannst du mir das sagen?
 
-**Tutor:** Das französische Wort für 'die Uhr' ist l'heure. Im Französischen wird oft 'l'' vor Wörter gesetzt, die mit einem Vokal beginnen, anstatt 'la' oder 'le'. Macht das Sinn, wenn du an andere Wörter denkst, die mit 'l'' anfangen?
+**Tutor:** Es ist ein kurzes Wort, das mit einem Vokal anfängt und einen Apostroph hat. Probier mal, wie 'Stunde' auf Französisch klingen könnte.
 
-- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2377/112 model=gemini-2.5-flash
-
-_(server would now pop the next item — scenario ends)_
+- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2520/82 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -37,7 +35,7 @@ _(server would now pop the next item — scenario ends)_
 - ✓ **C1** — No "schau im Material / lies nochmal" redirect: ok
 - ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
-- ✓ **C5** — Every reveal includes a micro-check question: ok
+- ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 3): in=6922 (avg 2307) · out=228 (avg 76)
+Tokens (turns 3): in=7143 (avg 2381) · out=303 (avg 101)
