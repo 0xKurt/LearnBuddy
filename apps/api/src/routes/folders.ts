@@ -119,7 +119,7 @@ folderRoutes.get('/:id', async (c) => {
     .eq('folder_id', id)
     .is('archived_at', null)
     .order('created_at', { ascending: false });
-  const materials = (materialsRes.data ?? []) as Array<{
+  const materialsRaw = (materialsRes.data ?? []) as Array<{
     id: string;
     title: string | null;
     extraction_status: string;
@@ -127,7 +127,46 @@ folderRoutes.get('/:id', async (c) => {
     created_at: string;
   }>;
 
-  const matIds = materials.map((m) => m.id);
+  const matIds = materialsRaw.map((m) => m.id);
+
+  // Load all photos for these materials in ONE query so each material
+  // row can carry its photo URLs. The folder UI surfaces the individual
+  // sheets directly (one row per photo) instead of nesting them inside
+  // a "Material" wrapper that the kid then had to click into.
+  const photosRes =
+    matIds.length === 0
+      ? { data: [], error: null }
+      : await supabase
+          .from('material_photos')
+          .select('material_id, position, storage_path')
+          .in('material_id', matIds)
+          .order('position', { ascending: true });
+  if (photosRes.error) {
+    throw new ApiError('internal', 'Failed to load folder photos', {
+      cause: photosRes.error.message,
+    });
+  }
+  const photoRows = (photosRes.data ?? []) as Array<{
+    material_id: string;
+    position: number;
+    storage_path: string;
+  }>;
+  const photoUrlsByMaterial = new Map<string, string[]>();
+  for (const row of photoRows) {
+    const path = row.storage_path.startsWith('materials-raw/')
+      ? row.storage_path.slice('materials-raw/'.length)
+      : row.storage_path;
+    const signed = await supabase.storage.from('materials-raw').createSignedUrl(path, 3600);
+    if (!signed.data?.signedUrl) continue;
+    const arr = photoUrlsByMaterial.get(row.material_id) ?? [];
+    arr.push(signed.data.signedUrl);
+    photoUrlsByMaterial.set(row.material_id, arr);
+  }
+  const materials = materialsRaw.map((m) => ({
+    ...m,
+    photo_urls: photoUrlsByMaterial.get(m.id) ?? [],
+  }));
+
   const itemsRes =
     matIds.length === 0
       ? { data: [], error: null }

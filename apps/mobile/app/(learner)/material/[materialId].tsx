@@ -230,9 +230,15 @@ export default function MaterialScreen() {
         <Text style={{ fontSize: 26, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
           {material.title ?? tCommon('material.untitled')}
         </Text>
-        <Text style={{ fontSize: 12, color: LB.ink2 }}>
-          {tCommon('material.question_count', { count: items.length })}
-        </Text>
+        {/* Only show the question count when extraction succeeded.
+         *  On failed materials the "0 Fragen" line read as a fact ("there
+         *  are no questions here") when it's actually "extraction broke,
+         *  see the banner above"; that combination was confusing. */}
+        {!isFailed && !isPending && (
+          <Text style={{ fontSize: 12, color: LB.ink2 }}>
+            {tCommon('material.question_count', { count: items.length })}
+          </Text>
+        )}
 
         {items.length > 0 && (
           <Text
@@ -251,7 +257,11 @@ export default function MaterialScreen() {
           </Text>
         )}
 
-        {items.length === 0 ? (
+        {/* Failed materials already render the failedBanner above with
+         *  its own retry CTA. Don't pile on an empty-state "Noch keine
+         *  Fragen" panel — the user said it read as three disjoint
+         *  status messages stacked on top of each other. */}
+        {items.length === 0 && !isFailed && !isPending ? (
           <View style={{ paddingVertical: 28 }}>
             <EmptyState
               glyph="📷"
@@ -259,7 +269,7 @@ export default function MaterialScreen() {
               body={tCommon('material.no_items_body')}
             />
           </View>
-        ) : (
+        ) : items.length > 0 ? (
           <View style={{ gap: 10 }}>
             {items.map((item, idx) => {
               const revealed = revealedIds.has(item.id);
@@ -313,29 +323,31 @@ export default function MaterialScreen() {
               );
             })}
           </View>
-        )}
+        ) : null}
       </ScrollView>
 
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom, 12),
-          gap: 8,
-          backgroundColor: LB.paper,
-          borderTopColor: LB.hairline,
-          borderTopWidth: 1,
-        }}
-      >
-        {items.length > 0 && (
+      {/* Footer bar only appears when there's a primary action to
+       *  offer — practise the existing items. On failed / pending
+       *  materials the footer would just hold an orphan "Fertig" button
+       *  that the user read as "this material is done", which it
+       *  wasn't. The back arrow at the top is the way out instead. */}
+      {items.length > 0 ? (
+        <View
+          style={{
+            paddingHorizontal: 20,
+            paddingTop: 12,
+            paddingBottom: Math.max(insets.bottom, 12),
+            gap: 8,
+            backgroundColor: LB.paper,
+            borderTopColor: LB.hairline,
+            borderTopWidth: 1,
+          }}
+        >
           <Btn size="lg" full onPress={practise}>
             {tCommon('material.practice')}
           </Btn>
-        )}
-        <Btn size="md" full variant="ghost" onPress={() => router.replace('/(learner)/home')}>
-          {tCommon('actions.done')}
-        </Btn>
-      </View>
+        </View>
+      ) : null}
 
       <PhotoViewerModal
         visible={viewerIndex !== null}

@@ -296,7 +296,98 @@ is stable. This is a clear v2 feel-good polish, not a v1 blocker.
 
 ---
 
-## 6. Pages cap (shipped)
+## 6. Lernziel + Material + Card management (sort, hide, delete)
+
+### Why
+
+Right now Lernziele / Materialien / Karten live in a flat list with no
+power tools. Once a learner accumulates a school-year's worth, they
+need:
+
+- **Reorder** Lernziele (drag-to-sort within a subject)
+- **Hide** Lernziele the learner doesn't want to see but doesn't want
+  to delete (semester finished, exam passed)
+- **Hard-delete** Lernziele
+- Same trio on Materialien and on individual Karten
+
+### Sketch
+
+- Reuse the existing `archive_at` pattern (we already soft-archive
+  some entities) for "hide". Add an explicit `hidden_at` if the
+  semantics differ from "deleted".
+- DB needs `sort_order` columns on the relevant tables, or use
+  `created_at` desc by default and let users override via a manual
+  position. Probably the latter — explicit sort field on user-curated
+  rows.
+- UI: long-press in the list opens the per-item menu (rename / hide /
+  delete). Drag handle on the row when in "edit mode".
+
+### Not yet started — backlog.
+
+---
+
+## 7. Karten-Modus (Flashcard quiz mode)
+
+### Why
+
+The conversational tutor is great for diagnose-and-scaffold work, but
+when the learner just wants to drill cards before a test, the
+conversation is overkill. A pure flashcard mode (question → reveal
+answer → self-rated correct/hard/wrong) would complement the tutor:
+
+- Cheaper (no LLM call per card unless the kid asks for an
+  explanation)
+- Faster (10 cards in 2 minutes)
+- Better for last-night-before-the-test cramming
+
+### Sketch
+
+- New screen: `/(learner)/flashcards/[scope]` (subject / folder /
+  material)
+- Card flip animation; "Konnte ich / Halb / Wieder" rating maps to
+  FSRS Good / Hard / Again
+- Optional: tap a button to spin up a brief tutor session on the card
+  the learner failed on
+
+### Not yet started — backlog.
+
+---
+
+## 8. FSRS-aware item ordering inside a Lernziel session
+
+### Why
+
+When the tutor starts a session on a Lernziel with N cards, the order
+currently is whatever the picker returns. Should be:
+
+1. Cards the learner has **never seen** (or only opener-introduced) →
+   first.
+2. Cards the learner got **wrong / partially correct** in past
+   sessions → next, with the worst ones first.
+3. Cards the learner answered correctly **but with hints** → third.
+4. Cards the learner has truly mastered (correct first-try multiple
+   times) → last, used as warm-up if the budget allows.
+
+Inside each tier, randomise so the kid doesn't drill the same item in
+the same slot every time.
+
+The FSRS state machine already tracks each item's stability; we just
+need to add a tier-aware order on top of due-date for the
+`pickItems()` selector that the agent route uses.
+
+### Sketch
+
+- `apps/api/src/lib/fsrs.ts` already has the per-item state.
+- `apps/api/src/routes/agent.ts`'s `pickItems()` (or whichever queue
+  builder) sorts by tier first, then by FSRS due, then randomise
+  within tier with a seeded RNG so the kid doesn't get the exact same
+  order twice.
+
+### Not yet started — backlog.
+
+---
+
+## 9. Pages cap (shipped)
 
 (Not really an idea anymore — landed on this branch.)
 

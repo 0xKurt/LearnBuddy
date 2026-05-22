@@ -54,6 +54,11 @@ const FolderMaterial = z.object({
   extraction_status: z.string(),
   page_count: z.number().nullable(),
   created_at: z.string(),
+  /** Signed URLs for the photos that fed this material. The folder
+   *  screen surfaces each photo as its own clickable thumbnail so the
+   *  learner doesn't have to drill into a Material wrapper just to
+   *  see what they captured. */
+  photo_urls: z.array(z.string()).optional().default([]),
 });
 const FolderItem = z.object({
   id: z.string(),

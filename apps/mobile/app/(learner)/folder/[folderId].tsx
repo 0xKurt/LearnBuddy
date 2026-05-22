@@ -24,10 +24,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   Btn,
+  CachedImage,
   CircleBtn,
   EmptyState,
   FolderEditorModal,
-  Icon,
   LoadingState,
 } from '../../../components/lb/index.js';
 import { getAccount } from '../../../lib/api/account.js';
@@ -246,6 +246,25 @@ export default function LernzielDetailScreen() {
           </View>
         ) : (
           <>
+            {/* +Material as a top-level CTA on the Lernziel screen, NOT
+             *  buried inside the Quellen dropdown. The Quellen section
+             *  at the bottom is for inspecting what's already there;
+             *  adding new material is a frequent enough action that it
+             *  deserves its own button right next to the "üben" CTA. */}
+            <Btn
+              full
+              size="md"
+              variant="outline"
+              onPress={() =>
+                router.push({
+                  pathname: '/(learner)/capture',
+                  params: { subjectId, folderId },
+                })
+              }
+            >
+              {`+ ${t('subject.new_material')}`}
+            </Btn>
+
             <Text style={styles.sectionLabel}>{t('material.detail.section_cards')}</Text>
             {items.length === 0 ? (
               <Text style={styles.emptyHint}>{t('material.detail.no_cards')}</Text>
@@ -280,17 +299,7 @@ export default function LernzielDetailScreen() {
               </View>
             )}
 
-            <SourcesSection
-              materials={materials}
-              subjectId={subjectId}
-              folderId={folderId}
-              onAddMaterial={() =>
-                router.push({
-                  pathname: '/(learner)/capture',
-                  params: { subjectId, folderId },
-                })
-              }
-            />
+            <SourcesSection materials={materials} subjectId={subjectId} folderId={folderId} />
           </>
         )}
       </ScrollView>
@@ -309,59 +318,77 @@ function SourcesSection({
   materials,
   subjectId,
   folderId,
-  onAddMaterial,
 }: {
   materials: FolderMaterial[];
   subjectId: string;
   folderId: string;
-  onAddMaterial: () => void;
 }) {
   const { t } = useTranslation('home');
-  const [expanded, setExpanded] = useState(false);
+  // Flatten every photo across every material into one list. The
+  // learner thinks in "sheets I photographed", not "material objects".
+  // Each photo carries back-pointers to its material so a tap can
+  // still jump to the material detail (where failed-state retry +
+  // per-item review live).
+  const photos = materials.flatMap((m, mIdx) =>
+    (m.photo_urls ?? []).map((url, pIdx) => ({
+      key: `${m.id}-${pIdx}`,
+      url,
+      materialId: m.id,
+      materialIndex: mIdx,
+      materialStatus: m.extraction_status,
+    })),
+  );
+
+  if (photos.length === 0) {
+    // Material was just uploaded; photos haven't been signed yet, OR
+    // the material has no photos for some reason. Show nothing rather
+    // than an empty section — the +Material CTA at the top covers the
+    // "add more" affordance.
+    return null;
+  }
+
+  const openMaterial = (materialId: string) => {
+    router.push({
+      pathname: '/(learner)/material/[materialId]',
+      params: { materialId, subjectId, folderId },
+    });
+  };
+
   return (
     <View style={styles.sourcesWrap}>
-      <Pressable onPress={() => setExpanded((v) => !v)}>
-        <View style={styles.sourcesHeader}>
-          <Text style={styles.sourcesLabel}>
-            {t('material.detail.sources_title')} · {materials.length}
-          </Text>
-          <Icon name={expanded ? 'chevron' : 'chevron'} size={18} color={LB.ink3} />
-        </View>
-      </Pressable>
-      {expanded && (
-        <View style={styles.sourcesList}>
-          {materials.map((m, idx) => (
-            <Pressable
-              key={m.id}
-              onPress={() =>
-                router.push({
-                  pathname: '/(learner)/material/[materialId]',
-                  params: { materialId: m.id, subjectId, folderId },
-                })
-              }
-              style={({ pressed }) => [pressed && { opacity: 0.85 }]}
-            >
-              <View style={[styles.sourceRow, idx !== 0 && styles.sourceRowDivider]}>
-                <Icon name="camera" size={16} color={LB.ink3} />
-                <Text style={styles.sourceTitle} numberOfLines={1}>
-                  {m.title ?? `Material ${idx + 1}`}
-                </Text>
-                {m.extraction_status !== 'ready' && (
-                  <Text style={styles.sourceStatus}>
-                    {m.extraction_status === 'failed' ? t('material.status.failed') : '…'}
-                  </Text>
-                )}
-                <Icon name="chevron" size={16} color={LB.ink3} />
-              </View>
-            </Pressable>
-          ))}
-          <View style={{ padding: 10 }}>
-            <Btn full size="sm" variant="outline" onPress={onAddMaterial}>
-              {`+ ${t('lernziel.add_material')}`}
-            </Btn>
-          </View>
-        </View>
-      )}
+      <View style={styles.sourcesHeader}>
+        <Text style={styles.sourcesLabel}>
+          {t('material.detail.sources_title')} · {photos.length}
+        </Text>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.photoStrip}
+      >
+        {photos.map((p) => (
+          <Pressable
+            key={p.key}
+            onPress={() => openMaterial(p.materialId)}
+            style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+            accessibilityLabel={t('material.detail.sources_title')}
+          >
+            <View style={styles.photoThumbWrap}>
+              <CachedImage
+                source={{ uri: p.url }}
+                contentFit="cover"
+                transition={150}
+                style={styles.photoThumb}
+              />
+              {p.materialStatus === 'failed' && (
+                <View style={styles.photoFailDot}>
+                  <Text style={styles.photoFailText}>!</Text>
+                </View>
+              )}
+            </View>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -460,48 +487,51 @@ const styles = StyleSheet.create({
 
   sourcesWrap: {
     marginTop: 24,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: LB.hairline,
-    overflow: 'hidden',
   },
   sourcesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 4,
+    paddingBottom: 10,
   },
   sourcesLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: LB.ink2,
-    letterSpacing: 0.4,
-  },
-  sourcesList: {
-    borderTopWidth: 1,
-    borderTopColor: LB.hairline,
-  },
-  sourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  sourceRowDivider: {
-    borderTopWidth: 1,
-    borderTopColor: LB.hairline,
-  },
-  sourceTitle: {
-    flex: 1,
-    fontSize: 14,
-    color: LB.ink,
-    fontWeight: '500',
-  },
-  sourceStatus: {
-    fontSize: 11,
     color: LB.ink3,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  photoStrip: {
+    gap: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  photoThumbWrap: {
+    position: 'relative',
+  },
+  photoThumb: {
+    width: 96,
+    height: 124,
+    borderRadius: 12,
+    backgroundColor: LB.bg,
+    borderWidth: 1,
+    borderColor: LB.hairline,
+  },
+  photoFailDot: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: LB.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: LB.paper,
+  },
+  photoFailText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+    lineHeight: 14,
   },
 });

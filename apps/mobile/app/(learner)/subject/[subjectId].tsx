@@ -325,14 +325,25 @@ export default function SubjectScreen() {
       </ScrollView>
 
       <View style={styles.footerBar}>
-        <Btn
-          full
-          size="lg"
-          variant="outline"
-          onPress={() => router.push({ pathname: '/(learner)/capture', params: { subjectId } })}
-        >
-          {`+ ${t('subject.new_material')}`}
-        </Btn>
+        {/* When the subject is empty, the FIRST action is "create a
+         *  Lernziel" — material goes INTO a Lernziel, so without one
+         *  the +Material button used to be confusing ("where does this
+         *  go?"). With at least one Lernziel, +Material is the common
+         *  next action, so it becomes the primary CTA. */}
+        {folders.length === 0 ? (
+          <Btn full size="lg" onPress={() => setCreatingFolder(true)}>
+            {`+ ${t('lernziel.singular')}`}
+          </Btn>
+        ) : (
+          <Btn
+            full
+            size="lg"
+            variant="outline"
+            onPress={() => router.push({ pathname: '/(learner)/capture', params: { subjectId } })}
+          >
+            {`+ ${t('subject.new_material')}`}
+          </Btn>
+        )}
       </View>
 
       <FolderEditorModal
