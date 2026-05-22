@@ -147,20 +147,94 @@ async function main() {
       }
 
       // 2c. Remove any leftover extraction_jobs rows for this material
-      // so the retry path can enqueue cleanly.
+      // so the new job below has a clean slate.
       await supabase.from('extraction_jobs').delete().eq('material_id', mat.id);
 
-      console.log(`    ✓ archived ${archivedCount} items, reset material to retry-ready`);
+      // 2d. Synthesize a fresh extraction_jobs row + flip the material
+      // back to `pending` so the worker picks it up on the next drain
+      // cycle. This is the same shape POST /materials/:id/retry would
+      // produce, just done server-side here so the user doesn't have
+      // to tap retry on every material manually.
+      const photosRes = await supabase
+        .from('material_photos')
+        .select('position, client_blur_score, client_brightness, width, height')
+        .eq('material_id', mat.id)
+        .order('position', { ascending: true });
+      const photoRows = (photosRes.data ?? []) as Array<{
+        position: number;
+        client_blur_score: number | null;
+        client_brightness: number | null;
+        width: number | null;
+        height: number | null;
+      }>;
+      if (photoRows.length === 0) {
+        console.log('    ⚠ no photos for this material — leaving in failed state');
+        totals.materials += 1;
+        totals.itemsArchived += archivedCount;
+        continue;
+      }
+      // Look up learner's locale + subject_id from the material row.
+      const matMeta = await supabase
+        .from('materials')
+        .select('subject_id')
+        .eq('id', mat.id)
+        .maybeSingle();
+      const accLookup = await supabase
+        .from('learners')
+        .select('account_id, ui_locale')
+        .eq('id', learner.id)
+        .maybeSingle();
+      const subjectId = (matMeta.data as { subject_id: string | null } | null)?.subject_id ?? null;
+      const accountId =
+        (accLookup.data as { account_id: string | null } | null)?.account_id ?? null;
+      const locale =
+        ((accLookup.data as { ui_locale: string | null } | null)?.ui_locale as string) ?? 'de';
+      if (!accountId) {
+        console.log('    ⚠ no account for this learner — leaving in failed state');
+        totals.materials += 1;
+        totals.itemsArchived += archivedCount;
+        continue;
+      }
+      const jobInsert = await supabase.from('extraction_jobs').insert({
+        material_id: mat.id,
+        learner_id: learner.id,
+        account_id: accountId,
+        subject_id: subjectId,
+        status: 'queued',
+        attempts: 0,
+        locale,
+        title: null,
+        client_quality_scores: photoRows.map((p) => ({
+          position: p.position,
+          blur: p.client_blur_score ?? 0,
+          brightness: p.client_brightness ?? 0,
+          width: p.width,
+          height: p.height,
+        })),
+        credit_estimate: 20,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      if (jobInsert.error) {
+        console.log(`    ⚠ failed to enqueue retry job: ${jobInsert.error.message}`);
+      } else {
+        await supabase
+          .from('materials')
+          .update({ extraction_status: 'pending', extraction_error: null })
+          .eq('id', mat.id);
+      }
+
+      console.log(`    ✓ archived ${archivedCount} items, queued for re-extraction`);
       totals.materials += 1;
       totals.itemsArchived += archivedCount;
+      totals.jobsEnqueued += 1;
     }
   }
 
   console.log(
     `\n══════════════════════════════════════════════════════════════` +
-      `\nDone: ${totals.materials} materials reset · ${totals.itemsArchived} items archived` +
-      `\nOpen the mobile app — every material now shows the "Nicht lesbar" banner with a retry button.` +
-      `\nTap "Nochmal versuchen" on each one (or use the bulk retry if you wire it later) — the existing retryMaterial route synthesises fresh extraction_jobs from the photos and the worker picks them up.` +
+      `\nDone: ${totals.materials} materials reset · ${totals.itemsArchived} items archived · ${totals.jobsEnqueued} jobs queued` +
+      `\nThe worker drains queued jobs on a pg_cron schedule (every ~minute). No mobile-side retry tap needed.` +
       `\n══════════════════════════════════════════════════════════════`,
   );
 }

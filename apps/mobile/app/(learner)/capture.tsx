@@ -25,6 +25,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion, type DeviceMotionMeasurement } from 'expo-sensors';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
@@ -32,6 +33,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Linking,
   Modal,
   Pressable,
@@ -65,6 +67,48 @@ import { useCaptureStore, type CapturedPhoto } from '../../lib/store/capture.js'
 import { LB } from '../../lib/theme/colors.js';
 
 const MAX_PHOTOS = 10;
+
+/** expo-camera renders the preview with object-fit: cover into the
+ *  view's aspect ratio. On modern phones the screen aspect (≈ 9 : 19.5
+ *  portrait) is "taller and narrower" than the sensor (3 : 4 portrait),
+ *  so the preview scales the sensor until its HEIGHT fills the screen
+ *  height — and the left and right edges of the sensor get cropped
+ *  out of view. `takePictureAsync` then returns the full sensor frame,
+ *  including the bands on either side that the user never saw. That's
+ *  the "ich sehe ganz viel drum rum" the kid reported.
+ *
+ *  Fix: crop the captured image to the viewfinder's aspect ratio.
+ *  Keep full sensor HEIGHT (top of frame = top of preview), crop the
+ *  sides symmetrically to match the screen's width-to-height ratio. */
+async function cropToViewfinder(
+  uri: string,
+  imgWidth: number,
+  imgHeight: number,
+): Promise<{ uri: string; width: number; height: number }> {
+  const screen = Dimensions.get('window');
+  // Screen aspect ratio (width / height) — portrait phones < 1.
+  const screenAspect = screen.width / screen.height;
+  const targetWidth = Math.round(imgHeight * screenAspect);
+  // Nothing to do if the sensor is already narrower than the screen
+  // (would mean the preview cropped TOP/BOTTOM instead — opposite
+  // problem, not seen on the phones we ship today).
+  if (targetWidth >= imgWidth) {
+    return { uri, width: imgWidth, height: imgHeight };
+  }
+  const originX = Math.round((imgWidth - targetWidth) / 2);
+  try {
+    const out = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ crop: { originX, originY: 0, width: targetWidth, height: imgHeight } }],
+      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
+    );
+    return { uri: out.uri, width: out.width, height: out.height };
+  } catch {
+    // If cropping fails for any reason, fall back to the uncropped
+    // image rather than losing the capture entirely.
+    return { uri, width: imgWidth, height: imgHeight };
+  }
+}
 
 export default function CaptureScreen() {
   const { t } = useTranslation('capture');
@@ -146,22 +190,28 @@ export default function CaptureScreen() {
     try {
       const pic = await cam.takePictureAsync({ quality: 0.85, skipProcessing: false });
       if (!pic) return;
-      const { gray } = await decodeForQuality(pic.uri, pic.width, pic.height);
+      // Crop the captured frame to the viewfinder's aspect ratio so
+      // the saved photo matches what the user framed (see
+      // cropToViewfinder for the why). Quality scoring runs on the
+      // CROPPED image so brightness/blur reflect what the extractor
+      // will actually see.
+      const cropped = await cropToViewfinder(pic.uri, pic.width, pic.height);
+      const { gray } = await decodeForQuality(cropped.uri, cropped.width, cropped.height);
       const blur = scoreBlur(gray);
       const brightness = scoreBrightness(gray);
       const score: QualityScore = {
         blur,
         brightness,
         tilt: tiltAtShutter,
-        width: pic.width,
-        height: pic.height,
+        width: cropped.width,
+        height: cropped.height,
       };
       const verdict = classify(score);
 
       const photo: CapturedPhoto = {
-        uri: pic.uri,
-        width: pic.width,
-        height: pic.height,
+        uri: cropped.uri,
+        width: cropped.width,
+        height: cropped.height,
         quality: score,
         localId: `${Date.now()}-${photos.length + 1}`,
       };
