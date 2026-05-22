@@ -1,15 +1,16 @@
-// Dev-only: re-trigger AI extraction for all of a learner's materials
+// Dev-only: re-trigger AI extraction for a learner's materials
 // WITHOUT making them re-take photos. Soft-archives the existing
 // LLM-generated `items`, clears extracted_markdown, flips the
 // material to extraction_status='failed' so the mobile UI shows the
-// retry banner, and (optionally) immediately enqueues a fresh
-// extraction_jobs row so the worker picks it up on the next drain.
+// retry banner. The existing retryMaterial route then enqueues a
+// fresh extraction_jobs row from the photos and the worker re-runs.
 //
 // Run:
-//   pnpm -F @learnbuddy/api dev:redo-extraction
-//       → operates on every active learner's materials
 //   pnpm -F @learnbuddy/api dev:redo-extraction your@email.com
 //       → operates on the learner of that account only
+//   pnpm -F @learnbuddy/api dev:redo-extraction --all
+//       → operates on every active learner. REQUIRES the explicit
+//         --all flag so you can't wipe everyone by typo.
 //
 // Reads SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY from .env.local. No
 // migration changes, no schema touching — purely soft-resets the
@@ -29,7 +30,16 @@ async function main() {
     process.exit(2);
   }
   const supabase = createClient(url, key, { auth: { persistSession: false } });
-  const emailFilter = process.argv[2]?.toLowerCase();
+  const arg = process.argv[2]?.toLowerCase();
+  if (!arg) {
+    console.error(
+      'Pass an email to target ONE account: pnpm -F @learnbuddy/api dev:redo-extraction your@email.com\n' +
+        'Or pass --all to wipe extraction state across every learner (dangerous):\n' +
+        '  pnpm -F @learnbuddy/api dev:redo-extraction --all',
+    );
+    process.exit(2);
+  }
+  const emailFilter = arg === '--all' ? null : arg;
 
   // 1. Find the learner(s) to touch.
   let learnerQuery = supabase
