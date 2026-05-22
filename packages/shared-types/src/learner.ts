@@ -21,7 +21,11 @@ export const Learner = z.object({
   ui_locale: Locale,
   preferred_answer_mode: AnswerMode,
   avatar_id: z.number().int().min(1),
-  tts_voice: TtsVoiceCharacter.nullable(),
+  // Optional + nullable so the mobile client parses successfully even
+  // when the migration 0027 hasn't been applied to the running
+  // Supabase yet (or the column was dropped in a rollback). NULL =
+  // server-side defaults to Aoede for this learner.
+  tts_voice: TtsVoiceCharacter.nullable().optional(),
   notifications_practice_nudge_enabled: z.boolean(),
   notifications_practice_nudge_time: HhMm,
   notifications_test_heads_up_enabled: z.boolean(),
