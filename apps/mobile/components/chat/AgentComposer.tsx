@@ -362,7 +362,13 @@ export function AgentComposer({
               </View>
               <Waveform
                 level={isRecording ? voice.level : isSpeaking ? speakLevel : 0.15}
-                dim={!isRecording && !isSpeaking}
+                // Orange bars = "your mic is hot, talk now". Gray bars =
+                // "the tutor has the floor (opener TTS, thinking,
+                // answering); wait." We previously coloured the tutor's
+                // breathing waveform orange too, which collided with the
+                // recording cue and made kids start talking during the
+                // opener. Same animation, different colour.
+                dim={!isRecording}
               />
             </View>
           ) : (
@@ -391,8 +397,7 @@ export function AgentComposer({
               onPress={stopConversation}
               label={t('chat.composer.a11y.end_conv')}
             />
-          ) : tutorSpeaking ? // Chat-screen owns the playback (opener / text-turn reply).
-          // No actionable button here — the kid just waits. The
+          ) : tutorSpeaking ? // No actionable button here — the kid just waits. The // Chat-screen owns the playback (opener / text-turn reply).
           // statusBlock above ("Antwortet" + animated waveform) is
           // the cue.
           null : mode === 'mic-recording' ? (
