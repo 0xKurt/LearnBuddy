@@ -224,6 +224,13 @@ export async function runStreamPipeline(
   let audioCount = 0;
   let usage: OpenAIChatResponse['usage'] | undefined;
   let lastEmittedReply = '';
+  let lastEmitAt = 0;
+  // Minimum time between client-bound reply_chunk frames. DeepSeek
+  // sends ~1-2 chars per token, so without throttling we emit ~50
+  // frames/second — RN re-layouts the bubble per frame and the kid
+  // sees a juddery, letter-by-letter unfold. 80 ms gives a smooth
+  // word-by-word feel that still looks "live."
+  const MIN_EMIT_INTERVAL_MS = 80;
 
   const flushSentences = async (treatTailAsComplete: boolean): Promise<void> => {
     const { sentences, nextIndex } = splitNewSentences(
@@ -273,10 +280,22 @@ export async function runStreamPipeline(
       const newReply = extractReplySoFar(buffer);
       if (newReply !== replySoFar) {
         replySoFar = newReply;
-        if (replySoFar !== lastEmittedReply) {
-          lastEmittedReply = replySoFar;
-          await events.onReplySoFar(replySoFar);
+        // Throttle reply_chunk emission. We emit ONLY when:
+        //   - it's been > MIN_EMIT_INTERVAL_MS since the last frame, OR
+        //   - the buffer ends at a word boundary (space, punctuation),
+        //     so we ride out a multi-token word as one chunk and emit
+        //     when the word completes — that's the smoothest cadence.
+        const endsAtBoundary = /[\s.,;:!?)\]}»»]$/.test(replySoFar);
+        const now = Date.now();
+        if (endsAtBoundary || now - lastEmitAt >= MIN_EMIT_INTERVAL_MS) {
+          if (replySoFar !== lastEmittedReply) {
+            lastEmittedReply = replySoFar;
+            lastEmitAt = now;
+            await events.onReplySoFar(replySoFar);
+          }
         }
+        // Sentence detection always runs — TTS chunks are gated by
+        // the sentence-boundary regex, not by the throttle.
         await flushSentences(false);
       }
     }
@@ -285,12 +304,12 @@ export async function runStreamPipeline(
       // TTS. This is also the path that handles tiny replies with no
       // terminal punctuation at all.
       const finalReply = extractReplySoFar(buffer);
-      if (finalReply !== replySoFar) {
-        replySoFar = finalReply;
-        if (replySoFar !== lastEmittedReply) {
-          lastEmittedReply = replySoFar;
-          await events.onReplySoFar(replySoFar);
-        }
+      if (finalReply !== replySoFar) replySoFar = finalReply;
+      if (replySoFar !== lastEmittedReply) {
+        // Always send the final accumulated reply even if it hasn't
+        // changed since the last throttle window.
+        lastEmittedReply = replySoFar;
+        await events.onReplySoFar(replySoFar);
       }
       await flushSentences(true);
       break;

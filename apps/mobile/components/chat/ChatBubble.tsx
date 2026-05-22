@@ -37,29 +37,6 @@ export function ChatBubble({
   const isLearner = role === 'learner';
   const isSystem = role === 'system';
 
-  // Streaming cursor animation
-  const cursorOpacity = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    if (isStreaming) {
-      const anim = Animated.loop(
-        Animated.sequence([
-          Animated.timing(cursorOpacity, {
-            toValue: 0,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(cursorOpacity, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-      anim.start();
-      return () => anim.stop();
-    }
-  }, [isStreaming]);
-
   // Tutor-speaking text breath. 1.4s round-trip = ~one breath; reads as
   // alive without being distracting. Returns to 1.0 when speaking stops.
   const speakingOpacity = useRef(new Animated.Value(1)).current;
@@ -111,6 +88,15 @@ export function ChatBubble({
     );
   }
 
+  // Don't render an empty agent bubble while we wait for the first
+  // streaming token. The chat screen already shows the thinking dots
+  // for that state — an empty bubble + blinking cursor + dots was
+  // three indicators for the same "tutor is thinking" moment, which
+  // kids read as visual noise.
+  if (!isLearner && !content && isStreaming) {
+    return null;
+  }
+
   return (
     <View style={[styles.container, isLearner ? styles.learnerContainer : styles.agentContainer]}>
       {/* Tool Call Banner */}
@@ -140,9 +126,6 @@ export function ChatBubble({
         <Text style={isLearner ? styles.learnerText : styles.agentText}>
           {renderForeignMarkers(content, styles.foreignText)}
         </Text>
-
-        {/* Streaming cursor */}
-        {isStreaming && <Animated.View style={[styles.cursor, { opacity: cursorOpacity }]} />}
       </Animated.View>
 
       {/* Verdict badge */}
@@ -345,13 +328,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 13,
     textAlign: 'center',
-  },
-  cursor: {
-    width: 2,
-    height: 18,
-    backgroundColor: '#1A1A2E',
-    marginLeft: 2,
-    alignSelf: 'flex-end',
   },
   toolCallBanner: {
     backgroundColor: '#E8E0F7',
