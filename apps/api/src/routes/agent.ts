@@ -737,20 +737,27 @@ agentRoutes.post(
           })
           .select('id')
           .single();
-        const synthTts = parsed.reply
-          ? withTimeout(
-              tts.synthesize({ text: parsed.reply, locale, rate: 1.0, voiceId: ttsVoice }),
-              8_000,
-              'per-turn TTS',
-            ).catch((err: unknown) => {
-              console.warn(
-                `[agent] TTS synthesize failed: ${
-                  err instanceof Error ? err.message : String(err)
-                }`,
-              );
-              return null;
-            })
-          : Promise.resolve(null);
+        // TTS is only useful when the learner SPOKE (voice mode auto-
+        // plays the reply). Text-mode users get audio they never asked
+        // for — and pay 1-3 s of perceived latency for it. Skip
+        // synthesis on a text turn; the mobile chat falls through to
+        // showing the reply text immediately.
+        const isVoiceTurn = !!body.audio_base64;
+        const synthTts =
+          parsed.reply && isVoiceTurn
+            ? withTimeout(
+                tts.synthesize({ text: parsed.reply, locale, rate: 1.0, voiceId: ttsVoice }),
+                8_000,
+                'per-turn TTS',
+              ).catch((err: unknown) => {
+                console.warn(
+                  `[agent] TTS synthesize failed: ${
+                    err instanceof Error ? err.message : String(err)
+                  }`,
+                );
+                return null;
+              })
+            : Promise.resolve(null);
 
         const [tutorInsert, synthResult] = await Promise.all([persistTutorTurn, synthTts]);
         const tutorTurnId = (tutorInsert.data as { id: string } | null)?.id ?? null;
