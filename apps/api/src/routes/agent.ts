@@ -697,6 +697,8 @@ agentRoutes.post(
         // partner's own prefix caching (e.g. DeepSeek caches 64-token-
         // aligned static prefixes automatically at $0.06/M).
         const tutorIsGemini = env.VERTEX_TUTOR_MODEL_ID.startsWith('gemini-');
+        const tutorIsPartner =
+          !tutorIsGemini && env.VERTEX_TUTOR_MODEL_ID.startsWith('deepseek-ai/');
 
         let headerCacheName: string | null = null;
         if (env.AGENT_PROMPT_VERSION === 'v3.1' && tutorIsGemini) {
@@ -738,32 +740,126 @@ agentRoutes.post(
             ? ((turnInput as { _dynamic?: string })._dynamic as string)
             : systemInstruction;
 
-        let agentResult;
-        try {
-          agentResult = await withTimeout(
-            llm.agentTurn({
-              systemInstruction: instructionToSend,
-              headerCacheName,
-              history,
-              learnerMessage: learnerText,
-              modelOverride,
-            }),
-            45_000,
-            'agent LLM',
-          );
-        } catch (err) {
-          await send({
-            type: 'error',
-            code: 'evaluation_failed',
-            message: err instanceof Error ? err.message : String(err),
-          });
-          return;
-        }
+        // For language_foreign items, detect the target locale so the
+        // synthesizer can switch voices mid-utterance on « » markers.
+        // For non-foreign-language items, foreignLocale stays null and
+        // the helper falls through to the single-voice path (zero
+        // overhead vs. the previous synthesise call).
+        const foreignLocale =
+          itemCtx.subjectKind === 'language_foreign'
+            ? detectForeignLocaleFromQuestion(itemCtx.question)
+            : null;
+        const isVoiceTurn = !!body.audio_base64;
 
-        const parsed = parseAgentJson(agentResult.json);
-        // Stream the reply as a single chunk for now — strict-JSON
-        // streaming would need an incremental parser.
-        if (parsed.reply) await send({ type: 'reply', text: parsed.reply });
+        type ParsedAgent = ReturnType<typeof parseAgentJson>;
+        type AgentUsage = {
+          input_tokens: number;
+          output_tokens: number;
+          cached_input_tokens?: number;
+          cost_usd_micros: number;
+          model: string;
+          prompt_version: string;
+        };
+        let parsed: ParsedAgent;
+        let agentUsage: AgentUsage;
+        let streamedAudioCount = 0;
+
+        if (tutorIsPartner) {
+          // ── Streaming voice path ───────────────────────────────────
+          // DeepSeek streams the JSON response token-by-token. As the
+          // `reply` field grows we emit `reply_chunk` SSE frames so the
+          // mobile bubble fills progressively, and split sentence-by-
+          // sentence to fire per-sentence TTS as soon as each one is
+          // complete. The kid hears the opener of the reply ~1 s into
+          // generation instead of ~4-5 s after the whole call finishes.
+          const { runStreamPipeline } = await import('../lib/agent/stream-pipeline.js');
+          const { jsonrepair } = await import('jsonrepair');
+          let streamResult;
+          try {
+            streamResult = await withTimeout(
+              runStreamPipeline(
+                {
+                  env,
+                  modelId: env.VERTEX_TUTOR_MODEL_ID,
+                  systemContent: instructionToSend,
+                  history,
+                  learnerMessage: learnerText,
+                  baseLocale: locale,
+                  foreignLocale,
+                  voiceId: ttsVoice,
+                  withAudio: isVoiceTurn,
+                  tts,
+                },
+                {
+                  onReplySoFar: (text) => send({ type: 'reply_chunk', text }),
+                  onAudioChunk: ({ base64, mime, durationMs, index }) =>
+                    send({ type: 'audio_chunk', base64, mime, durationMs, index }),
+                },
+              ),
+              45_000,
+              'agent LLM stream',
+            );
+          } catch (err) {
+            await send({
+              type: 'error',
+              code: 'evaluation_failed',
+              message: err instanceof Error ? err.message : String(err),
+            });
+            return;
+          }
+          let parsedJson: unknown;
+          try {
+            parsedJson = JSON.parse(streamResult.rawJson);
+          } catch {
+            try {
+              parsedJson = JSON.parse(jsonrepair(streamResult.rawJson));
+            } catch {
+              await send({
+                type: 'error',
+                code: 'evaluation_failed',
+                message: `partner stream JSON parse failed: ${streamResult.rawJson.slice(0, 200)}`,
+              });
+              return;
+            }
+          }
+          parsed = parseAgentJson(parsedJson);
+          streamedAudioCount = streamResult.audioChunksEmitted;
+          const u = streamResult.usage ?? {};
+          agentUsage = {
+            input_tokens: u.prompt_tokens ?? 0,
+            output_tokens: u.completion_tokens ?? 0,
+            cached_input_tokens: u.prompt_cache_hit_tokens ?? 0,
+            cost_usd_micros: 0,
+            model: env.VERTEX_TUTOR_MODEL_ID,
+            prompt_version: 'agent.v2.0',
+          };
+        } else {
+          // ── Legacy non-streaming Gemini path ───────────────────────
+          let agentResult;
+          try {
+            agentResult = await withTimeout(
+              llm.agentTurn({
+                systemInstruction: instructionToSend,
+                headerCacheName,
+                history,
+                learnerMessage: learnerText,
+                modelOverride,
+              }),
+              45_000,
+              'agent LLM',
+            );
+          } catch (err) {
+            await send({
+              type: 'error',
+              code: 'evaluation_failed',
+              message: err instanceof Error ? err.message : String(err),
+            });
+            return;
+          }
+          parsed = parseAgentJson(agentResult.json);
+          agentUsage = agentResult.usage;
+          if (parsed.reply) await send({ type: 'reply', text: parsed.reply });
+        }
 
         // Parallelise tutor-turn persistence and TTS synthesis. They're
         // independent: the DB write needs only the parsed reply + verdict,
@@ -794,18 +890,12 @@ agentRoutes.post(
         // for — and pay 1-3 s of perceived latency for it. Skip
         // synthesis on a text turn; the mobile chat falls through to
         // showing the reply text immediately.
-        const isVoiceTurn = !!body.audio_base64;
-        // For language_foreign items, detect the target locale so the
-        // synthesizer can switch voices mid-utterance on « » markers.
-        // For non-foreign-language items, foreignLocale stays null and
-        // the helper falls through to the single-voice path (zero
-        // overhead vs. the previous synthesise call).
-        const foreignLocale =
-          itemCtx.subjectKind === 'language_foreign'
-            ? detectForeignLocaleFromQuestion(itemCtx.question)
-            : null;
+        // ALSO skip when the streaming-pipeline path already emitted
+        // per-sentence audio_chunk frames — the mobile has the audio
+        // and a final whole-reply synthesis would just stack a duplicate
+        // on top.
         const synthTts =
-          parsed.reply && isVoiceTurn
+          parsed.reply && isVoiceTurn && streamedAudioCount === 0
             ? withTimeout(
                 synthesizeMultilingual({
                   tts,
@@ -876,14 +966,15 @@ agentRoutes.post(
           intent: parsed.intent,
           learner_turn_id: learnerTurnId,
           tutor_turn_id: tutorTurnId,
-          credits_used: Math.max(1, Math.round(agentResult.usage.cost_usd_micros / 100)),
+          credits_used: Math.max(1, Math.round(agentUsage.cost_usd_micros / 100)),
           // Surface the version we actually composed (v2 / v3) rather
           // than the gateway's hardcoded label — the gateway doesn't
           // know which composer the route picked.
           prompt_version: promptVersionUsed,
-          model: agentResult.usage.model,
+          model: agentUsage.model,
           replayed: false,
           audio: ttsAudio,
+          audio_chunks_emitted: streamedAudioCount,
         });
       } catch (err) {
         try {

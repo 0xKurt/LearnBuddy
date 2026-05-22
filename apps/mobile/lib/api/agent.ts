@@ -47,6 +47,21 @@ export type AgentSessionStart = z.infer<typeof AgentSessionStart>;
 const AgentSseFrame = z.discriminatedUnion('type', [
   z.object({ type: z.literal('transcript'), text: z.string() }),
   z.object({ type: z.literal('reply'), text: z.string() }),
+  /** Progressive reply chunk — server emits the full reply-so-far each
+   *  tick while the LLM streams. Mobile overwrites the in-flight tutor
+   *  bubble with `text` instead of waiting for the final `reply` frame. */
+  z.object({ type: z.literal('reply_chunk'), text: z.string() }),
+  /** One sentence-level synthesised audio segment. The server fires
+   *  these in playback order as the LLM streams. Mobile queues + plays
+   *  them sequentially so the kid hears the first sentence ~1 s into
+   *  generation instead of after the full reply. */
+  z.object({
+    type: z.literal('audio_chunk'),
+    index: z.number().int().nonnegative(),
+    base64: z.string(),
+    mime: z.string(),
+    durationMs: z.number().nonnegative().optional(),
+  }),
   z.object({
     type: z.literal('done'),
     verdict: z.enum(['correct', 'partially_correct', 'incorrect', 'skipped']).nullable(),

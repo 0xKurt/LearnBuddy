@@ -32,7 +32,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Icon } from '../lb/Icon';
 import { LB } from '../../lib/theme/colors';
-import { playTtsAudio, type TtsPlayHandle } from '../../lib/voice/play-tts';
+import { type TtsPlayHandle } from '../../lib/voice/play-tts';
 import { useVoiceRecorder } from '../../lib/voice/use-voice-recorder';
 
 const WAVEFORM_BARS = 30;
@@ -62,14 +62,15 @@ export type AgentComposerProps = {
     mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
   }) => Promise<string>;
   /** Conversation mode: submit audio as a learner turn. Returns the
-   *  agent's reply text PLUS the synthesised TTS audio (base64 + mime)
-   *  that came back from the server. Parent owns the SSE stream + chat
-   *  bubble updates; the composer plays the audio and re-opens the
-   *  mic when playback finishes. */
+   *  agent's reply text AFTER the chat screen has finished playing
+   *  the tutor audio (whether streamed per-sentence or a single MP3
+   *  fallback). The composer used to play the audio itself, but with
+   *  streaming voice mode the chat screen owns the queue — so this
+   *  promise resolves only when it's safe to re-open the mic. */
   submitVoiceTurn?: (audio: {
     base64: string;
     mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
-  }) => Promise<{ reply: string; audio?: { base64: string; mime: string } | null }>;
+  }) => Promise<{ reply: string }>;
   /** Fire-and-forget hook called the instant the user taps the mic so
    *  the parent can pre-warm the STT pipeline (Vercel cold start +
    *  GCP gRPC handshake). */
@@ -207,31 +208,21 @@ export function AgentComposer({
       setMode('idle');
       return;
     }
-    let turn: { reply: string; audio?: { base64: string; mime: string } | null } = {
-      reply: '',
-      audio: null,
-    };
+    // submitVoiceTurn now owns the full tutor lifecycle on the chat
+    // screen side — streaming sentence-level audio chunks play
+    // straight from the SSE handler, and the promise resolves only
+    // AFTER the last chunk finishes. So we just show conv-speaking
+    // for the duration and re-open the mic on resolve.
+    setMode('conv-speaking');
     try {
-      turn = await submitVoiceTurn({ base64: result.base64, mime: result.mime });
+      await submitVoiceTurn({ base64: result.base64, mime: result.mime });
     } catch (err) {
       setErrorHint(err instanceof Error ? err.message : 'Antwort fehlgeschlagen');
       if (!conversationCancelledRef.current) void beginConvListen();
       return;
     }
     if (conversationCancelledRef.current) return;
-    if (!turn.audio) {
-      // Server didn't synthesise (TTS error, no reply text) — skip
-      // playback and re-open the mic.
-      void beginConvListen();
-      return;
-    }
-    setMode('conv-speaking');
-    const handle = playTtsAudio(turn.audio.base64, turn.audio.mime);
-    ttsHandleRef.current = handle;
-    void handle.done.then(() => {
-      ttsHandleRef.current = null;
-      if (!conversationCancelledRef.current) void beginConvListen();
-    });
+    void beginConvListen();
   }, [voice, submitVoiceTurn, beginConvListen]);
 
   const startConversation = useCallback(async () => {
@@ -397,8 +388,7 @@ export function AgentComposer({
               onPress={stopConversation}
               label={t('chat.composer.a11y.end_conv')}
             />
-          ) : tutorSpeaking ? // No actionable button here — the kid just waits. The // Chat-screen owns the playback (opener / text-turn reply).
-          // statusBlock above ("Antwortet" + animated waveform) is
+          ) : tutorSpeaking ? // statusBlock above ("Antwortet" + animated waveform) is // No actionable button here — the kid just waits. The // Chat-screen owns the playback (opener / text-turn reply).
           // the cue.
           null : mode === 'mic-recording' ? (
             <>

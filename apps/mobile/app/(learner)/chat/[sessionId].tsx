@@ -36,6 +36,7 @@ import { ChatBubble, AgentThinking } from '../../../components/chat/ChatBubble';
 import { useNavigateUp } from '../../../lib/navigation/hierarchy';
 import { LB } from '../../../lib/theme/colors';
 import { playTtsAudio, type TtsPlayHandle } from '../../../lib/voice/play-tts';
+import { createTtsQueue, type TtsQueueHandle } from '../../../lib/voice/play-tts-queue';
 
 type Message = {
   id: string;
@@ -100,6 +101,9 @@ export default function AgentChatScreen() {
   // first conv-start the audio is consumed and stop/restart of conv
   // mode does not replay it.
   const openerAudioRef = useRef<{ base64: string; mime: string } | null>(null);
+  // Active per-sentence audio queue for the streaming voice path. Held
+  // here so stopTutorTts can drain it when the turn is interrupted.
+  const ttsQueueRef = useRef<TtsQueueHandle | null>(null);
   const startTutorTts = useCallback((audio: { base64: string; mime: string }) => {
     ttsHandleRef.current?.stop();
     setVoicePlaybackError(null);
@@ -118,6 +122,8 @@ export default function AgentChatScreen() {
   const stopTutorTts = useCallback(() => {
     ttsHandleRef.current?.stop();
     ttsHandleRef.current = null;
+    ttsQueueRef.current?.stop();
+    ttsQueueRef.current = null;
     setTutorSpeaking(false);
   }, []);
   useEffect(() => () => stopTutorTts(), [stopTutorTts]);
@@ -224,6 +230,21 @@ export default function AgentChatScreen() {
             );
             setThinking(false);
             break;
+          case 'reply_chunk':
+            // Progressive text from the streaming LLM path. Overwrite
+            // the bubble each tick — frames carry the full reply so
+            // far, not a delta.
+            replyText = e.text;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === agentId ? { ...m, content: replyText } : m)),
+            );
+            setThinking(false);
+            break;
+          case 'audio_chunk':
+            // Text-mode turns don't expect audio chunks (server skips
+            // TTS on text turns), but if one shows up just ignore it —
+            // the composer is text, no playback context.
+            break;
           case 'done':
             finalVerdict = e.verdict;
             advanced = e.advance;
@@ -302,8 +323,11 @@ export default function AgentChatScreen() {
     async (audio: {
       base64: string;
       mime: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
-    }): Promise<{ reply: string; audio?: { base64: string; mime: string } | null }> => {
-      if (!sessionId || !learnerId || sessionEnded) return { reply: '', audio: null };
+    }): Promise<{ reply: string }> => {
+      if (!sessionId || !learnerId || sessionEnded) return { reply: '' };
+      // Stop any in-flight tutor playback (e.g. opener still playing,
+      // or the previous reply queue hasn't drained).
+      stopTutorTts();
       setBusy(true);
       setThinking(true);
       const learnerMsgId = `lv-${Date.now()}`;
@@ -316,10 +340,15 @@ export default function AgentChatScreen() {
         { id: agentMsgId, role: 'agent', content: '', isStreaming: true },
       ]);
       let replyText = '';
-      let replyAudio: { base64: string; mime: string } | null = null;
       let finalVerdict: Message['verdict'] = null;
       let advanced = false;
       let hadError = false;
+      // Boxed in a ref so callback reassignment is visible to the outer
+      // post-await flow (raw `let` triggers TS narrowing that hides
+      // the reassignment done inside the SSE handler).
+      const queueBox: { current: TtsQueueHandle | null } = { current: null };
+      const fallbackAudioBox: { value: { base64: string; mime: string } | null } = { value: null };
+      let startedSpeaking = false;
       const ctid = newClientTurnId();
       const handle = (e: AgentSseFrame) => {
         switch (e.type) {
@@ -337,10 +366,35 @@ export default function AgentChatScreen() {
             );
             setThinking(false);
             break;
+          case 'reply_chunk':
+            // Progressive text from the streaming LLM path. Overwrite
+            // the bubble each tick — frames carry the full reply so far,
+            // not a delta.
+            replyText = e.text;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === agentMsgId ? { ...m, content: replyText } : m)),
+            );
+            setThinking(false);
+            break;
+          case 'audio_chunk': {
+            // First chunk → spin up the queue + flip "tutor speaking".
+            let q = queueBox.current;
+            if (!q) {
+              q = createTtsQueue((kind, detail) => {
+                setVoicePlaybackError(`${kind}: ${detail}`);
+              });
+              queueBox.current = q;
+              ttsQueueRef.current = q;
+              startedSpeaking = true;
+              setTutorSpeaking(true);
+            }
+            q.enqueue({ base64: e.base64, mime: e.mime });
+            break;
+          }
           case 'done':
             finalVerdict = e.verdict;
             advanced = e.advance;
-            if (e.audio) replyAudio = { base64: e.audio.base64, mime: e.audio.mime };
+            if (e.audio) fallbackAudioBox.value = { base64: e.audio.base64, mime: e.audio.mime };
             if (advanced) setCompletedItems((n) => n + 1);
             if (e.session_complete) setSessionEnded(true);
             break;
@@ -376,6 +430,9 @@ export default function AgentChatScreen() {
           // Remove the stale optimistic bubbles so failed attempts don't
           // accumulate in the transcript.
           setMessages((prev) => prev.filter((m) => m.id !== learnerMsgId && m.id !== agentMsgId));
+          queueBox.current?.stop();
+          queueBox.current = null;
+          if (startedSpeaking) setTutorSpeaking(false);
         } else {
           setMessages((prev) =>
             prev.map((m) =>
@@ -386,13 +443,40 @@ export default function AgentChatScreen() {
         setBusy(false);
         setThinking(false);
       }
+      // Wait for tutor audio playback to finish before resolving —
+      // the composer's auto-loop re-opens the mic as soon as this
+      // resolves, so we must not let it talk over the tutor.
+      const activeQueue = queueBox.current;
+      if (activeQueue) {
+        activeQueue.finalise();
+        try {
+          await activeQueue.done;
+        } catch {
+          /* ignore */
+        }
+        if (ttsQueueRef.current === activeQueue) ttsQueueRef.current = null;
+        setTutorSpeaking(false);
+      } else if (fallbackAudioBox.value && !hadError) {
+        // Streaming path didn't run (legacy Gemini turn) → fall back to
+        // the single-shot single-audio play we used to do.
+        const fb = fallbackAudioBox.value;
+        await new Promise<void>((resolve) => {
+          startTutorTts(fb);
+          const tick = setInterval(() => {
+            if (!ttsHandleRef.current) {
+              clearInterval(tick);
+              resolve();
+            }
+          }, 100);
+        });
+      }
       if (advanced && completedItems + 1 >= totalItems) {
         setSessionEnded(true);
         if (sessionId && learnerId) void finishAgentSession(learnerId, sessionId);
       }
-      return { reply: replyText, audio: replyAudio };
+      return { reply: replyText };
     },
-    [sessionId, learnerId, sessionEnded, completedItems, totalItems],
+    [sessionId, learnerId, sessionEnded, completedItems, totalItems, stopTutorTts, startTutorTts],
   );
 
   // ── Auto-scroll ───────────────────────────────────────────────────────

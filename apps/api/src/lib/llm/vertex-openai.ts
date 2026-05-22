@@ -122,3 +122,117 @@ export function isOpenAICompatModel(modelId: string): boolean {
   // We only ship DeepSeek today; add more prefixes here when needed.
   return modelId.startsWith('deepseek-ai/');
 }
+
+/** One delta event from the streaming endpoint. `content` is the chunk
+ *  of text appended this tick (may be ''). `done` is true on the final
+ *  `[DONE]` marker. `usage` may be present on the last delta when the
+ *  provider includes it (DeepSeek does; OpenAI sometimes; we tolerate
+ *  both). */
+export type OpenAIChatStreamDelta = {
+  content: string;
+  done: boolean;
+  finish_reason?: string;
+  usage?: OpenAIChatResponse['usage'];
+};
+
+/** Stream the Vertex OpenAI-compatible chat-completions endpoint as an
+ *  async iterable. Each yielded value is one parsed `data:` SSE line,
+ *  decomposed into a `content` delta + an end flag. Lets the caller
+ *  emit text incrementally and start downstream work (sentence-level
+ *  TTS, on-screen typing) without waiting for the full reply.
+ *
+ *  Auth + URL shape match `vertexOpenAIChat`. We append `stream: true`
+ *  to the body; everything else is identical. */
+export async function* streamVertexOpenAIChat(args: {
+  project: string;
+  location: string;
+  body: OpenAIChatRequest;
+}): AsyncGenerator<OpenAIChatStreamDelta, void, undefined> {
+  const host =
+    args.location === 'global'
+      ? 'aiplatform.googleapis.com'
+      : `${args.location}-aiplatform.googleapis.com`;
+  const url = `https://${host}/v1/projects/${args.project}/locations/${args.location}/endpoints/openapi/chat/completions`;
+  const token = await getAccessToken();
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      },
+      body: JSON.stringify({ ...args.body, stream: true }),
+    });
+  } catch (err) {
+    throw new ApiError(
+      'evaluation_failed',
+      `Vertex OpenAI-compat stream fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  if (!res.ok || !res.body) {
+    const text = res.body ? await res.text().catch(() => '') : '';
+    throw new ApiError(
+      'evaluation_failed',
+      `Vertex OpenAI-compat stream ${res.status}: ${text.slice(0, 300)}`,
+    );
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let lastUsage: OpenAIChatResponse['usage'] | undefined;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // SSE frames are separated by \n\n. Split, keep the trailing
+      // partial in the buffer for the next read.
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop() ?? '';
+      for (const frame of frames) {
+        for (const rawLine of frame.split('\n')) {
+          const line = rawLine.trim();
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload) continue;
+          if (payload === '[DONE]') {
+            yield { content: '', done: true, usage: lastUsage };
+            return;
+          }
+          try {
+            const json = JSON.parse(payload) as {
+              choices?: Array<{
+                delta?: { content?: string | null };
+                finish_reason?: string | null;
+              }>;
+              usage?: OpenAIChatResponse['usage'];
+            };
+            if (json.usage) lastUsage = json.usage;
+            const ch = json.choices?.[0];
+            const content = ch?.delta?.content ?? '';
+            const finish = ch?.finish_reason ?? undefined;
+            if (content || finish) {
+              yield { content, done: false, finish_reason: finish ?? undefined };
+            }
+          } catch {
+            // tolerate malformed frames — DeepSeek occasionally emits
+            // a keep-alive comment we can ignore
+          }
+        }
+      }
+    }
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      /* ignore */
+    }
+  }
+  // If we exit the loop without [DONE], still signal completion so
+  // the caller can finalise.
+  yield { content: '', done: true, usage: lastUsage };
+}
