@@ -47,14 +47,24 @@ async function main() {
     .select('id, display_name, account_id')
     .is('archived_at', null);
   if (emailFilter) {
-    // Look up the account id by email, then filter learners.
+    // Schema: accounts.owner_user_id → auth.users.id. Email lives on
+    // the auth row. Look up the auth user by email, then find the
+    // account row, then filter learners.
+    const users = await supabase.auth.admin.listUsers({ perPage: 200 });
+    const match = users.data?.users?.find(
+      (u) => u.email?.toLowerCase() === emailFilter.toLowerCase(),
+    );
+    if (!match) {
+      console.error(`No auth user found with email ${emailFilter}`);
+      process.exit(2);
+    }
     const accountRes = await supabase
       .from('accounts')
-      .select('id, owner_email')
-      .eq('owner_email', emailFilter)
+      .select('id')
+      .eq('owner_user_id', match.id)
       .maybeSingle();
     if (!accountRes.data) {
-      console.error(`No account found with email ${emailFilter}`);
+      console.error(`Auth user ${match.id} has no account row`);
       process.exit(2);
     }
     learnerQuery = learnerQuery.eq('account_id', accountRes.data.id);
