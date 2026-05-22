@@ -12,21 +12,23 @@ Was heißt "die Uhr" auf Französisch?
 
 **Learner:** weiß ich nicht
 
-**Tutor:** Das klingt frustrierend — viele finden die französischen Wörter erstmal fremd. Lass uns nur einen kleinen Schritt machen: Wir suchen das französische Wort für 'die Uhr' — es ist ein Hauptwort, das man bei der Zeitangabe verwendet.
+**Tutor:** Das ist okay — lass uns einen kleinen Schritt machen. Denk an das Wort für «Stunde» auf Französisch — es klingt ähnlich.
 
-- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2215/112 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2368/86 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** hilf mir bitte
 
-**Tutor:** Genau, 'Uhr' kann man auf zwei Arten sagen: die Zeit-Uhr (wie 'Es ist drei Uhr') und die Armbanduhr. Hier geht es um die Zeit-Uhr. Kannst du dir vorstellen, wie das französische Wort für 'Stunde' klingen könnte?
+**Tutor:** Gerne. Die Frage sucht nach dem französischen Wort für «Uhr». Es beginnt mit «l'» und hat einen ähnlichen Klang wie das deutsche Wort.
 
-- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2408/109 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2535/83 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** kannst du mir das sagen?
 
-**Tutor:** Es ist ein kurzes Wort, das mit einem Vokal anfängt und einen Apostroph hat. Probier mal, wie 'Stunde' auf Französisch klingen könnte.
+**Tutor:** Das französische Wort für 'die Uhr' ist «l'heure». Es ist feminin und wird mit Apostroph geschrieben, weil der folgende Vokal den Artikel verkürzt. Kannst du dir merken, dass es wie 'Stunde' klingt?
 
-- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2520/82 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2621/100 model=deepseek-ai/deepseek-v3.2-maas
+
+_(server would now pop the next item — scenario ends)_
 
 ---
 
@@ -35,7 +37,7 @@ Was heißt "die Uhr" auf Französisch?
 - ✓ **C1** — No "schau im Material / lies nochmal" redirect: ok
 - ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
-- ✓ **C5** — Every reveal includes a micro-check question: no reveal
+- ✓ **C5** — Every reveal includes a micro-check question: ok
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 3): in=7143 (avg 2381) · out=303 (avg 101)
+Tokens (turns 3): in=7524 (avg 2508) · out=269 (avg 90)

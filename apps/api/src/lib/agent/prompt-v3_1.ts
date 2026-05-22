@@ -401,7 +401,8 @@ export function buildAgentTurnContextV3_1(input: AgentTurnInput): string {
       lines.push(
         'REQUIRED MOVE — student gave up AND hint ladder is exhausted:',
         '  intent="reveal", verdict="skipped", reveal=true, advance=true.',
-        '  3 parts: ANSWER in one sentence → RULE/PRINCIPLE/MNEMONIC → ONE micro-check. NEVER end with "lass uns weitermachen" alone.',
+        `  3 parts: ANSWER (use the expectedAnswer ABOVE VERBATIM — copy "${input.currentItem.expectedAnswer}" letter-for-letter, do NOT paraphrase or "correct" it) → RULE/PRINCIPLE/MNEMONIC → ONE micro-check.`,
+        '  NEVER end with "lass uns weitermachen" alone.',
       );
     } else {
       lines.push(
@@ -419,6 +420,25 @@ export function buildAgentTurnContextV3_1(input: AgentTurnInput): string {
     lines.push(
       `REQUIRED RUNG if hinting: RUNG ${Math.min(nextRung, 3)} — ${templates[Math.min(nextRung, 3) - 1]}`,
       '  Same anti-paraphrase rule: a hint must add a NEW anchor, not reword the question.',
+    );
+  }
+
+  // Foreign-language marking. For language_foreign items, every word
+  // or phrase in the TARGET language (the one the kid is learning)
+  // must be wrapped in « » guillemets. The mobile renders these in
+  // italic so the kid can SEE which words are foreign, and the TTS
+  // gateway uses the same markers to switch voices mid-utterance so
+  // "Quelle heure est-il?" gets pronounced by the French voice instead
+  // of the German one stumbling over it. Without the markers we have
+  // no way to know which substring is foreign.
+  if (subjectKind === 'language_foreign') {
+    lines.push('');
+    lines.push(
+      'TARGET-LANGUAGE MARKING — REQUIRED:',
+      '  This is a foreign-language item. EVERY word or phrase in the target language MUST be wrapped in « » guillemets — both in hints and in REVEAL.',
+      '  Examples:  Die Frage lautet: «Quelle heure est-il?»  ·  Auf Französisch heißt "Stunde" «heure».  ·  Probier mal mit «quelle».',
+      '  Do NOT wrap German prose, only the target-language tokens. Single words AND multi-word phrases get their own guillemets.',
+      '  The mobile uses these markers to render foreign words in italic AND to pronounce them with the correct voice. Skipping a marker = kid hears the word in a German accent. Be precise.',
     );
   }
 

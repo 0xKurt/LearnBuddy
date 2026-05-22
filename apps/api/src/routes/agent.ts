@@ -23,6 +23,10 @@ import {
 import type { AgentItemContext, AgentThreadMessage, SubjectKind } from '../lib/agent/types.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { reflectAndPersistSession } from '../lib/reflective/session-reflect.js';
+import {
+  detectForeignLocaleFromQuestion,
+  synthesizeMultilingual,
+} from '../lib/voice/multilingual-tts.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import type { Locale } from '@learnbuddy/shared-types';
@@ -152,11 +156,29 @@ agentRoutes.post(
     // Synthesise the opener so the chat screen reads it aloud on start
     // — same Chirp HD voice and rate as the per-turn replies. Failure
     // (incl. timeout) is non-blocking: the screen still shows the text.
+    // The first question itself may contain foreign-language tokens
+    // wrapped in « » (extraction emits these for language items), so
+    // route through the multilingual splitter even on opener.
+    const firstItemSubjectKind = await lookupSubjectKind(
+      supabase,
+      firstItem.material_id as string | null,
+    );
+    const openerForeignLocale =
+      firstItemSubjectKind === 'language_foreign'
+        ? detectForeignLocaleFromQuestion(firstQuestion)
+        : null;
     let openerAudio: { base64: string; mime: string; durationMs: number } | null = null;
     try {
       const synth = await withTimeout(
-        tts.synthesize({ text: seedContent, locale, rate: 1.0, voiceId: ttsVoice }),
-        8_000,
+        synthesizeMultilingual({
+          tts,
+          text: seedContent,
+          baseLocale: locale,
+          foreignLocale: openerForeignLocale,
+          voiceId: ttsVoice,
+          rate: 1.0,
+        }),
+        12_000,
         'opener TTS',
       );
       openerAudio = {
@@ -753,11 +775,27 @@ agentRoutes.post(
         // synthesis on a text turn; the mobile chat falls through to
         // showing the reply text immediately.
         const isVoiceTurn = !!body.audio_base64;
+        // For language_foreign items, detect the target locale so the
+        // synthesizer can switch voices mid-utterance on « » markers.
+        // For non-foreign-language items, foreignLocale stays null and
+        // the helper falls through to the single-voice path (zero
+        // overhead vs. the previous synthesise call).
+        const foreignLocale =
+          itemCtx.subjectKind === 'language_foreign'
+            ? detectForeignLocaleFromQuestion(itemCtx.question)
+            : null;
         const synthTts =
           parsed.reply && isVoiceTurn
             ? withTimeout(
-                tts.synthesize({ text: parsed.reply, locale, rate: 1.0, voiceId: ttsVoice }),
-                8_000,
+                synthesizeMultilingual({
+                  tts,
+                  text: parsed.reply,
+                  baseLocale: locale,
+                  foreignLocale,
+                  voiceId: ttsVoice,
+                  rate: 1.0,
+                }),
+                12_000,
                 'per-turn TTS',
               ).catch((err: unknown) => {
                 console.warn(

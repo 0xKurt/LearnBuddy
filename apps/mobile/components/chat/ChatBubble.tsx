@@ -137,7 +137,9 @@ export function ChatBubble({
           speaking && { opacity: speakingOpacity },
         ]}
       >
-        <Text style={isLearner ? styles.learnerText : styles.agentText}>{content}</Text>
+        <Text style={isLearner ? styles.learnerText : styles.agentText}>
+          {renderForeignMarkers(content, styles.foreignText)}
+        </Text>
 
         {/* Streaming cursor */}
         {isStreaming && <Animated.View style={[styles.cursor, { opacity: cursorOpacity }]} />}
@@ -244,6 +246,35 @@ export function AgentThinking() {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Split a tutor reply on French-guillemet markers («…») and render the
+ *  inner text in italic so foreign-language words read as visually
+ *  distinct. The same markers drive language-aware TTS on the server.
+ *
+ *  We accept guillemets in both orderings: «text» (French style, our
+ *  contract) AND »text« (German style — the model sometimes flips them
+ *  because of native typography). Both ways the inner text is the
+ *  foreign token; the strict regex looks for one then the matching
+ *  closing in either direction. */
+function renderForeignMarkers(text: string, italicStyle: object): React.ReactNode {
+  const regex = /«([^«»]+)»|»([^«»]+)«/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+  for (const match of text.matchAll(regex)) {
+    const idx = match.index ?? 0;
+    if (idx > lastIndex) parts.push(text.slice(lastIndex, idx));
+    const inner = match[1] ?? match[2] ?? '';
+    parts.push(
+      <Text key={`fm-${key++}`} style={italicStyle}>
+        {inner}
+      </Text>,
+    );
+    lastIndex = idx + match[0].length;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts.length > 0 ? parts : text;
+}
+
 function formatToolName(name: string): string {
   const labels: Record<string, string> = {
     grade_answer: 'Bewertet deine Antwort...',
@@ -297,6 +328,10 @@ const styles = StyleSheet.create({
     color: '#1A1A2E',
     fontSize: 16,
     lineHeight: 22,
+  },
+  foreignText: {
+    fontStyle: 'italic',
+    fontWeight: '500',
   },
   systemBubble: {
     alignSelf: 'center',
