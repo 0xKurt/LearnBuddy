@@ -346,12 +346,40 @@ agentRoutes.post(
       const send = (data: object): Promise<void> => sse.writeSSE({ data: JSON.stringify(data) });
 
       try {
-        // Load session.
-        const sessRes = await supabase
-          .from('sessions')
-          .select('id, learner_id, test_mode, picked_item_ids, pinned_topic, started_at, ended_at')
-          .eq('id', session_id)
-          .maybeSingle();
+        // Pre-LLM DB reads in PARALLEL — session, idempotency check,
+        // turns history, learner profile all only depend on
+        // session_id / learner_id which we have from middleware. Used
+        // to be 4 sequential round-trips (~150-200 ms wasted on a
+        // sub-3 s turn). The validation that depends on each result
+        // happens AFTER the batched await, same logic as before.
+        const [sessRes, dupRes, turnsRes, learnerRow] = await Promise.all([
+          supabase
+            .from('sessions')
+            .select(
+              'id, learner_id, test_mode, picked_item_ids, pinned_topic, started_at, ended_at',
+            )
+            .eq('id', session_id)
+            .maybeSingle(),
+          supabase
+            .from('conversation_turns')
+            .select('id, turn_index')
+            .eq('session_id', session_id)
+            .eq('client_turn_id', body.client_turn_id)
+            .maybeSingle(),
+          supabase
+            .from('conversation_turns')
+            .select(
+              'id, item_id, turn_index, role, kind, content, verdict, advance_after, hint_given, created_at',
+            )
+            .eq('session_id', session_id)
+            .order('turn_index', { ascending: true }),
+          supabase
+            .from('learners')
+            .select('display_name, grade_level, ui_locale, tts_voice')
+            .eq('id', learner_id)
+            .maybeSingle(),
+        ]);
+
         const session = sessRes.data as {
           id: string;
           learner_id: string;
@@ -380,12 +408,6 @@ agentRoutes.post(
         // (no tutor row exists), DELETE the orphan learner row and
         // proceed as a fresh turn — otherwise the client would hang
         // waiting for a `done` event we can't synthesize honestly.
-        const dupRes = await supabase
-          .from('conversation_turns')
-          .select('id, turn_index')
-          .eq('session_id', session_id)
-          .eq('client_turn_id', body.client_turn_id)
-          .maybeSingle();
         const dup = dupRes.data as { id: string; turn_index: number } | null;
         if (dup) {
           const replayRes = await supabase
@@ -425,14 +447,7 @@ agentRoutes.post(
           await supabase.from('conversation_turns').delete().eq('id', dup.id);
         }
 
-        // Load turns (oldest first).
-        const turnsRes = await supabase
-          .from('conversation_turns')
-          .select(
-            'id, item_id, turn_index, role, kind, content, verdict, advance_after, hint_given, created_at',
-          )
-          .eq('session_id', session_id)
-          .order('turn_index', { ascending: true });
+        // Turns history was loaded in the initial parallel batch.
         const allTurns = (turnsRes.data ?? []) as Array<{
           id: string;
           item_id: string | null;
@@ -475,30 +490,32 @@ agentRoutes.post(
           return;
         }
 
-        // Material grounding — fetched once but injected ONLY when
-        // we're in tutoring mode (hint given OR prior wrong attempts
-        // on this item). Fresh-attempt + correct-answer turns don't
-        // need the material excerpt; skipping it saves ~30 % input
-        // tokens on those turns.
-        let materialContextFull: string | null = null;
+        // Material grounding + subject-kind lookup run in parallel —
+        // both depend on item.material_id but not on each other, and
+        // each is ~50 ms on Supabase EU. Material text is fetched once
+        // but injected ONLY when we're in tutoring mode (hint given OR
+        // prior wrong attempts on this item); fresh-attempt + correct-
+        // answer turns don't need the material excerpt and skipping it
+        // saves ~30 % input tokens.
         const materialId = item.material_id as string | null;
-        if (materialId) {
-          const m = await supabase
-            .from('materials')
-            .select('extracted_markdown')
-            .eq('id', materialId)
-            .maybeSingle();
-          materialContextFull =
-            (
-              (m.data as { extracted_markdown: string | null } | null)?.extracted_markdown ?? ''
-            ).slice(0, 4000) || null;
-        }
+        const [materialFetch, subjectKindResolved] = await Promise.all([
+          materialId
+            ? supabase
+                .from('materials')
+                .select('extracted_markdown')
+                .eq('id', materialId)
+                .maybeSingle()
+            : Promise.resolve(null),
+          lookupSubjectKind(supabase, materialId),
+        ]);
+        const materialContextFull = materialFetch
+          ? (
+              (materialFetch.data as { extracted_markdown: string | null } | null)
+                ?.extracted_markdown ?? ''
+            ).slice(0, 4000) || null
+          : null;
 
-        const learnerRow = await supabase
-          .from('learners')
-          .select('display_name, grade_level, ui_locale, tts_voice')
-          .eq('id', learner_id)
-          .maybeSingle();
+        // Learner row was loaded in the initial parallel batch.
         const learner = (learnerRow.data ?? null) as {
           display_name: string | null;
           grade_level: number | null;
@@ -548,10 +565,15 @@ agentRoutes.post(
             t.verdict === 'partially_correct',
         ).length;
 
-        // Persist the learner turn first so it's part of the history the
-        // model sees on the next call (and so idempotency works).
+        // Persist the learner turn IN PARALLEL with the LLM call.
+        // Used to be awaited before kicking off the LLM (~50 ms wasted
+        // round-trip). The model takes `learnerText` directly as input,
+        // not the inserted row — no semantic dependency.
+        // We still await the insert promise before emitting the `done`
+        // SSE frame (which needs `learner_turn_id`), but by then the
+        // LLM call has consumed most of that 50 ms in parallel.
         const nextIndex = allTurns.reduce((m, t) => Math.max(m, t.turn_index), -1) + 1;
-        const learnerInsert = await supabase
+        const learnerInsertP = supabase
           .from('conversation_turns')
           .insert({
             session_id,
@@ -566,12 +588,10 @@ agentRoutes.post(
           })
           .select('id')
           .single();
-        const learnerTurnId = (learnerInsert.data as { id: string } | null)?.id ?? null;
 
-        // Subject-kind lookup for the v3 prompt's subject-specific
-        // tutoring block (math vs vocab vs history have different
-        // hint strategies).
-        const subjectKind = await lookupSubjectKind(supabase, item.material_id as string | null);
+        // Subject-kind was resolved in parallel with the material
+        // fetch above — rename to keep the downstream block readable.
+        const subjectKind = subjectKindResolved;
 
         // Build the agent input and call the LLM.
         const itemCtx: AgentItemContext = {
@@ -840,6 +860,12 @@ agentRoutes.post(
             );
           });
         }
+
+        // Now await the learner insert that was kicked off before the
+        // LLM call — by this point it's almost certainly resolved
+        // already (LLM took 2-3 s, insert takes ~50 ms).
+        const learnerInsert = await learnerInsertP;
+        const learnerTurnId = (learnerInsert.data as { id: string } | null)?.id ?? null;
 
         await send({
           type: 'done',
