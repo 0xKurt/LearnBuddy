@@ -135,6 +135,26 @@ export default function MaterialScreen() {
   const isPending =
     material.extraction_status !== 'ready' && material.extraction_status !== 'failed';
 
+  // Map the raw extraction_error to a child-friendly explanation.
+  // The server stores technical strings like "too_few_items" or
+  // "Vertex output failed JSON validation: Unexpected end of JSON
+  // input"; the kid needs a sentence they can act on. We pattern-
+  // match the common cases and fall through to a generic encourager.
+  const failReason = (() => {
+    if (!isFailed) return null;
+    const raw = (material.extraction_error ?? '').toLowerCase();
+    if (raw.includes('too_few_items')) return tHome('material.fail_reason.too_few_items');
+    if (raw.includes('not_educational')) return tHome('material.fail_reason.not_educational');
+    if (
+      raw.includes('unexpected end of json') ||
+      raw.includes('too_long') ||
+      raw.includes('truncat')
+    )
+      return tHome('material.fail_reason.too_long');
+    if (raw.includes('unreadable')) return tHome('material.fail_reason.unreadable');
+    return tHome('material.fail_reason.generic');
+  })();
+
   function toggleReveal(id: string) {
     setRevealedIds((prev) => {
       const next = new Set(prev);
@@ -212,7 +232,7 @@ export default function MaterialScreen() {
         {isFailed && (
           <View style={styles.failedBanner}>
             <Text style={styles.failedTitle}>{tHome('material.status.failed')}</Text>
-            <Text style={styles.failedBody}>{tHome('material.retry_max_body')}</Text>
+            <Text style={styles.failedBody}>{failReason ?? tHome('material.retry_max_body')}</Text>
             <Btn full onPress={() => retryMut.mutate()} disabled={retryMut.isPending}>
               {tHome('material.actions.retry')}
             </Btn>

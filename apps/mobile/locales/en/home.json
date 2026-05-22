@@ -149,6 +149,13 @@
       "card_delete_cta": "Delete",
       "card_delete_failed_title": "Couldn't delete",
       "card_delete_failed_body": "Please try again."
+    },
+    "fail_reason": {
+      "too_few_items": "The photo didn't show enough exercises or terms. Try a sharper photo closer to the content.",
+      "too_long": "The material was too long to process in one go. Try splitting it into fewer pages per material.",
+      "not_educational": "This doesn't look like learning material. A photo from your notebook or textbook?",
+      "unreadable": "Couldn't make out the text. More light, fewer shadows, and a steady hand usually fix it.",
+      "generic": "This time it didn't work. Try again — a sharper photo with good lighting almost always helps."
     }
   },
   "lernziel": {

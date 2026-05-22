@@ -120,6 +120,13 @@
     "retry_failed_body": "Bitte versuche es gleich nochmal.",
     "retry_max_title": "Maximale Versuche erreicht",
     "retry_max_body": "Dieses Material lässt sich nicht lesen. Bitte mach neue Fotos.",
+    "fail_reason": {
+      "too_few_items": "Auf dem Foto waren zu wenige Aufgaben oder Begriffe zu erkennen. Versuch's mit einem schärferen Foto näher am Inhalt.",
+      "too_long": "Das Material war zu umfangreich für eine Bearbeitung am Stück. Versuch's mit weniger Seiten pro Material.",
+      "not_educational": "Das sieht nicht nach Lernmaterial aus. Foto vom Heft oder Schulbuch?",
+      "unreadable": "Konnte den Text nicht entziffern. Mehr Licht, weniger Schatten, und Kamera ruhig halten hilft meistens.",
+      "generic": "Diesmal hat's nicht geklappt. Versuch's nochmal — ein schärferes Foto bei guter Beleuchtung hilft fast immer."
+    },
     "retry_credits_title": "Keine Credits mehr",
     "retry_credits_body": "Im aktuellen Zeitraum sind alle Credits aufgebraucht.",
     "pending_banner_one": "1 Material wird vorbereitet",

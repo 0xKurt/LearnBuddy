@@ -149,6 +149,13 @@
       "card_delete_cta": "Supprimer",
       "card_delete_failed_title": "Impossible de supprimer",
       "card_delete_failed_body": "Réessaie s'il te plaît."
+    },
+    "fail_reason": {
+      "too_few_items": "La photo ne montrait pas assez d'exercices ou de termes. Essaie une photo plus nette et plus proche du contenu.",
+      "too_long": "Le support était trop long à traiter en une fois. Essaie de le diviser en moins de pages par support.",
+      "not_educational": "Cela ne ressemble pas à du matériel pédagogique. Une photo de ton cahier ou de ton manuel ?",
+      "unreadable": "Impossible de déchiffrer le texte. Plus de lumière, moins d'ombre et une main stable règlent souvent le problème.",
+      "generic": "Cette fois ça n'a pas marché. Réessaie — une photo plus nette avec un bon éclairage aide presque toujours."
     }
   },
   "lernziel": {
