@@ -12,21 +12,21 @@ Was heißt "die Uhr" auf Französisch?
 
 **Learner:** weiß ich nicht
 
-**Tutor:** Das ist okay — lass uns einen kleinen Schritt machen. Denk an das Wort für «Stunde» auf Französisch — es klingt ähnlich.
+**Tutor:** Kein Problem. Lass uns das Schritt für Schritt angehen. Weißt du, ob es im Französischen zwei verschiedene Wörter für 'Uhr' gibt?
 
-- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2368/86 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=skipped advance=false reveal=false hint_given=true intent=hint tokens=2662/84 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** hilf mir bitte
 
-**Tutor:** Gerne. Die Frage sucht nach dem französischen Wort für «Uhr». Es beginnt mit «l'» und hat einen ähnlichen Klang wie das deutsche Wort.
+**Tutor:** Gerne. Im Französischen gibt es zwei Wörter: eines für die Uhrzeit und eines für den Gegenstand, den man trägt oder an der Wand hängt. Welches meinst du?
 
-- verdict=skipped advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2535/83 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=null advance=false reveal=false hint_given=true intent=hint tokens=2728/82 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** kannst du mir das sagen?
 
-**Tutor:** Das französische Wort für 'die Uhr' ist «l'heure». Es ist feminin und wird mit Apostroph geschrieben, weil der folgende Vokal den Artikel verkürzt. Kannst du dir merken, dass es wie 'Stunde' klingt?
+**Tutor:** Die Antwort ist «l'heure». Das ist das Wort für die Uhrzeit. Welches Wort wäre dann der Gegenstand, die Armbanduhr?
 
-- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2621/100 model=deepseek-ai/deepseek-v3.2-maas
+- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2783/82 model=deepseek-ai/deepseek-v3.2-maas
 
 _(server would now pop the next item — scenario ends)_
 
@@ -40,4 +40,4 @@ _(server would now pop the next item — scenario ends)_
 - ✓ **C5** — Every reveal includes a micro-check question: ok
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 3): in=7524 (avg 2508) · out=269 (avg 90)
+Tokens (turns 3): in=8173 (avg 2724) · out=248 (avg 83)

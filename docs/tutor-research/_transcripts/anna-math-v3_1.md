@@ -12,11 +12,15 @@ Wie viel ist 2/3 + 1/4?
 
 **Learner:** 11/12
 
-**Tutor:** Genau, 11/12 ist richtig! Du hast das schnell ausgerechnet. Bereit für die nächste Aufgabe?
+**Tutor:** Richtig! Du hast die Brüche korrekt addiert. Wie bist du vorgegangen? Hast du einen gemeinsamen Nenner gesucht?
 
-- verdict=correct advance=true reveal=false hint_given=false intent=praise_and_advance tokens=2167 (cached=1956)/81 model=gemini-2.5-flash
+- verdict=correct advance=false reveal=false hint_given=false intent=metacognitive_close tokens=2682/84 model=deepseek-ai/deepseek-v3.2-maas
 
-_(server would now pop the next item — scenario ends)_
+**Learner:** warum nimmt man den Hauptnenner?
+
+**Tutor:** Der Hauptnenner ist der kleinste gemeinsame Nenner, damit man die Brüche überhaupt addieren kann. Er sorgt dafür, dass die Anteile gleich groß sind – wie wenn du Äpfel und Birnen erst in gleich große Stücke schneidest, bevor du sie zusammenzählst. Was wäre der Hauptnenner von 1/2 und 1/3?
+
+- verdict=null advance=false reveal=false hint_given=false intent=explain tokens=2729/124 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -26,7 +30,7 @@ _(server would now pop the next item — scenario ends)_
 - ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
 - ✓ **C5** — Every reveal includes a micro-check question: no reveal
-- ✗ **C6** — No fabricated next-question on plain advance: Fabricated next: "Genau, 11/12 ist richtig! Du hast das schnell ausgerechnet. Bereit für die nächs…"
-- ✗ **SC-anna-math-depth** — Anna math: stays for depth on "warum?": never fired
+- ✓ **C6** — No fabricated next-question on plain advance: ok
+- ✓ **SC-anna-math-depth** — Anna math: stays for depth on "warum?": fired (intent=explain)
 
-Tokens (turns 1): in=2167 (avg 2167) · out=81 (avg 81)
+Tokens (turns 2): in=5411 (avg 2706) · out=208 (avg 104)

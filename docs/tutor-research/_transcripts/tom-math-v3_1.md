@@ -12,17 +12,15 @@ Wie viel ist 2/3 + 1/4?
 
 **Learner:** 5/12?
 
-**Tutor:** Das ist noch nicht ganz richtig, Tom. Da hat sich ein kleiner Denkfehler eingeschlichen. Was ist denn unser Ziel, wenn wir Brüche addieren?
+**Tutor:** Nicht ganz — die Brüche haben unterschiedliche Nenner. Weißt du, wie man sie auf einen gemeinsamen Nenner bringt?
 
-- verdict=incorrect advance=false reveal=false hint_given=true intent=hint tokens=2167/81 model=gemini-2.5-flash
+- verdict=incorrect advance=false reveal=false hint_given=true intent=hint tokens=2683/82 model=deepseek-ai/deepseek-v3.2-maas
 
 **Learner:** oh stimmt — 11/12?
 
-**Tutor:** Genau, 11/12 ist richtig! Du hast das schnell korrigiert. Bereit für die nächste Aufgabe?
+**Tutor:** Genau! Du hast die Nenner auf 12 erweitert und die Zähler addiert. Warum ist 12 der gemeinsame Nenner?
 
-- verdict=correct advance=true reveal=false hint_given=false intent=praise_and_advance tokens=2209/81 model=gemini-2.5-flash
-
-_(server would now pop the next item — scenario ends)_
+- verdict=correct advance=false reveal=false hint_given=false intent=metacognitive_close tokens=2728/86 model=deepseek-ai/deepseek-v3.2-maas
 
 ---
 
@@ -32,6 +30,6 @@ _(server would now pop the next item — scenario ends)_
 - ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
 - ✓ **C5** — Every reveal includes a micro-check question: no reveal
-- ✗ **C6** — No fabricated next-question on plain advance: Fabricated next: "Genau, 11/12 ist richtig! Du hast das schnell korrigiert. Bereit für die nächste…"
+- ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 2): in=4376 (avg 2188) · out=162 (avg 81)
+Tokens (turns 2): in=5411 (avg 2706) · out=168 (avg 84)

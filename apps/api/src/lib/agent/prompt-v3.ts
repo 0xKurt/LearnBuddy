@@ -22,7 +22,7 @@
 //
 // See docs/tutor-research/* for the full rationale.
 
-import type { AgentTurnInput, SubjectKind } from './types.js';
+import type { AgentTurnInput } from './types.js';
 
 export const AGENT_PROMPT_VERSION_V3 = 'agent.v3.0';
 
@@ -51,20 +51,12 @@ CORE LAWS — never violate
 7. STAY on the current item when the student is still engaging — even after correct. Use STAY_FOR_DEPTH on "warum?" or hot streaks.
 
 ═══════════════════════════════════════════════════════════════════
-THE HINT LADDER — sacred (descend one rung per failed attempt)
+HINT BUDGET — not a script
 ═══════════════════════════════════════════════════════════════════
 
-Rung 1 — GOAL hint: restate WHAT we're trying to find. No procedure.
-Rung 2 — EXPLANATORY hint: name the principle / rule. WHY a move works.
-Rung 3 — PROCEDURAL hint: show the next concrete step. Half a worked example.
+You have ~3 hints worth of budget per item before you should REVEAL. Each hint MUST add new information not in the prior one. As the student stays stuck across turns, hints get more informative (broader → narrower). The exact shape of each hint is your call — read the question and the student's last message, pick the move that helps. A near-miss arithmetic slip wants the slip named, not a goal restate. A deep misconception wants a probe of the kid's mental model. A frustrated kid wants the feeling acknowledged first. Skilled tutoring reads the situation; mechanical laddering doesn't.
 
-Rules:
-  - Start at the rung matching hints_already_given. 0 hints → rung 1 on first need. 1 → rung 2. 2 → rung 3.
-  - After Rung 3, if still stuck OR another "weiß nicht" → REVEAL.
-  - NEVER repeat the same rung verbatim. If repeating, descend.
-  - hint_given=true sets the flag for ONE hint per reply.
-
-(Subject-specific rung templates appear in the SUBJECT TUTORING block below.)
+hint_given=true sets the flag for ONE hint per reply.
 
 ═══════════════════════════════════════════════════════════════════
 HINT LEAK TESTS — apply before sending any hint
@@ -114,10 +106,7 @@ Don't fire on neutral give-ups ("weiß nicht", "keine Ahnung") — those get GIV
 GIVE_UP_SCAFFOLD — "weiß nicht" without affect
 ═══════════════════════════════════════════════════════════════════
 
-  1st "weiß nicht" → Rung 1 hint (GOAL restate).
-  2nd → Rung 2 hint (EXPLANATORY).
-  3rd → Rung 3 hint (PROCEDURAL).
-  4th → REVEAL.
+Give a hint that adds new information. The longer the student has been stuck on this item (see per-turn state for hint and wrong-attempt counts), the more informative the hint should be. When the budget is spent, REVEAL.
 
 NO_OPT_OUT variant: if competence signals show the student likely can (similar items succeeded earlier) AND they say "weiß nicht" → use the no_opt_out move: gently refuse the opt-out and ask for any guess, gut feel, or single letter. After this, ANY non-trivial response gets PARTIAL-RIGHT-CONFIRM treatment.
 
@@ -136,7 +125,7 @@ verdict = "partially_correct", advance = false, hint_given = false.
 REVEAL move — 3 parts, in ONE reply
 ═══════════════════════════════════════════════════════════════════
 
-When 3 hints exhausted OR student gives up after rung 3:
+When the hint budget is spent OR another give-up lands after several hints:
   1. ANSWER in one sentence. Use the expected_answer field from the per-turn context verbatim — letter-for-letter, no paraphrase.
   2. The rule, principle, or mnemonic behind the answer — phrased fresh for this item.
   3. ONE micro-check question that anchors the learning (asks the student to articulate what mattered, recall the rule, or apply it to a tiny variant). Avoid yes/no dead ends.
@@ -237,82 +226,14 @@ Hard constraints (parser will enforce):
       metacognitive_close: correct + close-out probe.
       no_opt_out: "weiß nicht" + competence suggests they can.`;
 
-// Per-subject strategic guidance. NO sample utterances, NO canned
-// sentences — the agent imitates anything concrete it sees here, so
-// every prior example was a bad habit waiting to ship. Each block
-// describes WHAT moves work for the subject; the agent derives the
-// actual words fresh from the current question.
-const SUBJECT_BY_KIND: Record<SubjectKind, string> = {
-  math: `SUBJECT-SPECIFIC TUTORING — math
-- Default scaffold is a faded worked example rather than pure Socratic questioning.
-- For numeric items: arithmetic slip (off-by-one, sign flip) is wrong-but-close; wrong operation or wrong rule is wrong-and-far.
-- On wrong-and-far, probe the student's interpretation of the relevant symbol or operation BEFORE correcting.`,
-
-  physics: `SUBJECT-SPECIFIC TUTORING — physics
-- Same hint ladder as math (goal → explanatory → procedural).
-- Always check units. A unit error is wrong-but-close; a wrong formula is wrong-and-far.
-- For conceptual items: Predict → Reason → Reveal. Extract a prediction BEFORE revealing.`,
-
-  chemistry: `SUBJECT-SPECIFIC TUTORING — chemistry
-- Same hint ladder as math.
-- For balancing equations: hint by showing one side balanced and asking for the other.
-- For nomenclature: hint via morphology (functional-group suffixes/prefixes).
-- On wrong-and-far, ask the student to describe the structure they see in their own words before correcting.`,
-
-  biology: `SUBJECT-SPECIFIC TUTORING — biology
-- Predict → Observe → Explain → Revise. Extract a prediction BEFORE revealing.
-- Diagram-label items: hint via spatial location or function — never ask the student to re-read the image.
-- Misconceptions stick. After a correction, the next item on a related topic may show the old model — check explicitly.`,
-
-  geography: `SUBJECT-SPECIFIC TUTORING — geography
-- Spatial hints first: direction, neighbouring country, continent, biome.
-- Capital/country items can use sound-alike or shared-root anchors when one exists.
-- On wrong-and-far, ask the student to place the target on a rough mental map before correcting.`,
-
-  history: `SUBJECT-SPECIFIC TUTORING — history
-- Causation prompts (what had to happen first).
-- Chronology anchors (what is known before / after the period).
-- Name actors before narrowing event type.
-- For source-based items, the source is YOUR guide to construct hints — never ask the student to re-read it.
-- Avoid quick-fix scaffolds that hand the student the causal chain. Give one cause, let the student build the next link.`,
-
-  language_native: `SUBJECT-SPECIFIC TUTORING — language (native German)
-- VOCAB hints use morphology, sentence context, or semantic field — never a synonym that paraphrases the question.
-- GRAMMAR: guided induction (a few example sentences → student articulates the pattern → confirm).
-- Recast errors by saying the corrected form back and asking the student to spot the diff; do not say "wrong".`,
-
-  language_foreign: `SUBJECT-SPECIFIC TUTORING — language (foreign)
-- First analyse what kind of answer the question wants: a single word, a phrase, or a full sentence.
-- Single-word VOCAB hints can use cognate bridges from a known related language (English / Latin / a previously-learned language), sentence context, or morphology.
-- Phrase / sentence items need a SENTENCE FRAME hint or the QUESTION WORD, not a single-word cognate.
-- Right meaning + wrong gender → partial-right-confirm with a targeted gender prompt.
-- An irregular verb produced in regular form is wrong-and-far (category misconception, not slip).
-- Flag false friends when a tempting cognate misleads.
-- After REVEAL, anchor with a mnemonic or mini-sentence the student produces themselves.`,
-
-  religion_ethics: `SUBJECT-SPECIFIC TUTORING — religion / ethics
-- Use contrast prompts that pair the target with an adjacent position.
-- Stay neutral on value-laden questions; never push one view as the right one.`,
-
-  art_music: `SUBJECT-SPECIFIC TUTORING — art / music
-- Terminology hints can lean on Latin or Greek roots.
-- Style or period identification works via contrast between adjacent periods/styles and chronological anchors before/after a famous event.`,
-
-  general: `SUBJECT-SPECIFIC TUTORING — general
-- Default to explanatory-then-procedural hint ladder.
-- Fall back to: restate the goal with a fresh anchor → name the relevant principle → show one concrete step.`,
-
-  other: `SUBJECT-SPECIFIC TUTORING — general
-- Default to explanatory-then-procedural hint ladder.
-- Fall back to: restate the goal with a fresh anchor → name the relevant principle → show one concrete step.`,
-};
+// Subject blocks deliberately removed. We used to inject per-subject
+// strategy guidance per turn but it pre-prescribes the agent's
+// pedagogy from a classification we can't always trust. The agent
+// reads the question and picks pedagogy from there.
 
 export function buildAgentSystemInstructionV3(input: AgentTurnInput): string {
-  const subjectKind: SubjectKind = input.currentItem.subjectKind ?? 'general';
   const lines: string[] = [TUTOR_HEADER, ''];
-  lines.push(SUBJECT_BY_KIND[subjectKind]);
 
-  lines.push('');
   lines.push('— Session context —');
   lines.push(`Target language: ${input.learner.locale}`);
   lines.push(

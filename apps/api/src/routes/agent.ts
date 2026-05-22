@@ -156,17 +156,13 @@ agentRoutes.post(
     // Synthesise the opener so the chat screen reads it aloud on start
     // — same Chirp HD voice and rate as the per-turn replies. Failure
     // (incl. timeout) is non-blocking: the screen still shows the text.
-    // The first question itself may contain foreign-language tokens
-    // wrapped in « » (extraction emits these for language items), so
-    // route through the multilingual splitter even on opener.
-    const firstItemSubjectKind = await lookupSubjectKind(
-      supabase,
-      firstItem.material_id as string | null,
-    );
-    const openerForeignLocale =
-      firstItemSubjectKind === 'language_foreign'
-        ? detectForeignLocaleFromQuestion(firstQuestion)
-        : null;
+    // The first question may itself contain foreign-language tokens
+    // (e.g. a German question naming the target French phrase), so we
+    // detect foreign locale purely from the question text — no
+    // dependence on the brittle subjectKind classification. Returns
+    // null when no language name is mentioned, which short-circuits to
+    // single-voice synthesis.
+    const openerForeignLocale = detectForeignLocaleFromQuestion(firstQuestion);
     let openerAudio: { base64: string; mime: string; durationMs: number } | null = null;
     try {
       const synth = await withTimeout(
@@ -742,13 +738,11 @@ agentRoutes.post(
 
         // For language_foreign items, detect the target locale so the
         // synthesizer can switch voices mid-utterance on « » markers.
-        // For non-foreign-language items, foreignLocale stays null and
-        // the helper falls through to the single-voice path (zero
-        // overhead vs. the previous synthesise call).
-        const foreignLocale =
-          itemCtx.subjectKind === 'language_foreign'
-            ? detectForeignLocaleFromQuestion(itemCtx.question)
-            : null;
+        // Subject classification is unreliable (kids upload any topic),
+        // so we detect foreign locale purely from the question text.
+        // Returns null when no language name appears, short-circuiting
+        // to single-voice synthesis (zero overhead).
+        const foreignLocale = detectForeignLocaleFromQuestion(itemCtx.question);
         const isVoiceTurn = !!body.audio_base64;
 
         type ParsedAgent = ReturnType<typeof parseAgentJson>;
