@@ -33,6 +33,7 @@ import {
 import { Btn } from '../../../components/lb/Btn';
 import { AgentComposer } from '../../../components/chat/AgentComposer';
 import { ChatBubble, AgentThinking } from '../../../components/chat/ChatBubble';
+import { useNavigateUp } from '../../../lib/navigation/hierarchy';
 import { LB } from '../../../lib/theme/colors';
 import { playTtsAudio, type TtsPlayHandle } from '../../../lib/voice/play-tts';
 
@@ -53,6 +54,7 @@ function newClientTurnId(): string {
 
 export default function AgentChatScreen() {
   const { t } = useTranslation('home');
+  const navigateUp = useNavigateUp();
   const params = useLocalSearchParams<{
     sessionId?: string;
     subjectId?: string;
@@ -450,7 +452,7 @@ export default function AgentChatScreen() {
         keyboardVerticalOffset={0}
       >
         <View style={styles.header}>
-          <Btn variant="ghost" size="sm" onPress={() => router.back()}>
+          <Btn variant="ghost" size="sm" onPress={navigateUp}>
             {t('chat.back')}
           </Btn>
           <View style={styles.progressBox}>

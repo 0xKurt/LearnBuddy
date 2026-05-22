@@ -115,9 +115,16 @@ export function resolveParent(segments: string[], params: Params): UpHref | null
  *
  * `navigateUp()` returns `true` when it moved up a level (caller treats the
  * back as handled) and `false` at a hierarchy root (caller lets the OS
- * minimize/exit the app). Up-navigation uses `replace` so interaction
- * history never accumulates — the visible stack always mirrors the
- * hierarchy, not the click path.
+ * minimize/exit the app).
+ *
+ * Implementation uses `router.dismissTo` (POP_TO): if the parent already
+ * sits in the stack history it pops back to it, collapsing every step the
+ * user took since then. If the parent isn't in the stack (deep-link entry)
+ * React Navigation falls through to a push. We previously used
+ * `router.replace`, which only swapped the current screen and left the
+ * earlier history intact — that caused the iOS swipe-back + Android
+ * hardware back to replay the entire click path step-by-step instead of
+ * climbing the hierarchy.
  */
 export function useNavigateUp(): () => boolean {
   const segments = useSegments();
@@ -129,7 +136,7 @@ export function useNavigateUp(): () => boolean {
     // Cast: grouped routes ('/(learner)/…') aren't expressible in the typed
     // Href union but are valid hrefs at runtime — matches the codebase's
     // existing `as never` convention for group navigation.
-    router.replace(parent as never);
+    router.dismissTo(parent as never);
     return true;
   }, [segments, params]);
 }
