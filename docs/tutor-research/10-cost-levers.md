@@ -157,12 +157,26 @@ At 10 k sessions / month: **~$10-12 / month** on top of the v3.1
 baseline savings. The really big win was v3.1 itself (prompt
 compression) plus Gemini's free implicit caching.
 
+## What `AGENT_PROMPT_VERSION_OVERRIDE` actually controls
+
+The env var selects the prompt builder, nothing else. Specifically:
+
+| Lever                           | Gated by env var? | Notes                                                                                                                                                                                                          |
+| ------------------------------- | :---------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prompt content (v2 / v3 / v3.1) |      **yes**      | This is the var's only job.                                                                                                                                                                                    |
+| #1 explicit caching             |      partial      | Only v3.1 has a cacheable static prefix (`TUTOR_HEADER_V3_1`). v2 / v3 mix static + dynamic in one string, so explicit caching can't hit. Implicit caching (Gemini auto-feature) still works for all versions. |
+| #3 flash-lite routing           |      **no**       | Runs regardless of version.                                                                                                                                                                                    |
+| #4 history truncation (12)      |      **no**       | Runs regardless of version.                                                                                                                                                                                    |
+| #5 conditional material context |      **no**       | Runs regardless of version.                                                                                                                                                                                    |
+
+In other words: switching to v2 or v3 doesn't "disable" #3/#4/#5. The
+only difference is that v3.1 also gets the marginal extra discount
+from explicit caching (~5-10 % over implicit caching alone).
+
 ## Rollback path
 
-All five levers live in the v3.1 prompt path. To roll back:
-
-- `AGENT_PROMPT_VERSION_OVERRIDE='v3'` → uses verbose v3 prompt, no
-  history truncation, no flash-lite routing, no conditional material.
-- `AGENT_PROMPT_VERSION_OVERRIDE='v2'` → legacy quiz-bot.
-
-Both reachable without redeploy.
+- `AGENT_PROMPT_VERSION_OVERRIDE='v3'` → verbose v3 prompt (still
+  benefits from #3 #4 #5 + Gemini's implicit cache).
+- `AGENT_PROMPT_VERSION_OVERRIDE='v2'` → legacy quiz-bot (same
+  — still benefits from #3 #4 #5 + implicit cache).
+- Both reachable without redeploy.
