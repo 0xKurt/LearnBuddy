@@ -91,6 +91,31 @@ const PRICE_OUTPUT_MICROS_PER_M = 400_000; // $0.40/M
 // many of those were served from cache.
 const CACHED_INPUT_DISCOUNT = 0.25;
 
+/** DeepSeek V3.2 is currently NOT published in any Vertex regional
+ *  endpoint (europe-west4 / us-central1 both 404 as of 2026-05-22).
+ *  If an old PARTNER_MODEL_LOCATION value is still set in a stale env
+ *  (Vercel, a dev server that hasn't picked up the latest .env.local,
+ *  …) the partner call would fail with a 404 that's confusing for the
+ *  user. Until DeepSeek lands regionally, force `global` here and
+ *  emit a one-time warning so the operator can clean the env up
+ *  later. When partner regional endpoints land, drop this helper and
+ *  go back to honouring the env value directly. */
+const KNOWN_BAD_PARTNER_LOCATIONS = new Set(['europe-west4', 'europe-west3', 'us-central1']);
+let WARNED_PARTNER_LOCATION_OVERRIDE = false;
+function partnerModelLocation(envValue: string): string {
+  if (KNOWN_BAD_PARTNER_LOCATIONS.has(envValue)) {
+    if (!WARNED_PARTNER_LOCATION_OVERRIDE) {
+      WARNED_PARTNER_LOCATION_OVERRIDE = true;
+      console.warn(
+        `[vertex] PARTNER_MODEL_LOCATION="${envValue}" is not a Vertex region with DeepSeek today. ` +
+          `Forcing "global" until partner models land regionally. Update the env to silence this.`,
+      );
+    }
+    return 'global';
+  }
+  return envValue;
+}
+
 let LOGGED_CACHE_USAGE_SHAPE = false;
 
 type UsageTotals = {
@@ -325,7 +350,7 @@ export class VertexLlmGateway implements LLMGateway {
    *  no systemInstruction kwarg — system goes in the messages array). */
   private async regenerateOpenAICompat(userText: string): Promise<RegenerateResult> {
     const project = this.env.GOOGLE_CLOUD_PROJECT!;
-    const location = this.env.PARTNER_MODEL_LOCATION;
+    const location = partnerModelLocation(this.env.PARTNER_MODEL_LOCATION);
     const completion = await vertexOpenAIChat({
       project,
       location,
@@ -618,7 +643,7 @@ export class VertexLlmGateway implements LLMGateway {
     onToken?: (delta: string) => void,
   ): Promise<AgentGatewayResult> {
     const project = this.env.GOOGLE_CLOUD_PROJECT!;
-    const location = this.env.PARTNER_MODEL_LOCATION;
+    const location = partnerModelLocation(this.env.PARTNER_MODEL_LOCATION);
 
     // OpenAI shape: system → user → assistant → user → … We fold the
     // full system instruction into a single system message. When the
