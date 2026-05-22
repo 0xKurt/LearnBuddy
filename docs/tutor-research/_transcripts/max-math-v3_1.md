@@ -12,21 +12,21 @@ Wie viel ist 2/3 + 1/4?
 
 **Learner:** 11/7
 
-**Tutor:** Da hat sich ein kleiner Fehler eingeschlichen. Wir wollen herausfinden, wie viel diese beiden Bruchteile zusammen ergeben.
+**Tutor:** Da hat sich leider etwas eingeschlichen. Lass uns nochmal einen Schritt zurückgehen und schauen, was wir hier eigentlich suchen. Wir wollen die beiden Brüche 2/3 und 1/4 zusammenzählen.
 
-- verdict=incorrect advance=false reveal=false hint_given=true intent=hint tokens=2166 (cached=1956)/73 model=gemini-2.5-flash
+- verdict=incorrect advance=false reveal=false hint_given=true intent=hint tokens=2167/92 model=gemini-2.5-flash
 
 **Learner:** ich kann das nicht
 
-**Tutor:** Das klingt frustrierend. Das ist auch wirklich knifflig – viele bleiben da hängen. Lass uns nur den ersten Schritt anschauen.
+**Tutor:** Das klingt frustrierend, Max. Das ist auch wirklich knifflig – viele bleiben da hängen. Lass uns nur den ersten Schritt anschauen.
 
-- verdict=null advance=false reveal=false hint_given=false intent=affective_repair tokens=2194 (cached=1949)/80 model=gemini-2.5-flash
+- verdict=null advance=false reveal=false hint_given=false intent=affective_repair tokens=2301/82 model=gemini-2.5-flash
 
 **Learner:** das nervt
 
-**Tutor:** Das nervt wirklich. Gerade bei Brüchen ist das oft so, weil man sich erst an die Regeln gewöhnen muss. Lass uns mal schauen, was der erste Schritt bei der Addition von Brüchen ist.
+**Tutor:** Das klingt frustrierend, Max. Das ist auch wirklich knifflig – viele bleiben da hängen. Lass uns nur den ersten Schritt anschauen.
 
-- verdict=null advance=false reveal=false hint_given=false intent=affective_repair tokens=2226 (cached=1942)/94 model=gemini-2.5-flash
+- verdict=null advance=false reveal=false hint_given=false intent=affective_repair tokens=2335/82 model=gemini-2.5-flash
 
 ---
 
@@ -40,4 +40,4 @@ Wie viel ist 2/3 + 1/4?
 - ✓ **SC-max-math-affect** — Max math: affective_repair fires on "das nervt": fired
 - ✓ **SC-max-math-far** — Max math: "11/7" not greeted with "Fast": ok
 
-Tokens (turns 3): in=6586 (avg 2195) · out=247 (avg 82)
+Tokens (turns 3): in=6803 (avg 2268) · out=256 (avg 85)

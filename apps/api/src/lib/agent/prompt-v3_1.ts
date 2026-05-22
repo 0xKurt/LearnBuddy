@@ -150,6 +150,157 @@ const SUBJECT_BY_KIND: Record<SubjectKind, string> = {
   other: `SUBJECT: general. Default ladder. Restate the goal → name the relevant principle → show one step → ask for the next.`,
 };
 
+/** Trigger phrases for the two pedagogical branches the server can
+ *  detect deterministically. We mirror the lists in the header so the
+ *  classification is cheap and never depends on the model getting it
+ *  right. Lowercase comparison; punctuation stripped before match. */
+const GIVE_UP_PATTERNS = [
+  'weiß nicht',
+  'weiss nicht',
+  'keine ahnung',
+  'kein plan',
+  'kann nicht',
+  'kann ich nicht',
+  'kannich nicht',
+  'no idea',
+  "don't know",
+  'dont know',
+  'idk',
+  'ka',
+  'nichts',
+  '?',
+  // Explicit ask-for-the-answer patterns. A student saying "tell me" /
+  // "help me" after a failed turn is functionally giving up — they
+  // want the answer or another hint, not to keep guessing. Without
+  // these the model would treat the turn as engaged and might dodge
+  // the ladder.
+  'sag mir',
+  'sag es mir',
+  'sags mir',
+  "sag's mir",
+  'verrate',
+  'verrat es',
+  'hilf mir',
+  'hilfe',
+  'help me',
+  'tell me',
+  'kannst du mir',
+  "kannst du's",
+  'kannst du es',
+  'lös das',
+  'löse das',
+  'wie geht das',
+] as const;
+
+const AFFECT_PATTERNS = [
+  'nervt',
+  'scheisse',
+  'scheiße',
+  'kacke',
+  'doof',
+  'blöd',
+  'bloed',
+  'hasse',
+  'gebs auf',
+  'aufgeben',
+  'kann das nicht',
+  'keinen bock',
+  'wtf',
+  'fuck',
+  'hate',
+] as const;
+
+function normalizeLearnerText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[.!?,;:"'()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+type LearnerSignal = 'give_up' | 'affect' | 'engaged';
+
+function classifyLearnerSignal(text: string): LearnerSignal {
+  const norm = normalizeLearnerText(text);
+  if (!norm || norm.length < 2) return 'give_up';
+  if (AFFECT_PATTERNS.some((p) => norm.includes(p))) return 'affect';
+  // Short give-up phrases — require the message to be short-ish so a
+  // longer answer that happens to contain "nicht" isn't misclassified.
+  // Ask-for-answer patterns get a slightly larger window because
+  // they're often phrased as full sentences ("kannst du mir das sagen").
+  if (norm.length <= 40 && GIVE_UP_PATTERNS.some((p) => norm.includes(p))) {
+    return 'give_up';
+  }
+  return 'engaged';
+}
+
+/** Per-subject Rung N anchor templates. Telling the model exactly what
+ *  shape the hint must take at this rung beats hoping it interprets the
+ *  header's ladder description correctly. Keep these short — they're
+ *  injected verbatim into the per-turn context. */
+const RUNG_TEMPLATE: Record<SubjectKind, [string, string, string]> = {
+  math: [
+    'RUNG 1 — restate the GOAL (what we want, not how).',
+    'RUNG 2 — name the RULE/PRINCIPLE that applies (no procedure).',
+    'RUNG 3 — show HALF a worked example, stop before the answer.',
+  ],
+  physics: [
+    'RUNG 1 — restate the GOAL (quantity wanted + units).',
+    'RUNG 2 — name the LAW/PRINCIPLE that applies (no formula plug-in).',
+    'RUNG 3 — show one substitution step, stop before the answer.',
+  ],
+  chemistry: [
+    'RUNG 1 — restate the GOAL (what we are balancing/naming).',
+    'RUNG 2 — name the RULE (e.g. "atoms conserved", "-ol = alcohol group").',
+    'RUNG 3 — show one balanced side / one morpheme, stop before the rest.',
+  ],
+  biology: [
+    'RUNG 1 — restate the GOAL with a PREDICTION prompt ("Was tippst du, wo …?").',
+    'RUNG 2 — name the FUNCTION/PROCESS ("hier passiert der Gasaustausch — was tut das?").',
+    'RUNG 3 — name location/feature, stop before the term.',
+  ],
+  geography: [
+    'RUNG 1 — restate the GOAL with a SPATIAL prompt (continent / direction).',
+    'RUNG 2 — give a NEIGHBOUR or BIGGER feature ("liegt zwischen X und Y").',
+    'RUNG 3 — give a sound-alike or first letter, stop before the name.',
+  ],
+  history: [
+    'RUNG 1 — restate the GOAL with a CAUSATION prompt ("Was musste VOR X passieren?").',
+    'RUNG 2 — name the TYPE of event (Attentat / Vertrag / Schlacht) + decade.',
+    'RUNG 3 — name actor or place, stop before the event name.',
+  ],
+  language_native: [
+    'RUNG 1 — add a NEW retrieval anchor: morphology, sentence context, semantic field. NEVER just rephrase the question.',
+    'RUNG 2 — name the WORD-FAMILY or PREFIX ("denk an die Vorsilbe X — was macht die mit Y?").',
+    'RUNG 3 — give 2 example sentences using the target word, blank it out.',
+  ],
+  language_foreign: [
+    'RUNG 1 — add a NEW retrieval anchor: COGNATE BRIDGE ("Stunde = hour — und Französisch?"), sentence context, or morphology. NEVER just rephrase the question.',
+    'RUNG 2 — name the STRUCTURE / question word ("man fragt mit ›Quelle…‹") OR a key word translation.',
+    'RUNG 3 — give the LENGTH/SHAPE of the answer ("zwei Wörter, fängt mit einem Vokal an") or a NEAR-LANGUAGE bridge (English / Spanish equivalent), then ask the student to convert. Do NOT print the target answer literally — that is REVEAL territory.',
+  ],
+  religion_ethics: [
+    'RUNG 1 — restate the GOAL via a CONTRAST prompt ("Wie unterscheidet sich A von B hier?").',
+    'RUNG 2 — name the underlying CONCEPT/VALUE in play.',
+    'RUNG 3 — give one historical/textual example, stop before the answer.',
+  ],
+  art_music: [
+    'RUNG 1 — restate the GOAL via a CONTRAST ("glatt wie Renaissance oder bewegt wie Expressionismus?").',
+    'RUNG 2 — give Latin/Greek root or chronological anchor.',
+    'RUNG 3 — name period or technique, stop before the term.',
+  ],
+  general: [
+    'RUNG 1 — restate the GOAL plus ONE new anchor (not the question reworded).',
+    'RUNG 2 — name the rule/principle/structure in play.',
+    'RUNG 3 — show half a worked example, stop before the answer.',
+  ],
+  other: [
+    'RUNG 1 — restate the GOAL plus ONE new anchor (not the question reworded).',
+    'RUNG 2 — name the rule/principle/structure in play.',
+    'RUNG 3 — show half a worked example, stop before the answer.',
+  ],
+};
+
 /** Build ONLY the per-turn dynamic part — the subject block + session
  *  context + item + state + material. Excludes TUTOR_HEADER so that
  *  the static header can be served via Vertex context-caching while
@@ -223,6 +374,52 @@ export function buildAgentTurnContextV3_1(input: AgentTurnInput): string {
   );
   if (input.hintsGivenForItem >= 3) {
     lines.push('HINTS EXHAUSTED — next wrong/skip → REVEAL (3-part: answer + rule + micro-check).');
+  }
+
+  // Hard server-side directive: tell the model exactly which move +
+  // which rung to use. The flash tier is unreliable at interpreting
+  // the header's GIVE_UP_SCAFFOLD ladder on its own — it produced
+  // useless "Das ist eine feste Redewendung" replies in real sessions.
+  // We compute the next rung from the recorded counters so the model
+  // can't drift or skip a step. Includes the subject-specific rung
+  // template so there's no "what does Rung 2 look like for vocab?"
+  // ambiguity.
+  const signal = classifyLearnerSignal(input.learnerMessage);
+  const effort = Math.max(input.hintsGivenForItem, input.priorWrongAttemptsOnItem);
+  const templates = RUNG_TEMPLATE[subjectKind];
+  const nextRung = effort + 1;
+  lines.push('');
+  if (signal === 'affect') {
+    lines.push(
+      'REQUIRED MOVE — student message matches AFFECTIVE trigger:',
+      '  intent="affective_repair", verdict=null, hint_given=false, advance=false.',
+      '  3 parts in ONE reply: NAME the feeling (not the student) → NORMALISE without minimising → offer a SMALLER step. Resets the hint counter for this item.',
+      '  Do NOT jump straight to a hint. Do NOT pep-talk.',
+    );
+  } else if (signal === 'give_up') {
+    if (nextRung >= 4) {
+      lines.push(
+        'REQUIRED MOVE — student gave up AND hint ladder is exhausted:',
+        '  intent="reveal", verdict="skipped", reveal=true, advance=true.',
+        '  3 parts: ANSWER in one sentence → RULE/PRINCIPLE/MNEMONIC → ONE micro-check. NEVER end with "lass uns weitermachen" alone.',
+      );
+    } else {
+      lines.push(
+        `REQUIRED MOVE — student gave up. Use intent="give_up_scaffold" at RUNG ${nextRung}:`,
+        '  verdict="skipped", hint_given=true, advance=false.',
+        `  ${templates[nextRung - 1]}`,
+        '  ANTI-PARAPHRASE: introduce ONE NEW anchor (cognate / morpheme / rule / structural cue / sentence context). Restating the question with synonyms = REJECTED.',
+        '  After running the HINT LEAK TESTS, return.',
+      );
+    }
+  } else if (input.priorWrongAttemptsOnItem >= 1 && input.hintsGivenForItem < 3) {
+    // Wrong answer (not a give-up) — still escalate the ladder, but
+    // the model gets to choose between hint and wrong-but-close vs
+    // wrong-and-far framing. We do tell it which rung.
+    lines.push(
+      `REQUIRED RUNG if hinting: RUNG ${Math.min(nextRung, 3)} — ${templates[Math.min(nextRung, 3) - 1]}`,
+      '  Same anti-paraphrase rule: a hint must add a NEW anchor, not reword the question.',
+    );
   }
 
   // Material context — truncated more aggressively in v3.1 (2000 vs
