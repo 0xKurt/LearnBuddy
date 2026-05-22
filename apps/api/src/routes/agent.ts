@@ -453,8 +453,12 @@ agentRoutes.post(
           return;
         }
 
-        // Material grounding (clamped).
-        let materialContext: string | null = null;
+        // Material grounding — fetched once but injected ONLY when
+        // we're in tutoring mode (hint given OR prior wrong attempts
+        // on this item). Fresh-attempt + correct-answer turns don't
+        // need the material excerpt; skipping it saves ~30 % input
+        // tokens on those turns.
+        let materialContextFull: string | null = null;
         const materialId = item.material_id as string | null;
         if (materialId) {
           const m = await supabase
@@ -462,7 +466,7 @@ agentRoutes.post(
             .select('extracted_markdown')
             .eq('id', materialId)
             .maybeSingle();
-          materialContext =
+          materialContextFull =
             (
               (m.data as { extracted_markdown: string | null } | null)?.extracted_markdown ?? ''
             ).slice(0, 4000) || null;
@@ -563,15 +567,34 @@ agentRoutes.post(
           sourceExcerpt: (item.source_excerpt as string | null) ?? null,
         };
 
-        // Bound the history to last 40 messages (20 exchanges).
-        const HIST_MAX = 40;
-        const history: AgentThreadMessage[] = allTurns
+        // History truncation: drop from 40 → 12 to cut ~30 % input on
+        // late-session turns. CRITICAL: always keep the tutor turn
+        // that introduced the CURRENT item (so the model never loses
+        // "what are we working on"). The system prompt also carries
+        // the question + expected answer inline, but the introductory
+        // tutor turn is a different artefact (it carries the opener +
+        // any subject context preamble that anchors the dialogue).
+        const HIST_MAX = 12;
+        const allChatTurns = allTurns
           .filter((t) => t.role === 'learner' || t.role === 'tutor')
           .map((t) => ({
             role: t.role === 'tutor' ? ('tutor' as const) : ('learner' as const),
             content: t.content,
-          }))
-          .slice(-HIST_MAX);
+            item_id: t.item_id,
+          }));
+        const tailSlice = allChatTurns.slice(-HIST_MAX);
+        // Find the tutor turn that introduced the current item — the
+        // earliest tutor turn where item_id matches currentItemId.
+        const currentItemIntro = allChatTurns.find(
+          (t) => t.role === 'tutor' && t.item_id === currentItemId,
+        );
+        const history: AgentThreadMessage[] =
+          currentItemIntro && !tailSlice.includes(currentItemIntro)
+            ? [
+                { role: currentItemIntro.role, content: currentItemIntro.content },
+                ...tailSlice.map((t) => ({ role: t.role, content: t.content })),
+              ]
+            : tailSlice.map((t) => ({ role: t.role, content: t.content }));
 
         const itemsAnsweredCount = countAdvancedItems(allTurns);
         const sessionStartedMs = Date.parse(session.started_at);
@@ -583,38 +606,95 @@ agentRoutes.post(
         // struggling). v2 ignores these fields; safe to always pass.
         const competence = computeCompetenceSignals(allTurns);
 
+        // Conditional material context: only inject when we're
+        // already in tutoring mode (hints given or prior wrong on
+        // this item). A fresh first-attempt turn doesn't need the
+        // 2 KB material clamp — saves ~30 % input tokens.
+        const inTutoringMode = hintsGivenForItem > 0 || priorWrongAttemptsOnItem > 0;
+        const materialContextForTurn = inTutoringMode ? materialContextFull : null;
+
+        const turnInput = {
+          learner: {
+            displayName: learner?.display_name ?? null,
+            gradeLevel: learner?.grade_level ?? 7,
+            locale,
+          },
+          currentItem: itemCtx,
+          materialContext: materialContextForTurn,
+          hintsGivenForItem,
+          priorWrongAttemptsOnItem,
+          history,
+          learnerMessage: learnerText,
+          session: {
+            itemsTotal: queue.length,
+            itemsRemaining: Math.max(0, queue.length - itemsAnsweredCount),
+            minutesElapsed,
+            testMode: session.test_mode,
+            correctRateSoFar: competence.correctRateSoFar,
+            itemsCompleted: competence.itemsCompleted,
+            currentStreak: competence.currentStreak,
+            hintsUsedTotal: competence.hintsUsedTotal,
+          },
+        };
+
         const { instruction: systemInstruction, version: promptVersionUsed } =
-          buildAgentSystemInstructionForVersion(env.AGENT_PROMPT_VERSION_OVERRIDE, {
-            learner: {
-              displayName: learner?.display_name ?? null,
-              gradeLevel: learner?.grade_level ?? 7,
-              locale,
-            },
-            currentItem: itemCtx,
-            materialContext,
-            hintsGivenForItem,
-            priorWrongAttemptsOnItem,
-            history,
-            learnerMessage: learnerText,
-            session: {
-              itemsTotal: queue.length,
-              itemsRemaining: Math.max(0, queue.length - itemsAnsweredCount),
-              minutesElapsed,
-              testMode: session.test_mode,
-              correctRateSoFar: competence.correctRateSoFar,
-              itemsCompleted: competence.itemsCompleted,
-              currentStreak: competence.currentStreak,
-              hintsUsedTotal: competence.hintsUsedTotal,
-            },
-          });
+          buildAgentSystemInstructionForVersion(env.AGENT_PROMPT_VERSION_OVERRIDE, turnInput);
+
+        // Prompt caching (v3.1 only): cache the static TUTOR_HEADER
+        // so it bills at ~25 % of normal. The dynamic per-turn
+        // context still goes through full price but it's only
+        // ~500 tokens. Net: ~45 % cost reduction after first turn.
+        // v2 / v3 prompts intermix static + dynamic in one big blob,
+        // so we don't try to cache for them — they'd need a refactor
+        // we're not doing for legacy paths.
+        let headerCacheName: string | null = null;
+        if (env.AGENT_PROMPT_VERSION_OVERRIDE === 'v3.1') {
+          // Re-build the dynamic-only portion. The cached header is
+          // TUTOR_HEADER_V3_1 (constant string).
+          const { TUTOR_HEADER_V3_1, buildAgentTurnContextV3_1 } =
+            await import('../lib/agent/prompt-v3_1.js');
+          const dynamicOnly = buildAgentTurnContextV3_1(turnInput);
+          headerCacheName = await llm.ensureAgentHeaderCache(TUTOR_HEADER_V3_1, 'gemini-2.5-flash');
+          // Replace the full instruction with just the dynamic part
+          // — Vertex will prepend the cached header server-side.
+          if (headerCacheName) {
+            (turnInput as { _dynamic?: string })._dynamic = dynamicOnly;
+          }
+        }
+
+        // Model routing: route a turn that LOOKS LIKE a straight
+        // correct answer (learner message matches an acceptable
+        // answer loosely) to flash-lite — ~75 % cheaper per call.
+        // The model still does the praise_and_advance work but for
+        // a near-trivial turn the lite tier is plenty. Anything
+        // pedagogical (hints, affective, give-up) stays on flash.
+        const looksLikeCorrectAnswer = isLooseAnswerMatch(
+          learnerText,
+          itemCtx.expectedAnswer,
+          itemCtx.acceptableAnswers,
+        );
+        const modelOverride =
+          looksLikeCorrectAnswer && hintsGivenForItem === 0 && priorWrongAttemptsOnItem === 0
+            ? 'gemini-2.5-flash-lite'
+            : undefined;
+
+        // Build the actual systemInstruction to pass — when caching
+        // is active, send only the dynamic suffix; the header is
+        // already cached. When not active, send the full instruction.
+        const instructionToSend =
+          headerCacheName && (turnInput as { _dynamic?: string })._dynamic
+            ? ((turnInput as { _dynamic?: string })._dynamic as string)
+            : systemInstruction;
 
         let agentResult;
         try {
           agentResult = await withTimeout(
             llm.agentTurn({
-              systemInstruction,
+              systemInstruction: instructionToSend,
+              headerCacheName,
               history,
               learnerMessage: learnerText,
+              modelOverride,
             }),
             45_000,
             'agent LLM',
@@ -813,6 +893,27 @@ function resolveCurrentItemId(
     if (!advanced.has(id)) return id;
   }
   return null;
+}
+
+/** Loose case-insensitive comparison to decide whether the learner's
+ *  text likely IS one of the acceptable answers — used to route
+ *  praise_and_advance-shaped turns to the cheaper flash-lite model.
+ *  Conservative: we want to AVOID false positives (don't route
+ *  pedagogical turns to lite). Hence:
+ *   - exact lowercased match, OR
+ *   - whitespace-stripped lowercased match
+ *  Anything fancier (typo tolerance) belongs in the LLM, not here. */
+function isLooseAnswerMatch(learnerText: string, expected: string, acceptable: string[]): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const stripped = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+  const lText = norm(learnerText);
+  if (!lText) return false;
+  const candidates = [expected, ...acceptable].filter((s) => typeof s === 'string' && s.length > 0);
+  for (const c of candidates) {
+    const lc = norm(c);
+    if (lc && (lText === lc || stripped(learnerText) === stripped(c))) return true;
+  }
+  return false;
 }
 
 function countAdvancedItems(

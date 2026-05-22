@@ -118,6 +118,12 @@ export class FakeLlmGateway implements LLMGateway {
     };
   }
 
+  /** Fake gateway never caches — context caching is a Vertex feature.
+   *  Returning null tells the route to use the legacy non-cached path. */
+  async ensureAgentHeaderCache(_header: string, _model: string): Promise<string | null> {
+    return null;
+  }
+
   /** Agent v2 — deterministic JSON shape. Inspects the system instruction
    *  to extract the expected answer + hints_given, then reasons about
    *  the learner message to pick a verdict + intent. Enough realism so

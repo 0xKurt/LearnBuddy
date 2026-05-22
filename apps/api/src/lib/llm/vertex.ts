@@ -43,6 +43,7 @@ import {
   SYSTEM_REFLECT,
   buildReflectUserPrompt,
 } from '../../prompts/reflect.js';
+import { ensureAgentCache } from './agent-cache.js';
 import { parseRegeneratePayload, parseVisionPayload } from './postProcess.js';
 import type {
   AgentGatewayInput,
@@ -83,25 +84,38 @@ const SAFETY: SafetySetting[] = [
 const PRICE_INPUT_MICROS_PER_M = 100_000; // $0.10/M
 const PRICE_OUTPUT_MICROS_PER_M = 400_000; // $0.40/M
 
+// Cached input tokens are billed at 25 % of the normal input rate per
+// Google's context-caching pricing. promptTokenCount is the TOTAL
+// input (cached + uncached); cachedContentTokenCount tells us how
+// many of those were served from cache.
+const CACHED_INPUT_DISCOUNT = 0.25;
+
+let LOGGED_CACHE_USAGE_SHAPE = false;
+
 type UsageTotals = {
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens: number;
   costMicros: number;
 };
 
 function emptyUsage(): UsageTotals {
-  return { inputTokens: 0, outputTokens: 0, costMicros: 0 };
+  return { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, costMicros: 0 };
 }
 
 function addUsage(totals: UsageTotals, meta?: GenerateContentResponseUsageMetadata): UsageTotals {
   const inputTokens = meta?.promptTokenCount ?? 0;
   const outputTokens = meta?.candidatesTokenCount ?? 0;
+  const cachedTokens = meta?.cachedContentTokenCount ?? 0;
+  const uncachedTokens = Math.max(0, inputTokens - cachedTokens);
   const costMicros =
-    Math.round((inputTokens * PRICE_INPUT_MICROS_PER_M) / 1_000_000) +
+    Math.round((uncachedTokens * PRICE_INPUT_MICROS_PER_M) / 1_000_000) +
+    Math.round((cachedTokens * PRICE_INPUT_MICROS_PER_M * CACHED_INPUT_DISCOUNT) / 1_000_000) +
     Math.round((outputTokens * PRICE_OUTPUT_MICROS_PER_M) / 1_000_000);
   return {
     inputTokens: totals.inputTokens + inputTokens,
     outputTokens: totals.outputTokens + outputTokens,
+    cachedInputTokens: totals.cachedInputTokens + cachedTokens,
     costMicros: totals.costMicros + costMicros,
   };
 }
@@ -396,7 +410,11 @@ export class VertexLlmGateway implements LLMGateway {
     };
   }
 
-  /** Agent v2 — one JSON reply per learner message. */
+  async ensureAgentHeaderCache(header: string, model: string): Promise<string | null> {
+    return ensureAgentCache(this.client, header, model);
+  }
+
+  /** Agent v2/v3 — one JSON reply per learner message. */
   async agentTurn(
     input: AgentGatewayInput,
     onToken?: (delta: string) => void,
@@ -409,13 +427,35 @@ export class VertexLlmGateway implements LLMGateway {
       { role: 'user' as const, parts: [{ text: input.learnerMessage }] },
     ];
 
+    // Pick the model — caller may override (e.g. flash-lite for
+    // trivial advance turns). Default is the tutor tier.
+    const modelToUse = input.modelOverride ?? this.tutorModelId;
+
+    // When the static header is served via a Vertex cached-content
+    // ref, we MUST omit the systemInstruction field — Vertex rejects
+    // a request that has both. The cache already carries the
+    // system instruction, and the dynamic per-turn context goes in
+    // as the first user-role content turn so the model has it.
+    const useCache = !!input.headerCacheName;
+    const contentsWithDynamic = useCache
+      ? [
+          {
+            role: 'user' as const,
+            parts: [{ text: `[per-turn context]\n${input.systemInstruction}` }],
+          },
+          ...contents,
+        ]
+      : contents;
+
     let response: GenerateContentResponse;
     try {
       response = await this.client.models.generateContent({
-        model: this.tutorModelId,
-        contents,
+        model: modelToUse,
+        contents: contentsWithDynamic,
         config: {
-          systemInstruction: input.systemInstruction,
+          ...(useCache
+            ? { cachedContent: input.headerCacheName! }
+            : { systemInstruction: input.systemInstruction }),
           safetySettings: SAFETY,
           temperature: 0.4,
           topP: 0.9,
@@ -428,6 +468,15 @@ export class VertexLlmGateway implements LLMGateway {
         'evaluation_failed',
         `Vertex agentTurn failed: ${err instanceof Error ? err.message : String(err)}`,
       );
+    }
+
+    // One-time peek at the usage shape when caching is active —
+    // helps spot whether Vertex actually attributes cached tokens
+    // on every call vs only on first reference. Only logs once per
+    // process, via the module-level flag.
+    if (useCache && !LOGGED_CACHE_USAGE_SHAPE) {
+      LOGGED_CACHE_USAGE_SHAPE = true;
+      console.warn(`[agent] usageMetadata sample: ${JSON.stringify(response.usageMetadata)}`);
     }
 
     const totals = addUsage(emptyUsage(), response.usageMetadata);
@@ -472,8 +521,9 @@ export class VertexLlmGateway implements LLMGateway {
       usage: {
         input_tokens: totals.inputTokens,
         output_tokens: totals.outputTokens,
+        cached_input_tokens: totals.cachedInputTokens,
         cost_usd_micros: totals.costMicros,
-        model: this.tutorModelId,
+        model: modelToUse,
         prompt_version: 'agent.v2.0',
       },
     };

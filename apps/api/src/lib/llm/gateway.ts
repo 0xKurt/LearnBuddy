@@ -106,6 +106,10 @@ export type VisionResult = {
   usage: {
     input_tokens: number;
     output_tokens: number;
+    /** Portion of input_tokens served from a Vertex cached-content
+     *  ref (billed at 25 % of normal input rate). Always ≤ input_tokens.
+     *  0 when no caching was active. */
+    cached_input_tokens?: number;
     cost_usd_micros: number;
     model: string;
     prompt_version: string;
@@ -148,11 +152,22 @@ export type ExplainResult = {
 // ── Agent v2 (one-screen chat tutor) ──────────────────────────────────────
 
 export type AgentGatewayInput = {
+  /** Full system instruction (header + dynamic context) when caching
+   *  is OFF. When caching is ON, this is the dynamic-only portion
+   *  (`headerCacheName` carries the cached header). */
   systemInstruction: string;
+  /** Optional Vertex cached-content name for the static header. When
+   *  set, the model treats the cache as if it preceded
+   *  `systemInstruction` — discounted at ~25 % of full price. Null
+   *  falls back to the legacy non-cached path. */
+  headerCacheName?: string | null;
   /** Prior thread, oldest-first. */
   history: ReadonlyArray<{ role: 'learner' | 'tutor'; content: string }>;
   /** The new learner message. */
   learnerMessage: string;
+  /** Override the gateway's default tutor model. Used by the
+   *  flash-lite routing for trivial advance turns (~75 % cheaper). */
+  modelOverride?: string;
 };
 
 export type AgentGatewayResult = {
@@ -209,4 +224,10 @@ export interface LLMGateway {
     input: AgentGatewayInput,
     onToken?: (delta: string) => void,
   ): Promise<AgentGatewayResult>;
+  /** Set up (or refresh) a Vertex cached-content entry for the given
+   *  system header + model. Returns a name to pass into the next
+   *  `agentTurn` call's `headerCacheName`, or `null` if caching is
+   *  unavailable (test gateway, min-token failure, quota). Callers
+   *  treat null as "skip caching, pay full price". */
+  ensureAgentHeaderCache(header: string, model: string): Promise<string | null>;
 }

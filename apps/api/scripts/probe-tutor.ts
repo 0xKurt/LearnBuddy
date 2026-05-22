@@ -392,10 +392,12 @@ async function runScenario(
     const parsed = parseAgentJson(raw.json);
     inputTokensTotal += raw.usage.input_tokens;
     outputTokensTotal += raw.usage.output_tokens;
+    const cachedTokens = raw.usage.cached_input_tokens ?? 0;
     turnCount += 1;
     log(`**Tutor:** ${parsed.reply}`);
+    const cacheNote = cachedTokens > 0 ? ` (cached=${cachedTokens})` : '';
     log(
-      `  - verdict=${parsed.verdict}  advance=${parsed.advance}  reveal=${parsed.reveal}  hint_given=${parsed.hint_given}  intent=${parsed.intent}  tokens=${raw.usage.input_tokens}/${raw.usage.output_tokens}`,
+      `  - verdict=${parsed.verdict}  advance=${parsed.advance}  reveal=${parsed.reveal}  hint_given=${parsed.hint_given}  intent=${parsed.intent}  tokens=${raw.usage.input_tokens}${cacheNote}/${raw.usage.output_tokens}  model=${raw.usage.model}`,
     );
     log('');
 

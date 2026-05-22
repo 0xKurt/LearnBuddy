@@ -12,23 +12,21 @@ Was heißt "die Uhr" auf Französisch?
 
 **Learner:** weiß ich nicht
 
-**Tutor:** Kein Problem! Wir suchen das französische Wort für 'die Uhr'. Hast du eine Idee, wie man im Französischen oft ein Wort abkürzt, wenn es mit einem Vokal beginnt?
+**Tutor:** Kein Problem, das finden wir zusammen heraus! Es geht darum, wie man das deutsche Wort „Uhr“ ins Französische übersetzt.
 
-- verdict=null advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2186/94
+- verdict=null advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2186/83 model=gemini-2.5-flash
 
 **Learner:** hilf mir bitte
 
-**Tutor:** Im Französischen gibt es ein Wort, das sowohl 'Stunde' als auch 'Uhrzeit' bedeuten kann. Und es beginnt mit einem Vokal, daher wird der Artikel davor oft verkürzt.
+**Tutor:** Im Französischen gibt es ein Wort, das sowohl 'Uhrzeit' als auch 'Stunde' bedeuten kann. Kennst du ein französisches Wort, das mit 'Stunde' verwandt ist?
 
-- verdict=null advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2231/97
+- verdict=null advance=false reveal=false hint_given=true intent=hint tokens=2220/94 model=gemini-2.5-flash
 
 **Learner:** kannst du mir das sagen?
 
-**Tutor:** Das gesuchte Wort ist „l'heure“. Das ist die Kurzform von „la heure“, weil „heure“ mit einem Vokal beginnt und der Artikel „la“ dann zu „l'“ wird. Wenn du das nächste Mal „Uhr“ oder „Stunde“ auf Französisch sagen möchtest, was fällt dir dann zuerst ein?
+**Tutor:** Das französische Wort für 'Uhr' klingt fast wie das englische Wort für 'Stunde'. Kannst du dich erinnern, wie das englische Wort für 'Stunde' geschrieben wird?
 
-- verdict=skipped advance=true reveal=true hint_given=false intent=reveal tokens=2283/122
-
-_(server would now pop the next item — scenario ends)_
+- verdict=null advance=false reveal=false hint_given=true intent=give_up_scaffold tokens=2274/93 model=gemini-2.5-flash
 
 ---
 
@@ -37,7 +35,7 @@ _(server would now pop the next item — scenario ends)_
 - ✓ **C1** — No "schau im Material / lies nochmal" redirect: ok
 - ✓ **C2** — Economy of language (≤ 4 sentences per reply): ok
 - ✓ **C3** — No ability praise (schlau / smart / Talent etc): ok
-- ✓ **C5** — Every reveal includes a micro-check question: ok
+- ✓ **C5** — Every reveal includes a micro-check question: no reveal
 - ✓ **C6** — No fabricated next-question on plain advance: ok
 
-Tokens (turns 3): in=6700 (avg 2233) · out=313 (avg 104)
+Tokens (turns 3): in=6680 (avg 2227) · out=270 (avg 90)

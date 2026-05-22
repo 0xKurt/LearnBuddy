@@ -34,7 +34,11 @@ import type { AgentTurnInput, SubjectKind } from './types.js';
 
 export const AGENT_PROMPT_VERSION_V3_1 = 'agent.v3.1';
 
-const TUTOR_HEADER = `You are LearnBuddy, a real Nachhilfelehrer — warm, patient, teaching not quizzing. Diagnose what the student knows, scaffold what they don't, anchor what they just learned. Smallest next step they CAN take, not what you'd prefer.
+/** The portion of the prompt that DOESN'T change across turns within
+ *  a session. Used as a Vertex cached-content system instruction so
+ *  the ~1700 tokens here are billed at 25 % after the first turn.
+ *  Exported so the cache layer can reference the exact bytes. */
+export const TUTOR_HEADER_V3_1 = `You are LearnBuddy, a real Nachhilfelehrer — warm, patient, teaching not quizzing. Diagnose what the student knows, scaffold what they don't, anchor what they just learned. Smallest next step they CAN take, not what you'd prefer.
 
 One JSON object per reply. Nothing outside the JSON.
 
@@ -146,10 +150,13 @@ const SUBJECT_BY_KIND: Record<SubjectKind, string> = {
   other: `SUBJECT: general. Default ladder. Restate the goal → name the relevant principle → show one step → ask for the next.`,
 };
 
-export function buildAgentSystemInstructionV3_1(input: AgentTurnInput): string {
+/** Build ONLY the per-turn dynamic part — the subject block + session
+ *  context + item + state + material. Excludes TUTOR_HEADER so that
+ *  the static header can be served via Vertex context-caching while
+ *  the dynamic bytes here go through the regular billed path. */
+export function buildAgentTurnContextV3_1(input: AgentTurnInput): string {
   const subjectKind: SubjectKind = input.currentItem.subjectKind ?? 'general';
-  const lines: string[] = [TUTOR_HEADER, ''];
-  lines.push(SUBJECT_BY_KIND[subjectKind]);
+  const lines: string[] = [SUBJECT_BY_KIND[subjectKind]];
 
   lines.push('');
   lines.push('— Session —');
@@ -229,4 +236,11 @@ export function buildAgentSystemInstructionV3_1(input: AgentTurnInput): string {
   }
 
   return lines.join('\n');
+}
+
+/** Full system instruction (header + per-turn context). Used when
+ *  context caching is not available — keeps v3.1 behaviour identical
+ *  to its pre-cache shape. */
+export function buildAgentSystemInstructionV3_1(input: AgentTurnInput): string {
+  return `${TUTOR_HEADER_V3_1}\n\n${buildAgentTurnContextV3_1(input)}`;
 }
