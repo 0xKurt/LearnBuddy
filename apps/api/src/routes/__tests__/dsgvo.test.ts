@@ -1,7 +1,5 @@
 // DSGVO route tests. Doc 04 §dsgvo + Doc 09 §account-holder-rights.
 //
-// Per CODEBASE-AUDIT priority #8 — DSGVO is the legal must-pass surface
-// for a German app holding minors' data and had no automated coverage.
 // Covers the queue, status, idempotent re-queue, and cancel paths.
 
 import { describe, it, expect } from 'vitest';

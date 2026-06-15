@@ -1,6 +1,5 @@
 // Webhook route tests. Doc 04 §webhooks + Doc 08 §grants.
 //
-// Per CODEBASE-AUDIT priority #8 — the money path with no coverage.
 // Exercises shared-secret verification (constant-time + replay window) and
 // the credit grant on INITIAL_PURCHASE.
 

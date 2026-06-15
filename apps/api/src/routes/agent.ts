@@ -1,0 +1,1305 @@
+// Agent v2 route — one-screen conversational tutor.
+//
+//   POST   /agent/sessions            create a session, return queue + opener
+//   POST   /agent/sessions/:id/turn   stream one agent reply (SSE)
+//   PATCH  /agent/sessions/:id/finish end the session, fire reflective job
+//
+// One LLM call per learner message. Structured JSON output decides
+// verdict, advance, hint, reveal. Server tracks the item queue and
+// pops on `advance=true`. No move registry, no probe assessments — the
+// model owns the pedagogy through its JSON.
+
+import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
+import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import {
+  AGENT_PROMPT_VERSION,
+  buildAgentSystemInstructionForVersion,
+  parseAgentJson,
+} from '../lib/agent/index.js';
+import type { AgentItemContext, AgentThreadMessage, SubjectKind } from '../lib/agent/types.js';
+import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
+import { reflectAndPersistSession } from '../lib/reflective/session-reflect.js';
+import {
+  detectForeignLocaleFromQuestion,
+  synthesizeMultilingual,
+} from '../lib/voice/multilingual-tts.js';
+import { getDeps } from '../lib/deps.js';
+import { ApiError } from '../lib/errors.js';
+import type { Locale } from '@learnbuddy/shared-types';
+import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/rate-limit.js';
+
+export const agentRoutes = new Hono();
+agentRoutes.use('*', requireAuth, requireLearnerContext);
+
+/** Wrap a promise with a hard deadline. On timeout the returned promise
+ *  rejects with an ApiError so the SSE outer try/catch can send a
+ *  proper `error` event instead of letting the stream hang forever.
+ *  Failure modes we've actually hit in prod: GCP STT first-call cold
+ *  start, Vertex regional outage, TTS quota exhausted. */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => {
+      reject(new ApiError('evaluation_failed', `${label} timed out after ${ms}ms`));
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (err) => {
+        clearTimeout(t);
+        reject(err);
+      },
+    );
+  });
+}
+
+// ── Session start ──────────────────────────────────────────────────────────
+
+const SessionCreateBody = z.object({
+  subject_id: z.string().uuid().nullable().optional(),
+  folder_id: z.string().uuid().nullable().optional(),
+  material_id: z.string().uuid().nullable().optional(),
+  /** Filter items by their auto-extracted topic label. Used by the
+   *  Thema-detail screen so the tutor session covers exactly one topic
+   *  (e.g. "Bruchrechnung"). Bypasses the FSRS-aware RPC and pulls items
+   *  directly with topic = X — kids who tap a topic want to study THAT,
+   *  not whatever the scheduler thinks is due. */
+  topic: z.string().min(1).max(120).nullable().optional(),
+  test_mode: z.boolean().default(false),
+  max_items: z.number().int().min(1).max(50).default(20),
+});
+
+agentRoutes.post(
+  '/sessions',
+  rateLimit({ key: 'agent_sessions_create', per_hour: 60 }),
+  zValidator('json', SessionCreateBody),
+  async (c) => {
+    const { supabase, tts, now } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const body = c.req.valid('json');
+    const nowIso = now().toISOString();
+
+    const learnerRow = await supabase
+      .from('learners')
+      .select('display_name, grade_level, ui_locale, tts_voice')
+      .eq('id', learner_id)
+      .maybeSingle();
+    const learner = (learnerRow.data ?? null) as {
+      display_name: string | null;
+      grade_level: number | null;
+      ui_locale: string | null;
+      tts_voice: string | null;
+    } | null;
+    const locale = ((learner?.ui_locale ?? 'de') as Locale) ?? ('de' as Locale);
+    const ttsVoice = learner?.tts_voice ?? null;
+
+    const items = await pickItems(supabase, {
+      learner_id,
+      subject_id: body.subject_id ?? null,
+      folder_id: body.folder_id ?? null,
+      material_id: body.material_id ?? null,
+      topic: body.topic ?? null,
+      max_items: body.max_items,
+      now: nowIso,
+    });
+    if (items.length === 0) {
+      throw new ApiError('not_found', 'No items in scope. Add material first or widen the filter.');
+    }
+
+    const insert = await supabase
+      .from('sessions')
+      .insert({
+        learner_id,
+        subject_id: body.subject_id ?? null,
+        test_mode: body.test_mode,
+        started_at: nowIso,
+        attempts_count: 0,
+        correct_count: 0,
+        picked_item_ids: items.map((it) => it.id as string),
+      })
+      .select('*')
+      .single();
+    if (insert.error || !insert.data) {
+      throw new ApiError('internal', 'Failed to create session', {
+        cause: insert.error?.message ?? 'no row',
+      });
+    }
+    const session = insert.data as { id: string };
+
+    // Friendly opener + first question, persisted as ONE tutor turn.
+    // We must not seed two consecutive tutor entries because Gemini's
+    // `contents` requires alternating user/model — back-to-back model
+    // turns produce flaky output. Joining them in one bubble also reads
+    // more naturally on the client.
+    const firstItem = items[0]!;
+    const opener = buildLocalOpener(learner?.display_name ?? null, locale);
+    const firstQuestion = String(firstItem.question);
+    const seedContent = `${opener}\n\n${firstQuestion}`;
+    await supabase.from('conversation_turns').insert({
+      session_id: session.id,
+      learner_id,
+      item_id: firstItem.id as string,
+      turn_index: 0,
+      role: 'tutor',
+      kind: 'question',
+      content: seedContent,
+      intent: 'introduce_next',
+    });
+
+    // Synthesise the opener so the chat screen reads it aloud on start
+    // — same Chirp HD voice and rate as the per-turn replies. Failure
+    // (incl. timeout) is non-blocking: the screen still shows the text.
+    // The first question may itself contain foreign-language tokens
+    // (e.g. a German question naming the target French phrase), so we
+    // detect foreign locale purely from the question text — no
+    // dependence on the brittle subjectKind classification. Returns
+    // null when no language name is mentioned, which short-circuits to
+    // single-voice synthesis.
+    const openerForeignLocale = detectForeignLocaleFromQuestion(firstQuestion);
+    let openerAudio: { base64: string; mime: string; durationMs: number } | null = null;
+    try {
+      const synth = await withTimeout(
+        synthesizeMultilingual({
+          tts,
+          text: seedContent,
+          baseLocale: locale,
+          foreignLocale: openerForeignLocale,
+          voiceId: ttsVoice,
+          rate: 1.0,
+        }),
+        12_000,
+        'opener TTS',
+      );
+      openerAudio = {
+        base64: synth.audioBase64,
+        mime: synth.mime,
+        durationMs: synth.durationMs,
+      };
+    } catch (err) {
+      console.warn(
+        `[agent] opener TTS synthesize failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    return c.json(
+      {
+        session_id: session.id,
+        items,
+        opener,
+        first_question: firstQuestion,
+        audio: openerAudio,
+      },
+      201,
+    );
+  },
+);
+
+// ── Transcribe-only (no LLM tutor call) ────────────────────────────────────
+//
+// The composer's mic button uses this when the kid wants the spoken
+// text to land in the input field for review/edit before sending.
+// `/sessions/:id/turn` always runs the full pedagogy cycle; this route
+// is intentionally narrow — audio in, plain text out.
+
+const TranscribeBody = z.object({
+  audio_base64: z.string().min(1).max(8_000_000),
+  audio_mime: z.enum(['audio/m4a', 'audio/mp4', 'audio/wav', 'audio/webm']),
+});
+
+// Fire-and-forget pre-warm: the mobile app pings this the instant the
+// user taps the mic so the Vercel function and the GCP STT gRPC channel
+// are both warm by the time the actual audio arrives. Returns 200 fast
+// — the warmup itself is awaited so a cold gRPC handshake doesn't kick
+// over to the user's recognize() call.
+agentRoutes.post(
+  '/transcribe/warm',
+  rateLimit({ key: 'agent_transcribe_warm', per_hour: 6000 }),
+  async (c) => {
+    const { stt } = getDeps(c);
+    await stt.warmup();
+    return c.json({ ok: true });
+  },
+);
+
+agentRoutes.post(
+  '/transcribe',
+  rateLimit({ key: 'agent_transcribe', per_hour: 600 }),
+  zValidator('json', TranscribeBody),
+  async (c) => {
+    const { supabase, stt } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const body = c.req.valid('json');
+
+    // Pull learner's UI locale as a HINT only — chirp_2 still auto-
+    // detects, so a German learner answering in English on an English
+    // vocab item still gets transcribed correctly.
+    const learnerRow = await supabase
+      .from('learners')
+      .select('ui_locale')
+      .eq('id', learner_id)
+      .maybeSingle();
+    const preferredLocale =
+      ((learnerRow.data as { ui_locale: string | null } | null)?.ui_locale as Locale | null) ??
+      null;
+
+    const res = await stt.recognize({
+      audioBase64: body.audio_base64,
+      mime: body.audio_mime,
+      preferredLocale,
+    });
+    return c.json({
+      text: res.text,
+      detected_locale: res.detectedLocale,
+      confidence: res.confidence,
+    });
+  },
+);
+
+// ── Voice sample (preview for the admin → Stimme settings screen) ─────────
+//
+// Synthesises one short, friendly phrase in the requested voice and the
+// learner's UI locale, returns the MP3 base64. The settings screen plays
+// it via the existing `playTtsAudio` helper so the kid hears the voice
+// BEFORE committing to it. No DB writes — selecting is a separate
+// PATCH /learners call.
+
+const VoiceSampleBody = z.object({
+  voice: z.string().min(1).max(40),
+});
+
+// One short, natural-sounding sample per locale. ~2 sentences = ~3–5 s of
+// audio — enough to judge the voice character (pitch, warmth, pacing)
+// without wasting TTS budget. Kept simple and inviting; no brand-name
+// gymnastics ("Ich bin deine LearnBuddy-Stimme" reads weirdly in German
+// and the equivalent in romance languages too).
+const SAMPLE_PHRASE_BY_LOCALE: Record<string, string> = {
+  de: 'Hallo! Schön, dass du da bist. Lass uns gemeinsam etwas Neues lernen.',
+  en: "Hello! I'm glad you're here. Let's learn something new together.",
+  fr: 'Bonjour ! Ravie de te voir. On va apprendre quelque chose de nouveau ensemble.',
+  es: '¡Hola! Qué bien tenerte aquí. Vamos a aprender algo nuevo juntos.',
+  it: 'Ciao! Che bello averti qui. Impariamo qualcosa di nuovo insieme.',
+};
+
+agentRoutes.post(
+  '/voice/sample',
+  rateLimit({ key: 'agent_voice_sample', per_hour: 120 }),
+  zValidator('json', VoiceSampleBody),
+  async (c) => {
+    const { supabase, tts } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const { voice } = c.req.valid('json');
+
+    const learnerRow = await supabase
+      .from('learners')
+      .select('ui_locale')
+      .eq('id', learner_id)
+      .maybeSingle();
+    const locale = (((learnerRow.data as { ui_locale: string | null } | null)
+      ?.ui_locale as Locale | null) ?? 'de') as Locale;
+    const text = SAMPLE_PHRASE_BY_LOCALE[locale] ?? SAMPLE_PHRASE_BY_LOCALE['de']!;
+
+    const synth = await tts.synthesize({ text, locale, rate: 1.0, voiceId: voice });
+    return c.json({
+      audio: {
+        base64: synth.audioBase64,
+        mime: synth.mime,
+        durationMs: synth.durationMs,
+      },
+    });
+  },
+);
+
+// ── Turn (SSE stream) ──────────────────────────────────────────────────────
+
+const TurnBody = z.object({
+  client_turn_id: z.string().uuid(),
+  text: z.string().min(1).max(4000).nullable().optional(),
+  audio_base64: z.string().min(1).max(8_000_000).nullable().optional(),
+  audio_mime: z.enum(['audio/m4a', 'audio/mp4', 'audio/wav', 'audio/webm']).nullable().optional(),
+});
+
+agentRoutes.post(
+  '/sessions/:sessionId/turn',
+  rateLimit({ key: 'agent_turn', per_hour: 600 }),
+  zValidator('json', TurnBody),
+  async (c) => {
+    const { supabase, llm, stt, tts, env, now } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const session_id = c.req.param('sessionId');
+    const body = c.req.valid('json');
+
+    return streamSSE(c, async (sse) => {
+      const send = (data: object): Promise<void> => sse.writeSSE({ data: JSON.stringify(data) });
+
+      try {
+        // Pre-LLM DB reads in PARALLEL — session, idempotency check,
+        // turns history, learner profile all only depend on
+        // session_id / learner_id which we have from middleware. Used
+        // to be 4 sequential round-trips (~150-200 ms wasted on a
+        // sub-3 s turn). The validation that depends on each result
+        // happens AFTER the batched await, same logic as before.
+        const [sessRes, dupRes, turnsRes, learnerRow] = await Promise.all([
+          supabase
+            .from('sessions')
+            .select(
+              'id, learner_id, test_mode, picked_item_ids, pinned_topic, started_at, ended_at',
+            )
+            .eq('id', session_id)
+            .maybeSingle(),
+          supabase
+            .from('conversation_turns')
+            .select('id, turn_index')
+            .eq('session_id', session_id)
+            .eq('client_turn_id', body.client_turn_id)
+            .maybeSingle(),
+          supabase
+            .from('conversation_turns')
+            .select(
+              'id, item_id, turn_index, role, kind, content, verdict, advance_after, hint_given, created_at',
+            )
+            .eq('session_id', session_id)
+            .order('turn_index', { ascending: true }),
+          supabase
+            .from('learners')
+            .select('display_name, grade_level, ui_locale, tts_voice')
+            .eq('id', learner_id)
+            .maybeSingle(),
+        ]);
+
+        const session = sessRes.data as {
+          id: string;
+          learner_id: string;
+          test_mode: boolean;
+          picked_item_ids: string[] | null;
+          pinned_topic: string | null;
+          started_at: string;
+          ended_at: string | null;
+        } | null;
+        if (!session) {
+          await send({ type: 'error', code: 'not_found', message: 'session not found' });
+          return;
+        }
+        if (session.learner_id !== learner_id) {
+          await send({ type: 'error', code: 'forbidden', message: 'wrong learner' });
+          return;
+        }
+        if (session.ended_at) {
+          await send({ type: 'error', code: 'session_ended', message: 'session already ended' });
+          return;
+        }
+
+        // Idempotency — if this client_turn_id already produced a tutor
+        // reply, replay it instead of re-charging credits. If a prior
+        // attempt inserted the learner row but the LLM call failed
+        // (no tutor row exists), DELETE the orphan learner row and
+        // proceed as a fresh turn — otherwise the client would hang
+        // waiting for a `done` event we can't synthesize honestly.
+        const dup = dupRes.data as { id: string; turn_index: number } | null;
+        if (dup) {
+          const replayRes = await supabase
+            .from('conversation_turns')
+            .select('id, role, content, verdict, advance_after, hint_given, intent')
+            .eq('session_id', session_id)
+            .gte('turn_index', dup.turn_index)
+            .order('turn_index', { ascending: true })
+            .limit(2);
+          const rows = (replayRes.data ?? []) as Array<{
+            id: string;
+            role: 'learner' | 'tutor';
+            content: string;
+            verdict: string | null;
+            advance_after: boolean | null;
+            hint_given: boolean | null;
+            intent: string | null;
+          }>;
+          const tutor = rows.find((r) => r.role === 'tutor');
+          if (tutor) {
+            await send({ type: 'reply', text: tutor.content });
+            await send({
+              type: 'done',
+              verdict: tutor.verdict,
+              advance: tutor.advance_after === true,
+              hint_given: tutor.hint_given === true,
+              intent: tutor.intent ?? 'evaluate',
+              learner_turn_id: dup.id,
+              tutor_turn_id: tutor.id,
+              credits_used: 0,
+              replayed: true,
+            });
+            return;
+          }
+          // Orphan learner row — delete it and fall through. Without
+          // this the client retries forever.
+          await supabase.from('conversation_turns').delete().eq('id', dup.id);
+        }
+
+        // Turns history was loaded in the initial parallel batch.
+        const allTurns = (turnsRes.data ?? []) as Array<{
+          id: string;
+          item_id: string | null;
+          turn_index: number;
+          role: 'learner' | 'tutor' | 'system';
+          kind: string;
+          content: string;
+          verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
+          advance_after: boolean | null;
+          hint_given: boolean | null;
+          created_at: string;
+        }>;
+
+        // Resolve current item: the last tutor turn that hasn't yet
+        // been followed by an advance_after=true.
+        const queue = (session.picked_item_ids ?? []) as string[];
+        const currentItemId = resolveCurrentItemId(queue, allTurns);
+        if (!currentItemId) {
+          // Session has run out of items.
+          await send({
+            type: 'done',
+            verdict: null,
+            advance: false,
+            hint_given: false,
+            intent: 'break_suggest',
+            session_complete: true,
+            credits_used: 0,
+          });
+          return;
+        }
+
+        const itemRes = await supabase
+          .from('items')
+          .select('*')
+          .eq('id', currentItemId)
+          .maybeSingle();
+        const item = itemRes.data as Record<string, unknown> | null;
+        if (!item) {
+          await send({ type: 'error', code: 'not_found', message: 'current item missing' });
+          return;
+        }
+
+        // Material grounding + subject-kind lookup run in parallel —
+        // both depend on item.material_id but not on each other, and
+        // each is ~50 ms on Supabase EU. Material text is fetched once
+        // but injected ONLY when we're in tutoring mode (hint given OR
+        // prior wrong attempts on this item); fresh-attempt + correct-
+        // answer turns don't need the material excerpt and skipping it
+        // saves ~30 % input tokens.
+        const materialId = item.material_id as string | null;
+        const [materialFetch, subjectKindResolved] = await Promise.all([
+          materialId
+            ? supabase
+                .from('materials')
+                .select('extracted_markdown')
+                .eq('id', materialId)
+                .maybeSingle()
+            : Promise.resolve(null),
+          lookupSubjectKind(supabase, materialId),
+        ]);
+        const materialContextFull = materialFetch
+          ? (
+              (materialFetch.data as { extracted_markdown: string | null } | null)
+                ?.extracted_markdown ?? ''
+            ).slice(0, 4000) || null
+          : null;
+
+        // Learner row was loaded in the initial parallel batch.
+        const learner = (learnerRow.data ?? null) as {
+          display_name: string | null;
+          grade_level: number | null;
+          ui_locale: string | null;
+          tts_voice: string | null;
+        } | null;
+        const locale = ((learner?.ui_locale ?? 'de') as Locale) ?? ('de' as Locale);
+        const ttsVoice = learner?.tts_voice ?? null;
+
+        // Voice transcription if audio supplied. GCP Speech-to-Text v2
+        // chirp_2 with multilingual auto-detect: the German UI locale is
+        // a hint only, the learner can answer in any of the supported
+        // languages and it'll still come through (key feature for a
+        // language-learning app).
+        let learnerText = (body.text ?? '').trim();
+        if (!learnerText && body.audio_base64) {
+          const transcript = await withTimeout(
+            stt.recognize({
+              audioBase64: body.audio_base64,
+              mime: body.audio_mime ?? 'audio/m4a',
+              preferredLocale: locale,
+            }),
+            25_000,
+            'STT',
+          );
+          learnerText = transcript.text.trim();
+          if (learnerText) await send({ type: 'transcript', text: learnerText });
+        }
+        if (!learnerText) {
+          // Empty: either pure silence, hallucination filtered, or noise.
+          // We DON'T fail the turn — just signal end-of-stream gracefully
+          // so the client can re-open the mic without a scary error.
+          await send({ type: 'error', code: 'silent', message: 'no speech detected' });
+          return;
+        }
+
+        // Compute hint count + prior wrong attempts on THIS item from the
+        // server-recorded tutor turns (the model can lie; we cannot).
+        const tutorOnItem = allTurns.filter(
+          (t) => t.role === 'tutor' && t.item_id === currentItemId,
+        );
+        const hintsGivenForItem = tutorOnItem.filter((t) => t.hint_given === true).length;
+        const priorWrongAttemptsOnItem = tutorOnItem.filter(
+          (t) =>
+            t.verdict === 'incorrect' ||
+            t.verdict === 'skipped' ||
+            t.verdict === 'partially_correct',
+        ).length;
+
+        // Persist the learner turn IN PARALLEL with the LLM call.
+        // Used to be awaited before kicking off the LLM (~50 ms wasted
+        // round-trip). The model takes `learnerText` directly as input,
+        // not the inserted row — no semantic dependency.
+        // We still await the insert promise before emitting the `done`
+        // SSE frame (which needs `learner_turn_id`), but by then the
+        // LLM call has consumed most of that 50 ms in parallel.
+        const nextIndex = allTurns.reduce((m, t) => Math.max(m, t.turn_index), -1) + 1;
+        const learnerInsertP = supabase
+          .from('conversation_turns')
+          .insert({
+            session_id,
+            learner_id,
+            item_id: currentItemId,
+            turn_index: nextIndex,
+            role: 'learner',
+            kind: 'answer',
+            content: learnerText,
+            client_turn_id: body.client_turn_id,
+            mode: body.audio_base64 ? 'voice' : 'text',
+          })
+          .select('id')
+          .single();
+
+        // Subject-kind was resolved in parallel with the material
+        // fetch above — rename to keep the downstream block readable.
+        const subjectKind = subjectKindResolved;
+
+        // Build the agent input and call the LLM.
+        const itemCtx: AgentItemContext = {
+          itemId: currentItemId,
+          question: String(item.question ?? ''),
+          expectedAnswer: String(item.expected_answer ?? ''),
+          acceptableAnswers: (item.acceptable_answers as string[] | null) ?? [],
+          answerKind: (item.answer_kind as AgentItemContext['answerKind']) ?? 'short',
+          topic: (item.topic as string | null) ?? null,
+          difficulty: Number(item.difficulty ?? 2),
+          subjectKind,
+          mcOptions: (item.mc_options as string[] | null) ?? null,
+          mcCorrectIndex: (item.mc_correct_index as number | null) ?? null,
+          units: (item.units as string | null) ?? null,
+          sourceExcerpt: (item.source_excerpt as string | null) ?? null,
+        };
+
+        // History truncation: drop from 40 → 12 to cut ~30 % input on
+        // late-session turns. CRITICAL: always keep the tutor turn
+        // that introduced the CURRENT item (so the model never loses
+        // "what are we working on"). The system prompt also carries
+        // the question + expected answer inline, but the introductory
+        // tutor turn is a different artefact (it carries the opener +
+        // any subject context preamble that anchors the dialogue).
+        const HIST_MAX = 12;
+        const allChatTurns = allTurns
+          .filter((t) => t.role === 'learner' || t.role === 'tutor')
+          .map((t) => ({
+            role: t.role === 'tutor' ? ('tutor' as const) : ('learner' as const),
+            content: t.content,
+            item_id: t.item_id,
+          }));
+        const tailSlice = allChatTurns.slice(-HIST_MAX);
+        // Find the tutor turn that introduced the current item — the
+        // earliest tutor turn where item_id matches currentItemId.
+        const currentItemIntro = allChatTurns.find(
+          (t) => t.role === 'tutor' && t.item_id === currentItemId,
+        );
+        const history: AgentThreadMessage[] =
+          currentItemIntro && !tailSlice.includes(currentItemIntro)
+            ? [
+                { role: currentItemIntro.role, content: currentItemIntro.content },
+                ...tailSlice.map((t) => ({ role: t.role, content: t.content })),
+              ]
+            : tailSlice.map((t) => ({ role: t.role, content: t.content }));
+
+        const itemsAnsweredCount = countAdvancedItems(allTurns);
+        const sessionStartedMs = Date.parse(session.started_at);
+        const minutesElapsed = Number.isFinite(sessionStartedMs)
+          ? Math.max(0, Math.round((now().getTime() - sessionStartedMs) / 60_000))
+          : 0;
+
+        // Competence signal — drives v3's tone branch (cruising vs
+        // struggling). v2 ignores these fields; safe to always pass.
+        const competence = computeCompetenceSignals(allTurns);
+
+        // Conditional material context: only inject when we're
+        // already in tutoring mode (hints given or prior wrong on
+        // this item). A fresh first-attempt turn doesn't need the
+        // 2 KB material clamp — saves ~30 % input tokens.
+        const inTutoringMode = hintsGivenForItem > 0 || priorWrongAttemptsOnItem > 0;
+        const materialContextForTurn = inTutoringMode ? materialContextFull : null;
+
+        const turnInput = {
+          learner: {
+            displayName: learner?.display_name ?? null,
+            gradeLevel: learner?.grade_level ?? 7,
+            locale,
+          },
+          currentItem: itemCtx,
+          materialContext: materialContextForTurn,
+          hintsGivenForItem,
+          priorWrongAttemptsOnItem,
+          history,
+          learnerMessage: learnerText,
+          session: {
+            itemsTotal: queue.length,
+            itemsRemaining: Math.max(0, queue.length - itemsAnsweredCount),
+            minutesElapsed,
+            testMode: session.test_mode,
+            correctRateSoFar: competence.correctRateSoFar,
+            itemsCompleted: competence.itemsCompleted,
+            currentStreak: competence.currentStreak,
+            hintsUsedTotal: competence.hintsUsedTotal,
+          },
+        };
+
+        const { instruction: systemInstruction, version: promptVersionUsed } =
+          buildAgentSystemInstructionForVersion(env.AGENT_PROMPT_VERSION, turnInput);
+
+        // Prompt caching (v3.1 only): cache the static TUTOR_HEADER
+        // so it bills at ~25 % of normal. The dynamic per-turn
+        // context still goes through full price but it's only
+        // ~500 tokens. Net: ~45 % cost reduction after first turn.
+        // v2 / v3 prompts intermix static + dynamic in one big blob,
+        // so we don't try to cache for them — they'd need a refactor
+        // we're not doing for legacy paths.
+        // Gemini-specific cost levers: context caching + flash-lite
+        // trivial-correct routing. Both require a Gemini tutor model —
+        // partner MaaS providers (DeepSeek et al) have neither a Vertex
+        // cachedContents endpoint nor an analogous cheap tier on Vertex.
+        // When the tutor is a partner model, skip both and rely on the
+        // partner's own prefix caching (e.g. DeepSeek caches 64-token-
+        // aligned static prefixes automatically at $0.06/M).
+        const tutorIsGemini = env.VERTEX_TUTOR_MODEL_ID.startsWith('gemini-');
+        const tutorIsPartner =
+          !tutorIsGemini && env.VERTEX_TUTOR_MODEL_ID.startsWith('deepseek-ai/');
+
+        let headerCacheName: string | null = null;
+        if (env.AGENT_PROMPT_VERSION === 'v3.1' && tutorIsGemini) {
+          // Re-build the dynamic-only portion. The cached header is
+          // TUTOR_HEADER_V3_1 (constant string).
+          const { TUTOR_HEADER_V3_1, buildAgentTurnContextV3_1 } =
+            await import('../lib/agent/prompt-v3_1.js');
+          const dynamicOnly = buildAgentTurnContextV3_1(turnInput);
+          headerCacheName = await llm.ensureAgentHeaderCache(TUTOR_HEADER_V3_1, 'gemini-2.5-flash');
+          // Replace the full instruction with just the dynamic part
+          // — Vertex will prepend the cached header server-side.
+          if (headerCacheName) {
+            (turnInput as { _dynamic?: string })._dynamic = dynamicOnly;
+          }
+        }
+
+        // Model routing: route a turn that LOOKS LIKE a straight
+        // correct answer (learner message matches an acceptable
+        // answer loosely) to flash-lite — ~75 % cheaper per call.
+        // Gemini-only: DeepSeek has no "lite" tier on Vertex.
+        const looksLikeCorrectAnswer = isLooseAnswerMatch(
+          learnerText,
+          itemCtx.expectedAnswer,
+          itemCtx.acceptableAnswers,
+        );
+        const modelOverride =
+          tutorIsGemini &&
+          looksLikeCorrectAnswer &&
+          hintsGivenForItem === 0 &&
+          priorWrongAttemptsOnItem === 0
+            ? 'gemini-2.5-flash-lite'
+            : undefined;
+
+        // Build the actual systemInstruction to pass — when caching
+        // is active, send only the dynamic suffix; the header is
+        // already cached. When not active, send the full instruction.
+        const instructionToSend =
+          headerCacheName && (turnInput as { _dynamic?: string })._dynamic
+            ? ((turnInput as { _dynamic?: string })._dynamic as string)
+            : systemInstruction;
+
+        // For language_foreign items, detect the target locale so the
+        // synthesizer can switch voices mid-utterance on « » markers.
+        // Subject classification is unreliable (kids upload any topic),
+        // so we detect foreign locale purely from the question text.
+        // Returns null when no language name appears, short-circuiting
+        // to single-voice synthesis (zero overhead).
+        const foreignLocale = detectForeignLocaleFromQuestion(itemCtx.question);
+        const isVoiceTurn = !!body.audio_base64;
+
+        type ParsedAgent = ReturnType<typeof parseAgentJson>;
+        type AgentUsage = {
+          input_tokens: number;
+          output_tokens: number;
+          cached_input_tokens?: number;
+          cost_usd_micros: number;
+          model: string;
+          prompt_version: string;
+        };
+        let parsed: ParsedAgent;
+        let agentUsage: AgentUsage;
+        let streamedAudioCount = 0;
+
+        if (tutorIsPartner) {
+          // ── Streaming voice path ───────────────────────────────────
+          // DeepSeek streams the JSON response token-by-token. As the
+          // `reply` field grows we emit `reply_chunk` SSE frames so the
+          // mobile bubble fills progressively, and split sentence-by-
+          // sentence to fire per-sentence TTS as soon as each one is
+          // complete. The kid hears the opener of the reply ~1 s into
+          // generation instead of ~4-5 s after the whole call finishes.
+          const { runStreamPipeline } = await import('../lib/agent/stream-pipeline.js');
+          const { jsonrepair } = await import('jsonrepair');
+          let streamResult;
+          try {
+            streamResult = await withTimeout(
+              runStreamPipeline(
+                {
+                  env,
+                  modelId: env.VERTEX_TUTOR_MODEL_ID,
+                  systemContent: instructionToSend,
+                  history,
+                  learnerMessage: learnerText,
+                  baseLocale: locale,
+                  foreignLocale,
+                  voiceId: ttsVoice,
+                  withAudio: isVoiceTurn,
+                  tts,
+                },
+                {
+                  onReplySoFar: (text) => send({ type: 'reply_chunk', text }),
+                  onAudioChunk: ({ base64, mime, durationMs, index }) =>
+                    send({ type: 'audio_chunk', base64, mime, durationMs, index }),
+                },
+              ),
+              45_000,
+              'agent LLM stream',
+            );
+          } catch (err) {
+            await send({
+              type: 'error',
+              code: 'evaluation_failed',
+              message: err instanceof Error ? err.message : String(err),
+            });
+            return;
+          }
+          let parsedJson: unknown;
+          try {
+            parsedJson = JSON.parse(streamResult.rawJson);
+          } catch {
+            try {
+              parsedJson = JSON.parse(jsonrepair(streamResult.rawJson));
+            } catch {
+              await send({
+                type: 'error',
+                code: 'evaluation_failed',
+                message: `partner stream JSON parse failed: ${streamResult.rawJson.slice(0, 200)}`,
+              });
+              return;
+            }
+          }
+          parsed = parseAgentJson(parsedJson);
+          streamedAudioCount = streamResult.audioChunksEmitted;
+          const u = streamResult.usage ?? {};
+          agentUsage = {
+            input_tokens: u.prompt_tokens ?? 0,
+            output_tokens: u.completion_tokens ?? 0,
+            cached_input_tokens: u.prompt_cache_hit_tokens ?? 0,
+            cost_usd_micros: 0,
+            model: env.VERTEX_TUTOR_MODEL_ID,
+            prompt_version: 'agent.v2.0',
+          };
+        } else {
+          // ── Legacy non-streaming Gemini path ───────────────────────
+          let agentResult;
+          try {
+            agentResult = await withTimeout(
+              llm.agentTurn({
+                systemInstruction: instructionToSend,
+                headerCacheName,
+                history,
+                learnerMessage: learnerText,
+                modelOverride,
+              }),
+              45_000,
+              'agent LLM',
+            );
+          } catch (err) {
+            await send({
+              type: 'error',
+              code: 'evaluation_failed',
+              message: err instanceof Error ? err.message : String(err),
+            });
+            return;
+          }
+          parsed = parseAgentJson(agentResult.json);
+          agentUsage = agentResult.usage;
+          if (parsed.reply) await send({ type: 'reply', text: parsed.reply });
+        }
+
+        // Parallelise tutor-turn persistence and TTS synthesis. They're
+        // independent: the DB write needs only the parsed reply + verdict,
+        // and TTS needs only the reply text + locale + voice. Running
+        // them sequentially used to add ~50-200 ms (DB) on top of the
+        // 1-3 s TTS — pure waste in the gap between text-arrives and
+        // voice-starts that the user perceived as latency.
+        const tutorIndex = nextIndex + 1;
+        const persistTutorTurn = supabase
+          .from('conversation_turns')
+          .insert({
+            session_id,
+            learner_id,
+            item_id: currentItemId,
+            turn_index: tutorIndex,
+            role: 'tutor',
+            kind: parsed.reveal ? 'reveal' : parsed.hint_given ? 'hint' : 'feedback',
+            content: parsed.reply,
+            verdict: parsed.verdict,
+            intent: parsed.intent,
+            hint_given: parsed.hint_given,
+            advance_after: parsed.advance,
+          })
+          .select('id')
+          .single();
+        // TTS is only useful when the learner SPOKE (voice mode auto-
+        // plays the reply). Text-mode users get audio they never asked
+        // for — and pay 1-3 s of perceived latency for it. Skip
+        // synthesis on a text turn; the mobile chat falls through to
+        // showing the reply text immediately.
+        // ALSO skip when the streaming-pipeline path already emitted
+        // per-sentence audio_chunk frames — the mobile has the audio
+        // and a final whole-reply synthesis would just stack a duplicate
+        // on top.
+        const synthTts =
+          parsed.reply && isVoiceTurn && streamedAudioCount === 0
+            ? withTimeout(
+                synthesizeMultilingual({
+                  tts,
+                  text: parsed.reply,
+                  baseLocale: locale,
+                  foreignLocale,
+                  voiceId: ttsVoice,
+                  rate: 1.0,
+                }),
+                12_000,
+                'per-turn TTS',
+              ).catch((err: unknown) => {
+                console.warn(
+                  `[agent] TTS synthesize failed: ${
+                    err instanceof Error ? err.message : String(err)
+                  }`,
+                );
+                return null;
+              })
+            : Promise.resolve(null);
+
+        const [tutorInsert, synthResult] = await Promise.all([persistTutorTurn, synthTts]);
+        const tutorTurnId = (tutorInsert.data as { id: string } | null)?.id ?? null;
+        const ttsAudio = synthResult
+          ? {
+              base64: synthResult.audioBase64,
+              mime: synthResult.mime,
+              durationMs: synthResult.durationMs,
+            }
+          : null;
+
+        // FSRS update: every verdict advances the item_state row. The
+        // hint-aware effort signal downgrades a scaffolded `correct`
+        // to Hard so the next-due interval reflects partial mastery.
+        // Fire-and-forget — a transient DB hiccup shouldn't fail the
+        // turn the learner already got a reply for.
+        if (parsed.verdict) {
+          void updateItemState(supabase, {
+            learner_id,
+            item_id: currentItemId,
+            verdict: parsed.verdict,
+            reviewedAt: now(),
+            effort: {
+              hintsUsed: hintsGivenForItem + (parsed.hint_given ? 1 : 0),
+              priorWrongAttempts: priorWrongAttemptsOnItem,
+            },
+          }).catch((err: unknown) => {
+            console.warn(
+              `[agent] FSRS update failed for item ${currentItemId}: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          });
+        }
+
+        // Now await the learner insert that was kicked off before the
+        // LLM call — by this point it's almost certainly resolved
+        // already (LLM took 2-3 s, insert takes ~50 ms).
+        const learnerInsert = await learnerInsertP;
+        const learnerTurnId = (learnerInsert.data as { id: string } | null)?.id ?? null;
+
+        await send({
+          type: 'done',
+          verdict: parsed.verdict,
+          advance: parsed.advance,
+          reveal: parsed.reveal,
+          hint_given: parsed.hint_given,
+          intent: parsed.intent,
+          learner_turn_id: learnerTurnId,
+          tutor_turn_id: tutorTurnId,
+          credits_used: Math.max(1, Math.round(agentUsage.cost_usd_micros / 100)),
+          // Surface the version we actually composed (v2 / v3) rather
+          // than the gateway's hardcoded label — the gateway doesn't
+          // know which composer the route picked.
+          prompt_version: promptVersionUsed,
+          model: agentUsage.model,
+          replayed: false,
+          audio: ttsAudio,
+          audio_chunks_emitted: streamedAudioCount,
+        });
+      } catch (err) {
+        try {
+          await send({
+            type: 'error',
+            code: 'internal',
+            message: err instanceof Error ? err.message : String(err),
+          });
+        } catch {
+          /* stream may already be closed */
+        }
+      }
+    });
+  },
+);
+
+// ── Finish ────────────────────────────────────────────────────────────────
+
+agentRoutes.patch('/sessions/:sessionId/finish', async (c) => {
+  const { supabase, llm, now } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const session_id = c.req.param('sessionId');
+  const upd = await supabase
+    .from('sessions')
+    .update({ ended_at: now().toISOString() })
+    .eq('id', session_id)
+    .eq('learner_id', learner_id)
+    .select('id, ended_at')
+    .single();
+  if (upd.error) {
+    throw new ApiError('internal', 'Failed to end session', { cause: upd.error.message });
+  }
+  // Reflective summary — fire-and-forget. Writes a learner_episodes row
+  // + bumps recurring_misconceptions. The opener for the next session
+  // reads from this. Don't block the response on it; the LLM call can
+  // take several seconds.
+  void reflectAndPersistSession({ supabase, llm, now }, { session_id, learner_id }).catch(
+    (err: unknown) => {
+      console.warn(
+        `[agent] reflect failed for ${session_id}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    },
+  );
+  return c.json({ session_id, ended: true, prompt_version: AGENT_PROMPT_VERSION });
+});
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+
+function buildLocalOpener(name: string | null, locale: Locale): string {
+  const n = name?.trim() ?? '';
+  const greet =
+    locale === 'en'
+      ? n
+        ? `Hi ${n}! Ready to dig in?`
+        : 'Hi there! Ready to dig in?'
+      : locale === 'fr'
+        ? n
+          ? `Salut ${n} ! On y va ?`
+          : 'Salut ! On y va ?'
+        : locale === 'es'
+          ? n
+            ? `¡Hola ${n}! ¿Empezamos?`
+            : '¡Hola! ¿Empezamos?'
+          : locale === 'it'
+            ? n
+              ? `Ciao ${n}! Pronti?`
+              : 'Ciao! Pronti?'
+            : n
+              ? `Hi ${n}! Sollen wir loslegen?`
+              : 'Hi! Sollen wir loslegen?';
+  return greet;
+}
+
+/** Walk the persisted turns and figure out which item from the queue
+ *  is currently open. An item is "advanced past" once its last tutor
+ *  turn carries `advance_after = true`. */
+function resolveCurrentItemId(
+  queue: string[],
+  turns: Array<{ item_id: string | null; role: string; advance_after: boolean | null }>,
+): string | null {
+  if (queue.length === 0) return null;
+  const advanced = new Set<string>();
+  for (const t of turns) {
+    if (t.role === 'tutor' && t.item_id && t.advance_after === true) advanced.add(t.item_id);
+  }
+  for (const id of queue) {
+    if (!advanced.has(id)) return id;
+  }
+  return null;
+}
+
+/** Loose case-insensitive comparison to decide whether the learner's
+ *  text likely IS one of the acceptable answers — used to route
+ *  praise_and_advance-shaped turns to the cheaper flash-lite model.
+ *  Conservative: we want to AVOID false positives (don't route
+ *  pedagogical turns to lite). Hence:
+ *   - exact lowercased match, OR
+ *   - whitespace-stripped lowercased match
+ *  Anything fancier (typo tolerance) belongs in the LLM, not here. */
+function isLooseAnswerMatch(learnerText: string, expected: string, acceptable: string[]): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const stripped = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+  const lText = norm(learnerText);
+  if (!lText) return false;
+  const candidates = [expected, ...acceptable].filter((s) => typeof s === 'string' && s.length > 0);
+  for (const c of candidates) {
+    const lc = norm(c);
+    if (lc && (lText === lc || stripped(learnerText) === stripped(c))) return true;
+  }
+  return false;
+}
+
+function countAdvancedItems(
+  turns: Array<{ role: string; advance_after: boolean | null; item_id: string | null }>,
+): number {
+  const advanced = new Set<string>();
+  for (const t of turns) {
+    if (t.role === 'tutor' && t.item_id && t.advance_after === true) advanced.add(t.item_id);
+  }
+  return advanced.size;
+}
+
+/** Competence signal for the v3 prompt: correct rate, streak (+
+ *  correct in a row / − wrong in a row), hints used total. Derived
+ *  from the server-recorded tutor turns (one tutor row per turn,
+ *  with verdict and hint_given set by the parser). */
+function computeCompetenceSignals(
+  turns: Array<{
+    role: string;
+    verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
+    hint_given: boolean | null;
+    advance_after: boolean | null;
+    item_id: string | null;
+    turn_index: number;
+  }>,
+): {
+  correctRateSoFar: number;
+  itemsCompleted: number;
+  currentStreak: number;
+  hintsUsedTotal: number;
+} {
+  // Per-item OUTCOME = the verdict on the LAST tutor turn that has
+  // advance_after=true. Items still in flight (no advance yet) don't
+  // count. Skipped items count as not-correct.
+  const tutorTurns = turns
+    .filter((t) => t.role === 'tutor')
+    .sort((a, b) => a.turn_index - b.turn_index);
+  const outcomes: Array<'correct' | 'wrong'> = [];
+  for (const t of tutorTurns) {
+    if (t.advance_after === true) {
+      outcomes.push(t.verdict === 'correct' ? 'correct' : 'wrong');
+    }
+  }
+  const itemsCompleted = outcomes.length;
+  const correctCount = outcomes.filter((o) => o === 'correct').length;
+  const correctRateSoFar = itemsCompleted > 0 ? correctCount / itemsCompleted : 0;
+
+  // Streak from the END of outcomes: how many of the latest same
+  // outcome in a row. + correct, − wrong.
+  let currentStreak = 0;
+  if (outcomes.length > 0) {
+    const last = outcomes[outcomes.length - 1]!;
+    for (let i = outcomes.length - 1; i >= 0; i--) {
+      if (outcomes[i] === last) currentStreak += 1;
+      else break;
+    }
+    if (last === 'wrong') currentStreak = -currentStreak;
+  }
+
+  const hintsUsedTotal = tutorTurns.filter((t) => t.hint_given === true).length;
+
+  return { correctRateSoFar, itemsCompleted, currentStreak, hintsUsedTotal };
+}
+
+/** Look up subject_kind for an item via the subjects table. Returns
+ *  'general' when the chain breaks (no material, no subject, etc) so
+ *  the v3 prompt always has a usable value. */
+async function lookupSubjectKind(
+  supabase: SupabaseClient,
+  materialId: string | null,
+): Promise<SubjectKind> {
+  if (!materialId) return 'general';
+  const mat = await supabase
+    .from('materials')
+    .select('subject_id')
+    .eq('id', materialId)
+    .maybeSingle();
+  const subjectId = (mat.data as { subject_id: string | null } | null)?.subject_id ?? null;
+  if (!subjectId) return 'general';
+  const sub = await supabase
+    .from('subjects')
+    .select('subject_kind')
+    .eq('id', subjectId)
+    .maybeSingle();
+  const kind = (sub.data as { subject_kind: string | null } | null)?.subject_kind ?? null;
+  if (!kind) return 'general';
+  const allowed: readonly string[] = [
+    'math',
+    'physics',
+    'chemistry',
+    'biology',
+    'geography',
+    'history',
+    'language_native',
+    'language_foreign',
+    'religion_ethics',
+    'art_music',
+    'general',
+    'other',
+  ];
+  return (allowed.includes(kind) ? kind : 'general') as SubjectKind;
+}
+
+// Shared item picker — reuses the same RPC the legacy /sessions route
+// uses. Kept inline rather than imported so this file is self-contained
+// and the legacy module can be deleted later without breaking us.
+async function pickItems(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  i: {
+    learner_id: string;
+    subject_id: string | null;
+    folder_id: string | null;
+    material_id: string | null;
+    topic: string | null;
+    max_items: number;
+    now: string;
+  },
+): Promise<Array<Record<string, unknown>>> {
+  // Topic-scoped picks bypass the FSRS RPC: when the kid taps a topic
+  // they want to study THAT topic, not whatever the scheduler thinks is
+  // due. Filter items directly. The "Allgemein" bucket includes items
+  // with NULL/empty topic too — mirrors the topic-items list endpoint
+  // so what the kid sees is what the tutor gets.
+  if (i.topic) {
+    const isAllgemein = i.topic.trim().toLowerCase() === 'allgemein';
+    let q = supabase
+      .from('items')
+      .select('*')
+      .eq('learner_id', i.learner_id)
+      .is('archived_at', null)
+      .limit(i.max_items);
+    if (isAllgemein) {
+      q = q.or('topic.is.null,topic.eq.,topic.ilike.allgemein');
+    } else {
+      q = q.ilike('topic', i.topic);
+    }
+    if (i.subject_id) {
+      // Topic + subject — narrow to subject's materials. We rely on the
+      // join via material_id; items don't carry subject_id directly.
+      const mats = await supabase.from('materials').select('id').eq('subject_id', i.subject_id);
+      const matIds = ((mats.data ?? []) as Array<{ id: string }>).map((m) => m.id);
+      if (matIds.length === 0) return [];
+      q = q.in('material_id', matIds);
+    }
+    const res = await q;
+    if (res.error) {
+      throw new ApiError('internal', 'Failed to load items', { cause: res.error.message });
+    }
+    return (res.data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  const supaWithRpc = supabase as unknown as {
+    rpc?: (
+      name: string,
+      params: Record<string, unknown>,
+    ) => Promise<{ data: Array<{ item_id: string }> | null; error: { message: string } | null }>;
+  };
+  if (typeof supaWithRpc.rpc === 'function') {
+    const ids = await supaWithRpc.rpc('lb_pick_session_items', {
+      p_learner_id: i.learner_id,
+      p_subject_id: i.subject_id,
+      p_folder_id: i.folder_id,
+      p_material_id: i.material_id,
+      p_max_items: i.max_items,
+      p_now: i.now,
+    });
+    if (!ids.error && ids.data) {
+      const itemIds = ids.data.map((r) => r.item_id);
+      if (itemIds.length === 0) return [];
+      const items = await supabase.from('items').select('*').in('id', itemIds);
+      if (items.error) {
+        throw new ApiError('internal', 'Failed to load items', { cause: items.error.message });
+      }
+      const byId = new Map(
+        ((items.data ?? []) as Array<Record<string, unknown>>).map((it) => [it.id as string, it]),
+      );
+      return itemIds.map((id) => byId.get(id)).filter((it): it is Record<string, unknown> => !!it);
+    }
+  }
+  let q = supabase.from('items').select('*').eq('learner_id', i.learner_id).is('archived_at', null);
+  if (i.material_id) q = q.eq('material_id', i.material_id);
+  const items = await q;
+  if (items.error) {
+    throw new ApiError('internal', 'Failed to load items', { cause: items.error.message });
+  }
+  return ((items.data ?? []) as Array<Record<string, unknown>>).slice(0, i.max_items);
+}
+
+/** FSRS bookkeeping. Upserts the `item_states` row for (learner, item)
+ *  based on the verdict + effort signal. Best-effort: any error is
+ *  logged by the caller; the learner's turn already succeeded. */
+async function updateItemState(
+  supabase: ReturnType<typeof getDeps>['supabase'],
+  args: {
+    learner_id: string;
+    item_id: string;
+    verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
+    reviewedAt: Date;
+    effort: { hintsUsed: number; priorWrongAttempts: number };
+  },
+): Promise<void> {
+  const prevRes = await supabase
+    .from('item_states')
+    .select('*')
+    .eq('learner_id', args.learner_id)
+    .eq('item_id', args.item_id)
+    .maybeSingle();
+  const prev = (prevRes.data as ItemStateRow | null) ?? null;
+  const next = applyAttempt(prev, args.verdict, args.reviewedAt, args.effort);
+  if (prev) {
+    const upd = await supabase
+      .from('item_states')
+      .update(next)
+      .eq('learner_id', args.learner_id)
+      .eq('item_id', args.item_id);
+    if (upd.error) throw new Error(upd.error.message);
+  } else {
+    const ins = await supabase
+      .from('item_states')
+      .insert({ ...next, learner_id: args.learner_id, item_id: args.item_id });
+    if (ins.error) throw new Error(ins.error.message);
+  }
+}

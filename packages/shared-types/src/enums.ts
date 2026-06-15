@@ -95,7 +95,8 @@ export type Iso8601 = z.infer<typeof Iso8601>;
  *  every user-facing date in this shape; the UI renders it as `DD.MM.YYYY`.
  *  The `.refine` rejects impossible calendar values (e.g. `2026-02-30`) — the
  *  regex alone would let them through and the API would write garbage into
- *  Postgres. */
+ *  Postgres. Pure integer math (no `Date.UTC`) so years 1–99 aren't silently
+ *  remapped to 1901–1999 by JavaScript's two-digit-year quirk. */
 export const DateOnly = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -103,9 +104,8 @@ export const DateOnly = z
     const [y, m, d] = s.split('-').map((n) => Number.parseInt(n, 10));
     if (!y || !m || !d) return false;
     if (m < 1 || m > 12) return false;
-    // Construct a Date in UTC; if Date "rolls over" (e.g. Feb 30 → Mar 2) the
-    // round-trip won't match the inputs.
-    const dt = new Date(Date.UTC(y, m - 1, d));
-    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+    const isLeap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+    const monthLengths = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d >= 1 && d <= monthLengths[m - 1]!;
   }, 'Invalid calendar date');
 export type DateOnly = z.infer<typeof DateOnly>;

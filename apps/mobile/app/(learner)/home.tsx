@@ -2,8 +2,8 @@
 // No pending counter. No "must do" copy.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
@@ -15,7 +15,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Btn,
@@ -36,12 +35,7 @@ import {
   type SubjectListItem,
 } from '../../lib/api/subjects.js';
 import { useFirstTime } from '../../lib/onboarding/coach.js';
-import { scheduleTestDateReminders } from '../../lib/notifications.js';
-import {
-  clearPendingSession,
-  loadPendingSession,
-  type PendingSession,
-} from '../../lib/session/pending.js';
+import { registerPushTokenForLearner, scheduleTestDateReminders } from '../../lib/notifications.js';
 import { LB } from '../../lib/theme/colors.js';
 
 type SubjectKindKey =
@@ -140,24 +134,17 @@ export default function HomeScreen() {
   const lastSessionAt = scheduleQuery.data?.last_session_at ?? null;
   const streakCoach = useFirstTime('streak', { enabled: streak > 0 });
 
-  // Durable pending pointer (survives a full app restart). Reloaded on every
-  // focus so it appears right after the learner leaves a session.
-  const [pendingSession, setPending] = useState<PendingSession | null>(null);
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      void loadPendingSession().then((p) => {
-        if (alive) setPending(p);
-      });
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
-  const dismissResume = useCallback(() => {
-    void clearPendingSession();
-    setPending(null);
-  }, []);
+  // Register the device's Expo push token with the API so the server's
+  // extraction worker can wake us up when async work finishes. Runs once
+  // per learner — guarded by a ref so re-renders don't refire.
+  // No-op in Expo Go (the helper returns silently).
+  const pushRegisteredRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!learnerId) return;
+    if (pushRegisteredRef.current === learnerId) return;
+    pushRegisteredRef.current = learnerId;
+    void registerPushTokenForLearner(learnerId).catch(() => null);
+  }, [learnerId]);
 
   // Sync local test-date notifications whenever schedule data changes.
   const notifKeyRef = useRef<string | null>(null);
@@ -200,7 +187,7 @@ export default function HomeScreen() {
   const noPracticeYet = tiles.length > 0 && !lastSessionAt;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <LbHeader
         right={
           streak > 0 ? (
@@ -252,49 +239,6 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 14, color: LB.ink2, lineHeight: 20 }}>{t('re_entry')}</Text>
-          </View>
-        )}
-
-        {/* Resume banner — shown when the user navigated away mid-session */}
-        {pendingSession && (
-          <View
-            style={{
-              backgroundColor: LB.lavender,
-              borderRadius: 16,
-              padding: 16,
-              marginBottom: 16,
-              gap: 10,
-            }}
-          >
-            <Text style={{ fontSize: 14, color: LB.ink, fontWeight: '500', lineHeight: 20 }}>
-              {t('resume_banner')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Btn
-                  size="sm"
-                  full
-                  onPress={() => {
-                    router.push({
-                      pathname: '/(learner)/session/[sessionId]',
-                      params: {
-                        sessionId: pendingSession.session_id,
-                        resumeSessionId: pendingSession.session_id,
-                        learnerId: pendingSession.learner_id,
-                        testMode: String(pendingSession.test_mode),
-                      },
-                    });
-                  }}
-                >
-                  {t('resume_yes')}
-                </Btn>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Btn size="sm" full variant="ghost" onPress={dismissResume}>
-                  {t('resume_no')}
-                </Btn>
-              </View>
-            </View>
           </View>
         )}
 
@@ -391,7 +335,7 @@ export default function HomeScreen() {
         ctaLabel={tCoach('dismiss')}
         glyph="🔥"
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -654,7 +598,7 @@ function AddSubjectModal({
         </Pressable>
       </Modal>
 
-      <SafeAreaView style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 22, gap: 18 }}>
           {/* Header row */}
           <View
@@ -914,7 +858,7 @@ function AddSubjectModal({
             {mut.isPending ? t('modal.creating') : t('modal.create')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

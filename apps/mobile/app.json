@@ -58,8 +58,7 @@
       ],
       "@sentry/react-native",
       "expo-localization",
-      "expo-sqlite",
-      "@react-native-voice/voice"
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

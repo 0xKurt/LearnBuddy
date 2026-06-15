@@ -2,6 +2,68 @@
 
 This document is the privacy specification. It is concrete enough that an agent can implement the data flows correctly and an account holder can read the consent screen and trust it.
 
+## 0. Open compliance items — MUST resolve before launch
+
+The codebase as of 2026-05-22 deviates from §1 ("all durable data lives
+in the EU"). Each item below must be either fixed or documented in the
+privacy policy before the app ships to paying users.
+
+### 0.1 DeepSeek tutor runs on Vertex's global endpoint
+
+**State:** `VERTEX_TUTOR_MODEL_ID=deepseek-ai/deepseek-v3.2-maas` with
+`PARTNER_MODEL_LOCATION=global` (see `.env.local` + ENV.md).
+
+**Problem:** Vertex's `global` endpoint does NOT pin requests to an EU
+region. Google routes the call to whichever region has capacity, which
+in practice means a request may be processed in the US. This breaks
+§1 ("no requests leave the EU on the hot path") and the subprocessor
+table (§5) which lists Vertex inference as `europe-west3`.
+
+**What data is sent on this path:**
+
+- Full per-turn system prompt (tutor instructions, item question +
+  expected answer, current learner state)
+- Last ~12 thread messages (learner answers + tutor replies, all in
+  natural language)
+- Current learner message (verbatim text or transcribed voice)
+- Material context snippet (≤ 2 KB of the worksheet's extracted text)
+
+None of this contains the account holder's email, password, or
+billing data. It DOES contain content authored by a child learner
+and content extracted from photos they took of their schoolwork. For
+Art. 8 (children's data) the lawful basis is explicit consent — but
+the consent text must accurately describe the routing.
+
+**Options to resolve, in order of preference:**
+
+1. Wait for DeepSeek V3.2 to publish in a regional Vertex endpoint
+   (`europe-west1` or similar). Then flip `PARTNER_MODEL_LOCATION`
+   and we're done.
+2. Self-host DeepSeek on a GCP `europe-west*` VM or Cloud Run — adds
+   ops + cost, but keeps data in EU.
+3. Switch tutor + regenerate back to Gemini for launch
+   (`VERTEX_TUTOR_MODEL_ID=gemini-2.5-flash`, `VERTEX_MODEL_ID=…flash-lite`),
+   keep DeepSeek behind a feature flag for later. This is the
+   zero-risk path; we lose some tutor quality but stay aligned with §1.
+4. Ship with DeepSeek on the global endpoint and update §1 + §5 + the
+   consent screen to reflect "non-EU LLM routing for tutor" and the
+   relevant Standard Contractual Clauses. Requires legal review.
+
+**Decision deadline:** Before the first paying user is onboarded.
+Tracked here rather than in IDEAS.md because it's a launch blocker,
+not a backlog item.
+
+### 0.2 Vertex region inconsistency in subprocessor table
+
+§5 lists Vertex AI inference as `europe-west3`, but the actual env
+default is `GOOGLE_VERTEX_LOCATION=europe-west4` (Netherlands). Both
+are EU regions so the DSGVO posture is identical, but the doc and the
+code must agree. Fix the table to read `europe-west4` (or move the
+production deployment to `europe-west3` if there's a reason for
+Frankfurt specifically).
+
+---
+
 ## 1. Principles
 
 - **All durable data lives in the EU.** Database, storage, LLM inference, analytics, and error tracking are configured to EU regions. No US replicas. No requests leave the EU on the hot path.

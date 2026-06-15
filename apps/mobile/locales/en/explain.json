@@ -1,0 +1,14 @@
+{
+  "pill": "Explain this",
+  "open": "Open explanation",
+  "title": "Explain this",
+  "subtitle": "What would you like to know?",
+  "tabs": {
+    "question": "What is the question asking?",
+    "concept": "Explain the concept"
+  },
+  "loading": "One moment …",
+  "error": "That didn't go through. Give it another try.",
+  "hint": "Tap a tab above and I'll explain it.",
+  "close": "Close"
+}

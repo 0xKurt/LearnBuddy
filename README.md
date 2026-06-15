@@ -45,10 +45,9 @@ same on every PR. Do not bypass with `--no-verify`.
 
 - `CLAUDE.md` — rules for AI assistants editing this repo (also useful for
   humans new to the codebase).
-- `docs/04-api.md` — the API contract. Cite the relevant section in commit
-  messages.
-- `docs/CODEBASE-AUDIT.md` — current state, gaps, priorities.
-- `docs/IMPLEMENTATION-PLAN.md` — slice-by-slice build order.
+- `docs/README.md` — index of the spec, in reading order.
+- `docs/AGENT-REBUILD-PLAN.md` — the live build plan.
+- `docs/IDEAS.md` — open features and mobile-polish backlog.
 
 ## License
 

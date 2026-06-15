@@ -4,24 +4,24 @@
 
 ## Sources of truth
 
-When implementing a flow, **cite the doc section in your commit message** (e.g. `Doc 04 §auth.signup: implement POST /auth/account/signup`).
+The code IS the spec. Schema lives in `infra/supabase/migrations/`,
+types in `packages/shared-types/`, API in `apps/api/src/routes/`,
+screens in `apps/mobile/app/`, prompts in `apps/api/src/prompts/`.
+The docs below cover what the code can't: strategic vision, design
+identity, legal compliance, live work, and open backlog.
 
-- `docs/01-product.md` — product principles, user model, journeys (J1–J11)
-- `docs/02-architecture.md` — high-level system + observability
-- `docs/03-data-model.md` — schema (must match migrations in `infra/supabase/migrations/`)
-- `docs/04-api.md` — endpoints, validation, error codes, idempotency, rate limits
-- `docs/05-mobile.md` — screen tree, components, performance budgets
-- `docs/06-ai-pipeline.md` — Vertex prompts, safety, refund logic
-- `docs/07-content-types.md` — answer kinds, stimuli, math/diagrams
-- `docs/08-cost-and-credits.md` — credit math, refunds, soft caps
-- `docs/09-privacy.md` — DSGVO, consent, deletion, audit
-- `docs/10-implementation-order.md` — original phased build plan
-- `docs/USER-FLOWS.md` — flat v1 inventory (~371 flows, 23 sections)
-- `docs/USER-FLOWS-DEEP.md` — journeys + edge cases (~357 more)
-- `docs/IMPLEMENTATION-AUDIT.md` — current state, gaps, priorities
-- `docs/IMPLEMENTATION-PLAN.md` — slice-by-slice build order
+- `docs/01-product.md` — strategic product vision (user model, pricing, journeys)
+- `docs/09-privacy.md` — DSGVO inventory + subprocessor list (legal evidence)
+- `docs/DESIGN-BRIEF.md` — visual identity + tone (timeless reference)
+- `docs/AGENT-REBUILD-PLAN.md` — the active build plan
+- `docs/IDEAS.md` — open features + mobile-polish backlog + salvaged design questions
+- `docs/SETUP-VERTEX.md` — one-shot GCP setup reference
+- `docs/README.md` — index
+- `docs/adr/` — Architecture Decision Records (immutable)
 
-If your change diverges from any of these docs, write an ADR (`/engineering:architecture`) and reference it in the commit.
+If your change involves an irreversible architectural choice, write an
+ADR. Code comments may still cite old "Doc 04 §…" tombstones; treat
+those as "look it up in git history" markers — don't add new ones.
 
 ## Hard rules
 
@@ -31,11 +31,10 @@ If your change diverges from any of these docs, write an ADR (`/engineering:arch
 4. **Never skip migrations.** A migration once merged is immutable. Need a change? New migration.
 5. **Never hardcode demo data in production code paths.** Use mock data only inside `__fixtures__/` files referenced by tests.
 6. **Never ship a screen with `useState('hardcoded')` as its primary content.** The skeleton was OK; the next touch wires it.
-7. **Cite the doc** in commit messages and PR bodies. Reviewers need it.
-8. **Never use raw `<Pressable>` for a CTA button.** Always use `<Btn>` from `components/lb/`. Raw Pressables with inline `backgroundColor` bypass the design system and have broken the welcome screen CTAs repeatedly. `_layout.tsx` modals are not exempt — they must use `<Btn>` too.
-9. **Never block user interaction with a transparent modal overlay.** Any `Modal` with a full-screen dismiss `Pressable` must be dismissible via an obvious, correctly-styled in-sheet button using `<Btn>`. The outer Pressable intercepts all taps on screens underneath it.
-10. **Never put `backgroundColor` directly on `<Pressable>`.** In React Native, `backgroundColor` on `Pressable` silently fails to render in some versions (RN 0.73+). The `Btn` component already uses the correct pattern: `backgroundColor` lives on an inner `<View>` inside the `Pressable`, and the `Pressable` only holds `alignSelf` + `opacity`. Never revert this to put background styles on the Pressable itself — this is what caused the "white text on paper background, no button visible" bug that broke the welcome screen multiple times.
-11. **Never remove `KeyboardAvoidingView` from `welcome.tsx`.** The CTA button must be pinned OUTSIDE the `ScrollView` and INSIDE a `KeyboardAvoidingView` (`behavior="padding"` on iOS, `"height"` on Android). Without this, the keyboard covers the CTA and users cannot submit the form. This has been broken and re-fixed multiple times — do not touch the layout structure of welcome.tsx without understanding this constraint.
+7. **Never use raw `<Pressable>` for a CTA button.** Always use `<Btn>` from `components/lb/`. Raw Pressables with inline `backgroundColor` bypass the design system and have broken the welcome screen CTAs repeatedly. `_layout.tsx` modals are not exempt — they must use `<Btn>` too.
+8. **Never block user interaction with a transparent modal overlay.** Any `Modal` with a full-screen dismiss `Pressable` must be dismissible via an obvious, correctly-styled in-sheet button using `<Btn>`. The outer Pressable intercepts all taps on screens underneath it.
+9. **Never put `backgroundColor` directly on `<Pressable>`.** In React Native, `backgroundColor` on `Pressable` silently fails to render in some versions (RN 0.73+). The `Btn` component already uses the correct pattern: `backgroundColor` lives on an inner `<View>` inside the `Pressable`, and the `Pressable` only holds `alignSelf` + `opacity`. Never revert this to put background styles on the Pressable itself — this is what caused the "white text on paper background, no button visible" bug that broke the welcome screen multiple times.
+10. **Never remove `KeyboardAvoidingView` from `welcome.tsx`.** The CTA button must be pinned OUTSIDE the `ScrollView` and INSIDE a `KeyboardAvoidingView` (`behavior="padding"` on iOS, `"height"` on Android). Without this, the keyboard covers the CTA and users cannot submit the form. This has been broken and re-fixed multiple times — do not touch the layout structure of welcome.tsx without understanding this constraint.
 
 ## Required quality gates
 
@@ -51,16 +50,15 @@ If any gate fails, fix it before continuing. Don't pile work on a red bar.
 
 ## Work pattern — vertical slices
 
-Resist horizontal sweeps ("implement all 14 routes"). Pick one vertical from `docs/IMPLEMENTATION-PLAN.md`, finish it, ship it.
+Resist horizontal sweeps ("implement all 14 routes"). Pick one vertical from `docs/AGENT-REBUILD-PLAN.md` (active work) or `docs/IDEAS.md` (open backlog), finish it, ship it.
 
 A vertical slice is **done** when:
 
 1. **Types** — input/output zod schemas exist in `packages/shared-types/src/`.
 2. **Migration** — table exists in `infra/supabase/migrations/`. Already done for v1 of every entity.
-3. **API** — handler implemented, returns the documented shape, error codes correct.
+3. **API** — handler implemented, returns the right shape, error codes correct.
 4. **Test** — at minimum: happy path + one validation failure + one auth/permission failure. Vitest, Hono test client.
 5. **Mobile** — the screen(s) that consume this endpoint actually call it. No stub buttons. TanStack Query for caching.
-6. **Doc cited** — commit and/or PR references the spec section.
 
 If any of those steps are missing, the slice is **not done** — even if `pnpm test` is green.
 
@@ -98,4 +96,4 @@ Tailwind / NativeWind tokens live in `apps/mobile/tailwind.config.js` and `apps/
 
 Stop, ask, document. Don't fabricate. The user has been burned by tools that confidently ship half-built things.
 
-If a flow is `[implied — needs design]` in `USER-FLOWS.md` or `-DEEP.md`, surface that — do not silently invent a design and ship it.
+If a flow looks ambiguous, check `docs/IDEAS.md` (Part 3) for salvaged open design questions before inventing a design. Surface the ambiguity rather than silently shipping one interpretation.

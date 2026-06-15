@@ -1,9 +1,7 @@
 // Attempts route tests. Doc 04 §POST /attempts + /attempts/batch.
 //
-// Per CODEBASE-AUDIT priority #8: highest-value money flow with zero
-// coverage. Exercises: happy-path local-correct (no LLM, 0 credits),
-// LLM-evaluated incorrect (debit + settle), batch drain (bulk insert +
-// upsert path).
+// Exercises: happy-path local-correct (no LLM, 0 credits), LLM-evaluated
+// incorrect (debit + settle), batch drain (bulk insert + upsert path).
 
 import { describe, it, expect } from 'vitest';
 

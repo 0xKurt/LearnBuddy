@@ -1,0 +1,14 @@
+{
+  "pill": "Explique-moi ça",
+  "open": "Ouvrir l'explication",
+  "title": "Explique-moi ça",
+  "subtitle": "Que veux-tu comprendre ?",
+  "tabs": {
+    "question": "Que demande la question ?",
+    "concept": "Explique le concept"
+  },
+  "loading": "Un instant …",
+  "error": "Ça n'a pas marché. Réessaie tout de suite.",
+  "hint": "Choisis un onglet et je t'explique.",
+  "close": "Fermer"
+}

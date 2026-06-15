@@ -18,7 +18,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { parseNumericInput } from '@learnbuddy/shared-math';
 import {
@@ -114,9 +114,9 @@ export default function PracticeScreen() {
 
   if (templateQuery.isLoading || accountQuery.isLoading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <LoadingState label={t('loading')} />
-      </SafeAreaView>
+      </View>
     );
   }
   if (templateQuery.error) {
@@ -167,7 +167,7 @@ export default function PracticeScreen() {
     }
 
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16 }}>
           <Card tone="mint" padding={24}>
             <Text
@@ -195,7 +195,7 @@ export default function PracticeScreen() {
             {t('finish_home')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -225,7 +225,7 @@ export default function PracticeScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <SessionTopBar
         progress={(idx + 1) / total}
         index={t('progress', { current: idx + 1, total })}
@@ -331,7 +331,7 @@ export default function PracticeScreen() {
           />
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -347,7 +347,7 @@ function ErrorView({
   onCta: () => void;
 }) {
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 12 }}>
         <Text style={{ fontSize: 20, fontWeight: '600', color: LB.ink, letterSpacing: -0.4 }}>
           {title}
@@ -359,6 +359,6 @@ function ErrorView({
           </Btn>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

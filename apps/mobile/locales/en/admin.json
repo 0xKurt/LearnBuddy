@@ -12,6 +12,7 @@
       "profile_edit_sub": "Name, date of birth, year group",
       "notifications": "Notifications",
       "preferences": "Preferences",
+      "voice": "Voice",
       "subscription": "Subscription",
       "data": "Data & privacy",
       "archive": "Archive",
@@ -48,6 +49,24 @@
     "dyslexia_font": {
       "label": "OpenDyslexic font",
       "sub": "Easier-to-read font for dyslexia (font ships in the next update)."
+    }
+  },
+  "voice": {
+    "title": "Tutor's voice",
+    "subtitle": "How the tutor sounds when speaking to you. Tap the note to preview a voice.",
+    "preview_a11y": "Preview {{name}}",
+    "note": "Your choice applies across languages — the same voice keeps the same personality when you switch UI language.",
+    "gender": {
+      "female": "female",
+      "male": "male"
+    },
+    "descriptions": {
+      "aoede": "Calm & warm — the default",
+      "leda": "Soft & friendly, a touch reserved",
+      "kore": "Bright and lively, full of energy",
+      "charon": "Deep and calm",
+      "fenrir": "Warm and friendly",
+      "puck": "Cheeky and playful"
     }
   },
   "account_settings": {

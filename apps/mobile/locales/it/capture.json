@@ -45,5 +45,13 @@
   },
   "limits": {
     "max_reached": "Massimo 10 foto per materiale."
+  },
+  "gallery": {
+    "cta": "Dalla galleria",
+    "permission_title": "Serve l'accesso alle foto",
+    "permission_body": "Così puoi scegliere foto già sul telefono.",
+    "permission_cancel": "Annulla",
+    "permission_settings": "Apri impostazioni",
+    "error": "Impossibile caricare le foto — riprovare?"
   }
 }

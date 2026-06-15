@@ -1,10 +1,19 @@
-// P1 — Vision: extract + generate. Doc 06 §P1 (verbatim, with subject
-// guidance blocks). Bumping PROMPT_VERSION re-runs the eval harness on the
-// next PR; keep that in mind when iterating.
+// P1 — Vision: extract + generate. Doc 06 §P1.
+//
+// Prompt v2 (PROMPT_VERSION 'p1.2') rebuilt from the ground up after
+// reviewing real DB output. The original prompt told Gemini to
+// "extract every meaningful fact" — that produced 50 items from a 3-page
+// worksheet, most of them tautological, meta-about-the-worksheet, or
+// hallucinated. v2 reframes the task as "a teacher writing practice
+// cards" with quality-over-quantity at the centre, a classify-first
+// step, and an explicit self-review pass before finalising.
+//
+// Bumping PROMPT_VERSION re-runs the eval harness on the next PR; keep
+// that in mind when iterating further.
 
-export const PROMPT_VERSION = 'p1.0';
+export const PROMPT_VERSION = 'p1.2';
 
-export const SYSTEM_P1 = `You are a careful, patient learning helper for students. You read images of learning material and produce study questions in the target language. Extract every meaningful fact, concept, formula, definition, and relationship from the material — generate as many questions as the content warrants. Do not limit yourself to a fixed count. You never invent facts beyond what is shown in the images. You never produce content inappropriate for the student's age group.`;
+export const SYSTEM_P1 = `You are an experienced teacher creating practice cards from photos of a student's learning material. The cards will drive a tutoring conversation; each card has to be one a real teacher would ask in class to test understanding. Quality over quantity: every card must teach a distinct concept from the material. Never pad with weak cards, never split one concept into many cards, never duplicate. Generate as many cards as the material genuinely warrants — could be three, could be twenty-five; the lesson decides, not a quota. You never invent facts that are not in the material. You write in the student's target language. You never produce content inappropriate for the student's age. Your output is deterministic JSON in the requested format — never Markdown, never commentary.`;
 
 type SubjectKind =
   | 'math'
@@ -20,89 +29,11 @@ type SubjectKind =
   | 'general'
   | 'other';
 
-const SUBJECT_GUIDANCE: Record<SubjectKind, string> = {
-  math: `For mathematics:
-- Preserve formulas as LaTeX.
-- Distinguish between:
-    (a) Formulas to memorize verbatim → answer_kind: "formula".
-        Set latex_expected canonically; populate latex_acceptable with
-        1–3 equivalent re-arrangements.
-    (b) Definitions of named concepts → answer_kind: "short" or "long".
-        If a formula is part of the definition, include it in
-        expected_answer as $...$.
-    (c) Numeric applications → answer_kind: "numeric" with units when
-        applicable.
-    (d) Procedural recall → answer_kind: "long" or "fill_blank".
-- Prefer fill_blank for short definitions with clear missing words.
-- Generate problem templates aggressively for any parameterizable
-  arithmetic, algebraic, percentage, geometry-area, or proportion problem.`,
-
-  physics: `For physics:
-- Same formula handling as math.
-- Always set units on numeric items; preserve unit symbols
-  (e.g. \\,\\text{m/s}).
-- Distinguish between laws (memorize wording → "short" or "long"),
-  formulas (memorize symbolically → "formula"), and applications
-  (compute → "numeric").
-- Generate problem templates for any parameterizable computation with
-  given numeric inputs.`,
-
-  chemistry: `For chemistry:
-- Render chemical equations as LaTeX in $...$ using \\rightarrow for
-  reaction arrows and ^{} _{} for charges and counts. Example:
-  $2H_2 + O_2 \\rightarrow 2H_2O$.
-- Element symbols are case-sensitive (Na ≠ NA). Preserve exactly.
-- Prefer multiple_choice for nomenclature; short for symbol/name
-  recall; formula for equation completion; long for explanation of
-  reactions.
-- Diagrams: molecular structure drawings and apparatus sketches both
-  warrant diagram_label items.
-- Do NOT generate templates for chemistry.`,
-
-  biology: `For biology:
-- Most material includes labeled diagrams (cells, organs, plants, body
-  systems). Be aggressive with diagram detection; generate
-  diagram_label items.
-- Prefer short for term recall, long for explanations, and
-  multiple_choice for distinctive paired terms.
-- Do NOT generate templates.`,
-
-  geography: `For geography:
-- Maps are diagrams — treat country / city / river / mountain labels as
-  diagram labels.
-- Prefer multiple_choice for capital/country pairings; short for
-  fact recall.
-- Do NOT generate templates.`,
-
-  history: `For history:
-- Most items are short (dates, names, events) or long (causes, effects).
-  Use multiple_choice when distinguishing similar names or dates is the
-  skill.
-- Diagrams are rare; only generate diagram_label items if the page has
-  a clearly labeled timeline diagram or a labeled map.
-- Do NOT generate templates.`,
-
-  language_native: `For language work:
-- Prefer fill_blank for grammar drills (conjugations, declensions,
-  vocabulary in context).
-- Prefer short for vocabulary recall.
-- Prefer long for translation tasks; mark acceptable_answers liberally
-  to admit synonyms.
-- Do NOT generate templates.`,
-
-  language_foreign: `For language work:
-- Prefer fill_blank for grammar drills (conjugations, declensions,
-  vocabulary in context).
-- Prefer short for vocabulary recall.
-- Prefer long for translation tasks; mark acceptable_answers liberally
-  to admit synonyms.
-- Do NOT generate templates.`,
-
-  religion_ethics: `General handling: prefer short and long; use multiple_choice where clearly distinguishing options exists.`,
-  art_music: `General handling: prefer short and long; use multiple_choice where clearly distinguishing options exists.`,
-  general: `General handling: prefer short and long; use multiple_choice where clearly distinguishing options exists.`,
-  other: `General handling: prefer short and long; use multiple_choice where clearly distinguishing options exists.`,
-};
+// SUBJECT_GUIDANCE block intentionally removed — see prompt-v3_1.ts
+// for the same reasoning. Pre-prescribing answer_kind preferences per
+// subject locks the extractor into one shape per (often miss-) classified
+// topic; the model picks the right answer_kind from the actual question
+// content. The general guidance below applies to every subject.
 
 export function buildP1UserPrompt(input: {
   locale: string;
@@ -115,91 +46,207 @@ Student grade level: ${input.gradeLevel}
 Subject: ${input.subject}
 Subject kind: ${input.subjectKind}
 
-Tasks:
+You will work through FIVE steps in order. Do not skip any.
 
-1. EXTRACTION
-   Read every provided image. They are pages of one piece of learning
-   material — printed AND handwritten content may appear. Produce a clean
-   Markdown transcription of all educational content in
-   extracted_markdown. Preserve:
-     - Headings and lists
-     - Tables (Markdown tables)
-     - Mathematical and chemical formulas as LaTeX: inline $...$,
-       display $$...$$. Reaction arrows as \\rightarrow. Charges/counts
-       as ^{...} _{...}.
-   Skip: page numbers, student names, decorative marks, anything clearly
-   not part of the lesson.
+══════════════════════════════════════════════════════════════════════
+STEP 1 — TRANSCRIBE
+══════════════════════════════════════════════════════════════════════
+Read every page. Produce a clean Markdown transcription in
+\`extracted_markdown\`. Preserve headings, lists, tables (as Markdown
+tables), formulas as LaTeX ($...$ inline, $$...$$ display), reaction
+arrows as \\rightarrow, charges/counts as ^{...} _{...}.
+Skip: page numbers, student names, decorative marks, anything clearly
+not part of the lesson.
 
-2. ITEM GENERATION
-   Generate study items in ${input.locale} that thoroughly test the material.
-   Extract EVERY meaningful fact, concept, definition, formula, and relationship
-   — there is no fixed count. Cover all important concepts; mix answer kinds. Each item:
-     - question: prompt shown to the student
-     - expected_answer: a concise correct answer
-     - acceptable_answers: array of 1–4 equivalent phrasings or shorter
-       valid variants. Include common spelling tolerances. Do NOT include
-       partial answers.
-     - answer_kind: one of "short" | "long" | "numeric" |
-       "multiple_choice" | "formula" | "fill_blank" | "diagram_label"
-     - difficulty: 1..5 for grade ${input.gradeLevel}
-     - topic: short topic label in ${input.locale}
-     - source_excerpt: <200-char quote from material where answer is found
-     - language: detected language code
+══════════════════════════════════════════════════════════════════════
+STEP 2 — CLASSIFY THE PAGE(S)
+══════════════════════════════════════════════════════════════════════
+Decide internally what TYPE of material this is. The type drives how
+you generate items in Step 3. Pick the dominant type per page; you may
+mix types across a multi-page material.
 
-   For multiple_choice:
-     - mc_options: 3 or 4 plausible options
-     - mc_correct_index: 0-based
+  • EXPLANATION — explanatory text with definitions, processes,
+    relationships, named concepts. Examples: a biology page about
+    photosynthesis, a history paragraph about WWI causes.
+    → Generate concept questions ("Was bedeutet X?", "Warum passiert Y?",
+       "Wie unterscheidet sich A von B?"). Test understanding.
 
-   For numeric:
-     - units: unit string (e.g. "m/s", "kg") or omit if dimensionless
+  • PROBLEM_SET — exercises with visible problems and (sometimes)
+    answers. Examples: a math sheet with 20 fraction simplification
+    problems, physics computation drills.
+    → Generate 1 item per DISTINCT problem TYPE (not one per exercise!).
+       If five problems are all "simplify $\\frac{2x+2y}{4x+4y}$" patterns,
+       that is ONE concept and ONE problem_template, not five cards.
 
-   For formula:
-     - latex_expected: canonical LaTeX form
-     - latex_acceptable: 1–3 equivalent re-arrangements where they exist
+  • REFERENCE_OR_TEMPLATE — vocabulary lists, conjugation tables,
+    pattern tables (time-telling frames, declension tables), country/
+    capital lists, formula sheets, diagram label lists. Anything that
+    describes a STRUCTURE with placeholders or is a list of instances
+    of one category.
+    → Generate 1–3 SUMMARY cards that teach the PATTERN. NEVER one
+       card per exemplar. NEVER invent specific instances from a
+       structural template — if the worksheet shows the frame without
+       concrete fillings, your card teaches the frame; it does not
+       fabricate fillings as answers.
 
-   For fill_blank:
-     - fill_blank_template: text with one or more ___ placeholders
-     - fill_blank_answers: ordered correct fillings
+  • DIAGRAM_HEAVY — labeled images (anatomy, machines, maps).
+    → Generate diagram_label items pointing to the labels you see.
+       Limit: 10 per diagram.
 
-   For diagram_label:
-     - diagram_ref: { "diagram_index": N, "label_index": M }
-     - expected_answer: the label's text
+  • CHECKLIST_OR_META — the worksheet IS or contains a list of topics
+    to study, a test table-of-contents, an administrative page, a
+    "what's on the test" / "what to learn" list, a page-pointer list,
+    or any section about WHAT to study rather than the content itself.
+    → Produce ZERO items from this region. The checklist describes
+       what to learn, it is not learning material. Even if the
+       checklist mentions topics by name, do NOT produce items based
+       on the checklist's mention — only items from the actual content
+       elsewhere on the page.
 
-3. DIAGRAMS
-   If any image contains a labeled diagram, return a diagrams array.
-   Each diagram:
-     - page_index (which input image, 0-based)
-     - title (caption or null)
-     - bounding_box: [x0, y0, x1, y1] normalized 0..1 in the page
-     - labels: ordered array, each with text, label_text_box,
-       connector_box, target_xy.
-   For each diagram, generate items with answer_kind: "diagram_label"
-   referencing it. At most 10 label items per diagram.
+  • MIXED — when a page genuinely combines two of the above (e.g. a
+    checklist on top + actual lesson content below; or an explanation
+    followed by a problem set). Treat each region with its own rules.
+    Crucially: the CHECKLIST_OR_META region of a MIXED page produces
+    ZERO items, even if it mentions topics that ARE also taught on the
+    same page. Only the actual content region produces items.
 
-4. PROBLEM TEMPLATES (only for subjectKind in {math, physics})
-   If a problem is clearly an instance of a general pattern, emit it as
-   a problem_templates entry with template_text, params, constraints,
-   solution_expression, answer_kind, units (if applicable), topic, and
-   difficulty. Emit at most 3 templates per material.
+══════════════════════════════════════════════════════════════════════
+STEP 3 — DRAFT ITEMS
+══════════════════════════════════════════════════════════════════════
+Now write the cards. Hold these principles:
 
-5. SUBJECT-SPECIFIC GUIDANCE
-${SUBJECT_GUIDANCE[input.subjectKind]}
+  1. ONE concept per card. No two cards may teach the same thing.
+  2. The card must test UNDERSTANDING the teacher could grade.
+  3. Every answer must be present in or derivable from the material.
+     Never invent facts.
+  4. The kid will be tested on this. Cards that don't help them pass
+     are noise — drop them.
 
-6. SAFETY GUARD
-   If the images do not look like educational material (chat screenshots,
-   photos of people unrelated to a textbook, advertisements, personal
-   documents), return:
-   {
-     "detected_language": null,
-     "extracted_markdown": "",
-     "items": [],
-     "diagrams": [],
-     "problem_templates": [],
-     "error": "not_educational"
-   }
+HOW MANY CARDS
 
-OUTPUT FORMAT
-Return strictly valid JSON, no Markdown fences, no commentary, matching:
+There is NO fixed budget — a page with 3 distinct concepts gets 3 cards;
+a dense page with 20 distinct concepts gets 20. The rule is:
+
+  • One card per DISTINCT LEARNABLE CONCEPT that the material teaches.
+  • Two cards on the same concept = drop one.
+  • A vocabulary list, conjugation table, time-telling pattern, or list
+    of exemplars is ONE concept (the pattern), not N cards.
+  • A REFERENCE_OR_TEMPLATE page typically yields 1–3 summary cards.
+  • A CHECKLIST_OR_META page yields ZERO cards.
+  • An EXPLANATION page yields as many cards as the concepts it
+    introduces — could be 4, could be 25.
+
+Self-check: if a draft has ~25 items and they're all genuinely distinct
+concepts, that's fine. If 12 of them are minor variations of the same
+idea, drop them.
+
+Padding the count with weak cards is forbidden. Better 6 strong cards
+than 30 padded ones.
+
+FORBIDDEN PATTERNS — output will be rejected if you produce any:
+
+  ❌ META-QUESTIONS about the source — including book/page pointers, table-of-contents questions, and "what topics will be on the test" questions. A real teacher tests CONTENT, not the layout of the worksheet, not the table of contents, not the book pagination. Items whose answer is a page number, a chapter section, or a list of topics-on-the-test never get generated.
+
+  ❌ CIRCULAR / TAUTOLOGICAL questions where the question text reveals the answer (e.g. asking "which words describe X" when X itself appears in the answer set).
+
+  ❌ ONE CARD PER EXEMPLAR in a list. A vocabulary list, a sound-word list, a conjugation table, or any list of category instances should be bundled into ONE concept card that teaches the pattern — never one card per item in the list.
+
+  ❌ TAUTOLOGICAL FILL-BLANKS that just repeat the source. If the "answer" is identical to a sentence already shown on the worksheet, there is nothing to learn — skip.
+
+  ❌ TRIVIA from example dialogues / sample sentences. The dialogue is there to illustrate a concept, not to be memorised. Don't write items that test whether the student remembers what a character in a worksheet dialogue said.
+
+  ❌ HALLUCINATED ANSWERS. When the worksheet shows a STRUCTURAL PATTERN (a time-telling frame with placeholders, a conjugation skeleton, a formula template), do NOT invent specific concrete instances and call them answers. Either teach the pattern in ONE card whose answer states the structure, or skip.
+
+  ❌ NEAR-DUPLICATES. If you've written a card on a concept, do not write another on the same concept with slightly different wording.
+
+  ❌ YES/NO WITHOUT EXPLANATION. A yes/no card is rarely a learning card; if you must, make sure the answer is a substantive explanation, not just "yes" or "no".
+
+══════════════════════════════════════════════════════════════════════
+STEP 4 — SELF-REVIEW (do this before finalising the JSON)
+══════════════════════════════════════════════════════════════════════
+Walk through your draft items. For each item, mentally answer:
+
+  1. Would a teacher actually ask this in class? (No → drop.)
+  2. Does the question contain the answer? (Yes → rewrite or drop.)
+  3. Is this a near-duplicate of another card I wrote? (Yes → drop one.)
+  4. Is the answer present in the material, not invented? (Invented → drop.)
+  5. Does this teach a CONCEPT, not regurgitate a sample? (Sample → drop.)
+  6. Is this a META question about the source? (Yes → drop.)
+
+Aggressively drop weak cards. The right number of cards is "exactly as
+many distinct concepts as the material teaches" — no padding, no
+duplicates. That number could be 3 or 25; the lesson, not a quota,
+decides.
+
+══════════════════════════════════════════════════════════════════════
+STEP 5 — ITEM FIELDS + OUTPUT FORMAT
+══════════════════════════════════════════════════════════════════════
+
+Each item has these fields:
+  - question: prompt shown to the student
+  - expected_answer: a concise correct answer
+  - acceptable_answers: 1–4 equivalent phrasings or shorter valid
+    variants. Include common spelling tolerances. Never include
+    partial answers.
+  - answer_kind: "short" | "long" | "numeric" | "multiple_choice"
+                | "formula" | "fill_blank" | "diagram_label"
+  - difficulty: 1..5 for grade ${input.gradeLevel}
+  - topic: COARSE topic label in ${input.locale}. ONE topic for the
+    whole material, AT MOST TWO if the page genuinely covers two
+    distinct subject areas. Use the chapter / lesson name a student
+    would recognise. Never hyper-specific sub-categories (don't split
+    one lesson into "X usage" + "X vocabulary" + "X questions" — they
+    all belong to the same topic). Never worksheet-section labels
+    ("help with questions", "summary", "test topics") — those are
+    layout, not content.
+  - source_excerpt: <200-char quote from the material where the answer
+    is found. Empty string if not directly quotable.
+  - language: detected language code
+
+Per-kind required extras:
+  • multiple_choice: mc_options (3 or 4 plausible options),
+                     mc_correct_index (0-based)
+  • numeric:         units (unit string, or omit if dimensionless)
+  • formula:         latex_expected (canonical LaTeX),
+                     latex_acceptable (1–3 equivalent re-arrangements
+                     if they exist)
+  • fill_blank:      fill_blank_template (text with one or more ___
+                     placeholders), fill_blank_answers (ordered)
+  • diagram_label:   diagram_ref { diagram_index, label_index },
+                     expected_answer = the label's text
+
+DIAGRAMS (if any image contains labelled diagrams):
+  Each diagram entry:
+    - page_index (0-based)
+    - title (caption or null)
+    - bounding_box: [x0, y0, x1, y1] normalised 0..1 in the page
+    - labels: ordered array, each with text, label_text_box,
+      connector_box, target_xy
+  For each diagram you also generate at most 10 diagram_label items
+  referencing it. These count toward the 30-item cap.
+
+PROBLEM TEMPLATES (only when the material contains parameterisable
+problems — i.e. items where you can swap concrete numbers/values and
+generate equivalent practice items via the same solution expression).
+At most 3 template entries per material. Each:
+  template_text, params, constraints, solution_expression, answer_kind,
+  units (if applicable), topic, difficulty.
+
+SAFETY GUARD: if the images are not educational material (chat
+screenshots, photos of people, ads, personal documents), return:
+  {
+    "detected_language": null,
+    "extracted_markdown": "",
+    "items": [],
+    "diagrams": [],
+    "problem_templates": [],
+    "error": "not_educational"
+  }
+
+══════════════════════════════════════════════════════════════════════
+OUTPUT
+══════════════════════════════════════════════════════════════════════
+Return STRICTLY valid JSON, no Markdown fences, no commentary, matching:
 
 {
   "detected_language": "de"|"en"|"fr"|"es"|"it"|null,

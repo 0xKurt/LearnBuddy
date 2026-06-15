@@ -28,7 +28,6 @@ export { LbTextInput } from './LbTextInput.js';
 export { LbDatePicker } from './LbDatePicker.js';
 export { SvgStimulus } from './SvgStimulus.js';
 export { ExplainModal } from './ExplainModal.js';
-export { VoiceButton } from './VoiceButton.js';
 export { CoachMark } from './CoachMark.js';
 export { LbHeader } from './LbHeader.js';
 export { CachedImage } from './CachedImage.js';

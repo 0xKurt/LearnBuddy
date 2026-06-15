@@ -22,7 +22,9 @@
 
 import type { Deps } from '../lib/deps.js';
 import type { Env } from '../lib/env.js';
+import { __clearMaterialContextCache } from '../lib/material-context.js';
 import { FakeLlmGateway } from './fake-llm.js';
+import { FakeSTTGateway, FakeTTSGateway } from '../lib/voice/fake.js';
 
 export type FakeUser = { id: string; email: string };
 export type FakeRow = Record<string, unknown>;
@@ -341,6 +343,11 @@ export class FakeSupabase {
 
 /** Build a Deps instance suitable for route tests. */
 export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
+  // Material-context has a process-level LRU cache to spare prod from
+  // repeated row reads per session. In tests, each `createTestDeps()` is a
+  // fresh universe (different ids, different markdown), so we wipe the cache
+  // here to prevent one test's material from poisoning the next.
+  __clearMaterialContextCache();
   const fake = new FakeSupabase();
   const env: Env = {
     SUPABASE_URL: 'http://fake.local',
@@ -353,8 +360,11 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     ENABLE_DEV_ROUTES: 'false',
     GOOGLE_VERTEX_LOCATION: 'europe-west4',
     VERTEX_MODEL_ID: 'gemini-2.5-flash-lite',
+    VISION_MODEL_ID: 'gemini-2.5-flash-lite',
     VERTEX_TUTOR_MODEL_ID: 'gemini-2.5-flash',
+    PARTNER_MODEL_LOCATION: 'europe-west4',
     EXTRACTION_WORKER_SECRET: 'test-worker-secret',
+    AGENT_PROMPT_VERSION: 'v3',
   };
   return {
     env,
@@ -363,6 +373,8 @@ export function createTestDeps(overrides: Partial<Deps> = {}): Deps {
     supabase: fake as unknown as Deps['supabase'],
     supabaseAnon: fake as unknown as Deps['supabaseAnon'],
     llm: new FakeLlmGateway(),
+    stt: new FakeSTTGateway(),
+    tts: new FakeTTSGateway(),
     now: () => new Date('2026-05-16T10:00:00Z'),
     uuid: () => `uuid-${Math.random().toString(36).slice(2, 10)}`,
     ...overrides,

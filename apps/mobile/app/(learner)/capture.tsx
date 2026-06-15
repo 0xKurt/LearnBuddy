@@ -8,6 +8,7 @@
 //   - red verdict opens a "Trotzdem behalten" sheet (Doc 05 says red is
 //     non-blocking; the user always wins)
 //   - long-press strip thumbnail → delete; max 10 photos per material
+//   - "Aus Galerie" import via expo-image-picker for already-taken photos
 //   - "Fertig" → SubjectFolderPicker when no folderId/subjectId param was
 //     passed in by the folder / subject screens. Photos + target are
 //     stashed in the zustand capture store for Slice C2 to consume on
@@ -23,12 +24,16 @@ import { useQuery } from '@tanstack/react-query';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { DeviceMotion, type DeviceMotionMeasurement } from 'expo-sensors';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Linking,
   Modal,
   Pressable,
@@ -36,7 +41,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Btn,
@@ -62,12 +66,55 @@ import {
 import { useCaptureStore, type CapturedPhoto } from '../../lib/store/capture.js';
 import { LB } from '../../lib/theme/colors.js';
 
-const MAX_PHOTOS = 20;
+const MAX_PHOTOS = 10;
+
+/** expo-camera renders the preview with object-fit: cover into the
+ *  view's aspect ratio. On modern phones the screen aspect (≈ 9 : 19.5
+ *  portrait) is "taller and narrower" than the sensor (3 : 4 portrait),
+ *  so the preview scales the sensor until its HEIGHT fills the screen
+ *  height — and the left and right edges of the sensor get cropped
+ *  out of view. `takePictureAsync` then returns the full sensor frame,
+ *  including the bands on either side that the user never saw. That's
+ *  the "ich sehe ganz viel drum rum" the kid reported.
+ *
+ *  Fix: crop the captured image to the viewfinder's aspect ratio.
+ *  Keep full sensor HEIGHT (top of frame = top of preview), crop the
+ *  sides symmetrically to match the screen's width-to-height ratio. */
+async function cropToViewfinder(
+  uri: string,
+  imgWidth: number,
+  imgHeight: number,
+): Promise<{ uri: string; width: number; height: number }> {
+  const screen = Dimensions.get('window');
+  // Screen aspect ratio (width / height) — portrait phones < 1.
+  const screenAspect = screen.width / screen.height;
+  const targetWidth = Math.round(imgHeight * screenAspect);
+  // Nothing to do if the sensor is already narrower than the screen
+  // (would mean the preview cropped TOP/BOTTOM instead — opposite
+  // problem, not seen on the phones we ship today).
+  if (targetWidth >= imgWidth) {
+    return { uri, width: imgWidth, height: imgHeight };
+  }
+  const originX = Math.round((imgWidth - targetWidth) / 2);
+  try {
+    const out = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ crop: { originX, originY: 0, width: targetWidth, height: imgHeight } }],
+      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
+    );
+    return { uri: out.uri, width: out.width, height: out.height };
+  } catch {
+    // If cropping fails for any reason, fall back to the uncropped
+    // image rather than losing the capture entirely.
+    return { uri, width: imgWidth, height: imgHeight };
+  }
+}
 
 export default function CaptureScreen() {
   const { t } = useTranslation('capture');
   const navigateUp = useNavigateUp();
   const { t: tCoach } = useTranslation('coach');
+  const captureInsets = useSafeAreaInsets();
   const cameraCoach = useFirstTime('camera');
   const params = useLocalSearchParams<{ subjectId?: string; folderId?: string }>();
   const preSubjectId = params.subjectId ?? null;
@@ -143,22 +190,28 @@ export default function CaptureScreen() {
     try {
       const pic = await cam.takePictureAsync({ quality: 0.85, skipProcessing: false });
       if (!pic) return;
-      const { gray } = await decodeForQuality(pic.uri, pic.width, pic.height);
+      // Crop the captured frame to the viewfinder's aspect ratio so
+      // the saved photo matches what the user framed (see
+      // cropToViewfinder for the why). Quality scoring runs on the
+      // CROPPED image so brightness/blur reflect what the extractor
+      // will actually see.
+      const cropped = await cropToViewfinder(pic.uri, pic.width, pic.height);
+      const { gray } = await decodeForQuality(cropped.uri, cropped.width, cropped.height);
       const blur = scoreBlur(gray);
       const brightness = scoreBrightness(gray);
       const score: QualityScore = {
         blur,
         brightness,
         tilt: tiltAtShutter,
-        width: pic.width,
-        height: pic.height,
+        width: cropped.width,
+        height: cropped.height,
       };
       const verdict = classify(score);
 
       const photo: CapturedPhoto = {
-        uri: pic.uri,
-        width: pic.width,
-        height: pic.height,
+        uri: cropped.uri,
+        width: cropped.width,
+        height: cropped.height,
         quality: score,
         localId: `${Date.now()}-${photos.length + 1}`,
       };
@@ -180,6 +233,83 @@ export default function CaptureScreen() {
     setPhotos((prev) => prev.filter((p) => p.localId !== localId));
   };
 
+  // Pick from device photo library. We still score each picked image with the
+  // same blur / brightness / tilt path the camera shutter uses, so the worker
+  // sees consistent quality metadata regardless of whether photos were taken
+  // here or already existed on the phone. Tilt is 0 (no device-motion frame
+  // available for a previously-taken photo).
+  const pickFromGallery = async () => {
+    if (shutterBusy) return;
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      Alert.alert(t('limits.max_reached'));
+      return;
+    }
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(t('gallery.permission_title'), t('gallery.permission_body'), [
+        { text: t('gallery.permission_cancel'), style: 'cancel' },
+        ...(perm.canAskAgain
+          ? []
+          : [
+              {
+                text: t('gallery.permission_settings'),
+                onPress: () => void Linking.openSettings(),
+              },
+            ]),
+      ]);
+      return;
+    }
+    setShutterBusy(true);
+    try {
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        selectionLimit: remaining,
+        quality: 0.85,
+        exif: false,
+      });
+      if (res.canceled || res.assets.length === 0) return;
+      const accepted: CapturedPhoto[] = [];
+      for (const asset of res.assets) {
+        try {
+          const { gray } = await decodeForQuality(
+            asset.uri,
+            asset.width ?? 1024,
+            asset.height ?? 1024,
+          );
+          const blur = scoreBlur(gray);
+          const brightness = scoreBrightness(gray);
+          const score: QualityScore = {
+            blur,
+            brightness,
+            tilt: 0,
+            width: asset.width ?? 1024,
+            height: asset.height ?? 1024,
+          };
+          accepted.push({
+            uri: asset.uri,
+            width: asset.width ?? 1024,
+            height: asset.height ?? 1024,
+            quality: score,
+            localId: `gal-${Date.now()}-${accepted.length + 1}`,
+          });
+        } catch {
+          // skip a single bad asset; keep going so the user doesn't lose
+          // the others in the same selection
+        }
+      }
+      if (accepted.length > 0) {
+        setPhotos((prev) => [...prev, ...accepted]);
+        setRecent({ status: 'green', reason: null });
+      }
+    } catch {
+      toast.error(t('gallery.error'));
+    } finally {
+      setShutterBusy(false);
+    }
+  };
+
   const commit = (target: { subjectId: string; folderId: string | null }) => {
     setPending({
       photos,
@@ -192,7 +322,11 @@ export default function CaptureScreen() {
 
   const onDone = () => {
     if (photos.length === 0) return;
-    if (preSubjectId) {
+    // Pre-targeted from a Lernziel screen → commit directly. Pre-
+    // targeted from a subject screen → still open the picker so the
+    // learner picks a Lernziel (the picker auto-skips step 1 because
+    // initialSubjectId is set).
+    if (preSubjectId && preFolderId) {
       commit({ subjectId: preSubjectId, folderId: preFolderId });
       return;
     }
@@ -204,17 +338,17 @@ export default function CaptureScreen() {
 
   if (!permission) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={LB.ink2} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
         </View>
@@ -230,7 +364,7 @@ export default function CaptureScreen() {
             {t('permission.cta')}
           </Btn>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -238,10 +372,7 @@ export default function CaptureScreen() {
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" />
 
-      <SafeAreaView
-        pointerEvents="box-none"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0 }}
-      >
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
         <View
           style={{
             flexDirection: 'row',
@@ -257,12 +388,17 @@ export default function CaptureScreen() {
           )}
           <View style={{ width: 40 }} />
         </View>
-      </SafeAreaView>
+      </View>
 
-      <SafeAreaView
-        edges={['bottom']}
+      <View
         pointerEvents="box-none"
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingBottom: captureInsets.bottom,
+        }}
       >
         <View style={{ paddingHorizontal: 14, paddingBottom: 10, gap: 10 }}>
           {recent && (
@@ -336,12 +472,31 @@ export default function CaptureScreen() {
               backgroundColor: 'rgba(0,0,0,0.55)',
             }}
           >
-            <View style={{ minWidth: 64 }}>
+            <View style={{ minWidth: 64, gap: 6 }}>
               <Text style={{ color: '#fff', fontSize: 12 }}>
                 {photos.length === 1
                   ? t('strip.label_one')
                   : t('strip.label_other', { count: photos.length })}
               </Text>
+              <Pressable
+                onPress={() => void pickFromGallery()}
+                disabled={shutterBusy || photos.length >= MAX_PHOTOS}
+                accessibilityRole="button"
+                accessibilityLabel={t('gallery.cta')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                  backgroundColor: 'rgba(255,255,255,0.18)',
+                  alignSelf: 'flex-start',
+                  opacity: shutterBusy || photos.length >= MAX_PHOTOS ? 0.5 : 1,
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>
+                  {t('gallery.cta')}
+                </Text>
+              </Pressable>
             </View>
             <Pressable
               onPress={onShutter}
@@ -364,7 +519,7 @@ export default function CaptureScreen() {
                 }}
               >
                 <View
-                  style={{ width: 54, height: 54, borderRadius: 999, backgroundColor: LB.ink }}
+                  style={{ width: 54, height: 54, borderRadius: 999, backgroundColor: LB.primary }}
                 />
               </View>
             </Pressable>
@@ -396,7 +551,7 @@ export default function CaptureScreen() {
             </View>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       <Modal
         visible={redCandidate !== null}
@@ -461,6 +616,7 @@ export default function CaptureScreen() {
         <SubjectFolderPicker
           visible={pickerVisible}
           learnerId={learnerId}
+          initialSubjectId={preSubjectId ?? null}
           onCancel={() => setPickerVisible(false)}
           onChoose={(target) => {
             setPickerVisible(false);

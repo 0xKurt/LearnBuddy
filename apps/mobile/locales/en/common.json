@@ -84,5 +84,9 @@
     "title": "What's New",
     "items": ["Confirm password on sign-up", "App updates are detected automatically"],
     "cta": "Let's go"
+  },
+  "math": {
+    "preview_placeholder": "Preview appears here …",
+    "answer_placeholder": "Answer"
   }
 }

@@ -34,6 +34,7 @@ import { refund, settle, tryDebit } from '../lib/credits.js';
 import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { VISION_ESTIMATE } from '../lib/extraction.js';
+import { drainExtractionJobs } from '../lib/extraction-drain.js';
 
 // Maximum total claim attempts (initial + retries) before we refuse to keep
 // burning credits on a material that legitimately can't be extracted.
@@ -254,7 +255,71 @@ materialRoutes.post(
       .update({ extraction_status: 'pending', extraction_error: null })
       .eq('id', input.material_id);
 
+    // Kick the worker fire-and-forget. In prod pg_cron also fires every
+    // 60 s as a backup; in local dev pg_cron doesn't reach localhost, so
+    // this is the path that actually moves the job from queued → ready.
+    // Never await — the 202 must return immediately so the mobile poll
+    // loop starts. Skipped in tests so the existing pending→drain→ready
+    // flow keeps working (route tests manually call /materials-worker/drain).
+    if (getDeps(c).env.NODE_ENV !== 'test') {
+      const { llm } = getDeps(c);
+      void drainExtractionJobs({ supabase, llm, now }).catch(() => {
+        /* swallow — pg_cron will retry */
+      });
+    }
+
     return c.json({ material_id: input.material_id, status: 'pending' }, 202);
+  },
+);
+
+// ── PATCH /materials/:id — rename + move ────────────────────────────────────
+//
+// Two optional fields. Either or both can be present. Validates ownership
+// and (when moving) that the target folder belongs to the same subject so
+// a learner can't sneak a material into someone else's folder.
+
+const MaterialPatchBody = z.object({
+  title: z.string().trim().min(1).max(140).nullable().optional(),
+  folder_id: z.string().uuid().nullable().optional(),
+});
+
+materialRoutes.patch(
+  '/:id',
+  rateLimit({ key: 'materials_patch', per_day: 60 }),
+  zValidator('json', MaterialPatchBody),
+  async (c) => {
+    const { supabase } = getDeps(c);
+    const learner_id = c.get('learner_id');
+    if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+    const material_id = c.req.param('id');
+    const body = c.req.valid('json');
+    if (body.title === undefined && body.folder_id === undefined) {
+      throw new ApiError('validation_failed', 'title or folder_id must be provided');
+    }
+
+    const owned = await ownedMaterial(supabase, learner_id, material_id);
+
+    // Moving into a folder requires the folder to live in the same subject.
+    // Moving out (folder_id: null) is always allowed.
+    if (body.folder_id) {
+      await ownedFolder(supabase, owned.subject_id, body.folder_id);
+    }
+
+    const patch: Record<string, unknown> = {};
+    if (body.title !== undefined) patch.title = body.title;
+    if (body.folder_id !== undefined) patch.folder_id = body.folder_id;
+
+    const upd = await supabase
+      .from('materials')
+      .update(patch)
+      .eq('id', material_id)
+      .select('id, title, folder_id, subject_id')
+      .maybeSingle();
+    if (upd.error) {
+      throw new ApiError('internal', 'Failed to update material', { cause: upd.error.message });
+    }
+    if (!upd.data) throw new ApiError('not_found', 'Material not found');
+    return c.json(upd.data);
   },
 );
 
@@ -292,9 +357,91 @@ materialRoutes.post('/:id/retry', rateLimit({ key: 'materials_retry', per_day: 2
     locale: string;
     title: string | null;
   } | null;
+
+  // Recovery path: a material can end up without an extraction_jobs row
+  // (pre-0019 records, manual DB cleanup, or a half-finished upload).
+  // Instead of throwing "No extraction job to retry" and stranding the
+  // learner, we synthesize a fresh job from the material's stored
+  // photos + the learner's ui_locale.
   if (!job) {
-    throw new ApiError('not_found', 'No extraction job to retry');
+    const photos = await supabase
+      .from('material_photos')
+      .select('position, client_blur_score, client_brightness, width, height')
+      .eq('material_id', material_id)
+      .order('position', { ascending: true });
+    if (photos.error) {
+      throw new ApiError('internal', 'Failed to load material photos for retry', {
+        cause: photos.error.message,
+      });
+    }
+    const photoRows = (photos.data ?? []) as Array<{
+      position: number;
+      client_blur_score: number | null;
+      client_brightness: number | null;
+      width: number | null;
+      height: number | null;
+    }>;
+    if (photoRows.length === 0) {
+      throw new ApiError(
+        'validation_failed',
+        'No photos stored for this material — please re-take photos and re-upload',
+      );
+    }
+    const learnerRow = await supabase
+      .from('learners')
+      .select('ui_locale')
+      .eq('id', learner_id)
+      .maybeSingle();
+    const locale =
+      ((learnerRow.data as { ui_locale: string | null } | null)?.ui_locale as string) ?? 'de';
+
+    const debit = {
+      estimate: VISION_ESTIMATE,
+      reason: 'materials_create',
+      learner_id,
+      reference_id: material_id,
+    };
+    await tryDebit(supabase, account_id, debit);
+
+    const create = await supabase.from('extraction_jobs').insert({
+      material_id,
+      learner_id,
+      account_id,
+      subject_id: material.subject_id,
+      status: 'queued',
+      attempts: 0,
+      locale,
+      title: null,
+      client_quality_scores: photoRows.map((p) => ({
+        position: p.position,
+        blur: p.client_blur_score ?? 0,
+        brightness: p.client_brightness ?? 0,
+        width: p.width,
+        height: p.height,
+      })),
+      credit_estimate: VISION_ESTIMATE,
+      created_at: now().toISOString(),
+      updated_at: now().toISOString(),
+    });
+    if (create.error) {
+      await refund(supabase, account_id, debit);
+      throw new ApiError('internal', 'Failed to create extraction job', {
+        cause: create.error.message,
+      });
+    }
+    await supabase
+      .from('materials')
+      .update({ extraction_status: 'pending', extraction_error: null })
+      .eq('id', material_id);
+    if (getDeps(c).env.NODE_ENV !== 'test') {
+      const { llm } = getDeps(c);
+      void drainExtractionJobs({ supabase, llm, now }).catch(() => {
+        /* swallow — pg_cron will retry */
+      });
+    }
+    return c.json({ material_id, status: 'pending' }, 202);
   }
+
   // Guard a double-tap: an in-flight job must not be re-debited/re-queued.
   if (job.status === 'queued' || job.status === 'running') {
     return c.json({ material_id, status: 'pending' }, 202);
@@ -341,6 +488,14 @@ materialRoutes.post('/:id/retry', rateLimit({ key: 'materials_retry', per_day: 2
     .update({ extraction_status: 'pending', extraction_error: null })
     .eq('id', material_id);
 
+  // Same fire-and-forget as POST /materials — see note there.
+  if (getDeps(c).env.NODE_ENV !== 'test') {
+    const { llm } = getDeps(c);
+    void drainExtractionJobs({ supabase, llm, now }).catch(() => {
+      /* swallow — pg_cron will retry */
+    });
+  }
+
   return c.json({ material_id, status: 'pending' }, 202);
 });
 
@@ -386,7 +541,122 @@ function toItemRow(
   };
 }
 
+// ── GET /materials/topics — Themen-Liste pro Subject ──────────────────────
+//
+// The kid-facing Subject screen groups cards by their auto-extracted
+// `topic` label instead of by the upload that produced them. We build
+// the topic list server-side so a single, ordered, deduped response
+// powers the mobile UI without N round-trips.
+
+materialRoutes.get('/topics', async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const subject_id = c.req.query('subject_id');
+  if (!subject_id) throw new ApiError('validation_failed', 'subject_id is required');
+
+  // Items live under materials; we narrow by subject via material_id IN
+  // (subject's materials). Two queries (cheap) instead of a join, so the
+  // PostgREST schema stays flat.
+  const matsRes = await supabase
+    .from('materials')
+    .select('id')
+    .eq('learner_id', learner_id)
+    .eq('subject_id', subject_id)
+    .is('archived_at', null);
+  if (matsRes.error) {
+    throw new ApiError('internal', 'Failed to load materials', { cause: matsRes.error.message });
+  }
+  const matIds = ((matsRes.data ?? []) as Array<{ id: string }>).map((m) => m.id);
+  if (matIds.length === 0) return c.json([]);
+
+  const itemsRes = await supabase
+    .from('items')
+    .select('topic')
+    .in('material_id', matIds)
+    .is('archived_at', null);
+  if (itemsRes.error) {
+    throw new ApiError('internal', 'Failed to load items', { cause: itemsRes.error.message });
+  }
+
+  // Aggregate in code: case-insensitive grouping so "Bruchrechnung" and
+  // "bruchrechnung" don't show up twice. Empty/null topics roll up into
+  // an "Allgemein" bucket so kids never see a card they can't reach.
+  const counts = new Map<string, { label: string; count: number }>();
+  for (const row of (itemsRes.data ?? []) as Array<{ topic: string | null }>) {
+    const raw = (row.topic ?? '').trim();
+    const label = raw || 'Allgemein';
+    const key = label.toLowerCase();
+    const entry = counts.get(key);
+    if (entry) entry.count += 1;
+    else counts.set(key, { label, count: 1 });
+  }
+  const topics = [...counts.values()].sort((a, b) => b.count - a.count);
+  return c.json(topics);
+});
+
+// ── GET /materials/topic-items — Karten für ein Thema ─────────────────────
+//
+// Powers the Thema-Detail screen's inline card list (reveal pattern).
+// Case-insensitive match on items.topic, scoped to one subject so a
+// "Bruchrechnung" topic in Mathe doesn't bleed into Physik.
+
+materialRoutes.get('/topic-items', async (c) => {
+  const { supabase } = getDeps(c);
+  const learner_id = c.get('learner_id');
+  if (!learner_id) throw new ApiError('unauthenticated', 'Missing learner context');
+  const subject_id = c.req.query('subject_id');
+  const topic = c.req.query('topic');
+  if (!subject_id || !topic) {
+    throw new ApiError('validation_failed', 'subject_id and topic are required');
+  }
+
+  const matsRes = await supabase
+    .from('materials')
+    .select('id')
+    .eq('learner_id', learner_id)
+    .eq('subject_id', subject_id)
+    .is('archived_at', null);
+  if (matsRes.error) {
+    throw new ApiError('internal', 'Failed to load materials', { cause: matsRes.error.message });
+  }
+  const matIds = ((matsRes.data ?? []) as Array<{ id: string }>).map((m) => m.id);
+  if (matIds.length === 0) return c.json([]);
+
+  const isAllgemein = topic.trim().toLowerCase() === 'allgemein';
+  let q = supabase
+    .from('items')
+    .select('id, question, expected_answer, topic')
+    .in('material_id', matIds)
+    .is('archived_at', null);
+  if (isAllgemein) {
+    // "Allgemein" bucket holds items with NULL/empty topic + the literal
+    // "Allgemein" label (case-insensitive).
+    q = q.or('topic.is.null,topic.eq.,topic.ilike.allgemein');
+  } else {
+    q = q.ilike('topic', topic);
+  }
+  const res = await q;
+  if (res.error) {
+    throw new ApiError('internal', 'Failed to load items', { cause: res.error.message });
+  }
+  return c.json(res.data ?? []);
+});
+
 // ── GET /materials ──────────────────────────────────────────────────────────
+//
+// Returns each material with two visualisation-relevant fields the redesigned
+// grid card needs:
+//   - cover_url   : short-lived signed URL for the FIRST uploaded photo so the
+//                   mobile can show it as a thumbnail
+//   - item_count  : number of extracted (non-archived) items, which is way
+//                   more meaningful to the user than the raw page_count
+//
+// We batch one query each for first-photos and item counts (keyed by the
+// material_ids we just fetched) so the whole route stays O(3 round trips)
+// instead of O(N) per material.
+
+const COVER_URL_TTL_SECONDS = 60 * 30; // 30 min — comfortably longer than a polling cycle
 
 materialRoutes.get('/', async (c) => {
   const { supabase } = getDeps(c);
@@ -412,7 +682,70 @@ materialRoutes.get('/', async (c) => {
   if (result.error) {
     throw new ApiError('internal', 'Failed to load materials', { cause: result.error.message });
   }
-  return c.json(result.data ?? []);
+  const materials = (result.data ?? []) as Array<{
+    id: string;
+    title: string | null;
+    extraction_status: string;
+    page_count: number | null;
+    created_at: string;
+    subject_id: string;
+    folder_id: string | null;
+  }>;
+  if (materials.length === 0) return c.json([]);
+
+  const ids = materials.map((m) => m.id);
+
+  // Batch: position-1 photo for each material.
+  const photosRes = await supabase
+    .from('material_photos')
+    .select('material_id, storage_path')
+    .in('material_id', ids)
+    .eq('position', 1);
+  const coverPathByMaterial = new Map<string, string>();
+  for (const row of (photosRes.data ?? []) as Array<{
+    material_id: string;
+    storage_path: string;
+  }>) {
+    coverPathByMaterial.set(row.material_id, row.storage_path);
+  }
+
+  // Batch: count of non-archived items per material.
+  const itemsRes = await supabase
+    .from('items')
+    .select('material_id')
+    .in('material_id', ids)
+    .is('archived_at', null);
+  const itemCountByMaterial = new Map<string, number>();
+  for (const row of (itemsRes.data ?? []) as Array<{ material_id: string }>) {
+    itemCountByMaterial.set(row.material_id, (itemCountByMaterial.get(row.material_id) ?? 0) + 1);
+  }
+
+  // Sign every cover. The stored path includes the bucket prefix
+  // ("materials-raw/…"); createSignedUrl wants the path WITHIN the bucket,
+  // so strip the leading "materials-raw/".
+  const coverUrlByMaterial = new Map<string, string | null>();
+  for (const id of ids) {
+    const path = coverPathByMaterial.get(id);
+    if (!path) {
+      coverUrlByMaterial.set(id, null);
+      continue;
+    }
+    const withinBucket = path.startsWith('materials-raw/')
+      ? path.slice('materials-raw/'.length)
+      : path;
+    const signed = await supabase.storage
+      .from('materials-raw')
+      .createSignedUrl(withinBucket, COVER_URL_TTL_SECONDS);
+    coverUrlByMaterial.set(id, signed.data?.signedUrl ?? null);
+  }
+
+  return c.json(
+    materials.map((m) => ({
+      ...m,
+      cover_url: coverUrlByMaterial.get(m.id) ?? null,
+      item_count: itemCountByMaterial.get(m.id) ?? 0,
+    })),
+  );
 });
 
 // ── GET /materials/:id ──────────────────────────────────────────────────────
@@ -440,9 +773,29 @@ materialRoutes.get('/:id', async (c) => {
     throw new ApiError('internal', 'Failed to load items', { cause: items.error.message });
   }
 
+  // Photo signed URLs for the material-detail "photo strip". Same TTL +
+  // path-stripping as the list endpoint above.
+  const photosRes = await supabase
+    .from('material_photos')
+    .select('position, storage_path')
+    .eq('material_id', id)
+    .order('position', { ascending: true });
+  const photoRows = (photosRes.data ?? []) as Array<{ position: number; storage_path: string }>;
+  const photo_urls: string[] = [];
+  for (const row of photoRows) {
+    const path = row.storage_path.startsWith('materials-raw/')
+      ? row.storage_path.slice('materials-raw/'.length)
+      : row.storage_path;
+    const signed = await supabase.storage
+      .from('materials-raw')
+      .createSignedUrl(path, COVER_URL_TTL_SECONDS);
+    if (signed.data?.signedUrl) photo_urls.push(signed.data.signedUrl);
+  }
+
   return c.json({
     ...(m.data as Record<string, unknown>),
     items: items.data ?? [],
+    photo_urls,
     templates: [],
     study_assets: [],
   });

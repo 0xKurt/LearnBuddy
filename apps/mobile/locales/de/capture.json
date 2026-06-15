@@ -45,5 +45,13 @@
   },
   "limits": {
     "max_reached": "Mehr als 10 Bilder pro Material geht nicht."
+  },
+  "gallery": {
+    "cta": "Aus Galerie",
+    "permission_title": "Wir brauchen kurz Zugriff auf deine Bilder",
+    "permission_body": "Damit du Fotos von deinem Material auswählen kannst, die schon auf deinem Handy sind.",
+    "permission_cancel": "Abbrechen",
+    "permission_settings": "Einstellungen öffnen",
+    "error": "Fotos konnten nicht geladen werden — nochmal versuchen?"
   }
 }

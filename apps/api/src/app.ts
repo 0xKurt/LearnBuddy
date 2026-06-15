@@ -29,6 +29,7 @@ import { materialRoutes } from './routes/materials.js';
 import { materialWorkerRoutes } from './routes/materials-worker.js';
 import { itemRoutes } from './routes/items.js';
 import { sessionRoutes } from './routes/sessions.js';
+import { agentRoutes } from './routes/agent.js';
 import { attemptRoutes } from './routes/attempts.js';
 import { templateRoutes } from './routes/templates.js';
 import { explainRoutes } from './routes/explain.js';
@@ -101,6 +102,7 @@ export function createApp(opts: { deps?: Deps } = {}) {
   app.route('/materials-worker', materialWorkerRoutes);
   app.route('/items', itemRoutes);
   app.route('/sessions', sessionRoutes);
+  app.route('/agent', agentRoutes);
   app.route('/attempts', attemptRoutes);
   app.route('/templates', templateRoutes);
   app.route('/explain', explainRoutes);

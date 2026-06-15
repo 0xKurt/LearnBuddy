@@ -106,6 +106,10 @@ export type VisionResult = {
   usage: {
     input_tokens: number;
     output_tokens: number;
+    /** Portion of input_tokens served from a Vertex cached-content
+     *  ref (billed at 25 % of normal input rate). Always ≤ input_tokens.
+     *  0 when no caching was active. */
+    cached_input_tokens?: number;
     cost_usd_micros: number;
     model: string;
     prompt_version: string;
@@ -127,25 +131,6 @@ export type RegenerateResult = {
   usage: VisionResult['usage'];
 };
 
-export type EvaluateInput = {
-  question: string;
-  expectedAnswer: string;
-  acceptableAnswers: string[];
-  answerKind: GeneratedVisionItem['answer_kind'];
-  kidAnswer: string;
-  parsedLearnerLatex?: string;
-  locale: Locale;
-  gradeLevel: number;
-  priorHints: string[];
-};
-
-export type EvaluateResult = {
-  verdict: 'correct' | 'partially_correct' | 'incorrect';
-  feedback: string;
-  next_hint: string | null;
-  usage: VisionResult['usage'];
-};
-
 export type ExplainInput = {
   topic: string;
   context?: string;
@@ -164,78 +149,85 @@ export type ExplainResult = {
 
 // ── Conversational tutor (multi-turn). Doc 06 §P3, evolved. ─────────────────
 
-/** One prior message in the session thread, oldest-first. */
-export type ConversationMessage = {
-  role: 'learner' | 'tutor';
-  content: string;
-};
+// ── Agent v2 (one-screen chat tutor) ──────────────────────────────────────
 
-export type ConverseTurnInput = {
-  /** The question currently being worked on. */
-  item: {
-    question: string;
-    expectedAnswer: string;
-    acceptableAnswers: string[];
-    answerKind: GeneratedVisionItem['answer_kind'];
-    units?: string | null;
-    latexExpected?: string | null;
-    latexAcceptable?: string[] | null;
-    mcOptions?: string[] | null;
-    mcCorrectIndex?: number | null;
-    fillBlankTemplate?: string | null;
-    fillBlankAnswers?: string[] | null;
-    diagramLabelIndex?: number | null;
-    sourceExcerpt?: string | null;
-    topic?: string | null;
-  };
-  /** Full prior thread of THIS session (learner/tutor only), oldest-first. */
-  history: ConversationMessage[];
-  /** The new learner message (already transcribed if it came from voice). */
+export type AgentGatewayInput = {
+  /** Full system instruction (header + dynamic context) when caching
+   *  is OFF. When caching is ON, this is the dynamic-only portion
+   *  (`headerCacheName` carries the cached header). */
+  systemInstruction: string;
+  /** Optional Vertex cached-content name for the static header. When
+   *  set, the model treats the cache as if it preceded
+   *  `systemInstruction` — discounted at ~25 % of full price. Null
+   *  falls back to the legacy non-cached path. */
+  headerCacheName?: string | null;
+  /** Prior thread, oldest-first. */
+  history: ReadonlyArray<{ role: 'learner' | 'tutor'; content: string }>;
+  /** The new learner message. */
   learnerMessage: string;
-  learnerName: string | null;
-  locale: Locale;
-  gradeLevel: number;
-  testMode: boolean;
-  pinnedTopic: string | null;
-  /** Hints already given for the current item (drives the staircase). */
-  hintsGivenForItem: number;
-  /** The worksheet text this question came from (clamped). Grounds hints in
-   *  the real material instead of the tiny source excerpt. */
-  materialContext?: string | null;
+  /** Override the gateway's default tutor model. Used by the
+   *  flash-lite routing for trivial advance turns (~75 % cheaper). */
+  modelOverride?: string;
 };
 
-export type ConverseTurnResult = {
-  verdict: 'correct' | 'partially_correct' | 'incorrect' | 'skipped';
-  /** The learner-visible reply (control line already stripped). */
+export type AgentGatewayResult = {
+  /** The full structured response — caller validates schema. */
+  json: unknown;
+  /** The raw reply (parsed from json.reply) for streaming consumers that
+   *  prefer the text-only path. The gateway emits a single chunk after
+   *  the JSON parse — token-by-token streaming of strict JSON would
+   *  require server-side incremental parsing. */
   reply: string;
-  /** True when the reply contained a new hint (for staircase accounting). */
-  gaveHint: boolean;
   usage: VisionResult['usage'];
 };
 
-export type TranscribeInput = {
-  audioBase64: string;
-  mimeType: 'audio/m4a' | 'audio/mp4' | 'audio/wav' | 'audio/webm';
-  locale: Locale;
+/** Phase C1: reflective summary input. One LLM call per finished
+ *  session. Output is a LearnerEpisode JSON that drives the next
+ *  session's opener + the tutor's "from last time" prompt block. */
+export type ReflectSessionInput = {
+  transcript: ReadonlyArray<{
+    role: 'learner' | 'tutor';
+    verdict?: 'correct' | 'partially_correct' | 'incorrect' | 'skipped' | null;
+    item_topic?: string | null;
+    content: string;
+  }>;
+  durationMinutes: number;
 };
 
-export type TranscribeResult = {
-  text: string;
+export type ReflectSessionResult = {
+  one_sentence_arc: string;
+  concepts_touched: string[];
+  high_points: string[];
+  low_points: string[];
+  hypothesized_misconceptions: Array<{
+    concept_tag: string;
+    description: string;
+    confidence: number;
+  }>;
+  open_questions: string[];
   usage: VisionResult['usage'];
 };
 
 export interface LLMGateway {
   visionExtractAndGenerate(input: VisionInput): Promise<VisionResult>;
   regenerateFromText(input: RegenerateInput): Promise<RegenerateResult>;
-  evaluateAnswer(input: EvaluateInput): Promise<EvaluateResult>;
   explain(input: ExplainInput): Promise<ExplainResult>;
-  /** Multi-turn tutor reply. `onToken` receives learner-visible deltas as
-   *  they stream; the returned promise resolves with the final result. */
-  converseTurn(
-    input: ConverseTurnInput,
+  /** Post-session reflection. Off the learner's critical path
+   *  (fire-and-forget from /agent/sessions/:id/finish). */
+  reflectSession(input: ReflectSessionInput): Promise<ReflectSessionResult>;
+  /** Agent v2: one structured JSON reply per learner message. Returns
+   *  the raw parsed JSON; the route validates the schema and rejects
+   *  malformed output. Streaming text is emitted as a single chunk
+   *  after parse (streaming strict JSON requires an incremental parser
+   *  that's out of scope for v1). */
+  agentTurn(
+    input: AgentGatewayInput,
     onToken?: (delta: string) => void,
-  ): Promise<ConverseTurnResult>;
-  /** Speech-to-text for voice turns (robust fallback independent of any
-   *  on-device recognizer). */
-  transcribeAudio(input: TranscribeInput): Promise<TranscribeResult>;
+  ): Promise<AgentGatewayResult>;
+  /** Set up (or refresh) a Vertex cached-content entry for the given
+   *  system header + model. Returns a name to pass into the next
+   *  `agentTurn` call's `headerCacheName`, or `null` if caching is
+   *  unavailable (test gateway, min-token failure, quota). Callers
+   *  treat null as "skip caching, pay full price". */
+  ensureAgentHeaderCache(header: string, model: string): Promise<string | null>;
 }

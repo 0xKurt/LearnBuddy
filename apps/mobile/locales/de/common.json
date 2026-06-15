@@ -84,5 +84,9 @@
     "title": "Neu in LearnBuddy",
     "items": ["Passwort-Wiederholung beim Registrieren", "App-Updates werden automatisch erkannt"],
     "cta": "Los geht's"
+  },
+  "math": {
+    "preview_placeholder": "Vorschau erscheint hier …",
+    "answer_placeholder": "Antwort"
   }
 }

@@ -12,6 +12,7 @@
       "profile_edit_sub": "Nome, data di nascita, classe",
       "notifications": "Notifiche",
       "preferences": "Preferenze",
+      "voice": "Voce",
       "subscription": "Abbonamento",
       "data": "Dati e privacy",
       "archive": "Archivio",
@@ -48,6 +49,24 @@
     "dyslexia_font": {
       "label": "Carattere OpenDyslexic",
       "sub": "Carattere più leggibile per la dislessia (il font arriva nel prossimo aggiornamento)."
+    }
+  },
+  "voice": {
+    "title": "Voce del tutor",
+    "subtitle": "Come suona il tutor quando ti parla. Tocca la nota per ascoltare un'anteprima.",
+    "preview_a11y": "Ascolta {{name}}",
+    "note": "La scelta vale per tutte le lingue — la stessa voce mantiene la stessa personalità quando cambi la lingua dell'app.",
+    "gender": {
+      "female": "femminile",
+      "male": "maschile"
+    },
+    "descriptions": {
+      "aoede": "Calma e calda — quella predefinita",
+      "leda": "Dolce e amichevole, un po' riservata",
+      "kore": "Chiara e vivace, piena di energia",
+      "charon": "Profonda e tranquilla",
+      "fenrir": "Calda e amichevole",
+      "puck": "Birichina e giocosa"
     }
   },
   "account_settings": {

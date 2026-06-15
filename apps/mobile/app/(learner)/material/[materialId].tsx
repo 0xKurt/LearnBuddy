@@ -4,16 +4,25 @@
 // them as a conversation. (The old flip-card mode was removed — the
 // conversational session is the single, obvious way to practise.)
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Btn, CircleBtn, EmptyState, LoadingState } from '../../../components/lb/index.js';
+import {
+  Btn,
+  CachedImage,
+  CircleBtn,
+  EmptyState,
+  LoadingState,
+} from '../../../components/lb/index.js';
+import { PhotoViewerModal } from '../../../components/material/PhotoViewerModal.js';
+import { retryErrorCopy } from '../../../components/material/retry-error.js';
 import { getAccount } from '../../../lib/api/account.js';
-import { getMaterial } from '../../../lib/api/materials.js';
+import { archiveItem } from '../../../lib/api/items.js';
+import { getMaterial, retryMaterial } from '../../../lib/api/materials.js';
 import { useNavigateUp } from '../../../lib/navigation/hierarchy.js';
 import { LB } from '../../../lib/theme/colors.js';
 
@@ -21,6 +30,7 @@ export default function MaterialScreen() {
   const { materialId } = useLocalSearchParams<{ materialId: string }>();
   const navigateUp = useNavigateUp();
   const { t: tCommon } = useTranslation('common');
+  const { t: tHome } = useTranslation('home');
   const insets = useSafeAreaInsets();
   const accountQuery = useQuery({ queryKey: ['account'], queryFn: getAccount });
   const learnerId = accountQuery.data?.learner?.id;
@@ -32,11 +42,52 @@ export default function MaterialScreen() {
   });
 
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
-  const [footerH, setFooterH] = useState(0);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const qc = useQueryClient();
+
+  const retryMut = useMutation({
+    mutationFn: () => retryMaterial(learnerId as string, materialId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['material', materialId] });
+      qc.invalidateQueries({ queryKey: ['materials'] });
+    },
+    onError: (err) => {
+      const { title, body } = retryErrorCopy(err, tHome);
+      Alert.alert(title, body);
+    },
+  });
+
+  const deleteItemMut = useMutation({
+    mutationFn: (itemId: string) => archiveItem(learnerId as string, itemId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['material', materialId] });
+      qc.invalidateQueries({ queryKey: ['folder-detail'] });
+    },
+    onError: () =>
+      Alert.alert(
+        tHome('material.detail.card_delete_failed_title'),
+        tHome('material.detail.card_delete_failed_body'),
+      ),
+  });
+
+  function confirmDeleteItem(itemId: string) {
+    Alert.alert(
+      tHome('material.detail.card_delete_title'),
+      tHome('material.detail.card_delete_body'),
+      [
+        { text: tCommon('actions.cancel'), style: 'cancel' },
+        {
+          text: tHome('material.detail.card_delete_cta'),
+          style: 'destructive',
+          onPress: () => deleteItemMut.mutate(itemId),
+        },
+      ],
+    );
+  }
 
   if (materialQuery.isError) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
@@ -50,21 +101,21 @@ export default function MaterialScreen() {
             }
           />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (materialQuery.isLoading || accountQuery.isLoading) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <LoadingState />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!materialQuery.data) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+      <View style={{ flex: 1, backgroundColor: LB.paper }}>
         <View style={{ padding: 22 }}>
           <CircleBtn icon="back" onPress={navigateUp} />
           <EmptyState
@@ -73,12 +124,36 @@ export default function MaterialScreen() {
             body={tCommon('material.not_found_body')}
           />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   const material = materialQuery.data;
   const items = material.items;
+  const photoUrls = material.photo_urls ?? [];
+  const isFailed = material.extraction_status === 'failed';
+  const isPending =
+    material.extraction_status !== 'ready' && material.extraction_status !== 'failed';
+
+  // Map the raw extraction_error to a child-friendly explanation.
+  // The server stores technical strings like "too_few_items" or
+  // "Vertex output failed JSON validation: Unexpected end of JSON
+  // input"; the kid needs a sentence they can act on. We pattern-
+  // match the common cases and fall through to a generic encourager.
+  const failReason = (() => {
+    if (!isFailed) return null;
+    const raw = (material.extraction_error ?? '').toLowerCase();
+    if (raw.includes('too_few_items')) return tHome('material.fail_reason.too_few_items');
+    if (raw.includes('not_educational')) return tHome('material.fail_reason.not_educational');
+    if (
+      raw.includes('unexpected end of json') ||
+      raw.includes('too_long') ||
+      raw.includes('truncat')
+    )
+      return tHome('material.fail_reason.too_long');
+    if (raw.includes('unreadable')) return tHome('material.fail_reason.unreadable');
+    return tHome('material.fail_reason.generic');
+  })();
 
   function toggleReveal(id: string) {
     setRevealedIds((prev) => {
@@ -92,13 +167,13 @@ export default function MaterialScreen() {
   const practise = () => {
     if (!learnerId) return;
     router.push({
-      pathname: '/(learner)/session/[sessionId]',
-      params: { sessionId: `m-${materialId}-${Date.now()}`, learnerId, materialId },
+      pathname: '/(learner)/chat/[sessionId]',
+      params: { sessionId: 'new', materialId },
     });
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: LB.paper }}>
+    <View style={{ flex: 1, backgroundColor: LB.paper }}>
       <View
         style={{
           flexDirection: 'row',
@@ -115,20 +190,98 @@ export default function MaterialScreen() {
       </View>
 
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingBottom: (footerH || 120) + 16,
+          paddingBottom: 24,
           gap: 12,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={materialQuery.isFetching && !materialQuery.isLoading}
+            onRefresh={() => void materialQuery.refetch()}
+            tintColor={LB.ink2}
+          />
+        }
       >
+        {/* Photo strip — horizontal scroll of the originals so the user
+            can verify "this is the right material" at a glance. Tap to
+            enlarge in the full-screen viewer. */}
+        {photoUrls.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.photoStrip}
+          >
+            {photoUrls.map((uri, i) => (
+              <Pressable key={i} onPress={() => setViewerIndex(i)}>
+                <CachedImage
+                  source={{ uri }}
+                  contentFit="cover"
+                  transition={150}
+                  style={styles.photoThumb}
+                />
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Failed-state banner — appears when the worker couldn't read
+            the material. Big inline Retry button so the user doesn't
+            need to dig into a menu. */}
+        {isFailed && (
+          <View style={styles.failedBanner}>
+            <Text style={styles.failedTitle}>{tHome('material.status.failed')}</Text>
+            <Text style={styles.failedBody}>{failReason ?? tHome('material.retry_max_body')}</Text>
+            <Btn full onPress={() => retryMut.mutate()} disabled={retryMut.isPending}>
+              {tHome('material.actions.retry')}
+            </Btn>
+          </View>
+        )}
+
+        {/* Pending-state banner — material is still being processed.
+            We just remind the user; no actions to take. */}
+        {isPending && (
+          <View style={styles.pendingBanner}>
+            <Text style={styles.pendingText}>{tHome('material.status.preparing')}</Text>
+          </View>
+        )}
+
         <Text style={{ fontSize: 26, fontWeight: '600', color: LB.ink, letterSpacing: -0.5 }}>
           {material.title ?? tCommon('material.untitled')}
         </Text>
-        <Text style={{ fontSize: 12, color: LB.ink2 }}>
-          {tCommon('material.question_count', { count: items.length })}
-        </Text>
+        {/* Only show the question count when extraction succeeded.
+         *  On failed materials the "0 Fragen" line read as a fact ("there
+         *  are no questions here") when it's actually "extraction broke,
+         *  see the banner above"; that combination was confusing. */}
+        {!isFailed && !isPending && (
+          <Text style={{ fontSize: 12, color: LB.ink2 }}>
+            {tCommon('material.question_count', { count: items.length })}
+          </Text>
+        )}
 
-        {items.length === 0 ? (
+        {items.length > 0 && (
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              color: LB.ink3,
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+              marginTop: 10,
+              marginBottom: 2,
+            }}
+          >
+            {/* "Karten" / "Cards" section header above the items list */}
+            {tHome('material.detail.section_cards')}
+          </Text>
+        )}
+
+        {/* Failed materials already render the failedBanner above with
+         *  its own retry CTA. Don't pile on an empty-state "Noch keine
+         *  Fragen" panel — the user said it read as three disjoint
+         *  status messages stacked on top of each other. */}
+        {items.length === 0 && !isFailed && !isPending ? (
           <View style={{ paddingVertical: 28 }}>
             <EmptyState
               glyph="📷"
@@ -136,20 +289,26 @@ export default function MaterialScreen() {
               body={tCommon('material.no_items_body')}
             />
           </View>
-        ) : (
+        ) : items.length > 0 ? (
           <View style={{ gap: 10 }}>
             {items.map((item, idx) => {
               const revealed = revealedIds.has(item.id);
               return (
-                <View
+                <Pressable
                   key={item.id}
-                  style={{
-                    borderRadius: 18,
-                    backgroundColor: '#fff',
-                    borderColor: LB.hairline,
-                    borderWidth: 1,
-                    overflow: 'hidden',
-                  }}
+                  onLongPress={() => confirmDeleteItem(item.id)}
+                  delayLongPress={350}
+                  accessibilityHint={tHome('material.detail.card_long_press_hint')}
+                  style={({ pressed }) => [
+                    {
+                      borderRadius: 18,
+                      backgroundColor: '#fff',
+                      borderColor: LB.hairline,
+                      borderWidth: 1,
+                      overflow: 'hidden',
+                    },
+                    pressed && { opacity: 0.95 },
+                  ]}
                 >
                   <View style={{ padding: 16 }}>
                     <Text style={{ fontSize: 11, color: LB.ink3, fontWeight: '600' }}>
@@ -161,6 +320,8 @@ export default function MaterialScreen() {
                   </View>
                   <Pressable
                     onPress={() => toggleReveal(item.id)}
+                    onLongPress={() => confirmDeleteItem(item.id)}
+                    delayLongPress={350}
                     style={{
                       borderTopWidth: 1,
                       borderTopColor: LB.hairline,
@@ -178,38 +339,85 @@ export default function MaterialScreen() {
                       </Text>
                     )}
                   </Pressable>
-                </View>
+                </Pressable>
               );
             })}
           </View>
-        )}
+        ) : null}
       </ScrollView>
 
-      <View
-        onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingHorizontal: 20,
-          paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom, 12),
-          gap: 8,
-          backgroundColor: LB.paper,
-          borderTopColor: LB.hairline,
-          borderTopWidth: 1,
-        }}
-      >
-        {items.length > 0 && (
+      {/* Footer bar only appears when there's a primary action to
+       *  offer — practise the existing items. On failed / pending
+       *  materials the footer would just hold an orphan "Fertig" button
+       *  that the user read as "this material is done", which it
+       *  wasn't. The back arrow at the top is the way out instead. */}
+      {items.length > 0 ? (
+        <View
+          style={{
+            paddingHorizontal: 20,
+            paddingTop: 12,
+            paddingBottom: Math.max(insets.bottom, 12),
+            gap: 8,
+            backgroundColor: LB.paper,
+            borderTopColor: LB.hairline,
+            borderTopWidth: 1,
+          }}
+        >
           <Btn size="lg" full onPress={practise}>
             {tCommon('material.practice')}
           </Btn>
-        )}
-        <Btn size="md" full variant="ghost" onPress={() => router.replace('/(learner)/home')}>
-          {tCommon('actions.done')}
-        </Btn>
-      </View>
-    </SafeAreaView>
+        </View>
+      ) : null}
+
+      <PhotoViewerModal
+        visible={viewerIndex !== null}
+        photoUrls={photoUrls}
+        initialIndex={viewerIndex ?? 0}
+        onClose={() => setViewerIndex(null)}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  photoStrip: {
+    gap: 10,
+    paddingVertical: 4,
+  },
+  photoThumb: {
+    width: 88,
+    height: 116,
+    borderRadius: 10,
+    backgroundColor: LB.bg,
+  },
+  failedBanner: {
+    backgroundColor: 'rgba(177,73,60,0.06)',
+    borderColor: 'rgba(177,73,60,0.4)',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+    gap: 8,
+  },
+  failedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: LB.danger,
+  },
+  failedBody: {
+    fontSize: 13,
+    color: LB.ink2,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  pendingBanner: {
+    backgroundColor: LB.bg,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  pendingText: {
+    fontSize: 14,
+    color: LB.ink2,
+    fontWeight: '500',
+  },
+});

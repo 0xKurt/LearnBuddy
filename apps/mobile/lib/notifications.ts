@@ -82,6 +82,7 @@ type ExpoNotifs = {
       notification: { request: { content: { data: Record<string, unknown> } } };
     }) => void,
   ) => { remove(): void };
+  getExpoPushTokenAsync: (opts?: { projectId?: string }) => Promise<{ data: string }>;
 };
 
 let Notifs: ExpoNotifs | null = null;
@@ -174,6 +175,57 @@ export type UpcomingTest = {
 export async function scheduleTestDateReminders(tests: UpcomingTest[]): Promise<void> {
   const prefs = await loadNotificationPrefs();
   await rescheduleNotifications(prefs, tests);
+}
+
+// ─── Expo push tokens ────────────────────────────────────────────────────
+//
+// Background push (not local schedule) is what wakes the user up when
+// their material extraction finishes on the server. The token is obtained
+// via expo-notifications once permissions are granted; we then register
+// it with our API so the server-side extraction-drain can target it.
+// Returns null in Expo Go (no native push support) — local-schedule path
+// keeps working as a fallback.
+
+import { Platform } from 'react-native';
+
+export async function getExpoPushToken(projectId?: string): Promise<string | null> {
+  if (!Notifs?.getExpoPushTokenAsync) return null;
+  try {
+    const status = await Notifs.getPermissionsAsync();
+    if (status.status !== 'granted') return null;
+    const res = await Notifs.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    return res?.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function pushPlatform(): 'ios' | 'android' | 'web' {
+  if (Platform.OS === 'ios') return 'ios';
+  if (Platform.OS === 'android') return 'android';
+  return 'web';
+}
+
+/**
+ * Best-effort: fetch the device's Expo push token (if permission has
+ * been granted) and register it with the API so the server can target
+ * this device with background notifications. Silent on failure — push
+ * is a nice-to-have, never throws or blocks.
+ */
+export async function registerPushTokenForLearner(
+  learnerId: string,
+  projectId?: string,
+): Promise<void> {
+  try {
+    const token = await getExpoPushToken(projectId);
+    if (!token) return;
+    // Import lazily so this file doesn't drag the api client into
+    // vitest's node environment when other helpers are imported.
+    const { registerPushToken } = await import('./api/learners.js');
+    await registerPushToken(learnerId, token, pushPlatform());
+  } catch {
+    // best-effort
+  }
 }
 
 /**

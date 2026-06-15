@@ -87,5 +87,9 @@
       "Las actualizaciones se detectan automáticamente"
     ],
     "cta": "¡Vamos!"
+  },
+  "math": {
+    "preview_placeholder": "La vista previa aparece aquí …",
+    "answer_placeholder": "Respuesta"
   }
 }

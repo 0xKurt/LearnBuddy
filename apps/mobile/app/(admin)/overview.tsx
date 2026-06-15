@@ -18,6 +18,7 @@ type RowKey =
   | 'profile_edit'
   | 'notifications'
   | 'preferences'
+  | 'voice'
   | 'subscription'
   | 'data'
   | 'archive'
@@ -29,6 +30,7 @@ const ROWS: Row[] = [
   { key: 'profile_edit', href: '/(admin)/profile-edit', hasSub: true },
   { key: 'notifications', href: '/(admin)/profile-notifications' },
   { key: 'preferences', href: '/(admin)/preferences' },
+  { key: 'voice', href: '/(admin)/voice-settings' },
   { key: 'subscription', href: '/(admin)/subscription' },
   { key: 'data', href: '/(admin)/data' },
   { key: 'archive', href: '/(admin)/archived' },

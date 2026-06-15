@@ -13,6 +13,7 @@ import { getDeps } from '../lib/deps.js';
 import { ApiError } from '../lib/errors.js';
 import { applyAttempt, type ItemStateRow } from '../lib/fsrs.js';
 import { idempotency } from '../lib/idempotency.js';
+import { captureApiError } from '../lib/sentry.js';
 import { requireAuth, requireLearnerContext } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 
@@ -81,6 +82,12 @@ attemptRoutes.post(
     const accepted: string[] = [];
     const rejected: Array<{ client_attempt_id: string; reason: string }> = [];
 
+    // Phase A5 effort signal: count prior wrong/skipped attempts on the
+    // same item AS THEY APPEAR EARLIER IN THIS BATCH. The outbox is
+    // chronological so a later-in-batch correct after an earlier-in-batch
+    // wrong on the same item is "scaffolded" — FSRS gets Hard, not Good.
+    const wrongAttemptsByItem = new Map<string, number>();
+
     // Build the row payloads first so we can run a single bulk INSERT and a
     // single batched UPSERT instead of 2N sequential round-trips. A 200-row
     // batch used to do ~400 round-trips and would time out for users draining
@@ -108,7 +115,16 @@ attemptRoutes.post(
         test_mode: a.test_mode,
       });
       const prev = stateMap.get(a.item_id) ?? null;
-      const next = applyAttempt(prev, a.verdict, new Date(a.reviewed_at));
+      const priorWrongAttempts = wrongAttemptsByItem.get(a.item_id) ?? 0;
+      const next = applyAttempt(prev, a.verdict, new Date(a.reviewed_at), {
+        hintsUsed: a.hints_used,
+        priorWrongAttempts,
+      });
+      // Update running prior-wrong counter for subsequent attempts on
+      // this same item in this batch.
+      if (a.verdict === 'incorrect' || a.verdict === 'skipped') {
+        wrongAttemptsByItem.set(a.item_id, priorWrongAttempts + 1);
+      }
       stateRows.push({
         item_id: a.item_id,
         learner_id,
@@ -121,6 +137,10 @@ attemptRoutes.post(
       const ins = await supabase.from('attempts').insert(attemptRows);
       if (ins.error) {
         console.error(`[attempts] bulk persist failed: ${ins.error.message}`);
+        captureApiError(new Error(`attempts bulk persist failed: ${ins.error.message}`), {
+          attempt_count: attemptRows.length,
+          first_item_id: attemptRows[0]?.item_id,
+        });
       }
     }
     if (stateRows.length > 0) {
@@ -131,6 +151,9 @@ attemptRoutes.post(
       const ups = await supabase.from('item_states').upsert(stateRows, { onConflict: 'item_id' });
       if (ups.error) {
         console.error(`[attempts] item_states upsert failed: ${ups.error.message}`);
+        captureApiError(new Error(`item_states upsert failed: ${ups.error.message}`), {
+          row_count: stateRows.length,
+        });
       }
     }
 

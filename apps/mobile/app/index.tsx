@@ -102,7 +102,7 @@ export default function IndexRoute() {
         <Pressable onPress={resolve} hitSlop={12}>
           <View
             style={{
-              backgroundColor: LB.ink,
+              backgroundColor: LB.primary,
               paddingHorizontal: 24,
               paddingVertical: 12,
               borderRadius: 999,
