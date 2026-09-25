@@ -88,10 +88,12 @@ export function buildContext(
 
   lines.push('## Now');
   lines.push(`${weekdayName(today)} ${today}, ${nowLocal.time} (${tz})`);
-  const week = Array.from({ length: 8 }, (_, i) => addDays(today, i))
-    .map((d) => `${weekdayName(d).slice(0, 3)} ${d}`)
+  // Each day with its offset: the model copies the number (in_days) of the day it means
+  // instead of computing weekday arithmetic.
+  const days = Array.from({ length: 22 }, (_, i) => addDays(today, i))
+    .map((d, i) => `+${i} ${weekdayName(d).slice(0, 3)} ${d}`)
     .join(', ');
-  lines.push(`Next days: ${week}`);
+  lines.push(`Next days (in_days offset, weekday, date): ${days}`);
 
   lines.push('', '## Learner');
   const level =

@@ -4,9 +4,12 @@
 // which also enforces what Gemini's schema subset cannot express (string
 // lengths, patterns, refinements).
 //
-// Emits only keywords Vertex documents as supported: type, description,
-// enum, items, minItems, maxItems, minimum, maximum, anyOf, properties,
-// additionalProperties, required.
+// Emits only type, description, enum, items, anyOf, properties,
+// additionalProperties and required. Numeric bounds and array lengths go into
+// the description as a hint instead of being constraints: Vertex refuses
+// schemas whose constraints produce "too many states for serving" (the Buddy
+// turn schema did), and zod checks the bounds anyway (a violation gets one
+// repair round with the reason).
 
 import { z } from 'zod';
 
@@ -22,6 +25,19 @@ function withDescription(s: z.ZodTypeAny, out: JsonSchema): JsonSchema {
   return s.description ? { ...out, description: s.description } : out;
 }
 
+/** "0–8", "at least 1", "at most 3" or null. */
+function range(min: number | null, max: number | null): string | null {
+  if (min !== null && max !== null) return `${min}–${max}`;
+  if (min !== null) return `at least ${min}`;
+  if (max !== null) return `at most ${max}`;
+  return null;
+}
+
+function withHint(s: z.ZodTypeAny, out: JsonSchema, hint: string | null): JsonSchema {
+  const text = [s.description, hint ? `(${hint})` : null].filter(Boolean).join(' ');
+  return text ? { ...out, description: text } : out;
+}
+
 function convert(s: z.ZodTypeAny): JsonSchema {
   const def = s._def as { typeName: z.ZodFirstPartyTypeKind };
   switch (def.typeName) {
@@ -29,10 +45,7 @@ function convert(s: z.ZodTypeAny): JsonSchema {
       return withDescription(s, { type: 'string' });
     case z.ZodFirstPartyTypeKind.ZodNumber: {
       const n = s as z.ZodNumber;
-      const out: JsonSchema = { type: n.isInt ? 'integer' : 'number' };
-      if (n.minValue !== null) out.minimum = n.minValue;
-      if (n.maxValue !== null) out.maximum = n.maxValue;
-      return withDescription(s, out);
+      return withHint(s, { type: n.isInt ? 'integer' : 'number' }, range(n.minValue, n.maxValue));
     }
     case z.ZodFirstPartyTypeKind.ZodBoolean:
       return withDescription(s, { type: 'boolean' });
@@ -51,14 +64,16 @@ function convert(s: z.ZodTypeAny): JsonSchema {
       });
     case z.ZodFirstPartyTypeKind.ZodArray: {
       const a = s as z.ZodArray<z.ZodTypeAny>;
-      const out: JsonSchema = { type: 'array', items: toJsonSchema(a.element) };
       const d = a._def as {
         minLength: { value: number } | null;
         maxLength: { value: number } | null;
       };
-      if (d.minLength) out.minItems = d.minLength.value;
-      if (d.maxLength) out.maxItems = d.maxLength.value;
-      return withDescription(s, out);
+      const items = range(d.minLength?.value ?? null, d.maxLength?.value ?? null);
+      return withHint(
+        s,
+        { type: 'array', items: toJsonSchema(a.element) },
+        items ? `${items} items` : null,
+      );
     }
     case z.ZodFirstPartyTypeKind.ZodObject: {
       const o = s as z.ZodObject<z.ZodRawShape>;

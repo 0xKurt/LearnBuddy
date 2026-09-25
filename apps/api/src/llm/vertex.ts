@@ -141,7 +141,11 @@ function classify(err: unknown): LlmError {
   if (err instanceof GenAiApiError) {
     if (err.status === 429) return new LlmError('rate_limited', 'provider rate limit');
     if (err.status >= 500) return new LlmError('unavailable', `provider error ${err.status}`);
-    return new LlmError('unavailable', `provider rejected the request (${err.status})`);
+    // The provider's reason (e.g. an unsupported schema) is kept for the logs, cut short.
+    return new LlmError(
+      'unavailable',
+      `provider rejected the request (${err.status}): ${err.message.slice(0, 500)}`,
+    );
   }
   const name = (err as { name?: string } | null)?.name;
   if (name === 'AbortError' || name === 'TimeoutError')

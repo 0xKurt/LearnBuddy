@@ -87,7 +87,9 @@ export const DaySpecSchema = z
         .int()
         .min(0)
         .max(8)
-        .describe('0 = the next such weekday after today; 1 = one week later'),
+        .describe(
+          '0 = the first such weekday after today — also when today is that weekday ("Montag" said on a Monday = in 7 days); 1 = the one after that, only for "übernächste"/"the week after next"',
+        ),
     }),
     z.object({ kind: z.literal('unknown') }),
   ])

@@ -77,10 +77,15 @@ echten Geräten (Kamera, Tastatur, Push, Bildschirmleser).
 
 ## 3. Nicht automatisch belegt
 
-- **Urteilsqualität des echten Modells.** Die Tests prüfen die Maschinerie, nicht Gemini. Dafür
-  gibt es `apps/api/evals/buddy/` (16 Fälle: Wochentage, genanntes Datum, unklares Datum,
-  befristete Situation, Erinnerung, weniger Kontakt, Prompt-Injection, Zeitzone New York,
-  Verschiebung, Klassenstufe, Ergebnis einer Arbeit, Korrektur, Französisch, junges Kind). Er
-  braucht Vertex-Zugangsdaten und lief hier **nicht**.
+- **Urteilsqualität des echten Modells** ist nur stichprobenhaft belegt: `apps/api/evals/buddy/`
+  (16 Fälle: Wochentage, genanntes Datum, unklares Datum, befristete Situation, Erinnerung,
+  weniger Kontakt, Prompt-Injection, Zeitzone New York, Verschiebung, Klassenstufe, Ergebnis
+  einer Arbeit, Korrektur, Französisch, junges Kind) lief am 25.09.2026 dreimal hintereinander
+  mit Gemini 2.5 Flash über Vertex (europe-west4) mit 16/16, ca. 2 Cent pro Lauf. Der erste
+  Lauf deckte drei echte Fehler auf, die behoben sind: Vertex lehnte das Antwortschema als zu
+  komplex ab (Grenzen jetzt als Hinweis, zod prüft sie), Wochentage wurden verrechnet (die KI
+  übernimmt jetzt den Tagesabstand aus einer Liste), und Löschen wurde nur angeboten, aber
+  schon ausgeführt. Zusätzlich einmal der ganze Kernablauf mit echtem Modell: Planung, Foto
+  lesen, selbst vorbereitete Übung, Tutor-Bewertung. Das ist kein statistischer Beleg.
 - **Push auf echten Geräten** (Expo, APNs/FCM) und die **rechtliche Prüfung** des Push-Anbieters.
 - **Supabase Auth/Storage und pg_cron** auf einem gehosteten Projekt.
