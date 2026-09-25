@@ -13,8 +13,10 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { NewPasswordFields } from '../components/auth/NewPasswordFields.js';
+import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
+import { Glow } from '../components/lb/Glow.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { toast } from '../components/lb/Toast.js';
 import { clearAdminToken } from '../lib/admin.js';
@@ -119,6 +121,7 @@ export default function ResetPassword() {
   if (phase === 'checking') {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+        <Glow height={320} />
         <LoadingState label={t('reset.checking')} />
       </SafeAreaView>
     );
@@ -127,11 +130,22 @@ export default function ResetPassword() {
   if (phase === 'invalid' || phase === 'offline') {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
-        <ScrollView contentContainerStyle={{ padding: 24, gap: 18 }}>
-          <Text accessibilityRole="header" style={[TYPE.display, { marginTop: 24 }]}>
-            {t('reset.title')}
-          </Text>
-          <Card tone={phase === 'offline' ? 'sky' : 'butter'}>
+        <Glow height={420} />
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 28,
+            paddingBottom: 24,
+            gap: 18,
+          }}
+        >
+          <View style={{ alignItems: 'center', gap: 14 }}>
+            <BuddyOrb size={72} />
+            <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+              {t('reset.title')}
+            </Text>
+          </View>
+          <Card tone={phase === 'offline' ? 'sky' : 'butter'} padding={20}>
             <Text style={TYPE.title}>
               {phase === 'offline' ? t('reset.offline_title') : t('reset.invalid_title')}
             </Text>
@@ -141,11 +155,11 @@ export default function ResetPassword() {
           </Card>
           <View style={{ gap: 10 }}>
             {phase === 'offline' ? (
-              <Btn full onPress={() => void open(current.current)}>
+              <Btn pill full onPress={() => void open(current.current)}>
                 {t('reset.retry')}
               </Btn>
             ) : null}
-            <Btn variant={phase === 'offline' ? 'ghost' : 'primary'} full onPress={leave}>
+            <Btn variant={phase === 'offline' ? 'ghost' : 'primary'} pill full onPress={leave}>
               {backLabel}
             </Btn>
           </View>
@@ -156,18 +170,29 @@ export default function ResetPassword() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+      <Glow height={420} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={{ padding: 24, gap: 18 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 28,
+            paddingBottom: 24,
+            gap: 18,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text accessibilityRole="header" style={[TYPE.display, { marginTop: 24 }]}>
-            {t('reset.title')}
+          <View style={{ alignItems: 'center', gap: 14 }}>
+            <BuddyOrb size={72} />
+            <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+              {t('reset.title')}
+            </Text>
+          </View>
+          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
+            {t('reset.body')}
           </Text>
-          <Text style={TYPE.body}>{t('reset.body')}</Text>
           <NewPasswordFields
             password={password}
             repeat={repeat}
@@ -175,19 +200,12 @@ export default function ResetPassword() {
             onChangeRepeat={setRepeat}
             onSubmit={() => void save()}
           />
-          <Btn variant="ghost" onPress={leave}>
+          <Btn variant="ghost" pill center onPress={leave}>
             {backLabel}
           </Btn>
         </ScrollView>
-        <View
-          style={{
-            padding: 16,
-            borderTopWidth: 1,
-            borderTopColor: LB.hairline,
-            backgroundColor: LB.paper,
-          }}
-        >
-          <Btn size="lg" full disabled={!valid || busy} onPress={() => void save()}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
+          <Btn size="lg" pill full disabled={!valid || busy} onPress={() => void save()}>
             {busy ? t('reset.saving') : t('reset.cta')}
           </Btn>
         </View>

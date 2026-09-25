@@ -20,6 +20,7 @@ import {
   type Heard,
   type SpeechEngine,
 } from './engine.js';
+import { levelFromRecognizer } from './level.js';
 
 /** Locales that failed on the device during this app run: straight to the EU path next time. */
 const failedLocales = new Set<string>();
@@ -71,6 +72,7 @@ type Handlers = {
 export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs: number }) {
   const [phase, setPhaseState] = useState<DevicePhase>('idle');
   const [heard, setHeard] = useState<Heard>(NOTHING_HEARD);
+  const [level, setLevel] = useState(0);
   const [elapsedMs, setElapsed] = useState(0);
   const phaseRef = useRef<DevicePhase>('idle');
   const heardRef = useRef<Heard>(NOTHING_HEARD);
@@ -132,6 +134,10 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
       if (mounted.current) setElapsed(ms);
       if (ms >= maxMs) stop();
     }, 250);
+  });
+
+  useSpeechRecognitionEvent('volumechange', (e) => {
+    if (mine.current && mounted.current) setLevel(levelFromRecognizer(e.value));
   });
 
   useSpeechRecognitionEvent('result', (e) => {
@@ -205,6 +211,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
           requiresOnDeviceRecognition: true,
           addsPunctuation: true,
           maxAlternatives: 1,
+          volumeChangeEventOptions: { enabled: true, intervalMillis: 120 },
         });
       } catch {
         mine.current = false;
@@ -219,6 +226,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
   return {
     phase,
     heard: heardText(heard),
+    level: phase === 'listening' ? level : 0,
     elapsedMs,
     start,
     stop,

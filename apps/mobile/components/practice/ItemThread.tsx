@@ -12,7 +12,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from '../buddy/BuddyOrb.js';
+import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Icon } from '../lb/Icon.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';

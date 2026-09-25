@@ -131,9 +131,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
     <View
       style={{
         backgroundColor: LB.rose,
-        borderRadius: 24,
-        borderWidth: 1,
-        borderColor: LB.hairline,
+        borderRadius: 28,
         padding: 16,
       }}
     >
@@ -143,7 +141,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         icon="shield"
       >
         {/* Closed by default: the learner's settings stay short; parents open it when needed. */}
-        <Btn variant="outline" onPress={() => setOpen((v) => !v)}>
+        <Btn pill variant="outline" onPress={() => setOpen((v) => !v)}>
           {open ? t('settings:adult.close') : t('settings:adult.open')}
         </Btn>
         {open ? (
@@ -159,7 +157,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
               enabled={busy === null}
             />
 
-            <Card padding={18} radius={20}>
+            <Card padding={18}>
               <Row
                 question={t('settings:adult.export.title')}
                 hint={t('settings:adult.export.body')}
@@ -169,7 +167,12 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                     {t('settings:adult.needs_pin')}
                   </Text>
                 ) : null}
-                <Btn variant="outline" onPress={() => void exportData()} disabled={busy !== null}>
+                <Btn
+                  pill
+                  variant="outline"
+                  onPress={() => void exportData()}
+                  disabled={busy !== null}
+                >
                   {busy === 'export'
                     ? t('settings:adult.export.working')
                     : t('settings:adult.export.cta')}
@@ -177,7 +180,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
               </Row>
             </Card>
 
-            <Card padding={18} radius={20}>
+            <Card padding={18}>
               <Row
                 question={t('settings:adult.delete.title')}
                 answer={
@@ -191,11 +194,12 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                 hint={due ? undefined : t('settings:adult.delete.body')}
               >
                 {due ? (
-                  <Btn onPress={() => void cancelScheduledDeletion()} disabled={busy !== null}>
+                  <Btn pill onPress={() => void cancelScheduledDeletion()} disabled={busy !== null}>
                     {t('settings:adult.delete.cancel')}
                   </Btn>
                 ) : (
                   <Btn
+                    pill
                     variant="danger"
                     onPress={() => setDeleteOpen(true)}
                     disabled={busy !== null}
@@ -206,7 +210,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
               </Row>
             </Card>
 
-            <Card padding={18} radius={20}>
+            <Card padding={18}>
               <Row
                 question={t('settings:adult.signout.title')}
                 hint={
@@ -216,6 +220,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                 }
               >
                 <Btn
+                  pill
                   variant="outline"
                   onPress={() => setSignOutOpen(true)}
                   disabled={busy !== null}
@@ -238,7 +243,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         {minor ? (
           <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
         ) : null}
-        <Btn variant="danger" full onPress={() => void scheduleDeletion()}>
+        <Btn pill variant="danger" full onPress={() => void scheduleDeletion()}>
           {t('settings:adult.delete.confirm_cta')}
         </Btn>
       </Sheet>
@@ -250,7 +255,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         onClose={() => setSignOutOpen(false)}
       >
         <Text style={TYPE.body}>{t('settings:adult.signout.confirm_body')}</Text>
-        <Btn full onPress={() => void signOutNow()}>
+        <Btn pill full onPress={() => void signOutNow()}>
           {t('settings:adult.signout.confirm_cta')}
         </Btn>
       </Sheet>

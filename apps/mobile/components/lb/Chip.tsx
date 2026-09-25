@@ -4,7 +4,7 @@ import { LB } from '../../lib/theme/colors.js';
 type Tone = 'gray' | 'primary' | 'success' | 'warning' | 'dark';
 
 const TONES: Record<Tone, { bg: string; color: string; border?: string }> = {
-  gray: { bg: LB.bg, color: LB.ink, border: LB.hairline },
+  gray: { bg: LB.canvas, color: LB.ink2 },
   primary: { bg: LB.primaryLt, color: LB.primaryDk },
   success: { bg: 'rgba(107,141,106,0.13)', color: LB.successText },
   warning: { bg: 'rgba(181,138,60,0.13)', color: LB.warningText },
@@ -21,10 +21,11 @@ export function Chip({ children, tone = 'gray' }: { children: string; tone?: Ton
         backgroundColor: t.bg,
         borderColor: t.border ?? 'transparent',
         borderWidth: t.border ? 1 : 0,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
         borderRadius: 999,
         alignSelf: 'flex-start',
+        maxWidth: '100%',
       }}
     >
       <Text style={{ color: t.color, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>

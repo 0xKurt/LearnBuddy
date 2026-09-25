@@ -1,5 +1,7 @@
-// Sign up or sign in. CLAUDE.md rule 11: the CTA is pinned outside the
+// Sign up or sign in. CLAUDE.md rule 15: the CTA is pinned outside the
 // ScrollView, inside a KeyboardAvoidingView, so the keyboard never hides it.
+// The first impression: Buddy's soft light and orb, one headline, two pills to
+// choose, soft white fields.
 
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -7,9 +9,11 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-na
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner } from '../components/lb/Banner.js';
+import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
+import { Glow } from '../components/lb/Glow.js';
+import { Icon } from '../components/lb/Icon.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { toast } from '../components/lb/Toast.js';
@@ -65,18 +69,29 @@ export default function Welcome() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+      <Glow height={420} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={{ padding: 24, gap: 18 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 28,
+            paddingBottom: 24,
+            gap: 18,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text accessibilityRole="header" style={[TYPE.display, { marginTop: 24 }]}>
-            {t('welcome.title')}
-          </Text>
-          <Text style={TYPE.body}>{t('welcome.body')}</Text>
+          <View style={{ alignItems: 'center', gap: 14, marginBottom: 4 }}>
+            <BuddyOrb size={88} />
+            <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+              {t('welcome.title')}
+            </Text>
+            <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 420 }]}>
+              {t('welcome.body')}
+            </Text>
+          </View>
 
           {confirmSent ? (
             <Card tone="mint">
@@ -120,26 +135,41 @@ export default function Welcome() {
               }
             />
             {mode === 'signup' ? (
-              <Text style={TYPE.small}>{t('welcome.password_hint')}</Text>
+              <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>
+                {t('welcome.password_hint')}
+              </Text>
             ) : null}
           </View>
           {mode === 'signin' ? (
-            <Btn variant="ghost" onPress={() => void forgot()}>
+            <Btn variant="ghost" pill onPress={() => void forgot()}>
               {t('welcome.forgot')}
             </Btn>
           ) : (
-            <Banner tone="info">{t('welcome.minor_hint')}</Banner>
+            <Card tone="lavender" padding={16}>
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: LB.paper,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="shield" size={18} color={LB.primaryDk} />
+                </View>
+                <Text style={[TYPE.small, { flex: 1, color: LB.ink }]}>
+                  {t('welcome.minor_hint')}
+                </Text>
+              </View>
+            </Card>
           )}
         </ScrollView>
-        <View
-          style={{
-            padding: 16,
-            borderTopWidth: 1,
-            borderTopColor: LB.hairline,
-            backgroundColor: LB.paper,
-          }}
-        >
-          <Btn size="lg" full disabled={!valid || busy} onPress={() => void submit()}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
+          <Btn size="lg" pill full disabled={!valid || busy} onPress={() => void submit()}>
             {mode === 'signup' ? t('welcome.cta_signup') : t('welcome.cta_signin')}
           </Btn>
         </View>

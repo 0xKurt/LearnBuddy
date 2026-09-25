@@ -11,7 +11,7 @@ import { Text, View } from 'react-native';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from '../buddy/BuddyOrb.js';
+import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
 import { FigureView } from '../math/FigureView.js';
 import { MathText } from '../math/MathText.js';

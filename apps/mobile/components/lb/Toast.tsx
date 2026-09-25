@@ -1,5 +1,6 @@
 // One short message at the bottom (errors, confirmations). Screen readers
-// hear it as a live region.
+// hear it as a live region. Looks: a dark pill floating on a soft shadow; an
+// error also carries a round warning mark (never colour alone).
 
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
@@ -7,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
 
 import { LB } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 
 export type ToastTone = 'info' | 'error';
 
@@ -47,14 +49,38 @@ export function ToastHost() {
     >
       <View
         style={{
-          backgroundColor: tone === 'error' ? LB.danger : LB.ink,
-          borderRadius: 14,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          backgroundColor: LB.ink,
+          borderRadius: 26,
+          paddingHorizontal: 20,
+          paddingVertical: 13,
           maxWidth: 520,
+          ...SHADOW.float,
         }}
       >
-        <Text style={{ color: '#fff', fontSize: 15, lineHeight: 21 }}>{message}</Text>
+        {tone === 'error' ? (
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 11,
+              backgroundColor: LB.peachDeep,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: LB.ink, fontSize: 14, lineHeight: 18, fontWeight: '700' }}>
+              !
+            </Text>
+          </View>
+        ) : null}
+        <Text style={{ flexShrink: 1, color: LB.paper, fontSize: 15, lineHeight: 21 }}>
+          {message}
+        </Text>
       </View>
     </View>
   );

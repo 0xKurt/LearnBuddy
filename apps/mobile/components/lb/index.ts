@@ -6,7 +6,6 @@ export { CircleBtn } from './CircleBtn.js';
 export { EmptyState } from './EmptyState.js';
 export { ErrorBoundary } from './ErrorBoundary.js';
 export { Icon } from './Icon.js';
-export { KeyCap } from './KeyCap.js';
 export { LbTextInput } from './LbTextInput.js';
 export { LoadingState } from './LoadingState.js';
 export { PinPad } from './PinPad.js';

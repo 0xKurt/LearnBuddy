@@ -28,16 +28,16 @@ export function Checkbox({
           style={{
             width: 26,
             height: 26,
-            borderRadius: 8,
+            borderRadius: 9,
             borderWidth: 1.5,
-            borderColor: checked ? LB.ink : LB.ink3,
-            backgroundColor: checked ? LB.ink : '#fff',
+            borderColor: checked ? LB.primary : LB.ink3,
+            backgroundColor: checked ? LB.primary : LB.paper,
             alignItems: 'center',
             justifyContent: 'center',
             marginTop: 1,
           }}
         >
-          {checked ? <Icon name="check" size={16} color="#fff" /> : null}
+          {checked ? <Icon name="check" size={16} color={LB.paper} /> : null}
         </View>
         <Text style={[TYPE.body, { flex: 1, fontSize: 15 }]}>{label}</Text>
       </View>

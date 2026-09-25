@@ -1,6 +1,6 @@
 // The round mic button (56 pt; 72 pt when it is the main control in voice
-// mode) and the one status line that goes with it. Built like CircleBtn and
-// KeyCap: Pressable outside, the background on the inner View. Tap to start,
+// mode; 48 pt in the composer bar) and the one status line that goes with it. Built like
+// CircleBtn: Pressable outside, the background on the inner View. Tap to start,
 // tap to stop. While recording, a ring pulses (still for reduced motion), the
 // icon turns into a stop square and the timer runs; while the words are being
 // written down, a small spinner sits in the button.

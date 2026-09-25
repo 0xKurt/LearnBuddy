@@ -6,10 +6,12 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
+import { Icon } from '../components/lb/Icon.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
@@ -51,6 +53,7 @@ function ageOf(iso: string): number {
 
 export default function Profile() {
   const { t } = useTranslation('auth');
+  const insets = useSafeAreaInsets();
   const [relation, setRelation] = useState<'self' | 'child' | null>(null);
   const [name, setName] = useState('');
   const [day, setDay] = useState('');
@@ -106,7 +109,7 @@ export default function Profile() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={{ padding: 24, gap: 18 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24, gap: 22 }}
           keyboardShouldPersistTaps="handled"
         >
           <Text accessibilityRole="header" style={TYPE.display}>
@@ -123,7 +126,7 @@ export default function Profile() {
           {relation ? (
             <>
               <View style={{ gap: 8 }}>
-                <Text style={TYPE.label}>
+                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
                   {relation === 'self' ? t('profile.name_self') : t('profile.name_child')}
                 </Text>
                 <LbTextInput
@@ -136,7 +139,9 @@ export default function Profile() {
                 />
               </View>
               <View style={{ gap: 8 }}>
-                <Text style={TYPE.label}>{t('profile.birth_date')}</Text>
+                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
+                  {t('profile.birth_date')}
+                </Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <View style={{ flex: 1 }}>
                     <LbTextInput
@@ -170,36 +175,54 @@ export default function Profile() {
                   </View>
                 </View>
                 {dateComplete && !birthDate ? (
-                  <Text style={[TYPE.small, { color: LB.danger }]}>
+                  <Text style={[TYPE.small, { color: LB.danger, paddingHorizontal: 4 }]}>
                     {t('profile.birth_date_invalid')}
                   </Text>
                 ) : (
-                  <Text style={TYPE.small}>
+                  <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>
                     {relation === 'child'
                       ? t('profile.birth_date_hint_child')
                       : t('profile.birth_date_hint')}
                   </Text>
                 )}
                 {tooYoungSelf ? (
-                  <Text style={[TYPE.small, { color: LB.danger }]}>
+                  <Text style={[TYPE.small, { color: LB.danger, paddingHorizontal: 4 }]}>
                     {t('profile.too_young_self')}
                   </Text>
                 ) : null}
               </View>
               <View style={{ gap: 8 }}>
-                <Text style={TYPE.label}>{t('profile.language')}</Text>
+                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
                 <Segmented options={LANGUAGES} value={locale} onChange={setLocale} />
               </View>
               {relation === 'child' ? (
-                <Card tone="lavender">
+                <Card tone="lavender" padding={20}>
                   <View style={{ gap: 12 }}>
                     <Checkbox
                       checked={consent}
                       onChange={setConsent}
                       label={t('profile.child_consent')}
                     />
-                    <Text style={TYPE.title}>{t('profile.pin_title')}</Text>
-                    <Text style={TYPE.small}>{t('profile.pin_body')}</Text>
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}
+                    >
+                      <View
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          backgroundColor: LB.paper,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Icon name="shield" size={18} color={LB.primaryDk} />
+                      </View>
+                      <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
+                    </View>
+                    <Text style={[TYPE.small, { color: LB.ink }]}>{t('profile.pin_body')}</Text>
                     <LbTextInput
                       value={pin}
                       onChangeText={setPinValue}
@@ -231,13 +254,12 @@ export default function Profile() {
         </ScrollView>
         <View
           style={{
-            padding: 16,
-            borderTopWidth: 1,
-            borderTopColor: LB.hairline,
-            backgroundColor: LB.paper,
+            paddingHorizontal: 20,
+            paddingTop: 8,
+            paddingBottom: Math.max(insets.bottom, 16),
           }}
         >
-          <Btn size="lg" full disabled={!ready || busy} onPress={() => void submit()}>
+          <Btn size="lg" pill full disabled={!ready || busy} onPress={() => void submit()}>
             {t('profile.cta')}
           </Btn>
         </View>

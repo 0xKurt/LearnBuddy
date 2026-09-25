@@ -54,6 +54,8 @@ export type VoiceInput = {
   /** Milliseconds recorded so far and the most there can be (for "0:07 / 1:00"). */
   elapsedMs: number;
   maxMs: number;
+  /** How loud she is right now (0…1), for the orb's sound bars. */
+  level: number;
   /** What she has said so far while the phone recognises on-device ('' otherwise). */
   live: string;
   hint: VoiceHint | null;
@@ -166,6 +168,7 @@ export function useVoiceInput({
     elapsedMs: onDevice ? device.elapsedMs : rec.elapsedMs,
     maxMs: onDevice ? MAX_DICTATION_MS : rec.maxMs,
     live: onDevice ? device.heard : '',
+    level: onDevice ? device.level : rec.level,
     hint,
     denied: rec.denied,
     toggle,

@@ -39,7 +39,7 @@ function ErrorNote({ text }: { text: string | null }) {
   if (!text) return null;
   return (
     <View accessibilityLiveRegion="polite">
-      <Card tone="blush" padding={14} radius={16}>
+      <Card tone="blush" padding={14} radius={18}>
         <Text style={TYPE.body}>{text}</Text>
       </Card>
     </View>
@@ -165,11 +165,12 @@ export default function MaterialScreen() {
           title={messageFor(query.error)}
           action={
             <View style={{ gap: 10, alignItems: 'center' }}>
-              <Btn center onPress={() => void query.refetch()}>
+              <Btn pill center onPress={() => void query.refetch()}>
                 {t('common:actions.retry')}
               </Btn>
               <Btn
                 variant="ghost"
+                pill
                 center
                 onPress={() => (router.canGoBack() ? router.back() : router.replace('/library'))}
               >
@@ -196,11 +197,11 @@ export default function MaterialScreen() {
     }
     content = (
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 14, flexGrow: 1 }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
       >
-        <View style={{ gap: 4, marginBottom: 6 }}>
-          <Text accessibilityRole="header" style={TYPE.display}>
+        <View style={{ gap: 6, marginBottom: 8, paddingHorizontal: 4 }}>
+          <Text accessibilityRole="header" style={[TYPE.display, { fontSize: 28, lineHeight: 34 }]}>
             {title}
           </Text>
           <Text style={[TYPE.body, { color: LB.ink2 }]}>
@@ -211,7 +212,7 @@ export default function MaterialScreen() {
         </View>
         {empty !== null ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>
-            <EmptyState title={empty.title} body={empty.body} />
+            <EmptyState orb title={empty.title} body={empty.body} />
           </View>
         ) : (
           data.items.map((item, index) => (
@@ -235,7 +236,8 @@ export default function MaterialScreen() {
         material ? (
           <Btn
             size="sm"
-            variant="ghost"
+            variant="outline"
+            pill
             disabled={deleting || renaming}
             onPress={openRename}
             accessibilityLabel={t('library:rename_label', { title })}
@@ -254,13 +256,13 @@ export default function MaterialScreen() {
         onClose={() => setDeleteOpen(false)}
       >
         {target ? (
-          <Card tone="bg" padding={14} radius={16}>
+          <Card tone="lavender" padding={16} radius={18}>
             <MathText text={target.item.prompt} style={TYPE.body} />
           </Card>
         ) : null}
         <Text style={TYPE.body}>{t('library:item_delete_sheet.body')}</Text>
         <ErrorNote text={deleteError} />
-        <Btn variant="danger" full disabled={deleting} onPress={() => void confirmDelete()}>
+        <Btn variant="danger" pill full disabled={deleting} onPress={() => void confirmDelete()}>
           {t('library:item_delete_sheet.confirm')}
         </Btn>
       </Sheet>
@@ -271,7 +273,7 @@ export default function MaterialScreen() {
         closeLabel={t('common:actions.cancel')}
         onClose={() => setRenameOpen(false)}
         footer={
-          <Btn full disabled={renaming || !draftOk} onPress={() => void saveRename()}>
+          <Btn pill full disabled={renaming || !draftOk} onPress={() => void saveRename()}>
             {t('common:actions.save')}
           </Btn>
         }

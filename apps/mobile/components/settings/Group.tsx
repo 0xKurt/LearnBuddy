@@ -18,17 +18,30 @@ type Props = {
 export function Group({ title, intro, icon, children }: Props) {
   return (
     <View style={{ gap: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 }}>
         {icon ? (
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Icon name={icon} size={22} color={LB.ink} />
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: LB.paper,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name={icon} size={19} color={LB.primaryDk} />
           </View>
         ) : null}
         <Text accessibilityRole="header" style={[TYPE.title, { flex: 1 }]}>
           {title}
         </Text>
       </View>
-      {intro ? <Text style={[TYPE.body, { color: LB.ink2 }]}>{intro}</Text> : null}
+      {intro ? (
+        <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>{intro}</Text>
+      ) : null}
       {children}
     </View>
   );

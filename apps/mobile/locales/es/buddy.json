@@ -70,7 +70,7 @@
     "undo_label": "Deshacer: {{what}}"
   },
   "next": {
-    "line": "Próximo examen: {{title}} · {{when}}"
+    "line": "{{title}} · {{when}}"
   },
   "thread": {
     "title": "Chat con Buddy",

@@ -16,6 +16,10 @@ export const LB = {
   primary: '#6a48d7',
   primaryDk: '#5335b5',
   primaryLt: '#ebe5fc',
+  // The soft violet halo around a focused field (components/lb/LbTextInput.tsx).
+  ring: 'rgba(106,72,215,0.22)',
+  // A text field's resting border: soft, but visible on white and on the page.
+  field: 'rgba(60,40,120,0.16)',
   success: '#6b8d6a',
   warning: '#b58a3c',
   danger: '#b1493c',

@@ -120,14 +120,14 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
   const inputStyle = { fontSize: 16 };
 
   return (
-    <Card padding={18} radius={20}>
+    <Card padding={18}>
       <Row
         question={t('settings:adult.pin.title')}
         answer={pinSet ? t('settings:adult.pin.is_set') : t('settings:adult.pin.not_set')}
         hint={t('settings:adult.pin.body')}
       >
         {!open ? (
-          <Btn variant="outline" onPress={() => setOpen(true)}>
+          <Btn pill variant="outline" onPress={() => setOpen(true)}>
             {pinSet ? t('settings:adult.pin.change') : t('settings:adult.pin.create')}
           </Btn>
         ) : (
@@ -240,10 +240,10 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
             ) : null}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <Btn onPress={() => void save()} disabled={!canSave}>
+              <Btn pill onPress={() => void save()} disabled={!canSave}>
                 {t('settings:adult.pin.save')}
               </Btn>
-              <Btn variant="ghost" onPress={close} disabled={busy}>
+              <Btn pill variant="ghost" onPress={close} disabled={busy}>
                 {t('common:actions.cancel')}
               </Btn>
             </View>

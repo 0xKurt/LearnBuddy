@@ -3,6 +3,8 @@
 // A sheet with a form passes its CTA as `footer`: it stays pinned under the
 // scrolling content and, with the keyboard open, right above the keyboard
 // (CLAUDE.md rule 15).
+// Looks: a rounded white top sheet on a soft shadow, with a small grab handle
+// (decorative) over a light violet-grey veil.
 
 import type { ReactNode } from 'react';
 import {
@@ -17,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LB } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 
@@ -45,22 +48,35 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
             onPress={onClose}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           >
-            <View style={{ flex: 1, backgroundColor: 'rgba(29,27,34,0.35)' }} />
+            <View style={{ flex: 1, backgroundColor: 'rgba(31,27,46,0.28)' }} />
           </Pressable>
           <View
             accessibilityViewIsModal
             style={{
               backgroundColor: LB.paper,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              paddingTop: 20,
-              paddingBottom: insets.bottom + 20,
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              paddingTop: 10,
+              paddingBottom: insets.bottom + 16,
               maxHeight: '92%',
+              ...SHADOW.float,
             }}
           >
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={{
+                alignSelf: 'center',
+                width: 40,
+                height: 5,
+                borderRadius: 3,
+                backgroundColor: LB.ink4,
+                marginBottom: 14,
+              }}
+            />
             <ScrollView
               style={{ flexGrow: 0, flexShrink: 1 }}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 12 }}
+              contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 14, gap: 14 }}
               keyboardShouldPersistTaps="handled"
             >
               <Text accessibilityRole="header" style={TYPE.title}>
@@ -68,9 +84,9 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
               </Text>
               {children}
             </ScrollView>
-            <View style={{ paddingHorizontal: 20, gap: 8 }}>
+            <View style={{ paddingHorizontal: 22, gap: 8 }}>
               {footer}
-              <Btn variant="ghost" full onPress={onClose}>
+              <Btn variant="ghost" pill full onPress={onClose}>
                 {closeLabel}
               </Btn>
             </View>

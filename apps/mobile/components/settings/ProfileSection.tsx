@@ -56,7 +56,7 @@ export function ProfileSection({ learner }: { learner: LearnerView }) {
 
   return (
     <Group title={t('profile.language_title')}>
-      <Card padding={20} radius={22}>
+      <Card padding={20}>
         <View style={{ gap: 18 }}>
           <Row
             question={t('profile.language_question')}

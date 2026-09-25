@@ -20,7 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BuddyOrb } from '../components/buddy/BuddyOrb.js';
+import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
@@ -323,8 +323,14 @@ export default function BuddyScreen() {
             >
               {t('buddy:greeting', { name: h.learner.name })}
             </Text>
+            {/* Personal when something is coming up: the next test; otherwise the open question. */}
             <Text style={[TYPE.title, { color: LB.ink2, textAlign: 'center', fontWeight: '500' }]}>
-              {t('buddy:greeting_ask')}
+              {nextExam
+                ? t('buddy:next.line', {
+                    title: nextExam.title,
+                    when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+                  })
+                : t('buddy:greeting_ask')}
             </Text>
           </View>
 
@@ -335,15 +341,6 @@ export default function BuddyScreen() {
             // Only Buddy in the middle: nothing that could run into the labels on a small phone.
             center={<BuddyOrb size={72} />}
           />
-          {nextExam ? (
-            <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', marginTop: -6 }]}>
-              {t('buddy:next.line', {
-                title: nextExam.title,
-                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
-              })}
-            </Text>
-          ) : null}
-
           {messages.length === 0 && !shownPending ? (
             // First visit: one sentence about Buddy; the ring above shows how to start.
             <Text

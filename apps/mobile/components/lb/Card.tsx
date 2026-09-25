@@ -1,5 +1,9 @@
+// A surface for one thing. White paper cards float on a soft shadow (no hairline
+// box); tinted cards (a subject pastel, the accent tint) sit flat on the page.
+
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LB, TONE_BG, type SubjectTone } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 
 type Tone = 'paper' | 'bg' | 'primary' | 'primaryLt' | SubjectTone;
 
@@ -15,7 +19,7 @@ type Props = {
 };
 
 function backgroundFor(tone: Tone): { bg: string; color?: string } {
-  if (tone === 'paper') return { bg: '#fff' };
+  if (tone === 'paper') return { bg: LB.paper };
   if (tone === 'bg') return { bg: LB.bg };
   if (tone === 'primary') return { bg: LB.primary, color: '#fff' };
   if (tone === 'primaryLt') return { bg: LB.primaryLt };
@@ -27,7 +31,7 @@ export function Card({
   tone = 'paper',
   onPress,
   padding = 18,
-  radius = 18,
+  radius = 22,
   style,
   accessibilityLabel,
   accessibilityHint,
@@ -38,8 +42,7 @@ export function Card({
     backgroundColor: bg,
     borderRadius: radius,
     padding,
-    borderWidth: isPaper ? 1 : 0,
-    borderColor: LB.hairline,
+    ...(isPaper ? SHADOW.soft : null),
   };
   if (onPress) {
     return (
@@ -49,7 +52,9 @@ export function Card({
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
       >
-        <View style={[baseStyle, style]}>{children}</View>
+        {({ pressed }) => (
+          <View style={[baseStyle, style, pressed ? { opacity: 0.85 } : null]}>{children}</View>
+        )}
       </Pressable>
     );
   }

@@ -129,7 +129,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
 
   return (
     <>
-      <Card padding={18} radius={20}>
+      <Card padding={18}>
         <View style={{ gap: 16 }}>
           <Row
             question={t('settings:adult.access.email_title')}
@@ -139,7 +139,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
             {minor ? (
               <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
             ) : null}
-            <Btn variant="outline" onPress={() => void start('email')} disabled={locked}>
+            <Btn pill variant="outline" onPress={() => void start('email')} disabled={locked}>
               {t('settings:adult.access.email_cta')}
             </Btn>
           </Row>
@@ -148,7 +148,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
             {minor ? (
               <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
             ) : null}
-            <Btn variant="outline" onPress={() => void start('password')} disabled={locked}>
+            <Btn pill variant="outline" onPress={() => void start('password')} disabled={locked}>
               {t('settings:adult.access.password_cta')}
             </Btn>
           </Row>
@@ -162,7 +162,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
         onClose={close}
         footer={
           pendingEmail ? undefined : (
-            <Btn full disabled={!emailValid || busy} onPress={() => void saveEmail()}>
+            <Btn pill full disabled={!emailValid || busy} onPress={() => void saveEmail()}>
               {busy ? t('settings:adult.access.sending') : t('settings:adult.access.email_save')}
             </Btn>
           )
@@ -208,7 +208,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
         closeLabel={t('common:actions.cancel')}
         onClose={close}
         footer={
-          <Btn full disabled={!passwordValid || busy} onPress={() => void savePassword()}>
+          <Btn pill full disabled={!passwordValid || busy} onPress={() => void savePassword()}>
             {busy ? t('settings:adult.access.saving') : t('settings:adult.access.password_save')}
           </Btn>
         }

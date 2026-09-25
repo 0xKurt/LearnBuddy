@@ -5,17 +5,24 @@ import { View } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { useSvgId } from '../../lib/theme/svgId.js';
+import { barHeights } from '../../lib/speech/level.js';
 import { LB } from '../../lib/theme/colors.js';
 
-const BARS = [
-  { x: 33, h: 14 },
-  { x: 41, h: 26 },
-  { x: 49, h: 38 },
-  { x: 57, h: 26 },
-  { x: 65, h: 14 },
-];
+const BAR_X = [33, 41, 49, 57, 65];
+/** The tallest bar at full voice (in the 100-unit viewBox). */
+const BAR_MAX = 44;
 
-export function BuddyOrb({ size = 32, listening = false }: { size?: number; listening?: boolean }) {
+export function BuddyOrb({
+  size = 32,
+  listening = false,
+  level = 0.5,
+}: {
+  size?: number;
+  listening?: boolean;
+  /** How loud she is (0…1): the sound bars follow it while listening. */
+  level?: number;
+}) {
+  const heights = barHeights(level).map((h) => h * BAR_MAX);
   const base = useSvgId('g');
   const ids = { orbBody: `${base}orbBody`, orbShine: `${base}orbShine` };
   return (
@@ -49,13 +56,13 @@ export function BuddyOrb({ size = 32, listening = false }: { size?: number; list
           strokeWidth={1.5}
         />
         {listening
-          ? BARS.map((b) => (
+          ? BAR_X.map((x, i) => (
               <Rect
-                key={b.x}
-                x={b.x - 1.8}
-                y={50 - b.h / 2}
+                key={x}
+                x={x - 1.8}
+                y={50 - (heights[i] ?? 0) / 2}
                 width={3.6}
-                height={b.h}
+                height={heights[i] ?? 0}
                 rx={1.8}
                 fill={LB.primary}
               />

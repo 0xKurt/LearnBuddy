@@ -47,7 +47,7 @@ export function AboutSection() {
 
   return (
     <Group title={t('about.title')} icon="book">
-      <Card padding={18} radius={20}>
+      <Card padding={18}>
         <View style={{ gap: 16 }}>
           {version ? (
             <Row question={t('about.version_question')} answer={t('about.version', { version })} />
@@ -60,12 +60,12 @@ export function AboutSection() {
                   question={t('about.support_question')}
                   hint={t('about.support_hint', { email: link.detail ?? '' })}
                 >
-                  <Btn variant="outline" onPress={() => void openLink(link)}>
+                  <Btn pill variant="outline" onPress={() => void openLink(link)}>
                     {label.support}
                   </Btn>
                 </Row>
               ) : (
-                <Btn variant="outline" onPress={() => void openLink(link)}>
+                <Btn pill variant="outline" onPress={() => void openLink(link)}>
                   {label[link.kind]}
                 </Btn>
               )}

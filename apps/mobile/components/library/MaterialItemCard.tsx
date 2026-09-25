@@ -34,8 +34,8 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
   const { t } = useTranslation('library');
   const choices = item.kind === 'multiple_choice' && item.choices ? item.choices : null;
   return (
-    <Card padding={16} radius={18}>
-      <View style={{ gap: 12 }}>
+    <Card padding={18}>
+      <View style={{ gap: 14 }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
           <Text style={TYPE.label}>{t('items.question_label', { number })}</Text>
           {item.topic ? <Chip>{item.topic}</Chip> : null}
@@ -47,10 +47,21 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
           <View style={{ gap: 6 }}>
             <Text style={TYPE.label}>{t('items.choices')}</Text>
             {choices.map((choice, index) => (
-              <View key={index} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                <Text style={[TYPE.small, { color: LB.ink2 }]}>
-                  {String.fromCharCode(65 + index)}
-                </Text>
+              <View key={index} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                <View
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: LB.lavender,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={[TYPE.label, { color: LB.primaryDk }]}>
+                    {String.fromCharCode(65 + index)}
+                  </Text>
+                </View>
                 <View style={{ flex: 1 }}>
                   <MathText text={choice} style={TYPE.small} />
                 </View>
@@ -62,6 +73,7 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
           <Btn
             size="sm"
             variant="ghost"
+            pill
             disabled={disabled}
             onPress={onDelete}
             accessibilityLabel={t('items.delete_label', { number })}

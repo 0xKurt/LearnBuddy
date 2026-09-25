@@ -5,6 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { LB } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 import { Btn } from '../lb/Btn.js';
 
 const THUMB_WIDTH = 112;
@@ -22,52 +23,54 @@ export function PhotoStrip({ uris, disabled, onRemove }: Props) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 12 }}
+      // Room for the thumbnails' soft shadow.
+      contentContainerStyle={{ gap: 12, paddingHorizontal: 2, paddingVertical: 6 }}
     >
       {uris.map((uri, i) => (
-        <View key={uri} style={{ width: THUMB_WIDTH, gap: 4 }}>
-          <View
-            style={{
-              width: THUMB_WIDTH,
-              height: THUMB_HEIGHT,
-              borderRadius: 14,
-              overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: LB.hairline,
-              backgroundColor: LB.canvas,
-            }}
-          >
-            <Image
-              source={{ uri }}
-              accessible
-              accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
-              contentFit="cover"
-              transition={120}
-              style={{ flex: 1 }}
-            />
-            {/* Page number; the image label already says it for screen readers. */}
+        <View key={uri} style={{ width: THUMB_WIDTH, gap: 6 }}>
+          <View style={{ borderRadius: 18, backgroundColor: LB.paper, ...SHADOW.soft }}>
             <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
               style={{
-                position: 'absolute',
-                top: 6,
-                left: 6,
-                minWidth: 22,
-                height: 22,
-                borderRadius: 11,
-                paddingHorizontal: 6,
-                backgroundColor: LB.ink,
-                alignItems: 'center',
-                justifyContent: 'center',
+                width: THUMB_WIDTH,
+                height: THUMB_HEIGHT,
+                borderRadius: 18,
+                overflow: 'hidden',
+                backgroundColor: LB.canvas,
               }}
             >
-              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{i + 1}</Text>
+              <Image
+                source={{ uri }}
+                accessible
+                accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
+                contentFit="cover"
+                transition={120}
+                style={{ flex: 1 }}
+              />
+              {/* Page number; the image label already says it for screen readers. */}
+              <View
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  minWidth: 24,
+                  height: 24,
+                  borderRadius: 12,
+                  paddingHorizontal: 6,
+                  backgroundColor: LB.primary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ color: LB.paper, fontSize: 12, fontWeight: '700' }}>{i + 1}</Text>
+              </View>
             </View>
           </View>
           <Btn
             size="sm"
             variant="ghost"
+            pill
             full
             disabled={disabled}
             onPress={() => onRemove(uri)}

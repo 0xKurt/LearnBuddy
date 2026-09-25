@@ -15,7 +15,7 @@ import { Btn } from '../lb/Btn.js';
 import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
-import { BuddyOrb } from './BuddyOrb.js';
+import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { deliveryText, describeAction } from './describe.js';
 
 type Props = {

@@ -2,9 +2,10 @@
 
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { PinPad } from '../components/lb/PinPad.js';
 import { Screen } from '../components/lb/Screen.js';
@@ -50,26 +51,46 @@ export default function Pin() {
 
   return (
     <Screen>
-      <View
-        style={{ flex: 1, padding: 24, gap: 20, alignItems: 'center', justifyContent: 'center' }}
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 20,
+          paddingVertical: 24,
+          gap: 18,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-          {t('pin.title')}
-        </Text>
-        <Text style={[TYPE.body, { textAlign: 'center' }]}>{t('pin.body')}</Text>
-        {error ? (
-          <Text
-            accessibilityLiveRegion="assertive"
-            style={[TYPE.body, { color: LB.danger, textAlign: 'center' }]}
-          >
-            {error}
+        <BuddyOrb size={64} />
+        <View style={{ gap: 8, alignItems: 'center' }}>
+          <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+            {t('pin.title')}
           </Text>
+          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 360 }]}>
+            {t('pin.body')}
+          </Text>
+        </View>
+        {error ? (
+          <View
+            accessibilityLiveRegion="assertive"
+            style={{
+              backgroundColor: LB.blush,
+              borderRadius: 18,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              maxWidth: 360,
+            }}
+          >
+            <Text style={[TYPE.body, { color: LB.ink, textAlign: 'center' }]}>{error}</Text>
+          </View>
         ) : null}
-        <PinPad onComplete={(pin) => void submit(pin)} resetKey={attempt} disabled={busy} />
-        <Btn variant="ghost" center onPress={() => router.back()}>
+        <View style={{ marginTop: 4 }}>
+          <PinPad onComplete={(pin) => void submit(pin)} resetKey={attempt} disabled={busy} />
+        </View>
+        <Btn variant="ghost" pill center onPress={() => router.back()}>
           {t('pin.cancel')}
         </Btn>
-      </View>
+      </ScrollView>
     </Screen>
   );
 }

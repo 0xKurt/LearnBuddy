@@ -24,7 +24,7 @@ import { ApiError } from '../lib/api/client.js';
 import { deleteMaterial, retryMaterial, startPractice } from '../lib/api/endpoints.js';
 import { keys, queryClient, useLibrary } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
-import { LB, type SubjectTone } from '../lib/theme/colors.js';
+import { LB, TONE_DEEP, type SubjectTone } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
 /** Each kind of subject keeps its pastel, so a subject looks the same everywhere in the list. */
@@ -200,7 +200,11 @@ export default function LibraryScreen() {
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <EmptyState
           title={messageFor(library.error)}
-          action={<Btn onPress={() => void library.refetch()}>{t('common:actions.retry')}</Btn>}
+          action={
+            <Btn pill center onPress={() => void library.refetch()}>
+              {t('common:actions.retry')}
+            </Btn>
+          }
         />
       </View>
     ) : (
@@ -210,12 +214,13 @@ export default function LibraryScreen() {
     content = (
       <>
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 22, flexGrow: 1 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 26, flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
         >
           {groups.length === 0 ? (
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <EmptyState
+                orb
                 title={t('library:empty.title')}
                 action={
                   // Body text sits here at 16 px (EmptyState's own body is smaller).
@@ -225,7 +230,7 @@ export default function LibraryScreen() {
                     >
                       {t('library:empty.body')}
                     </Text>
-                    <Btn size="lg" center onPress={openCapture}>
+                    <Btn size="lg" pill center onPress={openCapture}>
                       {t('library:capture')}
                     </Btn>
                   </View>
@@ -234,8 +239,12 @@ export default function LibraryScreen() {
             </View>
           ) : (
             groups.map((g) => (
-              <Section key={g.key} title={g.title}>
-                <View style={{ gap: 10 }}>
+              <Section
+                key={g.key}
+                title={g.title}
+                dot={g.tone === 'paper' ? LB.ink4 : TONE_DEEP[g.tone]}
+              >
+                <View style={{ gap: 12 }}>
                   {g.materials.map((m) => (
                     <MaterialCard
                       key={m.id}
@@ -258,14 +267,11 @@ export default function LibraryScreen() {
           <View
             style={{
               paddingHorizontal: 16,
-              paddingTop: 12,
+              paddingTop: 8,
               paddingBottom: Math.max(insets.bottom, 16),
-              backgroundColor: LB.paper,
-              borderTopWidth: 1,
-              borderTopColor: LB.hairline,
             }}
           >
-            <Btn size="lg" full onPress={openCapture}>
+            <Btn size="lg" pill full onPress={openCapture}>
               {t('library:capture')}
             </Btn>
           </View>
@@ -288,12 +294,12 @@ export default function LibraryScreen() {
         <Text style={TYPE.body}>{t('library:delete_sheet.body', { title: deleteTitle })}</Text>
         {deleteError ? (
           <View accessibilityLiveRegion="polite">
-            <Card tone="blush" padding={14} radius={16}>
+            <Card tone="blush" padding={14} radius={18}>
               <Text style={TYPE.body}>{deleteError}</Text>
             </Card>
           </View>
         ) : null}
-        <Btn variant="danger" full disabled={deleting} onPress={() => void confirmDelete()}>
+        <Btn variant="danger" pill full disabled={deleting} onPress={() => void confirmDelete()}>
           {t('library:delete_sheet.confirm')}
         </Btn>
       </Sheet>

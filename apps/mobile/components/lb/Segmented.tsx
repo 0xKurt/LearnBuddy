@@ -1,4 +1,6 @@
-// Two to five mutually exclusive choices, built from Btn.
+// Two to five mutually exclusive choices, built from Btn: round pills that wrap
+// onto a second line on a narrow phone; the chosen one is filled violet and
+// read out as the selected radio button (never colour alone).
 
 import { View } from 'react-native';
 
@@ -19,6 +21,7 @@ export function Segmented<T extends string>({
         <Btn
           key={o.value}
           variant={o.value === value ? 'primary' : 'outline'}
+          pill
           selected={o.value === value}
           onPress={() => onChange(o.value)}
           accessibilityLabel={o.label}

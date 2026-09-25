@@ -191,7 +191,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
 
   return (
     <Group title={t('contact.question')}>
-      <Card tone="lavender" padding={20} radius={22}>
+      <Card tone="lavender" padding={20}>
         <View style={{ gap: 10 }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{answer}</Text>
           {!settings.contact_enabled ? (
@@ -222,22 +222,22 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
             </Text>
           ) : null}
           {settings.contact_enabled && pausedUntil ? (
-            <Btn variant="outline" onPress={() => void endPause()} disabled={saving}>
+            <Btn pill variant="outline" onPress={() => void endPause()} disabled={saving}>
               {t('contact.pause_end')}
             </Btn>
           ) : null}
           <View style={{ marginTop: 4, gap: 8 }}>
             {settings.contact_enabled ? (
               <>
-                <Btn variant="outline" onPress={() => void stop()} disabled={saving}>
+                <Btn pill variant="outline" onPress={() => void stop()} disabled={saving}>
                   {t('contact.stop')}
                 </Btn>
-                <Btn variant="ghost" onPress={() => setShowTimes((v) => !v)}>
+                <Btn pill variant="ghost" onPress={() => setShowTimes((v) => !v)}>
                   {showTimes ? t('contact.less') : t('contact.more')}
                 </Btn>
               </>
             ) : (
-              <Btn onPress={() => void allow()} disabled={saving}>
+              <Btn pill onPress={() => void allow()} disabled={saving}>
                 {canLoosen ? t('contact.allow') : t('contact.allow_adult')}
               </Btn>
             )}
@@ -246,12 +246,12 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
       </Card>
 
       {deviceMissing ? (
-        <Card tone="butter" padding={20} radius={22}>
+        <Card tone="butter" padding={20}>
           <View style={{ gap: 10 }}>
             <Text style={TYPE.body}>
               {t(push === 'no_token' ? 'contact.device_no_token' : 'contact.device_invalid')}
             </Text>
-            <Btn variant="outline" onPress={() => void registerDevice()} disabled={saving}>
+            <Btn pill variant="outline" onPress={() => void registerDevice()} disabled={saving}>
               {t('contact.device_register')}
             </Btn>
           </View>
@@ -259,7 +259,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
       ) : null}
 
       {settings.contact_enabled && showTimes ? (
-        <Card padding={20} radius={22}>
+        <Card padding={20}>
           <View style={{ gap: 18 }}>
             <Row
               question={t('contact.pause_question')}
@@ -271,12 +271,13 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
               hint={t('contact.pause_hint')}
             >
               {pausedUntil ? (
-                <Btn variant="outline" onPress={() => void endPause()} disabled={saving}>
+                <Btn pill variant="outline" onPress={() => void endPause()} disabled={saving}>
                   {t('contact.pause_end')}
                 </Btn>
               ) : (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   <Btn
+                    pill
                     variant="outline"
                     onPress={() => void pauseUntil(endOfTomorrow())}
                     disabled={saving}
@@ -284,6 +285,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
                     {t('contact.pause_tomorrow')}
                   </Btn>
                   <Btn
+                    pill
                     variant="outline"
                     onPress={() => void pauseUntil(endOfSunday())}
                     disabled={saving}
@@ -373,6 +375,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
                   answer={t('contact.weekdays_answer', { days: avoidedDays })}
                 >
                   <Btn
+                    pill
                     variant="outline"
                     onPress={() => void save({ avoid_weekdays: [] }, { loosens: true })}
                     disabled={saving}

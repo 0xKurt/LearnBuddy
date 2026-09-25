@@ -70,7 +70,7 @@
     "undo_label": "Undo: {{what}}"
   },
   "next": {
-    "line": "Next test: {{title}} · {{when}}"
+    "line": "{{title}} · {{when}}"
   },
   "thread": {
     "title": "Chat with Buddy",

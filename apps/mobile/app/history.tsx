@@ -48,6 +48,7 @@ export default function History() {
             <Btn
               variant="outline"
               size="sm"
+              pill
               center
               onPress={() => void loadMore()}
               disabled={loading}

@@ -44,18 +44,15 @@ export function SendBar({ progress, failure, hasPhotos, disabled, onSend }: Prop
     <View
       style={{
         paddingHorizontal: 16,
-        paddingTop: 12,
+        paddingTop: 8,
         paddingBottom: Math.max(insets.bottom, 16),
         gap: 10,
-        backgroundColor: LB.paper,
-        borderTopWidth: 1,
-        borderTopColor: LB.hairline,
       }}
     >
       {progress ? (
         <View accessibilityLiveRegion="polite" style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <ActivityIndicator size="small" color={LB.ink2} />
+            <ActivityIndicator size="small" color={LB.primary} />
             <Text style={[TYPE.body, { flex: 1 }]}>{progressText(progress)}</Text>
           </View>
           <View style={{ flexDirection: 'row' }}>
@@ -64,15 +61,16 @@ export function SendBar({ progress, failure, hasPhotos, disabled, onSend }: Prop
         </View>
       ) : failure ? (
         <View accessibilityLiveRegion="polite">
-          <Card tone="blush" padding={14} radius={16}>
+          <Card tone="blush" padding={14} radius={18}>
             <Text style={TYPE.body}>{failure}</Text>
           </Card>
         </View>
       ) : !hasPhotos ? (
-        <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('send_hint')}</Text>
+        <Text style={[TYPE.small, { textAlign: 'center' }]}>{t('send_hint')}</Text>
       ) : null}
       <Btn
         size="lg"
+        pill
         full
         variant={hasPhotos ? 'primary' : 'outline'}
         onPress={onSend}

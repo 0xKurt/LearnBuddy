@@ -4,10 +4,12 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
+import { Icon } from '../components/lb/Icon.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
@@ -31,6 +33,7 @@ const POINTS = [
 export default function Consent() {
   const { t } = useTranslation('auth');
   const me = useMe();
+  const insets = useSafeAreaInsets();
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -53,36 +56,50 @@ export default function Consent() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-        <Text accessibilityRole="header" style={TYPE.display}>
-          {t('consent.title')}
-        </Text>
-        <Text style={TYPE.body}>{t('consent.intro')}</Text>
-        <Card>
-          <View style={{ gap: 12 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24, gap: 18 }}>
+        <View style={{ gap: 8 }}>
+          <Text accessibilityRole="header" style={TYPE.display}>
+            {t('consent.title')}
+          </Text>
+          <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('consent.intro')}</Text>
+        </View>
+        <Card padding={20}>
+          <View style={{ gap: 14 }}>
             {POINTS.map((p) => (
-              <Text key={p} style={TYPE.body}>
-                • {t(`consent.${p}`)}
-              </Text>
+              <View key={p} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 13,
+                    marginTop: -1,
+                    backgroundColor: LB.lavender,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="check" size={15} color={LB.primaryDk} />
+                </View>
+                <Text style={[TYPE.body, { flex: 1 }]}>{t(`consent.${p}`)}</Text>
+              </View>
             ))}
           </View>
         </Card>
         {ENV.PRIVACY_URL ? (
-          <Btn variant="ghost" onPress={() => void Linking.openURL(ENV.PRIVACY_URL)}>
+          <Btn variant="ghost" pill onPress={() => void Linking.openURL(ENV.PRIVACY_URL)}>
             {t('consent.full_policy')}
           </Btn>
         ) : null}
-        <Checkbox checked={accepted} onChange={setAccepted} label={t('consent.accept')} />
+        <Card tone="lavender" padding={14}>
+          <Checkbox checked={accepted} onChange={setAccepted} label={t('consent.accept')} />
+        </Card>
       </ScrollView>
       <View
-        style={{
-          padding: 16,
-          borderTopWidth: 1,
-          borderTopColor: LB.hairline,
-          backgroundColor: LB.paper,
-        }}
+        style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}
       >
-        <Btn size="lg" full disabled={!accepted || busy} onPress={() => void accept()}>
+        <Btn size="lg" pill full disabled={!accepted || busy} onPress={() => void accept()}>
           {t('consent.cta')}
         </Btn>
       </View>

@@ -7,9 +7,9 @@ export function Progress({ value }: { value: number }) {
     <View
       style={{
         flex: 1,
-        height: 4,
-        borderRadius: 4,
-        backgroundColor: 'rgba(20,15,30,0.08)',
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: LB.primaryLt,
         overflow: 'hidden',
       }}
     >
@@ -18,7 +18,7 @@ export function Progress({ value }: { value: number }) {
           width: `${clamped * 100}%`,
           height: '100%',
           backgroundColor: LB.primary,
-          borderRadius: 4,
+          borderRadius: 3,
         }}
       />
     </View>

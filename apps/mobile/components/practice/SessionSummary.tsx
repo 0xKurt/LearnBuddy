@@ -13,7 +13,7 @@ import { Text, View } from 'react-native';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from '../buddy/BuddyOrb.js';
+import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { Icon } from '../lb/Icon.js';

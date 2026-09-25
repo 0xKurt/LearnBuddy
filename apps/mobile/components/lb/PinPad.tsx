@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 
 type Props = {
   onComplete: (pin: string) => void;
@@ -65,17 +66,25 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
           <View
             key={i}
             style={{
-              width: 14,
-              height: 14,
-              borderRadius: 7,
-              backgroundColor: i < entered.length ? LB.ink : 'transparent',
+              width: 16,
+              height: 16,
+              borderRadius: 8,
+              backgroundColor: i < entered.length ? LB.primary : LB.paper,
               borderWidth: 1.5,
-              borderColor: LB.ink2,
+              borderColor: i < entered.length ? LB.primary : LB.ink3,
             }}
           />
         ))}
       </View>
-      <View style={{ width: 264, flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+      <View
+        style={{
+          width: 264,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          rowGap: 14,
+        }}
+      >
         {KEYS.map((k, i) => (
           <Pressable
             key={`${k.label}-${i}`}
@@ -91,12 +100,13 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
               <View
                 style={{
                   width: 80,
-                  height: 56,
-                  borderRadius: 14,
+                  height: 60,
+                  borderRadius: 30,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor:
-                    k.value === 'none' ? 'transparent' : pressed ? LB.primaryLt : LB.bg,
+                    k.value === 'none' ? 'transparent' : pressed ? LB.primaryLt : LB.paper,
+                  ...(k.value === 'digit' ? SHADOW.soft : null),
                 }}
               >
                 <Text style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}>{k.label}</Text>

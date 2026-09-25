@@ -51,7 +51,7 @@ export default function SettingsScreen() {
           <EmptyState
             title={messageFor(loadError)}
             action={
-              <Btn center onPress={() => void refresh()}>
+              <Btn pill center onPress={() => void refresh()}>
                 {t('common:actions.retry')}
               </Btn>
             }
@@ -86,7 +86,7 @@ export default function SettingsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />
           }
         >
-          <View ref={content} style={{ gap: 32 }}>
+          <View ref={content} style={{ gap: 30 }}>
             <ContactSection
               settings={settings.data}
               isMinor={learner.is_minor}

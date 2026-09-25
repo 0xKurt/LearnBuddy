@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
@@ -98,7 +99,7 @@ export default function MemoryScreen() {
             <EmptyState
               title={messageFor(memory.error)}
               action={
-                <Btn center onPress={() => void refresh()}>
+                <Btn pill center onPress={() => void refresh()}>
                   {t('common:actions.retry')}
                 </Btn>
               }
@@ -156,22 +157,27 @@ export default function MemoryScreen() {
           }
         >
           <View ref={content} style={{ gap: 28 }}>
-            <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('memory:intro')}</Text>
+            <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>
+              {t('memory:intro')}
+            </Text>
 
             {items.length === 0 ? (
-              <Card tone="lavender" padding={20} radius={22}>
-                <View style={{ gap: 8 }}>
-                  <Text accessibilityRole="header" style={TYPE.title}>
+              <Card padding={24}>
+                <View style={{ gap: 10, alignItems: 'center' }}>
+                  <BuddyOrb size={56} />
+                  <Text accessibilityRole="header" style={[TYPE.title, { textAlign: 'center' }]}>
                     {t('memory:empty_title')}
                   </Text>
-                  <Text style={TYPE.body}>{t('memory:empty_body')}</Text>
+                  <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
+                    {t('memory:empty_body')}
+                  </Text>
                 </View>
               </Card>
             ) : null}
 
             {lasting.length > 0 ? (
               <View style={{ gap: 12 }}>
-                <Text accessibilityRole="header" style={TYPE.title}>
+                <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: 4 }]}>
                   {t('memory:lasting')}
                 </Text>
                 {lasting.map((m) => renderItem(m, false))}
@@ -180,10 +186,12 @@ export default function MemoryScreen() {
 
             {temporary.length > 0 ? (
               <View style={{ gap: 12 }}>
-                <Text accessibilityRole="header" style={TYPE.title}>
+                <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: 4 }]}>
                   {t('memory:temporary')}
                 </Text>
-                <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('memory:temporary_hint')}</Text>
+                <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>
+                  {t('memory:temporary_hint')}
+                </Text>
                 {temporary.map((m) => renderItem(m, true))}
               </View>
             ) : null}
@@ -202,7 +210,7 @@ export default function MemoryScreen() {
             {t('memory:confirm_body', { statement: removeTarget.statement })}
           </Text>
         ) : null}
-        <Btn variant="danger" full onPress={confirmRemove}>
+        <Btn variant="danger" pill full onPress={confirmRemove}>
           {t('memory:confirm_cta')}
         </Btn>
       </Sheet>

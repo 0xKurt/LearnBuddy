@@ -70,7 +70,7 @@
     "undo_label": "Rückgängig machen: {{what}}"
   },
   "next": {
-    "line": "Nächste Arbeit: {{title}} · {{when}}"
+    "line": "{{title}} · {{when}}"
   },
   "thread": {
     "title": "Chat mit Buddy",

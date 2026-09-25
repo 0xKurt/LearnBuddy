@@ -61,11 +61,14 @@ export function NewPasswordFields({
         error={mismatch}
       />
       {mismatch ? (
-        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: LB.danger }]}>
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[TYPE.small, { color: LB.danger, paddingHorizontal: 4 }]}
+        >
           {t('new_password.mismatch')}
         </Text>
       ) : (
-        <Text style={TYPE.small}>{t('welcome.password_hint')}</Text>
+        <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>{t('welcome.password_hint')}</Text>
       )}
     </View>
   );

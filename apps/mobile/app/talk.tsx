@@ -24,7 +24,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AreaCard } from '../components/buddy/AreaCard.js';
-import { BuddyOrb } from '../components/buddy/BuddyOrb.js';
+import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { OfferCard } from '../components/learn/OfferCard.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
@@ -201,7 +201,11 @@ export default function TalkScreen() {
           </Text>
         ) : null}
 
-        <PulsingOrb active={listening || phase === 'speaking'} listening={listening} />
+        <PulsingOrb
+          active={listening || phase === 'speaking'}
+          listening={listening}
+          level={voice.level}
+        />
 
         {listening && voice.live ? (
           <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', fontStyle: 'italic' }]}>
@@ -279,7 +283,15 @@ export default function TalkScreen() {
 }
 
 /** Buddy's orb, gently breathing while it listens or speaks (still with reduced motion). */
-function PulsingOrb({ active, listening }: { active: boolean; listening: boolean }) {
+function PulsingOrb({
+  active,
+  listening,
+  level,
+}: {
+  active: boolean;
+  listening: boolean;
+  level: number;
+}) {
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     let loop: Animated.CompositeAnimation | null = null;
@@ -317,7 +329,7 @@ function PulsingOrb({ active, listening }: { active: boolean; listening: boolean
   }, [active, scale]);
   return (
     <Animated.View style={{ transform: [{ scale }], marginVertical: 18 }}>
-      <BuddyOrb size={200} listening={listening} />
+      <BuddyOrb size={200} listening={listening} level={level} />
     </Animated.View>
   );
 }

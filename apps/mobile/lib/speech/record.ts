@@ -27,6 +27,7 @@ import {
   speakMimeForFile,
   type SpeakMime,
 } from './voice.js';
+import { levelFromDb } from './level.js';
 
 /** Speech, not music: mono, 22.05 kHz AAC in an .m4a on phones; the browser's own format on the web. */
 const SPEECH_RECORDING: RecordingOptions = {
@@ -34,7 +35,8 @@ const SPEECH_RECORDING: RecordingOptions = {
   sampleRate: 22_050,
   numberOfChannels: 1,
   bitRate: 48_000,
-  isMeteringEnabled: false,
+  // The level drives the orb's sound bars in conversation mode.
+  isMeteringEnabled: true,
   android: { outputFormat: 'mpeg4', audioEncoder: 'aac' },
   ios: {
     outputFormat: IOSOutputFormat.MPEG4AAC,
@@ -108,7 +110,7 @@ async function allowRecording(allowed: boolean): Promise<void> {
 
 export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }: Options) {
   const recorder = useAudioRecorder(SPEECH_RECORDING);
-  const state = useAudioRecorderState(recorder, 250);
+  const state = useAudioRecorderState(recorder, 120);
   const [phase, setPhaseState] = useState<RecordPhase>('idle');
   /** Microphone access was refused; canAskAgain = false means only the settings can change it. */
   const [denied, setDenied] = useState<{ canAskAgain: boolean } | null>(null);
@@ -231,6 +233,8 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
     elapsedMs: phase === 'recording' ? Math.min(state.durationMillis, maxMs) : 0,
     /** The longest this recording can get (for "0:07 / 1:00"). */
     maxMs,
+    /** How loud she is right now (0…1; 0 when not recording or not measured). */
+    level: phase === 'recording' ? levelFromDb(state.metering) : 0,
     denied,
     start,
     stop,

@@ -19,6 +19,7 @@ import { PhotoStrip } from '../components/capture/PhotoStrip.js';
 import { SendBar } from '../components/capture/SendBar.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
+import { Icon } from '../components/lb/Icon.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
 import { toast } from '../components/lb/Toast.js';
@@ -185,11 +186,11 @@ export default function CaptureScreen() {
   return (
     <Screen back>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 18 }}>
-        <View style={{ gap: 6 }}>
+        <View style={{ gap: 8, paddingHorizontal: 4 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
             {homework ? t('capture:homework.title') : t('capture:title')}
           </Text>
-          <Text style={TYPE.body}>
+          <Text style={[TYPE.body, { color: LB.ink2 }]}>
             {homework ? t('capture:homework.intro') : t('capture:intro')}
           </Text>
         </View>
@@ -207,7 +208,7 @@ export default function CaptureScreen() {
             accessibilityLiveRegion="polite"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
           >
-            <ActivityIndicator size="small" color={LB.ink2} />
+            <ActivityIndicator size="small" color={LB.primary} />
             <Text style={[TYPE.body, { flex: 1 }]}>
               {t('capture:preparing', { current: preparing.current, count: preparing.total })}
             </Text>
@@ -216,10 +217,10 @@ export default function CaptureScreen() {
 
         {cameraBlocked ? (
           <View accessibilityLiveRegion="polite">
-            <Card tone="butter" padding={16} radius={20}>
+            <Card tone="butter" padding={16}>
               <View style={{ gap: 12 }}>
                 <Text style={TYPE.body}>{t('capture:permission.camera')}</Text>
-                <Btn size="sm" variant="outline" onPress={() => void Linking.openSettings()}>
+                <Btn size="sm" variant="outline" pill onPress={() => void Linking.openSettings()}>
                   {t('capture:permission.open_settings')}
                 </Btn>
               </View>
@@ -229,28 +230,44 @@ export default function CaptureScreen() {
 
         {room > 0 ? (
           // First the camera is the one main action; once there are photos, sending is.
-          <View style={{ gap: 10 }}>
-            <Btn
-              size="lg"
-              variant={photos.length === 0 ? 'primary' : 'outline'}
-              full
-              disabled={busy}
-              onPress={() => void pick('camera')}
-            >
-              {photos.length === 0 ? t('capture:camera') : t('capture:camera_more')}
-            </Btn>
-            <Btn
-              size="lg"
-              variant="outline"
-              full
-              disabled={busy}
-              onPress={() => void pick('library')}
-            >
-              {t('capture:library')}
-            </Btn>
-          </View>
+          <Card padding={16}>
+            <View style={{ gap: 10 }}>
+              {photos.length === 0 ? (
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={{
+                    alignSelf: 'center',
+                    width: 72,
+                    height: 72,
+                    borderRadius: 36,
+                    marginBottom: 8,
+                    backgroundColor: LB.lavender,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="camera" size={32} color={LB.primaryDk} />
+                </View>
+              ) : null}
+              <Btn
+                size="lg"
+                variant={photos.length === 0 ? 'primary' : 'soft'}
+                pill
+                full
+                icon="camera"
+                disabled={busy}
+                onPress={() => void pick('camera')}
+              >
+                {photos.length === 0 ? t('capture:camera') : t('capture:camera_more')}
+              </Btn>
+              <Btn variant="ghost" pill full disabled={busy} onPress={() => void pick('library')}>
+                {t('capture:library')}
+              </Btn>
+            </View>
+          </Card>
         ) : (
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>
+          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
             {t('capture:limit', { max: MAX_PHOTOS })}
           </Text>
         )}

@@ -87,7 +87,7 @@ interruption, outage, other learner's ids) → screen wired to the endpoint → 
 
 Light, friendly, calm — not childish, not clinical (`docs/DESIGN-BRIEF.md`). "Pastell Soft":
 pastel pink · lilac · blue light (`components/lb/Glow.tsx`), a violet accent, Buddy as a soft orb
-(`components/buddy/BuddyOrb.tsx`). Tokens in `apps/mobile/lib/theme/colors.ts`, `type.ts` (one bold
+(`components/lb/BuddyOrb.tsx`). Tokens in `apps/mobile/lib/theme/colors.ts`, `type.ts` (one bold
 sans headline per screen) and `shadow.ts`;
 extend them instead of ad-hoc hex values. Same action → same component. Touch targets ≥ 44 pt,
 labels and roles on everything interactive, never color as the only signal.
