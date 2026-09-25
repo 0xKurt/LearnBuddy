@@ -5,14 +5,14 @@ import type { ViewStyle } from 'react-native';
 
 export const SHADOW = {
   soft: {
-    shadowColor: '#6b4a3a',
+    shadowColor: '#4b3a8f',
     shadowOpacity: 0.08,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
   float: {
-    shadowColor: '#6b4a3a',
+    shadowColor: '#4b3a8f',
     shadowOpacity: 0.14,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 10 },

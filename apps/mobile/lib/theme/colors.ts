@@ -1,20 +1,21 @@
-// LB design tokens. Source: handoff bundle components.jsx LB.
+// LB design tokens: light and friendly pastels (pink · lilac · blue) with a
+// violet accent — the "Pastell Soft" look the product owner chose (2026-09-25).
 // Kept as a literal palette object so non-styled paths (SVG fills, native
 // status bar, react-navigation themes) can pull from the same source as
 // nativewind classes.
 
 export const LB = {
-  ink: '#1d1b22',
-  ink2: '#5c5764',
-  ink3: '#928d9c',
-  ink4: '#cfcbd5',
-  paper: '#fdfcfa',
-  bg: '#f6f3ee',
-  canvas: '#f0eee9',
-  hairline: 'rgba(20,15,30,0.08)',
-  primary: '#b1715c',
-  primaryDk: '#985d4b',
-  primaryLt: '#f4dccf',
+  ink: '#1f1b2e',
+  ink2: '#5d5873',
+  ink3: '#8e89a3',
+  ink4: '#d4d0e2',
+  paper: '#ffffff',
+  bg: '#faf7fd',
+  canvas: '#f1edf8',
+  hairline: 'rgba(60,40,120,0.09)',
+  primary: '#6a48d7',
+  primaryDk: '#5335b5',
+  primaryLt: '#ebe5fc',
   success: '#6b8d6a',
   warning: '#b58a3c',
   danger: '#b1493c',
@@ -22,19 +23,19 @@ export const LB = {
   successText: '#46663f',
   warningText: '#7d5a16',
   // Subject pastels
-  lavender: '#ebe4f4',
-  lavenderDeep: '#cdbde6',
-  peach: '#f8e0d2',
-  peachDeep: '#ecc2a8',
-  mint: '#dceee2',
-  mintDeep: '#b9d8c4',
-  blush: '#f2dde2',
-  blushDeep: '#e2bbc6',
-  sky: '#dce6ef',
-  skyDeep: '#b8cee0',
-  butter: '#f3e8cf',
+  lavender: '#ece6fb',
+  lavenderDeep: '#c9b8f3',
+  peach: '#fbe3ee',
+  peachDeep: '#f2b8d2',
+  mint: '#dcf1ea',
+  mintDeep: '#b3e0cf',
+  blush: '#fae0ea',
+  blushDeep: '#efb3c8',
+  sky: '#e2ebfd',
+  skyDeep: '#b7cbf5',
+  butter: '#f6efdc',
   butterDeep: '#ddc995',
-  rose: '#dcd4e4',
+  rose: '#e6def6',
 } as const;
 
 export const SUBJECT_TONES = [
@@ -79,9 +80,9 @@ export const FIGURE = {
   stroke: LB.ink,
   label: LB.ink2,
   /** Shaded parts of a fraction, bars, filled polygons. */
-  fill: '#d9a08a',
-  fillSoft: 'rgba(177,113,92,0.16)',
+  fill: '#b9a4f0',
+  fillSoft: 'rgba(106,72,215,0.14)',
   empty: LB.paper,
   point: LB.primaryDk,
-  series: ['#b1715c', '#3f6f9a', '#5b8a4f'],
+  series: ['#6a48d7', '#2f7fb8', '#3f8a5c'],
 } as const;

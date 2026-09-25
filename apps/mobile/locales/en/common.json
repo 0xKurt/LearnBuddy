@@ -9,7 +9,8 @@
     "speak": "Read aloud",
     "pin_delete": "Delete last digit",
     "pin_progress": "{{count}} of 4 digits entered",
-    "camera": "Take a photo"
+    "camera": "Take a photo",
+    "keyboard": "Keyboard"
   },
   "actions": {
     "close": "Close",

@@ -9,7 +9,8 @@
     "speak": "Leer en voz alta",
     "pin_delete": "Borrar el último dígito",
     "pin_progress": "{{count}} de 4 dígitos introducidos",
-    "camera": "Hacer una foto"
+    "camera": "Hacer una foto",
+    "keyboard": "Teclado"
   },
   "actions": {
     "close": "Cerrar",

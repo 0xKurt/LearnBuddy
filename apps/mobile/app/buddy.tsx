@@ -21,8 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BuddyOrb } from '../components/buddy/BuddyOrb.js';
-import { Composer, type Suggestion } from '../components/buddy/Composer.js';
-import { StarterCards } from '../components/buddy/StarterCards.js';
+import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
@@ -36,6 +35,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
+import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
@@ -60,7 +60,6 @@ import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
-import { SHADOW } from '../lib/theme/shadow.js';
 import { TYPE } from '../lib/theme/type.js';
 
 const VISIBLE_MESSAGES = 6;
@@ -152,52 +151,50 @@ export default function BuddyScreen() {
     });
   }
 
-  /** What she can start with one tap (the same as saying it to Buddy). */
   /**
-   * A few starts that fit her situation (docs/UX-PRINCIPLES.md §6: examples, not a
-   * feature catalog). Everything else she just says; Buddy answers with a button.
+   * The ways to start, on the ring around Buddy (docs/UX-PRINCIPLES.md §6:
+   * examples of what Buddy does, not a feature catalog). The first one fits her
+   * situation; everything else she just says, and Buddy answers with a button.
    */
-  function suggestionsFor(next: BuddyHome['next'], last: MessageView | undefined): Suggestion[] {
-    // Buddy is asking something with answers to tap: nothing competes with them.
-    if (last?.role === 'buddy' && last.options && last.options.length > 0) return [];
+  function orbitItems(next: BuddyHome['next']): OrbitItem[] {
     const exam = next.find((i) => i.kind === 'exam');
-    const first: Suggestion = exam
-      ? {
-          key: 'test',
-          icon: 'check',
-          tone: 'lavender',
-          label: t('buddy:suggest.test_for', { title: exam.title }),
-          onPress: () => void send(t('buddy:suggest.test_message', { title: exam.title })),
-        }
-      : {
-          key: 'exam',
-          icon: 'clock',
-          tone: 'lavender',
-          label: t('buddy:suggest.exam'),
-          onPress: () => void send(t('buddy:suggest.exam')),
-        };
     return [
-      first,
+      exam
+        ? {
+            key: 'test',
+            icon: 'check',
+            label: t('buddy:suggest.test'),
+            onPress: () => void send(t('buddy:suggest.test_message', { title: exam.title })),
+          }
+        : {
+            key: 'exam',
+            icon: 'clock',
+            label: t('buddy:suggest.exam_short'),
+            onPress: () => void send(t('buddy:suggest.exam')),
+          },
       {
         key: 'homework',
         icon: 'pencil',
-        tone: 'peach',
         label: t('buddy:suggest.homework'),
         onPress: () => setChoice('homework'),
       },
       {
-        key: 'explain',
-        icon: 'bulb',
-        tone: 'butter',
-        label: t('buddy:suggest.explain'),
-        onPress: () => setTopic('explain'),
+        key: 'speak',
+        icon: 'mic',
+        label: t('buddy:suggest.speak'),
+        onPress: () => setTopic('speak'),
       },
       {
         key: 'vocab',
         icon: 'book',
-        tone: 'mint',
         label: t('buddy:suggest.vocab'),
         onPress: () => setChoice('vocab'),
+      },
+      {
+        key: 'explain',
+        icon: 'bulb',
+        label: t('buddy:suggest.explain'),
+        onPress: () => setTopic('explain'),
       },
     ];
   }
@@ -257,9 +254,9 @@ export default function BuddyScreen() {
           <View
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <BuddyOrb size={44} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <VoiceModeToggle />
+            <VoiceModeToggle />
+            <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
+            <View>
               <CircleBtn
                 icon="more"
                 onPress={() => setMenuOpen(true)}
@@ -267,22 +264,6 @@ export default function BuddyScreen() {
               />
             </View>
           </View>
-
-          {/* The one headline: who she is talking to, and an open question. */}
-          <Text accessibilityRole="header" style={[TYPE.display, { fontSize: 34, lineHeight: 40 }]}>
-            {t('buddy:greeting', { name: h.learner.name })}
-            {'\n'}
-            <Text style={{ color: LB.ink3 }}>{t('buddy:greeting_ask')}</Text>
-          </Text>
-
-          {nextExam ? (
-            <Text style={[TYPE.body, { color: LB.ink2, marginTop: -10 }]}>
-              {t('buddy:next.line', {
-                title: nextExam.title,
-                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
-              })}
-            </Text>
-          ) : null}
 
           {!h.system.model ? <Banner tone="warning">{t('buddy:system.no_model')}</Banner> : null}
           {h.system.scheduler === 'stale' ? (
@@ -330,27 +311,40 @@ export default function BuddyScreen() {
             />
           ) : null}
 
-          {messages.length === 0 && !shownPending ? (
-            // First visit: Buddy says who it is; the suggestions below show how to start.
-            <View style={{ gap: 18 }}>
-              <View
-                accessible
-                style={[
-                  {
-                    backgroundColor: '#fff',
-                    borderRadius: 24,
-                    paddingHorizontal: 18,
-                    paddingVertical: 16,
-                    gap: 4,
-                  },
-                  SHADOW.soft,
-                ]}
-              >
-                <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('buddy:intro.title')}</Text>
-                <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('buddy:intro.body')}</Text>
+          {/* The ring: Buddy and the open question in the middle, ways to start around it. */}
+          <OrbitMenu
+            items={orbitItems(h.next)}
+            disabled={pending !== null}
+            center={
+              <View style={{ alignItems: 'center', gap: 8 }}>
+                <BuddyOrb size={58} />
+                <Text
+                  accessibilityRole="header"
+                  style={[TYPE.display, { fontSize: 22, lineHeight: 27, textAlign: 'center' }]}
+                >
+                  {t('buddy:greeting', { name: h.learner.name })}
+                  {'\n'}
+                  <Text style={{ color: LB.ink3 }}>{t('buddy:greeting_ask')}</Text>
+                </Text>
               </View>
-              <StarterCards items={suggestionsFor(h.next, undefined)} disabled={pending !== null} />
-            </View>
+            }
+          />
+          {nextExam ? (
+            <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', marginTop: -6 }]}>
+              {t('buddy:next.line', {
+                title: nextExam.title,
+                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+              })}
+            </Text>
+          ) : null}
+
+          {messages.length === 0 && !shownPending ? (
+            // First visit: one sentence about Buddy; the ring above shows how to start.
+            <Text
+              style={[TYPE.body, { color: LB.ink2, textAlign: 'center', paddingHorizontal: 12 }]}
+            >
+              {t('buddy:intro.body')}
+            </Text>
           ) : (
             <View style={{ gap: 10 }}>
               {h.thread.length > VISIBLE_MESSAGES || h.thread_has_more ? (
@@ -377,11 +371,6 @@ export default function BuddyScreen() {
           disabled={pending !== null}
           onSend={(text) => void send(text)}
           onPhoto={() => router.push('/capture')}
-          suggestions={
-            messages.length === 0 && !shownPending
-              ? []
-              : suggestionsFor(h.next, h.thread[h.thread.length - 1])
-          }
         />
       </KeyboardAvoidingView>
 

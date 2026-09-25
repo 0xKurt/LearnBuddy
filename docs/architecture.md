@@ -348,16 +348,17 @@ the learner's own photos or just-finished practice: a due or running check they 
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
 and delivery status of each message) and **system** status (model, push, contact, scheduler).
 
-**The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx` is the
-greeting, one line for the next test, at most the **now** card and the **decision** card, and the
-conversation — what Buddy did stands under its message with "Rückgängig"; there are no tiles
-or lists. Starting something is one of: at most four suggestions above the field that fit her
-situation (a practice test for the next exam, or "I have a test soon"; homework; explain;
-vocabulary — hidden while Buddy offers answers to tap; `docs/UX-PRINCIPLES.md` §6), the camera
-next to the field, or simply saying it (Buddy answers with an `offer_learning` button). The field shows the
-mic while empty and "Senden" once there is text. Settings for the learner are one contact card
-(on/off, a one-line summary, "Zeiten anpassen" for the rare loosening) and the language;
-the parents' area is closed until opened. Level and grade are learned in the conversation.
+**The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
+at most the **now** and **decision** cards; the ring (`components/lb/OrbitMenu.tsx`) — Buddy's orb
+and "Hallo Lena, was steht an?" in the middle, five ways to start around it (a practice test when
+an exam is coming, else "Arbeit"; homework; pronunciation; vocabulary; explain —
+`docs/UX-PRINCIPLES.md` §6); one line for the next test; then the conversation — what Buddy did
+stands under its message with "Rückgängig"; no tiles, no lists. Anything else she simply says
+(Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
+field, mic ("Senden" once there is text); in voice mode it is voice-first — keyboard · big mic ·
+camera. Settings for the learner are one contact card (on/off, a one-line summary, "Zeiten
+anpassen" for the rare loosening) and the language; the parents' area is closed until opened.
+Level and grade are learned in the conversation.
 
 Photos that never all arrive are set aside after a day and whatever did arrive is deleted at
 once (`abandonStaleUploads`, run by the scheduler).

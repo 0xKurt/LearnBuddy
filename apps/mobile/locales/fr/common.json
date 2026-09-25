@@ -9,7 +9,8 @@
     "speak": "Lire à voix haute",
     "pin_delete": "Effacer le dernier chiffre",
     "pin_progress": "Chiffres saisis: {{count}} sur 4",
-    "camera": "Prendre une photo"
+    "camera": "Prendre une photo",
+    "keyboard": "Clavier"
   },
   "actions": {
     "close": "Fermer",

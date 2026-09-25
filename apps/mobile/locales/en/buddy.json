@@ -38,7 +38,7 @@
     "failed_retry": "Read again",
     "failed_new_photo": "New photo",
     "result_title": "Done!",
-    "result_body": "{{answered}} questions done, {{first_try}} right the first time.",
+    "result_body": "{{first_try}} of {{answered}} right the first time.",
     "result_secure": "You've got this: {{topics}}",
     "result_shaky": "Let's practise again: {{topics}}",
     "resume_body_untitled": "{{count}} questions left",
@@ -99,7 +99,8 @@
     "placeholder": "Write to Buddy …",
     "send": "Send",
     "photo": "Photograph a worksheet",
-    "suggestions": "Suggestions"
+    "keyboard": "Keyboard",
+    "photo_short": "Photo"
   },
   "action": {
     "remember": "Noted: {{statement}}",
@@ -143,7 +144,9 @@
     "homework": "Homework",
     "explain": "Explain something",
     "vocab": "Vocabulary",
-    "test_for": "Practice test: {{title}}",
-    "test_message": "Give me a practice test for \"{{title}}\"."
+    "test_message": "Give me a practice test for \"{{title}}\".",
+    "exam_short": "Test",
+    "test": "Practice test",
+    "speak": "Pronunciation"
   }
 }

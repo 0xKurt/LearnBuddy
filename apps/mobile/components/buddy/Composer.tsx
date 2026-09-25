@@ -1,22 +1,20 @@
-// Free text to Buddy, typed or spoken — plus the camera (a photo of a sheet
-// or of homework) and, while the field is empty, a row of suggestions to tap
-// instead of menus. The send button is a Btn; the field grows to a few lines. The mic writes what she said into the field, so she
-// can check it before sending; in voice mode it is sent right away and the
-// mic becomes the big main control (the field stays for typing).
+// Free text to Buddy, typed or spoken, plus the camera (a photo of a sheet or
+// of homework). One floating bar: camera, the field, the mic — "Senden" once
+// there is text. The mic writes what she said into the field so she can check
+// it. In voice mode the bar becomes voice-first: keyboard · big mic · camera,
+// and what she says is sent right away (the "Ich höre zu." look).
 
 import { useRef, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
-import { TYPE } from '../../lib/theme/type.js';
-import type { SubjectTone } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import type { IconName } from '../lb/Icon.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
@@ -24,29 +22,20 @@ import { useVoiceInput } from '../voice/useVoiceInput.js';
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
 
-export type Suggestion = {
-  key: string;
-  label: string;
-  icon: IconName;
-  tone: SubjectTone;
-  onPress: () => void;
-};
-
 export function Composer({
   disabled,
   onSend,
   onPhoto,
-  suggestions = [],
 }: {
   disabled: boolean;
   onSend: (text: string) => void;
   /** The camera: a photo says more than typing a worksheet. */
   onPhoto: () => void;
-  suggestions?: Suggestion[];
 }) {
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
   const voiceMode = useVoiceMode((s) => s.on);
+  const setVoiceMode = useVoiceMode((s) => s.setOn);
   const [text, setText] = useState('');
   const latest = useRef({ text, disabled });
   latest.current = { text, disabled };
@@ -72,40 +61,51 @@ export function Composer({
     },
   });
 
-  return (
-    <View
-      style={{
-        gap: 10,
-        paddingHorizontal: 12,
-        paddingTop: 8,
-        paddingBottom: Math.max(insets.bottom, 12),
-      }}
-    >
-      <MicStatus voice={voice} />
-      {suggestions.length > 0 && trimmed.length === 0 && voice.state === 'idle' ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ gap: 8 }}
-          accessibilityLabel={t('buddy:composer.suggestions')}
+  const frame = {
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: Math.max(insets.bottom, 12),
+  };
+
+  if (voiceMode) {
+    // Voice first: keyboard · big mic · camera.
+    return (
+      <View style={frame}>
+        <MicStatus voice={voice} />
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}
         >
-          {suggestions.map((s) => (
-            <Btn
-              key={s.key}
-              size="sm"
-              tone={s.tone}
-              icon={s.icon}
-              pill
-              onPress={s.onPress}
-              disabled={disabled}
-            >
-              {s.label}
-            </Btn>
-          ))}
-        </ScrollView>
-      ) : null}
-      {/* One floating bar: camera, the field, and the mic (or "Senden" once there is text). */}
+          <View style={{ alignItems: 'center', gap: 4, width: 90 }}>
+            <CircleBtn
+              icon="keyboard"
+              onPress={() => setVoiceMode(false)}
+              accessibilityLabel={t('buddy:composer.keyboard')}
+            />
+            <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
+          </View>
+          <MicButton
+            voice={voice}
+            size="lg"
+            label={t('common:voice.message')}
+            disabled={disabled}
+          />
+          <View style={{ alignItems: 'center', gap: 4, width: 90 }}>
+            <CircleBtn
+              icon="camera"
+              onPress={onPhoto}
+              accessibilityLabel={t('buddy:composer.photo')}
+            />
+            <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.photo_short')}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={frame}>
+      <MicStatus voice={voice} />
       <View
         style={[
           {
@@ -148,28 +148,16 @@ export function Composer({
           }}
         />
         {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
-        {!voiceMode && (trimmed.length === 0 || voice.state !== 'idle') ? (
+        {trimmed.length === 0 || voice.state !== 'idle' ? (
           <MicButton voice={voice} label={t('common:voice.message')} filled disabled={disabled} />
-        ) : null}
-        {trimmed.length > 0 && voice.state === 'idle' ? (
+        ) : (
           <View style={{ height: 56, justifyContent: 'center' }}>
-            <Btn onPress={send} disabled={disabled}>
+            <Btn onPress={send} disabled={disabled} pill>
               {t('buddy:composer.send')}
             </Btn>
           </View>
-        ) : null}
+        )}
       </View>
-      {voiceMode ? (
-        <View style={{ alignItems: 'center', gap: 6, paddingTop: 2 }}>
-          <MicButton
-            voice={voice}
-            size="lg"
-            label={t('common:voice.message')}
-            disabled={disabled}
-          />
-          <Text style={[TYPE.small, { textAlign: 'center' }]}>{t('common:voice.say_it')}</Text>
-        </View>
-      ) : null}
     </View>
   );
 }

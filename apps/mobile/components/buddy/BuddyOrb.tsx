@@ -1,10 +1,20 @@
-// Buddy's face: a warm, glowing orb (terracotta → peach with a lavender rim
-// and a soft highlight). The same Buddy at every size — large when it
-// introduces itself, small beside its messages. Decorative for screen readers.
+// Buddy's face: a soft pastel orb (blue → lilac → pink, like light through
+// glass) with a white glow. With `listening`, sound bars appear in it (the
+// voice-first look). The same Buddy at every size; decorative for screen readers.
 import { View } from 'react-native';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
-export function BuddyOrb({ size = 32 }: { size?: number }) {
+import { LB } from '../../lib/theme/colors.js';
+
+const BARS = [
+  { x: 33, h: 14 },
+  { x: 41, h: 26 },
+  { x: 49, h: 38 },
+  { x: 57, h: 26 },
+  { x: 65, h: 14 },
+];
+
+export function BuddyOrb({ size = 32, listening = false }: { size?: number; listening?: boolean }) {
   return (
     <View
       accessibilityElementsHidden
@@ -13,19 +23,41 @@ export function BuddyOrb({ size = 32 }: { size?: number }) {
     >
       <Svg width={size} height={size} viewBox="0 0 100 100">
         <Defs>
-          <RadialGradient id="body" cx="38%" cy="32%" r="75%">
-            <Stop offset="0" stopColor="#fff1e6" />
-            <Stop offset="0.35" stopColor="#f6c2a4" />
-            <Stop offset="0.72" stopColor="#dc8f6f" />
-            <Stop offset="1" stopColor="#b98ad8" />
+          <RadialGradient id="orbBody" cx="30%" cy="55%" r="80%">
+            <Stop offset="0" stopColor="#b9c9ff" />
+            <Stop offset="0.45" stopColor="#d7c4ff" />
+            <Stop offset="0.8" stopColor="#f9c6e1" />
+            <Stop offset="1" stopColor="#fbe3f0" />
           </RadialGradient>
-          <RadialGradient id="shine" cx="35%" cy="28%" r="30%">
-            <Stop offset="0" stopColor="#ffffff" stopOpacity={0.9} />
+          <RadialGradient id="orbShine" cx="40%" cy="30%" r="45%">
+            <Stop offset="0" stopColor="#ffffff" stopOpacity={0.85} />
             <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Circle cx="50" cy="50" r="48" fill="url(#body)" />
-        <Circle cx="38" cy="32" r="26" fill="url(#shine)" />
+        <Circle cx="50" cy="50" r="48" fill="url(#orbBody)" />
+        <Circle cx="50" cy="50" r="47" fill="url(#orbShine)" />
+        <Circle
+          cx="50"
+          cy="50"
+          r="47.5"
+          fill="none"
+          stroke="#ffffff"
+          strokeOpacity={0.9}
+          strokeWidth={1.5}
+        />
+        {listening
+          ? BARS.map((b) => (
+              <Rect
+                key={b.x}
+                x={b.x - 1.8}
+                y={50 - b.h / 2}
+                width={3.6}
+                height={b.h}
+                rx={1.8}
+                fill={LB.primary}
+              />
+            ))
+          : null}
       </Svg>
     </View>
   );

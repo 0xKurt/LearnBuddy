@@ -9,7 +9,8 @@
     "speak": "Vorlesen",
     "pin_delete": "Letzte Ziffer löschen",
     "pin_progress": "{{count}} von 4 Ziffern eingegeben",
-    "camera": "Foto machen"
+    "camera": "Foto machen",
+    "keyboard": "Tastatur"
   },
   "actions": {
     "close": "Schließen",

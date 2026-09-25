@@ -99,7 +99,8 @@
     "placeholder": "Scrivi a Buddy…",
     "send": "Invia",
     "photo": "Fotografa una scheda",
-    "suggestions": "Suggerimenti"
+    "keyboard": "Tastiera",
+    "photo_short": "Foto"
   },
   "action": {
     "remember": "Annotato: {{statement}}",
@@ -143,7 +144,9 @@
     "homework": "Compiti",
     "explain": "Spiegami qualcosa",
     "vocab": "Vocaboli",
-    "test_for": "Verifica di prova: {{title}}",
-    "test_message": "Fammi una verifica di prova per «{{title}}»."
+    "test_message": "Fammi una verifica di prova per «{{title}}».",
+    "exam_short": "Verifica",
+    "test": "Verifica di prova",
+    "speak": "Pronuncia"
   }
 }

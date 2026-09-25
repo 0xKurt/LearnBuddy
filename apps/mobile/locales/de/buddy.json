@@ -38,7 +38,7 @@
     "failed_retry": "Nochmal lesen",
     "failed_new_photo": "Neues Foto",
     "result_title": "Geschafft!",
-    "result_body": "{{answered}} Aufgaben gemacht, {{first_try}} gleich beim ersten Mal richtig.",
+    "result_body": "{{first_try}} von {{answered}} gleich beim ersten Mal richtig.",
     "result_secure": "Das sitzt: {{topics}}",
     "result_shaky": "Da üben wir nochmal: {{topics}}",
     "resume_body_untitled": "Noch {{count}} Aufgaben",
@@ -99,7 +99,8 @@
     "placeholder": "Schreib Buddy …",
     "send": "Senden",
     "photo": "Arbeitsblatt fotografieren",
-    "suggestions": "Vorschläge"
+    "keyboard": "Tastatur",
+    "photo_short": "Foto"
   },
   "action": {
     "remember": "Gemerkt: {{statement}}",
@@ -143,7 +144,9 @@
     "homework": "Hausaufgabe",
     "explain": "Erklär mir was",
     "vocab": "Vokabeln",
-    "test_for": "Probetest: {{title}}",
-    "test_message": "Mach mir einen Probetest für „{{title}}“."
+    "test_message": "Mach mir einen Probetest für „{{title}}“.",
+    "exam_short": "Arbeit",
+    "test": "Probetest",
+    "speak": "Aussprache"
   }
 }

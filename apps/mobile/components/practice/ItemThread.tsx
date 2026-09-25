@@ -122,7 +122,7 @@ function Bubble({
       accessibilityLabel={`${speaker}: ${spoken}`}
       style={{
         maxWidth: '86%',
-        backgroundColor: mine ? LB.ink : LB.paper,
+        backgroundColor: mine ? LB.primary : LB.paper,
         borderColor: LB.hairline,
         borderWidth: mine ? 0 : 1,
         borderRadius: 18,
@@ -136,7 +136,7 @@ function Bubble({
       <MathText
         text={text}
         accessible={false}
-        style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}
+        style={[TYPE.body, { color: mine ? '#fff' : LB.ink }]}
       />
     </View>
   );
