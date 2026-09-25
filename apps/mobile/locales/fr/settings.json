@@ -120,6 +120,28 @@
       "confirm_title": "Vraiment te déconnecter?",
       "confirm_body": "Pour te reconnecter, il faudra l'adresse e-mail et le mot de passe.",
       "confirm_cta": "Oui, me déconnecter"
+    },
+    "access": {
+      "email_title": "Adresse e-mail",
+      "email_unknown": "L'adresse n'est pas enregistrée sur ce téléphone.",
+      "email_cta": "Changer l'e-mail",
+      "email_sheet_title": "Changer l'adresse e-mail",
+      "email_intro": "C'est l'adresse pour se connecter ; les liens pour réinitialiser le mot de passe y arrivent aussi.",
+      "email_new": "Nouvelle adresse e-mail",
+      "email_save": "Envoyer l'e-mail de confirmation",
+      "sending": "Envoi …",
+      "email_pending_title": "Pas encore changée – d'abord confirmer",
+      "email_pending_body": "Nous avons envoyé un e-mail de confirmation à {{old_email}} et un autre à {{new_email}}. La nouvelle adresse ne compte qu'une fois les liens confirmés. D'ici là, tout reste sur l'adresse actuelle.",
+      "email_pending_body_no_old": "Nous avons envoyé un e-mail de confirmation à l'adresse actuelle et un autre à {{new_email}}. La nouvelle adresse ne compte qu'une fois les liens confirmés. D'ici là, tout reste sur l'adresse actuelle.",
+      "email_changed": "L'adresse e-mail a été changée.",
+      "done": "Terminé",
+      "password_title": "Mot de passe",
+      "password_cta": "Changer le mot de passe",
+      "password_sheet_title": "Changer le mot de passe",
+      "password_intro": "Le nouveau mot de passe vaut dès maintenant pour la connexion. Ce téléphone reste connecté.",
+      "password_save": "Enregistrer le mot de passe",
+      "saving": "Enregistrement …",
+      "password_saved": "Nouveau mot de passe enregistré."
     }
   },
   "status": {
@@ -136,5 +158,17 @@
     "scheduler_ok": "Oui. Même quand l'appli est fermée.",
     "scheduler_stale": "Pas pour le moment. Les rappels peuvent arriver en retard.",
     "scheduler_unknown": "Difficile à dire. Il n'y a pas encore de retour."
+  },
+  "about": {
+    "title": "À propos de LearnBuddy",
+    "version_question": "Quelle version ?",
+    "version": "LearnBuddy {{version}}",
+    "privacy": "Politique de confidentialité",
+    "imprint": "Mentions légales",
+    "support_question": "Des questions ou un problème ?",
+    "support_hint": "Écris-nous à {{email}}.",
+    "support_cta": "Écrire un e-mail",
+    "open_failed": "Le lien n'a pas pu s'ouvrir. Réessaie dans un instant.",
+    "open_mail_failed": "Aucune app de messagerie n'est configurée ici. Tu peux nous joindre à {{email}}."
   }
 }

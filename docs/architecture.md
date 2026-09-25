@@ -298,6 +298,28 @@ and delivery status of each message) and **system** status (model, push, contact
 Photos that never all arrive are set aside after a day and whatever did arrive is deleted at
 once (`abandonStaleUploads`, run by the scheduler).
 
+## App: account and connection
+
+- **Sign-in details** go from the app straight to Supabase Auth (`lib/auth/supabase.ts`); the
+  API never sees passwords. The Supabase client keeps a session in memory only; the app's
+  tokens live in `lib/auth/session.ts`, and tokens Supabase rotates on the way are saved back.
+- **Password reset**: the e-mail link leads to `/reset-password` (`learnbuddy://reset-password`
+  on a phone, `<origin>/reset-password` on the web; both must be in the Supabase project's
+  redirect URLs). The screen reads the implicit-flow tokens, a PKCE `code` or a `token_hash`
+  (`lib/auth/recovery.ts`), asks for the new password twice (sign-up rule, ≥ 8 characters) and
+  then saves the session. Expired or used links get a calm "ask for a new one".
+- **Changing e-mail or password** is in the parents' area (`AccountAccessCard`); for a minor's
+  profile the parents' PIN comes first. An e-mail change is only requested: it counts once the
+  confirmation links are opened (`double_confirm_changes`), and the app says exactly that.
+- **Offline**: NetInfo feeds TanStack Query's `onlineManager` (only `isConnected`; NetInfo's own
+  reachability ping is off). Queries pause instead of failing, a calm line says so at the top
+  (`components/lb/OfflineFrame.tsx`), and practice answers and recordings wait and are sent once
+  the device is back, with the same `client_turn_id` (`lib/api/whenOnline.ts`). The wait is in
+  memory: closing the app meanwhile drops the unsent answer, and the question stays open.
+- **About**: version from the app config; privacy, imprint and support rows only when
+  `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set
+  (`apps/mobile/.env.example`).
+
 ## Testing
 
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.

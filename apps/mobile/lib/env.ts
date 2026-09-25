@@ -7,6 +7,10 @@ export const ENV = {
   SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'anon-key-missing',
   /** Full privacy policy (web page); the consent screen links to it. */
   PRIVACY_URL: process.env.EXPO_PUBLIC_PRIVACY_URL ?? '',
+  /** Imprint (Impressum, web page); settings › "Über LearnBuddy". Empty hides the row. */
+  IMPRINT_URL: process.env.EXPO_PUBLIC_IMPRINT_URL ?? '',
+  /** Support contact address; settings › "Über LearnBuddy". Empty hides the row. */
+  SUPPORT_EMAIL: process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? '',
 };
 
 declare const __DEV__: boolean;

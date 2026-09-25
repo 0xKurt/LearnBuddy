@@ -120,6 +120,28 @@
       "confirm_title": "¿Seguro que quieres cerrar sesión?",
       "confirm_body": "Para volver a iniciar sesión hacen falta el correo electrónico y la contraseña.",
       "confirm_cta": "Sí, cerrar sesión"
+    },
+    "access": {
+      "email_title": "Dirección de correo",
+      "email_unknown": "La dirección no está guardada en este móvil.",
+      "email_cta": "Cambiar correo",
+      "email_sheet_title": "Cambiar dirección de correo",
+      "email_intro": "Con esta dirección se inicia sesión; ahí llegan también los enlaces para restablecer la contraseña.",
+      "email_new": "Nueva dirección de correo",
+      "email_save": "Enviar correo de confirmación",
+      "sending": "Enviando …",
+      "email_pending_title": "Aún no ha cambiado – primero hay que confirmar",
+      "email_pending_body": "Hemos enviado un correo de confirmación a {{old_email}} y otro a {{new_email}}. La nueva dirección solo vale cuando se confirmen los enlaces. Hasta entonces, todo sigue con la dirección actual.",
+      "email_pending_body_no_old": "Hemos enviado un correo de confirmación a la dirección actual y otro a {{new_email}}. La nueva dirección solo vale cuando se confirmen los enlaces. Hasta entonces, todo sigue con la dirección actual.",
+      "email_changed": "La dirección de correo ha cambiado.",
+      "done": "Listo",
+      "password_title": "Contraseña",
+      "password_cta": "Cambiar contraseña",
+      "password_sheet_title": "Cambiar contraseña",
+      "password_intro": "La nueva contraseña vale desde ahora para iniciar sesión. Este móvil sigue con la sesión iniciada.",
+      "password_save": "Guardar contraseña",
+      "saving": "Guardando …",
+      "password_saved": "Nueva contraseña guardada."
     }
   },
   "status": {
@@ -136,5 +158,17 @@
     "scheduler_ok": "Sí. Incluso con la app cerrada.",
     "scheduler_stale": "Ahora mismo no. Los recordatorios pueden llegar con retraso.",
     "scheduler_unknown": "No está claro. Todavía no hay respuesta."
+  },
+  "about": {
+    "title": "Sobre LearnBuddy",
+    "version_question": "¿Qué versión?",
+    "version": "LearnBuddy {{version}}",
+    "privacy": "Política de privacidad",
+    "imprint": "Aviso legal",
+    "support_question": "¿Preguntas o algún problema?",
+    "support_hint": "Escríbenos a {{email}}.",
+    "support_cta": "Escribir un correo",
+    "open_failed": "No se ha podido abrir el enlace. Vuelve a intentarlo en un momento.",
+    "open_mail_failed": "Aquí no hay ninguna app de correo configurada. Puedes escribirnos a {{email}}."
   }
 }

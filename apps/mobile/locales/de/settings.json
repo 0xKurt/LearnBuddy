@@ -120,6 +120,28 @@
       "confirm_title": "Wirklich abmelden?",
       "confirm_body": "Zum Wiederanmelden braucht es die E-Mail-Adresse und das Passwort.",
       "confirm_cta": "Ja, abmelden"
+    },
+    "access": {
+      "email_title": "E-Mail-Adresse",
+      "email_unknown": "Die Adresse ist auf diesem Handy nicht gespeichert.",
+      "email_cta": "E-Mail ändern",
+      "email_sheet_title": "E-Mail-Adresse ändern",
+      "email_intro": "Mit dieser Adresse meldet ihr euch an; dorthin kommen auch Links zum Zurücksetzen des Passworts.",
+      "email_new": "Neue E-Mail-Adresse",
+      "email_save": "Bestätigungs-Mail schicken",
+      "sending": "Wird geschickt …",
+      "email_pending_title": "Noch nicht geändert – erst bestätigen",
+      "email_pending_body": "Wir haben eine Bestätigungs-Mail an {{old_email}} und eine an {{new_email}} geschickt. Die neue Adresse gilt erst, wenn die Links darin bestätigt sind. Bis dahin bleibt alles bei der bisherigen Adresse.",
+      "email_pending_body_no_old": "Wir haben eine Bestätigungs-Mail an die bisherige Adresse und eine an {{new_email}} geschickt. Die neue Adresse gilt erst, wenn die Links darin bestätigt sind. Bis dahin bleibt alles bei der bisherigen Adresse.",
+      "email_changed": "Die E-Mail-Adresse ist geändert.",
+      "done": "Fertig",
+      "password_title": "Passwort",
+      "password_cta": "Passwort ändern",
+      "password_sheet_title": "Passwort ändern",
+      "password_intro": "Das neue Passwort gilt ab sofort für die Anmeldung. Auf diesem Handy bleibt ihr angemeldet.",
+      "password_save": "Passwort speichern",
+      "saving": "Wird gespeichert …",
+      "password_saved": "Neues Passwort gespeichert."
     }
   },
   "status": {
@@ -136,5 +158,17 @@
     "scheduler_ok": "Ja. Auch wenn die App zu ist.",
     "scheduler_stale": "Gerade nicht. Erinnerungen können sich verspäten.",
     "scheduler_unknown": "Unklar. Es gibt noch keine Rückmeldung."
+  },
+  "about": {
+    "title": "Über LearnBuddy",
+    "version_question": "Welche Version?",
+    "version": "LearnBuddy {{version}}",
+    "privacy": "Datenschutzerklärung",
+    "imprint": "Impressum",
+    "support_question": "Fragen oder ein Problem?",
+    "support_hint": "Schreib uns an {{email}}.",
+    "support_cta": "E-Mail schreiben",
+    "open_failed": "Der Link ließ sich nicht öffnen. Versuch es gleich nochmal.",
+    "open_mail_failed": "Hier ist keine Mail-App eingerichtet. Du erreichst uns unter {{email}}."
   }
 }

@@ -1,7 +1,7 @@
 // The parents' area ("Für Eltern" for a minor's profile, "Dein Konto" for an
 // adult learner), set apart from the learner's own settings: the parents'
-// PIN, data export, account deletion and sign-out (docs/privacy.md §Export
-// and deletion). For a minor, export and deletion need the parents: the API
+// PIN, the sign-in's e-mail and password, data export, account deletion and
+// sign-out (docs/privacy.md §Export and deletion). For a minor, export and deletion need the parents: the API
 // answers admin_required, the PIN screen opens and the call is retried once.
 // Deletion is scheduled with a 7-day hold; the date shown is the API's.
 
@@ -23,6 +23,7 @@ import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
+import { AccountAccessCard } from './AccountAccessCard.js';
 import { AdultCancelled, afterModalCloses, asAdultIfNeeded } from './adultGate.js';
 import { Group } from './Group.js';
 import { PinCard } from './PinCard.js';
@@ -143,6 +144,13 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         {minor ? (
           <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
         ) : null}
+
+        <AccountAccessCard
+          minor={minor}
+          pinSet={account.pin_set}
+          email={email}
+          enabled={busy === null}
+        />
 
         <Card padding={18} radius={20}>
           <Row question={t('settings:adult.export.title')} hint={t('settings:adult.export.body')}>

@@ -33,7 +33,11 @@ import {
 import { z } from 'zod';
 
 import { setAdminToken } from '../admin.js';
-import { newId, request } from './client.js';
+import { ApiError, newId, request } from './client.js';
+import { sendWhenOnline } from './whenOnline.js';
+
+/** The request may not have reached the API (lib/api/client.ts turns a failed fetch into this). */
+const noConnection = (err: unknown) => err instanceof ApiError && err.code === 'network';
 
 // ─────────────── identity ───────────────
 
@@ -143,11 +147,25 @@ export const startPractice = (body: StartPracticeRequest) =>
   request('POST', '/practice/sessions', { body, schema: SessionView });
 export const getSession = (id: string) =>
   request('GET', `/practice/sessions/${id}`, { schema: SessionView });
+/**
+ * An answer. Offline it waits and is sent once the device is back online; a
+ * dropped connection sends it again. Always with the same client_turn_id, so
+ * the API records it once (lib/api/whenOnline.ts).
+ */
 export const answerItem = (id: string, body: AnswerRequest) =>
-  request('POST', `/practice/sessions/${id}/answer`, { body, schema: AnswerResponse });
-/** A recording for a speak question; retrying the same recording reuses its client_turn_id. */
+  sendWhenOnline(
+    () => request('POST', `/practice/sessions/${id}/answer`, { body, schema: AnswerResponse }),
+    { isConnectionError: noConnection },
+  );
+/**
+ * A recording for a speak question; retrying the same recording reuses its
+ * client_turn_id. Waits while offline, like answerItem.
+ */
 export const speakItem = (id: string, body: SpeakRequest) =>
-  request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse });
+  sendWhenOnline(
+    () => request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
+    { isConnectionError: noConnection },
+  );
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */
 export const startTopic = (body: StartTopicRequest) =>
   request('POST', '/practice/topic', { body, schema: SessionView });

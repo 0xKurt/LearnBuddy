@@ -42,5 +42,6 @@
     "budget_exhausted": "Buddy ne peut plus répondre aujourd'hui.",
     "stale": "Trop de choses ont changé en même temps. Renvoie ton message.",
     "internal": "Quelque chose s'est mal passé."
-  }
+  },
+  "offline_banner": "Pas de connexion – je continue dès que tu es de nouveau en ligne."
 }

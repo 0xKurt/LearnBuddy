@@ -120,6 +120,28 @@
       "confirm_title": "Vuoi davvero uscire?",
       "confirm_body": "Per accedere di nuovo servono l'indirizzo email e la password.",
       "confirm_cta": "Sì, esci"
+    },
+    "access": {
+      "email_title": "Indirizzo email",
+      "email_unknown": "L'indirizzo non è salvato su questo telefono.",
+      "email_cta": "Cambia email",
+      "email_sheet_title": "Cambia l'indirizzo email",
+      "email_intro": "Con questo indirizzo si accede; qui arrivano anche i link per reimpostare la password.",
+      "email_new": "Nuovo indirizzo email",
+      "email_save": "Invia email di conferma",
+      "sending": "Invio …",
+      "email_pending_title": "Non ancora cambiato – prima conferma",
+      "email_pending_body": "Abbiamo inviato un'email di conferma a {{old_email}} e una a {{new_email}}. Il nuovo indirizzo vale solo dopo aver confermato i link. Fino ad allora resta tutto sull'indirizzo attuale.",
+      "email_pending_body_no_old": "Abbiamo inviato un'email di conferma all'indirizzo attuale e una a {{new_email}}. Il nuovo indirizzo vale solo dopo aver confermato i link. Fino ad allora resta tutto sull'indirizzo attuale.",
+      "email_changed": "L'indirizzo email è stato cambiato.",
+      "done": "Fatto",
+      "password_title": "Password",
+      "password_cta": "Cambia password",
+      "password_sheet_title": "Cambia password",
+      "password_intro": "La nuova password vale da subito per l'accesso. Questo telefono resta connesso.",
+      "password_save": "Salva la password",
+      "saving": "Salvataggio …",
+      "password_saved": "Nuova password salvata."
     }
   },
   "status": {
@@ -136,5 +158,17 @@
     "scheduler_ok": "Sì. Anche quando l'app è chiusa.",
     "scheduler_stale": "Al momento no. I promemoria potrebbero arrivare in ritardo.",
     "scheduler_unknown": "Non è chiaro. Non c'è ancora nessun riscontro."
+  },
+  "about": {
+    "title": "Informazioni su LearnBuddy",
+    "version_question": "Quale versione?",
+    "version": "LearnBuddy {{version}}",
+    "privacy": "Informativa sulla privacy",
+    "imprint": "Note legali",
+    "support_question": "Domande o un problema?",
+    "support_hint": "Scrivici a {{email}}.",
+    "support_cta": "Scrivi un'email",
+    "open_failed": "Non è stato possibile aprire il link. Riprova tra un attimo.",
+    "open_mail_failed": "Qui non è configurata nessuna app di posta. Puoi scriverci a {{email}}."
   }
 }

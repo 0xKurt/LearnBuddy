@@ -1,4 +1,4 @@
-// Root: providers, session hydration, notification taps, one Stack.
+// Root: providers, session hydration, notification taps, the offline line, one Stack.
 
 import '../lib/i18n/index.js';
 
@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ErrorBoundary } from '../components/lb/ErrorBoundary.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
+import { OfflineFrame } from '../components/lb/OfflineFrame.js';
 import { ToastHost } from '../components/lb/Toast.js';
 import { outreachOpened } from '../lib/api/endpoints.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
@@ -48,15 +49,17 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ErrorBoundary>
             <StatusBar style="dark" />
-            {ready ? (
-              <Stack
-                screenOptions={{ headerShown: false, contentStyle: { backgroundColor: LB.bg } }}
-              >
-                <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
-              </Stack>
-            ) : (
-              <LoadingState />
-            )}
+            <OfflineFrame>
+              {ready ? (
+                <Stack
+                  screenOptions={{ headerShown: false, contentStyle: { backgroundColor: LB.bg } }}
+                >
+                  <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
+                </Stack>
+              ) : (
+                <LoadingState />
+              )}
+            </OfflineFrame>
             <ToastHost />
           </ErrorBoundary>
         </QueryClientProvider>

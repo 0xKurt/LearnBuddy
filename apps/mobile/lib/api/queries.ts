@@ -3,9 +3,12 @@
 // cache instead of refetching.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
-import { focusManager, QueryClient, useQuery } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
+import { focusManager, onlineManager, QueryClient, useQuery } from '@tanstack/react-query';
+import { useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
 import {
   getHome,
@@ -33,6 +36,24 @@ if (Platform.OS !== 'web') {
     const sub = AppState.addEventListener('change', (state) => handleFocus(state === 'active'));
     return () => sub.remove();
   });
+}
+
+// Offline (NetInfo; on the web it follows the browser), queries and mutations
+// pause instead of failing and continue once the device is back online.
+// NetInfo's own reachability ping (a Google address on phones) is switched
+// off: only isConnected is used (lib/net.ts), and no extra third-party request.
+NetInfo.configure({ reachabilityShouldRun: () => false });
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((state) => setOnline(onlineFrom(state))),
+);
+
+/** Whether the device counts as online (the same answer TanStack Query uses). */
+export function useOnline(): boolean {
+  return useSyncExternalStore(
+    (onChange) => onlineManager.subscribe(onChange),
+    () => onlineManager.isOnline(),
+    () => true,
+  );
 }
 
 export const keys = {

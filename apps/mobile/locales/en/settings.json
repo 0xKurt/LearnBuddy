@@ -120,6 +120,28 @@
       "confirm_title": "Really sign out?",
       "confirm_body": "Signing in again needs the e-mail address and the password.",
       "confirm_cta": "Yes, sign out"
+    },
+    "access": {
+      "email_title": "E-mail address",
+      "email_unknown": "The address isn't stored on this phone.",
+      "email_cta": "Change e-mail",
+      "email_sheet_title": "Change e-mail address",
+      "email_intro": "This is the address for signing in; password reset links go there too.",
+      "email_new": "New e-mail address",
+      "email_save": "Send confirmation e-mail",
+      "sending": "Sending …",
+      "email_pending_title": "Not changed yet – confirm first",
+      "email_pending_body": "We sent one confirmation e-mail to {{old_email}} and one to {{new_email}}. The new address only counts once the links in them are confirmed. Until then, everything stays with the current address.",
+      "email_pending_body_no_old": "We sent one confirmation e-mail to the current address and one to {{new_email}}. The new address only counts once the links in them are confirmed. Until then, everything stays with the current address.",
+      "email_changed": "The e-mail address has been changed.",
+      "done": "Done",
+      "password_title": "Password",
+      "password_cta": "Change password",
+      "password_sheet_title": "Change password",
+      "password_intro": "The new password counts for signing in from now on. This phone stays signed in.",
+      "password_save": "Save password",
+      "saving": "Saving …",
+      "password_saved": "New password saved."
     }
   },
   "status": {
@@ -136,5 +158,17 @@
     "scheduler_ok": "Yes. Even when the app is closed.",
     "scheduler_stale": "Not right now. Reminders may be late.",
     "scheduler_unknown": "Unclear. There's no report yet."
+  },
+  "about": {
+    "title": "About LearnBuddy",
+    "version_question": "Which version?",
+    "version": "LearnBuddy {{version}}",
+    "privacy": "Privacy policy",
+    "imprint": "Legal notice",
+    "support_question": "Questions or a problem?",
+    "support_hint": "Write to us at {{email}}.",
+    "support_cta": "Write an e-mail",
+    "open_failed": "The link couldn't be opened. Try again in a moment.",
+    "open_mail_failed": "No mail app is set up here. You can reach us at {{email}}."
   }
 }

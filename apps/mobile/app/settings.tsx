@@ -1,7 +1,8 @@
 // Settings. Sources: docs/architecture.md §API (GET/PATCH /buddy/settings,
 // PATCH /learner, PUT /account/pin, GET /account/export, POST/DELETE
 // /account/deletion), §Delivery (contact rules) and docs/privacy.md (PIN
-// gate, export, deletion). Written for learners of about 12–18: plain
+// gate, export, deletion); sign-in details go to Supabase Auth directly
+// (components/settings/AccountAccessCard.tsx). Written for learners of about 12–18: plain
 // questions, short sentences, one action per row. The parents' area is set
 // apart; for a minor, more contact and account data go through the parents'
 // PIN (lib/adminFlow.ts). Everything shown is what the API returned.
@@ -15,6 +16,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Screen } from '../components/lb/Screen.js';
+import { AboutSection } from '../components/settings/AboutSection.js';
 import { AdultSection } from '../components/settings/AdultSection.js';
 import { ContactSection } from '../components/settings/ContactSection.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
@@ -99,6 +101,7 @@ export default function SettingsScreen() {
               failed={home.data ? null : home.error}
               onRetry={() => void home.refetch()}
             />
+            <AboutSection />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

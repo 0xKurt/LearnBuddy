@@ -42,5 +42,6 @@
     "budget_exhausted": "Buddy can't answer any more today.",
     "stale": "Too much changed at once. Send it again.",
     "internal": "Something went wrong."
-  }
+  },
+  "offline_banner": "No connection – I'll carry on as soon as you're back online."
 }
