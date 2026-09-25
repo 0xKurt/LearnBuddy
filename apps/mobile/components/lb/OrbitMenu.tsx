@@ -14,6 +14,8 @@ export type OrbitItem = { key: string; label: string; icon: IconName; onPress: (
 
 const NODE = 62;
 const LABEL_W = 108;
+/** Room for a one-line label above the top node. */
+const LABEL_ABOVE = 26;
 
 export function OrbitMenu({
   items,
@@ -30,6 +32,8 @@ export function OrbitMenu({
   const r = size / 2 - LABEL_W / 2;
   const cx = size / 2;
   const cy = size / 2;
+  // Neighbouring nodes never share touch area: the label width follows the chord between them.
+  const labelW = Math.min(LABEL_W, 2 * r * Math.sin(Math.PI / Math.max(items.length, 2)) - 6);
   // As tall as the lowest node and its label (no empty band under the ring).
   const lowest = Math.max(
     ...items.map((_, i) => cy + r * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / items.length)),
@@ -43,7 +47,7 @@ export function OrbitMenu({
       style={{ width: '100%', alignItems: 'center' }}
     >
       {size > 0 ? (
-        <View style={{ width: size, height }}>
+        <View style={{ width: size, height, marginTop: LABEL_ABOVE }}>
           <View
             pointerEvents="none"
             accessibilityElementsHidden
@@ -64,10 +68,10 @@ export function OrbitMenu({
           <View
             style={{
               position: 'absolute',
-              left: cx - r * 0.72,
-              top: cy - r * 0.72,
-              width: r * 1.44,
-              height: r * 1.44,
+              left: cx - r * 0.62,
+              top: cy - r * 0.62,
+              width: r * 1.24,
+              height: r * 1.24,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -78,6 +82,8 @@ export function OrbitMenu({
             const angle = -Math.PI / 2 + (i * 2 * Math.PI) / items.length;
             const x = cx + r * Math.cos(angle);
             const y = cy + r * Math.sin(angle);
+            // The top node's label sits above it, so it never reaches into the middle.
+            const labelAbove = Math.sin(angle) < -0.5;
             return (
               <Pressable
                 key={item.key}
@@ -88,15 +94,16 @@ export function OrbitMenu({
                 accessibilityState={{ disabled }}
                 style={{
                   position: 'absolute',
-                  left: x - LABEL_W / 2,
-                  top: y - NODE / 2,
-                  width: LABEL_W,
+                  left: x - labelW / 2,
+                  top: labelAbove ? y - NODE / 2 - LABEL_ABOVE : y - NODE / 2,
+                  width: labelW,
                   alignItems: 'center',
                   opacity: disabled ? 0.6 : 1,
                 }}
               >
                 {({ pressed }) => (
                   <>
+                    {labelAbove ? <NodeLabel text={item.label} above /> : null}
                     <View
                       style={[
                         {
@@ -113,19 +120,7 @@ export function OrbitMenu({
                     >
                       <Icon name={item.icon} size={26} color={LB.primary} />
                     </View>
-                    <Text
-                      numberOfLines={2}
-                      style={{
-                        marginTop: 6,
-                        fontSize: 14,
-                        lineHeight: 18,
-                        fontWeight: '600',
-                        color: LB.ink,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {item.label}
-                    </Text>
+                    {labelAbove ? null : <NodeLabel text={item.label} />}
                   </>
                 )}
               </Pressable>
@@ -134,5 +129,24 @@ export function OrbitMenu({
         </View>
       ) : null}
     </View>
+  );
+}
+
+function NodeLabel({ text, above = false }: { text: string; above?: boolean }) {
+  return (
+    <Text
+      numberOfLines={above ? 1 : 2}
+      style={{
+        marginTop: above ? 0 : 6,
+        marginBottom: above ? 6 : 0,
+        fontSize: 14,
+        lineHeight: 18,
+        fontWeight: '600',
+        color: LB.ink,
+        textAlign: 'center',
+      }}
+    >
+      {text}
+    </Text>
   );
 }

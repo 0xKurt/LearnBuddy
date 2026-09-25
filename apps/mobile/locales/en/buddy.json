@@ -1,6 +1,6 @@
 {
-  "greeting": "Hi {{name}},",
-  "greeting_ask": "what's coming up?",
+  "greeting": "Hi {{name}}",
+  "greeting_ask": "What's coming up?",
   "menu": {
     "open": "Open menu",
     "title": "More",

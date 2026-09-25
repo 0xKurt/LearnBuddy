@@ -311,23 +311,25 @@ export default function BuddyScreen() {
             />
           ) : null}
 
+          {/* The one headline: her name gets the full width (long names wrap, never overlap). */}
+          <View style={{ gap: 4 }}>
+            <Text
+              accessibilityRole="header"
+              style={[TYPE.display, { fontSize: 28, lineHeight: 34, textAlign: 'center' }]}
+            >
+              {t('buddy:greeting', { name: h.learner.name })}
+            </Text>
+            <Text style={[TYPE.title, { color: LB.ink2, textAlign: 'center', fontWeight: '500' }]}>
+              {t('buddy:greeting_ask')}
+            </Text>
+          </View>
+
           {/* The ring: Buddy and the open question in the middle, ways to start around it. */}
           <OrbitMenu
             items={orbitItems(h.next)}
             disabled={pending !== null}
-            center={
-              <View style={{ alignItems: 'center', gap: 8 }}>
-                <BuddyOrb size={58} />
-                <Text
-                  accessibilityRole="header"
-                  style={[TYPE.display, { fontSize: 22, lineHeight: 27, textAlign: 'center' }]}
-                >
-                  {t('buddy:greeting', { name: h.learner.name })}
-                  {'\n'}
-                  <Text style={{ color: LB.ink3 }}>{t('buddy:greeting_ask')}</Text>
-                </Text>
-              </View>
-            }
+            // Only Buddy in the middle: nothing that could run into the labels on a small phone.
+            center={<BuddyOrb size={72} />}
           />
           {nextExam ? (
             <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', marginTop: -6 }]}>

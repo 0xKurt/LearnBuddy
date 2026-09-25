@@ -349,8 +349,9 @@ with status and undo), **next** (tests and planned steps), the **thread** (with 
 and delivery status of each message) and **system** status (model, push, contact, scheduler).
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
-at most the **now** and **decision** cards; the ring (`components/lb/OrbitMenu.tsx`) — Buddy's orb
-and "Hallo Lena, was steht an?" in the middle, five ways to start around it (a practice test when
+at most the **now** and **decision** cards; the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
+the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, five ways to start
+around it (a practice test when
 an exam is coming, else "Arbeit"; homework; pronunciation; vocabulary; explain —
 `docs/UX-PRINCIPLES.md` §6); one line for the next test; then the conversation — what Buddy did
 stands under its message with "Rückgängig"; no tiles, no lists. Anything else she simply says
@@ -401,3 +402,5 @@ once (`abandonStaleUploads`, run by the scheduler).
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's
   web build talks to it like to production. Test tooling only; never deployed.
+  `tests/web/layout.spec.ts` checks the home under stress (a long name on a 390 and a 320 px
+  phone): nothing overlaps the ring's buttons, no two buttons share touch area, no sideways scroll.

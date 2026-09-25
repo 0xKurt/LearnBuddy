@@ -1,6 +1,6 @@
 {
-  "greeting": "Ciao {{name}},",
-  "greeting_ask": "cosa c'è in arrivo?",
+  "greeting": "Ciao {{name}}",
+  "greeting_ask": "Cosa c'è in arrivo?",
   "menu": {
     "open": "Apri il menu",
     "title": "Altro",

@@ -1,6 +1,6 @@
 {
-  "greeting": "Hallo {{name}},",
-  "greeting_ask": "was steht an?",
+  "greeting": "Hallo {{name}}",
+  "greeting_ask": "Was steht an?",
   "menu": {
     "open": "Menü öffnen",
     "title": "Mehr",
