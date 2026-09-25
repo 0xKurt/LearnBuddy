@@ -108,7 +108,9 @@
   },
   "again": {
     "shaky": "Practise the shaky ones again",
-    "topic": "Practise again: {{topics}}"
+    "topic": "Practise again: {{topics}}",
+    "harder": "More like this, a bit harder",
+    "harder_topic": "More like this, a bit harder: {{topics}}"
   },
   "flag": {
     "button": "Question doesn't fit",

@@ -108,7 +108,9 @@
   },
   "again": {
     "shaky": "Repasar lo que aún no está seguro",
-    "topic": "Repasar: {{topics}}"
+    "topic": "Repasar: {{topics}}",
+    "harder": "Más de esto, un poco más difícil",
+    "harder_topic": "Más de esto, un poco más difícil: {{topics}}"
   },
   "flag": {
     "button": "La pregunta no encaja",

@@ -108,7 +108,9 @@
   },
   "again": {
     "shaky": "Die wackligen nochmal üben",
-    "topic": "Nochmal üben: {{topics}}"
+    "topic": "Nochmal üben: {{topics}}",
+    "harder": "Mehr davon, etwas schwerer",
+    "harder_topic": "Mehr davon, etwas schwerer: {{topics}}"
   },
   "flag": {
     "button": "Frage passt nicht",

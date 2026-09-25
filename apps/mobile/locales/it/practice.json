@@ -108,7 +108,9 @@
   },
   "again": {
     "shaky": "Ripassa quello che non è ancora sicuro",
-    "topic": "Ripassa: {{topics}}"
+    "topic": "Ripassa: {{topics}}",
+    "harder": "Ancora, un po’ più difficile",
+    "harder_topic": "Ancora, un po’ più difficile: {{topics}}"
   },
   "flag": {
     "button": "La domanda non va",

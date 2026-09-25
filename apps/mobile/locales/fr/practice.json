@@ -108,7 +108,9 @@
   },
   "again": {
     "shaky": "Revoir ce qui n'est pas encore sûr",
-    "topic": "Revoir : {{topics}}"
+    "topic": "Revoir : {{topics}}",
+    "harder": "Encore, un peu plus difficile",
+    "harder_topic": "Encore, un peu plus difficile : {{topics}}"
   },
   "flag": {
     "button": "Question inadaptée",
