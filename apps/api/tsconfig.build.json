@@ -4,5 +4,5 @@
     "noEmit": false,
     "emitDeclarationOnly": false
   },
-  "exclude": ["**/*.test.ts", "**/__tests__/**", "evals/**"]
+  "exclude": ["**/*.test.ts", "**/__tests__/**", "src/testing/**", "evals/**"]
 }

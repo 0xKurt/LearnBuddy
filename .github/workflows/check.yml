@@ -11,6 +11,21 @@ jobs:
     name: typecheck + lint + test
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The API's integration tests run against a real Postgres (never mocked).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      LB_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      LB_REQUIRE_TEST_DB: '1'
     steps:
       - uses: actions/checkout@v4
 

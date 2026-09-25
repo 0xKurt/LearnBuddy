@@ -1,0 +1,399 @@
+// The one screen: what is relevant now, the one open decision, what Buddy
+// did (with real status), what comes next, and the conversation.
+// docs/architecture.md §Home. Everything is derived from stored state —
+// no card claims more than the data shows.
+
+import type {
+  ActionSummary,
+  ActionView,
+  BuddyHome,
+  Decision,
+  GoalBrief,
+  MessageView,
+  NowCard,
+  OutreachView,
+  UpcomingItem,
+} from '@learnbuddy/shared-types/contracts';
+
+import type { Deps } from '../../deps.js';
+import { daysBetween, localParts } from '../../lib/time.js';
+import type { BuddyState, GoalRow } from './state.js';
+import { loadBuddyState } from './state.js';
+
+const THREAD_LIMIT = 30;
+const DONE_WINDOW_MS = 72 * 3_600_000;
+const UNDO_WINDOW_MS = 7 * 86_400_000;
+const HEARTBEAT_STALE_MS = 10 * 60_000;
+
+type LearnerLite = { id: string; display_name: string; isMinor: boolean };
+
+function goalBrief(g: GoalRow, today: string): GoalBrief {
+  return {
+    id: g.id,
+    kind: g.kind,
+    title: g.title,
+    due_date: g.due_date,
+    days_left: g.due_date ? daysBetween(today, g.due_date) : null,
+    subject_name: g.subject_name,
+  };
+}
+
+const iso = (d: Date | null): string | null => (d ? d.toISOString() : null);
+
+export async function buildHome(
+  deps: Deps,
+  learner: LearnerLite,
+  beforeMessageId?: string,
+): Promise<BuddyHome> {
+  const now = deps.now();
+  const state = await loadBuddyState(deps.db, learner.id, now);
+  const tz = state.settings.timezone;
+  const today = localParts(now, tz).date;
+
+  const [nowCard, decision, done, thread, system] = await Promise.all([
+    nowCardOf(deps, learner.id, state, today, now),
+    decisionOf(state, learner, today, now),
+    doneOf(deps, learner.id, now),
+    threadOf(deps, learner.id, beforeMessageId),
+    systemOf(deps, learner.id, state),
+  ]);
+
+  return {
+    learner: { id: learner.id, name: learner.display_name, is_minor: learner.isMinor },
+    now: nowCard,
+    decision,
+    done,
+    next: nextOf(state, today),
+    thread: thread.messages,
+    thread_has_more: thread.hasMore,
+    system,
+    context_version: state.settings.context_version,
+  };
+}
+
+async function nowCardOf(
+  deps: Deps,
+  learnerId: string,
+  state: BuddyState,
+  today: string,
+  now: Date,
+): Promise<NowCard | null> {
+  const active = state.sessions.find(
+    (s) =>
+      s.status === 'active' &&
+      now.getTime() - s.started_at.getTime() < 12 * 3_600_000 &&
+      s.answered < s.total,
+  );
+  if (active) {
+    const goal = active.goal_id ? state.goals.find((g) => g.id === active.goal_id) : undefined;
+    const step = active.step_id ? state.steps.find((s) => s.id === active.step_id) : undefined;
+    return {
+      type: 'resume_practice',
+      session_id: active.id,
+      title: goal?.title ?? step?.title ?? '',
+      remaining: active.total - active.answered,
+    };
+  }
+  const justFinished = state.sessions.find(
+    (s) =>
+      s.status === 'finished' &&
+      s.finished_at &&
+      now.getTime() - s.finished_at.getTime() < 30 * 60_000,
+  );
+  if (justFinished) {
+    return {
+      type: 'practice_result',
+      session_id: justFinished.id,
+      result: {
+        answered: justFinished.answered,
+        first_try: justFinished.first_try,
+        secure_topics: justFinished.secure_topics,
+        shaky_topics: justFinished.shaky_topics,
+      },
+    };
+  }
+  const prepared = state.steps
+    .filter(
+      (s) =>
+        s.kind === 'practice' && s.state === 'prepared' && (s.payload.item_ids?.length ?? 0) > 0,
+    )
+    .sort((a, b) => {
+      const ga = state.goals.find((g) => g.id === a.goal_id)?.due_date ?? '9999-12-31';
+      const gb = state.goals.find((g) => g.id === b.goal_id)?.due_date ?? '9999-12-31';
+      return ga < gb ? -1 : ga > gb ? 1 : 0;
+    })[0];
+  if (prepared) {
+    const goal = prepared.goal_id ? state.goals.find((g) => g.id === prepared.goal_id) : undefined;
+    return {
+      type: 'practice_ready',
+      step_id: prepared.id,
+      title: prepared.title,
+      question_count: prepared.payload.item_ids?.length ?? 0,
+      est_minutes: prepared.payload.est_minutes ?? 10,
+      focus_topics: prepared.payload.focus_topics ?? [],
+      goal: goal ? goalBrief(goal, today) : null,
+    };
+  }
+  const failed = state.materials.find(
+    (m) => m.status === 'failed' && now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
+  );
+  if (failed) {
+    const attempts = await deps.db.maybeOne<{ n: number }>(
+      `select count(*)::int as n from jobs where learner_id = $1 and kind = 'extract_material'
+          and payload ->> 'material_id' = $2`,
+      [learnerId, failed.id],
+    );
+    return {
+      type: 'material_failed',
+      material_id: failed.id,
+      reason: failed.failure_reason,
+      retryable: failed.failure_reason !== 'not_learning_material' && (attempts?.n ?? 0) < 3,
+    };
+  }
+  const processing = state.materials.find(
+    (m) =>
+      (m.status === 'queued' || m.status === 'processing' || m.status === 'awaiting_upload') &&
+      now.getTime() - m.created_at.getTime() < 2 * 3_600_000,
+  );
+  if (processing) {
+    return {
+      type: 'material_processing',
+      material_id: processing.id,
+      status: processing.status as 'awaiting_upload' | 'queued' | 'processing',
+    };
+  }
+  const capture = state.steps.find((s) => s.kind === 'capture' && s.state === 'planned');
+  if (capture) {
+    const goal = capture.goal_id ? state.goals.find((g) => g.id === capture.goal_id) : undefined;
+    return {
+      type: 'capture_needed',
+      step_id: capture.id,
+      title: capture.title,
+      goal: goal ? goalBrief(goal, today) : null,
+    };
+  }
+  return null;
+}
+
+function decisionOf(
+  state: BuddyState,
+  learner: LearnerLite,
+  today: string,
+  now: Date,
+): Decision | null {
+  const past = state.goals.find(
+    (g) =>
+      g.kind === 'exam' &&
+      g.status === 'active' &&
+      g.due_date &&
+      daysBetween(today, g.due_date) < 0,
+  );
+  if (past) return { type: 'how_did_it_go', goal: goalBrief(past, today) };
+  const s = state.settings;
+  const hidden = s.opt_in_prompt_hidden_until && s.opt_in_prompt_hidden_until > now;
+  const somethingToFollow = state.totals.activeGoals > 0;
+  if (!s.contact_enabled && !hidden && somethingToFollow) {
+    return { type: 'contact_opt_in', can_enable_here: !learner.isMinor };
+  }
+  return null;
+}
+
+async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionView[]> {
+  const rows = await deps.db.query<{
+    id: string;
+    status: 'applied' | 'undone';
+    result: ActionSummary;
+    undo: unknown;
+    created_at: Date;
+  }>(
+    `select id, status, result, undo, created_at from buddy_actions
+      where learner_id = $1 and created_at > $2
+      order by seq desc limit 12`,
+    [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    status: r.status,
+    undoable:
+      r.status === 'applied' &&
+      r.undo !== null &&
+      now.getTime() - r.created_at.getTime() < UNDO_WINDOW_MS,
+    summary: r.result,
+    created_at: r.created_at.toISOString(),
+  }));
+}
+
+function nextOf(state: BuddyState, today: string): UpcomingItem[] {
+  const items: UpcomingItem[] = [];
+  for (const g of state.goals) {
+    if (g.status !== 'active' || !g.due_date || daysBetween(today, g.due_date) < 0) continue;
+    items.push({
+      kind: 'exam',
+      id: g.id,
+      title: g.title,
+      date: g.due_date,
+      time: null,
+      state: g.status,
+      agreed: false,
+    });
+  }
+  for (const s of state.steps) {
+    if (s.state !== 'planned' || !s.planned_date || daysBetween(today, s.planned_date) < 0)
+      continue;
+    if (s.kind === 'capture') continue; // shown as the "now" card
+    items.push({
+      kind: 'step',
+      id: s.id,
+      title: s.title,
+      date: s.planned_date,
+      time: s.planned_time,
+      state: s.state,
+      agreed: s.agreed,
+    });
+  }
+  return items
+    .sort((a, b) =>
+      `${a.date ?? ''}${a.time ?? ''}`.localeCompare(`${b.date ?? ''}${b.time ?? ''}`),
+    )
+    .slice(0, 5);
+}
+
+async function threadOf(
+  deps: Deps,
+  learnerId: string,
+  beforeMessageId?: string,
+): Promise<{ messages: MessageView[]; hasMore: boolean }> {
+  const rows = await deps.db.query<{
+    id: string;
+    role: 'learner' | 'buddy';
+    text: string;
+    status: 'processing' | 'done' | 'failed';
+    ask: { options?: string[] } | null;
+    reply_to_id: string | null;
+    outreach_id: string | null;
+    decision_id: string | null;
+    created_at: Date;
+  }>(
+    `select id, role, text, status, ask, reply_to_id, outreach_id, decision_id, created_at
+       from buddy_messages
+      where learner_id = $1
+        and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))
+      order by seq desc
+      limit $3`,
+    [learnerId, beforeMessageId ?? null, THREAD_LIMIT + 1],
+  );
+  const hasMore = rows.length > THREAD_LIMIT;
+  const page = rows.slice(0, THREAD_LIMIT).reverse();
+
+  const decisionIds = page.map((m) => m.decision_id).filter((d): d is string => !!d);
+  const outreachIds = page.map((m) => m.outreach_id).filter((d): d is string => !!d);
+  const now = deps.now();
+  const actions = decisionIds.length
+    ? await deps.db.query<{
+        id: string;
+        decision_id: string;
+        status: 'applied' | 'undone';
+        result: ActionSummary;
+        undo: unknown;
+        created_at: Date;
+      }>(
+        `select id, decision_id, status, result, undo, created_at from buddy_actions
+          where learner_id = $1 and decision_id = any($2::uuid[]) order by seq`,
+        [learnerId, decisionIds],
+      )
+    : [];
+  const outreach = outreachIds.length
+    ? await deps.db.query<{
+        id: string;
+        kind: OutreachView['kind'];
+        origin: OutreachView['origin'];
+        title: string;
+        body: string;
+        why: string | null;
+        status: OutreachView['status'];
+        send_at: Date | null;
+        sent_at: Date | null;
+        opened_at: Date | null;
+        created_at: Date;
+      }>(
+        `select id, kind, origin, title, body, why, status, send_at, sent_at, opened_at, created_at
+           from buddy_outreach where learner_id = $1 and id = any($2::uuid[])`,
+        [learnerId, outreachIds],
+      )
+    : [];
+
+  const messages: MessageView[] = page.map((m) => {
+    const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
+    return {
+      id: m.id,
+      role: m.role,
+      text: m.text,
+      status: m.status,
+      options: m.ask?.options ?? null,
+      reply_to_id: m.reply_to_id,
+      outreach: o
+        ? {
+            id: o.id,
+            kind: o.kind,
+            origin: o.origin,
+            title: o.title,
+            body: o.body,
+            why: o.why,
+            status: o.status,
+            send_at: iso(o.send_at),
+            sent_at: iso(o.sent_at),
+            opened_at: iso(o.opened_at),
+            created_at: o.created_at.toISOString(),
+          }
+        : null,
+      actions: actions
+        .filter((a) => a.decision_id === m.decision_id)
+        .map((a) => ({
+          id: a.id,
+          status: a.status,
+          undoable:
+            a.status === 'applied' &&
+            a.undo !== null &&
+            now.getTime() - a.created_at.getTime() < UNDO_WINDOW_MS,
+          summary: a.result,
+          created_at: a.created_at.toISOString(),
+        })),
+      created_at: m.created_at.toISOString(),
+    };
+  });
+  return { messages, hasMore };
+}
+
+async function systemOf(
+  deps: Deps,
+  learnerId: string,
+  state: BuddyState,
+): Promise<BuddyHome['system']> {
+  const now = deps.now();
+  let push: BuddyHome['system']['push'] = 'disabled';
+  if (deps.push.enabled) {
+    const tokens = await deps.db.query<{ status: string }>(
+      `select status from push_tokens where learner_id = $1`,
+      [learnerId],
+    );
+    push = tokens.some((t) => t.status === 'active')
+      ? 'active'
+      : tokens.length > 0
+        ? 'invalid'
+        : 'no_token';
+  }
+  const hb = await deps.db.maybeOne<{ last_finished_at: Date | null }>(
+    `select last_finished_at from system_heartbeats where name = 'tick'`,
+  );
+  const scheduler = !hb?.last_finished_at
+    ? 'unknown'
+    : now.getTime() - hb.last_finished_at.getTime() < HEARTBEAT_STALE_MS
+      ? 'ok'
+      : 'stale';
+  return {
+    model: deps.llm.available,
+    push,
+    contact_enabled: state.settings.contact_enabled,
+    scheduler,
+  };
+}

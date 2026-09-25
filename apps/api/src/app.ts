@@ -1,117 +1,142 @@
-// Hono app composition. Doc 02 §api + doc 04 entire.
+// HTTP composition. docs/architecture.md §API.
 //
-// The same `app` instance is exported for the Vercel handler at
-// api/[[...slug]].ts and for the local dev server at src/dev-server.ts.
-//
-// Deps (Supabase clients, env, time, uuid) are injected via the
-// `deps` context variable so route handlers stay testable. In production
-// we lazy-construct via `createProdDeps()`; tests supply their own.
+// One Hono app for the Node server, the Vercel function and tests; all
+// dependencies come in through `deps`. Every error leaves as the envelope
+// {"error": {"code", "message", "details"?}} (lib/errors.ts).
+
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { Hono } from 'hono';
-import { logger } from 'hono/logger';
+import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
+import { HTTPException } from 'hono/http-exception';
 
-import { errorHandler } from './middleware/error.js';
-import type { Deps } from './lib/deps.js';
-import { createProdDeps } from './lib/deps.js';
-import { initSentry } from './lib/sentry.js';
+import type { Deps } from './deps.js';
+import type { AppEnv } from './http/context.js';
+import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
+import { buddyRoutes } from './modules/buddy/routes.js';
+import { identityRoutes } from './modules/identity/routes.js';
+import { materialRoutes } from './modules/materials/routes.js';
+import { practiceRoutes } from './modules/practice/routes.js';
+import { runTick } from './modules/scheduler/tick.js';
 
-// Init Sentry as soon as the module loads so a crash in deps construction
-// is still captured.
-initSentry();
+/** The scheduler counts as stalled after this long without a finished run. */
+export const SCHEDULER_STALE_MS = 10 * 60_000;
 
-import { authRoutes } from './routes/auth.js';
-import { accountRoutes } from './routes/account.js';
-import { learnerRoutes } from './routes/learners.js';
-import { subjectRoutes } from './routes/subjects.js';
-import { folderRoutes } from './routes/folders.js';
-import { materialRoutes } from './routes/materials.js';
-import { materialWorkerRoutes } from './routes/materials-worker.js';
-import { itemRoutes } from './routes/items.js';
-import { sessionRoutes } from './routes/sessions.js';
-import { attemptRoutes } from './routes/attempts.js';
-import { templateRoutes } from './routes/templates.js';
-import { explainRoutes } from './routes/explain.js';
-import { dsgvoRoutes } from './routes/dsgvo.js';
-import { devRoutes } from './routes/dev.js';
-import { renderRoutes } from './routes/render.js';
-import { studyAssetRoutes } from './routes/study-assets.js';
-import { webhookRoutes } from './routes/webhooks.js';
-import { adminRoutes } from './routes/admin.js';
+function sameSecret(given: string, expected: string): boolean {
+  const a = createHash('sha256').update(given).digest();
+  const b = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(a, b);
+}
 
-export function createApp(opts: { deps?: Deps } = {}) {
-  const app = new Hono();
-  let deps: Deps | null = opts.deps ?? null;
+function codeForStatus(status: number): ErrorCode {
+  if (status === 401) return 'unauthenticated';
+  if (status === 403) return 'forbidden';
+  if (status === 404) return 'not_found';
+  if (status === 413) return 'too_large';
+  if (status === 429) return 'rate_limited';
+  if (status >= 500) return 'internal';
+  return 'invalid_input';
+}
 
-  app.use('*', logger());
-  // Mobile clients send `Origin: null` from RN; localhost origins are dev
-  // tooling (Expo web preview, vitest). Lock CORS to the known set instead
-  // of `*` so a future browser surface doesn't accidentally inherit a
-  // wide-open policy. Override via API_CORS_ORIGINS (comma-separated).
-  const allowedOrigins = (process.env.API_CORS_ORIGINS ?? '')
+export function createApp(deps: Deps): Hono<AppEnv> {
+  const app = new Hono<AppEnv>();
+
+  const origins = (deps.config.CORS_ORIGINS ?? '')
     .split(',')
-    .map((s) => s.trim())
+    .map((o) => o.trim())
     .filter(Boolean);
-  const defaultOrigins = [
-    'http://localhost:8081', // Expo dev
-    'http://localhost:19006', // Expo web
-    'http://localhost:3000', // misc dev
-  ];
-  const origins = allowedOrigins.length > 0 ? allowedOrigins : defaultOrigins;
+  if (origins.length > 0) {
+    app.use(
+      '*',
+      cors({
+        origin: (origin) => (origins.includes(origin) ? origin : null),
+        allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['content-type', 'authorization', 'x-timezone', 'x-admin-token'],
+        maxAge: 86_400,
+      }),
+    );
+  }
+  // Photos go straight to storage; API bodies are small JSON.
   app.use(
     '*',
-    cors({
-      origin: (incoming) => {
-        // RN fetch sends no Origin header — pass through.
-        if (!incoming) return null;
-        return origins.includes(incoming) ? incoming : null;
+    bodyLimit({
+      maxSize: 64 * 1024,
+      onError: () => {
+        throw new AppError('too_large', 'Request body too large');
       },
-      allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Learner-Id'],
-      maxAge: 86_400,
     }),
   );
-  app.onError(errorHandler);
   app.use('*', async (c, next) => {
-    if (!deps) {
-      deps = createProdDeps();
-    }
     c.set('deps', deps);
     await next();
   });
 
-  app.get('/health', (c) =>
-    c.json({ ok: true, version: process.env.npm_package_version ?? '0.0.0' }),
-  );
-  app.get('/version', (c) =>
-    c.json({
-      api_version: process.env.npm_package_version ?? '0.0.0',
-      min_app_version: process.env.MIN_APP_VERSION ?? '0.0.1',
-    }),
-  );
+  app.onError((err, c) => {
+    if (isAppError(err)) return c.json(err.toJSON(), err.status);
+    if (err instanceof HTTPException) {
+      const status = err.status;
+      return c.json(
+        { error: { code: codeForStatus(status), message: err.message || 'Request failed' } },
+        status,
+      );
+    }
+    // Logs carry the route and the error class, never request bodies or user content.
+    console.error('[api] unhandled error', {
+      method: c.req.method,
+      path: c.req.routePath,
+      error: err instanceof Error ? `${err.name}: ${err.message.slice(0, 300)}` : 'unknown',
+    });
+    return c.json({ error: { code: 'internal', message: 'Something went wrong' } }, 500);
+  });
+  app.notFound((c) => c.json({ error: { code: 'not_found', message: 'Not found' } }, 404));
 
-  // Versioned under /v1 via the Vercel rewrite in vercel.json. The dev server
-  // serves the same routes without the prefix.
-  app.route('/auth', authRoutes);
-  app.route('/account', accountRoutes);
-  app.route('/learners', learnerRoutes);
-  app.route('/subjects', subjectRoutes);
-  app.route('/folders', folderRoutes);
-  app.route('/materials', materialRoutes);
-  app.route('/materials-worker', materialWorkerRoutes);
-  app.route('/items', itemRoutes);
-  app.route('/sessions', sessionRoutes);
-  app.route('/attempts', attemptRoutes);
-  app.route('/templates', templateRoutes);
-  app.route('/explain', explainRoutes);
-  app.route('/dsgvo', dsgvoRoutes);
-  if (process.env.ENABLE_DEV_ROUTES === 'true') app.route('/dev', devRoutes);
-  app.route('/render', renderRoutes);
-  app.route('/study-assets', studyAssetRoutes);
-  app.route('/webhooks', webhookRoutes);
-  app.route('/admin', adminRoutes);
+  const api = new Hono<AppEnv>();
 
+  /** Liveness for monitoring: database reachable and the scheduler actually running. */
+  api.get('/health', async (c) => {
+    let dbOk = true;
+    let lastRun: Date | null = null;
+    try {
+      const hb = await deps.db.maybeOne<{ last_finished_at: Date | null }>(
+        `select last_finished_at from system_heartbeats where name = 'tick'`,
+      );
+      lastRun = hb?.last_finished_at ?? null;
+    } catch {
+      dbOk = false;
+    }
+    const schedulerOk =
+      lastRun !== null && deps.now().getTime() - lastRun.getTime() < SCHEDULER_STALE_MS;
+    const ok = dbOk && schedulerOk;
+    return c.json(
+      {
+        ok,
+        database: dbOk,
+        scheduler: { ok: schedulerOk, last_run_at: lastRun ? lastRun.toISOString() : null },
+        model: deps.llm.available,
+        push: deps.push.enabled,
+      },
+      ok ? 200 : 503,
+    );
+  });
+
+  /** Called every minute by pg_cron (lb_invoke_tick) or any external cron. */
+  api.post('/internal/tick', async (c) => {
+    const expected = deps.config.TICK_SECRET;
+    if (!expected) throw new AppError('unavailable', 'The scheduler secret is not configured');
+    const given = c.req.header('x-tick-secret');
+    if (!given || !sameSecret(given, expected))
+      throw new AppError('forbidden', 'Wrong scheduler secret');
+    return c.json(await runTick(deps));
+  });
+
+  api.route('/', identityRoutes);
+  api.route('/buddy', buddyRoutes);
+  api.route('/practice', practiceRoutes);
+  api.route('/materials', materialRoutes);
+
+  // The app calls /v1/…; Vercel rewrites /v1/* to the /api function, and the
+  // Node server serves the same routes without a prefix.
+  for (const base of ['/', '/v1', '/api', '/api/v1']) app.route(base, api);
   return app;
 }
-
-export const app = createApp();

@@ -1,0 +1,30 @@
+{
+  "weekday": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  "relative": {
+    "today": "Today",
+    "tomorrow": "Tomorrow"
+  },
+  "title": {
+    "buddy": "Buddy"
+  },
+  "reminder": {
+    "practice_ready": "As agreed: {{title}}. {{count}} questions are ready, about {{minutes}} minutes.",
+    "practice": "As agreed: {{title}}.",
+    "capture": "As agreed: {{title}} – a photo is enough, I'll do the rest."
+  },
+  "exam": {
+    "prepared": "{{day}} is “{{exam}}”. {{count}} questions are ready, about {{minutes}} minutes.",
+    "need_material": "{{day}} is “{{exam}}”. Do you have a worksheet for it? A photo is enough, I'll do the rest.",
+    "followup": "How did “{{exam}}” go? Tell me briefly and I'll plan the next steps."
+  },
+  "material": {
+    "ready": "Your questions for “{{title}}” are ready ({{count}}).",
+    "ready_untitled": "Your questions are ready ({{count}})."
+  },
+  "practice": {
+    "correct": "That's right – well done!",
+    "untitled": "Practice",
+    "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
+    "cannot_check": "I can't check that right now. You can look at the solution and compare yourself."
+  }
+}

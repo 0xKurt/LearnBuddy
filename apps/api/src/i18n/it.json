@@ -1,0 +1,30 @@
+{
+  "weekday": ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"],
+  "relative": {
+    "today": "Oggi",
+    "tomorrow": "Domani"
+  },
+  "title": {
+    "buddy": "Buddy"
+  },
+  "reminder": {
+    "practice_ready": "Come d'accordo: {{title}}. Ci sono {{count}} esercizi pronti, circa {{minutes}} minuti.",
+    "practice": "Come d'accordo: {{title}}.",
+    "capture": "Come d'accordo: {{title}} – basta una foto, al resto penso io."
+  },
+  "exam": {
+    "prepared": "{{day}} c'è «{{exam}}». Ci sono {{count}} esercizi pronti, circa {{minutes}} minuti.",
+    "need_material": "{{day}} c'è «{{exam}}». Hai una scheda? Basta una foto, al resto penso io.",
+    "followup": "Com'è andata «{{exam}}»? Dimmelo in breve e pianifico i prossimi passi."
+  },
+  "material": {
+    "ready": "Le tue domande su «{{title}}» sono pronte ({{count}}).",
+    "ready_untitled": "Le tue domande sono pronte ({{count}})."
+  },
+  "practice": {
+    "correct": "Esatto – bravissimo!",
+    "untitled": "Esercizio",
+    "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
+    "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla da solo."
+  }
+}
