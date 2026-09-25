@@ -215,4 +215,23 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
     };
   };
   llm.script('tutor', hint, hint, hint, hint);
+
+  // tests/web/offline.spec.ts: one short question, answered offline.
+  llm.script('explain', {
+    json: {
+      usable: true,
+      title: 'Hauptstädte',
+      subject: { name: 'Erdkunde', kind: 'geography' },
+      intro: null,
+      items: [
+        {
+          ...base,
+          kind: 'short',
+          prompt: 'Wie heißt die Hauptstadt von Frankreich?',
+          answer: 'Paris',
+          topic: 'Hauptstädte',
+        },
+      ],
+    },
+  });
 }

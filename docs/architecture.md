@@ -395,8 +395,12 @@ once (`abandonStaleUploads`, run by the scheduler).
 - **Offline**: NetInfo feeds TanStack Query's `onlineManager` (only `isConnected`; NetInfo's own
   reachability ping is off). Queries pause instead of failing, a calm line says so at the top
   (`components/lb/OfflineFrame.tsx`), and practice answers and recordings wait and are sent once
-  the device is back, with the same `client_turn_id` (`lib/api/whenOnline.ts`). The wait is in
-  memory: closing the app meanwhile drops the unsent answer, and the question stays open.
+  the device is back, with the same `client_turn_id` (`lib/api/whenOnline.ts`). Typed answers are
+  also kept on the device until the API has them (`lib/api/outbox.ts`, AsyncStorage /
+  localStorage): after the app was closed they are sent on the next start or when back online;
+  answers the API refuses for good are dropped; signing out clears them
+  (`tests/web/offline.spec.ts`). Recordings (pronunciation) are not kept — too large; closing the
+  app while one waits drops it.
 - **About**: version from the app config; privacy, imprint and support rows only when
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set
   (`apps/mobile/.env.example`).

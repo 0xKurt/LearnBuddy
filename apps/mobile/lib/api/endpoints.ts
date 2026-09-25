@@ -35,6 +35,7 @@ import { z } from 'zod';
 
 import { setAdminToken } from '../admin.js';
 import { ApiError, newId, request } from './client.js';
+import { dropAnswer, keepAnswer } from './outboxSync.js';
 import { sendWhenOnline } from './whenOnline.js';
 
 /** The request may not have reached the API (lib/api/client.ts turns a failed fetch into this). */
@@ -161,11 +162,24 @@ export const getSession = (id: string) =>
  * dropped connection sends it again. Always with the same client_turn_id, so
  * the API records it once (lib/api/whenOnline.ts).
  */
-export const answerItem = (id: string, body: AnswerRequest) =>
-  sendWhenOnline(
-    () => request('POST', `/practice/sessions/${id}/answer`, { body, schema: AnswerResponse }),
-    { isConnectionError: noConnection },
-  );
+export async function answerItem(id: string, body: AnswerRequest): Promise<AnswerResponse> {
+  // Kept on the device until the API has it (lib/api/outbox.ts): closing the app never loses it.
+  await keepAnswer(id, body);
+  try {
+    const res = await sendWhenOnline(() => postAnswer(id, body), {
+      isConnectionError: noConnection,
+    });
+    await dropAnswer(body.client_turn_id);
+    return res;
+  } catch (err) {
+    if (!noConnection(err)) await dropAnswer(body.client_turn_id);
+    throw err;
+  }
+}
+
+/** The plain request (the outbox resends with it; same client_turn_id → recorded once). */
+export const postAnswer = (id: string, body: AnswerRequest) =>
+  request('POST', `/practice/sessions/${id}/answer`, { body, schema: AnswerResponse });
 /**
  * A recording for a speak question; retrying the same recording reuses its
  * client_turn_id. Waits while offline, like answerItem.
