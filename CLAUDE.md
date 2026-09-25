@@ -57,6 +57,12 @@ If a change diverges from these docs, update the doc in the same change or write
 15. **Screens with a form pin the CTA outside the `ScrollView`, inside a `KeyboardAvoidingView`**
     (`behavior="padding"` on iOS, `"height"` on Android) — `app/welcome.tsx` is the reference.
 
+16. **Simplicity is the first rule.** Buddy is the interface: the learner talks, taps a suggestion
+    or takes a photo — no dashboards, tile grids, lists or forms to learn. Anything complex is
+    handled behind Buddy (tools, defaults, the conversation). A new feature first asks "can Buddy
+    do this in the chat?"; a new screen, menu or setting needs a reason it cannot. Parents' and
+    rare settings stay closed until opened.
+
 ## Required quality gates
 
 Run after every change (the pre-commit hook enforces them — never `--no-verify`):
