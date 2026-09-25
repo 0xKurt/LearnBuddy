@@ -28,9 +28,11 @@ export class SupabaseStorage implements StorageGateway {
   }
 
   async createUploadTarget(path: string): Promise<UploadTarget> {
+    // upsert: a retry after a partial upload signs the same paths again, and a photo that
+    // already arrived may be sent once more. The path is the learner's own and server-made.
     const { data, error } = await this.client.storage
       .from(PHOTO_BUCKET)
-      .createSignedUploadUrl(path);
+      .createSignedUploadUrl(path, { upsert: true });
     if (error || !data) throw new Error('could not create upload URL');
     return { path, url: data.signedUrl, token: data.token };
   }

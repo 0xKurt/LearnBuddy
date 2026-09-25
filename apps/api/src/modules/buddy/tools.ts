@@ -780,6 +780,69 @@ export async function runTool(action: AnyAction, ctx: ToolContext): Promise<Tool
 }
 
 /** Reverse an applied action. Returns false when the thing changed since (no blind overwrite). */
+/**
+ * Whether `runUndo` would apply right now: the same conditions, read-only. The home offers
+ * "undo" only then (a photo request whose photo arrived, or settings changed since, cannot be
+ * undone, so the button would only fail).
+ */
+export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Promise<boolean> {
+  const exists = async (sql: string, params: unknown[]) =>
+    (await db.maybeOne(sql, params)) !== null;
+  switch (undo.type) {
+    case 'retract_memory':
+      return exists(
+        `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'active'`,
+        [undo.memory_id, learnerId],
+      );
+    case 'restore_memory':
+      return exists(
+        `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'active'`,
+        [undo.new_id, learnerId],
+      );
+    case 'unretract_memory':
+      return exists(
+        `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'retracted'`,
+        [undo.memory_id, learnerId],
+      );
+    case 'restore_level':
+      return exists(
+        `select 1 from learners where id = $1 and level = $2 and grade is not distinct from $3`,
+        [learnerId, undo.expect_level, undo.expect_grade],
+      );
+    case 'drop_goal':
+      return exists(
+        `select 1 from buddy_goals where id = $1 and learner_id = $2 and status = 'active'`,
+        [undo.goal_id, learnerId],
+      );
+    case 'restore_goal':
+      return exists(
+        `select 1 from buddy_goals where id = $1 and learner_id = $2 and version = $3`,
+        [undo.goal_id, learnerId, undo.expect_version],
+      );
+    case 'cancel_step':
+      return exists(
+        `select 1 from buddy_steps where id = $1 and learner_id = $2 and state in ('planned','prepared')`,
+        [undo.step_id, learnerId],
+      );
+    case 'restore_step':
+      return exists(
+        `select 1 from buddy_steps where id = $1 and learner_id = $2 and version = $3
+            and state in ('planned','prepared','skipped','cancelled','done')`,
+        [undo.step_id, learnerId, undo.expect_version],
+      );
+    case 'restore_settings':
+      return exists(`select 1 from buddy_settings where learner_id = $1 and version = $2`, [
+        learnerId,
+        undo.expect_version,
+      ]);
+    case 'cancel_check':
+      return exists(`select 1 from jobs where id = $1 and learner_id = $2 and status = 'queued'`, [
+        undo.job_id,
+        learnerId,
+      ]);
+  }
+}
+
 export async function runUndo(
   db: Db,
   learnerId: string,

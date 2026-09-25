@@ -1,62 +1,96 @@
-// Session token storage. Doc 02 §auth + doc 05 §pin.
-//
-// Tokens are kept in `expo-secure-store` (encrypted by Keychain / Keystore).
-// On mount the app should call `loadSession()` to hydrate the in-memory cache;
-// `setSession()` persists and updates the cache; `clearSession()` wipes both.
+// Session tokens. Native: expo-secure-store (Keychain / Keystore), one key per
+// value so each stays under the platform size limit. Web (development and
+// browser tests only): localStorage.
 
 import * as SecureStore from 'expo-secure-store';
-
-const KEY_ACCESS = 'lb.session.access_token';
-const KEY_REFRESH = 'lb.session.refresh_token';
-const KEY_USER_ID = 'lb.session.user_id';
-const KEY_ACCOUNT_ID = 'lb.session.account_id';
+import { Platform } from 'react-native';
 
 export type Session = {
   access_token: string;
   refresh_token: string;
+  /** Seconds since epoch. */
+  expires_at: number;
   user_id: string;
-  account_id: string;
+  /** For re-entering the password when the adult has to prove they are here. */
+  email: string;
 };
 
+const KEYS = {
+  access: 'lb.access_token',
+  refresh: 'lb.refresh_token',
+  expires: 'lb.expires_at',
+  user: 'lb.user_id',
+  email: 'lb.email',
+} as const;
+
+const web = Platform.OS === 'web';
+
+async function read(key: string): Promise<string | null> {
+  if (web) return globalThis.localStorage?.getItem(key) ?? null;
+  return SecureStore.getItemAsync(key);
+}
+
+async function write(key: string, value: string): Promise<void> {
+  if (web) globalThis.localStorage?.setItem(key, value);
+  else await SecureStore.setItemAsync(key, value);
+}
+
+async function remove(key: string): Promise<void> {
+  if (web) globalThis.localStorage?.removeItem(key);
+  else await SecureStore.deleteItemAsync(key);
+}
+
 let cached: Session | null = null;
+const listeners = new Set<(s: Session | null) => void>();
+
+function emit(): void {
+  for (const l of listeners) l(cached);
+}
+
+export function onSessionChange(listener: (s: Session | null) => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
 
 export async function loadSession(): Promise<Session | null> {
-  const [a, r, u, acc] = await Promise.all([
-    SecureStore.getItemAsync(KEY_ACCESS),
-    SecureStore.getItemAsync(KEY_REFRESH),
-    SecureStore.getItemAsync(KEY_USER_ID),
-    SecureStore.getItemAsync(KEY_ACCOUNT_ID),
+  const [access, refresh, expires, user, email] = await Promise.all([
+    read(KEYS.access),
+    read(KEYS.refresh),
+    read(KEYS.expires),
+    read(KEYS.user),
+    read(KEYS.email),
   ]);
-  if (!a || !r || !u) {
-    cached = null;
-    return null;
-  }
-  // account_id may be empty string on the first login before getAccount() runs —
-  // that's fine; the access_token is all that's needed to authenticate API calls.
-  cached = { access_token: a, refresh_token: r, user_id: u, account_id: acc ?? '' };
+  cached =
+    access && refresh && user
+      ? {
+          access_token: access,
+          refresh_token: refresh,
+          expires_at: Number(expires ?? 0),
+          user_id: user,
+          email: email ?? '',
+        }
+      : null;
   return cached;
 }
 
-export async function setSession(s: Session): Promise<void> {
+export function currentSession(): Session | null {
+  return cached;
+}
+
+export async function saveSession(s: Session): Promise<void> {
   cached = s;
   await Promise.all([
-    SecureStore.setItemAsync(KEY_ACCESS, s.access_token),
-    SecureStore.setItemAsync(KEY_REFRESH, s.refresh_token),
-    SecureStore.setItemAsync(KEY_USER_ID, s.user_id),
-    SecureStore.setItemAsync(KEY_ACCOUNT_ID, s.account_id),
+    write(KEYS.access, s.access_token),
+    write(KEYS.refresh, s.refresh_token),
+    write(KEYS.expires, String(s.expires_at)),
+    write(KEYS.user, s.user_id),
+    write(KEYS.email, s.email),
   ]);
+  emit();
 }
 
 export async function clearSession(): Promise<void> {
   cached = null;
-  await Promise.all([
-    SecureStore.deleteItemAsync(KEY_ACCESS),
-    SecureStore.deleteItemAsync(KEY_REFRESH),
-    SecureStore.deleteItemAsync(KEY_USER_ID),
-    SecureStore.deleteItemAsync(KEY_ACCOUNT_ID),
-  ]);
-}
-
-export function getSessionSync(): Session | null {
-  return cached;
+  await Promise.all(Object.values(KEYS).map((k) => remove(k)));
+  emit();
 }

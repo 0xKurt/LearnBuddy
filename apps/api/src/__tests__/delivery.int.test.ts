@@ -320,6 +320,33 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     expect(env.push.attempts).toEqual([]);
   });
 
+  it('does not start something unasked while the learner is in the app, but does after they left', async () => {
+    await withPhone();
+    await seedExam(env, l.learnerId, { title: 'Mathearbeit', due: '2026-10-01', questions: 6 });
+    env.clock.set('2026-09-28T12:59:00Z');
+    await l.api.get('/buddy'); // using the app at 14:59
+    env.clock.set('2026-09-28T13:00:00Z');
+    await tick(env);
+    expect(env.llm.callsFor('buddy_check')).toHaveLength(0);
+    const job = await env.db.one<{ status: string; run_at: Date; attempts: number }>(
+      `select status, run_at, attempts from jobs where learner_id = $1 and payload ->> 'days_before' = '3'`,
+      [l.learnerId],
+    );
+    // Deferred without using up an attempt.
+    expect(job).toEqual({
+      status: 'queued',
+      run_at: new Date('2026-09-28T13:20:00Z'),
+      attempts: 0,
+    });
+    env.clock.set('2026-09-28T13:20:00Z');
+    env.llm.script(
+      'buddy_check',
+      checkAnswer('Übung ist bereit', 'Eine kurze Runde für Donnerstag liegt bereit.'),
+    );
+    await tick(env);
+    expect(env.push.sent).toHaveLength(1);
+  });
+
   it('does the work once when two scheduler runs overlap', async () => {
     await withPhone();
     await seedExam(env, l.learnerId, { title: 'Mathearbeit', due: '2026-10-01', questions: 6 });

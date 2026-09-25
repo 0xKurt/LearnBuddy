@@ -1,0 +1,39 @@
+{
+  "title": "Il mio materiale",
+  "capture": "Fotografa una nuova scheda",
+  "unsorted": "Senza materia",
+  "untitled": "Senza titolo",
+  "questions_one": "{{count}} esercizio",
+  "questions_other": "{{count}} esercizi",
+  "status": {
+    "reading": "in lettura",
+    "unreadable": "illeggibile",
+    "not_read": "non letta",
+    "incomplete": "incompleta"
+  },
+  "failure": {
+    "unreadable": "Le foto non erano ben leggibili. Prova con più luce e scattando dall'alto.",
+    "not_learning_material": "Non sembra né una scheda, né un quaderno, né la pagina di un libro.",
+    "model_error": "Qualcosa è andato storto durante la lettura.",
+    "photos_missing": "Non sono arrivate tutte le foto.",
+    "budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte."
+  },
+  "incomplete_hint": "Le foto non sono arrivate complete. Elimina la scheda e fotografala di nuovo.",
+  "practice": "Esercitati",
+  "practice_label": "Esercitati su “{{title}}”",
+  "retry": "Rileggi",
+  "retry_label": "Rileggi “{{title}}”",
+  "retry_started": "Rileggo la scheda.",
+  "delete": "Elimina",
+  "delete_label": "Elimina “{{title}}”",
+  "delete_sheet": {
+    "title": "Eliminare la scheda?",
+    "body": "“{{title}}” e i suoi esercizi verranno eliminati, insieme alle foto. Non si può annullare.",
+    "confirm": "Elimina"
+  },
+  "deleted": "Scheda eliminata.",
+  "empty": {
+    "title": "Qui arriveranno le tue schede",
+    "body": "Fotografa una scheda, una pagina del libro o il tuo quaderno – lo trasformo in esercizi."
+  }
+}

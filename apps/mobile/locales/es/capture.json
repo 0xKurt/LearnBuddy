@@ -1,49 +1,41 @@
 {
-  "title": "Capturar material",
-  "subtitle": "Saca una foto de una página, libro o ficha — hasta 10 fotos.",
+  "title": "Haz una foto de tu ficha",
+  "intro": "Ficha, página del libro o cuaderno: lo convierto en ejercicios.",
+  "tip": "Consejo: la página entera, buena luz y desde arriba.",
+  "privacy": "Las fotos se eliminan, a más tardar, 7 días después de su lectura.",
+  "camera": "Hacer una foto",
+  "camera_more": "Otra foto",
+  "library": "Elegir entre tus fotos",
+  "photos_title_one": "{{count}} foto",
+  "photos_title_other": "{{count}} fotos",
+  "photo_label": "Foto {{index}} de {{total}}",
+  "remove": "Quitar",
+  "remove_label": "Quitar la foto {{index}}",
+  "limit": "Una ficha puede tener como máximo {{max}} fotos.",
+  "preparing_one": "Preparando la foto…",
+  "preparing_other": "Preparando la foto {{current}} de {{count}}…",
+  "send": "Enviar",
+  "send_again": "Volver a enviar",
+  "send_hint": "Primero haz una foto.",
+  "progress": {
+    "reserving": "Un momento…",
+    "uploading_one": "Enviando la foto…",
+    "uploading_other": "Enviando la foto {{current}} de {{count}}…",
+    "submitting": "Ya casi está…"
+  },
   "permission": {
-    "title": "Necesitamos acceso a la cámara",
-    "body": "Para que puedas fotografiar tu material. Puedes cambiarlo en cualquier momento en Ajustes.",
-    "cta": "Abrir ajustes"
+    "camera": "LearnBuddy todavía no puede usar la cámara. Puedes permitirlo en los ajustes o elegir una imagen entre tus fotos.",
+    "open_settings": "Abrir los ajustes"
   },
-  "chip": {
-    "sharp": "nítida",
-    "ok": "ok",
-    "blur": "borrosa — vuelve a intentarlo",
-    "too_dark": "muy oscura",
-    "too_bright": "muy clara",
-    "too_small": "imagen muy pequeña",
-    "tilt": "Sujeta el teléfono un poco más recto"
-  },
-  "tilt_warn": "Sujeta el teléfono un poco más recto",
-  "review": {
-    "keep": "Conservar de todas formas",
-    "redo": "Intentar de nuevo",
-    "discard": "Descartar"
-  },
-  "strip": {
-    "label_one": "1 foto",
-    "label_other": "{{count}} fotos",
-    "max_hint": "Hasta 10 fotos por material.",
-    "long_press_hint": "Mantén pulsada una miniatura para eliminarla.",
-    "delete_title": "¿Eliminar foto?",
-    "delete_cancel": "Cancelar",
-    "delete_confirm": "Eliminar"
-  },
-  "cta": {
-    "shutter": "Disparador",
-    "done": "Listo",
-    "cancel": "Cancelar",
-    "shutter_error": "Foto fallida — ¿inténtalo de nuevo?"
-  },
-  "picker": {
-    "title": "¿Dónde lo guardamos?",
-    "folder_title": "Elige una carpeta",
-    "no_folder": "Sin carpeta — directo en la asignatura",
-    "no_subjects": "Aún no tienes asignaturas. Añade una desde la pantalla de inicio.",
-    "no_subjects_title": "Primero crea una asignatura"
-  },
-  "limits": {
-    "max_reached": "Máximo 10 fotos por material."
+  "error": {
+    "camera": "La cámara no se ha abierto. También puedes elegir una imagen entre tus fotos.",
+    "library": "Tus fotos no se han abierto. Inténtalo de nuevo.",
+    "prepare_one": "No se ha podido abrir una imagen. Elige otra.",
+    "prepare_other": "No se han podido abrir {{count}} imágenes. Elige otras.",
+    "upload_network": "La foto {{index}} no ha llegado: no hay conexión.",
+    "upload_rejected": "La foto {{index}} no ha llegado.",
+    "upload_file": "La foto {{index}} ya no está. Quítala y vuelve a hacerla.",
+    "kept": "Tus fotos siguen aquí.",
+    "left": "Tu ficha no ha llegado. Hazle otra foto, por favor."
   }
 }

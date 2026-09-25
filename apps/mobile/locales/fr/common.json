@@ -1,91 +1,25 @@
 {
-  "app": { "name": "LearnBuddy" },
-  "datepicker": {
-    "title": "Choisir une date",
-    "day": "Jour",
-    "month": "Mois",
-    "year": "Année",
-    "clear": "Aucune date"
-  },
-  "loading": "Chargement…",
-  "load_error": "Échec de connexion. Réessaie.",
-  "support": {
-    "contact": "Contacter le support",
-    "faq": "Aide & FAQ"
-  },
-  "actions": {
-    "continue": "Continuer",
-    "back": "Retour",
-    "cancel": "Annuler",
-    "save": "Enregistrer",
-    "done": "Terminé",
-    "next": "Suivant",
-    "retry": "Réessayer",
-    "delete": "Supprimer",
-    "close": "Fermer",
-    "ok": "Ok"
-  },
+  "app_name": "LearnBuddy",
   "a11y": {
     "back": "Retour",
     "close": "Fermer",
     "more": "Plus d'options",
     "add": "Ajouter",
-    "mic": "Microphone",
+    "mic": "Parler",
     "speak": "Lire à voix haute",
-    "avatar": "Profil de {{name}}"
+    "pin_delete": "Effacer le dernier chiffre",
+    "pin_progress": "Chiffres saisis: {{count}} sur 4"
   },
-  "tabs": {
-    "home": "Accueil",
-    "practice": "S'entraîner",
-    "camera": "Photographier",
-    "account": "Compte"
+  "actions": {
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "retry": "Réessayer",
+    "continue": "Continuer",
+    "done": "Terminé",
+    "delete": "Supprimer",
+    "edit": "Modifier"
   },
-  "greeting": {
-    "morning": "Bonjour",
-    "afternoon": "Bonjour",
-    "evening": "Bonsoir"
-  },
-  "material": {
-    "not_found": "Matériel introuvable.",
-    "not_found_body": "Il a peut-être été supprimé.",
-    "no_items": "Aucune question.",
-    "no_items_body": "Ça marchera la prochaine fois — réessaie.",
-    "question_count_one": "1 question",
-    "question_count_other": "{{count}} questions",
-    "question_label": "Question {{index}}",
-    "flashcards": "Fiches",
-    "card_question": "QUESTION",
-    "card_answer": "RÉPONSE",
-    "flip_hint": "Appuie pour retourner →",
-    "reveal": "Afficher la réponse →",
-    "load_error_title": "Impossible de charger le support.",
-    "practice": "Réviser ce support",
-    "untitled": "Support"
-  },
-  "update": {
-    "title": "Mise à jour disponible",
-    "body": "Cette version n'est plus prise en charge. Mets l'application à jour.",
-    "cta": "Mettre à jour"
-  },
-  "notifications": {
-    "daily_title": "Un petit entraînement ?",
-    "daily_body": "Trois minutes suffisent.",
-    "streak_title": "Pas encore pratiqué aujourd'hui ?",
-    "streak_body": "Même un exercice compte.",
-    "test_3days_title": "Test dans 3 jours",
-    "test_3days_body": "{{name}} — une petite révision ?",
-    "test_1day_title": "L'examen est demain",
-    "test_1day_body": "{{name}} — une révision rapide aide.",
-    "test_today_title": "Examen aujourd'hui !",
-    "test_today_body": "{{name}} — tu vas y arriver. Respire.",
-    "action_practice": "S'entraîner"
-  },
-  "whats_new": {
-    "title": "Nouveautés",
-    "items": [
-      "Confirmation du mot de passe à l'inscription",
-      "Les mises à jour sont détectées automatiquement"
-    ],
-    "cta": "C'est parti"
-  }
+  "loading": "Un instant…",
+  "offline": "Pas de connexion – je réessaie dans un instant."
 }

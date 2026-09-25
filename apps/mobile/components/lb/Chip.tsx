@@ -6,8 +6,8 @@ type Tone = 'gray' | 'primary' | 'success' | 'warning' | 'dark';
 const TONES: Record<Tone, { bg: string; color: string; border?: string }> = {
   gray: { bg: LB.bg, color: LB.ink, border: LB.hairline },
   primary: { bg: LB.primaryLt, color: LB.primaryDk },
-  success: { bg: 'rgba(107,141,106,0.13)', color: LB.success },
-  warning: { bg: 'rgba(181,138,60,0.13)', color: LB.warning },
+  success: { bg: 'rgba(107,141,106,0.13)', color: LB.successText },
+  warning: { bg: 'rgba(181,138,60,0.13)', color: LB.warningText },
   dark: { bg: LB.ink, color: '#fff' },
 };
 
@@ -22,12 +22,14 @@ export function Chip({ children, tone = 'gray' }: { children: string; tone?: Ton
         borderColor: t.border ?? 'transparent',
         borderWidth: t.border ? 1 : 0,
         paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingVertical: 4,
         borderRadius: 999,
         alignSelf: 'flex-start',
       }}
     >
-      <Text style={{ color: t.color, fontSize: 11, fontWeight: '500' }}>{children}</Text>
+      <Text style={{ color: t.color, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>
+        {children}
+      </Text>
     </View>
   );
 }

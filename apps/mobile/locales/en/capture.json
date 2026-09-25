@@ -1,49 +1,41 @@
 {
-  "title": "Capture material",
-  "subtitle": "Snap a page, book, or worksheet — up to 10 photos.",
+  "title": "Photograph your sheet",
+  "intro": "Worksheet, textbook page or exercise book – I'll turn it into practice.",
+  "tip": "Tip: whole page, good light, from above.",
+  "privacy": "Photos are deleted at the latest 7 days after reading.",
+  "camera": "Take photo",
+  "camera_more": "Another photo",
+  "library": "Choose from photos",
+  "photos_title_one": "{{count}} photo",
+  "photos_title_other": "{{count}} photos",
+  "photo_label": "Photo {{index}} of {{total}}",
+  "remove": "Remove",
+  "remove_label": "Remove photo {{index}}",
+  "limit": "One sheet can have at most {{max}} photos.",
+  "preparing_one": "Getting the photo ready …",
+  "preparing_other": "Getting photo {{current}} of {{count}} ready …",
+  "send": "Send",
+  "send_again": "Send again",
+  "send_hint": "Take a photo first.",
+  "progress": {
+    "reserving": "One moment …",
+    "uploading_one": "Sending the photo …",
+    "uploading_other": "Sending photo {{current}} of {{count}} …",
+    "submitting": "Almost done …"
+  },
   "permission": {
-    "title": "We need camera access for a moment",
-    "body": "So you can photograph your material. You can change this any time in Settings.",
-    "cta": "Open settings"
+    "camera": "LearnBuddy isn't allowed to use the camera yet. You can allow it in Settings – or choose a picture from your photos.",
+    "open_settings": "Open settings"
   },
-  "chip": {
-    "sharp": "sharp",
-    "ok": "ok",
-    "blur": "blurry — try again",
-    "too_dark": "too dark",
-    "too_bright": "too bright",
-    "too_small": "image too small",
-    "tilt": "Hold the phone a bit straighter"
-  },
-  "tilt_warn": "Hold the phone a bit straighter",
-  "review": {
-    "keep": "Keep anyway",
-    "redo": "Try again",
-    "discard": "Discard"
-  },
-  "strip": {
-    "label_one": "1 photo",
-    "label_other": "{{count}} photos",
-    "max_hint": "Up to 10 photos per material.",
-    "long_press_hint": "Long-press a thumbnail to delete it.",
-    "delete_title": "Delete photo?",
-    "delete_cancel": "Cancel",
-    "delete_confirm": "Delete"
-  },
-  "cta": {
-    "shutter": "Shutter",
-    "done": "Done",
-    "cancel": "Cancel",
-    "shutter_error": "Photo failed — try again?"
-  },
-  "picker": {
-    "title": "Where does this go?",
-    "folder_title": "Pick a folder",
-    "no_folder": "No folder — right in the subject",
-    "no_subjects": "You don't have a subject yet. Add one from the home screen first.",
-    "no_subjects_title": "Create a subject first"
-  },
-  "limits": {
-    "max_reached": "Max 10 photos per material."
+  "error": {
+    "camera": "The camera didn't open just now. You can also choose a picture from your photos.",
+    "library": "Your photos didn't open just now. Try again.",
+    "prepare_one": "One picture couldn't be opened. Pick another one.",
+    "prepare_other": "{{count}} pictures couldn't be opened. Pick other ones.",
+    "upload_network": "Photo {{index}} didn't arrive – no connection.",
+    "upload_rejected": "Photo {{index}} didn't arrive.",
+    "upload_file": "Photo {{index}} is gone. Remove it and take it again.",
+    "kept": "Your photos are still here.",
+    "left": "Your sheet didn't arrive. Please photograph it again."
   }
 }

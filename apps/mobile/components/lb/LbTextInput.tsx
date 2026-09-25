@@ -42,7 +42,8 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
         {showToggle && onToggle && (
           <Pressable
             onPress={onToggle}
-            hitSlop={8}
+            hitSlop={12}
+            accessibilityRole="button"
             accessibilityLabel={toggleAccessibilityLabel}
             style={{
               position: 'absolute',
@@ -57,7 +58,9 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
         )}
       </View>
       {errorMessage && (
-        <Text style={{ color: LB.danger, fontSize: 12, marginTop: 4 }}>{errorMessage}</Text>
+        <Text style={{ color: LB.danger, fontSize: 15, lineHeight: 21, marginTop: 4 }}>
+          {errorMessage}
+        </Text>
       )}
     </View>
   );

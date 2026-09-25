@@ -34,6 +34,7 @@ import {
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const PHOTO_RETENTION_DAYS = 7;
+const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 
 type MaterialRow = {
@@ -133,10 +134,15 @@ export async function createMaterial(
     }
     return row.id;
   });
-  const photos = await deps.db.query<{ position: number; storage_path: string }>(
-    `select position, storage_path from material_photos where material_id = $1 order by position`,
-    [material],
-  );
+  const view = await materialView(deps.db, learner.id, material);
+  // A repeated request after the photos went through has nothing left to upload.
+  const photos =
+    view.status === 'awaiting_upload'
+      ? await deps.db.query<{ position: number; storage_path: string }>(
+          `select position, storage_path from material_photos where material_id = $1 order by position`,
+          [material],
+        )
+      : [];
   const uploads = [];
   for (const p of photos) {
     const target = await deps.storage.createUploadTarget(p.storage_path);
@@ -147,7 +153,7 @@ export async function createMaterial(
       token: target.token,
     });
   }
-  return { material: await materialView(deps.db, learner.id, material), uploads };
+  return { material: view, uploads };
 }
 
 /** Photos are uploaded: check they are really there, then queue the reading. */
@@ -448,6 +454,32 @@ export async function purgePhotos(deps: Deps, job: JobRow): Promise<void> {
     deps.now(),
   ]);
   await finishJob(deps.db, job, deps.now(), { status: 'done', result: { removed: photos.length } });
+}
+
+/**
+ * Photos that never all arrived (the app was closed mid-send) are given up after a day: the
+ * material is set aside (never shown, nothing to read) and what did arrive is deleted now.
+ */
+export async function abandonStaleUploads(deps: Deps): Promise<number> {
+  const now = deps.now();
+  return deps.db.tx(async (tx) => {
+    const stale = await tx.query<{ id: string; learner_id: string }>(
+      `update materials set status = 'failed', failure_reason = 'photos_missing', archived_at = $1
+        where status = 'awaiting_upload' and archived_at is null and created_at < $2
+        returning id, learner_id`,
+      [now, new Date(now.getTime() - ABANDON_UPLOAD_MS)],
+    );
+    for (const m of stale) {
+      await enqueueJob(tx, {
+        learnerId: m.learner_id,
+        kind: 'purge_photos',
+        runAt: now,
+        dedupeKey: `purge:${m.id}:abandoned`,
+        payload: { material_id: m.id },
+      });
+    }
+    return stale.length;
+  });
 }
 
 export async function archiveMaterial(

@@ -11,7 +11,7 @@ import type { Deps } from '../../deps.js';
 import { queueStalledTurns, runLearnerJobs } from '../buddy/check.js';
 import { checkReceipts, sendDueOutreach, type DeliveryStats } from '../buddy/delivery.js';
 import { executeAccountDeletion } from '../identity/privacy.js';
-import { purgePhotos, runExtraction } from '../materials/service.js';
+import { abandonStaleUploads, purgePhotos, runExtraction } from '../materials/service.js';
 import {
   claimJobs,
   finishJob,
@@ -69,6 +69,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
           and not exists (select 1 from jobs j where j.kind = 'extract_material'
                             and j.payload ->> 'material_id' = m.id::text and j.status in ('queued','running'))`,
     );
+    await abandonStaleUploads(deps);
   });
 
   // Reading photos first: a learner is usually waiting for it.
@@ -147,7 +148,10 @@ export async function runQueuedExtraction(deps: Deps, learnerId: string): Promis
     leaseSeconds: 180,
     learnerId,
   });
-  if (job) await runJobSafely(deps, job, () => runExtraction(deps, job));
+  if (!job) return;
+  await runJobSafely(deps, job, () => runExtraction(deps, job));
+  // The learner is waiting: let Buddy act on the result right away.
+  await runLearnerJobs(deps, learnerId);
 }
 
 /** A handler that throws unexpectedly leaves the job to its lease/attempt limits. */

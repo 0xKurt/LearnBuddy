@@ -40,6 +40,8 @@ const CHECK_SCHEMA = toJsonSchema(CheckDecision);
 const LEASE_SECONDS = 150;
 const IN_APP_DEFER_MS = 20 * 60_000;
 const IN_APP_WINDOW_MS = 3 * 60_000;
+/** Wake-ups that follow directly from something the learner did. */
+const LEARNER_TRIGGERED = new Set(['material_ready', 'session_finished']);
 
 type Trigger = {
   job: JobRow;
@@ -294,8 +296,14 @@ async function decide(
     [learner.id],
   );
 
-  // The learner is using the app: don't talk over them, look again later.
-  if (settings.last_seen_at && now.getTime() - settings.last_seen_at.getTime() < IN_APP_WINDOW_MS) {
+  // The learner is using the app: don't start something unasked, look again
+  // later. What follows from their own action (the photos they just sent, the
+  // practice they just finished) is what they are waiting for: do it now.
+  const answersLearner = triggers.some((t) => LEARNER_TRIGGERED.has(t.reason));
+  const inApp =
+    settings.last_seen_at !== null &&
+    now.getTime() - settings.last_seen_at.getTime() < IN_APP_WINDOW_MS;
+  if (inApp && !answersLearner) {
     for (const trig of triggers) {
       await retryJob(deps.db, trig.job, {
         runAt: new Date(now.getTime() + IN_APP_DEFER_MS),
@@ -413,7 +421,9 @@ async function decide(
         'failed',
         [why],
       );
-      if (err instanceof LlmError && err.retryable) {
+      // Retry later only when nobody is waiting: after their own photos or practice the
+      // learner gets the fixed fallback now instead of nothing for ten minutes.
+      if (err instanceof LlmError && err.retryable && !answersLearner) {
         const retriable = triggers.filter((t) => t.job.attempts < t.job.max_attempts);
         if (retriable.length === triggers.length) {
           for (const trig of triggers) {

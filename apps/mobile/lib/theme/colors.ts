@@ -18,6 +18,9 @@ export const LB = {
   success: '#6b8d6a',
   warning: '#b58a3c',
   danger: '#b1493c',
+  // Text on the pale success/warning tints (≥ 4.5:1).
+  successText: '#46663f',
+  warningText: '#7d5a16',
   // Subject pastels
   lavender: '#ebe4f4',
   lavenderDeep: '#cdbde6',

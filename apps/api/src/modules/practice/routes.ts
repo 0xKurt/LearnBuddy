@@ -12,6 +12,7 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
+import { runLearnerJobs } from '../buddy/check.js';
 import { answerItem, finishSession, revealItem, sessionView, startManual } from './service.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
@@ -53,5 +54,12 @@ practiceRoutes.post('/sessions/:id/reveal', async (c) => {
 
 practiceRoutes.post('/sessions/:id/finish', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
-  return c.json(await finishSession(depsOf(c), c.get('learner').id, sessionId));
+  const deps = depsOf(c);
+  const learnerId = c.get('learner').id;
+  const view = await finishSession(deps, learnerId, sessionId);
+  // Buddy plans what comes next now instead of on the next scheduler run.
+  deps.background(async () => {
+    await runLearnerJobs(deps, learnerId);
+  });
+  return c.json(view);
 });

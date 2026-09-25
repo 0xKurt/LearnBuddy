@@ -1,91 +1,25 @@
 {
-  "app": { "name": "LearnBuddy" },
-  "datepicker": {
-    "title": "Scegli una data",
-    "day": "Giorno",
-    "month": "Mese",
-    "year": "Anno",
-    "clear": "Nessuna data"
-  },
-  "loading": "Caricamento…",
-  "load_error": "Connessione fallita. Per favore, riprova.",
-  "support": {
-    "contact": "Contatta il supporto",
-    "faq": "Aiuto & FAQ"
-  },
-  "actions": {
-    "continue": "Continua",
-    "back": "Indietro",
-    "cancel": "Annulla",
-    "save": "Salva",
-    "done": "Fatto",
-    "next": "Avanti",
-    "retry": "Riprova",
-    "delete": "Elimina",
-    "close": "Chiudi",
-    "ok": "Ok"
-  },
+  "app_name": "LearnBuddy",
   "a11y": {
     "back": "Indietro",
     "close": "Chiudi",
     "more": "Altre opzioni",
     "add": "Aggiungi",
-    "mic": "Microfono",
+    "mic": "Parla",
     "speak": "Leggi ad alta voce",
-    "avatar": "Profilo di {{name}}"
+    "pin_delete": "Cancella l'ultima cifra",
+    "pin_progress": "{{count}} di 4 cifre inserite"
   },
-  "tabs": {
-    "home": "Home",
-    "practice": "Esercizio",
-    "camera": "Fotografa",
-    "account": "Account"
+  "actions": {
+    "close": "Chiudi",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "retry": "Riprova",
+    "continue": "Continua",
+    "done": "Fatto",
+    "delete": "Elimina",
+    "edit": "Modifica"
   },
-  "greeting": {
-    "morning": "Buongiorno",
-    "afternoon": "Ciao",
-    "evening": "Buonasera"
-  },
-  "material": {
-    "not_found": "Materiale non trovato.",
-    "not_found_body": "Forse è stato eliminato.",
-    "no_items": "Nessuna domanda.",
-    "no_items_body": "La prossima volta funzionerà — riprova.",
-    "question_count_one": "1 domanda",
-    "question_count_other": "{{count}} domande",
-    "question_label": "Domanda {{index}}",
-    "flashcards": "Flashcard",
-    "card_question": "DOMANDA",
-    "card_answer": "RISPOSTA",
-    "flip_hint": "Tocca per girare →",
-    "reveal": "Mostra risposta →",
-    "load_error_title": "Impossibile caricare il materiale.",
-    "practice": "Esercitati su questo materiale",
-    "untitled": "Materiale"
-  },
-  "update": {
-    "title": "Aggiornamento disponibile",
-    "body": "Questa versione non è più supportata. Aggiorna l'app.",
-    "cta": "Aggiorna ora"
-  },
-  "notifications": {
-    "daily_title": "Un momento di esercizio?",
-    "daily_body": "Bastano tre minuti.",
-    "streak_title": "Non hai ancora esercitato oggi?",
-    "streak_body": "Anche un solo esercizio conta.",
-    "test_3days_title": "Test tra 3 giorni",
-    "test_3days_body": "{{name}} — una breve sessione di ripasso?",
-    "test_1day_title": "L'esame è domani",
-    "test_1day_body": "{{name}} — un ripasso veloce aiuta.",
-    "test_today_title": "Esame oggi!",
-    "test_today_body": "{{name}} — ce la fai. Respira.",
-    "action_practice": "Esercitati ora"
-  },
-  "whats_new": {
-    "title": "Novità",
-    "items": [
-      "Conferma password durante la registrazione",
-      "Gli aggiornamenti vengono rilevati automaticamente"
-    ],
-    "cta": "Andiamo!"
-  }
+  "loading": "Un momento…",
+  "offline": "Nessuna connessione – riprovo tra poco."
 }

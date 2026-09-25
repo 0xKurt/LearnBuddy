@@ -1,37 +1,43 @@
 {
-  "loading": "Stiamo preparando l'esercizio …",
-  "error_title": "Ops.",
-  "error_body": "Non siamo riusciti a caricarlo. Riprova.",
-  "back": "Indietro",
-  "topic_label": "Argomento",
-  "progress": "{{current}} di {{total}}",
-  "submit": "Controlla",
-  "next": "Avanti",
-  "verdict": {
-    "correct": "Esatto!",
-    "incorrect": "Non ancora del tutto"
+  "title_fallback": "Esercizi",
+  "loading": "Sto caricando le tue domande…",
+  "end": "Termina",
+  "end_label": "Termina gli esercizi",
+  "end_hint": "Torni da Buddy. Le tue risposte restano salvate.",
+  "progress": "Domanda {{current}} di {{total}}",
+  "answer": {
+    "label": "La tua risposta",
+    "placeholder": "La tua risposta…",
+    "unit_hint": "Risposta in {{unit}}"
   },
-  "answer_hint_numeric": "Scrivi la tua risposta",
-  "answer_hint_formula": "Scrivi la tua formula",
+  "check": "Controlla",
   "show_solution": "Mostra la soluzione",
-  "solution_label": "Soluzione",
-  "finish_title": "Fatto!",
-  "finish_body": "Hai risposto bene a {{correct}} su {{total}}. Bel giro.",
-  "finish_home": "Torna all'home",
-  "no_template": "Questo esercizio non è più disponibile.",
-  "exit_title": "Terminare l'esercizio?",
-  "exit_cancel": "Continua",
-  "exit_end": "Termina",
-  "hub": {
-    "title": "Esercitati",
-    "resume_title": "Continuare?",
-    "resume_body": "Hai ancora un esercizio aperto.",
-    "resume_yes": "Continua",
-    "resume_no": "Ricomincia",
-    "choose": "Scegli una materia",
-    "start": "Esercitati",
-    "empty_title": "Ancora niente da esercitare",
-    "empty_body": "Fotografa prima il tuo materiale, poi ci esercitiamo insieme.",
-    "empty_cta": "Vai all'home"
-  }
+  "choice_tried": "Già provata",
+  "thread": {
+    "you": "Tu",
+    "buddy": "Buddy",
+    "thinking": "Buddy sta guardando la tua risposta…"
+  },
+  "verdict": {
+    "correct": "Giusto",
+    "partially_correct": "Quasi",
+    "incorrect": "Non ancora del tutto",
+    "unchecked": "Non controllato"
+  },
+  "solution": {
+    "title": "Soluzione",
+    "calm": "Guardala con calma."
+  },
+  "next": "Avanti",
+  "finishing": "Un attimo – il tuo risultato sta arrivando.",
+  "finish_failed": "Al momento non riesco a caricare il tuo risultato.",
+  "summary": {
+    "title": "Ce l'hai fatta!",
+    "answered": "Risposte",
+    "first_try": "Giuste al primo colpo",
+    "secure": "Lo sai bene: {{topics}}",
+    "shaky": "Lo rivediamo insieme: {{topics}}"
+  },
+  "ended": "Questi esercizi sono già finiti.",
+  "back_to_buddy": "Torna da Buddy"
 }

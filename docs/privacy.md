@@ -2,7 +2,7 @@
 
 Status: describes what the rebuilt system does (2026-09-25). It is an engineering description,
 not legal advice; items marked **legal review** must be cleared before production use.
-Architecture: [architecture.md](architecture.md). Previous specification: [09-privacy.md](09-privacy.md).
+Architecture: [architecture.md](architecture.md). Previous specification: [legacy/09-privacy.md](legacy/09-privacy.md).
 
 ## Accounts and minors
 

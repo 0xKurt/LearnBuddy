@@ -364,6 +364,9 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
     const pause = paused.body.home.done.find((a) => a.summary.tool === 'set_contact')!;
     const s = await l.api.get<{ version: number }>('/buddy/settings');
     await l.api.patch('/buddy/settings', { preferred_start: '16:00', version: s.body.version });
+    // The home no longer offers it, and a stale button is refused.
+    const home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.done.find((a) => a.id === pause.id)).toMatchObject({ undoable: false });
     const refused = await l.api.post(`/buddy/actions/${pause.id}/undo`);
     expect(refused.status).toBe(409);
     expect(refused.body).toMatchObject({ error: { details: { reason: 'changed_since' } } });

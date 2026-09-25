@@ -1,0 +1,39 @@
+{
+  "title": "My material",
+  "capture": "Photograph a new sheet",
+  "unsorted": "No subject",
+  "untitled": "Untitled",
+  "questions_one": "{{count}} question",
+  "questions_other": "{{count}} questions",
+  "status": {
+    "reading": "being read",
+    "unreadable": "not readable",
+    "not_read": "not read",
+    "incomplete": "incomplete"
+  },
+  "failure": {
+    "unreadable": "The photos were hard to read. Try more light and shoot from above.",
+    "not_learning_material": "That doesn't look like a worksheet, exercise book or textbook page.",
+    "model_error": "Something went wrong while reading.",
+    "photos_missing": "Not all photos arrived.",
+    "budget_exhausted": "I can't read any more sheets today. It'll work again tomorrow."
+  },
+  "incomplete_hint": "The photos didn't fully arrive. Delete the sheet and photograph it again.",
+  "practice": "Practise",
+  "practice_label": "Practise “{{title}}”",
+  "retry": "Read again",
+  "retry_label": "Read “{{title}}” again",
+  "retry_started": "I'm reading the sheet again.",
+  "delete": "Delete",
+  "delete_label": "Delete “{{title}}”",
+  "delete_sheet": {
+    "title": "Delete sheet?",
+    "body": "“{{title}}” and its questions will be deleted, and the photos too. This can't be undone.",
+    "confirm": "Delete"
+  },
+  "deleted": "Deleted.",
+  "empty": {
+    "title": "Your sheets end up here",
+    "body": "Photograph a worksheet, a textbook page or your exercise book – I'll turn it into practice."
+  }
+}

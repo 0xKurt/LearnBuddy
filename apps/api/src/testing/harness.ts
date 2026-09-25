@@ -8,7 +8,7 @@ import { loadConfig, type Config } from '../config.js';
 import type { Deps } from '../deps.js';
 import type { AppEnv } from '../http/context.js';
 import { createDb, type PgDb } from '../lib/db.js';
-import { DisabledGateway } from '../llm/gateway.js';
+import { DisabledGateway, type LlmGateway } from '../llm/gateway.js';
 import { DisabledPush } from '../push/transport.js';
 import { createTestDatabase, type TestDatabase } from './database.js';
 import { FakeAuth, FakePush, MemoryStorage, ScriptedGateway, TestClock } from './fakes.js';
@@ -33,6 +33,8 @@ export async function createTestEnv(
   opts: {
     start?: string;
     model?: 'scripted' | 'disabled';
+    /** A real model for evaluations (evals/buddy); overrides `model`. */
+    gateway?: LlmGateway;
     push?: 'fake' | 'disabled';
     config?: Record<string, string>;
   } = {},
@@ -62,7 +64,7 @@ export async function createTestEnv(
     now: clock.now,
     auth,
     storage,
-    llm: opts.model === 'disabled' ? new DisabledGateway() : llm,
+    llm: opts.gateway ?? (opts.model === 'disabled' ? new DisabledGateway() : llm),
     push: opts.push === 'disabled' ? new DisabledPush() : push,
     background: (task) => {
       pending.push(task());
@@ -144,9 +146,13 @@ export async function onboard(
     birthDate?: string;
     locale?: 'de' | 'en' | 'fr' | 'es' | 'it';
     timezone?: string;
+    /** Set up the adult PIN during onboarding, as the app does for a child profile. */
+    pin?: string;
   } = {},
 ): Promise<Learner> {
   const { userId, token } = await env.auth.createUser();
+  // Just signed up with e-mail and password.
+  env.auth.signedInAt(token, Math.floor(env.clock.now().getTime() / 1000));
   const api = apiClient(env, token, { 'x-timezone': opts.timezone ?? 'Europe/Berlin' });
   const account = await api.post<{ account_id: string }>('/account', {
     locale: opts.locale ?? 'de',
@@ -165,6 +171,10 @@ export async function onboard(
   });
   if (learner.status !== 201)
     throw new Error(`learner: ${learner.status} ${JSON.stringify(learner.body)}`);
+  if (opts.pin) {
+    const pin = await api.put('/account/pin', { pin: opts.pin });
+    if (pin.status !== 200) throw new Error(`pin: ${pin.status} ${JSON.stringify(pin.body)}`);
+  }
   return { api, token, userId, accountId: account.body.account_id, learnerId: learner.body.id };
 }
 

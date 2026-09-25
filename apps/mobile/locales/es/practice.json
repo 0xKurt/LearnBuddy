@@ -1,37 +1,43 @@
 {
-  "loading": "Preparando tu práctica …",
-  "error_title": "Vaya.",
-  "error_body": "No pudimos cargar eso ahora. Inténtalo de nuevo.",
-  "back": "Volver",
-  "topic_label": "Tema",
-  "progress": "{{current}} de {{total}}",
-  "submit": "Comprobar",
-  "next": "Siguiente",
-  "verdict": {
-    "correct": "¡Exacto!",
-    "incorrect": "Aún no del todo"
+  "title_fallback": "Práctica",
+  "loading": "Estoy cargando tus preguntas…",
+  "end": "Terminar",
+  "end_label": "Terminar la práctica",
+  "end_hint": "Vuelves con Buddy. Tus respuestas se quedan guardadas.",
+  "progress": "Pregunta {{current}} de {{total}}",
+  "answer": {
+    "label": "Tu respuesta",
+    "placeholder": "Tu respuesta…",
+    "unit_hint": "Respuesta en {{unit}}"
   },
-  "answer_hint_numeric": "Escribe tu respuesta",
-  "answer_hint_formula": "Escribe tu fórmula",
+  "check": "Comprobar",
   "show_solution": "Ver la solución",
-  "solution_label": "Solución",
-  "finish_title": "¡Hecho!",
-  "finish_body": "Acertaste {{correct}} de {{total}}. Buena ronda.",
-  "finish_home": "Volver al inicio",
-  "no_template": "Esta práctica ya no está disponible.",
-  "exit_title": "¿Terminar la práctica?",
-  "exit_cancel": "Seguir",
-  "exit_end": "Terminar",
-  "hub": {
-    "title": "Practicar",
-    "resume_title": "¿Seguir?",
-    "resume_body": "Aún tienes una práctica abierta.",
-    "resume_yes": "Continuar",
-    "resume_no": "Empezar de nuevo",
-    "choose": "Elige una asignatura",
-    "start": "Practicar",
-    "empty_title": "Nada que practicar todavía",
-    "empty_body": "Haz primero una foto de tu material y practicamos juntos.",
-    "empty_cta": "Ir al inicio"
-  }
+  "choice_tried": "Ya la has probado",
+  "thread": {
+    "you": "Tú",
+    "buddy": "Buddy",
+    "thinking": "Buddy está mirando tu respuesta…"
+  },
+  "verdict": {
+    "correct": "Correcto",
+    "partially_correct": "Casi",
+    "incorrect": "Todavía no del todo",
+    "unchecked": "Sin comprobar"
+  },
+  "solution": {
+    "title": "Solución",
+    "calm": "Mírala con calma."
+  },
+  "next": "Siguiente",
+  "finishing": "Un momento: enseguida llega tu resultado.",
+  "finish_failed": "No he podido cargar tu resultado ahora mismo.",
+  "summary": {
+    "title": "¡Lo has conseguido!",
+    "answered": "Respondidas",
+    "first_try": "Acertadas a la primera",
+    "secure": "Lo dominas: {{topics}}",
+    "shaky": "Lo repasamos otra vez: {{topics}}"
+  },
+  "ended": "Esta práctica ya ha terminado.",
+  "back_to_buddy": "Volver con Buddy"
 }

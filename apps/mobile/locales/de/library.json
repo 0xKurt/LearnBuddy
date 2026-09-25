@@ -1,0 +1,39 @@
+{
+  "title": "Mein Stoff",
+  "capture": "Neues Blatt fotografieren",
+  "unsorted": "Ohne Fach",
+  "untitled": "Ohne Titel",
+  "questions_one": "{{count}} Aufgabe",
+  "questions_other": "{{count}} Aufgaben",
+  "status": {
+    "reading": "wird gelesen",
+    "unreadable": "nicht lesbar",
+    "not_read": "nicht gelesen",
+    "incomplete": "unvollständig"
+  },
+  "failure": {
+    "unreadable": "Die Fotos waren nicht gut lesbar. Versuch es mit mehr Licht und von oben.",
+    "not_learning_material": "Das sieht nicht nach Arbeitsblatt, Heft oder Buchseite aus.",
+    "model_error": "Beim Lesen ist etwas schiefgelaufen.",
+    "photos_missing": "Nicht alle Fotos sind angekommen.",
+    "budget_exhausted": "Für heute kann ich keine Blätter mehr lesen. Morgen geht es wieder."
+  },
+  "incomplete_hint": "Die Fotos sind nicht ganz angekommen. Lösch das Blatt und fotografier es neu.",
+  "practice": "Üben",
+  "practice_label": "„{{title}}“ üben",
+  "retry": "Nochmal lesen",
+  "retry_label": "„{{title}}“ nochmal lesen",
+  "retry_started": "Ich lese das Blatt nochmal.",
+  "delete": "Löschen",
+  "delete_label": "„{{title}}“ löschen",
+  "delete_sheet": {
+    "title": "Blatt löschen?",
+    "body": "„{{title}}“ und die Aufgaben daraus werden gelöscht, die Fotos auch. Das lässt sich nicht rückgängig machen.",
+    "confirm": "Löschen"
+  },
+  "deleted": "Gelöscht.",
+  "empty": {
+    "title": "Hier landen deine Blätter",
+    "body": "Fotografier ein Arbeitsblatt, eine Buchseite oder dein Heft – ich mache Übungen daraus."
+  }
+}

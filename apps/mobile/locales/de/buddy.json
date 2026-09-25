@@ -1,0 +1,142 @@
+{
+  "greeting": "Hallo {{name}}",
+  "menu": {
+    "open": "Menü öffnen",
+    "title": "Mehr",
+    "history": "Ganzer Verlauf",
+    "memory": "Was Buddy über dich weiß",
+    "library": "Mein Stoff",
+    "settings": "Einstellungen"
+  },
+  "system": {
+    "no_model": "Buddy kann gerade nicht antworten. Üben und deine Erinnerungen funktionieren trotzdem.",
+    "scheduler_stale": "Buddy arbeitet gerade nicht im Hintergrund. Erinnerungen können später kommen."
+  },
+  "now": {
+    "resume_title": "Weiterüben",
+    "resume_body": "{{title}} – noch {{count}} Aufgaben",
+    "resume_cta": "Weitermachen",
+    "ready_title": "Übung bereit: {{title}}",
+    "ready_body": "{{count}} Aufgaben · ca. {{minutes}} Min.",
+    "ready_focus": "Vor allem: {{topics}}",
+    "ready_for_exam": "Für „{{exam}}“ {{when}}",
+    "ready_cta": "Jetzt üben",
+    "ready_later": "Heute nicht",
+    "capture_title": "Schick mir ein Foto",
+    "capture_body": "Fotografier „{{title}}“ – ich mache daraus Übungen.",
+    "capture_cta": "Foto machen",
+    "sending_title": "Deine Fotos werden gesendet …",
+    "sending_body": "Lass die App kurz offen, bis alles angekommen ist.",
+    "processing_title": "Ich lese dein Blatt …",
+    "processing_body": "Das dauert meist etwa eine Minute. Du kannst die App solange schließen.",
+    "failed_title": "Das Blatt konnte ich nicht lesen",
+    "failed_unreadable": "Die Fotos waren schwer zu lesen. Probier's nochmal mit mehr Licht und von oben.",
+    "failed_not_learning_material": "Das sieht nicht nach einem Arbeitsblatt oder einer Buchseite aus.",
+    "failed_model_error": "Beim Lesen ist etwas schiefgegangen.",
+    "failed_photos_missing": "Die Fotos sind nicht ganz angekommen.",
+    "failed_budget_exhausted": "Für heute kann ich keine Blätter mehr lesen. Morgen geht's wieder.",
+    "failed_retry": "Nochmal lesen",
+    "failed_new_photo": "Neues Foto",
+    "result_title": "Geschafft!",
+    "result_body": "{{answered}} Aufgaben gemacht, {{first_try}} gleich beim ersten Mal richtig.",
+    "result_secure": "Das sitzt: {{topics}}",
+    "result_shaky": "Da üben wir nochmal: {{topics}}"
+  },
+  "when": {
+    "today": "heute",
+    "tomorrow": "morgen",
+    "in_days": "in {{count}} Tagen",
+    "on": "am {{day}}",
+    "on_at": "am {{day}} um {{time}}"
+  },
+  "decision": {
+    "optin_title": "Darf ich dir aufs Handy schreiben?",
+    "optin_body": "Zum Beispiel kurz vor einer Arbeit oder wenn eine Übung bereitliegt. Höchstens einmal am Tag und nie abends.",
+    "optin_yes": "Ja, gern",
+    "optin_no": "Lieber nicht",
+    "optin_minor_body": "Das müssen deine Eltern erlauben.",
+    "optin_minor_cta": "Eltern fragen",
+    "outcome_title": "Wie lief „{{title}}“?",
+    "outcome_good": "Gut",
+    "outcome_ok": "Ging so",
+    "outcome_hard": "Schwer"
+  },
+  "done": {
+    "title": "Das habe ich für dich erledigt",
+    "undo": "Rückgängig",
+    "undo_label": "Rückgängig machen: {{what}}",
+    "undone": "rückgängig gemacht"
+  },
+  "next": {
+    "title": "Was als Nächstes kommt",
+    "agreed": "abgemacht",
+    "exam": "Arbeit"
+  },
+  "thread": {
+    "title": "Chat mit Buddy",
+    "show_all": "Alles anzeigen",
+    "typing": "Buddy schreibt …",
+    "failed": "Nicht angekommen",
+    "resend": "Nochmal senden",
+    "load_more": "Ältere Nachrichten",
+    "you": "Du",
+    "buddy": "Buddy"
+  },
+  "delivery": {
+    "scheduled": "kommt {{when}}",
+    "sending": "wird geschickt",
+    "accepted": "an dein Handy geschickt",
+    "provider_accepted": "an dein Handy geschickt",
+    "provider_rejected": "konnte nicht an dein Handy geschickt werden",
+    "send_failed": "konnte nicht an dein Handy geschickt werden",
+    "send_uncertain": "unklar, ob es auf deinem Handy ankam",
+    "in_app": "nur hier in der App",
+    "suppressed": "nicht verschickt",
+    "expired": "nicht mehr aktuell",
+    "cancelled": "abgesagt",
+    "opened": "geöffnet"
+  },
+  "composer": {
+    "placeholder": "Schreib Buddy …",
+    "send": "Senden"
+  },
+  "action": {
+    "remember": "Gemerkt: {{statement}}",
+    "remember_until": "Gemerkt bis einschließlich {{date}}: {{statement}}",
+    "correct_memory": "Korrigiert: {{statement}}",
+    "forget": "Vergessen: {{statement}}",
+    "set_level_school": "Klasse {{grade}}",
+    "set_level_school_unknown": "Schule",
+    "set_level_university": "Studium",
+    "set_level_adult": "Weiterbildung",
+    "set_level_unknown": "Klasse noch offen",
+    "plan_exam": "Eingetragen: {{title}} am {{day}}",
+    "update_goal": "Geändert: {{title}}",
+    "update_goal_day": "Geändert: {{title}} – jetzt am {{day}}",
+    "close_goal_done": "Abgeschlossen: {{title}}",
+    "close_goal_dropped": "Gestrichen: {{title}}",
+    "prepare_practice": "Vorbereitet: {{title}} – {{count}} Aufgaben, ca. {{minutes}} Min.",
+    "plan_step": "Geplant: {{title}} {{when}}",
+    "plan_step_agreed": "Verabredet: {{title}} {{when}}",
+    "update_step_moved": "Verschoben: {{title}} {{when}}",
+    "update_step_skipped": "Übersprungen: {{title}}",
+    "update_step_cancelled": "Abgesagt: {{title}}",
+    "mark_step_done": "Erledigt: {{title}}",
+    "request_material": "Um ein Foto gebeten: {{title}}",
+    "set_contact_pause": "Keine Nachrichten bis einschließlich {{date}}",
+    "set_contact": "Nachrichten nur zwischen {{from}} und {{to}} Uhr, höchstens {{count}}× pro Woche",
+    "schedule_check": "Ich schaue {{when}} wieder vorbei"
+  },
+  "intro": {
+    "title": "Ich bin Buddy.",
+    "body": "Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten – ohne Stress. Erzähl mir einfach, was ansteht, oder schick mir ein Foto von deinem Arbeitsblatt.",
+    "start": "So kannst du anfangen:",
+    "starter_exam": "Ich schreibe bald eine Arbeit",
+    "starter_practice": "Ich möchte üben",
+    "starter_photo": "Arbeitsblatt fotografieren"
+  },
+  "working": {
+    "material": "Ich mache aus deinem Blatt gerade Übungen …",
+    "session": "Ich schaue mir an, wie deine Übung lief …"
+  }
+}

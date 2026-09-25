@@ -118,7 +118,13 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
   beforeAll(async () => {
     // Monday 2026-09-28, 10:00 in Berlin (CEST).
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
-    lina = await onboard(env, { relation: 'child', name: 'Lina', birthDate: '2014-03-10' });
+    // The adult sets up the profile and the PIN during onboarding.
+    lina = await onboard(env, {
+      relation: 'child',
+      name: 'Lina',
+      birthDate: '2014-03-10',
+      pin: '1357',
+    });
   });
   afterEach(() => {
     // A failed expectation inside a scripted model answer surfaces here.
@@ -245,31 +251,10 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     );
     expect(submitted.status).toBe(202);
     expect(submitted.body.status).toBe('queued');
-    await env.flushBackground();
-
-    const material = await lina.api.get<{
-      status: string;
-      item_count: number;
-      title: string;
-      subject_name: string;
-    }>(`/materials/${created.body.material.id}`);
-    expect(material.body).toMatchObject({ status: 'ready', item_count: 4, subject_name: 'Mathe' });
-    const step = await env.db.one<{
-      state: string;
-      done_source: string;
-      evidence: { questions: number };
-    }>(`select state, done_source, evidence from buddy_steps where id = $1`, [captureStepId]);
-    expect(step).toMatchObject({
-      state: 'done',
-      done_source: 'evidence',
-      evidence: { questions: 4 },
-    });
-  });
-
-  it('3 · acts on its own when the material is ready: prepares practice, respects that contact is off', async () => {
-    // Lina closed the app; the scheduler runs a few minutes later.
-    env.clock.minutes(6);
-    env.llm.script('buddy_check', (req) => {
+    // Reading starts right away, and Buddy acts on the result while Lina waits.
+    env.llm.script('buddy_check', async (req) => {
+      // While Buddy thinks about it, Lina's screen says so.
+      expect((await lina.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
       const text = ScriptedGateway.textOf(req);
       expect(text).toContain('g1 exam "Mathearbeit Brüche" on Friday 2026-10-02 (in 4 days)');
       expect(text).toContain('material: 1 ready (4 questions)');
@@ -299,7 +284,29 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
         },
       };
     });
-    await tick(env);
+    await env.flushBackground();
+
+    const material = await lina.api.get<{
+      status: string;
+      item_count: number;
+      title: string;
+      subject_name: string;
+    }>(`/materials/${created.body.material.id}`);
+    expect(material.body).toMatchObject({ status: 'ready', item_count: 4, subject_name: 'Mathe' });
+    const step = await env.db.one<{
+      state: string;
+      done_source: string;
+      evidence: { questions: number };
+    }>(`select state, done_source, evidence from buddy_steps where id = $1`, [captureStepId]);
+    expect(step).toMatchObject({
+      state: 'done',
+      done_source: 'evidence',
+      evidence: { questions: 4 },
+    });
+  });
+
+  it('3 · acts on its own when the material is ready: prepares practice, respects that contact is off', async () => {
+    // (Buddy's check ran right after the reading in step 2, while Lina was waiting in the app.)
 
     const outreach = await env.db.one<{ status: string; status_reason: string; topic_key: string }>(
       `select status, status_reason, topic_key from buddy_outreach where learner_id = $1`,
@@ -313,6 +320,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     });
 
     const home = (await lina.api.get<BuddyHome>('/buddy')).body;
+    expect(home.working).toBeNull();
     expect(home.now).toMatchObject({
       type: 'practice_ready',
       question_count: 4,
@@ -334,7 +342,6 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     expect(alone.status).toBe(403);
     expect(alone.body).toMatchObject({ error: { code: 'admin_required' } });
 
-    expect((await lina.api.put('/account/pin', { pin: '1357' })).status).toBe(200);
     const session = await lina.api.post<{ admin_token: string }>('/account/admin-session', {
       pin: '1357',
     });
@@ -363,7 +370,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
   });
 
   it('5 · shows a useful result: practice with rule checks, a model-judged answer, evidence on the step', async () => {
-    env.clock.hours(5); // Monday 15:08 local
+    env.clock.hours(5); // Monday 15:02 local
     const started = await lina.api.post<{ session_id: string }>(
       `/buddy/steps/${practiceStepId}/start`,
     );
@@ -441,7 +448,20 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     );
     expect(env.llm.callsFor('tutor')).toHaveLength(1);
 
+    // Finishing wakes Buddy right away to plan what comes next (here: nothing to add today).
+    env.llm.script('buddy_check', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain(
+        'the learner just finished practice: 4/4 answered',
+      );
+      return {
+        disposition: 'wait',
+        reason: 'Just practised and all correct; nothing to add today.',
+        actions: [],
+        outreach: null,
+      };
+    });
     view = (await lina.api.post<SessionView>(`/practice/sessions/${sessionId}/finish`)).body;
+    await env.flushBackground();
     expect(view.summary).toEqual({
       answered: 4,
       first_try: 4,
@@ -475,7 +495,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     env.clock.minutes(3);
     env.llm.script('buddy_turn', (req) => {
       const text = ScriptedGateway.textOf(req);
-      expect(text).toContain('Monday 2026-09-28, 15:11 (Europe/Berlin)');
+      expect(text).toContain('Monday 2026-09-28, 15:05 (Europe/Berlin)');
       return {
         reply: 'Mach ich – ab jetzt kurze Runden von etwa 5 Minuten.',
         options: null,
@@ -510,18 +530,6 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
   });
 
   it('7 · adapts: the next wake-up uses the preference, the message reaches the phone with honest status', async () => {
-    // The session_finished check (queued when practice ended) runs first: nothing new to do.
-    env.clock.minutes(10);
-    env.llm.script('buddy_check', {
-      json: {
-        disposition: 'wait',
-        reason: 'Just practised and all correct; nothing to add today.',
-        actions: [],
-        outreach: null,
-      },
-    });
-    await tick(env);
-
     // Thursday 15:00 local: one day before the test.
     env.clock.set('2026-10-01T13:00:00Z');
     env.llm.script('buddy_check', (req) => {

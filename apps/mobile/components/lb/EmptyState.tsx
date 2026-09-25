@@ -50,11 +50,11 @@ export function EmptyState({
       {body && (
         <Text
           style={{
-            fontSize: 13,
+            fontSize: 16,
             color: LB.ink2,
             textAlign: 'center',
-            maxWidth: 280,
-            lineHeight: 19,
+            maxWidth: 300,
+            lineHeight: 23,
           }}
         >
           {body}

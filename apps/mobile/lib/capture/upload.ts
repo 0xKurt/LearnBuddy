@@ -1,64 +1,200 @@
-// Drain the capture store through the upload pipeline:
-// reserveMaterial → PUT each photo → enqueueMaterial. Extraction itself runs
-// in a server-side worker (ADR 0003); the upload screen polls material
-// status afterwards, so this resolves as soon as the job is queued.
+// Photos of study material, from the picker to the API (docs/architecture.md
+// §Material). Each photo is made small but readable on the device (longest
+// side 1600 px, JPEG). Sending reserves the material with signed upload URLs,
+// PUTs every photo straight to storage, then submit lets the API check that
+// the photos arrived and start reading them.
 
-import { enqueueMaterial, reserveMaterial, uploadPhoto } from '../api/materials.js';
-import { i18n } from '../i18n/index.js';
-import type { AppLocale } from '../i18n/locale-storage.js';
-import type { PendingCapture } from '../store/capture.js';
+import type { CreateMaterialResponse } from '@learnbuddy/shared-types/contracts';
+import { ImageManipulator, SaveFormat, type ImageRef } from 'expo-image-manipulator';
 
-export type UploadProgress =
-  | { phase: 'reserving' }
-  | { phase: 'uploading'; uploaded: number; total: number }
-  | { phase: 'enqueuing' };
+import { ApiError, newId } from '../api/client.js';
+import { createMaterial, submitMaterial } from '../api/endpoints.js';
 
-export type UploadResult = { material_id: string };
+/** The API takes 1–20 photos per material. */
+export const MAX_PHOTOS = 20;
 
-export async function runUpload(
-  learnerId: string,
-  capture: PendingCapture,
-  onProgress: (p: UploadProgress) => void,
-): Promise<UploadResult> {
-  onProgress({ phase: 'reserving' });
-  const reservation = await reserveMaterial(learnerId, {
-    subject_id: capture.subject_id,
-    folder_id: capture.folder_id,
-    photo_count: capture.photos.length,
-    mime_type: 'image/jpeg',
-  });
+const MAX_SIDE = 1600;
+const JPEG_QUALITY = 0.7;
 
-  for (let i = 0; i < capture.photos.length; i++) {
-    onProgress({ phase: 'uploading', uploaded: i, total: capture.photos.length });
-    const photo = capture.photos[i];
-    const slot = reservation.uploads[i];
-    if (!photo || !slot) {
-      throw new Error('Upload slot mismatch');
+export type PreparedPhoto = { uri: string; width: number; height: number };
+
+/**
+ * Downscales a picked photo to a longest side of 1600 px (never upscales) and
+ * saves it as JPEG. The size is read from the rendered image, which is already
+ * upright, so the longer side is found whatever the camera's orientation was.
+ */
+export async function preparePhoto(sourceUri: string): Promise<PreparedPhoto> {
+  const context = ImageManipulator.manipulate(sourceUri);
+  const rendered: ImageRef[] = [];
+  try {
+    let image = await context.renderAsync();
+    rendered.push(image);
+    if (Math.max(image.width, image.height) > MAX_SIDE) {
+      context.resize(image.width >= image.height ? { width: MAX_SIDE } : { height: MAX_SIDE });
+      image = await context.renderAsync();
+      rendered.push(image);
     }
-    await uploadPhoto(slot.signed_url, photo.uri);
+    const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: JPEG_QUALITY });
+    return { uri: saved.uri, width: saved.width, height: saved.height };
+  } finally {
+    // Full-size bitmaps: free them now rather than whenever the GC runs.
+    context.release();
+    for (const r of rendered) r.release();
   }
-  onProgress({
-    phase: 'uploading',
-    uploaded: capture.photos.length,
-    total: capture.photos.length,
-  });
+}
 
-  onProgress({ phase: 'enqueuing' });
-  const res = await enqueueMaterial(learnerId, {
-    material_id: reservation.material_id,
-    subject_id: capture.subject_id,
-    folder_id: capture.folder_id,
-    title: null,
-    locale: (i18n.language ?? 'de') as AppLocale,
-    client_quality_scores: capture.photos.map((p, idx) => ({
-      position: idx + 1,
-      blur: p.quality.blur,
-      brightness: p.quality.brightness,
-      tilt: p.quality.tilt,
-      width: p.quality.width,
-      height: p.quality.height,
-    })),
-  });
+/** Why a photo did not reach storage: no connection, refused by storage, or the local file is gone. */
+export type UploadFailure = 'network' | 'rejected' | 'file';
 
-  return { material_id: res.material_id };
+export class PhotoUploadError extends Error {
+  constructor(
+    readonly kind: UploadFailure,
+    /** 0-based position of the photo in the material. */
+    readonly position: number,
+    readonly status: number = 0,
+  ) {
+    super(`Photo ${position + 1} was not uploaded (${kind}${status ? ` ${status}` : ''})`);
+    this.name = 'PhotoUploadError';
+  }
+}
+
+/**
+ * A photo sent twice (an earlier try stored it, but its answer never reached
+ * the app): the API signs with upsert, so storage normally just replaces it; a
+ * storage that refuses duplicates answers 409 or 400 "already exists". The
+ * photo is there either way, and submit checks every photo.
+ */
+function alreadyStored(status: number, body: string): boolean {
+  return status === 409 || (status === 400 && /duplicate|already exists/i.test(body));
+}
+
+/** PUTs one prepared JPEG to its signed upload URL; resolves once storage has it. */
+export async function uploadPhoto(
+  localUri: string,
+  uploadUrl: string,
+  position: number,
+): Promise<void> {
+  let body: Blob;
+  try {
+    body = await (await fetch(localUri)).blob();
+  } catch {
+    throw new PhotoUploadError('file', position);
+  }
+  if (body.size === 0) throw new PhotoUploadError('file', position);
+
+  let res: Response;
+  try {
+    res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'content-type': 'image/jpeg' },
+      body,
+    });
+  } catch {
+    throw new PhotoUploadError('network', position);
+  }
+  if (res.ok) return;
+  const text = await res.text().catch(() => '');
+  if (alreadyStored(res.status, text)) return;
+  throw new PhotoUploadError('rejected', position, res.status);
+}
+
+export type SendProgress =
+  | { step: 'reserving' }
+  | { step: 'uploading'; current: number; total: number }
+  | { step: 'submitting' };
+
+export type MaterialLink = { stepId: string | null; goalId: string | null };
+
+/**
+ * Sending one fixed set of photos. Keep the instance for retries: it keeps
+ * its client_request_id (the API then answers with the same material), skips
+ * photos storage already confirmed, and asks for fresh upload URLs when
+ * storage refused one. A changed photo set needs a new instance.
+ */
+export class MaterialUpload {
+  private requestId = newId();
+  private materialId: string | null = null;
+  /** Signed upload URL per photo position (index = position). */
+  private targets: string[] | null = null;
+  private readonly uploaded = new Set<number>();
+  private readonly photoUris: readonly string[];
+  private readonly link: MaterialLink;
+
+  constructor(photoUris: readonly string[], link: MaterialLink) {
+    this.photoUris = [...photoUris];
+    this.link = link;
+  }
+
+  /** Resolves once the API has accepted the photos for reading. */
+  async send(onProgress: (p: SendProgress) => void): Promise<void> {
+    const total = this.photoUris.length;
+    let materialId = this.materialId;
+    let targets = this.targets;
+
+    if (!materialId || !targets) {
+      onProgress({ step: 'reserving' });
+      const res = await createMaterial({
+        client_request_id: this.requestId,
+        photo_mimes: this.photoUris.map(() => 'image/jpeg' as const),
+        ...(this.link.stepId ? { step_id: this.link.stepId } : {}),
+        ...(this.link.goalId ? { goal_id: this.link.goalId } : {}),
+      });
+      materialId = res.material.id;
+      this.materialId = materialId;
+      // An earlier try already got through; only its answer was lost.
+      if (res.material.status !== 'awaiting_upload') return;
+      targets = this.targetsFrom(res.uploads);
+      this.targets = targets;
+    }
+
+    for (const [position, uri] of this.photoUris.entries()) {
+      if (this.uploaded.has(position)) continue;
+      const url = targets[position];
+      if (url === undefined) throw new Error(`No upload URL for photo ${position + 1}`);
+      onProgress({ step: 'uploading', current: position + 1, total });
+      try {
+        await uploadPhoto(uri, url, position);
+      } catch (err) {
+        // Refused (e.g. the URL expired): the next try gets fresh URLs for the same material.
+        if (err instanceof PhotoUploadError && err.kind === 'rejected') this.targets = null;
+        throw err;
+      }
+      this.uploaded.add(position);
+    }
+
+    onProgress({ step: 'submitting' });
+    try {
+      await submitMaterial(materialId);
+    } catch (err) {
+      if (err instanceof ApiError && err.reason === 'photos_missing')
+        this.forgetMissing(err.details);
+      throw err;
+    }
+  }
+
+  /** One URL per photo, by position. A mismatch starts a new material on the next try. */
+  private targetsFrom(uploads: CreateMaterialResponse['uploads']): string[] {
+    const urls = this.photoUris.map(
+      (_, position) => uploads.find((u) => u.position === position)?.url,
+    );
+    const complete = urls.filter((u): u is string => u !== undefined);
+    if (uploads.length !== this.photoUris.length || complete.length !== urls.length) {
+      this.requestId = newId();
+      this.materialId = null;
+      throw new Error('The upload slots do not match the photos');
+    }
+    return complete;
+  }
+
+  /** Submit found photos missing (details.missing = positions): upload those again next time. */
+  private forgetMissing(details: Record<string, unknown> | null): void {
+    const missing = details?.missing;
+    if (!Array.isArray(missing)) {
+      this.uploaded.clear();
+      return;
+    }
+    for (const position of missing) {
+      if (typeof position === 'number') this.uploaded.delete(position);
+    }
+  }
 }

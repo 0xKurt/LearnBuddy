@@ -1,0 +1,28 @@
+{
+  "title": "Was Buddy über dich weiß",
+  "intro": "Buddy merkt sich nur, was du ihm erzählt hast. Du kannst alles ändern oder entfernen.",
+  "lasting": "Das bleibt",
+  "temporary": "Nur für eine Weile",
+  "temporary_hint": "Das endet von selbst. Danach vergisst Buddy es.",
+  "until": "Bis einschließlich {{date}}.",
+  "source": {
+    "learner_stated": "Du hast gesagt: „{{quote}}“",
+    "learner_stated_plain": "Das hast du Buddy erzählt.",
+    "learner_edited": "Von dir geändert.",
+    "account_holder": "Von einem Erwachsenen eingetragen."
+  },
+  "edit": "Ändern",
+  "edit_a11y": "Ändern: {{statement}}",
+  "edit_input": "Was Buddy sich merken soll",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "remove": "Entfernen",
+  "remove_a11y": "Entfernen: {{statement}}",
+  "saved": "Geändert.",
+  "removed": "Entfernt. Buddy vergisst das.",
+  "confirm_title": "Das entfernen?",
+  "confirm_body": "„{{statement}}“ – Buddy vergisst das dann.",
+  "confirm_cta": "Ja, entfernen",
+  "empty_title": "Noch nichts gemerkt",
+  "empty_body": "Erzähl Buddy einfach, was bei dir ansteht. Was er sich merkt, steht dann hier."
+}

@@ -189,13 +189,23 @@ identityRoutes.put('/account/pin', requireUser, requireAccount, async (c) => {
   const deps = depsOf(c);
   const input = await readBody(c, SetPinRequest);
   const account = c.get('account');
+  // Proof that the adult is here: the current PIN, or having just signed in
+  // with the password (within 5 minutes; a token refresh does not count).
+  const authAt = c.get('user').authenticatedAt;
+  const fresh = authAt !== null && deps.now().getTime() / 1000 - authAt < 300;
   if (account.pin_hash) {
     const ok = input.current_pin ? await verifyPin(input.current_pin, account.pin_hash) : false;
-    // A fresh sign-in (within 5 minutes) also allows resetting a forgotten PIN.
-    const authAt = c.get('user').authenticatedAt;
-    const fresh = authAt !== null && deps.now().getTime() / 1000 - authAt < 300;
     if (!ok && !fresh)
       throw new AppError('forbidden', 'Current PIN required', { reason: 'pin_required' });
+  } else if (!fresh) {
+    // The first PIN of a minor's account guards the adult surface: the
+    // child holding the phone must not be able to set it.
+    const learner = await findLearner(deps.db, account.id);
+    if (learner && isMinor(learner.birth_date, deps.now())) {
+      throw new AppError('forbidden', 'Sign in again to set the PIN', {
+        reason: 'reauth_required',
+      });
+    }
   }
   await deps.db.query(
     `update accounts set pin_hash = $2, pin_failed_count = 0, pin_locked_until = null where id = $1`,

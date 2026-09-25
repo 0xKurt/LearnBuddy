@@ -13,6 +13,10 @@ export default tseslint.config(
       '**/.vercel/**',
       '**/.turbo/**',
       '**/coverage/**',
+      // Build output and browser-walkthrough results (see scripts/web-walkthrough.sh).
+      '**/dist-web/**',
+      'test-results/**',
+      'playwright-report/**',
       'design-examples/**',
       'docs/**',
       // Tool config files loaded as CommonJS by their tools regardless of
@@ -35,6 +39,13 @@ export default tseslint.config(
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
       '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+  {
+    // Plain Node scripts (tooling): Node's globals.
+    files: ['**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly', URL: 'readonly', Buffer: 'readonly' },
     },
   },
   prettier,

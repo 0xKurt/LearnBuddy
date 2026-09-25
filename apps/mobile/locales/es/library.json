@@ -1,0 +1,39 @@
+{
+  "title": "Mi material",
+  "capture": "Hacer una foto de una ficha nueva",
+  "unsorted": "Sin asignatura",
+  "untitled": "Sin título",
+  "questions_one": "{{count}} ejercicio",
+  "questions_other": "{{count}} ejercicios",
+  "status": {
+    "reading": "en lectura",
+    "unreadable": "ilegible",
+    "not_read": "sin leer",
+    "incomplete": "incompleta"
+  },
+  "failure": {
+    "unreadable": "Las fotos no se leían bien. Prueba con más luz y desde arriba.",
+    "not_learning_material": "Esto no parece ni una ficha, ni un cuaderno, ni una página de libro.",
+    "model_error": "Algo ha fallado durante la lectura.",
+    "photos_missing": "No han llegado todas las fotos.",
+    "budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar."
+  },
+  "incomplete_hint": "Las fotos no han llegado completas. Elimina la ficha y vuelve a hacerle una foto.",
+  "practice": "Practicar",
+  "practice_label": "Practicar “{{title}}”",
+  "retry": "Volver a leer",
+  "retry_label": "Volver a leer “{{title}}”",
+  "retry_started": "Vuelvo a leer la ficha.",
+  "delete": "Eliminar",
+  "delete_label": "Eliminar “{{title}}”",
+  "delete_sheet": {
+    "title": "¿Eliminar la ficha?",
+    "body": "Se eliminarán “{{title}}” y sus ejercicios, y también las fotos. No se puede deshacer.",
+    "confirm": "Eliminar"
+  },
+  "deleted": "Ficha eliminada.",
+  "empty": {
+    "title": "Aquí aparecerán tus fichas",
+    "body": "Haz una foto de una ficha, una página del libro o tu cuaderno: lo convierto en ejercicios."
+  }
+}

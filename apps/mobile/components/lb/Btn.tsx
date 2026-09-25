@@ -10,15 +10,21 @@ type Props = {
   variant?: Variant;
   size?: Size;
   full?: boolean;
+  /** Centre a button that is not full width (it sits at the start otherwise). */
+  center?: boolean;
+  /** Let a long label wrap onto several lines (answer choices, starters) instead of shrinking it. */
+  wrap?: boolean;
   disabled?: boolean;
+  /** Set for one choice of several (Segmented): read out as a radio button and whether it is chosen. */
+  selected?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
 };
 
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
-  sm: { height: 44, paddingHorizontal: 16, fontSize: 13 },
-  md: { height: 48, paddingHorizontal: 22, fontSize: 14 },
-  lg: { height: 54, paddingHorizontal: 26, fontSize: 15 },
+  sm: { height: 44, paddingHorizontal: 16, fontSize: 15 },
+  md: { height: 48, paddingHorizontal: 22, fontSize: 16 },
+  lg: { height: 54, paddingHorizontal: 26, fontSize: 17 },
 };
 
 const VARIANT_STYLE: Record<
@@ -43,7 +49,10 @@ export function Btn({
   variant = 'primary',
   size = 'md',
   full = false,
+  center = false,
+  wrap = false,
   disabled = false,
+  selected,
   accessibilityLabel,
   accessibilityHint,
 }: Props) {
@@ -54,13 +63,15 @@ export function Btn({
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      accessibilityRole="button"
+      accessibilityRole={selected === undefined ? 'button' : 'radio'}
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled }}
+      accessibilityState={
+        selected === undefined ? { disabled } : { disabled, selected, checked: selected }
+      }
       android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
       style={{
-        alignSelf: full ? 'stretch' : 'flex-start',
+        alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
         opacity: disabled ? 0.6 : 1,
         borderRadius: 12,
         overflow: 'hidden',
@@ -69,7 +80,7 @@ export function Btn({
       {({ pressed }) => (
         <View
           style={{
-            height: s.height,
+            ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { height: s.height }),
             paddingHorizontal: s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: 12,
@@ -77,20 +88,22 @@ export function Btn({
             borderColor: v.borderColor,
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: wrap ? 'flex-start' : 'center',
             opacity: pressed ? 0.78 : 1,
           }}
         >
           <Text
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.82}
+            {...(wrap
+              ? {}
+              : { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.82 })}
             style={{
+              flexShrink: 1,
               color: v.color,
               fontSize: s.fontSize,
+              lineHeight: Math.round(s.fontSize * 1.35),
               fontWeight: '600',
               letterSpacing: -0.1,
-              textAlign: 'center',
+              textAlign: wrap ? 'left' : 'center',
             }}
           >
             {children}

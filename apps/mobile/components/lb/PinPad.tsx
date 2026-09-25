@@ -4,6 +4,7 @@
 // once the 4th digit is entered; the parent clears or advances state.
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
@@ -31,6 +32,7 @@ const KEYS: Array<{ label: string; value: 'digit' | 'back' | 'none'; digit?: str
 ];
 
 export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
+  const { t } = useTranslation('common');
   const [entered, setEntered] = useState('');
 
   useEffect(() => {
@@ -53,7 +55,12 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
 
   return (
     <View style={{ alignItems: 'center', gap: 24 }}>
-      <View style={{ flexDirection: 'row', gap: 14 }}>
+      <View
+        accessible
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={t('a11y.pin_progress', { count: entered.length })}
+        style={{ flexDirection: 'row', gap: 14 }}
+      >
         {[0, 1, 2, 3].map((i) => (
           <View
             key={i}
@@ -74,6 +81,10 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
             key={`${k.label}-${i}`}
             onPress={() => press(k)}
             disabled={disabled || k.value === 'none'}
+            accessibilityRole="button"
+            accessibilityLabel={k.value === 'back' ? t('a11y.pin_delete') : k.label}
+            accessibilityElementsHidden={k.value === 'none'}
+            importantForAccessibility={k.value === 'none' ? 'no-hide-descendants' : 'auto'}
             style={{ opacity: disabled ? 0.4 : 1 }}
           >
             {({ pressed }) => (

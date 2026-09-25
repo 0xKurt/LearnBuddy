@@ -129,7 +129,9 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 1. one worker per learner (lease on `buddy_settings`);
 2. agreed reminders → fixed template (i18n), no model; with contact off or paused the reminder
    waits in the app, as Buddy promised;
-3. learner is in the app right now → look again in 20 minutes;
+3. learner is in the app right now → an unasked look (routine, countdown, a scheduled check) waits
+   20 minutes; what follows from the learner's own action (photos read, practice finished) runs now —
+   right after the reading or the practice, not on the next scheduler run;
 4. nothing to work with, or only a routine look while contact is off → silence, no model call;
 5. no model configured → fixed fallbacks immediately;
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
@@ -218,11 +220,15 @@ Finishing records evidence on Buddy's step (only if something was answered) and 
 ## Home
 
 `modules/buddy/home.ts`. Everything is derived from stored state: **now** (resume practice ›
-result of the last practice › prepared practice › material failed › material being read › photo
-needed), **decision** (how did the test go › enable contact), **done** (Buddy's actions of the
-last 72 h with status and undo), **next** (tests and planned steps), the **thread** (with the
-action cards and delivery status of each message) and **system** status (model, push, contact,
-scheduler).
+result of the last practice › prepared practice › material failed › material being read, or
+photos still being sent for up to 10 minutes › photo needed), **working** (Buddy is acting on
+the learner's own photos or just-finished practice: a due or running check they caused),
+**decision** (how did the test go › enable contact), **done** (Buddy's actions of the last 72 h
+with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
+and delivery status of each message) and **system** status (model, push, contact, scheduler).
+
+Photos that never all arrive are set aside after a day and whatever did arrive is deleted at
+once (`abandonStaleUploads`, run by the scheduler).
 
 ## Testing
 
@@ -236,3 +242,7 @@ scheduler).
   database tests are skipped; `LB_REQUIRE_TEST_DB=1` (CI) makes that a failure.
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
   devices, Supabase Auth/Storage themselves, pg_cron/pg_net on a hosted project.
+- Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
+  scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
+  a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's
+  web build talks to it like to production. Test tooling only; never deployed.

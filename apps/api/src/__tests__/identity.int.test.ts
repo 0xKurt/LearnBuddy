@@ -124,9 +124,9 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
   });
 
   it('locks the PIN after 5 wrong attempts for 15 minutes', async () => {
-    const l = await onboard(env, { relation: 'child' });
-    expect((await l.api.put('/account/pin', { pin: '4711' })).status).toBe(200);
-    // Changing it later needs the current PIN (or a fresh sign-in).
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    // Later, changing it needs the current PIN or a fresh password sign-in.
+    env.clock.minutes(6);
     expect((await l.api.put('/account/pin', { pin: '1234' })).status).toBe(403);
     for (let i = 0; i < 5; i++) {
       const wrong = await l.api.post('/account/admin-session', { pin: '0000' });
@@ -140,9 +140,25 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
     expect(ok.body.admin_token).toBeTruthy();
   });
 
-  it('gates export and deletion of a minor profile behind the adult PIN', async () => {
+  it('does not let the child set or change the adult PIN (a token refresh is not a sign-in)', async () => {
     const l = await onboard(env, { relation: 'child' });
-    await l.api.put('/account/pin', { pin: '2468' });
+    // Days later, on the child's phone: the session is only refreshed, never re-entered.
+    env.clock.hours(48);
+    const first = await l.api.put('/account/pin', { pin: '1111' });
+    expect(first.status).toBe(403);
+    expect(first.body).toMatchObject({ error: { details: { reason: 'reauth_required' } } });
+    // The adult signs in with the password: now it works, and changing it later needs that PIN.
+    env.auth.signedInAt(l.token, Math.floor(env.clock.now().getTime() / 1000));
+    expect((await l.api.put('/account/pin', { pin: '2222' })).status).toBe(200);
+    env.clock.minutes(10);
+    expect((await l.api.put('/account/pin', { pin: '3333' })).status).toBe(403);
+    expect((await l.api.put('/account/pin', { pin: '3333', current_pin: '2222' })).status).toBe(
+      200,
+    );
+  });
+
+  it('gates export and deletion of a minor profile behind the adult PIN', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '2468' });
     const denied = await l.api.get('/account/export');
     expect(denied.status).toBe(403);
     expect(denied.body).toMatchObject({ error: { code: 'admin_required' } });

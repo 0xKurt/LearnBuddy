@@ -1,0 +1,39 @@
+{
+  "title": "Mes cours",
+  "capture": "Prendre une nouvelle fiche en photo",
+  "unsorted": "Sans matière",
+  "untitled": "Sans titre",
+  "questions_one": "{{count}} exercice",
+  "questions_other": "{{count}} exercices",
+  "status": {
+    "reading": "lecture en cours",
+    "unreadable": "illisible",
+    "not_read": "non lue",
+    "incomplete": "incomplète"
+  },
+  "failure": {
+    "unreadable": "Les photos n'étaient pas bien lisibles. Réessaie avec plus de lumière, en prenant la photo d'en haut.",
+    "not_learning_material": "Ça ne ressemble ni à une fiche, ni à un cahier, ni à une page de manuel.",
+    "model_error": "Un problème est survenu pendant la lecture.",
+    "photos_missing": "Toutes les photos ne sont pas arrivées.",
+    "budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain."
+  },
+  "incomplete_hint": "Les photos ne sont pas arrivées en entier. Supprime la fiche et reprends-la en photo.",
+  "practice": "S'entraîner",
+  "practice_label": "S'entraîner sur «{{title}}»",
+  "retry": "Relire",
+  "retry_label": "Relire «{{title}}»",
+  "retry_started": "Je relis la fiche.",
+  "delete": "Supprimer",
+  "delete_label": "Supprimer «{{title}}»",
+  "delete_sheet": {
+    "title": "Supprimer la fiche?",
+    "body": "«{{title}}» et ses exercices seront supprimés, les photos aussi. Tu ne pourras pas revenir en arrière.",
+    "confirm": "Supprimer"
+  },
+  "deleted": "Fiche supprimée.",
+  "empty": {
+    "title": "Tes fiches arriveront ici",
+    "body": "Prends en photo une fiche, une page de manuel ou ton cahier – j'en fais des exercices."
+  }
+}

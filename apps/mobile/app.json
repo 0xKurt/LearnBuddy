@@ -15,10 +15,8 @@
       "supportsTablet": false,
       "associatedDomains": ["applinks:learnbuddy.app"],
       "infoPlist": {
-        "NSCameraUsageDescription": "Damit du Lernmaterial fotografieren kannst.",
-        "NSMicrophoneUsageDescription": "Damit du Antworten sprechen kannst.",
-        "NSSpeechRecognitionUsageDescription": "Damit deine gesprochenen Antworten erkannt werden.",
-        "NSFaceIDUsageDescription": "Damit Erwachsene den Konto-Bereich mit Face ID öffnen können."
+        "NSCameraUsageDescription": "Damit du Arbeitsblätter fotografieren kannst.",
+        "NSPhotoLibraryUsageDescription": "Damit du Fotos von Arbeitsblättern auswählen kannst."
       }
     },
     "android": {
@@ -27,12 +25,17 @@
       "adaptiveIcon": {
         "backgroundColor": "#f0eee9"
       },
-      "permissions": ["CAMERA", "RECORD_AUDIO"],
+      "permissions": ["CAMERA"],
       "intentFilters": [
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "learnbuddy.app" }],
+          "data": [
+            {
+              "scheme": "https",
+              "host": "learnbuddy.app"
+            }
+          ],
           "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
@@ -42,12 +45,12 @@
     },
     "plugins": [
       "expo-router",
-      "expo-camera",
       "expo-secure-store",
       [
-        "expo-local-authentication",
+        "expo-image-picker",
         {
-          "faceIDPermission": "Damit Erwachsene den Konto-Bereich mit Face ID öffnen können."
+          "photosPermission": "Damit du Fotos von Arbeitsblättern auswählen kannst.",
+          "cameraPermission": "Damit du Arbeitsblätter fotografieren kannst."
         }
       ],
       [
@@ -56,13 +59,7 @@
           "color": "#b1715c"
         }
       ],
-      "@sentry/react-native",
-      "expo-localization",
-      "expo-sqlite",
-      "@react-native-voice/voice"
-    ],
-    "experiments": {
-      "typedRoutes": true
-    }
+      "expo-localization"
+    ]
   }
 }

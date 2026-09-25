@@ -31,7 +31,7 @@ Wenn ein Tutorial oder Beispielcode `@google/generative-ai` oder `googleapis.com
 ## 0. Vorab — die Kosten-Realität
 
 - **$300 / 90 Tage Free Trial** beim ersten Sign-up. Reicht für Monate von D1-Entwicklung.
-- Danach: ~$0.0001 pro Credit (siehe `docs/08-cost-and-credits.md`). Heavy User = $0.076/Monat. Selbst 50 Testnutzer kosten dich <$4/Monat.
+- Danach: ~$0.0001 pro Credit (siehe `docs/legacy/08-cost-and-credits.md`, heute: `docs/architecture.md` §Limits). Heavy User = $0.076/Monat. Selbst 50 Testnutzer kosten dich <$4/Monat.
 - Setze **Budget Alerts** (Schritt 3 unten) — Google schaltet die API nicht automatisch ab, du bekommst nur Email. Das ist die einzige Achilles­ferse.
 
 ---
@@ -147,96 +147,55 @@ Vertex authentifiziert via Service-Account-JSON. Niemals OAuth User Credentials 
 
 ## 7. Lokale Entwicklung — Env-Variablen
 
-LearnBuddy lädt env via `apps/api/src/lib/env.ts`. Erweitere `Env`-Schema um die drei Vertex-Vars (passiert in Slice D1, hier nur die Werte):
+Die API liest ihre Konfiguration über `apps/api/src/config.ts` (Vorlage: `apps/api/.env.example`).
+Der Node-Server (`pnpm --filter @learnbuddy/api dev`) lädt `apps/api/.env.local` automatisch.
 
 ```env
 # apps/api/.env.local  (NICHT ins Repo committen)
-GOOGLE_APPLICATION_CREDENTIALS=/Users/<dein-user>/.config/learnbuddy/vertex-sa.json
-GOOGLE_CLOUD_PROJECT=learnbuddy-prod-471823
+LLM_BACKEND=vertex
+GOOGLE_CLOUD_PROJECT=<deine-projekt-id>
 GOOGLE_VERTEX_LOCATION=europe-west4
+GOOGLE_APPLICATION_CREDENTIALS=/Users/<dein-user>/.config/learnbuddy/vertex-sa.json
+# Modelle (Standardwerte):
+VERTEX_MODEL_SMART=gemini-2.5-flash
+VERTEX_MODEL_FAST=gemini-2.5-flash-lite
 ```
 
-`GOOGLE_APPLICATION_CREDENTIALS` ist der Standard-Pfad-Var, den die `@google-cloud/vertexai` und `google-auth-library` SDKs automatisch lesen.
-
-Für `pnpm dev` muss das File geladen werden. Wenn das nicht schon passiert, in `apps/api/src/dev-server.ts` an den Anfang:
-
-```ts
-import { config } from 'dotenv';
-config({ path: '.env.local' });
-```
+Ohne diese Werte läuft die API mit `LLM_BACKEND=disabled`: Buddy sagt dann ehrlich, dass er gerade
+nicht antworten kann, und nutzt feste Ersatzabläufe (vorbereitete Übung vor einer Arbeit usw.).
 
 ---
 
 ## 8. Vercel / Produktions-Deployment
 
-1. **Vercel Dashboard → LearnBuddy Project → Settings → Environment Variables**.
-2. Drei Variablen anlegen:
-   - `GOOGLE_CLOUD_PROJECT` = `learnbuddy-prod-471823`
+1. **Vercel Dashboard → Project → Settings → Environment Variables**.
+2. Anlegen:
+   - `LLM_BACKEND` = `vertex`
+   - `GOOGLE_CLOUD_PROJECT` = deine Projekt-ID
    - `GOOGLE_VERTEX_LOCATION` = `europe-west4`
-   - `GOOGLE_APPLICATION_CREDENTIALS_JSON` = (Inhalt der JSON-Datei als String einfügen — Vercel akzeptiert mehrzeilige Werte)
-3. Im Code wird der JSON-String zur Runtime in eine Tempdatei geschrieben und der Pfad in `GOOGLE_APPLICATION_CREDENTIALS` gesetzt:
+   - `GOOGLE_APPLICATION_CREDENTIALS_JSON` = Inhalt der JSON-Datei (mehrzeilig ist ok)
+3. Die API schreibt den JSON-String beim Start in eine Tempdatei (Rechte 0600) und setzt
+   `GOOGLE_APPLICATION_CREDENTIALS` darauf (`apps/api/src/llm/vertex.ts`).
 
-```ts
-// apps/api/src/lib/llm/vertex-bootstrap.ts (Slice D1)
-import { writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-
-if (
-  process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON &&
-  !process.env.GOOGLE_APPLICATION_CREDENTIALS
-) {
-  const path = join(tmpdir(), 'vertex-sa.json');
-  writeFileSync(path, process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON, { mode: 0o600 });
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = path;
-}
-```
-
-Das passiert einmal pro Vercel-Function-Cold-Start, ist also nicht teuer.
-
-> **Alternative**: GCP Workload Identity Federation (besser, keine Key-Datei). Für Privatperson + Vercel etwas komplex einzurichten; lohnt sich erst wenn der Service produktiv läuft.
+> **Alternative**: GCP Workload Identity Federation (ohne Key-Datei) — lohnt sich, sobald der Dienst produktiv läuft.
 
 ---
 
 ## 9. Connectivity-Test
 
-Bevor D1 implementiert wird, kurz prüfen, dass der Service-Account wirklich greift. Im API-Workspace:
+Mit gesetzten Variablen (siehe §7) prüft dieses Skript eine echte, strukturierte Modellantwort
+über denselben Weg, den Buddy nutzt (JSON-Schema, Timeout, Token-Grenzen):
 
 ```sh
-pnpm -F @learnbuddy/api add @google-cloud/vertexai
+cd apps/api
+npx tsx scripts/probe-model.ts
 ```
 
-Dann `apps/api/scripts/probe-vertex.ts`:
+Erwartung: eine Zeile mit `ok: true`, dem Modellnamen, Tokens und Kosten. Häufige Fehler:
 
-```ts
-import { VertexAI } from '@google-cloud/vertexai';
-
-const vertex = new VertexAI({
-  project: process.env.GOOGLE_CLOUD_PROJECT!,
-  location: process.env.GOOGLE_VERTEX_LOCATION!,
-});
-const model = vertex.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
-
-const result = await model.generateContent({
-  contents: [{ role: 'user', parts: [{ text: 'Sag "OK" auf Deutsch.' }] }],
-});
-console.log(result.response.candidates?.[0]?.content?.parts?.[0]?.text);
-```
-
-Ausführen:
-
-```sh
-GOOGLE_APPLICATION_CREDENTIALS=~/.config/learnbuddy/vertex-sa.json \
-GOOGLE_CLOUD_PROJECT=learnbuddy-prod-471823 \
-GOOGLE_VERTEX_LOCATION=europe-west4 \
-npx tsx apps/api/scripts/probe-vertex.ts
-```
-
-Erwartung: `OK` (oder Variante davon) wird ausgegeben. Wenn nicht, Fehlermeldung lesen — die häufigsten sind:
-
-- `PERMISSION_DENIED: aiplatform.endpoints.predict` → Service Account fehlt die `Vertex AI User` Rolle (Schritt 6.3 prüfen)
-- `404 Model not found` → Region falsch oder Modellname falsch geschrieben
-- `Could not load the default credentials` → `GOOGLE_APPLICATION_CREDENTIALS` Env-Var nicht gesetzt
+- `PERMISSION_DENIED: aiplatform.endpoints.predict` → Service Account fehlt die Rolle `Vertex AI User` (Schritt 6.3)
+- `404 Model not found` → Region oder Modellname falsch
+- `Could not load the default credentials` → `GOOGLE_APPLICATION_CREDENTIALS` nicht gesetzt
 
 ---
 
@@ -261,7 +220,7 @@ Für deine eigene Datenschutz-Dokumentation (falls jemals nötig):
 3. **Vertex AI Data Governance**: <https://cloud.google.com/vertex-ai/docs/general/data-governance> — bestätigt, dass Customer Data nicht zum Training verwendet wird.
 4. **EU Data Boundary Commitment**: <https://cloud.google.com/blog/products/identity-security/announcing-eu-sovereign-controls-for-google-workspace> — relevant falls du das in der Privacy Policy referenzieren willst.
 
-In LearnBuddys `docs/09-privacy.md` §5 (Subprocessors) Vertex AI eintragen, wenn D1 live geht.
+In LearnBuddys `docs/privacy.md` §Processors Vertex AI eintragen, wenn D1 live geht.
 
 ---
 
@@ -329,12 +288,8 @@ ls -la "$GOOGLE_APPLICATION_CREDENTIALS"
 
 ---
 
-## Anschluss an Slice D1
+## Danach
 
-Sobald du diese 14 Schritte durchhast, melde dich — der nächste Slice (`D1 — Vertex AI gateway`) braucht:
-
-1. `GOOGLE_CLOUD_PROJECT`, `GOOGLE_VERTEX_LOCATION` als Werte (für `apps/api/src/lib/env.ts`).
-2. Den Service-Account-JSON-Pfad lokal verfügbar.
-3. Sign-off, dass `@google-cloud/vertexai` als Dependency zu `apps/api` hinzugefügt werden darf (~3 MB, Standard Google-SDK-Größe).
-
-Danach lege ich D1 als reine Vertex-Implementation an, mit dem `LLMGateway`-Interface davor — falls du später auf Mistral oder Bedrock wechseln willst, ist das eine Slice und nicht eine Refactoring-Welle.
+Mit gesetzten Variablen nutzt Buddy das Modell für Gespräche, Hintergrund-Checks, das Lesen von
+Arbeitsblättern und den Übungs-Tutor. Kosten werden pro Aufruf in `llm_calls` erfasst und pro
+Lernendem und Tag begrenzt (`docs/architecture.md` §Limits).

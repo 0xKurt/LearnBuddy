@@ -1,138 +1,49 @@
-// Cold-launch router. Doc 04 §account + Doc 05 §navigation.
-//
-// On mount we:
-//   1. Hydrate the persisted app locale + session.
-//   2. If the user hasn't picked a locale yet — /(onboarding)/language.
-//   3. If no session — welcome.
-//   4. Otherwise call GET /account and pick:
-//        - no consent       → /(onboarding)/consent
-//        - no learner       → /(onboarding)/who-uses
-//        - else             → /(learner)/home
-//      A 401 means the persisted session is dead; clear it and welcome.
+// Where does this person belong? No session → welcome; no consent → consent;
+// no profile → profile; otherwise Buddy. Decided from the API, not guessed.
 
 import { Redirect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { clearSession, loadSession, setSession } from '../lib/auth/session.js';
-import { ApiError } from '../lib/api/client.js';
-import { getAccount } from '../lib/api/account.js';
-import { hydrateSavedLocale, i18n } from '../lib/i18n/index.js';
-import { loadSavedLocale } from '../lib/i18n/locale-storage.js';
-import { LB } from '../lib/theme/colors.js';
+import { Btn } from '../components/lb/Btn.js';
+import { LoadingState } from '../components/lb/LoadingState.js';
+import { Screen } from '../components/lb/Screen.js';
+import { useMe } from '../lib/api/queries.js';
+import { currentSession } from '../lib/auth/session.js';
+import { messageFor } from '../lib/errors.js';
+import { applyLocale } from '../lib/i18n/index.js';
+import { EmptyState } from '../components/lb/EmptyState.js';
 
-type Destination =
-  | '/(onboarding)/language'
-  | '/(onboarding)/welcome'
-  | '/(onboarding)/consent'
-  | '/(onboarding)/add-profile'
-  | '/(learner)/home';
+export default function Index() {
+  const signedIn = currentSession() !== null;
+  if (!signedIn) return <Redirect href="/welcome" />;
+  return <SignedInGate />;
+}
 
-export default function IndexRoute() {
-  const [dest, setDest] = useState<Destination | null>(null);
-  const [loadError, setLoadError] = useState(false);
-
-  const resolve = useCallback(() => {
-    setLoadError(false);
-    setDest(null);
-    let cancelled = false;
-    void (async () => {
-      await hydrateSavedLocale();
-      const savedLocale = await loadSavedLocale();
-      if (cancelled) return;
-      if (!savedLocale) {
-        setDest('/(onboarding)/language');
-        return;
-      }
-      const session = await loadSession();
-      if (cancelled) return;
-      if (!session) {
-        setDest('/(onboarding)/welcome');
-        return;
-      }
-      try {
-        const account = await getAccount();
-        if (cancelled) return;
-        // Backfill account_id into the stored session if it wasn't set during
-        // login (first login stores account_id: '' since getAccount hadn't run yet).
-        if (!session.account_id) {
-          await setSession({ ...session, account_id: account.id });
-        }
-        if (!account.consent) {
-          setDest('/(onboarding)/consent');
-        } else if (!account.learner) {
-          setDest('/(onboarding)/add-profile');
-        } else {
-          setDest('/(learner)/home');
-        }
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) {
-          await clearSession();
-          setDest('/(onboarding)/welcome');
-        } else {
-          setLoadError(true);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+function SignedInGate() {
+  const { t } = useTranslation('common');
+  const me = useMe();
+  const learnerLocale = me.data?.learner?.locale;
   useEffect(() => {
-    return resolve();
-  }, [resolve]);
+    if (learnerLocale) applyLocale(learnerLocale);
+  }, [learnerLocale]);
 
-  if (loadError) {
+  if (me.isPending) return <LoadingState label={t('loading')} />;
+  if (me.isError) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: LB.paper,
-          gap: 16,
-          paddingHorizontal: 32,
-        }}
-      >
-        <Text style={{ fontSize: 16, color: LB.ink, textAlign: 'center' }}>
-          {i18n.t('common:load_error')}
-        </Text>
-        <Pressable onPress={resolve} hitSlop={12}>
-          <View
-            style={{
-              backgroundColor: LB.ink,
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              borderRadius: 999,
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
-              {i18n.t('common:actions.retry')}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
+      <Screen>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <EmptyState
+            title={messageFor(me.error)}
+            action={<Btn onPress={() => void me.refetch()}>{t('actions.retry')}</Btn>}
+          />
+        </View>
+      </Screen>
     );
   }
-
-  if (!dest) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: LB.paper,
-        }}
-      >
-        <ActivityIndicator color={LB.ink2} accessibilityLabel={i18n.t('common:loading')} />
-      </View>
-    );
-  }
-  // expo-router's typed-routes regenerate on `expo start`, not `expo export`;
-  // the language route is new this slice so the typed-routes .d.ts may not
-  // yet list it. Cast keeps the typecheck green until the type file catches up.
-  return <Redirect href={dest as never} />;
+  const { account, learner } = me.data;
+  if (!account || !account.consent_current) return <Redirect href="/consent" />;
+  if (!learner) return <Redirect href="/profile" />;
+  return <Redirect href="/buddy" />;
 }

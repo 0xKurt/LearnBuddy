@@ -1,0 +1,28 @@
+{
+  "title": "Ce que Buddy sait de toi",
+  "intro": "Buddy ne retient que ce que tu lui as raconté. Tu peux tout modifier ou retirer.",
+  "lasting": "Ce qui reste",
+  "temporary": "Juste pour un moment",
+  "temporary_hint": "Ça s'arrête tout seul. Ensuite, Buddy l'oublie.",
+  "until": "Jusqu'au {{date}} inclus.",
+  "source": {
+    "learner_stated": "Tu as dit: «{{quote}}»",
+    "learner_stated_plain": "Tu l'as raconté à Buddy.",
+    "learner_edited": "Modifié par toi.",
+    "account_holder": "Ajouté par un adulte."
+  },
+  "edit": "Modifier",
+  "edit_a11y": "Modifier: {{statement}}",
+  "edit_input": "Ce que Buddy doit retenir",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "remove": "Retirer",
+  "remove_a11y": "Retirer: {{statement}}",
+  "saved": "Modifié.",
+  "removed": "Retiré. Buddy l'oublie.",
+  "confirm_title": "Tu veux retirer ça?",
+  "confirm_body": "«{{statement}}» – Buddy l'oubliera.",
+  "confirm_cta": "Oui, retirer",
+  "empty_title": "Rien de noté pour l'instant",
+  "empty_body": "Raconte simplement à Buddy ce qui t'attend. Ce que Buddy retient apparaîtra ici."
+}

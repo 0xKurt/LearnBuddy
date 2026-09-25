@@ -1,49 +1,41 @@
 {
-  "title": "Material aufnehmen",
-  "subtitle": "Foto vom Heft, Buch oder Arbeitsblatt — bis zu 10 Bilder.",
+  "title": "Fotografier dein Blatt",
+  "intro": "Arbeitsblatt, Buchseite oder Heft – ich mache Übungen daraus.",
+  "tip": "Tipp: Ganze Seite, gutes Licht, von oben.",
+  "privacy": "Die Fotos werden spätestens 7 Tage nach dem Lesen gelöscht.",
+  "camera": "Foto machen",
+  "camera_more": "Noch ein Foto",
+  "library": "Aus Fotos wählen",
+  "photos_title_one": "{{count}} Foto",
+  "photos_title_other": "{{count}} Fotos",
+  "photo_label": "Foto {{index}} von {{total}}",
+  "remove": "Entfernen",
+  "remove_label": "Foto {{index}} entfernen",
+  "limit": "Für ein Blatt gehen höchstens {{max}} Fotos.",
+  "preparing_one": "Foto wird vorbereitet …",
+  "preparing_other": "Foto {{current}} von {{count}} wird vorbereitet …",
+  "send": "Senden",
+  "send_again": "Nochmal senden",
+  "send_hint": "Mach zuerst ein Foto.",
+  "progress": {
+    "reserving": "Einen Moment …",
+    "uploading_one": "Foto wird gesendet …",
+    "uploading_other": "Foto {{current}} von {{count}} wird gesendet …",
+    "submitting": "Fast geschafft …"
+  },
   "permission": {
-    "title": "Wir brauchen kurz Kamerafreigabe",
-    "body": "Damit du dein Material fotografieren kannst. Du kannst die Erlaubnis jederzeit in den Einstellungen ändern.",
-    "cta": "Einstellungen öffnen"
+    "camera": "LearnBuddy darf die Kamera noch nicht benutzen. Du kannst das in den Einstellungen erlauben – oder ein Bild aus deinen Fotos wählen.",
+    "open_settings": "Einstellungen öffnen"
   },
-  "chip": {
-    "sharp": "scharf",
-    "ok": "ok",
-    "blur": "verschwommen — Versuch nochmal",
-    "too_dark": "zu dunkel",
-    "too_bright": "zu hell",
-    "too_small": "Bild zu klein",
-    "tilt": "Halt das Handy etwas gerader"
-  },
-  "tilt_warn": "Halt das Handy etwas gerader",
-  "review": {
-    "keep": "Trotzdem behalten",
-    "redo": "Nochmal versuchen",
-    "discard": "Verwerfen"
-  },
-  "strip": {
-    "label_one": "1 Foto",
-    "label_other": "{{count}} Fotos",
-    "max_hint": "Bis zu 10 Bilder pro Material.",
-    "long_press_hint": "Lang drücken, um ein Foto zu löschen.",
-    "delete_title": "Foto löschen?",
-    "delete_cancel": "Abbrechen",
-    "delete_confirm": "Löschen"
-  },
-  "cta": {
-    "shutter": "Auslöser",
-    "done": "Fertig",
-    "cancel": "Abbrechen",
-    "shutter_error": "Foto fehlgeschlagen — nochmal versuchen?"
-  },
-  "picker": {
-    "title": "Wohin damit?",
-    "folder_title": "Ordner wählen",
-    "no_folder": "Ohne Ordner — direkt im Fach",
-    "no_subjects": "Du hast noch kein Fach. Leg zuerst ein Fach auf dem Startbildschirm an.",
-    "no_subjects_title": "Zuerst ein Fach anlegen"
-  },
-  "limits": {
-    "max_reached": "Mehr als 10 Bilder pro Material geht nicht."
+  "error": {
+    "camera": "Die Kamera ging gerade nicht auf. Du kannst auch ein Bild aus deinen Fotos wählen.",
+    "library": "Deine Fotos gingen gerade nicht auf. Versuch es nochmal.",
+    "prepare_one": "Ein Bild ließ sich nicht öffnen. Nimm ein anderes.",
+    "prepare_other": "{{count}} Bilder ließen sich nicht öffnen. Nimm andere.",
+    "upload_network": "Foto {{index}} ist nicht angekommen – keine Verbindung.",
+    "upload_rejected": "Foto {{index}} ist nicht angekommen.",
+    "upload_file": "Foto {{index}} ist nicht mehr da. Entfern es und mach es neu.",
+    "kept": "Deine Fotos sind noch hier.",
+    "left": "Dein Blatt ist nicht angekommen. Fotografier es bitte nochmal."
   }
 }

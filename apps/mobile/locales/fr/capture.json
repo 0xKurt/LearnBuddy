@@ -1,49 +1,41 @@
 {
-  "title": "Photographier le matériel",
-  "subtitle": "Prends en photo une page, un livre ou une feuille d'exercices — jusqu'à 10 photos.",
+  "title": "Prends ta fiche en photo",
+  "intro": "Fiche, page de manuel ou cahier – j'en fais des exercices.",
+  "tip": "Astuce: la page entière, une bonne lumière, prise d'en haut.",
+  "privacy": "Les photos sont supprimées au plus tard 7 jours après leur lecture.",
+  "camera": "Prendre une photo",
+  "camera_more": "Encore une photo",
+  "library": "Choisir parmi tes photos",
+  "photos_title_one": "{{count}} photo",
+  "photos_title_other": "{{count}} photos",
+  "photo_label": "Photo {{index}} sur {{total}}",
+  "remove": "Retirer",
+  "remove_label": "Retirer la photo {{index}}",
+  "limit": "Une fiche peut avoir au maximum {{max}} photos.",
+  "preparing_one": "Préparation de la photo…",
+  "preparing_other": "Préparation de la photo {{current}} sur {{count}}…",
+  "send": "Envoyer",
+  "send_again": "Renvoyer",
+  "send_hint": "Prends d'abord une photo.",
+  "progress": {
+    "reserving": "Un instant…",
+    "uploading_one": "Envoi de la photo…",
+    "uploading_other": "Envoi de la photo {{current}} sur {{count}}…",
+    "submitting": "On y est presque…"
+  },
   "permission": {
-    "title": "Nous avons besoin de l'accès caméra",
-    "body": "Pour que tu puisses photographier ton matériel. Tu peux changer cela à tout moment dans Réglages.",
-    "cta": "Ouvrir les réglages"
+    "camera": "LearnBuddy n'a pas encore accès à l'appareil photo. Tu peux l'autoriser dans les réglages – ou choisir une image parmi tes photos.",
+    "open_settings": "Ouvrir les réglages"
   },
-  "chip": {
-    "sharp": "nette",
-    "ok": "ok",
-    "blur": "floue — réessaie",
-    "too_dark": "trop sombre",
-    "too_bright": "trop claire",
-    "too_small": "image trop petite",
-    "tilt": "Tiens le téléphone un peu plus droit"
-  },
-  "tilt_warn": "Tiens le téléphone un peu plus droit",
-  "review": {
-    "keep": "Garder quand même",
-    "redo": "Réessayer",
-    "discard": "Supprimer"
-  },
-  "strip": {
-    "label_one": "1 photo",
-    "label_other": "{{count}} photos",
-    "max_hint": "Jusqu'à 10 photos par matériel.",
-    "long_press_hint": "Appuie longuement sur une miniature pour la supprimer.",
-    "delete_title": "Supprimer la photo ?",
-    "delete_cancel": "Annuler",
-    "delete_confirm": "Supprimer"
-  },
-  "cta": {
-    "shutter": "Déclencheur",
-    "done": "Terminé",
-    "cancel": "Annuler",
-    "shutter_error": "Photo échouée — réessaie ?"
-  },
-  "picker": {
-    "title": "Où veux-tu le ranger ?",
-    "folder_title": "Choisir un dossier",
-    "no_folder": "Sans dossier — directement dans la matière",
-    "no_subjects": "Tu n'as pas encore de matière. Ajoutes-en une depuis l'accueil.",
-    "no_subjects_title": "Crée d'abord une matière"
-  },
-  "limits": {
-    "max_reached": "10 photos maximum par matériel."
+  "error": {
+    "camera": "L'appareil photo ne s'est pas ouvert. Tu peux aussi choisir une image parmi tes photos.",
+    "library": "Tes photos ne se sont pas ouvertes. Réessaie.",
+    "prepare_one": "Une image n'a pas pu être ouverte. Choisis-en une autre.",
+    "prepare_other": "{{count}} images n'ont pas pu être ouvertes. Choisis-en d'autres.",
+    "upload_network": "La photo {{index}} n'est pas arrivée – pas de connexion.",
+    "upload_rejected": "La photo {{index}} n'est pas arrivée.",
+    "upload_file": "La photo {{index}} n'est plus là. Retire-la et reprends-la.",
+    "kept": "Tes photos sont toujours là.",
+    "left": "Ta fiche n'est pas arrivée. Reprends-la en photo, s'il te plaît."
   }
 }

@@ -1,0 +1,142 @@
+{
+  "greeting": "Hola, {{name}}",
+  "menu": {
+    "open": "Abrir menú",
+    "title": "Más",
+    "history": "Historial completo",
+    "memory": "Lo que Buddy sabe de ti",
+    "library": "Mi material",
+    "settings": "Ajustes"
+  },
+  "system": {
+    "no_model": "Buddy no puede responder ahora mismo. Aun así, puedes practicar y tus recordatorios siguen funcionando.",
+    "scheduler_stale": "Ahora mismo Buddy no está trabajando en segundo plano. Los recordatorios pueden llegar más tarde."
+  },
+  "now": {
+    "resume_title": "Sigue practicando",
+    "resume_body": "{{title}} – {{count}} por hacer",
+    "resume_cta": "Continuar",
+    "ready_title": "Práctica lista: {{title}}",
+    "ready_body": "{{count}} ejercicios · unos {{minutes}} min",
+    "ready_focus": "Sobre todo: {{topics}}",
+    "ready_for_exam": "Para “{{exam}}” {{when}}",
+    "ready_cta": "Practicar ahora",
+    "ready_later": "Hoy no",
+    "capture_title": "Mándame una foto",
+    "capture_body": "Haz una foto de “{{title}}”: yo lo convierto en ejercicios.",
+    "capture_cta": "Hacer una foto",
+    "sending_title": "Enviando tus fotos…",
+    "sending_body": "Deja la app abierta un momento, hasta que haya llegado todo.",
+    "processing_title": "Estoy leyendo tu ficha…",
+    "processing_body": "Suele tardar más o menos un minuto. Mientras, puedes cerrar la app.",
+    "failed_title": "No he podido leer esta ficha",
+    "failed_unreadable": "Las fotos eran difíciles de leer. Vuelve a probar con más luz y desde arriba.",
+    "failed_not_learning_material": "Esto no parece ni una ficha ni una página de libro.",
+    "failed_model_error": "Algo ha fallado durante la lectura.",
+    "failed_photos_missing": "Las fotos no han llegado completas.",
+    "failed_budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
+    "failed_retry": "Volver a leer",
+    "failed_new_photo": "Nueva foto",
+    "result_title": "¡Lo has conseguido!",
+    "result_body": "Has respondido {{answered}} y has acertado {{first_try}} a la primera.",
+    "result_secure": "Lo dominas: {{topics}}",
+    "result_shaky": "Vamos a practicar otra vez: {{topics}}"
+  },
+  "when": {
+    "today": "hoy",
+    "tomorrow": "mañana",
+    "in_days": "en {{count}} días",
+    "on": "el {{day}}",
+    "on_at": "el {{day}} a las {{time}}"
+  },
+  "decision": {
+    "optin_title": "¿Puedo escribirte al móvil?",
+    "optin_body": "Por ejemplo, justo antes de un examen o cuando tengas ejercicios preparados. Como mucho una vez al día y nunca por la noche.",
+    "optin_yes": "Sí, claro",
+    "optin_no": "Mejor no",
+    "optin_minor_body": "Esto tienen que permitirlo tus padres.",
+    "optin_minor_cta": "Preguntar a mis padres",
+    "outcome_title": "¿Qué tal te fue en “{{title}}”?",
+    "outcome_good": "Bien",
+    "outcome_ok": "Más o menos",
+    "outcome_hard": "Difícil"
+  },
+  "done": {
+    "title": "Lo que he hecho por ti",
+    "undo": "Deshacer",
+    "undo_label": "Deshacer: {{what}}",
+    "undone": "deshecho"
+  },
+  "next": {
+    "title": "Lo que viene",
+    "agreed": "acordado",
+    "exam": "Examen"
+  },
+  "thread": {
+    "title": "Chat con Buddy",
+    "show_all": "Ver todo",
+    "typing": "Buddy está escribiendo…",
+    "failed": "No ha llegado",
+    "resend": "Volver a enviar",
+    "load_more": "Mensajes anteriores",
+    "you": "Tú",
+    "buddy": "Buddy"
+  },
+  "delivery": {
+    "scheduled": "llegará {{when}}",
+    "sending": "enviando",
+    "accepted": "enviado a tu móvil",
+    "provider_accepted": "enviado a tu móvil",
+    "provider_rejected": "no se ha podido enviar a tu móvil",
+    "send_failed": "no se ha podido enviar a tu móvil",
+    "send_uncertain": "no está claro si ha llegado a tu móvil",
+    "in_app": "solo aquí, en la app",
+    "suppressed": "no enviado",
+    "expired": "ya no es relevante",
+    "cancelled": "cancelado",
+    "opened": "abierto"
+  },
+  "composer": {
+    "placeholder": "Escribe a Buddy…",
+    "send": "Enviar"
+  },
+  "action": {
+    "remember": "Anotado: {{statement}}",
+    "remember_until": "Anotado hasta el {{date}} inclusive: {{statement}}",
+    "correct_memory": "Corregido: {{statement}}",
+    "forget": "Olvidado: {{statement}}",
+    "set_level_school": "{{grade}}.º curso",
+    "set_level_school_unknown": "Escuela",
+    "set_level_university": "Universidad",
+    "set_level_adult": "Formación continua",
+    "set_level_unknown": "Curso por definir",
+    "plan_exam": "Añadido: {{title}} el {{day}}",
+    "update_goal": "Modificado: {{title}}",
+    "update_goal_day": "Modificado: {{title}} – ahora el {{day}}",
+    "close_goal_done": "Completado: {{title}}",
+    "close_goal_dropped": "Descartado: {{title}}",
+    "prepare_practice": "Preparado: {{title}} – {{count}} ejercicios, unos {{minutes}} min",
+    "plan_step": "Planificado: {{title}} {{when}}",
+    "plan_step_agreed": "Acordado: {{title}} {{when}}",
+    "update_step_moved": "Reprogramado: {{title}} {{when}}",
+    "update_step_skipped": "Saltado: {{title}}",
+    "update_step_cancelled": "Cancelado: {{title}}",
+    "mark_step_done": "Hecho: {{title}}",
+    "request_material": "Foto pedida: {{title}}",
+    "set_contact_pause": "Sin mensajes hasta el {{date}} inclusive",
+    "set_contact": "Mensajes solo de {{from}} a {{to}}, como máximo {{count}} por semana",
+    "schedule_check": "Vuelvo a pasarme {{when}}"
+  },
+  "intro": {
+    "title": "Soy Buddy.",
+    "body": "Te ayudo a prepararte para exámenes y controles, sin estrés. Cuéntame qué tienes pendiente o mándame una foto de tu ficha.",
+    "start": "Puedes empezar así:",
+    "starter_exam": "Tengo un examen pronto",
+    "starter_practice": "Quiero practicar",
+    "starter_photo": "Hacer una foto de una ficha"
+  },
+  "working": {
+    "material": "Estoy convirtiendo tu ficha en ejercicios…",
+    "session": "Estoy viendo cómo te ha ido la práctica…"
+  }
+}

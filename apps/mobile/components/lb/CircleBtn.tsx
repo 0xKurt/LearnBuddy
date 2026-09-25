@@ -27,9 +27,9 @@ export function CircleBtn({
   const inner = (
     <View
       style={{
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: '#fff',
         borderColor: LB.hairline,
         borderWidth: 1,
@@ -37,7 +37,7 @@ export function CircleBtn({
         justifyContent: 'center',
       }}
     >
-      <Icon name={icon} size={18} color={LB.ink} />
+      <Icon name={icon} size={20} color={LB.ink} />
     </View>
   );
   if (!onPress) return inner;

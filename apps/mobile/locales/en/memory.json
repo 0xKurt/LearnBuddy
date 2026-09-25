@@ -1,0 +1,28 @@
+{
+  "title": "What Buddy knows about you",
+  "intro": "Buddy only keeps what you told it. You can change or remove anything.",
+  "lasting": "This stays",
+  "temporary": "Just for a while",
+  "temporary_hint": "This ends by itself. Then Buddy forgets it.",
+  "until": "Up to and including {{date}}.",
+  "source": {
+    "learner_stated": "You said: “{{quote}}”",
+    "learner_stated_plain": "You told Buddy this.",
+    "learner_edited": "Changed by you.",
+    "account_holder": "Entered by an adult."
+  },
+  "edit": "Change",
+  "edit_a11y": "Change: {{statement}}",
+  "edit_input": "What Buddy should remember",
+  "save": "Save",
+  "cancel": "Cancel",
+  "remove": "Remove",
+  "remove_a11y": "Remove: {{statement}}",
+  "saved": "Changed.",
+  "removed": "Removed. Buddy forgets this.",
+  "confirm_title": "Remove this?",
+  "confirm_body": "“{{statement}}” – Buddy will forget it.",
+  "confirm_cta": "Yes, remove",
+  "empty_title": "Nothing here yet",
+  "empty_body": "Just tell Buddy what's coming up. Whatever Buddy keeps shows up here."
+}

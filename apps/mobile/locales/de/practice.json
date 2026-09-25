@@ -1,37 +1,43 @@
 {
-  "loading": "Aufgaben werden vorbereitet …",
-  "error_title": "Ups.",
-  "error_body": "Wir konnten das gerade nicht laden. Versuch es nochmal.",
-  "back": "Zurück",
-  "topic_label": "Thema",
-  "progress": "{{current}} von {{total}}",
-  "submit": "Prüfen",
-  "next": "Weiter",
-  "verdict": {
-    "correct": "Genau!",
-    "incorrect": "Noch nicht ganz"
+  "title_fallback": "Üben",
+  "loading": "Ich hole deine Fragen …",
+  "end": "Beenden",
+  "end_label": "Übung beenden",
+  "end_hint": "Zurück zu Buddy. Deine Antworten bleiben gespeichert.",
+  "progress": "Frage {{current}} von {{total}}",
+  "answer": {
+    "label": "Deine Antwort",
+    "placeholder": "Deine Antwort …",
+    "unit_hint": "Antwort in {{unit}}"
   },
-  "answer_hint_numeric": "Tippe deine Antwort ein",
-  "answer_hint_formula": "Tippe deine Formel ein",
+  "check": "Prüfen",
   "show_solution": "Lösung zeigen",
-  "solution_label": "Lösung",
-  "finish_title": "Geschafft!",
-  "finish_body": "Du hast {{correct}} von {{total}} richtig gelöst. Schöne Runde.",
-  "finish_home": "Zurück zur Übersicht",
-  "no_template": "Diese Übung gibt es nicht mehr.",
-  "exit_title": "Übung beenden?",
-  "exit_cancel": "Weitermachen",
-  "exit_end": "Beenden",
-  "hub": {
-    "title": "Üben",
-    "resume_title": "Weitermachen?",
-    "resume_body": "Du hast noch eine Übung offen.",
-    "resume_yes": "Weiter",
-    "resume_no": "Neu starten",
-    "choose": "Wähle ein Fach",
-    "start": "Üben",
-    "empty_title": "Noch nichts zum Üben",
-    "empty_body": "Fotografier zuerst dein Lernmaterial, dann üben wir gemeinsam.",
-    "empty_cta": "Zur Startseite"
-  }
+  "choice_tried": "Schon ausprobiert",
+  "thread": {
+    "you": "Du",
+    "buddy": "Buddy",
+    "thinking": "Buddy schaut sich deine Antwort an …"
+  },
+  "verdict": {
+    "correct": "Richtig",
+    "partially_correct": "Fast",
+    "incorrect": "Noch nicht ganz",
+    "unchecked": "Nicht geprüft"
+  },
+  "solution": {
+    "title": "Lösung",
+    "calm": "Schau sie dir in Ruhe an."
+  },
+  "next": "Weiter",
+  "finishing": "Einen Moment – dein Ergebnis kommt gleich.",
+  "finish_failed": "Dein Ergebnis konnte ich gerade nicht laden.",
+  "summary": {
+    "title": "Geschafft!",
+    "answered": "Beantwortet",
+    "first_try": "Auf Anhieb richtig",
+    "secure": "Sitzt: {{topics}}",
+    "shaky": "Schauen wir nochmal an: {{topics}}"
+  },
+  "ended": "Diese Übung ist schon beendet.",
+  "back_to_buddy": "Zurück zu Buddy"
 }

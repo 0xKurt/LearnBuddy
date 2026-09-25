@@ -1,57 +1,35 @@
-// Root error boundary. Doc 05 §error-handling.
-//
-// React class components are the only mechanism for catching render errors
-// in the tree; functional components can't (yet). We render a tone-correct
-// fallback in German default (per CLAUDE.md tone rule) and ship the error to
-// Sentry. The user gets a "Reload"-style action that resets the boundary so
-// they don't have to kill the app.
+// Last line of defence for render errors: a calm message and a way back.
 
 import { Component, type ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { captureError } from '../../lib/sentry.js';
 import { i18n } from '../../lib/i18n/index.js';
 import { LB } from '../../lib/theme/colors.js';
+import { TYPE } from '../../lib/theme/type.js';
+import { Btn } from './Btn.js';
 
-type Props = { children: ReactNode };
-type State = { error: Error | null };
+type State = { failed: boolean };
 
-export class ErrorBoundary extends Component<Props, State> {
-  override state: State = { error: null };
+export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
+  override state: State = { failed: false };
 
-  static getDerivedStateFromError(error: Error): State {
-    return { error };
-  }
-
-  override componentDidCatch(error: Error, info: { componentStack?: string | null }): void {
-    captureError(error, { componentStack: info.componentStack ?? undefined });
+  static getDerivedStateFromError(): State {
+    return { failed: true };
   }
 
   override render(): ReactNode {
-    if (!this.state.error) return this.props.children;
+    if (!this.state.failed) return this.props.children;
     return (
-      <View style={{ flex: 1, backgroundColor: LB.paper, padding: 24, justifyContent: 'center' }}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: LB.ink, marginBottom: 12 }}>
+      <View
+        style={{ flex: 1, backgroundColor: LB.bg, padding: 24, justifyContent: 'center', gap: 16 }}
+      >
+        <Text accessibilityRole="header" style={TYPE.display}>
           {i18n.t('errors:boundary_title')}
         </Text>
-        <Text style={{ fontSize: 14, color: LB.ink2, marginBottom: 32 }}>
-          {i18n.t('errors:boundary_body')}
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={i18n.t('errors:boundary_retry')}
-          onPress={() => this.setState({ error: null })}
-          style={{
-            backgroundColor: LB.primary,
-            paddingVertical: 14,
-            borderRadius: 12,
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontWeight: '600' }}>
-            {i18n.t('errors:boundary_retry')}
-          </Text>
-        </Pressable>
+        <Text style={TYPE.body}>{i18n.t('errors:boundary_body')}</Text>
+        <Btn onPress={() => this.setState({ failed: false })}>
+          {i18n.t('errors:boundary_retry')}
+        </Btn>
       </View>
     );
   }

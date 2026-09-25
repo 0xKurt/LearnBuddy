@@ -9,7 +9,11 @@ import type { Config } from '../config.js';
 export type AuthUser = {
   userId: string;
   email: string | null;
-  /** Seconds since epoch when the user last authenticated (for PIN reset). */
+  /**
+   * Seconds since epoch when the user last proved who they are (password,
+   * e-mail link), from the token's `amr` claim, which survives token
+   * refreshes. Not `iat`: a refreshed token is not a fresh sign-in.
+   */
   authenticatedAt: number | null;
 };
 
@@ -19,14 +23,22 @@ export interface AuthVerifier {
   deleteUser(userId: string): Promise<void>;
 }
 
-function decodeIat(token: string): number | null {
+/** Latest interactive authentication recorded in a (verified) Supabase token. */
+export function authenticatedAtOf(token: string): number | null {
   const payload = token.split('.')[1];
   if (!payload) return null;
   try {
     const json = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
-      iat?: unknown;
+      amr?: unknown;
     };
-    return typeof json.iat === 'number' ? json.iat : null;
+    if (!Array.isArray(json.amr)) return null;
+    const times: number[] = [];
+    for (const entry of json.amr as unknown[]) {
+      const e = entry as { method?: unknown; timestamp?: unknown } | null;
+      if (e && typeof e.timestamp === 'number' && e.method !== 'token_refresh')
+        times.push(e.timestamp);
+    }
+    return times.length > 0 ? Math.max(...times) : null;
   } catch {
     return null;
   }
@@ -47,7 +59,7 @@ export class SupabaseAuthVerifier implements AuthVerifier {
     return {
       userId: data.user.id,
       email: data.user.email ?? null,
-      authenticatedAt: decodeIat(token),
+      authenticatedAt: authenticatedAtOf(token),
     };
   }
 

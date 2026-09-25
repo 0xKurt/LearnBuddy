@@ -3,7 +3,7 @@
 // revealing, and memory edits. docs/architecture.md §Material, §Practice.
 // requires live verification in Claude Code session (needs a running Postgres)
 
-import type { SessionView } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, LibraryView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { LlmError } from '../llm/gateway.js';
@@ -59,6 +59,8 @@ async function tick(env: TestEnv): Promise<void> {
   expect(res.status).toBe(200);
   expect(((await res.json()) as { errors: string[] }).errors).toEqual([]);
 }
+
+const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
 
 async function upload(env: TestEnv, l: Learner): Promise<string> {
   const created = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(
@@ -116,7 +118,9 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     m = await l.api.get(`/materials/${id}`);
     expect(m.body).toMatchObject({ status: 'failed', failure_reason: 'model_error' });
 
+    // Success: Buddy is woken right away (it decides to wait here).
     env.llm.script('extraction', readable());
+    env.llm.script('buddy_check', WAIT);
     expect((await l.api.post(`/materials/${id}/retry`)).status).toBe(202);
     await env.flushBackground();
     m = await l.api.get(`/materials/${id}`);
@@ -131,10 +135,6 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     );
     expect(paths.every((p) => env.storage.objects.has(p.storage_path))).toBe(true);
     env.clock.hours(24 * 7 + 1);
-    // The in-app check for the new material is not the point here.
-    env.llm.script('buddy_check', {
-      json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
-    });
     await tick(env);
     expect(paths.some((p) => env.storage.objects.has(p.storage_path))).toBe(false);
   });
@@ -173,8 +173,73 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect(m.body.status).toBe('ready');
   });
 
+  it('prepares practice from new photos at once when the model is briefly down, not ten minutes later', async () => {
+    env.llm.script('extraction', readable());
+    env.llm.script('buddy_check', { error: new LlmError('unavailable', 'overloaded') });
+    await upload(env, l);
+    // The learner is waiting for their photos: the fixed fallback acts now.
+    const home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.working).toBeNull();
+    expect(home.now).toMatchObject({ type: 'practice_ready', question_count: 3 });
+    const job = await env.db.one<{ status: string; result: { outcome: string } }>(
+      `select status, result from jobs where learner_id = $1 and kind = 'buddy_check'`,
+      [l.learnerId],
+    );
+    expect(job).toMatchObject({ status: 'done', result: { outcome: 'fallback_act' } });
+  });
+
+  it('does not claim to read photos that never all arrived, and deletes a half-sent upload after a day', async () => {
+    const created = await l.api.post<{
+      material: { id: string };
+      uploads: Array<{ path: string }>;
+    }>('/materials', { client_request_id: uuid(), photo_mimes: ['image/jpeg', 'image/jpeg'] });
+    expect(created.status).toBe(201);
+    // Only the first photo arrives; the app is closed before the rest is sent.
+    const first = created.body.uploads[0]!.path;
+    env.storage.put(first);
+    let home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.now).toMatchObject({ type: 'material_processing', status: 'awaiting_upload' });
+    env.clock.minutes(11);
+    home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.now).toBeNull();
+
+    env.clock.minutes(24 * 60);
+    await tick(env);
+    expect(env.storage.objects.has(first)).toBe(false);
+    const library = (await l.api.get<LibraryView>('/materials')).body;
+    expect([...library.unsorted, ...library.subjects.flatMap((s) => s.materials)]).toEqual([]);
+    const row = await env.db.one<{ status: string; failure_reason: string }>(
+      `select status, failure_reason from materials where id = $1`,
+      [created.body.material.id],
+    );
+    expect(row).toEqual({ status: 'failed', failure_reason: 'photos_missing' });
+  });
+
+  it('asks for no further upload when the same send is repeated after the photos went through', async () => {
+    env.llm.script('extraction', readable());
+    env.llm.script('buddy_check', WAIT);
+    const request = { client_request_id: uuid(), photo_mimes: ['image/jpeg'] };
+    const first = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(
+      '/materials',
+      request,
+    );
+    env.storage.put(first.body.uploads[0]!.path);
+    const id = first.body.material.id;
+    expect((await l.api.post(`/materials/${id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+    // The answer to the submit got lost, so the app asks again with the same id.
+    const again = await l.api.post<{
+      material: { id: string; status: string };
+      uploads: unknown[];
+    }>('/materials', request);
+    expect(again.status).toBe(201);
+    expect(again.body.material).toMatchObject({ id, status: 'ready' });
+    expect(again.body.uploads).toEqual([]);
+  });
+
   it('deleting material removes its photos now and its questions from practice', async () => {
     env.llm.script('extraction', readable());
+    env.llm.script('buddy_check', WAIT);
     const id = await upload(env, l);
     const paths = await env.db.query<{ storage_path: string }>(
       `select storage_path from material_photos where material_id = $1`,
@@ -190,6 +255,7 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
 
   it('never grades without judgement: no model → the answer stays open; hints and revealing count honestly', async () => {
     env.llm.script('extraction', readable());
+    env.llm.script('buddy_check', WAIT);
     await upload(env, l);
     const started = await l.api.post<SessionView>('/practice/sessions', {});
     expect(started.status).toBe(201);
@@ -247,7 +313,9 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
       answer: 'Rom',
     });
 
+    env.llm.script('buddy_check', WAIT);
     const finished = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`);
+    await env.flushBackground();
     expect(finished.body.summary).toEqual({
       answered: 2,
       first_try: 0,

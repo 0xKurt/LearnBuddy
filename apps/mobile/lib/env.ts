@@ -1,26 +1,20 @@
-// Mobile env. Doc 02 §config.
-//
-// At build time these are read from `EXPO_PUBLIC_*` env vars (see `eas.json`).
-// `EXPO_PUBLIC_*` is the Expo Router convention for build-time-replaced values
-// available to the JS bundle.
+// Build-time configuration (EXPO_PUBLIC_* variables, see .env.example).
 
 export const ENV = {
-  API_URL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:6001',
-  SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
-  SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
-  DSGVO_CONSENT_VERSION: process.env.EXPO_PUBLIC_DSGVO_CONSENT_VERSION ?? '2026-05-01',
-  REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '',
-  SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
-  POSTHOG_API_KEY: process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? '',
-  POSTHOG_HOST: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com',
-  RELEASE: process.env.EXPO_PUBLIC_APP_RELEASE ?? 'dev',
+  /** API base without version, e.g. https://api.learnbuddy.app */
+  API_URL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8787',
+  SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'http://localhost:54321',
+  SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'anon-key-missing',
+  /** Full privacy policy (web page); the consent screen links to it. */
+  PRIVACY_URL: process.env.EXPO_PUBLIC_PRIVACY_URL ?? '',
 };
 
-// Fail fast on a misconfigured production build that would send traffic
-// (and auth tokens) over cleartext HTTP. The localhost default is dev-only.
 declare const __DEV__: boolean;
-if (typeof __DEV__ !== 'undefined' && !__DEV__ && !ENV.API_URL.startsWith('https://')) {
+// A production build must never send tokens over plain HTTP across a network
+// (http://localhost is only this machine: local walkthroughs).
+const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(ENV.API_URL);
+if (typeof __DEV__ !== 'undefined' && !__DEV__ && !ENV.API_URL.startsWith('https://') && !local) {
   throw new Error(
-    `Production build requires an https:// API_URL — got "${ENV.API_URL}". Set EXPO_PUBLIC_API_URL.`,
+    `Production build requires an https:// EXPO_PUBLIC_API_URL (got "${ENV.API_URL}")`,
   );
 }

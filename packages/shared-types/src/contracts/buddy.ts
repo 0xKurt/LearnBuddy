@@ -124,6 +124,8 @@ export const MessageView = z.object({
   role: z.enum(['learner', 'buddy']),
   text: z.string(),
   status: z.enum(['processing', 'done', 'failed']),
+  /** The app's idempotency key (learner messages); resend a failed message with it. */
+  client_message_id: Uuid.nullable(),
   /** Quick answers Buddy offered with this message. */
   options: z.array(z.string()).nullable(),
   reply_to_id: Uuid.nullable(),
@@ -229,6 +231,11 @@ export const BuddyHome = z.object({
   thread: z.array(MessageView),
   thread_has_more: z.boolean(),
   system: SystemStatus,
+  /**
+   * Buddy is working on something the learner is waiting for right now: what to do with the
+   * photos they just sent ('material') or the practice they just finished ('session').
+   */
+  working: z.enum(['material', 'session']).nullable(),
   /** Context version the home was built from (debugging and stale checks). */
   context_version: z.number().int(),
 });

@@ -1,0 +1,28 @@
+{
+  "title": "Cosa sa Buddy di te",
+  "intro": "Buddy ricorda solo quello che gli hai raccontato. Puoi modificare o rimuovere tutto.",
+  "lasting": "Quello che resta",
+  "temporary": "Solo per un po'",
+  "temporary_hint": "Finisce da sé. Poi Buddy lo dimentica.",
+  "until": "Fino a {{date}} compreso.",
+  "source": {
+    "learner_stated": "Hai detto: “{{quote}}”",
+    "learner_stated_plain": "L'hai raccontato tu a Buddy.",
+    "learner_edited": "Modificato da te.",
+    "account_holder": "Aggiunto da una persona adulta."
+  },
+  "edit": "Modifica",
+  "edit_a11y": "Modifica: {{statement}}",
+  "edit_input": "Cosa deve ricordare Buddy",
+  "save": "Salva",
+  "cancel": "Annulla",
+  "remove": "Rimuovi",
+  "remove_a11y": "Rimuovi: {{statement}}",
+  "saved": "Modificato.",
+  "removed": "Rimosso. Buddy lo dimentica.",
+  "confirm_title": "Rimuovere questo?",
+  "confirm_body": "“{{statement}}” – Buddy lo dimenticherà.",
+  "confirm_cta": "Sì, rimuovi",
+  "empty_title": "Niente annotato per ora",
+  "empty_body": "Racconta a Buddy cosa ti aspetta. Quello che Buddy ricorda comparirà qui."
+}

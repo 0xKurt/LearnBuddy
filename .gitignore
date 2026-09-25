@@ -58,3 +58,8 @@ infra/supabase/.temp/
 infra/supabase/.branches/
 supabase/.temp/
 supabase/.branches/
+
+# Web build for the browser walkthrough (scripts/web-walkthrough.sh)
+dist-web/
+test-results/
+*.tsbuildinfo

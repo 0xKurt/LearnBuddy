@@ -1,0 +1,142 @@
+{
+  "greeting": "Hi {{name}}",
+  "menu": {
+    "open": "Open menu",
+    "title": "More",
+    "history": "Full history",
+    "memory": "What Buddy knows about you",
+    "library": "My material",
+    "settings": "Settings"
+  },
+  "system": {
+    "no_model": "Buddy can't answer right now. Practice and your reminders still work.",
+    "scheduler_stale": "Buddy isn't working in the background right now. Reminders may come late."
+  },
+  "now": {
+    "resume_title": "Keep practising",
+    "resume_body": "{{title}} – {{count}} questions left",
+    "resume_cta": "Continue",
+    "ready_title": "Practice ready: {{title}}",
+    "ready_body": "{{count}} questions · about {{minutes}} min",
+    "ready_focus": "Mostly: {{topics}}",
+    "ready_for_exam": "For “{{exam}}” {{when}}",
+    "ready_cta": "Practise now",
+    "ready_later": "Not today",
+    "capture_title": "Send me a photo",
+    "capture_body": "Take a photo of “{{title}}” – I'll turn it into practice.",
+    "capture_cta": "Take photo",
+    "sending_title": "Sending your photos …",
+    "sending_body": "Keep the app open for a moment until everything has arrived.",
+    "processing_title": "I'm reading your sheet …",
+    "processing_body": "This usually takes about a minute. You can close the app meanwhile.",
+    "failed_title": "I couldn't read this sheet",
+    "failed_unreadable": "The photos were hard to read. Try again with more light, shot from above.",
+    "failed_not_learning_material": "That doesn't look like a worksheet or a book page.",
+    "failed_model_error": "Something went wrong while reading.",
+    "failed_photos_missing": "The photos didn't fully arrive.",
+    "failed_budget_exhausted": "I can't read any more sheets today. Tomorrow it works again.",
+    "failed_retry": "Read again",
+    "failed_new_photo": "New photo",
+    "result_title": "Done!",
+    "result_body": "{{answered}} questions done, {{first_try}} right the first time.",
+    "result_secure": "You've got this: {{topics}}",
+    "result_shaky": "Let's practise again: {{topics}}"
+  },
+  "when": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "in_days": "in {{count}} days",
+    "on": "on {{day}}",
+    "on_at": "on {{day}} at {{time}}"
+  },
+  "decision": {
+    "optin_title": "May I message your phone?",
+    "optin_body": "For example just before a test or when practice is ready. At most once a day and never in the evening.",
+    "optin_yes": "Yes, please",
+    "optin_no": "Rather not",
+    "optin_minor_body": "Your parents need to allow this.",
+    "optin_minor_cta": "Ask a parent",
+    "outcome_title": "How did “{{title}}” go?",
+    "outcome_good": "Well",
+    "outcome_ok": "OK",
+    "outcome_hard": "Hard"
+  },
+  "done": {
+    "title": "What I did for you",
+    "undo": "Undo",
+    "undo_label": "Undo: {{what}}",
+    "undone": "undone"
+  },
+  "next": {
+    "title": "Coming up",
+    "agreed": "agreed",
+    "exam": "Test"
+  },
+  "thread": {
+    "title": "Chat with Buddy",
+    "show_all": "Show all",
+    "typing": "Buddy is typing …",
+    "failed": "Didn't arrive",
+    "resend": "Send again",
+    "load_more": "Older messages",
+    "you": "You",
+    "buddy": "Buddy"
+  },
+  "delivery": {
+    "scheduled": "coming {{when}}",
+    "sending": "being sent",
+    "accepted": "sent to your phone",
+    "provider_accepted": "sent to your phone",
+    "provider_rejected": "couldn't be sent to your phone",
+    "send_failed": "couldn't be sent to your phone",
+    "send_uncertain": "not sure it reached your phone",
+    "in_app": "only here in the app",
+    "suppressed": "not sent",
+    "expired": "no longer relevant",
+    "cancelled": "cancelled",
+    "opened": "opened"
+  },
+  "composer": {
+    "placeholder": "Write to Buddy …",
+    "send": "Send"
+  },
+  "action": {
+    "remember": "Noted: {{statement}}",
+    "remember_until": "Noted until {{date}}: {{statement}}",
+    "correct_memory": "Corrected: {{statement}}",
+    "forget": "Forgotten: {{statement}}",
+    "set_level_school": "Year {{grade}}",
+    "set_level_school_unknown": "School",
+    "set_level_university": "University",
+    "set_level_adult": "Further education",
+    "set_level_unknown": "Year still open",
+    "plan_exam": "Added: {{title}} on {{day}}",
+    "update_goal": "Changed: {{title}}",
+    "update_goal_day": "Changed: {{title}} – now on {{day}}",
+    "close_goal_done": "Completed: {{title}}",
+    "close_goal_dropped": "Removed: {{title}}",
+    "prepare_practice": "Prepared: {{title}} – {{count}} questions, about {{minutes}} min",
+    "plan_step": "Planned: {{title}} {{when}}",
+    "plan_step_agreed": "Agreed: {{title}} {{when}}",
+    "update_step_moved": "Moved: {{title}} {{when}}",
+    "update_step_skipped": "Skipped: {{title}}",
+    "update_step_cancelled": "Cancelled: {{title}}",
+    "mark_step_done": "Done: {{title}}",
+    "request_material": "Asked for a photo: {{title}}",
+    "set_contact_pause": "No messages until {{date}} (inclusive)",
+    "set_contact": "Messages only between {{from}} and {{to}}, at most {{count}}× a week",
+    "schedule_check": "I'll check in again {{when}}"
+  },
+  "intro": {
+    "title": "I'm Buddy.",
+    "body": "I help you get ready for tests and exams – without stress. Just tell me what's coming up, or send me a photo of your worksheet.",
+    "start": "You can start like this:",
+    "starter_exam": "I have a test coming up",
+    "starter_practice": "I want to practise",
+    "starter_photo": "Photograph a worksheet"
+  },
+  "working": {
+    "material": "I'm turning your worksheet into practice …",
+    "session": "I'm looking at how your practice went …"
+  }
+}

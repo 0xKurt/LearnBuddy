@@ -18,12 +18,14 @@ import type {
 import type { Deps } from '../../deps.js';
 import { daysBetween, localParts } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
+import { undoApplies, type UndoSpec } from './tools.js';
 import { loadBuddyState } from './state.js';
 
 const THREAD_LIMIT = 30;
 const DONE_WINDOW_MS = 72 * 3_600_000;
 const UNDO_WINDOW_MS = 7 * 86_400_000;
 const HEARTBEAT_STALE_MS = 10 * 60_000;
+const UPLOAD_WINDOW_MS = 10 * 60_000;
 
 type LearnerLite = { id: string; display_name: string; isMinor: boolean };
 
@@ -50,12 +52,13 @@ export async function buildHome(
   const tz = state.settings.timezone;
   const today = localParts(now, tz).date;
 
-  const [nowCard, decision, done, thread, system] = await Promise.all([
+  const [nowCard, decision, done, thread, system, working] = await Promise.all([
     nowCardOf(deps, learner.id, state, today, now),
     decisionOf(state, learner, today, now),
     doneOf(deps, learner.id, now),
     threadOf(deps, learner.id, beforeMessageId),
     systemOf(deps, learner.id, state),
+    workingOf(deps, learner.id, now),
   ]);
 
   return {
@@ -67,8 +70,23 @@ export async function buildHome(
     thread: thread.messages,
     thread_has_more: thread.hasMore,
     system,
+    working,
     context_version: state.settings.context_version,
   };
+}
+
+/** A check the learner's own action started (their photos, their finished practice) that is due or running. */
+async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<BuddyHome['working']> {
+  const row = await deps.db.maybeOne<{ reason: string }>(
+    `select payload->>'reason' as reason from jobs
+      where learner_id = $1 and kind = 'buddy_check' and status in ('queued', 'running')
+        and payload->>'reason' in ('material_ready', 'session_finished')
+        and run_at <= $2::timestamptz
+      order by run_at limit 1`,
+    [learnerId, new Date(now.getTime() + 60_000)],
+  );
+  if (!row) return null;
+  return row.reason === 'material_ready' ? 'material' : 'session';
 }
 
 async function nowCardOf(
@@ -150,11 +168,13 @@ async function nowCardOf(
       retryable: failed.failure_reason !== 'not_learning_material' && (attempts?.n ?? 0) < 3,
     };
   }
-  const processing = state.materials.find(
-    (m) =>
-      (m.status === 'queued' || m.status === 'processing' || m.status === 'awaiting_upload') &&
-      now.getTime() - m.created_at.getTime() < 2 * 3_600_000,
-  );
+  // Photos still on their way count only briefly: an upload the app gave up on is not
+  // "being sent" for hours (and Buddy then still asks for the photo).
+  const processing = state.materials.find((m) => {
+    const age = now.getTime() - m.created_at.getTime();
+    if (m.status === 'awaiting_upload') return age < UPLOAD_WINDOW_MS;
+    return (m.status === 'queued' || m.status === 'processing') && age < 2 * 3_600_000;
+  });
   if (processing) {
     return {
       type: 'material_processing',
@@ -203,7 +223,7 @@ async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionV
     id: string;
     status: 'applied' | 'undone';
     result: ActionSummary;
-    undo: unknown;
+    undo: UndoSpec | null;
     created_at: Date;
   }>(
     `select id, status, result, undo, created_at from buddy_actions
@@ -211,16 +231,20 @@ async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionV
       order by seq desc limit 12`,
     [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
   );
-  return rows.map((r) => ({
-    id: r.id,
-    status: r.status,
-    undoable:
-      r.status === 'applied' &&
-      r.undo !== null &&
-      now.getTime() - r.created_at.getTime() < UNDO_WINDOW_MS,
-    summary: r.result,
-    created_at: r.created_at.toISOString(),
-  }));
+  return Promise.all(
+    rows.map(async (r) => ({
+      id: r.id,
+      status: r.status,
+      // Offered only when it would work now (nothing changed since).
+      undoable:
+        r.status === 'applied' &&
+        r.undo !== null &&
+        now.getTime() - r.created_at.getTime() < UNDO_WINDOW_MS &&
+        (await undoApplies(deps.db, learnerId, r.undo)),
+      summary: r.result,
+      created_at: r.created_at.toISOString(),
+    })),
+  );
 }
 
 function nextOf(state: BuddyState, today: string): UpcomingItem[] {
@@ -268,13 +292,14 @@ async function threadOf(
     role: 'learner' | 'buddy';
     text: string;
     status: 'processing' | 'done' | 'failed';
+    client_message_id: string | null;
     ask: { options?: string[] } | null;
     reply_to_id: string | null;
     outreach_id: string | null;
     decision_id: string | null;
     created_at: Date;
   }>(
-    `select id, role, text, status, ask, reply_to_id, outreach_id, decision_id, created_at
+    `select id, role, text, status, client_message_id, ask, reply_to_id, outreach_id, decision_id, created_at
        from buddy_messages
       where learner_id = $1
         and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))
@@ -329,6 +354,7 @@ async function threadOf(
       role: m.role,
       text: m.text,
       status: m.status,
+      client_message_id: m.client_message_id,
       options: m.ask?.options ?? null,
       reply_to_id: m.reply_to_id,
       outreach: o

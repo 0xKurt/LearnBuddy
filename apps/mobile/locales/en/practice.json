@@ -1,37 +1,43 @@
 {
-  "loading": "Getting your practice ready …",
-  "error_title": "Oops.",
-  "error_body": "We couldn't load that right now. Give it another try.",
-  "back": "Back",
-  "topic_label": "Topic",
-  "progress": "{{current}} of {{total}}",
-  "submit": "Check",
-  "next": "Next",
-  "verdict": {
-    "correct": "Spot on!",
-    "incorrect": "Not quite yet"
+  "title_fallback": "Practice",
+  "loading": "Getting your questions …",
+  "end": "End",
+  "end_label": "End practice",
+  "end_hint": "Back to Buddy. Your answers stay saved.",
+  "progress": "Question {{current}} of {{total}}",
+  "answer": {
+    "label": "Your answer",
+    "placeholder": "Your answer …",
+    "unit_hint": "Answer in {{unit}}"
   },
-  "answer_hint_numeric": "Type your answer",
-  "answer_hint_formula": "Type your formula",
-  "show_solution": "Show the solution",
-  "solution_label": "Solution",
-  "finish_title": "Done!",
-  "finish_body": "You got {{correct}} out of {{total}}. Nice round.",
-  "finish_home": "Back to home",
-  "no_template": "This practice isn't available anymore.",
-  "exit_title": "End this practice?",
-  "exit_cancel": "Keep going",
-  "exit_end": "End",
-  "hub": {
-    "title": "Practice",
-    "resume_title": "Keep going?",
-    "resume_body": "You still have a practice open.",
-    "resume_yes": "Continue",
-    "resume_no": "Start fresh",
-    "choose": "Pick a subject",
-    "start": "Practise",
-    "empty_title": "Nothing to practise yet",
-    "empty_body": "Snap your study material first, then we'll practise together.",
-    "empty_cta": "Go to home"
-  }
+  "check": "Check",
+  "show_solution": "Show solution",
+  "choice_tried": "Already tried",
+  "thread": {
+    "you": "You",
+    "buddy": "Buddy",
+    "thinking": "Buddy is looking at your answer …"
+  },
+  "verdict": {
+    "correct": "Right",
+    "partially_correct": "Almost",
+    "incorrect": "Not quite yet",
+    "unchecked": "Not checked"
+  },
+  "solution": {
+    "title": "Solution",
+    "calm": "Take your time to look at it."
+  },
+  "next": "Next",
+  "finishing": "One moment – your result is on its way.",
+  "finish_failed": "I couldn't load your result just now.",
+  "summary": {
+    "title": "Done!",
+    "answered": "Answered",
+    "first_try": "Right on the first try",
+    "secure": "Solid: {{topics}}",
+    "shaky": "Worth another look: {{topics}}"
+  },
+  "ended": "This practice has already ended.",
+  "back_to_buddy": "Back to Buddy"
 }

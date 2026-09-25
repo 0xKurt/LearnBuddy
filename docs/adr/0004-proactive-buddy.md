@@ -2,10 +2,10 @@
 
 - Status: accepted; backend implemented and verified with real-Postgres tests, app rebuild in progress
 - Date: 2026-09-25
-- Diverges from: docs/01-product.md §Notifications ("local notifications only — no push
-  servers"), §Features (home = subject grid, credits), docs/03-data-model.md and docs/04-api.md
-  (replaced), docs/05-mobile.md §home, §Notifications, docs/06-ai-pipeline.md §P3 (tutor output
-  format), docs/08-cost-and-credits.md (credits replaced by per-learner daily limits),
+- Diverges from: docs/legacy/01-product.md §Notifications ("local notifications only — no push
+  servers"), §Features (home = subject grid, credits), docs/legacy/03-data-model.md and docs/legacy/04-api.md
+  (replaced), docs/legacy/05-mobile.md §home, §Notifications, docs/legacy/06-ai-pipeline.md §P3 (tutor output
+  format), docs/legacy/08-cost-and-credits.md (credits replaced by per-learner daily limits),
   docs/DESIGN-BRIEF.md "self-led, not app-driven" (kept as a hard constraint on _how_ Buddy may be
   proactive, see below), CLAUDE.md "a migration once merged is immutable" (see Transition).
 - Diagnosis and product principle (German): [docs/buddy/01-prinzip-und-diagnose.md](../buddy/01-prinzip-und-diagnose.md)
