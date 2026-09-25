@@ -25,11 +25,13 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
+import { insertItems, usableItems } from '../practice/items.js';
+import { createSession } from '../practice/service.js';
 import {
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
   ExtractionResult,
-  usableItems,
+  HOMEWORK_SYSTEM,
 } from './extract.js';
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
@@ -47,6 +49,7 @@ type MaterialRow = {
   status: 'awaiting_upload' | 'queued' | 'processing' | 'ready' | 'failed';
   failure_reason: MaterialView['failure_reason'];
   photo_count: number;
+  purpose: 'study' | 'homework';
   archived_at: Date | null;
   created_at: Date;
 };
@@ -56,9 +59,13 @@ export async function materialView(
   learnerId: string,
   materialId: string,
 ): Promise<MaterialView> {
-  const m = await db.maybeOne<MaterialRow & { subject_name: string | null; item_count: number }>(
+  const m = await db.maybeOne<
+    MaterialRow & { subject_name: string | null; item_count: number; session_id: string | null }
+  >(
     `select m.*, s.name as subject_name,
-            (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count
+            (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
+            (select ps.id from practice_sessions ps where ps.material_id = m.id
+              order by ps.started_at desc limit 1) as session_id
        from materials m left join subjects s on s.id = m.subject_id
       where m.id = $1 and m.learner_id = $2 and m.archived_at is null`,
     [materialId, learnerId],
@@ -68,7 +75,7 @@ export async function materialView(
 }
 
 function toView(
-  m: MaterialRow & { subject_name: string | null; item_count: number },
+  m: MaterialRow & { subject_name: string | null; item_count: number; session_id: string | null },
 ): MaterialView {
   return {
     id: m.id,
@@ -76,6 +83,8 @@ function toView(
     status: m.status,
     failure_reason: m.failure_reason,
     item_count: m.item_count,
+    purpose: m.purpose,
+    session_id: m.session_id,
     subject_name: m.subject_name,
     goal_id: m.goal_id,
     created_at: m.created_at.toISOString(),
@@ -113,8 +122,8 @@ export async function createMaterial(
     );
     if (existing) return existing.id;
     const row = await tx.one<{ id: string }>(
-      `insert into materials (learner_id, client_request_id, goal_id, step_id, subject_id, photo_count, created_at)
-       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      `insert into materials (learner_id, client_request_id, goal_id, step_id, subject_id, photo_count, created_at, purpose)
+       values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
       [
         learner.id,
         input.client_request_id,
@@ -123,6 +132,7 @@ export async function createMaterial(
         goal?.subject_id ?? null,
         input.photo_mimes.length,
         deps.now(),
+        input.purpose,
       ],
     );
     for (const [position, mime] of input.photo_mimes.entries()) {
@@ -323,7 +333,7 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       purpose: 'extraction',
       tier: 'smart',
       promptVersion: EXTRACT_PROMPT_VERSION,
-      system: EXTRACT_SYSTEM,
+      system: m.purpose === 'homework' ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM,
       contents: [
         {
           role: 'user',
@@ -374,37 +384,44 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         await findOrCreateSubject(tx, current.learner_id, x.subject.name, x.subject.kind)
       ).id;
     }
-    for (const it of items) {
-      await tx.query(
-        `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
-                            choices, correct_choice, topic, difficulty, source_excerpt)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-        [
-          current.learner_id,
-          materialId,
-          subjectId,
-          it.kind,
-          it.prompt,
-          it.answer,
-          it.accepted_answers,
-          it.unit,
-          it.choices,
-          it.correct_choice,
-          it.topic,
-          it.difficulty,
-          it.source_excerpt,
-        ],
-      );
-    }
+    const homework = current.purpose === 'homework';
+    const itemIds = await insertItems(
+      tx,
+      {
+        learnerId: current.learner_id,
+        materialId,
+        subjectId,
+        origin: homework ? 'homework' : 'material',
+      },
+      items,
+    );
     await tx.query(
       `update materials set status = 'ready', failure_reason = null, title = coalesce(title, $2),
                             extracted_text = $3, subject_id = $4, ready_at = $5
         where id = $1`,
       [materialId, x.title, x.extracted_text, subjectId, now],
     );
+    if (homework) {
+      // Homework goes straight into a help session: hints only, never the solution.
+      await createSession(
+        tx,
+        current.learner_id,
+        itemIds,
+        {
+          mode: 'help',
+          stepId: null,
+          goalId: current.goal_id,
+          materialId,
+          title: x.title,
+          intro: null,
+          clientRequestId: null,
+        },
+        now,
+      );
+    }
     // The capture step Buddy asked for (or, without one, the goal's open
     // capture step) is now done — with evidence.
-    if (current.step_id || current.goal_id) {
+    if (!homework && (current.step_id || current.goal_id)) {
       await tx.query(
         `update buddy_steps set state = 'done', done_source = 'evidence', finished_at = $4, version = version + 1,
                                 evidence = $5
@@ -419,13 +436,14 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         ],
       );
     }
-    await enqueueJob(tx, {
-      learnerId: current.learner_id,
-      kind: 'buddy_check',
-      runAt: now,
-      dedupeKey: `material_ready:${materialId}`,
-      payload: { reason: 'material_ready', material_id: materialId },
-    });
+    if (!homework)
+      await enqueueJob(tx, {
+        learnerId: current.learner_id,
+        kind: 'buddy_check',
+        runAt: now,
+        dedupeKey: `material_ready:${materialId}`,
+        payload: { reason: 'material_ready', material_id: materialId },
+      });
     await enqueueJob(tx, {
       learnerId: current.learner_id,
       kind: 'purge_photos',
@@ -512,10 +530,12 @@ export async function archiveMaterial(
 
 export async function libraryView(db: Db, learnerId: string): Promise<LibraryView> {
   const materials = await db.query<
-    MaterialRow & { subject_name: string | null; item_count: number }
+    MaterialRow & { subject_name: string | null; item_count: number; session_id: string | null }
   >(
     `select m.*, s.name as subject_name,
-            (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count
+            (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
+            (select ps.id from practice_sessions ps where ps.material_id = m.id
+              order by ps.started_at desc limit 1) as session_id
        from materials m left join subjects s on s.id = m.subject_id
       where m.learner_id = $1 and m.archived_at is null
       order by m.created_at desc

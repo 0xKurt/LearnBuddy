@@ -10,17 +10,26 @@ import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
 
-export function SessionSummary({ summary }: { summary: PracticeSummary }) {
+type Props = {
+  summary: PracticeSummary;
+  /** Homework help: the tasks were solved by the learner, with hints. */
+  homework?: boolean;
+};
+
+export function SessionSummary({ summary, homework = false }: Props) {
   const { t } = useTranslation('practice');
   const hasTopics = summary.secure_topics.length > 0 || summary.shaky_topics.length > 0;
   return (
     <View style={{ gap: 16 }}>
       <Text accessibilityRole="header" style={TYPE.display}>
-        {t('summary.title')}
+        {homework ? t('summary_help.title') : t('summary.title')}
       </Text>
       <Card tone="mint" padding={20} radius={22}>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Stat value={summary.answered} label={t('summary.answered')} />
+          <Stat
+            value={summary.answered}
+            label={homework ? t('summary_help.answered') : t('summary.answered')}
+          />
           <Stat value={summary.first_try} label={t('summary.first_try')} />
         </View>
         {hasTopics ? (

@@ -3,8 +3,9 @@
 // straight to storage, then the API checks and reads them; Buddy's home shows
 // the reading. A failed send keeps the photos for another try.
 //
-// Optional route params: stepId (the capture step Buddy asked for) and goalId
-// (the goal the material belongs to).
+// Optional route params: stepId (the capture step Buddy asked for), goalId
+// (the goal the material belongs to) and purpose ('homework': the tasks are
+// read and a help session is made — hints only, never the solution).
 
 import { Uuid } from '@learnbuddy/shared-types/contracts';
 import * as ImagePicker from 'expo-image-picker';
@@ -27,11 +28,18 @@ import {
   MaterialUpload,
   PhotoUploadError,
   preparePhoto,
+  type MaterialPurpose,
   type SendProgress,
 } from '../lib/capture/upload.js';
 import { messageFor } from '../lib/errors.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+
+/** The purpose param; anything else is study material. */
+function purposeParam(value: string | string[] | undefined): MaterialPurpose {
+  const v = Array.isArray(value) ? value[0] : value;
+  return v === 'homework' ? 'homework' : 'study';
+}
 
 /** A route param as one id; anything that is not a UUID is ignored. */
 function idParam(value: string | string[] | undefined): string | null {
@@ -41,9 +49,15 @@ function idParam(value: string | string[] | undefined): string | null {
 
 export default function CaptureScreen() {
   const { t } = useTranslation(['capture', 'common']);
-  const params = useLocalSearchParams<{ stepId?: string | string[]; goalId?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    stepId?: string | string[];
+    goalId?: string | string[];
+    purpose?: string | string[];
+  }>();
   const stepId = idParam(params.stepId);
   const goalId = idParam(params.goalId);
+  const purpose = purposeParam(params.purpose);
+  const homework = purpose === 'homework';
 
   /** Local URIs of the prepared JPEGs, in page order. */
   const [photos, setPhotos] = useState<string[]>([]);
@@ -148,7 +162,7 @@ export default function CaptureScreen() {
   async function send() {
     if (sending.current || busy || photos.length === 0) return;
     sending.current = true;
-    if (!upload.current) upload.current = new MaterialUpload(photos, { stepId, goalId });
+    if (!upload.current) upload.current = new MaterialUpload(photos, { stepId, goalId, purpose });
     const current = upload.current;
     setFailure(null);
     setProgress({ step: 'reserving' });
@@ -173,9 +187,11 @@ export default function CaptureScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 18 }}>
         <View style={{ gap: 6 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
-            {t('capture:title')}
+            {homework ? t('capture:homework.title') : t('capture:title')}
           </Text>
-          <Text style={TYPE.body}>{t('capture:intro')}</Text>
+          <Text style={TYPE.body}>
+            {homework ? t('capture:homework.intro') : t('capture:intro')}
+          </Text>
         </View>
 
         <CaptureTips />

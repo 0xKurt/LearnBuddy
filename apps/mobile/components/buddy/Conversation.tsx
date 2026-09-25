@@ -1,6 +1,8 @@
 // The latest part of the conversation. Buddy's messages that were also
 // sent outside the app show what really happened to them.
 
+import { MathText } from '../math/MathText.js';
+import { withoutEmphasis } from '../../lib/math/emphasis.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
+import { OfferCard } from '../learn/OfferCard.js';
 import { deliveryText, describeAction } from './describe.js';
 
 type Props = {
@@ -36,11 +39,13 @@ export function Conversation({
     <View style={{ gap: 10 }}>
       {messages.map((m) => {
         const mine = m.role === 'learner';
+        // What Buddy did (✓ list); offers are not done yet, they have their own card.
+        const done = m.actions.filter((a) => a.summary.tool !== 'offer_learning');
         return (
           <View key={m.id} style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}>
             <View
               accessible
-              accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${m.text}`}
+              accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${withoutEmphasis(m.text)}`}
               style={{
                 maxWidth: '86%',
                 backgroundColor: mine ? LB.ink : LB.paper,
@@ -56,14 +61,26 @@ export function Conversation({
               {m.outreach ? (
                 <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
               ) : null}
-              <Text style={[TYPE.body, { color: mine ? '#fff' : LB.ink }]}>{m.text}</Text>
+              <MathText
+                text={m.text}
+                accessible={false}
+                style={[TYPE.body, { color: mine ? '#fff' : LB.ink }]}
+              />
             </View>
             {m.outreach ? (
               <Text style={[TYPE.small, { fontSize: 12 }]}>{deliveryText(m.outreach)}</Text>
             ) : null}
-            {showActions && m.actions.length > 0 ? (
+            {m.actions.map((a) =>
+              // Buddy's offers to start something: always shown, one tap starts it.
+              a.summary.tool === 'offer_learning' ? (
+                <View key={a.id} style={{ width: '86%' }}>
+                  <OfferCard actionId={a.id} offer={a.summary} />
+                </View>
+              ) : null,
+            )}
+            {showActions && done.length > 0 ? (
               <View style={{ gap: 2, maxWidth: '86%' }}>
-                {m.actions.map((a) => (
+                {done.map((a) => (
                   <Text
                     key={a.id}
                     style={[

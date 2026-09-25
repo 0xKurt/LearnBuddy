@@ -39,5 +39,61 @@
     "shaky": "Lo rivediamo insieme: {{topics}}"
   },
   "ended": "Questi esercizi sono già finiti.",
-  "back_to_buddy": "Torna da Buddy"
+  "back_to_buddy": "Torna da Buddy",
+  "speak": {
+    "instruction": "Dillo ad alta voce",
+    "listen": "Ascolta",
+    "listen_slow": "Ascolta lentamente",
+    "listen_stop": "Ferma",
+    "listen_hint": "Te lo legge ad alta voce.",
+    "no_voice": "La lettura ad alta voce ora non funziona su questo dispositivo – forse manca la voce per questa lingua.",
+    "record": "Parla",
+    "record_again": "Ridillo",
+    "record_stop": "Fatto",
+    "record_label": "Inizia a registrare",
+    "record_stop_label": "Termina la registrazione e mandala a Buddy",
+    "record_hint": "Tocca, di' la frase e poi tocca Fatto. Al massimo 15 secondi.",
+    "recording": "Ti ascolto … {{time}} / {{max}}",
+    "recording_label": "Registrazione in corso, {{time}} di {{max}}",
+    "listening": "Buddy sta ascoltando …",
+    "send_failed": "La tua registrazione non è ancora arrivata a Buddy.",
+    "resend": "Invia di nuovo",
+    "record_new": "Registra di nuovo",
+    "skip": "Salta per questa volta",
+    "denied": "Senza microfono non posso sentirti. Puoi consentirlo nelle Impostazioni.",
+    "denied_web": "Senza microfono non posso sentirti. Consentilo in alto nel browser e poi tocca di nuovo Parla.",
+    "open_settings": "Apri Impostazioni",
+    "problem": {
+      "too_short": "È stato molto breve. Tocca Parla, di' tutta la frase e poi tocca Fatto.",
+      "unsupported": "Non riesco a leggere questa registrazione. Riprova, per favore.",
+      "failed": "La registrazione non è riuscita. Riprova, per favore."
+    },
+    "overall": {
+      "good": "Suona benissimo!",
+      "almost": "Quasi – fai attenzione a: {{words}}",
+      "almost_plain": "Quasi – solo un po' più chiaro.",
+      "retry": "Riprova – prima ascoltalo con calma."
+    },
+    "words_ok": "Suona bene: {{words}}.",
+    "words_practise": "Da riprovare: {{words}}.",
+    "legend": "Sottolineato = da riprovare",
+    "tip": "«{{word}}» – {{tip}}",
+    "heard": "Ho sentito: «{{text}}»"
+  },
+  "help_note": "Compiti – ti do degli indizi, la soluzione la trovi tu.",
+  "origin_buddy": "Domanda di Buddy",
+  "self_solved": {
+    "title": "Risolto da te!",
+    "body": "Ci sei arrivato da solo."
+  },
+  "explain": {
+    "title": "In breve",
+    "ready": "Capito – fammi le domande!",
+    "again": "Rileggi la spiegazione",
+    "sheet_title": "La spiegazione"
+  },
+  "summary_help": {
+    "title": "Compiti fatti",
+    "answered": "Risolti da te"
+  }
 }

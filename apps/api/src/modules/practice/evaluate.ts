@@ -6,7 +6,7 @@
 import { canonicalizeUnit, normalizeShortAnswer, parseNumericInput } from '@learnbuddy/shared-math';
 
 export type ItemForCheck = {
-  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula';
+  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
   answer: string;
   accepted_answers: string[];
   unit: string | null;
@@ -14,7 +14,33 @@ export type ItemForCheck = {
   correct_choice: number | null;
 };
 
-export type RuleVerdict = 'correct' | 'incorrect' | 'unknown';
+/** 'close': the same except for accents/diacritics (e.g. "eleve" for "élève") — the tutor says so. */
+export type RuleVerdict = 'correct' | 'close' | 'incorrect' | 'unknown';
+
+/** $\\frac{a}{b}$ → a/b, x^{2} → x^2, \\sqrt{x} → √x, \\cdot → ·; without the dollar signs. */
+export function plainMath(s: string): string {
+  let out = s.replace(/\$/g, '');
+  for (let i = 0; i < 4; i++) out = out.replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, '$1/$2');
+  return out
+    .replace(/\\sqrt\{([^{}]*)\}/g, '√$1')
+    .replace(/\^\{([^{}]*)\}/g, '^$1')
+    .replace(/_\{([^{}]*)\}/g, '_$1')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\times/g, '×')
+    .replace(/\\div/g, ':')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\(left|right)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Letters without accents: é → e, ß stays (it is a letter of its own). */
+function withoutAccents(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+    .normalize('NFC');
+}
 
 function closeEnough(actual: number, expected: number): boolean {
   if (expected === 0) return Math.abs(actual) <= 1e-9;
@@ -57,9 +83,13 @@ export function ruleCheck(
 
   // short / long / formula: an exact match (after normalisation) is decidable;
   // everything else needs judgement.
-  const norm = normalizeShortAnswer(text);
-  const targets = [item.answer, ...item.accepted_answers].map(normalizeShortAnswer).filter(Boolean);
+  // Math written as \\frac{3}{4} (stored) and 3/4 (typed) is the same answer.
+  const norm = normalizeShortAnswer(plainMath(text));
+  const targets = [item.answer, ...item.accepted_answers]
+    .map((a) => normalizeShortAnswer(plainMath(a)))
+    .filter(Boolean);
   if (targets.includes(norm)) return 'correct';
+  if (targets.map(withoutAccents).includes(withoutAccents(norm))) return 'close';
   if (item.kind === 'formula') {
     const compact = (s: string) => s.replace(/\s+/g, '').toLowerCase();
     if ([item.answer, ...item.accepted_answers].some((a) => compact(a) === compact(text)))

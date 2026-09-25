@@ -1,0 +1,64 @@
+{
+  "start": {
+    "title": "Qu'est-ce que tu veux faire ?",
+    "photo": "Photographier un cours",
+    "homework": "Aide aux devoirs",
+    "explain": "Explique-moi",
+    "practice": "S'entraîner",
+    "vocab": "Réviser le vocabulaire",
+    "speak": "Travailler la prononciation"
+  },
+  "homework": {
+    "title": "Aide aux devoirs",
+    "body": "Je te donne des indices – tu trouves la solution toi-même.",
+    "photo": "Photographier l'exercice",
+    "type": "Taper l'exercice"
+  },
+  "vocab": {
+    "title": "Réviser le vocabulaire",
+    "body": "Je t'interroge dans les deux sens.",
+    "photo": "Photographier la liste",
+    "type": "Taper le vocabulaire"
+  },
+  "topic": {
+    "explain": {
+      "title": "Qu'est-ce que je dois t'expliquer ?",
+      "hint": "Je t'explique en bref, puis je vérifie que c'est acquis.",
+      "placeholder": "p. ex. le datif, la photosynthèse, simplifier des fractions",
+      "ex_1": "La photosynthèse",
+      "ex_2": "Simplifier des fractions",
+      "ex_3": "Le passé composé"
+    },
+    "practice": {
+      "title": "Qu'est-ce que tu veux travailler ?",
+      "hint": "Je te pose quelques questions là-dessus.",
+      "placeholder": "p. ex. additionner des fractions, le passé composé",
+      "ex_1": "Additionner des fractions",
+      "ex_2": "Le passé composé",
+      "ex_3": "Le Moyen Âge"
+    },
+    "vocab": {
+      "title": "Tape ton vocabulaire",
+      "hint": "Une paire par ligne. Je t'interroge dans les deux sens.",
+      "placeholder": "the bedroom – la chambre\nthe bed – le lit"
+    },
+    "speak": {
+      "title": "Qu'est-ce que tu veux t'entraîner à dire ?",
+      "hint": "Je t'écoute et je te dis ce qui sonne déjà bien.",
+      "placeholder": "p. ex. Unit 3 ou tes propres phrases",
+      "ex_1": "Me présenter en anglais",
+      "ex_2": "Demander le chemin en allemand"
+    },
+    "help": {
+      "title": "Quel exercice ? Recopie-le.",
+      "hint": "Je te donne des indices – tu trouves la solution toi-même.",
+      "placeholder": "p. ex. Calcule 3/4 + 1/6."
+    },
+    "examples": "Par exemple :",
+    "example_hint": "Met l'exemple dans le champ.",
+    "submit": "C'est parti",
+    "preparing": "Buddy prépare …",
+    "preparing_hint": "Ça prend quelques secondes.",
+    "not_usable": "Je ne peux rien préparer avec ça, désolé – essaie un sujet d'école."
+  }
+}

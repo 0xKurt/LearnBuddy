@@ -1,7 +1,7 @@
 // Native icon set ported from components.jsx (consistent stroke 1.6).
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-type IconName =
+export type IconName =
   | 'home'
   | 'practice'
   | 'camera'
@@ -22,7 +22,10 @@ type IconName =
   | 'speak'
   | 'shield'
   | 'eye'
-  | 'eye-off';
+  | 'eye-off'
+  | 'bulb'
+  | 'book'
+  | 'keyboard';
 
 type IconProps = {
   name: IconName;
@@ -186,6 +189,33 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
             {...common}
           />
           <Path d="M8.71 8.71a4 4 0 105.58 5.58" {...common} />
+        </Svg>
+      );
+    case 'bulb':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M9 18h6M10 21h4" {...common} />
+          <Path
+            d="M12 3a6 6 0 00-3.6 10.8c.7.6 1.1 1.3 1.1 2.2V16h5c0-.9.4-1.6 1.1-2.2A6 6 0 0012 3z"
+            {...common}
+          />
+        </Svg>
+      );
+    case 'book':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5V5.5z"
+            {...common}
+          />
+          <Path d="M12 6v13.5" {...common} />
+        </Svg>
+      );
+    case 'keyboard':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Rect x={2.5} y={6} width={19} height={12} rx={2.5} {...common} />
+          <Path d="M6.5 10h1M10.5 10h1M14.5 10h1M17 10h.5M6.5 14h11" {...common} />
         </Svg>
       );
   }

@@ -746,6 +746,13 @@ export async function runTool(action: AnyAction, ctx: ToolContext): Promise<Tool
       };
     }
 
+    case 'offer_learning':
+      // Changes nothing: the learner starts it with a tap (the model never starts sessions).
+      return {
+        summary: { tool: 'offer_learning', kind: action.args.kind, text: action.args.text },
+        undo: null,
+      };
+
     case 'schedule_check': {
       const a = action.args;
       const date = resolveFutureDay(ctx, a.day, 'the check');

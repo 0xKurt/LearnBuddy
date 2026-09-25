@@ -1,0 +1,64 @@
+{
+  "start": {
+    "title": "Cosa vuoi fare?",
+    "photo": "Fotografare appunti",
+    "homework": "Aiuto con i compiti",
+    "explain": "Spiegami qualcosa",
+    "practice": "Esercitarsi",
+    "vocab": "Ripassare i vocaboli",
+    "speak": "Esercitare la pronuncia"
+  },
+  "homework": {
+    "title": "Aiuto con i compiti",
+    "body": "Ti do degli indizi – la soluzione la trovi tu.",
+    "photo": "Fotografare l'esercizio",
+    "type": "Scrivere l'esercizio"
+  },
+  "vocab": {
+    "title": "Ripassare i vocaboli",
+    "body": "Ti interrogo in entrambe le direzioni.",
+    "photo": "Fotografare la lista",
+    "type": "Scrivere i vocaboli"
+  },
+  "topic": {
+    "explain": {
+      "title": "Cosa ti devo spiegare?",
+      "hint": "Te lo spiego in breve e poi controllo se è chiaro.",
+      "placeholder": "es. il dativo, la fotosintesi, semplificare le frazioni",
+      "ex_1": "La fotosintesi",
+      "ex_2": "Semplificare le frazioni",
+      "ex_3": "Il passato prossimo"
+    },
+    "practice": {
+      "title": "Cosa vuoi esercitare?",
+      "hint": "Ti faccio qualche domanda su questo.",
+      "placeholder": "es. sommare frazioni, il simple past",
+      "ex_1": "Sommare frazioni",
+      "ex_2": "Il simple past",
+      "ex_3": "Il Medioevo"
+    },
+    "vocab": {
+      "title": "Scrivi i tuoi vocaboli",
+      "hint": "Una coppia per riga. Ti interrogo in entrambe le direzioni.",
+      "placeholder": "the bedroom – la camera\nthe bed – il letto"
+    },
+    "speak": {
+      "title": "Cosa vuoi esercitarti a dire?",
+      "hint": "Ti ascolto e ti dico cosa suona già bene.",
+      "placeholder": "es. Unit 3 o frasi tue",
+      "ex_1": "Presentarmi in inglese",
+      "ex_2": "Chiedere la strada in francese"
+    },
+    "help": {
+      "title": "Quale esercizio? Ricopialo qui.",
+      "hint": "Ti do degli indizi – la soluzione la trovi tu.",
+      "placeholder": "es. Calcola 3/4 + 1/6."
+    },
+    "examples": "Per esempio:",
+    "example_hint": "Inserisce l'esempio nel campo.",
+    "submit": "Andiamo",
+    "preparing": "Buddy sta preparando …",
+    "preparing_hint": "Ci vuole qualche secondo.",
+    "not_usable": "Con questo non riesco a preparare niente, scusa – prova con un argomento di scuola."
+  }
+}

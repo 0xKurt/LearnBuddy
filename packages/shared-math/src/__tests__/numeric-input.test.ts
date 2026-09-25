@@ -46,3 +46,16 @@ describe('parseNumericInput (en)', () => {
     expect(r.value).toBe(12.5);
   });
 });
+
+describe('parseNumericInput — characters from the math keys', () => {
+  it('reads a typographic minus, dot, powers, pi and roots', () => {
+    expect(parseNumericInput('−3,5', 'de').value).toBe(-3.5);
+    expect(parseNumericInput('2·3', 'de').value).toBe(6);
+    expect(parseNumericInput('4²', 'de').value).toBe(16);
+    expect(parseNumericInput('2³', 'en').value).toBe(8);
+    expect(parseNumericInput('√16', 'de').value).toBe(4);
+    expect(parseNumericInput('√(9)', 'de').value).toBe(3);
+    expect(parseNumericInput('2π', 'en').value).toBeCloseTo(2 * Math.PI);
+    expect(parseNumericInput('3/4', 'de').value).toBe(0.75);
+  });
+});

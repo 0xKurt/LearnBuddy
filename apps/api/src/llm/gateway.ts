@@ -10,11 +10,26 @@ type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string
 
 export type LlmPart =
   | { text: string }
-  | { inlineData: { mimeType: 'image/jpeg' | 'image/png'; data: string } };
+  | { inlineData: { mimeType: 'image/jpeg' | 'image/png' | AudioMime; data: string } };
+
+/** Recordings the model listens to directly (speak questions). */
+export type AudioMime =
+  | 'audio/mp4'
+  | 'audio/aac'
+  | 'audio/m4a'
+  | 'audio/webm'
+  | 'audio/wav'
+  | 'audio/mpeg';
 
 export type LlmMessage = { role: 'user' | 'model'; parts: LlmPart[] };
 
-export type LlmPurpose = 'buddy_turn' | 'buddy_check' | 'tutor' | 'explain' | 'extraction';
+export type LlmPurpose =
+  | 'buddy_turn'
+  | 'buddy_check'
+  | 'tutor'
+  | 'explain'
+  | 'extraction'
+  | 'pronounce';
 
 export type LlmRequest = {
   purpose: LlmPurpose;

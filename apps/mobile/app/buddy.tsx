@@ -23,6 +23,10 @@ import { DoneList } from '../components/buddy/DoneList.js';
 import { NextList } from '../components/buddy/NextList.js';
 import { NowCard } from '../components/buddy/NowCard.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
+import { ChoiceSheet } from '../components/learn/ChoiceSheet.js';
+import { StartRow, type StartTile } from '../components/learn/StartRow.js';
+import { TopicSheet } from '../components/learn/TopicSheet.js';
+import type { TopicKind } from '../components/learn/useStartTopic.js';
 import { Banner } from '../components/lb/Banner.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
@@ -51,12 +55,17 @@ import { TYPE } from '../lib/theme/type.js';
 
 const VISIBLE_MESSAGES = 6;
 
+/** iOS can't present a sheet while another one is still sliding away. */
+const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
+
 export default function BuddyScreen() {
-  const { t } = useTranslation(['buddy', 'common']);
+  const { t } = useTranslation(['buddy', 'common', 'learn']);
   const home = useHome();
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [topic, setTopic] = useState<TopicKind | null>(null);
+  const [choice, setChoice] = useState<'homework' | 'vocab' | null>(null);
   const scroll = useRef<ScrollView>(null);
   // After sending, follow the conversation to its end once the new content has rendered.
   const followEnd = useRef(false);
@@ -111,6 +120,27 @@ export default function BuddyScreen() {
       await registerDeviceForPush().catch(() => false);
       return next;
     });
+  }
+
+  /** The same flows from the start row, the intro's starters and the choice sheets. */
+  function pick(tile: StartTile): void {
+    switch (tile) {
+      case 'photo':
+        router.push('/capture');
+        return;
+      case 'homework':
+      case 'vocab':
+        setChoice(tile);
+        return;
+      default:
+        setTopic(tile);
+    }
+  }
+
+  /** From a choice sheet on: first let it close, then go on. */
+  function fromChoice(next: () => void): void {
+    setChoice(null);
+    setTimeout(next, SHEET_SWAP_MS);
   }
 
   if (home.isPending) return <LoadingState label={t('common:loading')} />;
@@ -215,6 +245,8 @@ export default function BuddyScreen() {
             />
           ) : null}
 
+          <StartRow onPick={pick} />
+
           <DoneList actions={h.done} busy={busy} onUndo={(id) => void act(() => undoAction(id))} />
           <NextList items={h.next} />
 
@@ -229,19 +261,19 @@ export default function BuddyScreen() {
                 {t('buddy:intro.start')}
               </Text>
               <View style={{ gap: 10 }}>
-                {(['starter_exam', 'starter_practice'] as const).map((key) => (
-                  <Btn
-                    key={key}
-                    variant="outline"
-                    full
-                    wrap
-                    disabled={pending !== null}
-                    onPress={() => void send(t(`buddy:intro.${key}`))}
-                  >
-                    {t(`buddy:intro.${key}`)}
-                  </Btn>
-                ))}
-                <Btn variant="outline" full wrap onPress={() => router.push('/capture')}>
+                <Btn
+                  variant="outline"
+                  full
+                  wrap
+                  disabled={pending !== null}
+                  onPress={() => void send(t('buddy:intro.starter_exam'))}
+                >
+                  {t('buddy:intro.starter_exam')}
+                </Btn>
+                <Btn variant="outline" full wrap onPress={() => pick('practice')}>
+                  {t('buddy:intro.starter_practice')}
+                </Btn>
+                <Btn variant="outline" full wrap onPress={() => pick('photo')}>
                   {t('buddy:intro.starter_photo')}
                 </Btn>
               </View>
@@ -299,6 +331,44 @@ export default function BuddyScreen() {
           </Btn>
         ))}
       </Sheet>
+
+      <ChoiceSheet
+        visible={choice !== null}
+        title={t(choice === 'vocab' ? 'learn:vocab.title' : 'learn:homework.title')}
+        body={t(choice === 'vocab' ? 'learn:vocab.body' : 'learn:homework.body')}
+        onClose={() => setChoice(null)}
+        choices={
+          choice === 'vocab'
+            ? [
+                {
+                  label: t('learn:vocab.photo'),
+                  icon: 'camera',
+                  onPress: () => fromChoice(() => router.push('/capture')),
+                },
+                {
+                  label: t('learn:vocab.type'),
+                  icon: 'keyboard',
+                  onPress: () => fromChoice(() => setTopic('vocab')),
+                },
+              ]
+            : [
+                {
+                  label: t('learn:homework.photo'),
+                  icon: 'camera',
+                  onPress: () =>
+                    fromChoice(() =>
+                      router.push({ pathname: '/capture', params: { purpose: 'homework' } }),
+                    ),
+                },
+                {
+                  label: t('learn:homework.type'),
+                  icon: 'keyboard',
+                  onPress: () => fromChoice(() => setTopic('help')),
+                },
+              ]
+        }
+      />
+      <TopicSheet kind={topic} onClose={() => setTopic(null)} />
     </SafeAreaView>
   );
 }

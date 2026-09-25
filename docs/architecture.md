@@ -220,6 +220,41 @@ nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced 
 no short-term steps) once per session: first try → Good, with help → Hard, revealed → Again.
 Finishing records evidence on Buddy's step (only if something was answered) and wakes Buddy.
 
+### Learning modes (migration `0003_learning_modes.sql`)
+
+Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
+shown as "Frage von Buddy"), from a typed list (`typed`) or from homework (`homework`). All
+share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `insertItems`).
+
+- **help** — homework, from a photo (`materials.purpose = 'homework'`: the tasks as printed, a
+  help session is created when they are read) or typed (`POST /practice/topic` kind `help`; tasks
+  the model adds are dropped — `fromLearnerText`). The stored solution only guides hints. The
+  server enforces "never the solution": no reveal endpoint (409 `reveal_not_allowed`), closed
+  items carry no answer, and a tutor reply that contains the solution in any notation
+  (`givesAwayHomework`) gets one repair round, then is replaced by a safe hint. Confirming what
+  the learner worked out is allowed. No FSRS for homework.
+- **explain** — `POST /practice/topic` kind `explain`: a short explanation (`session.intro`) at
+  the learner's grade, then 3–5 check questions; the tutor sees the explanation.
+- **practice on a topic** — kind `practice`: Buddy's own questions, marked as such.
+- **vocab** — pairs (`prompt_lang` → `lang`) from a photographed list or typed (kind `vocab`);
+  each pair becomes two questions (both directions, own FSRS state). Rule check: exact after
+  normalisation = right; only accents differ = `close` → partially right, the tutor names the
+  letter.
+- **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak` with a
+  ≤ 15 s recording, bodies up to 2 MB only on this route). The model listens to the audio itself:
+  it writes the expected pronunciation and the sounds actually produced (IPA), then judges word
+  by word (`practice/speak.ts`). good → right, almost → right with help, retry → stays open.
+  The recording is never stored. Live checks (`evals/speak/run.ts`, espeak-ng recordings): wrong
+  words are recognised reliably, a strong German accent in 2 of 3 runs; it is an AI assessment,
+  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores)
+  would replace `speakItem`'s model call behind the same contract.
+- **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
+  renders fractions, powers, roots; `apps/mobile/components/math/`); LaTeX the model forgot to
+  wrap is wrapped server-side, and rule checks compare \\frac{3}{4} and 3/4 as equal. A question
+  may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
+  (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
+  not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
+
 ## Home
 
 `modules/buddy/home.ts`. Everything is derived from stored state: **now** (resume practice ›

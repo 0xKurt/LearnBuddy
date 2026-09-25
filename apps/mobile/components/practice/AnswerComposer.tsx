@@ -1,32 +1,43 @@
-// The field for typed answers (short, long, numeric, formula) with "Prüfen"
-// and "Lösung zeigen". A number's unit stands next to the field. Autocorrect
-// is off so the phone never "fixes" what the learner actually wrote.
+// The field for typed answers (short, long, numeric, formula, vocab) with
+// "Prüfen" and "Lösung zeigen" (not in homework help: there is no solution to show). A number's unit stands next to the field.
+// Autocorrect is off so the phone never "fixes" what the learner actually
+// wrote. For math questions a row of keys (², √, π, …) sits above the field
+// and inserts at the cursor.
 
 import type { ItemKind } from '@learnbuddy/shared-types/contracts';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View, type KeyboardTypeOptions } from 'react-native';
+import { Platform, Text, View, type KeyboardTypeOptions, type TextInput } from 'react-native';
+
+import { hasMath } from '../../lib/math/parse.js';
 
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
+import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { BottomBar } from './BottomBar.js';
 
 /** AnswerRequest.text allows at most 2000 characters. */
 const MAX_ANSWER_LENGTH = 2000;
 
 type Props = {
+  /** 'speak' questions use their own recorder; here they fall back to a plain text answer. */
   kind: ItemKind;
+  /** The question text: a short answer to a question with math ($…$) gets the math keys too. */
+  prompt?: string;
   unit: string | null;
   value: string;
   disabled: boolean;
   onChange: (text: string) => void;
   onCheck: () => void;
-  onReveal: () => void;
+  /** Absent when the session never shows the solution (homework help). */
+  onReveal?: () => void;
 };
 
 export function AnswerComposer({
   kind,
+  prompt = '',
   unit,
   value,
   disabled,
@@ -37,6 +48,20 @@ export function AnswerComposer({
   const { t } = useTranslation('practice');
   const long = kind === 'long';
   const exact = kind === 'numeric' || kind === 'formula';
+  const showKeys = exact || (kind === 'short' && hasMath(prompt));
+  const inputRef = useRef<TextInput>(null);
+  // Where the cursor is (reported by the field); set `forced` once after an insert to move it.
+  const selection = useRef<Selection | null>(null);
+  const [forced, setForced] = useState<Selection | undefined>(undefined);
+
+  const insert = (insertion: Insertion) => {
+    const next = insertAtCursor(value, selection.current, insertion);
+    if (next.value.length > MAX_ANSWER_LENGTH) return;
+    selection.current = next.selection;
+    onChange(next.value);
+    setForced(next.selection);
+    inputRef.current?.focus();
+  };
   const canCheck = !disabled && value.trim().length > 0;
   // iOS number pads lack minus, comma and letters (units); this one has them all.
   const keyboardType: KeyboardTypeOptions =
@@ -44,11 +69,18 @@ export function AnswerComposer({
 
   return (
     <BottomBar>
+      {showKeys ? <MathKeys onInsert={insert} disabled={disabled} /> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ flex: 1 }}>
           <LbTextInput
+            ref={inputRef}
             value={value}
             onChangeText={onChange}
+            selection={forced}
+            onSelectionChange={(e) => {
+              selection.current = e.nativeEvent.selection;
+              if (forced) setForced(undefined);
+            }}
             placeholder={t('answer.placeholder')}
             accessibilityLabel={t('answer.label')}
             accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
@@ -88,9 +120,11 @@ export function AnswerComposer({
       </View>
       {/* One main action: "Prüfen" takes the room; "Lösung zeigen" stays a quiet side option. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Btn variant="ghost" onPress={onReveal} disabled={disabled}>
-          {t('show_solution')}
-        </Btn>
+        {onReveal ? (
+          <Btn variant="ghost" onPress={onReveal} disabled={disabled}>
+            {t('show_solution')}
+          </Btn>
+        ) : null}
         <View style={{ flex: 1 }}>
           <Btn full onPress={onCheck} disabled={!canCheck}>
             {t('check')}

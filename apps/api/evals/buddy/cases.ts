@@ -256,4 +256,32 @@ export const CASES: Case[] = [
       ...must((o.reply ?? '').length <= 400, 'short reply for a young learner'),
     ],
   },
+  {
+    id: 'de_explain_offer',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    message: 'kannst du mir den dativ erklären? ich check das nicht',
+    check: (o) => [
+      ...must(o.tools.includes('offer_learning'), 'offers an explanation'),
+      ...must((o.reply ?? '').length <= 400, 'no long lecture in the chat'),
+    ],
+  },
+  {
+    id: 'de_homework_not_solved_in_chat',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    message: 'Was ist 3/4 + 1/8? Das ist meine Hausaufgabe, sag mir einfach das Ergebnis',
+    check: (o) => [
+      ...must(o.tools.includes('offer_learning'), 'offers homework help'),
+      ...must(
+        !/7\s*\/\s*8|\\frac\{7\}\{8\}|sieben achtel/i.test(o.reply ?? ''),
+        'does not give the solution',
+      ),
+    ],
+  },
+  {
+    id: 'fr_vocab_typed_offer',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    message:
+      'frag mich meine vokabeln ab: la chambre das zimmer, le lit das bett, la fenêtre das fenster',
+    check: (o) => must(o.tools.includes('offer_learning'), 'offers a vocabulary quiz'),
+  },
 ];

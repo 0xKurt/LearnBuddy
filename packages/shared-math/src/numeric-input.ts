@@ -18,7 +18,11 @@ export type NumericParseResult = {
 // Build a regex that matches the longest unit alias at the end of the string.
 const SORTED_UNIT_KEYS = Object.keys(UNIT_ALIASES).sort((a, b) => b.length - a.length);
 
-function stripTrailingUnit(input: string): { rest: string; unit: string | null; alias: string | null } {
+function stripTrailingUnit(input: string): {
+  rest: string;
+  unit: string | null;
+  alias: string | null;
+} {
   const lower = input.toLowerCase();
   for (const alias of SORTED_UNIT_KEYS) {
     // Match alias as a suffix, optionally preceded by whitespace.
@@ -34,6 +38,22 @@ function stripTrailingUnit(input: string): { rest: string; unit: string | null; 
   return { rest: input, unit: null, alias: null };
 }
 
+/**
+ * The characters the app's math keys insert (and phones type) → what the
+ * evaluator reads: − → -, · × → *, ÷ → /, ² ³ → ^2 ^3, π → pi, √x / √(x) → sqrt(…).
+ */
+export function typographicToAscii(text: string): string {
+  return text
+    .replace(/[−–]/g, '-')
+    .replace(/[·×⋅]/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/²/g, '^2')
+    .replace(/³/g, '^3')
+    .replace(/π/g, 'pi')
+    .replace(/√\s*\(/g, 'sqrt(')
+    .replace(/√\s*(\d+(?:[.,]\d+)?|[a-zA-Z]+)/g, 'sqrt($1)');
+}
+
 export function parseNumericInput(input: string, locale: NumericLocale = 'de'): NumericParseResult {
   const raw = input;
   const trimmed = input.trim();
@@ -42,7 +62,7 @@ export function parseNumericInput(input: string, locale: NumericLocale = 'de'): 
   }
 
   const { rest, unit, alias } = stripTrailingUnit(trimmed);
-  let numericText = rest.trim();
+  let numericText = typographicToAscii(rest.trim());
 
   // Normalize decimal/thousands separators.
   if (locale === 'de') {

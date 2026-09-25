@@ -67,3 +67,21 @@ export const TONE_DEEP: Record<SubjectTone, string> = {
   butter: LB.butterDeep,
   rose: LB.lavenderDeep, // no rose-deep in source; reuse lavender-deep
 };
+
+// Figures in questions (components/math/FigureView.tsx): calm, printed-schoolbook look.
+// Series colors stay distinguishable for common colour-vision deficiencies and are
+// never the only signal (each graph also has a label and its own dash pattern).
+export const FIGURE = {
+  paper: LB.paper,
+  axis: LB.ink2,
+  grid: 'rgba(20,15,30,0.09)',
+  gridStrong: 'rgba(20,15,30,0.18)',
+  stroke: LB.ink,
+  label: LB.ink2,
+  /** Shaded parts of a fraction, bars, filled polygons. */
+  fill: '#d9a08a',
+  fillSoft: 'rgba(177,113,92,0.16)',
+  empty: LB.paper,
+  point: LB.primaryDk,
+  series: ['#b1715c', '#3f6f9a', '#5b8a4f'],
+} as const;

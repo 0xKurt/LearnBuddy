@@ -40,7 +40,10 @@
     "result_title": "Done!",
     "result_body": "{{answered}} questions done, {{first_try}} right the first time.",
     "result_secure": "You've got this: {{topics}}",
-    "result_shaky": "Let's practise again: {{topics}}"
+    "result_shaky": "Let's practise again: {{topics}}",
+    "resume_body_untitled": "{{count}} questions left",
+    "resume_title_help": "Continue your homework",
+    "resume_title_explain": "Continue your explanation"
   },
   "when": {
     "today": "today",
@@ -126,7 +129,8 @@
     "request_material": "Asked for a photo: {{title}}",
     "set_contact_pause": "No messages until {{date}} (inclusive)",
     "set_contact": "Messages only between {{from}} and {{to}}, at most {{count}}× a week",
-    "schedule_check": "I'll check in again {{when}}"
+    "schedule_check": "I'll check in again {{when}}",
+    "offer_learning": "Offered: {{what}} – “{{text}}”"
   },
   "intro": {
     "title": "I'm Buddy.",

@@ -9,6 +9,8 @@
 
 import type {
   AnswerRequest,
+  Figure,
+  SessionMode,
   AnswerResponse,
   PracticeSummary,
   PracticeTurnView,
@@ -33,14 +35,17 @@ import {
   TUTOR_SYSTEM,
   TutorDecision,
   enforceTutorInvariants,
+  givesAwayHomework,
   tutorContext,
 } from './tutor.js';
+import type { LlmMessage } from '../../llm/gateway.js';
 
 const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
 const MATERIAL_CHARS = 4000;
 
 export type PracticeLearner = {
   id: string;
+  display_name: string;
   locale: string;
   level: string;
   grade: number | null;
@@ -49,7 +54,7 @@ export type PracticeLearner = {
 
 type ItemRow = {
   id: string;
-  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula';
+  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
   prompt: string;
   answer: string;
   accepted_answers: string[];
@@ -57,7 +62,11 @@ type ItemRow = {
   choices: string[] | null;
   correct_choice: number | null;
   topic: string | null;
-  material_id: string;
+  material_id: string | null;
+  origin: 'material' | 'buddy' | 'typed' | 'homework';
+  lang: string | null;
+  prompt_lang: string | null;
+  figure: Figure | null;
 };
 
 type SessionRow = {
@@ -65,8 +74,10 @@ type SessionRow = {
   learner_id: string;
   step_id: string | null;
   goal_id: string | null;
-  mode: 'practice' | 'test';
+  mode: SessionMode;
   status: 'active' | 'finished' | 'abandoned';
+  title: string | null;
+  intro: string | null;
 };
 
 type SessionItemRow = {
@@ -80,17 +91,38 @@ type SessionItemRow = {
 
 // ─────────────── start ───────────────
 
-async function createSession(
+export type SessionOptions = {
+  stepId: string | null;
+  goalId: string | null;
+  mode: SessionMode;
+  materialId?: string | null;
+  title?: string | null;
+  intro?: string | null;
+  clientRequestId?: string | null;
+};
+
+export async function createSession(
   db: Db,
   learnerId: string,
   itemIds: string[],
-  opts: { stepId: string | null; goalId: string | null; mode: 'practice' | 'test' },
+  opts: SessionOptions,
   now: Date,
 ): Promise<string> {
   const s = await db.one<{ id: string }>(
-    `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at)
-     values ($1, $2, $3, $4, $5, $5) returning id`,
-    [learnerId, opts.stepId, opts.goalId, opts.mode, now],
+    `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
+                                    material_id, title, intro, client_request_id)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) returning id`,
+    [
+      learnerId,
+      opts.stepId,
+      opts.goalId,
+      opts.mode,
+      now,
+      opts.materialId ?? null,
+      opts.title ?? null,
+      opts.intro ?? null,
+      opts.clientRequestId ?? null,
+    ],
   );
   for (const [position, itemId] of itemIds.entries()) {
     await db.query(
@@ -207,11 +239,17 @@ export async function startManual(
   });
 }
 
+/** Practice and explanations feed spaced repetition; tests and homework do not. */
+function learnsFsrs(mode: SessionMode): boolean {
+  return mode === 'practice' || mode === 'explain';
+}
+
 // ─────────────── view ───────────────
 
 async function loadSession(db: Db, learnerId: string, sessionId: string): Promise<SessionRow> {
   const s = await db.maybeOne<SessionRow>(
-    `select id, learner_id, step_id, goal_id, mode, status from practice_sessions where id = $1 and learner_id = $2`,
+    `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+      where id = $1 and learner_id = $2`,
     [sessionId, learnerId],
   );
   if (!s) throw new AppError('not_found', 'Session not found');
@@ -227,7 +265,7 @@ export async function sessionView(
   const items = await db.query<SessionItemRow & ItemRow>(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.first_try_correct,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
-            i.topic, i.material_id
+            i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure
        from session_items si join items i on i.id = si.item_id
       where si.session_id = $1 order by si.position`,
     [sessionId],
@@ -238,21 +276,26 @@ export async function sessionView(
     role: 'learner' | 'tutor';
     text: string;
     verdict: PracticeTurnView['verdict'];
+    pronunciation: PracticeTurnView['pronunciation'];
     created_at: Date;
   }>(
-    `select id, item_id, role, text, verdict, created_at from practice_turns where session_id = $1 order by seq`,
+    `select id, item_id, role, text, verdict, pronunciation, created_at from practice_turns
+      where session_id = $1 order by seq`,
     [sessionId],
   );
   const title = await db.maybeOne<{ title: string }>(
-    `select coalesce(g.title, st.title) as title from practice_sessions ps
+    `select coalesce(ps.title, g.title, st.title) as title from practice_sessions ps
        left join buddy_goals g on g.id = ps.goal_id left join buddy_steps st on st.id = ps.step_id
       where ps.id = $1`,
     [sessionId],
   );
   const current = items.find((i) => i.status === 'open');
+  const revealAllowed = s.mode !== 'help';
   return {
     id: s.id,
     mode: s.mode,
+    intro: s.intro,
+    reveal_allowed: revealAllowed,
     status: s.status,
     title: title?.title ?? '',
     items: items.map((i) => ({
@@ -263,13 +306,17 @@ export async function sessionView(
         choices: i.choices,
         unit: i.unit,
         topic: i.topic,
+        origin: i.origin,
+        lang: i.lang,
+        prompt_lang: i.prompt_lang,
+        figure: i.figure,
       },
       status: i.status,
       attempts: i.attempts,
       hints_used: i.hints_used,
-      // Never leak the solution of an open question to the client.
+      // Never leak the solution of an open question, nor ever in help mode (homework).
       answer:
-        i.status === 'open'
+        i.status === 'open' || !revealAllowed
           ? null
           : i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null
             ? (i.choices[i.correct_choice] ?? i.answer)
@@ -281,6 +328,7 @@ export async function sessionView(
       role: tr.role,
       text: tr.text,
       verdict: tr.verdict,
+      pronunciation: tr.pronunciation,
       created_at: tr.created_at.toISOString(),
     })),
     current_item_id: s.status === 'active' ? (current?.id ?? null) : null,
@@ -357,7 +405,7 @@ export async function answerItem(
   const item = await deps.db.maybeOne<ItemRow & SessionItemRow & { extracted_text: string | null }>(
     `select i.*, si.status, si.attempts, si.hints_used, si.first_try_correct, si.position, si.item_id,
             m.extracted_text
-       from session_items si join items i on i.id = si.item_id join materials m on m.id = i.material_id
+       from session_items si join items i on i.id = si.item_id left join materials m on m.id = i.material_id
       where si.session_id = $1 and si.item_id = $2`,
     [sessionId, input.item_id],
   );
@@ -368,6 +416,11 @@ export async function answerItem(
     input.text ??
     (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null);
   if (!text) throw new AppError('invalid_input', 'Empty answer');
+  if (item.kind === 'speak') {
+    throw new AppError('conflict', 'This question is answered by speaking', {
+      reason: 'use_speak',
+    });
+  }
   const rule: RuleVerdict = ruleCheck(
     item,
     { text: input.text ?? null, choice: input.choice ?? null },
@@ -386,7 +439,10 @@ export async function answerItem(
     judged = {
       verdict: 'correct',
       evaluatedBy: 'rule',
-      reply: t(learner.locale, 'practice.correct'),
+      reply: t(
+        learner.locale,
+        session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
+      ),
       gaveHint: false,
       revealed: false,
     };
@@ -407,50 +463,77 @@ export async function answerItem(
         `select timezone from buddy_settings where learner_id = $1`,
         [learner.id],
       );
-      const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
-        purpose: 'tutor',
-        tier: 'smart',
-        promptVersion: TUTOR_PROMPT_VERSION,
-        system: TUTOR_SYSTEM,
-        contents: [
+      const tutorContents: LlmMessage[] = [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: tutorContext({
+                item,
+                hintsGiven: item.hints_used,
+                attempts: item.attempts,
+                ruleVerdict: rule,
+                mode: session.mode,
+                explanation: session.intro,
+                learnerLevel:
+                  learner.level === 'school'
+                    ? `school grade ${learner.grade ?? '?'}`
+                    : learner.level,
+                learnerAge: ageOn(learner.birth_date, now),
+                language: learner.locale,
+                material: item.extracted_text ? item.extracted_text.slice(0, MATERIAL_CHARS) : null,
+                preferences: preferences.map((p) => p.statement),
+              }),
+            },
+          ],
+        },
+        ...history.map((h) => ({
+          role: h.role === 'learner' ? ('user' as const) : ('model' as const),
+          parts: [{ text: h.text }],
+        })),
+        { role: 'user', parts: [{ text }] },
+      ];
+      const askTutor = async (messages: LlmMessage[]) => {
+        const r = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
+          purpose: 'tutor',
+          tier: 'smart',
+          promptVersion: TUTOR_PROMPT_VERSION,
+          system: TUTOR_SYSTEM,
+          contents: messages,
+          schema: TUTOR_SCHEMA,
+          maxOutputTokens: 1024,
+          temperature: 0.3,
+          timeoutMs: 20_000,
+          thinkingBudget: 0,
+        });
+        const parsed = TutorDecision.safeParse(r.json);
+        if (!parsed.success) throw new Error('tutor output invalid');
+        return enforceTutorInvariants(parsed.data, rule);
+      };
+      let d = await askTutor(tutorContents);
+      if (session.mode === 'help' && givesAwayHomework(d, item.answer, `${item.prompt}\n${text}`)) {
+        // Homework: the solution must not be given. One repair with the reason, then a safe hint.
+        d = await askTutor([
+          ...tutorContents,
+          { role: 'model', parts: [{ text: d.reply }] },
           {
             role: 'user',
             parts: [
               {
-                text: tutorContext({
-                  item,
-                  hintsGiven: item.hints_used,
-                  attempts: item.attempts,
-                  ruleVerdict: rule,
-                  learnerLevel:
-                    learner.level === 'school'
-                      ? `school grade ${learner.grade ?? '?'}`
-                      : learner.level,
-                  learnerAge: ageOn(learner.birth_date, now),
-                  language: learner.locale,
-                  material: item.extracted_text
-                    ? item.extracted_text.slice(0, MATERIAL_CHARS)
-                    : null,
-                  preferences: preferences.map((p) => p.statement),
-                }),
+                text: 'SYSTEM CHECK (not the learner): that reply gives the solution away, which is not allowed for homework. Write it again as one small hint or question without the answer.',
               },
             ],
           },
-          ...history.map((h) => ({
-            role: h.role === 'learner' ? ('user' as const) : ('model' as const),
-            parts: [{ text: h.text }],
-          })),
-          { role: 'user', parts: [{ text }] },
-        ],
-        schema: TUTOR_SCHEMA,
-        maxOutputTokens: 1024,
-        temperature: 0.3,
-        timeoutMs: 20_000,
-        thinkingBudget: 0,
-      });
-      const parsed = TutorDecision.safeParse(res.json);
-      if (!parsed.success) throw new Error('tutor output invalid');
-      const d = enforceTutorInvariants(parsed.data, rule);
+        ]);
+        if (givesAwayHomework(d, item.answer, `${item.prompt}\n${text}`)) {
+          d = {
+            ...d,
+            reply: t(learner.locale, 'practice.help_step'),
+            gave_hint: true,
+            revealed_answer: false,
+          };
+        }
+      }
       judged = {
         verdict: d.verdict,
         evaluatedBy: 'model',
@@ -462,21 +545,29 @@ export async function answerItem(
       if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
       // No model: say what the rules know, never pretend to have judged.
       judged =
-        rule === 'incorrect'
+        rule === 'close'
           ? {
-              verdict: 'incorrect',
+              verdict: 'partially_correct',
               evaluatedBy: 'rule',
-              reply: t(learner.locale, 'practice.not_quite'),
+              reply: t(learner.locale, 'practice.accents'),
               gaveHint: false,
               revealed: false,
             }
-          : {
-              verdict: null,
-              evaluatedBy: null,
-              reply: t(learner.locale, 'practice.cannot_check'),
-              gaveHint: false,
-              revealed: false,
-            };
+          : rule === 'incorrect'
+            ? {
+                verdict: 'incorrect',
+                evaluatedBy: 'rule',
+                reply: t(learner.locale, 'practice.not_quite'),
+                gaveHint: false,
+                revealed: false,
+              }
+            : {
+                verdict: null,
+                evaluatedBy: null,
+                reply: t(learner.locale, 'practice.cannot_check'),
+                gaveHint: false,
+                revealed: false,
+              };
     }
   }
 
@@ -526,7 +617,7 @@ export async function answerItem(
           where session_id = $1 and item_id = $2`,
         [sessionId, item.id, attempts, hints, status, firstTry, now],
       );
-      if (status !== 'open' && session.mode === 'practice') {
+      if (status !== 'open' && learnsFsrs(session.mode)) {
         await reviewItem(
           tx,
           learner.id,
@@ -573,12 +664,17 @@ export async function revealItem(
     );
     if (!si) throw new AppError('not_found', 'Question not in this session');
     if (si.status !== 'open') return;
+    if (s.mode === 'help') {
+      throw new AppError('conflict', 'Homework help never shows the solution', {
+        reason: 'reveal_not_allowed',
+      });
+    }
     await tx.query(
       `update session_items set status = 'skipped', first_try_correct = false, closed_at = $3
         where session_id = $1 and item_id = $2`,
       [sessionId, itemId, now],
     );
-    if (s.mode === 'practice') await reviewItem(tx, learnerId, itemId, 'revealed', now);
+    if (learnsFsrs(s.mode)) await reviewItem(tx, learnerId, itemId, 'revealed', now);
     await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
       sessionId,
       now,
@@ -596,7 +692,7 @@ export async function finishSession(
   const now = deps.now();
   await deps.db.tx(async (tx) => {
     const s = await tx.maybeOne<SessionRow>(
-      `select id, learner_id, step_id, goal_id, mode, status from practice_sessions
+      `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
         where id = $1 and learner_id = $2 for update`,
       [sessionId, learnerId],
     );

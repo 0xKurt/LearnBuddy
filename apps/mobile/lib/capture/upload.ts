@@ -103,7 +103,17 @@ export type SendProgress =
   | { step: 'uploading'; current: number; total: number }
   | { step: 'submitting' };
 
-export type MaterialLink = { stepId: string | null; goalId: string | null };
+export type MaterialPurpose = 'study' | 'homework';
+
+/**
+ * What the photos are for: the capture step and goal they belong to, and
+ * whether it is study material or homework (hints only, a help session).
+ */
+export type MaterialLink = {
+  stepId: string | null;
+  goalId: string | null;
+  purpose?: MaterialPurpose;
+};
 
 /**
  * Sending one fixed set of photos. Keep the instance for retries: it keeps
@@ -138,6 +148,7 @@ export class MaterialUpload {
         photo_mimes: this.photoUris.map(() => 'image/jpeg' as const),
         ...(this.link.stepId ? { step_id: this.link.stepId } : {}),
         ...(this.link.goalId ? { goal_id: this.link.goalId } : {}),
+        purpose: this.link.purpose ?? 'study',
       });
       materialId = res.material.id;
       this.materialId = materialId;

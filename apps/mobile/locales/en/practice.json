@@ -39,5 +39,61 @@
     "shaky": "Worth another look: {{topics}}"
   },
   "ended": "This practice has already ended.",
-  "back_to_buddy": "Back to Buddy"
+  "back_to_buddy": "Back to Buddy",
+  "speak": {
+    "instruction": "Say it out loud",
+    "listen": "Listen",
+    "listen_slow": "Listen slowly",
+    "listen_stop": "Stop",
+    "listen_hint": "Reads it aloud to you.",
+    "no_voice": "Reading aloud isn't working on this device right now – the voice for this language may be missing.",
+    "record": "Speak",
+    "record_again": "Say it again",
+    "record_stop": "Done",
+    "record_label": "Start recording",
+    "record_stop_label": "Stop recording and send it to Buddy",
+    "record_hint": "Tap, say the sentence, then tap Done. 15 seconds at most.",
+    "recording": "I'm listening … {{time}} / {{max}}",
+    "recording_label": "Recording, {{time}} of {{max}}",
+    "listening": "Buddy is listening …",
+    "send_failed": "Your recording hasn't reached Buddy yet.",
+    "resend": "Send again",
+    "record_new": "Record again",
+    "skip": "Skip this time",
+    "denied": "Without the microphone I can't hear you. You can allow it in Settings.",
+    "denied_web": "Without the microphone I can't hear you. Allow it at the top of your browser, then tap Speak again.",
+    "open_settings": "Open Settings",
+    "problem": {
+      "too_short": "That was very short. Tap Speak, say the whole sentence, then tap Done.",
+      "unsupported": "I can't read this recording, sorry. Please try again.",
+      "failed": "The recording didn't work. Please try again."
+    },
+    "overall": {
+      "good": "Sounds great!",
+      "almost": "Almost – watch out for: {{words}}",
+      "almost_plain": "Almost – just a little clearer.",
+      "retry": "Try again – listen to it calmly first."
+    },
+    "words_ok": "Sounds good: {{words}}.",
+    "words_practise": "Practise again: {{words}}.",
+    "legend": "Underlined = practise again",
+    "tip": "“{{word}}” – {{tip}}",
+    "heard": "What I heard: “{{text}}”"
+  },
+  "help_note": "Homework – I'll give you hints, you'll find the answer yourself.",
+  "origin_buddy": "Question from Buddy",
+  "self_solved": {
+    "title": "Solved it yourself!",
+    "body": "You worked that out on your own."
+  },
+  "explain": {
+    "title": "In short",
+    "ready": "Got it – ask me!",
+    "again": "Read the explanation again",
+    "sheet_title": "The explanation"
+  },
+  "summary_help": {
+    "title": "Homework done",
+    "answered": "Solved yourself"
+  }
 }

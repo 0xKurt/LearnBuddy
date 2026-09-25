@@ -4,3 +4,4 @@ export * from './mathlite.js';
 export * from './numeric-input.js';
 export * from './normalize.js';
 export * from './units.js';
+export * from './expression.js';

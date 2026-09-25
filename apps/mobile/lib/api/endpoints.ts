@@ -21,7 +21,9 @@ import {
   type AppLocale,
   type CreateLearnerRequest,
   type CreateMaterialRequest,
+  type SpeakRequest,
   type StartPracticeRequest,
+  type StartTopicRequest,
   type UpdateBuddySettingsRequest,
   type UpdateLearnerRequest,
   type UpdateMemoryRequest,
@@ -122,7 +124,8 @@ export const registerPushToken = (token: string, platform: 'ios' | 'android') =>
 // ─────────────── material ───────────────
 
 export const getLibrary = () => request('GET', '/materials', { schema: LibraryView });
-export const createMaterial = (body: CreateMaterialRequest) =>
+/** The request as sent: fields with a server default (purpose) may be left out. */
+export const createMaterial = (body: z.input<typeof CreateMaterialRequest>) =>
   request('POST', '/materials', { body, schema: CreateMaterialResponse });
 export const submitMaterial = (id: string) =>
   request('POST', `/materials/${id}/submit`, { schema: MaterialView });
@@ -140,6 +143,12 @@ export const getSession = (id: string) =>
   request('GET', `/practice/sessions/${id}`, { schema: SessionView });
 export const answerItem = (id: string, body: AnswerRequest) =>
   request('POST', `/practice/sessions/${id}/answer`, { body, schema: AnswerResponse });
+/** A recording for a speak question; retrying the same recording reuses its client_turn_id. */
+export const speakItem = (id: string, body: SpeakRequest) =>
+  request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse });
+/** A session from something the learner named (a topic, a vocabulary list, sentences to say). */
+export const startTopic = (body: StartTopicRequest) =>
+  request('POST', '/practice/topic', { body, schema: SessionView });
 export const revealItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/reveal`, {
     body: { item_id: itemId },

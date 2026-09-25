@@ -35,10 +35,17 @@ export function NowCard({
       return (
         <Card tone="primaryLt" padding={20} radius={22}>
           <Text accessibilityRole="header" style={TYPE.title}>
-            {t('now.resume_title')}
+            {card.mode === 'help'
+              ? t('now.resume_title_help')
+              : card.mode === 'explain'
+                ? t('now.resume_title_explain')
+                : t('now.resume_title')}
           </Text>
           <Text style={[TYPE.body, { marginTop: 4 }]}>
-            {t('now.resume_body', { title: card.title, count: card.remaining })}
+            {/* Sessions started from a topic or homework have no goal or step title. */}
+            {card.title.trim()
+              ? t('now.resume_body', { title: card.title, count: card.remaining })
+              : t('now.resume_body_untitled', { count: card.remaining })}
           </Text>
           <View style={{ marginTop: 16 }}>
             <Btn size="lg" onPress={() => onResume(card.session_id)} disabled={busy}>

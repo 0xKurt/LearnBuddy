@@ -280,6 +280,25 @@ const scheduleCheck = z.object({
   }),
 });
 
+const offerLearning = z.object({
+  tool: z.literal('offer_learning'),
+  args: z.object({
+    kind: z
+      .enum(['explain', 'practice', 'vocab', 'speak', 'help'])
+      .describe(
+        'explain a topic · questions on a topic · a vocabulary list · speaking practice · homework help',
+      ),
+    text: z
+      .string()
+      .trim()
+      .min(2)
+      .max(600)
+      .describe(
+        "What to learn, in the learner's words (topic, the vocabulary they typed, or the homework task)",
+      ),
+  }),
+});
+
 export const TurnAction = z.discriminatedUnion('tool', [
   remember,
   correctMemory,
@@ -295,6 +314,7 @@ export const TurnAction = z.discriminatedUnion('tool', [
   requestMaterial,
   setContact,
   scheduleCheck,
+  offerLearning,
 ]);
 export type TurnAction = z.infer<typeof TurnAction>;
 

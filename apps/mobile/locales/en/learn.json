@@ -1,0 +1,64 @@
+{
+  "start": {
+    "title": "What do you want to do?",
+    "photo": "Photograph your notes",
+    "homework": "Homework help",
+    "explain": "Explain something",
+    "practice": "Practise",
+    "vocab": "Test my vocab",
+    "speak": "Practise speaking"
+  },
+  "homework": {
+    "title": "Homework help",
+    "body": "I'll give you hints – you'll find the answer yourself.",
+    "photo": "Photograph the task",
+    "type": "Type in the task"
+  },
+  "vocab": {
+    "title": "Test my vocab",
+    "body": "I'll test you in both directions.",
+    "photo": "Photograph a vocab list",
+    "type": "Type in vocab"
+  },
+  "topic": {
+    "explain": {
+      "title": "What should I explain?",
+      "hint": "I'll explain it briefly, then check that it sticks.",
+      "placeholder": "e.g. the dative, photosynthesis, simplifying fractions",
+      "ex_1": "Photosynthesis",
+      "ex_2": "Simplifying fractions",
+      "ex_3": "Simple past"
+    },
+    "practice": {
+      "title": "What do you want to practise?",
+      "hint": "I'll ask you a few questions about it.",
+      "placeholder": "e.g. adding fractions, simple past",
+      "ex_1": "Adding fractions",
+      "ex_2": "Simple past",
+      "ex_3": "The Middle Ages"
+    },
+    "vocab": {
+      "title": "Type in your vocab",
+      "hint": "One pair per line. I'll test you in both directions.",
+      "placeholder": "la chambre – the bedroom\nle lit – the bed"
+    },
+    "speak": {
+      "title": "What do you want to practise saying?",
+      "hint": "I'll listen and tell you what already sounds good.",
+      "placeholder": "e.g. Unit 3 or your own sentences",
+      "ex_1": "Introducing myself in French",
+      "ex_2": "Asking the way in German"
+    },
+    "help": {
+      "title": "Which task? Copy it here.",
+      "hint": "I'll give you hints – you'll find the answer yourself.",
+      "placeholder": "e.g. Work out 3/4 + 1/6."
+    },
+    "examples": "For example:",
+    "example_hint": "Puts the example into the field.",
+    "submit": "Let's go",
+    "preparing": "Buddy is getting it ready …",
+    "preparing_hint": "This takes a few seconds.",
+    "not_usable": "I can't prepare anything from that, sorry – try a school topic."
+  }
+}

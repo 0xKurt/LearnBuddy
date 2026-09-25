@@ -59,7 +59,13 @@
           "color": "#b1715c"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Damit du Sätze laut üben kannst und Buddy dir sagt, wie deine Aussprache klingt."
+        }
+      ]
     ]
   }
 }

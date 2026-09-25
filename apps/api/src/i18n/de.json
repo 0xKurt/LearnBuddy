@@ -25,6 +25,13 @@
     "correct": "Stimmt – gut gemacht!",
     "untitled": "Übung",
     "not_quite": "Noch nicht ganz. Schau dir die Frage nochmal an – oder lass dir die Lösung zeigen.",
-    "cannot_check": "Das kann ich gerade nicht prüfen. Du kannst dir die Lösung ansehen und selbst vergleichen."
+    "cannot_check": "Das kann ich gerade nicht prüfen. Du kannst dir die Lösung ansehen und selbst vergleichen.",
+    "accents": "Fast – schau nochmal auf die Akzente.",
+    "help_step": "Lass uns Schritt für Schritt schauen: Was ist in der Aufgabe gegeben, und was wird gesucht?",
+    "help_solved": "Stark – das hast du selbst gelöst!",
+    "heard_retry": "Ich konnte dich nicht gut verstehen. Sprich nochmal etwas lauter und näher am Handy.",
+    "speak_good": "Klingt super!",
+    "speak_almost": "Fast! Schau dir die markierten Wörter an.",
+    "speak_retry": "Versuch's nochmal – hör es dir vorher an."
   }
 }

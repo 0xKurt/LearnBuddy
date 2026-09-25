@@ -73,6 +73,12 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     max_per_week: z.number().int(),
   }),
   z.object({ tool: z.literal('schedule_check'), at: IsoDateTime }),
+  /** Buddy offers to start learning; the app shows a button that starts it (POST /practice/topic). */
+  z.object({
+    tool: z.literal('offer_learning'),
+    kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help']),
+    text: z.string(),
+  }),
 ]);
 export type ActionSummary = z.infer<typeof ActionSummary>;
 
@@ -159,6 +165,8 @@ export const NowCard = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('resume_practice'),
     session_id: Uuid,
+    /** help: homework help, explain: an explanation with questions. */
+    mode: z.enum(['practice', 'test', 'help', 'explain']),
     title: z.string(),
     remaining: z.number().int(),
   }),

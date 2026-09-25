@@ -1,13 +1,18 @@
 // Where the learner is in the session ("Frage 2 von 8" and a thin bar – no
-// timer, no pressure) and the question itself in large, readable text.
+// timer, no pressure) and the question itself in large, readable text, with
+// its math set properly and its figure drawn underneath.
 
+import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
+import { Chip } from '../lb/Chip.js';
 import { Progress } from '../lb/Progress.js';
+import { FigureView } from '../math/FigureView.js';
+import { MathText } from '../math/MathText.js';
 
 type ProgressProps = {
   /** 1-based position of the question on screen. */
@@ -36,16 +41,36 @@ export function ProgressRow({ position, total, closed }: ProgressProps) {
   );
 }
 
-export function QuestionCard({ prompt, topic }: { prompt: string; topic: string | null }) {
+type QuestionProps = {
+  /** May contain inline math between dollar signs ($\frac{3}{4}$). */
+  prompt: string;
+  topic: string | null;
+  /** A drawing that goes with the question (fraction picture, graph, table …). */
+  figure?: Figure | null;
+  /** Buddy wrote this question (origin 'buddy'), it is not from the learner's own material. */
+  fromBuddy?: boolean;
+};
+
+export function QuestionCard({ prompt, topic, figure = null, fromBuddy = false }: QuestionProps) {
+  const { t } = useTranslation('practice');
   return (
     <Card tone="lavender" padding={20} radius={22}>
+      {fromBuddy ? (
+        <View style={{ marginBottom: 10 }}>
+          <Chip>{t('origin_buddy')}</Chip>
+        </View>
+      ) : null}
       {topic ? <Text style={[TYPE.body, { color: LB.ink2, marginBottom: 8 }]}>{topic}</Text> : null}
-      <Text
+      <MathText
+        text={prompt}
         accessibilityRole="header"
         style={[TYPE.title, { fontSize: 20, lineHeight: 28, fontWeight: '500' }]}
-      >
-        {prompt}
-      </Text>
+      />
+      {figure ? (
+        <View style={{ marginTop: 14 }}>
+          <FigureView figure={figure} />
+        </View>
+      ) : null}
     </Card>
   );
 }

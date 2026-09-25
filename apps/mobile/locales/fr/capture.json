@@ -37,5 +37,9 @@
     "upload_file": "La photo {{index}} n'est plus là. Retire-la et reprends-la.",
     "kept": "Tes photos sont toujours là.",
     "left": "Ta fiche n'est pas arrivée. Reprends-la en photo, s'il te plaît."
+  },
+  "homework": {
+    "title": "Photographie tes devoirs",
+    "intro": "Je t'aide pas à pas – la solution, tu la trouves toi-même."
   }
 }

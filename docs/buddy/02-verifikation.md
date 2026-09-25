@@ -77,15 +77,20 @@ echten Geräten (Kamera, Tastatur, Push, Bildschirmleser).
 
 ## 3. Nicht automatisch belegt
 
-- **Urteilsqualität des echten Modells** ist nur stichprobenhaft belegt: `apps/api/evals/buddy/`
-  (16 Fälle: Wochentage, genanntes Datum, unklares Datum, befristete Situation, Erinnerung,
-  weniger Kontakt, Prompt-Injection, Zeitzone New York, Verschiebung, Klassenstufe, Ergebnis
-  einer Arbeit, Korrektur, Französisch, junges Kind) lief am 25.09.2026 dreimal hintereinander
-  mit Gemini 2.5 Flash über Vertex (europe-west4) mit 16/16, ca. 2 Cent pro Lauf. Der erste
-  Lauf deckte drei echte Fehler auf, die behoben sind: Vertex lehnte das Antwortschema als zu
-  komplex ab (Grenzen jetzt als Hinweis, zod prüft sie), Wochentage wurden verrechnet (die KI
-  übernimmt jetzt den Tagesabstand aus einer Liste), und Löschen wurde nur angeboten, aber
-  schon ausgeführt. Zusätzlich einmal der ganze Kernablauf mit echtem Modell: Planung, Foto
-  lesen, selbst vorbereitete Übung, Tutor-Bewertung. Das ist kein statistischer Beleg.
+- **Urteilsqualität des echten Modells** ist nur stichprobenhaft belegt (Gemini 2.5 Flash über
+  Vertex, europe-west4, ca. 2 Cent pro Lauf):
+  - `apps/api/evals/buddy/` (19 Gesprächsfälle, u. a. Wochentage, unklares Datum, Verschieben,
+    Prompt-Injection, Zeitzone New York, Französisch, „Erklär mir den Dativ“, Hausaufgabe im Chat
+    ohne Lösung, getippte Vokabeln): zuletzt 19/19, 19/19, 18/19 – der Ausreißer rät das Datum
+    nicht, fragt aber ohne Fragezeichen.
+  - `apps/api/evals/modes/show.ts` (zum Lesen): Erklären, Üben zu einem Thema, Vokabeln,
+    Sprechsätze, getippte und fotografierte Hausaufgabe, Arbeitsblatt. Gefundene und behobene
+    Fehler: zu komplexes Antwortschema, Wochentage verrechnet, Mathe ohne `$` in Auswahlantworten,
+    Platzhalter in Sprechsätzen, eine selbst erfundene Hausaufgabe, eine richtige
+    Hausaufgaben-Lösung als „Vorsagen“ abgelehnt.
+  - `apps/api/evals/speak/run.ts` (Aufnahmen mit espeak-ng): falsches Wort wird verlässlich
+    erkannt, starker deutscher Akzent in 2 von 3 Läufen; eine korrekte Computerstimme wird
+    teils als „fast“ bewertet. **Aussprache-Bewertung ist eine KI-Einschätzung, keine Messung.**
+    Das ist kein statistischer Beleg.
 - **Push auf echten Geräten** (Expo, APNs/FCM) und die **rechtliche Prüfung** des Push-Anbieters.
 - **Supabase Auth/Storage und pg_cron** auf einem gehosteten Projekt.

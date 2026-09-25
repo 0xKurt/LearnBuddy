@@ -58,14 +58,23 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     );
   }
   // Photos go straight to storage; API bodies are small JSON.
-  app.use(
-    '*',
-    bodyLimit({
-      maxSize: 64 * 1024,
-      onError: () => {
-        throw new AppError('too_large', 'Request body too large');
-      },
-    }),
+  const smallBodies = bodyLimit({
+    maxSize: 64 * 1024,
+    onError: () => {
+      throw new AppError('too_large', 'Request body too large');
+    },
+  });
+  // Recordings for speaking practice (≤ 15 s, base64) are the one larger body.
+  const recordings = bodyLimit({
+    maxSize: 2 * 1024 * 1024,
+    onError: () => {
+      throw new AppError('too_large', 'Request body too large');
+    },
+  });
+  app.use('*', (c, next) =>
+    /\/practice\/sessions\/[^/]+\/speak$/.test(c.req.path)
+      ? recordings(c, next)
+      : smallBodies(c, next),
   );
   app.use('*', async (c, next) => {
     c.set('deps', deps);

@@ -27,6 +27,7 @@ import type { UploadTarget } from '../storage/gateway.js';
 import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { MemoryStorage, ScriptedGateway } from './fakes.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
+import { scriptLearningModes } from './scenarios/learning-modes.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const BASE = `http://localhost:${PORT}`;
@@ -126,7 +127,10 @@ async function main(): Promise<void> {
   const storage = new DevStorage();
   const scripted = new ScriptedGateway();
   const model = process.env.LB_DEV_MODEL === 'disabled' ? new DisabledGateway() : scripted;
-  if (model === scripted) scriptCoreLoop(scripted);
+  if (model === scripted) {
+    scriptCoreLoop(scripted);
+    scriptLearningModes(scripted);
+  }
   const deps: Deps = {
     config,
     db,

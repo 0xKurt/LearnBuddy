@@ -39,5 +39,61 @@
     "shaky": "On revoit ça ensemble: {{topics}}"
   },
   "ended": "Cet entraînement est déjà terminé.",
-  "back_to_buddy": "Retour à Buddy"
+  "back_to_buddy": "Retour à Buddy",
+  "speak": {
+    "instruction": "Dis-le à voix haute",
+    "listen": "Écouter",
+    "listen_slow": "Écouter lentement",
+    "listen_stop": "Arrêter",
+    "listen_hint": "Te le lit à voix haute.",
+    "no_voice": "La lecture à voix haute ne marche pas sur cet appareil pour le moment – la voix de cette langue manque peut-être.",
+    "record": "Parler",
+    "record_again": "Redis-le",
+    "record_stop": "Terminé",
+    "record_label": "Démarrer l'enregistrement",
+    "record_stop_label": "Arrêter l'enregistrement et l'envoyer à Buddy",
+    "record_hint": "Touche, dis la phrase, puis touche Terminé. 15 secondes au maximum.",
+    "recording": "J'écoute … {{time}} / {{max}}",
+    "recording_label": "Enregistrement en cours, {{time}} sur {{max}}",
+    "listening": "Buddy écoute …",
+    "send_failed": "Ton enregistrement n'est pas encore arrivé chez Buddy.",
+    "resend": "Renvoyer",
+    "record_new": "Réenregistrer",
+    "skip": "Passer cette fois",
+    "denied": "Sans micro, je ne peux pas t'entendre. Tu peux l'autoriser dans les réglages.",
+    "denied_web": "Sans micro, je ne peux pas t'entendre. Autorise-le en haut de ton navigateur, puis touche à nouveau Parler.",
+    "open_settings": "Ouvrir les réglages",
+    "problem": {
+      "too_short": "C'était très court. Touche Parler, dis toute la phrase, puis touche Terminé.",
+      "unsupported": "Je n'arrive pas à lire cet enregistrement. Réessaie, s'il te plaît.",
+      "failed": "L'enregistrement n'a pas marché. Réessaie, s'il te plaît."
+    },
+    "overall": {
+      "good": "Ça sonne super !",
+      "almost": "Presque – fais attention à : {{words}}",
+      "almost_plain": "Presque – juste un peu plus clairement.",
+      "retry": "Réessaie – écoute-le d'abord tranquillement."
+    },
+    "words_ok": "Ça sonne bien : {{words}}.",
+    "words_practise": "À refaire : {{words}}.",
+    "legend": "Souligné = à refaire",
+    "tip": "« {{word}} » – {{tip}}",
+    "heard": "J'ai entendu : « {{text}} »"
+  },
+  "help_note": "Devoirs – je te donne des indices, tu trouves la solution toi-même.",
+  "origin_buddy": "Question de Buddy",
+  "self_solved": {
+    "title": "Trouvé tout seul !",
+    "body": "Tu l'as trouvé par toi-même."
+  },
+  "explain": {
+    "title": "En bref",
+    "ready": "Compris – interroge-moi !",
+    "again": "Relire l'explication",
+    "sheet_title": "L'explication"
+  },
+  "summary_help": {
+    "title": "Devoirs terminés",
+    "answered": "Trouvés toi-même"
+  }
 }

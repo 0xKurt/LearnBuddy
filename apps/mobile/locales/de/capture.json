@@ -37,5 +37,9 @@
     "upload_file": "Foto {{index}} ist nicht mehr da. Entfern es und mach es neu.",
     "kept": "Deine Fotos sind noch hier.",
     "left": "Dein Blatt ist nicht angekommen. Fotografier es bitte nochmal."
+  },
+  "homework": {
+    "title": "Fotografier deine Hausaufgabe",
+    "intro": "Ich helfe dir Schritt für Schritt – die Lösung findest du selbst."
   }
 }

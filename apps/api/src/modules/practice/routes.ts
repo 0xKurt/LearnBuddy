@@ -1,6 +1,12 @@
 // Practice HTTP surface. docs/architecture.md §Practice.
 
-import { AnswerRequest, StartPracticeRequest, Uuid } from '@learnbuddy/shared-types/contracts';
+import {
+  AnswerRequest,
+  SpeakRequest,
+  StartPracticeRequest,
+  StartTopicRequest,
+  Uuid,
+} from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
@@ -13,7 +19,9 @@ import {
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
 import { runLearnerJobs } from '../buddy/check.js';
+import { startTopic } from './generate.js';
 import { answerItem, finishSession, revealItem, sessionView, startManual } from './service.js';
+import { speakItem } from './speak.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
 practiceRoutes.use('*', requireUser, requireAccount, requireLearner);
@@ -62,4 +70,19 @@ practiceRoutes.post('/sessions/:id/finish', async (c) => {
     await runLearnerJobs(deps, learnerId);
   });
   return c.json(view);
+});
+
+// Learning from something the learner named or typed (no photo).
+practiceRoutes.post('/topic', async (c) => {
+  const input = await readBody(c, StartTopicRequest);
+  const deps = depsOf(c);
+  const learner = c.get('learner');
+  const id = await startTopic(deps, learner, input);
+  return c.json(await sessionView(deps.db, learner.id, id), 201);
+});
+
+practiceRoutes.post('/sessions/:id/speak', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, SpeakRequest);
+  return c.json(await speakItem(depsOf(c), c.get('learner'), sessionId, input));
 });

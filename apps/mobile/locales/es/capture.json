@@ -37,5 +37,9 @@
     "upload_file": "La foto {{index}} ya no está. Quítala y vuelve a hacerla.",
     "kept": "Tus fotos siguen aquí.",
     "left": "Tu ficha no ha llegado. Hazle otra foto, por favor."
+  },
+  "homework": {
+    "title": "Fotografía tus deberes",
+    "intro": "Te ayudo paso a paso – la solución la encuentras tú."
   }
 }

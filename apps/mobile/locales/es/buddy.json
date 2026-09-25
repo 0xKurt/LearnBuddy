@@ -40,7 +40,10 @@
     "result_title": "¡Lo has conseguido!",
     "result_body": "Has respondido {{answered}} y has acertado {{first_try}} a la primera.",
     "result_secure": "Lo dominas: {{topics}}",
-    "result_shaky": "Vamos a practicar otra vez: {{topics}}"
+    "result_shaky": "Vamos a practicar otra vez: {{topics}}",
+    "resume_body_untitled": "Quedan {{count}} preguntas",
+    "resume_title_help": "Sigue con tus deberes",
+    "resume_title_explain": "Sigue con tu explicación"
   },
   "when": {
     "today": "hoy",
@@ -126,7 +129,8 @@
     "request_material": "Foto pedida: {{title}}",
     "set_contact_pause": "Sin mensajes hasta el {{date}} inclusive",
     "set_contact": "Mensajes solo de {{from}} a {{to}}, como máximo {{count}} por semana",
-    "schedule_check": "Vuelvo a pasarme {{when}}"
+    "schedule_check": "Vuelvo a pasarme {{when}}",
+    "offer_learning": "Propuesto: {{what}} – «{{text}}»"
   },
   "intro": {
     "title": "Soy Buddy.",

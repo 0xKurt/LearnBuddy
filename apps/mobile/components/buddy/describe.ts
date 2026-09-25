@@ -4,6 +4,7 @@
 import type { ActionSummary, OutreachView } from '@learnbuddy/shared-types/contracts';
 
 import { i18n } from '../../lib/i18n/index.js';
+import { KIND_LABEL } from '../learn/kinds.js';
 import {
   daysUntil,
   formatDay,
@@ -94,6 +95,11 @@ export function describeAction(a: ActionSummary): string {
             to: a.preferred_end,
             count: a.max_per_week,
           });
+    case 'offer_learning':
+      return t('action.offer_learning', {
+        what: i18n.t(`learn:${KIND_LABEL[a.kind]}`),
+        text: a.text,
+      });
     case 'schedule_check':
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),

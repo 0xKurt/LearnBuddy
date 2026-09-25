@@ -9,6 +9,8 @@ import { ActivityIndicator, Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { MathText } from '../math/MathText.js';
+import { useSpokenMath } from '../math/useSpokenMath.js';
 
 type VerdictKey = 'correct' | 'partially_correct' | 'incorrect' | 'unchecked';
 
@@ -109,10 +111,11 @@ function Bubble({
   speaker: string;
   faded?: boolean;
 }) {
+  const spoken = useSpokenMath(text);
   return (
     <View
       accessible
-      accessibilityLabel={`${speaker}: ${text}`}
+      accessibilityLabel={`${speaker}: ${spoken}`}
       style={{
         maxWidth: '86%',
         backgroundColor: mine ? LB.ink : LB.paper,
@@ -126,7 +129,11 @@ function Bubble({
         opacity: faded ? 0.7 : 1,
       }}
     >
-      <Text style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}>{text}</Text>
+      <MathText
+        text={text}
+        accessible={false}
+        style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}
+      />
     </View>
   );
 }

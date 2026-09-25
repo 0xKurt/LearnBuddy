@@ -25,6 +25,13 @@
     "correct": "¡Correcto, muy bien!",
     "untitled": "Práctica",
     "not_quite": "Todavía no del todo. Vuelve a mirar la pregunta – o muestra la solución.",
-    "cannot_check": "Ahora mismo no puedo comprobarlo. Puedes ver la solución y compararla tú."
+    "cannot_check": "Ahora mismo no puedo comprobarlo. Puedes ver la solución y compararla tú.",
+    "accents": "Casi – revisa otra vez los acentos.",
+    "help_step": "Vamos paso a paso: ¿qué datos te da el ejercicio y qué hay que buscar?",
+    "help_solved": "¡Genial, lo has resuelto tú solo!",
+    "heard_retry": "No te he oído bien. Inténtalo otra vez un poco más alto y más cerca del móvil.",
+    "speak_good": "¡Suena genial!",
+    "speak_almost": "¡Casi! Mira las palabras marcadas.",
+    "speak_retry": "Inténtalo otra vez – escúchalo antes."
   }
 }

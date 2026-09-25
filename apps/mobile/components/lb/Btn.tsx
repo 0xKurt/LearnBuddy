@@ -1,15 +1,27 @@
+import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { LB } from '../../lib/theme/colors.js';
+import { Icon, type IconName } from './Icon.js';
 
 type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 type Props = {
+  /** The button's text; also what a screen reader says unless accessibilityLabel is set. */
   children: string;
+  /**
+   * Shown instead of the text when set (e.g. an answer choice with math via
+   * <MathText>); `children` stays the accessible text. Style it in the variant's colour.
+   */
+  label?: ReactNode;
   onPress?: () => void;
   variant?: Variant;
   size?: Size;
   full?: boolean;
+  /** An icon before the text (the start tiles on Buddy's home, the choices in a sheet). */
+  icon?: IconName;
+  /** Fill the container's height too (tiles in a grid row stay equally tall). */
+  grow?: boolean;
   /** Centre a button that is not full width (it sits at the start otherwise). */
   center?: boolean;
   /** Let a long label wrap onto several lines (answer choices, starters) instead of shrinking it. */
@@ -45,12 +57,15 @@ const VARIANT_STYLE: Record<
 
 export function Btn({
   children,
+  label,
   onPress,
   variant = 'primary',
   size = 'md',
   full = false,
   center = false,
   wrap = false,
+  icon,
+  grow = false,
   disabled = false,
   selected,
   accessibilityLabel,
@@ -72,6 +87,7 @@ export function Btn({
       android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
       style={{
         alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
+        ...(grow ? { flexGrow: 1 } : {}),
         opacity: disabled ? 0.6 : 1,
         borderRadius: 12,
         overflow: 'hidden',
@@ -81,6 +97,8 @@ export function Btn({
         <View
           style={{
             ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { height: s.height }),
+            ...(grow ? { flexGrow: 1 } : {}),
+            gap: icon ? 10 : 0,
             paddingHorizontal: s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: 12,
@@ -92,22 +110,41 @@ export function Btn({
             opacity: pressed ? 0.78 : 1,
           }}
         >
-          <Text
-            {...(wrap
-              ? {}
-              : { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.82 })}
-            style={{
-              flexShrink: 1,
-              color: v.color,
-              fontSize: s.fontSize,
-              lineHeight: Math.round(s.fontSize * 1.35),
-              fontWeight: '600',
-              letterSpacing: -0.1,
-              textAlign: wrap ? 'left' : 'center',
-            }}
-          >
-            {children}
-          </Text>
+          {icon ? (
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <Icon
+                name={icon}
+                size={Math.round(s.fontSize * 1.4)}
+                color={variant === 'outline' ? LB.primaryDk : v.color}
+              />
+            </View>
+          ) : null}
+          {label !== undefined ? (
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={{ flexShrink: 1 }}
+            >
+              {label}
+            </View>
+          ) : (
+            <Text
+              {...(wrap
+                ? {}
+                : { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.82 })}
+              style={{
+                flexShrink: 1,
+                color: v.color,
+                fontSize: s.fontSize,
+                lineHeight: Math.round(s.fontSize * 1.35),
+                fontWeight: '600',
+                letterSpacing: -0.1,
+                textAlign: wrap ? 'left' : 'center',
+              }}
+            >
+              {children}
+            </Text>
+          )}
         </View>
       )}
     </Pressable>

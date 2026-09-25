@@ -39,5 +39,61 @@
     "shaky": "Lo repasamos otra vez: {{topics}}"
   },
   "ended": "Esta práctica ya ha terminado.",
-  "back_to_buddy": "Volver con Buddy"
+  "back_to_buddy": "Volver con Buddy",
+  "speak": {
+    "instruction": "Dilo en voz alta",
+    "listen": "Escuchar",
+    "listen_slow": "Escuchar despacio",
+    "listen_stop": "Parar",
+    "listen_hint": "Te lo lee en voz alta.",
+    "no_voice": "Leer en voz alta no funciona ahora en este dispositivo – quizá falta la voz para este idioma.",
+    "record": "Hablar",
+    "record_again": "Dilo otra vez",
+    "record_stop": "Listo",
+    "record_label": "Empezar a grabar",
+    "record_stop_label": "Terminar la grabación y enviársela a Buddy",
+    "record_hint": "Toca, di la frase y luego toca Listo. Como máximo 15 segundos.",
+    "recording": "Te escucho … {{time}} / {{max}}",
+    "recording_label": "Grabando, {{time}} de {{max}}",
+    "listening": "Buddy está escuchando …",
+    "send_failed": "Tu grabación aún no ha llegado a Buddy.",
+    "resend": "Enviar otra vez",
+    "record_new": "Grabar de nuevo",
+    "skip": "Saltar esta vez",
+    "denied": "Sin micrófono no puedo oírte. Puedes permitirlo en Ajustes.",
+    "denied_web": "Sin micrófono no puedo oírte. Permítelo arriba en tu navegador y vuelve a tocar Hablar.",
+    "open_settings": "Abrir Ajustes",
+    "problem": {
+      "too_short": "Ha sido muy corto. Toca Hablar, di toda la frase y luego toca Listo.",
+      "unsupported": "No puedo leer esta grabación. Inténtalo otra vez, por favor.",
+      "failed": "La grabación no ha funcionado. Inténtalo otra vez, por favor."
+    },
+    "overall": {
+      "good": "¡Suena genial!",
+      "almost": "Casi – fíjate en: {{words}}",
+      "almost_plain": "Casi – solo un poco más claro.",
+      "retry": "Inténtalo otra vez – escúchalo antes con calma."
+    },
+    "words_ok": "Suena bien: {{words}}.",
+    "words_practise": "Para practicar otra vez: {{words}}.",
+    "legend": "Subrayado = practicar otra vez",
+    "tip": "«{{word}}» – {{tip}}",
+    "heard": "He oído: «{{text}}»"
+  },
+  "help_note": "Deberes – te doy pistas, la solución la encuentras tú.",
+  "origin_buddy": "Pregunta de Buddy",
+  "self_solved": {
+    "title": "¡Resuelto por ti!",
+    "body": "Lo has descubierto tú solo."
+  },
+  "explain": {
+    "title": "En breve",
+    "ready": "Entendido – ¡pregúntame!",
+    "again": "Leer otra vez la explicación",
+    "sheet_title": "La explicación"
+  },
+  "summary_help": {
+    "title": "Deberes hechos",
+    "answered": "Resueltos por ti"
+  }
 }

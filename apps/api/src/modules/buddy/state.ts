@@ -119,6 +119,9 @@ export type MaterialBrief = {
 
 export type SessionBrief = {
   id: string;
+  mode: 'practice' | 'test' | 'help' | 'explain';
+  /** Topic and homework sessions carry their own title. */
+  title: string | null;
   status: 'active' | 'finished' | 'abandoned';
   goal_id: string | null;
   step_id: string | null;
@@ -274,7 +277,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
   );
 
   const sessions = await db.query<SessionBrief>(
-    `select ps.id, ps.status, ps.goal_id, ps.step_id, ps.started_at, ps.finished_at,
+    `select ps.id, ps.status, ps.goal_id, ps.step_id, ps.started_at, ps.finished_at, ps.mode, ps.title,
             count(si.item_id)::int as total,
             count(*) filter (where si.status <> 'open')::int as answered,
             count(*) filter (where si.first_try_correct)::int as first_try,

@@ -40,7 +40,10 @@
     "result_title": "Geschafft!",
     "result_body": "{{answered}} Aufgaben gemacht, {{first_try}} gleich beim ersten Mal richtig.",
     "result_secure": "Das sitzt: {{topics}}",
-    "result_shaky": "Da üben wir nochmal: {{topics}}"
+    "result_shaky": "Da üben wir nochmal: {{topics}}",
+    "resume_body_untitled": "Noch {{count}} Aufgaben",
+    "resume_title_help": "Weiter mit deiner Hausaufgabe",
+    "resume_title_explain": "Weiter mit deiner Erklärung"
   },
   "when": {
     "today": "heute",
@@ -126,7 +129,8 @@
     "request_material": "Um ein Foto gebeten: {{title}}",
     "set_contact_pause": "Keine Nachrichten bis einschließlich {{date}}",
     "set_contact": "Nachrichten nur zwischen {{from}} und {{to}} Uhr, höchstens {{count}}× pro Woche",
-    "schedule_check": "Ich schaue {{when}} wieder vorbei"
+    "schedule_check": "Ich schaue {{when}} wieder vorbei",
+    "offer_learning": "Angeboten: {{what}} – „{{text}}“"
   },
   "intro": {
     "title": "Ich bin Buddy.",

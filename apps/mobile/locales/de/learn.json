@@ -1,0 +1,64 @@
+{
+  "start": {
+    "title": "Was willst du machen?",
+    "photo": "Stoff fotografieren",
+    "homework": "Hilfe bei Hausaufgaben",
+    "explain": "Erklär mir was",
+    "practice": "Üben",
+    "vocab": "Vokabeln abfragen",
+    "speak": "Aussprache üben"
+  },
+  "homework": {
+    "title": "Hilfe bei Hausaufgaben",
+    "body": "Ich gebe dir Tipps – die Lösung findest du selbst.",
+    "photo": "Aufgabe fotografieren",
+    "type": "Aufgabe eintippen"
+  },
+  "vocab": {
+    "title": "Vokabeln abfragen",
+    "body": "Ich frag dich in beide Richtungen ab.",
+    "photo": "Vokabelliste fotografieren",
+    "type": "Vokabeln eintippen"
+  },
+  "topic": {
+    "explain": {
+      "title": "Was soll ich dir erklären?",
+      "hint": "Ich erkläre es dir kurz und frag dann nach, ob's sitzt.",
+      "placeholder": "z. B. Dativ, Photosynthese, Brüche kürzen",
+      "ex_1": "Dativ",
+      "ex_2": "Photosynthese",
+      "ex_3": "Brüche kürzen"
+    },
+    "practice": {
+      "title": "Was willst du üben?",
+      "hint": "Ich stelle dir ein paar Fragen dazu.",
+      "placeholder": "z. B. Brüche addieren, Simple Past",
+      "ex_1": "Brüche addieren",
+      "ex_2": "Simple Past",
+      "ex_3": "Das Mittelalter"
+    },
+    "vocab": {
+      "title": "Tipp deine Vokabeln ein",
+      "hint": "Ein Paar pro Zeile. Ich frag dich in beide Richtungen ab.",
+      "placeholder": "la chambre – das Zimmer\nle lit – das Bett"
+    },
+    "speak": {
+      "title": "Was willst du sagen üben?",
+      "hint": "Ich hör dir zu und sag dir, was schon gut klingt.",
+      "placeholder": "z. B. Unité 3 oder eigene Sätze",
+      "ex_1": "Mich auf Französisch vorstellen",
+      "ex_2": "Auf Englisch nach dem Weg fragen"
+    },
+    "help": {
+      "title": "Welche Aufgabe? Schreib sie ab.",
+      "hint": "Ich gebe dir Tipps – die Lösung findest du selbst.",
+      "placeholder": "z. B. Berechne 3/4 + 1/6."
+    },
+    "examples": "Zum Beispiel:",
+    "example_hint": "Setzt das Beispiel ins Feld ein.",
+    "submit": "Los geht's",
+    "preparing": "Buddy bereitet vor …",
+    "preparing_hint": "Das dauert ein paar Sekunden.",
+    "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema."
+  }
+}

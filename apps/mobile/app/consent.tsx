@@ -23,6 +23,7 @@ const POINTS = [
   'point_data',
   'point_photos',
   'point_ai',
+  'point_voice',
   'point_contact',
   'point_control',
 ] as const;

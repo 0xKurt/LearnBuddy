@@ -37,5 +37,9 @@
     "upload_file": "La foto {{index}} non c'è più. Rimuovila e scattala di nuovo.",
     "kept": "Le tue foto sono ancora qui.",
     "left": "La tua scheda non è arrivata. Fotografala di nuovo, per favore."
+  },
+  "homework": {
+    "title": "Fotografa i tuoi compiti",
+    "intro": "Ti aiuto passo dopo passo – la soluzione la trovi tu."
   }
 }

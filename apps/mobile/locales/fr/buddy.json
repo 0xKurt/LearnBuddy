@@ -40,7 +40,10 @@
     "result_title": "C'est fait!",
     "result_body": "Bonnes réponses du premier coup: {{first_try}} sur {{answered}}.",
     "result_secure": "Tu maîtrises: {{topics}}",
-    "result_shaky": "On s'entraîne encore sur: {{topics}}"
+    "result_shaky": "On s'entraîne encore sur: {{topics}}",
+    "resume_body_untitled": "Encore {{count}} questions",
+    "resume_title_help": "Reprends tes devoirs",
+    "resume_title_explain": "Reprends ton explication"
   },
   "when": {
     "today": "aujourd'hui",
@@ -126,7 +129,8 @@
     "request_material": "Photo demandée: {{title}}",
     "set_contact_pause": "Pas de messages jusqu'au {{date}} inclus",
     "set_contact": "Messages seulement entre {{from}} et {{to}}, au maximum {{count}} par semaine",
-    "schedule_check": "Je repasse {{when}}"
+    "schedule_check": "Je repasse {{when}}",
+    "offer_learning": "Proposé : {{what}} – « {{text}} »"
   },
   "intro": {
     "title": "Moi, c'est Buddy.",

@@ -47,9 +47,11 @@ export async function selectPracticeItems(
   const candidates = await db.query<Candidate>(
     `select i.id, i.topic, st.due
        from items i
-       join materials m on m.id = i.material_id
+       left join materials m on m.id = i.material_id
        left join item_states st on st.item_id = i.id
-      where i.learner_id = $1 and i.archived_at is null and m.archived_at is null
+      where i.learner_id = $1 and i.archived_at is null and (m.id is null or m.archived_at is null)
+        -- Homework is helped with, not drilled; speaking needs a quiet moment the learner chooses.
+        and i.origin <> 'homework' and i.kind <> 'speak'
         and ($2::uuid is null or m.goal_id = $2)
         and ($3::uuid is null or i.subject_id = $3)
         and ($4::uuid is null or i.material_id = $4)

@@ -39,5 +39,61 @@
     "shaky": "Schauen wir nochmal an: {{topics}}"
   },
   "ended": "Diese Übung ist schon beendet.",
-  "back_to_buddy": "Zurück zu Buddy"
+  "back_to_buddy": "Zurück zu Buddy",
+  "speak": {
+    "instruction": "Sag es laut",
+    "listen": "Anhören",
+    "listen_slow": "Langsam anhören",
+    "listen_stop": "Anhalten",
+    "listen_hint": "Liest es dir vor.",
+    "no_voice": "Vorlesen klappt auf diesem Gerät gerade nicht – vielleicht fehlt die Stimme für diese Sprache.",
+    "record": "Sprechen",
+    "record_again": "Nochmal sagen",
+    "record_stop": "Fertig",
+    "record_label": "Aufnahme starten",
+    "record_stop_label": "Aufnahme beenden und an Buddy schicken",
+    "record_hint": "Tipp, sag den Satz und tipp dann auf Fertig. Höchstens 15 Sekunden.",
+    "recording": "Ich höre mit … {{time}} / {{max}}",
+    "recording_label": "Aufnahme läuft, {{time}} von {{max}}",
+    "listening": "Buddy hört zu …",
+    "send_failed": "Deine Aufnahme ist noch nicht bei Buddy angekommen.",
+    "resend": "Nochmal senden",
+    "record_new": "Neu aufnehmen",
+    "skip": "Diesmal überspringen",
+    "denied": "Ohne Mikrofon kann ich dich nicht hören. Du kannst es in den Einstellungen erlauben.",
+    "denied_web": "Ohne Mikrofon kann ich dich nicht hören. Erlaube es oben in deinem Browser und tipp dann nochmal auf Sprechen.",
+    "open_settings": "Einstellungen öffnen",
+    "problem": {
+      "too_short": "Das war sehr kurz. Tipp auf Sprechen, sag den ganzen Satz und tipp dann auf Fertig.",
+      "unsupported": "Diese Aufnahme kann ich leider nicht lesen. Versuch es bitte nochmal.",
+      "failed": "Die Aufnahme hat nicht geklappt. Versuch es bitte nochmal."
+    },
+    "overall": {
+      "good": "Klingt super!",
+      "almost": "Fast – achte auf: {{words}}",
+      "almost_plain": "Fast – noch ein kleines bisschen deutlicher.",
+      "retry": "Versuch's nochmal – hör es dir vorher in Ruhe an."
+    },
+    "words_ok": "Klingt gut: {{words}}.",
+    "words_practise": "Nochmal üben: {{words}}.",
+    "legend": "Unterstrichen = nochmal üben",
+    "tip": "„{{word}}“ – {{tip}}",
+    "heard": "Gehört habe ich: „{{text}}“"
+  },
+  "help_note": "Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.",
+  "origin_buddy": "Frage von Buddy",
+  "self_solved": {
+    "title": "Selbst gelöst!",
+    "body": "Das hast du allein herausgefunden."
+  },
+  "explain": {
+    "title": "Kurz erklärt",
+    "ready": "Verstanden – frag mich!",
+    "again": "Erklärung nochmal lesen",
+    "sheet_title": "Die Erklärung"
+  },
+  "summary_help": {
+    "title": "Hausaufgabe geschafft",
+    "answered": "Selbst gelöst"
+  }
 }

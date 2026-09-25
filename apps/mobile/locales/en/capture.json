@@ -37,5 +37,9 @@
     "upload_file": "Photo {{index}} is gone. Remove it and take it again.",
     "kept": "Your photos are still here.",
     "left": "Your sheet didn't arrive. Please photograph it again."
+  },
+  "homework": {
+    "title": "Photograph your homework",
+    "intro": "I'll help you step by step – you'll find the answer yourself."
   }
 }

@@ -3,4 +3,5 @@
 export * from './common.js';
 export * from './identity.js';
 export * from './buddy.js';
+export * from './figure.js';
 export * from './learning.js';

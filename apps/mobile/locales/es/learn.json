@@ -1,0 +1,64 @@
+{
+  "start": {
+    "title": "¿Qué quieres hacer?",
+    "photo": "Fotografiar apuntes",
+    "homework": "Ayuda con los deberes",
+    "explain": "Explícame algo",
+    "practice": "Practicar",
+    "vocab": "Repasar vocabulario",
+    "speak": "Practicar pronunciación"
+  },
+  "homework": {
+    "title": "Ayuda con los deberes",
+    "body": "Te doy pistas – la solución la encuentras tú.",
+    "photo": "Fotografiar el ejercicio",
+    "type": "Escribir el ejercicio"
+  },
+  "vocab": {
+    "title": "Repasar vocabulario",
+    "body": "Te pregunto en los dos sentidos.",
+    "photo": "Fotografiar la lista",
+    "type": "Escribir el vocabulario"
+  },
+  "topic": {
+    "explain": {
+      "title": "¿Qué te explico?",
+      "hint": "Te lo explico en breve y luego compruebo si lo tienes claro.",
+      "placeholder": "p. ej. el dativo, la fotosíntesis, simplificar fracciones",
+      "ex_1": "La fotosíntesis",
+      "ex_2": "Simplificar fracciones",
+      "ex_3": "El pretérito indefinido"
+    },
+    "practice": {
+      "title": "¿Qué quieres practicar?",
+      "hint": "Te hago unas cuantas preguntas sobre ello.",
+      "placeholder": "p. ej. sumar fracciones, el simple past",
+      "ex_1": "Sumar fracciones",
+      "ex_2": "El simple past",
+      "ex_3": "La Edad Media"
+    },
+    "vocab": {
+      "title": "Escribe tu vocabulario",
+      "hint": "Una pareja por línea. Te pregunto en los dos sentidos.",
+      "placeholder": "the bedroom – el dormitorio\nthe bed – la cama"
+    },
+    "speak": {
+      "title": "¿Qué quieres practicar a decir?",
+      "hint": "Te escucho y te digo lo que ya suena bien.",
+      "placeholder": "p. ej. Unit 3 o tus propias frases",
+      "ex_1": "Presentarme en inglés",
+      "ex_2": "Preguntar el camino en francés"
+    },
+    "help": {
+      "title": "¿Qué ejercicio? Cópialo aquí.",
+      "hint": "Te doy pistas – la solución la encuentras tú.",
+      "placeholder": "p. ej. Calcula 3/4 + 1/6."
+    },
+    "examples": "Por ejemplo:",
+    "example_hint": "Pone el ejemplo en el campo.",
+    "submit": "¡Vamos!",
+    "preparing": "Buddy lo está preparando …",
+    "preparing_hint": "Tarda unos segundos.",
+    "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole."
+  }
+}

@@ -71,4 +71,5 @@ export const DAILY_LIMITS = {
   tutor: 300,
   explain: 60,
   extraction: 12,
+  pronounce: 200,
 } as const;
