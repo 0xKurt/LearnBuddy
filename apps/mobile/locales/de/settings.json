@@ -46,7 +46,11 @@
     "device_invalid": "Das angemeldete Handy ist nicht mehr erreichbar. Deshalb kommt alles nur hier in der App.",
     "device_register": "Dieses Handy anmelden",
     "device_registered": "Dieses Handy ist angemeldet.",
-    "device_not_possible": "Das geht auf diesem Handy gerade nicht. Vielleicht sind Mitteilungen in den Systemeinstellungen aus."
+    "device_not_possible": "Das geht auf diesem Handy gerade nicht. Vielleicht sind Mitteilungen in den Systemeinstellungen aus.",
+    "summary": "Buddy meldet sich zwischen {{start}} und {{end}} Uhr, höchstens {{count}}× pro Woche, nie nach {{quiet}} Uhr.",
+    "tell_buddy": "Sag Buddy einfach, wenn du Ruhe willst.",
+    "more": "Zeiten anpassen",
+    "less": "Weniger anzeigen"
   },
   "profile": {
     "title": "Dein Profil",
@@ -62,7 +66,8 @@
     "language_en": "English",
     "language_fr": "Français",
     "language_es": "Español",
-    "language_it": "Italiano"
+    "language_it": "Italiano",
+    "language_title": "Sprache"
   },
   "adult": {
     "title_minor": "Für Eltern",
@@ -142,7 +147,9 @@
       "password_save": "Passwort speichern",
       "saving": "Wird gespeichert …",
       "password_saved": "Neues Passwort gespeichert."
-    }
+    },
+    "open": "Öffnen",
+    "close": "Schließen"
   },
   "status": {
     "title": "Läuft alles?",

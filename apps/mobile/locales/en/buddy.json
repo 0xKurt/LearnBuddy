@@ -3,7 +3,6 @@
   "menu": {
     "open": "Open menu",
     "title": "More",
-    "history": "Full history",
     "memory": "What Buddy knows about you",
     "library": "My material",
     "settings": "Settings"
@@ -66,20 +65,14 @@
     "outcome_hard": "Hard"
   },
   "done": {
-    "title": "What I did for you",
     "undo": "Undo",
-    "undo_label": "Undo: {{what}}",
-    "undone": "undone"
+    "undo_label": "Undo: {{what}}"
   },
   "next": {
-    "title": "Coming up",
-    "agreed": "agreed",
-    "exam": "Test",
-    "message": "Buddy will write: “{{title}}”"
+    "line": "Next test: {{title}} · {{when}}"
   },
   "thread": {
     "title": "Chat with Buddy",
-    "show_all": "Show all",
     "typing": "Buddy is typing …",
     "failed": "Didn't arrive",
     "resend": "Send again",
@@ -103,7 +96,9 @@
   },
   "composer": {
     "placeholder": "Write to Buddy …",
-    "send": "Send"
+    "send": "Send",
+    "photo": "Photograph a worksheet",
+    "suggestions": "Suggestions"
   },
   "action": {
     "remember": "Noted: {{statement}}",
@@ -136,14 +131,19 @@
   },
   "intro": {
     "title": "I'm Buddy.",
-    "body": "I help you get ready for tests and exams – without stress. Just tell me what's coming up, or send me a photo of your worksheet.",
-    "start": "You can start like this:",
-    "starter_exam": "I have a test coming up",
-    "starter_practice": "I want to practise",
-    "starter_photo": "Photograph a worksheet"
+    "body": "I help you get ready for tests and exams – without stress. Just tell me what's coming up, or send me a photo of your worksheet."
   },
   "working": {
     "material": "I'm turning your worksheet into practice …",
     "session": "I'm looking at how your practice went …"
+  },
+  "suggest": {
+    "exam": "I've got a test soon",
+    "homework": "Homework",
+    "explain": "Explain something",
+    "vocab": "Vocabulary",
+    "practice": "Practise",
+    "test": "Practice test",
+    "speak": "Pronunciation"
   }
 }

@@ -1,5 +1,7 @@
-// The one screen: what matters now, the one open decision, what Buddy did,
-// what comes next, and the conversation. docs/architecture.md §Home.
+// The one screen, Buddy first: the one thing that matters now (if any), the
+// one open decision, and the conversation — what Buddy did stands in it, with
+// undo. Starting something is a tap on a suggestion, the camera, or just
+// saying it. No lists, no menus to learn. docs/architecture.md §Home.
 // Taps are direct API calls (no model); only free text goes to Buddy.
 // Voice mode (headphones switch next to the menu): Buddy's reply to what she
 // just sent is read aloud, and the mic is the composer's main control.
@@ -18,24 +20,20 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Composer } from '../components/buddy/Composer.js';
+import { Composer, type Suggestion } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
-import { DoneList } from '../components/buddy/DoneList.js';
-import { NextList } from '../components/buddy/NextList.js';
+import { whenText } from '../components/buddy/describe.js';
 import { NowCard } from '../components/buddy/NowCard.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
 import { ChoiceSheet } from '../components/learn/ChoiceSheet.js';
-import { StartRow, type StartTile } from '../components/learn/StartRow.js';
 import { TopicSheet } from '../components/learn/TopicSheet.js';
 import type { TopicKind } from '../components/learn/useStartTopic.js';
 import { Banner } from '../components/lb/Banner.js';
 import { Btn } from '../components/lb/Btn.js';
-import { Card } from '../components/lb/Card.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
-import { Section } from '../components/lb/Section.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
@@ -150,20 +148,20 @@ export default function BuddyScreen() {
     });
   }
 
-  /** The same flows from the start row, the intro's starters and the choice sheets. */
-  function pick(tile: StartTile): void {
-    switch (tile) {
-      case 'photo':
-        router.push('/capture');
-        return;
-      case 'homework':
-      case 'vocab':
-        setChoice(tile);
-        return;
-      default:
-        setTopic(tile);
-    }
-  }
+  /** What she can start with one tap (the same as saying it to Buddy). */
+  const suggestions: Suggestion[] = [
+    {
+      key: 'exam',
+      label: t('buddy:suggest.exam'),
+      onPress: () => void send(t('buddy:suggest.exam')),
+    },
+    { key: 'homework', label: t('buddy:suggest.homework'), onPress: () => setChoice('homework') },
+    { key: 'explain', label: t('buddy:suggest.explain'), onPress: () => setTopic('explain') },
+    { key: 'vocab', label: t('buddy:suggest.vocab'), onPress: () => setChoice('vocab') },
+    { key: 'practice', label: t('buddy:suggest.practice'), onPress: () => setTopic('practice') },
+    { key: 'test', label: t('buddy:suggest.test'), onPress: () => setTopic('test') },
+    { key: 'speak', label: t('buddy:suggest.speak'), onPress: () => setTopic('speak') },
+  ];
 
   /** From a choice sheet on: first let it close, then go on. */
   function fromChoice(next: () => void): void {
@@ -188,6 +186,8 @@ export default function BuddyScreen() {
   }
 
   const h = home.data;
+  // The next test in one line; everything else Buddy says in the conversation.
+  const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
   const messages = h.thread.slice(-VISIBLE_MESSAGES);
   // Hide the optimistic bubble once the server has the message.
   const shownPending =
@@ -229,6 +229,15 @@ export default function BuddyScreen() {
               />
             </View>
           </View>
+
+          {nextExam ? (
+            <Text style={[TYPE.body, { color: LB.ink2, marginTop: -10 }]}>
+              {t('buddy:next.line', {
+                title: nextExam.title,
+                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+              })}
+            </Text>
+          ) : null}
 
           {!h.system.model ? <Banner tone="warning">{t('buddy:system.no_model')}</Banner> : null}
           {h.system.scheduler === 'stale' ? (
@@ -276,69 +285,54 @@ export default function BuddyScreen() {
             />
           ) : null}
 
-          <StartRow onPick={pick} />
-
-          <DoneList
-            actions={h.done}
-            contactOn={h.system.contact_enabled}
-            busy={busy}
-            onUndo={(id) => void act(() => undoAction(id))}
-          />
-          <NextList items={h.next} />
-
           {messages.length === 0 && !shownPending ? (
-            // First visit: say who Buddy is and offer ways to start, so nobody faces an empty chat.
-            <Card tone="lavender" padding={20} radius={22}>
-              <Text accessibilityRole="header" style={TYPE.title}>
-                {t('buddy:intro.title')}
-              </Text>
-              <Text style={[TYPE.body, { marginTop: 6 }]}>{t('buddy:intro.body')}</Text>
-              <Text style={[TYPE.small, { marginTop: 16, marginBottom: 10 }]}>
-                {t('buddy:intro.start')}
-              </Text>
-              <View style={{ gap: 10 }}>
-                <Btn
-                  variant="outline"
-                  full
-                  wrap
-                  disabled={pending !== null}
-                  onPress={() => void send(t('buddy:intro.starter_exam'))}
-                >
-                  {t('buddy:intro.starter_exam')}
-                </Btn>
-                <Btn variant="outline" full wrap onPress={() => pick('practice')}>
-                  {t('buddy:intro.starter_practice')}
-                </Btn>
-                <Btn variant="outline" full wrap onPress={() => pick('photo')}>
-                  {t('buddy:intro.starter_photo')}
-                </Btn>
-              </View>
-            </Card>
-          ) : (
-            <Section
-              title={t('buddy:thread.title')}
-              right={
-                h.thread.length > VISIBLE_MESSAGES || h.thread_has_more ? (
-                  <Btn size="sm" variant="ghost" onPress={() => router.push('/history')}>
-                    {t('buddy:thread.show_all')}
-                  </Btn>
-                ) : undefined
-              }
+            // First visit: Buddy says who it is; the suggestions below show how to start.
+            <View
+              accessible
+              style={{
+                alignSelf: 'flex-start',
+                maxWidth: '90%',
+                backgroundColor: LB.paper,
+                borderColor: LB.hairline,
+                borderWidth: 1,
+                borderRadius: 18,
+                borderBottomLeftRadius: 6,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                gap: 4,
+              }}
             >
+              <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('buddy:intro.title')}</Text>
+              <Text style={TYPE.body}>{t('buddy:intro.body')}</Text>
+            </View>
+          ) : (
+            <View style={{ gap: 10 }}>
+              {h.thread.length > VISIBLE_MESSAGES || h.thread_has_more ? (
+                <Btn size="sm" variant="ghost" center onPress={() => router.push('/history')}>
+                  {t('buddy:thread.load_more')}
+                </Btn>
+              ) : null}
               <Conversation
                 contactOn={h.system.contact_enabled}
                 messages={messages}
                 pending={shownPending}
                 busy={busy || pending !== null}
+                showActions
+                onUndo={(id) => void act(() => undoAction(id))}
                 onOption={(messageId, option) => void send(option, newId(), messageId)}
                 onResend={(m: MessageView) =>
                   void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
                 }
               />
-            </Section>
+            </View>
           )}
         </ScrollView>
-        <Composer disabled={pending !== null} onSend={(text) => void send(text)} />
+        <Composer
+          disabled={pending !== null}
+          onSend={(text) => void send(text)}
+          onPhoto={() => router.push('/capture')}
+          suggestions={suggestions}
+        />
       </KeyboardAvoidingView>
 
       <Sheet
@@ -349,7 +343,6 @@ export default function BuddyScreen() {
       >
         {(
           [
-            ['history', '/history'],
             ['memory', '/memory'],
             ['library', '/library'],
             ['settings', '/settings'],

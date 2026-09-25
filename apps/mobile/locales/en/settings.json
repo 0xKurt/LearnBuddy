@@ -46,7 +46,11 @@
     "device_invalid": "The registered phone can no longer be reached. So everything arrives here in the app only.",
     "device_register": "Register this phone",
     "device_registered": "This phone is registered.",
-    "device_not_possible": "That isn't possible on this phone right now. Maybe notifications are off in the system settings."
+    "device_not_possible": "That isn't possible on this phone right now. Maybe notifications are off in the system settings.",
+    "summary": "Buddy gets in touch between {{start}} and {{end}}, at most {{count}}× a week, never after {{quiet}}.",
+    "tell_buddy": "Just tell Buddy when you want some quiet.",
+    "more": "Adjust times",
+    "less": "Show less"
   },
   "profile": {
     "title": "Your profile",
@@ -62,7 +66,8 @@
     "language_en": "English",
     "language_fr": "Français",
     "language_es": "Español",
-    "language_it": "Italiano"
+    "language_it": "Italiano",
+    "language_title": "Language"
   },
   "adult": {
     "title_minor": "For parents",
@@ -142,7 +147,9 @@
       "password_save": "Save password",
       "saving": "Saving …",
       "password_saved": "New password saved."
-    }
+    },
+    "open": "Open",
+    "close": "Close"
   },
   "status": {
     "title": "Is everything working?",

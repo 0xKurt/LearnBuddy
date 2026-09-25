@@ -20,7 +20,6 @@ import { AboutSection } from '../components/settings/AboutSection.js';
 import { AdultSection } from '../components/settings/AdultSection.js';
 import { ContactSection } from '../components/settings/ContactSection.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
-import { StatusSection } from '../components/settings/StatusSection.js';
 import { useRevealInput } from '../components/settings/useRevealInput.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
@@ -94,13 +93,8 @@ export default function SettingsScreen() {
               pinSet={account.pin_set}
               push={home.data?.system.push ?? null}
             />
-            <ProfileSection learner={learner} />
             <AdultSection account={account} learner={learner} onInputFocus={reveal} />
-            <StatusSection
-              system={home.data?.system ?? null}
-              failed={home.data ? null : home.error}
-              onRetry={() => void home.refetch()}
-            />
+            <ProfileSection learner={learner} />
             <AboutSection />
           </View>
         </ScrollView>

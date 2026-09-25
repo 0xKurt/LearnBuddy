@@ -3,7 +3,6 @@
   "menu": {
     "open": "Abrir menú",
     "title": "Más",
-    "history": "Historial completo",
     "memory": "Lo que Buddy sabe de ti",
     "library": "Mi material",
     "settings": "Ajustes"
@@ -66,20 +65,14 @@
     "outcome_hard": "Difícil"
   },
   "done": {
-    "title": "Lo que he hecho por ti",
     "undo": "Deshacer",
-    "undo_label": "Deshacer: {{what}}",
-    "undone": "deshecho"
+    "undo_label": "Deshacer: {{what}}"
   },
   "next": {
-    "title": "Lo que viene",
-    "agreed": "acordado",
-    "exam": "Examen",
-    "message": "Buddy te escribirá: «{{title}}»"
+    "line": "Próximo examen: {{title}} · {{when}}"
   },
   "thread": {
     "title": "Chat con Buddy",
-    "show_all": "Ver todo",
     "typing": "Buddy está escribiendo…",
     "failed": "No ha llegado",
     "resend": "Volver a enviar",
@@ -103,7 +96,9 @@
   },
   "composer": {
     "placeholder": "Escribe a Buddy…",
-    "send": "Enviar"
+    "send": "Enviar",
+    "photo": "Fotografiar una ficha",
+    "suggestions": "Sugerencias"
   },
   "action": {
     "remember": "Anotado: {{statement}}",
@@ -136,14 +131,19 @@
   },
   "intro": {
     "title": "Soy Buddy.",
-    "body": "Te ayudo a prepararte para exámenes y controles, sin estrés. Cuéntame qué tienes pendiente o mándame una foto de tu ficha.",
-    "start": "Puedes empezar así:",
-    "starter_exam": "Tengo un examen pronto",
-    "starter_practice": "Quiero practicar",
-    "starter_photo": "Hacer una foto de una ficha"
+    "body": "Te ayudo a prepararte para exámenes y controles, sin estrés. Cuéntame qué tienes pendiente o mándame una foto de tu ficha."
   },
   "working": {
     "material": "Estoy convirtiendo tu ficha en ejercicios…",
     "session": "Estoy viendo cómo te ha ido la práctica…"
+  },
+  "suggest": {
+    "exam": "Pronto tengo un examen",
+    "homework": "Deberes",
+    "explain": "Explícame algo",
+    "vocab": "Vocabulario",
+    "practice": "Practicar",
+    "test": "Examen de prueba",
+    "speak": "Pronunciación"
   }
 }

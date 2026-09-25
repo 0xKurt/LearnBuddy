@@ -3,13 +3,14 @@ import { Pressable, View } from 'react-native';
 import { LB } from '../../lib/theme/colors.js';
 import { Icon } from './Icon.js';
 
-const LABEL_KEY: Record<'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak', string> = {
+const LABEL_KEY: Record<'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'camera', string> = {
   back: 'a11y.back',
   close: 'a11y.close',
   more: 'a11y.more',
   plus: 'a11y.add',
   mic: 'a11y.mic',
   speak: 'a11y.speak',
+  camera: 'a11y.camera',
 };
 
 export function CircleBtn({
@@ -18,7 +19,7 @@ export function CircleBtn({
   accessibilityLabel,
   accessibilityHint,
 }: {
-  icon: 'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak';
+  icon: 'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'camera';
   onPress?: () => void;
   accessibilityLabel?: string;
   accessibilityHint?: string;

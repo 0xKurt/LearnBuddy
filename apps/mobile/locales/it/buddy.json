@@ -3,7 +3,6 @@
   "menu": {
     "open": "Apri il menu",
     "title": "Altro",
-    "history": "Cronologia completa",
     "memory": "Cosa sa Buddy di te",
     "library": "Il mio materiale",
     "settings": "Impostazioni"
@@ -66,20 +65,14 @@
     "outcome_hard": "Difficile"
   },
   "done": {
-    "title": "Ecco cosa ho fatto per te",
     "undo": "Annulla",
-    "undo_label": "Annulla: {{what}}",
-    "undone": "annullato"
+    "undo_label": "Annulla: {{what}}"
   },
   "next": {
-    "title": "In arrivo",
-    "agreed": "concordato",
-    "exam": "Verifica",
-    "message": "Buddy ti scriverà: «{{title}}»"
+    "line": "Prossima verifica: {{title}} · {{when}}"
   },
   "thread": {
     "title": "Chat con Buddy",
-    "show_all": "Mostra tutto",
     "typing": "Buddy sta scrivendo…",
     "failed": "Non arrivato",
     "resend": "Invia di nuovo",
@@ -103,7 +96,9 @@
   },
   "composer": {
     "placeholder": "Scrivi a Buddy…",
-    "send": "Invia"
+    "send": "Invia",
+    "photo": "Fotografa una scheda",
+    "suggestions": "Suggerimenti"
   },
   "action": {
     "remember": "Annotato: {{statement}}",
@@ -136,14 +131,19 @@
   },
   "intro": {
     "title": "Sono Buddy.",
-    "body": "Ti aiuto a prepararti per verifiche ed esami – senza stress. Dimmi cosa ti aspetta o mandami una foto della tua scheda.",
-    "start": "Puoi iniziare così:",
-    "starter_exam": "Tra poco ho una verifica",
-    "starter_practice": "Voglio esercitarmi",
-    "starter_photo": "Fotografa una scheda"
+    "body": "Ti aiuto a prepararti per verifiche ed esami – senza stress. Dimmi cosa ti aspetta o mandami una foto della tua scheda."
   },
   "working": {
     "material": "Sto trasformando la tua scheda in esercizi…",
     "session": "Sto guardando com'è andata con gli esercizi…"
+  },
+  "suggest": {
+    "exam": "Ho presto una verifica",
+    "homework": "Compiti",
+    "explain": "Spiegami qualcosa",
+    "vocab": "Vocaboli",
+    "practice": "Esercitarsi",
+    "test": "Verifica di prova",
+    "speak": "Pronuncia"
   }
 }

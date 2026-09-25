@@ -8,7 +8,8 @@
     "mic": "Hablar",
     "speak": "Leer en voz alta",
     "pin_delete": "Borrar el último dígito",
-    "pin_progress": "{{count}} de 4 dígitos introducidos"
+    "pin_progress": "{{count}} de 4 dígitos introducidos",
+    "camera": "Hacer una foto"
   },
   "actions": {
     "close": "Cerrar",

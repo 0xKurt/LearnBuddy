@@ -348,6 +348,16 @@ the learner's own photos or just-finished practice: a due or running check they 
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
 and delivery status of each message) and **system** status (model, push, contact, scheduler).
 
+**The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx` is the
+greeting, one line for the next test, at most the **now** card and the **decision** card, and the
+conversation — what Buddy did stands under its message with "Rückgängig"; there are no tiles
+or lists. Starting something is one of: a suggestion chip above the field (test coming,
+homework, explain, vocabulary, practise, practice test, pronunciation), the camera next to the
+field, or simply saying it (Buddy answers with an `offer_learning` button). The field shows the
+mic while empty and "Senden" once there is text. Settings for the learner are one contact card
+(on/off, a one-line summary, "Zeiten anpassen" for the rare loosening) and the language;
+the parents' area is closed until opened. Level and grade are learned in the conversation.
+
 Photos that never all arrive are set aside after a day and whatever did arrive is deleted at
 once (`abandonStaleUploads`, run by the scheduler).
 

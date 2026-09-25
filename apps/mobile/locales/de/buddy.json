@@ -3,7 +3,6 @@
   "menu": {
     "open": "Menü öffnen",
     "title": "Mehr",
-    "history": "Ganzer Verlauf",
     "memory": "Was Buddy über dich weiß",
     "library": "Mein Stoff",
     "settings": "Einstellungen"
@@ -66,20 +65,14 @@
     "outcome_hard": "Schwer"
   },
   "done": {
-    "title": "Das habe ich für dich erledigt",
     "undo": "Rückgängig",
-    "undo_label": "Rückgängig machen: {{what}}",
-    "undone": "rückgängig gemacht"
+    "undo_label": "Rückgängig machen: {{what}}"
   },
   "next": {
-    "title": "Was als Nächstes kommt",
-    "agreed": "abgemacht",
-    "exam": "Arbeit",
-    "message": "Buddy meldet sich: „{{title}}“"
+    "line": "Nächste Arbeit: {{title}} · {{when}}"
   },
   "thread": {
     "title": "Chat mit Buddy",
-    "show_all": "Alles anzeigen",
     "typing": "Buddy schreibt …",
     "failed": "Nicht angekommen",
     "resend": "Nochmal senden",
@@ -103,7 +96,9 @@
   },
   "composer": {
     "placeholder": "Schreib Buddy …",
-    "send": "Senden"
+    "send": "Senden",
+    "photo": "Arbeitsblatt fotografieren",
+    "suggestions": "Vorschläge"
   },
   "action": {
     "remember": "Gemerkt: {{statement}}",
@@ -136,14 +131,19 @@
   },
   "intro": {
     "title": "Ich bin Buddy.",
-    "body": "Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten – ohne Stress. Erzähl mir einfach, was ansteht, oder schick mir ein Foto von deinem Arbeitsblatt.",
-    "start": "So kannst du anfangen:",
-    "starter_exam": "Ich schreibe bald eine Arbeit",
-    "starter_practice": "Ich möchte üben",
-    "starter_photo": "Arbeitsblatt fotografieren"
+    "body": "Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten – ohne Stress. Erzähl mir einfach, was ansteht, oder schick mir ein Foto von deinem Arbeitsblatt."
   },
   "working": {
     "material": "Ich mache aus deinem Blatt gerade Übungen …",
     "session": "Ich schaue mir an, wie deine Übung lief …"
+  },
+  "suggest": {
+    "exam": "Ich schreibe bald eine Arbeit",
+    "homework": "Hausaufgabe",
+    "explain": "Erklär mir was",
+    "vocab": "Vokabeln",
+    "practice": "Üben",
+    "test": "Probetest",
+    "speak": "Aussprache"
   }
 }

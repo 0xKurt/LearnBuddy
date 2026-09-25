@@ -3,7 +3,6 @@
   "menu": {
     "open": "Ouvrir le menu",
     "title": "Plus",
-    "history": "Tout l'historique",
     "memory": "Ce que Buddy sait de toi",
     "library": "Mes cours",
     "settings": "Réglages"
@@ -66,20 +65,14 @@
     "outcome_hard": "Difficile"
   },
   "done": {
-    "title": "Ce que j'ai fait pour toi",
     "undo": "Annuler",
-    "undo_label": "Annuler: {{what}}",
-    "undone": "annulé"
+    "undo_label": "Annuler: {{what}}"
   },
   "next": {
-    "title": "À venir",
-    "agreed": "convenu",
-    "exam": "Contrôle",
-    "message": "Buddy t'écrira : « {{title}} »"
+    "line": "Prochain contrôle : {{title}} · {{when}}"
   },
   "thread": {
     "title": "Discussion avec Buddy",
-    "show_all": "Tout afficher",
     "typing": "Buddy écrit…",
     "failed": "Pas arrivé",
     "resend": "Renvoyer",
@@ -103,7 +96,9 @@
   },
   "composer": {
     "placeholder": "Écris à Buddy…",
-    "send": "Envoyer"
+    "send": "Envoyer",
+    "photo": "Photographier une fiche",
+    "suggestions": "Suggestions"
   },
   "action": {
     "remember": "Noté: {{statement}}",
@@ -136,14 +131,19 @@
   },
   "intro": {
     "title": "Moi, c'est Buddy.",
-    "body": "Je t'aide à préparer tes contrôles et tes interros – sans stress. Dis-moi simplement ce qui t'attend, ou envoie-moi une photo de ta fiche.",
-    "start": "Tu peux commencer comme ça:",
-    "starter_exam": "J'ai bientôt un contrôle",
-    "starter_practice": "Je veux m'entraîner",
-    "starter_photo": "Prendre une fiche en photo"
+    "body": "Je t'aide à préparer tes contrôles et tes interros – sans stress. Dis-moi simplement ce qui t'attend, ou envoie-moi une photo de ta fiche."
   },
   "working": {
     "material": "Je transforme ta fiche en exercices…",
     "session": "Je regarde comment s'est passé ton entraînement…"
+  },
+  "suggest": {
+    "exam": "J'ai bientôt un contrôle",
+    "homework": "Devoirs",
+    "explain": "Explique-moi",
+    "vocab": "Vocabulaire",
+    "practice": "S'entraîner",
+    "test": "Test blanc",
+    "speak": "Prononciation"
   }
 }

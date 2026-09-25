@@ -46,7 +46,11 @@
     "device_invalid": "Le téléphone enregistré n'est plus joignable. Du coup, tout arrive seulement ici, dans l'appli.",
     "device_register": "Enregistrer ce téléphone",
     "device_registered": "Ce téléphone est enregistré.",
-    "device_not_possible": "Ce n'est pas possible sur ce téléphone pour le moment. Les notifications sont peut-être désactivées dans les réglages du système."
+    "device_not_possible": "Ce n'est pas possible sur ce téléphone pour le moment. Les notifications sont peut-être désactivées dans les réglages du système.",
+    "summary": "Buddy te contacte entre {{start}} et {{end}}, au plus {{count}}× par semaine, jamais après {{quiet}}.",
+    "tell_buddy": "Dis-le simplement à Buddy si tu veux du calme.",
+    "more": "Modifier les horaires",
+    "less": "Afficher moins"
   },
   "profile": {
     "title": "Ton profil",
@@ -62,7 +66,8 @@
     "language_en": "English",
     "language_fr": "Français",
     "language_es": "Español",
-    "language_it": "Italiano"
+    "language_it": "Italiano",
+    "language_title": "Langue"
   },
   "adult": {
     "title_minor": "Pour les parents",
@@ -142,7 +147,9 @@
       "password_save": "Enregistrer le mot de passe",
       "saving": "Enregistrement …",
       "password_saved": "Nouveau mot de passe enregistré."
-    }
+    },
+    "open": "Ouvrir",
+    "close": "Fermer"
   },
   "status": {
     "title": "Tout fonctionne?",

@@ -1,10 +1,11 @@
-// Free text to Buddy, typed or spoken. The send button is a Btn; the field
-// grows to a few lines. The mic writes what she said into the field, so she
+// Free text to Buddy, typed or spoken — plus the camera (a photo of a sheet
+// or of homework) and, while the field is empty, a row of suggestions to tap
+// instead of menus. The send button is a Btn; the field grows to a few lines. The mic writes what she said into the field, so she
 // can check it before sending; in voice mode it is sent right away and the
 // mic becomes the big main control (the field stays for typing).
 
 import { useRef, useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,18 +14,26 @@ import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
+import { CircleBtn } from '../lb/CircleBtn.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
 
+export type Suggestion = { key: string; label: string; onPress: () => void };
+
 export function Composer({
   disabled,
   onSend,
+  onPhoto,
+  suggestions = [],
 }: {
   disabled: boolean;
   onSend: (text: string) => void;
+  /** The camera: a photo says more than typing a worksheet. */
+  onPhoto: () => void;
+  suggestions?: Suggestion[];
 }) {
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
@@ -67,7 +76,29 @@ export function Composer({
       }}
     >
       <MicStatus voice={voice} />
+      {suggestions.length > 0 && trimmed.length === 0 && voice.state === 'idle' ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ gap: 8 }}
+          accessibilityLabel={t('buddy:composer.suggestions')}
+        >
+          {suggestions.map((s) => (
+            <Btn key={s.key} size="sm" variant="soft" onPress={s.onPress} disabled={disabled}>
+              {s.label}
+            </Btn>
+          ))}
+        </ScrollView>
+      ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+        <View style={{ height: 56, justifyContent: 'center' }}>
+          <CircleBtn
+            icon="camera"
+            onPress={onPhoto}
+            accessibilityLabel={t('buddy:composer.photo')}
+          />
+        </View>
         <TextInput
           value={text}
           onChangeText={setText}
@@ -92,14 +123,17 @@ export function Composer({
             color: LB.ink,
           }}
         />
-        {voiceMode ? null : (
+        {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
+        {!voiceMode && (trimmed.length === 0 || voice.state !== 'idle') ? (
           <MicButton voice={voice} label={t('common:voice.message')} disabled={disabled} />
-        )}
-        <View style={{ height: 56, justifyContent: 'center' }}>
-          <Btn onPress={send} disabled={disabled || trimmed.length === 0}>
-            {t('buddy:composer.send')}
-          </Btn>
-        </View>
+        ) : null}
+        {trimmed.length > 0 && voice.state === 'idle' ? (
+          <View style={{ height: 56, justifyContent: 'center' }}>
+            <Btn onPress={send} disabled={disabled}>
+              {t('buddy:composer.send')}
+            </Btn>
+          </View>
+        ) : null}
       </View>
       {voiceMode ? (
         <View style={{ alignItems: 'center', gap: 6, paddingTop: 2 }}>

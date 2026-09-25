@@ -185,6 +185,9 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
     .join(', ');
   const deviceMissing = settings.contact_enabled && (push === 'no_token' || push === 'invalid');
   const secondary = [TYPE.body, { color: LB.ink2 }];
+  // The details are sensible defaults; she tells Buddy in the chat when she wants less.
+  // Only loosening (more, later, other days) needs this place — for a minor with the PIN.
+  const [showTimes, setShowTimes] = useState(false);
 
   return (
     <Group title={t('contact.question')}>
@@ -205,11 +208,34 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
                 : `${t('contact.minor_hint')} ${t('contact.no_pin_hint')}`}
             </Text>
           ) : null}
-          <View style={{ marginTop: 4 }}>
+          {settings.contact_enabled ? (
+            <Text style={secondary}>
+              {pausedUntil
+                ? t('contact.pause_until', { date: formatLastDay(pausedUntil, lang) })
+                : t('contact.summary', {
+                    start: settings.preferred_start,
+                    end: settings.preferred_end,
+                    count: settings.max_per_week,
+                    quiet: settings.quiet_start,
+                  })}{' '}
+              {t('contact.tell_buddy')}
+            </Text>
+          ) : null}
+          {settings.contact_enabled && pausedUntil ? (
+            <Btn variant="outline" onPress={() => void endPause()} disabled={saving}>
+              {t('contact.pause_end')}
+            </Btn>
+          ) : null}
+          <View style={{ marginTop: 4, gap: 8 }}>
             {settings.contact_enabled ? (
-              <Btn variant="outline" onPress={() => void stop()} disabled={saving}>
-                {t('contact.stop')}
-              </Btn>
+              <>
+                <Btn variant="outline" onPress={() => void stop()} disabled={saving}>
+                  {t('contact.stop')}
+                </Btn>
+                <Btn variant="ghost" onPress={() => setShowTimes((v) => !v)}>
+                  {showTimes ? t('contact.less') : t('contact.more')}
+                </Btn>
+              </>
             ) : (
               <Btn onPress={() => void allow()} disabled={saving}>
                 {canLoosen ? t('contact.allow') : t('contact.allow_adult')}
@@ -232,7 +258,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
         </Card>
       ) : null}
 
-      {settings.contact_enabled ? (
+      {settings.contact_enabled && showTimes ? (
         <Card padding={20} radius={22}>
           <View style={{ gap: 18 }}>
             <Row

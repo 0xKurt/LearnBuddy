@@ -119,7 +119,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // Here in the app the card says it now; the message about it is planned for Mia's preferred
   // time and visible as planned — and dropped once she has practised.
   await expect(page.getByText(/Übung bereit: /)).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText(/Vorbereitet: .* – 4 Aufgaben/)).toBeVisible();
+  await expect(page.getByText(/4 Aufgaben · ca\. 5 Min\./)).toBeVisible();
   await shot(page, '09-buddy-prepared');
 
   // ── The useful result: short practice, checked, with calm feedback ──

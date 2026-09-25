@@ -1,5 +1,5 @@
-// "Dein Profil": where the learner learns (level), the grade for school, and
-// the language. Each tap is one PATCH /learner with the profile's version
+// The app language. Level and grade are not a form: Buddy learns them in the
+// conversation (set_level) or at sign-up. Each tap is one PATCH /learner with the profile's version
 // (docs/architecture.md §API); the new language is applied only after the
 // API confirmed it. A stale version reloads the profile and says so.
 
@@ -21,11 +21,8 @@ import { SUPPORTED_LOCALES } from '../../lib/i18n/resources.js';
 import { Card } from '../lb/Card.js';
 import { Segmented } from '../lb/Segmented.js';
 import { toast } from '../lb/Toast.js';
-import { GradePicker } from './GradePicker.js';
 import { Group } from './Group.js';
-import { Divider, Row } from './Row.js';
-
-const LEVELS = ['school', 'university', 'adult'] as const;
+import { Row } from './Row.js';
 
 export function ProfileSection({ learner }: { learner: LearnerView }) {
   const { t } = useTranslation('settings');
@@ -57,48 +54,10 @@ export function ProfileSection({ learner }: { learner: LearnerView }) {
     }
   }
 
-  const level = learner.level === 'unknown' ? null : learner.level;
-
   return (
-    <Group title={t('profile.title')}>
-      <Card tone="peach" padding={20} radius={22}>
+    <Group title={t('profile.language_title')}>
+      <Card padding={20} radius={22}>
         <View style={{ gap: 18 }}>
-          <Row
-            question={t('profile.level_question')}
-            current={level ? t(`profile.level_${level}`) : undefined}
-            locked={saving}
-          >
-            <Segmented
-              options={LEVELS.map((l) => ({ value: l, label: t(`profile.level_${l}`) }))}
-              value={level}
-              onChange={(next) => {
-                if (next !== learner.level) void patch({ level: next });
-              }}
-            />
-          </Row>
-
-          {learner.level === 'school' ? (
-            <>
-              <Divider />
-              <Row
-                question={t('profile.grade_question')}
-                current={
-                  learner.grade !== null
-                    ? t('profile.grade_value', { grade: learner.grade })
-                    : undefined
-                }
-                hint={t('profile.grade_hint')}
-              >
-                <GradePicker
-                  value={learner.grade}
-                  disabled={saving}
-                  onChange={(grade) => void patch({ grade })}
-                />
-              </Row>
-            </>
-          ) : null}
-
-          <Divider />
           <Row
             question={t('profile.language_question')}
             current={t(`profile.language_${learner.locale}`)}

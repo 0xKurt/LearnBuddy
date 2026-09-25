@@ -8,7 +8,8 @@
     "mic": "Speak",
     "speak": "Read aloud",
     "pin_delete": "Delete last digit",
-    "pin_progress": "{{count}} of 4 digits entered"
+    "pin_progress": "{{count}} of 4 digits entered",
+    "camera": "Take a photo"
   },
   "actions": {
     "close": "Close",

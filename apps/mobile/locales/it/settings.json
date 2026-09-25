@@ -46,7 +46,11 @@
     "device_invalid": "Il telefono registrato non è più raggiungibile. Per questo tutto arriva solo qui nell'app.",
     "device_register": "Registra questo telefono",
     "device_registered": "Questo telefono è registrato.",
-    "device_not_possible": "Al momento non è possibile su questo telefono. Forse le notifiche sono disattivate nelle impostazioni di sistema."
+    "device_not_possible": "Al momento non è possibile su questo telefono. Forse le notifiche sono disattivate nelle impostazioni di sistema.",
+    "summary": "Buddy ti scrive tra le {{start}} e le {{end}}, al massimo {{count}}× a settimana, mai dopo le {{quiet}}.",
+    "tell_buddy": "Dillo a Buddy quando vuoi un po' di pace.",
+    "more": "Modifica orari",
+    "less": "Mostra meno"
   },
   "profile": {
     "title": "Il tuo profilo",
@@ -62,7 +66,8 @@
     "language_en": "English",
     "language_fr": "Français",
     "language_es": "Español",
-    "language_it": "Italiano"
+    "language_it": "Italiano",
+    "language_title": "Lingua"
   },
   "adult": {
     "title_minor": "Per i genitori",
@@ -142,7 +147,9 @@
       "password_save": "Salva la password",
       "saving": "Salvataggio …",
       "password_saved": "Nuova password salvata."
-    }
+    },
+    "open": "Apri",
+    "close": "Chiudi"
   },
   "status": {
     "title": "Funziona tutto?",

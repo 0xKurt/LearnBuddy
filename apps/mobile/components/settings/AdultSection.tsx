@@ -44,6 +44,7 @@ function setDeletionDue(due: string | null): void {
 }
 
 export function AdultSection({ account, learner, onInputFocus }: Props) {
+  const [open, setOpen] = useState(false);
   const { t, i18n } = useTranslation(['settings', 'common']);
   const [busy, setBusy] = useState<Task | null>(null);
   const inFlight = useRef(false);
@@ -141,69 +142,90 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         intro={minor ? t('settings:adult.intro_minor') : t('settings:adult.intro_self')}
         icon="shield"
       >
-        {minor ? (
-          <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
-        ) : null}
-
-        <AccountAccessCard
-          minor={minor}
-          pinSet={account.pin_set}
-          email={email}
-          enabled={busy === null}
-        />
-
-        <Card padding={18} radius={20}>
-          <Row question={t('settings:adult.export.title')} hint={t('settings:adult.export.body')}>
+        {/* Closed by default: the learner's settings stay short; parents open it when needed. */}
+        <Btn variant="outline" onPress={() => setOpen((v) => !v)}>
+          {open ? t('settings:adult.close') : t('settings:adult.open')}
+        </Btn>
+        {open ? (
+          <>
             {minor ? (
-              <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
+              <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
             ) : null}
-            <Btn variant="outline" onPress={() => void exportData()} disabled={busy !== null}>
-              {busy === 'export'
-                ? t('settings:adult.export.working')
-                : t('settings:adult.export.cta')}
-            </Btn>
-          </Row>
-        </Card>
 
-        <Card padding={18} radius={20}>
-          <Row
-            question={t('settings:adult.delete.title')}
-            answer={
-              due
-                ? t('settings:adult.delete.scheduled', {
-                    date: formatDate(due, lang),
-                    time: formatTime(due, lang),
-                  })
-                : undefined
-            }
-            hint={due ? undefined : t('settings:adult.delete.body')}
-          >
-            {due ? (
-              <Btn onPress={() => void cancelScheduledDeletion()} disabled={busy !== null}>
-                {t('settings:adult.delete.cancel')}
-              </Btn>
-            ) : (
-              <Btn variant="danger" onPress={() => setDeleteOpen(true)} disabled={busy !== null}>
-                {t('settings:adult.delete.cta')}
-              </Btn>
-            )}
-          </Row>
-        </Card>
+            <AccountAccessCard
+              minor={minor}
+              pinSet={account.pin_set}
+              email={email}
+              enabled={busy === null}
+            />
 
-        <Card padding={18} radius={20}>
-          <Row
-            question={t('settings:adult.signout.title')}
-            hint={
-              email
-                ? t('settings:adult.signout.body', { email })
-                : t('settings:adult.signout.body_no_email')
-            }
-          >
-            <Btn variant="outline" onPress={() => setSignOutOpen(true)} disabled={busy !== null}>
-              {t('settings:adult.signout.cta')}
-            </Btn>
-          </Row>
-        </Card>
+            <Card padding={18} radius={20}>
+              <Row
+                question={t('settings:adult.export.title')}
+                hint={t('settings:adult.export.body')}
+              >
+                {minor ? (
+                  <Text style={[TYPE.body, { color: LB.ink2 }]}>
+                    {t('settings:adult.needs_pin')}
+                  </Text>
+                ) : null}
+                <Btn variant="outline" onPress={() => void exportData()} disabled={busy !== null}>
+                  {busy === 'export'
+                    ? t('settings:adult.export.working')
+                    : t('settings:adult.export.cta')}
+                </Btn>
+              </Row>
+            </Card>
+
+            <Card padding={18} radius={20}>
+              <Row
+                question={t('settings:adult.delete.title')}
+                answer={
+                  due
+                    ? t('settings:adult.delete.scheduled', {
+                        date: formatDate(due, lang),
+                        time: formatTime(due, lang),
+                      })
+                    : undefined
+                }
+                hint={due ? undefined : t('settings:adult.delete.body')}
+              >
+                {due ? (
+                  <Btn onPress={() => void cancelScheduledDeletion()} disabled={busy !== null}>
+                    {t('settings:adult.delete.cancel')}
+                  </Btn>
+                ) : (
+                  <Btn
+                    variant="danger"
+                    onPress={() => setDeleteOpen(true)}
+                    disabled={busy !== null}
+                  >
+                    {t('settings:adult.delete.cta')}
+                  </Btn>
+                )}
+              </Row>
+            </Card>
+
+            <Card padding={18} radius={20}>
+              <Row
+                question={t('settings:adult.signout.title')}
+                hint={
+                  email
+                    ? t('settings:adult.signout.body', { email })
+                    : t('settings:adult.signout.body_no_email')
+                }
+              >
+                <Btn
+                  variant="outline"
+                  onPress={() => setSignOutOpen(true)}
+                  disabled={busy !== null}
+                >
+                  {t('settings:adult.signout.cta')}
+                </Btn>
+              </Row>
+            </Card>
+          </>
+        ) : null}
       </Group>
 
       <Sheet

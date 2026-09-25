@@ -1,5 +1,7 @@
 // The latest part of the conversation. Buddy's messages that were also
-// sent outside the app show what really happened to them.
+// sent outside the app show what really happened to them. What Buddy did
+// with a message stands right under it, with "Rückgängig" while that still
+// applies — there is no separate list of it on the home.
 
 import { MathText } from '../math/MathText.js';
 import { withoutEmphasis } from '../../lib/math/emphasis.js';
@@ -23,6 +25,8 @@ type Props = {
   contactOn?: boolean;
   onOption: (messageId: string, option: string) => void;
   onResend: (message: MessageView) => void;
+  /** Undo one of Buddy's actions (only offered where the API says it still applies). */
+  onUndo?: (actionId: string) => void;
 };
 
 export function Conversation({
@@ -33,6 +37,7 @@ export function Conversation({
   showActions = false,
   onOption,
   onResend,
+  onUndo,
 }: Props) {
   const { t } = useTranslation('buddy');
   const last = messages[messages.length - 1];
@@ -83,20 +88,43 @@ export function Conversation({
             )}
             {showActions && done.length > 0 ? (
               <View style={{ gap: 2, maxWidth: '86%' }}>
-                {done.map((a) => (
-                  <Text
-                    key={a.id}
-                    style={[
-                      TYPE.small,
-                      {
-                        fontSize: 13,
-                        textDecorationLine: a.status === 'undone' ? 'line-through' : 'none',
-                      },
-                    ]}
-                  >
-                    ✓ {describeAction(a.summary, { contactOn })}
-                  </Text>
-                ))}
+                {done.map((a) => {
+                  const what = describeAction(a.summary, { contactOn });
+                  return (
+                    <View
+                      key={a.id}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <Text
+                        style={[
+                          TYPE.small,
+                          {
+                            fontSize: 13,
+                            flex: 1,
+                            textDecorationLine: a.status === 'undone' ? 'line-through' : 'none',
+                          },
+                        ]}
+                      >
+                        ✓ {what}
+                      </Text>
+                      {onUndo && a.undoable && a.status !== 'undone' ? (
+                        <Btn
+                          size="sm"
+                          variant="ghost"
+                          onPress={() => onUndo(a.id)}
+                          disabled={busy}
+                          accessibilityLabel={t('done.undo_label', { what })}
+                        >
+                          {t('done.undo')}
+                        </Btn>
+                      ) : null}
+                    </View>
+                  );
+                })}
               </View>
             ) : null}
             {mine && m.status === 'failed' ? (

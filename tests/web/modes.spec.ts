@@ -41,7 +41,9 @@ test('learning modes: explain, homework help without the solution, practice with
   page,
 }) => {
   await onboardChild(page);
-  await expect(page.getByText('Was willst du machen?')).toBeVisible();
+  // No tiles or lists: Buddy, and suggestions to tap above the field.
+  await expect(page.getByRole('button', { name: 'Erklär mir was' })).toBeVisible();
+  await expect(page.getByText('Was willst du machen?')).toHaveCount(0);
   await shot(page, '20-home-start-row');
 
   // ── "Erklär mir was" → explanation, then questions ──
@@ -70,7 +72,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 
   // ── Homework help: hints only, no "show solution", solved by herself ──
-  await page.getByRole('button', { name: 'Hilfe bei Hausaufgaben' }).click();
+  await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe eintippen' }).click();
   await expect(page.getByText('Welche Aufgabe? Schreib sie ab.')).toBeVisible();
   await page
