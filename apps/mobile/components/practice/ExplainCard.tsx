@@ -28,7 +28,7 @@ export function ExplainText({ text }: { text: string }) {
 export function ExplainCard({ text }: { text: string }) {
   const { t } = useTranslation('practice');
   return (
-    <Card tone="sky" padding={20} radius={22}>
+    <Card tone="sky" padding={22} radius={24}>
       <Text accessibilityRole="header" style={[TYPE.label, { marginBottom: 10 }]}>
         {t('explain.title').toUpperCase()}
       </Text>

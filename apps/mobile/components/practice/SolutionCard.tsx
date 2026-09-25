@@ -23,7 +23,7 @@ export function SolutionCard({ status, answer, numeric }: Props) {
   const { t } = useTranslation('practice');
   const solved = status === 'correct';
   return (
-    <Card tone={solved ? 'mint' : 'sky'} padding={18} radius={20}>
+    <Card tone={solved ? 'mint' : 'sky'} padding={20} radius={24}>
       <Text style={[TYPE.body, { color: LB.ink2, fontWeight: '600' }]}>{t('solution.title')}</Text>
       <View style={{ marginTop: 4 }}>
         <MathText
@@ -42,7 +42,7 @@ export function SolutionCard({ status, answer, numeric }: Props) {
 export function SelfSolvedCard() {
   const { t } = useTranslation('practice');
   return (
-    <Card tone="mint" padding={18} radius={20}>
+    <Card tone="mint" padding={20} radius={24}>
       <View accessibilityLiveRegion="polite">
         <Text style={TYPE.title}>{t('self_solved.title')}</Text>
         <Text style={[TYPE.body, { color: LB.ink2, marginTop: 4 }]}>{t('self_solved.body')}</Text>

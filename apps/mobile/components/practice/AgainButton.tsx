@@ -29,6 +29,7 @@ export function AgainButton({ title, topics }: { title: string; topics: readonly
         <Btn
           size="lg"
           variant="soft"
+          pill
           icon="practice"
           full
           disabled={preparing}

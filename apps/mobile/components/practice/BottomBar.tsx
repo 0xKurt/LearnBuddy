@@ -1,6 +1,8 @@
 // The bar pinned to the bottom of the practice screen (the answer field or
 // the next step). It sits outside the ScrollView and inside the screen's
-// KeyboardAvoidingView, so the keyboard never covers it.
+// KeyboardAvoidingView, so the keyboard never covers it. No hard edge: it
+// shares the screen's calm background, and what sits in it floats (the answer
+// pill, round buttons), like the composer on Buddy's home.
 
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -15,11 +17,9 @@ export function BottomBar({ children }: { children: ReactNode }) {
       style={{
         gap: 10,
         paddingHorizontal: 16,
-        paddingTop: 12,
+        paddingTop: 10,
         paddingBottom: Math.max(insets.bottom, 12),
-        backgroundColor: LB.paper,
-        borderTopWidth: 1,
-        borderTopColor: LB.hairline,
+        backgroundColor: LB.bg,
       }}
     >
       {children}

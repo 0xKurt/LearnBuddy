@@ -1,25 +1,36 @@
 // The short conversation about one question: the learner's answers on the
-// right, Buddy's replies on the left (the same bubbles as the Buddy thread).
+// right in violet, Buddy's replies on the left as white bubbles with the small
+// orb beside them (the same bubbles as the Buddy thread, Conversation.tsx).
 // Only the latest answer carries its judgement, always in words and never as
-// "falsch"; a turn that was not an attempt (a question, "no idea") gets none.
+// "falsch", on a soft pastel chip (right = mint, almost = butter, not yet =
+// neutral); a turn that was not an attempt (a question, "no idea") gets none.
 
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { BuddyOrb } from '../buddy/BuddyOrb.js';
+import { Icon } from '../lb/Icon.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
 
 type VerdictKey = 'correct' | 'partially_correct' | 'incorrect' | 'unchecked';
 
-// Soft pastel backgrounds with dark text (readable at 16 px); the word carries the meaning.
+// Soft pastel chips with dark text; the word carries the meaning (a small check for "right").
 const VERDICT_BG: Record<VerdictKey, string> = {
   correct: LB.mint,
   partially_correct: LB.butter,
-  incorrect: LB.bg,
-  unchecked: LB.bg,
+  incorrect: LB.canvas,
+  unchecked: LB.canvas,
+};
+const VERDICT_TEXT: Record<VerdictKey, string> = {
+  correct: LB.successText,
+  partially_correct: LB.warningText,
+  incorrect: LB.ink2,
+  unchecked: LB.ink2,
 };
 
 /** null verdict = the answer could not be judged (no model), nothing was graded. */
@@ -45,7 +56,7 @@ export function ItemThread({ turns, pending, hideVerdicts = false }: Props) {
   for (const turn of turns) if (turn.role === 'learner') latestAnswerId = turn.id;
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 12 }}>
       {turns.map((turn) => {
         const mine = turn.role === 'learner';
         // While a new answer is on its way, the previous judgement no longer applies.
@@ -73,8 +84,11 @@ export function ItemThread({ turns, pending, hideVerdicts = false }: Props) {
             accessibilityLiveRegion="polite"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
           >
+            <BuddyOrb size={26} />
             <ActivityIndicator size="small" color={LB.ink3} />
-            <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('thread.thinking')}</Text>
+            <Text style={[TYPE.small, { color: LB.ink2, flexShrink: 1 }]}>
+              {t('thread.thinking')}
+            </Text>
           </View>
         </>
       ) : null}
@@ -83,21 +97,35 @@ export function ItemThread({ turns, pending, hideVerdicts = false }: Props) {
 }
 
 function VerdictTag({ verdict, label }: { verdict: VerdictKey; label: string }) {
-  const neutral = verdict === 'incorrect' || verdict === 'unchecked';
   return (
     <View
       accessibilityRole="text"
       accessibilityLabel={label}
       style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
         backgroundColor: VERDICT_BG[verdict],
-        borderColor: LB.hairline,
-        borderWidth: neutral ? 1 : 0,
         borderRadius: 999,
-        paddingHorizontal: 12,
-        paddingVertical: 3,
+        paddingLeft: verdict === 'correct' ? 10 : 14,
+        paddingRight: 14,
+        paddingVertical: 5,
       }}
     >
-      <Text style={[TYPE.body, { fontWeight: '600', color: neutral ? LB.ink2 : LB.ink }]}>
+      {verdict === 'correct' ? (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Icon name="check" size={15} color={VERDICT_TEXT[verdict]} />
+        </View>
+      ) : null}
+      <Text
+        style={{
+          color: VERDICT_TEXT[verdict],
+          fontSize: 14,
+          lineHeight: 19,
+          fontWeight: '600',
+          letterSpacing: 0.1,
+        }}
+      >
         {label}
       </Text>
     </View>
@@ -116,28 +144,36 @@ function Bubble({
   faded?: boolean;
 }) {
   const spoken = useSpokenMath(text);
-  return (
+  const bubble = (
     <View
       accessible
       accessibilityLabel={`${speaker}: ${spoken}`}
-      style={{
-        maxWidth: '86%',
-        backgroundColor: mine ? LB.primary : LB.paper,
-        borderColor: LB.hairline,
-        borderWidth: mine ? 0 : 1,
-        borderRadius: 18,
-        borderBottomRightRadius: mine ? 6 : 18,
-        borderBottomLeftRadius: mine ? 18 : 6,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        opacity: faded ? 0.7 : 1,
-      }}
+      style={[
+        {
+          flexShrink: 1,
+          backgroundColor: mine ? LB.primary : LB.paper,
+          borderRadius: 22,
+          borderBottomRightRadius: mine ? 6 : 22,
+          borderBottomLeftRadius: mine ? 22 : 6,
+          paddingHorizontal: 16,
+          paddingVertical: 11,
+          opacity: faded ? 0.7 : 1,
+        },
+        mine ? null : SHADOW.soft,
+      ]}
     >
       <MathText
         text={text}
         accessible={false}
         style={[TYPE.body, { color: mine ? '#fff' : LB.ink }]}
       />
+    </View>
+  );
+  if (mine) return <View style={{ maxWidth: '86%' }}>{bubble}</View>;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
+      <BuddyOrb size={26} />
+      {bubble}
     </View>
   );
 }

@@ -413,7 +413,7 @@ export default function PracticeScreen() {
               {session.mode !== 'help' && session.summary.shaky_topics.length > 0 ? (
                 <AgainButton title={session.title} topics={session.summary.shaky_topics} />
               ) : null}
-              <Btn size="lg" full onPress={backToBuddy}>
+              <Btn size="lg" pill full onPress={backToBuddy}>
                 {t('practice:back_to_buddy')}
               </Btn>
             </View>
@@ -462,10 +462,12 @@ export default function PracticeScreen() {
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <VoiceModeToggle />
       <Btn
-        variant="ghost"
+        variant="outline"
+        size="sm"
+        pill
         onPress={() => void close()}
         disabled={closing}
         accessibilityLabel={t('practice:end_label')}
@@ -489,7 +491,7 @@ export default function PracticeScreen() {
           <ExplainCard text={intro} />
         </ScrollView>
         <BottomBar>
-          <Btn size="lg" full onPress={() => setIntroRead(true)}>
+          <Btn size="lg" pill full onPress={() => setIntroRead(true)}>
             {t('practice:explain.ready')}
           </Btn>
         </BottomBar>
@@ -554,7 +556,7 @@ export default function PracticeScreen() {
           {session.mode === 'help' ? <Banner tone="info">{t('practice:help_note')}</Banner> : null}
           {testing ? <Banner tone="info">{t('practice:test_note')}</Banner> : null}
           {intro ? (
-            <Btn size="sm" variant="ghost" onPress={() => setIntroOpen(true)}>
+            <Btn size="sm" variant="soft" pill icon="book" onPress={() => setIntroOpen(true)}>
               {t('practice:explain.again')}
             </Btn>
           ) : null}
@@ -580,6 +582,7 @@ export default function PracticeScreen() {
               <Btn
                 size="sm"
                 variant="ghost"
+                pill
                 disabled={locked}
                 onPress={() => {
                   setFlagFor(item.id);
@@ -592,7 +595,7 @@ export default function PracticeScreen() {
             </View>
           ) : null}
           {voiceOn && open ? (
-            <Btn size="sm" variant="outline" icon="speak" onPress={() => readQuestion(item)}>
+            <Btn size="sm" variant="soft" pill icon="speak" onPress={() => readQuestion(item)}>
               {t('common:voice.read_again')}
             </Btn>
           ) : null}
@@ -656,7 +659,7 @@ export default function PracticeScreen() {
         ) : null}
         {open ? null : (
           <BottomBar>
-            <Btn size="lg" full onPress={next}>
+            <Btn size="lg" pill full onPress={next}>
               {t('practice:next')}
             </Btn>
           </BottomBar>

@@ -4,6 +4,9 @@
 // wrote. For math questions a row of keys (², √, π, …) sits above the field
 // and inserts at the cursor.
 //
+// The field sits in one floating white pill with a filled mic, the same bar
+// as Buddy's home composer (components/buddy/Composer.tsx).
+//
 // The mic next to the field writes what she said into it (numbers and
 // fractions as such: "drei Viertel" → "3/4"), so she can check it. In voice
 // mode the spoken answer is checked right away and the mic is the big main
@@ -15,15 +18,15 @@
 import type { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View, type KeyboardTypeOptions, type TextInput } from 'react-native';
+import { Platform, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 
 import { hasMath } from '../../lib/math/parse.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { LbTextInput } from '../lb/LbTextInput.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { TypedMathPreview } from '../math/TypedMathPreview.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
@@ -102,9 +105,6 @@ export function AnswerComposer({
       if (useVoiceMode.getState().on && !latest.current.disabled) onCheck(next.trim());
     },
   });
-  const mic = (size: 'md' | 'lg') => (
-    <MicButton voice={voice} size={size} label={t('common:voice.answer')} disabled={disabled} />
-  );
   // iOS number pads lack minus, comma and letters (units); this one has them all.
   const keyboardType: KeyboardTypeOptions =
     kind === 'numeric' && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
@@ -113,70 +113,104 @@ export function AnswerComposer({
     <BottomBar>
       <MicStatus voice={voice} />
       {showKeys ? <MathKeys onInsert={insert} disabled={disabled} /> : null}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ flex: 1 }}>
-          <LbTextInput
-            ref={inputRef}
-            value={value}
-            onChangeText={onChange}
-            selection={forced}
-            onSelectionChange={(e) => {
-              selection.current = e.nativeEvent.selection;
-              if (forced) setForced(undefined);
-            }}
-            placeholder={t('answer.placeholder')}
-            accessibilityLabel={t('answer.label')}
-            accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
-            multiline
-            maxLength={MAX_ANSWER_LENGTH}
-            autoCorrect={false}
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize={exact ? 'none' : 'sentences'}
-            keyboardType={keyboardType}
-            // Short answers go out with the return key; long ones need new lines.
-            submitBehavior={long ? 'newline' : 'submit'}
-            returnKeyType={long ? 'default' : 'send'}
-            onSubmitEditing={() => {
-              if (!long && canCheck) onCheck(value.trim());
-            }}
-            style={{
-              height: 'auto',
-              minHeight: long ? 88 : 52,
-              maxHeight: 150,
-              paddingTop: 14,
-              paddingBottom: 14,
-              fontSize: 16,
-              textAlignVertical: 'top',
-            }}
-          />
-        </View>
+      {/* One floating white pill, like the composer on Buddy's home: the field, the unit, the mic. */}
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'flex-end',
+            gap: 4,
+            backgroundColor: LB.paper,
+            borderRadius: long ? 26 : 30,
+            paddingVertical: 6,
+            paddingLeft: 16,
+            paddingRight: 6,
+            minHeight: 60,
+          },
+          SHADOW.float,
+        ]}
+      >
+        <TextInput
+          ref={inputRef}
+          value={value}
+          onChangeText={onChange}
+          selection={forced}
+          onSelectionChange={(e) => {
+            selection.current = e.nativeEvent.selection;
+            if (forced) setForced(undefined);
+          }}
+          placeholder={t('answer.placeholder')}
+          placeholderTextColor={LB.ink3}
+          accessibilityLabel={t('answer.label')}
+          accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
+          multiline
+          // The web's textarea starts two rows tall; one row, growing with the text.
+          {...(Platform.OS === 'web' && !long ? { numberOfLines: 1 } : {})}
+          maxLength={MAX_ANSWER_LENGTH}
+          autoCorrect={false}
+          spellCheck={false}
+          autoComplete="off"
+          autoCapitalize={exact ? 'none' : 'sentences'}
+          keyboardType={keyboardType}
+          // Short answers go out with the return key; long ones need new lines.
+          submitBehavior={long ? 'newline' : 'submit'}
+          returnKeyType={long ? 'default' : 'send'}
+          onSubmitEditing={() => {
+            if (!long && canCheck) onCheck(value.trim());
+          }}
+          textAlignVertical={long ? 'top' : 'center'}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            minHeight: long ? 88 : 48,
+            maxHeight: 150,
+            alignSelf: 'center',
+            backgroundColor: 'transparent',
+            paddingHorizontal: 0,
+            paddingTop: 13,
+            paddingBottom: 13,
+            fontSize: 16,
+            lineHeight: 22,
+            color: LB.ink,
+          }}
+        />
         {unit ? (
           <Text
             accessibilityElementsHidden
             importantForAccessibility="no"
-            style={[TYPE.body, { color: LB.ink2 }]}
+            style={[TYPE.body, { color: LB.ink2, alignSelf: 'center', paddingHorizontal: 4 }]}
           >
             {unit}
           </Text>
         ) : null}
-        {voiceMode ? null : mic('md')}
+        {voiceMode ? null : (
+          <MicButton
+            voice={voice}
+            size="sm"
+            filled
+            label={t('common:voice.answer')}
+            disabled={disabled}
+          />
+        )}
       </View>
       {/* Long answers are texts; the preview would only repeat them. */}
       {long ? null : <TypedMathPreview value={value} />}
       {voiceMode ? (
-        <View style={{ alignItems: 'center', paddingVertical: 2 }}>{mic('lg')}</View>
+        <View style={{ alignItems: 'center', paddingVertical: 2 }}>
+          <MicButton voice={voice} size="lg" label={t('common:voice.answer')} disabled={disabled} />
+        </View>
       ) : null}
       {/* One main action: "Prüfen" takes the room; "Lösung zeigen" stays a quiet side option. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {onReveal ? (
-          <Btn variant="ghost" onPress={onReveal} disabled={disabled}>
+          <Btn variant="ghost" pill onPress={onReveal} disabled={disabled}>
             {revealLabel ?? t('show_solution')}
           </Btn>
         ) : null}
         <View style={{ flex: 1 }}>
           <Btn
             full
+            pill
             variant={voiceMode ? 'soft' : 'primary'}
             onPress={() => onCheck(value.trim())}
             disabled={!canCheck}

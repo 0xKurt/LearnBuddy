@@ -3,13 +3,17 @@
 // decimal separator. Phone keyboards hide most of these; one tap here puts
 // them at the cursor. The characters are ones the answer check reads
 // (packages/shared-math typographicToAscii).
+//
+// The keys are soft and round (white on a soft shadow, the "Pastell Soft"
+// look of the composer below them), at least 44 × 44 pt.
 
 import { useTranslation } from 'react-i18next';
-import { ScrollView } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { currentLocale } from '../../lib/i18n/index.js';
 import { insertAtCursor, type Insertion, type Selection } from '../../lib/math/insert.js';
-import { KeyCap } from '../lb/KeyCap.js';
+import { LB } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 
 export { insertAtCursor, type Insertion, type Selection };
 
@@ -49,10 +53,11 @@ export function MathKeys({ onInsert, disabled = false }: Props) {
       keyboardShouldPersistTaps="always"
       accessibilityRole="toolbar"
       accessibilityLabel={t('keys.row')}
-      contentContainerStyle={{ gap: 6, paddingVertical: 2 }}
+      // Room around the keys, so their soft shadow is not cut off by the scroll view.
+      contentContainerStyle={{ gap: 8, paddingVertical: 6, paddingHorizontal: 4 }}
     >
       {mathKeys().map((k) => (
-        <KeyCap
+        <MathKey
           key={k.id}
           disabled={disabled}
           accessibilityLabel={t(`keys.${k.id}`)}
@@ -60,8 +65,67 @@ export function MathKeys({ onInsert, disabled = false }: Props) {
           onPress={() => onInsert(k.insert)}
         >
           {k.shown}
-        </KeyCap>
+        </MathKey>
       ))}
     </ScrollView>
+  );
+}
+
+const KEY = 44;
+
+/**
+ * One round key. The shadow sits on an outer View (a clipped Pressable would
+ * cut it off); the Pressable holds no background, the inner View shows the press.
+ */
+function MathKey({
+  children,
+  accessibilityLabel,
+  accessibilityHint,
+  onPress,
+  disabled,
+}: {
+  children: string;
+  /** What a screen reader says ("hoch 2"), never just the glyph. */
+  accessibilityLabel: string;
+  accessibilityHint: string;
+  onPress: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <View
+      style={[
+        { borderRadius: KEY / 2, backgroundColor: LB.paper, opacity: disabled ? 0.6 : 1 },
+        SHADOW.soft,
+      ]}
+    >
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled }}
+        android_ripple={{ color: 'rgba(0,0,0,0.08)', borderless: false }}
+        style={{ borderRadius: KEY / 2, overflow: 'hidden' }}
+      >
+        {({ pressed }) => (
+          <View
+            style={{
+              minWidth: KEY,
+              height: KEY,
+              paddingHorizontal: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: KEY / 2,
+              backgroundColor: pressed ? LB.lavender : 'transparent',
+            }}
+          >
+            <Text style={{ color: LB.primaryDk, fontSize: 19, lineHeight: 24, fontWeight: '600' }}>
+              {children}
+            </Text>
+          </View>
+        )}
+      </Pressable>
+    </View>
   );
 }
