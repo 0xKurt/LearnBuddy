@@ -35,5 +35,39 @@
   "empty": {
     "title": "Tes fiches arriveront ici",
     "body": "Prends en photo une fiche, une page de manuel ou ton cahier – j'en fais des exercices."
-  }
+  },
+  "open": "Voir les questions",
+  "open_label": "Voir les questions de « {{title}} »",
+  "rename": "Renommer",
+  "rename_label": "Renommer « {{title}} »",
+  "rename_sheet": {
+    "title": "Renommer la feuille",
+    "label": "Nom de la feuille",
+    "placeholder": "p. ex. Fractions – contrôle vendredi",
+    "empty": "Donne un nom à la feuille."
+  },
+  "renamed": "Renommée.",
+  "items": {
+    "loading": "Je récupère les questions …",
+    "back": "Retour",
+    "reading": "Je lis la feuille en ce moment – les questions arrivent bientôt.",
+    "empty_title": "Il n'y a plus de questions ici",
+    "empty_body": "Tu as supprimé toutes les questions de cette feuille. Reprends-la simplement en photo si tu veux t'entraîner à nouveau avec.",
+    "question_label": "Question {{number}}",
+    "choices": "Au choix",
+    "delete": "Supprimer",
+    "delete_label": "Supprimer la question {{number}}",
+    "result": {
+      "first_try": "Trouvé du premier coup",
+      "with_help": "Avec un peu d'aide",
+      "not_known": "On la revoit ensemble",
+      "never_asked": "Pas encore travaillée"
+    }
+  },
+  "item_delete_sheet": {
+    "title": "Supprimer la question ?",
+    "body": "Cette question ne reviendra plus.",
+    "confirm": "Supprimer"
+  },
+  "item_deleted": "Question supprimée."
 }

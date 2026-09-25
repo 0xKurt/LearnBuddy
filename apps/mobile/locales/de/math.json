@@ -66,5 +66,13 @@
     "close": "Klammer zu",
     "degree": "Grad",
     "decimal": "Komma"
+  },
+  "blank": {
+    "label": "Lücke",
+    "filled": "Lücke, darin: {{answer}}"
+  },
+  "preview": {
+    "label": "Vorschau",
+    "a11y": "Vorschau deiner Antwort: {{math}}"
   }
 }

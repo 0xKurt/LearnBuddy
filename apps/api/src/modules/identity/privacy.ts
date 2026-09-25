@@ -21,6 +21,7 @@ const LEARNER_TABLES = [
   'buddy_decisions',
   'buddy_actions',
   'buddy_outreach',
+  'buddy_events',
   'subjects',
   'materials',
   'items',

@@ -8,6 +8,9 @@
 // fractions as such: "drei Viertel" → "3/4"), so she can check it. In voice
 // mode the spoken answer is checked right away and the mic is the big main
 // control; "Prüfen" and the field stay for typing.
+//
+// Under the field a live preview shows typed math set properly ("3/4" as a
+// fraction), once there is math worth drawing (components/math/TypedMathPreview).
 
 import type { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
@@ -22,6 +25,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
+import { TypedMathPreview } from '../math/TypedMathPreview.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { BottomBar } from './BottomBar.js';
@@ -158,6 +162,8 @@ export function AnswerComposer({
         ) : null}
         {voiceMode ? null : mic('md')}
       </View>
+      {/* Long answers are texts; the preview would only repeat them. */}
+      {long ? null : <TypedMathPreview value={value} />}
       {voiceMode ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>{mic('lg')}</View>
       ) : null}

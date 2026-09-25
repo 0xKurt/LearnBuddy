@@ -14,6 +14,7 @@ import {
   getHome,
   getLibrary,
   getMaterial,
+  getMaterialItems,
   getMe,
   getMemory,
   getSession,
@@ -63,6 +64,7 @@ export const keys = {
   memory: ['buddy', 'memory'] as const,
   library: ['library'] as const,
   material: (id: string) => ['material', id] as const,
+  materialItems: (id: string) => ['material', id, 'items'] as const,
   session: (id: string) => ['practice', id] as const,
 };
 
@@ -98,6 +100,17 @@ export const useMaterial = (id: string) =>
     queryFn: () => getMaterial(id),
     refetchInterval: (q) =>
       q.state.data && ['queued', 'processing'].includes(q.state.data.status) ? 3000 : false,
+  });
+
+/** The questions of one material; follows it while its photos are being read. */
+export const useMaterialItems = (id: string) =>
+  useQuery({
+    queryKey: keys.materialItems(id),
+    queryFn: () => getMaterialItems(id),
+    refetchInterval: (q) =>
+      q.state.data && ['queued', 'processing'].includes(q.state.data.material.status)
+        ? 3000
+        : false,
   });
 
 export const usePracticeSession = (id: string) =>

@@ -109,5 +109,13 @@
   "again": {
     "shaky": "Die wackligen nochmal üben",
     "topic": "Nochmal üben: {{topics}}"
+  },
+  "flag": {
+    "button": "Frage passt nicht",
+    "hint": "Nimmt diese Frage raus, sie kommt nicht mehr dran.",
+    "sheet_title": "Frage passt nicht?",
+    "sheet_body": "Diese Frage kommt nicht mehr dran.",
+    "confirm": "Rausnehmen",
+    "done": "Alles klar – die Frage ist raus."
   }
 }

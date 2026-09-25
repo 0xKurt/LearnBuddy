@@ -35,5 +35,39 @@
   "empty": {
     "title": "Aquí aparecerán tus fichas",
     "body": "Haz una foto de una ficha, una página del libro o tu cuaderno: lo convierto en ejercicios."
-  }
+  },
+  "open": "Ver preguntas",
+  "open_label": "Ver las preguntas de «{{title}}»",
+  "rename": "Cambiar nombre",
+  "rename_label": "Cambiar el nombre de «{{title}}»",
+  "rename_sheet": {
+    "title": "Cambiar nombre de la hoja",
+    "label": "Nombre de la hoja",
+    "placeholder": "p. ej. Fracciones – examen del viernes",
+    "empty": "Ponle un nombre a la hoja."
+  },
+  "renamed": "Nombre cambiado.",
+  "items": {
+    "loading": "Estoy trayendo las preguntas …",
+    "back": "Volver",
+    "reading": "Estoy leyendo la hoja ahora mismo – enseguida están las preguntas.",
+    "empty_title": "Aquí ya no quedan preguntas",
+    "empty_body": "Has borrado todas las preguntas de esta hoja. Hazle una foto nueva si quieres volver a practicar con ella.",
+    "question_label": "Pregunta {{number}}",
+    "choices": "Opciones",
+    "delete": "Borrar",
+    "delete_label": "Borrar la pregunta {{number}}",
+    "result": {
+      "first_try": "Acertada a la primera",
+      "with_help": "Con un poco de ayuda",
+      "not_known": "La repasamos otra vez",
+      "never_asked": "Aún sin practicar"
+    }
+  },
+  "item_delete_sheet": {
+    "title": "¿Borrar la pregunta?",
+    "body": "Esta pregunta ya no volverá a salir.",
+    "confirm": "Borrar"
+  },
+  "item_deleted": "Pregunta borrada."
 }

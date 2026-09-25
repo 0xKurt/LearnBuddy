@@ -51,7 +51,8 @@ export async function recentResults(
   }>(
     `select si.session_id, i.topic, si.status, si.first_try_correct
        from session_items si join items i on i.id = si.item_id
-      where si.session_id = any($1::uuid[]) and i.learner_id = $2 and si.status <> 'open'`,
+      where si.session_id = any($1::uuid[]) and i.learner_id = $2 and si.status <> 'open'
+        and si.flagged_at is null`,
     [sessions.map((s) => s.id), learnerId],
   );
   return sessions.map((s) => {

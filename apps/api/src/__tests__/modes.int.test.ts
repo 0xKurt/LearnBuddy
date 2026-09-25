@@ -105,6 +105,10 @@ describe.skipIf(!dbReady)('learning modes', () => {
     const material = (await l.api.get<MaterialView>(`/materials/${created.body.material.id}`)).body;
     expect(material).toMatchObject({ status: 'ready', purpose: 'homework' });
     expect(material.session_id).not.toBeNull();
+    // Recorded as an event, but it wakes no background look (ADR 0005 stage 4).
+    expect(
+      await env.db.query(`select type from buddy_events where learner_id = $1`, [l.learnerId]),
+    ).toEqual([{ type: 'homework_ready' }]);
     // No "Buddy prepares practice" for homework.
     expect(
       await env.db.query(

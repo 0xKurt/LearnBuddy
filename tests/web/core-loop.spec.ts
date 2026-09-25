@@ -176,6 +176,25 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByText('Brüche kürzen und vergleichen')).toBeVisible();
   await expect(page.getByText(/· 4 Aufgaben$/)).toBeVisible();
   await shot(page, '14-library');
+
+  // The questions made from the sheet, renaming it, taking out one question.
+  await page
+    .getByRole('button', { name: 'Fragen aus „Brüche kürzen und vergleichen“ ansehen' })
+    .click();
+  await expect(page.getByText('Welcher Bruch ist größer?')).toBeVisible();
+  await expect(page.getByText('Auf Anhieb gewusst').first()).toBeVisible();
+  await page.getByRole('button', { name: '„Brüche kürzen und vergleichen“ umbenennen' }).click();
+  await page.getByLabel('Name des Blatts').fill('Brüche – Test Freitag');
+  await page.getByRole('button', { name: 'Speichern' }).click();
+  await expect(page.getByText('Umbenannt.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Brüche – Test Freitag' })).toBeVisible();
+  await page.getByRole('button', { name: 'Frage 4 löschen' }).click();
+  await page.getByRole('button', { name: 'Löschen', exact: true }).last().click();
+  await expect(page.getByText('Frage gelöscht.')).toBeVisible();
+  await expect(page.getByText('Warum multipliziert man beim Erweitern')).toHaveCount(0);
+  await shot(page, '16-material-questions');
+  await page.getByRole('button', { name: 'Zurück' }).click();
+  await expect(page.getByText(/· 3 Aufgaben$/)).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   await openMenu('Einstellungen');

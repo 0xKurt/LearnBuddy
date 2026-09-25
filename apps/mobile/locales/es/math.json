@@ -66,5 +66,13 @@
     "close": "cierra paréntesis",
     "degree": "grados",
     "decimal": "coma"
+  },
+  "blank": {
+    "label": "Hueco",
+    "filled": "Hueco, con: {{answer}}"
+  },
+  "preview": {
+    "label": "Vista previa",
+    "a11y": "Vista previa de tu respuesta: {{math}}"
   }
 }

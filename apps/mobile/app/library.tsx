@@ -244,6 +244,7 @@ export default function LibraryScreen() {
                       busy={busyId === m.id}
                       disabled={busyId !== null}
                       onPractice={() => practice(m)}
+                      onOpen={() => router.push(`/material/${m.id}`)}
                       onRetry={() => readAgain(m)}
                       onDelete={() => askDelete(m)}
                     />

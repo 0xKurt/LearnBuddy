@@ -35,5 +35,39 @@
   "empty": {
     "title": "Your sheets end up here",
     "body": "Photograph a worksheet, a textbook page or your exercise book – I'll turn it into practice."
-  }
+  },
+  "open": "See questions",
+  "open_label": "See the questions from “{{title}}”",
+  "rename": "Rename",
+  "rename_label": "Rename “{{title}}”",
+  "rename_sheet": {
+    "title": "Rename sheet",
+    "label": "Name of the sheet",
+    "placeholder": "e.g. Fractions – test on Friday",
+    "empty": "Give the sheet a name."
+  },
+  "renamed": "Renamed.",
+  "items": {
+    "loading": "Getting the questions …",
+    "back": "Back",
+    "reading": "I'm reading the sheet right now – the questions will be here soon.",
+    "empty_title": "No questions left here",
+    "empty_body": "You deleted all the questions from this sheet. Just take a new photo of it if you'd like to practise with it again.",
+    "question_label": "Question {{number}}",
+    "choices": "Options",
+    "delete": "Delete",
+    "delete_label": "Delete question {{number}}",
+    "result": {
+      "first_try": "Knew it right away",
+      "with_help": "With a little help",
+      "not_known": "Let's look at it again",
+      "never_asked": "Not practised yet"
+    }
+  },
+  "item_delete_sheet": {
+    "title": "Delete question?",
+    "body": "This question won't come up again.",
+    "confirm": "Delete"
+  },
+  "item_deleted": "Question deleted."
 }

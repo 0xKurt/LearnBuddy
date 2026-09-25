@@ -1,11 +1,14 @@
 // Where the learner is in the session ("Frage 2 von 8" and a thin bar – no
 // timer, no pressure) and the question itself in large, readable text, with
-// its math set properly and its figure drawn underneath.
+// its math set properly and its figure drawn underneath. A blank ("Ich helfe
+// ___ Mutter.") shows as a gap, read out as "Lücke"; while she types a short
+// answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { fillableAnswer } from '../../lib/math/prompt.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
@@ -49,10 +52,23 @@ type QuestionProps = {
   figure?: Figure | null;
   /** Buddy wrote this question (origin 'buddy'), it is not from the learner's own material. */
   fromBuddy?: boolean;
+  /**
+   * The short answer she is typing: shown inside the blank when the question
+   * has exactly one (lib/math/prompt.ts fillableAnswer). Leave it out for
+   * choices, long answers and once the question is closed.
+   */
+  answer?: string;
 };
 
-export function QuestionCard({ prompt, topic, figure = null, fromBuddy = false }: QuestionProps) {
+export function QuestionCard({
+  prompt,
+  topic,
+  figure = null,
+  fromBuddy = false,
+  answer,
+}: QuestionProps) {
   const { t } = useTranslation('practice');
+  const filled = fillableAnswer(prompt, answer);
   return (
     <Card tone="lavender" padding={20} radius={22}>
       {fromBuddy ? (
@@ -63,6 +79,7 @@ export function QuestionCard({ prompt, topic, figure = null, fromBuddy = false }
       {topic ? <Text style={[TYPE.body, { color: LB.ink2, marginBottom: 8 }]}>{topic}</Text> : null}
       <MathText
         text={prompt}
+        blanks={{ filled }}
         accessibilityRole="header"
         style={[TYPE.title, { fontSize: 20, lineHeight: 28, fontWeight: '500' }]}
       />

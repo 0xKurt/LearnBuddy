@@ -35,5 +35,39 @@
   "empty": {
     "title": "Qui arriveranno le tue schede",
     "body": "Fotografa una scheda, una pagina del libro o il tuo quaderno – lo trasformo in esercizi."
-  }
+  },
+  "open": "Vedi le domande",
+  "open_label": "Vedi le domande di «{{title}}»",
+  "rename": "Rinomina",
+  "rename_label": "Rinomina «{{title}}»",
+  "rename_sheet": {
+    "title": "Rinomina il foglio",
+    "label": "Nome del foglio",
+    "placeholder": "per es. Frazioni – verifica di venerdì",
+    "empty": "Dai un nome al foglio."
+  },
+  "renamed": "Rinominato.",
+  "items": {
+    "loading": "Recupero le domande …",
+    "back": "Indietro",
+    "reading": "Sto leggendo il foglio proprio ora – tra poco ci sono le domande.",
+    "empty_title": "Qui non ci sono più domande",
+    "empty_body": "Hai cancellato tutte le domande di questo foglio. Fagli semplicemente una nuova foto se vuoi esercitarti di nuovo.",
+    "question_label": "Domanda {{number}}",
+    "choices": "Opzioni",
+    "delete": "Cancella",
+    "delete_label": "Cancella la domanda {{number}}",
+    "result": {
+      "first_try": "Saputa subito",
+      "with_help": "Con un piccolo aiuto",
+      "not_known": "La rivediamo insieme",
+      "never_asked": "Non ancora esercitata"
+    }
+  },
+  "item_delete_sheet": {
+    "title": "Cancellare la domanda?",
+    "body": "Questa domanda non uscirà più.",
+    "confirm": "Cancella"
+  },
+  "item_deleted": "Domanda cancellata."
 }

@@ -1,6 +1,7 @@
 # ADR 0005 — Buddy's tool platform: connectors, tools, agent loop, events
 
-- Status: accepted; stage 1 (lookups and the agent loop) implemented and live-evaluated, stages 2–4 planned
+- Status: accepted; stages 1, 2 and 4 implemented (stage 1 live-evaluated); stage 3 (external
+  connectors) waits for a privacy decision
 - Date: 2026-09-25
 - Builds on: [ADR 0004](0004-proactive-buddy.md) (the model interprets and plans; code enforces)
 - Reference: the split into tools, plugins and automations used by open agent runtimes such as
@@ -121,17 +122,21 @@ contact the learner beyond what they allowed.
 
 ## Stages
 
-1. **Lookups and the loop** (now):
+1. **Lookups and the loop** — done (`lookups.ts`, `connectors/`, live-evaluated):
    - a registry for lookup tools;
    - the internal connectors `material`, `practice` and `items`;
    - the loop in turns and checks;
    - integration tests for isolation (another learner's data is never found), bounds, and
      prompt-injection text in a worksheet.
-2. **Act tools into the registry.** Move today's act tools onto the same registry. Behaviour
-   stays the same, and the existing tests keep passing.
+2. **Act tools into the registry** — done (`registry.ts`): one entry per tool with schema,
+   surfaces, touches, quote/undo flags and handler; schemas and the prompt catalogue are generated;
+   `runAct` re-checks the surface. Behaviour unchanged, existing tests pass.
 3. **External connectors**, one at a time, each with a privacy entry and legal review; off for
-   minors until cleared.
-4. **Event log.** Replace the implicit trigger payloads with the event log and subscribers.
+   minors until cleared. Not started: each one adds a processor for a minor's data and needs the
+   account holder's/operator's decision first.
+4. **Event log** — done (`events.ts`, `0007_events.sql`): `material_ready`, `homework_ready`,
+   `session_finished`, written in the change's transaction; subscribers wake Buddy; checks mark
+   events handled; part of the data export.
 
 ## Consequences
 

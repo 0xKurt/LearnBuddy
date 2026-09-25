@@ -25,8 +25,8 @@ import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
+import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
-import { enqueueJob } from '../scheduler/jobs.js';
 import { ruleCheck, type RuleVerdict } from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
@@ -88,6 +88,8 @@ type SessionItemRow = {
   attempts: number;
   hints_used: number;
   first_try_correct: boolean | null;
+  /** "Frage passt nicht": taken out by the learner (closed as skipped, archived). */
+  flagged_at?: Date | null;
 };
 
 // ─────────────── start ───────────────
@@ -265,7 +267,7 @@ export async function sessionView(
   const s = await loadSession(db, learnerId, sessionId);
   const items = await db.query<SessionItemRow & ItemRow>(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.first_try_correct,
-            i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
+            si.flagged_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure
        from session_items si join items i on i.id = si.item_id
       where si.session_id = $1 order by si.position`,
@@ -339,7 +341,8 @@ export async function sessionView(
 }
 
 function summarize(items: Array<SessionItemRow & { topic: string | null }>): PracticeSummary {
-  const closed = items.filter((i) => i.status !== 'open');
+  // A question she took out as not fitting was neither answered nor shaky.
+  const closed = items.filter((i) => i.status !== 'open' && !i.flagged_at);
   const byTopic = new Map<string, { secure: number; shaky: number }>();
   for (const i of closed) {
     if (!i.topic) continue;
@@ -717,6 +720,74 @@ export async function revealItem(
   return sessionView(deps.db, learnerId, sessionId);
 }
 
+/**
+ * "Frage passt nicht": the learner takes a question out. It is archived (never
+ * practised again) and, if still open here, closed as skipped — no FSRS review, and
+ * it counts neither as answered nor as shaky. Not for homework (help) and not while
+ * a test runs; only for questions from a photo or from Buddy. Idempotent.
+ */
+export async function flagItem(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string,
+  itemId: string,
+): Promise<SessionView> {
+  const now = deps.now();
+  await deps.db.tx(async (tx) => {
+    const s = await tx.maybeOne<SessionRow>(
+      `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+        where id = $1 and learner_id = $2 for update`,
+      [sessionId, learnerId],
+    );
+    if (!s) throw new AppError('not_found', 'Session not found');
+    const si = await tx.maybeOne<
+      Pick<SessionItemRow, 'status' | 'flagged_at'> & {
+        origin: ItemRow['origin'];
+        archived_at: Date | null;
+      }
+    >(
+      `select si.status, si.flagged_at, i.origin, i.archived_at
+         from session_items si join items i on i.id = si.item_id
+        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
+        for update of si, i`,
+      [sessionId, itemId, learnerId],
+    );
+    if (!si) throw new AppError('not_found', 'Question not in this session');
+    if (si.flagged_at) return; // already taken out
+    if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
+    if (s.mode === 'help') {
+      throw new AppError('conflict', 'Homework tasks are not taken out', {
+        reason: 'flag_not_allowed',
+      });
+    }
+    if (s.mode === 'test') {
+      throw new AppError('conflict', 'Not while a test runs', { reason: 'flag_not_allowed' });
+    }
+    if (si.origin !== 'material' && si.origin !== 'buddy') {
+      throw new AppError('conflict', 'Only questions from a photo or from Buddy', {
+        reason: 'flag_not_allowed',
+      });
+    }
+    if (!si.archived_at) {
+      await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
+    }
+    if (si.status === 'open') {
+      await tx.query(
+        `update session_items set status = 'skipped', flagged_at = $3, closed_at = $3
+          where session_id = $1 and item_id = $2`,
+        [sessionId, itemId, now],
+      );
+    }
+    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+      sessionId,
+      now,
+    ]);
+    // Buddy's prepared practice and picture of her questions may include it.
+    await bumpContext(tx, learnerId);
+  });
+  return sessionView(deps.db, learnerId, sessionId);
+}
+
 /** End the session; Buddy's step gets evidence, and Buddy is woken to plan next. */
 export async function finishSession(
   deps: Deps,
@@ -733,7 +804,7 @@ export async function finishSession(
     if (!s) throw new AppError('not_found', 'Session not found');
     if (s.status !== 'active') return; // idempotent
     const counts = await tx.one<{ answered: number; first_try: number; total: number }>(
-      `select count(*) filter (where status <> 'open')::int as answered,
+      `select count(*) filter (where status <> 'open' and flagged_at is null)::int as answered,
               count(*) filter (where first_try_correct)::int as first_try,
               count(*)::int as total
          from session_items where session_id = $1`,
@@ -760,13 +831,7 @@ export async function finishSession(
       }
     }
     if (counts.answered > 0) {
-      await enqueueJob(tx, {
-        learnerId,
-        kind: 'buddy_check',
-        runAt: now,
-        dedupeKey: `session_finished:${sessionId}`,
-        payload: { reason: 'session_finished', session_id: sessionId },
-      });
+      await emitEvent(tx, learnerId, { type: 'session_finished', sessionId }, now, counts);
     }
     await bumpContext(tx, learnerId);
   });

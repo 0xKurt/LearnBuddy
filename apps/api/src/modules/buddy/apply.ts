@@ -16,7 +16,8 @@ import { canonicalTopicKey, type Aliases } from './context.js';
 import type { AnyAction, Outreach } from './decision.js';
 import { planOutreach, type OutreachPlan } from './delivery.js';
 import { loadSettings, type SettingsRow } from './state.js';
-import { runTool, ToolRejection, type ToolOutcome } from './tools.js';
+import { runAct } from './registry.js';
+import { ToolRejection, type ToolOutcome } from './tools.js';
 
 export type DecisionMeta = {
   mode: 'turn' | 'check';
@@ -88,7 +89,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           const current = i === 0 ? settings : await loadSettings(tx, input.learnerId);
           outcomes.push({
             action,
-            outcome: await runTool(action, {
+            outcome: await runAct(action, {
               db: tx,
               learnerId: input.learnerId,
               settings: current,

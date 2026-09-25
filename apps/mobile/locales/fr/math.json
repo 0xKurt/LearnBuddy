@@ -66,5 +66,13 @@
     "close": "parenthèse fermante",
     "degree": "degrés",
     "decimal": "virgule"
+  },
+  "blank": {
+    "label": "Trou",
+    "filled": "Trou, rempli avec : {{answer}}"
+  },
+  "preview": {
+    "label": "Aperçu",
+    "a11y": "Aperçu de ta réponse : {{math}}"
   }
 }

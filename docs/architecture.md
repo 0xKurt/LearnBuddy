@@ -69,7 +69,9 @@ Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, 
 | `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                   |
 | `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                            |
 | `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                       |
+| `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one      |
 | `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                 |
+| `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived              |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                               |
 
 ## Buddy decisions
@@ -108,6 +110,12 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   `model_invalid`, `budget_exhausted`, `stale`); nothing half-applied, no invented reply.
 
 ## Tools
+
+`modules/buddy/registry.ts` (ADR 0005 stage 2) registers every act tool once: its call schema
+(`decision.ts`), the surfaces allowed to call it (`turn`, `check`), what it touches, whether it
+needs the learner's quote and can be undone, and its handler (`tools.ts`). The model-facing
+action schemas and the tool catalogue in the prompt are generated from it; `runAct` checks the
+surface again before running (a check can never run a turn-only tool — also unit-tested).
 
 `modules/buddy/tools.ts`. The only way a decision changes anything. Each tool validates against
 current rows (inside the decision's transaction), makes a bounded change and returns a card
@@ -193,6 +201,16 @@ maintenance. pg_cron calls it every minute via pg_net (`0002_scheduler.sql`, URL
 Supabase Vault). The Node server can run it in-process for development. A heartbeat makes a dead
 scheduler visible (`GET /health` → 503, and "scheduler: stale" in the app).
 
+### Events (ADR 0005 stage 4)
+
+`modules/buddy/events.ts`, table `buddy_events` (`0007_events.sql`). Something that just
+happened — `material_ready`, `homework_ready`, `session_finished` — is written once per (type,
+row), in the same transaction as the change, with the app clock. Its subscribers decide what
+follows: `material_ready` and `session_finished` wake Buddy for a check (the job carries the
+`event_id`, the check marks the event handled); `homework_ready` is only recorded (help starts in
+the app). Schedules — exam countdowns, agreed reminders, routine, `schedule_check` — stay jobs.
+An event never bypasses the contact rules.
+
 ## Model calls
 
 `llm/`. One seam (`LlmGateway`): structured JSON for a zod-derived schema, validated again with
@@ -228,6 +246,15 @@ Buddy is woken. Status is what the database says: `awaiting_upload → queued �
 ready | failed(reason)`. Photos are deleted 7 days after reading (also when unreadable), and
 immediately when the learner deletes the material.
 
+The learner sees the questions of one material (`GET /materials/:id/items`, screen
+`app/material/[id].tsx`, in the order they were stored — `items.seq`, migration
+`0006_item_flags.sql`): prompt, kind, topic, figure, choices and the latest result from her most
+recent closed attempt in any session (`first_try`, `with_help`, `not_known`, `never_asked`) —
+never the answer, accepted answers or the correct choice. She can delete a bad question
+(`DELETE /materials/:materialId/items/:itemId`: archives it, idempotent, confirm sheet; practice
+selection already skips archived items) and rename the material (`PATCH /materials/:id`,
+1–120 characters, trimmed). Both bump the context version; another learner's ids are 404.
+
 ## Practice
 
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
@@ -238,6 +265,13 @@ revealed answer never counts as right, a rule-checked wrong answer stays wrong).
 nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced repetition (FSRS,
 no short-term steps) once per session: first try → Good, with help → Hard, revealed → Again.
 Finishing records evidence on Buddy's step (only if something was answered) and wakes Buddy.
+
+"Frage passt nicht" (`POST /practice/sessions/:id/items/:itemId/flag`, a quiet button and a
+confirm sheet): the question is archived for future practice and, if still open, closed here as
+`skipped` with `session_items.flagged_at` (migration `0006_item_flags.sql`) — no FSRS review,
+and it counts neither as answered nor as shaky in the summary or the step's evidence. Only for
+questions from a photo or from Buddy in an active session; homework help and a running test get
+409 `flag_not_allowed`. Idempotent; bumps the context version.
 
 ### Learning modes (migration `0003_learning_modes.sql`)
 

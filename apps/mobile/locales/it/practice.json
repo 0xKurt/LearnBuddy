@@ -109,5 +109,13 @@
   "again": {
     "shaky": "Ripassa quello che non è ancora sicuro",
     "topic": "Ripassa: {{topics}}"
+  },
+  "flag": {
+    "button": "La domanda non va",
+    "hint": "Toglie questa domanda; non uscirà più.",
+    "sheet_title": "La domanda non va?",
+    "sheet_body": "Questa domanda non uscirà più.",
+    "confirm": "Toglila",
+    "done": "Va bene – la domanda è tolta."
   }
 }

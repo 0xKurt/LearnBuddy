@@ -286,7 +286,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             coalesce(array_agg(distinct i.topic) filter (
               where si.status in ('revealed','skipped','missed') or si.hints_used > 0), '{}') as shaky_topics
        from practice_sessions ps
-       left join session_items si on si.session_id = ps.id
+       -- A question she flagged as unfit counts as neither answered nor shaky.
+       left join session_items si on si.session_id = ps.id and si.flagged_at is null
        left join items i on i.id = si.item_id
       where ps.learner_id = $1
       group by ps.id

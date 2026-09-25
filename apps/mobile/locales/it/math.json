@@ -66,5 +66,13 @@
     "close": "parentesi chiusa",
     "degree": "gradi",
     "decimal": "virgola"
+  },
+  "blank": {
+    "label": "Spazio vuoto",
+    "filled": "Spazio vuoto, con: {{answer}}"
+  },
+  "preview": {
+    "label": "Anteprima",
+    "a11y": "Anteprima della tua risposta: {{math}}"
   }
 }

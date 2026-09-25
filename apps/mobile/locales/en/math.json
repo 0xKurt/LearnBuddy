@@ -66,5 +66,13 @@
     "close": "close bracket",
     "degree": "degrees",
     "decimal": "decimal point"
+  },
+  "blank": {
+    "label": "Blank",
+    "filled": "Blank, filled with: {{answer}}"
+  },
+  "preview": {
+    "label": "Preview",
+    "a11y": "Preview of your answer: {{math}}"
   }
 }

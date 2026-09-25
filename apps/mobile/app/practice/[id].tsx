@@ -7,6 +7,8 @@
 // Modes: explain shows Buddy's explanation first (and keeps it one tap away);
 // help (homework) never offers the solution – a solved task says she found it
 // herself. Questions Buddy wrote (origin 'buddy') carry a small tag.
+// "Frage passt nicht" (a quiet button, then a confirm sheet) takes a question
+// from a photo or from Buddy out for good — not for homework, not in a test.
 //
 // Voice mode ("Sprachmodus", the headphones switch in the header): each new
 // question is read aloud (choices as "A: …, B: …", a vocab prompt in its own
@@ -31,6 +33,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,7 +63,7 @@ import {
 } from '../../components/practice/SpeakPanel.js';
 import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
 import { ApiError, newId } from '../../lib/api/client.js';
-import { answerItem, finishSession, revealItem } from '../../lib/api/endpoints.js';
+import { answerItem, finishSession, flagItem, revealItem } from '../../lib/api/endpoints.js';
 import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
@@ -69,6 +72,7 @@ import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/
 import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { TYPE } from '../../lib/theme/type.js';
 
 type AnswerInput = { text: string } | { choice: number };
 
@@ -162,6 +166,9 @@ export default function PracticeScreen() {
   /** Explain mode: the explanation was read ("Verstanden – frag mich!"). */
   const [introRead, setIntroRead] = useState(false);
   const [introOpen, setIntroOpen] = useState(false);
+  /** "Frage passt nicht": the confirm sheet, and the question it is about. */
+  const [flagFor, setFlagFor] = useState<string | null>(null);
+  const [flagOpen, setFlagOpen] = useState(false);
   const working = useRef(false);
   const lastSent = useRef<SentAnswer | null>(null);
   const finishStarted = useRef(false);
@@ -307,6 +314,32 @@ export default function PracticeScreen() {
       setText('');
       Keyboard.dismiss();
     } catch (err) {
+      toast.show(messageFor(err), 'error');
+      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+    } finally {
+      working.current = false;
+      setBusy(false);
+    }
+  }
+
+  /** "Frage passt nicht" confirmed: out of this session and out of future practice. */
+  async function flag(): Promise<void> {
+    const itemId = flagFor;
+    if (!itemId || working.current) return;
+    working.current = true;
+    setBusy(true);
+    try {
+      await store(await flagItem(id, itemId));
+      setFlagOpen(false);
+      // On to the next open question (or the result, when none is left).
+      setPinnedId(null);
+      setText('');
+      lastSent.current = null;
+      Keyboard.dismiss();
+      scroll.current?.scrollTo({ y: 0, animated: false });
+      toast.show(t('practice:flag.done'));
+    } catch (err) {
+      setFlagOpen(false);
       toast.show(messageFor(err), 'error');
       if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
     } finally {
@@ -484,6 +517,13 @@ export default function PracticeScreen() {
   );
   // Once there is a conversation (or the solution), keep its newest part in view.
   const followEnd = turns.length > 0 || pendingText !== null || !open;
+  // Only a question from a photo or from Buddy; never homework, never during a test.
+  const flaggable =
+    open &&
+    session.status === 'active' &&
+    session.mode !== 'help' &&
+    !testing &&
+    (item.origin === 'material' || item.origin === 'buddy');
 
   function check(value: string): void {
     if (value) void answer(item.id, { text: value }, value);
@@ -531,8 +571,26 @@ export default function PracticeScreen() {
               topic={item.topic}
               figure={item.figure}
               fromBuddy={item.origin === 'buddy'}
+              // Her short answer appears in the gap of a fill-in sentence while she types.
+              answer={typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined}
             />
           )}
+          {flaggable ? (
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <Btn
+                size="sm"
+                variant="ghost"
+                disabled={locked}
+                onPress={() => {
+                  setFlagFor(item.id);
+                  setFlagOpen(true);
+                }}
+                accessibilityHint={t('practice:flag.hint')}
+              >
+                {t('practice:flag.button')}
+              </Btn>
+            </View>
+          ) : null}
           {voiceOn && open ? (
             <Btn size="sm" variant="outline" icon="speak" onPress={() => readQuestion(item)}>
               {t('common:voice.read_again')}
@@ -604,6 +662,17 @@ export default function PracticeScreen() {
           </BottomBar>
         )}
       </KeyboardAvoidingView>
+      <Sheet
+        visible={flagOpen}
+        title={t('practice:flag.sheet_title')}
+        closeLabel={t('common:actions.cancel')}
+        onClose={() => setFlagOpen(false)}
+      >
+        <Text style={TYPE.body}>{t('practice:flag.sheet_body')}</Text>
+        <Btn full disabled={busy} onPress={() => void flag()}>
+          {t('practice:flag.confirm')}
+        </Btn>
+      </Sheet>
       {intro ? (
         <Sheet
           visible={introOpen}

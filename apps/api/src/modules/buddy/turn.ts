@@ -24,7 +24,7 @@ import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext } from './context.js';
-import { TurnDecision } from './decision.js';
+import { TurnDecision } from './registry.js';
 import { bumpContext } from './plan.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
 import { lookupsField, withLookups } from './lookups.js';

@@ -58,7 +58,11 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
+  // A fill-in sentence: the gap is drawn, and her answer appears in it while she types.
+  await expect(page.getByLabel(/Ich helfe Lücke Mutter/)).toBeVisible();
   await page.getByLabel('Deine Antwort').fill('der');
+  await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
+  await shot(page, '22b-fill-blank');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -85,6 +89,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText(/Länge .*mal.* Breite/)).toBeVisible();
   await shot(page, '23-homework-hints');
+  // Typed math is previewed as it will be read.
+  await page.getByLabel('Deine Antwort').fill('3/4');
+  await expect(page.getByLabel('Vorschau deiner Antwort: 3 durch 4')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toHaveCount(0);
   await page.getByLabel('Deine Antwort').fill('28');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Selbst gelöst!', { exact: true })).toBeVisible();
@@ -99,6 +107,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('textbox').last().fill('Brüche vergleichen');
   await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   await shot(page, '25-practice-fractions');
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──

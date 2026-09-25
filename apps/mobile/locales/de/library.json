@@ -35,5 +35,39 @@
   "empty": {
     "title": "Hier landen deine Blätter",
     "body": "Fotografier ein Arbeitsblatt, eine Buchseite oder dein Heft – ich mache Übungen daraus."
-  }
+  },
+  "open": "Fragen ansehen",
+  "open_label": "Fragen aus „{{title}}“ ansehen",
+  "rename": "Umbenennen",
+  "rename_label": "„{{title}}“ umbenennen",
+  "rename_sheet": {
+    "title": "Blatt umbenennen",
+    "label": "Name des Blatts",
+    "placeholder": "z. B. Brüche – Test am Freitag",
+    "empty": "Gib dem Blatt einen Namen."
+  },
+  "renamed": "Umbenannt.",
+  "items": {
+    "loading": "Ich hole die Fragen …",
+    "back": "Zurück",
+    "reading": "Ich lese das Blatt gerade – gleich sind die Fragen da.",
+    "empty_title": "Hier sind keine Fragen mehr",
+    "empty_body": "Du hast alle Fragen aus diesem Blatt gelöscht. Fotografier es einfach neu, wenn du wieder damit üben magst.",
+    "question_label": "Frage {{number}}",
+    "choices": "Zur Auswahl",
+    "delete": "Löschen",
+    "delete_label": "Frage {{number}} löschen",
+    "result": {
+      "first_try": "Auf Anhieb gewusst",
+      "with_help": "Mit etwas Hilfe",
+      "not_known": "Schauen wir nochmal an",
+      "never_asked": "Noch nicht geübt"
+    }
+  },
+  "item_delete_sheet": {
+    "title": "Frage löschen?",
+    "body": "Diese Frage kommt nicht mehr dran.",
+    "confirm": "Löschen"
+  },
+  "item_deleted": "Frage gelöscht."
 }

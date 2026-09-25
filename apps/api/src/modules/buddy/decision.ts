@@ -299,54 +299,29 @@ const offerLearning = z.object({
   }),
 });
 
-export const TurnAction = z.discriminatedUnion('tool', [
+/** Every act tool's call schema, by name (surfaces and handlers: registry.ts). */
+export const ACT_SCHEMAS = {
   remember,
-  correctMemory,
+  correct_memory: correctMemory,
   forget,
-  setLevel,
-  planExam,
-  updateGoal,
-  closeGoal,
-  preparePractice,
-  planStep,
-  updateStep,
-  markStepDone,
-  requestMaterial,
-  setContact,
-  scheduleCheck,
-  offerLearning,
-]);
-export type TurnAction = z.infer<typeof TurnAction>;
+  set_level: setLevel,
+  plan_exam: planExam,
+  update_goal: updateGoal,
+  close_goal: closeGoal,
+  prepare_practice: preparePractice,
+  plan_step: planStep,
+  update_step: updateStep,
+  mark_step_done: markStepDone,
+  request_material: requestMaterial,
+  set_contact: setContact,
+  schedule_check: scheduleCheck,
+  offer_learning: offerLearning,
+} as const;
 
-/** In background checks Buddy may only prepare and look again — never change what the learner said. */
-export const CheckAction = z.discriminatedUnion('tool', [
-  preparePractice,
-  requestMaterial,
-  scheduleCheck,
-]);
-export type CheckAction = z.infer<typeof CheckAction>;
-
-export type AnyAction = TurnAction | CheckAction;
-export type ToolName = AnyAction['tool'];
-
-export const TurnDecision = z.object({
-  reply: z
-    .string()
-    .trim()
-    .min(1)
-    .max(700)
-    .describe(
-      "Your answer to the learner, in their language. Never claim a change you don't make in actions.",
-    ),
-  options: z
-    .array(z.string().trim().min(1).max(40))
-    .min(2)
-    .max(4)
-    .nullable()
-    .describe('Short tappable answers if you asked a question, else null'),
-  actions: z.array(TurnAction).max(6),
-});
-export type TurnDecision = z.infer<typeof TurnDecision>;
+export type ToolName = keyof typeof ACT_SCHEMAS;
+/** One call of the act tool K. */
+export type ActionOf<K extends ToolName> = z.infer<(typeof ACT_SCHEMAS)[K]>;
+export type AnyAction = { [K in ToolName]: ActionOf<K> }[ToolName];
 
 export const Outreach = z.object({
   kind: z.enum(['idea', 'checkin', 'result']),
@@ -374,11 +349,3 @@ export const Outreach = z.object({
   step: StepTarget.nullable(),
 });
 export type Outreach = z.infer<typeof Outreach>;
-
-export const CheckDecision = z.object({
-  disposition: z.enum(['act', 'wait']),
-  reason: z.string().trim().min(1).max(300).describe('Short audit note (not shown to the learner)'),
-  actions: z.array(CheckAction).max(3),
-  outreach: Outreach.nullable(),
-});
-export type CheckDecision = z.infer<typeof CheckDecision>;

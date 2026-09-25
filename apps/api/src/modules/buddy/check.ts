@@ -29,8 +29,9 @@ import { questionCountFor, selectPracticeItems } from '../practice/selection.js'
 import { claimJobs, enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext, canonicalTopicKey } from './context.js';
-import { CheckDecision } from './decision.js';
+import { CheckDecision } from './registry.js';
 import { planOutreach } from './delivery.js';
+import { markHandled } from './events.js';
 import { lookupsField, withLookups } from './lookups.js';
 import { bumpContext } from './plan.js';
 import { BUDDY_PROMPT_VERSION, CHECK_SYSTEM, repairMessage } from './prompts.js';
@@ -53,6 +54,8 @@ type Trigger = {
   stepId: string | null;
   materialId: string | null;
   sessionId: string | null;
+  /** The event that woke Buddy (ADR 0005 stage 4); null for schedules. */
+  eventId: string | null;
 };
 
 function triggerOf(job: JobRow): Trigger {
@@ -65,6 +68,7 @@ function triggerOf(job: JobRow): Trigger {
     stepId: str('step_id'),
     materialId: str('material_id'),
     sessionId: str('session_id'),
+    eventId: str('event_id'),
   };
 }
 
@@ -154,6 +158,12 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
 
     let outcome = 'done';
     if (others.length > 0) outcome = await decide(deps, learner, others);
+    await markHandled(
+      deps.db,
+      learnerId,
+      others.flatMap((t) => (t.eventId ? [t.eventId] : [])),
+      deps.now(),
+    );
     await ensureRoutine(deps, learnerId);
     return { jobs: jobs.length, outcome };
   } finally {

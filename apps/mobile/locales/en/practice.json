@@ -109,5 +109,13 @@
   "again": {
     "shaky": "Practise the shaky ones again",
     "topic": "Practise again: {{topics}}"
+  },
+  "flag": {
+    "button": "Question doesn't fit",
+    "hint": "Takes this question out; it won't come up again.",
+    "sheet_title": "Question doesn't fit?",
+    "sheet_body": "This question won't come up again.",
+    "confirm": "Take it out",
+    "done": "Got it – the question is out."
   }
 }

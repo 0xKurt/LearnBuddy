@@ -83,24 +83,23 @@ const BINARY = new Set([
   '⇔',
 ]);
 
-/** Splits a text into plain runs and $…$ math segments; an unmatched $ stays plain text. */
-export function splitMath(text: string): MathSegment[] {
-  const out: MathSegment[] = [];
-  let plain = '';
+/**
+ * Where the $…$ (and $$…$$) math sits in a text: `start`/`end` include the
+ * dollar signs, `inner` is the LaTeX between them. An unmatched or empty $…$
+ * is not math; an escaped \$ never opens one.
+ */
+export type MathSpan = { start: number; end: number; inner: string };
+
+export function mathSpans(text: string): MathSpan[] {
+  const out: MathSpan[] = [];
   let i = 0;
-  const flushPlain = () => {
-    if (plain.length > 0) out.push({ type: 'plain', text: plain });
-    plain = '';
-  };
   while (i < text.length) {
     const c = text[i] as string;
     if (c === '\\' && text[i + 1] === '$') {
-      plain += '$';
       i += 2;
       continue;
     }
     if (c !== '$') {
-      plain += c;
       i++;
       continue;
     }
@@ -108,21 +107,32 @@ export function splitMath(text: string): MathSegment[] {
     const open = display ? 2 : 1;
     const close = findClosingDollar(text, i + open, display);
     if (close === -1) {
-      plain += text.slice(i, i + open);
       i += open;
       continue;
     }
     const inner = text.slice(i + open, close);
-    if (inner.trim().length === 0) {
-      plain += text.slice(i, close + open);
-      i = close + open;
-      continue;
-    }
-    flushPlain();
-    out.push({ type: 'math', atoms: parseMath(inner) });
+    if (inner.trim().length > 0) out.push({ start: i, end: close + open, inner });
     i = close + open;
   }
-  flushPlain();
+  return out;
+}
+
+/** Plain text between math: an escaped \$ shows as $. */
+function unescapeDollar(plain: string): string {
+  return plain.replace(/\\\$/g, '$');
+}
+
+/** Splits a text into plain runs and $…$ math segments; an unmatched $ stays plain text. */
+export function splitMath(text: string): MathSegment[] {
+  const out: MathSegment[] = [];
+  let last = 0;
+  for (const span of mathSpans(text)) {
+    if (span.start > last)
+      out.push({ type: 'plain', text: unescapeDollar(text.slice(last, span.start)) });
+    out.push({ type: 'math', atoms: parseMath(span.inner) });
+    last = span.end;
+  }
+  if (last < text.length) out.push({ type: 'plain', text: unescapeDollar(text.slice(last)) });
   return out;
 }
 

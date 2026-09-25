@@ -20,7 +20,14 @@ import {
 import { check, readBody } from '../../http/validate.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { startTopic } from './generate.js';
-import { answerItem, finishSession, revealItem, sessionView, startManual } from './service.js';
+import {
+  answerItem,
+  finishSession,
+  flagItem,
+  revealItem,
+  sessionView,
+  startManual,
+} from './service.js';
 import { speakItem } from './speak.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
@@ -58,6 +65,13 @@ practiceRoutes.post('/sessions/:id/reveal', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const { item_id } = await readBody(c, z.object({ item_id: Uuid }));
   return c.json(await revealItem(depsOf(c), c.get('learner').id, sessionId, item_id));
+});
+
+/** "Frage passt nicht": out of this session (skipped, no FSRS) and out of future practice. */
+practiceRoutes.post('/sessions/:id/items/:itemId/flag', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const itemId = check(Uuid, c.req.param('itemId'));
+  return c.json(await flagItem(depsOf(c), c.get('learner').id, sessionId, itemId));
 });
 
 practiceRoutes.post('/sessions/:id/finish', async (c) => {

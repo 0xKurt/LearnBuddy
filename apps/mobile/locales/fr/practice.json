@@ -109,5 +109,13 @@
   "again": {
     "shaky": "Revoir ce qui n'est pas encore sûr",
     "topic": "Revoir : {{topics}}"
+  },
+  "flag": {
+    "button": "Question inadaptée",
+    "hint": "Retire cette question, elle ne reviendra plus.",
+    "sheet_title": "Question inadaptée ?",
+    "sheet_body": "Cette question ne reviendra plus.",
+    "confirm": "La retirer",
+    "done": "D'accord – la question est retirée."
   }
 }

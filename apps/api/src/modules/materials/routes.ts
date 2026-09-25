@@ -2,6 +2,7 @@
 
 import {
   CreateMaterialRequest,
+  RenameMaterialRequest,
   Uuid,
   type CreateMaterialResponse,
 } from '@learnbuddy/shared-types/contracts';
@@ -18,9 +19,12 @@ import { check, readBody } from '../../http/validate.js';
 import { runQueuedExtraction } from '../scheduler/tick.js';
 import {
   archiveMaterial,
+  archiveMaterialItem,
   createMaterial,
   libraryView,
+  materialItems,
   materialView,
+  renameMaterial,
   retryMaterial,
   submitMaterial,
 } from './service.js';
@@ -40,6 +44,27 @@ materialRoutes.post('/', async (c) => {
 materialRoutes.get('/:id', async (c) => {
   const materialId = check(Uuid, c.req.param('id'));
   return c.json(await materialView(depsOf(c).db, c.get('learner').id, materialId));
+});
+
+/** The learner renames it. */
+materialRoutes.patch('/:id', async (c) => {
+  const materialId = check(Uuid, c.req.param('id'));
+  const { title } = await readBody(c, RenameMaterialRequest);
+  return c.json(await renameMaterial(depsOf(c), c.get('learner').id, materialId, title));
+});
+
+/** Her questions from this material, with how each went last — never the solution. */
+materialRoutes.get('/:id/items', async (c) => {
+  const materialId = check(Uuid, c.req.param('id'));
+  return c.json(await materialItems(depsOf(c).db, c.get('learner').id, materialId));
+});
+
+/** A bad question is taken out (archived); idempotent. */
+materialRoutes.delete('/:materialId/items/:itemId', async (c) => {
+  const materialId = check(Uuid, c.req.param('materialId'));
+  const itemId = check(Uuid, c.req.param('itemId'));
+  await archiveMaterialItem(depsOf(c), c.get('learner').id, materialId, itemId);
+  return c.body(null, 204);
 });
 
 /** Photos are uploaded: verify, queue the reading, and start it right away. */

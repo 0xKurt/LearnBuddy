@@ -1,6 +1,7 @@
 // One photographed sheet in "Mein Stoff": its title, when it was taken and
 // how many questions it gave, its reading status in words, and what can be
-// done with it. Statuses are the API's; nothing is inferred.
+// done with it (practise, see its questions, read again, delete). Statuses
+// are the API's; nothing is inferred.
 
 import type { MaterialView } from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -21,6 +22,8 @@ type Props = {
   /** Some action is running; no second one meanwhile. */
   disabled: boolean;
   onPractice: () => void;
+  /** Its questions (app/material/[id].tsx). */
+  onOpen: () => void;
   onRetry: () => void;
   onDelete: () => void;
 };
@@ -54,6 +57,7 @@ export function MaterialCard({
   busy,
   disabled,
   onPractice,
+  onOpen,
   onRetry,
   onDelete,
 }: Props) {
@@ -91,6 +95,17 @@ export function MaterialCard({
               accessibilityLabel={t('practice_label', { title })}
             >
               {t('practice')}
+            </Btn>
+          ) : null}
+          {m.status === 'ready' ? (
+            <Btn
+              size="sm"
+              variant="outline"
+              disabled={disabled}
+              onPress={onOpen}
+              accessibilityLabel={t('open_label', { title })}
+            >
+              {t('open')}
             </Btn>
           ) : null}
           {retryable ? (

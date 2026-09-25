@@ -11,7 +11,10 @@
 
 import type {
   CreateMaterialRequest,
+  Figure,
+  ItemResult,
   LibraryView,
+  MaterialItemsView,
   MaterialView,
 } from '@learnbuddy/shared-types/contracts';
 
@@ -33,6 +36,7 @@ import {
   ExtractionResult,
   HOMEWORK_SYSTEM,
 } from './extract.js';
+import { emitEvent } from '../buddy/events.js';
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const PHOTO_RETENTION_DAYS = 7;
@@ -436,14 +440,13 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         ],
       );
     }
-    if (!homework)
-      await enqueueJob(tx, {
-        learnerId: current.learner_id,
-        kind: 'buddy_check',
-        runAt: now,
-        dedupeKey: `material_ready:${materialId}`,
-        payload: { reason: 'material_ready', material_id: materialId },
-      });
+    await emitEvent(
+      tx,
+      current.learner_id,
+      homework ? { type: 'homework_ready', materialId } : { type: 'material_ready', materialId },
+      now,
+      { questions: items.length },
+    );
     await enqueueJob(tx, {
       learnerId: current.learner_id,
       kind: 'purge_photos',
@@ -557,4 +560,115 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
     })),
     unsorted: materials.filter((m) => !m.subject_id).map(toView),
   };
+}
+
+// ─────────────── the questions of one material ───────────────
+
+type MaterialItemRow = {
+  id: string;
+  kind: MaterialItemsView['items'][number]['kind'];
+  prompt: string;
+  choices: string[] | null;
+  unit: string | null;
+  topic: string | null;
+  origin: MaterialItemsView['items'][number]['origin'];
+  lang: string | null;
+  prompt_lang: string | null;
+  figure: Figure | null;
+  last_status: 'correct' | 'revealed' | 'skipped' | 'missed' | null;
+  last_first_try: boolean | null;
+};
+
+function resultOf(r: MaterialItemRow): ItemResult {
+  if (r.last_status === null) return 'never_asked';
+  if (r.last_status === 'correct') return r.last_first_try ? 'first_try' : 'with_help';
+  return 'not_known';
+}
+
+/**
+ * The learner's questions from one material, with how the latest attempt went.
+ * Never the solution (answer, accepted answers, correct choice stay on the server).
+ */
+export async function materialItems(
+  db: Db,
+  learnerId: string,
+  materialId: string,
+): Promise<MaterialItemsView> {
+  const material = await materialView(db, learnerId, materialId);
+  const rows = await db.query<MaterialItemRow>(
+    `select i.id, i.kind, i.prompt, i.choices, i.unit, i.topic, i.origin, i.lang, i.prompt_lang, i.figure,
+            last.status as last_status, last.first_try_correct as last_first_try
+       from items i
+       left join lateral (
+         select si.status, si.first_try_correct from session_items si
+          where si.item_id = i.id and si.status <> 'open' and si.flagged_at is null
+          order by si.closed_at desc nulls last limit 1) last on true
+      where i.material_id = $1 and i.learner_id = $2 and i.archived_at is null
+      order by i.seq`,
+    [materialId, learnerId],
+  );
+  return {
+    material,
+    items: rows.map((r) => ({
+      id: r.id,
+      kind: r.kind,
+      prompt: r.prompt,
+      choices: r.choices,
+      unit: r.unit,
+      topic: r.topic,
+      origin: r.origin,
+      lang: r.lang,
+      prompt_lang: r.prompt_lang,
+      figure: r.figure,
+      result: resultOf(r),
+    })),
+  };
+}
+
+/**
+ * The learner deletes one question of a material: archived, so it never comes up in
+ * practice again. Idempotent — deleting it twice is fine; another learner's ids are 404.
+ */
+export async function archiveMaterialItem(
+  deps: Deps,
+  learnerId: string,
+  materialId: string,
+  itemId: string,
+): Promise<void> {
+  const now = deps.now();
+  await deps.db.tx(async (tx) => {
+    const item = await tx.maybeOne<{ archived_at: Date | null }>(
+      `select i.archived_at from items i join materials m on m.id = i.material_id
+        where i.id = $1 and i.material_id = $2 and i.learner_id = $3 and m.learner_id = $3
+          and m.archived_at is null
+        for update of i`,
+      [itemId, materialId, learnerId],
+    );
+    if (!item) throw new AppError('not_found', 'Question not found');
+    if (item.archived_at) return;
+    await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
+    // Buddy's picture of her material changed (question counts, what can be practised).
+    await bumpContext(tx, learnerId);
+  });
+}
+
+/** The learner renames a material (1–120 characters, trimmed by the contract). */
+export async function renameMaterial(
+  deps: Deps,
+  learnerId: string,
+  materialId: string,
+  title: string,
+): Promise<MaterialView> {
+  await deps.db.tx(async (tx) => {
+    const m = await tx.maybeOne<{ title: string | null }>(
+      `select title from materials where id = $1 and learner_id = $2 and archived_at is null for update`,
+      [materialId, learnerId],
+    );
+    if (!m) throw new AppError('not_found', 'Material not found');
+    if (m.title === title) return;
+    await tx.query(`update materials set title = $2 where id = $1`, [materialId, title]);
+    // Buddy refers to material by its title.
+    await bumpContext(tx, learnerId);
+  });
+  return materialView(deps.db, learnerId, materialId);
 }

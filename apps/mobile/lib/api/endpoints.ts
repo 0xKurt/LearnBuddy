@@ -10,6 +10,7 @@ import {
   DeletionResponse,
   LearnerView,
   LibraryView,
+  MaterialItemsView,
   MaterialView,
   MemoryList,
   MessageView,
@@ -140,6 +141,14 @@ export const getMaterial = (id: string) =>
 export const retryMaterial = (id: string) =>
   request('POST', `/materials/${id}/retry`, { schema: MaterialView });
 export const deleteMaterial = (id: string) => request('DELETE', `/materials/${id}`);
+export const renameMaterial = (id: string, title: string) =>
+  request('PATCH', `/materials/${id}`, { body: { title }, schema: MaterialView });
+/** Her questions from this material with how each went last (never the solution). */
+export const getMaterialItems = (id: string) =>
+  request('GET', `/materials/${id}/items`, { schema: MaterialItemsView });
+/** Takes one question out for good; deleting it twice is fine. */
+export const deleteMaterialItem = (materialId: string, itemId: string) =>
+  request('DELETE', `/materials/${materialId}/items/${itemId}`);
 
 // ─────────────── practice ───────────────
 
@@ -174,6 +183,9 @@ export const revealItem = (id: string, itemId: string) =>
     body: { item_id: itemId },
     schema: SessionView,
   });
+/** "Frage passt nicht": skipped here, never asked again. */
+export const flagItem = (id: string, itemId: string) =>
+  request('POST', `/practice/sessions/${id}/items/${itemId}/flag`, { schema: SessionView });
 export const finishSession = (id: string) =>
   request('POST', `/practice/sessions/${id}/finish`, { schema: SessionView });
 

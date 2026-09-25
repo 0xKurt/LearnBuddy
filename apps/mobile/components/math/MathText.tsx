@@ -6,6 +6,7 @@
 // Parsing: lib/math/parse.ts; spoken form: lib/math/speak.ts.
 
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
   Text,
@@ -16,9 +17,9 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { splitMath, type MathAtom } from '../../lib/math/parse.js';
+import type { MathAtom } from '../../lib/math/parse.js';
+import { parsePrompt, promptForSpeech, type PromptRun } from '../../lib/math/prompt.js';
 import { LB } from '../../lib/theme/colors.js';
-import { splitEmphasis, withoutEmphasis } from '../../lib/math/emphasis.js';
 import { useSpokenMath } from './useSpokenMath.js';
 
 type Props = {
@@ -30,6 +31,11 @@ type Props = {
   accessibilityLabel?: string;
   /** Put the whole text into the accessibility tree as one element (default true). */
   accessible?: boolean;
+  /**
+   * Draw "___" as a gap to fill in (questions), read out as "Lücke". `filled`:
+   * the learner's answer drawn into the gap while she types (one blank only).
+   */
+  blanks?: { filled?: string | null };
 };
 
 type Metrics = {
@@ -40,6 +46,9 @@ type Metrics = {
 };
 
 const THIN = ' ';
+/** An empty gap is as wide as a short word, and grows with the text size. */
+const EMPTY_GAP = '\u00A0'.repeat(7);
+const BOLD: TextStyle = { fontWeight: '700' };
 
 export function MathText({
   text,
@@ -47,21 +56,39 @@ export function MathText({
   accessibilityRole,
   accessibilityLabel,
   accessible = true,
+  blanks,
 }: Props) {
-  const segments = useMemo(() => splitMath(text), [text]);
-  const spoken = useSpokenMath(withoutEmphasis(text));
+  const { t } = useTranslation('math');
+  const withBlanks = blanks !== undefined;
+  const filled = blanks?.filled ?? null;
+  const runs = useMemo(() => parsePrompt(text, { blanks: withBlanks }), [text, withBlanks]);
+  const forSpeech = promptForSpeech(text, {
+    blanks: withBlanks,
+    blankWord: t('blank.label'),
+    // A $ in her answer must not open math in the spoken form.
+    filledWord: filled ? t('blank.filled', { answer: filled.replace(/\$/g, '\\$') }) : null,
+  });
+  const spoken = useSpokenMath(forSpeech);
   const flat = StyleSheet.flatten(style) ?? {};
-  const hasMath = segments.some((s) => s.type === 'math');
+  const simple = runs.every((r) => r.type === 'plain');
 
-  if (!hasMath) {
+  if (simple) {
     return (
       <Text
         style={style}
         accessibilityRole={accessibilityRole}
-        accessibilityLabel={accessibilityLabel ?? withoutEmphasis(text)}
+        accessibilityLabel={accessibilityLabel ?? forSpeech}
         accessible={accessible}
       >
-        <Emphasized text={text} />
+        {runs.map((r, i) =>
+          r.type === 'plain' && r.bold ? (
+            <Text key={i} style={BOLD}>
+              {r.text}
+            </Text>
+          ) : r.type === 'plain' ? (
+            r.text
+          ) : null,
+        )}
       </Text>
     );
   }
@@ -72,8 +99,9 @@ export function MathText({
     weight: flat.fontWeight,
     family: flat.fontFamily,
   };
+  const mBold: Metrics = { ...m, weight: '700' };
   const lineHeight = flat.lineHeight ?? Math.round(m.size * 1.4);
-  const units = buildUnits(segments);
+  const units = buildUnits(runs);
 
   return (
     <View
@@ -97,57 +125,106 @@ export function MathText({
             minHeight: lineHeight,
           }}
         >
-          {unit.map((piece, j) =>
-            piece.kind === 'plain' ? (
-              <Text key={j} style={[style, { lineHeight }]}>
-                <Emphasized text={piece.text} />
-              </Text>
-            ) : (
-              <AtomView key={j} atom={piece.atom} m={m} />
-            ),
-          )}
+          {unit.map((piece, j) => {
+            switch (piece.kind) {
+              case 'plain':
+                return (
+                  <Text key={j} style={[style, { lineHeight }, piece.bold ? BOLD : null]}>
+                    {piece.text}
+                  </Text>
+                );
+              case 'atom':
+                return <AtomView key={j} atom={piece.atom} m={piece.bold ? mBold : m} />;
+              case 'blank':
+                return (
+                  <Gap
+                    key={j}
+                    style={[style, { lineHeight }, piece.bold ? BOLD : null]}
+                    lineHeight={lineHeight}
+                    filled={filled}
+                  />
+                );
+            }
+          })}
         </View>
       ))}
     </View>
   );
 }
 
+/** A blank: a light box with a line under it, her answer inside once she types. */
+function Gap({
+  style,
+  lineHeight,
+  filled,
+}: {
+  style: StyleProp<TextStyle>;
+  lineHeight: number;
+  filled: string | null;
+}) {
+  return (
+    <View
+      style={{
+        flexShrink: 1,
+        minHeight: lineHeight,
+        justifyContent: 'flex-end',
+        marginHorizontal: 3,
+        paddingHorizontal: 6,
+        backgroundColor: LB.paper,
+        borderBottomWidth: 2,
+        borderBottomColor: LB.ink2,
+        borderTopLeftRadius: 6,
+        borderTopRightRadius: 6,
+      }}
+    >
+      <Text style={[style, filled ? { color: LB.primaryDk } : null]}>{filled ?? EMPTY_GAP}</Text>
+    </View>
+  );
+}
+
 // ─────────────── line breaking ───────────────
 
-type Piece = { kind: 'plain'; text: string } | { kind: 'atom'; atom: MathAtom };
+type Piece =
+  | { kind: 'plain'; text: string; bold: boolean }
+  | { kind: 'atom'; atom: MathAtom; bold: boolean }
+  | { kind: 'blank'; bold: boolean };
 
 /**
  * Groups the text into pieces that never break inside (a word, a term like
- * "x²"); the line may break between groups: at spaces in the text and after
- * + − = … inside math. Punctuation right after math stays with it.
+ * "x²", a gap with the punctuation after it); the line may break between
+ * groups: at spaces in the text and after + − = … inside math.
  */
-function buildUnits(segments: ReturnType<typeof splitMath>): Piece[][] {
+function buildUnits(runs: PromptRun[]): Piece[][] {
   const units: Piece[][] = [];
   let cur: Piece[] = [];
   const close = () => {
     if (cur.length > 0) units.push(cur);
     cur = [];
   };
-  for (const seg of segments) {
-    if (seg.type === 'plain') {
-      for (const part of seg.text.split(/(\s+)/)) {
+  for (const run of runs) {
+    if (run.type === 'blank') {
+      cur.push({ kind: 'blank', bold: run.bold });
+      continue;
+    }
+    if (run.type === 'plain') {
+      for (const part of run.text.split(/(\s+)/)) {
         if (part.length === 0) continue;
         if (/^\s+$/.test(part)) {
-          appendPlain(cur, ' ');
+          appendPlain(cur, ' ', run.bold);
           close();
-        } else appendPlain(cur, part);
+        } else appendPlain(cur, part, run.bold);
       }
       continue;
     }
-    for (const atom of seg.atoms) {
+    for (const atom of run.atoms) {
       if (atom.type !== 'chars') {
-        cur.push({ kind: 'atom', atom });
+        cur.push({ kind: 'atom', atom, bold: run.bold });
         if (atom.type === 'symbol' && atom.char.endsWith(THIN)) close();
         continue;
       }
       // Break after a spaced operator: "x² − 4x + 3" → "x² − " | "4x + " | "3".
       for (const p of splitAfterOperators(atom.text)) {
-        cur.push({ kind: 'atom', atom: { type: 'chars', text: p } });
+        cur.push({ kind: 'atom', atom: { type: 'chars', text: p }, bold: run.bold });
         if (p.endsWith(THIN)) close();
       }
     }
@@ -171,10 +248,11 @@ function splitAfterOperators(text: string): string[] {
   return out;
 }
 
-function appendPlain(cur: Piece[], text: string): void {
+function appendPlain(cur: Piece[], text: string, bold: boolean): void {
   const last = cur[cur.length - 1];
-  if (last?.kind === 'plain') cur[cur.length - 1] = { kind: 'plain', text: last.text + text };
-  else cur.push({ kind: 'plain', text });
+  if (last?.kind === 'plain' && last.bold === bold) {
+    cur[cur.length - 1] = { kind: 'plain', text: last.text + text, bold };
+  } else cur.push({ kind: 'plain', text, bold });
 }
 
 // ─────────────── drawing ───────────────
@@ -342,22 +420,5 @@ function Root({
         <Row atoms={body} m={m} size={size} />
       </View>
     </View>
-  );
-}
-
-/** Plain text with **bold** runs as nested Text. */
-function Emphasized({ text }: { text: string }) {
-  return (
-    <>
-      {splitEmphasis(text).map((r, i) =>
-        r.bold ? (
-          <Text key={i} style={{ fontWeight: '700' }}>
-            {r.text}
-          </Text>
-        ) : (
-          r.text
-        ),
-      )}
-    </>
   );
 }

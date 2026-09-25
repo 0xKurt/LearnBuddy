@@ -113,6 +113,33 @@ export const ItemView = z.object({
 });
 export type ItemView = z.infer<typeof ItemView>;
 
+// ─────────────── the questions of one material ───────────────
+
+/**
+ * How the latest closed attempt at a question went (any session):
+ * first_try · with_help (right after hints or retries) · not_known (revealed,
+ * skipped or missed) · never_asked.
+ */
+export const ItemResult = z.enum(['first_try', 'with_help', 'not_known', 'never_asked']);
+export type ItemResult = z.infer<typeof ItemResult>;
+
+/** A question of a material as listed for the learner: never includes the solution. */
+export const MaterialItemView = ItemView.extend({ result: ItemResult });
+export type MaterialItemView = z.infer<typeof MaterialItemView>;
+
+/** GET /materials/:id/items — the material and its questions (archived ones left out). */
+export const MaterialItemsView = z.object({
+  material: MaterialView,
+  items: z.array(MaterialItemView),
+});
+export type MaterialItemsView = z.infer<typeof MaterialItemsView>;
+
+/** PATCH /materials/:id — the learner renames a material. */
+export const RenameMaterialRequest = z.object({
+  title: z.string().trim().min(1).max(120),
+});
+export type RenameMaterialRequest = z.infer<typeof RenameMaterialRequest>;
+
 export const SessionItemView = z.object({
   item: ItemView,
   /** missed: answered wrong in a test (one try, closed). */
