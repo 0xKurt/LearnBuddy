@@ -69,6 +69,7 @@ const TASK: Record<StartTopicRequest['kind'], string> = {
   practice: `Write 6–10 PRACTICE questions on the topic the learner named, at their grade, easy to harder, mixing kinds sensibly. intro = null.`,
   vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; obvious alternative translations in accepted_answers). Do not add words. Up to 25 pairs. intro = null. If there are no pairs, usable = false.`,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words. intro = null.`,
+  test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers). intro = null.`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own. intro = null.`,
 };
 
@@ -88,7 +89,8 @@ Rules:
 
 Answer with the JSON object described by the schema.`;
 
-const MODE: Record<StartTopicRequest['kind'], 'explain' | 'practice' | 'help'> = {
+const MODE: Record<StartTopicRequest['kind'], 'explain' | 'practice' | 'help' | 'test'> = {
+  test: 'test',
   explain: 'explain',
   practice: 'practice',
   vocab: 'practice',
@@ -97,6 +99,7 @@ const MODE: Record<StartTopicRequest['kind'], 'explain' | 'practice' | 'help'> =
 };
 
 const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> = {
+  test: 'buddy',
   explain: 'buddy',
   practice: 'buddy',
   vocab: 'typed',
@@ -108,6 +111,7 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
 const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> = {
   explain: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
   practice: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab']),
+  test: new Set(['short', 'numeric', 'multiple_choice', 'formula', 'vocab']),
   vocab: new Set(['vocab']),
   speak: new Set(['speak']),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),

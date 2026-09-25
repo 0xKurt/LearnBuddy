@@ -50,6 +50,7 @@ import { ExplainCard, ExplainText } from '../../components/practice/ExplainCard.
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
+import { AgainButton } from '../../components/practice/AgainButton.js';
 import { SessionSummary } from '../../components/practice/SessionSummary.js';
 import { SelfSolvedCard, SolutionCard } from '../../components/practice/SolutionCard.js';
 import {
@@ -191,7 +192,9 @@ export default function PracticeScreen() {
   /** Voice mode: Buddy's reaction after an answer, with the verdict word first. */
   function readFeedback(res: AnswerResponse): void {
     if (!useVoiceMode.getState().on) return;
-    const key = verdictWordKey(res.verdict);
+    // A running test says no verdict (the result comes at the end).
+    const testing = res.session.mode === 'test' && res.session.status === 'active';
+    const key = testing ? null : verdictWordKey(res.verdict);
     const text = feedbackReadText(key ? t(key) : null, res.reply.text, words);
     speakInOrder([{ text, lang: currentLocale() }]);
   }
@@ -366,12 +369,21 @@ export default function PracticeScreen() {
             contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
             keyboardShouldPersistTaps="handled"
           >
-            <SessionSummary summary={session.summary} homework={session.mode === 'help'} />
+            <SessionSummary
+              summary={session.summary}
+              homework={session.mode === 'help'}
+              review={session.mode === 'test' ? session.items : null}
+            />
           </ScrollView>
           <BottomBar>
-            <Btn size="lg" full onPress={backToBuddy}>
-              {t('practice:back_to_buddy')}
-            </Btn>
+            <View style={{ gap: 10 }}>
+              {session.mode !== 'help' && session.summary.shaky_topics.length > 0 ? (
+                <AgainButton title={session.title} topics={session.summary.shaky_topics} />
+              ) : null}
+              <Btn size="lg" full onPress={backToBuddy}>
+                {t('practice:back_to_buddy')}
+              </Btn>
+            </View>
           </BottomBar>
         </Screen>
       );
@@ -410,6 +422,10 @@ export default function PracticeScreen() {
 
   const intro = session.mode === 'explain' ? (session.intro?.trim() ?? '') : '';
   const canReveal = session.reveal_allowed;
+  // A running test: no verdicts, no solutions, but a question can be skipped.
+  const testing = session.mode === 'test' && session.status === 'active';
+  const skip = canReveal || testing ? () => void reveal(shown.item.id) : undefined;
+  const skipLabel = testing ? t('practice:skip') : undefined;
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
@@ -496,6 +512,7 @@ export default function PracticeScreen() {
           }}
         >
           {session.mode === 'help' ? <Banner tone="info">{t('practice:help_note')}</Banner> : null}
+          {testing ? <Banner tone="info">{t('practice:test_note')}</Banner> : null}
           {intro ? (
             <Btn size="sm" variant="ghost" onPress={() => setIntroOpen(true)}>
               {t('practice:explain.again')}
@@ -524,17 +541,18 @@ export default function PracticeScreen() {
           {item.kind === 'vocab' && foreign(item.prompt_lang) ? (
             <ListenButton text={item.prompt} lang={item.prompt_lang} />
           ) : null}
-          <ItemThread turns={turns} pending={pendingText} />
+          <ItemThread turns={turns} pending={pendingText} hideVerdicts={testing} />
           {open && choices ? (
             <ChoiceList
               choices={choices}
               tried={tried}
               disabled={locked}
               onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
-              onReveal={canReveal ? () => void reveal(item.id) : undefined}
+              onReveal={skip}
+              revealLabel={skipLabel}
             />
           ) : null}
-          {shown.status === 'correct' && shown.answer === null ? <SelfSolvedCard /> : null}
+          {session.mode === 'help' && shown.status === 'correct' ? <SelfSolvedCard /> : null}
           {shown.status !== 'open' && shown.answer !== null ? (
             <SolutionCard
               status={shown.status}
@@ -556,7 +574,8 @@ export default function PracticeScreen() {
             disabled={locked}
             onChange={setText}
             onCheck={check}
-            onReveal={canReveal ? () => void reveal(item.id) : undefined}
+            onReveal={skip}
+            revealLabel={skipLabel}
           />
         ) : null}
         {open && choices && voiceOn ? (

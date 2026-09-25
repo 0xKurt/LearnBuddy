@@ -236,6 +236,13 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
 - **explain** — `POST /practice/topic` kind `explain`: a short explanation (`session.intro`) at
   the learner's grade, then 3–5 check questions; the tutor sees the explanation.
 - **practice on a topic** — kind `practice`: Buddy's own questions, marked as such.
+- **test** (migration `0005_test_mode.sql`) — kind `test` (start tile "Probetest", or Buddy's
+  `offer_learning` shortly before an exam): 8–12 questions like a class test. Code enforces:
+  one try per question (a wrong answer closes it as `missed`), every reply is a fixed neutral
+  text whatever the model wrote (no hint, no solution, no verdict), "Überspringen" instead of
+  "Lösung zeigen", no answers in the view while it runs (`reveal_allowed = false`), no FSRS.
+  At the end: every question with its solution, and one tap "Die wackligen nochmal üben"
+  (kind `practice` on the shaky topics; also after ordinary practice).
 - **vocab** — pairs (`prompt_lang` → `lang`) from a photographed list or typed (kind `vocab`);
   each pair becomes two questions (both directions, own FSRS state). Rule check: exact after
   normalisation = right; only accents differ = `close` → partially right, the tutor names the

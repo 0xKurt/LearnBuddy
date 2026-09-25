@@ -214,6 +214,101 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(ok.body.verdict).toBe('correct');
   });
 
+  it('runs a practice test: one try, no hints, no answers until the end', async () => {
+    env.llm.script('explain', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain('PRACTICE TEST');
+      return {
+        usable: true,
+        title: 'Brüche – Probetest',
+        subject: { name: 'Mathe', kind: 'math' },
+        intro: null,
+        items: [
+          item({
+            kind: 'numeric',
+            prompt: 'Wie viel ist $\\frac{1}{2} + \\frac{1}{4}$?',
+            answer: '0.75',
+            topic: 'Addieren',
+          }),
+          item({
+            prompt: 'Wie heißt die Zahl unter dem Bruchstrich?',
+            answer: 'Nenner',
+            topic: 'Begriffe',
+          }),
+          item({ prompt: 'Kürze 4/8', answer: '1/2', topic: 'Kürzen' }),
+          item({ kind: 'speak', prompt: 'nicht im Test', answer: 'x', lang: 'de' }),
+        ],
+      };
+    });
+    const s = (
+      await l.api.post<SessionView>('/practice/topic', {
+        client_request_id: randomUUID(),
+        kind: 'test',
+        text: 'Brüche',
+      })
+    ).body;
+    expect(s.mode).toBe('test');
+    expect(s.reveal_allowed).toBe(false);
+    expect(s.items.map((i) => i.item.kind)).toEqual(['numeric', 'short', 'short']);
+    const [a, b, c] = s.items.map((i) => i.item.id) as [string, string, string];
+
+    // Wrong by the rules: closed at once, a neutral reply, the answer stays hidden.
+    env.llm.script('tutor', tutor('Fast! Denk an den gemeinsamen Nenner 4.'));
+    const wrong = await answer(l, s, a, '0,5');
+    expect(wrong.body.verdict).toBe('incorrect');
+    expect(wrong.body.reply.text).toBe("Notiert – weiter geht's.");
+    const closed = wrong.body.session.items.find((i) => i.item.id === a)!;
+    expect(closed).toMatchObject({ status: 'missed', answer: null, hints_used: 0 });
+
+    // Asking for help gets no hint — whatever the model wrote — and the question stays open.
+    env.llm.script('tutor', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain('MODE: TEST');
+      return tutor('Tipp: Es ist der untere Teil, fängt mit N an.', {
+        intent: 'help_request',
+        verdict: 'not_an_attempt',
+      }).json;
+    });
+    const help = await answer(l, s, b, 'Hilfe?');
+    expect(help.body.reply.text).toContain('keine Tipps');
+    expect(help.body.reply.text).not.toContain('N an');
+    expect(help.body.session.items.find((i) => i.item.id === b)).toMatchObject({
+      status: 'open',
+      hints_used: 0,
+    });
+    // A model that "reveals" in a test is overruled too.
+    env.llm.script(
+      'tutor',
+      tutor('Richtig wäre Nenner.', { verdict: 'incorrect', revealed_answer: true }),
+    );
+    const miss = await answer(l, s, b, 'Zähler');
+    expect(miss.body.reply.text).toBe("Notiert – weiter geht's.");
+    expect(miss.body.session.items.find((i) => i.item.id === b)?.status).toBe('missed');
+
+    // Skipping is possible, but shows nothing while the test runs.
+    const skipped = await l.api.post<SessionView>(`/practice/sessions/${s.id}/reveal`, {
+      item_id: c,
+    });
+    expect(skipped.body.items.find((i) => i.item.id === c)).toMatchObject({
+      status: 'skipped',
+      answer: null,
+    });
+
+    // At the end: every answer and what to look at again.
+    // Buddy looks at the result afterwards (and plans nothing here).
+    env.llm.script('buddy_check', {
+      json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
+    });
+    const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`, {});
+    await env.flushBackground();
+    expect(done.body.reveal_allowed).toBe(true);
+    expect(done.body.items.map((i) => i.answer)).toEqual(['0.75', 'Nenner', '1/2']);
+    expect(done.body.summary?.shaky_topics.sort()).toEqual(['Addieren', 'Begriffe', 'Kürzen']);
+    // A test is not practice: no spaced-repetition state was written.
+    const fsrs = await env.db.query(`select 1 from item_states where learner_id = $1`, [
+      l.learnerId,
+    ]);
+    expect(fsrs).toHaveLength(0);
+  });
+
   it('shows no "done" result for a session left without answering anything', async () => {
     env.llm.script('explain', {
       json: {

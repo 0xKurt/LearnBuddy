@@ -1,6 +1,7 @@
 // Scripted model answers for the browser walkthrough of the learning modes
 // (tests/web/modes.spec.ts), after the core loop: "Erklär mir …", homework
-// help (hints only), and a photo-free practice with math and a figure.
+// help (hints only), a photo-free practice with math and a figure, and a
+// practice test followed by "die wackligen nochmal".
 // Test tooling only; answers are keyed by the learner's text, never guessed.
 
 import type { LlmRequest } from '../../llm/gateway.js';
@@ -96,6 +97,53 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
               { parts: 5, filled: 3 },
             ],
           },
+        },
+      ],
+    },
+  });
+  // Practice test: no hints, results at the end.
+  llm.script('explain', {
+    json: {
+      usable: true,
+      title: 'Die Römer – Probetest',
+      subject: { name: 'Geschichte', kind: 'history' },
+      intro: null,
+      items: [
+        {
+          ...base,
+          kind: 'multiple_choice',
+          prompt: 'Wer war der erste römische Kaiser?',
+          answer: 'Augustus',
+          choices: ['Caesar', 'Augustus', 'Nero'],
+          correct_choice: 1,
+          topic: 'Kaiserzeit',
+        },
+        {
+          ...base,
+          kind: 'numeric',
+          prompt: 'In welchem Jahr wurde Rom der Sage nach gegründet (v. Chr.)?',
+          answer: '753',
+          topic: 'Gründung Roms',
+        },
+      ],
+    },
+  });
+  // "Die wackligen nochmal üben" after the test.
+  llm.script('explain', {
+    json: {
+      usable: true,
+      title: 'Gründung Roms',
+      subject: { name: 'Geschichte', kind: 'history' },
+      intro: null,
+      items: [
+        {
+          ...base,
+          kind: 'multiple_choice',
+          prompt: 'Wer gründete Rom der Sage nach?',
+          answer: 'Romulus',
+          choices: ['Romulus', 'Hannibal'],
+          correct_choice: 0,
+          topic: 'Gründung Roms',
         },
       ],
     },

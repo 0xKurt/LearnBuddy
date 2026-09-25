@@ -284,7 +284,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             coalesce(array_agg(distinct i.topic) filter (
               where si.status = 'correct' and si.hints_used = 0 and i.topic is not null), '{}') as secure_topics,
             coalesce(array_agg(distinct i.topic) filter (
-              where si.status in ('revealed','skipped') or si.hints_used > 0), '{}') as shaky_topics
+              where si.status in ('revealed','skipped','missed') or si.hints_used > 0), '{}') as shaky_topics
        from practice_sessions ps
        left join session_items si on si.session_id = ps.id
        left join items i on i.id = si.item_id

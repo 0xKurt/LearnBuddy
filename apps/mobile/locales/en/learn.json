@@ -5,6 +5,7 @@
     "homework": "Homework help",
     "explain": "Explain something",
     "practice": "Practise",
+    "test": "Practice test",
     "vocab": "Test my vocab",
     "speak": "Practise speaking"
   },
@@ -36,6 +37,14 @@
       "ex_1": "Adding fractions",
       "ex_2": "Simple past",
       "ex_3": "The Middle Ages"
+    },
+    "test": {
+      "title": "What is the test about?",
+      "hint": "One answer per question, no hints – you'll see the result at the end.",
+      "placeholder": "e.g. fractions, unit 3, the Middle Ages",
+      "ex_1": "Fractions",
+      "ex_2": "Simple past",
+      "ex_3": "The Romans"
     },
     "vocab": {
       "title": "Type in your vocab",

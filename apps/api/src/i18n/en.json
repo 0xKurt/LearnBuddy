@@ -32,6 +32,8 @@
     "heard_retry": "I couldn't hear you well. Try again a bit louder and closer to the phone.",
     "speak_good": "Sounds great!",
     "speak_almost": "Almost! Look at the marked words.",
-    "speak_retry": "Try again – listen to it first."
+    "speak_retry": "Try again – listen to it first.",
+    "test_noted": "Noted – on to the next one.",
+    "test_no_hints": "There are no hints in a test – just write what you think, or skip the question."
   }
 }

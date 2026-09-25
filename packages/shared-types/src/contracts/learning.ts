@@ -115,7 +115,8 @@ export type ItemView = z.infer<typeof ItemView>;
 
 export const SessionItemView = z.object({
   item: ItemView,
-  status: z.enum(['open', 'correct', 'revealed', 'skipped']),
+  /** missed: answered wrong in a test (one try, closed). */
+  status: z.enum(['open', 'correct', 'revealed', 'skipped', 'missed']),
   attempts: z.number().int(),
   hints_used: z.number().int(),
   /** Only once the item is closed. */
@@ -167,7 +168,10 @@ export const SessionView = z.object({
   mode: SessionMode,
   /** explain: the explanation shown before the questions. */
   intro: z.string().nullable(),
-  /** false in help mode: no "show solution", closed questions show no answer. */
+  /**
+   * false in help mode (no "show solution", closed questions show no answer) and
+   * while a test runs (answers only once it is finished).
+   */
   reveal_allowed: z.boolean(),
   status: z.enum(['active', 'finished', 'abandoned']),
   title: z.string(),
@@ -212,9 +216,10 @@ export const StartTopicRequest = z.object({
   /**
    * explain: explain a topic, then check it · practice: questions on a topic ·
    * vocab: a typed vocabulary list · speak: sentences/words to say aloud ·
-   * help: a homework task the learner typed.
+   * help: a homework task the learner typed · test: a practice test on a topic
+   * (one try per question, no hints, results at the end).
    */
-  kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help']),
+  kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help', 'test']),
   text: z.string().trim().min(2).max(3000),
   subject: z.string().trim().max(60).nullable().optional(),
 });

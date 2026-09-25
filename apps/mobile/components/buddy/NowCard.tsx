@@ -39,7 +39,9 @@ export function NowCard({
               ? t('now.resume_title_help')
               : card.mode === 'explain'
                 ? t('now.resume_title_explain')
-                : t('now.resume_title')}
+                : card.mode === 'test'
+                  ? t('now.resume_title_test')
+                  : t('now.resume_title')}
           </Text>
           <Text style={[TYPE.body, { marginTop: 4 }]}>
             {/* Sessions started from a topic or homework have no goal or step title. */}

@@ -32,6 +32,8 @@
     "heard_retry": "Ich konnte dich nicht gut verstehen. Sprich nochmal etwas lauter und näher am Handy.",
     "speak_good": "Klingt super!",
     "speak_almost": "Fast! Schau dir die markierten Wörter an.",
-    "speak_retry": "Versuch's nochmal – hör es dir vorher an."
+    "speak_retry": "Versuch's nochmal – hör es dir vorher an.",
+    "test_noted": "Notiert – weiter geht's.",
+    "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage."
   }
 }

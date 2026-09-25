@@ -95,5 +95,19 @@
   "summary_help": {
     "title": "Hausaufgabe geschafft",
     "answered": "Selbst gelöst"
+  },
+  "test_note": "Probetest – eine Antwort pro Frage, keine Tipps. Das Ergebnis siehst du am Ende.",
+  "skip": "Überspringen",
+  "summary_test": {
+    "title": "Probetest geschafft!",
+    "review": "So lief's",
+    "right": "Richtig",
+    "missed": "Noch nicht richtig",
+    "skipped": "Übersprungen",
+    "solution": "Lösung: {{answer}}"
+  },
+  "again": {
+    "shaky": "Die wackligen nochmal üben",
+    "topic": "Nochmal üben: {{topics}}"
   }
 }

@@ -95,5 +95,19 @@
   "summary_help": {
     "title": "Deberes hechos",
     "answered": "Resueltos por ti"
+  },
+  "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
+  "skip": "Saltar",
+  "summary_test": {
+    "title": "¡Examen de prueba terminado!",
+    "review": "Cómo te ha ido",
+    "right": "Bien",
+    "missed": "Todavía no",
+    "skipped": "Saltada",
+    "solution": "Solución: {{answer}}"
+  },
+  "again": {
+    "shaky": "Repasar lo que aún no está seguro",
+    "topic": "Repasar: {{topics}}"
   }
 }

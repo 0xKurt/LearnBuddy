@@ -43,7 +43,8 @@
     "result_shaky": "Vamos a practicar otra vez: {{topics}}",
     "resume_body_untitled": "Quedan {{count}} preguntas",
     "resume_title_help": "Sigue con tus deberes",
-    "resume_title_explain": "Sigue con tu explicación"
+    "resume_title_explain": "Sigue con tu explicación",
+    "resume_title_test": "Sigue con tu examen de prueba"
   },
   "when": {
     "today": "hoy",

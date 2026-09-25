@@ -84,7 +84,7 @@ type SessionRow = {
 type SessionItemRow = {
   item_id: string;
   position: number;
-  status: 'open' | 'correct' | 'revealed' | 'skipped';
+  status: 'open' | 'correct' | 'revealed' | 'skipped' | 'missed';
   attempts: number;
   hints_used: number;
   first_try_correct: boolean | null;
@@ -291,7 +291,8 @@ export async function sessionView(
     [sessionId],
   );
   const current = items.find((i) => i.status === 'open');
-  const revealAllowed = s.mode !== 'help';
+  // Homework never shows the solution; a test shows the answers once it is finished.
+  const revealAllowed = s.mode !== 'help' && !(s.mode === 'test' && s.status === 'active');
   return {
     id: s.id,
     mode: s.mode,
@@ -389,6 +390,23 @@ async function replay(
   const turn = view.turns.find((tr) => tr.id === reply?.id);
   if (!turn) throw new AppError('conflict', 'Answer is still being processed');
   return { session: view, verdict: learnerTurn.verdict, reply: turn };
+}
+
+/**
+ * A test: one neutral acknowledgement per answer, never a hint or the
+ * solution (whatever the model wrote); what was right comes at the end.
+ */
+function asTestTurn<
+  J extends {
+    verdict: AnswerResponse['verdict'];
+    reply: string;
+    gaveHint: boolean;
+    revealed: boolean;
+  },
+>(j: J, locale: string): J {
+  if (j.verdict === null) return { ...j, gaveHint: false, revealed: false };
+  const key = j.verdict === 'not_an_attempt' ? 'practice.test_no_hints' : 'practice.test_noted';
+  return { ...j, reply: t(locale, key), gaveHint: false, revealed: false };
 }
 
 export async function answerItem(
@@ -581,6 +599,8 @@ export async function answerItem(
     }
   }
 
+  if (session.mode === 'test') judged = asTestTurn(judged, learner.locale);
+
   try {
     await deps.db.tx(async (tx) => {
       const si = await tx.one<SessionItemRow>(
@@ -619,6 +639,10 @@ export async function answerItem(
         firstTry = si.attempts === 0 && si.hints_used === 0;
       } else if (judged.revealed) {
         status = 'revealed';
+        firstTry = false;
+      } else if (session.mode === 'test' && attempted) {
+        // One try per question in a test.
+        status = 'missed';
         firstTry = false;
       }
       await tx.query(

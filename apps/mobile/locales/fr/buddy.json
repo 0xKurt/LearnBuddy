@@ -43,7 +43,8 @@
     "result_shaky": "On s'entraîne encore sur: {{topics}}",
     "resume_body_untitled": "Encore {{count}} questions",
     "resume_title_help": "Reprends tes devoirs",
-    "resume_title_explain": "Reprends ton explication"
+    "resume_title_explain": "Reprends ton explication",
+    "resume_title_test": "Reprends ton test d'entraînement"
   },
   "when": {
     "today": "aujourd'hui",

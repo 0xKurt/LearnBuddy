@@ -44,6 +44,8 @@ type Props = {
   onCheck: (value: string) => void;
   /** Absent when the session never shows the solution (homework help). */
   onReveal?: () => void;
+  /** The quiet side option's words (default "Lösung zeigen"; "Überspringen" in a test). */
+  revealLabel?: string;
 };
 
 export function AnswerComposer({
@@ -56,6 +58,7 @@ export function AnswerComposer({
   onChange,
   onCheck,
   onReveal,
+  revealLabel,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
@@ -162,7 +165,7 @@ export function AnswerComposer({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {onReveal ? (
           <Btn variant="ghost" onPress={onReveal} disabled={disabled}>
-            {t('show_solution')}
+            {revealLabel ?? t('show_solution')}
           </Btn>
         ) : null}
         <View style={{ flex: 1 }}>

@@ -95,5 +95,19 @@
   "summary_help": {
     "title": "Compiti fatti",
     "answered": "Risolti da te"
+  },
+  "test_note": "Verifica di prova – una risposta per domanda, niente suggerimenti. Vedrai il risultato alla fine.",
+  "skip": "Salta",
+  "summary_test": {
+    "title": "Verifica di prova finita!",
+    "review": "Com'è andata",
+    "right": "Giusto",
+    "missed": "Non ancora giusto",
+    "skipped": "Saltata",
+    "solution": "Soluzione: {{answer}}"
+  },
+  "again": {
+    "shaky": "Ripassa quello che non è ancora sicuro",
+    "topic": "Ripassa: {{topics}}"
   }
 }

@@ -5,6 +5,7 @@
     "homework": "Aiuto con i compiti",
     "explain": "Spiegami qualcosa",
     "practice": "Esercitarsi",
+    "test": "Verifica di prova",
     "vocab": "Ripassare i vocaboli",
     "speak": "Esercitare la pronuncia"
   },
@@ -36,6 +37,14 @@
       "ex_1": "Sommare frazioni",
       "ex_2": "Il simple past",
       "ex_3": "Il Medioevo"
+    },
+    "test": {
+      "title": "Su cosa è la verifica?",
+      "hint": "Una risposta per domanda, niente suggerimenti: vedrai il risultato alla fine.",
+      "placeholder": "es. frazioni, unità 3, il Medioevo",
+      "ex_1": "Frazioni",
+      "ex_2": "Simple past",
+      "ex_3": "I Romani"
     },
     "vocab": {
       "title": "Scrivi i tuoi vocaboli",

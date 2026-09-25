@@ -88,7 +88,7 @@ type SpeakItem = {
   kind: string;
   prompt: string;
   lang: string | null;
-  status: 'open' | 'correct' | 'revealed' | 'skipped';
+  status: 'open' | 'correct' | 'revealed' | 'skipped' | 'missed';
   attempts: number;
   hints_used: number;
   first_try_correct: boolean | null;

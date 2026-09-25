@@ -95,5 +95,19 @@
   "summary_help": {
     "title": "Devoirs terminés",
     "answered": "Trouvés toi-même"
+  },
+  "test_note": "Test d'entraînement – une réponse par question, pas d'indices. Tu verras le résultat à la fin.",
+  "skip": "Passer",
+  "summary_test": {
+    "title": "Test terminé !",
+    "review": "Comment ça s'est passé",
+    "right": "Juste",
+    "missed": "Pas encore juste",
+    "skipped": "Passée",
+    "solution": "Solution : {{answer}}"
+  },
+  "again": {
+    "shaky": "Revoir ce qui n'est pas encore sûr",
+    "topic": "Revoir : {{topics}}"
   }
 }

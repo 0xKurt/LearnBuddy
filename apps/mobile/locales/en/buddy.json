@@ -43,7 +43,8 @@
     "result_shaky": "Let's practise again: {{topics}}",
     "resume_body_untitled": "{{count}} questions left",
     "resume_title_help": "Continue your homework",
-    "resume_title_explain": "Continue your explanation"
+    "resume_title_explain": "Continue your explanation",
+    "resume_title_test": "Continue your practice test"
   },
   "when": {
     "today": "today",

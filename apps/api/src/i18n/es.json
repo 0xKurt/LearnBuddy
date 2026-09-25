@@ -32,6 +32,8 @@
     "heard_retry": "No te he oído bien. Inténtalo otra vez un poco más alto y más cerca del móvil.",
     "speak_good": "¡Suena genial!",
     "speak_almost": "¡Casi! Mira las palabras marcadas.",
-    "speak_retry": "Inténtalo otra vez – escúchalo antes."
+    "speak_retry": "Inténtalo otra vez – escúchalo antes.",
+    "test_noted": "Anotado – seguimos.",
+    "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta."
   }
 }

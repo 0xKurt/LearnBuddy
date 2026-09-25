@@ -1,4 +1,4 @@
-// "Was willst du machen?" on Buddy's home: six ways to start, always there,
+// "Was willst du machen?" on Buddy's home: the ways to start, always there,
 // two per row. Each is a Btn with an icon; every tile of a row is equally tall.
 
 import { View } from 'react-native';
@@ -8,13 +8,14 @@ import { Btn } from '../lb/Btn.js';
 import type { IconName } from '../lb/Icon.js';
 import { Section } from '../lb/Section.js';
 
-export type StartTile = 'photo' | 'homework' | 'explain' | 'practice' | 'vocab' | 'speak';
+export type StartTile = 'photo' | 'homework' | 'explain' | 'practice' | 'test' | 'vocab' | 'speak';
 
 const TILES: ReadonlyArray<readonly [StartTile, IconName]> = [
   ['photo', 'camera'],
   ['homework', 'pencil'],
   ['explain', 'bulb'],
   ['practice', 'practice'],
+  ['test', 'check'],
   ['vocab', 'book'],
   ['speak', 'mic'],
 ];
@@ -27,7 +28,9 @@ export function StartRow({
   onPick: (tile: StartTile) => void;
 }) {
   const { t } = useTranslation('learn');
-  const rows = [TILES.slice(0, 2), TILES.slice(2, 4), TILES.slice(4, 6)];
+  const rows = Array.from({ length: Math.ceil(TILES.length / 2) }, (_, i) =>
+    TILES.slice(i * 2, i * 2 + 2),
+  );
   return (
     <Section title={t('start.title')}>
       <View style={{ gap: 10 }}>

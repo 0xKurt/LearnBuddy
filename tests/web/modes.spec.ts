@@ -1,7 +1,8 @@
 // Browser walkthrough of the learning modes (after core-loop.spec.ts, same dev
 // stack; scripted answers in apps/api/src/testing/scenarios/learning-modes.ts):
 // "Erklär mir …", homework help with hints only, practice without a photo with
-// math and a figure. Screenshots go to test-results/web/shots.
+// math and a figure, a practice test (no hints, results at the end) and
+// "die wackligen nochmal". Screenshots go to test-results/web/shots.
 
 import { join } from 'node:path';
 
@@ -122,4 +123,32 @@ test('learning modes: explain, homework help without the solution, practice with
   );
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
   await shot(page, '26-buddy-voice-mode', 844);
+  await page.getByRole('switch', { name: 'Sprachmodus' }).click();
+
+  // ── Practice test: no verdicts or solutions until the end ──
+  await page.getByRole('button', { name: 'Probetest', exact: true }).click();
+  await expect(page.getByText('Worüber schreibst du den Test?')).toBeVisible();
+  await page.getByRole('textbox').last().fill('Die Römer');
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(
+    page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Augustus', exact: true }).click();
+  await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
+  await expect(page.getByText('Richtig', { exact: true })).toHaveCount(0);
+  await shot(page, '28-test-noted');
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('button', { name: 'Überspringen' }).click();
+  // The last question stays until "Weiter" (the test is finished by then, so its solution shows).
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Probetest geschafft!')).toBeVisible();
+  await expect(page.getByText('1 · Richtig')).toBeVisible();
+  await expect(page.getByText('2 · Übersprungen')).toBeVisible();
+  await expect(page.getByText('Lösung: 753')).toBeVisible();
+  await shot(page, '29-test-review');
+
+  // ── One tap: the shaky topics again ──
+  await page.getByRole('button', { name: 'Die wackligen nochmal üben' }).click();
+  await expect(page.getByText('Wer gründete Rom der Sage nach?')).toBeVisible();
 });

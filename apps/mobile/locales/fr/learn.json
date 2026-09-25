@@ -5,6 +5,7 @@
     "homework": "Aide aux devoirs",
     "explain": "Explique-moi",
     "practice": "S'entraîner",
+    "test": "Test d'entraînement",
     "vocab": "Réviser le vocabulaire",
     "speak": "Travailler la prononciation"
   },
@@ -36,6 +37,14 @@
       "ex_1": "Additionner des fractions",
       "ex_2": "Le passé composé",
       "ex_3": "Le Moyen Âge"
+    },
+    "test": {
+      "title": "Sur quoi porte le test ?",
+      "hint": "Une réponse par question, pas d'indices – tu verras le résultat à la fin.",
+      "placeholder": "p. ex. fractions, unité 3, le Moyen Âge",
+      "ex_1": "Les fractions",
+      "ex_2": "Le passé composé",
+      "ex_3": "Les Romains"
     },
     "vocab": {
       "title": "Tape ton vocabulaire",

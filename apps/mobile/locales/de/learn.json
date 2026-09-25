@@ -5,6 +5,7 @@
     "homework": "Hilfe bei Hausaufgaben",
     "explain": "Erklär mir was",
     "practice": "Üben",
+    "test": "Probetest",
     "vocab": "Vokabeln abfragen",
     "speak": "Aussprache üben"
   },
@@ -36,6 +37,14 @@
       "ex_1": "Brüche addieren",
       "ex_2": "Simple Past",
       "ex_3": "Das Mittelalter"
+    },
+    "test": {
+      "title": "Worüber schreibst du den Test?",
+      "hint": "Eine Antwort pro Frage, keine Tipps – das Ergebnis siehst du am Ende.",
+      "placeholder": "z. B. Brüche, Unité 3, Das Mittelalter",
+      "ex_1": "Brüche",
+      "ex_2": "Simple Past",
+      "ex_3": "Die Römer"
     },
     "vocab": {
       "title": "Tipp deine Vokabeln ein",

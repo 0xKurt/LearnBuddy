@@ -5,6 +5,7 @@
     "homework": "Ayuda con los deberes",
     "explain": "Explícame algo",
     "practice": "Practicar",
+    "test": "Examen de prueba",
     "vocab": "Repasar vocabulario",
     "speak": "Practicar pronunciación"
   },
@@ -36,6 +37,14 @@
       "ex_1": "Sumar fracciones",
       "ex_2": "El simple past",
       "ex_3": "La Edad Media"
+    },
+    "test": {
+      "title": "¿Sobre qué es el examen?",
+      "hint": "Una respuesta por pregunta, sin pistas: verás el resultado al final.",
+      "placeholder": "p. ej. fracciones, unidad 3, la Edad Media",
+      "ex_1": "Fracciones",
+      "ex_2": "Pasado simple",
+      "ex_3": "Los romanos"
     },
     "vocab": {
       "title": "Escribe tu vocabulario",

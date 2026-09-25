@@ -7,6 +7,7 @@ import type { TopicKind } from './useStartTopic.js';
 export const KIND_ICON: Record<TopicKind, IconName> = {
   explain: 'bulb',
   practice: 'practice',
+  test: 'check',
   vocab: 'book',
   speak: 'mic',
   help: 'pencil',
@@ -16,6 +17,7 @@ export const KIND_ICON: Record<TopicKind, IconName> = {
 export const KIND_LABEL: Record<TopicKind, string> = {
   explain: 'start.explain',
   practice: 'start.practice',
+  test: 'start.test',
   vocab: 'start.vocab',
   speak: 'start.speak',
   help: 'start.homework',
@@ -25,6 +27,7 @@ export const KIND_LABEL: Record<TopicKind, string> = {
 export const KIND_EXAMPLES: Record<TopicKind, number> = {
   explain: 3,
   practice: 3,
+  test: 3,
   vocab: 0,
   speak: 2,
   help: 0,

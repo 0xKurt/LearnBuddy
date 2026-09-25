@@ -32,6 +32,8 @@
     "heard_retry": "Non ti ho sentito bene. Riprova un po' più forte e più vicino al telefono.",
     "speak_good": "Suona benissimo!",
     "speak_almost": "Quasi! Guarda le parole segnate.",
-    "speak_retry": "Riprova – ascoltalo prima."
+    "speak_retry": "Riprova – ascoltalo prima.",
+    "test_noted": "Annotato – andiamo avanti.",
+    "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda."
   }
 }

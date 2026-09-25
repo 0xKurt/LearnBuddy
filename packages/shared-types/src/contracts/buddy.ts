@@ -76,7 +76,7 @@ export const ActionSummary = z.discriminatedUnion('tool', [
   /** Buddy offers to start learning; the app shows a button that starts it (POST /practice/topic). */
   z.object({
     tool: z.literal('offer_learning'),
-    kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help']),
+    kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help', 'test']),
     text: z.string(),
   }),
 ]);

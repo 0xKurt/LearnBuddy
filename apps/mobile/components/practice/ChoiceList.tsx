@@ -47,9 +47,11 @@ type Props = {
   onChoose: (index: number, choice: string) => void;
   /** Absent when the session never shows the solution (homework help). */
   onReveal?: () => void;
+  /** The quiet side option's words (default "Lösung zeigen"; "Überspringen" in a test). */
+  revealLabel?: string;
 };
 
-export function ChoiceList({ choices, tried, disabled, onChoose, onReveal }: Props) {
+export function ChoiceList({ choices, tried, disabled, onChoose, onReveal, revealLabel }: Props) {
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
   return (
@@ -81,7 +83,7 @@ export function ChoiceList({ choices, tried, disabled, onChoose, onReveal }: Pro
       {onReveal ? (
         <View style={{ alignItems: 'center' }}>
           <Btn variant="ghost" center onPress={onReveal} disabled={disabled}>
-            {t('show_solution')}
+            {revealLabel ?? t('show_solution')}
           </Btn>
         </View>
       ) : null}

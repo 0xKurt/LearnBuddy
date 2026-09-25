@@ -33,9 +33,11 @@ type Props = {
   turns: PracticeTurnView[];
   /** The answer being sent right now, shown until the server has it. */
   pending: string | null;
+  /** A running test: no verdicts until the end. */
+  hideVerdicts?: boolean;
 };
 
-export function ItemThread({ turns, pending }: Props) {
+export function ItemThread({ turns, pending, hideVerdicts = false }: Props) {
   const { t } = useTranslation('practice');
   if (turns.length === 0 && pending === null) return null;
 
@@ -48,7 +50,9 @@ export function ItemThread({ turns, pending }: Props) {
         const mine = turn.role === 'learner';
         // While a new answer is on its way, the previous judgement no longer applies.
         const verdict =
-          mine && turn.id === latestAnswerId && pending === null ? verdictKey(turn.verdict) : null;
+          mine && turn.id === latestAnswerId && pending === null && !hideVerdicts
+            ? verdictKey(turn.verdict)
+            : null;
         return (
           <View key={turn.id} style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}>
             <Bubble

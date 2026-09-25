@@ -32,6 +32,8 @@
     "heard_retry": "Je ne t'ai pas bien entendu. Réessaie un peu plus fort et plus près du téléphone.",
     "speak_good": "C'est super !",
     "speak_almost": "Presque ! Regarde les mots marqués.",
-    "speak_retry": "Réessaie – écoute-le d'abord."
+    "speak_retry": "Réessaie – écoute-le d'abord.",
+    "test_noted": "Noté – on continue.",
+    "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question."
   }
 }

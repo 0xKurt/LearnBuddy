@@ -95,5 +95,19 @@
   "summary_help": {
     "title": "Homework done",
     "answered": "Solved yourself"
+  },
+  "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
+  "skip": "Skip",
+  "summary_test": {
+    "title": "Practice test done!",
+    "review": "How it went",
+    "right": "Right",
+    "missed": "Not right yet",
+    "skipped": "Skipped",
+    "solution": "Answer: {{answer}}"
+  },
+  "again": {
+    "shaky": "Practise the shaky ones again",
+    "topic": "Practise again: {{topics}}"
   }
 }
