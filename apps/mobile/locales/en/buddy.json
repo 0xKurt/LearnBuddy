@@ -142,8 +142,7 @@
     "homework": "Homework",
     "explain": "Explain something",
     "vocab": "Vocabulary",
-    "practice": "Practise",
-    "test": "Practice test",
-    "speak": "Pronunciation"
+    "test_for": "Practice test: {{title}}",
+    "test_message": "Give me a practice test for \"{{title}}\"."
   }
 }

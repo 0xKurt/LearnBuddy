@@ -19,6 +19,7 @@ Cite the relevant section in commit messages and PR bodies (e.g. `docs/architect
 - `docs/architecture.md` — modules, API, decisions, tools, proactivity, delivery, limits, testing
 - `docs/privacy.md` — data, retention, minors, export/deletion, processors
 - `docs/DESIGN-BRIEF.md` — how the product must feel (still valid)
+- `docs/UX-PRINCIPLES.md` — hide system complexity, keep understanding and control (intent → result; examples, not feature catalogs; progressive disclosure; undo over confirmation)
 - `docs/SETUP-VERTEX.md` — model setup
 - `docs/legacy/` — the previous app's specs and audits: history, **not** requirements
 
@@ -61,7 +62,7 @@ If a change diverges from these docs, update the doc in the same change or write
     or takes a photo — no dashboards, tile grids, lists or forms to learn. Anything complex is
     handled behind Buddy (tools, defaults, the conversation). A new feature first asks "can Buddy
     do this in the chat?"; a new screen, menu or setting needs a reason it cannot. Parents' and
-    rare settings stay closed until opened.
+    rare settings stay closed until opened. Check new UI against `docs/UX-PRINCIPLES.md` §31–32.
 
 ## Required quality gates
 

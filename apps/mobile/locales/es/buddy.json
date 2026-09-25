@@ -142,8 +142,7 @@
     "homework": "Deberes",
     "explain": "Explícame algo",
     "vocab": "Vocabulario",
-    "practice": "Practicar",
-    "test": "Examen de prueba",
-    "speak": "Pronunciación"
+    "test_for": "Examen de prueba: {{title}}",
+    "test_message": "Hazme un examen de prueba para «{{title}}»."
   }
 }

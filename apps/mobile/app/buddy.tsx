@@ -149,19 +149,32 @@ export default function BuddyScreen() {
   }
 
   /** What she can start with one tap (the same as saying it to Buddy). */
-  const suggestions: Suggestion[] = [
-    {
-      key: 'exam',
-      label: t('buddy:suggest.exam'),
-      onPress: () => void send(t('buddy:suggest.exam')),
-    },
-    { key: 'homework', label: t('buddy:suggest.homework'), onPress: () => setChoice('homework') },
-    { key: 'explain', label: t('buddy:suggest.explain'), onPress: () => setTopic('explain') },
-    { key: 'vocab', label: t('buddy:suggest.vocab'), onPress: () => setChoice('vocab') },
-    { key: 'practice', label: t('buddy:suggest.practice'), onPress: () => setTopic('practice') },
-    { key: 'test', label: t('buddy:suggest.test'), onPress: () => setTopic('test') },
-    { key: 'speak', label: t('buddy:suggest.speak'), onPress: () => setTopic('speak') },
-  ];
+  /**
+   * A few starts that fit her situation (docs/UX-PRINCIPLES.md §6: examples, not a
+   * feature catalog). Everything else she just says; Buddy answers with a button.
+   */
+  function suggestionsFor(next: BuddyHome['next'], last: MessageView | undefined): Suggestion[] {
+    // Buddy is asking something with answers to tap: nothing competes with them.
+    if (last?.role === 'buddy' && last.options && last.options.length > 0) return [];
+    const exam = next.find((i) => i.kind === 'exam');
+    const first: Suggestion = exam
+      ? {
+          key: 'test',
+          label: t('buddy:suggest.test_for', { title: exam.title }),
+          onPress: () => void send(t('buddy:suggest.test_message', { title: exam.title })),
+        }
+      : {
+          key: 'exam',
+          label: t('buddy:suggest.exam'),
+          onPress: () => void send(t('buddy:suggest.exam')),
+        };
+    return [
+      first,
+      { key: 'homework', label: t('buddy:suggest.homework'), onPress: () => setChoice('homework') },
+      { key: 'explain', label: t('buddy:suggest.explain'), onPress: () => setTopic('explain') },
+      { key: 'vocab', label: t('buddy:suggest.vocab'), onPress: () => setChoice('vocab') },
+    ];
+  }
 
   /** From a choice sheet on: first let it close, then go on. */
   function fromChoice(next: () => void): void {
@@ -331,7 +344,7 @@ export default function BuddyScreen() {
           disabled={pending !== null}
           onSend={(text) => void send(text)}
           onPhoto={() => router.push('/capture')}
-          suggestions={suggestions}
+          suggestions={suggestionsFor(h.next, h.thread[h.thread.length - 1])}
         />
       </KeyboardAvoidingView>
 

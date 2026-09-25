@@ -105,8 +105,12 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 
   // ── Practice without a photo: fractions drawn, math rendered ──
-  await page.getByRole('button', { name: 'Üben', exact: true }).click();
-  await page.getByRole('textbox').last().fill('Brüche vergleichen');
+  // Said to Buddy instead of picking a tile: Buddy answers with a start button.
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Brüche vergleichen üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(
+    page.getByText('ein paar Fragen zu Brüchen vorbereitet', { exact: false }),
+  ).toBeVisible();
   await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
@@ -137,9 +141,9 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('switch', { name: 'Sprachmodus' }).click();
 
   // ── Practice test: no verdicts or solutions until the end ──
-  await page.getByRole('button', { name: 'Probetest', exact: true }).click();
-  await expect(page.getByText('Worüber schreibst du den Test?')).toBeVisible();
-  await page.getByRole('textbox').last().fill('Die Römer');
+  await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('ein Probetest über die Römer', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(
     page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),

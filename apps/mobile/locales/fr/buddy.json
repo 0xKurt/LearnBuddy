@@ -142,8 +142,7 @@
     "homework": "Devoirs",
     "explain": "Explique-moi",
     "vocab": "Vocabulaire",
-    "practice": "S'entraîner",
-    "test": "Test blanc",
-    "speak": "Prononciation"
+    "test_for": "Test blanc : {{title}}",
+    "test_message": "Fais-moi un test blanc pour « {{title}} »."
   }
 }

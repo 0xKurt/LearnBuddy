@@ -148,6 +148,26 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     },
   });
+  // Said in the chat instead of a tile: Buddy answers with a start button (offer_learning).
+  llm.script(
+    'buddy_turn',
+    {
+      json: {
+        reply: 'Gute Idee – ich hab dir ein paar Fragen zu Brüchen vorbereitet.',
+        options: null,
+        actions: [
+          { tool: 'offer_learning', args: { kind: 'practice', text: 'Brüche vergleichen' } },
+        ],
+      },
+    },
+    {
+      json: {
+        reply: 'Klar – ein Probetest über die Römer, wie in der Arbeit.',
+        options: null,
+        actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Die Römer' } }],
+      },
+    },
+  );
   // Tutor: hints for homework (never the solution), and the explain question.
   const hint = (req: LlmRequest) => {
     const text = lastText(req).toLowerCase();

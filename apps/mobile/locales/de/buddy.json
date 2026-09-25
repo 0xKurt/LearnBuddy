@@ -142,8 +142,7 @@
     "homework": "Hausaufgabe",
     "explain": "Erklär mir was",
     "vocab": "Vokabeln",
-    "practice": "Üben",
-    "test": "Probetest",
-    "speak": "Aussprache"
+    "test_for": "Probetest: {{title}}",
+    "test_message": "Mach mir einen Probetest für „{{title}}“."
   }
 }
