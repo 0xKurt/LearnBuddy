@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   afterSend,
+  failureOf,
   OUTBOX_MAX,
   parseOutbox,
   withEntry,
@@ -43,5 +44,19 @@ describe('outbox', () => {
     expect(afterSend('no_connection')).toBe('keep');
     expect(afterSend('sent')).toBe('remove');
     expect(afterSend('refused')).toBe('remove');
+    expect(afterSend('try_later')).toBe('keep');
+  });
+
+  it('drops an answer only when the API clearly refuses it', () => {
+    expect(failureOf('network', 0)).toBe('no_connection');
+    expect(failureOf('conflict', 409)).toBe('refused');
+    expect(failureOf('not_found', 404)).toBe('refused');
+    expect(failureOf('invalid_input', 400)).toBe('refused');
+    // Server trouble, an expired login, a proxy page: kept for later.
+    expect(failureOf('internal', 500)).toBe('try_later');
+    expect(failureOf('internal', 503)).toBe('try_later');
+    expect(failureOf('unauthorized', 401)).toBe('try_later');
+    expect(failureOf('rate_limited', 429)).toBe('try_later');
+    expect(failureOf('invalid_response', 200)).toBe('try_later');
   });
 });

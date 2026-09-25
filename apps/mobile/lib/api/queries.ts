@@ -39,14 +39,26 @@ if (Platform.OS !== 'web') {
   });
 }
 
-// Offline (NetInfo; on the web it follows the browser), queries and mutations
-// pause instead of failing and continue once the device is back online.
-// NetInfo's own reachability ping (a Google address on phones) is switched
-// off: only isConnected is used (lib/net.ts), and no extra third-party request.
+// Offline, queries and mutations pause instead of failing and continue once
+// the device is back online. Phones: NetInfo; its own reachability ping (a
+// Google address) is switched off: only isConnected is used (lib/net.ts), and
+// no extra third-party request. Web: the browser's online/offline events —
+// NetInfo on Chromium only follows navigator.connection "change", which does
+// not fire when the connection simply comes back.
 NetInfo.configure({ reachabilityShouldRun: () => false });
-onlineManager.setEventListener((setOnline) =>
-  NetInfo.addEventListener((state) => setOnline(onlineFrom(state))),
-);
+onlineManager.setEventListener((setOnline) => {
+  if (Platform.OS !== 'web') {
+    return NetInfo.addEventListener((state) => setOnline(onlineFrom(state)));
+  }
+  const update = () => setOnline(navigator.onLine);
+  update();
+  window.addEventListener('online', update);
+  window.addEventListener('offline', update);
+  return () => {
+    window.removeEventListener('online', update);
+    window.removeEventListener('offline', update);
+  };
+});
 
 /** Whether the device counts as online (the same answer TanStack Query uses). */
 export function useOnline(): boolean {

@@ -392,14 +392,18 @@ once (`abandonStaleUploads`, run by the scheduler).
 - **Changing e-mail or password** is in the parents' area (`AccountAccessCard`); for a minor's
   profile the parents' PIN comes first. An e-mail change is only requested: it counts once the
   confirmation links are opened (`double_confirm_changes`), and the app says exactly that.
-- **Offline**: NetInfo feeds TanStack Query's `onlineManager` (only `isConnected`; NetInfo's own
-  reachability ping is off). Queries pause instead of failing, a calm line says so at the top
+- **Offline**: on phones NetInfo feeds TanStack Query's `onlineManager` (only `isConnected`;
+  NetInfo's own reachability ping is off); on the web the browser's `online`/`offline` events do
+  (NetInfo on Chromium misses the connection coming back). Queries pause instead of failing, a calm line says so at the top
   (`components/lb/OfflineFrame.tsx`), and practice answers and recordings wait and are sent once
   the device is back, with the same `client_turn_id` (`lib/api/whenOnline.ts`). Typed answers are
   also kept on the device until the API has them (`lib/api/outbox.ts`, AsyncStorage /
   localStorage): after the app was closed they are sent on the next start or when back online;
-  answers the API refuses for good are dropped; signing out clears them
-  (`tests/web/offline.spec.ts`). Recordings (pronunciation) are not kept — too large; closing the
+  only answers the API clearly refuses (4xx: question closed, session ended) are dropped — server
+  trouble, an expired login or a proxy page keep them for later. An answer being sent live is
+  skipped by the outbox, and one flush runs at a time, so an answer never goes out twice at once.
+  Signing out clears them (`tests/web/offline.spec.ts`: app open → exactly one request; app
+  closed → sent on the next start). Recordings (pronunciation) are not kept — too large; closing the
   app while one waits drops it.
 - **About**: version from the app config; privacy, imprint and support rows only when
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set

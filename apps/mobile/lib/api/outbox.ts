@@ -44,9 +44,21 @@ export function parseOutbox(raw: string | null, now: Date): OutboxEntry[] {
   }
 }
 
-/** What to do with an entry after a send attempt. */
-export type SendResult = 'sent' | 'refused' | 'no_connection';
+/**
+ * What a send attempt came to. Only a clear "no" from the API (question
+ * closed, session ended, not hers) is `refused`; a server hiccup, a login
+ * that needs refreshing or a page that isn't the API is `try_later`.
+ */
+export type SendResult = 'sent' | 'refused' | 'no_connection' | 'try_later';
+
+/** Classifies a failed send from the error's code and HTTP status (0 = never reached the API). */
+export function failureOf(code: string, status: number): SendResult {
+  if (code === 'network' || status === 0) return 'no_connection';
+  if (code === 'invalid_response') return 'try_later';
+  const forGood = status >= 400 && status < 500 && ![401, 408, 429].includes(status);
+  return forGood ? 'refused' : 'try_later';
+}
 
 export function afterSend(result: SendResult): 'remove' | 'keep' {
-  return result === 'no_connection' ? 'keep' : 'remove';
+  return result === 'sent' || result === 'refused' ? 'remove' : 'keep';
 }

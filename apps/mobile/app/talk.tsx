@@ -117,23 +117,28 @@ export default function TalkScreen() {
     listen();
   }, []);
 
-  // Leaving ends everything: no reading aloud, no microphone.
+  // Leaving (or opening a card on top) ends everything: no reading aloud, no
+  // microphone. Coming back makes the mic work again; she taps it to go on.
   useFocusEffect(
-    useCallback(
-      () => () => {
+    useCallback(() => {
+      open.current = true;
+      return () => {
         open.current = false;
         stopSpeaking();
         if (voiceRef.current.state === 'recording') voiceRef.current.toggle();
-      },
-      [],
-    ),
+        setPhase((p) => (p === 'thinking' ? p : 'paused'));
+      };
+    }, []),
   );
 
-  // Listening stopped without text (nothing heard, too short, no mic): wait for a tap.
+  // Listening stopped without text (nothing heard, too short, no mic, writing
+  // it down failed): wait for a tap. A text moves on to 'thinking' first.
+  const lastVoiceState = useRef(voice.state);
   useEffect(() => {
-    if (phase === 'listening' && voice.state === 'idle' && (voice.hint || voice.denied)) {
-      setPhase('paused');
-    }
+    const was = lastVoiceState.current;
+    lastVoiceState.current = voice.state;
+    if (phase !== 'listening' || voice.state !== 'idle') return;
+    if (voice.hint || voice.denied || was === 'transcribing') setPhase('paused');
   }, [phase, voice.state, voice.hint, voice.denied]);
 
   function onMic(): void {

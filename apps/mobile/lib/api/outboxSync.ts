@@ -4,7 +4,14 @@ import type { AnswerRequest, AnswerResponse } from '@learnbuddy/shared-types/con
 import { onlineManager } from '@tanstack/react-query';
 
 import { ApiError } from './client.js';
-import { afterSend, parseOutbox, withEntry, without, type SendResult } from './outbox.js';
+import {
+  afterSend,
+  failureOf,
+  parseOutbox,
+  withEntry,
+  without,
+  type SendResult,
+} from './outbox.js';
 import { readOutbox, writeOutbox } from './outboxStorage.js';
 
 // One writer at a time, so two answers saved at once never overwrite each other.
@@ -38,19 +45,47 @@ export function clearOutbox(): Promise<void> {
 }
 
 export function resultOf(err: unknown): SendResult {
-  return err instanceof ApiError && err.code === 'network' ? 'no_connection' : 'refused';
+  return err instanceof ApiError ? failureOf(err.code, err.status) : 'try_later';
 }
+
+// Answers being sent right now by the practice screen: a flush leaves them
+// alone, so one answer never goes out twice at the same moment.
+const live = new Set<string>();
+
+/** Sends one answer live; the outbox skips it meanwhile. */
+export async function sendingLive<T>(clientTurnId: string, fn: () => Promise<T>): Promise<T> {
+  live.add(clientTurnId);
+  try {
+    return await fn();
+  } finally {
+    live.delete(clientTurnId);
+  }
+}
+
+let flushing: Promise<number> | null = null;
 
 /**
  * Sends every kept answer once (oldest first). `send` is the plain request;
- * `onSent` lets the app refresh that session. Stops at the first missing connection.
+ * `onSent` lets the app refresh that session. Stops at the first answer that
+ * has to wait (no connection, server trouble). One flush at a time: a second
+ * call while one runs joins it.
  */
-export async function flushOutbox(
+export function flushOutbox(
+  send: (sessionId: string, body: AnswerRequest) => Promise<AnswerResponse>,
+  onSent: (sessionId: string) => void,
+): Promise<number> {
+  flushing ??= flushOnce(send, onSent).finally(() => {
+    flushing = null;
+  });
+  return flushing;
+}
+
+async function flushOnce(
   send: (sessionId: string, body: AnswerRequest) => Promise<AnswerResponse>,
   onSent: (sessionId: string) => void,
 ): Promise<number> {
   if (!onlineManager.isOnline()) return 0;
-  const list = await serial(load);
+  const list = (await serial(load)).filter((e) => !live.has(e.body.client_turn_id));
   let sent = 0;
   for (const e of list) {
     let result: SendResult = 'sent';

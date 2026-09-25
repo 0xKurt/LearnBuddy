@@ -35,7 +35,7 @@ import { z } from 'zod';
 
 import { setAdminToken } from '../admin.js';
 import { ApiError, newId, request } from './client.js';
-import { dropAnswer, keepAnswer } from './outboxSync.js';
+import { dropAnswer, keepAnswer, resultOf, sendingLive } from './outboxSync.js';
 import { sendWhenOnline } from './whenOnline.js';
 
 /** The request may not have reached the API (lib/api/client.ts turns a failed fetch into this). */
@@ -165,16 +165,19 @@ export const getSession = (id: string) =>
 export async function answerItem(id: string, body: AnswerRequest): Promise<AnswerResponse> {
   // Kept on the device until the API has it (lib/api/outbox.ts): closing the app never loses it.
   await keepAnswer(id, body);
-  try {
-    const res = await sendWhenOnline(() => postAnswer(id, body), {
-      isConnectionError: noConnection,
-    });
-    await dropAnswer(body.client_turn_id);
-    return res;
-  } catch (err) {
-    if (!noConnection(err)) await dropAnswer(body.client_turn_id);
-    throw err;
-  }
+  return sendingLive(body.client_turn_id, async () => {
+    try {
+      const res = await sendWhenOnline(() => postAnswer(id, body), {
+        isConnectionError: noConnection,
+      });
+      await dropAnswer(body.client_turn_id);
+      return res;
+    } catch (err) {
+      // Only a clear "no" drops it; server trouble keeps it for the next flush.
+      if (resultOf(err) === 'refused') await dropAnswer(body.client_turn_id);
+      throw err;
+    }
+  });
 }
 
 /** The plain request (the outbox resends with it; same client_turn_id → recorded once). */

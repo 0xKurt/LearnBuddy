@@ -1,11 +1,14 @@
-// An answer given offline survives closing the app (runs after modes.spec.ts:
-// the scripted model answers in order). The answer is kept on the device
-// (lib/api/outbox.ts) and sent with the same client_turn_id once the app is
-// open and online again.
+// Answers given offline (runs after modes.spec.ts: the scripted model answers
+// in order). Each is kept on the device (lib/api/outbox.ts):
+// - back online with the app open, it goes out exactly once — the waiting
+//   send and the outbox never both send it;
+// - after the app was closed, it is sent on the next start.
 
 import { expect, test } from '@playwright/test';
 
-test('an answer given offline arrives after the app was closed', async ({ browser }) => {
+test('answers given offline arrive once: app open, and after it was closed', async ({
+  browser,
+}) => {
   const context = await browser.newContext();
   let page = await context.newPage();
   await page.goto('/');
@@ -28,9 +31,25 @@ test('an answer given offline arrives after the app was closed', async ({ browse
   await expect(page.getByText('Wie heißt die Hauptstadt von Frankreich?')).toBeVisible();
   const practiceUrl = page.url();
 
-  // Offline: she answers; it waits. Then the app is closed.
+  // Offline with the app open: the answer waits and goes out once when back online.
   await context.setOffline(true);
   await page.getByLabel('Deine Antwort').fill('Paris');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Keine Verbindung', { exact: false })).toBeVisible();
+  const sent: string[] = [];
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && /\/answer$/.test(r.url())) sent.push(r.postData() ?? '');
+  });
+  await context.setOffline(false);
+  await expect(page.getByText('Stimmt – gut gemacht!')).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(1500); // a second send would have started by now
+  expect(sent).toHaveLength(1);
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Wie heißt die Hauptstadt von Italien?')).toBeVisible();
+
+  // Offline again: she answers; it waits. Then the app is closed.
+  await context.setOffline(true);
+  await page.getByLabel('Deine Antwort').fill('Rom');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Keine Verbindung', { exact: false })).toBeVisible();
   await page.waitForTimeout(300);
