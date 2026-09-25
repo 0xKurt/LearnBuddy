@@ -78,7 +78,10 @@ describe('POST /dsgvo/delete-account', () => {
     expect(res.status).toBe(202);
     const body = (await res.json()) as { execute_at: string; request_id: string };
     expect(body.execute_at).toBeTruthy();
-    expect(new Date(body.execute_at).getTime()).toBeGreaterThan(Date.now());
+    // Compare against the injected clock, not the wall clock: the fixed test
+    // clock (2026-05-16) made this assertion a time-bomb once real time
+    // passed 2026-05-23.
+    expect(new Date(body.execute_at).getTime()).toBe(s.deps.now().getTime() + 7 * 86_400_000);
 
     const row = s.fake.tables.get('dsgvo_requests')?.find((r) => r.id === body.request_id);
     expect(row?.kind).toBe('delete');
