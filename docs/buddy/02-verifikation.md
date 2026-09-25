@@ -88,6 +88,10 @@ echten Geräten (Kamera, Tastatur, Push, Bildschirmleser).
     der Vergangenheit), 20/20. Der Blatt-Fall antwortete in 6/6 Läufen aus dem Blatt. Der alte
     Prompt fiel am selben Tag bei „unklares Datum“ 4/4 durch (Modell hat sich verändert); die
     neue Regel „erst nach dem Thema fragen“ besteht 6/6.
+    Mit `open_area` und der Code-Regel „nicht fragen und zugleich löschen“ (Prompt `buddy.9`,
+    22 Fälle): 20/22, 22/22, 22/22. Die zwei Ausreißer fragten „Soll ich …?“ statt den Knopf
+    anzubieten. Der Fall „Lösche alle meine Ziele“ entfernt das Ziel jetzt meist sichtbar mit
+    Rückgängig-Karte (bewusst: UX-Prinzip §18); nie wird etwas in der Vergangenheit eingetragen.
   - `apps/api/evals/modes/show.ts` (zum Lesen): Erklären, Üben zu einem Thema, Vokabeln,
     Sprechsätze, getippte und fotografierte Hausaufgabe, Arbeitsblatt. Gefundene und behobene
     Fehler: zu komplexes Antwortschema, Wochentage verrechnet, Mathe ohne `$` in Auswahlantworten,

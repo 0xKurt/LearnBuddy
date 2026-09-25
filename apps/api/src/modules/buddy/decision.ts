@@ -299,6 +299,17 @@ const offerLearning = z.object({
   }),
 });
 
+const openArea = z.object({
+  tool: z.literal('open_area'),
+  args: z.object({
+    area: z
+      .enum(['library', 'memory', 'settings', 'history', 'capture'])
+      .describe(
+        "library = her sheets and their questions · memory = what you know about her · settings = contact, language, parents' area · history = all earlier messages · capture = take a photo of a sheet",
+      ),
+  }),
+});
+
 /** Every act tool's call schema, by name (surfaces and handlers: registry.ts). */
 export const ACT_SCHEMAS = {
   remember,
@@ -316,6 +327,7 @@ export const ACT_SCHEMAS = {
   set_contact: setContact,
   schedule_check: scheduleCheck,
   offer_learning: offerLearning,
+  open_area: openArea,
 } as const;
 
 export type ToolName = keyof typeof ACT_SCHEMAS;

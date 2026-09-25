@@ -132,13 +132,13 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '27-practice-voice-mode', 844);
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('Hallo Lena')).toBeVisible();
-  await expect(page.getByRole('switch', { name: 'Sprachmodus' })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  );
+  // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).
+  await expect(page.getByRole('button', { name: 'Tastatur' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
   await shot(page, '26-buddy-voice-mode', 844);
-  await page.getByRole('switch', { name: 'Sprachmodus' }).click();
+  // "Tastatur" goes back to typing.
+  await page.getByRole('button', { name: 'Tastatur' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
   // ── Practice test: no verdicts or solutions until the end ──
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
@@ -166,4 +166,35 @@ test('learning modes: explain, homework help without the solution, practice with
   // ── One tap: the shaky topics again ──
   await page.getByRole('button', { name: 'Die wackligen nochmal üben' }).click();
   await expect(page.getByText('Wer gründete Rom der Sage nach?')).toBeVisible();
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
+  await expect(page.getByText('Hallo Lena')).toBeVisible();
+
+  // ── Any part of the app, by just asking Buddy ──
+  await page.getByLabel('Schreib Buddy …').fill('Zeig mir meine Arbeitsblätter');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Klar – hier ist dein Stoff.')).toBeVisible();
+  await shot(page, '31-open-area', 844);
+  await page.getByRole('button', { name: 'Mein Stoff öffnen' }).click();
+  await expect(page.getByRole('heading', { name: 'Mein Stoff' })).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── Conversation mode: she speaks, Buddy answers aloud, in the same conversation ──
+  // (A fake microphone; in the browser there is no pause detection, so she taps when done.)
+  await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
+  await expect(page.getByText('GESPRÄCH')).toBeVisible();
+  await expect(page.getByText('Ich höre zu.')).toBeVisible();
+  await expect(page.getByText('Tipp aufs Mikro, wenn du fertig bist.')).toBeVisible();
+  await shot(page, '32-talk-listening', 844);
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
+  await expect(page.getByText('„Was steht diese Woche an?“')).toBeVisible();
+  // The answer on the conversation screen (the chat underneath has it too).
+  await expect(
+    page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),
+  ).toBeVisible();
+  await shot(page, '33-talk-answer', 844);
+  await page.getByRole('button', { name: 'Beenden' }).last().click();
+  await expect(page.getByText('Hallo Lena')).toBeVisible();
+  // The same conversation: what was said by voice is in the chat.
+  await expect(page.getByText('Was steht diese Woche an?')).toBeVisible();
 });

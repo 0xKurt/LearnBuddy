@@ -61,7 +61,8 @@ Logs contain route names and error classes only — no request bodies, messages 
 - **Google Vertex AI** (model): region `europe-west4`; prompts contain the learner's messages,
   memory, goals and material text needed for the answer. **legal review:** confirm the data
   processing terms (no training on customer data) for the configured project.
-- **Speech recognition of the device** (Apple / Google): used first for talking instead of typing,
+- **Speech recognition of the device** (Apple / Google) — also in conversation mode, where the
+  mic reopens after each answer only while the conversation screen she opened is open: used first for talking instead of typing,
   **only on-device** (`requiresOnDeviceRecognition`; on Android only when the language's offline
   model is installed) — the audio does not leave the phone. Where the phone could only recognise
   on Apple's/Google's servers, and always in the browser (Chrome's Web Speech is server-side), the

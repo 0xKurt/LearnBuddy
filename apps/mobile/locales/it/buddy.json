@@ -129,7 +129,8 @@
     "set_contact": "Messaggi solo dalle {{from}} alle {{to}}, al massimo {{count}} a settimana",
     "schedule_check": "Torno a fare un salto {{when}}",
     "offer_learning": "Proposto: {{what}} – «{{text}}»",
-    "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)"
+    "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
+    "open_area": "Mostrato: {{what}}"
   },
   "intro": {
     "title": "Sono Buddy.",
@@ -148,5 +149,29 @@
     "exam_short": "Verifica",
     "test": "Verifica di prova",
     "speak": "Pronuncia"
+  },
+  "area": {
+    "library": "Il mio materiale",
+    "memory": "Cosa sa Buddy di te",
+    "settings": "Impostazioni",
+    "history": "Tutti i messaggi",
+    "capture": "Fotografa una scheda",
+    "open": "Apri",
+    "open_label": "Apri {{what}}"
+  },
+  "talk": {
+    "open": "Parla con Buddy",
+    "title": "Conversazione",
+    "listening": "Ti ascolto.",
+    "listening_sub": "Di’ semplicemente cosa ti serve.",
+    "tap_when_done": "Tocca il microfono quando hai finito.",
+    "thinking": "Ci penso …",
+    "speaking": "Buddy sta parlando …",
+    "paused": "Pronto quando vuoi.",
+    "paused_sub": "Tocca il microfono e parla.",
+    "slow": "Ci vuole di più – la risposta arriverà nella chat.",
+    "end": "Termina",
+    "speak": "Parla",
+    "interrupt": "Interrompi e parla"
   }
 }

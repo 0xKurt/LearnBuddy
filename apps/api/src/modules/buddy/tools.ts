@@ -808,6 +808,11 @@ async function runScheduleCheck(
   };
 }
 
+async function runOpenArea(action: ActionOf<'open_area'>, _ctx: ToolContext): Promise<ToolOutcome> {
+  // Changes nothing: the app shows a button that opens that part of the app.
+  return { summary: { tool: 'open_area', area: action.args.area }, undo: null };
+}
+
 /** One handler per act tool (the registry in registry.ts attaches them to their schemas). */
 export const ACT_HANDLERS: {
   [K in ToolName]: (action: ActionOf<K>, ctx: ToolContext) => Promise<ToolOutcome>;
@@ -826,6 +831,7 @@ export const ACT_HANDLERS: {
   request_material: runRequestMaterial,
   set_contact: runSetContact,
   offer_learning: runOfferLearning,
+  open_area: runOpenArea,
   schedule_check: runScheduleCheck,
 };
 

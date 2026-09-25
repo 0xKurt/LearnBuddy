@@ -4,6 +4,7 @@
 import { View } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
+import { useSvgId } from '../../lib/theme/svgId.js';
 import { LB } from '../../lib/theme/colors.js';
 
 const BARS = [
@@ -15,6 +16,8 @@ const BARS = [
 ];
 
 export function BuddyOrb({ size = 32, listening = false }: { size?: number; listening?: boolean }) {
+  const base = useSvgId('g');
+  const ids = { orbBody: `${base}orbBody`, orbShine: `${base}orbShine` };
   return (
     <View
       accessibilityElementsHidden
@@ -23,19 +26,19 @@ export function BuddyOrb({ size = 32, listening = false }: { size?: number; list
     >
       <Svg width={size} height={size} viewBox="0 0 100 100">
         <Defs>
-          <RadialGradient id="orbBody" cx="30%" cy="55%" r="80%">
+          <RadialGradient id={ids.orbBody} cx="30%" cy="55%" r="80%">
             <Stop offset="0" stopColor="#b9c9ff" />
             <Stop offset="0.45" stopColor="#d7c4ff" />
             <Stop offset="0.8" stopColor="#f9c6e1" />
             <Stop offset="1" stopColor="#fbe3f0" />
           </RadialGradient>
-          <RadialGradient id="orbShine" cx="40%" cy="30%" r="45%">
+          <RadialGradient id={ids.orbShine} cx="40%" cy="30%" r="45%">
             <Stop offset="0" stopColor="#ffffff" stopOpacity={0.85} />
             <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Circle cx="50" cy="50" r="48" fill="url(#orbBody)" />
-        <Circle cx="50" cy="50" r="47" fill="url(#orbShine)" />
+        <Circle cx="50" cy="50" r="48" fill={`url(#${ids.orbBody})`} />
+        <Circle cx="50" cy="50" r="47" fill={`url(#${ids.orbShine})`} />
         <Circle
           cx="50"
           cy="50"

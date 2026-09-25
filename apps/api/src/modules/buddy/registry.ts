@@ -161,6 +161,14 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     does: 'offer a button that starts learning now (explain, practice, test, vocab, speak, help)',
     run: ACT_HANDLERS.offer_learning,
   },
+  open_area: {
+    surfaces: TURN,
+    touches: ['nothing'],
+    needsQuote: false,
+    undoable: false,
+    does: 'show a button that opens a part of the app she asks for (her sheets, what you know, settings, earlier messages, the camera)',
+    run: ACT_HANDLERS.open_area,
+  },
 };
 
 const NAMES = Object.keys(ACT_SCHEMAS) as ToolName[];
@@ -206,8 +214,55 @@ export const TurnDecision = z.object({
     .nullable()
     .describe('Short tappable answers if you asked a question, else null'),
   actions: z.array(TurnActionSchema).max(6),
+  // Lenient when parsing (older scripted answers have no such field); the model must write it.
+  asks_permission: z.boolean().default(false),
 });
-export type TurnDecision = { reply: string; options: string[] | null; actions: TurnAction[] };
+export type TurnDecision = {
+  reply: string;
+  options: string[] | null;
+  actions: TurnAction[];
+  asks_permission: boolean;
+};
+
+/** What the model answers with: asks_permission is required there. */
+export const TurnDecisionForModel = TurnDecision.extend({
+  asks_permission: z
+    .boolean()
+    .describe(
+      'true if your reply asks the learner whether you should do something ("Soll ich …?"). Then that thing must not be in actions — it happens in a later answer, after they said yes.',
+    ),
+});
+
+/** Actions that remove something she had (a test, something you knew, a planned step). */
+export function removesSomething(a: AnyAction): boolean {
+  switch (a.tool) {
+    case 'close_goal':
+      return a.args.status === 'dropped';
+    case 'forget':
+      return true;
+    case 'update_step':
+      return a.args.state !== null;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Code-enforced (not only prompted): a reply that asks for permission may not
+ * already remove something in the same answer. Returns the reasons to repair.
+ */
+export function askedButActed(d: {
+  asks_permission: boolean;
+  actions: readonly AnyAction[];
+}): string[] {
+  if (!d.asks_permission) return [];
+  return d.actions
+    .filter(removesSomething)
+    .map(
+      (a) =>
+        `${a.tool}: your reply asks whether to do it, but you already did it. Ask only — leave it out of actions until the learner says yes.`,
+    );
+}
 
 export const CheckDecision = z.object({
   disposition: z.enum(['act', 'wait']),

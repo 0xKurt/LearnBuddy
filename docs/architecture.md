@@ -117,6 +117,13 @@ needs the learner's quote and can be undone, and its handler (`tools.ts`). The m
 action schemas and the tool catalogue in the prompt are generated from it; `runAct` checks the
 surface again before running (a check can never run a turn-only tool — also unit-tested).
 
+Every part of the app is reachable by asking: `open_area` (library, memory, settings, history,
+capture) changes nothing and shows a button in the conversation, like `offer_learning`.
+A reply that asks for permission (`asks_permission`, required in the model's answer) may not
+remove anything in the same answer (dropping a goal, forgetting, cancelling a step): the code
+rejects it and asks for a repair (`askedButActed`). Removing on her clear wish is allowed — it is
+visible as a card with undo (`docs/UX-PRINCIPLES.md` §18).
+
 `modules/buddy/tools.ts`. The only way a decision changes anything. Each tool validates against
 current rows (inside the decision's transaction), makes a bounded change and returns a card
 summary plus undo data. Enforced here, not in the prompt:
@@ -336,6 +343,14 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   device's voices (`expo-speech`); she answers with the mic. The microphone never starts by
   itself. This is turn by turn (tap, speak, listen) — a live, interruptible conversation (e.g.
   a realtime audio API) is not built.
+- **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
+  conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
+  is read aloud → Buddy listens again. On the phone listening ends by itself when she pauses
+  (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
+  Tapping the mic while Buddy speaks interrupts it. When the answer carries a button
+  (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
+  screen — opened by her — is open; "Beenden" or the keyboard ends it. Walkthrough: one full turn
+  with Chromium's fake microphone and a scripted transcript.
 - **Pronunciation** — see Learning modes (`speak`).
 
 ## Home

@@ -10,7 +10,8 @@
     "pin_delete": "Borrar el último dígito",
     "pin_progress": "{{count}} de 4 dígitos introducidos",
     "camera": "Hacer una foto",
-    "keyboard": "Teclado"
+    "keyboard": "Teclado",
+    "talk": "Hablar con Buddy"
   },
   "actions": {
     "close": "Cerrar",

@@ -40,10 +40,17 @@ type Options = {
   context?: string | null;
   /** The understood text (never empty). */
   onText: (text: string) => void;
+  /**
+   * Conversation: on the device, listening ends by itself when she pauses. (A
+   * recording for our EU path has no pause detection: she taps to finish.)
+   */
+  untilPause?: boolean;
 };
 
 export type VoiceInput = {
   state: VoiceInputState;
+  /** Listening on the device (ends by itself with untilPause) rather than recording. */
+  onDevice: boolean;
   /** Milliseconds recorded so far and the most there can be (for "0:07 / 1:00"). */
   elapsedMs: number;
   maxMs: number;
@@ -56,7 +63,13 @@ export type VoiceInput = {
   toggle: () => void;
 };
 
-export function useVoiceInput({ purpose, lang, context = null, onText }: Options): VoiceInput {
+export function useVoiceInput({
+  purpose,
+  lang,
+  context = null,
+  onText,
+  untilPause = false,
+}: Options): VoiceInput {
   const { i18n } = useTranslation();
   const [transcribing, setTranscribing] = useState(false);
   const [choosing, setChoosing] = useState(false);
@@ -131,7 +144,7 @@ export function useVoiceInput({ purpose, lang, context = null, onText }: Options
     const engine = await engineFor(locale);
     if (!mounted.current) return;
     setChoosing(false);
-    if (engine === 'device') await device.start(locale);
+    if (engine === 'device') await device.start(locale, { untilPause });
     else await rec.start();
   }
 
@@ -149,6 +162,7 @@ export function useVoiceInput({ purpose, lang, context = null, onText }: Options
 
   return {
     state,
+    onDevice,
     elapsedMs: onDevice ? device.elapsedMs : rec.elapsedMs,
     maxMs: onDevice ? MAX_DICTATION_MS : rec.maxMs,
     live: onDevice ? device.heard : '',

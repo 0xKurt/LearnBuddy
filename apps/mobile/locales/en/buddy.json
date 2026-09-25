@@ -129,7 +129,8 @@
     "set_contact": "Messages only between {{from}} and {{to}}, at most {{count}}× a week",
     "schedule_check": "I'll check in again {{when}}",
     "offer_learning": "Offered: {{what}} – “{{text}}”",
-    "plan_step_agreed_in_app": "Agreed: {{title}} {{when}} – shows up here in the app (messages to your phone are off)"
+    "plan_step_agreed_in_app": "Agreed: {{title}} {{when}} – shows up here in the app (messages to your phone are off)",
+    "open_area": "Shown: {{what}}"
   },
   "intro": {
     "title": "I'm Buddy.",
@@ -148,5 +149,29 @@
     "exam_short": "Test",
     "test": "Practice test",
     "speak": "Pronunciation"
+  },
+  "area": {
+    "library": "My material",
+    "memory": "What Buddy knows about you",
+    "settings": "Settings",
+    "history": "All messages",
+    "capture": "Photograph a sheet",
+    "open": "Open",
+    "open_label": "Open {{what}}"
+  },
+  "talk": {
+    "open": "Talk with Buddy",
+    "title": "Conversation",
+    "listening": "I'm listening.",
+    "listening_sub": "Just say what you need.",
+    "tap_when_done": "Tap the mic when you're done.",
+    "thinking": "Thinking …",
+    "speaking": "Buddy is speaking …",
+    "paused": "Ready when you are.",
+    "paused_sub": "Tap the mic and speak.",
+    "slow": "This is taking longer – the answer will show up in the chat.",
+    "end": "End",
+    "speak": "Speak",
+    "interrupt": "Interrupt and speak"
   }
 }

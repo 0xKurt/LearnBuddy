@@ -62,6 +62,27 @@ for (const viewport of [
     for (let i = 0; i < names.length; i++)
       for (let j = i + 1; j < names.length; j++)
         expect(overlaps(boxes[i]!, boxes[j]!), `${names[i]} overlaps ${names[j]}`).toBe(false);
+    // The composer bar: camera, field and mic inside the screen, the field centred on the mic.
+    const camera = await page
+      .getByRole('button', { name: 'Arbeitsblatt fotografieren' })
+      .boundingBox();
+    const mic = await page.getByRole('button', { name: 'Nachricht sprechen' }).boundingBox();
+    const field = await page.getByLabel('Schreib Buddy …').boundingBox();
+    for (const [what, box] of [
+      ['camera', camera],
+      ['mic', mic],
+      ['field', field],
+    ] as const) {
+      expect(box, what).not.toBeNull();
+      expect(box!.x, what).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width, what).toBeLessThanOrEqual(viewport.width);
+      expect(box!.y + box!.height, what).toBeLessThanOrEqual(viewport.height);
+    }
+    const centre = (b: Box) => b.y + b.height / 2;
+    expect(Math.abs(centre(field!) - centre(mic!))).toBeLessThanOrEqual(3);
+    expect(Math.abs(centre(camera!) - centre(mic!))).toBeLessThanOrEqual(3);
+    // One compact row while empty (not a two-line box).
+    expect(field!.height).toBeLessThanOrEqual(48);
     // No sideways scrolling anywhere.
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

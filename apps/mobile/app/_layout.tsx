@@ -55,6 +55,7 @@ export default function RootLayout() {
                   screenOptions={{ headerShown: false, contentStyle: { backgroundColor: LB.bg } }}
                 >
                   <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="talk" options={{ presentation: 'fullScreenModal' }} />
                 </Stack>
               ) : (
                 <LoadingState />

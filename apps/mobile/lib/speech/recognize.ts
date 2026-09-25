@@ -174,7 +174,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
   });
 
   const start = useCallback(
-    async (lang: string): Promise<void> => {
+    async (lang: string, opts: { untilPause?: boolean } = {}): Promise<void> => {
       if (phaseRef.current !== 'idle') return;
       setPhase('starting');
       try {
@@ -200,7 +200,8 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
         ExpoSpeechRecognitionModule.start({
           lang: (installedList && installedMatch(installedList, lang)) || lang,
           interimResults: true,
-          continuous: true,
+          // untilPause: the recogniser ends by itself when she stops speaking (conversation).
+          continuous: !opts.untilPause,
           requiresOnDeviceRecognition: true,
           addsPunctuation: true,
           maxAlternatives: 1,

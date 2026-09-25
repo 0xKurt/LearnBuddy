@@ -40,7 +40,6 @@ import { LoadingState } from '../components/lb/LoadingState.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
-import { VoiceModeToggle } from '../components/voice/VoiceModeToggle.js';
 import { requestAdmin } from '../lib/adminFlow.js';
 import { ApiError, newId } from '../lib/api/client.js';
 import {
@@ -254,7 +253,12 @@ export default function BuddyScreen() {
           <View
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <VoiceModeToggle />
+            {/* Talking with Buddy hands-free (conversation mode). */}
+            <CircleBtn
+              icon="headphones"
+              onPress={() => router.push('/talk')}
+              accessibilityLabel={t('buddy:talk.open')}
+            />
             <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
             <View>
               <CircleBtn

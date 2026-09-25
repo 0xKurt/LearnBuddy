@@ -5,7 +5,7 @@
 // and what she says is sent right away (the "Ich höre zu." look).
 
 import { useRef, useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Platform, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -110,22 +110,24 @@ export function Composer({
         style={[
           {
             flexDirection: 'row',
-            alignItems: 'flex-end',
-            gap: 6,
+            alignItems: 'center',
+            gap: 2,
             backgroundColor: '#fff',
-            borderRadius: 30,
-            padding: 6,
+            borderRadius: 32,
+            paddingVertical: 6,
+            paddingLeft: 4,
+            paddingRight: 6,
+            minHeight: 60,
           },
           SHADOW.float,
         ]}
       >
-        <View style={{ height: 56, justifyContent: 'center' }}>
-          <CircleBtn
-            icon="camera"
-            onPress={onPhoto}
-            accessibilityLabel={t('buddy:composer.photo')}
-          />
-        </View>
+        <CircleBtn
+          icon="camera"
+          plain
+          onPress={onPhoto}
+          accessibilityLabel={t('buddy:composer.photo')}
+        />
         <TextInput
           value={text}
           onChangeText={setText}
@@ -133,29 +135,37 @@ export function Composer({
           placeholderTextColor={LB.ink3}
           accessibilityLabel={t('buddy:composer.placeholder')}
           multiline
+          // The web's textarea starts two rows tall; one row, growing with the text.
+          {...(Platform.OS === 'web' ? { numberOfLines: 1 } : {})}
           maxLength={MAX_MESSAGE_LENGTH}
           onSubmitEditing={send}
+          textAlignVertical="center"
           style={{
             flex: 1,
-            minHeight: 56,
-            maxHeight: 132,
+            minHeight: 44,
+            maxHeight: 120,
             backgroundColor: 'transparent',
-            paddingHorizontal: 6,
-            paddingTop: 17,
-            paddingBottom: 17,
+            paddingHorizontal: 4,
+            paddingTop: 11,
+            paddingBottom: 11,
             fontSize: 16,
+            lineHeight: 22,
             color: LB.ink,
           }}
         />
         {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
         {trimmed.length === 0 || voice.state !== 'idle' ? (
-          <MicButton voice={voice} label={t('common:voice.message')} filled disabled={disabled} />
+          <MicButton
+            voice={voice}
+            size="sm"
+            label={t('common:voice.message')}
+            filled
+            disabled={disabled}
+          />
         ) : (
-          <View style={{ height: 56, justifyContent: 'center' }}>
-            <Btn onPress={send} disabled={disabled} pill>
-              {t('buddy:composer.send')}
-            </Btn>
-          </View>
+          <Btn onPress={send} disabled={disabled} pill size="sm">
+            {t('buddy:composer.send')}
+          </Btn>
         )}
       </View>
     </View>

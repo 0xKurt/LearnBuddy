@@ -10,7 +10,8 @@
     "pin_delete": "Cancella l'ultima cifra",
     "pin_progress": "{{count}} di 4 cifre inserite",
     "camera": "Scatta una foto",
-    "keyboard": "Tastiera"
+    "keyboard": "Tastiera",
+    "talk": "Parla con Buddy"
   },
   "actions": {
     "close": "Chiudi",

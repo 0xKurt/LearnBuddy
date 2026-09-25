@@ -21,7 +21,7 @@ export function useDeviceRecognition(_: {
     phase: 'idle' as DevicePhase,
     heard: '',
     elapsedMs: 0,
-    start: async (_lang: string): Promise<void> => {},
+    start: async (_lang: string, _opts: { untilPause?: boolean } = {}): Promise<void> => {},
     stop: (): void => {},
   };
 }

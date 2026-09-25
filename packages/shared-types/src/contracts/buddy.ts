@@ -79,6 +79,11 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help', 'test']),
     text: z.string(),
   }),
+  /** Buddy points to a part of the app (said, not searched for); the app shows a button to open it. */
+  z.object({
+    tool: z.literal('open_area'),
+    area: z.enum(['library', 'memory', 'settings', 'history', 'capture']),
+  }),
 ]);
 export type ActionSummary = z.infer<typeof ActionSummary>;
 

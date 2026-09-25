@@ -129,7 +129,8 @@
     "set_contact": "Nachrichten nur zwischen {{from}} und {{to}} Uhr, höchstens {{count}}× pro Woche",
     "schedule_check": "Ich schaue {{when}} wieder vorbei",
     "offer_learning": "Angeboten: {{what}} – „{{text}}“",
-    "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Nachrichten aufs Handy sind aus)"
+    "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Nachrichten aufs Handy sind aus)",
+    "open_area": "Gezeigt: {{what}}"
   },
   "intro": {
     "title": "Ich bin Buddy.",
@@ -148,5 +149,29 @@
     "exam_short": "Arbeit",
     "test": "Probetest",
     "speak": "Aussprache"
+  },
+  "area": {
+    "library": "Mein Stoff",
+    "memory": "Was Buddy über dich weiß",
+    "settings": "Einstellungen",
+    "history": "Alle Nachrichten",
+    "capture": "Blatt fotografieren",
+    "open": "Öffnen",
+    "open_label": "{{what}} öffnen"
+  },
+  "talk": {
+    "open": "Mit Buddy sprechen",
+    "title": "Gespräch",
+    "listening": "Ich höre zu.",
+    "listening_sub": "Sag einfach, was du brauchst.",
+    "tap_when_done": "Tipp aufs Mikro, wenn du fertig bist.",
+    "thinking": "Ich denke nach …",
+    "speaking": "Buddy spricht …",
+    "paused": "Bereit, wenn du es bist.",
+    "paused_sub": "Tipp aufs Mikro und sprich.",
+    "slow": "Das dauert gerade länger – die Antwort kommt gleich im Chat.",
+    "end": "Beenden",
+    "speak": "Sprechen",
+    "interrupt": "Unterbrechen und sprechen"
   }
 }

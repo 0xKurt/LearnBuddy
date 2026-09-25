@@ -10,7 +10,8 @@
     "pin_delete": "Delete last digit",
     "pin_progress": "{{count}} of 4 digits entered",
     "camera": "Take a photo",
-    "keyboard": "Keyboard"
+    "keyboard": "Keyboard",
+    "talk": "Talk with Buddy"
   },
   "actions": {
     "close": "Close",

@@ -4,6 +4,7 @@ import { ACT_SCHEMAS } from '../decision.js';
 import {
   ACT_TOOLS,
   actToolsPrompt,
+  askedButActed,
   CheckActionSchema,
   toolsFor,
   TurnActionSchema,
@@ -39,5 +40,21 @@ describe('act tool registry', () => {
     expect(actToolsPrompt('check')).toContain('prepare_practice');
     expect(actToolsPrompt('check')).not.toContain('set_contact');
     expect(actToolsPrompt('turn')).toContain('set_contact: reduce, pause or shift contact');
+  });
+
+  it('never lets a reply ask whether to remove something while already removing it', () => {
+    const drop = {
+      tool: 'close_goal' as const,
+      args: { goal: 'g1', status: 'dropped' as const, outcome: null, quote: 'Lösche alles' },
+    };
+    const plan = {
+      tool: 'offer_learning' as const,
+      args: { kind: 'practice' as const, text: 'Brüche' },
+    };
+    expect(askedButActed({ asks_permission: true, actions: [drop] })).toHaveLength(1);
+    // Asking about something else after doing a harmless thing is fine.
+    expect(askedButActed({ asks_permission: true, actions: [plan] })).toEqual([]);
+    // Removing without asking (she clearly asked for it) is a normal action.
+    expect(askedButActed({ asks_permission: false, actions: [drop] })).toEqual([]);
   });
 });

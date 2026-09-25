@@ -24,15 +24,15 @@ import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext } from './context.js';
-import { TurnDecision } from './registry.js';
+import { askedButActed, TurnDecision, TurnDecisionForModel } from './registry.js';
 import { bumpContext } from './plan.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
 import { lookupsField, withLookups } from './lookups.js';
 import { loadBuddyState } from './state.js';
 
-const TURN_SCHEMA = toJsonSchema(TurnDecision);
+const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
-const TURN_STEP_SCHEMA = toJsonSchema(TurnDecision.extend({ lookups: lookupsField }));
+const TURN_STEP_SCHEMA = toJsonSchema(TurnDecisionForModel.extend({ lookups: lookupsField }));
 const MAX_ROUNDS = 4;
 /** A turn still "processing" after this long is considered interrupted. */
 export const TURN_STALL_MS = 3 * 60_000;
@@ -233,6 +233,13 @@ export async function processTurn(
       await record('rejected', errors);
       if (repairErrors) return failTurn(deps, message, 'model_invalid');
       repairErrors = errors;
+      continue;
+    }
+    const contradictions = askedButActed(parsed.data);
+    if (contradictions.length > 0) {
+      await record('rejected', contradictions);
+      if (repairErrors) return failTurn(deps, message, 'model_invalid');
+      repairErrors = contradictions;
       continue;
     }
 

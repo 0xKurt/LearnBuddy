@@ -82,9 +82,11 @@ type Props = {
   /** What tapping does when idle ("Nachricht sprechen", "Antwort sagen"). */
   label: string;
   /** lg: the main control in voice mode. */
-  size?: 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
   /** Filled even when idle (the composer's main control while the field is empty). */
   filled?: boolean;
+  /** Instead of start/stop recording (the conversation screen runs its own loop). */
+  onPress?: () => void;
   disabled?: boolean;
 };
 
@@ -94,13 +96,14 @@ export function MicButton({
   size = 'md',
   filled: filledIdle = false,
   disabled = false,
+  onPress,
 }: Props) {
   const { t } = useTranslation('common');
   const recording = voice.state === 'recording';
   const working = voice.state === 'starting' || voice.state === 'transcribing';
   // A running recording can always be stopped.
   const off = recording ? false : disabled || working;
-  const d = size === 'lg' ? 72 : 56;
+  const d = size === 'lg' ? 72 : size === 'sm' ? 48 : 56;
   const filled = size === 'lg' || recording || filledIdle;
   const bg = recording ? LB.primaryDk : filled ? LB.primary : '#fff';
   const fg = filled ? '#fff' : LB.primaryDk;
@@ -110,7 +113,7 @@ export function MicButton({
     <View style={{ width: d, height: d, alignItems: 'center', justifyContent: 'center' }}>
       {recording ? <PulseRing size={d} /> : null}
       <Pressable
-        onPress={voice.toggle}
+        onPress={onPress ?? voice.toggle}
         disabled={off}
         accessibilityRole="button"
         accessibilityLabel={recording ? t('voice.stop') : label}

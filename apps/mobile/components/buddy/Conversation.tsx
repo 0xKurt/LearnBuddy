@@ -14,6 +14,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { AreaCard } from './AreaCard.js';
 import { BuddyOrb } from './BuddyOrb.js';
 import { deliveryText, describeAction } from './describe.js';
 
@@ -50,7 +51,9 @@ export function Conversation({
       {messages.map((m) => {
         const mine = m.role === 'learner';
         // What Buddy did (✓ list); offers are not done yet, they have their own card.
-        const done = m.actions.filter((a) => a.summary.tool !== 'offer_learning');
+        const done = m.actions.filter(
+          (a) => a.summary.tool !== 'offer_learning' && a.summary.tool !== 'open_area',
+        );
         return (
           <View key={m.id} style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
@@ -87,8 +90,12 @@ export function Conversation({
             {m.actions.map((a) =>
               // Buddy's offers to start something: always shown, one tap starts it.
               a.summary.tool === 'offer_learning' ? (
-                <View key={a.id} style={{ width: '86%' }}>
+                <View key={a.id} style={{ width: '86%', marginLeft: 34 }}>
                   <OfferCard actionId={a.id} offer={a.summary} />
+                </View>
+              ) : a.summary.tool === 'open_area' ? (
+                <View key={a.id} style={{ width: '86%', marginLeft: 34 }}>
+                  <AreaCard area={a.summary.area} />
                 </View>
               ) : null,
             )}

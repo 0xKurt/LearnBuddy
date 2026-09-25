@@ -17,7 +17,11 @@ export default defineConfig({
     locale: 'de-DE',
     timezoneId: 'Europe/Berlin',
     viewport: { width: 390, height: 844 },
-    launchOptions: { executablePath: process.env.LB_CHROMIUM ?? '/opt/pw-browsers/chromium' },
+    launchOptions: {
+      executablePath: process.env.LB_CHROMIUM ?? '/opt/pw-browsers/chromium',
+      // A fake microphone (a tone) so the conversation loop can run end to end.
+      args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
+    },
     screenshot: 'only-on-failure',
   },
   webServer: [

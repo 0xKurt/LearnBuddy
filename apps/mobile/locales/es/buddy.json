@@ -129,7 +129,8 @@
     "set_contact": "Mensajes solo de {{from}} a {{to}}, como máximo {{count}} por semana",
     "schedule_check": "Vuelvo a pasarme {{when}}",
     "offer_learning": "Propuesto: {{what}} – «{{text}}»",
-    "plan_step_agreed_in_app": "Acordado: {{title}} {{when}} – aparece aquí en la app (los mensajes al móvil están desactivados)"
+    "plan_step_agreed_in_app": "Acordado: {{title}} {{when}} – aparece aquí en la app (los mensajes al móvil están desactivados)",
+    "open_area": "Mostrado: {{what}}"
   },
   "intro": {
     "title": "Soy Buddy.",
@@ -148,5 +149,29 @@
     "exam_short": "Examen",
     "test": "Examen de prueba",
     "speak": "Pronunciación"
+  },
+  "area": {
+    "library": "Mi material",
+    "memory": "Lo que Buddy sabe de ti",
+    "settings": "Ajustes",
+    "history": "Todos los mensajes",
+    "capture": "Fotografiar una ficha",
+    "open": "Abrir",
+    "open_label": "Abrir {{what}}"
+  },
+  "talk": {
+    "open": "Hablar con Buddy",
+    "title": "Conversación",
+    "listening": "Te escucho.",
+    "listening_sub": "Di lo que necesitas.",
+    "tap_when_done": "Toca el micro cuando termines.",
+    "thinking": "Estoy pensando …",
+    "speaking": "Buddy está hablando …",
+    "paused": "Listo cuando tú quieras.",
+    "paused_sub": "Toca el micro y habla.",
+    "slow": "Está tardando más – la respuesta aparecerá en el chat.",
+    "end": "Terminar",
+    "speak": "Hablar",
+    "interrupt": "Interrumpir y hablar"
   }
 }

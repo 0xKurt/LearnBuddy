@@ -4,7 +4,7 @@ import { LB } from '../../lib/theme/colors.js';
 import { Icon } from './Icon.js';
 
 const LABEL_KEY: Record<
-  'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'camera' | 'keyboard',
+  'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'camera' | 'keyboard' | 'headphones',
   string
 > = {
   back: 'a11y.back',
@@ -15,6 +15,7 @@ const LABEL_KEY: Record<
   speak: 'a11y.speak',
   camera: 'a11y.camera',
   keyboard: 'a11y.keyboard',
+  headphones: 'a11y.talk',
 };
 
 export function CircleBtn({
@@ -22,11 +23,14 @@ export function CircleBtn({
   onPress,
   accessibilityLabel,
   accessibilityHint,
+  plain = false,
 }: {
-  icon: 'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'camera' | 'keyboard';
+  icon: 'back' | 'close' | 'more' | 'plus' | 'mic' | 'speak' | 'camera' | 'keyboard' | 'headphones';
   onPress?: () => void;
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  /** No ring or fill: an icon button inside another surface (the composer bar). */
+  plain?: boolean;
 }) {
   const { t } = useTranslation('common');
   const inner = (
@@ -35,14 +39,14 @@ export function CircleBtn({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#fff',
+        backgroundColor: plain ? 'transparent' : '#fff',
         borderColor: LB.hairline,
-        borderWidth: 1,
+        borderWidth: plain ? 0 : 1,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Icon name={icon} size={20} color={LB.ink} />
+      <Icon name={icon} size={plain ? 24 : 20} color={plain ? LB.ink2 : LB.ink} />
     </View>
   );
   if (!onPress) return inner;

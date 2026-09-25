@@ -107,6 +107,8 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
         what: i18n.t(`learn:${KIND_LABEL[a.kind]}`),
         text: a.text,
       });
+    case 'open_area':
+      return t('action.open_area', { what: t(`area.${a.area}`) });
     case 'schedule_check':
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),

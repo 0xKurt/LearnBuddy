@@ -167,7 +167,23 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
         actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Die Römer' } }],
       },
     },
+    {
+      json: {
+        reply: 'Klar – hier ist dein Stoff.',
+        options: null,
+        actions: [{ tool: 'open_area', args: { area: 'library' } }],
+      },
+    },
+    // Conversation mode: what she said (the fake microphone's tone, "heard" by the script).
+    {
+      json: {
+        reply: 'Diese Woche steht noch nichts an – magst du etwas üben?',
+        options: null,
+        actions: [],
+      },
+    },
   );
+  llm.script('transcribe', { json: { heard_speech: true, text: 'Was steht diese Woche an?' } });
   // Tutor: hints for homework (never the solution), and the explain question.
   const hint = (req: LlmRequest) => {
     const text = lastText(req).toLowerCase();
