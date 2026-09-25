@@ -63,7 +63,7 @@ export type ToolContext = {
   /** Learner's app language, for titles the server writes itself. */
   locale: string;
   /** Shared by all actions of one decision: what earlier actions created. */
-  created: { goalId: string | null };
+  created: { goalId: string | null; stepId: string | null };
 };
 
 export type UndoSpec =
@@ -498,6 +498,7 @@ export async function runTool(action: AnyAction, ctx: ToolContext): Promise<Tool
           ctx.now,
         ],
       );
+      ctx.created.stepId = step.id;
       return {
         summary: {
           tool: 'prepare_practice',
@@ -539,6 +540,7 @@ export async function runTool(action: AnyAction, ctx: ToolContext): Promise<Tool
          values ($1, $2, $3, $4, 'planned', $5, $6, $7) returning id, version`,
         [ctx.learnerId, goal?.id ?? null, a.kind, a.title, date, a.time, a.agreed],
       );
+      ctx.created.stepId = step.id;
       if (a.agreed) {
         const when =
           at ?? zonedToInstant(date, ctx.settings.preferred_start, ctx.settings.timezone);

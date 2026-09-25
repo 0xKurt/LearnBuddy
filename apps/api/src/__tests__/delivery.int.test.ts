@@ -4,7 +4,13 @@
 // docs/architecture.md §Delivery, §Background work. ADR 0004 §Reliability.
 // requires live verification in Claude Code session (needs a running Postgres)
 
-import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
+import { randomUUID } from 'node:crypto';
+
+import type {
+  BuddyHome,
+  SendMessageResponse,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -370,6 +376,80 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     expect(await outreachOf(env, l.learnerId)).toHaveLength(1);
   });
 
+  it('drops a planned "practice is ready" once the learner has done that practice', async () => {
+    await withPhone();
+    await seedExam(env, l.learnerId, { title: 'Mathearbeit', due: '2026-10-01', questions: 3 });
+    // 10:10 local: Buddy prepares practice and plans to say so in the preferred window (15:00).
+    env.clock.set('2026-09-28T08:10:00Z');
+    await env.db.query(
+      `update jobs set run_at = $2 where learner_id = $1 and payload ->> 'days_before' = '3'`,
+      [l.learnerId, env.clock.now()],
+    );
+    env.llm.script('buddy_check', {
+      json: {
+        disposition: 'act',
+        reason: 'test in 3 days: prepare a short practice',
+        actions: [
+          {
+            tool: 'prepare_practice',
+            args: { goal: 'g1', subject: null, minutes: 5, focus_topics: [] },
+          },
+        ],
+        outreach: {
+          kind: 'idea',
+          topic_key: 'exam:g1:prep',
+          title: 'Übung ist bereit',
+          body: 'Eine kurze Runde für Donnerstag liegt bereit.',
+          why: 'Die Arbeit ist bald.',
+          relevance: 0.9,
+          expires_in_hours: 12,
+          goal: 'g1',
+          step: 'new',
+        },
+      },
+    });
+    await tick(env);
+    const step = await env.db.one<{ id: string }>(
+      `select id from buddy_steps where learner_id = $1 and kind = 'practice' and state = 'prepared'`,
+      [l.learnerId],
+    );
+    const planned = await env.db.one<{ status: string; step_id: string }>(
+      `select status, step_id from buddy_outreach where learner_id = $1`,
+      [l.learnerId],
+    );
+    expect(planned).toEqual({ status: 'scheduled', step_id: step.id });
+    let home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.next.filter((i) => i.kind === 'message')).toHaveLength(1);
+
+    // The learner practises before 15:00.
+    env.clock.minutes(30);
+    const started = await l.api.post<{ session_id: string }>(`/buddy/steps/${step.id}/start`);
+    const session = started.body.session_id;
+    const view = (await l.api.get<SessionView>(`/practice/sessions/${session}`)).body;
+    for (const it of view.items) {
+      const res = await l.api.post(`/practice/sessions/${session}/answer`, {
+        client_turn_id: randomUUID(),
+        item_id: it.item.id,
+        text: it.item.prompt.replace('Frage', 'Antwort'),
+      });
+      expect(res.status).toBe(200);
+    }
+    env.llm.script('buddy_check', {
+      json: { disposition: 'wait', reason: 'just practised', actions: [], outreach: null },
+    });
+    expect((await l.api.post(`/practice/sessions/${session}/finish`)).status).toBe(200);
+    await env.flushBackground();
+    home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.next.filter((i) => i.kind === 'message')).toEqual([]);
+
+    // At 15:00 nothing goes out: the message is about practice that is done.
+    env.clock.set('2026-09-28T13:00:00Z');
+    await tick(env);
+    expect(env.push.sent).toHaveLength(0);
+    const [out] = await outreachOf(env, l.learnerId);
+    expect(out).toMatchObject({ status: 'cancelled', status_reason: 'obsolete' });
+  });
+
   it('holds and cancels planned messages when the learner pauses, without a backlog afterwards', async () => {
     await withPhone();
     await seedExam(env, l.learnerId, { title: 'Mathearbeit', due: '2026-10-01', questions: 6 });
@@ -387,6 +467,16 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     let [out] = await outreachOf(env, l.learnerId);
     expect(out).toMatchObject({ status: 'scheduled' });
     expect(out!.send_at!.toISOString()).toBe('2026-09-28T13:00:00.000Z');
+    // Planned, and visible as planned: the home lists it under what comes next.
+    let home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.next).toContainEqual(
+      expect.objectContaining({
+        kind: 'message',
+        title: 'Übung ist bereit',
+        date: '2026-09-28',
+        time: '15:00',
+      }),
+    );
 
     const s = await l.api.get<{ version: number }>('/buddy/settings');
     await l.api.patch('/buddy/settings', {
@@ -395,6 +485,8 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     });
     [out] = await outreachOf(env, l.learnerId);
     expect(out).toMatchObject({ status: 'cancelled', status_reason: 'paused' });
+    home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.next.filter((i) => i.kind === 'message')).toEqual([]);
     // During the pause the daily routine look is skipped without asking the model.
     env.clock.set('2026-09-29T13:00:00Z');
     await tick(env);

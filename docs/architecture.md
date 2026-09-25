@@ -149,7 +149,10 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
   one is unanswered (48 h). Agreed reminders go out at the agreed minute (quiet hours and pause
   apply, limits and avoided weekdays do not).
 - Rules are re-checked at send time; a message about something already done is cancelled.
-  Pausing cancels everything planned — nothing is sent in bulk afterwards.
+  A message is linked to its goal and step (`step: "new"` = the practice prepared in the same
+  decision), so "practice is ready" is dropped once that practice was done. Pausing cancels
+  everything planned — nothing is sent in bulk afterwards. Planned messages are listed on the
+  home under what comes next.
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device

@@ -1,4 +1,4 @@
-// What comes next: tests and planned steps, in date order.
+// What comes next: tests, planned steps and messages Buddy has planned, in date order.
 
 import type { UpcomingItem } from '@learnbuddy/shared-types/contracts';
 import { Text, View } from 'react-native';
@@ -31,7 +31,9 @@ export function NextList({ items }: { items: UpcomingItem[] }) {
             }}
           >
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[TYPE.body, { fontSize: 15 }]}>{it.title}</Text>
+              <Text style={[TYPE.body, { fontSize: 15 }]}>
+                {it.kind === 'message' ? t('next.message', { title: it.title }) : it.title}
+              </Text>
               {it.date ? <Text style={TYPE.small}>{whenText(it.date, it.time)}</Text> : null}
             </View>
             {it.kind === 'exam' ? <Chip tone="primary">{t('next.exam')}</Chip> : null}

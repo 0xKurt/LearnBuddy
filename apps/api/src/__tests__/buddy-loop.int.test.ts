@@ -280,7 +280,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
           relevance: 0.8,
           expires_in_hours: 24,
           goal: 'g1',
-          step: null,
+          step: 'new',
         },
       };
     });
@@ -557,7 +557,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
           relevance: 0.9,
           expires_in_hours: 12,
           goal: 'g1',
-          step: null,
+          step: 'new',
         },
       };
     });

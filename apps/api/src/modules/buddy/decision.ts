@@ -50,6 +50,13 @@ export const GoalTarget = z
     'goal alias from STATE (g1), or "new" for the test planned with plan_exam earlier in this same answer',
   );
 export const StepRef = alias('st', 'step');
+/** A step from STATE, or the practice/step created earlier in the same answer. */
+export const StepTarget = z
+  .string()
+  .regex(/^(st\d{1,3}|new)$/, 'must be a step alias like st1, or "new"')
+  .describe(
+    'step alias from STATE (st1), or "new" for the practice (prepare_practice) or step (plan_step) created earlier in this same answer',
+  );
 export const MemoryRef = alias('m', 'memory');
 export const SubjectRef = alias('f', 'subject');
 
@@ -341,7 +348,8 @@ export const Outreach = z.object({
   relevance: z.number().min(0).max(1),
   expires_in_hours: z.number().int().min(2).max(72),
   goal: GoalRef.nullable(),
-  step: StepRef.nullable(),
+  /** What the message is about: once that step is done or gone, the message is not sent. */
+  step: StepTarget.nullable(),
 });
 export type Outreach = z.infer<typeof Outreach>;
 

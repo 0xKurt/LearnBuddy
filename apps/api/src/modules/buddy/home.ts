@@ -66,7 +66,7 @@ export async function buildHome(
     now: nowCard,
     decision,
     done,
-    next: nextOf(state, today),
+    next: nextOf(state, today, now),
     thread: thread.messages,
     thread_has_more: thread.hasMore,
     system,
@@ -247,7 +247,7 @@ async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionV
   );
 }
 
-function nextOf(state: BuddyState, today: string): UpcomingItem[] {
+function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
   const items: UpcomingItem[] = [];
   for (const g of state.goals) {
     if (g.status !== 'active' || !g.due_date || daysBetween(today, g.due_date) < 0) continue;
@@ -273,6 +273,27 @@ function nextOf(state: BuddyState, today: string): UpcomingItem[] {
       time: s.planned_time,
       state: s.state,
       agreed: s.agreed,
+    });
+  }
+  // Messages Buddy has planned (not yet sent), unless their step is listed already. Like at
+  // sending time, one whose step is no longer open or whose goal is closed will not go out.
+  const listedSteps = new Set(items.filter((i) => i.kind === 'step').map((i) => i.id));
+  const openStep = (id: string) =>
+    state.steps.some((s) => s.id === id && (s.state === 'planned' || s.state === 'prepared'));
+  const activeGoal = (id: string) => state.goals.some((g) => g.id === id && g.status === 'active');
+  for (const o of state.outreach) {
+    if (o.status !== 'scheduled' || !o.send_at || o.send_at <= now) continue;
+    if (o.step_id && (listedSteps.has(o.step_id) || !openStep(o.step_id))) continue;
+    if (o.goal_id && !activeGoal(o.goal_id)) continue;
+    const at = localParts(o.send_at, state.settings.timezone);
+    items.push({
+      kind: 'message',
+      id: o.id,
+      title: o.title,
+      date: at.date,
+      time: at.time,
+      state: o.status,
+      agreed: o.origin === 'agreed',
     });
   }
   return items

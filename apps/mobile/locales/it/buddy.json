@@ -70,7 +70,8 @@
   "next": {
     "title": "In arrivo",
     "agreed": "concordato",
-    "exam": "Verifica"
+    "exam": "Verifica",
+    "message": "Buddy ti scriverà: «{{title}}»"
   },
   "thread": {
     "title": "Chat con Buddy",

@@ -81,7 +81,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
       if (settings.context_version !== input.contextVersion) throw new StaleDecision();
 
       const outcomes: Array<{ action: AnyAction; outcome: ToolOutcome }> = [];
-      const created = { goalId: null as string | null };
+      const created = { goalId: null as string | null, stepId: null as string | null };
       for (const [i, action] of input.actions.entries()) {
         try {
           // Settings may be changed by an earlier action of the same decision.
@@ -200,9 +200,12 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           goalId: input.outreach.goal
             ? (input.aliases.goals.get(input.outreach.goal)?.id ?? null)
             : null,
-          stepId: input.outreach.step
-            ? (input.aliases.steps.get(input.outreach.step)?.id ?? null)
-            : null,
+          stepId:
+            input.outreach.step === 'new'
+              ? created.stepId
+              : input.outreach.step
+                ? (input.aliases.steps.get(input.outreach.step)?.id ?? null)
+                : null,
         });
       }
 

@@ -130,7 +130,7 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
         relevance: 0.8,
         expires_in_hours: 24,
         goal: 'g1',
-        step: null,
+        step: 'new',
       },
     },
   });

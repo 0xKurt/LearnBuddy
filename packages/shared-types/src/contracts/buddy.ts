@@ -203,7 +203,8 @@ export const Decision = z.discriminatedUnion('type', [
 export type Decision = z.infer<typeof Decision>;
 
 export const UpcomingItem = z.object({
-  kind: z.enum(['exam', 'step']),
+  /** 'message': a message Buddy has planned to send (its title), not yet sent. */
+  kind: z.enum(['exam', 'step', 'message']),
   id: Uuid,
   title: z.string(),
   date: LocalDate.nullable(),

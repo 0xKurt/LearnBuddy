@@ -70,7 +70,8 @@
   "next": {
     "title": "Was als Nächstes kommt",
     "agreed": "abgemacht",
-    "exam": "Arbeit"
+    "exam": "Arbeit",
+    "message": "Buddy meldet sich: „{{title}}“"
   },
   "thread": {
     "title": "Chat mit Buddy",

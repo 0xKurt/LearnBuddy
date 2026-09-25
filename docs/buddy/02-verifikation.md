@@ -47,6 +47,7 @@ Anmeldung und Foto-Speicher, dazu eine gemeinsame Test-Uhr.
 - Ohne Modell → feste, übersetzte Ersatzabläufe (vorbereitete Übung vor der Arbeit).
 - Material → unlesbare Fotos, begrenzte Wiederholungen, Zeitüberschreitung beim Anbieter, Löschung entfernt Fotos sofort; Fotos werden nach 7 Tagen gelöscht.
 - Abgebrochenes Senden → Fotos, die nie ganz ankamen, gelten nicht als „wird gelesen“ (Buddy bittet weiter um das Foto); nach einem Tag wird der Rest weggeräumt und angekommene Fotos sofort gelöscht. Dasselbe Senden nach Erfolg nochmal → kein zweiter Upload.
+- Geplante Nachrichten → stehen vorher unter „Was als Nächstes kommt“; „Übung ist bereit“ wird nicht mehr verschickt, wenn die Übung schon gemacht ist.
 - Warten auf Buddy → Solange Buddy auf die eigenen Fotos oder eine gerade beendete Übung reagiert, zeigt die Startseite das an. Ist das Modell in dem Moment kurz weg, bereitet der feste Ersatzablauf die Übung sofort vor, statt erst zehn Minuten später.
 - Übung ohne Modell → nichts wird bewertet; Hilferufe sind keine Antworten; Tipps und Auflösen zählen ehrlich.
 - Datenschutz → Export, Löschung mit 7-Tage-Frist und Abbruch, vollständige Kaskade.

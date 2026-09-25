@@ -116,7 +116,8 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Senden' }).click();
 
   // ── Buddy acts on it by itself: reads it, prepares practice, says so ──
-  // (Its message about it waits for Mia's preferred time; here in the app the card says it now.)
+  // Here in the app the card says it now; the message about it is planned for Mia's preferred
+  // time and visible as planned — and dropped once she has practised.
   await expect(page.getByText(/Übung bereit: /)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(/Vorbereitet: .* – 4 Aufgaben/)).toBeVisible();
   await shot(page, '09-buddy-prepared');
