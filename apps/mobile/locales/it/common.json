@@ -21,5 +21,30 @@
     "edit": "Modifica"
   },
   "loading": "Un momento…",
-  "offline": "Nessuna connessione – riprovo tra poco."
+  "offline": "Nessuna connessione – riprovo tra poco.",
+  "voice": {
+    "message": "Detta un messaggio",
+    "answer": "Di' la tua risposta",
+    "hint": "Tocca, parla e tocca di nuovo. Al massimo un minuto.",
+    "stop": "Ferma la registrazione",
+    "stop_hint": "Poi scrivo quello che hai detto.",
+    "recording": "Ti ascolto … {{time}} / {{max}}",
+    "recording_value": "Registrazione in corso, {{time}} di {{max}}",
+    "transcribing": "Sto scrivendo quello che hai detto …",
+    "denied": "Senza microfono non posso sentirti. Puoi consentirlo nelle Impostazioni.",
+    "denied_web": "Senza microfono non posso sentirti. Consentilo in alto nel browser, poi tocca di nuovo il microfono.",
+    "open_settings": "Apri Impostazioni",
+    "problem": {
+      "empty": "Non ti ho capito – di nuovo?",
+      "too_short": "È stato molto breve. Tocca il microfono, parla con calma e poi tocca di nuovo.",
+      "unsupported": "Non riesco a leggere questa registrazione. Riprova, per favore.",
+      "failed": "La registrazione non è riuscita. Riprova, per favore."
+    },
+    "mode": "Modalità voce",
+    "mode_hint": "Buddy ti legge ad alta voce e tu rispondi con il microfono.",
+    "mode_on": "Ti leggo ad alta voce – rispondi con il microfono.",
+    "read_again": "Rileggi",
+    "say_it": "Tocca il microfono e dillo e basta.",
+    "or_say": "Oppure di' la tua risposta."
+  }
 }

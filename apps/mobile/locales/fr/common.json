@@ -21,5 +21,30 @@
     "edit": "Modifier"
   },
   "loading": "Un instant…",
-  "offline": "Pas de connexion – je réessaie dans un instant."
+  "offline": "Pas de connexion – je réessaie dans un instant.",
+  "voice": {
+    "message": "Dicter un message",
+    "answer": "Dire ta réponse",
+    "hint": "Touche, parle et touche encore. Une minute au maximum.",
+    "stop": "Arrêter l'enregistrement",
+    "stop_hint": "Ensuite, j'écris ce que tu as dit.",
+    "recording": "Je t'écoute … {{time}} / {{max}}",
+    "recording_value": "Enregistrement en cours, {{time}} sur {{max}}",
+    "transcribing": "J'écris ce que tu as dit …",
+    "denied": "Sans micro, je ne peux pas t'entendre. Tu peux l'autoriser dans les réglages.",
+    "denied_web": "Sans micro, je ne peux pas t'entendre. Autorise-le en haut de ton navigateur, puis touche à nouveau le micro.",
+    "open_settings": "Ouvrir les réglages",
+    "problem": {
+      "empty": "Je ne t'ai pas compris – encore une fois ?",
+      "too_short": "C'était très court. Touche le micro, parle tranquillement, puis touche encore.",
+      "unsupported": "Je ne peux pas lire cet enregistrement. Réessaie, s'il te plaît.",
+      "failed": "L'enregistrement n'a pas marché. Réessaie, s'il te plaît."
+    },
+    "mode": "Mode vocal",
+    "mode_hint": "Buddy te lit les textes, et tu réponds avec le micro.",
+    "mode_on": "Je te lis tout – réponds avec le micro.",
+    "read_again": "Relire",
+    "say_it": "Touche le micro et dis-le simplement.",
+    "or_say": "Ou dis ta réponse."
+  }
 }

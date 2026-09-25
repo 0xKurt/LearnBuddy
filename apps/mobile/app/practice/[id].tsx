@@ -7,14 +7,23 @@
 // Modes: explain shows Buddy's explanation first (and keeps it one tap away);
 // help (homework) never offers the solution – a solved task says she found it
 // herself. Questions Buddy wrote (origin 'buddy') carry a small tag.
+//
+// Voice mode ("Sprachmodus", the headphones switch in the header): each new
+// question is read aloud (choices as "A: …, B: …", a vocab prompt in its own
+// language), and so is Buddy's reply with the verdict word after every answer.
+// The mic is the main control; reading stops when she starts speaking or
+// leaves. The microphone itself only ever starts with her tap.
 
 import type {
   AnswerResponse,
+  ItemView,
+  PracticeTurnView,
   SessionItemView,
   SessionView,
 } from '@learnbuddy/shared-types/contracts';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import type { TFunction } from 'i18next';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AccessibilityInfo,
@@ -33,9 +42,10 @@ import { LoadingState } from '../../components/lb/LoadingState.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { Sheet } from '../../components/lb/Sheet.js';
 import { toast } from '../../components/lb/Toast.js';
+import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
-import { ChoiceList } from '../../components/practice/ChoiceList.js';
+import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
 import { ExplainCard, ExplainText } from '../../components/practice/ExplainCard.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
@@ -47,12 +57,17 @@ import {
   SpeakCard,
   SpeakPanel,
 } from '../../components/practice/SpeakPanel.js';
+import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
 import { ApiError, newId } from '../../lib/api/client.js';
 import { answerItem, finishSession, revealItem } from '../../lib/api/endpoints.js';
 import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import type { SpokenWords } from '../../lib/math/speak.js';
+import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/speech/listen.js';
+import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
+import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 
 type AnswerInput = { text: string } | { choice: number };
 
@@ -68,6 +83,37 @@ type SentAnswer = {
 function foreign(lang: string | null): lang is string {
   const base = baseLanguage(lang);
   return base !== null && base !== currentLocale();
+}
+
+/** What voice mode reads when a question appears (never the topic). */
+function questionParts(item: ItemView, words: SpokenWords, t: TFunction): SpokenPart[] {
+  const app = currentLocale();
+  switch (item.kind) {
+    case 'speak':
+      return [
+        { text: t('practice:speak.instruction'), lang: app },
+        { text: item.prompt, lang: item.lang ?? item.prompt_lang ?? app },
+      ];
+    case 'vocab':
+      return [{ text: spokenText(item.prompt, words), lang: item.prompt_lang ?? app }];
+    default:
+      return [
+        {
+          text: questionReadText(
+            item.prompt,
+            item.kind === 'multiple_choice' ? item.choices : null,
+            words,
+          ),
+          lang: app,
+        },
+      ];
+  }
+}
+
+/** The verdict word read before Buddy's reply (as ItemThread shows it); none for "not an attempt". */
+function verdictWordKey(verdict: PracticeTurnView['verdict']): string | null {
+  if (verdict === 'not_an_attempt') return null;
+  return `practice:verdict.${verdict ?? 'unchecked'}`;
 }
 
 function backToBuddy(): void {
@@ -121,6 +167,35 @@ export default function PracticeScreen() {
   const scroll = useRef<ScrollView>(null);
 
   const session = query.data;
+  const voiceOn = useVoiceMode((s) => s.on);
+  const words = useSpokenWords();
+
+  // Voice mode: a question is read aloud once when it appears (or when voice mode is switched on).
+  const onScreen = session ? questionOnScreen(session, pinnedId) : null;
+  const introWaiting =
+    session !== undefined &&
+    session.mode === 'explain' &&
+    (session.intro?.trim() ?? '') !== '' &&
+    !introRead &&
+    !(session.items.some((i) => i.status !== 'open') || session.turns.length > 0);
+  const toRead = onScreen && onScreen.status === 'open' && !introWaiting ? onScreen.item : null;
+  const readQuestion = (item: ItemView) => speakInOrder(questionParts(item, words, t));
+  useEffect(() => {
+    if (voiceOn && toRead) readQuestion(toRead);
+    // Only a new question (or switching voice mode on) reads again; "Nochmal vorlesen" repeats it.
+  }, [voiceOn, toRead?.id]);
+
+  // Leaving the screen ends whatever is being read.
+  useFocusEffect(useCallback(() => () => stopListening(), []));
+
+  /** Voice mode: Buddy's reaction after an answer, with the verdict word first. */
+  function readFeedback(res: AnswerResponse): void {
+    if (!useVoiceMode.getState().on) return;
+    const key = verdictWordKey(res.verdict);
+    const text = feedbackReadText(key ? t(key) : null, res.reply.text, words);
+    speakInOrder([{ text, lang: currentLocale() }]);
+  }
+
   const nothingOpen =
     session?.status === 'active' && session.items.every((i) => i.status !== 'open');
 
@@ -195,7 +270,8 @@ export default function PracticeScreen() {
       if (answerText !== null) setText((current) => (current.trim() === answerText ? '' : current));
       if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
         Keyboard.dismiss();
-      AccessibilityInfo.announceForAccessibility(res.reply.text);
+      if (useVoiceMode.getState().on) readFeedback(res);
+      else AccessibilityInfo.announceForAccessibility(res.reply.text);
     } catch (err) {
       // The typed answer stays in the field, so trying again is one tap.
       toast.show(messageFor(err), 'error');
@@ -214,6 +290,7 @@ export default function PracticeScreen() {
   async function spoke(itemId: string, res: AnswerResponse): Promise<void> {
     setPinnedId(itemId);
     await store(res.session);
+    readFeedback(res);
   }
 
   async function reveal(itemId: string): Promise<void> {
@@ -336,15 +413,18 @@ export default function PracticeScreen() {
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
-    <Btn
-      variant="ghost"
-      onPress={() => void close()}
-      disabled={closing}
-      accessibilityLabel={t('practice:end_label')}
-      accessibilityHint={t('practice:end_hint')}
-    >
-      {t('practice:end')}
-    </Btn>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <VoiceModeToggle />
+      <Btn
+        variant="ghost"
+        onPress={() => void close()}
+        disabled={closing}
+        accessibilityLabel={t('practice:end_label')}
+        accessibilityHint={t('practice:end_hint')}
+      >
+        {t('practice:end')}
+      </Btn>
+    </View>
   );
 
   // ─────────────── explain: the explanation first ───────────────
@@ -389,8 +469,7 @@ export default function PracticeScreen() {
   // Once there is a conversation (or the solution), keep its newest part in view.
   const followEnd = turns.length > 0 || pendingText !== null || !open;
 
-  function check(): void {
-    const value = text.trim();
+  function check(value: string): void {
     if (value) void answer(item.id, { text: value }, value);
   }
 
@@ -406,7 +485,7 @@ export default function PracticeScreen() {
           contentContainerStyle={{
             padding: 16,
             gap: 16,
-            paddingBottom: open && !typed && !speaking ? insets.bottom + 24 : 16,
+            paddingBottom: open && !typed && !speaking && !voiceOn ? insets.bottom + 24 : 16,
           }}
           onContentSizeChange={() => {
             if (followEnd) scroll.current?.scrollToEnd({ animated: true });
@@ -437,6 +516,11 @@ export default function PracticeScreen() {
               fromBuddy={item.origin === 'buddy'}
             />
           )}
+          {voiceOn && open ? (
+            <Btn size="sm" variant="outline" icon="speak" onPress={() => readQuestion(item)}>
+              {t('common:voice.read_again')}
+            </Btn>
+          ) : null}
           {item.kind === 'vocab' && foreign(item.prompt_lang) ? (
             <ListenButton text={item.prompt} lang={item.prompt_lang} />
           ) : null}
@@ -467,11 +551,19 @@ export default function PracticeScreen() {
             kind={item.kind}
             prompt={item.prompt}
             unit={item.unit}
+            lang={item.kind === 'vocab' ? item.lang : null}
             value={text}
             disabled={locked}
             onChange={setText}
             onCheck={check}
             onReveal={canReveal ? () => void reveal(item.id) : undefined}
+          />
+        ) : null}
+        {open && choices && voiceOn ? (
+          <SpokenChoiceBar
+            prompt={item.prompt}
+            disabled={locked}
+            onText={(said) => void answer(item.id, { text: said }, said)}
           />
         ) : null}
         {open && speaking ? (

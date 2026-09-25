@@ -1,10 +1,12 @@
 // The one screen: what matters now, the one open decision, what Buddy did,
 // what comes next, and the conversation. docs/architecture.md §Home.
 // Taps are direct API calls (no model); only free text goes to Buddy.
+// Voice mode (headphones switch next to the menu): Buddy's reply to what she
+// just sent is read aloud, and the mic is the composer's main control.
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -36,6 +38,8 @@ import { LoadingState } from '../components/lb/LoadingState.js';
 import { Section } from '../components/lb/Section.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
+import { useSpokenWords } from '../components/math/useSpokenMath.js';
+import { VoiceModeToggle } from '../components/voice/VoiceModeToggle.js';
 import { requestAdmin } from '../lib/adminFlow.js';
 import { ApiError, newId } from '../lib/api/client.js';
 import {
@@ -49,7 +53,11 @@ import {
 } from '../lib/api/endpoints.js';
 import { keys, queryClient, setHome, useHome } from '../lib/api/queries.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
+import { currentLocale } from '../lib/i18n/index.js';
 import { registerDeviceForPush } from '../lib/push.js';
+import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
+import { replyAfter, spokenText } from '../lib/speech/spoken.js';
+import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
@@ -69,6 +77,25 @@ export default function BuddyScreen() {
   const scroll = useRef<ScrollView>(null);
   // After sending, follow the conversation to its end once the new content has rendered.
   const followEnd = useRef(false);
+  const voiceOn = useVoiceMode((s) => s.on);
+  const words = useSpokenWords();
+  /** The message she sent last whose reply hasn't been read aloud yet (voice mode). */
+  const awaitingReply = useRef<string | null>(null);
+
+  // Voice mode: Buddy's reply to what she just sent is read aloud once it is there
+  // (right with the answer, or later when a slow turn finishes).
+  const thread = home.data?.thread;
+  useEffect(() => {
+    const sent = awaitingReply.current;
+    if (!sent || !thread) return;
+    const reply = replyAfter(thread, sent);
+    if (!reply) return;
+    awaitingReply.current = null;
+    if (voiceOn) speakInOrder([{ text: spokenText(reply.text, words), lang: currentLocale() }]);
+  }, [thread, voiceOn, words]);
+
+  // Going to another screen ends whatever is being read.
+  useFocusEffect(useCallback(() => () => stopListening(), []));
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: keys.home });
 
@@ -98,6 +125,7 @@ export default function BuddyScreen() {
   ) {
     setPending({ id: clientMessageId, text });
     followEnd.current = true;
+    awaitingReply.current = clientMessageId;
     try {
       const res = await sendMessage(text, clientMessageId, replyToId);
       setHome(res.home);
@@ -192,11 +220,14 @@ export default function BuddyScreen() {
             <Text accessibilityRole="header" style={TYPE.display}>
               {t('buddy:greeting', { name: h.learner.name })}
             </Text>
-            <CircleBtn
-              icon="more"
-              onPress={() => setMenuOpen(true)}
-              accessibilityLabel={t('buddy:menu.open')}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <VoiceModeToggle />
+              <CircleBtn
+                icon="more"
+                onPress={() => setMenuOpen(true)}
+                accessibilityLabel={t('buddy:menu.open')}
+              />
+            </View>
           </View>
 
           {!h.system.model ? <Banner tone="warning">{t('buddy:system.no_model')}</Banner> : null}
@@ -247,7 +278,12 @@ export default function BuddyScreen() {
 
           <StartRow onPick={pick} />
 
-          <DoneList actions={h.done} busy={busy} onUndo={(id) => void act(() => undoAction(id))} />
+          <DoneList
+            actions={h.done}
+            contactOn={h.system.contact_enabled}
+            busy={busy}
+            onUndo={(id) => void act(() => undoAction(id))}
+          />
           <NextList items={h.next} />
 
           {messages.length === 0 && !shownPending ? (
@@ -290,6 +326,7 @@ export default function BuddyScreen() {
               }
             >
               <Conversation
+                contactOn={h.system.contact_enabled}
                 messages={messages}
                 pending={shownPending}
                 busy={busy || pending !== null}

@@ -130,7 +130,8 @@
     "set_contact_pause": "Nessun messaggio fino a {{date}} compreso",
     "set_contact": "Messaggi solo dalle {{from}} alle {{to}}, al massimo {{count}} a settimana",
     "schedule_check": "Torno a fare un salto {{when}}",
-    "offer_learning": "Proposto: {{what}} – «{{text}}»"
+    "offer_learning": "Proposto: {{what}} – «{{text}}»",
+    "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)"
   },
   "intro": {
     "title": "Sono Buddy.",

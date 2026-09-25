@@ -130,7 +130,8 @@
     "set_contact_pause": "No messages until {{date}} (inclusive)",
     "set_contact": "Messages only between {{from}} and {{to}}, at most {{count}}× a week",
     "schedule_check": "I'll check in again {{when}}",
-    "offer_learning": "Offered: {{what}} – “{{text}}”"
+    "offer_learning": "Offered: {{what}} – “{{text}}”",
+    "plan_step_agreed_in_app": "Agreed: {{title}} {{when}} – shows up here in the app (messages to your phone are off)"
   },
   "intro": {
     "title": "I'm Buddy.",

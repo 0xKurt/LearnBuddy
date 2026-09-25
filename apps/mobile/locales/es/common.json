@@ -21,5 +21,30 @@
     "edit": "Cambiar"
   },
   "loading": "Un momento…",
-  "offline": "Sin conexión. Vuelvo a intentarlo enseguida."
+  "offline": "Sin conexión. Vuelvo a intentarlo enseguida.",
+  "voice": {
+    "message": "Dictar un mensaje",
+    "answer": "Decir tu respuesta",
+    "hint": "Toca, habla y vuelve a tocar. Como mucho un minuto.",
+    "stop": "Parar la grabación",
+    "stop_hint": "Después escribo lo que has dicho.",
+    "recording": "Te escucho … {{time}} / {{max}}",
+    "recording_value": "Grabando, {{time}} de {{max}}",
+    "transcribing": "Estoy escribiendo lo que has dicho …",
+    "denied": "Sin micrófono no puedo oírte. Puedes permitirlo en los Ajustes.",
+    "denied_web": "Sin micrófono no puedo oírte. Permítelo arriba en tu navegador y vuelve a tocar el micro.",
+    "open_settings": "Abrir Ajustes",
+    "problem": {
+      "empty": "No te he entendido – ¿otra vez?",
+      "too_short": "Ha sido muy corto. Toca el micro, habla con calma y vuelve a tocar.",
+      "unsupported": "No puedo leer esta grabación. Inténtalo otra vez, por favor.",
+      "failed": "La grabación no ha funcionado. Inténtalo otra vez, por favor."
+    },
+    "mode": "Modo voz",
+    "mode_hint": "Buddy te lee en voz alta y tú respondes con el micro.",
+    "mode_on": "Te leo en voz alta – responde con el micro.",
+    "read_again": "Leer otra vez",
+    "say_it": "Toca el micro y dilo sin más.",
+    "or_say": "O di tu respuesta."
+  }
 }

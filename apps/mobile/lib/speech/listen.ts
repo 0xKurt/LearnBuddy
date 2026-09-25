@@ -72,3 +72,21 @@ export function stop(): void {
   current?.onEnd('stopped');
   Speech.stop().catch(() => undefined);
 }
+
+export type SpokenPart = { text: string; lang: string };
+
+/**
+ * Reads several parts one after another, each in its own language (an
+ * instruction in the app language, then the sentence in French). Stopping,
+ * or reading something else, ends the whole sequence.
+ */
+export function speakInOrder(parts: readonly SpokenPart[]): void {
+  const rest = parts.filter((p) => p.text.trim().length > 0);
+  const first = rest[0];
+  if (!first) return;
+  void speak(first.text, first.lang, {
+    onEnd: (why) => {
+      if (why === 'done') speakInOrder(rest.slice(1));
+    },
+  });
+}

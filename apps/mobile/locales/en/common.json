@@ -21,5 +21,30 @@
     "edit": "Change"
   },
   "loading": "One moment …",
-  "offline": "No connection – I'll try again shortly."
+  "offline": "No connection – I'll try again shortly.",
+  "voice": {
+    "message": "Speak a message",
+    "answer": "Say your answer",
+    "hint": "Tap, speak and tap again. One minute at most.",
+    "stop": "Stop recording",
+    "stop_hint": "Then I'll write down what you said.",
+    "recording": "I'm listening … {{time}} / {{max}}",
+    "recording_value": "Recording, {{time}} of {{max}}",
+    "transcribing": "I'm writing down what you said …",
+    "denied": "I can't hear you without the microphone. You can allow it in Settings.",
+    "denied_web": "I can't hear you without the microphone. Allow it at the top of your browser, then tap the mic again.",
+    "open_settings": "Open Settings",
+    "problem": {
+      "empty": "I didn't catch that – try again?",
+      "too_short": "That was very short. Tap the mic, take your time speaking, then tap again.",
+      "unsupported": "I can't read this recording, sorry. Please try again.",
+      "failed": "The recording didn't work. Please try again."
+    },
+    "mode": "Voice mode",
+    "mode_hint": "Buddy reads aloud to you, and you answer with the mic.",
+    "mode_on": "I'll read aloud to you – answer with the mic.",
+    "read_again": "Read it again",
+    "say_it": "Tap the mic and just say it.",
+    "or_say": "Or say your answer."
+  }
 }

@@ -99,4 +99,27 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await shot(page, '25-practice-fractions');
+
+  // ── Voice mode: switched on in the practice header, still on at Buddy ──
+  // (Recording can't run in headless Chromium; this checks the controls and the layout.)
+  const voiceSwitch = page.getByRole('switch', { name: 'Sprachmodus' });
+  await expect(voiceSwitch).toHaveAttribute('aria-checked', 'false');
+  // Multiple choice: the mic only joins the options in voice mode.
+  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
+  await voiceSwitch.click();
+  await expect(voiceSwitch).toHaveAttribute('aria-checked', 'true');
+  const explained = page.getByText('Ich lese dir vor – antworte mit dem Mikro.');
+  await expect(explained).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
+  await expect(explained).toBeHidden({ timeout: 8000 });
+  await shot(page, '27-practice-voice-mode', 844);
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
+  await expect(page.getByText('Hallo Lena')).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Sprachmodus' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
+  await shot(page, '26-buddy-voice-mode', 844);
 });

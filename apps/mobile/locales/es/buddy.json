@@ -130,7 +130,8 @@
     "set_contact_pause": "Sin mensajes hasta el {{date}} inclusive",
     "set_contact": "Mensajes solo de {{from}} a {{to}}, como máximo {{count}} por semana",
     "schedule_check": "Vuelvo a pasarme {{when}}",
-    "offer_learning": "Propuesto: {{what}} – «{{text}}»"
+    "offer_learning": "Propuesto: {{what}} – «{{text}}»",
+    "plan_step_agreed_in_app": "Acordado: {{title}} {{when}} – aparece aquí en la app (los mensajes al móvil están desactivados)"
   },
   "intro": {
     "title": "Soy Buddy.",

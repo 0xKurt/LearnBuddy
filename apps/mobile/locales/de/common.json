@@ -21,5 +21,30 @@
     "edit": "Ändern"
   },
   "loading": "Einen Moment …",
-  "offline": "Keine Verbindung – ich versuche es gleich wieder."
+  "offline": "Keine Verbindung – ich versuche es gleich wieder.",
+  "voice": {
+    "message": "Nachricht sprechen",
+    "answer": "Antwort sagen",
+    "hint": "Tipp, sprich und tipp nochmal. Höchstens eine Minute.",
+    "stop": "Aufnahme stoppen",
+    "stop_hint": "Danach schreibe ich auf, was du gesagt hast.",
+    "recording": "Ich höre zu … {{time}} / {{max}}",
+    "recording_value": "Aufnahme läuft, {{time}} von {{max}}",
+    "transcribing": "Ich schreibe auf, was du gesagt hast …",
+    "denied": "Ohne Mikrofon kann ich dich nicht hören. Du kannst es in den Einstellungen erlauben.",
+    "denied_web": "Ohne Mikrofon kann ich dich nicht hören. Erlaube es oben in deinem Browser und tipp dann nochmal aufs Mikro.",
+    "open_settings": "Einstellungen öffnen",
+    "problem": {
+      "empty": "Ich hab dich nicht verstanden – nochmal?",
+      "too_short": "Das war ganz kurz. Tipp aufs Mikro, sprich in Ruhe und tipp dann nochmal.",
+      "unsupported": "Diese Aufnahme kann ich leider nicht lesen. Versuch es bitte nochmal.",
+      "failed": "Die Aufnahme hat nicht geklappt. Versuch es bitte nochmal."
+    },
+    "mode": "Sprachmodus",
+    "mode_hint": "Buddy liest dir vor, und du antwortest mit dem Mikro.",
+    "mode_on": "Ich lese dir vor – antworte mit dem Mikro.",
+    "read_again": "Nochmal vorlesen",
+    "say_it": "Tipp aufs Mikro und sag es einfach.",
+    "or_say": "Oder sag deine Antwort."
+  }
 }

@@ -110,11 +110,13 @@ export function speakMimeForFile(uri: string): SpeakMime | null {
   }
 }
 
-/** Longest recording (SpeakRequest: ≤ 15 s). */
+/** Longest pronunciation recording (SpeakRequest: ≤ 15 s). */
 export const MAX_RECORDING_MS = 15_000;
+/** Longest spoken message or answer (TranscribeRequest: ≤ ~60 s). */
+export const MAX_DICTATION_MS = 60_000;
 /** Shorter than this is a tap, not a sentence. */
 export const MIN_RECORDING_MS = 600;
-/** SpeakRequest.audio_base64 limits. */
+/** SpeakRequest/TranscribeRequest.audio_base64 limits (60 s at 48 kbit/s is ~480 000). */
 export const MAX_AUDIO_BASE64 = 1_400_000;
 export const MIN_AUDIO_BASE64 = 100;
 

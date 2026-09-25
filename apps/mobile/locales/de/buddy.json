@@ -130,7 +130,8 @@
     "set_contact_pause": "Keine Nachrichten bis einschließlich {{date}}",
     "set_contact": "Nachrichten nur zwischen {{from}} und {{to}} Uhr, höchstens {{count}}× pro Woche",
     "schedule_check": "Ich schaue {{when}} wieder vorbei",
-    "offer_learning": "Angeboten: {{what}} – „{{text}}“"
+    "offer_learning": "Angeboten: {{what}} – „{{text}}“",
+    "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Nachrichten aufs Handy sind aus)"
   },
   "intro": {
     "title": "Ich bin Buddy.",

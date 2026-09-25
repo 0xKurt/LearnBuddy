@@ -1,6 +1,7 @@
 // Recording one spoken sentence (expo-audio): the microphone is asked for
 // only when the learner taps record, the recording stops by itself after
-// 15 s, and it is handed over as base64 for SpeakRequest. The file itself is
+// maxMs (15 s for pronunciation, 60 s for a spoken message or answer), and it
+// is handed over as base64 for SpeakRequest / TranscribeRequest. The file itself is
 // deleted from the device right after reading it; nothing is kept.
 
 import {
@@ -57,6 +58,11 @@ type Handlers = {
   onFailed: (why: RecordFailure) => void;
 };
 
+type Options = Handlers & {
+  /** The recording stops by itself after this long (default 15 s, SpeakRequest's limit). */
+  maxMs?: number;
+};
+
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -100,7 +106,7 @@ async function allowRecording(allowed: boolean): Promise<void> {
   }
 }
 
-export function useRecording({ onRecorded, onFailed }: Handlers) {
+export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }: Options) {
   const recorder = useAudioRecorder(SPEECH_RECORDING);
   const state = useAudioRecorderState(recorder, 250);
   const [phase, setPhaseState] = useState<RecordPhase>('idle');
@@ -112,6 +118,8 @@ export function useRecording({ onRecorded, onFailed }: Handlers) {
   const mounted = useRef(true);
   const handlers = useRef<Handlers>({ onRecorded, onFailed });
   handlers.current = { onRecorded, onFailed };
+  const maxRef = useRef(maxMs);
+  maxRef.current = maxMs;
 
   const setPhase = useCallback((p: RecordPhase) => {
     phaseRef.current = p;
@@ -156,7 +164,7 @@ export function useRecording({ onRecorded, onFailed }: Handlers) {
           handlers.current.onRecorded({
             uri,
             mime: read.mime,
-            durationMs: Math.min(durationMs, MAX_RECORDING_MS),
+            durationMs: Math.min(durationMs, maxRef.current),
             base64: read.base64,
           });
         }
@@ -191,7 +199,7 @@ export function useRecording({ onRecorded, onFailed }: Handlers) {
       recorder.record();
       startedAt.current = Date.now();
       setPhase('recording');
-      limit.current = setTimeout(() => void finish(true), MAX_RECORDING_MS);
+      limit.current = setTimeout(() => void finish(true), maxRef.current);
     } catch {
       await allowRecording(false);
       handlers.current.onFailed('failed');
@@ -220,7 +228,9 @@ export function useRecording({ onRecorded, onFailed }: Handlers) {
   return {
     phase,
     /** Milliseconds recorded so far (for the timer). */
-    elapsedMs: phase === 'recording' ? Math.min(state.durationMillis, MAX_RECORDING_MS) : 0,
+    elapsedMs: phase === 'recording' ? Math.min(state.durationMillis, maxMs) : 0,
+    /** The longest this recording can get (for "0:07 / 1:00"). */
+    maxMs,
     denied,
     start,
     stop,

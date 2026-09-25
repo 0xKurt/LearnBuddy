@@ -17,6 +17,7 @@ import {
   SendMessageResponse,
   SessionView,
   StartStepResponse,
+  TranscribeResponse,
   type AnswerRequest,
   type AppLocale,
   type CreateLearnerRequest,
@@ -24,6 +25,7 @@ import {
   type SpeakRequest,
   type StartPracticeRequest,
   type StartTopicRequest,
+  type TranscribeRequest,
   type UpdateBuddySettingsRequest,
   type UpdateLearnerRequest,
   type UpdateMemoryRequest,
@@ -156,3 +158,9 @@ export const revealItem = (id: string, itemId: string) =>
   });
 export const finishSession = (id: string) =>
   request('POST', `/practice/sessions/${id}/finish`, { schema: SessionView });
+
+// ─────────────── voice ───────────────
+
+/** Speech to text for a spoken message or answer (≤ ~60 s); '' when nothing was understood. */
+export const transcribe = (body: TranscribeRequest) =>
+  request('POST', '/voice/transcribe', { body, schema: TranscribeResponse });

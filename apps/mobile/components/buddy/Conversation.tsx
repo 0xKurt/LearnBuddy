@@ -19,12 +19,15 @@ type Props = {
   pending: { text: string } | null;
   busy: boolean;
   showActions?: boolean;
+  /** Whether Buddy may message her phone (agreed reminders say where they arrive). */
+  contactOn?: boolean;
   onOption: (messageId: string, option: string) => void;
   onResend: (message: MessageView) => void;
 };
 
 export function Conversation({
   messages,
+  contactOn,
   pending,
   busy,
   showActions = false,
@@ -91,7 +94,7 @@ export function Conversation({
                       },
                     ]}
                   >
-                    ✓ {describeAction(a.summary)}
+                    ✓ {describeAction(a.summary, { contactOn })}
                   </Text>
                 ))}
               </View>

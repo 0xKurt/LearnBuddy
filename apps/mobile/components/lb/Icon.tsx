@@ -25,7 +25,9 @@ export type IconName =
   | 'eye-off'
   | 'bulb'
   | 'book'
-  | 'keyboard';
+  | 'keyboard'
+  | 'headphones'
+  | 'stop';
 
 type IconProps = {
   name: IconName;
@@ -216,6 +218,20 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Rect x={2.5} y={6} width={19} height={12} rx={2.5} {...common} />
           <Path d="M6.5 10h1M10.5 10h1M14.5 10h1M17 10h.5M6.5 14h11" {...common} />
+        </Svg>
+      );
+    case 'headphones':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M4 15v-3a8 8 0 0116 0v3" {...common} />
+          <Rect x={3} y={14} width={4.5} height={6.5} rx={1.8} {...common} />
+          <Rect x={16.5} y={14} width={4.5} height={6.5} rx={1.8} {...common} />
+        </Svg>
+      );
+    case 'stop':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Rect x={6.5} y={6.5} width={11} height={11} rx={2.5} {...common} fill={color} />
         </Svg>
       );
   }

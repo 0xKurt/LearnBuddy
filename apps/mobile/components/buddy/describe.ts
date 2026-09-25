@@ -34,7 +34,8 @@ function isoDate(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export function describeAction(a: ActionSummary): string {
+/** contactOn = false: agreed reminders only reach her here in the app — the card says so. */
+export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } = {}): string {
   const locale = i18n.language;
   switch (a.tool) {
     case 'remember':
@@ -72,6 +73,12 @@ export function describeAction(a: ActionSummary): string {
         minutes: a.est_minutes,
       });
     case 'plan_step':
+      if (a.agreed && opts.contactOn === false) {
+        return t('action.plan_step_agreed_in_app', {
+          title: a.title,
+          when: whenText(a.date, a.time),
+        });
+      }
       return t(a.agreed ? 'action.plan_step_agreed' : 'action.plan_step', {
         title: a.title,
         when: whenText(a.date, a.time),

@@ -12,16 +12,22 @@ import { Icon } from '../lb/Icon.js';
 import { Section } from '../lb/Section.js';
 import { describeAction } from './describe.js';
 
-type Props = { actions: ActionView[]; busy: boolean; onUndo: (actionId: string) => void };
+type Props = {
+  /** Whether Buddy may message her phone (agreed reminders say where they arrive). */
+  contactOn?: boolean;
+  actions: ActionView[];
+  busy: boolean;
+  onUndo: (actionId: string) => void;
+};
 
-export function DoneList({ actions, busy, onUndo }: Props) {
+export function DoneList({ actions, busy, onUndo, contactOn }: Props) {
   const { t } = useTranslation('buddy');
   if (actions.length === 0) return null;
   return (
     <Section title={t('done.title')}>
       <Card padding={6} radius={18}>
         {actions.slice(0, 6).map((a, i) => {
-          const text = describeAction(a.summary);
+          const text = describeAction(a.summary, { contactOn });
           const undone = a.status === 'undone';
           return (
             <View

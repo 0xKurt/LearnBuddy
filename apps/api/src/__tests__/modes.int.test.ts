@@ -214,6 +214,28 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(ok.body.verdict).toBe('correct');
   });
 
+  it('shows no "done" result for a session left without answering anything', async () => {
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Brüche',
+        subject: null,
+        intro: null,
+        items: [item({ prompt: 'Kürze 2/4', answer: '1/2' })],
+      },
+    });
+    const s = (
+      await l.api.post<SessionView>('/practice/topic', {
+        client_request_id: randomUUID(),
+        kind: 'practice',
+        text: 'Brüche',
+      })
+    ).body;
+    expect((await l.api.post(`/practice/sessions/${s.id}/finish`)).status).toBe(200);
+    const home = (await l.api.get<{ now: { type: string } | null }>('/buddy')).body;
+    expect(home.now?.type).not.toBe('practice_result');
+  });
+
   it('says honestly when a request is nothing to learn from', async () => {
     env.llm.script('explain', {
       json: { usable: false, title: '—', subject: null, intro: null, items: [] },

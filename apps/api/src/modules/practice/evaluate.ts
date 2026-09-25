@@ -60,8 +60,9 @@ export function ruleCheck(
       return answer.choice === item.correct_choice ? 'correct' : 'incorrect';
     }
     if (answer.text && item.choices) {
-      const norm = normalizeShortAnswer(answer.text);
-      const idx = item.choices.findIndex((c) => normalizeShortAnswer(c) === norm);
+      // A spoken or typed choice ("2/3") matches the choice however it is written ($\frac{2}{3}$).
+      const norm = normalizeShortAnswer(plainMath(answer.text));
+      const idx = item.choices.findIndex((c) => normalizeShortAnswer(plainMath(c)) === norm);
       if (idx >= 0) return idx === item.correct_choice ? 'correct' : 'incorrect';
     }
     return 'unknown';

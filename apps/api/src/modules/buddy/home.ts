@@ -116,6 +116,8 @@ async function nowCardOf(
   const justFinished = state.sessions.find(
     (s) =>
       s.status === 'finished' &&
+      // Left without answering anything: nothing to celebrate or report.
+      s.answered > 0 &&
       s.finished_at &&
       now.getTime() - s.finished_at.getTime() < 30 * 60_000,
   );
