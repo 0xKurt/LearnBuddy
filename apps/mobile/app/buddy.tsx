@@ -20,7 +20,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BuddyOrb } from '../components/buddy/BuddyOrb.js';
 import { Composer, type Suggestion } from '../components/buddy/Composer.js';
+import { StarterCards } from '../components/buddy/StarterCards.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
@@ -33,6 +35,7 @@ import { Banner } from '../components/lb/Banner.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
+import { Glow } from '../components/lb/Glow.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
@@ -57,6 +60,7 @@ import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
+import { SHADOW } from '../lib/theme/shadow.js';
 import { TYPE } from '../lib/theme/type.js';
 
 const VISIBLE_MESSAGES = 6;
@@ -160,19 +164,41 @@ export default function BuddyScreen() {
     const first: Suggestion = exam
       ? {
           key: 'test',
+          icon: 'check',
+          tone: 'lavender',
           label: t('buddy:suggest.test_for', { title: exam.title }),
           onPress: () => void send(t('buddy:suggest.test_message', { title: exam.title })),
         }
       : {
           key: 'exam',
+          icon: 'clock',
+          tone: 'lavender',
           label: t('buddy:suggest.exam'),
           onPress: () => void send(t('buddy:suggest.exam')),
         };
     return [
       first,
-      { key: 'homework', label: t('buddy:suggest.homework'), onPress: () => setChoice('homework') },
-      { key: 'explain', label: t('buddy:suggest.explain'), onPress: () => setTopic('explain') },
-      { key: 'vocab', label: t('buddy:suggest.vocab'), onPress: () => setChoice('vocab') },
+      {
+        key: 'homework',
+        icon: 'pencil',
+        tone: 'peach',
+        label: t('buddy:suggest.homework'),
+        onPress: () => setChoice('homework'),
+      },
+      {
+        key: 'explain',
+        icon: 'bulb',
+        tone: 'butter',
+        label: t('buddy:suggest.explain'),
+        onPress: () => setTopic('explain'),
+      },
+      {
+        key: 'vocab',
+        icon: 'book',
+        tone: 'mint',
+        label: t('buddy:suggest.vocab'),
+        onPress: () => setChoice('vocab'),
+      },
     ];
   }
 
@@ -210,6 +236,7 @@ export default function BuddyScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
+      <Glow />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -230,9 +257,7 @@ export default function BuddyScreen() {
           <View
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <Text accessibilityRole="header" style={TYPE.display}>
-              {t('buddy:greeting', { name: h.learner.name })}
-            </Text>
+            <BuddyOrb size={44} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <VoiceModeToggle />
               <CircleBtn
@@ -242,6 +267,13 @@ export default function BuddyScreen() {
               />
             </View>
           </View>
+
+          {/* The one headline: who she is talking to, and an open question. */}
+          <Text accessibilityRole="header" style={[TYPE.display, { fontSize: 34, lineHeight: 40 }]}>
+            {t('buddy:greeting', { name: h.learner.name })}
+            {'\n'}
+            <Text style={{ color: LB.ink3 }}>{t('buddy:greeting_ask')}</Text>
+          </Text>
 
           {nextExam ? (
             <Text style={[TYPE.body, { color: LB.ink2, marginTop: -10 }]}>
@@ -300,23 +332,24 @@ export default function BuddyScreen() {
 
           {messages.length === 0 && !shownPending ? (
             // First visit: Buddy says who it is; the suggestions below show how to start.
-            <View
-              accessible
-              style={{
-                alignSelf: 'flex-start',
-                maxWidth: '90%',
-                backgroundColor: LB.paper,
-                borderColor: LB.hairline,
-                borderWidth: 1,
-                borderRadius: 18,
-                borderBottomLeftRadius: 6,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                gap: 4,
-              }}
-            >
-              <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('buddy:intro.title')}</Text>
-              <Text style={TYPE.body}>{t('buddy:intro.body')}</Text>
+            <View style={{ gap: 18 }}>
+              <View
+                accessible
+                style={[
+                  {
+                    backgroundColor: '#fff',
+                    borderRadius: 24,
+                    paddingHorizontal: 18,
+                    paddingVertical: 16,
+                    gap: 4,
+                  },
+                  SHADOW.soft,
+                ]}
+              >
+                <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('buddy:intro.title')}</Text>
+                <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('buddy:intro.body')}</Text>
+              </View>
+              <StarterCards items={suggestionsFor(h.next, undefined)} disabled={pending !== null} />
             </View>
           ) : (
             <View style={{ gap: 10 }}>
@@ -344,7 +377,11 @@ export default function BuddyScreen() {
           disabled={pending !== null}
           onSend={(text) => void send(text)}
           onPhoto={() => router.push('/capture')}
-          suggestions={suggestionsFor(h.next, h.thread[h.thread.length - 1])}
+          suggestions={
+            messages.length === 0 && !shownPending
+              ? []
+              : suggestionsFor(h.next, h.thread[h.thread.length - 1])
+          }
         />
       </KeyboardAvoidingView>
 

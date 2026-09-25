@@ -13,6 +13,8 @@ import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { OfferCard } from '../learn/OfferCard.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
+import { BuddyOrb } from './BuddyOrb.js';
 import { deliveryText, describeAction } from './describe.js';
 
 type Props = {
@@ -51,29 +53,33 @@ export function Conversation({
         const done = m.actions.filter((a) => a.summary.tool !== 'offer_learning');
         return (
           <View key={m.id} style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}>
-            <View
-              accessible
-              accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${withoutEmphasis(m.text)}`}
-              style={{
-                maxWidth: '86%',
-                backgroundColor: mine ? LB.ink : LB.paper,
-                borderColor: LB.hairline,
-                borderWidth: mine ? 0 : 1,
-                borderRadius: 18,
-                borderBottomRightRadius: mine ? 6 : 18,
-                borderBottomLeftRadius: mine ? 18 : 6,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              {m.outreach ? (
-                <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
-              ) : null}
-              <MathText
-                text={m.text}
-                accessible={false}
-                style={[TYPE.body, { color: mine ? '#fff' : LB.ink }]}
-              />
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
+              {mine ? null : <BuddyOrb size={26} />}
+              <View
+                accessible
+                accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${withoutEmphasis(m.text)}`}
+                style={[
+                  {
+                    flexShrink: 1,
+                    backgroundColor: mine ? LB.primary : '#fff',
+                    borderRadius: 22,
+                    borderBottomRightRadius: mine ? 6 : 22,
+                    borderBottomLeftRadius: mine ? 22 : 6,
+                    paddingHorizontal: 16,
+                    paddingVertical: 11,
+                  },
+                  mine ? null : SHADOW.soft,
+                ]}
+              >
+                {m.outreach ? (
+                  <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
+                ) : null}
+                <MathText
+                  text={m.text}
+                  accessible={false}
+                  style={[TYPE.body, { color: mine ? '#fff' : LB.ink }]}
+                />
+              </View>
             </View>
             {m.outreach ? (
               <Text style={[TYPE.small, { fontSize: 12 }]}>{deliveryText(m.outreach)}</Text>
@@ -87,7 +93,7 @@ export function Conversation({
               ) : null,
             )}
             {showActions && done.length > 0 ? (
-              <View style={{ gap: 2, maxWidth: '86%' }}>
+              <View style={{ gap: 6, maxWidth: '88%', marginLeft: 34 }}>
                 {done.map((a) => {
                   const what = describeAction(a.summary, { contactOn });
                   return (
@@ -97,6 +103,9 @@ export function Conversation({
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 4,
+                        backgroundColor: a.status === 'undone' ? LB.canvas : LB.mint,
+                        borderRadius: 16,
+                        paddingLeft: 12,
                       }}
                     >
                       <Text
@@ -158,8 +167,8 @@ export function Conversation({
           <View
             style={{
               maxWidth: '86%',
-              backgroundColor: LB.ink,
-              borderRadius: 18,
+              backgroundColor: LB.primary,
+              borderRadius: 22,
               borderBottomRightRadius: 6,
               paddingHorizontal: 14,
               paddingVertical: 10,

@@ -83,17 +83,25 @@ type Props = {
   label: string;
   /** lg: the main control in voice mode. */
   size?: 'md' | 'lg';
+  /** Filled even when idle (the composer's main control while the field is empty). */
+  filled?: boolean;
   disabled?: boolean;
 };
 
-export function MicButton({ voice, label, size = 'md', disabled = false }: Props) {
+export function MicButton({
+  voice,
+  label,
+  size = 'md',
+  filled: filledIdle = false,
+  disabled = false,
+}: Props) {
   const { t } = useTranslation('common');
   const recording = voice.state === 'recording';
   const working = voice.state === 'starting' || voice.state === 'transcribing';
   // A running recording can always be stopped.
   const off = recording ? false : disabled || working;
   const d = size === 'lg' ? 72 : 56;
-  const filled = size === 'lg' || recording;
+  const filled = size === 'lg' || recording || filledIdle;
   const bg = recording ? LB.primaryDk : filled ? LB.primary : '#fff';
   const fg = filled ? '#fff' : LB.primaryDk;
   const time = formatClock(voice.elapsedMs);

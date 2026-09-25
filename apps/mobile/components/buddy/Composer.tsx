@@ -13,7 +13,10 @@ import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
+import type { SubjectTone } from '../../lib/theme/colors.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 import { Btn } from '../lb/Btn.js';
+import type { IconName } from '../lb/Icon.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
@@ -21,7 +24,13 @@ import { useVoiceInput } from '../voice/useVoiceInput.js';
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
 
-export type Suggestion = { key: string; label: string; onPress: () => void };
+export type Suggestion = {
+  key: string;
+  label: string;
+  icon: IconName;
+  tone: SubjectTone;
+  onPress: () => void;
+};
 
 export function Composer({
   disabled,
@@ -68,11 +77,8 @@ export function Composer({
       style={{
         gap: 10,
         paddingHorizontal: 12,
-        paddingTop: 10,
-        paddingBottom: Math.max(insets.bottom, 10),
-        backgroundColor: LB.paper,
-        borderTopWidth: 1,
-        borderTopColor: LB.hairline,
+        paddingTop: 8,
+        paddingBottom: Math.max(insets.bottom, 12),
       }}
     >
       <MicStatus voice={voice} />
@@ -85,13 +91,34 @@ export function Composer({
           accessibilityLabel={t('buddy:composer.suggestions')}
         >
           {suggestions.map((s) => (
-            <Btn key={s.key} size="sm" variant="soft" onPress={s.onPress} disabled={disabled}>
+            <Btn
+              key={s.key}
+              size="sm"
+              tone={s.tone}
+              icon={s.icon}
+              pill
+              onPress={s.onPress}
+              disabled={disabled}
+            >
               {s.label}
             </Btn>
           ))}
         </ScrollView>
       ) : null}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+      {/* One floating bar: camera, the field, and the mic (or "Senden" once there is text). */}
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'flex-end',
+            gap: 6,
+            backgroundColor: '#fff',
+            borderRadius: 30,
+            padding: 6,
+          },
+          SHADOW.float,
+        ]}
+      >
         <View style={{ height: 56, justifyContent: 'center' }}>
           <CircleBtn
             icon="camera"
@@ -112,11 +139,8 @@ export function Composer({
             flex: 1,
             minHeight: 56,
             maxHeight: 132,
-            backgroundColor: LB.bg,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: LB.hairline,
-            paddingHorizontal: 14,
+            backgroundColor: 'transparent',
+            paddingHorizontal: 6,
             paddingTop: 17,
             paddingBottom: 17,
             fontSize: 16,
@@ -125,7 +149,7 @@ export function Composer({
         />
         {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
         {!voiceMode && (trimmed.length === 0 || voice.state !== 'idle') ? (
-          <MicButton voice={voice} label={t('common:voice.message')} disabled={disabled} />
+          <MicButton voice={voice} label={t('common:voice.message')} filled disabled={disabled} />
         ) : null}
         {trimmed.length > 0 && voice.state === 'idle' ? (
           <View style={{ height: 56, justifyContent: 'center' }}>

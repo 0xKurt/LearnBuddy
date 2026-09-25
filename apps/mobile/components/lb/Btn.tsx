@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { LB } from '../../lib/theme/colors.js';
+import { LB, TONE_BG, type SubjectTone } from '../../lib/theme/colors.js';
 import { Icon, type IconName } from './Icon.js';
 
 type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
@@ -27,6 +27,10 @@ type Props = {
   /** Let a long label wrap onto several lines (answer choices, starters) instead of shrinking it. */
   wrap?: boolean;
   disabled?: boolean;
+  /** A pastel tint instead of the variant's background (suggestions: one tint per kind). */
+  tone?: SubjectTone;
+  /** Fully rounded ends (chips). */
+  pill?: boolean;
   /** Set for one choice of several (Segmented): read out as a radio button and whether it is chosen. */
   selected?: boolean;
   accessibilityLabel?: string;
@@ -68,11 +72,15 @@ export function Btn({
   grow = false,
   disabled = false,
   selected,
+  tone,
+  pill = false,
   accessibilityLabel,
   accessibilityHint,
 }: Props) {
   const s = SIZE_STYLE[size];
-  const v = VARIANT_STYLE[variant];
+  const base = VARIANT_STYLE[variant];
+  const v = tone ? { ...base, bg: TONE_BG[tone], color: LB.ink, borderWidth: 0 } : base;
+  const radius = pill ? s.height / 2 : 14;
 
   return (
     <Pressable
@@ -89,7 +97,7 @@ export function Btn({
         alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
         ...(grow ? { flexGrow: 1 } : {}),
         opacity: disabled ? 0.6 : 1,
-        borderRadius: 12,
+        borderRadius: radius,
         overflow: 'hidden',
       }}
     >
@@ -101,7 +109,7 @@ export function Btn({
             gap: icon ? 10 : 0,
             paddingHorizontal: s.paddingHorizontal,
             backgroundColor: v.bg,
-            borderRadius: 12,
+            borderRadius: radius,
             borderWidth: v.borderWidth,
             borderColor: v.borderColor,
             flexDirection: 'row',
@@ -115,7 +123,7 @@ export function Btn({
               <Icon
                 name={icon}
                 size={Math.round(s.fontSize * 1.4)}
-                color={variant === 'outline' ? LB.primaryDk : v.color}
+                color={variant === 'outline' || tone ? LB.primaryDk : v.color}
               />
             </View>
           ) : null}

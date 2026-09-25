@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { CircleBtn } from './CircleBtn.js';
+import { Glow } from './Glow.js';
 
 type Props = {
   title?: string;
@@ -20,6 +21,8 @@ type Props = {
 export function Screen({ title, back = false, right, children }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
+      {/* The same soft light as on Buddy's home, a little lower so content stays calm. */}
+      <Glow height={260} />
       {(title || back || right) && (
         <View
           style={{
