@@ -65,3 +65,11 @@ describe('fromLearnerText', () => {
     ).toBe(false);
   });
 });
+
+describe('homeworkSolved', () => {
+  it('needs the final answer, not a right step', async () => {
+    const { homeworkSolved } = await import('../tutor.js');
+    expect(homeworkSolved('ok also gleicher nenner 12', '11/12')).toBe(false);
+    expect(homeworkSolved('8/12 + 3/12 = 11/12', '$\\frac{11}{12}$')).toBe(true);
+  });
+});

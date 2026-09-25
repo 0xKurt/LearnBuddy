@@ -29,7 +29,8 @@ export type LlmPurpose =
   | 'tutor'
   | 'explain'
   | 'extraction'
-  | 'pronounce';
+  | 'pronounce'
+  | 'transcribe';
 
 export type LlmRequest = {
   purpose: LlmPurpose;

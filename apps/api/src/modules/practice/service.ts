@@ -36,6 +36,7 @@ import {
   TutorDecision,
   enforceTutorInvariants,
   givesAwayHomework,
+  homeworkSolved,
   tutorContext,
 } from './tutor.js';
 import type { LlmMessage } from '../../llm/gateway.js';
@@ -533,6 +534,15 @@ export async function answerItem(
             revealed_answer: false,
           };
         }
+      }
+      if (
+        session.mode === 'help' &&
+        item.kind !== 'long' &&
+        d.verdict === 'correct' &&
+        !homeworkSolved(text, item.answer)
+      ) {
+        // A right step, not the final answer yet: the task stays open.
+        d = { ...d, verdict: 'partially_correct' };
       }
       judged = {
         verdict: d.verdict,

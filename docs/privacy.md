@@ -21,19 +21,19 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
 
 ## What is stored
 
-| Data                                                                              | Where                                                             | Retention                                                                                          |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Account, consent, PIN hash                                                        | `accounts`                                                        | until deletion                                                                                     |
-| Learner profile (name, birth date, level, grade, language)                        | `learners`                                                        | until deletion                                                                                     |
-| Conversation with Buddy                                                           | `buddy_messages`                                                  | until deletion                                                                                     |
-| What Buddy knows, with the learner's own words as source                          | `buddy_memories`                                                  | until corrected/removed or deletion; temporary situations end by themselves (≤ 60 days)            |
-| Goals, steps, decisions, actions (audit of what Buddy did and why)                | `buddy_goals`, `buddy_steps`, `buddy_decisions`, `buddy_actions`  | until deletion                                                                                     |
-| Contact settings, push tokens, messages outside the app and their delivery status | `buddy_settings`, `push_tokens`, `buddy_outreach`                 | until deletion                                                                                     |
-| Photos of study material                                                          | Supabase Storage, private bucket `material-photos`                | **7 days after reading** (also when unreadable); immediately when the learner deletes the material |
-| Voice recordings (speaking practice)                                              | not stored — sent once to the model (Vertex AI, EU) and discarded | never stored; only the model's written judgement is kept with the practice turn                    |
-| Transcribed text and questions from the material                                  | `materials`, `items`                                              | until the material or the account is deleted                                                       |
-| Practice sessions, answers, spaced-repetition state                               | `practice_sessions`, `practice_turns`, `item_states`              | until deletion                                                                                     |
-| Model usage (tokens, cost, outcome — no content)                                  | `llm_calls`, `usage_daily`                                        | until deletion                                                                                     |
+| Data                                                                                                         | Where                                                             | Retention                                                                                          |
+| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Account, consent, PIN hash                                                                                   | `accounts`                                                        | until deletion                                                                                     |
+| Learner profile (name, birth date, level, grade, language)                                                   | `learners`                                                        | until deletion                                                                                     |
+| Conversation with Buddy                                                                                      | `buddy_messages`                                                  | until deletion                                                                                     |
+| What Buddy knows, with the learner's own words as source                                                     | `buddy_memories`                                                  | until corrected/removed or deletion; temporary situations end by themselves (≤ 60 days)            |
+| Goals, steps, decisions, actions (audit of what Buddy did and why)                                           | `buddy_goals`, `buddy_steps`, `buddy_decisions`, `buddy_actions`  | until deletion                                                                                     |
+| Contact settings, push tokens, messages outside the app and their delivery status                            | `buddy_settings`, `push_tokens`, `buddy_outreach`                 | until deletion                                                                                     |
+| Photos of study material                                                                                     | Supabase Storage, private bucket `material-photos`                | **7 days after reading** (also when unreadable); immediately when the learner deletes the material |
+| Voice recordings (speaking practice; spoken messages/answers when the device cannot recognise speech itself) | not stored — sent once to the model (Vertex AI, EU) and discarded | never stored; only the written result (judgement or text) is kept where it is used                 |
+| Transcribed text and questions from the material                                                             | `materials`, `items`                                              | until the material or the account is deleted                                                       |
+| Practice sessions, answers, spaced-repetition state                                                          | `practice_sessions`, `practice_turns`, `item_states`              | until deletion                                                                                     |
+| Model usage (tokens, cost, outcome — no content)                                                             | `llm_calls`, `usage_daily`                                        | until deletion                                                                                     |
 
 Logs contain route names and error classes only — no request bodies, messages or answers.
 
@@ -60,6 +60,11 @@ Logs contain route names and error classes only — no request bodies, messages 
 - **Google Vertex AI** (model): region `europe-west4`; prompts contain the learner's messages,
   memory, goals and material text needed for the answer. **legal review:** confirm the data
   processing terms (no training on customer data) for the configured project.
+- **Speech recognition of the device** (Apple / Google, or the browser's): used first for talking
+  instead of typing; the app asks for on-device recognition where the system offers it. Where the
+  system recognises speech on its servers, Apple's/Google's terms apply. **legal review:** decide
+  whether minors' speech may use server-side system recognition, or force on-device / our own
+  EU path (`/voice/transcribe`).
 - **Expo push service** (optional): off unless `PUSH_BACKEND=expo`. It adds a US subprocessor and
   sends notification titles and bodies via Apple/Google. Texts are written without scores or
   personal details, but they are about the learner's tests. **legal review required before

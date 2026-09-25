@@ -148,3 +148,13 @@ export function givesAwayHomework(d: TutorDecision, solution: string, task: stri
     );
   return !words(task).has(sol) && words(d.reply).has(sol);
 }
+
+/**
+ * Homework: a task is solved only when the learner has the final answer — a right
+ * intermediate step ("common denominator 12") keeps it open. The model's "correct"
+ * stands only if the learner's words contain the solution.
+ */
+export function homeworkSolved(learnerText: string, solution: string): boolean {
+  const sol = mathNorm(solution);
+  return sol.length > 0 && mathNorm(learnerText).includes(sol);
+}

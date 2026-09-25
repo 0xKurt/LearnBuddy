@@ -72,4 +72,5 @@ export const DAILY_LIMITS = {
   explain: 60,
   extraction: 12,
   pronounce: 200,
+  transcribe: 400,
 } as const;

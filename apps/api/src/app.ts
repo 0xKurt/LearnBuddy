@@ -17,6 +17,7 @@ import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
 import { buddyRoutes } from './modules/buddy/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
 import { materialRoutes } from './modules/materials/routes.js';
+import { voiceRoutes } from './modules/voice/routes.js';
 import { practiceRoutes } from './modules/practice/routes.js';
 import { runTick } from './modules/scheduler/tick.js';
 
@@ -72,7 +73,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     },
   });
   app.use('*', (c, next) =>
-    /\/practice\/sessions\/[^/]+\/speak$/.test(c.req.path)
+    /\/practice\/sessions\/[^/]+\/speak$|\/voice\/transcribe$/.test(c.req.path)
       ? recordings(c, next)
       : smallBodies(c, next),
   );
@@ -143,6 +144,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
   api.route('/buddy', buddyRoutes);
   api.route('/practice', practiceRoutes);
   api.route('/materials', materialRoutes);
+  api.route('/voice', voiceRoutes);
 
   // The app calls /v1/…; Vercel rewrites /v1/* to the /api function, and the
   // Node server serves the same routes without a prefix.

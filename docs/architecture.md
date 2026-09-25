@@ -255,6 +255,23 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
   (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
   not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
 
+## Voice
+
+Talking instead of typing, everywhere she would otherwise type (chat, answers):
+
+- **Speech to text** — on the device first (iOS/Android speech recognition, the browser's Web
+  Speech API; streams while she speaks, nothing leaves the device for this). Where that is not
+  available: `POST /voice/transcribe` (`modules/voice/`): the model writes down the recording
+  (answer mode writes numbers and fractions as such, and gets the question as context so short
+  answers like "drei Viertel" are heard as 3/4). Live checks with espeak-ng recordings
+  (`evals/voice/run.ts`): 5/6 with context; the lite model invented words and is not used. The
+  recording is never stored.
+- **Voice mode** (app): Buddy's replies, questions and feedback are read aloud with the
+  device's voices (`expo-speech`); she answers with the mic. The microphone never starts by
+  itself. This is turn by turn (tap, speak, listen) — a live, interruptible conversation (e.g.
+  a realtime audio API) is not built.
+- **Pronunciation** — see Learning modes (`speak`).
+
 ## Home
 
 `modules/buddy/home.ts`. Everything is derived from stored state: **now** (resume practice ›

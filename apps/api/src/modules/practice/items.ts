@@ -168,10 +168,12 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
     );
     ids.push(row.id);
   };
+  for (const it of items) await insert(it);
+  // The other direction of each pair comes after all first directions — asked right after
+  // its twin, the answer would still be on screen. Its alternatives are unknown; the tutor
+  // judges variants.
   for (const it of items) {
-    await insert(it);
     if (it.kind === 'vocab' && it.lang && it.prompt_lang) {
-      // The other direction; its alternatives are unknown, the tutor judges variants.
       await insert({
         ...it,
         prompt: it.answer,

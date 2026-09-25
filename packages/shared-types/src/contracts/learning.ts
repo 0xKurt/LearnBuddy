@@ -229,6 +229,29 @@ export const SpeakRequest = z.object({
 });
 export type SpeakRequest = z.infer<typeof SpeakRequest>;
 
+/** Speech to text: a spoken chat message or answer (≤ 60 s). The recording is not stored. */
+export const TranscribeRequest = z.object({
+  mime: z.enum(['audio/mp4', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/wav', 'audio/mpeg']),
+  audio_base64: z.string().min(100).max(1_400_000),
+  /** message: talking to Buddy · answer: answering a question (numbers and math written as such). */
+  purpose: z.enum(['message', 'answer']),
+  /** The language she is expected to speak (e.g. 'fr' for a French answer); null = the app language. */
+  lang: z
+    .string()
+    .regex(/^[a-z]{2}$/)
+    .nullable()
+    .optional(),
+  /** answer: the question being answered, so short answers ("drei Viertel") are heard in context. */
+  context: z.string().max(600).nullable().optional(),
+});
+export type TranscribeRequest = z.infer<typeof TranscribeRequest>;
+
+export const TranscribeResponse = z.object({
+  /** What was said, written down; empty when nothing understandable was heard. */
+  text: z.string(),
+});
+export type TranscribeResponse = z.infer<typeof TranscribeResponse>;
+
 export const AnswerResponse = z.object({
   session: SessionView,
   /** How the learner's answer was judged; null = could not be judged (no model), nothing was graded. */
