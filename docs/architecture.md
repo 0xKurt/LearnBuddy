@@ -97,7 +97,7 @@ The model never writes ids, dates or instants (`modules/buddy/decision.ts`):
 
 `modules/buddy/turn.ts`. A learner message is stored first (idempotent per `client_message_id`)
 with a claim token. The turn builds the context (STATE + dialogue), asks the model for a
-`TurnDecision` (JSON schema), validates and applies it.
+`TurnDecision` (JSON schema) — after up to two rounds of lookups (below) — validates and applies it.
 
 - Duplicate request → replay (done) or "processing" (202); never a second run.
 - A newer message during a turn supersedes it: the newer turn answers both.
@@ -119,6 +119,25 @@ summary plus undo data. Enforced here, not in the prompt:
 - temporary situations need an end (≤ 60 days); plans lie ≤ 1 year ahead;
 - undo is refused when the object changed since (version check) — no blind overwrite of, e.g.,
   an adult's later settings change.
+
+### Lookups (ADR 0005, stage 1)
+
+`modules/buddy/lookups.ts` + `connectors/`. Before answering, a turn or check may read:
+`search_material` (passages of her read worksheets, Postgres full text, prefix words),
+`practice_history` (finished sessions: what sat, what was shaky) and `find_questions`
+(questions on a topic with the latest result — never the solutions). Registered once (name,
+schema, surfaces, connectors); the model-facing schema and prompt lines are generated from the
+registry. Enforced in code:
+
+- at most 2 lookup rounds × 3 lookups, then the final schema offers no lookups;
+- results ≤ 6000 characters per round, marked as data; invalid calls report an error and are
+  not run;
+- every connector query is scoped by the learner id; lookups change nothing;
+- the audit (`buddy_decisions.output.lookups`) records which lookups ran, not their results.
+
+Live eval (`evals/buddy/run.ts`, case `de_lookup_sheet`): the answer came from the sheet in every
+run (6/6). Act tools move to the same registry in stage 2; external connectors (stage 3) and
+the event log (stage 4) are planned.
 
 ## Proactivity
 

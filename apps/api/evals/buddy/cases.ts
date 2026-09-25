@@ -30,6 +30,8 @@ export type Outcome = {
   }>;
   settings: { contact_enabled: boolean; max_per_week: number; paused_until: Date | null };
   level: { level: string; grade: number | null };
+  /** Lookup tools Buddy used before answering (ADR 0005). */
+  lookups: string[];
 };
 
 export type Case = {
@@ -195,6 +197,27 @@ export const CASES: Case[] = [
         'moved to Monday 2026-10-05',
       ),
       ...must(o.goals.filter((g) => g.status === 'active').length === 1, 'no duplicate goal'),
+    ],
+  },
+  {
+    id: 'de_lookup_sheet',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      await env.db.query(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title, extracted_text, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'Geschichte – Das Römische Reich', $2, $3)`,
+        [
+          l.learnerId,
+          'Das Römische Reich. Rom wurde der Sage nach 753 v. Chr. von Romulus gegründet. Nach dem Tod Caesars wurde Octavian, genannt Augustus, 27 v. Chr. der erste römische Kaiser. Die Römer bauten Straßen und Aquädukte.',
+          env.clock.now(),
+        ],
+      );
+    },
+    message: 'Wer war nochmal laut meinem Blatt der erste römische Kaiser?',
+    check: (o) => [
+      ...must(o.lookups.includes('search_material'), 'looked at the sheet'),
+      ...must(/augustus|octavian/i.test(o.reply ?? ''), 'answers from the sheet'),
+      ...must(o.tools.length === 0, 'changes nothing'),
     ],
   },
   {

@@ -27,9 +27,12 @@ import { buildContents, buildContext } from './context.js';
 import { TurnDecision } from './decision.js';
 import { bumpContext } from './plan.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
+import { lookupsField, withLookups } from './lookups.js';
 import { loadBuddyState } from './state.js';
 
 const TURN_SCHEMA = toJsonSchema(TurnDecision);
+/** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
+const TURN_STEP_SCHEMA = toJsonSchema(TurnDecision.extend({ lookups: lookupsField }));
 const MAX_ROUNDS = 4;
 /** A turn still "processing" after this long is considered interrupted. */
 export const TURN_STALL_MS = 3 * 60_000;
@@ -180,25 +183,35 @@ export async function processTurn(
 
     let raw: unknown;
     try {
-      const result = await callModel(
-        deps,
-        learner.id,
-        localParts(now, state.settings.timezone).date,
-        {
-          purpose: 'buddy_turn',
-          tier: 'smart',
-          promptVersion: BUDDY_PROMPT_VERSION,
-          system: TURN_SYSTEM,
-          contents,
-          schema: TURN_SCHEMA,
-          maxOutputTokens: 2048,
-          temperature: 0.4,
-          timeoutMs: 30_000,
-          thinkingBudget: 512,
+      const looked = await withLookups({
+        ctx: { deps, learnerId: learner.id, timezone: state.settings.timezone },
+        surface: 'turn',
+        contents,
+        call: async (messages, final) => {
+          const result = await callModel(
+            deps,
+            learner.id,
+            localParts(now, state.settings.timezone).date,
+            {
+              purpose: 'buddy_turn',
+              tier: 'smart',
+              promptVersion: BUDDY_PROMPT_VERSION,
+              system: TURN_SYSTEM,
+              contents: messages,
+              schema: final ? TURN_SCHEMA : TURN_STEP_SCHEMA,
+              maxOutputTokens: 2048,
+              temperature: 0.4,
+              timeoutMs: 30_000,
+              thinkingBudget: 512,
+            },
+          );
+          meta.model = result.usage.model;
+          return result.json;
         },
-      );
-      raw = result.json;
-      meta.model = result.usage.model;
+      });
+      raw = looked.raw;
+      // The audit keeps what was looked up (tools and whether they worked), not the results.
+      if (looked.steps.length > 0) meta.output = { lookups: looked.steps, final: raw };
     } catch (err) {
       const code = isAppError(err)
         ? err.code
@@ -210,7 +223,7 @@ export async function processTurn(
       await record('failed', [code]);
       return failTurn(deps, message, code);
     }
-    meta.output = raw;
+    if (meta.output === undefined) meta.output = raw;
 
     const parsed = TurnDecision.safeParse(raw);
     if (!parsed.success) {

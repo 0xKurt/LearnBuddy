@@ -31,12 +31,15 @@ import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext, canonicalTopicKey } from './context.js';
 import { CheckDecision } from './decision.js';
 import { planOutreach } from './delivery.js';
+import { lookupsField, withLookups } from './lookups.js';
 import { bumpContext } from './plan.js';
 import { BUDDY_PROMPT_VERSION, CHECK_SYSTEM, repairMessage } from './prompts.js';
 import { loadBuddyState, type BuddyState, type SettingsRow } from './state.js';
 import { claimMessage, processTurn, pushAvailable, TURN_STALL_MS } from './turn.js';
 
 const CHECK_SCHEMA = toJsonSchema(CheckDecision);
+/** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
+const CHECK_STEP_SCHEMA = toJsonSchema(CheckDecision.extend({ lookups: lookupsField }));
 const LEASE_SECONDS = 150;
 const IN_APP_DEFER_MS = 20 * 60_000;
 const IN_APP_WINDOW_MS = 3 * 60_000;
@@ -393,20 +396,29 @@ async function decide(
 
     let raw: unknown;
     try {
-      const res = await callModel(deps, learner.id, today, {
-        purpose: 'buddy_check',
-        tier: 'smart',
-        promptVersion: BUDDY_PROMPT_VERSION,
-        system: CHECK_SYSTEM,
+      const looked = await withLookups({
+        ctx: { deps, learnerId: learner.id, timezone: state.settings.timezone },
+        surface: 'check',
         contents: buildContents(ctx.state, dialogue, tail),
-        schema: CHECK_SCHEMA,
-        maxOutputTokens: 2048,
-        temperature: 0.3,
-        timeoutMs: 40_000,
-        thinkingBudget: 768,
+        call: async (messages, final) => {
+          const res = await callModel(deps, learner.id, today, {
+            purpose: 'buddy_check',
+            tier: 'smart',
+            promptVersion: BUDDY_PROMPT_VERSION,
+            system: CHECK_SYSTEM,
+            contents: messages,
+            schema: final ? CHECK_SCHEMA : CHECK_STEP_SCHEMA,
+            maxOutputTokens: 2048,
+            temperature: 0.3,
+            timeoutMs: 40_000,
+            thinkingBudget: 768,
+          });
+          meta.model = res.usage.model;
+          return res.json;
+        },
       });
-      raw = res.json;
-      meta.model = res.usage.model;
+      raw = looked.raw;
+      if (looked.steps.length > 0) meta.output = { lookups: looked.steps, final: raw };
     } catch (err) {
       const why = isAppError(err) ? err.code : err instanceof LlmError ? err.kind : 'error';
       await recordUnapplied(
@@ -440,7 +452,7 @@ async function decide(
       await fallback(deps, learner, triggers, why);
       return `fallback:${why}`;
     }
-    meta.output = raw;
+    if (meta.output === undefined) meta.output = raw;
 
     const parsed = CheckDecision.safeParse(raw);
     const semantic =

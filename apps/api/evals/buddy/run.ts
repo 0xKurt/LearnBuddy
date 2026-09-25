@@ -91,6 +91,16 @@ async function main(): Promise<void> {
           [l.learnerId],
         ),
         level: await env.db.one(`select level, grade from learners where id = $1`, [l.learnerId]),
+        lookups: (
+          await env.db.query<{ tool: string }>(
+            `select distinct c->>'tool' as tool
+               from buddy_decisions d,
+                    jsonb_array_elements(coalesce(d.output->'lookups', '[]'::jsonb)) s,
+                    jsonb_array_elements(s->'results') c
+              where d.learner_id = $1`,
+            [l.learnerId],
+          )
+        ).map((r) => r.tool),
       };
       const problems =
         outcome.status === 'done'
