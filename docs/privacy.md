@@ -60,11 +60,12 @@ Logs contain route names and error classes only — no request bodies, messages 
 - **Google Vertex AI** (model): region `europe-west4`; prompts contain the learner's messages,
   memory, goals and material text needed for the answer. **legal review:** confirm the data
   processing terms (no training on customer data) for the configured project.
-- **Speech recognition of the device** (Apple / Google, or the browser's): used first for talking
-  instead of typing; the app asks for on-device recognition where the system offers it. Where the
-  system recognises speech on its servers, Apple's/Google's terms apply. **legal review:** decide
-  whether minors' speech may use server-side system recognition, or force on-device / our own
-  EU path (`/voice/transcribe`).
+- **Speech recognition of the device** (Apple / Google): used first for talking instead of typing,
+  **only on-device** (`requiresOnDeviceRecognition`; on Android only when the language's offline
+  model is installed) — the audio does not leave the phone. Where the phone could only recognise
+  on Apple's/Google's servers, and always in the browser (Chrome's Web Speech is server-side), the
+  app records instead and uses our own EU path (`/voice/transcribe`, Vertex AI). The decision is
+  code (`apps/mobile/lib/speech/engine.ts`), not a setting.
 - **Expo push service** (optional): off unless `PUSH_BACKEND=expo`. It adds a US subprocessor and
   sends notification titles and bodies via Apple/Google. Texts are written without scores or
   personal details, but they are about the learner's tests. **legal review required before

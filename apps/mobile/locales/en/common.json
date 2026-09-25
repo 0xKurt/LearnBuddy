@@ -30,6 +30,7 @@
     "stop_hint": "Then I'll write down what you said.",
     "recording": "I'm listening … {{time}} / {{max}}",
     "recording_value": "Recording, {{time}} of {{max}}",
+    "live": "Heard so far: {{text}}",
     "transcribing": "I'm writing down what you said …",
     "denied": "I can't hear you without the microphone. You can allow it in Settings.",
     "denied_web": "I can't hear you without the microphone. Allow it at the top of your browser, then tap the mic again.",

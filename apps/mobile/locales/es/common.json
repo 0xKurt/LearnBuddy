@@ -30,6 +30,7 @@
     "stop_hint": "Después escribo lo que has dicho.",
     "recording": "Te escucho … {{time}} / {{max}}",
     "recording_value": "Grabando, {{time}} de {{max}}",
+    "live": "Entendido hasta ahora: {{text}}",
     "transcribing": "Estoy escribiendo lo que has dicho …",
     "denied": "Sin micrófono no puedo oírte. Puedes permitirlo en los Ajustes.",
     "denied_web": "Sin micrófono no puedo oírte. Permítelo arriba en tu navegador y vuelve a tocar el micro.",

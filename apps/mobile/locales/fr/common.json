@@ -30,6 +30,7 @@
     "stop_hint": "Ensuite, j'écris ce que tu as dit.",
     "recording": "Je t'écoute … {{time}} / {{max}}",
     "recording_value": "Enregistrement en cours, {{time}} sur {{max}}",
+    "live": "Compris jusqu'ici : {{text}}",
     "transcribing": "J'écris ce que tu as dit …",
     "denied": "Sans micro, je ne peux pas t'entendre. Tu peux l'autoriser dans les réglages.",
     "denied_web": "Sans micro, je ne peux pas t'entendre. Autorise-le en haut de ton navigateur, puis touche à nouveau le micro.",

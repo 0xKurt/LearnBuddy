@@ -63,7 +63,14 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Damit du Sätze laut üben kannst und Buddy dir sagt, wie deine Aussprache klingt."
+          "microphonePermission": "Damit du mit Buddy sprechen statt tippen und Sätze laut üben kannst."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Damit du mit Buddy sprechen statt tippen und Sätze laut üben kannst.",
+          "speechRecognitionPermission": "Damit dein iPhone selbst aufschreibt, was du sagst – direkt auf dem Gerät."
         }
       ]
     ]

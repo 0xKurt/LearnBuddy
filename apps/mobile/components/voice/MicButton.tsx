@@ -163,18 +163,30 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
     const time = formatClock(voice.elapsedMs);
     const max = formatClock(voice.maxMs);
     return (
-      <View
-        accessible
-        accessibilityLabel={t('voice.recording_value', { time, max })}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 22 }}
-      >
+      <View style={{ gap: 6 }}>
         <View
-          style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: LB.primary }}
-          importantForAccessibility="no"
-        />
-        <Text style={[TYPE.body, { fontWeight: '600' }]}>
-          {t('voice.recording', { time, max })}
-        </Text>
+          accessible
+          accessibilityLabel={t('voice.recording_value', { time, max })}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 22 }}
+        >
+          <View
+            style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: LB.primary }}
+            importantForAccessibility="no"
+          />
+          <Text style={[TYPE.body, { fontWeight: '600' }]}>
+            {t('voice.recording', { time, max })}
+          </Text>
+        </View>
+        {voice.live ? (
+          // On-device recognition: what she has said so far, as she says it.
+          <Text
+            accessibilityLabel={t('voice.live', { text: voice.live })}
+            style={[TYPE.body, { color: LB.ink2, fontStyle: 'italic' }]}
+            numberOfLines={4}
+          >
+            „{voice.live}“
+          </Text>
+        ) : null}
       </View>
     );
   }

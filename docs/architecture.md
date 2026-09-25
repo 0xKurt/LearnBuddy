@@ -259,9 +259,15 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
 
 Talking instead of typing, everywhere she would otherwise type (chat, answers):
 
-- **Speech to text** — on the device first (iOS/Android speech recognition, the browser's Web
-  Speech API; streams while she speaks, nothing leaves the device for this). Where that is not
-  available: `POST /voice/transcribe` (`modules/voice/`): the model writes down the recording
+- **Speech to text** — on the device first, strictly on-device (`expo-speech-recognition` with
+  `requiresOnDeviceRecognition`; the words appear while she speaks, nothing leaves the phone).
+  `lib/speech/engine.ts` decides per tap (unit-tested): iOS when on-device is supported; Android
+  only with the language's offline model installed; never the browser's Web Speech (server-side)
+  and never the system's server mode. If the recogniser fails for the language, the same tap
+  continues as a recording and that language goes straight to the server for the rest of the
+  app run; a refused speech-recognition permission also falls back (only the mic is needed).
+  The device path needs verification on a real iPhone/Android phone. Otherwise:
+  `POST /voice/transcribe` (`modules/voice/`): the model writes down the recording
   (answer mode writes numbers and fractions as such, and gets the question as context so short
   answers like "drei Viertel" are heard as 3/4). Live checks with espeak-ng recordings
   (`evals/voice/run.ts`): 5/6 with context; the lite model invented words and is not used. The
