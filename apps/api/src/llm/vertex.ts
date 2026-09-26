@@ -76,26 +76,45 @@ function usageOf(
   };
 }
 
+/** "eu/gemini-3.1-flash-lite" → location eu; a bare model id uses the default location. */
+export function splitModelSpec(spec: string, defaultLocation: string) {
+  const i = spec.indexOf('/');
+  return i < 0
+    ? { location: defaultLocation, model: spec }
+    : { location: spec.slice(0, i), model: spec.slice(i + 1) };
+}
+
 export class VertexGateway implements LlmGateway {
   readonly available = true;
-  private readonly client: GoogleGenAI;
+  /** One client per location (the EU multi-region "eu" serves models europe-west4 doesn't). */
+  private readonly clients = new Map<string, GoogleGenAI>();
 
   constructor(private readonly config: Config) {
     ensureCredentialsFile(config);
-    this.client = new GoogleGenAI({
-      vertexai: true,
-      project: config.GOOGLE_CLOUD_PROJECT,
-      location: config.GOOGLE_VERTEX_LOCATION,
-    });
+  }
+
+  private clientFor(location: string): GoogleGenAI {
+    let c = this.clients.get(location);
+    if (!c) {
+      c = new GoogleGenAI({
+        vertexai: true,
+        project: this.config.GOOGLE_CLOUD_PROJECT,
+        location,
+      });
+      this.clients.set(location, c);
+    }
+    return c;
   }
 
   async generate(req: LlmRequest): Promise<LlmResult> {
-    const model =
-      req.tier === 'smart' ? this.config.VERTEX_MODEL_SMART : this.config.VERTEX_MODEL_FAST;
+    const spec =
+      this.config.VERTEX_ROUTES[req.purpose] ??
+      (req.tier === 'smart' ? this.config.VERTEX_MODEL_SMART : this.config.VERTEX_MODEL_FAST);
+    const { location, model } = splitModelSpec(spec, this.config.GOOGLE_VERTEX_LOCATION);
     const started = Date.now();
     let response: GenerateContentResponse;
     try {
-      response = await this.client.models.generateContent({
+      response = await this.clientFor(location).models.generateContent({
         model,
         contents: req.contents,
         config: {

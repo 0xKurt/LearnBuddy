@@ -3,6 +3,22 @@
 
 import { z } from 'zod';
 
+const ModelSpec = z
+  .string()
+  .regex(/^([a-z0-9-]+\/)?gemini-[a-z0-9.-]+$/, 'expected [location/]gemini-…');
+const VertexRoutes = z
+  .object({
+    buddy_turn: ModelSpec,
+    buddy_check: ModelSpec,
+    tutor: ModelSpec,
+    explain: ModelSpec,
+    extraction: ModelSpec,
+    pronounce: ModelSpec,
+    transcribe: ModelSpec,
+  })
+  .partial()
+  .strict();
+
 const Config = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -31,6 +47,23 @@ const Config = z
     VERTEX_MODEL_SMART: z.string().default('gemini-2.5-flash'),
     /** Cheaper model for short low-stakes tasks (no feature uses it yet). */
     VERTEX_MODEL_FAST: z.string().default('gemini-2.5-flash-lite'),
+    /**
+     * Per-task models, overriding the tier: JSON like {"tutor":"eu/gemini-3.1-flash-lite"}.
+     * A model may carry its location ("eu/…"; default GOOGLE_VERTEX_LOCATION). Chosen per
+     * task by measurement (docs/architecture.md §Model calls); unknown keys are rejected.
+     */
+    VERTEX_ROUTES: z
+      .string()
+      .optional()
+      .transform((raw, ctx) => {
+        if (!raw) return {};
+        try {
+          return VertexRoutes.parse(JSON.parse(raw));
+        } catch (err) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: `VERTEX_ROUTES: ${String(err)}` });
+          return z.NEVER;
+        }
+      }),
     /** Push via Expo is off until legal review (ADR 0004 §4). */
     PUSH_BACKEND: z.enum(['expo', 'disabled']).default('disabled'),
     EXPO_ACCESS_TOKEN: z.string().optional(),

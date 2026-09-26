@@ -226,6 +226,12 @@ timeout; `DisabledGateway` when no model is configured (Buddy says so). Every ca
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens, cost, latency and outcome — never with prompt or answer text.
 
+Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
+to a model, otherwise the tier's model applies. A model may carry its location
+(`eu/gemini-3.1-flash-lite`): the Gemini 3.x models are served in the EU only through the EU
+multi-region endpoint `eu`, not in `europe-west4` (probed 2026-09-26). A route changes only after
+the task's eval passes on it (`evals/buddy`, `evals/tutor`, `evals/speak`, `evals/speed`).
+
 ### Speed
 
 Waiting kills practice. Budgets (end to end, measured in process by `apps/api/evals/speed/run.ts`
