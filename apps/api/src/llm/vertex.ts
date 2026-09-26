@@ -27,6 +27,7 @@ import {
   type LlmResult,
   type LlmUsage,
 } from './gateway.js';
+import { repairJsonStrings } from './latex.js';
 import { costMicros } from './pricing.js';
 
 // Children use the app: strict on sexual content, medium elsewhere.
@@ -149,7 +150,7 @@ export class VertexGateway implements LlmGateway {
       throw new LlmError('invalid_output', 'empty output', usage);
     }
     try {
-      return { json: JSON.parse(text), usage };
+      return { json: repairJsonStrings(JSON.parse(text)), usage };
     } catch {
       throw new LlmError('invalid_output', 'output is not valid JSON', usage);
     }

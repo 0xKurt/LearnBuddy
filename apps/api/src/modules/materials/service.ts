@@ -353,7 +353,8 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       maxOutputTokens: 12_000,
       temperature: 0.3,
       timeoutMs: 120_000,
-      thinkingBudget: 0,
+      // Read once in the background: time to think (see generate.ts).
+      thinkingBudget: 2048,
     });
     result = ExtractionResult.safeParse(res.json);
   } catch (err) {

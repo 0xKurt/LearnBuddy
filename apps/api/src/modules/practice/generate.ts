@@ -174,10 +174,13 @@ export async function startTopic(
         },
       ],
       schema: GENERATED_SCHEMA,
-      maxOutputTokens: 8000,
+      maxOutputTokens: 10_000,
       temperature: 0.4,
       timeoutMs: 60_000,
-      thinkingBudget: 0,
+      // Prepared once, and everything later builds on it (keys, hints, worked
+      // solutions): time to think. Measured on 3.6 Flash: about the same time and
+      // cost, more careful content (docs/architecture.md §Speed).
+      thinkingBudget: 2048,
     });
     const parsed = GeneratedSet.safeParse(res.json);
     if (!parsed.success)

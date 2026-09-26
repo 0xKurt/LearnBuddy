@@ -242,6 +242,10 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   (multiple choice, numbers, exact matches), and in a test also a wrong one — including a plain
   number or fraction with another value as a short answer (`differentNumber`; not in homework,
   where "12" may be a right step). A test needs only the judgement. Fast and free.
+- Thinking where it pays: preparing (reading a worksheet, writing items, keys and explanations —
+  once, mostly in the background) gets 2048; on 3.6 Flash that cost about the same time and money
+  and gave more careful content. The tutor gets none: on 3.6 Flash more thinking was slower and not
+  better (0: 26/27 at 1.1 s; 1024: 16/18 at 1.4–1.7 s; 4096: 17/18 at 2.5 s, evals/tutor).
 - A model call is only as slow as it must be: thinking budget only where it measurably helps.
   Buddy's turns keep 512 (without: 18/22 instead of 20/22 eval cases, among them solving
   homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
@@ -256,17 +260,17 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                     |
-| ------------------------------- | ------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                  |
-| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512     |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768 |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                |
-| Extraction                      | 120 s timeout, 12 000 output tokens, ≤ 3 runs per material, ≤ 20 photos   |
-| Jobs                            | 3 attempts, leases 120–180 s; tick budget 45 s                            |
-| Turn stall                      | taken over after 3 minutes                                                |
-| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h       |
-| Memory                          | 60 active items; temporary ≤ 60 days                                      |
+| What                            | Limit                                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                               |
+| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                  |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768              |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                             |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos |
+| Jobs                            | 3 attempts, leases 120–180 s; tick budget 45 s                                         |
+| Turn stall                      | taken over after 3 minutes                                                             |
+| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                    |
+| Memory                          | 60 active items; temporary ≤ 60 days                                                   |
 
 Pricing used for cost records (Vertex AI, 2026-09-25): gemini-2.5-flash $0.30 input / $2.50
 output per 1M tokens (output includes thinking), gemini-2.5-flash-lite $0.10 / $0.40.
