@@ -58,7 +58,11 @@ Logs contain route names and error classes only — no request bodies, messages 
 ## Processors
 
 - **Supabase** (database, auth, storage): EU region of the project.
-- **Google Vertex AI** (model): region `europe-west4`; prompts contain the learner's messages,
+- **Google Vertex AI** (model): EU only — the EU multi-region endpoint `eu` (Gemini 3.6 Flash; Google
+  states ML processing and storage stay in EU member states, seen as a snippet of its data-residency
+  page, to be confirmed) or `europe-west4`; `global` and non-EU regions are refused at startup
+  (`apps/api/src/config.ts`). **Before launch:** confirm the model is GA (Google's preview terms
+  exclude services likely used by under-18s) and switch off abuse-monitoring prompt logging. Prompts contain the learner's messages,
   memory, goals and material text needed for the answer. **legal review:** confirm the data
   processing terms (no training on customer data) for the configured project.
 - **Speech recognition of the device** (Apple / Google) — also in conversation mode, where the

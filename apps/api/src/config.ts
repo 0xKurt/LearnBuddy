@@ -3,9 +3,20 @@
 
 import { z } from 'zod';
 
+/**
+ * Children's data is processed in the EU only (docs/privacy.md): the EU multi-region "eu" or a
+ * europe-* region. "global" and other regions are refused at startup, never silently used.
+ */
+const EuLocation = z
+  .string()
+  .regex(/^(eu|europe-[a-z]+[0-9]+)$/, 'only the EU: "eu" or a europe-* region');
 const ModelSpec = z
   .string()
-  .regex(/^([a-z0-9-]+\/)?gemini-[a-z0-9.-]+$/, 'expected [location/]gemini-…');
+  .regex(/^([a-z0-9-]+\/)?gemini-[a-z0-9.-]+$/, 'expected [location/]gemini-…')
+  .refine(
+    (spec) => !spec.includes('/') || EuLocation.safeParse(spec.split('/')[0]).success,
+    'only the EU: "eu/…" or "europe-*/…"',
+  );
 const VertexRoutes = z
   .object({
     buddy_turn: ModelSpec,
@@ -40,13 +51,17 @@ const Config = z
     /** 'disabled' runs the app without a model: Buddy says so honestly. */
     LLM_BACKEND: z.enum(['vertex', 'disabled']).default('vertex'),
     GOOGLE_CLOUD_PROJECT: z.string().optional(),
-    GOOGLE_VERTEX_LOCATION: z.string().default('europe-west4'),
+    GOOGLE_VERTEX_LOCATION: EuLocation.default('europe-west4'),
     /** Service-account JSON inline (Vercel); written to a temp file at boot. */
     GOOGLE_APPLICATION_CREDENTIALS_JSON: z.string().optional(),
-    /** Conversation, planning, tutoring and reading worksheets. */
-    VERTEX_MODEL_SMART: z.string().default('gemini-2.5-flash'),
-    /** Cheaper model for short low-stakes tasks (no feature uses it yet). */
-    VERTEX_MODEL_FAST: z.string().default('gemini-2.5-flash-lite'),
+    /**
+     * Conversation, planning, tutoring, reading worksheets, speech. Gemini 3.6 Flash through the
+     * EU multi-region endpoint: it passed every eval (tutor 26/27, Buddy 22/22, speech 6/6,
+     * pronunciation stricter than 2.5); Gemini 2.5 Flash is retired in October 2026.
+     */
+    VERTEX_MODEL_SMART: ModelSpec.default('eu/gemini-3.6-flash'),
+    /** Cheaper model for short low-stakes tasks (no feature uses it: the Lite models failed the tutor eval). */
+    VERTEX_MODEL_FAST: ModelSpec.default('eu/gemini-3.1-flash-lite'),
     /**
      * Per-task models, overriding the tier: JSON like {"tutor":"eu/gemini-3.1-flash-lite"}.
      * A model may carry its location ("eu/…"; default GOOGLE_VERTEX_LOCATION). Chosen per

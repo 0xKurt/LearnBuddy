@@ -1,6 +1,10 @@
 # Vertex AI — Setup für Privatperson (LearnBuddy)
 
-Schritt-für-Schritt-Anleitung, um Vertex AI Gemini 2.5 Flash-Lite für LearnBuddy nutzbar zu machen. Privatperson reicht — kein Gewerbeschein, keine UStID nötig. Du brauchst Kreditkarte oder SEPA, eine Telefonnummer für die Verifizierung und ~30 Minuten.
+Schritt-für-Schritt-Anleitung, um Vertex AI (Gemini, EU) für LearnBuddy nutzbar zu machen.
+
+> **Stand 26.09.2026:** Standardmodell ist Gemini 3.6 Flash über den EU-Multiregion-Endpunkt `eu`
+> (in `europe-west4` gibt es nur die 2.5-Modelle, die im Oktober 2026 abgeschaltet werden). Wo
+> unten noch 2.5 Flash-Lite steht, gilt das Vorgehen genauso. Privatperson reicht — kein Gewerbeschein, keine UStID nötig. Du brauchst Kreditkarte oder SEPA, eine Telefonnummer für die Verifizierung und ~30 Minuten.
 
 Stand: 2026-05-16. Wenn die Google-Cloud-Console-UI sich ändert, sind die Pfade unten als "Console → X → Y" zu lesen und ggf. mit der globalen Suche oben (Lupensymbol) abzukürzen.
 
@@ -156,9 +160,11 @@ LLM_BACKEND=vertex
 GOOGLE_CLOUD_PROJECT=<deine-projekt-id>
 GOOGLE_VERTEX_LOCATION=europe-west4
 GOOGLE_APPLICATION_CREDENTIALS=/Users/<dein-user>/.config/learnbuddy/vertex-sa.json
-# Modelle (Standardwerte):
-VERTEX_MODEL_SMART=gemini-2.5-flash
-VERTEX_MODEL_FAST=gemini-2.5-flash-lite
+# Modelle (Standardwerte; "eu/…" = EU-Multiregion-Endpunkt, nur EU-Standorte sind erlaubt):
+VERTEX_MODEL_SMART=eu/gemini-3.6-flash
+VERTEX_MODEL_FAST=eu/gemini-3.1-flash-lite
+# Optional pro Aufgabe, nach bestandenem Eval (docs/architecture.md §Model calls):
+# VERTEX_ROUTES={"tutor":"eu/gemini-3.6-flash"}
 ```
 
 Ohne diese Werte läuft die API mit `LLM_BACKEND=disabled`: Buddy sagt dann ehrlich, dass er gerade

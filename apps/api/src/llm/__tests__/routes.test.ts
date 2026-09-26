@@ -32,4 +32,17 @@ describe('model routes', () => {
     expect(() => loadConfig({ ...env, VERTEX_ROUTES: '{"tutor":"gpt-4o"}' })).toThrow();
     expect(() => loadConfig({ ...env, VERTEX_ROUTES: 'not json' })).toThrow();
   });
+
+  it('processes in the EU only: other locations are refused at startup', () => {
+    expect(loadConfig(env).VERTEX_MODEL_SMART).toBe('eu/gemini-3.6-flash');
+    expect(
+      loadConfig({ ...env, VERTEX_ROUTES: '{"tutor":"europe-west4/gemini-2.5-flash"}' })
+        .VERTEX_ROUTES,
+    ).toEqual({ tutor: 'europe-west4/gemini-2.5-flash' });
+    for (const bad of ['global/gemini-3.6-flash', 'us-central1/gemini-3.6-flash']) {
+      expect(() => loadConfig({ ...env, VERTEX_ROUTES: `{"tutor":"${bad}"}` })).toThrow();
+      expect(() => loadConfig({ ...env, VERTEX_MODEL_SMART: bad })).toThrow();
+    }
+    expect(() => loadConfig({ ...env, GOOGLE_VERTEX_LOCATION: 'global' })).toThrow();
+  });
 });

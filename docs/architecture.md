@@ -221,7 +221,7 @@ An event never bypasses the contact rules.
 ## Model calls
 
 `llm/`. One seam (`LlmGateway`): structured JSON for a zod-derived schema, validated again with
-zod. `VertexGateway` (Gemini, `europe-west4`) with explicit output-token cap, thinking budget and
+zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) with explicit output-token cap, thinking budget and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens, cost, latency and outcome — never with prompt or answer text.
@@ -272,8 +272,10 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 | Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                    |
 | Memory                          | 60 active items; temporary ≤ 60 days                                                   |
 
-Pricing used for cost records (Vertex AI, 2026-09-25): gemini-2.5-flash $0.30 input / $2.50
-output per 1M tokens (output includes thinking), gemini-2.5-flash-lite $0.10 / $0.40.
+Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
+gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
+from 2027; output includes thinking). Note: Gemini 3.x bills the response schema as input tokens
+(Buddy's turn schema ≈ 9 600 tokens), 2.5 did not — keep schemas small.
 
 ## Material
 
