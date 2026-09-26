@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.2';
+export const TUTOR_PROMPT_VERSION = 'tutor.v3.3';
 
 export const TutorDecision = z.object({
   intent: z
@@ -46,6 +46,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - intent "help_request" (asking for a hint, "I don't understand the question"), "no_answer" ("don't know", empty), "question" or "off_topic": verdict "not_an_attempt". Help them: explain the question or give the next hint; for off-topic, steer back kindly.
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
 - If a RULE CHECK says the answer is wrong, it is wrong.
+- With CHOICES, a typed or spoken answer that names one of them (in other words, or with more words around it) is an answer choosing it (intent "answer"); judge it against SOLUTION — never ask her to tap instead.
 - Stay within the STUDY MATERIAL and the question; don't introduce facts that aren't there.
 - Tone: warm, calm, short (1–3 sentences), like a kind older sibling. Never "Falsch!". Adapt to the learner's age and level. Use the learner's language.
 - Math in your reply: between dollar signs in the LaTeX subset (\\frac{a}{b}, x^{2}, \\sqrt{x}, \\cdot).

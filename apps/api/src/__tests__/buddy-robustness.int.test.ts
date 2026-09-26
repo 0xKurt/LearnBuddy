@@ -338,6 +338,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
           args: {
             preferred_start: null,
             preferred_end: null,
+            quiet_start: null,
             avoid_weekdays: null,
             pause: { kind: 'end_of_week', weeks_ahead: 0 },
             fewer: false,
@@ -370,6 +371,54 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
     const refused = await l.api.post(`/buddy/actions/${pause.id}/undo`);
     expect(refused.status).toBe(409);
     expect(refused.body).toMatchObject({ error: { details: { reason: 'changed_since' } } });
+  });
+
+  it('moves quiet hours only earlier ("nicht nach 19 Uhr"), with undo; later is refused', async () => {
+    const l = await onboard(env);
+    const contact = (quiet: string, quote: string) => ({
+      tool: 'set_contact',
+      args: {
+        preferred_start: null,
+        preferred_end: null,
+        quiet_start: quiet,
+        avoid_weekdays: null,
+        pause: null,
+        fewer: false,
+        quote,
+      },
+    });
+    env.llm.script(
+      'buddy_turn',
+      answer('Alles klar – nach 19 Uhr schreibe ich dir nicht mehr.', [
+        contact('19:00', 'nach 19 uhr nicht mehr schreiben'),
+      ]),
+    );
+    const earlier = await send(l, 'mama sagt du darfst mir nach 19 uhr nicht mehr schreiben');
+    expect(earlier.body.status).toBe('done');
+    let st = await l.api.get<{ quiet_start: string; preferred_end: string; version: number }>(
+      '/buddy/settings',
+    );
+    expect(st.body.quiet_start).toBe('19:00');
+    expect(st.body.preferred_end <= '19:00').toBe(true);
+    const card = earlier.body.home.done.find((a) => a.summary.tool === 'set_contact')!;
+    expect(card.summary).toMatchObject({ quiet_start: '19:00' });
+    expect((await l.api.post(`/buddy/actions/${card.id}/undo`)).status).toBe(200);
+    st = await l.api.get('/buddy/settings');
+    expect(st.body.quiet_start).toBe('20:00');
+
+    // Later means more contact: the code refuses, and Buddy has to answer without it.
+    env.llm.script(
+      'buddy_turn',
+      answer('Okay, bis 21 Uhr!', [contact('21:00', 'bis 21 uhr darfst du schreiben')]),
+      answer('Später schreiben dürfen nur deine Eltern in den Einstellungen erlauben.'),
+    );
+    const later = await send(l, 'bis 21 uhr darfst du schreiben');
+    expect(later.body.home.thread.at(-1)?.text).toBe(
+      'Später schreiben dürfen nur deine Eltern in den Einstellungen erlauben.',
+    );
+    expect((await l.api.get<{ quiet_start: string }>('/buddy/settings')).body.quiet_start).toBe(
+      '20:00',
+    );
   });
 
   it('keeps learners apart: foreign ids are not found, aliases only resolve to own data', async () => {
@@ -485,6 +534,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
           args: {
             preferred_start: null,
             preferred_end: null,
+            quiet_start: null,
             avoid_weekdays: [],
             pause: null,
             fewer: false,

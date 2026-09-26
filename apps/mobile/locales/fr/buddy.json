@@ -130,7 +130,8 @@
     "schedule_check": "Je repasse {{when}}",
     "offer_learning": "Proposé : {{what}} – « {{text}} »",
     "plan_step_agreed_in_app": "Convenu : {{title}} {{when}} – ça s'affiche ici dans l'appli (les messages sur ton téléphone sont désactivés)",
-    "open_area": "Affiché : {{what}}"
+    "open_area": "Affiché : {{what}}",
+    "set_contact_quiet": "Messages seulement entre {{from}} et {{to}}, jamais après {{quiet}}, au maximum {{count}} par semaine"
   },
   "intro": {
     "title": "Moi, c'est Buddy.",

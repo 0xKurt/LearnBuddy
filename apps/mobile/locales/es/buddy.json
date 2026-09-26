@@ -130,7 +130,8 @@
     "schedule_check": "Vuelvo a pasarme {{when}}",
     "offer_learning": "Propuesto: {{what}} – «{{text}}»",
     "plan_step_agreed_in_app": "Acordado: {{title}} {{when}} – aparece aquí en la app (los mensajes al móvil están desactivados)",
-    "open_area": "Mostrado: {{what}}"
+    "open_area": "Mostrado: {{what}}",
+    "set_contact_quiet": "Mensajes solo de {{from}} a {{to}}, nunca después de las {{quiet}}, como máximo {{count}} por semana"
   },
   "intro": {
     "title": "Soy Buddy.",

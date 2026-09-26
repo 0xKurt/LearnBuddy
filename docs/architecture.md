@@ -130,6 +130,8 @@ summary plus undo data. Enforced here, not in the prompt:
 
 - background checks may only `prepare_practice`, `request_material`, `schedule_check`;
 - contact can only be reduced or shifted by Buddy (`set_contact`), never enabled or increased;
+  quiet hours may only start earlier ("nicht nach 19 Uhr" → 19:00), and the preferred window then
+  ends there — a reply may only claim what the tool actually changed (found by the Lena run);
 - agreed times may not fall into quiet hours; checks lie between 1 hour and 21 days ahead;
 - temporary situations need an end (≤ 60 days); plans lie ≤ 1 year ahead;
 - undo is refused when the object changed since (version check) — no blind overwrite of, e.g.,
@@ -232,6 +234,10 @@ Flash-Lite — as strict as 3.6 Flash in `evals/speak`, half the cost), else the
 (`eu/gemini-3.1-flash-lite`): the Gemini 3.x models are served in the EU only through the EU
 multi-region endpoint `eu`, not in `europe-west4` (probed 2026-09-26). A route changes only after
 the task's eval passes on it (`evals/buddy`, `evals/tutor`, `evals/speak`, `evals/speed`).
+`evals/lena` plays whole journeys of a 12-year-old against the live model (child-like typing,
+photographed sheets, spoken answers, begging for the solution) and writes a transcript to read;
+report in `reports/Lena-Durchlauf.md`. A spoken or typed choice counts as the option it names —
+exactly, by its letter, or said first and explained (`choiceNamed`).
 
 ### Speed
 

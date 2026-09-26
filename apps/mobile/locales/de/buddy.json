@@ -130,7 +130,8 @@
     "schedule_check": "Ich schaue {{when}} wieder vorbei",
     "offer_learning": "Angeboten: {{what}} – „{{text}}“",
     "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Nachrichten aufs Handy sind aus)",
-    "open_area": "Gezeigt: {{what}}"
+    "open_area": "Gezeigt: {{what}}",
+    "set_contact_quiet": "Nachrichten nur zwischen {{from}} und {{to}} Uhr, nie nach {{quiet}} Uhr, höchstens {{count}}× pro Woche"
   },
   "intro": {
     "title": "Ich bin Buddy.",

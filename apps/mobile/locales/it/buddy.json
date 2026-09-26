@@ -130,7 +130,8 @@
     "schedule_check": "Torno a fare un salto {{when}}",
     "offer_learning": "Proposto: {{what}} – «{{text}}»",
     "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
-    "open_area": "Mostrato: {{what}}"
+    "open_area": "Mostrato: {{what}}",
+    "set_contact_quiet": "Messaggi solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}, al massimo {{count}} a settimana"
   },
   "intro": {
     "title": "Sono Buddy.",

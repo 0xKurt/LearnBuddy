@@ -71,6 +71,8 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     avoid_weekdays: z.array(z.number().int()),
     paused_until: IsoDateTime.nullable(),
     max_per_week: z.number().int(),
+    /** No messages from then until the morning (absent in older records). */
+    quiet_start: LocalTime.optional(),
   }),
   z.object({ tool: z.literal('schedule_check'), at: IsoDateTime }),
   /** Buddy offers to start learning; the app shows a button that starts it (POST /practice/topic). */

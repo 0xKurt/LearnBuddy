@@ -302,6 +302,9 @@ const setContact = z.object({
   args: z.object({
     preferred_start: LocalTimeSchema.nullable(),
     preferred_end: LocalTimeSchema.nullable(),
+    quiet_start: LocalTimeSchema.nullable().describe(
+      'No messages at all from this time until the morning ("nicht nach 19 Uhr" → 19:00); only earlier than now',
+    ),
     avoid_weekdays: z
       .array(z.number().int().min(1).max(7))
       .max(7)

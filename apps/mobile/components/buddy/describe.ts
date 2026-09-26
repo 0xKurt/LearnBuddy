@@ -97,11 +97,18 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
     case 'set_contact':
       return a.paused_until
         ? t('action.set_contact_pause', { date: formatLastDay(a.paused_until, locale) })
-        : t('action.set_contact', {
-            from: a.preferred_start,
-            to: a.preferred_end,
-            count: a.max_per_week,
-          });
+        : a.quiet_start
+          ? t('action.set_contact_quiet', {
+              from: a.preferred_start,
+              to: a.preferred_end,
+              quiet: a.quiet_start,
+              count: a.max_per_week,
+            })
+          : t('action.set_contact', {
+              from: a.preferred_start,
+              to: a.preferred_end,
+              count: a.max_per_week,
+            });
     case 'offer_learning':
       return t('action.offer_learning', {
         what: i18n.t(`learn:${KIND_LABEL[a.kind]}`),

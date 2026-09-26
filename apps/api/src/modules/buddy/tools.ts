@@ -101,6 +101,8 @@ export type UndoSpec =
     }
   | {
       type: 'restore_settings';
+      /** Absent in undo records written before quiet hours could be changed. */
+      quiet_start?: string;
       preferred_start: string;
       preferred_end: string;
       avoid_weekdays: number[];
@@ -712,8 +714,24 @@ async function runSetContact(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const s = ctx.settings;
+  const quietStart = a.quiet_start ?? s.quiet_start;
+  // Quiet hours may only grow: every minute that was quiet stays quiet.
+  for (let m = 0; m < 1440; m += 5) {
+    if (inWindow(m, s.quiet_start, s.quiet_end) && !inWindow(m, quietStart, s.quiet_end)) {
+      throw new ToolRejection(
+        `quiet hours can only start earlier than ${s.quiet_start} — later means more contact`,
+      );
+    }
+  }
   const preferredStart = a.preferred_start ?? s.preferred_start;
-  const preferredEnd = a.preferred_end ?? s.preferred_end;
+  let preferredEnd = a.preferred_end ?? s.preferred_end;
+  // The preferred window ends where the quiet hours begin.
+  if (
+    minutesOf(quietStart) > minutesOf(s.quiet_end) &&
+    minutesOf(preferredEnd) > minutesOf(quietStart)
+  ) {
+    preferredEnd = quietStart;
+  }
   if (minutesOf(preferredStart) >= minutesOf(preferredEnd)) {
     throw new ToolRejection('the preferred window must start before it ends');
   }
@@ -732,9 +750,9 @@ async function runSetContact(
   await ctx.db.query(
     `update buddy_settings
         set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4, paused_until = $5,
-            max_per_week = $6, version = version + 1
+            max_per_week = $6, quiet_start = $7, version = version + 1
       where learner_id = $1`,
-    [ctx.learnerId, preferredStart, preferredEnd, avoid, pausedUntil, maxPerWeek],
+    [ctx.learnerId, preferredStart, preferredEnd, avoid, pausedUntil, maxPerWeek, quietStart],
   );
   if (pausedUntil && pausedUntil.getTime() > ctx.now.getTime()) {
     // Nothing queued during a pause is sent afterwards (no backlog).
@@ -752,9 +770,11 @@ async function runSetContact(
       avoid_weekdays: avoid,
       paused_until: pausedUntil ? pausedUntil.toISOString() : null,
       max_per_week: maxPerWeek,
+      quiet_start: quietStart,
     },
     undo: {
       type: 'restore_settings',
+      quiet_start: s.quiet_start,
       preferred_start: s.preferred_start,
       preferred_end: s.preferred_end,
       avoid_weekdays: s.avoid_weekdays,
@@ -1041,7 +1061,8 @@ export async function runUndo(
       // adult's later change is never overwritten by the learner's undo.
       const r = await db.query(
         `update buddy_settings set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4,
-                                   paused_until = $5, max_per_week = $6, version = version + 1
+                                   paused_until = $5, max_per_week = $6,
+                                   quiet_start = coalesce($8, quiet_start), version = version + 1
           where learner_id = $1 and version = $7 returning learner_id`,
         [
           learnerId,
@@ -1051,6 +1072,7 @@ export async function runUndo(
           undo.paused_until,
           undo.max_per_week,
           undo.expect_version,
+          undo.quiet_start ?? null,
         ],
       );
       return r.length === 1;

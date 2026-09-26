@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { differentNumber, editDistance, ruleCheck, valuesIn } from '../evaluate.js';
+import { choiceNamed, differentNumber, editDistance, ruleCheck, valuesIn } from '../evaluate.js';
 
 const mc = {
   kind: 'multiple_choice' as const,
@@ -117,5 +117,30 @@ describe('values in a text', () => {
     expect(valuesIn('$\\frac{31}{20}$')).toEqual([1.55]);
     expect(valuesIn('$1\\frac{11}{20}$ und 1 11/20')).toEqual([1.55, 1.55]);
     expect(valuesIn('0,75 oder 3/4')).toEqual([0.75, 0.75]);
+  });
+});
+
+describe('a spoken or typed choice', () => {
+  const choices = [
+    'Die Zähler direkt addieren',
+    'Die Brüche gleichnamig machen',
+    'Die Nenner miteinander multiplizieren',
+  ];
+
+  it('is the option it names: exactly, by its letter, or said first and explained', () => {
+    expect(choiceNamed('die brüche gleichnamig machen', choices)).toBe(1);
+    expect(choiceNamed('B', choices)).toBe(1);
+    expect(choiceNamed('c.', choices)).toBe(2);
+    expect(
+      choiceNamed('Die Brüche gleichnamig machen, auf denselben Nenner bringen.', choices),
+    ).toBe(1);
+    expect(choiceNamed('2/3', ['$\\frac{2}{3}$', '$\\frac{3}{5}$'])).toBe(0);
+  });
+
+  it('leaves everything unclear to the tutor', () => {
+    expect(choiceNamed('ich glaube die zweite', choices)).toBeNull();
+    expect(choiceNamed('nicht die brüche gleichnamig machen', choices)).toBeNull();
+    expect(choiceNamed('d', choices)).toBeNull();
+    expect(choiceNamed('die', choices)).toBeNull();
   });
 });

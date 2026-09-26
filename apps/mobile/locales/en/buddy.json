@@ -130,7 +130,8 @@
     "schedule_check": "I'll check in again {{when}}",
     "offer_learning": "Offered: {{what}} – “{{text}}”",
     "plan_step_agreed_in_app": "Agreed: {{title}} {{when}} – shows up here in the app (messages to your phone are off)",
-    "open_area": "Shown: {{what}}"
+    "open_area": "Shown: {{what}}",
+    "set_contact_quiet": "Messages only between {{from}} and {{to}}, never after {{quiet}}, at most {{count}}× a week"
   },
   "intro": {
     "title": "I'm Buddy.",

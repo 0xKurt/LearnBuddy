@@ -85,6 +85,29 @@ function closeEnough(actual: number, expected: number): boolean {
   );
 }
 
+/**
+ * The option a spoken or typed answer names, or null: the option itself however it
+ * is written ("2/3" for $\frac{2}{3}$), its letter as voice mode reads them ("B",
+ * "b."), or the option said first and then explained further ("Die Brüche
+ * gleichnamig machen, auf denselben Nenner bringen"). Only when exactly one
+ * option fits; anything else is left to the tutor.
+ */
+export function choiceNamed(text: string, choices: readonly string[]): number | null {
+  const norm = normalizeShortAnswer(plainMath(text));
+  const options = choices.map((c) => normalizeShortAnswer(plainMath(c)));
+  const exact = options.indexOf(norm);
+  if (exact >= 0) return exact;
+  const letter = /^([a-z])[.)]?$/i.exec(text.trim());
+  if (letter) {
+    const i = letter[1]!.toLowerCase().charCodeAt(0) - 97;
+    return i < choices.length ? i : null;
+  }
+  const first = options
+    .map((o, i) => ({ o, i }))
+    .filter(({ o }) => o.length >= 3 && norm.startsWith(o) && /^\W/u.test(norm.slice(o.length)));
+  return first.length === 1 ? first[0]!.i : null;
+}
+
 export function ruleCheck(
   item: ItemForCheck,
   answer: { text: string | null; choice: number | null },
@@ -95,10 +118,8 @@ export function ruleCheck(
       return answer.choice === item.correct_choice ? 'correct' : 'incorrect';
     }
     if (answer.text && item.choices) {
-      // A spoken or typed choice ("2/3") matches the choice however it is written ($\frac{2}{3}$).
-      const norm = normalizeShortAnswer(plainMath(answer.text));
-      const idx = item.choices.findIndex((c) => normalizeShortAnswer(plainMath(c)) === norm);
-      if (idx >= 0) return idx === item.correct_choice ? 'correct' : 'incorrect';
+      const idx = choiceNamed(answer.text, item.choices);
+      if (idx !== null) return idx === item.correct_choice ? 'correct' : 'incorrect';
     }
     return 'unknown';
   }
