@@ -122,6 +122,29 @@ describe('wiring', () => {
     expect(unreachable).toEqual([]);
   });
 
+  it('every package the apps depend on is in the lockfile (a frozen install works)', () => {
+    const root = join(MOBILE, '../..');
+    const lock = read(join(root, 'pnpm-lock.yaml'));
+    const missing: string[] = [];
+    for (const dir of [
+      'apps/mobile',
+      'apps/api',
+      'packages/shared-types',
+      'packages/shared-math',
+    ]) {
+      const pkg = JSON.parse(read(join(root, dir, 'package.json'))) as Record<
+        string,
+        Record<string, string> | undefined
+      >;
+      const importer = lock.split(`\n  ${dir}:\n`)[1]?.split(/\n {2}\S/)[0] ?? '';
+      for (const field of ['dependencies', 'devDependencies'])
+        for (const name of Object.keys(pkg[field] ?? {}))
+          if (!new RegExp(`\\n\\s+'?${name.replace(/[/.]/g, '\\$&')}'?:\\n`).test(importer))
+            missing.push(`${dir}: ${name}`);
+    }
+    expect(missing).toEqual([]);
+  });
+
   it('every text the app asks for exists (German)', () => {
     const dir = join(MOBILE, 'locales/de');
     const locale = new Map<string, Set<string>>();
