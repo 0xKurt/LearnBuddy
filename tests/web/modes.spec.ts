@@ -4,19 +4,9 @@
 // math and a figure, a practice test (no hints, results at the end) and
 // "die wackligen nochmal". Screenshots go to test-results/web/shots.
 
-import { join } from 'node:path';
-
 import { expect, test, type Page } from '@playwright/test';
 
-const SHOTS = join(__dirname, '../../test-results/web/shots');
-
-async function shot(page: Page, name: string, height = 1500): Promise<void> {
-  const size = page.viewportSize();
-  await page.setViewportSize({ width: size?.width ?? 390, height });
-  await page.waitForTimeout(300);
-  await page.screenshot({ path: join(SHOTS, `${name}.png`) });
-  if (size) await page.setViewportSize(size);
-}
+import { shot } from './fit';
 
 async function onboardChild(page: Page): Promise<void> {
   await page.goto('/');
@@ -30,6 +20,7 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByLabel('TT').fill('10');
   await page.getByLabel('MM').fill('02');
   await page.getByLabel('JJJJ').fill('2014');
+  await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('checkbox').click();
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');
@@ -134,13 +125,13 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);
   await expect(explained).toBeHidden({ timeout: 8000 });
-  await shot(page, '27-practice-voice-mode', 844);
+  await shot(page, '27-practice-voice-mode');
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('Hallo Lena')).toBeVisible();
   // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).
   await expect(page.getByRole('button', { name: 'Tastatur' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
-  await shot(page, '26-buddy-voice-mode', 844);
+  await shot(page, '26-buddy-voice-mode');
   // "Tastatur" goes back to typing.
   await page.getByRole('button', { name: 'Tastatur' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
@@ -178,7 +169,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByLabel('Schreib Buddy …').fill('Zeig mir meine Arbeitsblätter');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Klar – hier ist dein Stoff.')).toBeVisible();
-  await shot(page, '31-open-area', 844);
+  await shot(page, '31-open-area');
   await page.getByRole('button', { name: 'Mein Stoff öffnen' }).click();
   await expect(page.getByRole('heading', { name: 'Mein Stoff' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
@@ -189,7 +180,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('GESPRÄCH')).toBeVisible();
   await expect(page.getByText('Ich höre zu.')).toBeVisible();
   await expect(page.getByText('Tipp aufs Mikro, wenn du fertig bist.')).toBeVisible();
-  await shot(page, '32-talk-listening', 844);
+  await shot(page, '32-talk-listening');
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
   await expect(page.getByText('„Was steht diese Woche an?“')).toBeVisible();
@@ -197,7 +188,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),
   ).toBeVisible();
-  await shot(page, '33-talk-answer', 844);
+  await shot(page, '33-talk-answer');
   await page.getByRole('button', { name: 'Beenden' }).last().click();
   await expect(page.getByText('Hallo Lena')).toBeVisible();
   // The same conversation: what was said by voice is in the chat.

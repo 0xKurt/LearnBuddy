@@ -63,6 +63,8 @@ If a change diverges from these docs, update the doc in the same change or write
     handled behind Buddy (tools, defaults, the conversation). A new feature first asks "can Buddy
     do this in the chat?"; a new screen, menu or setting needs a reason it cannot. Parents' and
     rare settings stay closed until opened. Check new UI against `docs/UX-PRINCIPLES.md` §31–32.
+    **No scrolling to find what matters:** every screen fits a 390×844 and a 360×740 phone; only a
+    conversation or a browsed list scrolls (`tests/web/fit.ts` fails the walkthrough otherwise).
 
 ## Required quality gates
 

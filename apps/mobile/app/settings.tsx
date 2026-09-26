@@ -19,6 +19,7 @@ import { Screen } from '../components/lb/Screen.js';
 import { AboutSection } from '../components/settings/AboutSection.js';
 import { AdultSection } from '../components/settings/AdultSection.js';
 import { ContactSection } from '../components/settings/ContactSection.js';
+import { FoldContext } from '../components/settings/Group.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
 import { useRevealInput } from '../components/settings/useRevealInput.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
@@ -31,6 +32,8 @@ export default function SettingsScreen() {
   const home = useHome();
   const { scroll, content, reveal } = useRevealInput();
   const [refreshing, setRefreshing] = useState(false);
+  // One group open at a time; all closed at first (components/settings/Group.tsx).
+  const [open, setOpen] = useState<string | null>(null);
 
   async function refresh() {
     setRefreshing(true);
@@ -86,17 +89,21 @@ export default function SettingsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />
           }
         >
-          <View ref={content} style={{ gap: 30 }}>
-            <ContactSection
-              settings={settings.data}
-              isMinor={learner.is_minor}
-              pinSet={account.pin_set}
-              push={home.data?.system.push ?? null}
-            />
-            <AdultSection account={account} learner={learner} onInputFocus={reveal} />
-            <ProfileSection learner={learner} />
-            <AboutSection />
-          </View>
+          <FoldContext.Provider
+            value={{ open, toggle: (key) => setOpen((now) => (now === key ? null : key)) }}
+          >
+            <View ref={content} style={{ gap: 16 }}>
+              <ContactSection
+                settings={settings.data}
+                isMinor={learner.is_minor}
+                pinSet={account.pin_set}
+                push={home.data?.system.push ?? null}
+              />
+              <AdultSection account={account} learner={learner} onInputFocus={reveal} />
+              <ProfileSection learner={learner} />
+              <AboutSection />
+            </View>
+          </FoldContext.Provider>
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

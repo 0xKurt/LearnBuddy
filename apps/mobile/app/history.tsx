@@ -42,7 +42,7 @@ export default function History() {
 
   return (
     <Screen back title={t('thread.title')}>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+      <ScrollView testID="scroll-thread" contentContainerStyle={{ padding: 16, gap: 16 }}>
         {more ? (
           <View style={{ alignItems: 'center' }}>
             <Btn

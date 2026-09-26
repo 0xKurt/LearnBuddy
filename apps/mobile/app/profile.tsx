@@ -64,18 +64,18 @@ export default function Profile() {
   const [pin, setPinValue] = useState('');
   const [pinRepeat, setPinRepeat] = useState('');
   const [busy, setBusy] = useState(false);
+  // For a child two short steps, each fitting the screen: the child, then the parents.
+  const [step, setStep] = useState<'learner' | 'parent'>('learner');
 
   const birthDate = birthDateOf(day, month, year);
   const dateComplete = day.length > 0 && month.length > 0 && year.length === 4;
   const minor = birthDate !== null && ageOf(birthDate) < 16;
   const tooYoungSelf = relation === 'self' && minor;
   const pinOk = /^\d{4}$/.test(pin) && pin === pinRepeat;
-  const ready =
-    relation !== null &&
-    name.trim().length > 0 &&
-    birthDate !== null &&
-    !tooYoungSelf &&
-    (relation === 'self' || (consent && pinOk));
+  const learnerReady =
+    relation !== null && name.trim().length > 0 && birthDate !== null && !tooYoungSelf;
+  const ready = learnerReady && (relation === 'self' || (consent && pinOk));
+  const parentStep = relation === 'child' && step === 'parent';
 
   async function submit() {
     if (!relation || !birthDate) return;
@@ -112,18 +112,31 @@ export default function Profile() {
           contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24, gap: 22 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text accessibilityRole="header" style={TYPE.display}>
-            {t('profile.title')}
-          </Text>
-          <Segmented
-            options={[
-              { value: 'self', label: t('profile.self') },
-              { value: 'child', label: t('profile.child') },
-            ]}
-            value={relation}
-            onChange={setRelation}
-          />
-          {relation ? (
+          {parentStep ? (
+            <>
+              <Btn variant="ghost" size="sm" pill icon="back" onPress={() => setStep('learner')}>
+                {t('profile.back')}
+              </Btn>
+              <Text accessibilityRole="header" style={TYPE.display}>
+                {t('profile.parent_title')}
+              </Text>
+            </>
+          ) : (
+            <Text accessibilityRole="header" style={TYPE.display}>
+              {t('profile.title')}
+            </Text>
+          )}
+          {parentStep ? null : (
+            <Segmented
+              options={[
+                { value: 'self', label: t('profile.self') },
+                { value: 'child', label: t('profile.child') },
+              ]}
+              value={relation}
+              onChange={setRelation}
+            />
+          )}
+          {relation && !parentStep ? (
             <>
               <View style={{ gap: 8 }}>
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
@@ -195,61 +208,59 @@ export default function Profile() {
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
                 <Segmented options={LANGUAGES} value={locale} onChange={setLocale} />
               </View>
-              {relation === 'child' ? (
-                <Card tone="lavender" padding={20}>
-                  <View style={{ gap: 12 }}>
-                    <Checkbox
-                      checked={consent}
-                      onChange={setConsent}
-                      label={t('profile.child_consent')}
-                    />
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}
-                    >
-                      <View
-                        accessibilityElementsHidden
-                        importantForAccessibility="no-hide-descendants"
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 16,
-                          backgroundColor: LB.paper,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Icon name="shield" size={18} color={LB.primaryDk} />
-                      </View>
-                      <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
-                    </View>
-                    <Text style={[TYPE.small, { color: LB.ink }]}>{t('profile.pin_body')}</Text>
-                    <LbTextInput
-                      value={pin}
-                      onChangeText={setPinValue}
-                      placeholder="••••"
-                      accessibilityLabel={t('profile.pin_title')}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      secureTextEntry
-                    />
-                    <LbTextInput
-                      value={pinRepeat}
-                      onChangeText={setPinRepeat}
-                      placeholder="••••"
-                      accessibilityLabel={t('profile.pin_repeat')}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      secureTextEntry
-                    />
-                    {pinRepeat.length === 4 && pin !== pinRepeat ? (
-                      <Text style={[TYPE.small, { color: LB.danger }]}>
-                        {t('profile.pin_mismatch')}
-                      </Text>
-                    ) : null}
-                  </View>
-                </Card>
-              ) : null}
             </>
+          ) : null}
+          {parentStep ? (
+            <Card tone="lavender" padding={20}>
+              <View style={{ gap: 12 }}>
+                <Checkbox
+                  checked={consent}
+                  onChange={setConsent}
+                  label={t('profile.child_consent')}
+                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                  <View
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: LB.paper,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon name="shield" size={18} color={LB.primaryDk} />
+                  </View>
+                  <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
+                </View>
+                <Text style={[TYPE.small, { color: LB.ink }]}>{t('profile.pin_body')}</Text>
+                <LbTextInput
+                  value={pin}
+                  onChangeText={setPinValue}
+                  placeholder="••••"
+                  accessibilityLabel={t('profile.pin_title')}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  secureTextEntry
+                />
+                <LbTextInput
+                  value={pinRepeat}
+                  onChangeText={setPinRepeat}
+                  placeholder="••••"
+                  accessibilityLabel={t('profile.pin_repeat')}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  secureTextEntry
+                />
+                {pinRepeat.length === 4 && pin !== pinRepeat ? (
+                  <Text style={[TYPE.small, { color: LB.danger }]}>
+                    {t('profile.pin_mismatch')}
+                  </Text>
+                ) : null}
+              </View>
+            </Card>
           ) : null}
         </ScrollView>
         <View
@@ -259,9 +270,15 @@ export default function Profile() {
             paddingBottom: Math.max(insets.bottom, 16),
           }}
         >
-          <Btn size="lg" pill full disabled={!ready || busy} onPress={() => void submit()}>
-            {t('profile.cta')}
-          </Btn>
+          {relation === 'child' && !parentStep ? (
+            <Btn size="lg" pill full disabled={!learnerReady} onPress={() => setStep('parent')}>
+              {t('profile.next')}
+            </Btn>
+          ) : (
+            <Btn size="lg" pill full disabled={!ready || busy} onPress={() => void submit()}>
+              {t('profile.cta')}
+            </Btn>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Screen>

@@ -8,18 +8,11 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-const SHOTS = join(__dirname, '../../test-results/web/shots');
+import { SHOTS, shot } from './fit';
+
 mkdirSync(SHOTS, { recursive: true });
 
 /** The app scrolls inside its own views: a tall window shows a whole screen. */
-async function shot(page: Page, name: string, height = 1500): Promise<void> {
-  const size = page.viewportSize();
-  await page.setViewportSize({ width: size?.width ?? 390, height });
-  await page.waitForTimeout(300);
-  await page.screenshot({ path: join(SHOTS, `${name}.png`) });
-  if (size) await page.setViewportSize(size);
-}
-
 /** A photographed "worksheet", rendered by the browser itself. */
 async function worksheetJpeg(page: Page, path: string): Promise<void> {
   const sheet = await page.context().newPage();
@@ -65,6 +58,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByLabel('TT').fill('14');
   await page.getByLabel('MM').fill('03');
   await page.getByLabel('JJJJ').fill('2013');
+  await shot(page, '03a-profile-child');
+  // For a child two short steps (each fits the screen): the child, then the parents.
+  await page.getByRole('button', { name: 'Weiter' }).click();
   const start = page.getByRole('button', { name: "Los geht's" });
   await expect(start).toBeDisabled(); // consent and PIN still missing
   await page.getByRole('checkbox').click();
@@ -202,7 +198,11 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await openMenu('Einstellungen');
   await expect(page.getByText('Darf Buddy dir aufs Handy schreiben?')).toBeVisible();
   await expect(page.getByText('Für Eltern')).toBeVisible();
-  await shot(page, '15-settings', 2600);
+  await shot(page, '15-settings');
+  // Every group is closed with what is set now; one tap opens it.
+  await page.getByRole('button', { name: 'Darf Buddy dir aufs Handy schreiben?' }).click();
+  await expect(page.getByRole('button', { name: 'Nicht mehr erlauben' })).toBeVisible();
+  await shot(page, '15b-settings-contact', { opened: true });
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('Hallo Mia')).toBeVisible();
 

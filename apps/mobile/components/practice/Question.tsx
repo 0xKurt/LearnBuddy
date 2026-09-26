@@ -5,6 +5,7 @@
 // answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -22,13 +23,15 @@ type ProgressProps = {
   total: number;
   /** Questions already closed (answered right, or solution shown). */
   closed: number;
+  /** A quiet action at the end of the row ("Frage passt nicht"). */
+  right?: ReactNode;
 };
 
-export function ProgressRow({ position, total, closed }: ProgressProps) {
+export function ProgressRow({ position, total, closed, right }: ProgressProps) {
   const { t } = useTranslation('practice');
   const share = total > 0 ? Math.max(0, Math.min(1, closed / total)) : 0;
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Text style={[TYPE.label, { color: LB.ink2, fontSize: 14 }]}>
         {t('progress', { current: position, total })}
       </Text>
@@ -36,7 +39,13 @@ export function ProgressRow({ position, total, closed }: ProgressProps) {
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={{ height: 8, borderRadius: 4, backgroundColor: LB.lavender, overflow: 'hidden' }}
+        style={{
+          flex: 1,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: LB.lavender,
+          overflow: 'hidden',
+        }}
       >
         <View
           style={{
@@ -47,6 +56,7 @@ export function ProgressRow({ position, total, closed }: ProgressProps) {
           }}
         />
       </View>
+      {right}
     </View>
   );
 }
@@ -65,6 +75,8 @@ type QuestionProps = {
    * choices, long answers and once the question is closed.
    */
   answer?: string;
+  /** The tallest the drawing may be, so the answer stays on screen. */
+  figureMaxHeight?: number;
 };
 
 export function QuestionCard({
@@ -73,16 +85,31 @@ export function QuestionCard({
   figure = null,
   fromBuddy = false,
   answer,
+  figureMaxHeight,
 }: QuestionProps) {
   const { t } = useTranslation('practice');
   const filled = fillableAnswer(prompt, answer);
   return (
-    <Card tone="lavender" padding={22} radius={24}>
-      {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
-      {topic ? (
-        <Text style={[TYPE.small, { color: LB.ink2, fontWeight: '600', marginBottom: 8 }]}>
-          {topic}
-        </Text>
+    <Card tone="lavender" padding={18} radius={24}>
+      {fromBuddy || topic ? (
+        // Where it comes from and what it is about share one line.
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            columnGap: 10,
+            rowGap: 4,
+            marginBottom: 8,
+          }}
+        >
+          {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
+          {topic ? (
+            <Text style={[TYPE.small, { color: LB.ink2, fontWeight: '600', flexShrink: 1 }]}>
+              {topic}
+            </Text>
+          ) : null}
+        </View>
       ) : null}
       <MathText
         text={prompt}
@@ -91,8 +118,8 @@ export function QuestionCard({
         style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
       />
       {figure ? (
-        <View style={{ marginTop: 16 }}>
-          <FigureView figure={figure} />
+        <View style={{ marginTop: 12 }}>
+          <FigureView figure={figure} maxHeight={figureMaxHeight} />
         </View>
       ) : null}
     </Card>
@@ -115,7 +142,6 @@ function FromBuddyTag({ label }: { label: string }) {
         paddingLeft: 4,
         paddingRight: 12,
         paddingVertical: 4,
-        marginBottom: 12,
       }}
     >
       <BuddyOrb size={18} />

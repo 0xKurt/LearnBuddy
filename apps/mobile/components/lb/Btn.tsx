@@ -131,7 +131,7 @@ export function Btn({
             <View
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
-              style={{ flexShrink: 1 }}
+              style={{ flexShrink: 1, flexGrow: full ? 1 : 0 }}
             >
               {label}
             </View>

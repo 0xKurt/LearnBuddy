@@ -1092,6 +1092,15 @@
 
     If one screen tries to answer all of these simultaneously, simplify it.
 
+    LearnBuddy: a screen fits the phone without scrolling (390×844 and a small
+    360×740). What matters stays pinned — the question on top, the way to
+    answer at the bottom, the next step's button. Only two things may grow and
+    scroll: a conversation (newest at the bottom, always shown at its end) and
+    a list she browses on purpose (her material, her memories, a test's
+    review). Rare settings are closed groups with what is set now; one tap
+    opens one. A long form is split into short steps. The walkthroughs check
+    this on every screen (tests/web/fit.ts).
+
 
     --------------------------------------------------
     33. REUSABLE PRODUCT STATES

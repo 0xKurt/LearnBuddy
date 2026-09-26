@@ -33,7 +33,7 @@ export function NowCard({
   switch (card.type) {
     case 'resume_practice':
       return (
-        <Card tone="primaryLt" padding={20} radius={22}>
+        <Card tone="primaryLt" padding={16} radius={22}>
           <Text accessibilityRole="header" style={TYPE.title}>
             {card.mode === 'help'
               ? t('now.resume_title_help')
@@ -49,8 +49,8 @@ export function NowCard({
               ? t('now.resume_body', { title: card.title, count: card.remaining })
               : t('now.resume_body_untitled', { count: card.remaining })}
           </Text>
-          <View style={{ marginTop: 16 }}>
-            <Btn size="lg" onPress={() => onResume(card.session_id)} disabled={busy}>
+          <View style={{ marginTop: 12 }}>
+            <Btn onPress={() => onResume(card.session_id)} disabled={busy}>
               {t('now.resume_cta')}
             </Btn>
           </View>
@@ -58,7 +58,7 @@ export function NowCard({
       );
     case 'practice_ready':
       return (
-        <Card tone="primaryLt" padding={20} radius={22}>
+        <Card tone="primaryLt" padding={16} radius={22}>
           <Text accessibilityRole="header" style={TYPE.title}>
             {t('now.ready_title', { title: card.title })}
           </Text>
@@ -78,11 +78,11 @@ export function NowCard({
               {t('now.ready_focus', { topics: card.focus_topics.join(', ') })}
             </Text>
           ) : null}
-          <View style={{ marginTop: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            <Btn size="lg" onPress={() => onStart(card.step_id)} disabled={busy}>
+          <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            <Btn onPress={() => onStart(card.step_id)} disabled={busy}>
               {t('now.ready_cta')}
             </Btn>
-            <Btn size="lg" variant="ghost" onPress={() => onSkip(card.step_id)} disabled={busy}>
+            <Btn variant="ghost" onPress={() => onSkip(card.step_id)} disabled={busy}>
               {t('now.ready_later')}
             </Btn>
           </View>
@@ -90,19 +90,15 @@ export function NowCard({
       );
     case 'capture_needed':
       return (
-        <Card tone="peach" padding={20} radius={22}>
+        <Card tone="peach" padding={16} radius={22}>
           <Text accessibilityRole="header" style={TYPE.title}>
             {t('now.capture_title')}
           </Text>
           <Text style={[TYPE.body, { marginTop: 4 }]}>
             {t('now.capture_body', { title: card.title })}
           </Text>
-          <View style={{ marginTop: 16 }}>
-            <Btn
-              size="lg"
-              onPress={() => onCapture(card.step_id, card.goal?.id ?? null)}
-              disabled={busy}
-            >
+          <View style={{ marginTop: 12 }}>
+            <Btn onPress={() => onCapture(card.step_id, card.goal?.id ?? null)} disabled={busy}>
               {t('now.capture_cta')}
             </Btn>
           </View>
@@ -110,7 +106,7 @@ export function NowCard({
       );
     case 'material_processing':
       return (
-        <Card tone="sky" padding={20} radius={22}>
+        <Card tone="sky" padding={16} radius={22}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <ActivityIndicator color={LB.ink2} />
             <Text accessibilityRole="header" style={[TYPE.title, { flex: 1 }]}>
@@ -126,14 +122,14 @@ export function NowCard({
       );
     case 'material_failed':
       return (
-        <Card tone="butter" padding={20} radius={22}>
+        <Card tone="butter" padding={16} radius={22}>
           <Text accessibilityRole="header" style={TYPE.title}>
             {t('now.failed_title')}
           </Text>
           <Text style={[TYPE.body, { marginTop: 4 }]}>
             {t(`now.failed_${card.reason ?? 'model_error'}`)}
           </Text>
-          <View style={{ marginTop: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {card.retryable ? (
               <Btn onPress={() => onRetryMaterial(card.material_id)} disabled={busy}>
                 {t('now.failed_retry')}
@@ -151,7 +147,7 @@ export function NowCard({
       );
     case 'practice_result':
       return (
-        <Card tone="mint" padding={20} radius={22}>
+        <Card tone="mint" padding={16} radius={22}>
           <Text accessibilityRole="header" style={TYPE.title}>
             {t('now.result_title')}
           </Text>

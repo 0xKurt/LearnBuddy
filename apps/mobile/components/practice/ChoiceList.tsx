@@ -26,18 +26,29 @@ type SpokenChoiceProps = {
   prompt: string;
   disabled: boolean;
   onText: (text: string) => void;
+  /** Read the question again (next to the mic: the voice controls together). */
+  onReadAgain?: () => void;
 };
 
 /** Voice mode: the pinned bar under the options – say the answer instead of tapping it. */
-export function SpokenChoiceBar({ prompt, disabled, onText }: SpokenChoiceProps) {
+export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: SpokenChoiceProps) {
   const { t } = useTranslation('common');
   const voice = useVoiceInput({ purpose: 'answer', lang: null, context: prompt, onText });
   return (
     <BottomBar>
       <MicStatus voice={voice} />
-      <View style={{ alignItems: 'center', gap: 6 }}>
-        <Text style={[TYPE.small, { textAlign: 'center' }]}>{t('voice.or_say')}</Text>
-        <MicButton voice={voice} size="lg" label={t('voice.answer')} disabled={disabled} />
+      {/* One row next to the options' actions: the options stay on screen. */}
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}
+      >
+        {onReadAgain ? (
+          <Btn size="sm" variant="soft" pill icon="speak" onPress={onReadAgain}>
+            {t('voice.read_again')}
+          </Btn>
+        ) : (
+          <Text style={[TYPE.small, { flexShrink: 1 }]}>{t('voice.or_say')}</Text>
+        )}
+        <MicButton voice={voice} filled label={t('voice.answer')} disabled={disabled} />
       </View>
     </BottomBar>
   );
@@ -68,56 +79,62 @@ export function ChoiceList({
 }: Props) {
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
+  // Short options (a number, a fraction, a word) sit two by two: all of them and the
+  // question fit on the screen without scrolling.
+  const grid = choices.length <= 4 && choices.every((c) => shortChoice(c));
   return (
-    <View style={{ gap: 12 }}>
-      {choices.map((choice, index) => {
-        const wasTried = tried.has(choice);
-        return (
-          // The white card and its shadow sit around the button (Btn clips what is inside it).
-          <View
-            key={`${index}:${choice}`}
-            style={[
-              { borderRadius: CARD_RADIUS, backgroundColor: wasTried ? LB.canvas : LB.paper },
-              wasTried ? null : SHADOW.soft,
-            ]}
-          >
-            <Btn
-              variant="ghost"
-              pill
-              full
-              wrap
-              disabled={disabled || wasTried}
-              onPress={() => onChoose(index, choice)}
-              accessibilityHint={wasTried ? t('choice_tried') : undefined}
-              // Math in a choice is set properly; a screen reader hears it in words.
-              label={
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                  <LetterBadge letter={letterFor(index)} tried={wasTried} />
-                  <View style={{ flexShrink: 1, gap: 2 }}>
-                    <MathText
-                      text={choice}
-                      accessible={false}
-                      style={{
-                        color: wasTried ? LB.ink2 : LB.ink,
-                        fontSize: 17,
-                        lineHeight: 23,
-                        fontWeight: '600',
-                      }}
-                    />
-                    {wasTried ? (
-                      <Text style={[TYPE.label, { color: LB.ink2, fontWeight: '500' }]}>
-                        {t('choice_tried')}
-                      </Text>
-                    ) : null}
-                  </View>
-                </View>
-              }
+    <View style={{ gap: 10 }}>
+      <View style={grid ? { flexDirection: 'row', flexWrap: 'wrap', gap: 10 } : { gap: 10 }}>
+        {choices.map((choice, index) => {
+          const wasTried = tried.has(choice);
+          return (
+            // The white card and its shadow sit around the button (Btn clips what is inside it).
+            <View
+              key={`${index}:${choice}`}
+              style={[
+                { borderRadius: CARD_RADIUS, backgroundColor: wasTried ? LB.canvas : LB.paper },
+                grid ? { flexBasis: '45%', flexGrow: 1 } : null,
+                wasTried ? null : SHADOW.soft,
+              ]}
             >
-              {speakMathText(choice, words)}
-            </Btn>
-          </View>
-        );
-      })}
+              <Btn
+                variant="ghost"
+                pill
+                full
+                wrap
+                disabled={disabled || wasTried}
+                onPress={() => onChoose(index, choice)}
+                accessibilityHint={wasTried ? t('choice_tried') : undefined}
+                // Math in a choice is set properly; a screen reader hears it in words.
+                label={
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                    <LetterBadge letter={letterFor(index)} tried={wasTried} />
+                    <View style={{ flexShrink: 1, gap: 2 }}>
+                      <MathText
+                        text={choice}
+                        accessible={false}
+                        style={{
+                          color: wasTried ? LB.ink2 : LB.ink,
+                          fontSize: 17,
+                          lineHeight: 23,
+                          fontWeight: '600',
+                        }}
+                      />
+                      {wasTried ? (
+                        <Text style={[TYPE.label, { color: LB.ink2, fontWeight: '500' }]}>
+                          {t('choice_tried')}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                }
+              >
+                {speakMathText(choice, words)}
+              </Btn>
+            </View>
+          );
+        })}
+      </View>
       {onReveal || onHint ? (
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
           {onHint ? (
@@ -140,6 +157,12 @@ export function ChoiceList({
       ) : null}
     </View>
   );
+}
+
+/** A number, a fraction or a word or two: what fits half the width. */
+function shortChoice(choice: string): boolean {
+  const plain = choice.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2').replace(/[$\\{}]/g, '');
+  return plain.trim().length <= 14;
 }
 
 /** Rounded, but still a card and not a pill (Btn's md pill radius: the card follows the button). */

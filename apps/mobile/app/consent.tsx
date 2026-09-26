@@ -56,15 +56,15 @@ export default function Consent() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24, gap: 18 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 14 }}>
         <View style={{ gap: 8 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
             {t('consent.title')}
           </Text>
           <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('consent.intro')}</Text>
         </View>
-        <Card padding={20}>
-          <View style={{ gap: 14 }}>
+        <Card padding={16}>
+          <View style={{ gap: 10 }}>
             {POINTS.map((p) => (
               <View key={p} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                 <View
@@ -82,7 +82,9 @@ export default function Consent() {
                 >
                   <Icon name="check" size={15} color={LB.primaryDk} />
                 </View>
-                <Text style={[TYPE.body, { flex: 1 }]}>{t(`consent.${p}`)}</Text>
+                <Text style={[TYPE.body, { flex: 1, fontSize: 15, lineHeight: 21 }]}>
+                  {t(`consent.${p}`)}
+                </Text>
               </View>
             ))}
           </View>
@@ -92,13 +94,19 @@ export default function Consent() {
             {t('consent.full_policy')}
           </Btn>
         ) : null}
+      </ScrollView>
+      {/* The agreement sits with its button: both always on screen. */}
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 16),
+          gap: 10,
+        }}
+      >
         <Card tone="lavender" padding={14}>
           <Checkbox checked={accepted} onChange={setAccepted} label={t('consent.accept')} />
         </Card>
-      </ScrollView>
-      <View
-        style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}
-      >
         <Btn size="lg" pill full disabled={!accepted || busy} onPress={() => void accept()}>
           {t('consent.cta')}
         </Btn>

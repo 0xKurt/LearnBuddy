@@ -190,7 +190,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
   const [showTimes, setShowTimes] = useState(false);
 
   return (
-    <Group title={t('contact.question')}>
+    <Group title={t('contact.question')} fold="contact" summary={answer}>
       <Card tone="lavender" padding={20}>
         <View style={{ gap: 10 }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{answer}</Text>

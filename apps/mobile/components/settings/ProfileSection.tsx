@@ -55,7 +55,11 @@ export function ProfileSection({ learner }: { learner: LearnerView }) {
   }
 
   return (
-    <Group title={t('profile.language_title')}>
+    <Group
+      title={t('profile.language_title')}
+      fold="language"
+      summary={t(`profile.language_${learner.locale}`)}
+    >
       <Card padding={20}>
         <View style={{ gap: 18 }}>
           <Row

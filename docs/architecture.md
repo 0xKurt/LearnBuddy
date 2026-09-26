@@ -423,16 +423,24 @@ with status and undo), **next** (tests and planned steps), the **thread** (with 
 and delivery status of each message) and **system** status (model, push, contact, scheduler).
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
-at most the **now** and **decision** cards; the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
+at most the **now** and **decision** cards (pinned; the decision drops its explanation when a
+now card is there too); the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
 the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, five ways to start
 around it (a practice test when
 an exam is coming, else "Arbeit"; homework; pronunciation; vocabulary; explain —
-`docs/UX-PRINCIPLES.md` §6); one line for the next test; then the conversation — what Buddy did
-stands under its message with "Rückgängig"; no tiles, no lists. Anything else she simply says
+`docs/UX-PRINCIPLES.md` §6). Once there is a conversation the ring becomes one row of the same
+five (`components/lb/StartRow.tsx`) and the conversation takes the rest of the screen, always at
+its newest message — what Buddy did stands under its message with "Rückgängig"; no tiles, no
+lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
 field, mic ("Senden" once there is text); in voice mode it is voice-first — keyboard · big mic ·
-camera. Settings for the learner are one contact card (on/off, a one-line summary, "Zeiten
-anpassen" for the rare loosening) and the language; the parents' area is closed until opened.
+camera. Settings for the learner are closed groups, each with what is set now, one open at a
+time (`components/settings/Group.tsx`): contact (on/off, a one-line summary, "Zeiten anpassen"
+for the rare loosening), the language, about; the parents' area is closed until opened.
+Setting up a child's profile is two short steps (the child, then consent and the parents' PIN).
+The practice screen pins the question (with its drawing scaled to fit) on top and the way to
+answer at the bottom; only the conversation about the question scrolls between them; short
+options sit two by two.
 Level and grade are learned in the conversation.
 
 Photos that never all arrive are set aside after a day and whatever did arrive is deleted at
@@ -486,3 +494,6 @@ once (`abandonStaleUploads`, run by the scheduler).
   web build talks to it like to production. Test tooling only; never deployed.
   `tests/web/layout.spec.ts` checks the home under stress (a long name on a 390 and a 320 px
   phone): nothing overlaps the ring's buttons, no two buttons share touch area, no sideways scroll.
+  Every screenshot in the walkthroughs (`tests/web/fit.ts`) is taken at 390×844 and 360×740 and
+  fails when anything has to be scrolled to be seen; only a conversation (`testID="scroll-thread"`)
+  and a browsed list (`"scroll-list"`) may grow. Measurements go to `test-results/web/fit.jsonl`.

@@ -34,11 +34,11 @@ import {
   Platform,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Banner } from '../../components/lb/Banner.js';
 import { Btn } from '../../components/lb/Btn.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { LoadingState } from '../../components/lb/LoadingState.js';
@@ -78,6 +78,7 @@ import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/
 import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 type AnswerInput = { text: string } | { choice: number };
@@ -162,6 +163,7 @@ export default function PracticeScreen() {
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
   const query = usePracticeSession(id);
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
 
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -361,7 +363,6 @@ export default function PracticeScreen() {
       setText('');
       lastSent.current = null;
       Keyboard.dismiss();
-      scroll.current?.scrollTo({ y: 0, animated: false });
       toast.show(t('practice:flag.done'));
     } catch (err) {
       setFlagOpen(false);
@@ -377,7 +378,6 @@ export default function PracticeScreen() {
     setPinnedId(null);
     setText('');
     lastSent.current = null;
-    scroll.current?.scrollTo({ y: 0, animated: false });
   }
 
   // ─────────────── loading / not loadable ───────────────
@@ -424,6 +424,7 @@ export default function PracticeScreen() {
       return (
         <Screen title={title}>
           <ScrollView
+            testID="scroll-list"
             contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
             keyboardShouldPersistTaps="handled"
           >
@@ -563,6 +564,43 @@ export default function PracticeScreen() {
     if (value) void answer(item.id, { text: value }, value);
   }
 
+  // A small row of quiet tools under the question (never a second headline).
+  const tools = [
+    intro ? (
+      <Btn key="intro" size="sm" variant="soft" pill icon="book" onPress={() => setIntroOpen(true)}>
+        {t('practice:explain.again')}
+      </Btn>
+    ) : null,
+    // With options the voice bar carries it (SpokenChoiceBar).
+    voiceOn && open && !choices ? (
+      <Btn key="read" size="sm" variant="soft" pill icon="speak" onPress={() => readQuestion(item)}>
+        {t('common:voice.read_again')}
+      </Btn>
+    ) : null,
+    item.kind === 'vocab' && foreign(item.prompt_lang) ? (
+      <ListenButton key="listen" text={item.prompt} lang={item.prompt_lang} />
+    ) : null,
+  ].filter((node) => node !== null);
+
+  const flagButton = flaggable ? (
+    <Btn
+      size="sm"
+      variant="ghost"
+      pill
+      disabled={locked}
+      onPress={() => {
+        setFlagFor(item.id);
+        setFlagOpen(true);
+      }}
+      accessibilityHint={t('practice:flag.hint')}
+    >
+      {t('practice:flag.button')}
+    </Btn>
+  ) : null;
+
+  // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
+  // the way to answer stays at the bottom, and only the conversation between them
+  // grows — like a chat, newest at the bottom.
   return (
     <Screen title={title} right={endButton}>
       <KeyboardAvoidingView
@@ -570,12 +608,50 @@ export default function PracticeScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
+          testID="scroll-question"
+          style={{ flexGrow: 0, flexShrink: 1, maxHeight: '60%' }}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
+        >
+          <ProgressRow
+            position={session.items.indexOf(shown) + 1}
+            total={session.items.length}
+            closed={session.items.filter((i) => i.status !== 'open').length}
+            right={flagButton}
+          />
+          {session.mode === 'help' || testing ? (
+            <Text style={[TYPE.small, { color: LB.primaryDk, fontWeight: '500' }]}>
+              {t(testing ? 'practice:test_note' : 'practice:help_note')}
+            </Text>
+          ) : null}
+          {speaking ? (
+            <SpeakCard item={item} turns={turns} />
+          ) : (
+            <QuestionCard
+              prompt={item.prompt}
+              topic={item.topic}
+              figure={item.figure}
+              figureMaxHeight={Math.round(windowHeight * 0.14)}
+              fromBuddy={item.origin === 'buddy'}
+              // Her short answer appears in the gap of a fill-in sentence while she types.
+              answer={typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined}
+            />
+          )}
+          {tools.length > 0 ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
+          ) : null}
+        </ScrollView>
+        <ScrollView
           ref={scroll}
+          testID="scroll-thread"
+          style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
-            padding: 16,
-            gap: 16,
-            paddingBottom: open && !typed && !speaking && !voiceOn ? insets.bottom + 24 : 16,
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            gap: 12,
           }}
           onContentSizeChange={() => {
             if (followEnd) scroll.current?.scrollToEnd({ animated: true });
@@ -585,67 +661,7 @@ export default function PracticeScreen() {
             if (followEnd) scroll.current?.scrollToEnd({ animated: false });
           }}
         >
-          {session.mode === 'help' ? <Banner tone="info">{t('practice:help_note')}</Banner> : null}
-          {testing ? <Banner tone="info">{t('practice:test_note')}</Banner> : null}
-          {intro ? (
-            <Btn size="sm" variant="soft" pill icon="book" onPress={() => setIntroOpen(true)}>
-              {t('practice:explain.again')}
-            </Btn>
-          ) : null}
-          <ProgressRow
-            position={session.items.indexOf(shown) + 1}
-            total={session.items.length}
-            closed={session.items.filter((i) => i.status !== 'open').length}
-          />
-          {speaking ? (
-            <SpeakCard item={item} turns={turns} />
-          ) : (
-            <QuestionCard
-              prompt={item.prompt}
-              topic={item.topic}
-              figure={item.figure}
-              fromBuddy={item.origin === 'buddy'}
-              // Her short answer appears in the gap of a fill-in sentence while she types.
-              answer={typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined}
-            />
-          )}
-          {flaggable ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-              <Btn
-                size="sm"
-                variant="ghost"
-                pill
-                disabled={locked}
-                onPress={() => {
-                  setFlagFor(item.id);
-                  setFlagOpen(true);
-                }}
-                accessibilityHint={t('practice:flag.hint')}
-              >
-                {t('practice:flag.button')}
-              </Btn>
-            </View>
-          ) : null}
-          {voiceOn && open ? (
-            <Btn size="sm" variant="soft" pill icon="speak" onPress={() => readQuestion(item)}>
-              {t('common:voice.read_again')}
-            </Btn>
-          ) : null}
-          {item.kind === 'vocab' && foreign(item.prompt_lang) ? (
-            <ListenButton text={item.prompt} lang={item.prompt_lang} />
-          ) : null}
           <ItemThread turns={turns} pending={pendingText} hideVerdicts={testing} />
-          {open && choices ? (
-            <ChoiceList
-              choices={choices}
-              tried={tried}
-              disabled={locked}
-              onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
-              onReveal={skip}
-              revealLabel={skipLabel}
-              onHint={hint}
-            />
-          ) : null}
           {session.mode === 'help' && shown.status === 'correct' ? <SelfSolvedCard /> : null}
           {shown.status !== 'open' && shown.answer !== null ? (
             <SolutionCard
@@ -658,6 +674,25 @@ export default function PracticeScreen() {
             <ListenButton text={shown.answer} lang={item.lang} />
           ) : null}
         </ScrollView>
+        {open && choices ? (
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: voiceOn ? 0 : Math.max(insets.bottom, 12),
+            }}
+          >
+            <ChoiceList
+              choices={choices}
+              tried={tried}
+              disabled={locked}
+              onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
+              onReveal={skip}
+              revealLabel={skipLabel}
+              onHint={hint}
+            />
+          </View>
+        ) : null}
         {typed ? (
           <AnswerComposer
             kind={item.kind}
@@ -678,6 +713,7 @@ export default function PracticeScreen() {
             prompt={item.prompt}
             disabled={locked}
             onText={(said) => void answer(item.id, { text: said }, said)}
+            onReadAgain={() => readQuestion(item)}
           />
         ) : null}
         {open && speaking ? (

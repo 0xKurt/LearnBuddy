@@ -77,9 +77,9 @@ export default function Welcome() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: 28,
+            paddingTop: 16,
             paddingBottom: 24,
-            gap: 18,
+            gap: 14,
           }}
           keyboardShouldPersistTaps="handled"
         >

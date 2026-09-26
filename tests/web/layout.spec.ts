@@ -20,6 +20,7 @@ async function onboard(page: Page, name: string): Promise<void> {
   await page.getByLabel('TT').fill('10');
   await page.getByLabel('MM').fill('02');
   await page.getByLabel('JJJJ').fill('2014');
+  await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('checkbox').click();
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');

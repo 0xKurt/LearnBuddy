@@ -36,6 +36,7 @@ import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
 import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
+import { StartRow } from '../components/lb/StartRow.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
@@ -230,6 +231,95 @@ export default function BuddyScreen() {
       ? { text: pending.text }
       : null;
 
+  // Once there is a conversation, it gets the room; the ring shrinks to a row.
+  const talking = messages.length > 0 || shownPending !== null;
+  const top = [
+    !h.system.model ? (
+      <Banner key="model" tone="warning">
+        {t('buddy:system.no_model')}
+      </Banner>
+    ) : null,
+    h.system.scheduler === 'stale' ? (
+      <Banner key="scheduler" tone="warning">
+        {t('buddy:system.scheduler_stale')}
+      </Banner>
+    ) : null,
+    h.now ? (
+      <NowCard
+        key="now"
+        card={h.now}
+        busy={busy}
+        onResume={(id) => router.push(`/practice/${id}`)}
+        onStart={(stepId) =>
+          void act(async () => {
+            const { session_id } = await startStep(stepId);
+            router.push(`/practice/${session_id}`);
+          })
+        }
+        onSkip={(stepId) => void act(() => skipStep(stepId))}
+        onCapture={(stepId, goalId) =>
+          router.push({
+            pathname: '/capture',
+            params: { ...(stepId ? { stepId } : {}), ...(goalId ? { goalId } : {}) },
+          })
+        }
+        onRetryMaterial={(id) =>
+          void act(async () => {
+            await retryMaterial(id);
+            await refresh();
+          })
+        }
+      />
+    ) : null,
+    h.working ? <WorkingNote key="working" what={h.working} /> : null,
+    h.decision ? (
+      <DecisionCard
+        key="decision"
+        decision={h.decision}
+        compact={h.now !== null}
+        busy={busy}
+        onOptIn={(enable) =>
+          enable ? void enableContact(false) : void act(() => answerContactOptIn(false))
+        }
+        onAdultOptIn={() => void enableContact(true)}
+        onOutcome={(goalId, outcome) => void act(() => reportOutcome(goalId, outcome))}
+      />
+    ) : null,
+  ].filter((node) => node !== null);
+  // The one headline: her name gets the full width (long names wrap, never overlap).
+  const greeting = (
+    <View style={{ gap: talking ? 0 : 4 }}>
+      <Text
+        accessibilityRole="header"
+        style={[
+          TYPE.display,
+          talking ? { fontSize: 22, lineHeight: 28 } : { fontSize: 28, lineHeight: 34 },
+          { textAlign: 'center' },
+        ]}
+      >
+        {t('buddy:greeting', { name: h.learner.name })}
+      </Text>
+      {/* Personal when something is coming up: the next test; otherwise the open question.
+          With a card on top that card is the personal line. */}
+      {talking && top.length > 0 ? null : (
+        <Text
+          numberOfLines={talking ? 1 : undefined}
+          style={[
+            talking ? TYPE.body : TYPE.title,
+            { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
+          ]}
+        >
+          {nextExam
+            ? t('buddy:next.line', {
+                title: nextExam.title,
+                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+              })
+            : t('buddy:greeting_ask')}
+        </Text>
+      )}
+    </View>
+  );
+
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow />
@@ -237,119 +327,71 @@ export default function BuddyScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          ref={scroll}
-          contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 18 }}
-          keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => {
-            if (!followEnd.current) return;
-            followEnd.current = false;
-            scroll.current?.scrollToEnd({ animated: true });
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingTop: 8,
           }}
-          refreshControl={
-            <RefreshControl refreshing={home.isRefetching} onRefresh={() => void home.refetch()} />
-          }
         >
-          <View
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-          >
-            {/* Talking with Buddy hands-free (conversation mode). */}
-            <CircleBtn
-              icon="headphones"
-              onPress={() => router.push('/talk')}
-              accessibilityLabel={t('buddy:talk.open')}
-            />
-            <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
-            <View>
-              <CircleBtn
-                icon="more"
-                onPress={() => setMenuOpen(true)}
-                accessibilityLabel={t('buddy:menu.open')}
-              />
-            </View>
-          </View>
-
-          {!h.system.model ? <Banner tone="warning">{t('buddy:system.no_model')}</Banner> : null}
-          {h.system.scheduler === 'stale' ? (
-            <Banner tone="warning">{t('buddy:system.scheduler_stale')}</Banner>
-          ) : null}
-
-          {h.now ? (
-            <NowCard
-              card={h.now}
-              busy={busy}
-              onResume={(id) => router.push(`/practice/${id}`)}
-              onStart={(stepId) =>
-                void act(async () => {
-                  const { session_id } = await startStep(stepId);
-                  router.push(`/practice/${session_id}`);
-                })
-              }
-              onSkip={(stepId) => void act(() => skipStep(stepId))}
-              onCapture={(stepId, goalId) =>
-                router.push({
-                  pathname: '/capture',
-                  params: { ...(stepId ? { stepId } : {}), ...(goalId ? { goalId } : {}) },
-                })
-              }
-              onRetryMaterial={(id) =>
-                void act(async () => {
-                  await retryMaterial(id);
-                  await refresh();
-                })
-              }
-            />
-          ) : null}
-
-          {h.working ? <WorkingNote what={h.working} /> : null}
-
-          {h.decision ? (
-            <DecisionCard
-              decision={h.decision}
-              busy={busy}
-              onOptIn={(enable) =>
-                enable ? void enableContact(false) : void act(() => answerContactOptIn(false))
-              }
-              onAdultOptIn={() => void enableContact(true)}
-              onOutcome={(goalId, outcome) => void act(() => reportOutcome(goalId, outcome))}
-            />
-          ) : null}
-
-          {/* The one headline: her name gets the full width (long names wrap, never overlap). */}
-          <View style={{ gap: 4 }}>
-            <Text
-              accessibilityRole="header"
-              style={[TYPE.display, { fontSize: 28, lineHeight: 34, textAlign: 'center' }]}
-            >
-              {t('buddy:greeting', { name: h.learner.name })}
-            </Text>
-            {/* Personal when something is coming up: the next test; otherwise the open question. */}
-            <Text style={[TYPE.title, { color: LB.ink2, textAlign: 'center', fontWeight: '500' }]}>
-              {nextExam
-                ? t('buddy:next.line', {
-                    title: nextExam.title,
-                    when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
-                  })
-                : t('buddy:greeting_ask')}
-            </Text>
-          </View>
-
-          {/* The ring: Buddy and the open question in the middle, ways to start around it. */}
-          <OrbitMenu
-            items={orbitItems(h.next)}
-            disabled={pending !== null}
-            // Only Buddy in the middle: nothing that could run into the labels on a small phone.
-            center={<BuddyOrb size={72} />}
+          {/* Talking with Buddy hands-free (conversation mode). */}
+          <CircleBtn
+            icon="headphones"
+            onPress={() => router.push('/talk')}
+            accessibilityLabel={t('buddy:talk.open')}
           />
-          {messages.length === 0 && !shownPending ? (
-            // First visit: one sentence about Buddy; the ring above shows how to start.
-            <Text
-              style={[TYPE.body, { color: LB.ink2, textAlign: 'center', paddingHorizontal: 12 }]}
+          <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
+          <CircleBtn
+            icon="more"
+            onPress={() => setMenuOpen(true)}
+            accessibilityLabel={t('buddy:menu.open')}
+          />
+        </View>
+
+        {/* What matters now stays on top; it never scrolls away under the conversation. */}
+        {top.length > 0 ? (
+          <ScrollView
+            testID="scroll-top"
+            style={{ flexGrow: 0, flexShrink: 1, maxHeight: '50%' }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}
+          >
+            {top}
+          </ScrollView>
+        ) : null}
+
+        {talking ? (
+          <>
+            <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}>
+              {greeting}
+              {/* The ring, small: starting stays one tap away. */}
+              <StartRow items={orbitItems(h.next)} disabled={pending !== null} />
+            </View>
+            <ScrollView
+              ref={scroll}
+              testID="scroll-thread"
+              style={{ flex: 1 }}
+              contentContainerStyle={{
+                flexGrow: 1,
+                justifyContent: 'flex-end',
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                gap: 10,
+              }}
+              keyboardShouldPersistTaps="handled"
+              // A conversation: always at its newest message.
+              onContentSizeChange={() => {
+                scroll.current?.scrollToEnd({ animated: followEnd.current });
+                followEnd.current = false;
+              }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={home.isRefetching}
+                  onRefresh={() => void home.refetch()}
+                />
+              }
             >
-              {t('buddy:intro.body')}
-            </Text>
-          ) : (
-            <View style={{ gap: 10 }}>
               {h.thread.length > VISIBLE_MESSAGES || h.thread_has_more ? (
                 <Btn size="sm" variant="ghost" center onPress={() => router.push('/history')}>
                   {t('buddy:thread.load_more')}
@@ -367,9 +409,42 @@ export default function BuddyScreen() {
                   void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
                 }
               />
-            </View>
-          )}
-        </ScrollView>
+            </ScrollView>
+          </>
+        ) : (
+          <ScrollView
+            testID="scroll-home"
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: 'center',
+              padding: 16,
+              gap: 18,
+            }}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                refreshing={home.isRefetching}
+                onRefresh={() => void home.refetch()}
+              />
+            }
+          >
+            {greeting}
+            {/* The ring: Buddy in the middle, ways to start around it. */}
+            <OrbitMenu
+              items={orbitItems(h.next)}
+              disabled={pending !== null}
+              // Only Buddy in the middle: nothing that could run into the labels on a small phone.
+              center={<BuddyOrb size={72} />}
+            />
+            {/* First visit: one sentence about Buddy; the ring above shows how to start. */}
+            <Text
+              style={[TYPE.body, { color: LB.ink2, textAlign: 'center', paddingHorizontal: 12 }]}
+            >
+              {t('buddy:intro.body')}
+            </Text>
+          </ScrollView>
+        )}
         <Composer
           disabled={pending !== null}
           onSend={(text) => void send(text)}

@@ -58,9 +58,14 @@ export function formatNumber(n: number): string {
   return localDecimal(plain, currentLocale()).replace('-', '−');
 }
 
-export function FigureView({ figure }: { figure: Figure }) {
+/**
+ * `maxHeight` keeps a drawing from pushing the answer off a small screen: a figure
+ * that comes out taller is drawn again, narrower (its height follows its width).
+ */
+export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: number }) {
   const { t } = useTranslation('math');
   const [width, setWidth] = useState(0);
+  const [scale, setScale] = useState(1);
   const words = useSpokenWords();
   const description = useMemo(
     () => describeFigure(figure, t, (s) => speakMathText(s, words)),
@@ -74,7 +79,10 @@ export function FigureView({ figure }: { figure: Figure }) {
       accessibilityLabel={`${t('figure.label')}: ${description}`}
       onLayout={(e) => {
         const w = Math.floor(e.nativeEvent.layout.width);
-        if (w > 0 && Math.abs(w - width) > 1) setWidth(w);
+        if (w > 0 && Math.abs(w - width) > 1) {
+          setWidth(w);
+          setScale(1);
+        }
       }}
       style={{
         alignSelf: 'stretch',
@@ -87,8 +95,18 @@ export function FigureView({ figure }: { figure: Figure }) {
       }}
     >
       {width > 0 ? (
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <FigureBody figure={figure} width={width - 26} />
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={{ alignItems: 'center' }}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            // Measured at full width once; a smaller scale is final (no ping-pong).
+            if (maxHeight && scale === 1 && h > maxHeight + 2)
+              setScale(Math.max(0.4, maxHeight / h));
+          }}
+        >
+          <FigureBody figure={figure} width={Math.floor((width - 26) * scale)} />
         </View>
       ) : null}
     </View>

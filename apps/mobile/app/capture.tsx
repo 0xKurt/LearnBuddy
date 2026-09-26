@@ -195,7 +195,8 @@ export default function CaptureScreen() {
           </Text>
         </View>
 
-        <CaptureTips />
+        {/* Tips are for taking the photo; once there is one, the photos get the room. */}
+        {photos.length === 0 ? <CaptureTips /> : null}
 
         {photos.length > 0 ? (
           <Section title={t('capture:photos_title', { count: photos.length })}>

@@ -214,6 +214,7 @@ export default function LibraryScreen() {
     content = (
       <>
         <ScrollView
+          testID="scroll-list"
           contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 26, flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
         >

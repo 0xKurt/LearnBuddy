@@ -14,18 +14,27 @@ type Props = {
   onOptIn: (enable: boolean) => void;
   onAdultOptIn: () => void;
   onOutcome: (goalId: string, outcome: 'good' | 'ok' | 'hard') => void;
+  /** Another card is on screen too: only the question and the answers (it must fit). */
+  compact?: boolean;
 };
 
-export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome }: Props) {
+export function DecisionCard({
+  decision,
+  busy,
+  onOptIn,
+  onAdultOptIn,
+  onOutcome,
+  compact = false,
+}: Props) {
   const { t } = useTranslation('buddy');
   if (decision.type === 'how_did_it_go') {
     const goalId = decision.goal.id;
     return (
-      <Card tone="lavender" padding={20} radius={22}>
+      <Card tone="lavender" padding={16} radius={22}>
         <Text accessibilityRole="header" style={TYPE.title}>
           {t('decision.outcome_title', { title: decision.goal.title })}
         </Text>
-        <View style={{ marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {(['good', 'ok', 'hard'] as const).map((o) => (
             <Btn key={o} variant="outline" onPress={() => onOutcome(goalId, o)} disabled={busy}>
               {t(`decision.outcome_${o}`)}
@@ -36,15 +45,17 @@ export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome 
     );
   }
   return (
-    <Card tone="lavender" padding={20} radius={22}>
+    <Card tone="lavender" padding={16} radius={22}>
       <Text accessibilityRole="header" style={TYPE.title}>
         {t('decision.optin_title')}
       </Text>
-      <Text style={[TYPE.body, { marginTop: 4 }]}>{t('decision.optin_body')}</Text>
+      {compact ? null : (
+        <Text style={[TYPE.small, { marginTop: 4 }]}>{t('decision.optin_body')}</Text>
+      )}
       {!decision.can_enable_here ? (
         <Text style={[TYPE.small, { marginTop: 4 }]}>{t('decision.optin_minor_body')}</Text>
       ) : null}
-      <View style={{ marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {decision.can_enable_here ? (
           <Btn onPress={() => onOptIn(true)} disabled={busy}>
             {t('decision.optin_yes')}

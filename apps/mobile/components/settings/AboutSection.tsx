@@ -46,7 +46,12 @@ export function AboutSection() {
   };
 
   return (
-    <Group title={t('about.title')} icon="book">
+    <Group
+      title={t('about.title')}
+      icon="book"
+      fold="about"
+      summary={version ? t('about.version', { version }) : undefined}
+    >
       <Card padding={18}>
         <View style={{ gap: 16 }}>
           {version ? (
