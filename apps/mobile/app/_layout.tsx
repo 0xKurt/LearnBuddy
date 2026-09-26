@@ -16,6 +16,7 @@ import { OfflineFrame } from '../components/lb/OfflineFrame.js';
 import { ToastHost } from '../components/lb/Toast.js';
 import { outreachOpened, postAnswer } from '../lib/api/endpoints.js';
 import { clearOutbox, flushOutbox } from '../lib/api/outboxSync.js';
+import { drafts } from '../lib/capture/draftStorage.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { loadSession, onSessionChange } from '../lib/auth/session.js';
 import { clearLegacyLocalNotifications, onNotificationTap } from '../lib/push.js';
@@ -45,6 +46,8 @@ export default function RootLayout() {
     const offSession = onSessionChange((s) => {
       if (!s) {
         void clearOutbox();
+        // A shared phone: the next person does not find her photos.
+        void drafts.clearAll();
         queryClient.clear();
         router.replace('/');
       }

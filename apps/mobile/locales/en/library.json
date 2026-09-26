@@ -69,5 +69,6 @@
     "body": "This question won't come up again.",
     "confirm": "Delete"
   },
-  "item_deleted": "Question deleted."
+  "item_deleted": "Question deleted.",
+  "add_page": "Add a page"
 }

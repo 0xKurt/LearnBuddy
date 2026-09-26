@@ -51,6 +51,8 @@
     "washed_out_tip": "Zu hell oder spiegelt: Halt das Handy etwas schräg, weg von der Lampe.",
     "small": "Foto {{index}} ist sehr klein.",
     "small_tip": "Kleine Schrift kann ich so kaum lesen. Fotografier das Blatt lieber direkt mit der Kamera.",
+    "tilted": "Foto {{index}} ist schief.",
+    "tilted_tip": "Leg das Blatt gerade hin und halt das Handy genau darüber, nicht schräg davor.",
     "retake": "Neu fotografieren",
     "keep": "Trotzdem behalten",
     "flag": "Schwer lesbar"
@@ -58,6 +60,19 @@
   "again": {
     "title": "Nochmal fotografieren",
     "title_pages": "Seite {{pages}} nochmal",
-    "intro": "Nur was gefehlt hat – der Rest ist schon fertig. Achte darauf, dass die ganze Seite drauf ist."
+    "intro": "Nur was gefehlt hat – der Rest ist schon fertig. Achte darauf, dass die ganze Seite drauf ist.",
+    "title_add": "Seite hinzufügen",
+    "intro_add": "Die Fragen dazu kommen zu diesem Blatt."
+  },
+  "draft": {
+    "title": "Deine Fotos sind noch nicht gesendet",
+    "body_one": "1 Foto von vorhin wartet.",
+    "body_other": "{{count}} Fotos von vorhin warten.",
+    "resume": "Weiter",
+    "discard": "Verwerfen",
+    "discarded_one": "Foto verworfen.",
+    "discarded_other": "{{count}} Fotos verworfen.",
+    "undo": "Rückgängig",
+    "undo_label": "Verworfene Fotos zurückholen"
   }
 }

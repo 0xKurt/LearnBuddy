@@ -58,6 +58,8 @@ type MaterialRow = {
   purpose: 'study' | 'homework';
   page_problems: PageProblem[];
   pages_resolved_at: Date | null;
+  completes_material_id: string | null;
+  merged_into: string | null;
   archived_at: Date | null;
   created_at: Date;
 };
@@ -73,7 +75,7 @@ export async function materialView(
     `select m.*, s.name as subject_name,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
             (select ps.id from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc limit 1) as session_id
+              order by ps.started_at desc, ps.seq desc limit 1) as session_id
        from materials m left join subjects s on s.id = m.subject_id
       where m.id = $1 and m.learner_id = $2 and m.archived_at is null`,
     [materialId, learnerId],
@@ -95,6 +97,7 @@ function toView(
     session_id: m.session_id,
     page_problems: m.pages_resolved_at ? [] : m.page_problems,
     photo_count: m.photo_count,
+    merged_into: m.merged_into,
     subject_name: m.subject_name,
     goal_id: m.goal_id,
     created_at: m.created_at.toISOString(),
@@ -118,10 +121,17 @@ export async function createMaterial(
     : null;
   if (input.step_id && !step) throw new AppError('not_found', 'Step not found');
   // Pages photographed again for an earlier material keep its goal and purpose.
+  // `id`: the notice answered (this material); `root`: the sheet the pages join.
   const completes = input.completes
-    ? await deps.db.maybeOne<{ id: string; goal_id: string | null; purpose: 'study' | 'homework' }>(
-        `select id, goal_id, purpose from materials
-          where id = $1 and learner_id = $2 and archived_at is null`,
+    ? await deps.db.maybeOne<{
+        id: string;
+        root: string;
+        goal_id: string | null;
+        purpose: 'study' | 'homework';
+      }>(
+        `select m.id, coalesce(m.merged_into, m.id) as root, r.goal_id, r.purpose
+           from materials m join materials r on r.id = coalesce(m.merged_into, m.id)
+          where m.id = $1 and m.learner_id = $2 and m.archived_at is null and r.archived_at is null`,
         [input.completes, learner.id],
       )
     : null;
@@ -154,7 +164,7 @@ export async function createMaterial(
         input.photo_mimes.length,
         deps.now(),
         purpose,
-        completes?.id ?? null,
+        completes?.root ?? null,
       ],
     );
     if (completes) {
@@ -440,46 +450,121 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       materialId,
     ]);
     if (current.status === 'ready') return; // a concurrent run finished first
-    let subjectId = current.subject_id;
+    // Pages for an earlier sheet join it (migration 0011): its questions, subject and session.
+    const target = current.completes_material_id
+      ? await tx.maybeOne<MaterialRow>(
+          `select * from materials where id = $1 and learner_id = $2 and status = 'ready'
+              and archived_at is null and merged_into is null for update`,
+          [current.completes_material_id, current.learner_id],
+        )
+      : null;
+    const home = target ?? current;
+    let subjectId = home.subject_id;
     if (!subjectId && x.subject) {
       subjectId = (
         await findOrCreateSubject(tx, current.learner_id, x.subject.name, x.subject.kind)
       ).id;
     }
-    const homework = current.purpose === 'homework';
-    const itemIds = await insertItems(
-      tx,
-      {
-        learnerId: current.learner_id,
-        materialId,
-        subjectId,
-        origin: homework ? 'homework' : 'material',
-      },
-      items,
+    // A second subject on the sheet: its questions go there (found by their topics).
+    const second =
+      x.other_subject && x.other_subject.topics.length
+        ? await findOrCreateSubject(
+            tx,
+            current.learner_id,
+            x.other_subject.name,
+            x.other_subject.kind,
+          )
+        : null;
+    const secondTopics = new Set(
+      (x.other_subject?.topics ?? []).map((t) => t.trim().toLowerCase()),
     );
-    await tx.query(
-      `update materials set status = 'ready', failure_reason = null, title = coalesce(title, $2),
-                            extracted_text = $3, subject_id = $4, ready_at = $5, page_problems = $6
-        where id = $1`,
-      [materialId, x.title, x.extracted_text, subjectId, now, JSON.stringify(pageProblems)],
-    );
-    if (homework) {
-      // Homework goes straight into a help session: hints only, never the solution.
-      await createSession(
-        tx,
-        current.learner_id,
-        itemIds,
-        {
-          mode: 'help',
-          stepId: null,
-          goalId: current.goal_id,
-          materialId,
-          title: x.title,
-          intro: null,
-          clientRequestId: null,
-        },
-        now,
+    const homework = home.purpose === 'homework';
+    const bySubject = new Map<string | null, typeof items>();
+    for (const item of items) {
+      const own =
+        second &&
+        second.id !== subjectId &&
+        secondTopics.has((item.topic ?? '').trim().toLowerCase())
+          ? second.id
+          : subjectId;
+      bySubject.set(own, [...(bySubject.get(own) ?? []), item]);
+    }
+    const itemIds: string[] = [];
+    for (const [sid, group] of bySubject) {
+      itemIds.push(
+        ...(await insertItems(
+          tx,
+          {
+            learnerId: current.learner_id,
+            materialId: home.id,
+            subjectId: sid,
+            origin: homework ? 'homework' : 'material',
+          },
+          group,
+        )),
       );
+    }
+    if (target) {
+      await tx.query(
+        `update materials set status = 'ready', failure_reason = null, title = $2, subject_id = $3,
+                              ready_at = $4, page_problems = $5, merged_into = $6
+          where id = $1`,
+        [materialId, target.title, subjectId, now, JSON.stringify(pageProblems), target.id],
+      );
+      await tx.query(
+        `update materials set extracted_text = concat_ws(E'\n\n', extracted_text, $2::text),
+                              subject_id = coalesce(subject_id, $3)
+          where id = $1`,
+        [target.id, x.extracted_text, subjectId],
+      );
+    } else {
+      await tx.query(
+        `update materials set status = 'ready', failure_reason = null, title = coalesce(title, $2),
+                              extracted_text = $3, subject_id = $4, ready_at = $5, page_problems = $6
+          where id = $1`,
+        [materialId, x.title, x.extracted_text, subjectId, now, JSON.stringify(pageProblems)],
+      );
+    }
+    if (homework) {
+      // Homework goes straight into a help session: hints only, never the solution. The
+      // tasks of a later page join the sheet's session while it is still open.
+      const open = target
+        ? await tx.maybeOne<{ id: string; next: number }>(
+            `select ps.id, coalesce(max(si.position) + 1, 0)::int as next
+               from practice_sessions ps left join session_items si on si.session_id = ps.id
+              where ps.material_id = $1 and ps.status = 'active'
+              group by ps.id order by ps.started_at desc, ps.seq desc limit 1`,
+            [target.id],
+          )
+        : null;
+      if (open) {
+        for (const [i, itemId] of itemIds.entries()) {
+          await tx.query(
+            `insert into session_items (session_id, item_id, position) values ($1, $2, $3)`,
+            [open.id, itemId, open.next + i],
+          );
+        }
+        await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+          open.id,
+          now,
+        ]);
+      } else {
+        await createSession(
+          tx,
+          current.learner_id,
+          itemIds,
+          {
+            mode: 'help',
+            stepId: null,
+            goalId: home.goal_id,
+            materialId: home.id,
+            title: target?.title ?? x.title,
+            intro: null,
+            clientRequestId: null,
+          },
+          now,
+        );
+      }
     }
     // The capture step Buddy asked for (or, without one, the goal's open
     // capture step) is now done — with evidence.
@@ -501,7 +586,9 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     await emitEvent(
       tx,
       current.learner_id,
-      homework ? { type: 'homework_ready', materialId } : { type: 'material_ready', materialId },
+      homework
+        ? { type: 'homework_ready', materialId: home.id }
+        : { type: 'material_ready', materialId: home.id },
       now,
       { questions: items.length },
     );
@@ -609,10 +696,10 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
     `select m.*, s.name as subject_name,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
             (select ps.id from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc limit 1) as session_id
+              order by ps.started_at desc, ps.seq desc limit 1) as session_id
        from materials m left join subjects s on s.id = m.subject_id
-      where m.learner_id = $1 and m.archived_at is null
-      order by m.created_at desc
+      where m.learner_id = $1 and m.archived_at is null and m.merged_into is null
+      order by m.created_at desc, m.seq desc
       limit 200`,
     [learnerId],
   );

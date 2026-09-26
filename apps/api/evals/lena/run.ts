@@ -273,8 +273,10 @@ async function render(html: string): Promise<Uint8Array> {
   });
   const page = await browser.newPage({ viewport: { width: 820, height: 1100 } });
   await page.setContent(
-    `<body style="font-family: 'DejaVu Sans', sans-serif; padding: 40px; background: #fdfdf8; font-size: 22px; line-height: 1.5">${html}</body>`,
+    `<head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat&family=Indie+Flower&family=Patrick+Hand&display=block"></head><body style="font-family: 'DejaVu Sans', sans-serif; padding: 40px; background: #fdfdf8; font-size: 22px; line-height: 1.5">${html}</body>`,
   );
+  // Handwriting fonts (Google Fonts, SIL OFL) must be there before the photo is taken.
+  await page.evaluate('document.fonts.ready');
   const shot = await page.screenshot({ type: 'jpeg', quality: 85 });
   await page.close();
   return new Uint8Array(shot);
@@ -544,6 +546,129 @@ const JOURNEYS: Spec[] = [
       );
       const said = JSON.stringify(items.body).toLowerCase();
       j.check(!/0,75|5\/8/.test(said), 'keine Fragen zu Aufgaben, die nicht auf dem Foto sind');
+    },
+  },
+  {
+    id: 'handschrift-heft',
+    title: 'Handgeschriebene Heftseite (Bio: Fotosynthese)',
+    from: 'alt 06 P1: Handschrift ist Pflichtfall',
+    async run(j) {
+      const line = (text: string, deg: number) =>
+        `<div style="transform: rotate(${deg}deg); margin: 0 0 6px">${text}</div>`;
+      const m = await j.photo(
+        `<div style="font-family: 'Indie Flower', cursive; color: #1d3a8a; font-size: 30px; line-height: 44px; background: repeating-linear-gradient(#fdfdf8 0 43px, #9bbbe0 43px 44px); padding: 10px 24px">
+          ${line('<u>Bio 12.9. Fotosynthese</u>', -0.6)}
+          ${line('Pflanzen machen aus Wasser und Kohlenstoffdioxid', 0.4)}
+          ${line('mit Hilfe von Licht Traubenzucker und Sauerstoff.', -0.3)}
+          ${line('Das passiert in den Chloroplasten (grün wegen Chlorophyll).', 0.5)}
+          ${line('Wortgleichung: Wasser + Kohlenstoffdioxid → Traubenzucker + Sauerstoff', -0.4)}
+          ${line('Merke: ohne Licht keine Fotosynthese!', 0.3)}
+        </div>`,
+      );
+      j.check(
+        m?.status === 'ready' && (m.item_count ?? 0) >= 3,
+        'Handschrift gelesen, Fragen daraus',
+      );
+      if (!m) return;
+      const items = await j.l.api.get<{ items: { prompt: string }[] }>(`/materials/${m.id}/items`);
+      for (const it of items.body.items ?? []) j.log.push(`  - Frage: ${it.prompt}`);
+      const said = (items.body.items ?? [])
+        .map((it) => it.prompt)
+        .join(' ')
+        .toLowerCase();
+      j.check(
+        /chloroplast|licht|sauerstoff|traubenzucker/.test(said),
+        'Fragen zum Inhalt der Seite',
+      );
+    },
+  },
+  {
+    id: 'handschrift-antworten',
+    title: 'Arbeitsblatt, schon mit Lenas Antworten (eine falsch)',
+    from: 'neu: gedruckt + Handschrift gemischt',
+    async run(j) {
+      const hw = (text: string) =>
+        `<span style="font-family: 'Caveat', cursive; color: #1d3a8a; font-size: 32px; margin-left: 12px">${text}</span>`;
+      const m = await j.photo(
+        `<h2>Einmaleins – Übung</h2>
+         <p>1. 7 · 8 = ${hw('54')}</p>
+         <p>2. 6 · 9 = ${hw('54')}</p>
+         <p>3. 8 · 8 = ${hw('64')}</p>
+         <p>4. 9 · 7 = ${hw('63')}</p>`,
+      );
+      j.check(m?.status === 'ready', 'gelesen');
+      if (!m) return;
+      const rows = await j.env.db.query<{ prompt: string; answer: string }>(
+        `select prompt, answer from items where material_id = $1 order by seq`,
+        [m.id],
+      );
+      for (const r of rows) j.log.push(`  - ${r.prompt} → ${r.answer}`);
+      // "7 · 8", "7 x 8" or LaTeX "7 \cdot 8".
+      const times = String.raw`\s*(?:[·*x×⋅]|\\cdot|\\times)\s*`;
+      const seven = rows.find((r) => new RegExp(`7${times}8|8${times}7`).test(r.prompt));
+      j.check(
+        !!seven && /56/.test(seven.answer),
+        'richtige Lösung 56, nicht Lenas „54“ übernommen',
+      );
+    },
+  },
+  {
+    id: 'zwei-faecher',
+    title: 'Mathe und Bio auf einem Blatt',
+    from: 'alt DEEP L758',
+    async run(j) {
+      const m = await j.photo(
+        `<h2>Freiarbeit Klasse 6</h2>
+         <h3>Mathe</h3><p>1. Berechne 3/4 von 20.</p><p>2. Kürze 12/18.</p><p>3. Wie viel ist 25 % von 80?</p>
+         <h3>Biologie</h3><p>4. Wie viele Beine haben Insekten?</p><p>5. Nenne die drei Körperabschnitte eines Insekts.</p><p>6. Wie viele Beine haben Spinnen?</p>`,
+      );
+      j.check(m?.status === 'ready', 'gelesen');
+      if (!m) return;
+      const rows = await j.env.db.query<{ prompt: string; subject: string }>(
+        `select i.prompt, s.name as subject from items i join subjects s on s.id = i.subject_id
+          where i.material_id = $1 order by i.seq`,
+        [m.id],
+      );
+      for (const r of rows) j.log.push(`  - [${r.subject}] ${r.prompt}`);
+      const subjects = new Set(rows.map((r) => r.subject));
+      const insects = rows.filter((r) => /insekt|spinne|beine/i.test(r.prompt));
+      const fractions = rows.filter((r) => /kürze|von 20|%/i.test(r.prompt));
+      j.check(
+        subjects.size === 2 &&
+          insects.length > 0 &&
+          fractions.length > 0 &&
+          new Set(insects.map((r) => r.subject)).size === 1 &&
+          !fractions.some((f) => f.subject === insects[0]!.subject),
+        'Bio-Fragen unter Bio, Mathe-Fragen unter Mathe',
+      );
+    },
+  },
+  {
+    id: 'gedreht',
+    title: 'Foto um 90° gedreht',
+    from: 'alt DEEP L754 (nie geprüft)',
+    async run(j) {
+      const m = await j.photo(
+        `<div style="transform: rotate(90deg) translate(160px, 160px); transform-origin: top left; width: 900px; position: absolute; left: 700px; top: 0">
+           <h2>Englisch – Vokabeln Unit 3</h2>
+           <p>the kitchen – die Küche</p><p>the garden – der Garten</p><p>the stairs – die Treppe</p><p>the bathroom – das Badezimmer</p>
+         </div>`,
+      );
+      j.check(
+        m?.status === 'ready' && (m.item_count ?? 0) >= 3,
+        'gedrehtes Blatt trotzdem gelesen',
+      );
+      if (!m) return;
+      const items = await j.l.api.get<{ items: { prompt: string }[] }>(`/materials/${m.id}/items`);
+      for (const it of items.body.items ?? []) j.log.push(`  - Frage: ${it.prompt}`);
+      const said = (items.body.items ?? [])
+        .map((it) => it.prompt)
+        .join(' ')
+        .toLowerCase();
+      j.check(
+        /kitchen|garden|stairs|bathroom|küche|garten|treppe|badezimmer/.test(said),
+        'die Vokabeln erkannt',
+      );
     },
   },
   {

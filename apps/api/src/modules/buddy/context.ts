@@ -257,7 +257,12 @@ export function buildContext(
     if (!opts.pushAvailable)
       lines.push('- no working push channel on the device: messages only appear in the app');
   }
-  const lastOut = state.outreach.find((o) => o.sent_at);
+  // The message sent last (not the one planned last).
+  const lastOut = state.outreach
+    .filter((o) => o.sent_at)
+    .reduce<
+      (typeof state.outreach)[number] | undefined
+    >((a, o) => (!a || o.sent_at! > a.sent_at! ? o : a), undefined);
   if (lastOut?.sent_at) {
     const at = localParts(lastOut.sent_at, tz);
     const answer = lastOut.opened_at ? 'opened' : 'not opened yet';

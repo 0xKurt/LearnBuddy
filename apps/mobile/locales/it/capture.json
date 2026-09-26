@@ -51,6 +51,8 @@
     "washed_out_tip": "Troppo chiara o riflessi: inclina un po’ il telefono, lontano dalla lampada.",
     "small": "La foto {{index}} è molto piccola.",
     "small_tip": "Così leggo a fatica le scritte piccole. Meglio fotografare il foglio con la fotocamera.",
+    "tilted": "La foto {{index}} è storta.",
+    "tilted_tip": "Metti il foglio dritto e tieni il telefono proprio sopra, non inclinato.",
     "retake": "Rifai la foto",
     "keep": "Tienila lo stesso",
     "flag": "Difficile da leggere"
@@ -58,6 +60,19 @@
   "again": {
     "title": "Rifai la foto",
     "title_pages": "Di nuovo pagina {{pages}}",
-    "intro": "Solo quello che mancava: il resto è già pronto. Fai in modo che ci sia tutta la pagina."
+    "intro": "Solo quello che mancava: il resto è già pronto. Fai in modo che ci sia tutta la pagina.",
+    "title_add": "Aggiungi una pagina",
+    "intro_add": "Le sue domande si aggiungono a questo foglio."
+  },
+  "draft": {
+    "title": "Le tue foto non sono ancora state inviate",
+    "body_one": "1 foto di prima ti aspetta.",
+    "body_other": "{{count}} foto di prima ti aspettano.",
+    "resume": "Continua",
+    "discard": "Scarta",
+    "discarded_one": "Foto scartata.",
+    "discarded_other": "{{count}} foto scartate.",
+    "undo": "Annulla",
+    "undo_label": "Recupera le foto scartate"
   }
 }

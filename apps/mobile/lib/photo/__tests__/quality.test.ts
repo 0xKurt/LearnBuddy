@@ -18,7 +18,16 @@ const photo = (name: string) => {
 
 describe('photo quality', () => {
   it('passes photos that can be read: in focus, noisy, with a shadow, slightly soft', () => {
-    for (const f of ['sharp.jpg', 'noisy.jpg', 'shadow.jpg', 'blur_mild.jpg', 'sparse.jpg'])
+    for (const f of [
+      'sharp.jpg',
+      'noisy.jpg',
+      'shadow.jpg',
+      'blur_mild.jpg',
+      'sparse.jpg',
+      // A little turned is normal; a phone tipped forward is not judged (tilt.ts).
+      'turned_5.jpg',
+      'slanted_forward.jpg',
+    ])
       expect(photo(f).problems, f).toEqual([]);
   });
 
@@ -29,6 +38,15 @@ describe('photo quality', () => {
     expect(photo('dark.jpg').problems).toEqual(['dark']);
     expect(photo('washed.jpg').problems).toEqual(['washed_out']);
     expect(photo('sharp_420.jpg').problems).toEqual(['small']);
+    expect(photo('turned_15.jpg').problems).toEqual(['tilted']);
+    expect(photo('turned_neg22.jpg').problems).toEqual(['tilted']);
+    expect(photo('slanted_side.jpg').problems).toEqual(['tilted']);
+  });
+
+  it('measures the angle of the text lines', () => {
+    expect(photo('sharp.jpg').metrics.angle).toBe(0);
+    expect(Math.abs(photo('turned_15.jpg').metrics.angle ?? 0)).toBeGreaterThanOrEqual(13);
+    expect(Math.abs(photo('turned_neg22.jpg').metrics.angle ?? 0)).toBeGreaterThanOrEqual(20);
   });
 
   it('does not call a dark or empty picture blurry as well', () => {

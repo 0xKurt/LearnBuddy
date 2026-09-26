@@ -310,12 +310,16 @@ context caching of the fixed part, or offering only the tools a turn can use.
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
 decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean
 brightness), washed out (ink hardly darker than the paper), blurry (the strongest edges relative to
-that contrast; soft edges also make ink paler, so blur is checked first) or too small (shorter side
-under 900 px). Nothing leaves the device for this. A photo with a problem is marked "Schwer lesbar"
+that contrast; soft edges also make ink paler, so blur is checked first), too small (shorter side
+under 900 px) or tilted (`lib/photo/tilt.ts`: the ink pixels are projected at trial angles and the
+sharpest profile gives the angle of the text lines; 10° or more, or 8° difference between the upper
+and lower half — a phone held at a slant to the side). A phone tipped forward (lines level but
+smaller towards the top) is not judged: the line spacing was not reliable with a few lines of text.
+Tilt is only advised when the photo is otherwise fine. Nothing leaves the device for this. A photo with a problem is marked "Schwer lesbar"
 and a calm card says what is wrong and how to do better, with "Neu fotografieren" (replaces it and
-opens the camera) and "Trotzdem behalten". Calibrated on eleven rendered sample photos (in focus,
-noisy, shadow, little text, three kinds of blur, dark, washed out, small; unit-tested) — real phone
-photos may need the limits adjusted. Live guidance while aiming the camera would need our own camera
+opens the camera) and "Trotzdem behalten". Calibrated on sixteen rendered sample photos (in focus,
+noisy, shadow, little text, three kinds of blur, dark, washed out, small, turned 5°/15°/−22°, slanted
+to the side and forward; unit-tested) — real phone photos may need the limits adjusted. Live guidance while aiming the camera would need our own camera
 screen and is not built. What the phone cannot see (a page cut off at the edge, a finger over the
 text) the model reports per page (below).
 
@@ -352,6 +356,35 @@ are reported in 6 of 6 runs with the final prompt (the one before missed a cut o
 the cut-off sentence, hence the last rule), no false report on three good pages, no question about
 what was not on the photo. Before, the blurred page was dropped without a word, and the cut-off page
 failed the whole sheet in 4 of 14 runs.
+
+**Pages added later** (migration `0011_material_parts.sql`). "Nochmal fotografieren" and "Seite
+hinzufügen" (on the sheet's question list) send the photos as a material of their own with
+`completes`, so upload, reading, retries and failures work exactly as for any photo. Once read, its
+questions join the sheet (`merged_into`): same material, same subject; for homework the tasks are
+appended to the sheet's help session while it is open (else a new help session). The part is hidden
+from lists and Buddy's context (only its own missing pages still show). If the sheet was deleted
+meanwhile, the pages stay a sheet of their own. A second school subject on one sheet
+(`other_subject` with the topics of its questions) files those questions under that subject.
+Pages keep the order they were taken in; there is no reordering — the notice about a missing page
+shows that page's photo while it is on the phone (kept a day, below), so the number is never
+ambiguous.
+
+**Photos survive the app being closed** (`apps/mobile/lib/capture/draft.ts`). Every photo is
+copied where the system does not clean up (documents; data URLs in a browser) and the capture screen
+keeps a draft (photos, what the check found, what they are for, and — once sending began — the
+request id). Closed, killed or updated before the photos were sent, home offers "Deine Fotos sind
+noch nicht gesendet" with "Weiter" (the same material: the API answers the request id with it, so
+nothing is sent twice) or "Verwerfen" (undo until she leaves home; then the files are deleted). A
+draft older than 7 days is deleted. Sent photos stay a day on the phone for the page notice.
+Uploads on a phone use a native background upload session (`lib/capture/put.ts`, iOS background
+URL session; Android always), so switching apps does not stop them; a browser uses a plain PUT.
+Not verified on a real device yet (only in the browser walkthrough).
+
+**Handwriting, answers written in, rotation** (live Lena eval): a handwritten notebook page on
+lined paper (handwriting fonts), a printed sheet with the learner's own answers written in (one
+wrong: the model uses the right solution and does not quiz her own answers — prompt rule), maths
+and biology on one sheet (filed under both subjects) and a photo turned by 90° are read 3 of 3.
+Rendered handwriting is tidier than a child's: real photos are still needed.
 
 The learner sees the questions of one material (`GET /materials/:id/items`, screen
 `app/material/[id].tsx`, in the order they were stored — `items.seq`, migration
@@ -552,7 +585,11 @@ once (`abandonStaleUploads`, run by the scheduler).
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;
   scripts can assert on the context the model sees), fake push provider, fake auth, in-memory
-  storage, and a single test clock.
+  storage, and a single test clock. Rows made at the same moment of that clock are ordered by an
+  insertion number (`seq`, migration `0010_stable_order.sql`): goals, steps and memories get their
+  aliases in that order, and jobs due together run in it. Before, ties were broken by however the
+  table happened to hold the rows — the most likely cause of one failed run of the core-loop test
+  in about 40 (its log was lost and it did not come back in 36 further runs, so this is not proven).
 - Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). Without one the
   database tests are skipped; `LB_REQUIRE_TEST_DB=1` (CI) makes that a failure.
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
@@ -569,7 +606,9 @@ once (`abandonStaleUploads`, run by the scheduler).
   `tests/web/tour.spec.ts` taps every control the other walkthroughs don't (undo, resend, earlier
   messages, changing and removing what Buddy knows, contact with the parents' PIN, times,
   language, a pause, a new PIN, the export, scheduling and cancelling a deletion, a dark photo
-  kept anyway, a sheet that could not be read and is read again, homework from a photo, an
+  kept anyway, photos that wait on home after a reload (discarded, brought back, resumed), a
+  sheet that could not be read and is read again, homework of two pages with the second cut off
+  and taken again (it joins the same help session), "Seite hinzufügen", an
   explanation read again, pronunciation with a fake microphone, sign-out that survives a
   reload, an expired password link). `apps/mobile/lib/__tests__/wiring.test.ts` checks from the source that every
   app call has a server route and every route is used, every endpoint function is used, every

@@ -88,7 +88,7 @@ export async function claimJobs(
          select id from jobs
           where status = 'queued' and run_at <= $1 and kind = any($2::text[])
             and ($5::uuid is null or learner_id = $5)
-          order by run_at
+          order by run_at, seq
           limit $3
           for update skip locked
        )
@@ -116,7 +116,7 @@ export async function learnersWithDueJobs(
     `select learner_id from jobs
       where status = 'queued' and run_at <= $1 and kind = any($2::text[]) and learner_id is not null
       group by learner_id
-      order by min(run_at)
+      order by min(run_at), min(seq)
       limit $3`,
     [now, kinds, limit],
   );

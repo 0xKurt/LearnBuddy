@@ -51,6 +51,8 @@
     "washed_out_tip": "Trop clair ou reflet : incline un peu le téléphone, loin de la lampe.",
     "small": "La photo {{index}} est très petite.",
     "small_tip": "Je peux à peine lire les petits caractères ainsi. Prends plutôt la feuille avec l’appareil photo.",
+    "tilted": "La photo {{index}} est de travers.",
+    "tilted_tip": "Pose la feuille bien droite et tiens le téléphone juste au-dessus, pas en biais.",
     "retake": "Reprendre la photo",
     "keep": "La garder quand même",
     "flag": "Difficile à lire"
@@ -58,6 +60,19 @@
   "again": {
     "title": "Reprendre la photo",
     "title_pages": "Page {{pages}} à nouveau",
-    "intro": "Seulement ce qui manquait – le reste est déjà prêt. Veille à ce que toute la page soit sur la photo."
+    "intro": "Seulement ce qui manquait – le reste est déjà prêt. Veille à ce que toute la page soit sur la photo.",
+    "title_add": "Ajouter une page",
+    "intro_add": "Ses questions rejoignent cette feuille."
+  },
+  "draft": {
+    "title": "Tes photos ne sont pas encore envoyées",
+    "body_one": "1 photo de tout à l'heure attend.",
+    "body_other": "{{count}} photos de tout à l'heure attendent.",
+    "resume": "Continuer",
+    "discard": "Jeter",
+    "discarded_one": "Photo jetée.",
+    "discarded_other": "{{count}} photos jetées.",
+    "undo": "Annuler",
+    "undo_label": "Récupérer les photos jetées"
   }
 }

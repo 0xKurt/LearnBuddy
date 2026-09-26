@@ -39,7 +39,7 @@ export async function recentResults(
               select 1 from session_items si join items i on i.id = si.item_id
                where si.session_id = ps.id
                  and to_tsvector('simple', coalesce(i.topic, '') || ' ' || i.prompt) @@ to_tsquery('simple', $3)))
-      order by ps.finished_at desc limit $2`,
+      order by ps.finished_at desc, ps.seq desc limit $2`,
     [learnerId, limit, q],
   );
   if (sessions.length === 0) return [];

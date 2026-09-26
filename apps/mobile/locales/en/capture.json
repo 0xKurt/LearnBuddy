@@ -51,6 +51,8 @@
     "washed_out_tip": "Too bright or glare: tilt the phone a little, away from the lamp.",
     "small": "Photo {{index}} is very small.",
     "small_tip": "I can hardly read small print like this. Better take the sheet with the camera.",
+    "tilted": "Photo {{index}} is crooked.",
+    "tilted_tip": "Lay the sheet straight and hold the phone right above it, not at an angle.",
     "retake": "Take it again",
     "keep": "Keep it anyway",
     "flag": "Hard to read"
@@ -58,6 +60,19 @@
   "again": {
     "title": "Take it again",
     "title_pages": "Page {{pages}} again",
-    "intro": "Only what was missing – the rest is already done. Make sure the whole page is in the photo."
+    "intro": "Only what was missing – the rest is already done. Make sure the whole page is in the photo.",
+    "title_add": "Add a page",
+    "intro_add": "Its questions join this sheet."
+  },
+  "draft": {
+    "title": "Your photos haven't been sent yet",
+    "body_one": "1 photo from earlier is waiting.",
+    "body_other": "{{count}} photos from earlier are waiting.",
+    "resume": "Continue",
+    "discard": "Discard",
+    "discarded_one": "Photo discarded.",
+    "discarded_other": "{{count}} photos discarded.",
+    "undo": "Undo",
+    "undo_label": "Bring back the discarded photos"
   }
 }

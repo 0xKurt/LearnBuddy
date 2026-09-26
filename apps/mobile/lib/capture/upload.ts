@@ -11,6 +11,7 @@ import { ApiError, newId } from '../api/client.js';
 import { checkPhoto } from '../photo/check.js';
 import { ANALYSIS_WIDTH, type PhotoProblem } from '../photo/quality.js';
 import { createMaterial, submitMaterial } from '../api/endpoints.js';
+import { putPhoto } from './put.js';
 
 /** The API takes 1–20 photos per material. */
 export const MAX_PHOTOS = 20;
@@ -94,27 +95,11 @@ export async function uploadPhoto(
   uploadUrl: string,
   position: number,
 ): Promise<void> {
-  let body: Blob;
-  try {
-    body = await (await fetch(localUri)).blob();
-  } catch {
-    throw new PhotoUploadError('file', position);
-  }
-  if (body.size === 0) throw new PhotoUploadError('file', position);
-
-  let res: Response;
-  try {
-    res = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: { 'content-type': 'image/jpeg' },
-      body,
-    });
-  } catch {
-    throw new PhotoUploadError('network', position);
-  }
-  if (res.ok) return;
-  const text = await res.text().catch(() => '');
-  if (alreadyStored(res.status, text)) return;
+  const res = await putPhoto(localUri, uploadUrl);
+  if (res.kind === 'file') throw new PhotoUploadError('file', position);
+  if (res.kind === 'network') throw new PhotoUploadError('network', position);
+  if (res.status >= 200 && res.status < 300) return;
+  if (alreadyStored(res.status, res.body)) return;
   throw new PhotoUploadError('rejected', position, res.status);
 }
 
@@ -144,7 +129,7 @@ export type MaterialLink = {
  * storage refused one. A changed photo set needs a new instance.
  */
 export class MaterialUpload {
-  private requestId = newId();
+  private currentRequestId: string;
   private materialId: string | null = null;
   /** Signed upload URL per photo position (index = position). */
   private targets: string[] | null = null;
@@ -152,9 +137,20 @@ export class MaterialUpload {
   private readonly photoUris: readonly string[];
   private readonly link: MaterialLink;
 
-  constructor(photoUris: readonly string[], link: MaterialLink) {
+  constructor(photoUris: readonly string[], link: MaterialLink, requestId: string = newId()) {
     this.photoUris = [...photoUris];
     this.link = link;
+    this.currentRequestId = requestId;
+  }
+
+  /** Also kept in the draft: a send after a restart reuses the same material. */
+  get requestId(): string {
+    return this.currentRequestId;
+  }
+
+  /** The material, once the API reserved it. */
+  get material(): string | null {
+    return this.materialId;
   }
 
   /** Resolves once the API has accepted the photos for reading. */
@@ -166,7 +162,7 @@ export class MaterialUpload {
     if (!materialId || !targets) {
       onProgress({ step: 'reserving' });
       const res = await createMaterial({
-        client_request_id: this.requestId,
+        client_request_id: this.currentRequestId,
         photo_mimes: this.photoUris.map(() => 'image/jpeg' as const),
         ...(this.link.stepId ? { step_id: this.link.stepId } : {}),
         ...(this.link.goalId ? { goal_id: this.link.goalId } : {}),
@@ -213,7 +209,7 @@ export class MaterialUpload {
     );
     const complete = urls.filter((u): u is string => u !== undefined);
     if (uploads.length !== this.photoUris.length || complete.length !== urls.length) {
-      this.requestId = newId();
+      this.currentRequestId = newId();
       this.materialId = null;
       throw new Error('The upload slots do not match the photos');
     }

@@ -70,6 +70,8 @@ export const MaterialView = z.object({
   /** Pages not read completely, while Lena has not answered the notice. */
   page_problems: z.array(PageProblem),
   photo_count: z.number().int(),
+  /** Pages added to a sheet: once read, their questions are part of that sheet. */
+  merged_into: Uuid.nullable(),
   created_at: IsoDateTime,
 });
 export type MaterialView = z.infer<typeof MaterialView>;

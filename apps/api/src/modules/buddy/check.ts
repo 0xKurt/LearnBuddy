@@ -590,7 +590,7 @@ async function fallback(
           `select id, payload from buddy_steps
             where learner_id = $1 and kind = 'practice' and state = 'prepared'
               and goal_id is not distinct from $2
-            order by created_at desc limit 1`,
+            order by created_at desc, seq desc limit 1`,
           [learner.id, goalId],
         );
         if (existing?.payload.item_ids?.length) {

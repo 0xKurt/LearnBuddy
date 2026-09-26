@@ -26,6 +26,7 @@ import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
 import { NowCard } from '../components/buddy/NowCard.js';
+import { DraftCard } from '../components/capture/DraftCard.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
 import { ChoiceSheet } from '../components/learn/ChoiceSheet.js';
 import { TopicSheet } from '../components/learn/TopicSheet.js';
@@ -55,6 +56,8 @@ import {
   undoAction,
 } from '../lib/api/endpoints.js';
 import { keys, queryClient, setHome, useHome } from '../lib/api/queries.js';
+import type { CaptureDraft } from '../lib/capture/draft.js';
+import { drafts } from '../lib/capture/draftStorage.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { registerDeviceForPush } from '../lib/push.js';
@@ -74,6 +77,45 @@ export default function BuddyScreen() {
   const { t } = useTranslation(['buddy', 'common', 'learn']);
   const home = useHome();
   const [busy, setBusy] = useState(false);
+  /** Photos left from before, not sent yet (lib/capture/draft.ts), and one just let go. */
+  const [draft, setDraft] = useState<CaptureDraft | null>(null);
+  const [letGo, setLetGo] = useState<CaptureDraft | null>(null);
+  /** The photo of the page Buddy could not read, while it is on the phone. */
+  const [pageThumb, setPageThumb] = useState<string | null>(null);
+  const letGoRef = useRef<CaptureDraft | null>(null);
+  letGoRef.current = letGo;
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      void drafts.leftBehind().then((d) => {
+        if (alive) setDraft(d);
+      });
+      void drafts.prune();
+      return () => {
+        alive = false;
+        // Let go and not brought back: now the photos are deleted.
+        const gone = letGoRef.current;
+        if (gone) void drafts.drop(gone.photos.map((p) => p.uri));
+        setLetGo(null);
+      };
+    }, []),
+  );
+  const missingNow = home.data?.now?.type === 'pages_missing' ? home.data.now : null;
+  const missingPage = missingNow ? `${missingNow.material_id}:${missingNow.pages[0]?.page}` : null;
+  useEffect(() => {
+    if (!missingNow?.pages[0]) {
+      setPageThumb(null);
+      return;
+    }
+    let alive = true;
+    void drafts.sentPage(missingNow.material_id, missingNow.pages[0].page).then((uri) => {
+      if (alive) setPageThumb(uri);
+    });
+    return () => {
+      alive = false;
+    };
+    // Only when the page in question changes.
+  }, [missingPage]);
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   /** Buddy's reply while it is being written (an answer that changes nothing). */
   const [live, setLive] = useState<string | null>(null);
@@ -262,6 +304,7 @@ export default function BuddyScreen() {
   }
 
   const h = home.data;
+  const missing = h.now?.type === 'pages_missing' ? h.now : null;
   // The next test in one line; everything else Buddy says in the conversation.
   const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
   const messages = h.thread.slice(-VISIBLE_MESSAGES);
@@ -284,8 +327,33 @@ export default function BuddyScreen() {
         {t('buddy:system.scheduler_stale')}
       </Banner>
     ) : null,
+    draft || letGo ? (
+      <DraftCard
+        key="draft"
+        count={(draft ?? letGo)!.photos.length}
+        preview={(draft ?? letGo)!.photos[0]?.uri ?? null}
+        discarded={!draft}
+        onResume={() => router.push({ pathname: '/capture', params: { resume: '1' } })}
+        onDiscard={() => {
+          const d = draft;
+          if (!d) return;
+          // Kept until she leaves home: "Rückgängig" brings them back.
+          void drafts.save({ requestId: null, photos: [], link: d.link });
+          setLetGo(d);
+          setDraft(null);
+        }}
+        onUndo={() => {
+          const d = letGo;
+          if (!d) return;
+          void drafts.save({ requestId: d.requestId, photos: d.photos, link: d.link });
+          setDraft(d);
+          setLetGo(null);
+        }}
+      />
+    ) : null,
     h.now ? (
       <NowCard
+        thumb={missing ? pageThumb : null}
         key="now"
         card={h.now}
         busy={busy}

@@ -97,7 +97,7 @@ async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<Budd
       where learner_id = $1 and kind = 'buddy_check' and status in ('queued', 'running')
         and payload->>'reason' in ('material_ready', 'session_finished')
         and run_at <= $2::timestamptz
-      order by run_at limit 1`,
+      order by run_at, seq limit 1`,
     [learnerId, new Date(now.getTime() + 60_000)],
   );
   if (!row) return null;

@@ -7,7 +7,7 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { BuddyHome, MaterialView } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, LibraryView, MaterialView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -31,17 +31,26 @@ const item = (prompt: string, answer: string) => ({
   source_excerpt: null,
 });
 
-const sheet = (pages: unknown, title = 'Nomen und Verben') => ({
+const PAGE2 = [
+  item('Ist „schnell“ ein Adjektiv?', 'ja'),
+  item('Nenne ein Adjektiv für „Hund“.', 'groß'),
+];
+
+const sheet = (
+  pages: unknown,
+  title = 'Nomen und Verben',
+  items = [
+    item('Ist „Hund“ ein Nomen oder ein Verb?', 'Nomen'),
+    item('Ist „laufen“ ein Nomen oder ein Verb?', 'Verb'),
+  ],
+) => ({
   is_learning_material: true,
   readable: true,
   pages,
   title,
   subject: { name: 'Deutsch', kind: 'german' },
   extracted_text: 'Seite 1: Nomen. Seite 3: Verben.',
-  items: [
-    item('Ist „Hund“ ein Nomen oder ein Verb?', 'Nomen'),
-    item('Ist „laufen“ ein Nomen oder ein Verb?', 'Verb'),
-  ],
+  items,
 });
 
 const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
@@ -59,7 +68,6 @@ async function send(
 ): Promise<MaterialView> {
   const purpose = opts.purpose ?? 'study';
   env.llm.script('extraction', { json: opts.result });
-  if (purpose === 'study') env.llm.script('buddy_check', WAIT);
   const created = await l.api.post<{ material: MaterialView; uploads: Array<{ path: string }> }>(
     '/materials',
     {
@@ -96,6 +104,9 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
       pin: '4826',
     });
     tom = await onboard(env, { relation: 'child', name: 'Tom', birthDate: '2013-05-01' });
+    // Buddy's check after a sheet is read: nothing to add here (sheets read at the same
+    // moment share one check).
+    env.llm.byDefault('buddy_check', WAIT);
   });
   afterEach(async () => {
     const report = {
@@ -156,7 +167,7 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
     expect((await lena.api.post(`/materials/not-an-id/pages-ok`)).status).toBe(422);
   });
 
-  it('the page photographed again ends the notice and keeps homework and goal', async () => {
+  it('the page photographed again joins the homework and its open help session', async () => {
     const [goal] = await env.db.query<{ id: string }>(
       `insert into buddy_goals (learner_id, kind, title, due_date, status)
        values ($1, 'exam', 'Deutscharbeit', '2026-10-05', 'active') returning id`,
@@ -189,15 +200,24 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
       completes: hw.id,
       requestId,
       purpose: 'homework',
-      result: sheet([{ page: 1, read: 'all', problem: null }], 'Hausaufgabe Wortarten 2'),
+      result: sheet([{ page: 1, read: 'all', problem: null }], 'Seite 2', PAGE2),
     });
-    expect(again).toMatchObject({ status: 'ready', purpose: 'homework', goal_id: goal!.id });
-    expect(again.session_id).not.toBeNull();
-    expect((await lena.api.get<MaterialView>(`/materials/${hw.id}`)).body.page_problems).toEqual(
-      [],
-    );
+    // Read, and part of her homework now: same sheet, same help session (2 + 2 tasks).
+    expect(again).toMatchObject({ status: 'ready', purpose: 'homework', merged_into: hw.id });
+    const sheetNow = (await lena.api.get<MaterialView>(`/materials/${hw.id}`)).body;
+    expect(sheetNow).toMatchObject({ item_count: 4, page_problems: [], goal_id: goal!.id });
     home = (await lena.api.get<BuddyHome>('/buddy')).body;
-    expect(home.now).toMatchObject({ type: 'resume_practice', mode: 'help' });
+    expect(home.now).toMatchObject({
+      type: 'resume_practice',
+      mode: 'help',
+      session_id: hw.session_id,
+      remaining: 4,
+    });
+    const sessions = await env.db.one<{ n: number }>(
+      `select count(*)::int as n from practice_sessions where learner_id = $1`,
+      [lena.learnerId],
+    );
+    expect(sessions.n).toBe(1);
     // The same request again (its answer was lost): the same material, nothing new.
     const repeat = await lena.api.post<{ material: MaterialView; uploads: unknown[] }>(
       '/materials',
@@ -205,6 +225,72 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
     );
     expect(repeat.body.material.id).toBe(again.id);
     expect(repeat.body.uploads).toEqual([]);
+  });
+
+  it('a page added later joins the sheet; a finished help session gets a new one', async () => {
+    const study = await send(env, lena, { photos: 1, result: sheet([]) });
+    const added = await send(env, lena, {
+      photos: 1,
+      completes: study.id,
+      result: sheet([], 'Ganz anderer Titel', PAGE2),
+    });
+    expect(added.merged_into).toBe(study.id);
+    const lib = (await lena.api.get<LibraryView>('/materials')).body;
+    const listed = [...lib.unsorted, ...lib.subjects.flatMap((x) => x.materials)];
+    // One sheet in her library, with all four questions and its own title.
+    expect(listed.map((x) => [x.id, x.title, x.item_count])).toEqual([
+      [study.id, 'Nomen und Verben', 4],
+    ]);
+    // Deleted meanwhile: the pages stay a sheet of their own (nothing is lost).
+    const orphan = await send(env, lena, { photos: 1, result: sheet([], 'Erst') });
+    env.llm.script('extraction', { json: sheet([], 'Zweit', PAGE2) });
+    const created = await lena.api.post<{ material: MaterialView; uploads: { path: string }[] }>(
+      '/materials',
+      { client_request_id: randomUUID(), photo_mimes: ['image/jpeg'], completes: orphan.id },
+    );
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    expect((await lena.api.delete(`/materials/${orphan.id}`)).status).toBeLessThan(300);
+    await lena.api.post(`/materials/${created.body.material.id}/submit`);
+    await env.flushBackground();
+    const alone = (await lena.api.get<MaterialView>(`/materials/${created.body.material.id}`)).body;
+    expect(alone).toMatchObject({ status: 'ready', merged_into: null, item_count: 2 });
+
+    // Homework finished before page 2 came: page 2 gets its own help session.
+    const hw = await send(env, lena, { photos: 1, purpose: 'homework', result: sheet([]) });
+    await lena.api.post(`/practice/sessions/${hw.session_id}/finish`);
+    await env.flushBackground();
+    const late = await send(env, lena, {
+      photos: 1,
+      completes: hw.id,
+      purpose: 'homework',
+      result: sheet([], 'x', PAGE2),
+    });
+    expect(late.merged_into).toBe(hw.id);
+    const home = (await lena.api.get<BuddyHome>('/buddy')).body;
+    expect(home.now).toMatchObject({ type: 'resume_practice', mode: 'help', remaining: 2 });
+    expect(home.now?.type === 'resume_practice' && home.now.session_id).not.toBe(hw.session_id);
+  });
+
+  it('files the questions of a second subject on the sheet under that subject', async () => {
+    const m = await send(env, lena, {
+      photos: 1,
+      result: {
+        ...sheet([], 'Deutsch und Bio', [
+          { ...item('Ist „Hund“ ein Nomen?', 'ja'), topic: 'Wortarten' },
+          { ...item('Wie viele Beine hat eine Spinne?', '8'), topic: 'Spinnentiere' },
+        ]),
+        other_subject: { name: 'Biologie', kind: 'biology', topics: ['Spinnentiere'] },
+      },
+    });
+    const rows = await env.db.query<{ prompt: string; subject: string }>(
+      `select i.prompt, s.name as subject from items i join subjects s on s.id = i.subject_id
+        where i.material_id = $1 order by i.seq`,
+      [m.id],
+    );
+    expect(rows.map((r) => [r.prompt, r.subject])).toEqual([
+      ['Ist „Hund“ ein Nomen?', 'Deutsch'],
+      ['Wie viele Beine hat eine Spinne?', 'Biologie'],
+    ]);
   });
 
   it('one cut-off page does not cost the whole sheet, even if the model says "unreadable"', async () => {

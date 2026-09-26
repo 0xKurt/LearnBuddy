@@ -265,7 +265,7 @@ buddyRoutes.get('/memory', async (c) => {
   }>(
     `select id, kind, statement, source, quote, valid_until, created_at, version from buddy_memories
       where learner_id = $1 and status = 'active' and (valid_until is null or valid_until > $2)
-      order by created_at desc`,
+      order by created_at desc, seq desc`,
     [c.get('learner').id, deps.now()],
   );
   return c.json(

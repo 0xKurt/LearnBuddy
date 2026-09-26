@@ -163,6 +163,12 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Übung bereit: Nomen und Verben')).toHaveCount(0);
   await openMenu(page, 'Mein Stoff');
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
+  // A page she forgot can be added to the sheet.
+  await page.getByRole('button', { name: /^Fragen .*Nomen und Verben/ }).click();
+  await page.getByRole('button', { name: 'Seite hinzufügen' }).click();
+  await expect(page.getByText('Die Fragen dazu kommen zu diesem Blatt.')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück' }).click();
+  await page.getByRole('button', { name: 'Zurück' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── Homework of two pages, the second cut off: Lena is told, and takes just that page again ──
@@ -194,13 +200,14 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Foto machen' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
   await page.getByRole('button', { name: 'Senden' }).click();
-  // The notice is answered; the help for the page taken again is on top.
-  await expect(page.getByText('Weiter mit deiner Hausaufgabe')).toBeVisible({ timeout: 15_000 });
+  // The notice is answered; once page 2 is read, its task joins the same help session.
   await expect(page.getByText('Eine Seite konnte ich nicht ganz lesen')).toHaveCount(0);
+  await expect(page.getByText('Hausaufgabe Quadrat – noch 2 Aufgaben')).toBeVisible({
+    timeout: 15_000,
+  });
   await page.getByRole('button', { name: 'Weitermachen' }).click();
-  await expect(
-    page.getByText('Ein Rechteck ist 6 cm lang und 3 cm breit.', { exact: false }),
-  ).toBeVisible();
+  await expect(page.getByText('Ein Quadrat hat 4 cm Seitenlänge.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Frage 1 von 2')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
   await shot(page, '51-homework-photo');
   await page.getByRole('button', { name: 'Übung beenden' }).click();
@@ -216,6 +223,27 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Schwer lesbar')).toBeVisible();
   await shot(page, '46-photo-kept');
   await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── Not sent, and the app is closed: the photo waits on home, survives a restart ──
+  await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText('1 Foto von vorhin wartet.')).toBeVisible();
+  await shot(page, '47-photos-waiting');
+  // Let go, and brought back.
+  await page.getByRole('button', { name: 'Verwerfen' }).click();
+  await expect(page.getByText('Foto verworfen.')).toBeVisible();
+  await page.getByRole('button', { name: 'Verworfene Fotos zurückholen' }).click();
+  await page.getByRole('button', { name: 'Weiter', exact: true }).click();
+  // The same photo, still marked and still kept (no second question about it).
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await expect(page.getByText('Schwer lesbar')).toBeVisible();
+  await expect(page.getByText('Foto 1 ist zu dunkel.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Entfernen' }).click();
+  await page.getByRole('button', { name: 'Zurück' }).click();
+  await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toHaveCount(0);
 
   // ── An explanation read again from the questions ──
   await page.getByRole('button', { name: 'Erklär mir was', exact: true }).click();

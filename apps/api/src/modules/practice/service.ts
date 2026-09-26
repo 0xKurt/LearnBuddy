@@ -572,7 +572,7 @@ export async function answerItem(
         `select statement from buddy_memories
           where learner_id = $1 and status = 'active' and kind = 'preference'
             and (valid_until is null or valid_until > $2)
-          order by created_at desc limit 5`,
+          order by created_at desc, seq desc limit 5`,
         [learner.id, now],
       );
       const history = await deps.db.query<{ role: 'learner' | 'tutor'; text: string }>(

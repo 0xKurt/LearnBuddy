@@ -69,5 +69,6 @@
     "body": "Diese Frage kommt nicht mehr dran.",
     "confirm": "Löschen"
   },
-  "item_deleted": "Frage gelöscht."
+  "item_deleted": "Frage gelöscht.",
+  "add_page": "Seite hinzufügen"
 }

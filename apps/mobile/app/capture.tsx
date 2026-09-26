@@ -7,7 +7,8 @@
 // (the goal the material belongs to) and purpose ('homework': the tasks are
 // read and a help session is made — hints only, never the solution),
 // completes (an earlier material whose missing pages these are) with pages
-// (their numbers, for the hint).
+// (their numbers, for the hint), resume=1 (go on with the photos left from
+// before: they are kept as a draft until sent, lib/capture/draft.ts).
 
 import { Uuid } from '@learnbuddy/shared-types/contracts';
 import * as ImagePicker from 'expo-image-picker';
@@ -32,9 +33,12 @@ import {
   MaterialUpload,
   PhotoUploadError,
   preparePhoto,
+  type MaterialLink,
   type MaterialPurpose,
   type SendProgress,
 } from '../lib/capture/upload.js';
+import type { DraftLink } from '../lib/capture/draft.js';
+import { drafts } from '../lib/capture/draftStorage.js';
 import { messageFor } from '../lib/errors.js';
 import type { PhotoProblem } from '../lib/photo/quality.js';
 import { LB } from '../lib/theme/colors.js';
@@ -52,6 +56,10 @@ function pagesParam(value: string | string[] | undefined): string | null {
   return v && /^\d{1,2}(,\d{1,2})*$/.test(v) ? v.split(',').join(', ') : null;
 }
 
+function uploadLink(l: DraftLink): MaterialLink {
+  return { stepId: l.stepId, goalId: l.goalId, purpose: l.purpose, completes: l.completes };
+}
+
 /** A route param as one id; anything that is not a UUID is ignored. */
 function idParam(value: string | string[] | undefined): string | null {
   const v = Array.isArray(value) ? value[0] : value;
@@ -66,13 +74,22 @@ export default function CaptureScreen() {
     purpose?: string | string[];
     completes?: string | string[];
     pages?: string | string[];
+    resume?: string | string[];
+    add?: string | string[];
   }>();
-  const stepId = idParam(params.stepId);
-  const goalId = idParam(params.goalId);
-  const purpose = purposeParam(params.purpose);
-  const homework = purpose === 'homework';
-  const completes = idParam(params.completes);
-  const missingPages = pagesParam(params.pages);
+  const resume = params.resume === '1';
+  /** What the photos are for; a resumed draft brings its own. */
+  const [link, setLink] = useState<DraftLink>(() => ({
+    stepId: idParam(params.stepId),
+    goalId: idParam(params.goalId),
+    purpose: purposeParam(params.purpose),
+    completes: idParam(params.completes),
+    pages: pagesParam(params.pages),
+    add: params.add === '1',
+  }));
+  const homework = link.purpose === 'homework';
+  const completes = link.completes;
+  const missingPages = link.pages;
 
   /** Local URIs of the prepared JPEGs, in page order. */
   const [photos, setPhotos] = useState<string[]>([]);
@@ -89,13 +106,47 @@ export default function CaptureScreen() {
   const picking = useRef(false);
   const sending = useRef(false);
   const mounted = useRef(true);
+  /** Changed here since opening: only then is the draft written (and an older one replaced). */
+  const dirty = useRef(false);
 
   useEffect(() => {
     mounted.current = true;
+    if (resume) {
+      void drafts.load().then((d) => {
+        if (!d || !mounted.current || dirty.current) return;
+        const uris = d.photos.map((p) => p.uri);
+        setLink(d.link);
+        setPhotos(uris);
+        setProblems(
+          Object.fromEntries(
+            d.photos.filter((p) => p.problems.length).map((p) => [p.uri, p.problems]),
+          ),
+        );
+        setKept(new Set(d.photos.filter((p) => p.kept).map((p) => p.uri)));
+        // Already on its way before: the same material, nothing sent twice.
+        if (d.requestId) upload.current = new MaterialUpload(uris, uploadLink(d.link), d.requestId);
+      });
+    }
     return () => {
       mounted.current = false;
     };
-  }, []);
+  }, [resume]);
+
+  // The draft follows every change, so closing the app loses nothing.
+  useEffect(() => {
+    if (!dirty.current) return;
+    void drafts.save({
+      requestId: upload.current?.requestId ?? null,
+      photos: photos.map((uri) => ({ uri, problems: problems[uri] ?? [], kept: kept.has(uri) })),
+      link,
+    });
+  }, [photos, problems, kept, link]);
+
+  /** The first change in a fresh capture replaces a draft left from before. */
+  async function touch() {
+    if (!dirty.current && !resume) await drafts.discard();
+    dirty.current = true;
+  }
 
   const busy = preparing !== null || progress !== null;
   const room = MAX_PHOTOS - photos.length;
@@ -108,13 +159,17 @@ export default function CaptureScreen() {
   /** `replace`: the photo a retake stands in for — same place, only once the new one is there. */
   async function addPhotos(sources: string[], replace: string | null = null) {
     let failed = 0;
+    await touch();
     for (const [i, source] of sources.entries()) {
       setPreparing({ current: i + 1, total: sources.length });
       try {
-        const photo = await preparePhoto(source);
+        const prepared = await preparePhoto(source);
+        // Where the system does not clean up: the photo survives the app being closed.
+        const photo = { ...prepared, uri: await drafts.keep(prepared.uri) };
         if (replace && i === 0) {
           setPhotos((prev) => prev.map((p) => (p === replace ? photo.uri : p)));
           setProblems(({ [replace]: _gone, ...rest }) => rest);
+          void drafts.drop([replace]);
         } else {
           setPhotos((prev) => (prev.length < MAX_PHOTOS ? [...prev, photo.uri] : prev));
         }
@@ -171,7 +226,9 @@ export default function CaptureScreen() {
 
   function remove(uri: string) {
     if (busy) return;
+    dirty.current = true;
     setPhotos((prev) => prev.filter((p) => p !== uri));
+    void drafts.drop([uri]);
     photosChanged();
   }
 
@@ -201,14 +258,22 @@ export default function CaptureScreen() {
   async function send() {
     if (sending.current || busy || photos.length === 0) return;
     sending.current = true;
-    if (!upload.current)
-      upload.current = new MaterialUpload(photos, { stepId, goalId, purpose, completes });
+    if (!upload.current) upload.current = new MaterialUpload(photos, uploadLink(link));
     const current = upload.current;
     setFailure(null);
     setProgress({ step: 'reserving' });
+    drafts.startSending(current.requestId);
+    dirty.current = true;
+    // The request id goes into the draft first: after a crash the same material goes on.
+    await drafts.save({
+      requestId: current.requestId,
+      photos: photos.map((uri) => ({ uri, problems: problems[uri] ?? [], kept: kept.has(uri) })),
+      link,
+    });
     try {
       // Keeps going if the learner leaves meanwhile: they asked for it to be sent.
       await current.send(setProgress);
+      if (current.material) await drafts.sent(current.material, photos);
       void queryClient.invalidateQueries({ queryKey: keys.home });
       void queryClient.invalidateQueries({ queryKey: keys.library });
       // Back to Buddy's home, which now shows the reading (opens it if it isn't in the stack).
@@ -217,6 +282,7 @@ export default function CaptureScreen() {
       if (mounted.current) setFailure(failureText(err));
       else toast.show(t('capture:error.left'), 'error');
     } finally {
+      drafts.stopSending(current.requestId);
       sending.current = false;
       setProgress(null);
     }
@@ -228,9 +294,11 @@ export default function CaptureScreen() {
         <View style={{ gap: 8, paddingHorizontal: 4 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
             {completes
-              ? missingPages
-                ? t('capture:again.title_pages', { pages: missingPages })
-                : t('capture:again.title')
+              ? link.add
+                ? t('capture:again.title_add')
+                : missingPages
+                  ? t('capture:again.title_pages', { pages: missingPages })
+                  : t('capture:again.title')
               : homework
                 ? t('capture:homework.title')
                 : t('capture:title')}
@@ -238,7 +306,9 @@ export default function CaptureScreen() {
           {photos.length === 0 ? (
             <Text style={[TYPE.body, { color: LB.ink2 }]}>
               {completes
-                ? t('capture:again.intro')
+                ? link.add
+                  ? t('capture:again.intro_add')
+                  : t('capture:again.intro')
                 : homework
                   ? t('capture:homework.intro')
                   : t('capture:intro')}
@@ -266,7 +336,10 @@ export default function CaptureScreen() {
             problems={problems[review] ?? []}
             disabled={busy}
             onRetake={() => retake(review)}
-            onKeep={() => setKept((prev) => new Set(prev).add(review))}
+            onKeep={() => {
+              dirty.current = true;
+              setKept((prev) => new Set(prev).add(review));
+            }}
           />
         ) : null}
 

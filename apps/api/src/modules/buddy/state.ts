@@ -207,7 +207,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
        from buddy_goals g left join subjects s on s.id = g.subject_id
       where g.learner_id = $1
         and (g.status = 'active' or g.closed_at > $2::timestamptz - interval '14 days')
-      order by (g.status = 'active') desc, g.due_date nulls last, g.created_at
+      order by (g.status = 'active') desc, g.due_date nulls last, g.created_at, g.seq
       limit $3`,
     [learnerId, now, LIMITS.goals],
   );
@@ -219,7 +219,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
       where learner_id = $1
         and (state in ('planned','prepared','in_progress')
              or finished_at > $2::timestamptz - interval '7 days')
-      order by (state in ('planned','prepared','in_progress')) desc, planned_date nulls last, created_at
+      order by (state in ('planned','prepared','in_progress')) desc, planned_date nulls last, created_at, seq
       limit $3`,
     [learnerId, now, LIMITS.steps],
   );
@@ -228,7 +228,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     `select id, kind, statement, source, quote, valid_until, version, created_at
        from buddy_memories
       where learner_id = $1 and status = 'active' and (valid_until is null or valid_until > $2)
-      order by created_at
+      order by created_at, seq
       limit $3`,
     [learnerId, now, LIMITS.memories + 1],
   );
@@ -246,10 +246,10 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
   const subjects = await db.query<SubjectRow>(
     `select s.id, s.name, s.kind,
             (select count(*) from items i where i.subject_id = s.id and i.archived_at is null)::int as item_count,
-            (select count(*) from materials m where m.subject_id = s.id and m.archived_at is null)::int as material_count
+            (select count(*) from materials m where m.subject_id = s.id and m.archived_at is null and m.merged_into is null)::int as material_count
        from subjects s
       where s.learner_id = $1 and s.archived_at is null
-      order by s.created_at
+      order by s.created_at, s.seq
       limit $2`,
     [learnerId, LIMITS.subjects],
   );
@@ -266,7 +266,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
        from items i left join item_states st on st.item_id = i.id
       where i.learner_id = $1 and i.archived_at is null
       group by i.subject_id, coalesce(i.topic, '')
-      order by count(*) desc
+      order by count(*) desc, i.subject_id, coalesce(i.topic, '')
       limit $2`,
     [learnerId, LIMITS.topics, now],
   );
@@ -277,7 +277,9 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count
        from materials m
       where m.learner_id = $1 and m.archived_at is null
-      order by m.created_at desc
+        -- A merged part only while its own missing pages are not answered.
+        and (m.merged_into is null or (m.pages_resolved_at is null and m.page_problems <> '[]'::jsonb))
+      order by m.created_at desc, m.seq desc
       limit $2`,
     [learnerId, LIMITS.materials],
   );
@@ -297,7 +299,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
        left join items i on i.id = si.item_id
       where ps.learner_id = $1
       group by ps.id
-      order by ps.started_at desc
+      order by ps.started_at desc, ps.seq desc
       limit $2`,
     [learnerId, LIMITS.sessions],
   );
@@ -307,7 +309,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             responded_at, response, goal_id, step_id, created_at
        from buddy_outreach
       where learner_id = $1 and created_at > $2::timestamptz - make_interval(days => $3)
-      order by created_at desc`,
+      order by created_at desc, seq desc`,
     [learnerId, now, LIMITS.outreachDays],
   );
 

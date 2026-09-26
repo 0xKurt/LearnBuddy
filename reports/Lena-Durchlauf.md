@@ -96,6 +96,17 @@ Der Durchlauf lässt sich jederzeit wiederholen (`apps/api/evals/lena/run.ts`).
    Werbung) nicht, außer sie sind als Schulaufgabe gedruckt. Live 5 von 5 abgelehnt. Solche Fotos
    werden jetzt sofort gelöscht statt nach 7 Tagen.
    - Kompletter Durchlauf danach: **74 von 74** Prüfungen.
+5. **Neue Foto-Szenarien** (Nachtrag, live 3 von 3):
+   - eine Heftseite in Handschrift (Bio, liniertes Papier) wird gelesen;
+   - ein Arbeitsblatt, auf dem Lena schon Antworten eingetragen hat, eine davon falsch
+     („7 · 8 = 54“): Buddy übernimmt ihre Antwort nicht als Lösung und fragt nicht nach ihren
+     eigenen Einträgen (dafür gibt es jetzt eine Prompt-Regel; vorher kam eine Frage „Welche
+     Aufgabe ist falsch gelöst?“ dazu);
+   - Mathe und Bio auf einem Blatt landen in beiden Fächern;
+   - ein um 90° gedrehtes Foto wird gelesen.
+   - Die Handschrift ist gerenderte Schreibschrift, ordentlicher als bei einem Kind. Echte
+     Fotos fehlen noch.
+   - Kompletter Durchlauf mit allen 24 Szenarien: **82 von 82** Prüfungen.
 
 ## Auffällig, noch nicht behoben – dazu brauche ich deine Meinung
 

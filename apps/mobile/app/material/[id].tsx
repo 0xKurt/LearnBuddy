@@ -210,6 +210,26 @@ export default function MaterialScreen() {
               .filter(Boolean)
               .join(' · ')}
           </Text>
+          {material.status === 'ready' ? (
+            // A page she forgot: its questions join this sheet once read.
+            <View style={{ flexDirection: 'row', marginTop: 4 }}>
+              <Btn
+                size="sm"
+                variant="soft"
+                pill
+                icon="camera"
+                disabled={deleting || renaming}
+                onPress={() =>
+                  router.push({
+                    pathname: '/capture',
+                    params: { completes: material.id, purpose: material.purpose, add: '1' },
+                  })
+                }
+              >
+                {t('library:add_page')}
+              </Btn>
+            </View>
+          ) : null}
         </View>
         {empty !== null ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>

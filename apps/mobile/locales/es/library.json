@@ -69,5 +69,6 @@
     "body": "Esta pregunta ya no volverá a salir.",
     "confirm": "Borrar"
   },
-  "item_deleted": "Pregunta borrada."
+  "item_deleted": "Pregunta borrada.",
+  "add_page": "Añadir una página"
 }

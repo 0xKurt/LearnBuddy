@@ -69,5 +69,6 @@
     "body": "Cette question ne reviendra plus.",
     "confirm": "Supprimer"
   },
-  "item_deleted": "Question supprimée."
+  "item_deleted": "Question supprimée.",
+  "add_page": "Ajouter une page"
 }
