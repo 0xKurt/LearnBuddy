@@ -270,6 +270,21 @@ export const SendMessageResponse = z.object({
 });
 export type SendMessageResponse = z.infer<typeof SendMessageResponse>;
 
+/**
+ * POST /buddy/messages with `Accept: text/event-stream` (docs/architecture.md §Speed):
+ * `reply` events while Buddy writes, then one `done` event carrying the
+ * SendMessageResponse (or `error` with { code }). A higher `round` replaces the
+ * text of a lower one. `speakable`: the answer changes nothing, so the text may
+ * be shown and read aloud now; otherwise wait for `done`.
+ */
+export const ReplyStreamEvent = z.object({
+  round: z.number().int().min(1),
+  text: z.string(),
+  speakable: z.boolean(),
+  done: z.boolean(),
+});
+export type ReplyStreamEvent = z.infer<typeof ReplyStreamEvent>;
+
 // ─────────────── memory ("Was Buddy weiß") ───────────────
 
 export const MemoryView = z.object({

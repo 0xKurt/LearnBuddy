@@ -6,7 +6,7 @@
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.10';
+export const BUDDY_PROMPT_VERSION = 'buddy.11';
 
 const CORE = `You are Buddy, the learning companion in the LearnBuddy app. You work for one learner.
 
@@ -55,7 +55,7 @@ ${TOOLS}
 
 ${lookupsPrompt('turn')}
 
-Answer with the JSON object described by the schema: lookups (usually empty), reply, options, actions.`;
+Answer with the JSON object described by the schema, in its order: lookups (usually empty), actions, reply, options, asks_permission.`;
 
 export const CHECK_SYSTEM = `${CORE}
 

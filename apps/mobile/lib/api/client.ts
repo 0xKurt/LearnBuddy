@@ -10,6 +10,8 @@ import { currentSession, type Session } from '../auth/session.js';
 import { refreshSession } from '../auth/supabase.js';
 import { ENV } from '../env.js';
 import { deviceTimeZone } from '../time.js';
+import { SseReader, type SseEvent } from './sse.js';
+import { streamingFetch } from './streamingFetch.js';
 
 export class ApiError extends Error {
   constructor(
@@ -53,6 +55,40 @@ async function validToken(): Promise<string | null> {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
+
+/** One authorised call; a 401 refreshes the session once and tries again. */
+async function authorised(
+  method: Method,
+  path: string,
+  body: unknown,
+  accept: string,
+  fetchFn: FetchLike = fetch,
+): Promise<Response> {
+  const send = async (token: string | null): Promise<Response> => {
+    const headers: Record<string, string> = { accept, 'x-timezone': deviceTimeZone() };
+    if (body !== undefined) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    const admin = adminToken();
+    if (admin) headers['x-admin-token'] = admin;
+    try {
+      return await fetchFn(`${ENV.API_URL}/v1${path}`, {
+        method,
+        headers,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      throw new ApiError('network', 'No connection', 0);
+    }
+  };
+  let res = await send(await validToken());
+  if (res.status === 401 && currentSession()) {
+    const next = await refreshOnce();
+    if (next) res = await send(next.access_token);
+  }
+  return res;
+}
+
 export async function request<S extends ZodTypeAny>(
   method: Method,
   path: string,
@@ -68,32 +104,16 @@ export async function request<S extends ZodTypeAny>(
   path: string,
   opts: { body?: unknown; schema?: S } = {},
 ): Promise<unknown> {
-  const send = async (token: string | null): Promise<Response> => {
-    const headers: Record<string, string> = {
-      accept: 'application/json',
-      'x-timezone': deviceTimeZone(),
-    };
-    if (opts.body !== undefined) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const admin = adminToken();
-    if (admin) headers['x-admin-token'] = admin;
-    try {
-      return await fetch(`${ENV.API_URL}/v1${path}`, {
-        method,
-        headers,
-        body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-      });
-    } catch {
-      throw new ApiError('network', 'No connection', 0);
-    }
-  };
+  const res = await authorised(method, path, opts.body, 'application/json');
+  return readJson(res, method, path, opts.schema);
+}
 
-  let res = await send(await validToken());
-  if (res.status === 401 && currentSession()) {
-    const next = await refreshOnce();
-    if (next) res = await send(next.access_token);
-  }
-
+async function readJson<S extends ZodTypeAny>(
+  res: Response,
+  method: Method,
+  path: string,
+  schema: S | undefined,
+): Promise<unknown> {
   const text = await res.text();
   let json: unknown = null;
   if (text) {
@@ -120,12 +140,67 @@ export async function request<S extends ZodTypeAny>(
       err?.details ?? null,
     );
   }
-  if (!opts.schema) return json;
-  const parsed = opts.schema.safeParse(json);
+  if (!schema) return json;
+  const parsed = schema.safeParse(json);
   if (!parsed.success) {
     throw new ApiError('invalid_response', `Unexpected response for ${method} ${path}`, res.status);
   }
   return parsed.data;
+}
+
+/**
+ * A call whose answer streams as server-sent events (docs/architecture.md §Speed):
+ * every event but the last goes to onEvent; the `done` event is the result
+ * (validated like request()), an `error` event throws. A server that answers
+ * with plain JSON (an error before streaming, or no streaming) is read as request() would.
+ */
+export async function streamRequest<S extends ZodTypeAny>(
+  method: Method,
+  path: string,
+  opts: { body?: unknown; schema: S; onEvent: (event: SseEvent) => void },
+): Promise<z.infer<S>> {
+  // expo/fetch streams the body on the phone as well (React Native's fetch does not).
+  const res = await authorised(method, path, opts.body, 'text/event-stream', streamingFetch);
+  const reader =
+    (res.headers.get('content-type') ?? '').includes('text/event-stream') && res.body
+      ? res.body.getReader()
+      : null;
+  if (!reader) return readJson(res, method, path, opts.schema) as Promise<z.infer<S>>;
+  const sse = new SseReader();
+  const decoder = new TextDecoder();
+  for (;;) {
+    let chunk: ReadableStreamReadResult<Uint8Array>;
+    try {
+      chunk = await reader.read();
+    } catch {
+      throw new ApiError('network', 'Connection lost', 0);
+    }
+    if (chunk.done) break;
+    for (const e of sse.push(decoder.decode(chunk.value, { stream: true }))) {
+      if (e.event === 'done') {
+        void reader.cancel().catch(() => undefined);
+        const parsed = opts.schema.safeParse(safeJson(e.data));
+        if (!parsed.success)
+          throw new ApiError('invalid_response', `Unexpected response for ${method} ${path}`, 200);
+        return parsed.data;
+      }
+      if (e.event === 'error') {
+        const code = (safeJson(e.data) as { code?: string } | null)?.code ?? 'internal';
+        throw new ApiError(code, 'The server could not finish', 500);
+      }
+      opts.onEvent(e);
+    }
+  }
+  // The stream ended without a result: the message may have arrived; the caller reloads.
+  throw new ApiError('network', 'Connection lost', 0);
+}
+
+function safeJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 export function newId(): string {

@@ -193,11 +193,14 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       },
     },
     // Conversation mode: what she said (the fake microphone's tone, "heard" by the script).
+    // In the order the model writes it (actions before the reply): streamed and spoken at once.
     {
       json: {
+        lookups: [],
+        actions: [],
         reply: 'Diese Woche steht noch nichts an – magst du etwas üben?',
         options: null,
-        actions: [],
+        asks_permission: false,
       },
     },
   );

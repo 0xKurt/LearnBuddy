@@ -47,7 +47,7 @@ import {
   answerContactOptIn,
   reportOutcome,
   retryMaterial,
-  sendMessage,
+  sendMessageStreamed,
   skipStep,
   startStep,
   undoAction,
@@ -58,6 +58,7 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
+import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -72,6 +73,8 @@ export default function BuddyScreen() {
   const home = useHome();
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
+  /** Buddy's reply while it is being written (an answer that changes nothing). */
+  const [live, setLive] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [topic, setTopic] = useState<TopicKind | null>(null);
   const [choice, setChoice] = useState<'homework' | 'vocab' | null>(null);
@@ -125,18 +128,48 @@ export default function BuddyScreen() {
     replyToId: string | null = null,
   ) {
     setPending({ id: clientMessageId, text });
+    setLive(null);
     followEnd.current = true;
     awaitingReply.current = clientMessageId;
+    // Buddy's reply appears while it is written when the answer changes nothing; in voice
+    // mode it is also read sentence by sentence (docs/architecture.md §Speed).
+    let round = 0;
+    const cur: { speaker: StreamSpeaker | null } = { speaker: null };
     try {
-      const res = await sendMessage(text, clientMessageId, replyToId);
+      const res = await sendMessageStreamed(text, clientMessageId, replyToId, (e) => {
+        if (e.round !== round) {
+          round = e.round;
+          cur.speaker?.cancel();
+          cur.speaker = null;
+          setLive(null);
+        }
+        if (!e.speakable) return;
+        setLive(e.text);
+        followEnd.current = true;
+        if (!useVoiceMode.getState().on) return;
+        cur.speaker ??= createStreamSpeaker(
+          currentLocale(),
+          (sentence) => spokenText(sentence, words),
+          () => undefined,
+        );
+        cur.speaker.feed(e.text, e.done);
+      });
+      // Already read while it was written: the effect below does not read it again.
+      if (cur.speaker) {
+        const reply = replyAfter(res.home.thread, clientMessageId);
+        if (reply && reply.text === cur.speaker.text) awaitingReply.current = null;
+        else cur.speaker.cancel();
+      }
       setHome(res.home);
       if (res.status === 'failed') toast.show(turnFailureText(res.error_code), 'error');
     } catch (err) {
+      cur.speaker?.cancel();
       toast.show(messageFor(err), 'error');
       // The message may have reached the server (then it shows as failed or processing).
       await refresh();
     } finally {
       setPending(null);
+      setLive(null);
       followEnd.current = true;
     }
   }
@@ -401,6 +434,7 @@ export default function BuddyScreen() {
                 contactOn={h.system.contact_enabled}
                 messages={messages}
                 pending={shownPending}
+                live={live}
                 busy={busy || pending !== null}
                 showActions
                 onUndo={(id) => void act(() => undoAction(id))}

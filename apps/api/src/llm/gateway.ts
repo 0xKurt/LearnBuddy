@@ -46,6 +46,11 @@ export type LlmRequest = {
   timeoutMs: number;
   /** Tokens the model may spend thinking (0 = off where the model allows). */
   thinkingBudget?: number;
+  /**
+   * Streaming: called with the JSON written so far, as it arrives. Only for showing
+   * progress — decisions are still made on the whole, validated result.
+   */
+  onPartial?: (rawSoFar: string) => void;
 };
 
 export type LlmUsage = {

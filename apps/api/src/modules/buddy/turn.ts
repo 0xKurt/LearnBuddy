@@ -14,6 +14,8 @@
 
 import { randomUUID } from 'node:crypto';
 
+import { z } from 'zod';
+
 import type { Deps } from '../../deps.js';
 import type { LearnerContext } from '../../http/context.js';
 import { isUniqueViolation } from '../../lib/db.js';
@@ -26,13 +28,16 @@ import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext } from './context.js';
 import { askedButActed, TurnDecision, TurnDecisionForModel } from './registry.js';
 import { bumpContext } from './plan.js';
+import { replyProgress, type ReplyProgress } from './stream.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
 import { lookupsField, withLookups } from './lookups.js';
 import { loadBuddyState } from './state.js';
 
 const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
-const TURN_STEP_SCHEMA = toJsonSchema(TurnDecisionForModel.extend({ lookups: lookupsField }));
+const TURN_STEP_SCHEMA = toJsonSchema(
+  z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
+);
 const MAX_ROUNDS = 4;
 /** A turn still "processing" after this long is considered interrupted. */
 export const TURN_STALL_MS = 3 * 60_000;
@@ -55,11 +60,18 @@ export type TurnLearner = Pick<
   'id' | 'display_name' | 'birth_date' | 'level' | 'grade' | 'locale' | 'isMinor'
 >;
 
+/**
+ * Buddy's reply while it is being written: `round` counts the model calls of this
+ * turn (a lookup or a repair starts a new one, whose reply replaces the last).
+ */
+export type OnReply = (round: number, progress: ReplyProgress) => void;
+
 /** Entry point for POST /buddy/messages. */
 export async function receiveLearnerMessage(
   deps: Deps,
   learner: TurnLearner,
   input: { clientMessageId: string; text: string; replyToId: string | null },
+  onReply?: OnReply,
 ): Promise<TurnOutcome> {
   const now = deps.now();
   const token = randomUUID();
@@ -102,7 +114,7 @@ export async function receiveLearnerMessage(
     if (!claimed) return { status: 'processing', errorCode: null };
     message = claimed;
   }
-  return processTurn(deps, learner, message);
+  return processTurn(deps, learner, message, onReply);
 }
 
 /**
@@ -130,8 +142,10 @@ export async function processTurn(
   deps: Deps,
   learner: TurnLearner,
   message: ClaimedMessage,
+  onReply?: OnReply,
 ): Promise<TurnOutcome> {
   let repairErrors: string[] | null = null;
+  let round = 0;
   for (let attempt = 1; attempt <= MAX_ROUNDS; attempt++) {
     const now = deps.now();
     const state = await loadBuddyState(deps.db, learner.id, now);
@@ -188,6 +202,8 @@ export async function processTurn(
         surface: 'turn',
         contents,
         call: async (messages, final) => {
+          const thisRound = ++round;
+          let last = '';
           const result = await callModel(
             deps,
             learner.id,
@@ -203,6 +219,18 @@ export async function processTurn(
               temperature: 0.4,
               timeoutMs: 30_000,
               thinkingBudget: 512,
+              ...(onReply
+                ? {
+                    onPartial: (raw: string) => {
+                      const p = replyProgress(raw);
+                      if (!p) return;
+                      const key = `${p.text}|${p.speakable}|${p.done}`;
+                      if (key === last) return;
+                      last = key;
+                      onReply(thisRound, p);
+                    },
+                  }
+                : {}),
             },
           );
           meta.model = result.usage.model;

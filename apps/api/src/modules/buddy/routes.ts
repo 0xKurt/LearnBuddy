@@ -12,9 +12,11 @@ import {
   UpdateBuddySettingsRequest,
   UpdateMemoryRequest,
   Uuid,
+  type ReplyStreamEvent,
   type SendMessageResponse,
 } from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 
 import {
@@ -29,14 +31,14 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
-import { AppError } from '../../lib/errors.js';
+import { AppError, isAppError } from '../../lib/errors.js';
 import { inWindow } from '../../lib/time.js';
 import { startFromStep } from '../practice/service.js';
 import { buildHome } from './home.js';
 import { bumpContext, cancelGoalWakeups } from './plan.js';
 import { loadSettings, type SettingsRow } from './state.js';
 import { runUndo, type UndoSpec } from './tools.js';
-import { receiveLearnerMessage } from './turn.js';
+import { receiveLearnerMessage, type OnReply, type TurnOutcome } from './turn.js';
 
 export const buddyRoutes = new Hono<AppEnv>();
 buddyRoutes.use('*', requireUser, requireAccount, requireLearner);
@@ -62,17 +64,46 @@ buddyRoutes.get('/thread', async (c) => {
 buddyRoutes.post('/messages', async (c) => {
   const input = await readBody(c, SendMessageRequest);
   const learner = c.get('learner');
-  const outcome = await receiveLearnerMessage(depsOf(c), learner, {
-    clientMessageId: input.client_message_id,
-    text: input.text,
-    replyToId: input.reply_to_id ?? null,
-  });
-  const body: SendMessageResponse = {
+  const run = (onReply?: OnReply) =>
+    receiveLearnerMessage(
+      depsOf(c),
+      learner,
+      {
+        clientMessageId: input.client_message_id,
+        text: input.text,
+        replyToId: input.reply_to_id ?? null,
+      },
+      onReply,
+    );
+  const result = async (outcome: TurnOutcome): Promise<SendMessageResponse> => ({
     status: outcome.status,
     error_code: outcome.errorCode,
     home: await home(c),
-  };
-  return c.json(body, outcome.status === 'processing' ? 202 : 200);
+  });
+
+  if (!(c.req.header('accept') ?? '').includes('text/event-stream')) {
+    const outcome = await run();
+    return c.json(await result(outcome), outcome.status === 'processing' ? 202 : 200);
+  }
+  // Streamed: Buddy's reply while it is written, then the same result as above.
+  return streamSSE(
+    c,
+    async (stream) => {
+      let sent = Promise.resolve();
+      const outcome = await run((round, p) => {
+        const event: ReplyStreamEvent = { round, ...p };
+        sent = sent.then(() => stream.writeSSE({ event: 'reply', data: JSON.stringify(event) }));
+      });
+      await sent;
+      await stream.writeSSE({ event: 'done', data: JSON.stringify(await result(outcome)) });
+    },
+    async (err, stream) => {
+      await stream.writeSSE({
+        event: 'error',
+        data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),
+      });
+    },
+  );
 });
 
 // ─────────────── explicit taps ───────────────

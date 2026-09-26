@@ -224,8 +224,16 @@ export type TurnDecision = {
   asks_permission: boolean;
 };
 
-/** What the model answers with: asks_permission is required there. */
-export const TurnDecisionForModel = TurnDecision.extend({
+/**
+ * What the model answers with: asks_permission is required there, and actions come
+ * before the reply. The model writes in this order, so while the reply is still
+ * being streamed code already knows whether the answer changes anything: a reply
+ * without actions can be shown and spoken at once (docs/architecture.md §Speed).
+ */
+export const TurnDecisionForModel = z.object({
+  actions: TurnDecision.shape.actions,
+  reply: TurnDecision.shape.reply,
+  options: TurnDecision.shape.options,
   asks_permission: z
     .boolean()
     .describe(

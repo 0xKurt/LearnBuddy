@@ -33,11 +33,12 @@ import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { MicButton } from '../components/voice/MicButton.js';
 import { useVoiceInput } from '../components/voice/useVoiceInput.js';
 import { newId } from '../lib/api/client.js';
-import { sendMessage } from '../lib/api/endpoints.js';
+import { sendMessageStreamed } from '../lib/api/endpoints.js';
 import { setHome } from '../lib/api/queries.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
-import { speak, stop as stopSpeaking } from '../lib/speech/listen.js';
+import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
+import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -58,6 +59,8 @@ export default function TalkScreen() {
   const [phase, setPhase] = useState<Phase>('paused');
   const [said, setSaid] = useState('');
   const [reply, setReply] = useState<MessageView | null>(null);
+  /** Buddy's reply while it is still being written (only an answer that changes nothing). */
+  const [live, setLive] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const open = useRef(true);
 
@@ -81,32 +84,92 @@ export default function TalkScreen() {
   async function answer(text: string): Promise<void> {
     setSaid(text);
     setReply(null);
+    setLive(null);
     setPhase('thinking');
     const id = newId();
+    // Buddy's reply is read sentence by sentence while it is written — but only when
+    // the answer changes nothing (the server says `speakable`); anything else is read
+    // once it is stored (docs/architecture.md §Speed).
+    // Set from the stream callback (a holder, so the checks below see it).
+    const cur: { speaker: StreamSpeaker | null } = { speaker: null };
+    /** Stops the streamed reading; its end no longer counts. */
+    const drop = () => {
+      const was = cur.speaker;
+      cur.speaker = null;
+      was?.cancel();
+    };
+    let round = 0;
+    let spokenEnd: ListenEnd | null = null;
+    let final: MessageView | null = null;
+    const goOn = () => {
+      if (!open.current || !final || !spokenEnd) return;
+      // Read to the end: listen again — unless there is something to tap first.
+      if (spokenEnd === 'done' && !hasCard(final)) listen();
+      else setPhase((p) => (p === 'speaking' ? 'paused' : p));
+    };
     try {
-      const res = await sendMessage(text, id, null);
+      const res = await sendMessageStreamed(text, id, null, (e) => {
+        if (!open.current) return;
+        if (e.round !== round) {
+          // A new attempt replaces what was read of the last one.
+          drop();
+          round = e.round;
+          setLive(null);
+        }
+        if (!e.speakable) return;
+        setLive(e.text);
+        setPhase('speaking');
+        if (!cur.speaker) {
+          const me = createStreamSpeaker(
+            currentLocale(),
+            (sentence) => spokenText(sentence, words),
+            (why) => {
+              if (cur.speaker !== me) return;
+              spokenEnd = why;
+              goOn();
+            },
+          );
+          cur.speaker = me;
+        }
+        cur.speaker.feed(e.text, e.done);
+      });
       setHome(res.home);
       if (!open.current) return;
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
+        drop();
+        setLive(null);
         setProblem(
           res.status === 'failed' ? turnFailureText(res.error_code) : t('buddy:talk.slow'),
         );
         setPhase('paused');
         return;
       }
+      final = r;
       setReply(r);
+      setLive(null);
+      // She interrupted Buddy while it was reading: never start again over her.
+      if (spokenEnd === 'stopped') {
+        goOn();
+        return;
+      }
+      if (cur.speaker && cur.speaker.text === r.text) {
+        goOn(); // Already read (or still reading) exactly this.
+        return;
+      }
+      drop();
+      spokenEnd = null;
       setPhase('speaking');
       void speak(spokenText(r.text, words), currentLocale(), {
         onEnd: (why) => {
-          if (!open.current) return;
-          // Read to the end: listen again — unless there is something to tap first.
-          if (why === 'done' && !hasCard(r)) listen();
-          else setPhase((p) => (p === 'speaking' ? 'paused' : p));
+          spokenEnd = why;
+          goOn();
         },
       });
     } catch (err) {
+      drop();
       if (!open.current) return;
+      setLive(null);
       setProblem(messageFor(err));
       setPhase('paused');
     }
@@ -220,6 +283,9 @@ export default function TalkScreen() {
           <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>„{said}“</Text>
         ) : null}
 
+        {live && !reply && phase !== 'listening' ? (
+          <Text style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}>{live}</Text>
+        ) : null}
         {reply && phase !== 'listening' ? (
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
             <Text style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}>

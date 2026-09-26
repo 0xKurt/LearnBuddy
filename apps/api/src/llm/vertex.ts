@@ -133,24 +133,47 @@ export class VertexGateway implements LlmGateway {
     );
     const started = Date.now();
     let response: GenerateContentResponse;
+    const params = {
+      model,
+      contents: req.contents,
+      config: {
+        systemInstruction: req.system,
+        temperature: req.temperature,
+        maxOutputTokens: req.maxOutputTokens,
+        responseMimeType: 'application/json',
+        responseJsonSchema: req.schema,
+        safetySettings: SAFETY,
+        ...(req.thinkingBudget !== undefined
+          ? { thinkingConfig: { thinkingBudget: req.thinkingBudget } }
+          : {}),
+        abortSignal: AbortSignal.timeout(req.timeoutMs),
+      },
+    };
+    let streamedText: string | null = null;
     try {
-      response = await this.clientFor(location).models.generateContent({
-        model,
-        contents: req.contents,
-        config: {
-          systemInstruction: req.system,
-          temperature: req.temperature,
-          maxOutputTokens: req.maxOutputTokens,
-          responseMimeType: 'application/json',
-          responseJsonSchema: req.schema,
-          safetySettings: SAFETY,
-          ...(req.thinkingBudget !== undefined
-            ? { thinkingConfig: { thinkingBudget: req.thinkingBudget } }
-            : {}),
-          abortSignal: AbortSignal.timeout(req.timeoutMs),
-        },
-      });
+      if (req.onPartial) {
+        // The same call, streamed: the text so far goes to onPartial; the last chunk
+        // carries the finish reason and the usage.
+        let last: GenerateContentResponse | null = null;
+        let text = '';
+        for await (const chunk of await this.clientFor(location).models.generateContentStream(
+          params,
+        )) {
+          last = chunk;
+          const piece = chunk.text;
+          if (piece) {
+            text += piece;
+            req.onPartial(text);
+          }
+        }
+        if (!last) throw new LlmError('blocked', 'no candidate returned');
+        response = last;
+        streamedText = text;
+      } else {
+        response = await this.clientFor(location).models.generateContent(params);
+      }
     } catch (err) {
+      if (err instanceof LlmError) throw err;
       throw classify(err);
     }
     const usage = usageOf(model, response, Date.now() - started);
@@ -164,7 +187,7 @@ export class VertexGateway implements LlmGateway {
     if (reason && reason !== FinishReason.STOP) {
       throw new LlmError('blocked', `finish reason ${reason}`, usage);
     }
-    const text = response.text;
+    const text = streamedText ?? response.text;
     if (typeof text !== 'string' || text.trim() === '') {
       throw new LlmError('invalid_output', 'empty output', usage);
     }

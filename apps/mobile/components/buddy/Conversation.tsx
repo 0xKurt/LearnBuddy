@@ -22,6 +22,11 @@ type Props = {
   messages: MessageView[];
   /** Local message being sent right now (optimistic). */
   pending: { text: string } | null;
+  /**
+   * Buddy's reply while it is still being written (only for an answer that changes
+   * nothing — docs/architecture.md §Speed); the stored message replaces it.
+   */
+  live?: string | null;
   busy: boolean;
   showActions?: boolean;
   /** Whether Buddy may message her phone (agreed reminders say where they arrive). */
@@ -36,6 +41,7 @@ export function Conversation({
   messages,
   contactOn,
   pending,
+  live = null,
   busy,
   showActions = false,
   onOption,
@@ -186,7 +192,27 @@ export function Conversation({
           </View>
         </View>
       ) : null}
-      {thinking ? (
+      {thinking && live ? (
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
+          <BuddyOrb size={26} />
+          <View
+            accessibilityLiveRegion="polite"
+            style={[
+              {
+                flexShrink: 1,
+                backgroundColor: '#fff',
+                borderRadius: 22,
+                borderBottomLeftRadius: 6,
+                paddingHorizontal: 16,
+                paddingVertical: 11,
+              },
+              SHADOW.soft,
+            ]}
+          >
+            <MathText text={closedMath(live)} style={[TYPE.body, { color: LB.ink }]} />
+          </View>
+        </View>
+      ) : thinking ? (
         <View
           accessibilityLiveRegion="polite"
           style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
@@ -197,4 +223,10 @@ export function Conversation({
       ) : null}
     </View>
   );
+}
+
+/** A reply cut off in the middle of a formula shows up to the formula (it follows complete). */
+function closedMath(text: string): string {
+  const dollars = text.match(/\$/g)?.length ?? 0;
+  return dollars % 2 === 0 ? text : text.slice(0, text.lastIndexOf('$'));
 }

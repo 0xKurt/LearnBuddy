@@ -15,6 +15,7 @@ import {
   MemoryList,
   MessageView,
   MeResponse,
+  ReplyStreamEvent,
   SendMessageResponse,
   SessionView,
   StartStepResponse,
@@ -34,7 +35,7 @@ import {
 import { z } from 'zod';
 
 import { setAdminToken } from '../admin.js';
-import { ApiError, newId, request } from './client.js';
+import { ApiError, newId, request, streamRequest } from './client.js';
 import { dropAnswer, keepAnswer, resultOf, sendingLive } from './outboxSync.js';
 import { sendWhenOnline } from './whenOnline.js';
 
@@ -94,6 +95,30 @@ export const sendMessage = (
   request('POST', '/buddy/messages', {
     body: { client_message_id: clientMessageId, text, reply_to_id: replyToId },
     schema: SendMessageResponse,
+  });
+
+/**
+ * The same message, with Buddy's reply streamed while it is written (onReply);
+ * resolves with the same result as sendMessage.
+ */
+export const sendMessageStreamed = (
+  text: string,
+  clientMessageId: string,
+  replyToId: string | null,
+  onReply: (event: ReplyStreamEvent) => void,
+) =>
+  streamRequest('POST', '/buddy/messages', {
+    body: { client_message_id: clientMessageId, text, reply_to_id: replyToId },
+    schema: SendMessageResponse,
+    onEvent: (e) => {
+      if (e.event !== 'reply') return;
+      try {
+        const parsed = ReplyStreamEvent.safeParse(JSON.parse(e.data));
+        if (parsed.success) onReply(parsed.data);
+      } catch {
+        // A broken progress event only means less progress shown; the result decides.
+      }
+    },
   });
 
 export const startStep = (stepId: string) =>

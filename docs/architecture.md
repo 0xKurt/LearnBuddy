@@ -252,6 +252,22 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
   twice as fast, no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
+  `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
+  lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
+  what the answer does. Only an answer that changes nothing — no lookups, only actions that touch
+  nothing (an offer button) — is shown and read aloud while it is written; everything else
+  appears once it is validated and applied, as before (rules 1 and 5: nothing is claimed before
+  it is true). A rejected or repaired answer starts a new `round` whose text replaces the last;
+  the app never reads over an interruption. The app reads it sentence by sentence
+  (`lib/speech/sentences.ts`, `streamSpeaker.ts`) on the conversation screen and in voice mode,
+  and shows it growing in the chat; `expo/fetch` streams on the phone. Measured (live, 3.6 Flash,
+  `evals/stream/run.ts`, medians): first words after 1.35–1.6 s instead of the whole answer after
+  1.76–1.86 s — about 0.3–0.5 s, more for long explanations. Most of the wait is before the model
+  writes its first character; the order change kept 22/22 in `evals/buddy`. On a deployed API
+  the host must pass streamed responses through (needs live verification).
+- The tutor's answers are not streamed: code checks the whole reply first (the solution-leak
+  guard, verdict invariants), and streaming would save only ~0.3 s there (1.1 s → 1.4 s).
 
 Measured baseline (median of 3 rounds, 2026-09-26): rule-decided answers 10–25 ms; answers the
 model judges 0.7–1.6 s; Buddy's replies 1.7–3.9 s (one outlier 10 s); speech to text 1.1 s;

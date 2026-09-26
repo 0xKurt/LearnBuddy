@@ -112,6 +112,12 @@ export class ScriptedGateway implements LlmGateway {
       }
     } else if ('error' in answer) throw answer.error;
     else json = answer.json;
+    // Streaming: the answer as the model would write it, in a few pieces.
+    if (req.onPartial) {
+      const text = JSON.stringify(json);
+      for (const n of [Math.floor(text.length / 3), Math.floor((2 * text.length) / 3), text.length])
+        req.onPartial(text.slice(0, n));
+    }
     return {
       json,
       usage: {
