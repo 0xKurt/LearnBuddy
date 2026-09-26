@@ -53,7 +53,8 @@ export async function createTestEnv(
   });
   const db = createDb(database.url, { max: 8 });
   const clock = new TestClock(opts.start ?? '2026-09-28T08:00:00Z');
-  const llm = new ScriptedGateway();
+  // Background hints for new questions are answered with "none" unless a test scripts them.
+  const llm = new ScriptedGateway().byDefault('hints', { json: { items: [] } });
   const push = new FakePush();
   const auth = new FakeAuth(db);
   const storage = new MemoryStorage();

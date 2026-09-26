@@ -175,3 +175,30 @@ export function differentNumber(item: ItemForCheck, text: string): boolean {
   if (expected.length === 0 || expected.some((v) => v === null)) return false;
   return expected.every((v) => !closeEnough(given, v!));
 }
+
+/**
+ * The numbers a text states, as values: 3/4, 0,75, 1 11/20, $1\frac{11}{20}$, $\frac{31}{20}$.
+ * For telling whether a hint states the result in another form (31/20 for 1 11/20).
+ */
+export function valuesIn(text: string): number[] {
+  const t = text
+    .replace(/(\d)\s*\\[dt]?frac\{(\d+)\}\{(\d+)\}/g, '$1 $2/$3')
+    .replace(/\\[dt]?frac\{(-?\d+(?:[.,]\d+)?)\}\{(\d+(?:[.,]\d+)?)\}/g, '$1/$2');
+  const out: number[] = [];
+  const num = (x: string) => Number(x.replace(',', '.'));
+  const re =
+    /(-?\d+)\s+(\d+)\/(\d+)|(-?\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)|(-?\d+(?:[.,]\d+)?)/g;
+  for (const m of t.matchAll(re)) {
+    if (m[1] !== undefined) {
+      const whole = num(m[1]);
+      const frac = num(m[2]!) / num(m[3]!);
+      out.push(whole < 0 ? whole - frac : whole + frac);
+    } else if (m[4] !== undefined) {
+      const den = num(m[5]!);
+      if (den !== 0) out.push(num(m[4]) / den);
+    } else if (m[6] !== undefined) {
+      out.push(num(m[6]));
+    }
+  }
+  return out;
+}

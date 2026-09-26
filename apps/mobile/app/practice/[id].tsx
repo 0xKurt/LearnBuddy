@@ -490,7 +490,7 @@ export default function PracticeScreen() {
   const testing = session.mode === 'test' && session.status === 'active';
   const skip = canReveal || testing ? () => void reveal(shown.item.id) : undefined;
   const skipLabel = testing ? t('practice:skip') : undefined;
-  const hint = shown.hints_left > 0 ? () => void askHint(shown.item.id) : undefined;
+  const hint = shown.hint_available ? () => void askHint(shown.item.id) : undefined;
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.

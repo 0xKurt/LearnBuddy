@@ -358,6 +358,8 @@ export async function sessionView(
         i.status === 'open' && s.status === 'active' && givesHints(s.mode)
           ? Math.max(0, i.hints.length - i.hints_used)
           : 0,
+      hint_available:
+        i.status === 'open' && s.status === 'active' && givesHints(s.mode) && i.kind !== 'speak',
       // Never leak the solution of an open question, nor ever in help mode (homework).
       answer:
         i.status === 'open' || !revealAllowed
@@ -836,10 +838,13 @@ export async function answerItem(
   return { session: view, verdict: judged.verdict, reply };
 }
 
+class NoPreparedHint extends Error {}
+
 /**
- * "Tipp": the next prepared hint for an open question, at once and without a model.
+ * "Tipp": the next prepared hint for an open question, at once and without a model;
+ * with none prepared (yet), the tutor writes one like for "weiß nicht".
  * Recorded as a learner turn ("Tipp, bitte") and a tutor turn; idempotent per
- * client_turn_id; 409 when no prepared hint is left (the app then hides the button).
+ * client_turn_id; 409 for a closed question or outside practice and explanations.
  */
 export async function hintItem(
   deps: Deps,
@@ -871,9 +876,7 @@ export async function hintItem(
       if (!si) throw new AppError('not_found', 'Question not in this session');
       if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
       const hint = si.hints[si.hints_used];
-      if (hint === undefined) {
-        throw new AppError('conflict', 'No hint left', { reason: 'no_hints_left' });
-      }
+      if (hint === undefined) throw new NoPreparedHint();
       const seq = await nextSeq(tx, sessionId);
       await tx.query(
         `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id)
@@ -902,6 +905,14 @@ export async function hintItem(
       ]);
     });
   } catch (err) {
+    // None prepared (yet, or used up): the tutor writes one, as for "weiß nicht".
+    if (err instanceof NoPreparedHint) {
+      return answerItem(deps, learner, sessionId, {
+        client_turn_id: input.client_turn_id,
+        item_id: input.item_id,
+        text: t(learner.locale, 'practice.hint_request'),
+      });
+    }
     if (isUniqueViolation(err)) {
       const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
       if (r) return r;

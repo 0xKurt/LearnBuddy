@@ -21,6 +21,7 @@ import {
 import { check, readBody } from '../../http/validate.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { startTopic } from './generate.js';
+import { prepareHints } from './hints.js';
 import {
   answerItem,
   finishSession,
@@ -100,6 +101,13 @@ practiceRoutes.post('/topic', async (c) => {
   const deps = depsOf(c);
   const learner = c.get('learner');
   const id = await startTopic(deps, learner, input);
+  // Hints for the new questions, while she reads the first one. Best effort: if this
+  // never runs, the tutor model helps as before (hints.ts).
+  if (input.kind === 'practice' || input.kind === 'explain') {
+    deps.background(async () => {
+      await prepareHints(deps, learner, id).catch(() => 0);
+    });
+  }
   return c.json(await sessionView(deps.db, learner.id, id), 201);
 });
 

@@ -9,3 +9,9 @@
 alter table items
   add column hints text[] not null default '{}',
   add column worked_solution text check (worked_solution is null or length(worked_solution) between 1 and 2000);
+
+-- Hints for questions prepared on a topic are written in the background right after
+-- the session starts (the learner does not wait for them): their own daily limit.
+alter table usage_daily drop constraint usage_daily_kind_check;
+alter table usage_daily add constraint usage_daily_kind_check
+  check (kind in ('buddy_turn','buddy_check','tutor','explain','extraction','pronounce','transcribe','hints'));

@@ -114,7 +114,9 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
-  // "Tipp": the next prepared hint at once — no model involved.
+  // "Tipp": the next prepared hint at once — no model involved. The hints are written
+  // in the background right after the start; give that a moment in the dev stack.
+  await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
   await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
   await shot(page, '25-practice-fractions');

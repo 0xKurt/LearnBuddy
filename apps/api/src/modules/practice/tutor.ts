@@ -12,7 +12,7 @@
 
 import { z } from 'zod';
 
-import { NEAR_MISS, type RuleVerdict } from './evaluate.js';
+import { NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
 export const TUTOR_PROMPT_VERSION = 'tutor.v3.2';
 
@@ -165,6 +165,14 @@ export function givesAwayHomework(d: TutorDecision, solution: string, task: stri
  * the task. Used for homework replies, prepared hints and early tutor replies.
  */
 export function mentionsSolution(text: string, solution: string, task: string): boolean {
+  // A numeric result in another form (31/20 for 1 11/20, 0,75 for 3/4) — unless the task
+  // itself states that value.
+  const solutionValues = valuesIn(solution);
+  if (solutionValues.length === 1) {
+    const v = solutionValues[0]!;
+    const same = (x: number) => Math.abs(x - v) < 1e-9;
+    if (!valuesIn(task).some(same) && valuesIn(text).some(same)) return true;
+  }
   const sol = mathNorm(solution);
   if (!sol) return false;
   const simple = /^[\p{L}\p{N}]+$/u.test(sol) && sol.length < 4;

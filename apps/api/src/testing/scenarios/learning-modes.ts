@@ -5,7 +5,7 @@
 // Test tooling only; answers are keyed by the learner's text, never guessed.
 
 import type { LlmRequest } from '../../llm/gateway.js';
-import type { ScriptedGateway } from '../fakes.js';
+import { ScriptedGateway } from '../fakes.js';
 
 const base = {
   accepted_answers: [],
@@ -73,6 +73,24 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     },
   });
+  // Hints are written in the background after each topic session starts (hints.ts);
+  // the fractions question gets two, everything else none (tests/web/modes.spec.ts taps "Tipp").
+  llm.byDefault('hints', (req) =>
+    ScriptedGateway.textOf(req).includes('Welcher Bruch ist größer')
+      ? {
+          items: [
+            {
+              n: 1,
+              hints: [
+                'Schau auf die Kreise: Welcher ist mehr gefüllt?',
+                'Bring beide Brüche auf den Nenner 15.',
+              ],
+              worked_solution: null,
+            },
+          ],
+        }
+      : { items: [] },
+  );
   // Practice without a photo: fractions, with a figure.
   llm.script('explain', {
     json: {
@@ -89,10 +107,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           choices: ['$\\frac{2}{3}$', '$\\frac{3}{5}$'],
           correct_choice: 0,
           topic: 'Brüche vergleichen',
-          hints: [
-            'Schau auf die Kreise: Welcher ist mehr gefüllt?',
-            'Bring beide Brüche auf den Nenner 15.',
-          ],
           figure: {
             type: 'fraction',
             shape: 'circle',

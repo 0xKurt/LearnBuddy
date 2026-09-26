@@ -30,7 +30,8 @@ export type LlmPurpose =
   | 'explain'
   | 'extraction'
   | 'pronounce'
-  | 'transcribe';
+  | 'transcribe'
+  | 'hints';
 
 export type LlmRequest = {
   purpose: LlmPurpose;

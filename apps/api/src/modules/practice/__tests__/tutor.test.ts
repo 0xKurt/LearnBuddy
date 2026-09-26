@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { enforceTutorInvariants, type TutorDecision } from '../tutor.js';
+import { enforceTutorInvariants, mentionsSolution, type TutorDecision } from '../tutor.js';
 
 const d = (over: Partial<TutorDecision>): TutorDecision => ({
   intent: 'answer',
@@ -33,6 +33,19 @@ describe('tutor invariants', () => {
     ).toBe('incorrect');
     expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'close').verdict).toBe(
       'partially_correct',
+    );
+  });
+});
+
+describe('mentionsSolution', () => {
+  it('catches the result in another form, but not the numbers of the task', () => {
+    const task = 'Berechne $\\frac{3}{4} + \\frac{4}{5}$.';
+    expect(
+      mentionsSolution('$\\frac{15}{20} + \\frac{16}{20} = \\frac{31}{20}$', '1 11/20', task),
+    ).toBe(true);
+    expect(mentionsSolution('Der Hauptnenner von 4 und 5 ist 20.', '1 11/20', task)).toBe(false);
+    expect(mentionsSolution('Schau auf $\\frac{3}{4}$.', '0,75', 'Kürze $\\frac{6}{8}$.')).toBe(
+      false,
     );
   });
 });

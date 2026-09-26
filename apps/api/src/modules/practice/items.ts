@@ -61,7 +61,7 @@ export const ItemDraft = z.object({
     .max(3)
     .default([])
     .describe(
-      '2–3 hints, each more specific than the one before: what is asked → which rule or idea → the first step. Never the answer itself. Empty for vocab and speak.',
+      '2–3 hints, each more specific than the one before: what is asked → which rule or idea → the first step. Never the answer — not in another form either (no 31/20 when the answer is 1 11/20) and no step that already produces it. Empty for vocab and speak.',
     ),
   worked_solution: z
     .string()

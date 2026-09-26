@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { differentNumber, editDistance, ruleCheck } from '../evaluate.js';
+import { differentNumber, editDistance, ruleCheck, valuesIn } from '../evaluate.js';
 
 const mc = {
   kind: 'multiple_choice' as const,
@@ -109,5 +109,13 @@ describe('near misses on written answers', () => {
     expect(check('der Schüler', 'der Schüler')).toBe('correct');
     expect(check('die Katze', 'Katze', ['Katze'])).toBe('correct');
     expect(check('élève', 'eleve')).toBe('close');
+  });
+});
+
+describe('values in a text', () => {
+  it('reads fractions, decimals and mixed numbers in any notation', () => {
+    expect(valuesIn('$\\frac{31}{20}$')).toEqual([1.55]);
+    expect(valuesIn('$1\\frac{11}{20}$ und 1 11/20')).toEqual([1.55, 1.55]);
+    expect(valuesIn('0,75 oder 3/4')).toEqual([0.75, 0.75]);
   });
 });

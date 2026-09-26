@@ -26,6 +26,7 @@ const VertexRoutes = z
     extraction: ModelSpec,
     pronounce: ModelSpec,
     transcribe: ModelSpec,
+    hints: ModelSpec,
   })
   .partial()
   .strict();
@@ -121,4 +122,5 @@ export const DAILY_LIMITS = {
   extraction: 12,
   pronounce: 200,
   transcribe: 400,
+  hints: 60,
 } as const;

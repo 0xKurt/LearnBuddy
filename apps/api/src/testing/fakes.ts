@@ -55,6 +55,14 @@ export class ScriptedGateway implements LlmGateway {
   /** Errors thrown inside scripted functions (e.g. failed expectations about the context). */
   readonly scriptErrors: string[] = [];
   private readonly queues = new Map<LlmPurpose, ScriptedAnswer[]>();
+  /** Answers for purposes a test does not care about (scripted answers still come first). */
+  private readonly defaults = new Map<LlmPurpose, ScriptedAnswer>();
+
+  /** Answer every unscripted call of this purpose with the same answer. */
+  byDefault(purpose: LlmPurpose, answer: ScriptedAnswer): this {
+    this.defaults.set(purpose, answer);
+    return this;
+  }
 
   script(purpose: LlmPurpose, ...answers: ScriptedAnswer[]): this {
     this.queues.set(purpose, [...(this.queues.get(purpose) ?? []), ...answers]);
@@ -89,7 +97,7 @@ export class ScriptedGateway implements LlmGateway {
 
   async generate(req: LlmRequest): Promise<LlmResult> {
     this.calls.push(req);
-    const answer = this.queues.get(req.purpose)?.shift();
+    const answer = this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
     if (!answer) {
       this.unexpected.push(req);
       throw new LlmError('unavailable', `unscripted model call (${req.purpose})`);

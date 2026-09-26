@@ -42,17 +42,21 @@ async function start(
   l: Learner,
   items: Record<string, unknown>[],
   kind = 'practice',
+  help: { n: number; hints: string[]; worked_solution: string | null }[] = [],
 ) {
   env.llm.script('explain', {
     json: { usable: true, title: 'Brüche', subject: null, intro: null, items },
   });
+  // Hints are written in the background right after the start (hints.ts).
+  if (help.length) env.llm.script('hints', { json: { items: help } });
   const res = await l.api.post<SessionView>('/practice/topic', {
     client_request_id: randomUUID(),
     kind,
     text: 'Brüche',
   });
   expect(res.status).toBe(201);
-  return res.body;
+  await env.flushBackground();
+  return (await l.api.get<SessionView>(`/practice/sessions/${res.body.id}`)).body;
 }
 
 const answer = (l: Learner, s: SessionView, itemId: string, text: string) =>
@@ -91,16 +95,20 @@ describe.skipIf(!dbReady)('hint ladder', () => {
   });
 
   it('hands out prepared hints at once, never twice, and explains after the third miss', async () => {
-    const s = await start(env, l, [
-      item({
-        kind: 'numeric',
-        prompt: 'Berechne $\\frac{1}{2} + \\frac{1}{4}$.',
-        answer: '0.75',
-        accepted_answers: ['3/4'],
-        hints: HINTS,
-        worked_solution: '1/2 ist 2/4. 2/4 + 1/4 = 3/4.',
-      }),
-    ]);
+    const s = await start(
+      env,
+      l,
+      [
+        item({
+          kind: 'numeric',
+          prompt: 'Berechne $\\frac{1}{2} + \\frac{1}{4}$.',
+          answer: '0.75',
+          accepted_answers: ['3/4'],
+        }),
+      ],
+      'practice',
+      [{ n: 1, hints: HINTS, worked_solution: '1/2 ist 2/4. 2/4 + 1/4 = 3/4.' }],
+    );
     const id = s.items[0]!.item.id;
     expect(s.items[0]!.hints_left).toBe(3);
     const calls = env.llm.callsFor('tutor').length;
@@ -131,26 +139,71 @@ describe.skipIf(!dbReady)('hint ladder', () => {
     expect((await hint(l, s, id)).status).toBe(409);
   });
 
+  it('writes a hint with the tutor when none is prepared (yet)', async () => {
+    const s = await start(env, l, [item({ prompt: 'Kürze 6/8', answer: '3/4' })]);
+    expect(s.items[0]).toMatchObject({ hints_left: 0, hint_available: true });
+    env.llm.script('tutor', (req) => {
+      expect(JSON.stringify(req.contents)).toContain('Tipp, bitte');
+      return {
+        intent: 'help_request',
+        verdict: 'not_an_attempt',
+        reply: 'Durch welche Zahl kannst du 6 und 8 teilen?',
+        gave_hint: true,
+        revealed_answer: false,
+      };
+    });
+    const r = await hint(l, s, s.items[0]!.item.id);
+    expect(r.status).toBe(200);
+    expect(r.body.reply.text).toBe('Durch welche Zahl kannst du 6 und 8 teilen?');
+    expect(r.body.session.items[0]).toMatchObject({ status: 'open', hints_used: 1 });
+  });
+
   it('drops prepared hints that give the answer away', async () => {
-    const s = await start(env, l, [
-      item({
-        prompt: 'Wie heißt die Zahl unter dem Bruchstrich?',
-        answer: 'Nenner',
-        hints: ['Sie steht unten.', 'Es ist der Nenner.'],
-      }),
-    ]);
-    expect(s.items[0]!.hints_left).toBe(1);
+    const s = await start(
+      env,
+      l,
+      [
+        item({ prompt: 'Wie heißt die Zahl unter dem Bruchstrich?', answer: 'Nenner' }),
+        item({
+          kind: 'numeric',
+          prompt: 'Berechne $\\frac{3}{4} + \\frac{4}{5}$.',
+          answer: '1 11/20',
+        }),
+      ],
+      'practice',
+      [
+        { n: 1, hints: ['Sie steht unten.', 'Es ist der Nenner.'], worked_solution: null },
+        // The result in another form is the result.
+        {
+          n: 2,
+          hints: ['Der Hauptnenner ist 20.', '$\\frac{15}{20} + \\frac{16}{20} = \\frac{31}{20}$'],
+          worked_solution: null,
+        },
+      ],
+    );
+    expect(s.items.map((i) => i.hints_left)).toEqual([1, 1]);
   });
 
   it('never lets the model give the solution before the second hint', async () => {
-    const s = await start(env, l, [
-      item({
-        kind: 'long',
-        prompt: 'Warum bauten die Römer Straßen?',
-        answer: 'Für schnelle Truppenbewegungen',
-        hints: ['Denk an das Heer.', 'Wie kamen Soldaten schnell an die Grenze?'],
-      }),
-    ]);
+    const s = await start(
+      env,
+      l,
+      [
+        item({
+          kind: 'long',
+          prompt: 'Warum bauten die Römer Straßen?',
+          answer: 'Für schnelle Truppenbewegungen',
+        }),
+      ],
+      'practice',
+      [
+        {
+          n: 1,
+          hints: ['Denk an das Heer.', 'Wie kamen Soldaten schnell an die Grenze?'],
+          worked_solution: null,
+        },
+      ],
+    );
     const id = s.items[0]!.item.id;
     env.llm.script('tutor', (req) => {
       // The model sees the ladder …
@@ -170,16 +223,14 @@ describe.skipIf(!dbReady)('hint ladder', () => {
   });
 
   it('gives no hints in a test or for homework, and none for another learner', async () => {
-    const test = await start(
-      env,
-      l,
-      [item({ prompt: 'Kürze 2/4', answer: '1/2', hints: ['Teile oben und unten durch 2.'] })],
-      'test',
-    );
+    const test = await start(env, l, [item({ prompt: 'Kürze 2/4', answer: '1/2' })], 'test');
+    expect(env.llm.callsFor('hints')).toHaveLength(0); // no hints for a test
     expect(test.items[0]!.hints_left).toBe(0);
     expect((await hint(l, test, test.items[0]!.item.id)).status).toBe(409);
 
-    const s = await start(env, l, [item({ prompt: 'Kürze 2/4', answer: '1/2', hints: HINTS })]);
+    const s = await start(env, l, [item({ prompt: 'Kürze 2/4', answer: '1/2' })], 'practice', [
+      { n: 1, hints: HINTS, worked_solution: null },
+    ]);
     const other = await onboard(env, {
       relation: 'child',
       name: 'Mia',

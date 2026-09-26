@@ -59,7 +59,9 @@ export const GeneratedSet = z.object({
     .max(2500)
     .nullable()
     .describe('explain only: the explanation shown before the questions; otherwise null'),
-  items: z.array(ItemDraft).max(25),
+  // Hints and worked solutions are written right after, in the background
+  // (hints.ts): she starts at once instead of waiting for them.
+  items: z.array(ItemDraft.omit({ hints: true, worked_solution: true })).max(25),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const GENERATED_SCHEMA = toJsonSchema(GeneratedSet);
@@ -192,7 +194,11 @@ export async function startTopic(
   }
 
   const allowed = KINDS[input.kind];
-  let items = usableItems(set.items.filter((i) => allowed.has(i.kind)));
+  let items = usableItems(
+    set.items
+      .filter((i) => allowed.has(i.kind))
+      .map((i) => ({ ...i, hints: [], worked_solution: null })),
+  );
   if (input.kind === 'help') {
     // Homework is what the learner typed — tasks the model added are dropped.
     items = items.filter((i) => fromLearnerText(i.prompt, input.text));
