@@ -102,15 +102,14 @@ Rechnung für den schlimmsten Fall — **1 Stunde intensives Üben am Tag** — 
 App-Store-Gebühr etwa 7 €. Der schlimmste Fall würde also fast alles auffressen; ein normales Kind
 (15–20 Minuten am Tag) kostet ≈ 1 €. Deshalb:
 
-| Hebel                                                                                                                                                                                                                                                                                                            | Wirkung                                                   | Stand      |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
-| Vorbereiten statt live                                                                                                                                                                                                                                                                                           | Üben selbst kostet fast nichts, egal wie lange            | 🔨         |
-| **Kostenlimit pro Kind und Tag in Cent** statt nur Aufrufzahlen (heute: 80 Buddy-Nachrichten, 300 Tutor-Antworten, 12 Blätter — im Extremfall ~1,50 $/Tag). Ist das Tagesbudget aufgebraucht, übt Lena mit Regeln und vorbereiteten Tipps weiter; Buddy sagt freundlich, dass er morgen wieder ausführlich hilft | Obergrenze pro Monat garantiert                           | 🔨         |
-| Kleines Schema, kurzer Kontext                                                                                                                                                                                                                                                                                   | Buddy-Nachricht ~2,5× billiger                            | 🔨         |
-| Günstigerer Anbieter                                                                                                                                                                                                                                                                                             | Mistral & Co. testen: bei gleicher Qualität 3–5× billiger | ❓ Zugänge |
-| Kostenloses Lautmodell                                                                                                                                                                                                                                                                                           | Aussprache ≈ 0                                            | ❓ Test    |
+| Hebel                                                                                                                                           | Wirkung                                                   | Stand      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
+| Vorbereiten statt live                                                                                                                          | Üben selbst kostet fast nichts, egal wie lange            | 🔨         |
+| Kostenlimit — **verworfen (26.09.)**: keine Kostengrenze pro Kind, Mischkalkulation; die Aufruf-Obergrenzen pro Tag (Missbrauchsschutz) bleiben | —                                                         | —          |
+| Kleines Schema, kurzer Kontext                                                                                                                  | Buddy-Nachricht ~2,5× billiger                            | 🔨         |
+| Günstigerer Anbieter                                                                                                                            | Mistral & Co. testen: bei gleicher Qualität 3–5× billiger | ❓ Zugänge |
+| Kostenloses Lautmodell                                                                                                                          | Aussprache ≈ 0                                            | ❓ Test    |
 
-❓ Vorschlag Tagesbudget: **15 Cent pro Kind und Tag** (≈ 4,50 €/Monat im Maximum, in der Praxis weit
 darunter). Du legst die Zahl fest.
 
 ## 7. Sprachen
@@ -136,7 +135,7 @@ des Handys. 📋 Aussprache-Prüfung für alle sechs (siehe 4).
 
 1. **Tipps:** Lösung nach dem 3. Fehlversuch? (Vorschlag ja)
 2. **„Ich hatte recht“-Knopf:** ja? (Vorschlag ja, zählt als „selbst bewertet“)
-3. **Tagesbudget pro Kind:** Vorschlag 15 Cent.
+3. ~~Tagesbudget pro Kind~~ — entschieden: kein Kostenlimit (Mischkalkulation).
 4. **Zugänge für Anbieter-Tests:** Mistral (La Plateforme) und ein deutscher Hoster (IONOS oder
    STACKIT); optional Azure OpenAI (EU).
 5. **Aussprache:** `huggingface.co` freischalten + Aufnahmen von Lena.
@@ -147,7 +146,7 @@ des Handys. 📋 Aussprache-Prüfung für alle sechs (siehe 4).
 
 ## 10. Reihenfolge der Arbeit (ohne neue Zugänge sofort machbar)
 
-1. Umstieg auf 3.6 Flash + Standort-Sperre + Kostenlimit in Cent (Abschaltung Mitte Oktober).
+1. Umstieg auf 3.6 Flash + Standort-Sperre (Abschaltung Mitte Oktober). ✅
 2. Buddy-Schema verkleinern, neu messen (Kosten, Zeit, 22 Fälle).
 3. Vokabel-Prüfung ohne Modell (Varianten, Tippfehler, lernende Liste).
 4. Tipp-Treppe mit vorbereiteten Tipps und Lösungsweg.

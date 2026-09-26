@@ -64,56 +64,98 @@ export const Quote = z
   .string()
   .min(1)
   .max(300)
-  .describe("The learner's exact words from their LATEST message that justify this change");
+  .describe("the learner's exact words (latest message)");
 
-export const DaySpecSchema = z
-  .discriminatedUnion('kind', [
-    z.object({
-      kind: z.literal('date'),
-      date: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/)
-        .describe('YYYY-MM-DD — only when the learner named a calendar date'),
-    }),
-    z.object({
-      kind: z.literal('in_days'),
-      days: z.number().int().min(0).max(366).describe('0 = today, 1 = tomorrow, 14 = in two weeks'),
-    }),
-    z.object({
-      kind: z.literal('weekday'),
-      weekday: z.number().int().min(1).max(7).describe('1 = Monday … 7 = Sunday'),
-      weeks_ahead: z
-        .number()
-        .int()
-        .min(0)
-        .max(8)
-        .describe(
-          '0 = the first such weekday after today — also when today is that weekday ("Montag" said on a Monday = in 7 days); 1 = the one after that, only for "übernächste"/"the week after next"',
-        ),
-    }),
-    z.object({ kind: z.literal('unknown') }),
-  ])
-  .describe('A day as the learner described it; the server computes the date');
+// Days and durations as the learner described them; the server computes the date
+// (hard rule 2). The model sees ONE flat object per spec — a kind plus the fields
+// that kind uses — and code turns it into the exact union below. A union of four
+// shapes, repeated in eight tools, cost ~7 000 input tokens per Buddy turn on
+// Gemini 3.x, which bills the response schema (docs/architecture.md §Model calls).
+const flatField = <T extends z.ZodTypeAny>(t: T, what: string) =>
+  t.nullable().optional().describe(what);
 
-export const UntilSpecSchema = z
-  .discriminatedUnion('kind', [
-    z.object({
-      kind: z.literal('end_of_day'),
-      days: z
-        .number()
-        .int()
-        .min(0)
-        .max(60)
-        .describe('0 = until tonight, 1 = until end of tomorrow'),
-    }),
-    z.object({
-      kind: z.literal('end_of_week'),
-      weeks_ahead: z.number().int().min(0).max(8).describe('0 = until Sunday of this week'),
-    }),
-    z.object({ kind: z.literal('through'), day: DaySpecSchema }),
-    z.object({ kind: z.literal('unknown') }),
-  ])
-  .describe('How long a temporary condition lasts; the server computes the end');
+const FlatDay = z.object({
+  kind: z
+    .enum(['date', 'in_days', 'weekday', 'unknown'])
+    .describe('A day as the learner described it; the server computes the date'),
+  date: flatField(
+    z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    'kind date: YYYY-MM-DD — only when the learner named a calendar date',
+  ),
+  days: flatField(
+    z.number().int().min(0).max(366),
+    'kind in_days: 0 = today, 1 = tomorrow, 14 = in two weeks',
+  ),
+  weekday: flatField(z.number().int().min(1).max(7), 'kind weekday: 1 = Monday … 7 = Sunday'),
+  weeks_ahead: flatField(
+    z.number().int().min(0).max(8),
+    'kind weekday: 0 = next such weekday, 1 = the one after (see prompt)',
+  ),
+});
+
+type DaySpecOut =
+  | { kind: 'date'; date: string }
+  | { kind: 'in_days'; days: number }
+  | { kind: 'weekday'; weekday: number; weeks_ahead: number }
+  | { kind: 'unknown' };
+
+function missing(ctx: z.RefinementCtx, kind: string, field: string): never {
+  ctx.addIssue({ code: z.ZodIssueCode.custom, message: `kind ${kind} needs ${field}` });
+  return z.NEVER;
+}
+
+export const DaySpecSchema = FlatDay.transform((d, ctx): DaySpecOut => {
+  switch (d.kind) {
+    case 'date':
+      return d.date == null ? missing(ctx, 'date', 'date') : { kind: 'date', date: d.date };
+    case 'in_days':
+      return d.days == null ? missing(ctx, 'in_days', 'days') : { kind: 'in_days', days: d.days };
+    case 'weekday':
+      return d.weekday == null
+        ? missing(ctx, 'weekday', 'weekday')
+        : { kind: 'weekday', weekday: d.weekday, weeks_ahead: d.weeks_ahead ?? 0 };
+    case 'unknown':
+      return { kind: 'unknown' };
+  }
+});
+
+const FlatUntil = z.object({
+  kind: z
+    .enum(['end_of_day', 'end_of_week', 'through', 'unknown'])
+    .describe('How long a temporary condition lasts; the server computes the end'),
+  days: flatField(
+    z.number().int().min(0).max(60),
+    'kind end_of_day: 0 = until tonight, 1 = until end of tomorrow',
+  ),
+  weeks_ahead: flatField(
+    z.number().int().min(0).max(8),
+    'kind end_of_week: 0 = until Sunday of this week',
+  ),
+  day: flatField(DaySpecSchema, 'kind through: the last day it lasts'),
+});
+
+type UntilSpecOut =
+  | { kind: 'end_of_day'; days: number }
+  | { kind: 'end_of_week'; weeks_ahead: number }
+  | { kind: 'through'; day: DaySpecOut }
+  | { kind: 'unknown' };
+
+export const UntilSpecSchema = FlatUntil.transform((u, ctx): UntilSpecOut => {
+  switch (u.kind) {
+    case 'end_of_day':
+      return u.days == null
+        ? missing(ctx, 'end_of_day', 'days')
+        : { kind: 'end_of_day', days: u.days };
+    case 'end_of_week':
+      return u.weeks_ahead == null
+        ? missing(ctx, 'end_of_week', 'weeks_ahead')
+        : { kind: 'end_of_week', weeks_ahead: u.weeks_ahead };
+    case 'through':
+      return u.day == null ? missing(ctx, 'through', 'day') : { kind: 'through', day: u.day };
+    case 'unknown':
+      return { kind: 'unknown' };
+  }
+});
 
 const LocalTimeSchema = z
   .string()

@@ -97,10 +97,12 @@ function convert(s: z.ZodTypeAny): JsonSchema {
         .options as z.ZodTypeAny[];
       return withDescription(s, { anyOf: options.map((o) => toJsonSchema(o)) });
     }
-    case z.ZodFirstPartyTypeKind.ZodNullable:
-      return withDescription(s, {
-        anyOf: [toJsonSchema((s as z.ZodNullable<z.ZodTypeAny>).unwrap()), { type: 'null' }],
-      });
+    case z.ZodFirstPartyTypeKind.ZodNullable: {
+      const inner = toJsonSchema((s as z.ZodNullable<z.ZodTypeAny>).unwrap());
+      // The same text on the wrapper and the value is said once (Gemini 3.x bills schemas).
+      if (s.description && inner.description === s.description) delete inner.description;
+      return withDescription(s, { anyOf: [inner, { type: 'null' }] });
+    }
     case z.ZodFirstPartyTypeKind.ZodOptional:
       return toJsonSchema((s as z.ZodOptional<z.ZodTypeAny>).unwrap());
     case z.ZodFirstPartyTypeKind.ZodDefault:

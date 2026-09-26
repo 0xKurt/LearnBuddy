@@ -275,7 +275,11 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
 gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
 from 2027; output includes thinking). Note: Gemini 3.x bills the response schema as input tokens
-(Buddy's turn schema ≈ 9 600 tokens), 2.5 did not — keep schemas small.
+(Buddy's turn schema ≈ 9 400 → 8 500 tokens after flattening day/duration specs into one object
+each and moving repeated descriptions into the prompt; `$ref`/`$defs` do not help, Gemini expands
+them before billing — measured 2026-09-26), 2.5 did not. Tokens scale with schema text; the
+largest tools are set_contact (~1 300), remember (~1 100), plan_step (~900). Next levers: explicit
+context caching of the fixed part, or offering only the tools a turn can use.
 
 ## Material
 
