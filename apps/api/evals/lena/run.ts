@@ -475,7 +475,7 @@ const JOURNEYS: Spec[] = [
         three?.status === 'ready' && (three.item_count ?? 0) >= 5,
         'drei Seiten gelesen, Fragen von allen Seiten',
       );
-      const now = (await j.home()).now;
+      const now = (await j.home()).notice;
       j.check(now?.type !== 'pages_missing', 'keine falsche Meldung über fehlende Seiten');
     },
   },
@@ -496,7 +496,9 @@ const JOURNEYS: Spec[] = [
       const items = await j.l.api.get<{ items: { prompt: string }[] }>(`/materials/${m.id}/items`);
       for (const it of items.body.items ?? []) j.log.push(`  - Frage: ${it.prompt}`);
       const home = await j.home();
-      j.log.push(`  - Startscreen: ${JSON.stringify(home.now)}`);
+      j.log.push(
+        `  - Startscreen: ${JSON.stringify(home.now)} · Hinweis: ${JSON.stringify(home.notice)}`,
+      );
       const text = await j.env.db.one<{ extracted_text: string | null }>(
         `select extracted_text from materials where id = $1`,
         [m.id],
@@ -512,7 +514,7 @@ const JOURNEYS: Spec[] = [
       const invented = /.{0,80}(zellkern|mitochondri).{0,80}/.exec(said);
       if (invented) j.log.push(`  - erfunden?: ${invented[0]}`);
       j.check(!invented, 'keine erfundenen Fragen zur unlesbaren Seite');
-      const now = home.now;
+      const now = home.notice;
       j.check(
         now?.type === 'pages_missing' && now.pages.map((p) => p.page).join(',') === '2',
         'Lena erfährt, dass (nur) Seite 2 nicht gelesen wurde',
@@ -537,9 +539,11 @@ const JOURNEYS: Spec[] = [
       const items = await j.l.api.get<{ items: { prompt: string }[] }>(`/materials/${m.id}/items`);
       for (const it of items.body.items ?? []) j.log.push(`  - Frage: ${it.prompt}`);
       const home = await j.home();
-      j.log.push(`  - Startscreen: ${JSON.stringify(home.now)}`);
+      j.log.push(
+        `  - Startscreen: ${JSON.stringify(home.now)} · Hinweis: ${JSON.stringify(home.notice)}`,
+      );
       j.log.push(`  - Modell: ${JSON.stringify(readings.at(-1)).slice(0, 1500)}`);
-      const now = home.now;
+      const now = home.notice;
       j.check(
         now?.type === 'pages_missing' && now.pages.some((p) => p.page === 2),
         'Lena erfährt, dass auf Seite 2 etwas fehlt',

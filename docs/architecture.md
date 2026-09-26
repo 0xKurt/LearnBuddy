@@ -345,8 +345,9 @@ treated as ready (the model said so at times for one cut-off page; the prompt sa
 false only when nothing can be read, and text that stops mid-sentence at the edge is cut off and is
 never completed). A broken page report is dropped (`.catch([])`) without costing the questions.
 Code keeps only real photo positions, each once, and stores them as `materials.page_problems`.
-Home then shows `pages_missing` first — before a waiting homework help session, while the sheet is
-still at hand, for 24 hours: "Seite 2: ein Stück ist abgeschnitten", the rest is ready, with
+Buddy then says it at the end of the conversation (`BuddyHome.notice`, not a card on top: nothing on
+home moves; the help session of a homework is ready meanwhile), while the sheet is
+still at hand, for 24 hours, with the photo of that page while it is on the phone: "Seite 2: ein Stück ist abgeschnitten", the rest is ready, with
 "Nochmal fotografieren" (capture opens with `completes` and the page numbers; the new material keeps
 the old one's goal and purpose and ends the notice in the same transaction) and "Passt so"
 (`POST /materials/:id/pages-ok`, idempotent). A photo of something else among the pages only offers
@@ -372,8 +373,8 @@ ambiguous.
 **Photos survive the app being closed** (`apps/mobile/lib/capture/draft.ts`). Every photo is
 copied where the system does not clean up (documents; data URLs in a browser) and the capture screen
 keeps a draft (photos, what the check found, what they are for, and — once sending began — the
-request id). Closed, killed or updated before the photos were sent, home offers "Deine Fotos sind
-noch nicht gesendet" with "Weiter" (the same material: the API answers the request id with it, so
+request id). Closed, killed or updated before the photos were sent, Buddy says "Deine Fotos sind
+noch nicht gesendet" at the end of the conversation with "Weiter" (the same material: the API answers the request id with it, so
 nothing is sent twice) or "Verwerfen" (undo until she leaves home; then the files are deleted). A
 draft older than 7 days is deleted. Sent photos stay a day on the phone for the page notice.
 Uploads on a phone use a native background upload session (`lib/capture/put.ts`, iOS background

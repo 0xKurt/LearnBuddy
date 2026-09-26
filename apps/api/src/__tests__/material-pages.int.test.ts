@@ -137,7 +137,7 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
       page_problems: [{ page: 2, read: 'part', problem: 'cut_off' }],
     });
     const home = (await lena.api.get<BuddyHome>('/buddy')).body;
-    expect(home.now).toEqual({
+    expect(home.notice).toEqual({
       type: 'pages_missing',
       material_id: m.id,
       title: 'Nomen und Verben',
@@ -145,9 +145,9 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
       pages: [{ page: 2, read: 'part', problem: 'cut_off' }],
     });
     // Tom sees nothing of it and cannot answer it for her.
-    expect((await tom.api.get<BuddyHome>('/buddy')).body.now).toBeNull();
+    expect((await tom.api.get<BuddyHome>('/buddy')).body.notice).toBeNull();
     expect((await tom.api.post(`/materials/${m.id}/pages-ok`)).status).toBe(404);
-    expect((await lena.api.get<BuddyHome>('/buddy')).body.now?.type).toBe('pages_missing');
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.notice?.type).toBe('pages_missing');
   });
 
   it('"Passt so" ends the notice once; a repeat changes nothing', async () => {
@@ -163,7 +163,7 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
     // A retry after a lost answer: fine, nothing changes.
     expect((await lena.api.post(`/materials/${m.id}/pages-ok`)).status).toBe(200);
     expect(await contextVersion(env, lena.learnerId)).toBe(before + 1);
-    expect((await lena.api.get<BuddyHome>('/buddy')).body.now?.type).not.toBe('pages_missing');
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.notice).toBeNull();
     expect((await lena.api.post(`/materials/not-an-id/pages-ok`)).status).toBe(422);
   });
 
@@ -179,9 +179,10 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
       result: sheet([{ page: 2, read: 'part', problem: 'covered' }], 'Hausaufgabe Wortarten'),
     });
     await env.db.query(`update materials set goal_id = $2 where id = $1`, [hw.id, goal!.id]);
-    // The notice comes before the help session that is waiting, then the session.
+    // Buddy says what is missing; the help session is ready meanwhile.
     let home = (await lena.api.get<BuddyHome>('/buddy')).body;
-    expect(home.now?.type).toBe('pages_missing');
+    expect(home.notice?.type).toBe('pages_missing');
+    expect(home.now).toMatchObject({ type: 'resume_practice', mode: 'help' });
 
     // Tom cannot attach his photos to her sheet.
     expect(
@@ -331,15 +332,15 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
       result: sheet([{ page: 'zwei', read: 'maybe' }]),
     });
     expect(broken).toMatchObject({ status: 'ready', item_count: 2, page_problems: [] });
-    expect((await lena.api.get<BuddyHome>('/buddy')).body.now?.type).not.toBe('pages_missing');
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.notice).toBeNull();
 
     await send(env, lena, {
       photos: 2,
       result: sheet([{ page: 1, read: 'none', problem: 'not_material' }]),
     });
-    expect((await lena.api.get<BuddyHome>('/buddy')).body.now?.type).toBe('pages_missing');
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.notice?.type).toBe('pages_missing');
     // A day later the sheet is no longer at hand: no nagging.
     env.clock.advance(25 * 3_600_000);
-    expect((await lena.api.get<BuddyHome>('/buddy')).body.now?.type).not.toBe('pages_missing');
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.notice).toBeNull();
   });
 });

@@ -1,7 +1,6 @@
 // The one thing that matters right now, with its single next action.
 
 import type { NowCard as NowCardData } from '@learnbuddy/shared-types/contracts';
-import { Image } from 'expo-image';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -19,11 +18,6 @@ type Props = {
   onSkip: (stepId: string) => void;
   onCapture: (stepId: string | null, goalId: string | null) => void;
   onRetryMaterial: (materialId: string) => void;
-  /** Photograph the pages Buddy could not read again (numbers only for several photos). */
-  onRetakePages: (materialId: string, pages: number[] | null) => void;
-  onPagesOk: (materialId: string) => void;
-  /** pages_missing: the photo of that page, while it is still on the phone. */
-  thumb?: string | null;
 };
 
 export function NowCard({
@@ -34,9 +28,6 @@ export function NowCard({
   onSkip,
   onCapture,
   onRetryMaterial,
-  onRetakePages,
-  onPagesOk,
-  thumb = null,
 }: Props) {
   const { t } = useTranslation('buddy');
   switch (card.type) {
@@ -154,62 +145,6 @@ export function NowCard({
           </View>
         </Card>
       );
-    case 'pages_missing': {
-      const several = card.photo_count > 1;
-      const pages = card.pages.map((p) => p.page);
-      // A photo of something else is not worth taking again: then only "OK".
-      const retake = card.pages.some((p) => p.problem !== 'not_material');
-      return (
-        <Card tone="butter" padding={16} radius={22}>
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-            {thumb ? (
-              // Which sheet it was, at a glance (the page numbers follow the order taken).
-              <Image
-                source={{ uri: thumb }}
-                accessible={false}
-                style={{ width: 44, height: 58, borderRadius: 8 }}
-                contentFit="cover"
-              />
-            ) : null}
-            <Text accessibilityRole="header" style={[TYPE.title, { flex: 1 }]}>
-              {several
-                ? t('now.pages_title', { count: pages.length })
-                : t('now.pages_title_single')}
-            </Text>
-          </View>
-          {card.pages.map((p) => (
-            <Text key={p.page} style={[TYPE.body, { marginTop: 4 }]}>
-              {several
-                ? t('now.pages_line', {
-                    page: p.page,
-                    problem: t(`now.pages_problem.${p.problem ?? 'other'}`),
-                  })
-                : t(`now.pages_problem.${p.problem ?? 'other'}`)}
-            </Text>
-          ))}
-          <Text style={[TYPE.small, { marginTop: 4 }]}>
-            {card.title ? t('now.pages_rest', { title: card.title }) : t('now.pages_rest_untitled')}
-          </Text>
-          <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            {retake ? (
-              <Btn
-                onPress={() => onRetakePages(card.material_id, several ? pages : null)}
-                disabled={busy}
-              >
-                {t('now.pages_retake', { count: several ? pages.length : 1 })}
-              </Btn>
-            ) : null}
-            <Btn
-              variant={retake ? 'ghost' : 'primary'}
-              onPress={() => onPagesOk(card.material_id)}
-              disabled={busy}
-            >
-              {t('now.pages_ok')}
-            </Btn>
-          </View>
-        </Card>
-      );
-    }
     case 'practice_result':
       return (
         <Card tone="mint" padding={16} radius={22}>

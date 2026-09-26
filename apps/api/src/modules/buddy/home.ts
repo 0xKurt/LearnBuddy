@@ -10,6 +10,7 @@ import type {
   Decision,
   GoalBrief,
   MessageView,
+  HomeNotice,
   NowCard,
   OutreachView,
   UpcomingItem,
@@ -64,6 +65,7 @@ export async function buildHome(
   return {
     learner: { id: learner.id, name: learner.display_name, is_minor: learner.isMinor },
     now: nowCard,
+    notice: noticeOf(state, now),
     decision,
     done,
     next: nextOf(state, today, now),
@@ -104,6 +106,27 @@ async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<Budd
   return row.reason === 'material_ready' ? 'material' : 'session';
 }
 
+/**
+ * Pages Buddy could not read, while the sheet is still at hand (a day): Buddy says it at
+ * the end of the conversation; the rest of the sheet is ready (docs/architecture.md §Material).
+ */
+function noticeOf(state: BuddyState, now: Date): HomeNotice | null {
+  const missing = state.materials.find(
+    (m) =>
+      m.status === 'ready' &&
+      m.page_problems.length > 0 &&
+      now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
+  );
+  if (!missing) return null;
+  return {
+    type: 'pages_missing',
+    material_id: missing.id,
+    title: missing.title,
+    photo_count: missing.photo_count,
+    pages: missing.page_problems,
+  };
+}
+
 async function nowCardOf(
   deps: Deps,
   learnerId: string,
@@ -111,24 +134,6 @@ async function nowCardOf(
   today: string,
   now: Date,
 ): Promise<NowCard | null> {
-  // Pages Buddy could not read come first while the sheet is still at hand: the
-  // rest of it is ready (and a homework help session waits), but Lena should
-  // know what is missing (docs/architecture.md §Material).
-  const missing = state.materials.find(
-    (m) =>
-      m.status === 'ready' &&
-      m.page_problems.length > 0 &&
-      now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
-  );
-  if (missing) {
-    return {
-      type: 'pages_missing',
-      material_id: missing.id,
-      title: missing.title,
-      photo_count: missing.photo_count,
-      pages: missing.page_problems,
-    };
-  }
   const active = state.sessions.find(
     (s) =>
       s.status === 'active' &&

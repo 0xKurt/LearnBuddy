@@ -3,6 +3,7 @@
 // with a message stands right under it, with "Rückgängig" while that still
 // applies — there is no separate list of it on the home.
 
+import type { ReactNode } from 'react';
 import { MathText } from '../math/MathText.js';
 import { withoutEmphasis } from '../../lib/math/emphasis.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
@@ -22,6 +23,8 @@ type Props = {
   messages: MessageView[];
   /** Local message being sent right now (optimistic). */
   pending: { text: string } | null;
+  /** What Buddy tells now, with buttons (NoticeBubble), after the messages. */
+  notices?: ReactNode[];
   /**
    * Buddy's reply while it is still being written (only for an answer that changes
    * nothing — docs/architecture.md §Speed); the stored message replaces it.
@@ -41,6 +44,7 @@ export function Conversation({
   messages,
   contactOn,
   pending,
+  notices = [],
   live = null,
   busy,
   showActions = false,
@@ -175,6 +179,7 @@ export function Conversation({
           </View>
         );
       })}
+      {notices}
       {pending ? (
         <View style={{ alignItems: 'flex-end' }}>
           <View

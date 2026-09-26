@@ -26,7 +26,7 @@ import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
 import { NowCard } from '../components/buddy/NowCard.js';
-import { DraftCard } from '../components/capture/DraftCard.js';
+import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
 import { ChoiceSheet } from '../components/learn/ChoiceSheet.js';
 import { TopicSheet } from '../components/learn/TopicSheet.js';
@@ -100,7 +100,7 @@ export default function BuddyScreen() {
       };
     }, []),
   );
-  const missingNow = home.data?.now?.type === 'pages_missing' ? home.data.now : null;
+  const missingNow = home.data?.notice?.type === 'pages_missing' ? home.data.notice : null;
   const missingPage = missingNow ? `${missingNow.material_id}:${missingNow.pages[0]?.page}` : null;
   useEffect(() => {
     if (!missingNow?.pages[0]) {
@@ -304,7 +304,121 @@ export default function BuddyScreen() {
   }
 
   const h = home.data;
-  const missing = h.now?.type === 'pages_missing' ? h.now : null;
+  // What Buddy tells at the end of the conversation, with its buttons: nothing on top moves.
+  const shownDraft = draft ?? letGo;
+  const missing = h.notice?.type === 'pages_missing' ? h.notice : null;
+  const notices = [
+    shownDraft ? (
+      <NoticeBubble
+        key="draft"
+        text={
+          draft
+            ? t('capture:draft.title')
+            : t('capture:draft.discarded', { count: shownDraft.photos.length })
+        }
+        detail={draft ? t('capture:draft.body', { count: draft.photos.length }) : null}
+        thumb={draft ? (draft.photos[0]?.uri ?? null) : null}
+      >
+        {draft ? (
+          <>
+            <Btn
+              size="sm"
+              onPress={() => router.push({ pathname: '/capture', params: { resume: '1' } })}
+            >
+              {t('capture:draft.resume')}
+            </Btn>
+            <Btn
+              size="sm"
+              variant="ghost"
+              onPress={() => {
+                // Kept until she leaves home: "Rückgängig" brings them back.
+                void drafts.save({ requestId: null, photos: [], link: draft.link });
+                setLetGo(draft);
+                setDraft(null);
+              }}
+            >
+              {t('capture:draft.discard')}
+            </Btn>
+          </>
+        ) : (
+          <Btn
+            size="sm"
+            variant="ghost"
+            accessibilityLabel={t('capture:draft.undo_label')}
+            onPress={() => {
+              const d = letGo;
+              if (!d) return;
+              void drafts.save({ requestId: d.requestId, photos: d.photos, link: d.link });
+              setDraft(d);
+              setLetGo(null);
+            }}
+          >
+            {t('capture:draft.undo')}
+          </Btn>
+        )}
+      </NoticeBubble>
+    ) : null,
+    missing ? (
+      <NoticeBubble
+        key="pages"
+        text={
+          missing.photo_count > 1
+            ? t('buddy:now.pages_title', { count: missing.pages.length })
+            : t('buddy:now.pages_title_single')
+        }
+        detail={[
+          ...missing.pages.map((p) =>
+            missing.photo_count > 1
+              ? t('buddy:now.pages_line', {
+                  page: p.page,
+                  problem: t(`buddy:now.pages_problem.${p.problem ?? 'other'}`),
+                })
+              : t(`buddy:now.pages_problem.${p.problem ?? 'other'}`),
+          ),
+          missing.title
+            ? t('buddy:now.pages_rest', { title: missing.title })
+            : t('buddy:now.pages_rest_untitled'),
+        ].join('\n')}
+        thumb={pageThumb}
+      >
+        {/* A photo of something else is not worth taking again: then only "OK". */}
+        {missing.pages.some((p) => p.problem !== 'not_material') ? (
+          <Btn
+            size="sm"
+            disabled={busy}
+            onPress={() =>
+              router.push({
+                pathname: '/capture',
+                params: {
+                  completes: missing.material_id,
+                  ...(missing.photo_count > 1
+                    ? { pages: missing.pages.map((p) => p.page).join(',') }
+                    : {}),
+                },
+              })
+            }
+          >
+            {t('buddy:now.pages_retake', {
+              count: missing.photo_count > 1 ? missing.pages.length : 1,
+            })}
+          </Btn>
+        ) : null}
+        <Btn
+          size="sm"
+          variant="ghost"
+          disabled={busy}
+          onPress={() =>
+            void act(async () => {
+              await acceptMissingPages(missing.material_id);
+              await refresh();
+            })
+          }
+        >
+          {t('buddy:now.pages_ok')}
+        </Btn>
+      </NoticeBubble>
+    ) : null,
+  ].filter((node) => node !== null);
   // The next test in one line; everything else Buddy says in the conversation.
   const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
   const messages = h.thread.slice(-VISIBLE_MESSAGES);
@@ -315,7 +429,7 @@ export default function BuddyScreen() {
       : null;
 
   // Once there is a conversation, it gets the room; the ring shrinks to a row.
-  const talking = messages.length > 0 || shownPending !== null;
+  const talking = messages.length > 0 || shownPending !== null || notices.length > 0;
   const top = [
     !h.system.model ? (
       <Banner key="model" tone="warning">
@@ -327,33 +441,8 @@ export default function BuddyScreen() {
         {t('buddy:system.scheduler_stale')}
       </Banner>
     ) : null,
-    draft || letGo ? (
-      <DraftCard
-        key="draft"
-        count={(draft ?? letGo)!.photos.length}
-        preview={(draft ?? letGo)!.photos[0]?.uri ?? null}
-        discarded={!draft}
-        onResume={() => router.push({ pathname: '/capture', params: { resume: '1' } })}
-        onDiscard={() => {
-          const d = draft;
-          if (!d) return;
-          // Kept until she leaves home: "Rückgängig" brings them back.
-          void drafts.save({ requestId: null, photos: [], link: d.link });
-          setLetGo(d);
-          setDraft(null);
-        }}
-        onUndo={() => {
-          const d = letGo;
-          if (!d) return;
-          void drafts.save({ requestId: d.requestId, photos: d.photos, link: d.link });
-          setDraft(d);
-          setLetGo(null);
-        }}
-      />
-    ) : null,
     h.now ? (
       <NowCard
-        thumb={missing ? pageThumb : null}
         key="now"
         card={h.now}
         busy={busy}
@@ -374,18 +463,6 @@ export default function BuddyScreen() {
         onRetryMaterial={(id) =>
           void act(async () => {
             await retryMaterial(id);
-            await refresh();
-          })
-        }
-        onRetakePages={(id, pages) =>
-          router.push({
-            pathname: '/capture',
-            params: { completes: id, ...(pages ? { pages: pages.join(',') } : {}) },
-          })
-        }
-        onPagesOk={(id) =>
-          void act(async () => {
-            await acceptMissingPages(id);
             await refresh();
           })
         }
@@ -521,6 +598,7 @@ export default function BuddyScreen() {
                 contactOn={h.system.contact_enabled}
                 messages={messages}
                 pending={shownPending}
+                notices={notices}
                 live={live}
                 busy={busy || pending !== null}
                 showActions

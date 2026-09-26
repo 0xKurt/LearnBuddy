@@ -205,6 +205,14 @@ export const NowCard = z.discriminatedUnion('type', [
     retryable: z.boolean(),
   }),
   z.object({ type: z.literal('practice_result'), session_id: Uuid, result: PracticeResultBrief }),
+]);
+export type NowCard = z.infer<typeof NowCard>;
+
+/**
+ * Something Buddy tells in the conversation (at its end, with buttons), not a card on
+ * top: it does not push the rest of home around.
+ */
+export const HomeNotice = z.discriminatedUnion('type', [
   /** Some pages of a material could not be read: photograph them again, or leave it. */
   z.object({
     type: z.literal('pages_missing'),
@@ -214,7 +222,7 @@ export const NowCard = z.discriminatedUnion('type', [
     pages: z.array(PageProblem).min(1),
   }),
 ]);
-export type NowCard = z.infer<typeof NowCard>;
+export type HomeNotice = z.infer<typeof HomeNotice>;
 
 export const Decision = z.discriminatedUnion('type', [
   z.object({
@@ -250,6 +258,7 @@ export type SystemStatus = z.infer<typeof SystemStatus>;
 export const BuddyHome = z.object({
   learner: z.object({ id: Uuid, name: z.string(), is_minor: z.boolean() }),
   now: NowCard.nullable(),
+  notice: HomeNotice.nullable(),
   decision: Decision.nullable(),
   done: z.array(ActionView),
   next: z.array(UpcomingItem),
