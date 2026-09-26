@@ -29,8 +29,15 @@ const say = (voice: string, text: string, file: string) =>
   execFileSync('espeak-ng', ['-v', voice, '-s', '140', '-w', join(S, file), text]);
 const gateway = {
   available: true,
-  generate: (req: LlmRequest) =>
-    req.purpose === 'explain' ? scripted.generate(req) : real.generate(req),
+  generate: async (req: LlmRequest) => {
+    if (req.purpose === 'explain') return scripted.generate(req);
+    const r = await real.generate(req);
+    const u = r.usage;
+    console.log(
+      `  [${req.purpose} ${u.model}] ${u.latencyMs} ms · $${(u.costMicros / 1e6).toFixed(5)} · in ${u.inputTokens} out ${u.outputTokens} thought ${u.thoughtTokens}`,
+    );
+    return r;
+  },
 } as LlmGateway;
 const env = await createTestEnv({ start: '2026-09-28T14:00:00Z', gateway });
 const l = await onboard(env, {
