@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadConfig } from '../../config.js';
-import { splitModelSpec } from '../vertex.js';
+import { modelFor, splitModelSpec } from '../vertex.js';
 
 const env = {
   DATABASE_URL: 'x',
@@ -44,5 +44,13 @@ describe('model routes', () => {
       expect(() => loadConfig({ ...env, VERTEX_MODEL_SMART: bad })).toThrow();
     }
     expect(() => loadConfig({ ...env, GOOGLE_VERTEX_LOCATION: 'global' })).toThrow();
+  });
+
+  it('runs each task on its measured model unless a route says otherwise', () => {
+    const c = loadConfig(env);
+    expect(modelFor(c, { purpose: 'pronounce', tier: 'smart' })).toBe('eu/gemini-3.1-flash-lite');
+    expect(modelFor(c, { purpose: 'tutor', tier: 'smart' })).toBe('eu/gemini-3.6-flash');
+    const routed = loadConfig({ ...env, VERTEX_ROUTES: '{"pronounce":"eu/gemini-3.6-flash"}' });
+    expect(modelFor(routed, { purpose: 'pronounce', tier: 'smart' })).toBe('eu/gemini-3.6-flash');
   });
 });

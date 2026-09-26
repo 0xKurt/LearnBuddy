@@ -85,6 +85,25 @@ export function splitModelSpec(spec: string, defaultLocation: string) {
     : { location: spec.slice(0, i), model: spec.slice(i + 1) };
 }
 
+/**
+ * Measured defaults per task, where a task does better on another model than its tier's
+ * (docs/architecture.md §Model calls). VERTEX_ROUTES overrides them.
+ * - pronounce: 3.1 Flash-Lite judged as strictly as 3.6 Flash (German accent and a wrong
+ *   word "retry" 3/3) at ~0.09 instead of ~0.2 cents per sentence (evals/speak, 2026-09-26).
+ */
+export const DEFAULT_ROUTES: Partial<Record<LlmRequest['purpose'], string>> = {
+  pronounce: 'eu/gemini-3.1-flash-lite',
+};
+
+/** The model spec a request runs on: explicit route → measured default → the tier's model. */
+export function modelFor(config: Config, req: Pick<LlmRequest, 'purpose' | 'tier'>): string {
+  return (
+    config.VERTEX_ROUTES[req.purpose] ??
+    DEFAULT_ROUTES[req.purpose] ??
+    (req.tier === 'smart' ? config.VERTEX_MODEL_SMART : config.VERTEX_MODEL_FAST)
+  );
+}
+
 export class VertexGateway implements LlmGateway {
   readonly available = true;
   /** One client per location (the EU multi-region "eu" serves models europe-west4 doesn't). */
@@ -108,10 +127,10 @@ export class VertexGateway implements LlmGateway {
   }
 
   async generate(req: LlmRequest): Promise<LlmResult> {
-    const spec =
-      this.config.VERTEX_ROUTES[req.purpose] ??
-      (req.tier === 'smart' ? this.config.VERTEX_MODEL_SMART : this.config.VERTEX_MODEL_FAST);
-    const { location, model } = splitModelSpec(spec, this.config.GOOGLE_VERTEX_LOCATION);
+    const { location, model } = splitModelSpec(
+      modelFor(this.config, req),
+      this.config.GOOGLE_VERTEX_LOCATION,
+    );
     const started = Date.now();
     let response: GenerateContentResponse;
     try {

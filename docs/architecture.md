@@ -227,7 +227,8 @@ against a per-learner daily limit first (atomic upsert) and is recorded in `llm_
 tokens, cost, latency and outcome — never with prompt or answer text.
 
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
-to a model, otherwise the tier's model applies. A model may carry its location
+to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1
+Flash-Lite — as strict as 3.6 Flash in `evals/speak`, half the cost), else the tier's model. A model may carry its location
 (`eu/gemini-3.1-flash-lite`): the Gemini 3.x models are served in the EU only through the EU
 multi-region endpoint `eu`, not in `europe-west4` (probed 2026-09-26). A route changes only after
 the task's eval passes on it (`evals/buddy`, `evals/tutor`, `evals/speak`, `evals/speed`).
