@@ -27,6 +27,8 @@
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
     "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla da solo.",
     "accents": "Quasi – controlla di nuovo gli accenti.",
+    "missing_word": "Quasi – manca ancora una parola. Guarda di nuovo.",
+    "typo": "Quasi – si scrive {{answer}}. Scrivilo ancora una volta.",
     "help_step": "Andiamo passo per passo: cosa ti dà l'esercizio e cosa bisogna trovare?",
     "help_solved": "Grande – l'hai risolto da solo!",
     "heard_retry": "Non ti ho sentito bene. Riprova un po' più forte e più vicino al telefono.",

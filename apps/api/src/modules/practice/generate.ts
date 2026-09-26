@@ -22,7 +22,7 @@ import { ageOn } from '../identity/model.js';
 import { FIGURE_RULES, ItemDraft, MATH_RULES, insertItems, usableItems } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.1';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.2';
 
 const SUBJECT_KINDS = [
   'math',
@@ -67,7 +67,7 @@ const GENERATED_SCHEMA = toJsonSchema(GeneratedSet);
 const TASK: Record<StartTopicRequest['kind'], string> = {
   explain: `EXPLAIN the topic the learner named. "intro": a clear explanation for their age and grade — short paragraphs, 1–2 everyday examples, the one rule or idea that matters most, at most ~180 words; bold nothing, no headings. Then 3–5 items that check understanding (not just recall), easy to harder.`,
   practice: `Write 6–10 PRACTICE questions on the topic the learner named, at their grade, easy to harder, mixing kinds sensibly. intro = null.`,
-  vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; obvious alternative translations in accepted_answers). Do not add words. Up to 25 pairs. intro = null. If there are no pairs, usable = false.`,
+  vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to 8) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. intro = null. If there are no pairs, usable = false.`,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words. intro = null.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers). intro = null.`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own. intro = null.`,

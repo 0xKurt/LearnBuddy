@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { FIGURE_RULES, ItemDraft, MATH_RULES } from '../practice/items.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v3.0';
+export const EXTRACT_PROMPT_VERSION = 'extract.v3.1';
 
 const SUBJECT_KINDS = [
   'math',
@@ -49,7 +49,7 @@ export const EXTRACT_SYSTEM = `You read photos of a learner's study material (wo
 1. Decide whether this is learning material (is_learning_material) and whether it is readable (readable). If not, return empty items.
 2. Transcribe the material faithfully into extracted_text (Markdown). Don't add anything that isn't there.
 3. Write practice questions that check exactly this material, pitched at the learner's level (LEARNER). Each has the correct answer.
-   - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; other correct translations in accepted_answers). Up to 25 pairs; the app asks both directions itself.
+   - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to 8) — answers are checked against this list without a model). Up to 25 pairs; the app asks both directions itself.
    - Otherwise 8–15 questions. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - numeric: answer is the number (decimal point), unit separately in "unit".
    - ${MATH_RULES}

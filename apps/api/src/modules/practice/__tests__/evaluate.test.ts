@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { differentNumber, ruleCheck } from '../evaluate.js';
+import { differentNumber, editDistance, ruleCheck } from '../evaluate.js';
 
 const mc = {
   kind: 'multiple_choice' as const,
@@ -74,5 +74,40 @@ describe('differentNumber (tests only)', () => {
     expect(differentNumber(short('3/4', ['drei Viertel']), '3/7')).toBe(false);
     // Any accepted value counts as right.
     expect(differentNumber(short('3/4', ['0,8']), '0,8')).toBe(false);
+  });
+});
+
+describe('near misses on written answers', () => {
+  const vocab = (answer: string, accepted: string[] = []) => ({
+    kind: 'vocab' as const,
+    answer,
+    accepted_answers: accepted,
+    unit: null,
+    choices: null,
+    correct_choice: null,
+  });
+  const check = (answer: string, text: string, accepted: string[] = []) =>
+    ruleCheck(vocab(answer, accepted), { text, choice: null }, 'de');
+
+  it('measures slips like a typist makes them', () => {
+    expect(editDistance('garden', 'gardn')).toBe(1);
+    expect(editDistance('garden', 'gadren')).toBe(1); // two letters swapped
+    expect(editDistance('kitchen', 'kitchen')).toBe(0);
+  });
+
+  it('allows slips by word length, never on short words', () => {
+    expect(check('garden', 'gardn')).toBe('typo');
+    expect(check('cat', 'car')).toBe('unknown'); // short: must be exact
+    expect(check('bedroom', 'bedrm')).toBe('unknown'); // 2 slips on 7 letters: too many
+    expect(check('Schlafzimmer', 'Schlafzimer')).toBe('typo');
+    expect(check('Schlafzimmer', 'Schlfzimer')).toBe('typo'); // 2 slips on 12 letters
+    expect(check('garden', 'Garten')).toBe('typo'); // shown the spelling, never counted right
+  });
+
+  it('notices a missing first word and keeps exact and accepted answers right', () => {
+    expect(check('der Schüler', 'Schüler')).toBe('missing_word');
+    expect(check('der Schüler', 'der Schüler')).toBe('correct');
+    expect(check('die Katze', 'Katze', ['Katze'])).toBe('correct');
+    expect(check('élève', 'eleve')).toBe('close');
   });
 });

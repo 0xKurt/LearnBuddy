@@ -14,8 +14,43 @@ export type ItemForCheck = {
   correct_choice: number | null;
 };
 
-/** 'close': the same except for accents/diacritics (e.g. "eleve" for "élève") — the tutor says so. */
-export type RuleVerdict = 'correct' | 'close' | 'incorrect' | 'unknown';
+/**
+ * Near misses on a written answer, decided without a model (the kind of check
+ * Anki, Quizlet and LibreLingo do):
+ * - 'close': the same except for accents/diacritics ("eleve" for "élève");
+ * - 'missing_word': the key without its first word ("Küche" for "die Küche");
+ * - 'typo': a small slip — Damerau distance within a limit that grows with the
+ *   word (none up to 4 letters, 1 up to 8, else 2). A slip can also be another
+ *   real word ("horse" for "house"), so it is never counted right: the app shows
+ *   the spelling and she types it again.
+ */
+export type RuleVerdict = 'correct' | 'close' | 'missing_word' | 'typo' | 'incorrect' | 'unknown';
+
+/** Near misses: partly right, not wrong. */
+export const NEAR_MISS = new Set<RuleVerdict>(['close', 'missing_word', 'typo']);
+
+/** Optimal-string-alignment distance: insert, delete, replace, swap two neighbours. */
+export function editDistance(a: string, b: string): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+  );
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i]![j] = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i]![j] = Math.min(d[i]![j]!, d[i - 2]![j - 2]! + 1);
+      }
+    }
+  }
+  return d[a.length]![b.length]!;
+}
+
+/** Slips allowed for a key of this length: short words must be exact ("cat" ≠ "car"). */
+function allowedSlips(key: string): number {
+  const letters = key.replace(/\s+/g, '').length;
+  return letters <= 4 ? 0 : letters <= 8 ? 1 : 2;
+}
 
 /** $\\frac{a}{b}$ → a/b, x^{2} → x^2, \\sqrt{x} → √x, \\cdot → ·; without the dollar signs. */
 export function plainMath(s: string): string {
@@ -91,6 +126,21 @@ export function ruleCheck(
     .filter(Boolean);
   if (targets.includes(norm)) return 'correct';
   if (targets.map(withoutAccents).includes(withoutAccents(norm))) return 'close';
+  if (item.kind === 'vocab' || item.kind === 'short') {
+    const folded = withoutAccents(norm);
+    const words = (x: string) => x.split(' ').filter(Boolean);
+    if (targets.some((t) => words(t).length >= 2 && words(t).slice(1).join(' ') === norm)) {
+      return 'missing_word';
+    }
+    if (
+      targets.some((t) => {
+        const slips = allowedSlips(t);
+        return slips > 0 && editDistance(folded, withoutAccents(t)) <= slips;
+      })
+    ) {
+      return 'typo';
+    }
+  }
   if (item.kind === 'formula') {
     const compact = (s: string) => s.replace(/\s+/g, '').toLowerCase();
     if ([item.answer, ...item.accepted_answers].some((a) => compact(a) === compact(text)))

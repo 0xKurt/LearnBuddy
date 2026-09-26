@@ -27,6 +27,8 @@
     "not_quite": "Noch nicht ganz. Schau dir die Frage nochmal an – oder lass dir die Lösung zeigen.",
     "cannot_check": "Das kann ich gerade nicht prüfen. Du kannst dir die Lösung ansehen und selbst vergleichen.",
     "accents": "Fast – schau nochmal auf die Akzente.",
+    "missing_word": "Fast – da fehlt noch ein Wort. Schau nochmal genau hin.",
+    "typo": "Fast – so schreibt man es: {{answer}}. Tipp es nochmal.",
     "help_step": "Lass uns Schritt für Schritt schauen: Was ist in der Aufgabe gegeben, und was wird gesucht?",
     "help_solved": "Stark – das hast du selbst gelöst!",
     "heard_retry": "Ich konnte dich nicht gut verstehen. Sprich nochmal etwas lauter und näher am Handy.",

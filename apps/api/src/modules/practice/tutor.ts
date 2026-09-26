@@ -12,6 +12,8 @@
 
 import { z } from 'zod';
 
+import { NEAR_MISS, type RuleVerdict } from './evaluate.js';
+
 export const TUTOR_PROMPT_VERSION = 'tutor.v3.1';
 
 export const TutorDecision = z.object({
@@ -68,11 +70,20 @@ export type TutorItem = {
   prompt_lang: string | null;
 };
 
+const RULE_TEXT: Record<RuleVerdict, string> = {
+  incorrect: 'the answer is WRONG',
+  correct: 'the answer is right',
+  close: 'close: right except accents',
+  missing_word: 'close: a word is missing (e.g. the article)',
+  typo: 'close: a small spelling slip',
+  unknown: 'not decidable by rules — judge it',
+};
+
 export function tutorContext(input: {
   item: TutorItem;
   hintsGiven: number;
   attempts: number;
-  ruleVerdict: 'correct' | 'close' | 'incorrect' | 'unknown';
+  ruleVerdict: RuleVerdict;
   mode: 'practice' | 'test' | 'help' | 'explain';
   explanation: string | null;
   learnerLevel: string;
@@ -91,7 +102,7 @@ export function tutorContext(input: {
     `SOLUTION: ${i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null ? `[${i.correct_choice}] ${i.choices[i.correct_choice]}` : i.answer}${i.unit ? ` ${i.unit}` : ''}`,
     ...(i.accepted_answers.length ? [`ALSO ACCEPTED: ${i.accepted_answers.join(' | ')}`] : []),
     `HINTS GIVEN: ${input.hintsGiven} · ATTEMPTS SO FAR: ${input.attempts}`,
-    `RULE CHECK: ${input.ruleVerdict === 'incorrect' ? 'the answer is WRONG' : input.ruleVerdict === 'correct' ? 'the answer is right' : input.ruleVerdict === 'close' ? 'close: right except accents' : 'not decidable by rules — judge it'}`,
+    `RULE CHECK: ${RULE_TEXT[input.ruleVerdict]}`,
   ];
   if (input.explanation) lines.push('', `EXPLANATION:\n${input.explanation}`);
   if (input.material) lines.push('', `STUDY MATERIAL:\n${input.material}`);
@@ -99,10 +110,7 @@ export function tutorContext(input: {
 }
 
 /** Server-side invariants over the model's judgement. */
-export function enforceTutorInvariants(
-  d: TutorDecision,
-  ruleVerdict: 'correct' | 'close' | 'incorrect' | 'unknown',
-): TutorDecision {
+export function enforceTutorInvariants(d: TutorDecision, ruleVerdict: RuleVerdict): TutorDecision {
   let verdict = d.verdict;
   if (d.intent !== 'answer') verdict = 'not_an_attempt';
   // The rules only say "wrong" to a real answer (a choice, a number): it is an attempt.
@@ -112,7 +120,7 @@ export function enforceTutorInvariants(
     verdict = 'incorrect';
   }
   // Accents missing is not fully right.
-  if (ruleVerdict === 'close' && verdict === 'correct') verdict = 'partially_correct';
+  if (NEAR_MISS.has(ruleVerdict) && verdict === 'correct') verdict = 'partially_correct';
   if (d.revealed_answer && (verdict === 'correct' || verdict === 'partially_correct')) {
     verdict = 'incorrect';
   }

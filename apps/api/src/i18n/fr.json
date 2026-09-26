@@ -27,6 +27,8 @@
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
     "cannot_check": "Je ne peux pas vérifier ça pour le moment. Tu peux regarder la solution et comparer toi-même.",
     "accents": "Presque – vérifie encore les accents.",
+    "missing_word": "Presque – il manque encore un mot. Regarde encore une fois.",
+    "typo": "Presque – ça s'écrit {{answer}}. Tape-le encore une fois.",
     "help_step": "Allons-y pas à pas : qu'est-ce qui est donné dans l'exercice, et qu'est-ce qu'on cherche ?",
     "help_solved": "Bravo – tu l'as trouvé tout seul !",
     "heard_retry": "Je ne t'ai pas bien entendu. Réessaie un peu plus fort et plus près du téléphone.",

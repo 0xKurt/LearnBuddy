@@ -27,6 +27,8 @@
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
     "cannot_check": "I can't check that right now. You can look at the solution and compare yourself.",
     "accents": "Almost – check the accents again.",
+    "missing_word": "Almost – a word is still missing. Take another look.",
+    "typo": "Almost – it's spelled {{answer}}. Type it once more.",
     "help_step": "Let's go step by step: what does the task give you, and what are you looking for?",
     "help_solved": "Great – you solved that yourself!",
     "heard_retry": "I couldn't hear you well. Try again a bit louder and closer to the phone.",

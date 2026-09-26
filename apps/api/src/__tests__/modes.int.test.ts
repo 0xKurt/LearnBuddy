@@ -363,7 +363,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(res.body).toMatchObject({ error: { details: { reason: 'not_usable' } } });
   });
 
-  it('asks typed vocabulary in both directions and treats missing accents as almost right', async () => {
+  it('asks typed vocabulary in both directions and checks near misses without a model', async () => {
     env.llm.script('explain', {
       json: {
         usable: true,
@@ -393,20 +393,37 @@ describe.skipIf(!dbReady)('learning modes', () => {
       ["l'élève", 'fr', 'de'],
       ['der Schüler', 'de', 'fr'],
     ]);
-    // German → French, typed without accents: the tutor hears "close" and it is never fully right.
-    env.llm.script('tutor', (req) => {
-      expect(ScriptedGateway.textOf(req)).toContain('close: right except accents');
-      return {
-        intent: 'answer',
-        verdict: 'correct',
-        reply: 'Fast – é!',
-        gave_hint: false,
-        revealed_answer: false,
-      };
-    });
-    const back = res.body.items[1]!.item;
-    const r = await answer(l, res.body, back.id, "l'eleve");
-    expect(r.body.verdict).toBe('partially_correct');
+    const [forth, back] = res.body.items.map((i) => i.item.id) as [string, string];
+    const tutorCalls = () => env.llm.callsFor('tutor').length;
+    const before = tutorCalls();
+
+    // German → French without accents: almost right, at once, never fully right.
+    const accents = await answer(l, res.body, back, "l'eleve");
+    expect(accents.body.verdict).toBe('partially_correct');
+    expect(accents.body.reply.text).toContain('Akzente');
+
+    // French → German without the article: almost right, the solution stays hidden.
+    const noArticle = await answer(l, res.body, forth, 'Schüler');
+    expect(noArticle.body.verdict).toBe('partially_correct');
+    expect(noArticle.body.reply.text).toContain('fehlt noch ein Wort');
+    expect(noArticle.body.reply.text).not.toContain('der Schüler');
+
+    // A slip: the spelling is shown, the question stays open — she types it herself.
+    const slip = await answer(l, res.body, forth, 'der Schühler');
+    expect(slip.body.verdict).toBe('partially_correct');
+    expect(slip.body.reply.text).toContain('der Schüler');
+    expect(slip.body.session.items.find((i) => i.item.id === forth)?.status).toBe('open');
+    expect(tutorCalls()).toBe(before); // none of this needed a model
+
+    // An answer the rules don't know goes to the tutor; judged right, the key learns it.
+    env.llm.script('tutor', tutor('Richtig!', { verdict: 'correct' }));
+    const synonym = await answer(l, res.body, forth, 'der Lernende');
+    expect(synonym.body.verdict).toBe('correct');
+    const key = await env.db.one<{ accepted_answers: string[] }>(
+      `select accepted_answers from items where id = $1`,
+      [forth],
+    );
+    expect(key.accepted_answers).toContain('der Lernende');
   });
 
   it('listens to a recording: word feedback, retry stays open, a replay is not judged twice', async () => {

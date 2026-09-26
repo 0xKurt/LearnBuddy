@@ -27,7 +27,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
-import { differentNumber, ruleCheck, type RuleVerdict } from './evaluate.js';
+import { differentNumber, NEAR_MISS, plainMath, ruleCheck, type RuleVerdict } from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
 import {
@@ -474,11 +474,28 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
-  } else if (session.mode === 'test' && (rule === 'incorrect' || rule === 'close')) {
+  } else if (NEAR_MISS.has(rule) && session.mode !== 'help') {
+    // A near miss needs no model: a fixed, kind answer at once. A slip shows the
+    // spelling and stays open, so she types it right herself (never in homework,
+    // which never shows the solution — there the tutor judges).
+    judged = {
+      verdict: 'partially_correct',
+      evaluatedBy: 'rule',
+      reply:
+        rule === 'typo'
+          ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
+          : t(
+              learner.locale,
+              rule === 'missing_word' ? 'practice.missing_word' : 'practice.accents',
+            ),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (session.mode === 'test' && rule === 'incorrect') {
     // A test only needs the judgement, and the rules already have it: no model
     // call (it would only write a hint the test replaces with a neutral word).
     judged = {
-      verdict: rule === 'close' ? 'partially_correct' : 'incorrect',
+      verdict: 'incorrect',
       evaluatedBy: 'rule',
       reply: '',
       gaveHint: false,
@@ -648,6 +665,22 @@ export async function answerItem(
          values ($1, $2, $3, $4, 'tutor', $5, $6, $7)`,
         [sessionId, learner.id, item.id, seq + 1, judged.reply, judged.gaveHint, judged.revealed],
       );
+      // The key learns: an answer the model judged right that the rules did not know
+      // is accepted by the rules next time — at once and without a model.
+      if (
+        judged.evaluatedBy === 'model' &&
+        judged.verdict === 'correct' &&
+        rule === 'unknown' &&
+        (item.kind === 'vocab' || item.kind === 'short') &&
+        session.mode !== 'help' &&
+        text.trim().length <= 80
+      ) {
+        await tx.query(
+          `update items set accepted_answers = array_append(accepted_answers, $3)
+            where id = $1 and learner_id = $2 and not ($3 = any(accepted_answers))`,
+          [item.id, learner.id, text.trim()],
+        );
+      }
       const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
       const attempts = si.attempts + (attempted ? 1 : 0);
       const hints = si.hints_used + (judged.gaveHint ? 1 : 0);

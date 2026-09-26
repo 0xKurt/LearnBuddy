@@ -305,7 +305,11 @@ selection already skips archived items) and rename the material (`PATCH /materia
 
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics). Answers are checked by rules where exactness is decidable (multiple choice,
-numbers with decimal comma and units, exact matches); otherwise the tutor model judges with a
+numbers with decimal comma and units, exact matches, and near misses on written answers — missing
+accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
+fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in
+homework). Answers the model judges right that the rules did not know are added to the item's
+accepted answers, so the rules know them next time; otherwise the tutor model judges with a
 structured decision, and the server enforces invariants (a non-attempt is never graded, a
 revealed answer never counts as right, a rule-checked wrong answer stays wrong). Without a model,
 nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced repetition (FSRS,
