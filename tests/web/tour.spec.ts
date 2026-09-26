@@ -158,6 +158,9 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   });
   // Read now, and a practice made from its one question: "1 Aufgabe", not "1 Aufgaben".
   await expect(page.getByText(/^1 Aufgabe · ca\. \d+ Min\.$/)).toBeVisible({ timeout: 15_000 });
+  // "Heute nicht": the practice steps aside without a trace of pressure.
+  await page.getByRole('button', { name: 'Heute nicht' }).click();
+  await expect(page.getByText('Übung bereit: Nomen und Verben')).toHaveCount(0);
   await openMenu(page, 'Mein Stoff');
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
@@ -234,4 +237,9 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await shot(page, '48-reset-link-invalid');
   await page.getByRole('button', { name: 'Zurück zur Anmeldung' }).click();
   await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
+  // "Passwort vergessen?": the same answer whether the address has an account or not.
+  await page.getByRole('radio', { name: 'Anmelden' }).click();
+  await page.getByLabel('E-Mail').fill(email);
+  await page.getByRole('button', { name: 'Passwort vergessen?' }).click();
+  await expect(page.getByText(/Wenn es ein Konto mit dieser Adresse gibt/)).toBeVisible();
 });

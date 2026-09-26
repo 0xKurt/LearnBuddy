@@ -93,13 +93,19 @@ export default function CaptureScreen() {
     setFailure(null);
   }
 
-  async function addPhotos(sources: string[]) {
+  /** `replace`: the photo a retake stands in for — same place, only once the new one is there. */
+  async function addPhotos(sources: string[], replace: string | null = null) {
     let failed = 0;
     for (const [i, source] of sources.entries()) {
       setPreparing({ current: i + 1, total: sources.length });
       try {
         const photo = await preparePhoto(source);
-        setPhotos((prev) => (prev.length < MAX_PHOTOS ? [...prev, photo.uri] : prev));
+        if (replace && i === 0) {
+          setPhotos((prev) => prev.map((p) => (p === replace ? photo.uri : p)));
+          setProblems(({ [replace]: _gone, ...rest }) => rest);
+        } else {
+          setPhotos((prev) => (prev.length < MAX_PHOTOS ? [...prev, photo.uri] : prev));
+        }
         if (photo.problems.length > 0)
           setProblems((prev) => ({ ...prev, [photo.uri]: photo.problems }));
         photosChanged();
@@ -111,8 +117,8 @@ export default function CaptureScreen() {
     if (failed > 0) toast.show(t('capture:error.prepare', { count: failed }), 'error');
   }
 
-  async function pick(source: 'camera' | 'library') {
-    if (picking.current || busy || room <= 0) return;
+  async function pick(source: 'camera' | 'library', replace: string | null = null) {
+    if (picking.current || busy || (room <= 0 && !replace)) return;
     picking.current = true;
     try {
       let result: ImagePicker.ImagePickerResult;
@@ -140,8 +146,12 @@ export default function CaptureScreen() {
         return;
       }
       if (result.canceled) return;
-      if (result.assets.length > room) toast.show(t('capture:limit', { max: MAX_PHOTOS }));
-      await addPhotos(result.assets.slice(0, room).map((a) => a.uri));
+      if (!replace && result.assets.length > room)
+        toast.show(t('capture:limit', { max: MAX_PHOTOS }));
+      await addPhotos(
+        result.assets.slice(0, replace ? 1 : room).map((a) => a.uri),
+        replace,
+      );
     } finally {
       picking.current = false;
     }
@@ -157,8 +167,8 @@ export default function CaptureScreen() {
   const review = photos.find((uri) => (problems[uri]?.length ?? 0) > 0 && !kept.has(uri)) ?? null;
 
   function retake(uri: string) {
-    remove(uri);
-    void pick('camera');
+    // The old photo stays until a new one is taken (cancelling keeps it), in its place.
+    void pick('camera', uri);
   }
 
   function failureText(err: unknown): string {

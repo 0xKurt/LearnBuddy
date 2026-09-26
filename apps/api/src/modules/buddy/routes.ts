@@ -86,9 +86,9 @@ buddyRoutes.post('/messages', async (c) => {
     return c.json(await result(outcome), outcome.status === 'processing' ? 202 : 200);
   }
   // Streamed: Buddy's reply while it is written, then the same result as above.
-  return streamSSE(
-    c,
-    async (stream) => {
+  return streamSSE(c, async (stream) => {
+    // Errors are answered here, as a code only: nothing internal reaches the app.
+    try {
       let sent = Promise.resolve();
       const outcome = await run((round, p) => {
         const event: ReplyStreamEvent = { round, ...p };
@@ -96,14 +96,13 @@ buddyRoutes.post('/messages', async (c) => {
       });
       await sent;
       await stream.writeSSE({ event: 'done', data: JSON.stringify(await result(outcome)) });
-    },
-    async (err, stream) => {
+    } catch (err) {
       await stream.writeSSE({
         event: 'error',
         data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),
       });
-    },
-  );
+    }
+  });
 });
 
 // ─────────────── explicit taps ───────────────

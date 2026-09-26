@@ -176,15 +176,18 @@ export default function BuddyScreen() {
   }
 
   async function enableContact(asAdult: boolean) {
-    if (asAdult && !(await requestAdmin())) return;
-    await act(async () => {
-      const next = await answerContactOptIn(true);
-      // The PIN was for this one step (docs/privacy.md §PIN gate).
+    try {
+      if (asAdult && !(await requestAdmin())) return;
+      await act(async () => {
+        const next = await answerContactOptIn(true);
+        // Ask for notification permission only now, when it has a purpose.
+        await registerDeviceForPush().catch(() => false);
+        return next;
+      });
+    } finally {
+      // The PIN was for this one step, also when it failed (docs/privacy.md §PIN gate).
       if (asAdult) clearAdminToken();
-      // Ask for notification permission only now, when it has a purpose.
-      await registerDeviceForPush().catch(() => false);
-      return next;
-    });
+    }
   }
 
   /**

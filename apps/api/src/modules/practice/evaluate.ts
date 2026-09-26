@@ -95,8 +95,10 @@ function closeEnough(actual: number, expected: number): boolean {
 export function choiceNamed(text: string, choices: readonly string[]): number | null {
   const norm = normalizeShortAnswer(plainMath(text));
   const options = choices.map((c) => normalizeShortAnswer(plainMath(c)));
-  const exact = options.indexOf(norm);
-  if (exact >= 0) return exact;
+  // Only a unique, non-empty option counts ("<", "=" normalise to nothing).
+  const exact = options.flatMap((o, i) => (o !== '' && o === norm ? [i] : []));
+  if (exact.length === 1) return exact[0]!;
+  if (exact.length > 1) return null;
   const letter = /^([a-z])[.)]?$/i.exec(text.trim());
   if (letter) {
     const i = letter[1]!.toLowerCase().charCodeAt(0) - 97;
@@ -104,7 +106,8 @@ export function choiceNamed(text: string, choices: readonly string[]): number | 
   }
   const first = options
     .map((o, i) => ({ o, i }))
-    .filter(({ o }) => o.length >= 3 && norm.startsWith(o) && /^\W/u.test(norm.slice(o.length)));
+    // Said first and then explained — never a longer number ("125,5" is not the option "125").
+    .filter(({ o }) => o.length >= 3 && norm.startsWith(o) && /^\s+\D/u.test(norm.slice(o.length)));
   return first.length === 1 ? first[0]!.i : null;
 }
 

@@ -73,8 +73,12 @@ export default function TalkScreen() {
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
 
+  /** Counts her turns: listening again makes any answer still arriving a thing of the past. */
+  const turnSeq = useRef(0);
+
   function listen(): void {
     if (!open.current) return;
+    turnSeq.current++;
     stopSpeaking();
     setProblem(null);
     setPhase('listening');
@@ -87,6 +91,9 @@ export default function TalkScreen() {
     setLive(null);
     setPhase('thinking');
     const id = newId();
+    const me = ++turnSeq.current;
+    // She spoke again (or left): this answer no longer drives the screen or the voice.
+    const stale = () => turnSeq.current !== me || !open.current;
     // Buddy's reply is read sentence by sentence while it is written — but only when
     // the answer changes nothing (the server says `speakable`); anything else is read
     // once it is stored (docs/architecture.md §Speed).
@@ -102,14 +109,14 @@ export default function TalkScreen() {
     let spokenEnd: ListenEnd | null = null;
     let final: MessageView | null = null;
     const goOn = () => {
-      if (!open.current || !final || !spokenEnd) return;
+      if (stale() || !final || !spokenEnd) return;
       // Read to the end: listen again — unless there is something to tap first.
       if (spokenEnd === 'done' && !hasCard(final)) listen();
       else setPhase((p) => (p === 'speaking' ? 'paused' : p));
     };
     try {
       const res = await sendMessageStreamed(text, id, null, (e) => {
-        if (!open.current) return;
+        if (stale()) return;
         if (e.round !== round) {
           // A new attempt replaces what was read of the last one.
           drop();
@@ -134,7 +141,10 @@ export default function TalkScreen() {
         cur.speaker.feed(e.text, e.done);
       });
       setHome(res.home);
-      if (!open.current) return;
+      if (stale()) {
+        drop();
+        return;
+      }
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
         drop();
@@ -168,7 +178,7 @@ export default function TalkScreen() {
       });
     } catch (err) {
       drop();
-      if (!open.current) return;
+      if (stale()) return;
       setLive(null);
       setProblem(messageFor(err));
       setPhase('paused');

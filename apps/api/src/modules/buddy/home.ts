@@ -79,9 +79,17 @@ export async function buildHome(
 async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<BuddyHome['working']> {
   // Her photos being read: also when another card is on top (a homework photo behind a
   // prepared practice) — the app follows the home closely while anything is working.
+  // Only while a reading job is really alive (a material left behind is set to failed by
+  // the scheduler), not archived, and like the card for at most two hours.
   const reading = await deps.db.maybeOne(
-    `select 1 from materials where learner_id = $1 and status in ('queued', 'processing') limit 1`,
-    [learnerId],
+    `select 1 from materials m
+      where m.learner_id = $1 and m.status in ('queued', 'processing') and m.archived_at is null
+        and m.created_at > $2::timestamptz - interval '2 hours'
+        and exists (select 1 from jobs j where j.kind = 'extract_material'
+                      and j.payload ->> 'material_id' = m.id::text
+                      and j.status in ('queued', 'running'))
+      limit 1`,
+    [learnerId, now],
   );
   if (reading) return 'material';
   const row = await deps.db.maybeOne<{ reason: string }>(

@@ -122,6 +122,32 @@ describe.skipIf(!dbReady)('endpoints outside the main journeys', () => {
     expect(stored.response).toBe('later');
   });
 
+  it('says Buddy is reading only while a sheet is really being read', async () => {
+    const created = await lena.api.post<{ material: { id: string }; uploads: { path: string }[] }>(
+      '/materials',
+      { client_request_id: '00000000-0000-4000-8000-00000000a001', photo_mimes: ['image/jpeg'] },
+    );
+    env.storage.put(created.body.uploads[0]!.path);
+    await lena.api.post(`/materials/${created.body.material.id}/submit`);
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
+    // Removed while it waits: nothing is being read any more (no endless "reading").
+    expect((await lena.api.delete(`/materials/${created.body.material.id}`)).status).toBeLessThan(
+      300,
+    );
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.working).toBeNull();
+    env.llm.byDefault('extraction', {
+      json: {
+        is_learning_material: false,
+        readable: true,
+        title: null,
+        subject: null,
+        extracted_text: '',
+        items: [],
+      },
+    });
+    await env.flushBackground();
+  });
+
   it('forgets this phone when she signs out; nobody else can remove her phone', async () => {
     const token = 'ExponentPushToken[lena-phone-0001]';
     expect((await lena.api.post('/buddy/push-tokens', { token, platform: 'ios' })).status).toBe(

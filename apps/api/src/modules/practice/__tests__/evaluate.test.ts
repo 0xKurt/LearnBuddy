@@ -142,5 +142,10 @@ describe('a spoken or typed choice', () => {
     expect(choiceNamed('nicht die brüche gleichnamig machen', choices)).toBeNull();
     expect(choiceNamed('d', choices)).toBeNull();
     expect(choiceNamed('die', choices)).toBeNull();
+    // A longer number is not the option (review finding).
+    expect(choiceNamed('125,5', ['125', '130', '135'])).toBeNull();
+    expect(choiceNamed('100.000', ['100', '1000'])).toBeNull();
+    // Options that are only symbols never swallow an answer made of punctuation.
+    expect(choiceNamed('?', ['<', '>', '='])).toBeNull();
   });
 });

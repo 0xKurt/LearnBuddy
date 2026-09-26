@@ -149,6 +149,16 @@ describe.skipIf(!dbReady)('streamed replies', () => {
     expect(again.done?.status).toBe('done');
   });
 
+  it('ends an unexpected failure with a code only, never the internal message', async () => {
+    env.llm.script('buddy_turn', {
+      error: new LlmError('unavailable', 'connection to db-internal-7 lost: secret detail'),
+    });
+    const s = await stream(env, l, 'Hallo nochmal');
+    const raw = JSON.stringify(s);
+    expect(raw).not.toContain('secret detail');
+    expect(s.done?.status ?? s.error?.code).toBeTruthy();
+  });
+
   it('refuses a stream without a valid learner or body before streaming', async () => {
     const res = await env.app.request('/v1/buddy/messages', {
       method: 'POST',

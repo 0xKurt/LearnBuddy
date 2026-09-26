@@ -716,7 +716,7 @@ async function runSetContact(
   const s = ctx.settings;
   const quietStart = a.quiet_start ?? s.quiet_start;
   // Quiet hours may only grow: every minute that was quiet stays quiet.
-  for (let m = 0; m < 1440; m += 5) {
+  for (let m = 0; m < 1440; m++) {
     if (inWindow(m, s.quiet_start, s.quiet_end) && !inWindow(m, quietStart, s.quiet_end)) {
       throw new ToolRejection(
         `quiet hours can only start earlier than ${s.quiet_start} — later means more contact`,
