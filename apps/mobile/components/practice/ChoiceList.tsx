@@ -18,6 +18,7 @@ import { Btn } from '../lb/Btn.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
+import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { BottomBar } from './BottomBar.js';
 
@@ -33,7 +34,15 @@ type SpokenChoiceProps = {
 /** Voice mode: the pinned bar under the options – say the answer instead of tapping it. */
 export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: SpokenChoiceProps) {
   const { t } = useTranslation('common');
-  const voice = useVoiceInput({ purpose: 'answer', lang: null, context: prompt, onText });
+  // Hands-free: listening ends when she pauses (on the phone), and starts again by itself.
+  const voice = useVoiceInput({
+    purpose: 'answer',
+    lang: null,
+    context: prompt,
+    onText,
+    untilPause: true,
+  });
+  useHandsFreeMic(voice, disabled);
   return (
     <BottomBar>
       <MicStatus voice={voice} />

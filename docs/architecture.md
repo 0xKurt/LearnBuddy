@@ -414,10 +414,16 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   answers like "drei Viertel" are heard as 3/4). Live checks with espeak-ng recordings
   (`evals/voice/run.ts`): 5/6 with context; the lite model invented words and is not used. The
   recording is never stored.
-- **Voice mode** (app): Buddy's replies, questions and feedback are read aloud with the
-  device's voices (`expo-speech`); she answers with the mic. The microphone never starts by
-  itself. This is turn by turn (tap, speak, listen) — a live, interruptible conversation (e.g.
-  a realtime audio API) is not built.
+- **Voice mode** (app): Buddy's replies, questions, an explanation and feedback are read aloud
+  with the device's voices (`expo-speech`); she answers with the mic — in the chat, in every
+  practice mode, and in the sheet where she names a topic (`TopicSheet`, which starts at once in
+  voice mode). **Practice is hands-free** after her first tap on a mic there
+  (`lib/speech/handsFree.ts`): question read → the mic listens (ends by itself when she pauses, on
+  the phone) → her answer or question is checked → the feedback is read → the mic listens again,
+  or, once the question is closed, the next one comes. Typing, switching voice mode off or leaving
+  ends the loop; the microphone never starts before her own tap on that screen. Pronunciation
+  recordings stay tap by tap. Buddy's chat replies stream and are read sentence by sentence
+  (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
   is read aloud → Buddy listens again. On the phone listening ends by itself when she pauses

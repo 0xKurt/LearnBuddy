@@ -46,9 +46,10 @@
     },
     "mode": "Modo voz",
     "mode_hint": "Buddy te lee en voz alta y tú respondes con el micro.",
-    "mode_on": "Te leo en voz alta – responde con el micro.",
+    "mode_on": "Te leo en voz alta. Toca el micro una vez – luego vuelvo a escuchar solo.",
     "read_again": "Leer otra vez",
     "say_it": "Toca el micro y dilo sin más.",
-    "or_say": "O di tu respuesta."
+    "or_say": "O di tu respuesta.",
+    "topic": "Decirlo en vez de escribirlo"
   }
 }

@@ -78,15 +78,19 @@ export type SpokenPart = { text: string; lang: string };
 /**
  * Reads several parts one after another, each in its own language (an
  * instruction in the app language, then the sentence in French). Stopping,
- * or reading something else, ends the whole sequence.
+ * or reading something else, ends the whole sequence; onEnd says how it ended.
  */
-export function speakInOrder(parts: readonly SpokenPart[]): void {
+export function speakInOrder(parts: readonly SpokenPart[], onEnd?: (why: ListenEnd) => void): void {
   const rest = parts.filter((p) => p.text.trim().length > 0);
   const first = rest[0];
-  if (!first) return;
+  if (!first) {
+    onEnd?.('done');
+    return;
+  }
   void speak(first.text, first.lang, {
     onEnd: (why) => {
-      if (why === 'done') speakInOrder(rest.slice(1));
+      if (why === 'done') speakInOrder(rest.slice(1), onEnd);
+      else onEnd?.(why);
     },
   });
 }

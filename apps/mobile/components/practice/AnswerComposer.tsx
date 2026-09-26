@@ -10,7 +10,8 @@
 // The mic next to the field writes what she said into it (numbers and
 // fractions as such: "drei Viertel" → "3/4"), so she can check it. In voice
 // mode the spoken answer is checked right away and the mic is the big main
-// control; "Prüfen" and the field stay for typing.
+// control; "Prüfen" and the field stay for typing. After her first tap on the
+// mic in voice mode the loop listens again by itself (useHandsFreeMic).
 //
 // Under the field a live preview shows typed math set properly ("3/4" as a
 // fraction), once there is math worth drawing (components/math/TypedMathPreview).
@@ -22,6 +23,7 @@ import { Platform, Text, TextInput, View, type KeyboardTypeOptions } from 'react
 
 import { hasMath } from '../../lib/math/parse.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
+import { useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -30,6 +32,7 @@ import { Btn } from '../lb/Btn.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { TypedMathPreview } from '../math/TypedMathPreview.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
+import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { BottomBar } from './BottomBar.js';
 
@@ -107,7 +110,10 @@ export function AnswerComposer({
       onChange(next);
       if (useVoiceMode.getState().on && !latest.current.disabled) onCheck(next.trim());
     },
+    // Hands-free (voice mode): on the phone listening ends by itself when she pauses.
+    untilPause: voiceMode,
   });
+  useHandsFreeMic(voice, disabled);
   // iOS number pads lack minus, comma and letters (units); this one has them all.
   const keyboardType: KeyboardTypeOptions =
     kind === 'numeric' && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
@@ -136,7 +142,11 @@ export function AnswerComposer({
         <TextInput
           ref={inputRef}
           value={value}
-          onChangeText={onChange}
+          onChangeText={(typed) => {
+            // Typing ends the hands-free loop: she answers with the keyboard now.
+            useHandsFree.getState().disarm();
+            onChange(typed);
+          }}
           selection={forced}
           onSelectionChange={(e) => {
             selection.current = e.nativeEvent.selection;

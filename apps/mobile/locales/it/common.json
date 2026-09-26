@@ -46,9 +46,10 @@
     },
     "mode": "Modalità voce",
     "mode_hint": "Buddy ti legge ad alta voce e tu rispondi con il microfono.",
-    "mode_on": "Ti leggo ad alta voce – rispondi con il microfono.",
+    "mode_on": "Ti leggo ad alta voce. Tocca il microfono una volta – poi ascolto di nuovo da solo.",
     "read_again": "Rileggi",
     "say_it": "Tocca il microfono e dillo e basta.",
-    "or_say": "Oppure di' la tua risposta."
+    "or_say": "Oppure di' la tua risposta.",
+    "topic": "Dillo invece di scriverlo"
   }
 }

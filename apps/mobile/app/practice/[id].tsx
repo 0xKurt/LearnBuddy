@@ -77,6 +77,7 @@ import type { SpokenWords } from '../../lib/math/speak.js';
 import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/speech/listen.js';
 import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
+import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -195,23 +196,52 @@ export default function PracticeScreen() {
     !introRead &&
     !(session.items.some((i) => i.status !== 'open') || session.turns.length > 0);
   const toRead = onScreen && onScreen.status === 'open' && !introWaiting ? onScreen.item : null;
-  const readQuestion = (item: ItemView) => speakInOrder(questionParts(item, words, t));
+  // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
+  // to the end lets the mic listen again, and a closed question moves on by itself.
+  const readQuestion = (item: ItemView) =>
+    speakInOrder(questionParts(item, words, t), (why) => {
+      if (why === 'done') useHandsFree.getState().listenNow();
+    });
+  // Voice mode: the explanation is read aloud first (then "Verstanden – frag mich!").
+  const introText = introWaiting ? (session?.intro?.trim() ?? '') : '';
+  useEffect(() => {
+    if (voiceOn && introText)
+      speakInOrder([{ text: spokenText(introText, words), lang: currentLocale() }]);
+  }, [voiceOn, introText]);
   useEffect(() => {
     if (voiceOn && toRead) readQuestion(toRead);
     // Only a new question (or switching voice mode on) reads again; "Nochmal vorlesen" repeats it.
   }, [voiceOn, toRead?.id]);
 
-  // Leaving the screen ends whatever is being read.
-  useFocusEffect(useCallback(() => () => stopListening(), []));
+  // Leaving the screen ends whatever is being read, and the hands-free loop.
+  useFocusEffect(
+    useCallback(() => {
+      useHandsFree.getState().disarm();
+      return () => {
+        useHandsFree.getState().disarm();
+        stopListening();
+      };
+    }, []),
+  );
+  useEffect(() => {
+    if (!voiceOn) useHandsFree.getState().disarm();
+  }, [voiceOn]);
 
   /** Voice mode: Buddy's reaction after an answer, with the verdict word first. */
-  function readFeedback(res: AnswerResponse): void {
+  function readFeedback(res: AnswerResponse, itemId: string): void {
     if (!useVoiceMode.getState().on) return;
     // A running test says no verdict (the result comes at the end).
     const testing = res.session.mode === 'test' && res.session.status === 'active';
     const key = testing ? null : verdictWordKey(res.verdict);
     const text = feedbackReadText(key ? t(key) : null, res.reply.text, words);
-    speakInOrder([{ text, lang: currentLocale() }]);
+    speakInOrder([{ text, lang: currentLocale() }], (why) => {
+      if (why !== 'done') return;
+      const hands = useHandsFree.getState();
+      const then = afterFeedback(res.session.items, itemId, hands.armed);
+      if (then === 'listen') hands.listenNow();
+      // Closed: on to the next open question, which is read and then listened for.
+      if (then === 'next') setTimeout(() => nextRef.current(), 400);
+    });
   }
 
   const nothingOpen =
@@ -288,7 +318,7 @@ export default function PracticeScreen() {
       if (answerText !== null) setText((current) => (current.trim() === answerText ? '' : current));
       if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
         Keyboard.dismiss();
-      if (useVoiceMode.getState().on) readFeedback(res);
+      if (useVoiceMode.getState().on) readFeedback(res, itemId);
       else AccessibilityInfo.announceForAccessibility(res.reply.text);
     } catch (err) {
       // The typed answer stays in the field, so trying again is one tap.
@@ -308,7 +338,7 @@ export default function PracticeScreen() {
   async function spoke(itemId: string, res: AnswerResponse): Promise<void> {
     setPinnedId(itemId);
     await store(res.session);
-    readFeedback(res);
+    readFeedback(res, itemId);
   }
 
   async function reveal(itemId: string): Promise<void> {
@@ -339,7 +369,7 @@ export default function PracticeScreen() {
     try {
       const res = await hintItem(id, itemId);
       await store(res.session);
-      if (useVoiceMode.getState().on) readFeedback(res);
+      if (useVoiceMode.getState().on) readFeedback(res, itemId);
     } catch (err) {
       toast.show(messageFor(err), 'error');
       if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
@@ -374,6 +404,8 @@ export default function PracticeScreen() {
     }
   }
 
+  const nextRef = useRef(() => undefined as void);
+  nextRef.current = () => next();
   function next(): void {
     setPinnedId(null);
     setText('');

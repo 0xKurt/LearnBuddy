@@ -120,7 +120,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
   await voiceSwitch.click();
   await expect(voiceSwitch).toHaveAttribute('aria-checked', 'true');
-  const explained = page.getByText('Ich lese dir vor – antworte mit dem Mikro.');
+  const explained = page.getByText('Ich lese dir vor. Tipp einmal aufs Mikro', { exact: false });
   await expect(explained).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nochmal vorlesen' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(1);

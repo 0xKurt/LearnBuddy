@@ -46,9 +46,10 @@
     },
     "mode": "Mode vocal",
     "mode_hint": "Buddy te lit les textes, et tu réponds avec le micro.",
-    "mode_on": "Je te lis tout – réponds avec le micro.",
+    "mode_on": "Je te lis tout. Touche le micro une fois – ensuite j’écoute à nouveau tout seul.",
     "read_again": "Relire",
     "say_it": "Touche le micro et dis-le simplement.",
-    "or_say": "Ou dis ta réponse."
+    "or_say": "Ou dis ta réponse.",
+    "topic": "Le dire au lieu de l’écrire"
   }
 }

@@ -46,9 +46,10 @@
     },
     "mode": "Sprachmodus",
     "mode_hint": "Buddy liest dir vor, und du antwortest mit dem Mikro.",
-    "mode_on": "Ich lese dir vor – antworte mit dem Mikro.",
+    "mode_on": "Ich lese dir vor. Tipp einmal aufs Mikro – danach höre ich von selbst wieder zu.",
     "read_again": "Nochmal vorlesen",
     "say_it": "Tipp aufs Mikro und sag es einfach.",
-    "or_say": "Oder sag deine Antwort."
+    "or_say": "Oder sag deine Antwort.",
+    "topic": "Sagen statt tippen"
   }
 }
