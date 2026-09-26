@@ -98,3 +98,31 @@ export function ruleCheck(
   }
   return 'unknown';
 }
+
+/** A plain number or simple fraction ("3", "-0,75", "3/4", "\\frac{3}{4}"); null for anything else. */
+function plainNumber(s: string): number | null {
+  // Spaces only around the number: "3 1/2" is a mixed number, not 31/2.
+  const x = plainMath(s).trim();
+  const m = /^(-?\d+(?:[.,]\d+)?)(?:\/(\d+(?:[.,]\d+)?))?$/.exec(x);
+  if (!m) return null;
+  // "1.000" / "1,000" could be a thousand or one: not decidable.
+  if (/[.,]\d{3}$/.test(m[1]!) || (m[2] && /[.,]\d{3}$/.test(m[2]))) return null;
+  const num = Number(m[1]!.replace(',', '.'));
+  const den = m[2] ? Number(m[2].replace(',', '.')) : 1;
+  return den === 0 ? null : num / den;
+}
+
+/**
+ * A plain number whose value differs from every expected number: wrong for
+ * sure. Only for tests (one answer per question) — in homework "12" may be a
+ * right step towards 11/12. The same value in another form ("4/8" for "1/2")
+ * is not decided here: it may still be wrong (not reduced).
+ */
+export function differentNumber(item: ItemForCheck, text: string): boolean {
+  if (item.kind !== 'short' && item.kind !== 'formula' && item.kind !== 'numeric') return false;
+  const given = plainNumber(text);
+  if (given === null) return false;
+  const expected = [item.answer, ...item.accepted_answers].map(plainNumber);
+  if (expected.length === 0 || expected.some((v) => v === null)) return false;
+  return expected.every((v) => !closeEnough(given, v!));
+}

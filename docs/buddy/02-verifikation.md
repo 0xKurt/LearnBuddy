@@ -100,6 +100,11 @@ echten Geräten (Kamera, Tastatur, Push, Bildschirmleser).
   - `apps/api/evals/speak/run.ts` (Aufnahmen mit espeak-ng): falsches Wort wird verlässlich
     erkannt, starker deutscher Akzent in 2 von 3 Läufen; eine korrekte Computerstimme wird
     teils als „fast“ bewertet. **Aussprache-Bewertung ist eine KI-Einschätzung, keine Messung.**
-    Das ist kein statistischer Beleg.
+    Das ist kein statistischer Beleg. Ohne zusätzliches Nachdenken (`pronounce.v2.1`, je 3 Läufe):
+    halb so lange (≈ 3,8 s statt ≈ 8 s pro Satz), falsches Wort 3/3 statt 2/3 erkannt, korrekte
+    Stimme 2/3 statt 1/3 als „gut“; deutsche Aussprache in beiden Varianten nur als „fast“.
+  - `apps/api/evals/speed/run.ts`: Wartezeit und Kosten jedes typischen Schritts gegen das echte
+    Modell (Zahlen in `docs/architecture.md` §Speed). Buddy ohne Nachdenken: 18/22 statt 20/22
+    Fälle, darunter eine im Chat gelöste Hausaufgabe — das Nachdenken bleibt.
 - **Push auf echten Geräten** (Expo, APNs/FCM) und die **rechtliche Prüfung** des Push-Anbieters.
 - **Supabase Auth/Storage und pg_cron** auf einem gehosteten Projekt.

@@ -27,7 +27,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
-import { ruleCheck, type RuleVerdict } from './evaluate.js';
+import { differentNumber, ruleCheck, type RuleVerdict } from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
 import {
@@ -465,6 +465,19 @@ export async function answerItem(
         learner.locale,
         session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
       ),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (
+    session.mode === 'test' &&
+    (rule === 'incorrect' || rule === 'close' || differentNumber(item, text))
+  ) {
+    // A test only needs the judgement, and the rules already have it: no model
+    // call (it would only write a hint the test replaces with a neutral word).
+    judged = {
+      verdict: rule === 'close' ? 'partially_correct' : 'incorrect',
+      evaluatedBy: 'rule',
+      reply: '',
       gaveHint: false,
       revealed: false,
     };

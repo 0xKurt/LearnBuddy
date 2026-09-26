@@ -239,6 +239,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
             topic: 'Begriffe',
           }),
           item({ prompt: 'Kürze 4/8', answer: '1/2', topic: 'Kürzen' }),
+          item({ prompt: 'Kürze 6/8', answer: '$\\frac{3}{4}$', topic: 'Kürzen' }),
           item({ kind: 'speak', prompt: 'nicht im Test', answer: 'x', lang: 'de' }),
         ],
       };
@@ -252,12 +253,14 @@ describe.skipIf(!dbReady)('learning modes', () => {
     ).body;
     expect(s.mode).toBe('test');
     expect(s.reveal_allowed).toBe(false);
-    expect(s.items.map((i) => i.item.kind)).toEqual(['numeric', 'short', 'short']);
-    const [a, b, c] = s.items.map((i) => i.item.id) as [string, string, string];
+    expect(s.items.map((i) => i.item.kind)).toEqual(['numeric', 'short', 'short', 'short']);
+    const [a, b, c, d] = s.items.map((i) => i.item.id) as [string, string, string, string];
 
-    // Wrong by the rules: closed at once, a neutral reply, the answer stays hidden.
-    env.llm.script('tutor', tutor('Fast! Denk an den gemeinsamen Nenner 4.'));
+    // Wrong by the rules: closed at once, a neutral reply, the answer stays hidden —
+    // and no model call: the rules already have the judgement (fast, free).
+    const tutorCalls = env.llm.callsFor('tutor').length;
     const wrong = await answer(l, s, a, '0,5');
+    expect(env.llm.callsFor('tutor')).toHaveLength(tutorCalls);
     expect(wrong.body.verdict).toBe('incorrect');
     expect(wrong.body.reply.text).toBe("Notiert – weiter geht's.");
     const closed = wrong.body.session.items.find((i) => i.item.id === a)!;
@@ -287,6 +290,13 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(miss.body.reply.text).toBe("Notiert – weiter geht's.");
     expect(miss.body.session.items.find((i) => i.item.id === b)?.status).toBe('missed');
 
+    // A plain number with another value is wrong for sure, even as a short answer: no model call.
+    const before = env.llm.callsFor('tutor').length;
+    const fraction = await answer(l, s, d, '3/8');
+    expect(fraction.body.verdict).toBe('incorrect');
+    expect(fraction.body.reply.text).toBe("Notiert – weiter geht's.");
+    expect(env.llm.callsFor('tutor')).toHaveLength(before);
+
     // Skipping is possible, but shows nothing while the test runs.
     const skipped = await l.api.post<SessionView>(`/practice/sessions/${s.id}/reveal`, {
       item_id: c,
@@ -304,7 +314,12 @@ describe.skipIf(!dbReady)('learning modes', () => {
     const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`, {});
     await env.flushBackground();
     expect(done.body.reveal_allowed).toBe(true);
-    expect(done.body.items.map((i) => i.answer)).toEqual(['0.75', 'Nenner', '1/2']);
+    expect(done.body.items.map((i) => i.answer)).toEqual([
+      '0.75',
+      'Nenner',
+      '1/2',
+      '$\\frac{3}{4}$',
+    ]);
     expect(done.body.summary?.shaky_topics.sort()).toEqual(['Addieren', 'Begriffe', 'Kürzen']);
     // A test is not practice: no spaced-repetition state was written.
     const fsrs = await env.db.query(`select 1 from item_states where learner_id = $1`, [

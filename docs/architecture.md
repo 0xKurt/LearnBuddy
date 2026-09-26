@@ -224,7 +224,29 @@ An event never bypasses the contact rules.
 zod. `VertexGateway` (Gemini, `europe-west4`) with explicit output-token cap, thinking budget and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
-tokens, cost and outcome — never with prompt or answer text.
+tokens, cost, latency and outcome — never with prompt or answer text.
+
+### Speed
+
+Waiting kills practice. Budgets (end to end, measured in process by `apps/api/evals/speed/run.ts`
+against the live model; a deployed API adds network and possibly a cold start):
+an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that follow:
+
+- What code can decide, code decides at once, without a model call: a right answer by the rules
+  (multiple choice, numbers, exact matches), and in a test also a wrong one — including a plain
+  number or fraction with another value as a short answer (`differentNumber`; not in homework,
+  where "12" may be a right step). A test needs only the judgement. Fast and free.
+- A model call is only as slow as it must be: thinking budget only where it measurably helps.
+  Buddy's turns keep 512 (without: 18/22 instead of 20/22 eval cases, among them solving
+  homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
+  twice as fast, no worse).
+- Anything that adds a model call to a step Lena waits on needs a measurement first.
+
+Measured baseline (median of 3 rounds, 2026-09-26): rule-decided answers 10–25 ms; answers the
+model judges 0.7–1.6 s; Buddy's replies 1.7–3.9 s (one outlier 10 s); speech to text 1.1 s;
+pronunciation 6 s (before dropping its thinking budget, 3–4 s after); preparing a practice
+2.5–6 s (Buddy says so meanwhile). Model cost per step: $0.0003–0.0005 for a judged answer,
+$0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
