@@ -13,6 +13,7 @@ const VOICE_LOCALE: Record<string, string> = {
   fr: 'fr-FR',
   es: 'es-ES',
   it: 'it-IT',
+  ru: 'ru-RU',
 };
 
 /** "fr", "FR", "fr-CA", "fr_FR" → "fr"; null for nothing usable. */

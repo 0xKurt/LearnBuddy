@@ -14,6 +14,7 @@ describe('voiceLocale', () => {
     expect(voiceLocale('fr')).toBe('fr-FR');
     expect(voiceLocale('en')).toBe('en-GB');
     expect(voiceLocale('es')).toBe('es-ES');
+    expect(voiceLocale('ru')).toBe('ru-RU');
     expect(voiceLocale('it')).toBe('it-IT');
     expect(voiceLocale('de')).toBe('de-DE');
     expect(voiceLocale('FR')).toBe('fr-FR');
