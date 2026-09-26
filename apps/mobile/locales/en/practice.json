@@ -12,6 +12,8 @@
   },
   "check": "Check",
   "show_solution": "Show solution",
+  "hint": "Hint",
+  "hint_label": "Get a hint",
   "choice_tried": "Already tried",
   "thread": {
     "you": "You",

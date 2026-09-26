@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { NEAR_MISS, type RuleVerdict } from './evaluate.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.1';
+export const TUTOR_PROMPT_VERSION = 'tutor.v3.2';
 
 export const TutorDecision = z.object({
   intent: z
@@ -44,7 +44,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
   - "partially_correct": name what is right, then nudge toward what is missing without giving it away.
   - "incorrect": stay warm and give the next hint.
 - intent "help_request" (asking for a hint, "I don't understand the question"), "no_answer" ("don't know", empty), "question" or "off_topic": verdict "not_an_attempt". Help them: explain the question or give the next hint; for off-topic, steer back kindly.
-- Hints get more specific step by step. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
+- Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
 - If a RULE CHECK says the answer is wrong, it is wrong.
 - Stay within the STUDY MATERIAL and the question; don't introduce facts that aren't there.
 - Tone: warm, calm, short (1–3 sentences), like a kind older sibling. Never "Falsch!". Adapt to the learner's age and level. Use the learner's language.
@@ -82,6 +82,8 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
 export function tutorContext(input: {
   item: TutorItem;
   hintsGiven: number;
+  /** Hints written when the question was prepared; the next one is preparedHints[hintsGiven]. */
+  preparedHints?: string[];
   attempts: number;
   ruleVerdict: RuleVerdict;
   mode: 'practice' | 'test' | 'help' | 'explain';
@@ -104,6 +106,14 @@ export function tutorContext(input: {
     `HINTS GIVEN: ${input.hintsGiven} · ATTEMPTS SO FAR: ${input.attempts}`,
     `RULE CHECK: ${RULE_TEXT[input.ruleVerdict]}`,
   ];
+  const prepared = input.preparedHints ?? [];
+  if (prepared.length) {
+    lines.push(
+      '',
+      `PREPARED HINTS (the next one to give is #${Math.min(input.hintsGiven + 1, prepared.length)}; say it in your words, fitted to the answer; never skip ahead, never repeat an earlier one):`,
+      ...prepared.map((h, n) => `${n + 1}. ${h}`),
+    );
+  }
   if (input.explanation) lines.push('', `EXPLANATION:\n${input.explanation}`);
   if (input.material) lines.push('', `STUDY MATERIAL:\n${input.material}`);
   return lines.join('\n');
@@ -146,10 +156,19 @@ export function givesAwayHomework(d: TutorDecision, solution: string, task: stri
   if (d.revealed_answer) return true;
   // Confirming what the learner worked out themselves is the point, not a give-away.
   if (d.verdict === 'correct') return false;
+  return mentionsSolution(d.reply, solution, task);
+}
+
+/**
+ * Does a text contain the solution (any math notation)? A solution that is a single
+ * short word or number counts only as a separate token that is not already part of
+ * the task. Used for homework replies, prepared hints and early tutor replies.
+ */
+export function mentionsSolution(text: string, solution: string, task: string): boolean {
   const sol = mathNorm(solution);
   if (!sol) return false;
   const simple = /^[\p{L}\p{N}]+$/u.test(sol) && sol.length < 4;
-  if (!simple) return !mathNorm(task).includes(sol) && mathNorm(d.reply).includes(sol);
+  if (!simple) return !mathNorm(task).includes(sol) && mathNorm(text).includes(sol);
   const words = (x: string) =>
     new Set(
       x
@@ -157,7 +176,7 @@ export function givesAwayHomework(d: TutorDecision, solution: string, task: stri
         .split(/[^\p{L}\p{N}]+/u)
         .filter(Boolean),
     );
-  return !words(task).has(sol) && words(d.reply).has(sol);
+  return !words(task).has(sol) && words(text).has(sol);
 }
 
 /**

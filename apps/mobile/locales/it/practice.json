@@ -12,6 +12,8 @@
   },
   "check": "Controlla",
   "show_solution": "Mostra la soluzione",
+  "hint": "Indizio",
+  "hint_label": "Ricevere un indizio",
   "choice_tried": "Già provata",
   "thread": {
     "you": "Tu",

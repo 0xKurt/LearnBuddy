@@ -200,6 +200,12 @@ export const revealItem = (id: string, itemId: string) =>
     body: { item_id: itemId },
     schema: SessionView,
   });
+/** "Tipp": the next prepared hint, at once (no model); 409 when none is left. */
+export const hintItem = (id: string, itemId: string) =>
+  request('POST', `/practice/sessions/${id}/hint`, {
+    body: { client_turn_id: newId(), item_id: itemId },
+    schema: AnswerResponse,
+  });
 /** "Frage passt nicht": skipped here, never asked again. */
 export const flagItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/items/${itemId}/flag`, { schema: SessionView });

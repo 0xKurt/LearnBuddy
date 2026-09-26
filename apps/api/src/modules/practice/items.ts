@@ -11,6 +11,7 @@ import { compileExpression } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
+import { mentionsSolution } from './tutor.js';
 
 export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs.`;
 
@@ -55,8 +56,32 @@ export const ItemDraft = z.object({
     .describe('vocab: language of the answer; speak: language to say it in; else null'),
   figure: Figure.nullable().default(null),
   source_excerpt: z.string().trim().max(300).nullable(),
+  hints: z
+    .array(z.string().trim().min(1).max(300))
+    .max(3)
+    .default([])
+    .describe(
+      '2–3 hints, each more specific than the one before: what is asked → which rule or idea → the first step. Never the answer itself. Empty for vocab and speak.',
+    ),
+  worked_solution: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1500)
+    .nullable()
+    .default(null)
+    .describe(
+      'The solution explained step by step in 2–5 short sentences, shown after the third wrong try. null for vocab and speak.',
+    ),
 });
 export type ItemDraft = z.infer<typeof ItemDraft>;
+
+/** The solution as a learner would see it (a choice's text for multiple choice). */
+function solutionText(it: ItemDraft): string {
+  return it.kind === 'multiple_choice' && it.choices && it.correct_choice !== null
+    ? (it.choices[it.correct_choice] ?? it.answer)
+    : it.answer;
+}
 
 /** A figure the app can really draw, or null (a broken figure never costs the question). */
 function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
@@ -112,9 +137,14 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
     if (it.kind === 'multiple_choice') {
       if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
       if (it.correct_choice >= it.choices.length) continue;
+      it.hints = it.hints.filter((h) => !mentionsSolution(h, solutionText(it), it.prompt));
       out.push(it);
       continue;
     }
+    // Help must never give the answer away: a prepared hint that contains it is dropped.
+    const leaks = (h: string) =>
+      [solutionText(it), ...it.accepted_answers].some((sol) => mentionsSolution(h, sol, it.prompt));
+    it.hints = it.hints.filter((h) => !leaks(h));
     const plain = { ...it, choices: null, correct_choice: null };
     if (it.kind === 'vocab') {
       if (!it.lang || !it.prompt_lang || it.lang === it.prompt_lang) continue;
@@ -144,8 +174,9 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
   const insert = async (it: ItemDraft) => {
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
-                          choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) returning id`,
+                          choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
+                          hints, worked_solution)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -164,6 +195,8 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
         it.lang,
         it.prompt_lang,
         it.figure ? JSON.stringify(it.figure) : null,
+        it.hints,
+        it.worked_solution,
       ],
     );
     ids.push(row.id);
@@ -181,6 +214,9 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
         accepted_answers: [],
         prompt_lang: it.lang,
         lang: it.prompt_lang,
+        // Hints were written for the first direction.
+        hints: [],
+        worked_solution: null,
       });
     }
   }

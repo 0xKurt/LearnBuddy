@@ -316,6 +316,18 @@ nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced 
 no short-term steps) once per session: first try → Good, with help → Hard, revealed → Again.
 Finishing records evidence on Buddy's step (only if something was answered) and wakes Buddy.
 
+**Hint ladder** (migration `0008_item_hints.sql`, practice and explanations only). When a question is
+prepared, the model also writes 2–3 hints (what is asked → which rule → the first step) and the
+solution explained step by step; a hint that contains the solution is dropped by code. While
+practising: a rule-decided wrong answer gets the next prepared hint at once (no model), the "Tipp"
+button (`POST /practice/sessions/:id/hint`, idempotent, 409 when none is left, never the hints
+themselves in the view — only `hints_left`) does the same. The tutor model, when it must judge,
+sees the prepared hints; a reply that gives the solution away before the second hint is replaced
+by the prepared hint, without a second call. After the third wrong try (`REVEAL_AFTER_MISSES`), or
+a request for help after the last hint, the worked solution is shown and the question counts as
+revealed (FSRS brings it back soon). Tests give no hints; homework keeps its own rules (never the
+solution).
+
 "Frage passt nicht" (`POST /practice/sessions/:id/items/:itemId/flag`, a quiet button and a
 confirm sheet): the question is archived for future practice and, if still open, closed here as
 `skipped` with `session_items.flagged_at` (migration `0006_item_flags.sql`) — no FSRS review,

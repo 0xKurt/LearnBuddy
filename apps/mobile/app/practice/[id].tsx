@@ -63,7 +63,13 @@ import {
 } from '../../components/practice/SpeakPanel.js';
 import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
 import { ApiError, newId } from '../../lib/api/client.js';
-import { answerItem, finishSession, flagItem, revealItem } from '../../lib/api/endpoints.js';
+import {
+  answerItem,
+  finishSession,
+  flagItem,
+  hintItem,
+  revealItem,
+} from '../../lib/api/endpoints.js';
 import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
@@ -322,6 +328,25 @@ export default function PracticeScreen() {
     }
   }
 
+  /** "Tipp": the next prepared hint, at once. */
+  async function askHint(itemId: string): Promise<void> {
+    if (working.current) return;
+    working.current = true;
+    setPinnedId(itemId);
+    setBusy(true);
+    try {
+      const res = await hintItem(id, itemId);
+      await store(res.session);
+      if (useVoiceMode.getState().on) readFeedback(res);
+    } catch (err) {
+      toast.show(messageFor(err), 'error');
+      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+    } finally {
+      working.current = false;
+      setBusy(false);
+    }
+  }
+
   /** "Frage passt nicht" confirmed: out of this session and out of future practice. */
   async function flag(): Promise<void> {
     const itemId = flagFor;
@@ -465,6 +490,7 @@ export default function PracticeScreen() {
   const testing = session.mode === 'test' && session.status === 'active';
   const skip = canReveal || testing ? () => void reveal(shown.item.id) : undefined;
   const skipLabel = testing ? t('practice:skip') : undefined;
+  const hint = shown.hints_left > 0 ? () => void askHint(shown.item.id) : undefined;
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
     // background (finishing again is a no-op) – the header must not jump under the reader.
@@ -617,6 +643,7 @@ export default function PracticeScreen() {
               onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
               onReveal={skip}
               revealLabel={skipLabel}
+              onHint={hint}
             />
           ) : null}
           {session.mode === 'help' && shown.status === 'correct' ? <SelfSolvedCard /> : null}
@@ -643,6 +670,7 @@ export default function PracticeScreen() {
             onCheck={check}
             onReveal={skip}
             revealLabel={skipLabel}
+            onHint={hint}
           />
         ) : null}
         {open && choices && voiceOn ? (

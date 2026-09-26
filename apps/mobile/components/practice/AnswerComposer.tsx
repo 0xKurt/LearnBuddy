@@ -53,6 +53,8 @@ type Props = {
   onReveal?: () => void;
   /** The quiet side option's words (default "Lösung zeigen"; "Überspringen" in a test). */
   revealLabel?: string;
+  /** "Tipp": the next prepared hint; absent when none is left. */
+  onHint?: () => void;
 };
 
 export function AnswerComposer({
@@ -66,6 +68,7 @@ export function AnswerComposer({
   onCheck,
   onReveal,
   revealLabel,
+  onHint,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
@@ -202,6 +205,17 @@ export function AnswerComposer({
       ) : null}
       {/* One main action: "Prüfen" takes the room; "Lösung zeigen" stays a quiet side option. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {onHint ? (
+          <Btn
+            variant="ghost"
+            pill
+            onPress={onHint}
+            disabled={disabled}
+            accessibilityLabel={t('hint_label')}
+          >
+            {t('hint')}
+          </Btn>
+        ) : null}
         {onReveal ? (
           <Btn variant="ghost" pill onPress={onReveal} disabled={disabled}>
             {revealLabel ?? t('show_solution')}

@@ -12,6 +12,8 @@
   },
   "check": "Prüfen",
   "show_solution": "Lösung zeigen",
+  "hint": "Tipp",
+  "hint_label": "Einen Tipp bekommen",
   "choice_tried": "Schon ausprobiert",
   "thread": {
     "you": "Du",

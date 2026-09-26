@@ -114,6 +114,9 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
+  // "Tipp": the next prepared hint at once — no model involved.
+  await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
+  await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
   await shot(page, '25-practice-fractions');
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──

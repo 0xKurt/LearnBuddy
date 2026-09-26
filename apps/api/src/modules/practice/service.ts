@@ -12,6 +12,7 @@ import type {
   Figure,
   SessionMode,
   AnswerResponse,
+  HintRequest,
   PracticeSummary,
   PracticeTurnView,
   SessionView,
@@ -37,6 +38,7 @@ import {
   enforceTutorInvariants,
   givesAwayHomework,
   homeworkSolved,
+  mentionsSolution,
   tutorContext,
 } from './tutor.js';
 import type { LlmMessage } from '../../llm/gateway.js';
@@ -68,6 +70,8 @@ type ItemRow = {
   lang: string | null;
   prompt_lang: string | null;
   figure: Figure | null;
+  hints: string[];
+  worked_solution: string | null;
 };
 
 type SessionRow = {
@@ -247,6 +251,38 @@ function learnsFsrs(mode: SessionMode): boolean {
   return mode === 'practice' || mode === 'explain';
 }
 
+/** The hint ladder runs in practice and explanations (tests give none; homework has its own rules). */
+function givesHints(mode: SessionMode): boolean {
+  return mode === 'practice' || mode === 'explain';
+}
+
+/**
+ * After this many wrong tries the solution is explained (docs/buddy/03-fahrplan.md §2):
+ * the old app withheld it forever, which frustrated; research on bottom-out hints and
+ * worked examples supports a bounded ladder.
+ */
+export const REVEAL_AFTER_MISSES = 3;
+
+/** The solution as the learner sees it. */
+function shownSolution(
+  i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit'>,
+): string {
+  if (i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null) {
+    return i.choices[i.correct_choice] ?? i.answer;
+  }
+  return `${i.answer}${i.unit ? ` ${i.unit}` : ''}`;
+}
+
+/** The worked solution when prepared, otherwise the plain solution. */
+function workedReply(
+  locale: string,
+  i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit' | 'worked_solution'>,
+): string {
+  return i.worked_solution
+    ? `${t(locale, 'practice.worked_intro')} ${i.worked_solution}`
+    : t(locale, 'practice.solution_is', { answer: shownSolution(i) });
+}
+
 // ─────────────── view ───────────────
 
 async function loadSession(db: Db, learnerId: string, sessionId: string): Promise<SessionRow> {
@@ -268,7 +304,7 @@ export async function sessionView(
   const items = await db.query<SessionItemRow & ItemRow>(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.first_try_correct,
             si.flagged_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
-            i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure
+            i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution
        from session_items si join items i on i.id = si.item_id
       where si.session_id = $1 order by si.position`,
     [sessionId],
@@ -318,6 +354,10 @@ export async function sessionView(
       status: i.status,
       attempts: i.attempts,
       hints_used: i.hints_used,
+      hints_left:
+        i.status === 'open' && s.status === 'active' && givesHints(s.mode)
+          ? Math.max(0, i.hints.length - i.hints_used)
+          : 0,
       // Never leak the solution of an open question, nor ever in help mode (homework).
       answer:
         i.status === 'open' || !revealAllowed
@@ -454,6 +494,7 @@ export async function answerItem(
     byRules === 'unknown' && session.mode !== 'help' && differentNumber(item, text)
       ? 'incorrect'
       : byRules;
+  const nextHint = givesHints(session.mode) ? (item.hints[item.hints_used] ?? null) : null;
 
   type Judged = {
     verdict: 'correct' | 'partially_correct' | 'incorrect' | 'not_an_attempt' | null;
@@ -501,6 +542,28 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
+  } else if (
+    givesHints(session.mode) &&
+    rule === 'incorrect' &&
+    item.attempts + 1 >= REVEAL_AFTER_MISSES
+  ) {
+    // The third wrong try, wrong for sure: the solution explained, at once and without a model.
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: workedReply(learner.locale, item),
+      gaveHint: false,
+      revealed: true,
+    };
+  } else if (rule === 'incorrect' && nextHint !== null) {
+    // Wrong for sure and a prepared hint is next: at once, no model, never the same twice.
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: nextHint,
+      gaveHint: true,
+      revealed: false,
+    };
   } else {
     try {
       const preferences = await deps.db.query<{ statement: string }>(
@@ -526,6 +589,7 @@ export async function answerItem(
               text: tutorContext({
                 item,
                 hintsGiven: item.hints_used,
+                preparedHints: givesHints(session.mode) ? item.hints : [],
                 attempts: item.attempts,
                 ruleVerdict: rule,
                 mode: session.mode,
@@ -635,6 +699,45 @@ export async function answerItem(
     }
   }
 
+  if (givesHints(session.mode)) {
+    // Never the solution before the second hint — whatever the model wrote. The prepared
+    // hint (or a neutral line) takes its place, without a second model call.
+    if (
+      judged.evaluatedBy === 'model' &&
+      judged.verdict !== 'correct' &&
+      item.hints_used < 2 &&
+      (judged.revealed || mentionsSolution(judged.reply, shownSolution(item), item.prompt))
+    ) {
+      judged = {
+        ...judged,
+        reply: nextHint ?? t(learner.locale, 'practice.not_quite'),
+        gaveHint: nextHint !== null,
+        revealed: false,
+      };
+    }
+    // Never withheld forever: after the third wrong try, or when she asks again after the
+    // last prepared hint, the solution is explained and the question comes back soon (FSRS).
+    const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
+    const misses = item.attempts + (attempted ? 1 : 0);
+    const askedAfterLastHint =
+      judged.verdict === 'not_an_attempt' &&
+      item.hints.length > 0 &&
+      item.hints_used >= item.hints.length;
+    if (
+      !judged.revealed &&
+      judged.verdict !== 'correct' &&
+      judged.verdict !== null &&
+      (misses >= REVEAL_AFTER_MISSES || askedAfterLastHint)
+    ) {
+      judged = {
+        ...judged,
+        reply: workedReply(learner.locale, item),
+        gaveHint: false,
+        revealed: true,
+      };
+    }
+  }
+
   if (session.mode === 'test') judged = asTestTurn(judged, learner.locale);
 
   try {
@@ -731,6 +834,83 @@ export async function answerItem(
     .find((tr) => tr.item_id === item.id && tr.role === 'tutor');
   if (!reply) throw new AppError('internal', 'reply missing');
   return { session: view, verdict: judged.verdict, reply };
+}
+
+/**
+ * "Tipp": the next prepared hint for an open question, at once and without a model.
+ * Recorded as a learner turn ("Tipp, bitte") and a tutor turn; idempotent per
+ * client_turn_id; 409 when no prepared hint is left (the app then hides the button).
+ */
+export async function hintItem(
+  deps: Deps,
+  learner: PracticeLearner,
+  sessionId: string,
+  input: HintRequest,
+): Promise<AnswerResponse> {
+  const now = deps.now();
+  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+  if (replayed) return replayed;
+  const session = await loadSession(deps.db, learner.id, sessionId);
+  if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
+  if (!givesHints(session.mode)) {
+    throw new AppError('conflict', 'No hints in this mode', { reason: 'no_hints' });
+  }
+  try {
+    await deps.db.tx(async (tx) => {
+      const si = await tx.maybeOne<{
+        status: SessionItemRow['status'];
+        hints_used: number;
+        hints: string[];
+      }>(
+        `select si.status, si.hints_used, i.hints
+           from session_items si join items i on i.id = si.item_id
+          where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
+          for update of si`,
+        [sessionId, input.item_id, learner.id],
+      );
+      if (!si) throw new AppError('not_found', 'Question not in this session');
+      if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
+      const hint = si.hints[si.hints_used];
+      if (hint === undefined) {
+        throw new AppError('conflict', 'No hint left', { reason: 'no_hints_left' });
+      }
+      const seq = await nextSeq(tx, sessionId);
+      await tx.query(
+        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id)
+         values ($1, $2, $3, $4, 'learner', $5, 'not_an_attempt', 'rule', $6)`,
+        [
+          sessionId,
+          learner.id,
+          input.item_id,
+          seq,
+          t(learner.locale, 'practice.hint_request'),
+          input.client_turn_id,
+        ],
+      );
+      await tx.query(
+        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed)
+         values ($1, $2, $3, $4, 'tutor', $5, true, false)`,
+        [sessionId, learner.id, input.item_id, seq + 1, hint],
+      );
+      await tx.query(
+        `update session_items set hints_used = hints_used + 1 where session_id = $1 and item_id = $2`,
+        [sessionId, input.item_id],
+      );
+      await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+        sessionId,
+        now,
+      ]);
+    });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+      if (r) return r;
+    }
+    throw err;
+  }
+  const replayedNow = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+  if (!replayedNow) throw new AppError('internal', 'hint missing');
+  return replayedNow;
 }
 
 /** "Show me the solution": close the question as not known (FSRS: again). */

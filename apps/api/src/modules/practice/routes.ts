@@ -2,6 +2,7 @@
 
 import {
   AnswerRequest,
+  HintRequest,
   SpeakRequest,
   StartPracticeRequest,
   StartTopicRequest,
@@ -24,6 +25,7 @@ import {
   answerItem,
   finishSession,
   flagItem,
+  hintItem,
   revealItem,
   sessionView,
   startManual,
@@ -59,6 +61,12 @@ practiceRoutes.post('/sessions/:id/answer', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, AnswerRequest);
   return c.json(await answerItem(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+practiceRoutes.post('/sessions/:id/hint', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, HintRequest);
+  return c.json(await hintItem(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 practiceRoutes.post('/sessions/:id/reveal', async (c) => {

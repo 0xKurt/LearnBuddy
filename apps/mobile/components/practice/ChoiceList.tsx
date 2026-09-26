@@ -53,9 +53,19 @@ type Props = {
   onReveal?: () => void;
   /** The quiet side option's words (default "Lösung zeigen"; "Überspringen" in a test). */
   revealLabel?: string;
+  /** "Tipp": the next prepared hint; absent when none is left. */
+  onHint?: () => void;
 };
 
-export function ChoiceList({ choices, tried, disabled, onChoose, onReveal, revealLabel }: Props) {
+export function ChoiceList({
+  choices,
+  tried,
+  disabled,
+  onChoose,
+  onReveal,
+  revealLabel,
+  onHint,
+}: Props) {
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
   return (
@@ -108,11 +118,24 @@ export function ChoiceList({ choices, tried, disabled, onChoose, onReveal, revea
           </View>
         );
       })}
-      {onReveal ? (
-        <View style={{ alignItems: 'center' }}>
-          <Btn variant="ghost" pill center onPress={onReveal} disabled={disabled}>
-            {revealLabel ?? t('show_solution')}
-          </Btn>
+      {onReveal || onHint ? (
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+          {onHint ? (
+            <Btn
+              variant="ghost"
+              pill
+              onPress={onHint}
+              disabled={disabled}
+              accessibilityLabel={t('hint_label')}
+            >
+              {t('hint')}
+            </Btn>
+          ) : null}
+          {onReveal ? (
+            <Btn variant="ghost" pill center onPress={onReveal} disabled={disabled}>
+              {revealLabel ?? t('show_solution')}
+            </Btn>
+          ) : null}
         </View>
       ) : null}
     </View>

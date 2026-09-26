@@ -89,6 +89,10 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           choices: ['$\\frac{2}{3}$', '$\\frac{3}{5}$'],
           correct_choice: 0,
           topic: 'Brüche vergleichen',
+          hints: [
+            'Schau auf die Kreise: Welcher ist mehr gefüllt?',
+            'Bring beide Brüche auf den Nenner 15.',
+          ],
           figure: {
             type: 'fraction',
             shape: 'circle',
