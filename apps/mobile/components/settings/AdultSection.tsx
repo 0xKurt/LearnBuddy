@@ -15,6 +15,7 @@ import { cancelDeletion, exportAccount, requestDeletion } from '../../lib/api/en
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { currentSession } from '../../lib/auth/session.js';
 import { signOut } from '../../lib/auth/supabase.js';
+import { unregisterDeviceForPush } from '../../lib/push.js';
 import { messageFor } from '../../lib/errors.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -122,6 +123,8 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
     return run('signout', async () => {
       await afterModalCloses();
       clearAdminToken();
+      // Still signed in: tell the server this phone no longer gets Buddy's messages.
+      await unregisterDeviceForPush();
       // The root layout returns to the start screen once the session is gone.
       await signOut();
     });

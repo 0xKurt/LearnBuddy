@@ -8,7 +8,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { registerPushToken } from './api/endpoints.js';
+import { registerPushToken, unregisterPushToken } from './api/endpoints.js';
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
@@ -50,6 +50,24 @@ export async function registerDeviceForPush(): Promise<boolean> {
   const token = await Notifications.getExpoPushTokenAsync({ projectId: id });
   await registerPushToken(token.data, Platform.OS === 'ios' ? 'ios' : 'android');
   return true;
+}
+
+/**
+ * Signing out: this device stops getting Buddy's messages for this learner (on a
+ * shared family phone the next person must not see them). Never asks for anything;
+ * a failure does not stop the sign-out.
+ */
+export async function unregisterDeviceForPush(): Promise<void> {
+  if (Platform.OS === 'web' || !Device.isDevice) return;
+  const id = projectId();
+  if (!id) return;
+  try {
+    if (!(await Notifications.getPermissionsAsync()).granted) return;
+    const token = await Notifications.getExpoPushTokenAsync({ projectId: id });
+    await unregisterPushToken(token.data);
+  } catch {
+    // Offline or no token: the server drops the token once the provider reports it gone.
+  }
 }
 
 /** Calls back with the outreach id when the learner taps one of Buddy's notifications. */

@@ -87,19 +87,9 @@ export const getThread = (before: string) =>
   });
 
 /** Idempotent: pass the same clientMessageId when retrying. */
-export const sendMessage = (
-  text: string,
-  clientMessageId: string = newId(),
-  replyToId: string | null = null,
-) =>
-  request('POST', '/buddy/messages', {
-    body: { client_message_id: clientMessageId, text, reply_to_id: replyToId },
-    schema: SendMessageResponse,
-  });
-
 /**
- * The same message, with Buddy's reply streamed while it is written (onReply);
- * resolves with the same result as sendMessage.
+ * A message to Buddy, with the reply streamed while it is written (onReply);
+ * resolves with the stored result (docs/architecture.md §Speed).
  */
 export const sendMessageStreamed = (
   text: string,
@@ -153,6 +143,9 @@ export const updateSettings = (body: UpdateBuddySettingsRequest) =>
 
 export const registerPushToken = (token: string, platform: 'ios' | 'android') =>
   request('POST', '/buddy/push-tokens', { body: { token, platform } });
+/** This device no longer gets Buddy's messages (signing out). */
+export const unregisterPushToken = (token: string) =>
+  request('DELETE', '/buddy/push-tokens', { body: { token } });
 
 // ─────────────── material ───────────────
 
