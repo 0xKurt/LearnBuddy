@@ -67,7 +67,8 @@
   },
   "done": {
     "undo": "Rückgängig",
-    "undo_label": "Rückgängig machen: {{what}}"
+    "undo_label": "Rückgängig machen: {{what}}",
+    "undone": "rückgängig gemacht"
   },
   "next": {
     "line": "{{title}} · {{when}}"

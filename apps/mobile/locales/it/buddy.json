@@ -67,7 +67,8 @@
   },
   "done": {
     "undo": "Annulla",
-    "undo_label": "Annulla: {{what}}"
+    "undo_label": "Annulla: {{what}}",
+    "undone": "annullato"
   },
   "next": {
     "line": "{{title}} · {{when}}"

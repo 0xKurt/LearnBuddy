@@ -67,7 +67,8 @@
   },
   "done": {
     "undo": "Deshacer",
-    "undo_label": "Deshacer: {{what}}"
+    "undo_label": "Deshacer: {{what}}",
+    "undone": "deshecho"
   },
   "next": {
     "line": "{{title}} · {{when}}"

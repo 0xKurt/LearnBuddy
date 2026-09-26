@@ -67,7 +67,8 @@
   },
   "done": {
     "undo": "Undo",
-    "undo_label": "Undo: {{what}}"
+    "undo_label": "Undo: {{what}}",
+    "undone": "undone"
   },
   "next": {
     "line": "{{title}} · {{when}}"

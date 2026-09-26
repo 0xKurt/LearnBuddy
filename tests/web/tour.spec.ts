@@ -1,0 +1,186 @@
+// Feature tour: every control the other walkthroughs do not tap, tapped once,
+// with what it must lead to (the wiring audit, docs/architecture.md §Testing).
+// Runs after the other walkthroughs (its scripted model answers come last,
+// apps/api/src/testing/scenarios/tour.ts).
+
+import { join } from 'node:path';
+
+import { expect, test, type Page } from '@playwright/test';
+
+import { shot } from './fit';
+
+const FIXTURES = join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures');
+
+async function onboardChild(page: Page, email: string): Promise<void> {
+  await page.goto('/');
+  await page.getByLabel('E-Mail').fill(email);
+  await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
+  await page.getByRole('button', { name: 'Konto erstellen' }).click();
+  await page.getByRole('checkbox').click();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('radio', { name: 'Mein Kind' }).click();
+  await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Pia');
+  await page.getByLabel('TT').fill('03');
+  await page.getByLabel('MM').fill('07');
+  await page.getByLabel('JJJJ').fill('2014');
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await page.getByRole('checkbox').click();
+  await page.getByLabel('PIN der Eltern').fill('2468');
+  await page.getByLabel('PIN wiederholen').fill('2468');
+  await page.getByRole('button', { name: "Los geht's" }).click();
+  await expect(page.getByText('Hallo Pia')).toBeVisible();
+}
+
+async function say(page: Page, text: string): Promise<void> {
+  await page.getByLabel('Schreib Buddy …').fill(text);
+  await page.getByRole('button', { name: 'Senden' }).click();
+}
+
+const openMenu = async (page: Page, item: string) => {
+  await page.getByRole('button', { name: 'Menü öffnen' }).click();
+  await page.getByRole('button', { name: item }).click();
+};
+
+test('feature tour: undo, resend, memory, history, settings, parents, photo, explanation', async ({
+  page,
+}) => {
+  const email = `tour-${Date.now()}@example.test`;
+  await onboardChild(page, email);
+
+  // ── Undo what Buddy did ──
+  await say(page, 'Ich spiele Handball');
+  await expect(page.getByText('Cool – Handball merke ich mir.')).toBeVisible();
+  const undo = page.getByRole('button', { name: /^Rückgängig machen: / });
+  await expect(undo).toBeVisible();
+  await undo.click();
+  await expect(undo).toHaveCount(0);
+  // Said in words, not only by colour.
+  await expect(page.getByText('Gemerkt: Spielt Handball – rückgängig gemacht')).toBeVisible();
+  await shot(page, '40-undone');
+
+  // ── A message that fails is sent again with one tap ──
+  await say(page, 'ich mag Katzen');
+  const resend = page.getByRole('button', { name: 'Nochmal senden' });
+  await expect(resend).toBeVisible();
+  await shot(page, '41-failed-message');
+  await resend.click();
+  await expect(page.getByText('Katzen, schön! Das merke ich mir.')).toBeVisible();
+  await expect(resend).toHaveCount(0);
+
+  // ── Earlier messages (the home shows the latest six) ──
+  await say(page, 'danke');
+  await expect(page.getByText('Gern!')).toBeVisible();
+  await say(page, 'tschüss');
+  await expect(page.getByText('Bis später!')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ältere Nachrichten' })).toBeVisible();
+  await page.getByRole('button', { name: 'Ältere Nachrichten' }).click();
+  await expect(page.getByText('Ich spiele Handball')).toBeVisible();
+  await shot(page, '42-history');
+  await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── What Buddy knows: change it, then remove it ──
+  await openMenu(page, 'Was Buddy über dich weiß');
+  await expect(page.getByText('Mag Katzen', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Ändern: Mag Katzen' }).click();
+  await page.getByLabel('Was Buddy sich merken soll').fill('Mag Katzen und Hunde');
+  await page.getByRole('button', { name: 'Speichern' }).click();
+  await expect(page.getByText('Mag Katzen und Hunde', { exact: true })).toBeVisible();
+  await expect(page.getByText('Von dir geändert.')).toBeVisible();
+  await shot(page, '43-memory-edited');
+  await page.getByRole('button', { name: 'Entfernen: Mag Katzen und Hunde' }).click();
+  await page.getByRole('button', { name: 'Ja, entfernen' }).click();
+  await expect(page.getByText('Entfernt. Buddy vergisst das.')).toBeVisible();
+  await expect(page.getByText('Mag Katzen und Hunde', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── Settings: messages to the phone (parents' PIN), times, language ──
+  await openMenu(page, 'Einstellungen');
+  await page.getByRole('button', { name: 'Darf Buddy dir aufs Handy schreiben?' }).click();
+  await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
+  await page.getByRole('button', { name: 'Eltern fragen' }).click();
+  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
+  await expect(page.getByText('Ja. Buddy darf dir auch aufs Handy schreiben.')).toBeVisible();
+  await page.getByRole('button', { name: 'Zeiten anpassen' }).click();
+  await expect(page.getByText('Wann nicht?')).toBeVisible();
+  await shot(page, '44-settings-times', { opened: true });
+  await page.getByRole('button', { name: 'Nicht mehr erlauben' }).click();
+  await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sprache' }).click();
+  await page.getByRole('radio', { name: 'English' }).click();
+  await expect(page.getByText('Settings')).toBeVisible();
+  // The group stays open: back in one tap.
+  await page.getByRole('radio', { name: 'Deutsch' }).click();
+  await expect(page.getByText('Einstellungen')).toBeVisible();
+
+  // ── For parents: after leaving the settings the PIN counts no more ──
+  await page.getByRole('button', { name: 'Zurück' }).click();
+  await openMenu(page, 'Einstellungen');
+  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  await expect(page.getByText('Daten exportieren')).toBeVisible();
+  await page.getByRole('button', { name: 'Konto löschen …' }).click();
+  await page.getByRole('button', { name: 'Ja, in 7 Tagen löschen' }).click();
+  // A child's account: the parents' PIN again.
+  await expect(page.getByRole('button', { name: '2', exact: true })).toBeVisible();
+  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
+  await expect(page.getByText(/Die Löschung ist geplant/).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Löschung abbrechen' }).click();
+  await expect(page.getByText(/Löschung abgebrochen/)).toBeVisible();
+  await shot(page, '45-parents', { opened: true });
+  await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── A hard-to-read photo kept anyway ──
+  await page.getByRole('button', { name: 'Arbeitsblatt fotografieren' }).click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await (await chooser).setFiles(join(FIXTURES, 'dark.jpg'));
+  await expect(page.getByText('Foto 1 ist zu dunkel.')).toBeVisible();
+  await page.getByRole('button', { name: 'Trotzdem behalten' }).click();
+  await expect(page.getByText('Foto 1 ist zu dunkel.')).toHaveCount(0);
+  await expect(page.getByText('Schwer lesbar')).toBeVisible();
+  await shot(page, '46-photo-kept');
+  await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── An explanation read again from the questions ──
+  await page.getByRole('button', { name: 'Erklär mir was', exact: true }).click();
+  await page.getByRole('textbox').last().fill('Nomen');
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Nomen sind Namen für Dinge', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Verstanden – frag mich!' }).click();
+  await expect(page.getByText('Welches Wort ist ein Nomen?')).toBeVisible();
+  await page.getByRole('button', { name: 'Erklärung nochmal lesen' }).click();
+  await expect(page.getByText('Die Erklärung')).toBeVisible();
+  await shot(page, '47-explanation-again');
+  await page.getByRole('button', { name: 'Schließen' }).last().click();
+  await page.getByRole('button', { name: 'Hund', exact: true }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!')).toBeVisible();
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
+
+  // ── Pronunciation: record (a fake microphone), sent, feedback per word ──
+  await page.getByRole('button', { name: 'Aussprache', exact: true }).click();
+  await page.getByRole('textbox').last().fill('Englisch: The weather is nice today.');
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('The weather is nice today.').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Aufnahme starten' }).click();
+  await page.waitForTimeout(1200);
+  await page.getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' }).click();
+  await expect(page.getByText('Fast – achte auf: weather')).toBeVisible();
+  await expect(page.getByText(/Zunge zwischen den Zähnen/)).toBeVisible();
+  await shot(page, '49-speak-feedback');
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
+
+  // ── Signing out, and the password link that no longer works ──
+  await openMenu(page, 'Einstellungen');
+  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  await page.getByRole('button', { name: 'Abmelden' }).last().click();
+  await page.getByRole('button', { name: 'Ja, abmelden' }).click();
+  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
+  // Signed out for good: a reload does not bring the session back.
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
+  await page.goto('/reset-password');
+  await expect(page.getByText('Dieser Link gilt nicht mehr')).toBeVisible();
+  await shot(page, '48-reset-link-invalid');
+  await page.getByRole('button', { name: 'Zurück zur Anmeldung' }).click();
+  await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();
+});

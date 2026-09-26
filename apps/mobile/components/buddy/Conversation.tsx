@@ -127,11 +127,11 @@ export function Conversation({
                           {
                             fontSize: 13,
                             flex: 1,
-                            textDecorationLine: a.status === 'undone' ? 'line-through' : 'none',
+                            color: a.status === 'undone' ? LB.ink2 : LB.ink,
                           },
                         ]}
                       >
-                        ✓ {what}
+                        {a.status === 'undone' ? `${what} – ${t('done.undone')}` : `✓ ${what}`}
                       </Text>
                       {onUndo && a.undoable && a.status !== 'undone' ? (
                         <Btn

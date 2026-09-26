@@ -16,7 +16,9 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   the display name can be a nickname.
 - **PIN gate** for minors: data export, deletion and anything that increases contact need a
   short-lived admin token obtained with the account holder's PIN (scrypt hash; 5 wrong attempts
-  lock for 15 minutes; token valid 10 minutes, HMAC-signed, bound to the account). Reducing
+  lock for 15 minutes; token valid 10 minutes, HMAC-signed, bound to the account; the app
+  forgets it as soon as the parents leave the settings or the one step they unlocked is done,
+  so the child holding the phone afterwards cannot use it). Reducing
   contact (pause, quieter) never needs the PIN. Buddy's own tools can never increase contact.
 
 ## What is stored

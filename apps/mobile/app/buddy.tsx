@@ -41,6 +41,7 @@ import { LoadingState } from '../components/lb/LoadingState.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
+import { clearAdminToken } from '../lib/admin.js';
 import { requestAdmin } from '../lib/adminFlow.js';
 import { ApiError, newId } from '../lib/api/client.js';
 import {
@@ -178,6 +179,8 @@ export default function BuddyScreen() {
     if (asAdult && !(await requestAdmin())) return;
     await act(async () => {
       const next = await answerContactOptIn(true);
+      // The PIN was for this one step (docs/privacy.md §PIN gate).
+      if (asAdult) clearAdminToken();
       // Ask for notification permission only now, when it has a purpose.
       await registerDeviceForPush().catch(() => false);
       return next;

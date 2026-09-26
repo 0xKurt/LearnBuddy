@@ -28,6 +28,7 @@ import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { MemoryStorage, ScriptedGateway } from './fakes.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
+import { scriptTour } from './scenarios/tour.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const BASE = `http://localhost:${PORT}`;
@@ -130,6 +131,7 @@ async function main(): Promise<void> {
   if (model === scripted) {
     scriptCoreLoop(scripted);
     scriptLearningModes(scripted);
+    scriptTour(scripted);
   }
   const deps: Deps = {
     config,

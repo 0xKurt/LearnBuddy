@@ -537,3 +537,10 @@ once (`abandonStaleUploads`, run by the scheduler).
   Every screenshot in the walkthroughs (`tests/web/fit.ts`) is taken at 390×844 and 360×740 and
   fails when anything has to be scrolled to be seen; only a conversation (`testID="scroll-thread"`)
   and a browsed list (`"scroll-list"`) may grow. Measurements go to `test-results/web/fit.jsonl`.
+  `tests/web/tour.spec.ts` taps every control the other walkthroughs don't (undo, resend, earlier
+  messages, changing and removing what Buddy knows, contact with the parents' PIN, times,
+  language, scheduling and cancelling a deletion, a dark photo kept anyway, an explanation read
+  again, pronunciation with a fake microphone, sign-out that survives a reload, an expired
+  password link). `apps/mobile/lib/__tests__/wiring.test.ts` checks from the source that every
+  app call has a server route and every route is used, every endpoint function is used, every
+  screen is reachable and every German text exists.

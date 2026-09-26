@@ -7,8 +7,8 @@
 // apart; for a minor, more contact and account data go through the parents'
 // PIN (lib/adminFlow.ts). Everything shown is what the API returned.
 
-import { Redirect } from 'expo-router';
-import { useState } from 'react';
+import { Redirect, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +22,7 @@ import { ContactSection } from '../components/settings/ContactSection.js';
 import { FoldContext } from '../components/settings/Group.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
 import { useRevealInput } from '../components/settings/useRevealInput.js';
+import { clearAdminToken } from '../lib/admin.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 
@@ -34,6 +35,10 @@ export default function SettingsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   // One group open at a time; all closed at first (components/settings/Group.tsx).
   const [open, setOpen] = useState<string | null>(null);
+  // The parents' PIN counts while they are here: leaving the settings (also for the
+  // PIN pad, which sets a fresh one) ends it, so the child holding the phone
+  // afterwards cannot use it (docs/privacy.md §PIN gate).
+  useFocusEffect(useCallback(() => () => clearAdminToken(), []));
 
   async function refresh() {
     setRefreshing(true);

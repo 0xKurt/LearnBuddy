@@ -1,0 +1,96 @@
+// Scripted model answers for the feature tour (tests/web/tour.spec.ts), after
+// the other walkthroughs: something remembered (then undone), a message that
+// fails once and is sent again, something to edit in "Was Buddy weiß", and an
+// explanation to read again. Test tooling only.
+
+import { LlmError } from '../../llm/gateway.js';
+import type { ScriptedGateway } from '../fakes.js';
+
+const turn = (reply: string, actions: unknown[] = []) => ({
+  json: { lookups: [], actions, reply, options: null, asks_permission: false },
+});
+const remember = (statement: string, quote: string) => ({
+  tool: 'remember',
+  args: { kind: 'fact', statement, quote, until: null },
+});
+
+export function scriptTour(llm: ScriptedGateway): void {
+  llm.script(
+    'buddy_turn',
+    turn('Cool – Handball merke ich mir.', [remember('Spielt Handball', 'Ich spiele Handball')]),
+    // The next message fails once (model down) and is sent again.
+    { error: new LlmError('unavailable', 'provider down') },
+    turn('Katzen, schön! Das merke ich mir.', [remember('Mag Katzen', 'ich mag Katzen')]),
+    turn('Gern!'),
+    turn('Bis später!'),
+  );
+  llm.script('explain', {
+    json: {
+      usable: true,
+      title: 'Nomen',
+      subject: { name: 'Deutsch', kind: 'german' },
+      intro:
+        'Nomen sind Namen für Dinge, Lebewesen und Gefühle. Man schreibt sie groß: der Hund, die Freude.',
+      items: [
+        {
+          kind: 'multiple_choice',
+          prompt: 'Welches Wort ist ein Nomen?',
+          answer: 'Hund',
+          accepted_answers: [],
+          unit: null,
+          choices: ['laufen', 'Hund', 'schnell'],
+          correct_choice: 1,
+          topic: 'Nomen',
+          difficulty: 1,
+          prompt_lang: null,
+          lang: null,
+          figure: null,
+          source_excerpt: null,
+        },
+      ],
+    },
+  });
+  // Pronunciation: one sentence, judged "almost" with a tip for one word.
+  llm.script('explain', {
+    json: {
+      usable: true,
+      title: 'Englisch sprechen',
+      subject: { name: 'Englisch', kind: 'english' },
+      intro: null,
+      items: [
+        {
+          kind: 'speak',
+          prompt: 'The weather is nice today.',
+          answer: 'The weather is nice today.',
+          accepted_answers: [],
+          unit: null,
+          choices: null,
+          correct_choice: null,
+          topic: 'Sprechen',
+          difficulty: 1,
+          prompt_lang: 'en',
+          lang: 'en',
+          figure: null,
+          source_excerpt: null,
+        },
+      ],
+    },
+  });
+  llm.script('pronounce', {
+    json: {
+      audible: true,
+      expected_ipa: 'ðə ˈwɛðər ɪz naɪs təˈdeɪ',
+      heard_ipa: 'de ˈvɛtər ɪs naɪs təˈdeɪ',
+      heard: 'the wether is nice today',
+      overall: 'almost',
+      words: [
+        { text: 'The', ok: true, tip: null },
+        { text: 'weather', ok: false, tip: '‹th› mit der Zunge zwischen den Zähnen' },
+        { text: 'is', ok: true, tip: null },
+        { text: 'nice', ok: true, tip: null },
+        { text: 'today', ok: true, tip: null },
+      ],
+      reply: 'Schon gut verständlich! Übe noch das ‹th› in „weather“.',
+    },
+  });
+}
