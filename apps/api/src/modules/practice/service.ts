@@ -443,11 +443,17 @@ export async function answerItem(
       reason: 'use_speak',
     });
   }
-  const rule: RuleVerdict = ruleCheck(
+  const byRules: RuleVerdict = ruleCheck(
     item,
     { text: input.text ?? null, choice: input.choice ?? null },
     learner.locale,
   );
+  // A plain number with another value is a wrong answer for sure — except in homework,
+  // where "12" may be a right step towards 11/12.
+  const rule: RuleVerdict =
+    byRules === 'unknown' && session.mode !== 'help' && differentNumber(item, text)
+      ? 'incorrect'
+      : byRules;
 
   type Judged = {
     verdict: 'correct' | 'partially_correct' | 'incorrect' | 'not_an_attempt' | null;
@@ -468,10 +474,7 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
-  } else if (
-    session.mode === 'test' &&
-    (rule === 'incorrect' || rule === 'close' || differentNumber(item, text))
-  ) {
+  } else if (session.mode === 'test' && (rule === 'incorrect' || rule === 'close')) {
     // A test only needs the judgement, and the rules already have it: no model
     // call (it would only write a hint the test replaces with a neutral word).
     judged = {

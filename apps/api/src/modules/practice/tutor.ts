@@ -105,6 +105,8 @@ export function enforceTutorInvariants(
 ): TutorDecision {
   let verdict = d.verdict;
   if (d.intent !== 'answer') verdict = 'not_an_attempt';
+  // The rules only say "wrong" to a real answer (a choice, a number): it is an attempt.
+  if (ruleVerdict === 'incorrect') verdict = 'incorrect';
   if (verdict === 'not_an_attempt' && d.intent === 'answer') verdict = 'incorrect';
   if (ruleVerdict === 'incorrect' && (verdict === 'correct' || verdict === 'partially_correct')) {
     verdict = 'incorrect';

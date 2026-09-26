@@ -114,8 +114,7 @@ function plainNumber(s: string): number | null {
 
 /**
  * A plain number whose value differs from every expected number: wrong for
- * sure. Only for tests (one answer per question) — in homework "12" may be a
- * right step towards 11/12. The same value in another form ("4/8" for "1/2")
+ * sure. Not for homework — there "12" may be a right step towards 11/12. The same value in another form ("4/8" for "1/2")
  * is not decided here: it may still be wrong (not reduced).
  */
 export function differentNumber(item: ItemForCheck, text: string): boolean {
