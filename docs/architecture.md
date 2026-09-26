@@ -457,7 +457,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
 `modules/buddy/home.ts`. Everything is derived from stored state: **now** (resume practice ›
 result of the last practice › prepared practice › material failed › material being read, or
 photos still being sent for up to 10 minutes › photo needed), **working** (Buddy is acting on
-the learner's own photos or just-finished practice: a due or running check they caused),
+the learner's own photos or just-finished practice: her photos still being read — also homework,
+also behind another card, so the app keeps following the home — or a due or running check they
+caused),
 **decision** (how did the test go › enable contact), **done** (Buddy's actions of the last 72 h
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
 and delivery status of each message) and **system** status (model, push, contact, scheduler).
@@ -539,8 +541,9 @@ once (`abandonStaleUploads`, run by the scheduler).
   and a browsed list (`"scroll-list"`) may grow. Measurements go to `test-results/web/fit.jsonl`.
   `tests/web/tour.spec.ts` taps every control the other walkthroughs don't (undo, resend, earlier
   messages, changing and removing what Buddy knows, contact with the parents' PIN, times,
-  language, scheduling and cancelling a deletion, a dark photo kept anyway, an explanation read
-  again, pronunciation with a fake microphone, sign-out that survives a reload, an expired
-  password link). `apps/mobile/lib/__tests__/wiring.test.ts` checks from the source that every
+  language, a pause, a new PIN, the export, scheduling and cancelling a deletion, a dark photo
+  kept anyway, a sheet that could not be read and is read again, homework from a photo, an
+  explanation read again, pronunciation with a fake microphone, sign-out that survives a
+  reload, an expired password link). `apps/mobile/lib/__tests__/wiring.test.ts` checks from the source that every
   app call has a server route and every route is used, every endpoint function is used, every
   screen is reachable and every German text exists.

@@ -93,4 +93,67 @@ export function scriptTour(llm: ScriptedGateway): void {
       reply: 'Schon gut verständlich! Übe noch das ‹th› in „weather“.',
     },
   });
+  // A sheet that could not be read, read again with success; then homework from a photo.
+  llm.script(
+    'extraction',
+    {
+      json: {
+        is_learning_material: true,
+        readable: false,
+        title: null,
+        subject: null,
+        extracted_text: '',
+        items: [],
+      },
+    },
+    {
+      json: {
+        is_learning_material: true,
+        readable: true,
+        title: 'Nomen und Verben',
+        subject: { name: 'Deutsch', kind: 'german' },
+        extracted_text: 'Nomen schreibt man groß. Verben sagen, was jemand tut.',
+        items: [
+          {
+            kind: 'short',
+            prompt: 'Wie schreibt man Nomen?',
+            answer: 'groß',
+            accepted_answers: [],
+            unit: null,
+            choices: null,
+            correct_choice: null,
+            topic: 'Nomen',
+            difficulty: 1,
+            source_excerpt: null,
+          },
+        ],
+      },
+    },
+    {
+      json: {
+        is_learning_material: true,
+        readable: true,
+        title: 'Hausaufgabe Rechteck',
+        subject: { name: 'Mathe', kind: 'math' },
+        extracted_text: 'Ein Rechteck ist 6 cm lang und 3 cm breit. Berechne den Flächeninhalt.',
+        items: [
+          {
+            kind: 'numeric',
+            prompt: 'Ein Rechteck ist 6 cm lang und 3 cm breit. Berechne den Flächeninhalt.',
+            answer: '18',
+            accepted_answers: [],
+            unit: 'cm²',
+            choices: null,
+            correct_choice: null,
+            topic: 'Flächeninhalt',
+            difficulty: 2,
+            source_excerpt: null,
+          },
+        ],
+      },
+    },
+  );
+  llm.script('buddy_check', {
+    json: { disposition: 'wait', reason: 'Nothing to add now.', actions: [], outreach: null },
+  });
 }

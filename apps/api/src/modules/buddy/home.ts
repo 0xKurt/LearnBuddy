@@ -77,6 +77,13 @@ export async function buildHome(
 
 /** A check the learner's own action started (their photos, their finished practice) that is due or running. */
 async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<BuddyHome['working']> {
+  // Her photos being read: also when another card is on top (a homework photo behind a
+  // prepared practice) — the app follows the home closely while anything is working.
+  const reading = await deps.db.maybeOne(
+    `select 1 from materials where learner_id = $1 and status in ('queued', 'processing') limit 1`,
+    [learnerId],
+  );
+  if (reading) return 'material';
   const row = await deps.db.maybeOne<{ reason: string }>(
     `select payload->>'reason' as reason from jobs
       where learner_id = $1 and kind = 'buddy_check' and status in ('queued', 'running')

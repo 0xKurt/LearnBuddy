@@ -103,6 +103,9 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Zeiten anpassen' }).click();
   await expect(page.getByText('Wann nicht?')).toBeVisible();
   await shot(page, '44-settings-times', { opened: true });
+  // A pause needs no PIN (less contact is always allowed).
+  await page.getByRole('button', { name: 'Bis morgen' }).click();
+  await expect(page.getByText(/Pause bis einschließlich/).first()).toBeVisible();
   await page.getByRole('button', { name: 'Nicht mehr erlauben' }).click();
   await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
 
@@ -127,11 +130,59 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Löschung abbrechen' }).click();
   await expect(page.getByText(/Löschung abgebrochen/)).toBeVisible();
   await shot(page, '45-parents', { opened: true });
+  // A new PIN, with the current one.
+  await page.getByRole('button', { name: 'PIN ändern' }).click();
+  await page.getByLabel('Aktuelle PIN').fill('2468');
+  await page.getByLabel('Neue PIN (4 Ziffern)').fill('1357');
+  await page.getByLabel('Neue PIN wiederholen').fill('1357');
+  await page.getByRole('button', { name: 'PIN speichern' }).click();
+  await expect(page.getByText('PIN gespeichert.')).toBeVisible();
+  // The export is made (on a phone it opens the share sheet; a browser may not share).
+  const exported = page.waitForResponse((r) => r.url().endsWith('/v1/account/export'));
+  await page.getByRole('button', { name: 'Export erstellen' }).click();
+  expect((await exported).status()).toBe(200);
   await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── A sheet Buddy could not read: read again ──
+  await page.getByRole('button', { name: 'Arbeitsblatt fotografieren' }).click();
+  let chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Aus Fotos wählen' }).click();
+  await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Das Blatt konnte ich nicht lesen')).toBeVisible({ timeout: 30_000 });
+  await shot(page, '50-sheet-unreadable');
+  await page.getByRole('button', { name: 'Nochmal lesen' }).click();
+  await expect(page.getByText('Das Blatt konnte ich nicht lesen')).toHaveCount(0, {
+    timeout: 30_000,
+  });
+  // Read now, and a practice made from its one question: "1 Aufgabe", not "1 Aufgaben".
+  await expect(page.getByText(/^1 Aufgabe · ca\. \d+ Min\.$/)).toBeVisible({ timeout: 15_000 });
+  await openMenu(page, 'Mein Stoff');
+  await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück' }).click();
+
+  // ── Homework from a photo: straight into help, hints only ──
+  await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
+  await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
+  await expect(page.getByText('Fotografier deine Hausaufgabe')).toBeVisible();
+  chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await page.getByRole('button', { name: 'Senden' }).click();
+  // Shown as soon as it is read, although a prepared practice was on top before.
+  await expect(page.getByText('Weiter mit deiner Hausaufgabe')).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Weitermachen' }).click();
+  await expect(
+    page.getByText('Ein Rechteck ist 6 cm lang und 3 cm breit.', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
+  await shot(page, '51-homework-photo');
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
 
   // ── A hard-to-read photo kept anyway ──
   await page.getByRole('button', { name: 'Arbeitsblatt fotografieren' }).click();
-  const chooser = page.waitForEvent('filechooser');
+  chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Foto machen' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'dark.jpg'));
   await expect(page.getByText('Foto 1 ist zu dunkel.')).toBeVisible();

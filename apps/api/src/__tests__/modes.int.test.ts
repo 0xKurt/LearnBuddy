@@ -6,7 +6,12 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { AnswerResponse, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
+import type {
+  BuddyHome,
+  AnswerResponse,
+  MaterialView,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -74,9 +79,12 @@ describe.skipIf(!dbReady)('learning modes', () => {
   });
 
   it('helps with photographed homework without ever giving the solution', async () => {
-    env.llm.script('extraction', (req) => {
+    env.llm.script('extraction', async (req) => {
       // The homework prompt, not the "write practice questions" one.
       expect(req.system).toContain('help to solve it THEMSELVES');
+      // While it is being read the home says Buddy is working — also for homework, which
+      // wakes no background look — so the app keeps following it (found by the tour).
+      expect((await l.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
       return {
         is_learning_material: true,
         readable: true,
@@ -101,6 +109,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
     env.storage.put(created.body.uploads[0]!.path);
     await l.api.post(`/materials/${created.body.material.id}/submit`);
     await env.flushBackground();
+    expect((await l.api.get<BuddyHome>('/buddy')).body.working).toBeNull();
 
     const material = (await l.api.get<MaterialView>(`/materials/${created.body.material.id}`)).body;
     expect(material).toMatchObject({ status: 'ready', purpose: 'homework' });
