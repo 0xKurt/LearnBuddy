@@ -47,7 +47,25 @@
     "resume_body_untitled_other": "Encore {{count}} questions",
     "resume_title_help": "Reprends tes devoirs",
     "resume_title_explain": "Reprends ton explication",
-    "resume_title_test": "Reprends ton test d'entraînement"
+    "resume_title_test": "Reprends ton test d'entraînement",
+    "pages_title_one": "Je n'ai pas pu lire une page en entier",
+    "pages_title_other": "Je n'ai pas pu lire {{count}} pages en entier",
+    "pages_title_single": "Je n'ai pas pu lire ta photo en entier",
+    "pages_line": "Page {{page}} : {{problem}}",
+    "pages_problem": {
+      "cut_off": "un morceau est coupé",
+      "blurry": "floue",
+      "dark": "trop sombre",
+      "glare": "la lumière se reflète",
+      "covered": "quelque chose la cache",
+      "not_material": "ça ne ressemble pas à un cours",
+      "other": "difficile à lire"
+    },
+    "pages_rest": "Tout le reste de « {{title}} » est prêt.",
+    "pages_rest_untitled": "Tout le reste est prêt.",
+    "pages_retake_one": "Reprendre la photo",
+    "pages_retake_other": "Reprendre ces pages",
+    "pages_ok": "C'est bon"
   },
   "when": {
     "today": "aujourd'hui",

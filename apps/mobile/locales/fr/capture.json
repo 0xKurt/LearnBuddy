@@ -54,5 +54,10 @@
     "retake": "Reprendre la photo",
     "keep": "La garder quand même",
     "flag": "Difficile à lire"
+  },
+  "again": {
+    "title": "Reprendre la photo",
+    "title_pages": "Page {{pages}} à nouveau",
+    "intro": "Seulement ce qui manquait – le reste est déjà prêt. Veille à ce que toute la page soit sur la photo."
   }
 }

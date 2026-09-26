@@ -159,6 +159,9 @@ export const getMaterial = (id: string) =>
   request('GET', `/materials/${id}`, { schema: MaterialView });
 export const retryMaterial = (id: string) =>
   request('POST', `/materials/${id}/retry`, { schema: MaterialView });
+/** "Passt so": the pages Buddy could not read are fine as they are. */
+export const acceptMissingPages = (id: string) =>
+  request('POST', `/materials/${id}/pages-ok`, { schema: MaterialView });
 export const deleteMaterial = (id: string) => request('DELETE', `/materials/${id}`);
 export const renameMaterial = (id: string, title: string) =>
   request('PATCH', `/materials/${id}`, { body: { title }, schema: MaterialView });

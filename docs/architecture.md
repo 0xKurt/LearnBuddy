@@ -316,15 +316,42 @@ and a calm card says what is wrong and how to do better, with "Neu fotografieren
 opens the camera) and "Trotzdem behalten". Calibrated on eleven rendered sample photos (in focus,
 noisy, shadow, little text, three kinds of blur, dark, washed out, small; unit-tested) — real phone
 photos may need the limits adjusted. Live guidance while aiming the camera would need our own camera
-screen and is not built. The model's reading still reports an unreadable photo as before.
+screen and is not built. What the phone cannot see (a page cut off at the edge, a finger over the
+text) the model reports per page (below).
 
 `modules/materials/`. `create` reserves the material and signed upload URLs (idempotent per
 client id) → the app uploads directly → `submit` verifies the photos arrived and queues the
 reading (and starts it right away via `waitUntil`) → the job reads them with the model into
 questions (validated item by item) → the capture step Buddy asked for is done with evidence →
 Buddy is woken. Status is what the database says: `awaiting_upload → queued → processing →
-ready | failed(reason)`. Photos are deleted 7 days after reading (also when unreadable), and
+ready | failed(reason)`. Photos are deleted 7 days after reading (also when unreadable), at once
+when they are not learning material (a letter, a recipe: they cannot be read again anyway), and
 immediately when the learner deletes the material.
+
+**What counts as learning material** is said in the prompt: school or study content; everyday
+papers (a recipe, a letter, a receipt, an advert) are not, unless printed as a school task (live:
+the recipe photo was taken as material in 3 of 3 runs with the page prompt, 1 of 3 before;
+rejected 5 of 5 after).
+
+**Pages that could not be read** (migration `0009_material_pages.sql`). Several photos are read in
+one model call; the model also reports each photo (`pages`: read `all` / `part` / `none`, with a
+problem: cut off, blurry, dark, glare, covered, not material). A bad page no longer costs the sheet:
+the readable pages become questions, and "not readable" with questions and a page that was read is
+treated as ready (the model said so at times for one cut-off page; the prompt says `readable` is
+false only when nothing can be read, and text that stops mid-sentence at the edge is cut off and is
+never completed). A broken page report is dropped (`.catch([])`) without costing the questions.
+Code keeps only real photo positions, each once, and stores them as `materials.page_problems`.
+Home then shows `pages_missing` first — before a waiting homework help session, while the sheet is
+still at hand, for 24 hours: "Seite 2: ein Stück ist abgeschnitten", the rest is ready, with
+"Nochmal fotografieren" (capture opens with `completes` and the page numbers; the new material keeps
+the old one's goal and purpose and ends the notice in the same transaction) and "Passt so"
+(`POST /materials/:id/pages-ok`, idempotent). A photo of something else among the pages only offers
+"Passt so". Buddy's context names the missing pages. Measured live (Lena eval `seite-kaputt`,
+`seite-abgeschnitten`, `mehrere-seiten`): a blurred middle page and a page cut off at the bottom
+are reported in 6 of 6 runs with the final prompt (the one before missed a cut once and completed
+the cut-off sentence, hence the last rule), no false report on three good pages, no question about
+what was not on the photo. Before, the blurred page was dropped without a word, and the cut-off page
+failed the whole sheet in 4 of 14 runs.
 
 The learner sees the questions of one material (`GET /materials/:id/items`, screen
 `app/material/[id].tsx`, in the order they were stored — `items.seq`, migration

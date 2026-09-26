@@ -133,6 +133,8 @@ export type MaterialLink = {
   stepId: string | null;
   goalId: string | null;
   purpose?: MaterialPurpose;
+  /** The earlier material whose missing pages these photos are (keeps its goal and purpose). */
+  completes?: string | null;
 };
 
 /**
@@ -169,6 +171,7 @@ export class MaterialUpload {
         ...(this.link.stepId ? { step_id: this.link.stepId } : {}),
         ...(this.link.goalId ? { goal_id: this.link.goalId } : {}),
         purpose: this.link.purpose ?? 'study',
+        ...(this.link.completes ? { completes: this.link.completes } : {}),
       });
       materialId = res.material.id;
       this.materialId = materialId;

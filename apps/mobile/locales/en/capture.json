@@ -54,5 +54,10 @@
     "retake": "Take it again",
     "keep": "Keep it anyway",
     "flag": "Hard to read"
+  },
+  "again": {
+    "title": "Take it again",
+    "title_pages": "Page {{pages}} again",
+    "intro": "Only what was missing – the rest is already done. Make sure the whole page is in the photo."
   }
 }

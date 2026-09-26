@@ -47,7 +47,25 @@
     "resume_body_untitled_other": "{{count}} questions left",
     "resume_title_help": "Continue your homework",
     "resume_title_explain": "Continue your explanation",
-    "resume_title_test": "Continue your practice test"
+    "resume_title_test": "Continue your practice test",
+    "pages_title_one": "I couldn't read one page completely",
+    "pages_title_other": "I couldn't read {{count}} pages completely",
+    "pages_title_single": "I couldn't read your photo completely",
+    "pages_line": "Page {{page}}: {{problem}}",
+    "pages_problem": {
+      "cut_off": "part of it is cut off",
+      "blurry": "blurry",
+      "dark": "too dark",
+      "glare": "the light reflects",
+      "covered": "something is covering it",
+      "not_material": "doesn't look like school work",
+      "other": "hard to read"
+    },
+    "pages_rest": "Everything else from “{{title}}” is ready.",
+    "pages_rest_untitled": "Everything else is ready.",
+    "pages_retake_one": "Take it again",
+    "pages_retake_other": "Take these pages again",
+    "pages_ok": "That's fine"
   },
   "when": {
     "today": "today",

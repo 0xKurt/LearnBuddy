@@ -111,6 +111,24 @@ async function nowCardOf(
   today: string,
   now: Date,
 ): Promise<NowCard | null> {
+  // Pages Buddy could not read come first while the sheet is still at hand: the
+  // rest of it is ready (and a homework help session waits), but Lena should
+  // know what is missing (docs/architecture.md §Material).
+  const missing = state.materials.find(
+    (m) =>
+      m.status === 'ready' &&
+      m.page_problems.length > 0 &&
+      now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
+  );
+  if (missing) {
+    return {
+      type: 'pages_missing',
+      material_id: missing.id,
+      title: missing.title,
+      photo_count: missing.photo_count,
+      pages: missing.page_problems,
+    };
+  }
   const active = state.sessions.find(
     (s) =>
       s.status === 'active' &&

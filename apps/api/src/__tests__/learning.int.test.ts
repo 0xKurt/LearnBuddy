@@ -155,6 +155,14 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect(m.body).toMatchObject({ status: 'failed', failure_reason: 'not_learning_material' });
     const retry = await l.api.post(`/materials/${id}/retry`);
     expect(retry.status).toBe(409);
+    // A photo of something else (a letter, a recipe) is deleted at once, not after 7 days.
+    const paths = await env.db.query<{ storage_path: string }>(
+      `select storage_path from material_photos where material_id = $1`,
+      [id],
+    );
+    expect(paths.length).toBeGreaterThan(0);
+    await tick(env);
+    expect(paths.some((p) => env.storage.objects.has(p.storage_path))).toBe(false);
   });
 
   it('retries a provider timeout later instead of failing the material', async () => {

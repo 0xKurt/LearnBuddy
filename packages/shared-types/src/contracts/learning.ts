@@ -23,6 +23,20 @@ export const MaterialFailure = z.enum([
 ]);
 export type MaterialFailure = z.infer<typeof MaterialFailure>;
 
+/**
+ * A page Buddy could not read completely (cut off, blurred, …). Lena is told
+ * and may photograph exactly that page again (docs/architecture.md §Material).
+ */
+export const PageProblem = z.object({
+  /** Position of the photo, starting at 1. */
+  page: z.number().int().min(1),
+  read: z.enum(['part', 'none']),
+  problem: z
+    .enum(['cut_off', 'blurry', 'dark', 'glare', 'covered', 'not_material', 'other'])
+    .nullable(),
+});
+export type PageProblem = z.infer<typeof PageProblem>;
+
 export const CreateMaterialRequest = z.object({
   client_request_id: Uuid,
   photo_mimes: z
@@ -34,6 +48,11 @@ export const CreateMaterialRequest = z.object({
   step_id: Uuid.nullable().optional(),
   /** homework: the learner needs help with these tasks — hints only, never the solution. */
   purpose: z.enum(['study', 'homework']).default('study'),
+  /**
+   * The pages missing from this earlier material, photographed again: its notice
+   * ends, and the new photos keep its goal and purpose.
+   */
+  completes: Uuid.nullable().optional(),
 });
 export type CreateMaterialRequest = z.infer<typeof CreateMaterialRequest>;
 
@@ -48,6 +67,9 @@ export const MaterialView = z.object({
   purpose: z.enum(['study', 'homework']),
   /** homework: the help session, once the tasks are read. */
   session_id: Uuid.nullable(),
+  /** Pages not read completely, while Lena has not answered the notice. */
+  page_problems: z.array(PageProblem),
+  photo_count: z.number().int(),
   created_at: IsoDateTime,
 });
 export type MaterialView = z.infer<typeof MaterialView>;

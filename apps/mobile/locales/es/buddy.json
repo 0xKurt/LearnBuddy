@@ -47,7 +47,25 @@
     "resume_body_untitled_other": "Quedan {{count}} preguntas",
     "resume_title_help": "Sigue con tus deberes",
     "resume_title_explain": "Sigue con tu explicación",
-    "resume_title_test": "Sigue con tu examen de prueba"
+    "resume_title_test": "Sigue con tu examen de prueba",
+    "pages_title_one": "No pude leer una página entera",
+    "pages_title_other": "No pude leer {{count}} páginas enteras",
+    "pages_title_single": "No pude leer tu foto entera",
+    "pages_line": "Página {{page}}: {{problem}}",
+    "pages_problem": {
+      "cut_off": "falta un trozo",
+      "blurry": "borrosa",
+      "dark": "demasiado oscura",
+      "glare": "la luz se refleja",
+      "covered": "algo la tapa",
+      "not_material": "no parece material de clase",
+      "other": "difícil de leer"
+    },
+    "pages_rest": "Todo lo demás de «{{title}}» está listo.",
+    "pages_rest_untitled": "Todo lo demás está listo.",
+    "pages_retake_one": "Hacer otra foto",
+    "pages_retake_other": "Fotografiar de nuevo estas páginas",
+    "pages_ok": "Así está bien"
   },
   "when": {
     "today": "hoy",

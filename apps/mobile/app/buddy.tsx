@@ -45,6 +45,7 @@ import { clearAdminToken } from '../lib/admin.js';
 import { requestAdmin } from '../lib/adminFlow.js';
 import { ApiError, newId } from '../lib/api/client.js';
 import {
+  acceptMissingPages,
   answerContactOptIn,
   reportOutcome,
   retryMaterial,
@@ -305,6 +306,18 @@ export default function BuddyScreen() {
         onRetryMaterial={(id) =>
           void act(async () => {
             await retryMaterial(id);
+            await refresh();
+          })
+        }
+        onRetakePages={(id, pages) =>
+          router.push({
+            pathname: '/capture',
+            params: { completes: id, ...(pages ? { pages: pages.join(',') } : {}) },
+          })
+        }
+        onPagesOk={(id) =>
+          void act(async () => {
+            await acceptMissingPages(id);
             await refresh();
           })
         }

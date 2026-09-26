@@ -5,7 +5,9 @@
 //
 // Optional route params: stepId (the capture step Buddy asked for), goalId
 // (the goal the material belongs to) and purpose ('homework': the tasks are
-// read and a help session is made — hints only, never the solution).
+// read and a help session is made — hints only, never the solution),
+// completes (an earlier material whose missing pages these are) with pages
+// (their numbers, for the hint).
 
 import { Uuid } from '@learnbuddy/shared-types/contracts';
 import * as ImagePicker from 'expo-image-picker';
@@ -44,6 +46,12 @@ function purposeParam(value: string | string[] | undefined): MaterialPurpose {
   return v === 'homework' ? 'homework' : 'study';
 }
 
+/** "2,3" → "2, 3"; anything that is not a list of page numbers is ignored. */
+function pagesParam(value: string | string[] | undefined): string | null {
+  const v = Array.isArray(value) ? value[0] : value;
+  return v && /^\d{1,2}(,\d{1,2})*$/.test(v) ? v.split(',').join(', ') : null;
+}
+
 /** A route param as one id; anything that is not a UUID is ignored. */
 function idParam(value: string | string[] | undefined): string | null {
   const v = Array.isArray(value) ? value[0] : value;
@@ -56,11 +64,15 @@ export default function CaptureScreen() {
     stepId?: string | string[];
     goalId?: string | string[];
     purpose?: string | string[];
+    completes?: string | string[];
+    pages?: string | string[];
   }>();
   const stepId = idParam(params.stepId);
   const goalId = idParam(params.goalId);
   const purpose = purposeParam(params.purpose);
   const homework = purpose === 'homework';
+  const completes = idParam(params.completes);
+  const missingPages = pagesParam(params.pages);
 
   /** Local URIs of the prepared JPEGs, in page order. */
   const [photos, setPhotos] = useState<string[]>([]);
@@ -189,7 +201,8 @@ export default function CaptureScreen() {
   async function send() {
     if (sending.current || busy || photos.length === 0) return;
     sending.current = true;
-    if (!upload.current) upload.current = new MaterialUpload(photos, { stepId, goalId, purpose });
+    if (!upload.current)
+      upload.current = new MaterialUpload(photos, { stepId, goalId, purpose, completes });
     const current = upload.current;
     setFailure(null);
     setProgress({ step: 'reserving' });
@@ -214,11 +227,21 @@ export default function CaptureScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 18 }}>
         <View style={{ gap: 8, paddingHorizontal: 4 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
-            {homework ? t('capture:homework.title') : t('capture:title')}
+            {completes
+              ? missingPages
+                ? t('capture:again.title_pages', { pages: missingPages })
+                : t('capture:again.title')
+              : homework
+                ? t('capture:homework.title')
+                : t('capture:title')}
           </Text>
           {photos.length === 0 ? (
             <Text style={[TYPE.body, { color: LB.ink2 }]}>
-              {homework ? t('capture:homework.intro') : t('capture:intro')}
+              {completes
+                ? t('capture:again.intro')
+                : homework
+                  ? t('capture:homework.intro')
+                  : t('capture:intro')}
             </Text>
           ) : null}
         </View>

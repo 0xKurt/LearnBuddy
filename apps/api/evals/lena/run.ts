@@ -27,6 +27,7 @@ import { chromium } from '@playwright/test';
 
 import { loadConfig } from '../../src/config.js';
 import { mentionsSolution } from '../../src/modules/practice/tutor.js';
+import type { LlmGateway } from '../../src/llm/gateway.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import {
   TEST_TICK_SECRET,
@@ -43,7 +44,17 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const gateway = new VertexGateway(config);
+const vertex = new VertexGateway(config);
+/** Reading answers kept for the transcript (to see why a sheet failed). */
+const readings: unknown[] = [];
+const gateway: LlmGateway = {
+  available: true,
+  async generate(req) {
+    const res = await vertex.generate(req);
+    if (req.purpose === 'extraction') readings.push(res.json);
+    return res;
+  },
+};
 const TMP = mkdtempSync(join(tmpdir(), 'lena-'));
 
 // ─────────────── one journey ───────────────
@@ -462,6 +473,77 @@ const JOURNEYS: Spec[] = [
         three?.status === 'ready' && (three.item_count ?? 0) >= 5,
         'drei Seiten gelesen, Fragen von allen Seiten',
       );
+      const now = (await j.home()).now;
+      j.check(now?.type !== 'pages_missing', 'keine falsche Meldung über fehlende Seiten');
+    },
+  },
+  {
+    id: 'seite-kaputt',
+    title: 'Drei Seiten, die mittlere unlesbar',
+    from: 'neu · alt: Foto-Probleme',
+    async run(j) {
+      const blurred = (html: string) => `<div style="filter: blur(7px)">${html}</div>`;
+      const m = await j.photo([
+        `<h2>Die Zelle – Seite 1</h2><p>Alle Lebewesen bestehen aus Zellen. Pflanzenzellen haben eine Zellwand und Chloroplasten, Tierzellen nicht.</p><p>1. Nenne zwei Unterschiede zwischen Pflanzen- und Tierzelle.</p>`,
+        blurred(
+          `<h2>Seite 2 – Zellbestandteile</h2><p>Der Zellkern steuert die Zelle. Die Mitochondrien sind die Kraftwerke der Zelle.</p><p>2. Welche Aufgabe hat der Zellkern?</p><p>3. Warum nennt man Mitochondrien Kraftwerke?</p>`,
+        ),
+        `<h2>Seite 3 – Mikroskopieren</h2><p>Zuerst stellt man mit dem Grobtrieb scharf, dann mit dem Feintrieb.</p><p>4. In welcher Reihenfolge benutzt man Grob- und Feintrieb?</p>`,
+      ]);
+      if (!m) return;
+      const items = await j.l.api.get<{ items: { prompt: string }[] }>(`/materials/${m.id}/items`);
+      for (const it of items.body.items ?? []) j.log.push(`  - Frage: ${it.prompt}`);
+      const home = await j.home();
+      j.log.push(`  - Startscreen: ${JSON.stringify(home.now)}`);
+      const text = await j.env.db.one<{ extracted_text: string | null }>(
+        `select extracted_text from materials where id = $1`,
+        [m.id],
+      );
+      j.log.push(
+        `  - gelesener Text: ${(text.extracted_text ?? '').replace(/\n+/g, ' / ').slice(0, 600)}`,
+      );
+      // The questions themselves (a wrong option in a multiple choice may name anything).
+      const said = (items.body.items ?? [])
+        .map((it) => it.prompt)
+        .join(' | ')
+        .toLowerCase();
+      const invented = /.{0,80}(zellkern|mitochondri).{0,80}/.exec(said);
+      if (invented) j.log.push(`  - erfunden?: ${invented[0]}`);
+      j.check(!invented, 'keine erfundenen Fragen zur unlesbaren Seite');
+      const now = home.now;
+      j.check(
+        now?.type === 'pages_missing' && now.pages.map((p) => p.page).join(',') === '2',
+        'Lena erfährt, dass (nur) Seite 2 nicht gelesen wurde',
+      );
+    },
+  },
+  {
+    id: 'seite-abgeschnitten',
+    title: 'Zwei Seiten, die zweite unten abgeschnitten',
+    from: 'neu · alt: Foto-Probleme',
+    async run(j) {
+      // The photo ends in the middle of task 3: the rest of the page is not on it.
+      const cut = (html: string) =>
+        `<div style="height:230px;overflow:hidden;border-bottom:0">${html}</div>`;
+      const m = await j.photo([
+        `<h2>Brüche – Seite 1</h2><p>1. Kürze 6/8.</p><p>2. Kürze 10/15.</p>`,
+        cut(
+          `<h2>Brüche – Seite 2</h2><p>3. Erweitere 2/3 auf den Nenner 12.</p><p>4. Ein Kuchen wird in 8 Stücke geteilt. Tom isst 3 Stücke, Lena isst 2 Stücke. Welcher Anteil des Kuchens bleibt übrig? Gib das Ergebnis gekürzt an und erkläre deinen Rechenweg in einem Satz.</p><p>5. Welcher Bruch ist größer: 3/4 oder 5/8?</p><p>6. Schreibe 0,75 als Bruch.</p>`,
+        ),
+      ]);
+      if (!m) return;
+      const items = await j.l.api.get<{ items: { prompt: string }[] }>(`/materials/${m.id}/items`);
+      for (const it of items.body.items ?? []) j.log.push(`  - Frage: ${it.prompt}`);
+      const home = await j.home();
+      j.log.push(`  - Startscreen: ${JSON.stringify(home.now)}`);
+      j.log.push(`  - Modell: ${JSON.stringify(readings.at(-1)).slice(0, 1500)}`);
+      const now = home.now;
+      j.check(
+        now?.type === 'pages_missing' && now.pages.some((p) => p.page === 2),
+        'Lena erfährt, dass auf Seite 2 etwas fehlt',
+      );
+      const said = JSON.stringify(items.body).toLowerCase();
+      j.check(!/0,75|5\/8/.test(said), 'keine Fragen zu Aufgaben, die nicht auf dem Foto sind');
     },
   },
   {

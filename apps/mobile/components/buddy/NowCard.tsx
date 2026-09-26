@@ -18,6 +18,9 @@ type Props = {
   onSkip: (stepId: string) => void;
   onCapture: (stepId: string | null, goalId: string | null) => void;
   onRetryMaterial: (materialId: string) => void;
+  /** Photograph the pages Buddy could not read again (numbers only for several photos). */
+  onRetakePages: (materialId: string, pages: number[] | null) => void;
+  onPagesOk: (materialId: string) => void;
 };
 
 export function NowCard({
@@ -28,6 +31,8 @@ export function NowCard({
   onSkip,
   onCapture,
   onRetryMaterial,
+  onRetakePages,
+  onPagesOk,
 }: Props) {
   const { t } = useTranslation('buddy');
   switch (card.type) {
@@ -145,6 +150,49 @@ export function NowCard({
           </View>
         </Card>
       );
+    case 'pages_missing': {
+      const several = card.photo_count > 1;
+      const pages = card.pages.map((p) => p.page);
+      // A photo of something else is not worth taking again: then only "OK".
+      const retake = card.pages.some((p) => p.problem !== 'not_material');
+      return (
+        <Card tone="butter" padding={16} radius={22}>
+          <Text accessibilityRole="header" style={TYPE.title}>
+            {several ? t('now.pages_title', { count: pages.length }) : t('now.pages_title_single')}
+          </Text>
+          {card.pages.map((p) => (
+            <Text key={p.page} style={[TYPE.body, { marginTop: 4 }]}>
+              {several
+                ? t('now.pages_line', {
+                    page: p.page,
+                    problem: t(`now.pages_problem.${p.problem ?? 'other'}`),
+                  })
+                : t(`now.pages_problem.${p.problem ?? 'other'}`)}
+            </Text>
+          ))}
+          <Text style={[TYPE.small, { marginTop: 4 }]}>
+            {card.title ? t('now.pages_rest', { title: card.title }) : t('now.pages_rest_untitled')}
+          </Text>
+          <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {retake ? (
+              <Btn
+                onPress={() => onRetakePages(card.material_id, several ? pages : null)}
+                disabled={busy}
+              >
+                {t('now.pages_retake', { count: several ? pages.length : 1 })}
+              </Btn>
+            ) : null}
+            <Btn
+              variant={retake ? 'ghost' : 'primary'}
+              onPress={() => onPagesOk(card.material_id)}
+              disabled={busy}
+            >
+              {t('now.pages_ok')}
+            </Btn>
+          </View>
+        </Card>
+      );
+    }
     case 'practice_result':
       return (
         <Card tone="mint" padding={16} radius={22}>

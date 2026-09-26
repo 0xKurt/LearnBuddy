@@ -54,5 +54,10 @@
     "retake": "Rifai la foto",
     "keep": "Tienila lo stesso",
     "flag": "Difficile da leggere"
+  },
+  "again": {
+    "title": "Rifai la foto",
+    "title_pages": "Di nuovo pagina {{pages}}",
+    "intro": "Solo quello che mancava: il resto è già pronto. Fai in modo che ci sia tutta la pagina."
   }
 }

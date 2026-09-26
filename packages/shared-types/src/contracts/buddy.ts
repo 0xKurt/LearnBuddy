@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { IsoDateTime, LocalDate, LocalTime, Uuid } from './common.js';
+import { PageProblem } from './learning.js';
 
 // ─────────────── what Buddy did (rendered as cards, not prose) ───────────────
 
@@ -204,6 +205,14 @@ export const NowCard = z.discriminatedUnion('type', [
     retryable: z.boolean(),
   }),
   z.object({ type: z.literal('practice_result'), session_id: Uuid, result: PracticeResultBrief }),
+  /** Some pages of a material could not be read: photograph them again, or leave it. */
+  z.object({
+    type: z.literal('pages_missing'),
+    material_id: Uuid,
+    title: z.string().nullable(),
+    photo_count: z.number().int(),
+    pages: z.array(PageProblem).min(1),
+  }),
 ]);
 export type NowCard = z.infer<typeof NowCard>;
 

@@ -93,7 +93,8 @@ export function scriptTour(llm: ScriptedGateway): void {
       reply: 'Schon gut verständlich! Übe noch das ‹th› in „weather“.',
     },
   });
-  // A sheet that could not be read, read again with success; then homework from a photo.
+  // A sheet that could not be read, read again with success; then homework of two
+  // pages whose second is cut off, and that page photographed again.
   llm.script(
     'extraction',
     {
@@ -123,6 +124,33 @@ export function scriptTour(llm: ScriptedGateway): void {
             choices: null,
             correct_choice: null,
             topic: 'Nomen',
+            difficulty: 1,
+            source_excerpt: null,
+          },
+        ],
+      },
+    },
+    {
+      json: {
+        is_learning_material: true,
+        readable: true,
+        pages: [
+          { page: 1, read: 'all', problem: null },
+          { page: 2, read: 'part', problem: 'cut_off' },
+        ],
+        title: 'Hausaufgabe Quadrat',
+        subject: { name: 'Mathe', kind: 'math' },
+        extracted_text: 'Ein Quadrat hat 4 cm Seitenlänge. Berechne den Umfang.',
+        items: [
+          {
+            kind: 'numeric',
+            prompt: 'Ein Quadrat hat 4 cm Seitenlänge. Berechne den Umfang.',
+            answer: '16',
+            accepted_answers: [],
+            unit: 'cm',
+            choices: null,
+            correct_choice: null,
+            topic: 'Umfang',
             difficulty: 1,
             source_excerpt: null,
           },

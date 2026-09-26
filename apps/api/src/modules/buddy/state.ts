@@ -2,6 +2,8 @@
 // model context, the home screen and deterministic decisions. All queries are
 // scoped by learner_id; nothing here trusts client input.
 
+import type { PageProblem } from '@learnbuddy/shared-types/contracts';
+
 import type { Db } from '../../lib/db.js';
 
 export type SettingsRow = {
@@ -114,6 +116,9 @@ export type MaterialBrief = {
   subject_id: string | null;
   goal_id: string | null;
   item_count: number;
+  photo_count: number;
+  /** Pages not read completely that Lena has not answered yet (resolved: empty). */
+  page_problems: PageProblem[];
   created_at: Date;
 };
 
@@ -267,7 +272,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
   );
 
   const materials = await db.query<MaterialBrief>(
-    `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at,
+    `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at, m.photo_count,
+            case when m.pages_resolved_at is null then m.page_problems else '[]'::jsonb end as page_problems,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count
        from materials m
       where m.learner_id = $1 and m.archived_at is null

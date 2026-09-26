@@ -81,6 +81,21 @@ Der Durchlauf lässt sich jederzeit wiederholen (`apps/api/evals/lena/run.ts`).
    - Alles Unklare („ich glaube die zweite“) beurteilt weiter das Modell. Das Modell hat dafür
      jetzt die Regel, eine genannte Option als Antwort zu werten.
    - Getestet: Buddy 22/22, Tutor 9/9, live 3 von 3.
+3. **Eine kaputte Seite ging still verloren, oder das ganze Blatt.** (Nachtrag, neue Szenarien
+   „drei Seiten, die mittlere unscharf“ und „zwei Seiten, die zweite unten abgeschnitten“.)
+   - Unscharfe Mittelseite: Buddy ließ sie weg, erfand nichts, sagte Lena aber auch nichts.
+   - Abgeschnittene Seite: In 4 von 14 Läufen erklärte das Modell deswegen das ganze Blatt für
+     unlesbar, Lena hätte gar nichts bekommen. Einmal ergänzte es den abgeschnittenen Satz selbst.
+   - Jetzt meldet das Modell jede Seite einzeln. Die lesbaren Seiten werden zu Fragen, und Lena
+     sieht „Seite 2: ein Stück ist abgeschnitten“ mit „Nochmal fotografieren“ (nur diese Seite)
+     oder „Passt so“. Ein Blatt scheitert nur noch, wenn wirklich keine Seite lesbar ist; das
+     prüft der Code, nicht nur der Prompt.
+   - Live mit dem finalen Stand 6 von 6, keine falsche Meldung bei drei guten Seiten.
+4. **Das Rezept wurde öfter als Lernstoff angenommen** (vorher 1 von 3, nach der Seiten-Änderung
+   3 von 3). Jetzt steht im Prompt, was Lernstoff ist: Alltagszettel (Rezept, Brief, Kassenbon,
+   Werbung) nicht, außer sie sind als Schulaufgabe gedruckt. Live 5 von 5 abgelehnt. Solche Fotos
+   werden jetzt sofort gelöscht statt nach 7 Tagen.
+   - Kompletter Durchlauf danach: **74 von 74** Prüfungen.
 
 ## Auffällig, noch nicht behoben – dazu brauche ich deine Meinung
 

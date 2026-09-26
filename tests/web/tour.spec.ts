@@ -165,16 +165,38 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
-  // ── Homework from a photo: straight into help, hints only ──
+  // ── Homework of two pages, the second cut off: Lena is told, and takes just that page again ──
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
   await expect(page.getByText('Fotografier deine Hausaufgabe')).toBeVisible();
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Foto machen' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  // The sample photo is small for a phone photo: kept anyway.
+  await page.getByRole('button', { name: 'Trotzdem behalten' }).click();
+  chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Noch ein Foto' }).click();
+  await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await expect(page.getByRole('img', { name: 'Foto 2 von 2' })).toBeVisible();
+  await page.getByRole('button', { name: 'Trotzdem behalten' }).click();
   await page.getByRole('button', { name: 'Senden' }).click();
-  // Shown as soon as it is read, although a prepared practice was on top before.
+  // Before the help session: what is missing, while the sheet is still at hand.
+  await expect(page.getByText('Eine Seite konnte ich nicht ganz lesen')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText('Seite 2: ein Stück ist abgeschnitten')).toBeVisible();
+  await expect(page.getByText('Alles andere von „Hausaufgabe Quadrat“ ist fertig.')).toBeVisible();
+  await shot(page, '52-page-missing');
+  await page.getByRole('button', { name: 'Nochmal fotografieren' }).click();
+  await expect(page.getByText('Seite 2 nochmal')).toBeVisible();
+  await shot(page, '53-page-again');
+  chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
+  await page.getByRole('button', { name: 'Senden' }).click();
+  // The notice is answered; the help for the page taken again is on top.
   await expect(page.getByText('Weiter mit deiner Hausaufgabe')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Eine Seite konnte ich nicht ganz lesen')).toHaveCount(0);
   await page.getByRole('button', { name: 'Weitermachen' }).click();
   await expect(
     page.getByText('Ein Rechteck ist 6 cm lang und 3 cm breit.', { exact: false }),

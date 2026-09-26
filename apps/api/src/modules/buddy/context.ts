@@ -221,6 +221,10 @@ export function buildContext(
   const failed = state.materials.filter((m) => m.status === 'failed');
   if (failed.length)
     lines.push(`- ${failed.length} sheet(s) could not be read (learner can retry)`);
+  for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
+    lines.push(
+      `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,
+    );
 
   lines.push('', '## Recent practice');
   if (state.sessions.length === 0) lines.push('- none yet');

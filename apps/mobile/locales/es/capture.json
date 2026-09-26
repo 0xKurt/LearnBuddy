@@ -54,5 +54,10 @@
     "retake": "Hacer otra foto",
     "keep": "Quedármela igualmente",
     "flag": "Difícil de leer"
+  },
+  "again": {
+    "title": "Hacer otra foto",
+    "title_pages": "Página {{pages}} otra vez",
+    "intro": "Solo lo que faltaba: lo demás ya está listo. Asegúrate de que salga la página entera."
   }
 }

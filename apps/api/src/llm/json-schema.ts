@@ -107,6 +107,8 @@ function convert(s: z.ZodTypeAny): JsonSchema {
       return toJsonSchema((s as z.ZodOptional<z.ZodTypeAny>).unwrap());
     case z.ZodFirstPartyTypeKind.ZodDefault:
       return toJsonSchema((s as z.ZodDefault<z.ZodTypeAny>).removeDefault());
+    case z.ZodFirstPartyTypeKind.ZodCatch:
+      return withDescription(s, toJsonSchema((s as z.ZodCatch<z.ZodTypeAny>).removeCatch()));
     case z.ZodFirstPartyTypeKind.ZodEffects:
       return withDescription(s, toJsonSchema((s as z.ZodEffects<z.ZodTypeAny>).innerType()));
     default:

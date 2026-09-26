@@ -16,6 +16,7 @@ import type {
   LibraryView,
   MaterialItemsView,
   MaterialView,
+  PageProblem,
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -34,6 +35,7 @@ import {
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
   ExtractionResult,
+  type PageReport,
   HOMEWORK_SYSTEM,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
@@ -54,6 +56,8 @@ type MaterialRow = {
   failure_reason: MaterialView['failure_reason'];
   photo_count: number;
   purpose: 'study' | 'homework';
+  page_problems: PageProblem[];
+  pages_resolved_at: Date | null;
   archived_at: Date | null;
   created_at: Date;
 };
@@ -89,6 +93,8 @@ function toView(
     item_count: m.item_count,
     purpose: m.purpose,
     session_id: m.session_id,
+    page_problems: m.pages_resolved_at ? [] : m.page_problems,
+    photo_count: m.photo_count,
     subject_name: m.subject_name,
     goal_id: m.goal_id,
     created_at: m.created_at.toISOString(),
@@ -111,7 +117,17 @@ export async function createMaterial(
       )
     : null;
   if (input.step_id && !step) throw new AppError('not_found', 'Step not found');
-  const goalId = input.goal_id ?? step?.goal_id ?? null;
+  // Pages photographed again for an earlier material keep its goal and purpose.
+  const completes = input.completes
+    ? await deps.db.maybeOne<{ id: string; goal_id: string | null; purpose: 'study' | 'homework' }>(
+        `select id, goal_id, purpose from materials
+          where id = $1 and learner_id = $2 and archived_at is null`,
+        [input.completes, learner.id],
+      )
+    : null;
+  if (input.completes && !completes) throw new AppError('not_found', 'Material not found');
+  const goalId = input.goal_id ?? step?.goal_id ?? completes?.goal_id ?? null;
+  const purpose = completes?.purpose ?? input.purpose;
   const goal = goalId
     ? await deps.db.maybeOne<{ subject_id: string | null }>(
         `select subject_id from buddy_goals where id = $1 and learner_id = $2`,
@@ -126,8 +142,9 @@ export async function createMaterial(
     );
     if (existing) return existing.id;
     const row = await tx.one<{ id: string }>(
-      `insert into materials (learner_id, client_request_id, goal_id, step_id, subject_id, photo_count, created_at, purpose)
-       values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
+      `insert into materials (learner_id, client_request_id, goal_id, step_id, subject_id, photo_count,
+                              created_at, purpose, completes_material_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
       [
         learner.id,
         input.client_request_id,
@@ -136,9 +153,18 @@ export async function createMaterial(
         goal?.subject_id ?? null,
         input.photo_mimes.length,
         deps.now(),
-        input.purpose,
+        purpose,
+        completes?.id ?? null,
       ],
     );
+    if (completes) {
+      // The notice about the missing pages has been answered.
+      await tx.query(
+        `update materials set pages_resolved_at = coalesce(pages_resolved_at, $2) where id = $1`,
+        [completes.id, deps.now()],
+      );
+      await bumpContext(tx, learner.id);
+    }
     for (const [position, mime] of input.photo_mimes.entries()) {
       const ext = mime === 'image/png' ? 'png' : 'jpg';
       await tx.query(
@@ -168,6 +194,28 @@ export async function createMaterial(
     });
   }
   return { material: view, uploads };
+}
+
+/** "Passt so": the missing pages are fine as they are; the notice ends. Idempotent. */
+export async function acceptMissingPages(
+  deps: Deps,
+  learnerId: string,
+  materialId: string,
+): Promise<void> {
+  await deps.db.tx(async (tx) => {
+    const m = await tx.maybeOne<{ pages_resolved_at: Date | null }>(
+      `select pages_resolved_at from materials
+        where id = $1 and learner_id = $2 and archived_at is null for update`,
+      [materialId, learnerId],
+    );
+    if (!m) throw new AppError('not_found', 'Material not found');
+    if (m.pages_resolved_at) return;
+    await tx.query(`update materials set pages_resolved_at = $2 where id = $1`, [
+      materialId,
+      deps.now(),
+    ]);
+    await bumpContext(tx, learnerId);
+  });
 }
 
 /** Photos are uploaded: check they are really there, then queue the reading. */
@@ -271,11 +319,14 @@ async function fail(
       `select learner_id from materials where id = $1`,
       [materialId],
     );
-    // Unusable photos are not kept longer than readable ones (docs/privacy.md).
+    // Unusable photos are not kept longer than readable ones, and a photo of
+    // something else (a letter, a recipe) not at all: it cannot be read again
+    // anyway (docs/privacy.md).
+    const keepMs = reason === 'not_learning_material' ? 0 : PHOTO_RETENTION_DAYS * 86_400_000;
     await enqueueJob(tx, {
       learnerId: m.learner_id,
       kind: 'purge_photos',
-      runAt: new Date(now.getTime() + PHOTO_RETENTION_DAYS * 86_400_000),
+      runAt: new Date(now.getTime() + keepMs),
       dedupeKey: `purge:${materialId}`,
       payload: { material_id: materialId },
     });
@@ -376,7 +427,13 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   const x = result.data;
   if (!x.is_learning_material) return fail(deps, job, materialId, 'not_learning_material');
   const items = usableItems(x.items);
-  if (!x.readable || items.length === 0) return fail(deps, job, materialId, 'unreadable');
+  const pageProblems = pageProblemsOf(x.pages, m.photo_count);
+  // "Not readable" with questions and a page that was read: one bad page must not
+  // cost the whole sheet (the model says so for a cut-off page at times); the
+  // page report tells Lena what is missing.
+  const somePageRead = x.pages.some((p) => p.page <= m.photo_count && p.read !== 'none');
+  if ((!x.readable && !somePageRead) || items.length === 0)
+    return fail(deps, job, materialId, 'unreadable');
 
   await deps.db.tx(async (tx) => {
     const current = await tx.one<MaterialRow>(`select * from materials where id = $1 for update`, [
@@ -402,9 +459,9 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     );
     await tx.query(
       `update materials set status = 'ready', failure_reason = null, title = coalesce(title, $2),
-                            extracted_text = $3, subject_id = $4, ready_at = $5
+                            extracted_text = $3, subject_id = $4, ready_at = $5, page_problems = $6
         where id = $1`,
-      [materialId, x.title, x.extracted_text, subjectId, now],
+      [materialId, x.title, x.extracted_text, subjectId, now, JSON.stringify(pageProblems)],
     );
     if (homework) {
       // Homework goes straight into a help session: hints only, never the solution.
@@ -461,6 +518,19 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     status: 'done',
     result: { outcome: 'ready', items: items.length },
   });
+}
+
+/**
+ * The pages that were not read completely, as the model reported them: only real
+ * photo positions, each once. Lena is told about them (docs/architecture.md §Material).
+ */
+export function pageProblemsOf(pages: PageReport[], photoCount: number): PageProblem[] {
+  const out = new Map<number, PageProblem>();
+  for (const p of pages) {
+    if (p.read === 'all' || p.page > photoCount || out.has(p.page)) continue;
+    out.set(p.page, { page: p.page, read: p.read, problem: p.problem });
+  }
+  return [...out.values()].sort((a, b) => a.page - b.page);
 }
 
 /** Raw photos are deleted 7 days after reading (docs/privacy.md). */

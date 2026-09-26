@@ -54,5 +54,10 @@
     "retake": "Neu fotografieren",
     "keep": "Trotzdem behalten",
     "flag": "Schwer lesbar"
+  },
+  "again": {
+    "title": "Nochmal fotografieren",
+    "title_pages": "Seite {{pages}} nochmal",
+    "intro": "Nur was gefehlt hat – der Rest ist schon fertig. Achte darauf, dass die ganze Seite drauf ist."
   }
 }

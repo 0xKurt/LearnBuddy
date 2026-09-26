@@ -18,6 +18,7 @@ import {
 import { check, readBody } from '../../http/validate.js';
 import { runQueuedExtraction } from '../scheduler/tick.js';
 import {
+  acceptMissingPages,
   archiveMaterial,
   archiveMaterialItem,
   createMaterial,
@@ -84,6 +85,15 @@ materialRoutes.post('/:id/retry', async (c) => {
   const { jobId } = await retryMaterial(deps, learnerId, materialId);
   if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
   return c.json(await materialView(deps.db, learnerId, materialId), 202);
+});
+
+/** "Passt so": the pages Buddy could not read are fine as they are. */
+materialRoutes.post('/:id/pages-ok', async (c) => {
+  const materialId = check(Uuid, c.req.param('id'));
+  const deps = depsOf(c);
+  const learnerId = c.get('learner').id;
+  await acceptMissingPages(deps, learnerId, materialId);
+  return c.json(await materialView(deps.db, learnerId, materialId));
 });
 
 materialRoutes.delete('/:id', async (c) => {

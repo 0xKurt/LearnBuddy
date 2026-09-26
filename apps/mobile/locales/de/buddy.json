@@ -47,7 +47,25 @@
     "resume_body_untitled_other": "Noch {{count}} Aufgaben",
     "resume_title_help": "Weiter mit deiner Hausaufgabe",
     "resume_title_explain": "Weiter mit deiner Erklärung",
-    "resume_title_test": "Weiter mit deinem Probetest"
+    "resume_title_test": "Weiter mit deinem Probetest",
+    "pages_title_one": "Eine Seite konnte ich nicht ganz lesen",
+    "pages_title_other": "{{count}} Seiten konnte ich nicht ganz lesen",
+    "pages_title_single": "Dein Foto konnte ich nicht ganz lesen",
+    "pages_line": "Seite {{page}}: {{problem}}",
+    "pages_problem": {
+      "cut_off": "ein Stück ist abgeschnitten",
+      "blurry": "unscharf",
+      "dark": "zu dunkel",
+      "glare": "das Licht spiegelt",
+      "covered": "etwas liegt drüber",
+      "not_material": "sieht nicht nach Schulstoff aus",
+      "other": "schwer zu lesen"
+    },
+    "pages_rest": "Alles andere von „{{title}}“ ist fertig.",
+    "pages_rest_untitled": "Alles andere ist fertig.",
+    "pages_retake_one": "Nochmal fotografieren",
+    "pages_retake_other": "Diese Seiten nochmal fotografieren",
+    "pages_ok": "Passt so"
   },
   "when": {
     "today": "heute",
