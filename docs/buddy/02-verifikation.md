@@ -103,6 +103,14 @@ echten Geräten (Kamera, Tastatur, Push, Bildschirmleser).
     Das ist kein statistischer Beleg. Ohne zusätzliches Nachdenken (`pronounce.v2.1`, je 3 Läufe):
     halb so lange (≈ 3,8 s statt ≈ 8 s pro Satz), falsches Wort 3/3 statt 2/3 erkannt, korrekte
     Stimme 2/3 statt 1/3 als „gut“; deutsche Aussprache in beiden Varianten nur als „fast“.
+  - Freie Aussprache-Prüfung ohne Modellkosten (Spike 2026-09-26, Testaufnahmen nur mit espeak-ng):
+    PocketSphinx (en-us, CMU) erkennt schon die korrekte Stimme nicht („i you cut all files in the
+    garden“); Allosaurus (uni2005, Lautmodell für alle sechs Schulsprachen, 0,1–0,2 s auf CPU)
+    liegt bei 61–87 % Lautfehlern auch für korrekte Aussprache und trennt Akzent nicht von
+    korrekt. **Aussagekraft gering**: espeak-Stimmen sind synthetisch und für Modelle, die auf
+    echter Sprache trainiert sind, ungewohnt. Offen: wav2vec2-Lautmodell (Hugging Face, hier
+    gesperrt) mit echten Aufnahmen von Kindern. Handy-Spracherkennung verbessert falsch
+    Ausgesprochenes zum richtigen Wort (Erfahrung des Product Owners) — für Aussprache ungeeignet.
   - `apps/api/evals/speed/run.ts`: Wartezeit und Kosten jedes typischen Schritts gegen das echte
     Modell (Zahlen in `docs/architecture.md` §Speed). Buddy ohne Nachdenken: 18/22 statt 20/22
     Fälle, darunter eine im Chat gelöste Hausaufgabe — das Nachdenken bleibt.
