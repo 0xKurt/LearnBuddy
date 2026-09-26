@@ -208,34 +208,41 @@ class Journey {
   }
 
   /** A worksheet photo (HTML rendered by Chromium), sent like the app does. */
-  async photo(html: string, purpose: 'material' | 'homework' = 'material') {
-    const bytes = await render(html);
-    this.log.push(`- *fotografiert ein Blatt* (${purpose})`);
+  /** Photos of one sheet (one page or several), sent like the app does; times reading and preparing. */
+  async photo(html: string | string[], purpose: 'material' | 'homework' = 'material') {
+    const pages = Array.isArray(html) ? html : [html];
+    const bytes = await Promise.all(pages.map((p) => render(p)));
+    this.log.push(
+      `- *fotografiert ${pages.length === 1 ? 'ein Blatt' : `${pages.length} Seiten`}* (${purpose})`,
+    );
     const created = await this.l.api.post<{
       material: { id: string };
       uploads: { path: string }[];
     }>('/materials', {
       client_request_id: crypto.randomUUID(),
-      photo_mimes: ['image/jpeg'],
+      photo_mimes: pages.map(() => 'image/jpeg'),
       ...(purpose === 'homework' ? { purpose } : {}),
     });
     if (created.status !== 201) {
       this.log.push(`  → ${created.status} ${JSON.stringify(created.body).slice(0, 200)}`);
       return null;
     }
-    for (const u of created.body.uploads) this.env.storage.put(u.path, bytes);
+    created.body.uploads.forEach((u, i) => this.env.storage.put(u.path, bytes[i]));
     const t0 = performance.now();
     await this.l.api.post(`/materials/${created.body.material.id}/submit`);
     await this.env.flushBackground();
+    const read = Math.round(performance.now() - t0);
+    this.waits.push({ what: `read ${pages.length} page(s)`, ms: read });
     await this.tick();
     const m = await this.l.api.get<{
       status: string;
       failure_reason: string | null;
       title: string | null;
+      item_count: number;
     }>(`/materials/${created.body.material.id}`);
     this.waits.push({ what: 'photo → ready', ms: Math.round(performance.now() - t0) });
     this.log.push(
-      `  → ${m.body.status}${m.body.failure_reason ? ` (${m.body.failure_reason})` : ''}: ${m.body.title ?? ''} (${this.waits.at(-1)?.ms} ms)`,
+      `  → ${m.body.status}${m.body.failure_reason ? ` (${m.body.failure_reason})` : ''}: ${m.body.title ?? ''} · ${m.body.item_count} Fragen (gelesen nach ${read} ms, Übung bereit nach ${this.waits.at(-1)?.ms} ms)`,
     );
     return { id: created.body.material.id, ...m.body };
   }
@@ -434,6 +441,27 @@ const JOURNEYS: Spec[] = [
       await j.tick();
       const after = await j.say('wie wars');
       j.check(after.status === 'done', 'Buddy spricht über das Ergebnis');
+    },
+  },
+  {
+    id: 'mehrere-seiten',
+    title: 'Ein Blatt über drei Seiten (Bio: die Zelle)',
+    from: 'neu',
+    async run(j) {
+      await j.say('nächsten mittwoch bio test über die zelle');
+      const one = await j.photo(
+        `<h2>Die Zelle – Seite 1</h2><p>Alle Lebewesen bestehen aus Zellen. Pflanzenzellen haben eine Zellwand, Chloroplasten und eine große Vakuole. Tierzellen haben keine Zellwand.</p><p>1. Nenne zwei Unterschiede zwischen Pflanzen- und Tierzelle.</p>`,
+      );
+      j.check(one?.status === 'ready', 'eine Seite gelesen');
+      const three = await j.photo([
+        `<h2>Die Zelle – Seite 1</h2><p>Alle Lebewesen bestehen aus Zellen. Pflanzenzellen haben eine Zellwand, Chloroplasten und eine große Vakuole. Tierzellen haben keine Zellwand.</p><p>1. Nenne zwei Unterschiede zwischen Pflanzen- und Tierzelle.</p>`,
+        `<h2>Seite 2 – Zellbestandteile</h2><p>Der Zellkern steuert die Zelle und enthält die Erbinformation. Die Mitochondrien sind die Kraftwerke der Zelle. Die Zellmembran grenzt die Zelle ab.</p><p>2. Welche Aufgabe hat der Zellkern?</p><p>3. Warum nennt man Mitochondrien Kraftwerke?</p>`,
+        `<h2>Seite 3 – Mikroskopieren</h2><p>Mit dem Lichtmikroskop kann man Zellen bis etwa 1000-fach vergrößern. Zuerst stellt man mit dem Grobtrieb scharf, dann mit dem Feintrieb.</p><p>4. In welcher Reihenfolge benutzt man Grob- und Feintrieb?</p><p>5. Wie stark vergrößert ein Lichtmikroskop etwa?</p>`,
+      ]);
+      j.check(
+        three?.status === 'ready' && (three.item_count ?? 0) >= 5,
+        'drei Seiten gelesen, Fragen von allen Seiten',
+      );
     },
   },
   {
