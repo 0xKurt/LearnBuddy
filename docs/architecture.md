@@ -306,6 +306,18 @@ context caching of the fixed part, or offering only the tools a turn can use.
 
 ## Material
 
+**Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
+common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
+decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean
+brightness), washed out (ink hardly darker than the paper), blurry (the strongest edges relative to
+that contrast; soft edges also make ink paler, so blur is checked first) or too small (shorter side
+under 900 px). Nothing leaves the device for this. A photo with a problem is marked "Schwer lesbar"
+and a calm card says what is wrong and how to do better, with "Neu fotografieren" (replaces it and
+opens the camera) and "Trotzdem behalten". Calibrated on eleven rendered sample photos (in focus,
+noisy, shadow, little text, three kinds of blur, dark, washed out, small; unit-tested) — real phone
+photos may need the limits adjusted. Live guidance while aiming the camera would need our own camera
+screen and is not built. The model's reading still reports an unreadable photo as before.
+
 `modules/materials/`. `create` reserves the material and signed upload URLs (idempotent per
 client id) → the app uploads directly → `submit` verifies the photos arrived and queues the
 reading (and starts it right away via `waitUntil`) → the job reads them with the model into

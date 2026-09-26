@@ -41,5 +41,18 @@
   "homework": {
     "title": "Photograph your homework",
     "intro": "I'll help you step by step – you'll find the answer yourself."
+  },
+  "quality": {
+    "blurry": "Photo {{index}} is blurry.",
+    "blurry_tip": "Hold the phone still and tap the sheet on the screen to focus.",
+    "dark": "Photo {{index}} is too dark.",
+    "dark_tip": "Move to the light or turn a light on – without the phone's shadow on the sheet.",
+    "washed_out": "The writing on photo {{index}} is hard to see.",
+    "washed_out_tip": "Too bright or glare: tilt the phone a little, away from the lamp.",
+    "small": "Photo {{index}} is very small.",
+    "small_tip": "I can hardly read small print like this. Better take the sheet with the camera.",
+    "retake": "Take it again",
+    "keep": "Keep it anyway",
+    "flag": "Hard to read"
   }
 }

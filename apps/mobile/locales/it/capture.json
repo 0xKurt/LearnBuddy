@@ -41,5 +41,18 @@
   "homework": {
     "title": "Fotografa i tuoi compiti",
     "intro": "Ti aiuto passo dopo passo – la soluzione la trovi tu."
+  },
+  "quality": {
+    "blurry": "La foto {{index}} è sfocata.",
+    "blurry_tip": "Tieni fermo il telefono e tocca il foglio sullo schermo per mettere a fuoco.",
+    "dark": "La foto {{index}} è troppo scura.",
+    "dark_tip": "Mettiti alla luce o accendi una lampada, senza l’ombra del telefono sul foglio.",
+    "washed_out": "Nella foto {{index}} la scrittura si vede appena.",
+    "washed_out_tip": "Troppo chiara o riflessi: inclina un po’ il telefono, lontano dalla lampada.",
+    "small": "La foto {{index}} è molto piccola.",
+    "small_tip": "Così leggo a fatica le scritte piccole. Meglio fotografare il foglio con la fotocamera.",
+    "retake": "Rifai la foto",
+    "keep": "Tienila lo stesso",
+    "flag": "Difficile da leggere"
   }
 }

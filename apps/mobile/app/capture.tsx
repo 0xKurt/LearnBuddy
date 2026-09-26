@@ -15,6 +15,7 @@ import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native
 import { useTranslation } from 'react-i18next';
 
 import { CaptureTips } from '../components/capture/CaptureTips.js';
+import { PhotoCheckCard } from '../components/capture/PhotoCheckCard.js';
 import { PhotoStrip } from '../components/capture/PhotoStrip.js';
 import { SendBar } from '../components/capture/SendBar.js';
 import { Btn } from '../components/lb/Btn.js';
@@ -33,6 +34,7 @@ import {
   type SendProgress,
 } from '../lib/capture/upload.js';
 import { messageFor } from '../lib/errors.js';
+import type { PhotoProblem } from '../lib/photo/quality.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
@@ -62,6 +64,10 @@ export default function CaptureScreen() {
 
   /** Local URIs of the prepared JPEGs, in page order. */
   const [photos, setPhotos] = useState<string[]>([]);
+  /** What the check on the device found per photo (lib/photo/quality.ts). */
+  const [problems, setProblems] = useState<Record<string, PhotoProblem[]>>({});
+  /** Photos she chose to keep despite a problem. */
+  const [kept, setKept] = useState<ReadonlySet<string>>(new Set());
   const [preparing, setPreparing] = useState<{ current: number; total: number } | null>(null);
   const [progress, setProgress] = useState<SendProgress | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -94,6 +100,8 @@ export default function CaptureScreen() {
       try {
         const photo = await preparePhoto(source);
         setPhotos((prev) => (prev.length < MAX_PHOTOS ? [...prev, photo.uri] : prev));
+        if (photo.problems.length > 0)
+          setProblems((prev) => ({ ...prev, [photo.uri]: photo.problems }));
         photosChanged();
       } catch {
         failed += 1;
@@ -145,6 +153,14 @@ export default function CaptureScreen() {
     photosChanged();
   }
 
+  /** The first photo with a problem she has not decided about yet. */
+  const review = photos.find((uri) => (problems[uri]?.length ?? 0) > 0 && !kept.has(uri)) ?? null;
+
+  function retake(uri: string) {
+    remove(uri);
+    void pick('camera');
+  }
+
   function failureText(err: unknown): string {
     if (err instanceof PhotoUploadError) {
       const index = err.position + 1;
@@ -190,9 +206,11 @@ export default function CaptureScreen() {
           <Text accessibilityRole="header" style={TYPE.display}>
             {homework ? t('capture:homework.title') : t('capture:title')}
           </Text>
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>
-            {homework ? t('capture:homework.intro') : t('capture:intro')}
-          </Text>
+          {photos.length === 0 ? (
+            <Text style={[TYPE.body, { color: LB.ink2 }]}>
+              {homework ? t('capture:homework.intro') : t('capture:intro')}
+            </Text>
+          ) : null}
         </View>
 
         {/* Tips are for taking the photo; once there is one, the photos get the room. */}
@@ -200,8 +218,23 @@ export default function CaptureScreen() {
 
         {photos.length > 0 ? (
           <Section title={t('capture:photos_title', { count: photos.length })}>
-            <PhotoStrip uris={photos} disabled={busy} onRemove={remove} />
+            <PhotoStrip
+              uris={photos}
+              flagged={new Set(photos.filter((uri) => (problems[uri]?.length ?? 0) > 0))}
+              disabled={busy}
+              onRemove={remove}
+            />
           </Section>
+        ) : null}
+
+        {review ? (
+          <PhotoCheckCard
+            index={photos.indexOf(review) + 1}
+            problems={problems[review] ?? []}
+            disabled={busy}
+            onRetake={() => retake(review)}
+            onKeep={() => setKept((prev) => new Set(prev).add(review))}
+          />
         ) : null}
 
         {preparing ? (
@@ -229,7 +262,7 @@ export default function CaptureScreen() {
           </View>
         ) : null}
 
-        {room > 0 ? (
+        {review ? null : room > 0 ? (
           // First the camera is the one main action; once there are photos, sending is.
           <Card padding={16}>
             <View style={{ gap: 10 }}>

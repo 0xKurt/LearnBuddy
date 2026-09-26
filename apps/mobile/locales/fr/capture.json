@@ -41,5 +41,18 @@
   "homework": {
     "title": "Photographie tes devoirs",
     "intro": "Je t'aide pas à pas – la solution, tu la trouves toi-même."
+  },
+  "quality": {
+    "blurry": "La photo {{index}} est floue.",
+    "blurry_tip": "Tiens le téléphone immobile et touche la feuille à l’écran pour faire la mise au point.",
+    "dark": "La photo {{index}} est trop sombre.",
+    "dark_tip": "Va vers la lumière ou allume une lampe – sans l’ombre du téléphone sur la feuille.",
+    "washed_out": "Sur la photo {{index}}, on voit à peine l’écriture.",
+    "washed_out_tip": "Trop clair ou reflet : incline un peu le téléphone, loin de la lampe.",
+    "small": "La photo {{index}} est très petite.",
+    "small_tip": "Je peux à peine lire les petits caractères ainsi. Prends plutôt la feuille avec l’appareil photo.",
+    "retake": "Reprendre la photo",
+    "keep": "La garder quand même",
+    "flag": "Difficile à lire"
   }
 }

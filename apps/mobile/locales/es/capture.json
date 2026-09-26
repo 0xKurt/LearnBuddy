@@ -41,5 +41,18 @@
   "homework": {
     "title": "Fotografía tus deberes",
     "intro": "Te ayudo paso a paso – la solución la encuentras tú."
+  },
+  "quality": {
+    "blurry": "La foto {{index}} está borrosa.",
+    "blurry_tip": "Sujeta el móvil quieto y toca la hoja en la pantalla para enfocar.",
+    "dark": "La foto {{index}} está demasiado oscura.",
+    "dark_tip": "Ponte a la luz o enciende una lámpara, sin la sombra del móvil sobre la hoja.",
+    "washed_out": "En la foto {{index}} apenas se ve la letra.",
+    "washed_out_tip": "Demasiado clara o con reflejos: inclina un poco el móvil, lejos de la lámpara.",
+    "small": "La foto {{index}} es muy pequeña.",
+    "small_tip": "Así apenas puedo leer la letra pequeña. Mejor haz la foto de la hoja con la cámara.",
+    "retake": "Hacer otra foto",
+    "keep": "Quedármela igualmente",
+    "flag": "Difícil de leer"
   }
 }

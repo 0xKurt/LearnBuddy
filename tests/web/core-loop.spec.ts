@@ -15,8 +15,14 @@ mkdirSync(SHOTS, { recursive: true });
 /** The app scrolls inside its own views: a tall window shows a whole screen. */
 /** A photographed "worksheet", rendered by the browser itself. */
 async function worksheetJpeg(page: Page, path: string): Promise<void> {
-  const sheet = await page.context().newPage();
-  await sheet.setViewportSize({ width: 800, height: 1000 });
+  // A phone photo is big: 1600 × 2000 pixels (800 × 1000 at twice the density).
+  const sheet = await page
+    .context()
+    .browser()!
+    .newPage({
+      viewport: { width: 800, height: 1000 },
+      deviceScaleFactor: 2,
+    });
   await sheet.setContent(`
     <body style="font-family: Georgia, serif; padding: 48px; background: #fffef8">
       <h1>Brüche – Übungsblatt</h1>
@@ -106,10 +112,21 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '07-capture-empty');
   const photo = join(SHOTS, '..', 'worksheet.jpg');
   await worksheetJpeg(page, photo);
-  const chooser = page.waitForEvent('filechooser');
+  // A blurry photo first: the phone itself says so at once, and "Neu fotografieren" replaces it.
+  let chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Foto machen' }).click();
+  await (
+    await chooser
+  ).setFiles(join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures/blur.jpg'));
+  await expect(page.getByText('Foto 1 ist unscharf.')).toBeVisible();
+  await expect(page.getByText('Schwer lesbar')).toBeVisible();
+  await shot(page, '08a-capture-blurry');
+  chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Neu fotografieren' }).click();
   await (await chooser).setFiles(photo);
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await expect(page.getByText('Foto 1 ist unscharf.')).toHaveCount(0);
+  await expect(page.getByText('Schwer lesbar')).toHaveCount(0);
   await shot(page, '08-capture-photo');
   await page.getByRole('button', { name: 'Senden' }).click();
 

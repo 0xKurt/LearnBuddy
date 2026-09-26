@@ -41,5 +41,18 @@
   "homework": {
     "title": "Fotografier deine Hausaufgabe",
     "intro": "Ich helfe dir Schritt für Schritt – die Lösung findest du selbst."
+  },
+  "quality": {
+    "blurry": "Foto {{index}} ist unscharf.",
+    "blurry_tip": "Halt das Handy ruhig und tipp auf dem Bildschirm auf das Blatt, damit es scharf wird.",
+    "dark": "Foto {{index}} ist zu dunkel.",
+    "dark_tip": "Geh ans Licht oder mach das Licht an – aber ohne Schatten vom Handy auf dem Blatt.",
+    "washed_out": "Auf Foto {{index}} ist die Schrift kaum zu sehen.",
+    "washed_out_tip": "Zu hell oder spiegelt: Halt das Handy etwas schräg, weg von der Lampe.",
+    "small": "Foto {{index}} ist sehr klein.",
+    "small_tip": "Kleine Schrift kann ich so kaum lesen. Fotografier das Blatt lieber direkt mit der Kamera.",
+    "retake": "Neu fotografieren",
+    "keep": "Trotzdem behalten",
+    "flag": "Schwer lesbar"
   }
 }

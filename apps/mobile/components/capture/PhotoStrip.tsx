@@ -13,11 +13,13 @@ const THUMB_HEIGHT = 148;
 
 type Props = {
   uris: readonly string[];
+  /** Photos the check found hard to read: marked in words, not only colour. */
+  flagged?: ReadonlySet<string>;
   disabled: boolean;
   onRemove: (uri: string) => void;
 };
 
-export function PhotoStrip({ uris, disabled, onRemove }: Props) {
+export function PhotoStrip({ uris, flagged, disabled, onRemove }: Props) {
   const { t } = useTranslation('capture');
   return (
     <ScrollView
@@ -65,6 +67,24 @@ export function PhotoStrip({ uris, disabled, onRemove }: Props) {
               >
                 <Text style={{ color: LB.paper, fontSize: 12, fontWeight: '700' }}>{i + 1}</Text>
               </View>
+              {flagged?.has(uri) ? (
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 6,
+                    right: 6,
+                    bottom: 6,
+                    borderRadius: 10,
+                    paddingVertical: 3,
+                    backgroundColor: LB.butter,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: LB.warningText, fontSize: 12, fontWeight: '700' }}>
+                    {t('quality.flag')}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </View>
           <Btn
