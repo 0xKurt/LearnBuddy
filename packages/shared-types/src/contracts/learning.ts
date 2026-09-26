@@ -146,6 +146,10 @@ export const SessionItemView = z.object({
   status: z.enum(['open', 'correct', 'revealed', 'skipped', 'missed']),
   attempts: z.number().int(),
   hints_used: z.number().int(),
+  /** Prepared hints still to give; never the hints themselves. */
+  hints_left: z.number().int().min(0).default(0),
+  /** "Tipp" works for this question now: a prepared hint at once, else the tutor writes one. */
+  hint_available: z.boolean().default(false),
   /** Only once the item is closed. */
   answer: z.string().nullable(),
 });
@@ -228,6 +232,10 @@ export const AnswerRequest = z
     message: 'text or choice is required',
   });
 export type AnswerRequest = z.infer<typeof AnswerRequest>;
+
+/** "Tipp": the next prepared hint for an open question — at once, no model. */
+export const HintRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
+export type HintRequest = z.infer<typeof HintRequest>;
 
 export const AnswerVerdict = z.enum([
   'correct',
