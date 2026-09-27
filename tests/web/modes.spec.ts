@@ -184,7 +184,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.waitForTimeout(1500);
   const streamed = page.waitForResponse((r) => r.url().endsWith('/v1/buddy/messages'));
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
-  // Buddy's reply comes as a stream (read aloud while it is written).
+  // Buddy's reply comes as a stream (shown while it is written, read aloud once stored).
   expect((await streamed).headers()['content-type']).toContain('text/event-stream');
   await expect(page.getByText('„Was steht diese Woche an?“')).toBeVisible();
   // The answer on the conversation screen (the chat underneath has it too).
