@@ -1,6 +1,7 @@
 // The one thing that matters right now, with its single next action.
 
-import type { NowCard as NowCardData } from '@learnbuddy/shared-types/contracts';
+import type { NowCard as NowCardData, PreparedPractice } from '@learnbuddy/shared-types/contracts';
+import { Image } from 'expo-image';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +28,10 @@ type Props = {
   onSkip: (stepId: string) => void;
   onCapture: (target: CaptureTarget) => void;
   onRetryMaterial: (materialId: string) => void;
+  /** The photo being read (material_processing), while it is on the phone: it arrived. */
+  thumb?: string | null;
+  /** Buddy is already making practice from it: one card says both (no second note). */
+  preparing?: boolean;
 };
 
 export function NowCard({
@@ -37,6 +42,8 @@ export function NowCard({
   onSkip,
   onCapture,
   onRetryMaterial,
+  thumb = null,
+  preparing = false,
 }: Props) {
   const { t } = useTranslation(['buddy', 'practice']);
   switch (card.type) {
@@ -120,15 +127,27 @@ export function NowCard({
       return (
         <Card tone="sky" padding={16} radius={22}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <ActivityIndicator color={LB.ink2} />
+            {thumb ? (
+              <Image
+                source={{ uri: thumb }}
+                accessible={false}
+                style={{ width: 36, height: 48, borderRadius: 6 }}
+                contentFit="cover"
+              />
+            ) : null}
             <Text accessibilityRole="header" style={[TYPE.title, { flex: 1 }]}>
               {card.status === 'awaiting_upload'
                 ? t('now.sending_title')
                 : t('now.processing_title')}
             </Text>
+            <ActivityIndicator color={LB.ink2} />
           </View>
           <Text style={[TYPE.small, { marginTop: 8 }]}>
-            {card.status === 'awaiting_upload' ? t('now.sending_body') : t('now.processing_body')}
+            {card.status === 'awaiting_upload'
+              ? t('now.sending_body')
+              : preparing
+                ? t('now.processing_body_practice')
+                : t('now.processing_body')}
           </Text>
         </Card>
       );
@@ -193,7 +212,50 @@ export function NowCard({
               {t('now.result_shaky', { topics: card.result.shaky_topics.join(', ') })}
             </Text>
           ) : null}
+          {/* What is ready next stays on the one card (user feedback #2). */}
+          {card.next ? <NextPractice next={card.next} busy={busy} onStart={onStart} /> : null}
         </Card>
       );
   }
+}
+
+/** "Als Nächstes": the prepared practice under a result, with its one action. */
+function NextPractice({
+  next,
+  busy,
+  onStart,
+}: {
+  next: PreparedPractice;
+  busy: boolean;
+  onStart: (stepId: string) => void;
+}) {
+  const { t } = useTranslation('buddy');
+  return (
+    <View
+      style={{
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: LB.hairline,
+      }}
+    >
+      <Text style={[TYPE.body, { fontWeight: '600' }]}>
+        {t('now.next_title', { title: next.title })}
+      </Text>
+      <Text style={[TYPE.small, { marginTop: 2 }]}>
+        {next.goal?.due_date
+          ? t('now.next_body_exam', {
+              count: next.question_count,
+              minutes: next.est_minutes,
+              when: whenText(next.goal.due_date),
+            })
+          : t('now.ready_body', { count: next.question_count, minutes: next.est_minutes })}
+      </Text>
+      <View style={{ marginTop: 10 }}>
+        <Btn onPress={() => onStart(next.step_id)} disabled={busy}>
+          {t('now.ready_cta')}
+        </Btn>
+      </View>
+    </View>
+  );
 }

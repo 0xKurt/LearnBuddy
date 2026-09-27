@@ -206,8 +206,13 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       goal: { id: goalId },
     });
     captureStepId = (home.now as { step_id: string }).step_id;
-    // Contact outside the app is off; for a minor only an adult can turn it on.
-    expect(home.decision).toEqual({ type: 'contact_opt_in', can_enable_here: false });
+    // Contact outside the app is off; for a minor only an adult can turn it on — and the
+    // card says what they would allow, from the stored rules (user feedback #4).
+    expect(home.decision).toEqual({
+      type: 'contact_opt_in',
+      can_enable_here: false,
+      rules: { max_per_day: 1, quiet_start: '20:00' },
+    });
     expect(home.next).toEqual([
       expect.objectContaining({ kind: 'exam', id: goalId, date: '2026-10-02' }),
     ]);

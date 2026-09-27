@@ -61,9 +61,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByText('Wer lernt mit LearnBuddy?')).toBeVisible();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
   await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Mia');
-  await page.getByLabel('TT').fill('14');
-  await page.getByLabel('MM').fill('03');
-  await page.getByLabel('JJJJ').fill('2013');
+  await page.getByLabel('Tag', { exact: true }).fill('14');
+  await page.getByLabel('Monat', { exact: true }).fill('03');
+  await page.getByLabel('Jahr', { exact: true }).fill('2013');
   await shot(page, '03a-profile-child');
   // For a child two short steps (each fits the screen): the child, then the parents.
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -74,6 +74,13 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByLabel('PIN wiederholen').fill(pin);
   await shot(page, '03-profile-child');
   await start.click();
+
+  // ── The hand-over: what is set now, and the phone goes to Mia (user feedback #10) ──
+  await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
+  await expect(page.getByText('PIN der Eltern: gesetzt – nur ihr kennt sie')).toBeVisible();
+  await expect(page.getByText(/Nachrichten aufs Handy: aus/)).toBeVisible();
+  await shot(page, '03b-handover');
+  await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
 
   // ── The student's first look: who Buddy is and how to start ──
   await expect(page.getByText('Hallo Mia')).toBeVisible();
@@ -93,17 +100,30 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
     page.getByText('Super, dann bereiten wir uns bis Freitag zusammen vor.', { exact: false }),
   ).toBeVisible();
   await expect(page.getByText(/Eingetragen: Mathearbeit Brüche am/)).toBeVisible();
+  // One card on top (the photo); the question about messages is asked in the conversation,
+  // with what would be allowed — also for a minor (user feedback #4, #6).
   await expect(page.getByText('Schick mir ein Foto')).toBeVisible();
   await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeVisible();
-  await expect(page.getByText('Das müssen deine Eltern erlauben.')).toBeVisible();
+  await expect(
+    page.getByText(/Höchstens einmal am Tag und nie nach 20:00 Uhr\. Das erlauben deine Eltern/),
+  ).toBeVisible();
+  // Her own message stays in view under the card.
+  await expect(
+    page.getByText('Ich schreibe am Freitag eine Mathearbeit über Brüche.'),
+  ).toBeInViewport();
   await shot(page, '05-buddy-planned');
 
-  // ── Messages to the phone need a parent: the PIN, not the student ──
+  // ── Messages to the phone need a parent: the PIN, not the student — and the parent sees
+  // what they allow, and that it was allowed ──
   await page.getByRole('button', { name: 'Eltern fragen' }).click();
   await expect(page.getByText('PIN der Eltern')).toBeVisible();
+  await expect(
+    page.getByText(/Ihr erlaubt, dass Buddy Mia aufs Handy schreibt\. .*nie nach 20:00 Uhr/),
+  ).toBeVisible();
   await shot(page, '06-parent-pin');
   for (const digit of pin) await page.getByRole('button', { name: digit, exact: true }).click();
   await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText(/^Erlaubt[.:]/)).toBeVisible();
   await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeHidden();
 
   // ── The worksheet: photographed, sent, read in the background ──

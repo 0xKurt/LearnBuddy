@@ -66,7 +66,11 @@
     "pages_retake_one": "Rifai la foto",
     "pages_retake_other": "Rifotografa queste pagine",
     "pages_ok": "Va bene così",
-    "failed_title_named": "Non sono riuscito a leggere «{{title}}»"
+    "failed_title_named": "Non sono riuscito a leggere «{{title}}»",
+    "processing_body_practice": "Poi ne faccio subito degli esercizi. Nel frattempo puoi chiudere l'app.",
+    "next_title": "Prossimo: {{title}}",
+    "next_body_exam_one": "{{count}} esercizio · circa {{minutes}} min · verifica {{when}}",
+    "next_body_exam_other": "{{count}} esercizi · circa {{minutes}} min · verifica {{when}}"
   },
   "when": {
     "today": "oggi",
@@ -81,17 +85,27 @@
     "optin_body": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Al massimo una volta al giorno e mai di sera.",
     "optin_yes": "Sì, volentieri",
     "optin_no": "Meglio di no",
-    "optin_minor_body": "Devono permetterlo i tuoi genitori.",
+    "optin_minor_body": "Lo permettono i tuoi genitori con il loro PIN.",
     "optin_minor_cta": "Chiedi ai genitori",
     "outcome_title": "Com'è andata con “{{title}}”?",
     "outcome_good": "Bene",
     "outcome_ok": "Così così",
-    "outcome_hard": "Difficile"
+    "outcome_hard": "Difficile",
+    "optin_body_rules_one": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Al massimo una volta al giorno e mai dopo le {{time}}.",
+    "optin_body_rules_other": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Al massimo {{count}} volte al giorno e mai dopo le {{time}}.",
+    "optin_parent": "Per i genitori: permettete a Buddy di scrivere a {{name}} sul telefono. {{rules}} Si può cambiare in qualsiasi momento nelle impostazioni.",
+    "rules_short_one": "al massimo una volta al giorno, mai dopo le {{time}}",
+    "rules_short_other": "al massimo {{count}} volte al giorno, mai dopo le {{time}}",
+    "rules_settings": "come indicato nelle impostazioni",
+    "optin_done": "Permesso: ora ti scrivo anche sul telefono – {{rules}}. Puoi cambiarlo nelle impostazioni.",
+    "optin_done_minor": "Permesso: ora Buddy scrive anche a {{name}} sul telefono – {{rules}}. Si può cambiare nelle impostazioni.",
+    "optin_done_no_device": "Permesso. Però questo telefono non è stato registrato per le notifiche: i messaggi di Buddy saranno qui nell'app."
   },
   "done": {
     "undo": "Annulla",
     "undo_label": "Annulla: {{what}}",
-    "undone": "annullato"
+    "undone": "annullato",
+    "undo_request_material": "Nessuna foto necessaria"
   },
   "next": {
     "line": "{{title}} · {{when}}"
@@ -110,7 +124,9 @@
       "invalid": "Buddy si è confuso",
       "stale": "Nessuna risposta: troppe cose insieme",
       "internal": "Nessuna risposta: qualcosa è andato storto"
-    }
+    },
+    "today": "Oggi",
+    "yesterday": "Ieri"
   },
   "delivery": {
     "scheduled": "arriva {{when}}",
@@ -156,14 +172,15 @@
     "update_step_skipped": "Saltato: {{title}}",
     "update_step_cancelled": "Annullato: {{title}}",
     "mark_step_done": "Fatto: {{title}}",
-    "request_material": "Foto richiesta: {{title}}",
+    "request_material": "Aspetto la tua foto: {{title}}",
     "set_contact_pause": "Nessun messaggio fino a {{date}} compreso",
     "set_contact": "Messaggi solo dalle {{from}} alle {{to}}, al massimo {{count}} a settimana",
     "schedule_check": "Torno a fare un salto {{when}}",
     "offer_learning": "Proposto: {{what}} – «{{text}}»",
     "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
     "open_area": "Mostrato: {{what}}",
-    "set_contact_quiet": "Messaggi solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}, al massimo {{count}} a settimana"
+    "set_contact_quiet": "Messaggi solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}, al massimo {{count}} a settimana",
+    "request_material_undone": "Nessuna foto necessaria: {{title}}"
   },
   "intro": {
     "title": "Sono Buddy.",
@@ -180,7 +197,6 @@
     "vocab": "Vocaboli",
     "test_message": "Fammi una verifica di prova per «{{title}}».",
     "exam_short": "Verifica",
-    "test": "Verifica di prova",
     "speak": "Pronuncia"
   },
   "area": {
@@ -205,7 +221,8 @@
     "slow": "Ci vuole di più – la risposta arriverà nella chat.",
     "end": "Termina",
     "speak": "Parla",
-    "interrupt": "Interrompi e parla"
+    "interrupt": "Interrompi e parla",
+    "short": "Parla"
   },
   "a11y": {
     "reply": "Buddy: {{text}}"

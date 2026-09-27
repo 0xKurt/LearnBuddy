@@ -17,14 +17,17 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
   await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Lena');
-  await page.getByLabel('TT').fill('10');
-  await page.getByLabel('MM').fill('02');
-  await page.getByLabel('JJJJ').fill('2014');
+  await page.getByLabel('Tag', { exact: true }).fill('10');
+  await page.getByLabel('Monat', { exact: true }).fill('02');
+  await page.getByLabel('Jahr', { exact: true }).fill('2014');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('checkbox').click();
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');
   await page.getByRole('button', { name: "Los geht's" }).click();
+  // The hand-over: what is set, then the phone goes to the child (user feedback #10).
+  await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
   await expect(page.getByText('Hallo Lena')).toBeVisible();
 }
 

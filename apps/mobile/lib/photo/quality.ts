@@ -46,8 +46,14 @@ export const LIMITS = {
    * readable 0.56, blurred 0.31, very blurred 0.18.
    */
   blurry: 0.45,
-  /** The shorter side of the original photo under this: too small for small print. */
-  minSide: 900,
+  /**
+   * The shorter side of the original photo under this: too small for small print.
+   * Calibrated on the sample sheet (lib/photo/__tests__): at 800 px across (a copy sent by
+   * a messenger, a screenshot) its print is clearly readable — 900 called it "sehr klein"
+   * (user feedback #16); at 420 px it is not. 700 px across an A4 page still gives 10-pt
+   * print about 6 px of x-height, what the reading model handles; below that it gets hard.
+   */
+  minSide: 700,
   /**
    * Text lines at this angle or more: tilted. Samples: straight 0°, turned 5° (fine),
    * turned 15° and −22°, held at a slant to the side 20° with 12° convergence.
