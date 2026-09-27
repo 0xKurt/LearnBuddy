@@ -366,8 +366,11 @@ down, request refused, safety block — gives its reservation back.
 `refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never
 retried automatically), `transient` (5xx, 429, network — retry later is fine), `unknown` (no
 answer: a model call may be retried because it changes nothing; a push is never repeated).
-`LlmError.outcome` and the push errors carry it; a provider 4xx is `refused`, no longer retried
-three times as an outage.
+`LlmError.outcome`, the push errors, `StorageError.outcome` and the auth verifier
+(`authOutcomeOf`) carry it; a provider 4xx is `refused`, no longer retried three times as an
+outage. Auth: `refused` makes a token invalid (401), everything else is 503; a refused password
+change is `invalid_input`, not "try again later". Storage: an absent object is `null`, never an
+error, and an error is never "absent".
 
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
 to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1

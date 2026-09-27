@@ -3,7 +3,12 @@ import type { AddressInfo } from 'node:net';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { authenticatedAtOf, SupabaseAuthVerifier, verifyFailureOf } from '../verifier.js';
+import {
+  authenticatedAtOf,
+  authOutcomeOf,
+  SupabaseAuthVerifier,
+  verifyFailureOf,
+} from '../verifier.js';
 
 const jwt = (payload: Record<string, unknown>) =>
   `h.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.s`;
@@ -86,5 +91,62 @@ describe('SupabaseAuthVerifier failure classes', () => {
     expect(verifyFailureOf({ status: 0 })).toBe('unavailable');
     expect(verifyFailureOf({ status: 408 })).toBe('unavailable');
     expect(verifyFailureOf({ status: 400 })).toBe('invalid');
+  });
+});
+
+const USER = '00000000-0000-4000-8000-000000000001';
+
+// The admin calls of the same seam, in the shared classification (audit S-7).
+describe('SupabaseAuthVerifier admin calls', () => {
+  let server: Server;
+  let base = '';
+  let answer: { status: number; body: unknown } = { status: 200, body: {} };
+  beforeAll(async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    server = createServer((_req, res) => {
+      res.writeHead(answer.status, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(answer.body));
+    });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+    base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  });
+  afterAll(async () => {
+    vi.restoreAllMocks();
+    await new Promise<void>((r) => server.close(() => r()));
+  });
+  const verifier = () =>
+    new SupabaseAuthVerifier({ SUPABASE_URL: base, SUPABASE_SERVICE_ROLE_KEY: 'service-key' });
+
+  it('classifies every status class once', () => {
+    expect(authOutcomeOf({})).toBe('unknown');
+    expect(authOutcomeOf({ status: 0 })).toBe('unknown');
+    expect(authOutcomeOf({ status: 400 })).toBe('refused');
+    expect(authOutcomeOf({ status: 404 })).toBe('refused');
+    expect(authOutcomeOf({ status: 408 })).toBe('transient');
+    expect(authOutcomeOf({ status: 429 })).toBe('transient');
+    expect(authOutcomeOf({ status: 503 })).toBe('transient');
+  });
+
+  it('a password the service refuses is not reported as an outage', async () => {
+    answer = { status: 400, body: { code: 'same_password', msg: 'same' } };
+    await expect(verifier().updatePassword(USER, 'secret-1234')).rejects.toMatchObject({
+      code: 'invalid_input',
+      details: { reason: 'weak_password' },
+    });
+    answer = { status: 403, body: { msg: 'not admin' } };
+    await expect(verifier().updatePassword(USER, 'secret-1234')).rejects.toMatchObject({
+      code: 'internal',
+    });
+    answer = { status: 503, body: { msg: 'down' } };
+    await expect(verifier().updatePassword(USER, 'secret-1234')).rejects.toMatchObject({
+      code: 'unavailable',
+    });
+  });
+
+  it('deleting a user that is already gone is done; an outage is not', async () => {
+    answer = { status: 404, body: { code: 'user_not_found', msg: 'User not found' } };
+    await expect(verifier().deleteUser(USER)).resolves.toBeUndefined();
+    answer = { status: 502, body: { msg: 'down' } };
+    await expect(verifier().deleteUser(USER)).rejects.toThrow(/transient/);
   });
 });

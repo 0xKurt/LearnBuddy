@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 import type { Config } from '../config.js';
+import { outcomeOfStatus, type Outcome } from '../lib/outcome.js';
 
 export const PHOTO_BUCKET = 'material-photos';
 
@@ -15,10 +16,31 @@ export type UploadTarget = { path: string; url: string; token: string };
  * not there": callers retry instead of blaming the learner (docs/architecture.md §Material).
  */
 export class StorageError extends Error {
-  constructor(op: 'sign' | 'list' | 'download' | 'remove') {
-    super(`storage ${op} failed`);
+  /** The shared classification (lib/outcome.ts, audit S-7); never "absent". */
+  readonly outcome: Exclude<Outcome, 'ok'>;
+  constructor(op: 'sign' | 'list' | 'download' | 'remove', outcome: Exclude<Outcome, 'ok'>) {
+    super(`storage ${op} failed (${outcome})`);
     this.name = 'StorageError';
+    this.outcome = outcome;
   }
+}
+
+/**
+ * A Supabase Storage error → outcome. The HTTP status is on `status` (StorageApiError) or on
+ * the original response (StorageUnknownError); none means no answer (`unknown`).
+ */
+export function storageOutcomeOf(error: unknown): Exclude<Outcome, 'ok'> {
+  const e = (error ?? {}) as { status?: unknown; originalError?: unknown };
+  const original = e.originalError as { status?: unknown } | undefined;
+  const status =
+    typeof e.status === 'number'
+      ? e.status
+      : typeof original?.status === 'number'
+        ? original.status
+        : null;
+  if (status === null || status < 400) return 'unknown';
+  const outcome = outcomeOfStatus(status);
+  return outcome === 'ok' ? 'unknown' : outcome;
 }
 
 /** Supabase Storage deletes at most 1000 objects per request. */
@@ -47,7 +69,7 @@ export async function removeAll(storage: StorageGateway, paths: string[]): Promi
 export class SupabaseStorage implements StorageGateway {
   private readonly client;
 
-  constructor(config: Config) {
+  constructor(config: Pick<Config, 'SUPABASE_URL' | 'SUPABASE_SERVICE_ROLE_KEY'>) {
     this.client = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
@@ -59,7 +81,7 @@ export class SupabaseStorage implements StorageGateway {
     const { data, error } = await this.client.storage
       .from(PHOTO_BUCKET)
       .createSignedUploadUrl(path, { upsert: true });
-    if (error || !data) throw new StorageError('sign');
+    if (error || !data) throw new StorageError('sign', storageOutcomeOf(error));
     return { path, url: data.signedUrl, token: data.token };
   }
 
@@ -75,7 +97,7 @@ export class SupabaseStorage implements StorageGateway {
       const { data, error } = await this.client.storage
         .from(PHOTO_BUCKET)
         .list(folder, { limit: 100 });
-      if (error || !data) throw new StorageError('list');
+      if (error || !data) throw new StorageError('list', storageOutcomeOf(error));
       const present = new Set((data ?? []).map((o) => o.name));
       for (const n of names) if (present.has(n)) found.add(`${folder}/${n}`);
     }
@@ -86,7 +108,7 @@ export class SupabaseStorage implements StorageGateway {
     const { data, error } = await this.client.storage.from(PHOTO_BUCKET).download(path);
     if (error) {
       if (isNotFound(error)) return null;
-      throw new StorageError('download');
+      throw new StorageError('download', storageOutcomeOf(error));
     }
     if (!data) return null;
     return new Uint8Array(await data.arrayBuffer());
@@ -99,7 +121,7 @@ export class SupabaseStorage implements StorageGateway {
       const { error } = await this.client.storage
         .from(PHOTO_BUCKET)
         .remove(paths.slice(i, i + STORAGE_REMOVE_LIMIT));
-      if (error) throw new StorageError('remove');
+      if (error) throw new StorageError('remove', storageOutcomeOf(error));
     }
   }
 }

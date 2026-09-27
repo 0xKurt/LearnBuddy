@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import type { Config } from '../config.js';
 import { AppError } from '../lib/errors.js';
+import { outcomeOfStatus, type Outcome } from '../lib/outcome.js';
 
 export type AuthUser = {
   userId: string;
@@ -56,16 +57,25 @@ export function authenticatedAtOf(token: string): number | null {
 }
 
 /**
+ * A failed Supabase Auth call in the shared classification (lib/outcome.ts, audit S-7): a 4xx
+ * other than 408/429 is a definite `refused`; 5xx, 408 and 429 are `transient`; no status
+ * (network error, no answer) is `unknown`.
+ */
+export function authOutcomeOf(error: { status?: number | undefined }): Exclude<Outcome, 'ok'> {
+  const status = error.status;
+  if (status === undefined || status < 400) return 'unknown';
+  const outcome = outcomeOfStatus(status);
+  return outcome === 'ok' ? 'unknown' : outcome;
+}
+
+/**
  * What a failed token check means. Only a definite answer from Supabase Auth
- * about the token (a 4xx other than 408/429) makes it invalid; a network
- * error (status 0 / none), a 5xx or a rate limit says nothing about the
- * token and must never reach the app as 401 (audit H-27).
+ * about the token (`refused`) makes it invalid; a network error, a 5xx or a
+ * rate limit says nothing about the token and must never reach the app as 401
+ * (audit H-27).
  */
 export function verifyFailureOf(error: { status?: number | undefined }): 'invalid' | 'unavailable' {
-  const status = error.status;
-  if (status === undefined || status === 0) return 'unavailable';
-  if (status === 408 || status === 429 || status >= 500) return 'unavailable';
-  return status >= 400 ? 'invalid' : 'unavailable';
+  return authOutcomeOf(error) === 'refused' ? 'invalid' : 'unavailable';
 }
 
 export class SupabaseAuthVerifier implements AuthVerifier {
@@ -100,16 +110,25 @@ export class SupabaseAuthVerifier implements AuthVerifier {
 
   async deleteUser(userId: string): Promise<void> {
     const { error } = await this.client.auth.admin.deleteUser(userId);
-    if (error && !/not.?found/i.test(error.message)) throw new Error('could not delete auth user');
+    if (!error) return;
+    const outcome = authOutcomeOf(error);
+    // Already gone is what was asked for.
+    if (outcome === 'refused' && (error.status === 404 || /not.?found/i.test(error.message)))
+      return;
+    // The deletion job retries (never parked); the outcome is kept in its last_error.
+    throw new Error(`could not delete auth user (${outcome})`);
   }
 
   async updatePassword(userId: string, password: string): Promise<void> {
     const { error } = await this.client.auth.admin.updateUserById(userId, { password });
-    if (error) {
-      // Supabase refuses weak or reused passwords with a 422; say so, never its text.
-      if (error.status === 422)
-        throw new AppError('invalid_input', 'Password not accepted', { reason: 'weak_password' });
-      throw new AppError('unavailable', 'Sign-in service unavailable');
-    }
+    if (!error) return;
+    const outcome = authOutcomeOf(error);
+    if (outcome !== 'refused') throw new AppError('unavailable', 'Sign-in service unavailable');
+    // Supabase refuses weak or reused passwords with a 422 (a malformed one with a 400);
+    // say so, never its text.
+    if (error.status === 422 || error.status === 400)
+      throw new AppError('invalid_input', 'Password not accepted', { reason: 'weak_password' });
+    // Any other definite "no" (e.g. the service key) is not an outage the parent could wait out.
+    throw new AppError('internal', 'Sign-in service refused the change');
   }
 }

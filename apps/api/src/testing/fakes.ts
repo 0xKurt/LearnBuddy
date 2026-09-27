@@ -240,7 +240,7 @@ export class MemoryStorage implements StorageGateway {
     const n = this.failures.get(op) ?? 0;
     if (n > 0) {
       this.failures.set(op, n - 1);
-      throw new StorageError(op);
+      throw new StorageError(op, 'transient');
     }
   }
 
@@ -263,7 +263,7 @@ export class MemoryStorage implements StorageGateway {
   async remove(paths: string[]): Promise<void> {
     this.removeCalls.push([...paths]);
     // The hosted API rejects the whole request above its object limit.
-    if (paths.length > STORAGE_REMOVE_LIMIT) throw new StorageError('remove');
+    if (paths.length > STORAGE_REMOVE_LIMIT) throw new StorageError('remove', 'refused');
     this.maybeFail('remove');
     for (const p of paths) this.objects.delete(p);
   }
