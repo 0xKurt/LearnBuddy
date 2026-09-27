@@ -77,7 +77,11 @@ Logs contain route names and error classes only — no request bodies, messages 
   model is installed) — the audio does not leave the phone. Where the phone could only recognise
   on Apple's/Google's servers, and always in the browser (Chrome's Web Speech is server-side), the
   app records instead and uses our own EU path (`/voice/transcribe`, Vertex AI). The decision is
-  code (`apps/mobile/lib/speech/engine.ts`), not a setting.
+  code (`apps/mobile/lib/speech/engine.ts`), not a setting. On iPhone the on-device check only
+  covers the phone's own language, and iOS would silently send any other language to Apple's
+  servers; so the system recogniser is used only when the language she speaks is exactly the
+  phone's language (with region), every other language goes the recording path (EU). **Not yet
+  verified on a real iPhone**; until it is, treat the iOS on-device promise as unproven.
 - **Expo push service** (optional): off unless `PUSH_BACKEND=expo`. It adds a US subprocessor and
   sends notification titles and bodies via Apple/Google. Texts are written without scores or
   personal details, but they are about the learner's tests. **legal review required before

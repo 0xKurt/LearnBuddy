@@ -494,7 +494,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
 
 - **Speech to text** — on the device first, strictly on-device (`expo-speech-recognition` with
   `requiresOnDeviceRecognition`; the words appear while she speaks, nothing leaves the phone).
-  `lib/speech/engine.ts` decides per tap (unit-tested): iOS when on-device is supported; Android
+  `lib/speech/engine.ts` decides per tap (unit-tested): iOS when on-device is supported and the
+  language is exactly the phone's own locale (iOS checks on-device support for that locale only
+  and would send any other language to Apple, D-11); Android
   only with the language's offline model installed; never the browser's Web Speech (server-side)
   and never the system's server mode. If the recogniser fails for the language, the same tap
   continues as a recording and that language goes straight to the server for the rest of the
