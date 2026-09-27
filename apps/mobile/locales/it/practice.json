@@ -3,7 +3,8 @@
   "loading": "Sto caricando le tue domande…",
   "end": "Termina",
   "end_label": "Termina gli esercizi",
-  "end_hint": "Torni da Buddy. Le tue risposte restano salvate.",
+  "end_hint": "Torna da Buddy. Le tue risposte restano salvate – puoi continuare qui più tardi.",
+  "end_hint_test": "Consegna il test di prova e ti mostra com'è andata.",
   "progress": "Domanda {{current}} di {{total}}",
   "answer": {
     "label": "La tua risposta",
@@ -35,8 +36,6 @@
   "finish_failed": "Al momento non riesco a caricare il tuo risultato.",
   "summary": {
     "title": "Ce l'hai fatta!",
-    "answered": "Risposte",
-    "first_try": "Giuste al primo colpo",
     "secure": "Lo sai bene: {{topics}}",
     "shaky": "Lo rivediamo insieme: {{topics}}"
   },
@@ -96,8 +95,7 @@
     "sheet_title": "La spiegazione"
   },
   "summary_help": {
-    "title": "Compiti fatti",
-    "answered": "Risolti da te"
+    "title": "Compiti fatti"
   },
   "test_note": "Verifica di prova – una risposta per domanda, niente suggerimenti. Vedrai il risultato alla fine.",
   "skip": "Salta",
@@ -107,7 +105,8 @@
     "right": "Giusto",
     "missed": "Non ancora giusto",
     "skipped": "Saltata",
-    "solution": "Soluzione: {{answer}}"
+    "solution": "Soluzione: {{answer}}",
+    "untouched": "Non svolto"
   },
   "again": {
     "shaky": "Ripassa quello che non è ancora sicuro",
@@ -122,5 +121,16 @@
     "sheet_body": "Questa domanda non uscirà più.",
     "confirm": "Toglila",
     "done": "Va bene – la domanda è tolta."
-  }
+  },
+  "summary_line": {
+    "help_one": "Hai risolto {{count}} esercizio da solo.",
+    "help_other": "Hai risolto {{count}} esercizi da solo.",
+    "answered_one": "Hai risposto a {{count}} domanda.",
+    "answered_other": "Hai risposto a {{count}} domande.",
+    "all_first": "Tutto giusto al primo colpo.",
+    "first_one": "Giusto al primo colpo."
+  },
+  "later": "Più tardi",
+  "later_hint": "L'esercizio resta aperto e torna dopo gli altri.",
+  "later_done": "Va bene – quello torna più tardi."
 }

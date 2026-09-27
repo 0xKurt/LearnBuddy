@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { givesAwayHomework, type TutorDecision } from '../tutor.js';
+import {
+  givesAwayHomework,
+  homeworkSolved,
+  type HomeworkKey,
+  type TutorDecision,
+} from '../tutor.js';
 
 const reply = (text: string, revealed = false): TutorDecision => ({
   intent: 'no_answer',
@@ -67,9 +72,73 @@ describe('fromLearnerText', () => {
 });
 
 describe('homeworkSolved', () => {
-  it('needs the final answer, not a right step', async () => {
-    const { homeworkSolved } = await import('../tutor.js');
-    expect(homeworkSolved('ok also gleicher nenner 12', '11/12')).toBe(false);
-    expect(homeworkSolved('8/12 + 3/12 = 11/12', '$\\frac{11}{12}$')).toBe(true);
+  const task = (answer: string, over: Partial<HomeworkKey> = {}): HomeworkKey => ({
+    prompt: 'Berechne $\\frac{2}{3} + \\frac{1}{4}$.',
+    answer,
+    accepted_answers: [],
+    unit: null,
+    tolerance: null,
+    ...over,
+  });
+
+  it('needs the final answer, not a right step', () => {
+    expect(homeworkSolved(task('11/12'), 'ok also gleicher nenner 12')).toBe(false);
+    expect(homeworkSolved(task('$\\frac{11}{12}$'), '8/12 + 3/12 = 11/12')).toBe(true);
+  });
+
+  it('H-10: closes a right answer written in another form than the key', () => {
+    const sevenEighths = task('$\\frac{7}{8}$', { prompt: 'Berechne ¾ + ⅛.' });
+    expect(homeworkSolved(sevenEighths, '0,875')).toBe(true);
+    expect(homeworkSolved(task('$\\frac{3}{4}$', { prompt: 'Kürze 6/8.' }), '0,75')).toBe(true);
+    // An accepted answer counts like the key.
+    expect(
+      homeworkSolved(task('Berlin', { prompt: 'Hauptstadt?', accepted_answers: ['BER'] }), 'BER'),
+    ).toBe(true);
+    expect(homeworkSolved(task('x = 5', { prompt: 'Löse 2x = 10.' }), '5')).toBe(true);
+    expect(homeworkSolved(task('12', { prompt: 'Fläche?', unit: 'cm²' }), '12 cm²')).toBe(true);
+    // Another value is not solved.
+    expect(homeworkSolved(sevenEighths, '0,8')).toBe(false);
+  });
+
+  it('M-28: a list of guesses is no solution', () => {
+    const t = task('7/8', { prompt: 'Berechne $\\frac{3}{4} + \\frac{1}{8}$.' });
+    expect(homeworkSolved(t, 'Ist es 1/8, 3/8, 5/8 oder 7/8?')).toBe(false);
+    // A worked line uses the task's values and the result.
+    expect(homeworkSolved(t, '6/8 + 1/8 = 7/8')).toBe(true);
+  });
+});
+
+describe('givesAwayHomework on the final verdict (H-9, M-28)', () => {
+  const reply = (text: string, verdict: TutorDecision['verdict']): TutorDecision => ({
+    intent: 'answer',
+    verdict,
+    reply: text,
+    gave_hint: false,
+    revealed_answer: false,
+  });
+  it('checks a demoted reply and every form of the solution', () => {
+    expect(
+      givesAwayHomework(
+        reply('Super – das ergibt 11/12.', 'partially_correct'),
+        ['11/12'],
+        'Berechne 2/3 + 1/4',
+      ),
+    ).toBe(true);
+    expect(
+      givesAwayHomework(
+        reply('Genau, 0,875!', 'partially_correct'),
+        ['$\\frac{7}{8}$', '0.875'],
+        'Berechne 3/4 + 1/8',
+      ),
+    ).toBe(true);
+  });
+  it('her own guesses are no licence: only the task exempts a value', () => {
+    expect(
+      givesAwayHomework(
+        reply('Von deinen Vorschlägen stimmt 7/8.', 'incorrect'),
+        ['7/8'],
+        'Berechne $\\frac{3}{4} + \\frac{1}{8}$.',
+      ),
+    ).toBe(true);
   });
 });

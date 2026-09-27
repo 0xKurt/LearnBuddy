@@ -217,7 +217,13 @@ export const NowCard = z.discriminatedUnion('type', [
     /** The sheet's title, when it has one. */
     title: z.string().nullable(),
   }),
-  z.object({ type: z.literal('practice_result'), session_id: Uuid, result: PracticeResultBrief }),
+  z.object({
+    type: z.literal('practice_result'),
+    session_id: Uuid,
+    /** help: homework — solved by herself, no hit rate (docs/UX-PRINCIPLES.md). */
+    mode: z.enum(['practice', 'test', 'help', 'explain']).default('practice'),
+    result: PracticeResultBrief,
+  }),
 ]);
 export type NowCard = z.infer<typeof NowCard>;
 

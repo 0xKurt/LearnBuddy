@@ -32,7 +32,7 @@ import { t } from '../../i18n/index.js';
 import { questionCountFor, selectPracticeItems } from '../practice/selection.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
-import type { ActionOf, ToolName } from './decision.js';
+import { schoolYearsOf, type ActionOf, type ToolName } from './decision.js';
 import {
   cancelGoalWakeups,
   findOrCreateSubject,
@@ -340,7 +340,12 @@ async function runForget(action: ActionOf<'forget'>, ctx: ToolContext): Promise<
 async function runSetLevel(action: ActionOf<'set_level'>, ctx: ToolContext): Promise<ToolOutcome> {
   const a = action.args;
   requireQuote(ctx, a.quote);
-  const grade = a.level === 'school' ? a.grade : null;
+  // Code converts her school's own label into years of schooling (audit M-39).
+  const fromLabel = a.level === 'school' && a.school_year ? schoolYearsOf(a.school_year) : null;
+  if (a.level === 'school' && a.school_year && fromLabel === null) {
+    throw new ToolRejection('that school year does not exist in that school system');
+  }
+  const grade = a.level === 'school' ? (fromLabel ?? a.grade) : null;
   const before = await ctx.db.one<{ level: string; grade: number | null }>(
     `select level, grade from learners where id = $1 for update`,
     [ctx.learnerId],

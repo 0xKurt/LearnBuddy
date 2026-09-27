@@ -84,6 +84,8 @@ export async function createTestEnv(
       while (pending.length > 0) await pending.shift();
     },
     close: async () => {
+      // Work a route started in the background ends before the database goes away.
+      await Promise.allSettled(pending.splice(0));
       await db.close();
       await database.drop();
     },

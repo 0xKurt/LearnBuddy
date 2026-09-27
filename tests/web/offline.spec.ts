@@ -59,6 +59,6 @@ test('answers given offline arrive once: app open, and after it was closed', asy
   await context.setOffline(false);
   page = await context.newPage();
   await page.goto(practiceUrl);
-  await expect(page.getByText('Auf Anhieb richtig')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/Du hast \d+ Fragen? beantwortet/)).toBeVisible({ timeout: 30_000 });
   await context.close();
 });

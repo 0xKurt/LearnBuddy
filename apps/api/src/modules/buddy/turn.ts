@@ -409,8 +409,14 @@ async function homeworkLeak(
   reply: string,
   learnerWords: readonly string[],
 ): Promise<string[]> {
-  const open = await deps.db.query<{ prompt: string; answer: string }>(
-    `select i.prompt, i.answer
+  const open = await deps.db.query<{
+    prompt: string;
+    answer: string;
+    accepted_answers: string[];
+    unit: string | null;
+    tolerance: number | null;
+  }>(
+    `select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance
        from practice_sessions ps
        join session_items si on si.session_id = ps.id and si.status = 'open'
        join items i on i.id = si.item_id
@@ -418,9 +424,7 @@ async function homeworkLeak(
     [learnerId],
   );
   const hers = learnerWords.join('\n');
-  return open.some(
-    (i) => !homeworkSolved(hers, i.answer) && mentionsSolution(reply, i.answer, i.prompt),
-  )
+  return open.some((i) => !homeworkSolved(i, hers) && mentionsSolution(reply, i.answer, i.prompt))
     ? [
         'reply: it gives away the solution of her open homework task. Help her find it herself (a question, a first step) — never the result.',
       ]

@@ -3,7 +3,8 @@
   "loading": "Estoy cargando tus preguntas…",
   "end": "Terminar",
   "end_label": "Terminar la práctica",
-  "end_hint": "Vuelves con Buddy. Tus respuestas se quedan guardadas.",
+  "end_hint": "Volver a Buddy. Tus respuestas quedan guardadas: puedes seguir aquí más tarde.",
+  "end_hint_test": "Entrega el examen de práctica y te muestra cómo te ha ido.",
   "progress": "Pregunta {{current}} de {{total}}",
   "answer": {
     "label": "Tu respuesta",
@@ -35,8 +36,6 @@
   "finish_failed": "No he podido cargar tu resultado ahora mismo.",
   "summary": {
     "title": "¡Lo has conseguido!",
-    "answered": "Respondidas",
-    "first_try": "Acertadas a la primera",
     "secure": "Lo dominas: {{topics}}",
     "shaky": "Lo repasamos otra vez: {{topics}}"
   },
@@ -96,8 +95,7 @@
     "sheet_title": "La explicación"
   },
   "summary_help": {
-    "title": "Deberes hechos",
-    "answered": "Resueltos por ti"
+    "title": "Deberes hechos"
   },
   "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
   "skip": "Saltar",
@@ -107,7 +105,8 @@
     "right": "Bien",
     "missed": "Todavía no",
     "skipped": "Saltada",
-    "solution": "Solución: {{answer}}"
+    "solution": "Solución: {{answer}}",
+    "untouched": "Sin responder"
   },
   "again": {
     "shaky": "Repasar lo que aún no está seguro",
@@ -122,5 +121,16 @@
     "sheet_body": "Esta pregunta ya no volverá a salir.",
     "confirm": "Quitarla",
     "done": "Vale – la pregunta está fuera."
-  }
+  },
+  "summary_line": {
+    "help_one": "Has resuelto {{count}} ejercicio tú solo.",
+    "help_other": "Has resuelto {{count}} ejercicios tú solo.",
+    "answered_one": "Has respondido {{count}} pregunta.",
+    "answered_other": "Has respondido {{count}} preguntas.",
+    "all_first": "Todo bien a la primera.",
+    "first_one": "Bien a la primera."
+  },
+  "later": "Más tarde",
+  "later_hint": "El ejercicio sigue abierto y vuelve después de los demás.",
+  "later_done": "Vale, ese vuelve más tarde."
 }

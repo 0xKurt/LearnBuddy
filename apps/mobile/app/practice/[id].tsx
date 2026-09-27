@@ -2,11 +2,15 @@
 // time, a short conversation with Buddy about it, the solution once it is
 // closed, and a calm summary at the end. The server decides everything that
 // matters (verdicts, which question is open, the summary); this screen shows
-// it. "Beenden" finishes the session and goes back to Buddy.
+// it. The server finishes a session when its last question closes. "Beenden" with questions
+// still open goes back to Buddy and keeps the session to go on with (home card, the sheet);
+// in a test it hands the test in and shows the review (decision D-5, audit H-8, M-36).
 //
 // Modes: explain shows Buddy's explanation first (and keeps it one tap away);
 // help (homework) never offers the solution – a solved task says she found it
-// herself. Questions Buddy wrote (origin 'buddy') carry a small tag.
+// herself; "Tipp" asks for a hint and "Später" sets a task aside (it stays open and comes
+// back after the others). "Lösung zeigen" appears only after a try or a hint.
+// Questions Buddy wrote (origin 'buddy') carry a small tag.
 // "Frage passt nicht" (a quiet button, then a confirm sheet) takes a question
 // from a photo or from Buddy out for good — not for homework, not in a test.
 //
@@ -64,6 +68,7 @@ import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
 import { ApiError, newId } from '../../lib/api/client.js';
 import {
   answerItem,
+  deferItem,
   finishSession,
   flagItem,
   hintItem,
@@ -295,14 +300,23 @@ export default function PracticeScreen() {
   async function close(): Promise<void> {
     if (closing) return;
     setClosing(true);
-    try {
-      // With nothing answered, the server keeps Buddy's step open.
-      await finishSession(id);
-    } catch (err) {
-      // Leaving always works; the session then stays open and can be resumed from Buddy.
-      toast.show(messageFor(err), 'error');
+    if (session?.mode === 'test' && session.status === 'active') {
+      // A test is handed in: the review comes right here, questions she never got to marked
+      // as such, with every solution (audit M-36).
+      try {
+        await store(await finishSession(id));
+        setPinnedId(null);
+        void queryClient.invalidateQueries({ queryKey: keys.home });
+      } catch (err) {
+        toast.show(messageFor(err), 'error');
+      } finally {
+        setClosing(false);
+      }
+      return;
     }
-    // Marked stale instead of written: this screen is leaving and shouldn't flash the result.
+    // Anything else is a pause: open questions stay where they are, the answers are stored,
+    // and Buddy's home (and the sheet) lead back here (decision D-5, audit H-8). The server
+    // finished the session already if nothing is open.
     void queryClient.invalidateQueries({ queryKey: keys.session(id), refetchType: 'none' });
     void queryClient.invalidateQueries({ queryKey: keys.home });
     backToBuddy();
@@ -385,6 +399,27 @@ export default function PracticeScreen() {
       const res = await hintItem(id, itemId);
       await store(res.session);
       readFeedback(res, itemId);
+    } catch (err) {
+      toast.show(messageFor(err), 'error');
+      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+    } finally {
+      working.current = false;
+      setBusy(false);
+    }
+  }
+
+  /** Homework help "Später": the task stays open and comes back after the others. */
+  async function later(itemId: string): Promise<void> {
+    if (working.current) return;
+    working.current = true;
+    setBusy(true);
+    try {
+      await store(await deferItem(id, itemId));
+      setPinnedId(null);
+      setText('');
+      lastSent.current = null;
+      Keyboard.dismiss();
+      announce(t('practice:later_done'));
     } catch (err) {
       toast.show(messageFor(err), 'error');
       if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
@@ -477,7 +512,7 @@ export default function PracticeScreen() {
           >
             <SessionSummary
               summary={session.summary}
-              homework={session.mode === 'help'}
+              mode={session.mode}
               review={session.mode === 'test' ? session.items : null}
             />
           </ScrollView>
@@ -536,8 +571,24 @@ export default function PracticeScreen() {
   const canReveal = session.reveal_allowed;
   // A running test: no verdicts, no solutions, but a question can be skipped.
   const testing = session.mode === 'test' && session.status === 'active';
-  const skip = canReveal || testing ? () => void reveal(shown.item.id) : undefined;
-  const skipLabel = testing ? t('practice:skip') : undefined;
+  // Homework help: a task can be set aside while another one is open (it comes back).
+  const canPostpone =
+    session.mode === 'help' &&
+    shown.status === 'open' &&
+    session.items.filter((i) => i.status === 'open').length > 1;
+  // "Lösung zeigen" only once the server offers it: after a try or a hint (feedback #8).
+  const skip =
+    testing || shown.reveal_available
+      ? () => void reveal(shown.item.id)
+      : canPostpone
+        ? () => void later(shown.item.id)
+        : undefined;
+  const skipLabel = testing
+    ? t('practice:skip')
+    : canPostpone && !shown.reveal_available
+      ? t('practice:later')
+      : undefined;
+  const skipHint = canPostpone && !testing ? t('practice:later_hint') : undefined;
   const hint = shown.hint_available ? () => void askHint(shown.item.id) : undefined;
   const endButton = (
     // Stays while a question is on screen, also once the session was finished in the
@@ -551,7 +602,7 @@ export default function PracticeScreen() {
         onPress={() => void close()}
         disabled={closing}
         accessibilityLabel={t('practice:end_label')}
-        accessibilityHint={t('practice:end_hint')}
+        accessibilityHint={t(testing ? 'practice:end_hint_test' : 'practice:end_hint')}
       >
         {t('practice:end')}
       </Btn>
@@ -736,6 +787,7 @@ export default function PracticeScreen() {
               onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
               onReveal={skip}
               revealLabel={skipLabel}
+              revealHint={skipHint}
               onHint={hint}
             />
           </View>
@@ -752,6 +804,7 @@ export default function PracticeScreen() {
             onCheck={check}
             onReveal={skip}
             revealLabel={skipLabel}
+            revealHint={skipHint}
             onHint={hint}
           />
         ) : null}

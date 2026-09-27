@@ -69,10 +69,16 @@ type Props = {
   tried: ReadonlySet<string>;
   disabled: boolean;
   onChoose: (index: number, choice: string) => void;
-  /** Absent when the session never shows the solution (homework help). */
+  /**
+   * The quiet side option: "Lösung zeigen" once she tried or got a hint (never from the first
+   * second, user feedback #8), "Überspringen" in a test, "Später" in homework help (the task
+   * stays open). Absent when none applies.
+   */
   onReveal?: () => void;
-  /** The quiet side option's words (default "Lösung zeigen"; "Überspringen" in a test). */
+  /** The quiet side option's words (default "Lösung zeigen"). */
   revealLabel?: string;
+  /** What the side option does, for screen readers (e.g. "Später": it comes back). */
+  revealHint?: string;
   /** "Tipp": the next prepared hint; absent when none is left. */
   onHint?: () => void;
 };
@@ -84,6 +90,7 @@ export function ChoiceList({
   onChoose,
   onReveal,
   revealLabel,
+  revealHint,
   onHint,
 }: Props) {
   const { t } = useTranslation('practice');
@@ -158,7 +165,14 @@ export function ChoiceList({
             </Btn>
           ) : null}
           {onReveal ? (
-            <Btn variant="ghost" pill center onPress={onReveal} disabled={disabled}>
+            <Btn
+              variant="ghost"
+              pill
+              center
+              onPress={onReveal}
+              disabled={disabled}
+              accessibilityHint={revealHint}
+            >
               {revealLabel ?? t('show_solution')}
             </Btn>
           ) : null}

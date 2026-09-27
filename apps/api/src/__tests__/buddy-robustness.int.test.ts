@@ -368,6 +368,9 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
     // The home no longer offers it, and a stale button is refused.
     const home = (await l.api.get<BuddyHome>('/buddy')).body;
     expect(home.done.find((a) => a.id === pause.id)).toMatchObject({ undoable: false });
+    // Nor does the card in the conversation (audit M-56, repro-06).
+    const card = home.thread.flatMap((m) => m.actions).find((a) => a.id === pause.id);
+    expect(card).toMatchObject({ undoable: false });
     const refused = await l.api.post(`/buddy/actions/${pause.id}/undo`);
     expect(refused.status).toBe(409);
     expect(refused.body).toMatchObject({ error: { details: { reason: 'changed_since' } } });

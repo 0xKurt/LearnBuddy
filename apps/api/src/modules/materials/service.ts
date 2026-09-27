@@ -35,6 +35,7 @@ import { createSession } from '../practice/service.js';
 import {
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
+  ExtractionParse,
   ExtractionResult,
   type PageReport,
   HOMEWORK_SYSTEM,
@@ -72,12 +73,19 @@ export async function materialView(
   materialId: string,
 ): Promise<MaterialView> {
   const m = await db.maybeOne<
-    MaterialRow & { subject_name: string | null; item_count: number; session_id: string | null }
+    MaterialRow & {
+      subject_name: string | null;
+      item_count: number;
+      session_id: string | null;
+      session_status: MaterialView['session_status'];
+    }
   >(
     `select m.*, s.name as subject_name,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
             (select ps.id from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc, ps.seq desc limit 1) as session_id
+              order by ps.started_at desc, ps.seq desc limit 1) as session_id,
+            (select ps.status from practice_sessions ps where ps.material_id = m.id
+              order by ps.started_at desc, ps.seq desc limit 1) as session_status
        from materials m left join subjects s on s.id = m.subject_id
       where m.id = $1 and m.learner_id = $2 and m.archived_at is null`,
     [materialId, learnerId],
@@ -87,7 +95,12 @@ export async function materialView(
 }
 
 function toView(
-  m: MaterialRow & { subject_name: string | null; item_count: number; session_id: string | null },
+  m: MaterialRow & {
+    subject_name: string | null;
+    item_count: number;
+    session_id: string | null;
+    session_status: MaterialView['session_status'];
+  },
 ): MaterialView {
   return {
     id: m.id,
@@ -98,6 +111,7 @@ function toView(
     item_count: m.item_count,
     purpose: m.purpose,
     session_id: m.session_id,
+    session_status: m.session_status,
     page_problems: m.pages_resolved_at ? [] : m.page_problems,
     photo_count: m.photo_count,
     merged_into: m.merged_into,
@@ -123,6 +137,18 @@ export async function createMaterial(
       )
     : null;
   if (input.step_id && !step) throw new AppError('not_found', 'Step not found');
+  // A study sheet sent without a link (the composer camera, "Mein Stoff") while exactly one
+  // photo is asked for (an open capture step) is that photo: it completes the step and joins
+  // its goal, whichever way she took it (audit H-16). With two or more open, none is guessed.
+  const asked =
+    !step && !input.goal_id && !input.completes && input.purpose !== 'homework'
+      ? await deps.db.query<{ id: string; goal_id: string | null }>(
+          `select id, goal_id from buddy_steps
+            where learner_id = $1 and kind = 'capture' and state = 'planned' limit 2`,
+          [learner.id],
+        )
+      : [];
+  const captureStep = step ?? (asked.length === 1 ? asked[0]! : null);
   // Pages photographed again for an earlier material keep its goal and purpose.
   // `id`: the notice answered (this material); `root`: the sheet the pages join.
   const completes = input.completes
@@ -139,7 +165,7 @@ export async function createMaterial(
       )
     : null;
   if (input.completes && !completes) throw new AppError('not_found', 'Material not found');
-  const goalId = input.goal_id ?? step?.goal_id ?? completes?.goal_id ?? null;
+  const goalId = input.goal_id ?? captureStep?.goal_id ?? completes?.goal_id ?? null;
   const purpose = completes?.purpose ?? input.purpose;
   const goal = goalId
     ? await deps.db.maybeOne<{ subject_id: string | null }>(
@@ -149,11 +175,21 @@ export async function createMaterial(
     : null;
   if (goalId && !goal) throw new AppError('not_found', 'Goal not found');
   const material = await deps.db.tx(async (tx) => {
-    const existing = await tx.maybeOne<{ id: string }>(
-      `select id from materials where learner_id = $1 and client_request_id = $2`,
+    const existing = await tx.maybeOne<{ id: string; archived_at: Date | null }>(
+      `select id, archived_at from materials where learner_id = $1 and client_request_id = $2
+        for update`,
       [learner.id, input.client_request_id],
     );
-    if (existing) return existing.id;
+    if (existing && !existing.archived_at) return existing.id;
+    if (existing) {
+      // The earlier send was given up (photos never all arrived within a day) or its sheet
+      // was deleted: the photos still on her phone become a new sheet, never an endless
+      // "Das gibt es nicht mehr" (audit H-13). The old row gives up the request id (a new
+      // random one: the column is required and nothing else knows it).
+      await tx.query(`update materials set client_request_id = gen_random_uuid() where id = $1`, [
+        existing.id,
+      ]);
+    }
     const row = await tx.one<{ id: string }>(
       `insert into materials (learner_id, client_request_id, goal_id, step_id, subject_id, photo_count,
                               created_at, purpose, completes_material_id)
@@ -162,7 +198,7 @@ export async function createMaterial(
         learner.id,
         input.client_request_id,
         goalId,
-        step?.id ?? null,
+        captureStep?.id ?? null,
         goal?.subject_id ?? null,
         input.photo_mimes.length,
         deps.now(),
@@ -508,7 +544,7 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       // Read once in the background: time to think (see generate.ts).
       thinkingBudget: 2048,
     });
-    result = ExtractionResult.safeParse(res.json);
+    result = ExtractionParse.safeParse(res.json);
   } catch (err) {
     if (isAppError(err) && err.code === 'budget_exhausted')
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
@@ -838,12 +874,19 @@ async function withdrawItems(tx: Db, learnerId: string, itemIds: string[], now: 
 
 export async function libraryView(db: Db, learnerId: string): Promise<LibraryView> {
   const materials = await db.query<
-    MaterialRow & { subject_name: string | null; item_count: number; session_id: string | null }
+    MaterialRow & {
+      subject_name: string | null;
+      item_count: number;
+      session_id: string | null;
+      session_status: MaterialView['session_status'];
+    }
   >(
     `select m.*, s.name as subject_name,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
             (select ps.id from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc, ps.seq desc limit 1) as session_id
+              order by ps.started_at desc, ps.seq desc limit 1) as session_id,
+            (select ps.status from practice_sessions ps where ps.material_id = m.id
+              order by ps.started_at desc, ps.seq desc limit 1) as session_status
        from materials m left join subjects s on s.id = m.subject_id
       where m.learner_id = $1 and m.archived_at is null and m.merged_into is null
       order by m.created_at desc, m.seq desc
