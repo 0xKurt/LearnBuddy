@@ -23,6 +23,8 @@ export type SettingsRow = {
   context_version: number;
   last_seen_at: Date | null;
   version: number;
+  /** Which worker runs this learner's background checks (check.ts), if any. */
+  check_lease_token?: string | null;
 };
 
 export type GoalRow = {
@@ -80,6 +82,8 @@ export type MessageRow = {
   role: 'learner' | 'buddy';
   text: string;
   status: 'processing' | 'done' | 'failed';
+  /** Why a learner message failed or was held back (migration 0020). */
+  failure_code: string | null;
   reply_to_id: string | null;
   ask: { options: string[] } | null;
   outreach_id: string | null;
@@ -235,7 +239,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const messages = (
     await db.query<MessageRow>(
-      `select id, role, text, status, reply_to_id, ask, outreach_id, decision_id, created_at
+      `select id, role, text, status, failure_code, reply_to_id, ask, outreach_id, decision_id, created_at
          from buddy_messages where learner_id = $1
         order by seq desc
         limit $2`,

@@ -32,13 +32,14 @@ import {
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
 import { AppError, isAppError } from '../../lib/errors.js';
-import { inWindow } from '../../lib/time.js';
 import { startFromStep } from '../practice/service.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
-import { bumpContext, cancelGoalWakeups } from './plan.js';
+import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
+import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
+import { loosens } from './policy.js';
 import { loadSettings, type SettingsRow } from './state.js';
-import { runUndo, type UndoSpec } from './tools.js';
+import { runUndo, undoLoosensContact, type UndoSpec } from './tools.js';
 import { receiveLearnerMessage, type OnReply, type TurnOutcome } from './turn.js';
 
 export const buddyRoutes = new Hono<AppEnv>();
@@ -114,27 +115,50 @@ buddyRoutes.post('/steps/:id/start', async (c) => {
   return c.json({ session_id: sessionId });
 });
 
+// "Heute nicht": the step steps aside until tomorrow — not skipped for good (audit M-57).
+// An agreed reminder moves with it to the same time tomorrow.
 buddyRoutes.post('/steps/:id/skip', async (c) => {
   const stepId = check(Uuid, c.req.param('id'));
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
+  const now = deps.now();
   await deps.db.tx(async (tx) => {
-    const step = await tx.maybeOne<{ state: string }>(
-      `select state from buddy_steps where id = $1 and learner_id = $2 for update`,
+    await lockContext(tx, learnerId);
+    const settings = await loadSettings(tx, learnerId);
+    const step = await tx.maybeOne<{
+      state: string;
+      agreed: boolean;
+      planned_date: string | null;
+      planned_time: string | null;
+    }>(
+      `select state, agreed, planned_date, planned_time from buddy_steps
+        where id = $1 and learner_id = $2 for update`,
       [stepId, learnerId],
     );
     if (!step) throw new AppError('not_found', 'Step not found');
     if (!['planned', 'prepared'].includes(step.state))
       throw new AppError('conflict', 'This step is no longer open');
-    await tx.query(
-      `update buddy_steps set state = 'skipped', finished_at = $2, version = version + 1 where id = $1`,
-      [stepId, deps.now()],
+    const today = localParts(now, settings.timezone).date;
+    const tomorrow = addDays(today, 1);
+    const moved = await tx.one<{ id: string; version: number }>(
+      `update buddy_steps set planned_date = greatest(coalesce(planned_date, $2::date), $2::date),
+                              version = version + 1
+        where id = $1 returning id, version`,
+      [stepId, tomorrow],
     );
     await tx.query(
       `update jobs set status = 'cancelled'
         where learner_id = $1 and kind = 'buddy_check' and status = 'queued' and payload ->> 'step_id' = $2`,
       [learnerId, stepId],
     );
+    if (step.agreed) {
+      const at = zonedToInstant(
+        tomorrow,
+        step.planned_time ?? settings.preferred_start,
+        settings.timezone,
+      );
+      await scheduleStepReminder(tx, learnerId, moved, at);
+    }
     await bumpContext(tx, learnerId);
   });
   return c.json(await home(c));
@@ -147,7 +171,7 @@ buddyRoutes.post('/actions/:id/undo', async (c) => {
   const now = deps.now();
   await deps.db.tx(async (tx) => {
     // Same lock as decisions: an undo never interleaves with applying a decision.
-    await tx.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learnerId]);
+    await lockContext(tx, learnerId);
     const action = await tx.maybeOne<{
       id: string;
       status: string;
@@ -163,6 +187,9 @@ buddyRoutes.post('/actions/:id/undo', async (c) => {
     if (now.getTime() - action.created_at.getTime() > 7 * 86_400_000) {
       throw new AppError('conflict', 'Too old to undo');
     }
+    // Undoing "fewer messages" or a pause means more contact again: for a minor that needs
+    // the adult's PIN, exactly like the same change in the settings (CLAUDE.md rule 6).
+    if (await undoLoosensContact(tx, learnerId, action.undo, now)) assertAccountHolder(c);
     if (!(await runUndo(tx, learnerId, action.undo, now))) {
       throw new AppError('conflict', 'This changed since — undo it by hand', {
         reason: 'changed_since',
@@ -183,6 +210,7 @@ buddyRoutes.post('/goals/:id/outcome', async (c) => {
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
   await deps.db.tx(async (tx) => {
+    await lockContext(tx, learnerId);
     const goal = await tx.maybeOne<{ status: string }>(
       `select status from buddy_goals where id = $1 and learner_id = $2 for update`,
       [goalId, learnerId],
@@ -236,6 +264,7 @@ buddyRoutes.post('/outreach/:id/opened', async (c) => {
   const learnerId = c.get('learner').id;
   const now = deps.now();
   await deps.db.tx(async (tx) => {
+    await lockContext(tx, learnerId);
     const r = await tx.query(
       `update buddy_outreach
           set opened_at = coalesce(opened_at, $3),
@@ -288,6 +317,7 @@ buddyRoutes.patch('/memory/:id', async (c) => {
   const editor = actorOf(c) === 'account_holder' ? 'account_holder' : 'learner_edited';
   const now = deps.now();
   await deps.db.tx(async (tx) => {
+    await lockContext(tx, learnerId);
     const current = await tx.maybeOne<{
       id: string;
       kind: string;
@@ -341,25 +371,6 @@ function settingsView(s: SettingsRow, canLoosen: boolean): BuddySettingsView {
     version: s.version,
     can_loosen: canLoosen,
   };
-}
-
-/** True when the change allows more contact than before (needs the account holder for minors). */
-export function loosens(before: SettingsRow, after: SettingsRow, now: Date): boolean {
-  if (!before.contact_enabled && after.contact_enabled) return true;
-  if (after.max_per_day > before.max_per_day || after.max_per_week > before.max_per_week)
-    return true;
-  if (before.avoid_weekdays.some((d) => !after.avoid_weekdays.includes(d))) return true;
-  const pausedBefore =
-    before.paused_until && before.paused_until > now ? before.paused_until.getTime() : 0;
-  const pausedAfter =
-    after.paused_until && after.paused_until > now ? after.paused_until.getTime() : 0;
-  if (pausedAfter < pausedBefore) return true;
-  for (let m = 0; m < 1440; m += 5) {
-    const wasQuiet = inWindow(m, before.quiet_start, before.quiet_end);
-    const isQuiet = inWindow(m, after.quiet_start, after.quiet_end);
-    if (wasQuiet && !isQuiet) return true;
-  }
-  return false;
 }
 
 buddyRoutes.get('/settings', async (c) => {
@@ -426,11 +437,19 @@ buddyRoutes.patch('/settings', async (c) => {
       ],
     );
     if (!row.contact_enabled || (row.paused_until && row.paused_until > now)) {
-      // Nothing queued is sent later in bulk.
+      // Nothing Buddy queued on its own is sent later in bulk. A reminder she agreed to (and
+      // the answer to her own action) stays: at its time it waits in the app (D-13, H-37 1B).
       await tx.query(
         `update buddy_outreach set status = 'cancelled', status_reason = $2
-          where learner_id = $1 and status = 'scheduled'`,
+          where learner_id = $1 and status = 'scheduled' and origin = 'buddy'`,
         [learnerId, row.contact_enabled ? 'paused' : 'contact_disabled'],
+      );
+    }
+    if (before.contact_enabled && !row.contact_enabled) {
+      // A "no" is at least a "not now": the home does not ask again right away (audit M-62).
+      await tx.query(
+        `update buddy_settings set opt_in_prompt_hidden_until = $2 where learner_id = $1`,
+        [learnerId, new Date(now.getTime() + 14 * 86_400_000)],
       );
     }
     return row;

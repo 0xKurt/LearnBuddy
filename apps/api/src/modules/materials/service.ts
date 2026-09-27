@@ -310,8 +310,8 @@ export async function retryMaterial(
     if (!m) throw new AppError('not_found', 'Material not found');
     if (m.status !== 'failed')
       throw new AppError('conflict', 'Only failed material can be retried');
-    if (m.failure_reason === 'not_learning_material') {
-      throw new AppError('conflict', 'This does not look like learning material', {
+    if (m.failure_reason === 'not_learning_material' || m.failure_reason === 'blocked') {
+      throw new AppError('conflict', 'Reading this again would give the same answer', {
         reason: m.failure_reason,
       });
     }
@@ -376,7 +376,11 @@ export async function markMaterialFailed(
   // Unusable photos are not kept longer than readable ones, and a photo of
   // something else (a letter, a recipe) not at all: it cannot be read again
   // anyway (docs/privacy.md).
-  const keepMs = reason === 'not_learning_material' ? 0 : PHOTO_RETENTION_DAYS * 86_400_000;
+  // The same holds for photos the safety filter refused to read.
+  const keepMs =
+    reason === 'not_learning_material' || reason === 'blocked'
+      ? 0
+      : PHOTO_RETENTION_DAYS * 86_400_000;
   await enqueueJob(tx, {
     learnerId: m.learner_id,
     kind: 'purge_photos',
@@ -510,6 +514,10 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
     if (err instanceof LlmError && err.retryable)
       return retryTransient(deps, job, materialId, err.kind);
+    // The provider's safety filter refused this sheet: reading it again gives the same
+    // answer, so it ends here with its own honest words and no retry (audit p2-T8).
+    if (err instanceof LlmError && err.kind === 'blocked')
+      return fail(deps, job, materialId, 'blocked');
     return fail(deps, job, materialId, 'model_error');
   }
   if (!result.success) return fail(deps, job, materialId, 'model_error');

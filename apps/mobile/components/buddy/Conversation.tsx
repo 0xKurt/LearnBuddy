@@ -18,6 +18,7 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { deliveryText, describeAction } from './describe.js';
+import { i18n } from '../../lib/i18n/index.js';
 
 type Props = {
   messages: MessageView[];
@@ -155,10 +156,16 @@ export function Conversation({
             ) : null}
             {mine && m.status === 'failed' ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={[TYPE.small, { color: LB.danger }]}>{t('thread.failed')}</Text>
-                <Btn size="sm" variant="outline" onPress={() => onResend(m)} disabled={busy}>
-                  {t('thread.resend')}
-                </Btn>
+                {/* It arrived: say why it was not answered (CLAUDE.md rule 5). */}
+                <Text style={[TYPE.small, { color: LB.danger }]}>
+                  {failedLabel(m.failure_code)}
+                </Text>
+                {/* Resending cannot help once today's allowance is used up. */}
+                {m.failure_code === 'budget' ? null : (
+                  <Btn size="sm" variant="outline" onPress={() => onResend(m)} disabled={busy}>
+                    {t('thread.resend')}
+                  </Btn>
+                )}
               </View>
             ) : null}
             {m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
@@ -228,6 +235,12 @@ export function Conversation({
       ) : null}
     </View>
   );
+}
+
+/** Why a stored message was not answered; "not arrived" only when nothing is known. */
+function failedLabel(code: string | null): string {
+  const key = `buddy:thread.failed_reason.${code ?? 'internal'}`;
+  return i18n.exists(key) ? i18n.t(key) : i18n.t('buddy:thread.failed');
 }
 
 /** A reply cut off in the middle of a formula shows up to the formula (it follows complete). */

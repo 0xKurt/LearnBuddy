@@ -64,7 +64,9 @@ export const Quote = z
   .string()
   .min(1)
   .max(300)
-  .describe("the learner's exact words (latest message)");
+  .describe(
+    "the learner's exact words, whole words as written (what they wrote since your last answer)",
+  );
 
 // Days and durations as the learner described them; the server computes the date
 // (hard rule 2). The model sees ONE flat object per spec — a kind plus the fields
@@ -270,6 +272,17 @@ const planStep = z.object({
       .boolean()
       .describe('true only if the learner asked for / agreed to this time (a reminder)'),
     quote: Quote.nullable().describe('Required when agreed=true'),
+    // Optional in parsing (older scripted answers have neither); the model sees both.
+    subject: SubjectRef.nullable()
+      .optional()
+      .describe(
+        'kind practice without a goal: the subject (f1) she wants to practise; null if it has no material yet',
+      ),
+    focus_topics: z
+      .array(z.string().trim().min(1).max(60))
+      .max(5)
+      .optional()
+      .describe('kind practice: topics she named, in her words'),
   }),
 });
 

@@ -100,8 +100,17 @@ export async function callModel(
           : err.kind === 'invalid_output'
             ? 'invalid_output'
             : 'error';
-      await record(deps.db, learnerId, req, outcome, err.usage, err.kind);
-      if (err.kind === 'unavailable' || err.kind === 'rate_limited') {
+      await record(
+        deps.db,
+        learnerId,
+        req,
+        outcome,
+        err.usage,
+        err.finishReason ? `${err.kind}:${err.finishReason}` : err.kind,
+      );
+      // Nothing usable came back: the learner's daily allowance is not used up by a
+      // provider outage, a rejected request or a safety block (her words are not "spent").
+      if (err.kind !== 'invalid_output' && err.kind !== 'timeout') {
         await releaseReservation(deps.db, learnerId, localDay, kind);
       }
     }

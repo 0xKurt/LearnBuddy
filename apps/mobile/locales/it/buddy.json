@@ -37,6 +37,7 @@
     "failed_model_error": "Qualcosa è andato storto durante la lettura.",
     "failed_photos_missing": "Le foto non sono arrivate complete.",
     "failed_budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte.",
+    "failed_blocked": "Non posso leggere questa scheda: il filtro di sicurezza non la lascia passare. Rileggerla non servirà. Scrivi semplicemente le domande che ti servono.",
     "failed_retry": "Rileggi",
     "failed_new_photo": "Nuova foto",
     "result_title": "Ce l'hai fatta!",
@@ -103,7 +104,14 @@
     "resend": "Invia di nuovo",
     "load_more": "Messaggi precedenti",
     "you": "Tu",
-    "buddy": "Buddy"
+    "buddy": "Buddy",
+    "failed_reason": {
+      "model_unavailable": "Buddy non è riuscito a rispondere",
+      "budget": "Oggi Buddy non può più rispondere",
+      "invalid": "Buddy si è confuso",
+      "stale": "Nessuna risposta: troppe cose insieme",
+      "internal": "Nessuna risposta: qualcosa è andato storto"
+    }
   },
   "delivery": {
     "scheduled": "arriva {{when}}",

@@ -16,10 +16,11 @@ import type {
   UpcomingItem,
 } from '@learnbuddy/shared-types/contracts';
 
+import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
 import { daysBetween, localParts } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
-import { undoApplies, type UndoSpec } from './tools.js';
+import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
 import { loadBuddyState } from './state.js';
 
 const THREAD_LIMIT = 30;
@@ -56,8 +57,8 @@ export async function buildHome(
   const [nowCard, decision, done, thread, system, working] = await Promise.all([
     nowCardOf(deps, learner.id, state, today, now),
     decisionOf(state, learner, today, now),
-    doneOf(deps, learner.id, now),
-    threadOf(deps, learner.id, beforeMessageId),
+    doneOf(deps, learner, now),
+    threadOf(deps, learner, beforeMessageId),
     systemOf(deps, learner.id, state),
     workingOf(deps, learner.id, now),
   ]);
@@ -170,7 +171,11 @@ async function nowCardOf(
   const prepared = state.steps
     .filter(
       (s) =>
-        s.kind === 'practice' && s.state === 'prepared' && (s.payload.item_ids?.length ?? 0) > 0,
+        s.kind === 'practice' &&
+        s.state === 'prepared' &&
+        (s.payload.item_ids?.length ?? 0) > 0 &&
+        // "Heute nicht" moved it to tomorrow: not on today's card.
+        (!s.planned_date || daysBetween(today, s.planned_date) <= 0),
     )
     .sort((a, b) => {
       const ga = state.goals.find((g) => g.id === a.goal_id)?.due_date ?? '9999-12-31';
@@ -229,7 +234,10 @@ async function nowCardOf(
       type: 'material_failed',
       material_id: failed.id,
       reason: failed.failure_reason,
-      retryable: failed.failure_reason !== 'not_learning_material' && (row?.n ?? 0) < 3,
+      retryable:
+        failed.failure_reason !== 'not_learning_material' &&
+        failed.failure_reason !== 'blocked' &&
+        (row?.n ?? 0) < 3,
       purpose: row?.purpose ?? 'study',
       completes: row?.completes ?? null,
       title: row?.title ?? null,
@@ -271,7 +279,21 @@ function decisionOf(
   return null;
 }
 
-async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionView[]> {
+/**
+ * A minor cannot undo her way to more contact: that needs the adult's PIN (rule 6), so the
+ * button is not offered to her; the server refuses it anyway.
+ */
+async function needsAdult(
+  deps: Deps,
+  learner: LearnerLite,
+  undo: UndoSpec | null,
+  now: Date,
+): Promise<boolean> {
+  return learner.isMinor && undo !== null && undoLoosensContact(deps.db, learner.id, undo, now);
+}
+
+async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<ActionView[]> {
+  const learnerId = learner.id;
   const rows = await deps.db.query<{
     id: string;
     status: 'applied' | 'undone';
@@ -293,7 +315,8 @@ async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionV
         r.status === 'applied' &&
         r.undo !== null &&
         now.getTime() - r.created_at.getTime() < UNDO_WINDOW_MS &&
-        (await undoApplies(deps.db, learnerId, r.undo)),
+        (await undoApplies(deps.db, learnerId, r.undo)) &&
+        !(await needsAdult(deps, learner, r.undo, now)),
       summary: r.result,
       created_at: r.created_at.toISOString(),
     })),
@@ -315,7 +338,12 @@ function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
     });
   }
   for (const s of state.steps) {
-    if (s.state !== 'planned' || !s.planned_date || daysBetween(today, s.planned_date) < 0)
+    if (!s.planned_date || daysBetween(today, s.planned_date) < 0) continue;
+    // Planned steps, and prepared practice she moved to a later day.
+    if (
+      s.state !== 'planned' &&
+      !(s.state === 'prepared' && daysBetween(today, s.planned_date) > 0)
+    )
       continue;
     if (s.kind === 'capture') continue; // shown as the "now" card
     items.push({
@@ -358,14 +386,16 @@ function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
 
 async function threadOf(
   deps: Deps,
-  learnerId: string,
+  learner: LearnerLite,
   beforeMessageId?: string,
 ): Promise<{ messages: MessageView[]; hasMore: boolean }> {
+  const learnerId = learner.id;
   const rows = await deps.db.query<{
     id: string;
     role: 'learner' | 'buddy';
     text: string;
     status: 'processing' | 'done' | 'failed';
+    failure_code: string | null;
     client_message_id: string | null;
     ask: { options?: string[] } | null;
     reply_to_id: string | null;
@@ -373,7 +403,8 @@ async function threadOf(
     decision_id: string | null;
     created_at: Date;
   }>(
-    `select id, role, text, status, client_message_id, ask, reply_to_id, outreach_id, decision_id, created_at
+    `select id, role, text, status, failure_code, client_message_id, ask, reply_to_id, outreach_id,
+            decision_id, created_at
        from buddy_messages
       where learner_id = $1
         and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))
@@ -393,7 +424,7 @@ async function threadOf(
         decision_id: string;
         status: 'applied' | 'undone';
         result: ActionSummary;
-        undo: unknown;
+        undo: UndoSpec | null;
         created_at: Date;
       }>(
         `select id, decision_id, status, result, undo, created_at from buddy_actions
@@ -405,7 +436,7 @@ async function threadOf(
     ? await deps.db.query<{
         id: string;
         kind: OutreachView['kind'];
-        origin: OutreachView['origin'];
+        origin: OutreachView['origin'] | 'learner';
         title: string;
         body: string;
         why: string | null;
@@ -421,6 +452,12 @@ async function threadOf(
       )
     : [];
 
+  // Undo that would need the adult is not offered to a minor (see needsAdult).
+  const adultOnly = new Set<string>();
+  for (const a of actions) {
+    if (a.status === 'applied' && (await needsAdult(deps, learner, a.undo, now)))
+      adultOnly.add(a.id);
+  }
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -428,6 +465,7 @@ async function threadOf(
       role: m.role,
       text: m.text,
       status: m.status,
+      failure_code: m.failure_code,
       client_message_id: m.client_message_id,
       options: m.ask?.options ?? null,
       reply_to_id: m.reply_to_id,
@@ -435,7 +473,8 @@ async function threadOf(
         ? {
             id: o.id,
             kind: o.kind,
-            origin: o.origin,
+            // Her own action's result is shown like Buddy's message (older apps know two origins).
+            origin: o.origin === 'learner' ? 'buddy' : o.origin,
             title: o.title,
             body: o.body,
             why: o.why,
@@ -454,6 +493,7 @@ async function threadOf(
           undoable:
             a.status === 'applied' &&
             a.undo !== null &&
+            !adultOnly.has(a.id) &&
             now.getTime() - a.created_at.getTime() < UNDO_WINDOW_MS,
           summary: a.result,
           created_at: a.created_at.toISOString(),
@@ -485,13 +525,26 @@ async function systemOf(
   const hb = await deps.db.maybeOne<{ last_finished_at: Date | null }>(
     `select last_finished_at from system_heartbeats where name = 'tick'`,
   );
-  const scheduler = !hb?.last_finished_at
-    ? 'unknown'
-    : now.getTime() - hb.last_finished_at.getTime() < HEARTBEAT_STALE_MS
-      ? 'ok'
-      : 'stale';
+  const recent =
+    !!hb?.last_finished_at && now.getTime() - hb.last_finished_at.getTime() < HEARTBEAT_STALE_MS;
+  // Her own work waiting well past its time means nothing is running it — also when there has
+  // never been a heartbeat (a misconfigured scheduler is not "unknown", audit M-67).
+  const waiting = await deps.db.maybeOne(
+    `select 1 from jobs where learner_id = $1 and status = 'queued' and run_at < $2 limit 1`,
+    [learnerId, new Date(now.getTime() - HEARTBEAT_STALE_MS)],
+  );
+  const scheduler =
+    waiting || (hb?.last_finished_at && !recent) ? 'stale' : recent ? 'ok' : 'unknown';
+  // "Buddy can answer" only when a model is configured and today's allowance is not used up
+  // (audit p2-F-journey-outage-invisible-on-home).
+  const today = localParts(now, state.settings.timezone).date;
+  const used = await deps.db.maybeOne<{ calls: number }>(
+    `select calls from usage_daily where learner_id = $1 and day = $2 and kind = 'buddy_turn'`,
+    [learnerId, today],
+  );
+  const model = deps.llm.available && (used?.calls ?? 0) < DAILY_LIMITS.buddy_turn;
   return {
-    model: deps.llm.available,
+    model,
     push,
     contact_enabled: state.settings.contact_enabled,
     scheduler,

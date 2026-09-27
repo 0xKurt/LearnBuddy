@@ -30,7 +30,7 @@ import { claimJobs, enqueueJob, finishJob, retryJob, type JobRow } from '../sche
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext, canonicalTopicKey } from './context.js';
 import { CheckDecision } from './registry.js';
-import { planOutreach } from './delivery.js';
+import { planOutreach, type BodyTemplate } from './delivery.js';
 import { markHandled } from './events.js';
 import { lookupsField, withLookups } from './lookups.js';
 import { bumpContext } from './plan.js';
@@ -81,6 +81,36 @@ async function acquireLease(deps: Deps, learnerId: string, now: Date): Promise<s
     [learnerId, token, now, LEASE_SECONDS],
   );
   return row ? token : null;
+}
+
+/** This worker's hold on one learner's checks, and on the jobs it claimed for them. */
+type CheckLease = { learnerId: string; token: string; jobs: JobRow[] };
+
+/** Another worker took over (our lease ran out): stop without writing anything. */
+class LeaseLost extends Error {}
+
+/**
+ * Heartbeat (audit M-47 check-lease-shorter-than-runtime): before every model call the
+ * learner lease and the claimed jobs' leases are extended by a full lease, so a check that
+ * runs longer than one lease (several lookup and repair rounds on a slow provider day) is
+ * never taken over — and run twice — while it is still alive. If the lease is already gone,
+ * another worker owns the learner now: this one stops.
+ */
+async function extendLease(deps: Deps, lease: CheckLease): Promise<void> {
+  const now = deps.now();
+  const held = await deps.db.maybeOne(
+    `update buddy_settings set check_lease_until = $3::timestamptz + make_interval(secs => $4)
+      where learner_id = $1 and check_lease_token = $2
+      returning learner_id`,
+    [lease.learnerId, lease.token, now, LEASE_SECONDS],
+  );
+  if (!held) throw new LeaseLost();
+  await deps.db.query(
+    `update jobs j set lease_until = $3::timestamptz + make_interval(secs => $4)
+       from unnest($1::uuid[], $2::uuid[]) as mine(id, token)
+      where j.id = mine.id and j.lease_token = mine.token and j.status = 'running'`,
+    [lease.jobs.map((j) => j.id), lease.jobs.map((j) => j.lease_token), now, LEASE_SECONDS],
+  );
 }
 
 async function releaseLease(deps: Deps, learnerId: string, token: string): Promise<void> {
@@ -152,12 +182,29 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
 
     const triggers = jobs.filter((j) => j.kind === 'buddy_check').map(triggerOf);
     const agreed = triggers.filter((t) => t.reason === 'step_due');
-    const others = triggers.filter((t) => t.reason !== 'step_due');
+    // A check whose worker failed all its attempts comes back once, model-free (terminal.ts).
+    const parked = triggers.filter((t) => t.reason !== 'step_due' && t.job.payload.fallback_only);
+    const others = triggers.filter((t) => t.reason !== 'step_due' && !t.job.payload.fallback_only);
 
     for (const trig of agreed) await sendAgreedReminder(deps, learner, trig);
+    if (parked.length > 0) {
+      try {
+        await fallback(deps, learner, parked, 'parked', { learnerId, token, jobs });
+      } catch (err) {
+        if (!(err instanceof LeaseLost)) throw err;
+        return { jobs: jobs.length, outcome: 'lease_lost' };
+      }
+    }
 
     let outcome = 'done';
-    if (others.length > 0) outcome = await decide(deps, learner, others);
+    if (others.length > 0) {
+      try {
+        outcome = await decide(deps, learner, others, { learnerId, token, jobs });
+      } catch (err) {
+        if (!(err instanceof LeaseLost)) throw err;
+        return { jobs: jobs.length, outcome: 'lease_lost' };
+      }
+    }
     await markHandled(
       deps.db,
       learnerId,
@@ -189,7 +236,12 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
           agreed: boolean;
           goal_id: string | null;
           version: number;
-          payload: { item_ids?: string[]; est_minutes?: number };
+          payload: {
+            item_ids?: string[];
+            est_minutes?: number;
+            subject_id?: string | null;
+            focus_topics?: string[];
+          };
         }>(`select * from buddy_steps where id = $1 and learner_id = $2 for update`, [
           trig.stepId,
           learner.id,
@@ -200,12 +252,15 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
     }
     let count = step.payload.item_ids?.length ?? 0;
     let minutes = step.payload.est_minutes ?? 0;
-    if (step.kind === 'practice' && count === 0) {
+    // Practice for what she named — the test's material or the subject — and nothing else:
+    // without either, the reminder only reminds (audit H-30), never "6 Aufgaben" from any subject.
+    const subjectId = step.payload.subject_id ?? null;
+    if (step.kind === 'practice' && count === 0 && (step.goal_id || subjectId)) {
       const items = await selectPracticeItems(
         tx,
         learner.id,
-        { goalId: step.goal_id },
-        [],
+        { goalId: step.goal_id, subjectId },
+        step.payload.focus_topics ?? [],
         questionCountFor(10),
         now,
       );
@@ -219,12 +274,14 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
         );
       }
     }
-    const body =
+    const key =
       step.kind === 'capture'
-        ? t(learner.locale, 'reminder.capture', { title: step.title })
+        ? ('reminder.capture' as const)
         : count > 0
-          ? t(learner.locale, 'reminder.practice_ready', { title: step.title, count, minutes })
-          : t(learner.locale, 'reminder.practice', { title: step.title });
+          ? ('reminder.practice_ready' as const)
+          : ('reminder.practice' as const);
+    const params = { title: step.title, count, minutes };
+    const body = t(learner.locale, key, params);
     const plan = await planOutreach(tx, {
       learnerId: learner.id,
       settings,
@@ -243,6 +300,8 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
       goalId: step.goal_id,
       stepId: step.id,
       inAppWhenOff: true,
+      // Rendered when shown: a reminder that arrives late says so (D-13).
+      template: { key, params, agreed_at: trig.job.run_at.toISOString() },
     });
     await bumpContext(tx, learner.id);
     return { outcome: plan.status, reason: plan.reason };
@@ -302,6 +361,7 @@ async function decide(
   deps: Deps,
   learner: LearnerRow & { isMinor: boolean },
   triggers: Trigger[],
+  lease: CheckLease,
 ): Promise<string> {
   const now = deps.now();
   const settings = await deps.db.one<SettingsRow>(
@@ -372,7 +432,7 @@ async function decide(
 
   // No model configured at all: retrying later cannot help, the fixed fallbacks act now.
   if (!deps.llm.available) {
-    await fallback(deps, learner, triggers, 'model_disabled');
+    await fallback(deps, learner, triggers, 'model_disabled', lease);
     return 'fallback:model_disabled';
   }
 
@@ -385,7 +445,8 @@ async function decide(
       pushAvailable: await pushAvailable(deps, learner.id),
     });
     const dialogue = state.messages
-      .filter((m) => m.status === 'done')
+      // A message the safety filter held back never goes to the model again (audit H-32).
+      .filter((m) => m.status === 'done' && m.failure_code !== 'blocked')
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text }));
     const tail = `${describeTriggers(state, triggers, today)}${repair ? `\n\n${repairMessage(repair)}` : ''}`;
@@ -411,6 +472,7 @@ async function decide(
         surface: 'check',
         contents: buildContents(ctx.state, dialogue, tail),
         call: async (messages, final) => {
+          await extendLease(deps, lease);
           const res = await callModel(deps, learner.id, today, {
             purpose: 'buddy_check',
             tier: 'smart',
@@ -430,6 +492,7 @@ async function decide(
       raw = looked.raw;
       if (looked.steps.length > 0) meta.output = { lookups: looked.steps, final: raw };
     } catch (err) {
+      if (err instanceof LeaseLost) throw err;
       const why = isAppError(err) ? err.code : err instanceof LlmError ? err.kind : 'error';
       await recordUnapplied(
         deps.db,
@@ -459,7 +522,7 @@ async function decide(
           return 'retry_later';
         }
       }
-      await fallback(deps, learner, triggers, why);
+      await fallback(deps, learner, triggers, why, lease);
       return `fallback:${why}`;
     }
     if (meta.output === undefined) meta.output = raw;
@@ -488,7 +551,7 @@ async function decide(
         errors,
       );
       if (repair) {
-        await fallback(deps, learner, triggers, 'invalid_output');
+        await fallback(deps, learner, triggers, 'invalid_output', lease);
         return 'fallback:invalid_output';
       }
       repair = errors;
@@ -520,12 +583,16 @@ async function decide(
       aliases: ctx.aliases,
       now: at,
       reference: at,
-      latestLearnerText: null,
+      learnerWords: null,
       triggerMessageId: null,
       messageClaim: null,
+      // Applied only while this worker still holds the learner (never twice).
+      checkLease: lease.token,
       actions: d.actions,
       reply: null,
       outreach: d.outreach,
+      // Her own photos or practice: the answer is not an initiative (policy.ts).
+      outreachOrigin: answersLearner ? 'learner' : 'buddy',
       meta,
     });
     if (applied.status === 'applied') {
@@ -538,15 +605,22 @@ async function decide(
       });
       return 'act';
     }
+    if (applied.status === 'superseded') throw new LeaseLost();
     if (applied.status === 'rejected') {
       if (repair) {
-        await fallback(deps, learner, triggers, 'rejected');
+        await fallback(deps, learner, triggers, 'rejected', lease);
         return 'fallback:rejected';
       }
       repair = applied.errors;
       continue;
     }
     // stale → loop with fresh state
+  }
+  // She kept chatting while Buddy tried three times: what she is waiting for (her photos,
+  // her practice) still gets its fixed answer (audit p2-check-stale-exhaustion-drops-reaction).
+  if (answersLearner) {
+    await fallback(deps, learner, triggers, 'stale', lease);
+    return 'fallback:stale';
   }
   await finishAll({ outcome: 'stale' });
   return 'stale';
@@ -559,6 +633,7 @@ async function fallback(
   learner: LearnerRow,
   triggers: Trigger[],
   why: string,
+  lease: CheckLease,
 ): Promise<void> {
   const now = deps.now();
   for (const trig of triggers) {
@@ -567,6 +642,8 @@ async function fallback(
         `select * from buddy_settings where learner_id = $1 for update`,
         [learner.id],
       );
+      // Only while this worker still holds the learner: never a second fallback message.
+      if (settings.check_lease_token !== lease.token) throw new LeaseLost();
       const tz = settings.timezone;
       const today = localParts(now, tz).date;
       const goal = trig.goalId
@@ -627,26 +704,29 @@ async function fallback(
 
       let proposal: {
         kind: 'idea' | 'checkin' | 'result';
+        origin: 'buddy' | 'learner';
         topic: string;
         body: string;
+        template: BodyTemplate | null;
         relevance: number;
         goalId: string | null;
         stepId: string | null;
+        /** Buddy said it would come back: the promise waits in the app when contact is off. */
+        inAppWhenOff?: boolean;
       } | null = null;
       if (trig.reason === 'exam_countdown' && goal?.status === 'active' && goal.due_date) {
         const inDays = daysBetween(today, goal.due_date);
         const day = dayLabel(learner.locale, weekdayOf(goal.due_date), inDays);
         const p = await prepared(goal.id, goal.subject_id, goal.title);
         if (p) {
+          const params = { exam: goal.title, count: p.count, minutes: p.minutes };
           proposal = {
             kind: 'idea',
+            origin: 'buddy',
             topic: `exam:${goal.id}:prep`,
-            body: t(learner.locale, 'exam.prepared', {
-              day,
-              exam: goal.title,
-              count: p.count,
-              minutes: p.minutes,
-            }),
+            body: t(learner.locale, 'exam.prepared', { day, ...params }),
+            // "Morgen" is rendered on the day it is read (audit M-60).
+            template: { key: 'exam.prepared', params, due_date: goal.due_date },
             relevance: inDays <= 1 ? 0.85 : 0.7,
             goalId: goal.id,
             stepId: p.stepId,
@@ -665,8 +745,14 @@ async function fallback(
           }
           proposal = {
             kind: 'idea',
+            origin: 'buddy',
             topic: `exam:${goal.id}:material`,
             body: t(learner.locale, 'exam.need_material', { day, exam: goal.title }),
+            template: {
+              key: 'exam.need_material',
+              params: { exam: goal.title },
+              due_date: goal.due_date,
+            },
             relevance: 0.7,
             goalId: goal.id,
             stepId: null,
@@ -675,8 +761,10 @@ async function fallback(
       } else if (trig.reason === 'exam_followup' && goal?.status === 'active') {
         proposal = {
           kind: 'checkin',
+          origin: 'buddy',
           topic: `exam:${goal.id}:followup`,
           body: t(learner.locale, 'exam.followup', { exam: goal.title }),
+          template: null,
           relevance: 0.7,
           goalId: goal.id,
           stepId: null,
@@ -703,6 +791,9 @@ async function fallback(
           );
           proposal = {
             kind: 'result',
+            // Her photos: the result always reaches her, like any answer (audit M-61).
+            origin: 'learner',
+            template: null,
             topic: `material:${m.id}`,
             body: m.title
               ? t(learner.locale, 'material.ready', { title: m.title, count: m.n })
@@ -712,6 +803,20 @@ async function fallback(
             stepId: p?.stepId ?? null,
           };
         }
+      } else if (trig.reason === 'checkin_requested') {
+        // Buddy said "ich schaue nochmal vorbei": without the model it still keeps its word,
+        // honestly (audit p2-F-journey-checkin-promise-dropped).
+        proposal = {
+          kind: 'checkin',
+          origin: 'buddy',
+          topic: `checkin:${trig.job.id}`,
+          body: t(learner.locale, 'reminder.checkin_unavailable'),
+          template: null,
+          relevance: 0.7,
+          goalId: null,
+          stepId: null,
+          inAppWhenOff: true,
+        };
       }
 
       let outreach = null;
@@ -721,7 +826,7 @@ async function fallback(
           settings,
           now,
           decisionId: null,
-          origin: 'buddy',
+          origin: proposal.origin,
           kind: proposal.kind,
           topicKey: proposal.topic,
           dedupeKey: `fallback:${proposal.topic}:${trig.job.id}`,
@@ -733,6 +838,8 @@ async function fallback(
           expiresAt: new Date(now.getTime() + 24 * 3_600_000),
           goalId: proposal.goalId,
           stepId: proposal.stepId,
+          inAppWhenOff: proposal.inAppWhenOff ?? false,
+          template: proposal.template,
         });
       }
       await tx.query(

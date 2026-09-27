@@ -19,6 +19,7 @@ import {
   sweepForgottenPhotos,
 } from '../materials/purge.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
+import { handleParkedJobs } from './terminal.js';
 import {
   claimJobs,
   finishJob,
@@ -85,6 +86,11 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
       for (const m of stuck) await markMaterialFailed(tx, m.id, 'model_error', deps.now());
     });
     await abandonStaleUploads(deps);
+  });
+
+  // Every parked job gets its defined effect (terminal.ts): no job kind ends silently.
+  await guard('terminal', async () => {
+    await handleParkedJobs(deps);
   });
 
   // Reading photos first: a learner is usually waiting for it.

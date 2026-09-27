@@ -46,7 +46,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     touches: ['memory'],
     needsQuote: true,
     undoable: true,
-    does: 'keep something lasting or temporary about the learner',
+    does: 'keep something lasting or temporary about the learner (never health, family trouble, being hurt, abuse or self-harm)',
     run: ACT_HANDLERS.remember,
   },
   correct_memory: {
@@ -198,12 +198,23 @@ function unionFor(surface: Surface) {
 export const TurnActionSchema = unionFor('turn');
 export const CheckActionSchema = unionFor('check');
 
+/** The longest reply that passes validation; a longer one is never shown or spoken early. */
+export const REPLY_MAX = 700;
+
+const Concern = z
+  .boolean()
+  .describe(
+    'true if the learner tells of distress: being hurt, bullied, abused or threatened, thinking of hurting themselves, or feeling unsafe or hopeless. Then the app answers with a fixed caring message and nothing about it is remembered.',
+  );
+
 export const TurnDecision = z.object({
+  // Lenient when parsing (older scripted answers have no such field); the model must write it.
+  concern: z.boolean().default(false),
   reply: z
     .string()
     .trim()
     .min(1)
-    .max(700)
+    .max(REPLY_MAX)
     .describe(
       "Your answer to the learner, in their language. Never claim a change you don't make in actions.",
     ),
@@ -218,6 +229,7 @@ export const TurnDecision = z.object({
   asks_permission: z.boolean().default(false),
 });
 export type TurnDecision = {
+  concern: boolean;
   reply: string;
   options: string[] | null;
   actions: TurnAction[];
@@ -231,6 +243,8 @@ export type TurnDecision = {
  * without actions can be shown and spoken at once (docs/architecture.md §Speed).
  */
 export const TurnDecisionForModel = z.object({
+  // First, so code knows before any reply text arrives whether this is a safeguarding answer.
+  concern: Concern,
   actions: TurnDecision.shape.actions,
   reply: TurnDecision.shape.reply,
   options: TurnDecision.shape.options,

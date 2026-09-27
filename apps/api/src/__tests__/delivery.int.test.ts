@@ -299,13 +299,29 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
       checkAnswer('Übung für Donnerstag', 'Ich habe eine kurze Übung vorbereitet.'),
     );
     await tick(env);
-    expect(env.push.sent.map((m) => m.title)).toEqual(['Übung für Donnerstag']);
+    // The lock screen gets a fixed text per kind (S-6); Buddy's words are in the app.
+    expect(env.push.sent.map((m) => m.body)).toEqual(['Buddy hat eine Idee für dich.']);
 
+    // She named the subject when she agreed to it (plan_step subject, audit H-30).
+    await env.db.query(
+      `update buddy_steps set payload = jsonb_build_object('subject_id', (
+          select id from subjects where learner_id = $1 and name = 'Mathe'))
+        where learner_id = $1 and agreed`,
+      [l.learnerId],
+    );
     // 17:30: the agreed reminder goes out anyway, with the text Buddy promised.
     env.clock.set('2026-09-28T15:30:00Z');
     await tick(env);
-    // The reminder also prepared the practice it talks about.
     expect(env.push.sent.map((m) => m.body)).toEqual([
+      'Buddy hat eine Idee für dich.',
+      'Deine verabredete Erinnerung ist da.',
+    ]);
+    // In the thread: Buddy's words, and the reminder with the practice it prepared.
+    const thread = await env.db.query<{ text: string }>(
+      `select text from buddy_messages where learner_id = $1 and outreach_id is not null order by seq`,
+      [l.learnerId],
+    );
+    expect(thread.map((m) => m.text)).toEqual([
       'Ich habe eine kurze Übung vorbereitet.',
       'Wie verabredet: Brüche üben. 6 Aufgaben liegen bereit, ca. 5 Minuten.',
     ]);
@@ -652,8 +668,14 @@ describe.skipIf(!dbReady)('without any model configured', () => {
     await seedExam(env, l.learnerId, { title: 'Mathearbeit', due: '2026-10-01', questions: 6 });
     env.clock.set('2026-09-28T13:00:00Z');
     await tick(env);
-    // A fixed template, in the learner's language, with a real prepared practice behind it.
-    expect(env.push.sent.map((m) => m.body)).toEqual([
+    // A fixed template, in the learner's language, with a real prepared practice behind it —
+    // on the lock screen only the kind of message (S-6), the words in the app.
+    expect(env.push.sent.map((m) => m.body)).toEqual(['Buddy hat eine Idee für dich.']);
+    const thread = await env.db.query<{ text: string }>(
+      `select text from buddy_messages where learner_id = $1 and outreach_id is not null`,
+      [l.learnerId],
+    );
+    expect(thread.map((m) => m.text)).toEqual([
       'Donnerstag ist „Mathearbeit“. 6 Aufgaben liegen bereit, ca. 5 Minuten.',
     ]);
     const home = (await l.api.get<BuddyHome>('/buddy')).body;

@@ -37,6 +37,7 @@
     "failed_model_error": "Something went wrong while reading.",
     "failed_photos_missing": "The photos didn't fully arrive.",
     "failed_budget_exhausted": "I can't read any more sheets today. Tomorrow it works again.",
+    "failed_blocked": "I'm not allowed to read this sheet – the safety filter won't let it through. Reading it again won't help. Just type the questions you need.",
     "failed_retry": "Read again",
     "failed_new_photo": "New photo",
     "result_title": "Done!",
@@ -103,7 +104,14 @@
     "resend": "Send again",
     "load_more": "Older messages",
     "you": "You",
-    "buddy": "Buddy"
+    "buddy": "Buddy",
+    "failed_reason": {
+      "model_unavailable": "Buddy couldn't answer just now",
+      "budget": "Buddy can't answer any more today",
+      "invalid": "Buddy got tangled up",
+      "stale": "Not answered – too much at once",
+      "internal": "Not answered – something went wrong"
+    }
   },
   "delivery": {
     "scheduled": "coming {{when}}",

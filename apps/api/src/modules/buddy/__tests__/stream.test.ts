@@ -35,4 +35,18 @@ describe('replyProgress', () => {
   it('says nothing before the reply starts', () => {
     expect(replyProgress('{"lookups": [], "actions": [')).toBeNull();
   });
+
+  it('never shows a reply longer than validation allows (repro-28)', () => {
+    const long = JSON.stringify({ actions: [], reply: 'x'.repeat(701), options: null });
+    expect(replyProgress(long)?.speakable).toBe(false);
+    const fits = JSON.stringify({ actions: [], reply: 'x'.repeat(700), options: null });
+    expect(replyProgress(fits)?.speakable).toBe(true);
+  });
+
+  it('never shows the model words of a safeguarding answer', () => {
+    const raw = JSON.stringify({ concern: true, actions: [], reply: 'Oh nein …', options: null });
+    expect(replyProgress(raw)?.speakable).toBe(false);
+    const calm = JSON.stringify({ concern: false, actions: [], reply: 'Klar.', options: null });
+    expect(replyProgress(calm)?.speakable).toBe(true);
+  });
 });

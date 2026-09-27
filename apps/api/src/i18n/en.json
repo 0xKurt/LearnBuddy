@@ -7,7 +7,22 @@
   "title": {
     "buddy": "Buddy"
   },
+  "safeguarding": {
+    "blocked": "I can't answer that here. If something is weighing on you or someone is hurting you, please talk to an adult you trust – or call Childline on 0800 1111 (free and confidential). I'm still here for you.",
+    "concern": "Thank you for telling me – that matters, and you're not alone with it. Please talk to an adult you trust. You can also call Childline on 0800 1111 (free and confidential, you don't have to give your name). I'm still here for you.",
+    "blocked_adult": "I can't answer that here. If something is weighing on you, please talk to someone you trust. If you are in danger, call the emergency number 112.",
+    "concern_adult": "Thank you for telling me – that matters. Please talk to someone you trust. If you are in danger, call the emergency number 112. I'm still here for you.",
+    "held_back": "(A message the safety filter held back.)"
+  },
+  "push": {
+    "reminder": "Your agreed reminder is here.",
+    "idea": "Buddy has an idea for you.",
+    "checkin": "Buddy would like to check in.",
+    "result": "Buddy has something ready for you."
+  },
   "reminder": {
+    "late": "I meant to remind you at {{time}} – sorry, this comes late. {{text}}",
+    "checkin_unavailable": "I wanted to check in with you, but I can't quite get to it right now. Just write to me if you like.",
     "practice_ready": "As agreed: {{title}}. {{count}} questions are ready, about {{minutes}} minutes.",
     "practice": "As agreed: {{title}}.",
     "capture": "As agreed: {{title}} – a photo is enough, I'll do the rest."

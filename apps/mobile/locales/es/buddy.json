@@ -37,6 +37,7 @@
     "failed_model_error": "Algo ha fallado durante la lectura.",
     "failed_photos_missing": "Las fotos no han llegado completas.",
     "failed_budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
+    "failed_blocked": "No puedo leer esta ficha: el filtro de seguridad no la deja pasar. Volver a leerla no servirá. Escribe las preguntas que necesites.",
     "failed_retry": "Volver a leer",
     "failed_new_photo": "Nueva foto",
     "result_title": "¡Lo has conseguido!",
@@ -103,7 +104,14 @@
     "resend": "Volver a enviar",
     "load_more": "Mensajes anteriores",
     "you": "Tú",
-    "buddy": "Buddy"
+    "buddy": "Buddy",
+    "failed_reason": {
+      "model_unavailable": "Buddy no ha podido responder",
+      "budget": "Buddy ya no puede responder hoy",
+      "invalid": "Buddy se ha liado",
+      "stale": "Sin respuesta: demasiado a la vez",
+      "internal": "Sin respuesta: algo ha fallado"
+    }
   },
   "delivery": {
     "scheduled": "llegará {{when}}",
