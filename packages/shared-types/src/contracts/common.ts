@@ -7,6 +7,20 @@ export const LocalDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD');
 /** Learner-local wall time. */
 export const LocalTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:MM');
 
+/**
+ * A list in a response that older app builds must still read after the API
+ * grows (audit M-69): an element this build does not understand (a new tool,
+ * card, status) is left out instead of failing the whole response.
+ */
+export function tolerantArray<S extends z.ZodTypeAny>(element: S) {
+  return z.array(z.unknown()).transform((items) =>
+    items.flatMap((item) => {
+      const r = element.safeParse(item);
+      return r.success ? [r.data as z.output<S>] : [];
+    }),
+  );
+}
+
 export const AppLocale = z.enum(['de', 'en', 'fr', 'es', 'it']);
 export type AppLocale = z.infer<typeof AppLocale>;
 
@@ -25,6 +39,7 @@ export const ApiErrorCode = z.enum([
   'internal',
   'model_unavailable',
   'unavailable',
+  'update_required',
 ]);
 export type ApiErrorCode = z.infer<typeof ApiErrorCode>;
 

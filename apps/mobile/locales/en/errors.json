@@ -18,7 +18,8 @@
     "internal": "Something went wrong. Try again in a moment.",
     "model_unavailable": "Buddy can't answer right now. Try again later.",
     "unavailable": "Not reachable right now. Try again in a moment.",
-    "invalid_response": "The answer was unexpected. Try again."
+    "invalid_response": "The answer was unexpected. Try again.",
+    "update_required": "This version of LearnBuddy is too old. Please update the app in the App Store or on Google Play."
   },
   "reason": {
     "consent_outdated": "The privacy notice was updated. Please read it again.",

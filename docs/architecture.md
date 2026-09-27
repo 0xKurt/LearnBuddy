@@ -57,6 +57,14 @@ Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, 
 - Errors: `{"error": {"code", "message", "details"?}}` with stable codes (`lib/errors.ts`); no
   provider bodies, SQL or user content in messages or logs.
 - Bodies are JSON ≤ 64 KB, validated with zod (`http/validate.ts`); photos go straight to storage.
+- Older app builds (audit M-69): responses the home is built from are forward compatible — a
+  card, notice, decision, action or message kind a build does not know is left out
+  (`tolerantArray`, `.catch` in `contracts/buddy.ts`), never the whole response. The app sends
+  `x-app-version`; with `MIN_APP_VERSION` set, older builds get 426 `update_required` ("bitte
+  aktualisieren"), and kept answers wait for the update instead of being dropped.
+- Indexes (migration `0019_learner_indexes.sql`): every foreign key has an index, so the account
+  deletion cascade and the per-subject counts cost her data, not everybody's
+  (`scale.int.test.ts` keeps it so for future foreign keys).
 
 | Route                                                                                                | Purpose                                                  |
 | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |

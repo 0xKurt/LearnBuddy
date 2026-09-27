@@ -3,6 +3,7 @@
 // present, and the error envelope as ApiError. Responses are validated with
 // the shared zod contracts.
 
+import Constants from 'expo-constants';
 import type { z, ZodTypeAny } from 'zod';
 
 import { adminToken } from '../admin.js';
@@ -55,6 +56,9 @@ async function validToken(): Promise<string | null> {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+/** This build's version: the API answers `update_required` when it is too old (audit M-69). */
+const APP_VERSION = Constants.expoConfig?.version ?? null;
+
 type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
 
 /** One authorised call; a 401 refreshes the session once and tries again. */
@@ -67,6 +71,7 @@ async function authorised(
 ): Promise<Response> {
   const send = async (token: string | null): Promise<Response> => {
     const headers: Record<string, string> = { accept, 'x-timezone': deviceTimeZone() };
+    if (APP_VERSION) headers['x-app-version'] = APP_VERSION;
     if (body !== undefined) headers['content-type'] = 'application/json';
     if (token) headers.authorization = `Bearer ${token}`;
     const admin = adminToken();

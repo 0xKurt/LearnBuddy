@@ -56,7 +56,8 @@ export type SendResult = 'sent' | 'refused' | 'no_connection' | 'try_later';
 export function failureOf(code: string, status: number): SendResult {
   if (code === 'network' || status === 0) return 'no_connection';
   if (code === 'invalid_response') return 'try_later';
-  const forGood = status >= 400 && status < 500 && ![401, 408, 429].includes(status);
+  // 426: this build is too old — after the update the answer can still be sent.
+  const forGood = status >= 400 && status < 500 && ![401, 408, 426, 429].includes(status);
   return forGood ? 'refused' : 'try_later';
 }
 

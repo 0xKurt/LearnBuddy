@@ -14,6 +14,7 @@ import {
   MaterialView,
   MemoryList,
   MessageView,
+  tolerantArray,
   MeResponse,
   ReplyStreamEvent,
   SendMessageResponse,
@@ -83,7 +84,7 @@ export const getHome = () => request('GET', '/buddy', { schema: BuddyHome });
 
 export const getThread = (before: string) =>
   request('GET', `/buddy/thread?before=${encodeURIComponent(before)}`, {
-    schema: z.object({ messages: z.array(MessageView), has_more: z.boolean() }),
+    schema: z.object({ messages: tolerantArray(MessageView), has_more: z.boolean() }),
   });
 
 /** Idempotent: pass the same clientMessageId when retrying. */
