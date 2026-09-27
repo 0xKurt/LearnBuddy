@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../components/lb/ErrorBoundary.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { OfflineFrame } from '../components/lb/OfflineFrame.js';
+import { SplashHandoff } from '../components/lb/SplashHandoff.js';
 import { toast, ToastHost } from '../components/lb/Toast.js';
 import { clearAdminToken, installAdminAutoClear } from '../lib/admin.js';
 import { ApiError } from '../lib/api/client.js';
@@ -177,6 +178,7 @@ export default function RootLayout() {
               )}
             </OfflineFrame>
             <ToastHost />
+            <SplashHandoff ready={ready} />
           </ErrorBoundary>
         </QueryClientProvider>
       </SafeAreaProvider>
