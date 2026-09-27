@@ -337,6 +337,171 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(fsrs).toHaveLength(0);
   });
 
+  it('grades numbers and math by the key in a test: a right answer is never missed, a wrong one never praised', async () => {
+    // docs/architecture.md §Practice (grading); audit C-1–C-6, H-1.
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Zahlen – Probetest',
+        subject: { name: 'Mathe', kind: 'math' },
+        intro: null,
+        items: [
+          item({
+            kind: 'numeric',
+            prompt: '1/8 als Dezimalzahl?',
+            answer: '0.125',
+            topic: 'Dezimalzahlen',
+          }),
+          item({ kind: 'numeric', prompt: '4 h in Minuten?', answer: '240', topic: 'Umrechnen' }),
+          item({
+            kind: 'numeric',
+            prompt: '1/4 in Prozent?',
+            answer: '25',
+            unit: '%',
+            topic: 'Prozent',
+          }),
+          item({ prompt: 'Kürze 6/8', answer: '$\\frac{3}{4}$', topic: 'Kürzen' }),
+          item({
+            kind: 'numeric',
+            prompt: '7/2 als gemischte Zahl?',
+            answer: '3.5',
+            topic: 'Gemischte Zahlen',
+          }),
+          item({
+            kind: 'numeric',
+            prompt: 'Berechne 17 · 23',
+            answer: '391',
+            topic: 'Multiplizieren',
+          }),
+        ],
+      },
+    });
+    const s = (
+      await l.api.post<SessionView>('/practice/topic', {
+        client_request_id: randomUUID(),
+        kind: 'test',
+        text: 'Zahlen',
+      })
+    ).body;
+    const [dec, minutes, percent, reduce, mixed, product] = s.items.map((i) => i.item.id) as [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
+
+    // Decided by the rules, no model: 0,125 is 0.125 (C-1), 242 is not 240 (C-2), 25 % is 25 %
+    // (C-4), 3,4 is not 3/4 (C-6).
+    expect((await answer(l, s, dec, '0,125')).body.verdict).toBe('correct');
+    expect((await answer(l, s, minutes, '242')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, percent, '25 %')).body.verdict).toBe('correct');
+    expect((await answer(l, s, reduce, '3,4')).body.verdict).toBe('incorrect');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+
+    // The same value in another form (C-3, D-3) and the task typed again (H-1): the tutor judges.
+    env.llm.script('tutor', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain('RULE CHECK: not decidable by rules');
+      return tutor('ok', { verdict: 'correct', gave_hint: false }).json;
+    });
+    expect((await answer(l, s, mixed, '3 1/2')).body.verdict).toBe('correct');
+    env.llm.script('tutor', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain('RULE CHECK: not decidable by rules');
+      return tutor('ok', { verdict: 'incorrect', gave_hint: false }).json;
+    });
+    expect((await answer(l, s, product, '17·23')).body.verdict).toBe('incorrect');
+    expect(env.llm.callsFor('tutor')).toHaveLength(2);
+
+    const stored = await env.db.query<{
+      item_id: string;
+      status: string;
+      first_try_correct: boolean;
+    }>(`select item_id, status, first_try_correct from session_items where session_id = $1`, [
+      s.id,
+    ]);
+    const statusOf = (id: string) => stored.find((r) => r.item_id === id);
+    expect(statusOf(dec)).toMatchObject({ status: 'correct', first_try_correct: true });
+    expect(statusOf(minutes)).toMatchObject({ status: 'missed', first_try_correct: false });
+    expect(statusOf(percent)).toMatchObject({ status: 'correct', first_try_correct: true });
+    expect(statusOf(reduce)).toMatchObject({ status: 'missed', first_try_correct: false });
+    expect(statusOf(mixed)).toMatchObject({ status: 'correct', first_try_correct: true });
+    expect(statusOf(product)).toMatchObject({ status: 'missed', first_try_correct: false });
+    const byRule = await env.db.query<{ text: string; verdict: string; evaluated_by: string }>(
+      `select text, verdict, evaluated_by from practice_turns
+        where session_id = $1 and role = 'learner' order by seq`,
+      [s.id],
+    );
+    expect(byRule.map((r) => [r.text, r.verdict, r.evaluated_by])).toEqual([
+      ['0,125', 'correct', 'rule'],
+      ['242', 'incorrect', 'rule'],
+      ['25 %', 'correct', 'rule'],
+      ['3,4', 'incorrect', 'rule'],
+      ['3 1/2', 'correct', 'model'],
+      ['17·23', 'incorrect', 'model'],
+    ]);
+
+    env.llm.script('buddy_check', {
+      json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
+    });
+    const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`, {});
+    await env.flushBackground();
+    expect(done.body.summary?.secure_topics.sort()).toEqual([
+      'Dezimalzahlen',
+      'Gemischte Zahlen',
+      'Prozent',
+    ]);
+    expect(done.body.summary?.shaky_topics.sort()).toEqual([
+      'Kürzen',
+      'Multiplizieren',
+      'Umrechnen',
+    ]);
+  });
+
+  it('keeps case, ß and punctuation in German: a spelling difference is almost, never right', async () => {
+    // docs/architecture.md §Practice (grading); audit C-7, decision D-2.
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Rechtschreibung',
+        subject: { name: 'Deutsch', kind: 'german' },
+        intro: 'Nach langem Vokal schreibt man ß.',
+        items: [
+          item({ prompt: 'Setze ein: Stra_e', answer: 'Straße', topic: 's-Laute' }),
+          item({
+            prompt: 'Setze das Komma: Ich glaube dass er kommt.',
+            answer: 'Ich glaube, dass er kommt.',
+            topic: 'Kommas',
+          }),
+        ],
+      },
+    });
+    const s = (
+      await l.api.post<SessionView>('/practice/topic', {
+        client_request_id: randomUUID(),
+        kind: 'explain',
+        text: 'ß und Kommas',
+      })
+    ).body;
+    const [street, comma] = s.items.map((i) => i.item.id) as [string, string];
+
+    const ss = await answer(l, s, street, 'Strasse');
+    expect(ss.body.verdict).toBe('partially_correct');
+    expect(ss.body.reply.text).toContain('Groß- und Kleinschreibung, ß und Satzzeichen');
+    expect(ss.body.session.items.find((i) => i.item.id === street)?.status).toBe('open');
+    const noComma = await answer(l, s, comma, 'Ich glaube dass er kommt.');
+    expect(noComma.body.verdict).toBe('partially_correct');
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+
+    const right = await answer(l, s, street, 'Straße');
+    expect(right.body.verdict).toBe('correct');
+    const state = await env.db.one<{ last_outcome: string }>(
+      `select last_outcome from item_states where item_id = $1`,
+      [street],
+    );
+    expect(state.last_outcome).toBe('with_help');
+  });
+
   it('shows no "done" result for a session left without answering anything', async () => {
     env.llm.script('explain', {
       json: {

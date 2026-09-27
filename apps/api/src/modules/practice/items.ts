@@ -7,13 +7,19 @@
 // questions (both directions), each with its own FSRS state.
 
 import { Figure } from '@learnbuddy/shared-types/contracts';
-import { compileExpression } from '@learnbuddy/shared-math';
+import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
 import { mentionsSolution } from './tutor.js';
 
 export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs.`;
+
+/** How a number key is written (docs/architecture.md §Practice, grading; audit C-1). */
+export const NUMERIC_KEY_RULES = `numeric: answer = the number with a decimal point and no thousands separators (0.125, 1250 — never 0,125 or 1.250); a fraction (3/4) or mixed number (3 1/2) only when the task asks for that form; the unit separately in "unit" ("%" for percent). tolerance only when the task says to round, estimate or measure — otherwise null (exact).`;
+
+/** When case, ß and punctuation decide (decision D-2). */
+export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
 export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.`;
 
@@ -55,6 +61,22 @@ export const ItemDraft = z.object({
     .default(null)
     .describe('vocab: language of the answer; speak: language to say it in; else null'),
   figure: Figure.nullable().default(null),
+  tolerance: z
+    .number()
+    .positive()
+    .max(1_000_000)
+    .nullable()
+    .default(null)
+    .describe(
+      'numeric only: the ± difference still counted right when the task asks to round, estimate or measure (e.g. 0.05 for "miss auf den Millimeter genau" in cm); null for an exact result',
+    ),
+  spelling: z
+    .enum(['strict', 'gentle'])
+    .nullable()
+    .default(null)
+    .describe(
+      'short/long/vocab: "strict" when the task practises spelling, capitalisation or punctuation (Rechtschreibung, Kommasetzung, Groß-/Kleinschreibung); "gentle" when they do not matter for the answer; null to leave it to the subject',
+    ),
   source_excerpt: z.string().trim().max(300).nullable(),
   hints: z
     .array(z.string().trim().min(1).max(300))
@@ -122,6 +144,18 @@ function dollarMath(text: string): string {
   return `$${text}$`;
 }
 
+/**
+ * An explicit tolerance only for a number key, and never wider than a tenth of the key
+ * (decision D-1: a wider tolerance only where the item declares one, and within bounds —
+ * a model-written tolerance must not turn 242 for 240 into a right answer).
+ */
+function usableTolerance(it: ItemDraft): number | null {
+  if (it.kind !== 'numeric' || it.tolerance === null) return null;
+  const key = parseCanonicalKey(it.answer);
+  if (key.value === null || key.value === 0) return null;
+  return it.tolerance <= Math.abs(key.value) / 10 ? it.tolerance : null;
+}
+
 /** Keep only items whose shape is consistent; returns them normalised. */
 export function usableItems(items: ItemDraft[]): ItemDraft[] {
   const out: ItemDraft[] = [];
@@ -133,6 +167,9 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
       accepted_answers: raw.accepted_answers.map(dollarMath),
       choices: raw.choices ? raw.choices.map(dollarMath) : null,
       figure: usableFigure(raw.figure),
+      tolerance: usableTolerance(raw),
+      spelling:
+        raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
     };
     if (it.kind === 'multiple_choice') {
       if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
@@ -175,8 +212,8 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) returning id`,
+                          hints, worked_solution, tolerance, spelling)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -197,6 +234,8 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
         it.figure ? JSON.stringify(it.figure) : null,
         it.hints,
         it.worked_solution,
+        it.tolerance,
+        it.spelling,
       ],
     );
     ids.push(row.id);
