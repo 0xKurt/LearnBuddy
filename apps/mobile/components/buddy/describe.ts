@@ -104,12 +104,10 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
             from: a.preferred_start,
             to: a.preferred_end,
             quiet: a.quiet_start,
-            count: a.max_per_week,
           })
         : t('action.set_contact', {
             from: a.preferred_start,
             to: a.preferred_end,
-            count: a.max_per_week,
           });
       // Days she asked to be left alone are part of what was agreed (p2-set-contact-card-omits-avoided-weekdays).
       return a.avoid_weekdays.length > 0

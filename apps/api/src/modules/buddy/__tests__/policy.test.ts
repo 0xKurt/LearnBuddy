@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { localParts } from '../../../lib/time.js';
 import {
   decideContact,
+  IN_APP_REASONS,
   type ContactSettings,
   type OutreachProposal,
   type PastContact,
@@ -16,8 +17,6 @@ const base: ContactSettings = {
   preferred_start: '15:00',
   preferred_end: '18:30',
   avoid_weekdays: [],
-  max_per_day: 1,
-  max_per_week: 4,
   paused_until: null,
 };
 
@@ -42,14 +41,22 @@ function local(d: Date, tz = 'Europe/Berlin'): string {
 }
 
 describe('decideContact — Buddy initiatives', () => {
-  it('stays silent when contact is not enabled (opt-in)', () => {
-    expect(decideContact({ ...base, contact_enabled: false }, idea(), [], WED_10)).toEqual({
-      kind: 'suppress',
-      reason: 'contact_disabled',
-    });
+  it('sends nothing to the phone when contact is not enabled (opt-in) — it waits in the app', () => {
+    const d = decideContact({ ...base, contact_enabled: false }, idea(), [], WED_10);
+    expect(d).toEqual({ kind: 'suppress', reason: 'contact_disabled' });
+    expect(d.kind === 'suppress' && IN_APP_REASONS.includes(d.reason)).toBe(true);
   });
 
-  it('stays silent while paused', () => {
+  it('does not repeat a topic in the app either, with contact off', () => {
+    const history: PastContact[] = [
+      { at: new Date('2026-09-22T13:00:00Z'), topicKey: 'exam:math:prep' },
+    ];
+    const d = decideContact({ ...base, contact_enabled: false }, idea(), history, WED_10);
+    expect(d).toEqual({ kind: 'suppress', reason: 'duplicate_topic' });
+    expect(IN_APP_REASONS).not.toContain('duplicate_topic');
+  });
+
+  it('sends nothing to the phone while paused', () => {
     const paused = { ...base, paused_until: new Date(WED_10.getTime() + hours(24)) };
     expect(decideContact(paused, idea(), [], WED_10)).toEqual({
       kind: 'suppress',
@@ -104,31 +111,22 @@ describe('decideContact — Buddy initiatives', () => {
     expect(d.kind === 'schedule' && local(d.sendAt)).toBe('2026-09-24 07:00');
   });
 
-  it('respects the daily cap across all contact kinds', () => {
+  it('writes several times a day: no daily limit (ADR 0006)', () => {
     const history: PastContact[] = [
-      {
-        at: new Date('2026-09-23T06:30:00Z'),
-        topicKey: 'reminder:x',
-        origin: 'agreed',
-        answered: true,
-      },
+      { at: new Date('2026-09-23T06:30:00Z'), topicKey: 'reminder:x' },
+      { at: new Date('2026-09-23T07:00:00Z'), topicKey: 'exam:german:prep' },
+      { at: new Date('2026-09-23T07:30:00Z'), topicKey: 'material:1' },
     ];
     const d = decideContact(base, idea(), history, WED_10);
-    expect(d.kind === 'schedule' && local(d.sendAt)).toBe('2026-09-24 15:00');
+    expect(d.kind === 'schedule' && local(d.sendAt)).toBe('2026-09-23 15:00');
   });
 
-  it('respects the weekly cap and reports caps when nothing fits before expiry', () => {
-    const history: PastContact[] = ['2026-09-21', '2026-09-22'].map((day, i) => ({
-      at: new Date(`${day}T13:00:00Z`),
-      topicKey: `t${i}`,
-      origin: 'buddy' as const,
-      answered: true,
-    }));
-    const tight = { ...base, max_per_week: 2 };
-    expect(decideContact(tight, idea(), history, WED_10)).toEqual({
-      kind: 'suppress',
-      reason: 'caps',
-    });
+  it('has no weekly limit either', () => {
+    const history: PastContact[] = ['2026-09-21', '2026-09-22', '2026-09-23'].flatMap((day, i) =>
+      [0, 1, 2].map((j) => ({ at: new Date(`${day}T0${6 + j}:00:00Z`), topicKey: `t${i}-${j}` })),
+    );
+    const d = decideContact(base, idea(), history, WED_10);
+    expect(d.kind === 'schedule' && local(d.sendAt)).toBe('2026-09-23 15:00');
   });
 
   it('skips avoided weekdays ("donnerstags hab ich Fußball")', () => {
@@ -144,36 +142,28 @@ describe('decideContact — Buddy initiatives', () => {
 
   it('does not repeat a topic within 72 hours', () => {
     const history: PastContact[] = [
-      {
-        at: new Date('2026-09-21T13:00:00Z'),
-        topicKey: 'exam:math:prep',
-        origin: 'buddy',
-        answered: true,
-      },
+      { at: new Date('2026-09-21T13:00:00Z'), topicKey: 'exam:math:prep' },
     ];
     expect(decideContact(base, idea(), history, WED_10)).toEqual({
       kind: 'suppress',
       reason: 'duplicate_topic',
     });
+    // After 72 hours the topic may come up again.
+    const later = new Date('2026-09-24T14:00:00Z');
+    expect(
+      decideContact(
+        base,
+        idea({ earliest: later, expiresAt: new Date(later.getTime() + hours(24)) }),
+        history,
+        later,
+      ).kind,
+    ).toBe('schedule');
   });
 
-  it('does not follow up while the last initiative is unanswered', () => {
-    const history: PastContact[] = [
-      { at: new Date('2026-09-22T13:00:00Z'), topicKey: 'other', origin: 'buddy', answered: false },
-    ];
-    expect(decideContact(base, idea(), history, WED_10)).toEqual({
-      kind: 'suppress',
-      reason: 'previous_unanswered',
-    });
-    history[0]!.answered = true;
-    expect(decideContact(base, idea(), history, WED_10).kind).toBe('schedule');
-  });
-
-  it('treats a zero cap as "no initiatives"', () => {
-    expect(decideContact({ ...base, max_per_week: 0 }, idea(), [], WED_10)).toEqual({
-      kind: 'suppress',
-      reason: 'caps',
-    });
+  it('writes about a new topic even when the last message is still unanswered', () => {
+    const history: PastContact[] = [{ at: new Date('2026-09-23T07:00:00Z'), topicKey: 'other' }];
+    const d = decideContact(base, idea(), history, WED_10);
+    expect(d.kind === 'schedule' && local(d.sendAt)).toBe('2026-09-23 15:00');
   });
 
   it('evaluates windows in the learner time zone', () => {
@@ -212,11 +202,9 @@ describe('decideContact — agreed reminders', () => {
     expiresAt: new Date(at.getTime() + hours(hoursValid)),
   });
 
-  it('is sent at the agreed time even when caps are used up', () => {
+  it('is sent at the agreed time, whatever else Buddy said that day', () => {
     const at17 = new Date('2026-09-23T15:00:00Z');
-    const full: PastContact[] = [
-      { at: new Date('2026-09-23T13:00:00Z'), topicKey: 'x', origin: 'buddy', answered: false },
-    ];
+    const full: PastContact[] = [{ at: new Date('2026-09-23T13:00:00Z'), topicKey: 'step:1' }];
     const d = decideContact(base, agreed(at17), full, WED_10);
     expect(d.kind === 'schedule' && local(d.sendAt)).toBe('2026-09-23 17:00');
   });

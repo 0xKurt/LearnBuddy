@@ -14,7 +14,9 @@
 //   - A reminder the learner agreed to always reaches the thread — also when contact is
 //     off or paused, quiet hours moved over it, or the scheduler ran late ("late" copy).
 //   - Buddy's answer to her own action (origin 'learner') always reaches the thread.
-//   - In-app messages count toward the caps, the topic dedupe and the unanswered gate (D-12).
+//   - Messages in the app are never limited or counted (ADR 0006). Whatever cannot go to the
+//     phone (contact off, paused, no allowed time) waits in the app; only a low relevance or a
+//     topic Buddy already raised drops Buddy's own message.
 //   - The lock screen shows a fixed text per kind, never a title, a count or a score (S-6);
 //     the words about her are only in the app.
 //   - Words that depend on the day ("Morgen ist …") are rendered when they are delivered.
@@ -32,7 +34,7 @@ import {
   type PushMessage,
   type PushTicket,
 } from '../../push/transport.js';
-import { decideContact, type PastContact } from './policy.js';
+import { decideContact, IN_APP_REASONS, type PastContact } from './policy.js';
 import type { SettingsRow } from './state.js';
 
 export type OutreachOrigin = 'agreed' | 'buddy' | 'learner';
@@ -66,12 +68,6 @@ export type OutreachPlanInput = {
   expiresAt: Date;
   goalId: string | null;
   stepId: string | null;
-  /**
-   * When contact outside the app is off, paused or has no time left for it, the message
-   * still waits in the app (Buddy's own promises). Always so for origins 'agreed' and
-   * 'learner'.
-   */
-  inAppWhenOff?: boolean;
   template?: BodyTemplate | null;
 };
 
@@ -83,50 +79,25 @@ export type OutreachPlan = {
 };
 
 /**
- * Statuses that count as "Buddy contacted the learner" for caps, dedupe and the unanswered
- * gate — in the app too (D-12): "höchstens 2× pro Woche" means every message Buddy starts.
+ * Statuses of a message Buddy said (or will say), in the app too: the same topic is not
+ * raised again within 72 hours (policy.ts). Nothing is counted against a limit.
  */
-const COUNTED = [
-  'scheduled',
-  'sending',
-  'accepted',
-  'provider_accepted',
-  'send_uncertain',
-  'in_app',
-];
+const SAID = ['scheduled', 'sending', 'accepted', 'provider_accepted', 'send_uncertain', 'in_app'];
 
 /** A late agreed reminder says so when it is more than this late. */
 const LATE_MS = 15 * 60_000;
 
 export async function contactHistory(db: Db, learnerId: string, now: Date): Promise<PastContact[]> {
-  const rows = await db.query<{
-    id: string;
-    topic_key: string;
-    origin: 'agreed' | 'buddy';
-    at: Date;
-    answered: boolean;
-  }>(
-    `select id, topic_key, origin, coalesce(sent_at, send_at, created_at) as at,
-            (opened_at is not null or responded_at is not null
-             -- Doing what it was about answers it too, without tapping the push
-             -- (previous-unanswered-needs-push-tap).
-             or exists (select 1 from buddy_steps st
-                         where st.id = buddy_outreach.step_id
-                           and st.state in ('in_progress','done'))) as answered
+  const rows = await db.query<{ id: string; topic_key: string; at: Date }>(
+    `select id, topic_key, coalesce(sent_at, send_at, created_at) as at
        from buddy_outreach
       where learner_id = $1 and status = any($2::text[])
         -- Her own action's result is not an initiative (policy.ts).
         and origin <> 'learner'
         and coalesce(sent_at, send_at, created_at) > $3::timestamptz - interval '8 days'`,
-    [learnerId, COUNTED, now],
+    [learnerId, SAID, now],
   );
-  return rows.map((r) => ({
-    id: r.id,
-    at: r.at,
-    topicKey: r.topic_key,
-    origin: r.origin,
-    answered: r.answered,
-  }));
+  return rows.map((r) => ({ id: r.id, at: r.at, topicKey: r.topic_key }));
 }
 
 export async function planOutreach(db: Db, input: OutreachPlanInput): Promise<OutreachPlan> {
@@ -143,13 +114,8 @@ export async function planOutreach(db: Db, input: OutreachPlanInput): Promise<Ou
     history,
     input.now,
   );
-  const inApp =
-    decision.kind === 'suppress' &&
-    (input.origin !== 'buddy' ||
-      (input.inAppWhenOff === true &&
-        (decision.reason === 'contact_disabled' ||
-          decision.reason === 'paused' ||
-          decision.reason === 'no_slot')));
+  // Not to the phone is not "not at all": it waits in the app (ADR 0006).
+  const inApp = decision.kind === 'suppress' && IN_APP_REASONS.includes(decision.reason);
   const status = decision.kind === 'schedule' ? 'scheduled' : inApp ? 'in_app' : 'suppressed';
   const row = await db.maybeOne<{ id: string }>(
     `insert into buddy_outreach (learner_id, kind, origin, decision_id, goal_id, step_id, topic_key, dedupe_key,
@@ -416,8 +382,8 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
       [o.learner_id],
     );
     // The whole policy again, as it is now: tightened rules (avoided days, a new window,
-    // lower caps, a pause, the unanswered gate) also hold for what was already queued
-    // (audit M-59). This row itself is not part of its history.
+    // a pause, contact off) also hold for what was already queued (audit M-59) — then it
+    // waits in the app instead. This row itself is not part of its history.
     const history = (await contactHistory(deps.db, o.learner_id, now)).filter((h) => h.id !== o.id);
     const again = decideContact(
       settings,
@@ -432,11 +398,11 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
       now,
     );
     if (again.kind === 'suppress') {
-      if (o.origin === 'buddy') {
-        if (await settle(deps.db, o, 'suppressed', { reason: again.reason })) stats.suppressed++;
-      } else if (await settleInApp(deps, o, 'in_app', { reason: again.reason }, now)) {
-        // Agreed, or her own action's result: it waits in the app (D-13).
-        stats.inApp++;
+      if (IN_APP_REASONS.includes(again.reason)) {
+        // Not to the phone now: it waits in the app (D-13, ADR 0006).
+        if (await settleInApp(deps, o, 'in_app', { reason: again.reason }, now)) stats.inApp++;
+      } else if (await settle(deps.db, o, 'suppressed', { reason: again.reason })) {
+        stats.suppressed++;
       }
       continue;
     }

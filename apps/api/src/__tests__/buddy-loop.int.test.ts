@@ -211,7 +211,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     expect(home.decision).toEqual({
       type: 'contact_opt_in',
       can_enable_here: false,
-      rules: { max_per_day: 1, quiet_start: '20:00' },
+      rules: { quiet_start: '20:00' },
     });
     expect(home.next).toEqual([
       expect.objectContaining({ kind: 'exam', id: goalId, date: '2026-10-02' }),
@@ -269,7 +269,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       expect(text).toContain(
         'new material is ready: "Brüche kürzen und vergleichen" with 4 questions',
       );
-      expect(text).toContain('OFF: Buddy may not message the learner outside the app');
+      expect(text).toContain('OFF: nothing goes to the phone');
       return {
         disposition: 'act',
         reason: 'Material ready, test in 4 days: prepare a first practice.',
@@ -667,7 +667,6 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
               quiet_start: null,
               avoid_weekdays: null,
               pause: { kind: 'end_of_week', weeks_ahead: 0 },
-              fewer: false,
               quote: 'diese Woche keine Nachrichten mehr',
             },
           },
@@ -714,7 +713,8 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       `select status, status_reason from buddy_outreach where learner_id = $1 and topic_key = $2`,
       [lina.learnerId, `exam:${goalId}:followup`],
     );
-    expect(followup).toEqual({ status: 'suppressed', status_reason: 'paused' });
+    // Paused means nothing to the phone; the question waits in the app (ADR 0006).
+    expect(followup).toEqual({ status: 'in_app', status_reason: 'paused' });
     expect(env.push.sent).toHaveLength(1);
 
     // In the app, the one open decision is "how did it go?" — answered with a tap, no model involved.

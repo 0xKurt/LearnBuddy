@@ -43,7 +43,6 @@ const WINDOWS = [
   { key: 'middle', start: '15:00', end: '18:30' },
   { key: 'late', start: '16:00', end: '19:30' },
 ] as const;
-const PER_WEEK = ['1', '2', '3', '4'] as const;
 
 /** Local midnight `days` days after today on this device, as an instant (an exclusive end). */
 function midnightIn(days: number, now: Date = new Date()): string {
@@ -229,7 +228,6 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
                 : t('contact.summary', {
                     start: settings.preferred_start,
                     end: settings.preferred_end,
-                    count: settings.max_per_week,
                     quiet: settings.quiet_start,
                   })}{' '}
               {t('contact.tell_buddy')}
@@ -364,25 +362,6 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
                   if (w && w.key !== preferred?.key) {
                     void save({ preferred_start: w.start, preferred_end: w.end });
                   }
-                }}
-              />
-            </Row>
-
-            <Divider />
-            <Row
-              question={t('contact.per_week_question')}
-              answer={t('contact.per_week_answer', { count: settings.max_per_week })}
-              hint={t('contact.per_week_hint')}
-              locked={saving}
-            >
-              <Segmented
-                options={PER_WEEK.map((n) => ({
-                  value: n,
-                  label: t('contact.per_week_option', { count: Number(n) }),
-                }))}
-                value={pick(PER_WEEK, String(settings.max_per_week))}
-                onChange={(n) => {
-                  if (Number(n) !== settings.max_per_week) void save({ max_per_week: Number(n) });
                 }}
               />
             </Row>

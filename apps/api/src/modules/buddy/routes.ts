@@ -198,8 +198,8 @@ buddyRoutes.post('/actions/:id/undo', async (c) => {
     if (now.getTime() - action.created_at.getTime() > 7 * 86_400_000) {
       throw new AppError('conflict', 'Too old to undo');
     }
-    // Undoing "fewer messages" or a pause means more contact again: for a minor that needs
-    // the adult's PIN, exactly like the same change in the settings (CLAUDE.md rule 6).
+    // Undoing a pause or earlier quiet hours means more contact again: under 16 that needs
+    // the adult's PIN, exactly like the same change in the settings (CLAUDE.md rule 6, ADR 0006).
     if (await undoLoosensContact(tx, learnerId, action.undo, now)) assertAccountHolder(c);
     if (!(await runUndo(tx, learnerId, action.undo, now))) {
       throw new AppError('conflict', 'This changed since — undo it by hand', {
@@ -375,8 +375,6 @@ function settingsView(s: SettingsRow, canLoosen: boolean): BuddySettingsView {
     preferred_start: s.preferred_start,
     preferred_end: s.preferred_end,
     avoid_weekdays: s.avoid_weekdays,
-    max_per_day: s.max_per_day,
-    max_per_week: s.max_per_week,
     paused_until: s.paused_until ? s.paused_until.toISOString() : null,
     timezone: s.timezone,
     version: s.version,
@@ -411,8 +409,6 @@ buddyRoutes.patch('/settings', async (c) => {
       avoid_weekdays: input.avoid_weekdays
         ? [...new Set(input.avoid_weekdays)].sort()
         : before.avoid_weekdays,
-      max_per_day: input.max_per_day ?? before.max_per_day,
-      max_per_week: input.max_per_week ?? before.max_per_week,
       paused_until:
         input.paused_until === undefined
           ? before.paused_until
@@ -427,9 +423,9 @@ buddyRoutes.patch('/settings', async (c) => {
     const row = await tx.one<SettingsRow>(
       `update buddy_settings
           set contact_enabled = $2, quiet_start = $3, quiet_end = $4, preferred_start = $5, preferred_end = $6,
-              avoid_weekdays = $7, max_per_day = $8, max_per_week = $9, paused_until = $10,
-              contact_changed_by = case when contact_enabled <> $2 then $11::text else contact_changed_by end,
-              contact_changed_at = case when contact_enabled <> $2 then $12::timestamptz else contact_changed_at end,
+              avoid_weekdays = $7, paused_until = $8,
+              contact_changed_by = case when contact_enabled <> $2 then $9::text else contact_changed_by end,
+              contact_changed_at = case when contact_enabled <> $2 then $10::timestamptz else contact_changed_at end,
               version = version + 1, context_version = context_version + 1
         where learner_id = $1 returning *`,
       [
@@ -440,8 +436,6 @@ buddyRoutes.patch('/settings', async (c) => {
         after.preferred_start,
         after.preferred_end,
         after.avoid_weekdays,
-        after.max_per_day,
-        after.max_per_week,
         after.paused_until,
         by,
         now,

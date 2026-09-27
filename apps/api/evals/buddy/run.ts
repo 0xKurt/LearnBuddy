@@ -88,7 +88,7 @@ async function main(): Promise<void> {
           [l.learnerId],
         ),
         settings: await env.db.one(
-          `select contact_enabled, max_per_week, paused_until from buddy_settings where learner_id = $1`,
+          `select contact_enabled, paused_until from buddy_settings where learner_id = $1`,
           [l.learnerId],
         ),
         level: await env.db.one(`select level, grade from learners where id = $1`, [l.learnerId]),

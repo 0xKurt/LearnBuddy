@@ -52,8 +52,8 @@ export const CreateLearnerRequest = z.object({
   birth_date: LocalDate,
   locale: AppLocale,
   /**
-   * Required (true) for every child profile: the account holder's consent
-   * (DSGVO Art. 8 under 16; for 16/17 it is recorded too, D-8).
+   * Required (true) for a child profile under 16: the parents' consent
+   * (DSGVO Art. 8, German age 16, ADR 0006). From 16 she consents herself.
    */
   minor_consent: z.boolean(),
   /**

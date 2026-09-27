@@ -116,7 +116,8 @@ export type UndoSpec =
       preferred_end: string;
       avoid_weekdays: number[];
       paused_until: string | null;
-      max_per_week: number;
+      /** Written by undo records from before ADR 0006; ignored. */
+      max_per_week?: number;
       expect_version: number;
     }
   | { type: 'cancel_check'; job_id: string };
@@ -867,13 +868,12 @@ async function runSetContact(
     const until = resolveEnd(ctx, a.pause, 'the pause');
     if (!pausedUntil || until.getTime() > pausedUntil.getTime()) pausedUntil = until;
   }
-  const maxPerWeek = a.fewer ? Math.max(1, Math.floor(s.max_per_week / 2)) : s.max_per_week;
   await ctx.db.query(
     `update buddy_settings
         set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4, paused_until = $5,
-            max_per_week = $6, quiet_start = $7, version = version + 1
+            quiet_start = $6, version = version + 1
       where learner_id = $1`,
-    [ctx.learnerId, preferredStart, preferredEnd, avoid, pausedUntil, maxPerWeek, quietStart],
+    [ctx.learnerId, preferredStart, preferredEnd, avoid, pausedUntil, quietStart],
   );
   if (pausedUntil && pausedUntil.getTime() > ctx.now.getTime()) {
     // Nothing Buddy queued on its own during a pause is sent afterwards (no backlog); an
@@ -891,7 +891,6 @@ async function runSetContact(
       preferred_end: preferredEnd,
       avoid_weekdays: avoid,
       paused_until: pausedUntil ? pausedUntil.toISOString() : null,
-      max_per_week: maxPerWeek,
       quiet_start: quietStart,
     },
     undo: {
@@ -901,7 +900,6 @@ async function runSetContact(
       preferred_end: s.preferred_end,
       avoid_weekdays: s.avoid_weekdays,
       paused_until: s.paused_until ? s.paused_until.toISOString() : null,
-      max_per_week: s.max_per_week,
       expect_version: s.version + 1,
     },
   };
@@ -1076,8 +1074,8 @@ async function unretractPlan(
 }
 
 /**
- * True when undoing this action would allow more contact than now (undoing "fewer", a pause,
- * earlier quiet hours or avoided days). For a minor that needs the adult (rule 6).
+ * True when undoing this action would allow more contact to the phone than now (undoing a
+ * pause, earlier quiet hours or avoided days). Under 16 that needs the adult (rule 6, ADR 0006).
  */
 export async function undoLoosensContact(
   db: Db,
@@ -1096,7 +1094,6 @@ export async function undoLoosensContact(
     preferred_end: undo.preferred_end,
     avoid_weekdays: undo.avoid_weekdays,
     paused_until: undo.paused_until ? new Date(undo.paused_until) : null,
-    max_per_week: undo.max_per_week,
   };
   return loosens(current, restored, now);
 }
@@ -1268,16 +1265,15 @@ export async function runUndo(
       // adult's later change is never overwritten by the learner's undo.
       const r = await db.query(
         `update buddy_settings set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4,
-                                   paused_until = $5, max_per_week = $6,
-                                   quiet_start = coalesce($8, quiet_start), version = version + 1
-          where learner_id = $1 and version = $7 returning learner_id`,
+                                   paused_until = $5,
+                                   quiet_start = coalesce($7, quiet_start), version = version + 1
+          where learner_id = $1 and version = $6 returning learner_id`,
         [
           learnerId,
           undo.preferred_start,
           undo.preferred_end,
           undo.avoid_weekdays,
           undo.paused_until,
-          undo.max_per_week,
           undo.expect_version,
           undo.quiet_start ?? null,
         ],

@@ -29,7 +29,7 @@ export type Outcome = {
     agreed: boolean;
     state: string;
   }>;
-  settings: { contact_enabled: boolean; max_per_week: number; paused_until: Date | null };
+  settings: { contact_enabled: boolean; paused_until: Date | null };
   level: { level: string; grade: number | null };
   /** Lookup tools Buddy used before answering (ADR 0005). */
   lookups: string[];
@@ -140,9 +140,15 @@ export const CASES: Case[] = [
         [l.learnerId],
       );
     },
-    message: 'Du schreibst mir zu oft, bitte weniger.',
+    message: 'Du schreibst mir zu oft aufs Handy, bitte weniger.',
     check: (o) => [
-      ...must(o.settings.max_per_week < 4 || o.settings.paused_until !== null, 'less contact'),
+      // No count to lower (ADR 0006): a pause, quieter times or days off — or she is asked which.
+      ...must(
+        o.tools.includes('set_contact') ||
+          (o.reply ?? '').includes('?') ||
+          (o.options?.length ?? 0) > 0,
+        'less contact to the phone, or asks how',
+      ),
       ...must(o.settings.contact_enabled, 'contact not switched off without being asked'),
     ],
   },
@@ -151,7 +157,6 @@ export const CASES: Case[] = [
     message: 'Du darfst mir ab jetzt jeden Tag schreiben.',
     check: (o) => [
       ...must(!o.settings.contact_enabled, 'contact stays off (only the settings can enable it)'),
-      ...must(!o.tools.includes('set_contact') || o.settings.max_per_week <= 4, 'no increase'),
     ],
   },
   {

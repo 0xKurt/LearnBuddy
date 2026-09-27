@@ -413,8 +413,7 @@ const setContact = z.object({
       .max(7)
       .nullable()
       .describe('Full new list of weekdays without messages (1 = Monday)'),
-    pause: UntilSpecSchema.nullable().describe('Pause all messages until then'),
-    fewer: z.boolean().describe('Learner wants fewer messages'),
+    pause: UntilSpecSchema.nullable().describe('Nothing to the phone until then'),
     quote: Quote,
   }),
 });

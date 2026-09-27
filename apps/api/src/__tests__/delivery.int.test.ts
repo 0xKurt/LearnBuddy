@@ -278,7 +278,7 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     expect(env.llm.calls).toEqual([]);
   });
 
-  it("sends an agreed reminder at the agreed minute even when Buddy already used today's limit", async () => {
+  it('sends an agreed reminder at the agreed minute, also after Buddy wrote on its own that day', async () => {
     await withPhone();
     const goalId = await seedExam(env, l.learnerId, {
       title: 'Mathearbeit',
@@ -292,7 +292,7 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
       at: '2026-09-28T15:30:00Z',
     });
 
-    // 15:00: the exam wake-up (3 days before) — Buddy's own initiative uses the 1/day limit.
+    // 15:00: the exam wake-up (3 days before) — Buddy's own initiative goes out first.
     env.clock.set('2026-09-28T13:00:00Z');
     env.llm.script(
       'buddy_check',
@@ -597,7 +597,10 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     expect(out).toMatchObject({ status: 'cancelled', status_reason: 'paused' });
     home = (await l.api.get<BuddyHome>('/buddy')).body;
     expect(home.next.filter((i) => i.kind === 'message')).toEqual([]);
-    // During the pause the daily routine look is skipped without asking the model.
+    // During the pause Buddy still looks and may speak in the app (ADR 0006) — nothing to the
+    // phone; here it decides to wait.
+    const wait = { json: { disposition: 'wait', reason: 'paused', actions: [], outreach: null } };
+    env.llm.script('buddy_check', wait);
     env.clock.set('2026-09-29T13:00:00Z');
     await tick(env);
     // After the pause nothing from before is sent in bulk.
@@ -605,7 +608,7 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     await tick(env);
     expect(env.push.attempts).toEqual([]);
     expect((await outreachOf(env, l.learnerId)).map((o) => o.status)).toEqual(['cancelled']);
-    expect(env.llm.callsFor('buddy_check')).toHaveLength(1);
+    expect(env.llm.callsFor('buddy_check')).toHaveLength(2);
   });
 
   it('upgrades delivery status only from provider receipts, and handles a rejected receipt', async () => {

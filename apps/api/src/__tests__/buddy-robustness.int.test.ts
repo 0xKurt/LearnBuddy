@@ -470,7 +470,6 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
             quiet_start: null,
             avoid_weekdays: null,
             pause: { kind: 'end_of_week', weeks_ahead: 0 },
-            fewer: false,
             quote: 'bis Sonntag keine Nachrichten',
           },
         },
@@ -515,7 +514,6 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
         quiet_start: quiet,
         avoid_weekdays: null,
         pause: null,
-        fewer: false,
         quote,
       },
     });
@@ -669,7 +667,6 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
             quiet_start: null,
             avoid_weekdays: [],
             pause: null,
-            fewer: false,
             quote: 'auch am Wochenende schreiben',
           },
         },

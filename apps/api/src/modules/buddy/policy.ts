@@ -1,21 +1,23 @@
-// Contact policy: when Buddy may reach out, decided by code, not by the model.
-// docs/architecture.md §Contact control, ADR 0004 §3.
+// Contact policy: when Buddy's message goes to the phone, decided by code, not by the model.
+// docs/architecture.md §Proactivity, §Delivery; ADR 0006.
 //
 // Pure functions over settings + contact history, evaluated in the learner's
-// time zone. Two kinds of contact:
-//   agreed — a reminder the learner explicitly asked for ("erinnere mich
-//            Donnerstag um 17 Uhr"). Sent at the agreed time; quiet hours and
-//            pause still apply; caps do not block it (it was requested) but it
-//            counts toward the caps for Buddy's own initiatives.
-//   buddy  — Buddy's own initiative. Needs relevance ≥ 0.6, lands in the
-//            preferred window, respects caps, avoided weekdays, topic dedupe,
-//            and never follows up while the previous initiative is unanswered.
+// time zone. Messages in the app are never limited or counted (ADR 0006): the
+// policy only decides whether and when a message also goes to the phone, and
+// keeps Buddy from saying the same thing twice. Three kinds of contact:
+//   agreed  — a reminder the learner explicitly asked for ("erinnere mich
+//             Donnerstag um 17 Uhr"). Sent at the agreed time; quiet hours and
+//             pause still apply to the phone.
+//   buddy   — Buddy's own initiative. Needs relevance ≥ 0.6 and a topic not
+//             raised in the last 72 h; to the phone only when contact is on,
+//             not paused, in the preferred window, outside quiet hours and on
+//             a day she did not rule out.
 //   learner — Buddy's answer to something the learner just did (her photos were
-//            read, her practice is finished). Not an initiative: no relevance,
-//            window, caps or unanswered gate; sent now outside quiet hours when
-//            contact is on, otherwise it waits in the app (delivery.ts).
-// Caps count every message Buddy sent on its own, in the app too (D-12).
-// Silence is a normal outcome and is always logged with its reason.
+//             read, her practice is finished). Sent now outside quiet hours when
+//             contact is on.
+// Whatever cannot go to the phone (contact off, paused, no allowed time) waits
+// in the app (delivery.ts). Only a low relevance or a repeated topic drops a
+// message. Silence is always logged with its reason.
 
 import {
   addDays,
@@ -23,7 +25,6 @@ import {
   inWindow,
   localParts,
   minutesOf,
-  startOfLocalWeek,
   timeOfMinutes,
   weekdayOf,
   zonedToInstant,
@@ -37,8 +38,6 @@ export type ContactSettings = {
   preferred_start: string;
   preferred_end: string;
   avoid_weekdays: number[];
-  max_per_day: number;
-  max_per_week: number;
   paused_until: Date | null;
 };
 
@@ -48,9 +47,6 @@ export type PastContact = {
   /** When it was (or is scheduled to be) sent. */
   at: Date;
   topicKey: string;
-  origin: 'agreed' | 'buddy';
-  /** The learner opened or answered it. */
-  answered: boolean;
 };
 
 export type OutreachProposal = {
@@ -68,9 +64,10 @@ export type SuppressReason =
   | 'paused'
   | 'low_relevance'
   | 'duplicate_topic'
-  | 'previous_unanswered'
-  | 'caps'
   | 'no_slot';
+
+/** Not to the phone, but the message waits in the app. The other reasons drop it. */
+export const IN_APP_REASONS: readonly SuppressReason[] = ['contact_disabled', 'paused', 'no_slot'];
 
 export type PolicyDecision =
   | { kind: 'schedule'; sendAt: Date }
@@ -78,7 +75,6 @@ export type PolicyDecision =
 
 export const MIN_RELEVANCE = 0.6;
 export const TOPIC_DEDUPE_HOURS = 72;
-export const UNANSWERED_HOURS = 48;
 const MAX_LOOKAHEAD_DAYS = 14;
 
 /** Allowed minutes of a day: [start, end) ranges within `window`, outside quiet hours. */
@@ -117,6 +113,18 @@ export function decideContact(
   history: PastContact[],
   now: Date,
 ): PolicyDecision {
+  if (proposal.origin === 'buddy') {
+    // What makes Buddy's own message worth saying at all — in the app too.
+    if (proposal.relevance === null || proposal.relevance < MIN_RELEVANCE) {
+      return { kind: 'suppress', reason: 'low_relevance' };
+    }
+    const dedupeFrom = now.getTime() - TOPIC_DEDUPE_HOURS * 3_600_000;
+    if (history.some((h) => h.topicKey === proposal.topicKey && h.at.getTime() >= dedupeFrom)) {
+      return { kind: 'suppress', reason: 'duplicate_topic' };
+    }
+  }
+
+  // From here on only the phone: contact outside the app is opt-in.
   if (!s.contact_enabled) return { kind: 'suppress', reason: 'contact_disabled' };
   if (s.paused_until && s.paused_until.getTime() > now.getTime()) {
     return { kind: 'suppress', reason: 'paused' };
@@ -138,50 +146,27 @@ export function decideContact(
     const minute = minutesOf(p.time);
     if (!inWindow(minute, s.quiet_start, s.quiet_end))
       return { kind: 'schedule', sendAt: earliest };
-    const next = findSlot(s, earliest, proposal.expiresAt, [], false, true);
+    const next = findSlot(s, earliest, proposal.expiresAt, false, false);
     return next ? { kind: 'schedule', sendAt: next } : { kind: 'suppress', reason: 'no_slot' };
   }
 
-  if (proposal.relevance === null || proposal.relevance < MIN_RELEVANCE) {
-    return { kind: 'suppress', reason: 'low_relevance' };
-  }
-  const dedupeFrom = now.getTime() - TOPIC_DEDUPE_HOURS * 3_600_000;
-  if (history.some((h) => h.topicKey === proposal.topicKey && h.at.getTime() >= dedupeFrom)) {
-    return { kind: 'suppress', reason: 'duplicate_topic' };
-  }
-  const lastBuddy = history
-    .filter((h) => h.origin === 'buddy' && h.at.getTime() <= now.getTime())
-    .sort((a, b) => b.at.getTime() - a.at.getTime())[0];
-  if (
-    lastBuddy &&
-    !lastBuddy.answered &&
-    now.getTime() - lastBuddy.at.getTime() < UNANSWERED_HOURS * 3_600_000
-  ) {
-    return { kind: 'suppress', reason: 'previous_unanswered' };
-  }
-  if (s.max_per_day === 0 || s.max_per_week === 0) return { kind: 'suppress', reason: 'caps' };
-
   const slot =
-    findSlot(s, earliest, proposal.expiresAt, history, true, false) ??
-    findSlot(s, earliest, proposal.expiresAt, history, false, false);
-  if (slot) return { kind: 'schedule', sendAt: slot };
-  // Distinguish "full" from "no allowed time at all" for the audit trail.
-  const uncapped = findSlot(s, earliest, proposal.expiresAt, [], false, true);
-  return { kind: 'suppress', reason: uncapped ? 'caps' : 'no_slot' };
+    findSlot(s, earliest, proposal.expiresAt, true, true) ??
+    findSlot(s, earliest, proposal.expiresAt, false, true);
+  return slot ? { kind: 'schedule', sendAt: slot } : { kind: 'suppress', reason: 'no_slot' };
 }
 
 /**
  * First instant ≥ `from` and < `until` that is outside quiet hours (and, for
- * Buddy's initiatives, on a non-avoided weekday, inside the preferred window
- * when `preferWindow`, and under the daily/weekly caps).
+ * Buddy's initiatives, on a day she did not rule out, inside the preferred
+ * window when `preferWindow`).
  */
 function findSlot(
   s: ContactSettings,
   from: Date,
   until: Date,
-  history: PastContact[],
   preferWindow: boolean,
-  ignoreCaps: boolean,
+  initiative: boolean,
 ): Date | null {
   const tz = s.timezone;
   const start = localParts(from, tz);
@@ -194,18 +179,7 @@ function findSlot(
   for (let offset = 0; offset <= MAX_LOOKAHEAD_DAYS; offset++) {
     const date = addDays(start.date, offset);
     if (daysBetween(date, lastDay) < 0) break;
-    if (!ignoreCaps) {
-      if (s.avoid_weekdays.includes(weekdayOf(date))) continue;
-      const weekStart = startOfLocalWeek(zonedToInstant(date, '12:00', tz), tz).getTime();
-      let perDay = 0;
-      let perWeek = 0;
-      for (const h of history) {
-        const hp = localParts(h.at, tz);
-        if (hp.date === date) perDay++;
-        if (startOfLocalWeek(h.at, tz).getTime() === weekStart) perWeek++;
-      }
-      if (perDay >= s.max_per_day || perWeek >= s.max_per_week) continue;
-    }
+    if (initiative && s.avoid_weekdays.includes(weekdayOf(date))) continue;
     const fromMinute =
       offset === 0 ? minutesOf(start.time) + (from.getUTCSeconds() > 0 ? 1 : 0) : 0;
     const minute = earliestMinute(ranges, fromMinute);
@@ -218,11 +192,9 @@ function findSlot(
   return null;
 }
 
-/** True when the change allows more contact than before (needs the account holder for minors). */
+/** True when the change allows more contact to the phone than before (needs the adult under 16). */
 export function loosens(before: ContactSettings, after: ContactSettings, now: Date): boolean {
   if (!before.contact_enabled && after.contact_enabled) return true;
-  if (after.max_per_day > before.max_per_day || after.max_per_week > before.max_per_week)
-    return true;
   if (before.avoid_weekdays.some((d) => !after.avoid_weekdays.includes(d))) return true;
   const pausedBefore =
     before.paused_until && before.paused_until > now ? before.paused_until.getTime() : 0;

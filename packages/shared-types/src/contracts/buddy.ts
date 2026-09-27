@@ -71,7 +71,6 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     preferred_end: LocalTime,
     avoid_weekdays: z.array(z.number().int()),
     paused_until: IsoDateTime.nullable(),
-    max_per_week: z.number().int(),
     /** No messages from then until the morning (absent in older records). */
     quiet_start: LocalTime.optional(),
   }),
@@ -260,10 +259,7 @@ export const Decision = z.discriminatedUnion('type', [
      * What would be allowed, from the stored rules, so the card (and the parents' PIN)
      * says exactly that (user feedback #4). Null from an older API.
      */
-    rules: z
-      .object({ max_per_day: z.number().int(), quiet_start: LocalTime })
-      .nullable()
-      .catch(null),
+    rules: z.object({ quiet_start: LocalTime }).nullable().catch(null),
   }),
   z.object({ type: z.literal('how_did_it_go'), goal: GoalBrief }),
 ]);
@@ -376,8 +372,6 @@ export const BuddySettingsView = z.object({
   preferred_start: LocalTime,
   preferred_end: LocalTime,
   avoid_weekdays: z.array(z.number().int().min(1).max(7)),
-  max_per_day: z.number().int(),
-  max_per_week: z.number().int(),
   paused_until: IsoDateTime.nullable(),
   timezone: z.string(),
   version: z.number().int(),
@@ -393,8 +387,6 @@ export const UpdateBuddySettingsRequest = z.object({
   preferred_start: LocalTime.optional(),
   preferred_end: LocalTime.optional(),
   avoid_weekdays: z.array(z.number().int().min(1).max(7)).max(7).optional(),
-  max_per_day: z.number().int().min(0).max(3).optional(),
-  max_per_week: z.number().int().min(0).max(14).optional(),
   paused_until: IsoDateTime.nullable().optional(),
   version: z.number().int(),
 });

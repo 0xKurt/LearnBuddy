@@ -309,7 +309,6 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
       expiresAt: new Date(trig.job.run_at.getTime() + 6 * 3_600_000),
       goalId: step.goal_id,
       stepId: step.id,
-      inAppWhenOff: true,
       // Rendered when shown: a reminder that arrives late says so (D-13).
       template: { key, params, agreed_at: trig.job.run_at.toISOString() },
     });
@@ -404,14 +403,8 @@ async function decide(
   };
 
   let state = await loadBuddyState(deps.db, learner.id, now);
-  // A routine look exists to reach out; while contact is off or paused it has nothing to do.
-  const contactOff =
-    !settings.contact_enabled || (settings.paused_until !== null && settings.paused_until > now);
-  const skipRoutine = contactOff && triggers.every((t) => t.reason === 'routine');
-  if (
-    skipRoutine ||
-    (state.totals.activeGoals === 0 && state.totals.items === 0 && state.totals.openSteps === 0)
-  ) {
+  // With contact to the phone off, a routine look still speaks in the app (ADR 0006).
+  if (state.totals.activeGoals === 0 && state.totals.items === 0 && state.totals.openSteps === 0) {
     await recordUnapplied(
       deps.db,
       {
@@ -426,7 +419,7 @@ async function decide(
           promptVersion: BUDDY_PROMPT_VERSION,
           output: null,
           triggers: triggers.map((t) => t.reason),
-          reason: skipRoutine ? 'routine check while contact is off' : 'nothing to work with',
+          reason: 'nothing to work with',
           topicKey: null,
         },
       },
@@ -435,7 +428,7 @@ async function decide(
     );
     await finishAll({
       outcome: 'wait',
-      reason: skipRoutine ? 'contact_off' : 'nothing_to_work_with',
+      reason: 'nothing_to_work_with',
     });
     return 'wait';
   }
@@ -721,8 +714,6 @@ async function fallback(
         relevance: number;
         goalId: string | null;
         stepId: string | null;
-        /** Buddy said it would come back: the promise waits in the app when contact is off. */
-        inAppWhenOff?: boolean;
       } | null = null;
       if (trig.reason === 'exam_countdown' && goal?.status === 'active' && goal.due_date) {
         const inDays = daysBetween(today, goal.due_date);
@@ -825,7 +816,6 @@ async function fallback(
           relevance: 0.7,
           goalId: null,
           stepId: null,
-          inAppWhenOff: true,
         };
       }
 
@@ -848,7 +838,6 @@ async function fallback(
           expiresAt: new Date(now.getTime() + 24 * 3_600_000),
           goalId: proposal.goalId,
           stepId: proposal.stepId,
-          inAppWhenOff: proposal.inAppWhenOff ?? false,
           template: proposal.template,
         });
       }
@@ -883,7 +872,6 @@ async function ensureRoutine(deps: Deps, learnerId: string): Promise<void> {
   const s = await deps.db.one<SettingsRow>(`select * from buddy_settings where learner_id = $1`, [
     learnerId,
   ]);
-  if (!s.contact_enabled) return;
   const tz = s.timezone;
   const today = localParts(now, tz).date;
   const soon = await deps.db.maybeOne(

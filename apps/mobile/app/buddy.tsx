@@ -262,11 +262,11 @@ export default function BuddyScreen() {
     }
   }
 
-  /** "Höchstens einmal am Tag, nie nach 20:00 Uhr" from the stored rules. */
+  /** "Nie nach 20:00 Uhr" from the stored rules. */
   function rulesShort(decision: OptInDecision | null): string {
     const r = decision?.rules;
-    if (!r || r.max_per_day < 1) return t('buddy:decision.rules_settings');
-    return t('buddy:decision.rules_short', { count: r.max_per_day, time: r.quiet_start });
+    if (!r) return t('buddy:decision.rules_settings');
+    return t('buddy:decision.rules_short', { time: r.quiet_start });
   }
 
   async function enableContact(asAdult: boolean) {

@@ -60,10 +60,12 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   rejects (a 4xx other than 408/429) is 401; when Supabase Auth cannot answer (network, 5xx, 429) the API answers 503 `unavailable`, so an auth outage never looks like a sign-out.
 - Every learner-scoped route takes the learner from the verified user (`http/context.ts`), never
   from the body, the path or a model output. The device sends its IANA zone in `x-timezone`.
-- Minors: loosening contact rules, account data, sign-in details, a birth-date correction and
-  agreeing to a new privacy text need a short-lived admin token (PIN, `x-admin-token`,
-  5 minutes, HMAC; the app drops it after the one step). A child profile counts as a minor
-  until 18 (D-8). Tightening (pause, quieter) is always allowed.
+- Under 16: loosening contact to the phone, account data, sign-in details, a birth-date
+  correction and agreeing to a new privacy text need a short-lived admin token (PIN,
+  `x-admin-token`, 5 minutes, HMAC; the app drops it after the one step). The gate is the age,
+  not who set the profile up: from 16 (DSGVO Art. 8, German age) she consents and decides
+  herself, also on a profile her parents created (ADR 0006). Tightening (pause, quieter) is
+  always allowed.
 - Consent: every route behind `requireAccount` answers 409 `consent_outdated` while the
   account's `consent_version` is not the current one; `/me`, `POST /account`, the PIN, export
   and deletion (`requireAccountAnyConsent`) keep working, and so does unregistering a phone
@@ -122,8 +124,9 @@ The model never writes ids, dates or instants (`modules/buddy/decision.ts`):
 - **One lock order** — every transaction that bumps the context locks the learner's
   `buddy_settings` row first (`plan.ts lockContext`), then steps, goals, memories or outreach,
   as applying a decision does; a tap during an apply waits instead of deadlocking (repro-01).
-- **Undo never loosens contact for a minor without the adult**: undoing "fewer messages" or a
-  pause needs the PIN like the same change in the settings, and the button is not offered to her.
+- **Undo never loosens contact under 16 without the adult**: undoing a pause, earlier quiet
+  hours or a day off needs the PIN like the same change in the settings, and the button is not
+  offered to her.
 - **All or nothing** — the first rejected action rolls back the whole decision; the reasons go
   back to the model for one repair round, then the turn fails honestly.
 - Every decision — applied, waiting, stale, rejected, failed — is stored in `buddy_decisions`
@@ -259,7 +262,9 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 3. learner is in the app right now → an unasked look (routine, countdown, a scheduled check) waits
    20 minutes; what follows from the learner's own action (photos read, practice finished) runs now —
    right after the reading or the practice, not on the next scheduler run;
-4. nothing to work with, or only a routine look while contact is off → silence, no model call;
+4. nothing to work with → silence, no model call. With contact to the phone off or paused Buddy
+   still looks and speaks in the app (ADR 0006); the daily routine look runs while an exam is
+   within 14 days;
 5. no model configured → fixed fallbacks immediately;
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
 7. apply with the context fence; the contact policy decides whether and when a message is sent;
@@ -277,20 +282,21 @@ is not skipped for good.
 
 `modules/buddy/policy.ts` (pure) and `delivery.ts`.
 
-- Policy: opt-in; pause; quiet hours in the learner's zone; Buddy's own messages need relevance
-  ≥ 0.6, go into the preferred window, at most 1/day and 4/week, no repeat of a topic within
-  72 h (topic keys are stored with real ids), no second message while the last one is unanswered
-  (48 h; writing to Buddy counts as answering what is in the thread, and so does starting or
-  finishing the step a message was about). **All contact counts,
-  in the app too** (D-12): with push off, "schreib mir weniger" means fewer messages in the
-  thread. Agreed reminders go out at the agreed minute (quiet hours and pause apply, limits and
-  avoided weekdays do not). Buddy's answer to her own action (origin `learner`: her photos were
-  read, her practice is finished) is not an initiative: always in the app, pushed now when
-  contact is on and it is not night, never held back by limits.
-- The whole policy runs again at send time (tightened days, window, caps, pause, the unanswered
-  gate); a message about something already done is cancelled. A message is linked to its goal
-  and step (`step: "new"` = the practice prepared in the same decision; a link that does not
-  resolve rejects the decision instead of being dropped), so "practice is ready"
+- **Messages are the core of the app and are not limited** (ADR 0006, product owner
+  2026-09-27): nothing counts Buddy's messages, in the app or to the phone — no daily or weekly
+  cap, no "wait until she answered". Buddy's own message needs relevance ≥ 0.6 and a topic not
+  raised in the last 72 h (topic keys are stored with real ids; in the app too) — that is all
+  that drops one.
+- **The phone is the learner's choice**: contact outside the app is opt-in (the setting and the
+  OS permission); quiet hours at night, a pause, the preferred window and days without messages
+  are her settings and apply to the phone. What cannot go to the phone (contact off, paused, no
+  allowed time before it expires) waits in the app (`in_app`). Agreed reminders go out at the
+  agreed minute (quiet hours and pause apply, avoided weekdays do not). Buddy's answer to her
+  own action (origin `learner`: her photos were read, her practice is finished) is pushed now
+  when contact is on and it is not night.
+- The whole policy runs again at send time (tightened days, window, a pause, contact off): then
+  the message waits in the app instead; a message about something already done is cancelled. A message is linked to its goal
+  and step (`step: "new"` = the practice prepared in the same decision), so "practice is ready"
   is dropped once that practice was done. Pausing or switching off cancels everything Buddy
   planned on its own — nothing is sent in bulk afterwards; agreed reminders stay and wait in the
   app. Planned messages are listed on the home under what comes next. Stopping contact hides
@@ -472,15 +478,17 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 | Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos             |
 | Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s            |
 | Turn stall                      | taken over after 3 minutes                                                                         |
-| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                                |
+| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h          |
 | Memory                          | 60 active items; temporary ≤ 60 days                                                               |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, then 30 min, 1 h … ≤ 24 h; the right PIN resets (423 + `Retry-After`)     |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)    |
 | Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
-| Requests per account            | practice answers (typed + spoken) 600/h, messages to Buddy 120/h (429 + `Retry-After`)             |
+| Requests per account            | abuse protection only: practice answers 600/h, messages to Buddy 120/h (429 + `Retry-After`)       |
 
-Budgets are rows in `attempt_counters` (migration 0014) changed by one atomic upsert with the app
-clock (`lib/limits.ts` `consume`); answers and messages are counted by one middleware in front of
-the routes (`http/limits.ts`). Password-reset e-mails are Supabase Auth's own rate limit.
+Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
+one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
+by one middleware in front of the routes (`http/limits.ts`). A request budget exists only against
+scripts and must never limit normal use — 10 answers or 2 messages a minute for a whole hour;
+the owner's rule is to add no constraint that is not strictly needed (ADR 0006). Password-reset e-mails are Supabase Auth's own rate limit.
 
 Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
 gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
