@@ -267,6 +267,13 @@ async function decideTurn(
         contents,
         call: async (messages, final) => {
           const thisRound = ++round;
+          // Still working: a turn of several model calls must not look stalled and be taken
+          // over while it runs (turn-cost-and-stall-window).
+          await deps.db.query(
+            `update buddy_messages set claimed_at = $3
+              where id = $1 and claim_token = $2 and status = 'processing'`,
+            [message.id, message.claim_token, deps.now()],
+          );
           let last = '';
           const result = await callModel(deps, learner.id, today, {
             purpose: 'buddy_turn',

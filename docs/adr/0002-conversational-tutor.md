@@ -1,6 +1,7 @@
 # ADR 0002 — Conversational tutor: grading, grounding, model tier
 
-- Status: accepted
+- Status: superseded by [ADR 0004](0004-proactive-buddy.md) (fresh start); history only —
+  the tutor today is described in `docs/architecture.md` §Practice.
 - Date: 2026-05-19
 - Diverges from: docs/06-ai-pipeline.md §P3 (single-shot evaluator) and
   §provider-configuration (single pinned model).

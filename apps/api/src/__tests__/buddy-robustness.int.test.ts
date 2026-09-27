@@ -359,6 +359,28 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
     expect(env.llm.calls.length).toBe(before);
   });
 
+  it('a long turn with several model calls is not taken over while it runs (turn-cost-and-stall-window)', async () => {
+    const l = await onboard(env);
+    env.llm.script(
+      'buddy_turn',
+      async () => {
+        env.clock.minutes(2);
+        return { lookups: [{ tool: 'search_material', args: { query: '' } }], ...say('…') };
+      },
+      async () => {
+        env.clock.minutes(2); // 4 minutes into the turn: past the stall limit of 3
+        await tick(env);
+        return say('Ich habe nachgesehen.');
+      },
+    );
+    expect((await send(l, 'Was steht auf meinem Blatt?')).body.status).toBe('done');
+    const recoveries = await env.db.query(
+      `select 1 from jobs where learner_id = $1 and kind = 'buddy_turn'`,
+      [l.learnerId],
+    );
+    expect(recoveries).toEqual([]);
+  });
+
   it('a turn that keeps crashing is taken over three times, then fails (p2-J-stall-recovery-loop-drains-budget)', async () => {
     const l = await onboard(env);
     const msg = await env.db.one<{ id: string }>(

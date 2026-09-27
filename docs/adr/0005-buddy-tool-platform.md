@@ -136,13 +136,16 @@ contact the learner beyond what they allowed.
    account holder's/operator's decision first.
 4. **Event log** — done (`events.ts`, `0007_events.sql`): `material_ready`, `homework_ready`,
    `session_finished`, written in the change's transaction; subscribers wake Buddy; checks mark
-   events handled; part of the data export.
+   events handled (`handled_at` is an audit field — a wake-up job that dies is re-driven by its
+   job's terminal state in `scheduler/terminal.ts`, not by re-reading the log); part of the data
+   export.
 
 ## Consequences
 
 - Buddy can answer "what was on the sheet about the Romans?" or "how did fractions go last
   week?" from real data instead of STATE alone, and it plans with the actual results.
-- A turn with lookups costs up to three model calls. The daily limits count them; the prompt
+- A turn with lookups costs up to three model calls per round (a stale context or a repair starts
+  a new round, at most four: twelve calls in the worst case). The daily limits count them; the prompt
   asks for lookups only when STATE does not answer the question.
 - The model still never writes ids or dates. Lookup results carry aliases where the model may
   act on them.

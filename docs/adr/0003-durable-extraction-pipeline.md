@@ -1,6 +1,7 @@
 # ADR 0003 — Capture → extraction must be durable (not a held-open stream)
 
-- Status: accepted (problem + target design); implementation **in progress**
+- Status: superseded by [ADR 0004](0004-proactive-buddy.md) (fresh start); the durable
+  pipeline it asked for is built — `docs/architecture.md` §Material, §Background work.
 - Date: 2026-05-19
 - Relates to: docs/04-api.md §POST /materials, docs/06-ai-pipeline.md §P1,
   docs/08-cost-and-credits.md §atomic-debit.

@@ -16,14 +16,16 @@ application code enforces permissions, tenant isolation, time rules, version che
    Supabase Storage (photos, signed upload URLs)      ├─ buddy      turns, checks, tools, contact policy, delivery, home
                                                       ├─ materials  photos → questions (model, job)
                                                       ├─ practice   sessions, rule checks, tutor, FSRS
+                                                      ├─ voice      speech to text (recordings → model)
+                                                      ├─ devices    push device binding (install id)
                                                       └─ scheduler  durable jobs + tick
                                                       │
    Postgres (Supabase) ◀── direct connection (pg) ────┘      Vertex AI (Gemini, EU)   Expo push (off by default)
    pg_cron ── every minute ──▶ POST /internal/tick
 ```
 
-Code: `apps/api/src/`. Schema: `infra/supabase/migrations/0001_baseline.sql`,
-`0002_scheduler.sql`. Contracts shared with the app: `packages/shared-types/src/contracts/`.
+Code: `apps/api/src/`. Schema: `infra/supabase/migrations/` (`0001_baseline.sql` and the numbered
+migrations after it). Contracts shared with the app: `packages/shared-types/src/contracts/`.
 
 ## Core loop
 
@@ -141,7 +143,8 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   within the 24-message dialogue the model saw.
 - `reply_to_id` is stored only when it names one of her own messages.
 - Stale context → rebuild and ask again (≤ 4 rounds); invalid output → one repair round.
-- Interrupted turn (process died, function frozen) → after 3 minutes the scheduler (or a client
+- Interrupted turn (process died, function frozen) → after 3 minutes without a model call (each
+  call refreshes the claim, so a long live turn is not mistaken for a dead one) the scheduler (or a client
   retry) takes over with a new claim token; the old runner can no longer publish or fail it.
   After three takeovers that died too, the message fails (`internal`) instead of being run
   (and billed) again every few minutes.
@@ -365,8 +368,10 @@ conversations is used up.
 happened — `material_ready`, `homework_ready`, `session_finished` — is written once per (type,
 row), in the same transaction as the change, with the app clock. Its subscribers decide what
 follows: `material_ready` and `session_finished` wake Buddy for a check (the job carries the
-`event_id`, the check marks the event handled); `homework_ready` is only recorded (help starts in
-the app). Schedules — exam countdowns, agreed reminders, routine, `schedule_check` — stay jobs.
+`event_id`, the check marks the event handled — `handled_at` is an audit field for the export
+and for reading the log; nothing re-reads it to re-drive an event: a wake-up job that dies is
+handled by its job's terminal state, `scheduler/terminal.ts`); `homework_ready` is only recorded
+(help starts in the app). Schedules — exam countdowns, agreed reminders, routine, `schedule_check` — stay jobs.
 An event never bypasses the contact rules.
 
 ## Model calls
@@ -376,8 +381,9 @@ zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU loc
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens, cost, latency and outcome — never with prompt or answer text; a safety block keeps the
-provider's finish reason (`blocked:SAFETY`). A call that produced nothing usable — provider
-down, request refused, safety block — gives its reservation back.
+provider's finish reason (`blocked:SAFETY`). A call that the provider did not run for her — provider
+down, request refused, safety block — gives its reservation back; a timeout or unusable output
+keeps it (the provider may have done and billed the work).
 
 **One error classification at every external seam** (`lib/outcome.ts`, audit S-7): `ok`,
 `refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never
@@ -446,20 +452,20 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                          |
-| ------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                       |
-| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                          |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                      |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                     |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos         |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s        |
-| Turn stall                      | taken over after 3 minutes                                                                     |
-| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                            |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                           |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, then 30 min, 1 h … ≤ 24 h; the right PIN resets (423 + `Retry-After`) |
-| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                      |
-| Requests per account            | practice answers (typed + spoken) 600/h, messages to Buddy 120/h (429 + `Retry-After`)         |
+| What                            | Limit                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                           |
+| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512 |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                          |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                         |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos             |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s            |
+| Turn stall                      | taken over after 3 minutes                                                                         |
+| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                                |
+| Memory                          | 60 active items; temporary ≤ 60 days                                                               |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, then 30 min, 1 h … ≤ 24 h; the right PIN resets (423 + `Retry-After`)     |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
+| Requests per account            | practice answers (typed + spoken) 600/h, messages to Buddy 120/h (429 + `Retry-After`)             |
 
 Budgets are rows in `attempt_counters` (migration 0014) changed by one atomic upsert with the app
 clock (`lib/limits.ts` `consume`); answers and messages are counted by one middleware in front of

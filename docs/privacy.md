@@ -111,8 +111,8 @@ Logs contain route names and error classes only — no request bodies, messages 
   states ML processing and storage stay in EU member states, seen as a snippet of its data-residency
   page, to be confirmed) or `europe-west4`; `global` and non-EU regions are refused at startup
   (`apps/api/src/config.ts`). **Before launch:** confirm the model is GA (Google's preview terms
-  exclude services likely used by under-18s) and switch off abuse-monitoring prompt logging. Prompts contain the learner's messages,
-  memory, goals and material text needed for the answer. **legal review:** confirm the data
+  exclude services likely used by under-18s) and switch off abuse-monitoring prompt logging. Prompts contain the learner's display name and age in
+  years (never the birth date), her messages, memory, goals and material text needed for the answer. **legal review:** confirm the data
   processing terms (no training on customer data) for the configured project.
 - **Speech recognition of the device** (Apple / Google) — also in conversation mode, where the
   mic reopens after each answer only while the conversation screen she opened is open: used first for talking instead of typing,
