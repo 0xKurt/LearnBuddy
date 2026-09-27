@@ -49,6 +49,12 @@ const THIN = ' ';
 /** An empty gap is as wide as a short word, and grows with the text size. */
 const EMPTY_GAP = '\u00A0'.repeat(7);
 const BOLD: TextStyle = { fontWeight: '700' };
+const ITALIC: TextStyle = { fontStyle: 'italic' };
+/** The emphasis of a run: bold, italic, both or none. */
+function emphasis(p: { bold: boolean; italic?: boolean }): TextStyle | null {
+  if (p.bold && p.italic) return { ...BOLD, ...ITALIC };
+  return p.bold ? BOLD : p.italic ? ITALIC : null;
+}
 /** Her answer for a blank inside math (the text's only blank), or null. */
 const FilledBlank = createContext<string | null>(null);
 
@@ -83,8 +89,8 @@ export function MathText({
         accessible={accessible}
       >
         {runs.map((r, i) =>
-          r.type === 'plain' && r.bold ? (
-            <Text key={i} style={BOLD}>
+          r.type === 'plain' && (r.bold || r.italic) ? (
+            <Text key={i} style={emphasis(r)}>
               {r.text}
             </Text>
           ) : r.type === 'plain' ? (
@@ -132,7 +138,7 @@ export function MathText({
               switch (piece.kind) {
                 case 'plain':
                   return (
-                    <Text key={j} style={[style, { lineHeight }, piece.bold ? BOLD : null]}>
+                    <Text key={j} style={[style, { lineHeight }, emphasis(piece)]}>
                       {piece.text}
                     </Text>
                   );
@@ -189,7 +195,7 @@ function Gap({
 // ─────────────── line breaking ───────────────
 
 type Piece =
-  | { kind: 'plain'; text: string; bold: boolean }
+  | { kind: 'plain'; text: string; bold: boolean; italic?: boolean }
   | { kind: 'atom'; atom: MathAtom; bold: boolean }
   | { kind: 'blank'; bold: boolean };
 
@@ -214,9 +220,9 @@ function buildUnits(runs: PromptRun[]): Piece[][] {
       for (const part of run.text.split(/(\s+)/)) {
         if (part.length === 0) continue;
         if (/^\s+$/.test(part)) {
-          appendPlain(cur, ' ', run.bold);
+          appendPlain(cur, ' ', run.bold, run.italic === true);
           close();
-        } else appendPlain(cur, part, run.bold);
+        } else appendPlain(cur, part, run.bold, run.italic === true);
       }
       continue;
     }
@@ -252,11 +258,11 @@ function splitAfterOperators(text: string): string[] {
   return out;
 }
 
-function appendPlain(cur: Piece[], text: string, bold: boolean): void {
+function appendPlain(cur: Piece[], text: string, bold: boolean, italic: boolean): void {
   const last = cur[cur.length - 1];
-  if (last?.kind === 'plain' && last.bold === bold) {
-    cur[cur.length - 1] = { kind: 'plain', text: last.text + text, bold };
-  } else cur.push({ kind: 'plain', text, bold });
+  if (last?.kind === 'plain' && last.bold === bold && (last.italic ?? false) === italic) {
+    cur[cur.length - 1] = { kind: 'plain', text: last.text + text, bold, italic };
+  } else cur.push({ kind: 'plain', text, bold, italic });
 }
 
 // ─────────────── drawing ───────────────

@@ -1,0 +1,96 @@
+// Buddy is thinking: his bubble with three softly pulsing dots, the small orb
+// next to it breathing — so a wait never looks like nothing is happening.
+// Screen readers hear "Buddy schreibt …" (a polite live region); the dots are
+// decorative. With reduce motion the dots stand still at a soft tone.
+
+import { useEffect } from 'react';
+import { View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
+
+import { LB } from '../../lib/theme/colors.js';
+import { riseIn } from '../../lib/theme/enter.js';
+import { EASE } from '../../lib/theme/motion.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
+import { BuddyOrb } from '../lb/BuddyOrb.js';
+
+/** One dot's rise and fall; the three follow each other like a soft wave. */
+const DOT_MS = 420;
+const DOT_GAP_MS = 160;
+
+export function TypingBubble({ label }: { label: string }) {
+  const reduce = useReducedMotion();
+  const a = useSharedValue(0);
+  const b = useSharedValue(0);
+  const c = useSharedValue(0);
+  useEffect(() => {
+    const dots = [a, b, c];
+    if (reduce) return;
+    dots.forEach((d, i) => {
+      d.value = withDelay(
+        i * DOT_GAP_MS,
+        withRepeat(
+          withSequence(
+            withTiming(1, { duration: DOT_MS, easing: EASE.breathe }),
+            withTiming(0, { duration: DOT_MS, easing: EASE.breathe }),
+            // A short rest after each wave, so it reads as calm, not as a spinner.
+            withTiming(0, { duration: DOT_GAP_MS * 2 }),
+          ),
+          -1,
+        ),
+      );
+    });
+    return () => dots.forEach((d) => cancelAnimation(d));
+  }, [reduce, a, b, c]);
+  return (
+    <Animated.View
+      entering={riseIn()}
+      accessible
+      accessibilityLabel={label}
+      accessibilityLiveRegion="polite"
+      style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}
+    >
+      <BuddyOrb size={26} />
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: LB.paper,
+            borderRadius: 22,
+            borderBottomLeftRadius: 6,
+            paddingHorizontal: 18,
+            height: 44,
+          },
+          SHADOW.soft,
+        ]}
+      >
+        <Dot v={a} />
+        <Dot v={b} />
+        <Dot v={c} />
+      </View>
+    </Animated.View>
+  );
+}
+
+function Dot({ v }: { v: SharedValue<number> }) {
+  const style = useAnimatedStyle(() => ({
+    opacity: 0.28 + v.value * 0.5,
+    transform: [{ translateY: -v.value * 3 }, { scale: 0.9 + v.value * 0.15 }],
+  }));
+  return (
+    <Animated.View
+      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: LB.primary }, style]}
+    />
+  );
+}

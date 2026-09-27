@@ -106,10 +106,12 @@ export const sendMessageStreamed = (
   clientMessageId: string,
   replyToId: string | null,
   onReply: (event: ReplyStreamEvent) => void,
+  signal?: AbortSignal,
 ) =>
   streamRequest('POST', '/buddy/messages', {
     body: { client_message_id: clientMessageId, text, reply_to_id: replyToId },
     schema: SendMessageResponse,
+    ...(signal ? { signal } : {}),
     onEvent: (e) => {
       if (e.event !== 'reply') return;
       try {
@@ -120,6 +122,10 @@ export const sendMessageStreamed = (
       }
     },
   });
+
+/** "Stopp" while Buddy writes: the turn ends stopped, or the answer says it was already there. */
+export const stopMessage = (clientMessageId: string) =>
+  request('POST', `/buddy/messages/${clientMessageId}/stop`, { schema: SendMessageResponse });
 
 export const startStep = (stepId: string) =>
   request('POST', `/buddy/steps/${stepId}/start`, { schema: StartStepResponse });

@@ -188,6 +188,10 @@ export const PreparedPractice = z.object({
 });
 export type PreparedPractice = z.infer<typeof PreparedPractice>;
 
+/** The real stages of reading a sheet (docs/architecture.md §Material, gap 5). */
+export const ReadingStage = z.enum(['sending', 'waiting', 'reading', 'building']);
+export type ReadingStage = z.infer<typeof ReadingStage>;
+
 export const NowCard = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('resume_practice'),
@@ -207,7 +211,20 @@ export const NowCard = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('material_processing'),
     material_id: Uuid,
-    status: z.enum(['awaiting_upload', 'queued', 'processing']),
+    /** ready: read, and Buddy is making practice from it (stage 'building'). */
+    status: z.enum(['awaiting_upload', 'queued', 'processing', 'ready']),
+    /**
+     * Where it really is (only real server stages, CLAUDE.md rule 5): the photos are on
+     * their way, waiting for the reader, being read, or read and Buddy makes practice.
+     * Missing from older servers: the app goes by `status`.
+     */
+    stage: ReadingStage.optional(),
+    /** How many photos (pages) she sent. */
+    pages: z.number().int().min(1).optional(),
+    /** Tasks found, once read (stage 'building'): a result, never a count of due work. */
+    found: z.number().int().min(0).nullable().optional(),
+    /** Homework goes straight to help after reading: no practice to build. */
+    purpose: z.enum(['study', 'homework']).optional(),
   }),
   z.object({
     type: z.literal('material_failed'),

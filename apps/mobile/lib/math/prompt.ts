@@ -1,5 +1,5 @@
-// A question or message text as runs to draw: plain words, $…$ math, **bold**
-// and — in questions — fill-in blanks ("Ich helfe ___ Mutter.": three or more
+// A question or message text as runs to draw: plain words, $…$ math, **bold**,
+// *italic* (or _italic_) and — in questions — fill-in blanks ("Ich helfe ___ Mutter.": three or more
 // underscores). Bold may wrap math and blanks; bold markers inside $…$ belong to
 // the math. A blank inside math ("$\frac{3}{4} = \frac{___}{8}$", or \square) is
 // a blank atom of the math (parse.ts): counted, filled and read like any other.
@@ -7,11 +7,14 @@
 
 import { mathSpans, parseMath, type MathAtom } from './parse.js';
 
+/** Italic is only set when true, so runs without it compare as before. */
+type Slant = { italic?: true };
+
 export type PromptRun =
-  | { type: 'plain'; text: string; bold: boolean }
-  | { type: 'math'; atoms: MathAtom[]; bold: boolean }
+  | ({ type: 'plain'; text: string; bold: boolean } & Slant)
+  | ({ type: 'math'; atoms: MathAtom[]; bold: boolean } & Slant)
   /** `index`: 0-based position among the blanks of the text. */
-  | { type: 'blank'; index: number; bold: boolean };
+  | ({ type: 'blank'; index: number; bold: boolean } & Slant);
 
 export type PromptOptions = {
   /** Read "___" as a blank to fill in (questions); otherwise it stays as written. */
@@ -22,11 +25,18 @@ export type PromptOptions = {
 export const MAX_FILLED_LENGTH = 40;
 
 type RawRun =
-  | { type: 'plain'; raw: string; bold: boolean }
-  | { type: 'math'; raw: string; inner: string; bold: boolean }
-  | { type: 'blank'; index: number; bold: boolean };
+  | ({ type: 'plain'; raw: string; bold: boolean } & Slant)
+  | ({ type: 'math'; raw: string; inner: string; bold: boolean } & Slant)
+  | ({ type: 'blank'; index: number; bold: boolean } & Slant);
 
-const BOLD = /\*\*([^*\n]+?)\*\*/g;
+/** **bold**, which may hold *italic* inside it. */
+const BOLD = /\*\*((?:[^*\n]|\*(?!\*))+?)\*\*/g;
+/**
+ * *italic* or _italic_: the marker hugs a word on both sides and stands outside a word, so
+ * "2 * 3 * 4", "2*3*4", "x_1" and blanks ("___") stay as written.
+ */
+const ITALIC =
+  /(?<![*\w])\*(?![\s*])([^*\n]+?)(?<![\s*])\*(?![*\w])|(?<![\w_])_(?![\s_])([^_\n]+?)(?<![\s_])_(?![\w_])/g;
 const BLANK = /_{3,}/g;
 /** A blank written inside math (parse.ts turns each into a { type: 'blank' } atom). */
 const MATH_BLANK = /_{3,}|\\(?:square|Box)(?![a-zA-Z])/g;
@@ -48,15 +58,27 @@ function scan(text: string, options: PromptOptions): RawRun[] {
   masked += text.slice(last);
 
   // The text in ranges, each bold or not; the ** markers themselves drop out.
-  const ranges: { start: number; end: number; bold: boolean }[] = [];
+  const boldRanges: { start: number; end: number; bold: boolean }[] = [];
   last = 0;
   for (const m of masked.matchAll(BOLD)) {
     const at = m.index;
-    if (at > last) ranges.push({ start: last, end: at, bold: false });
-    ranges.push({ start: at + 2, end: at + m[0].length - 2, bold: true });
+    if (at > last) boldRanges.push({ start: last, end: at, bold: false });
+    boldRanges.push({ start: at + 2, end: at + m[0].length - 2, bold: true });
     last = at + m[0].length;
   }
-  if (last < text.length) ranges.push({ start: last, end: text.length, bold: false });
+  if (last < text.length) boldRanges.push({ start: last, end: text.length, bold: false });
+  // Within each range, italic parts; their single markers drop out as well.
+  const ranges: { start: number; end: number; bold: boolean; italic: boolean }[] = [];
+  for (const r of boldRanges) {
+    let at = r.start;
+    for (const m of masked.slice(r.start, r.end).matchAll(ITALIC)) {
+      const from = r.start + m.index;
+      if (from > at) ranges.push({ start: at, end: from, bold: r.bold, italic: false });
+      ranges.push({ start: from + 1, end: from + m[0].length - 1, bold: r.bold, italic: true });
+      at = from + m[0].length;
+    }
+    if (r.end > at) ranges.push({ start: at, end: r.end, bold: r.bold, italic: false });
+  }
 
   const blanks = options.blanks
     ? [...masked.matchAll(BLANK)].map((m) => ({ start: m.index, end: m.index + m[0].length }))
@@ -70,23 +92,25 @@ function scan(text: string, options: PromptOptions): RawRun[] {
   const out: RawRun[] = [];
   let blankIndex = 0;
   for (const r of ranges) {
+    const slant: Slant = r.italic ? { italic: true } : {};
     let at = r.start;
     for (const mark of marks) {
       if (mark.start < r.start || mark.end > r.end) continue;
       if (mark.start > at)
-        out.push({ type: 'plain', raw: text.slice(at, mark.start), bold: r.bold });
+        out.push({ type: 'plain', raw: text.slice(at, mark.start), bold: r.bold, ...slant });
       if (mark.math) {
         out.push({
           type: 'math',
           raw: text.slice(mark.start, mark.end),
           inner: mark.math.inner,
           bold: r.bold,
+          ...slant,
         });
         if (options.blanks) blankIndex += mathBlanks(mark.math.inner);
-      } else out.push({ type: 'blank', index: blankIndex++, bold: r.bold });
+      } else out.push({ type: 'blank', index: blankIndex++, bold: r.bold, ...slant });
       at = mark.end;
     }
-    if (r.end > at) out.push({ type: 'plain', raw: text.slice(at, r.end), bold: r.bold });
+    if (r.end > at) out.push({ type: 'plain', raw: text.slice(at, r.end), bold: r.bold, ...slant });
   }
   return out;
 }
@@ -96,9 +120,19 @@ export function parsePrompt(text: string, options: PromptOptions): PromptRun[] {
   return scan(text, options).map((r): PromptRun => {
     switch (r.type) {
       case 'plain':
-        return { type: 'plain', text: r.raw.replace(/\\\$/g, '$'), bold: r.bold };
+        return {
+          type: 'plain',
+          text: r.raw.replace(/\\\$/g, '$'),
+          bold: r.bold,
+          ...(r.italic ? { italic: true as const } : {}),
+        };
       case 'math':
-        return { type: 'math', atoms: parseMath(r.inner), bold: r.bold };
+        return {
+          type: 'math',
+          atoms: parseMath(r.inner),
+          bold: r.bold,
+          ...(r.italic ? { italic: true as const } : {}),
+        };
       case 'blank':
         return r;
     }

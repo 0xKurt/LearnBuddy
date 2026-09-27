@@ -45,7 +45,7 @@ import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } fro
 import { loosens } from './policy.js';
 import { loadSettings, type SettingsRow } from './state.js';
 import { runUndo, undoLoosensContact, type UndoSpec } from './tools.js';
-import { receiveLearnerMessage, type OnReply, type TurnOutcome } from './turn.js';
+import { receiveLearnerMessage, stopTurn, type OnReply, type TurnOutcome } from './turn.js';
 
 export const buddyRoutes = new Hono<AppEnv>();
 buddyRoutes.use(
@@ -120,6 +120,20 @@ buddyRoutes.post('/messages', async (c) => {
       });
     }
   });
+});
+
+// "Stopp": she ends Buddy's reply while it is written (docs/architecture.md §Turns). The
+// answer says where the turn stands: stopped, or already answered (then the reply is there).
+buddyRoutes.post('/messages/:clientMessageId/stop', async (c) => {
+  const clientMessageId = check(Uuid, c.req.param('clientMessageId'));
+  const outcome = await stopTurn(depsOf(c), c.get('learner').id, clientMessageId);
+  if (!outcome) throw new AppError('not_found', 'Message not found');
+  const body: SendMessageResponse = {
+    status: outcome.status,
+    error_code: outcome.errorCode,
+    home: await home(c),
+  };
+  return c.json(body);
 });
 
 // ─────────────── explicit taps ───────────────

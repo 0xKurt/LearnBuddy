@@ -71,7 +71,19 @@
     "processing_body_practice": "Danach mache ich gleich Übungen daraus. Du kannst die App solange schließen.",
     "next_title": "Als Nächstes: {{title}}",
     "next_body_exam_one": "{{count}} Aufgabe · ca. {{minutes}} Min. · Arbeit {{when}}",
-    "next_body_exam_other": "{{count}} Aufgaben · ca. {{minutes}} Min. · Arbeit {{when}}"
+    "next_body_exam_other": "{{count}} Aufgaben · ca. {{minutes}} Min. · Arbeit {{when}}",
+    "waiting_title": "Gleich lese ich dein Blatt …",
+    "reading_title_one": "Ich lese dein Blatt …",
+    "reading_title_other": "Ich lese deine {{count}} Seiten …",
+    "building_title": "Blatt gelesen",
+    "building_body_one": "{{count}} Aufgabe gefunden · ich mache Übungen daraus",
+    "building_body_other": "{{count}} Aufgaben gefunden · ich mache Übungen daraus",
+    "steps": {
+      "sent": "Angekommen",
+      "read": "Lesen",
+      "build": "Übungen",
+      "a11y": "Schritt {{step}} von {{total}}: {{label}}"
+    }
   },
   "when": {
     "today": "heute",
@@ -122,10 +134,17 @@
       "budget": "Für heute kann Buddy nicht mehr antworten",
       "invalid": "Buddy hat sich verhaspelt",
       "stale": "Nicht beantwortet – zu viel gleichzeitig",
-      "internal": "Nicht beantwortet – da lief etwas schief"
+      "internal": "Nicht beantwortet – da lief etwas schief",
+      "stopped": "Gestoppt"
     },
     "today": "Heute",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "stop": "Stopp",
+    "stop_label": "Antwort stoppen",
+    "stopped": "Gestoppt.",
+    "new_reply": "Neue Antwort",
+    "new_reply_label": "Zur neuen Antwort springen",
+    "message_hint": "Lange drücken zum Kopieren oder Vorlesen"
   },
   "delivery": {
     "scheduled": "kommt {{when}}",
@@ -238,7 +257,11 @@
     "end": "Beenden",
     "speak": "Sprechen",
     "interrupt": "Unterbrechen und sprechen",
-    "short": "Reden"
+    "short": "Reden",
+    "photo": "Foto",
+    "photo_label": "Foto zeigen",
+    "stop_speaking": "Buddy unterbrechen",
+    "tap_orb": "Tipp auf Buddy, um ihn zu unterbrechen."
   },
   "a11y": {
     "reply": "Buddy: {{text}}"
@@ -246,5 +269,13 @@
   "card": {
     "close": "Karte ausblenden",
     "shown": "Oben liegt eine Karte von Buddy. Du kannst sie ausblenden."
+  },
+  "message": {
+    "title_buddy": "Buddys Nachricht",
+    "title_mine": "Deine Nachricht",
+    "copy": "Kopieren",
+    "speak": "Vorlesen",
+    "copied": "Kopiert",
+    "copy_failed": "Kopieren hat nicht geklappt"
   }
 }

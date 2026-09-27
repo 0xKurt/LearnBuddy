@@ -3,6 +3,7 @@
 // there is text. The mic writes what she said into the field so she can check
 // it. In voice mode the bar becomes voice-first: keyboard · big mic · camera,
 // and what she says is sent right away (the "Ich höre zu." look).
+// While Buddy writes his answer, the send button (or the big mic) is "Stopp".
 
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
@@ -10,7 +11,12 @@ import { Platform, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import Animated from 'react-native-reanimated';
+
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
+import { haptic } from '../../lib/haptics.js';
+import { fadeIn } from '../../lib/theme/enter.js';
+import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -26,10 +32,16 @@ const MAX_MESSAGE_LENGTH = 2000;
 
 export function Composer({
   disabled,
+  writing = false,
+  onStop,
   onSend,
   onPhoto,
 }: {
   disabled: boolean;
+  /** Buddy is answering what she sent: the send button becomes "Stopp". */
+  writing?: boolean;
+  /** Ends Buddy's answer (the turn ends stopped; see app/buddy.tsx). */
+  onStop?: () => void;
   /** Resolves false when the message never reached Buddy: her text comes back (audit M-76). */
   onSend: (text: string) => Promise<boolean>;
   /** The camera: a photo says more than typing a worksheet. */
@@ -46,6 +58,7 @@ export function Composer({
   const trimmed = text.trim();
   /** Sends and empties the field; a message that never arrived comes back into it. */
   const deliver = (message: string) => {
+    haptic.tap();
     setText('');
     void onSend(message).then((delivered) =>
       setText((current) => composerAfterSend(current, message, delivered)),
@@ -90,6 +103,22 @@ export function Composer({
     paddingBottom: Math.max(insets.bottom, 12),
   };
 
+  const stopBtn = (size: 'sm' | 'lg') => (
+    <Animated.View key="stop" entering={fadeIn(DURATION.quick)}>
+      <Btn
+        pill
+        size={size}
+        variant="soft"
+        icon="stop"
+        onPress={onStop}
+        accessibilityLabel={t('buddy:thread.stop_label')}
+      >
+        {t('buddy:thread.stop')}
+      </Btn>
+    </Animated.View>
+  );
+  const stoppable = writing && onStop !== undefined && voice.state === 'idle';
+
   if (voiceMode) {
     // Voice first: keyboard · big mic · camera.
     return (
@@ -118,12 +147,16 @@ export function Composer({
             />
             <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
           </View>
-          <MicButton
-            voice={voice}
-            size="lg"
-            label={t('common:voice.message')}
-            disabled={disabled}
-          />
+          {stoppable ? (
+            stopBtn('lg')
+          ) : (
+            <MicButton
+              voice={voice}
+              size="lg"
+              label={t('common:voice.message')}
+              disabled={disabled}
+            />
+          )}
           <View style={{ alignItems: 'center', gap: 4, width: 90 }}>
             <CircleBtn
               icon="camera"
@@ -195,7 +228,9 @@ export function Composer({
           }}
         />
         {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
-        {trimmed.length === 0 || voice.state !== 'idle' ? (
+        {stoppable ? (
+          stopBtn('sm')
+        ) : trimmed.length === 0 || voice.state !== 'idle' ? (
           <MicButton
             voice={voice}
             size="sm"
