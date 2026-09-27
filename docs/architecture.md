@@ -468,7 +468,7 @@ common failure was an unreadable photo): right after a photo is taken or picked,
 decoded on the device (jpeg-js, the same on phone and web) and measured — too dark (mean
 brightness), washed out (ink hardly darker than the paper), blurry (the strongest edges relative to
 that contrast; soft edges also make ink paler, so blur is checked first), too small (shorter side
-under 900 px) or tilted (`lib/photo/tilt.ts`: the ink pixels are projected at trial angles and the
+under 700 px; an 800 px messenger copy or screenshot of a sheet reads well, user feedback #16) or tilted (`lib/photo/tilt.ts`: the ink pixels are projected at trial angles and the
 sharpest profile gives the angle of the text lines; 10° or more, or 8° difference between the upper
 and lower half — a phone held at a slant to the side). A phone tipped forward (lines level but
 smaller towards the top) is not judged: the line spacing was not reliable with a few lines of text.
@@ -832,30 +832,44 @@ photos still being sent for up to 10 minutes › photo needed), **working** (Bud
 the learner's own photos or just-finished practice: her photos still being read — also homework,
 also behind another card, so the app keeps following the home — or a due or running check they
 caused),
-**decision** (how did the test go › enable contact), **done** (Buddy's actions of the last 72 h
+A result carries the prepared practice that is next (`next`), so a short round never hides
+the practice for a test (user feedback #2).
+**decision** (how did the test go › enable contact — with the stored rules it would allow,
+`rules`: at most n a day, never after the quiet hour, so the card and the parents' PIN screen
+say exactly that), **done** (Buddy's actions of the last 72 h
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
 and delivery status of each message) and **system** status (model, push, contact, scheduler).
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
-at most the **now** and **decision** cards (pinned; the decision drops its explanation when a
-now card is there too); the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
+**one** card (pinned): the **now** card, else the **decision**; with a now card the decision
+is asked at the end of the conversation with quieter buttons, so there is one violet button
+(`lib/homeLayout.ts`); "Buddy is working" is said once (inside "Ich lese dein Blatt …", with
+the photo, or as a line at the end of the conversation); the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
 the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, five ways to start
-around it (a practice test when
-an exam is coming, else "Arbeit"; homework; pronunciation; vocabulary; explain —
+around it ("Arbeit" — with a test planned it prepares her for it; homework; pronunciation;
+vocabulary; explain —
 `docs/UX-PRINCIPLES.md` §6). Once there is a conversation the ring becomes one row of the same
-five (`components/lb/StartRow.tsx`) and the conversation takes the rest of the screen, always at
-its newest message — what Buddy did stands under its message with "Rückgängig"; no tiles, no
+five (`components/lb/StartRow.tsx`) and the conversation takes the rest of the screen, at
+its newest message but never so far that her own last message is pushed out at the top; a
+quiet line names the day where a new one starts (never how many days passed) — what Buddy did stands under its message with "Rückgängig"; no tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
 field, mic ("Senden" once there is text); in voice mode it is voice-first — keyboard · big mic ·
 camera. Settings for the learner are closed groups, each with what is set now, one open at a
 time (`components/settings/Group.tsx`): contact (on/off, a one-line summary, "Zeiten anpassen"
-for the rare loosening), the language, about; the parents' area is closed until opened.
-Setting up a child's profile is two short steps (the child, then consent and the parents' PIN).
+for the rare loosening), the language, about; the parents' area is closed until opened, and
+for a minor's profile it opens only with the parents' PIN ("PIN vergessen?" opens just the PIN
+card, where a new PIN needs the account's password; `lib/parentsGate.ts`).
+Setting up a child's profile is two short steps (the child, then consent and the parents' PIN),
+then a hand-over: what is set (consent, PIN, messages to the phone off) and "Gib Lena jetzt das
+Handy". Someone under 16 choosing "Ich selbst" gets no dead end: "Eine erwachsene Person ist
+hier" keeps name and birth date and goes to the parents' step on the same phone, naming the
+account's e-mail (DESIGN-BRIEF §Onboarding); there is no age check beyond the birth date.
 The practice screen pins the question (with its drawing scaled to fit) on top and the way to
 answer at the bottom; only the conversation about the question scrolls between them; short
 options sit two by two.
-Level and grade are learned in the conversation.
+Level and grade are learned in the conversation (the profile has no grade field: Buddy asks when
+the level is unknown and it matters for the next step — `context.ts`, `set_level`).
 
 Photos that never all arrive are set aside after a day and whatever did arrive is deleted at
 once (`abandonStaleUploads`, run by the scheduler).
