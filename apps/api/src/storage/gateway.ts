@@ -10,12 +10,38 @@ export const PHOTO_BUCKET = 'material-photos';
 
 export type UploadTarget = { path: string; url: string; token: string };
 
+/**
+ * The provider could not answer (outage, timeout, rate limit). Never means "the photo is
+ * not there": callers retry instead of blaming the learner (docs/architecture.md §Material).
+ */
+export class StorageError extends Error {
+  constructor(op: 'sign' | 'list' | 'download' | 'remove') {
+    super(`storage ${op} failed`);
+    this.name = 'StorageError';
+  }
+}
+
+/** Supabase Storage deletes at most 1000 objects per request. */
+export const STORAGE_REMOVE_LIMIT = 1000;
+
 export interface StorageGateway {
   createUploadTarget(path: string): Promise<UploadTarget>;
-  /** Which of `paths` exist. */
+  /** Which of `paths` exist. Throws StorageError when the provider cannot tell. */
   existing(paths: string[]): Promise<Set<string>>;
+  /** The object, or null when it is absent. Throws StorageError when the provider fails. */
   download(path: string): Promise<Uint8Array | null>;
+  /**
+   * Deletes at most STORAGE_REMOVE_LIMIT paths; a path that is already gone counts as
+   * deleted. Throws StorageError when the provider fails.
+   */
   remove(paths: string[]): Promise<void>;
+}
+
+/** Deletes any number of paths, in provider-sized chunks. */
+export async function removeAll(storage: StorageGateway, paths: string[]): Promise<void> {
+  for (let i = 0; i < paths.length; i += STORAGE_REMOVE_LIMIT) {
+    await storage.remove(paths.slice(i, i + STORAGE_REMOVE_LIMIT));
+  }
 }
 
 export class SupabaseStorage implements StorageGateway {
@@ -33,7 +59,7 @@ export class SupabaseStorage implements StorageGateway {
     const { data, error } = await this.client.storage
       .from(PHOTO_BUCKET)
       .createSignedUploadUrl(path, { upsert: true });
-    if (error || !data) throw new Error('could not create upload URL');
+    if (error || !data) throw new StorageError('sign');
     return { path, url: data.signedUrl, token: data.token };
   }
 
@@ -46,7 +72,10 @@ export class SupabaseStorage implements StorageGateway {
       byFolder.set(folder, [...(byFolder.get(folder) ?? []), p.slice(i + 1)]);
     }
     for (const [folder, names] of byFolder) {
-      const { data } = await this.client.storage.from(PHOTO_BUCKET).list(folder, { limit: 100 });
+      const { data, error } = await this.client.storage
+        .from(PHOTO_BUCKET)
+        .list(folder, { limit: 100 });
+      if (error || !data) throw new StorageError('list');
       const present = new Set((data ?? []).map((o) => o.name));
       for (const n of names) if (present.has(n)) found.add(`${folder}/${n}`);
     }
@@ -55,13 +84,34 @@ export class SupabaseStorage implements StorageGateway {
 
   async download(path: string): Promise<Uint8Array | null> {
     const { data, error } = await this.client.storage.from(PHOTO_BUCKET).download(path);
-    if (error || !data) return null;
+    if (error) {
+      if (isNotFound(error)) return null;
+      throw new StorageError('download');
+    }
+    if (!data) return null;
     return new Uint8Array(await data.arrayBuffer());
   }
 
   async remove(paths: string[]): Promise<void> {
-    if (paths.length === 0) return;
-    const { error } = await this.client.storage.from(PHOTO_BUCKET).remove(paths);
-    if (error) throw new Error('could not remove photos');
+    for (let i = 0; i < paths.length; i += STORAGE_REMOVE_LIMIT) {
+      // Deleting an absent object is not an error for Supabase Storage (it is left out of
+      // the returned list), so a repeated purge is harmless.
+      const { error } = await this.client.storage
+        .from(PHOTO_BUCKET)
+        .remove(paths.slice(i, i + STORAGE_REMOVE_LIMIT));
+      if (error) throw new StorageError('remove');
+    }
   }
+}
+
+/**
+ * Supabase Storage answers a missing object with HTTP 400 and `statusCode: "404"` (or a
+ * plain 404). Anything else — network, 5xx, 429 — is a failure, not an absence.
+ * requires live verification in Claude Code session (against the hosted Storage API)
+ */
+function isNotFound(error: unknown): boolean {
+  const e = error as { status?: unknown; statusCode?: unknown; originalError?: unknown };
+  if (e.status === 404 || e.statusCode === '404' || e.statusCode === 404) return true;
+  const original = e.originalError as { status?: unknown } | undefined;
+  return original?.status === 404;
 }

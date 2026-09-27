@@ -18,6 +18,7 @@ export type AccountRow = {
   pin_failed_count: number;
   pin_locked_until: Date | null;
   deletion_due_at: Date | null;
+  deletion_started_at: Date | null;
 };
 
 export type LearnerRow = {

@@ -64,6 +64,10 @@ identityRoutes.get('/me', requireUser, async (c) => {
           locale: account.locale as LearnerView['locale'],
           pin_set: account.pin_hash !== null,
           deletion_due_at: account.deletion_due_at ? account.deletion_due_at.toISOString() : null,
+          // The hold is over: it is being carried out (not "planned for a past date").
+          deletion_running:
+            account.deletion_started_at !== null ||
+            (account.deletion_due_at !== null && account.deletion_due_at <= now),
           consent_current: account.consent_version === deps.config.CONSENT_VERSION,
         }
       : null,

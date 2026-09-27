@@ -17,6 +17,7 @@ import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
 import { buddyRoutes } from './modules/buddy/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
 import { materialRoutes } from './modules/materials/routes.js';
+import { erasureBacklog } from './modules/materials/purge.js';
 import { voiceRoutes } from './modules/voice/routes.js';
 import { practiceRoutes } from './modules/practice/routes.js';
 import { runTick } from './modules/scheduler/tick.js';
@@ -117,12 +118,21 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     }
     const schedulerOk =
       lastRun !== null && deps.now().getTime() - lastRun.getTime() < SCHEDULER_STALE_MS;
-    const ok = dbOk && schedulerOk;
+    // Erasure later than promised is a failure someone must look at (docs/privacy.md).
+    let erasure = { overdue_deletions: 0, overdue_photo_deletions: 0 };
+    try {
+      if (dbOk) erasure = await erasureBacklog(deps.db, deps.now());
+    } catch {
+      dbOk = false;
+    }
+    const erasureOk = erasure.overdue_deletions === 0 && erasure.overdue_photo_deletions === 0;
+    const ok = dbOk && schedulerOk && erasureOk;
     return c.json(
       {
         ok,
         database: dbOk,
         scheduler: { ok: schedulerOk, last_run_at: lastRun ? lastRun.toISOString() : null },
+        erasure: { ok: erasureOk, ...erasure },
         model: deps.llm.available,
         push: deps.push.enabled,
       },

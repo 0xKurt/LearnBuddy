@@ -273,15 +273,20 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const materials = await db.query<MaterialBrief>(
     `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at, m.photo_count,
-            case when m.pages_resolved_at is null then m.page_problems else '[]'::jsonb end as page_problems,
+            -- Pages not read: while unanswered, and for a day after the reading (the sheet is
+            -- still at hand) — the home notice and Buddy's context see the same window.
+            case when m.pages_resolved_at is null and m.ready_at > $3::timestamptz - interval '24 hours'
+                 then m.page_problems else '[]'::jsonb end as page_problems,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count
        from materials m
       where m.learner_id = $1 and m.archived_at is null
         -- A merged part only while its own missing pages are not answered.
-        and (m.merged_into is null or (m.pages_resolved_at is null and m.page_problems <> '[]'::jsonb))
+        and (m.merged_into is null
+             or (m.pages_resolved_at is null and m.page_problems <> '[]'::jsonb
+                 and m.ready_at > $3::timestamptz - interval '24 hours'))
       order by m.created_at desc, m.seq desc
       limit $2`,
-    [learnerId, LIMITS.materials],
+    [learnerId, LIMITS.materials, now],
   );
 
   const sessions = await db.query<SessionBrief>(

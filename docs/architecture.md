@@ -201,8 +201,27 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 `modules/scheduler/`. One durable queue (`jobs`) for extraction, Buddy checks, turn recovery,
 photo purge and account deletion. Claimed with `FOR UPDATE SKIP LOCKED` and a lease token;
 finishing and retrying are compare-and-set on the token, so a worker whose lease expired cannot
-overwrite its successor. At most `max_attempts` (default 3), then parked as `failed`. A cancelled
-job can be planned again with the same key (an exam moved away and back).
+overwrite its successor. At most `max_attempts` (default 3), then parked as `failed` — except the
+erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KINDS` in
+`scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
+again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
+lease. A cancelled job can be planned again with the same key (an exam moved away and back).
+
+**Erasure** (`modules/materials/purge.ts`, `identity/privacy.ts`, migration `0016_erasure.sql`;
+D-7, D-9). The account deletion is a resumable job whose stage lives in its payload: `start`
+(marks `accounts.deletion_started_at`; from here it cannot be cancelled — `DELETE
+/account/deletion` answers 409 `deletion_running` — and the account takes no more writes) →
+`photos` (every live photo path goes to the `storage_deletions` queue) → `content` (the learner's
+tables, children first, 2 000 rows per statement, 20 s per run, resuming at the saved table) →
+`auth` (the auth user, which cascades the account, profile and settings). The account does not
+wait for Storage: queued paths are removed in requests of ≤ 1 000 (the Storage limit, also
+enforced by the test fake) and retried with backoff until gone. Maintenance after the job loop
+works that queue, re-plans a purge for photos no job will delete any more (failed or read more
+than 7 days ago, deleted), and erases removed/replaced memories after their 7-day undo window
+(below). `GET /health` fails (503, `erasure`) when an account is more than a day past its
+deletion date or a queued path is more than a day old. `/me` says `deletion_running` once the
+hold is over. Every foreign-key column is indexed (`0017_fk_indexes.sql`), so the cascades follow
+the learner's own rows, not the table size.
 
 `POST /internal/tick` runs everything due within a 45 s budget: recovery → reading photos →
 Buddy per learner (one learner's failure does not stop the others) → delivery → receipts →
@@ -283,17 +302,17 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                  |
-| ------------------------------- | -------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                               |
-| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                  |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768              |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                             |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos |
-| Jobs                            | 3 attempts, leases 120–180 s; tick budget 45 s                                         |
-| Turn stall                      | taken over after 3 minutes                                                             |
-| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                    |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                   |
+| What                            | Limit                                                                                   |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                |
+| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                   |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768               |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                              |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos  |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s |
+| Turn stall                      | taken over after 3 minutes                                                              |
+| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                     |
+| Memory                          | 60 active items; temporary ≤ 60 days                                                    |
 
 Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
 gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
@@ -330,7 +349,28 @@ questions (validated item by item) → the capture step Buddy asked for is done 
 Buddy is woken. Status is what the database says: `awaiting_upload → queued → processing →
 ready | failed(reason)`. Photos are deleted 7 days after reading (also when unreadable), at once
 when they are not learning material (a letter, a recipe: they cannot be read again anyway), and
-immediately when the learner deletes the material.
+immediately when the learner deletes the material — and once more 2 hours later, when no signed
+upload URL can deliver a late photo any more (a submit for a deleted material also purges at once).
+A material becomes failed in one place (`markMaterialFailed`), from the job and from the tick's
+recovery alike: status, the purge and a context bump in one transaction.
+
+**Outages are not failures.** The Storage gateway tells an absent photo (`null`) from a provider
+failure (`StorageError`): a failed download retries the run like a retryable model error (backoff
+1, 2, 4 min); a failed existence check on submit answers 503 `storage_unavailable`, never
+"photos missing". Runs refused for the daily budget or lost to an outage are marked `uncounted`
+and do not use up the 3 runs. After the photo purge, retry answers 409 `photos_deleted`, and
+`MaterialView.photos_deleted` hides "Nochmal lesen" (the card says to photograph it again). Each
+photo in the reading request is preceded by a label ("Photo 2 of 3:"), so page numbers in the
+report name real photos.
+
+**Deleting** ("Blatt löschen", D-7) takes the sheet and its merged pages out of the library,
+Buddy's picture, running sessions (open questions closed like "Frage passt nicht"), prepared
+practice (a step left without questions goes back to planned) and its homework help session
+(abandoned) in one transaction, and plans `purge_content`: the transcript, title and page report
+are erased and the questions deleted with their answers, practice turns and memory state; sessions,
+steps and events keep only ids and counts. "Frage löschen" erases that question the same way. A
+reading still running for a deleted sheet ends without result: the final transaction re-checks
+`archived_at` under the row lock (no questions, no ready, no wake-up).
 
 **What counts as learning material** is said in the prompt: school or study content; everyday
 papers (a recipe, a letter, a receipt, an advert) are not, unless printed as a school task (live:
@@ -363,8 +403,12 @@ hinzufügen" (on the sheet's question list) send the photos as a material of the
 `completes`, so upload, reading, retries and failures work exactly as for any photo. Once read, its
 questions join the sheet (`merged_into`): same material, same subject; for homework the tasks are
 appended to the sheet's help session while it is open (else a new help session). The part is hidden
-from lists and Buddy's context (only its own missing pages still show). If the sheet was deleted
-meanwhile, the pages stay a sheet of their own. A second school subject on one sheet
+from lists and Buddy's context (only its own missing pages still show). Its reading is its own
+event (`material_ready` keyed on the part, the check looks at the sheet), so added pages wake
+Buddy like the first ones did. A part that fails keeps the sheet's title and subject. If the sheet
+was deleted meanwhile, the pages stay a sheet of their own; deleting a sheet also deletes the
+pages merged into it. The page notice lasts 24 hours from the reading (`ready_at`), in the home
+and in Buddy's context alike. A second school subject on one sheet
 (`other_subject` with the topics of its questions) files those questions under that subject.
 Pages keep the order they were taken in; there is no reordering — the notice about a missing page
 shows that page's photo while it is on the phone (kept a day, below), so the number is never
