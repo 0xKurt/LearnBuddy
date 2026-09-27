@@ -15,7 +15,7 @@ import type {
   SessionItemView,
   SessionMode,
 } from '@learnbuddy/shared-types/contracts';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import Animated, {
@@ -31,7 +31,7 @@ import { LB } from '../../lib/theme/colors.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from '../lb/BuddyOrb.js';
+import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
@@ -74,8 +74,9 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
   ];
   return (
     <View style={{ gap: 18 }}>
-      <View style={{ alignItems: 'center', gap: 14, paddingTop: 12 }}>
-        <OrbArrival />
+      <View style={{ alignItems: 'center', gap: 14, paddingTop: 36 }}>
+        {/* Room above the orb: the celebrating moon flies up to about 0.75 × its size. */}
+        <OrbArrival celebrate={celebrate} />
         <Rise slow delay={AT.title}>
           <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
             {homework
@@ -116,9 +117,19 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
   );
 }
 
-/** Buddy's orb arrives: it grows in softly while a pastel halo breathes out behind it. */
-function OrbArrival() {
+/**
+ * Buddy's orb arrives: it grows in softly while a pastel halo breathes out behind it. A
+ * session that just ended here is a "Geschafft" moment: once the orb is there, his moon
+ * spirals up and bursts into sparkles (lib/buddy/moon.ts, happy).
+ */
+function OrbArrival({ celebrate }: { celebrate: boolean }) {
   const reduced = useReducedMotion();
+  const [moon, setMoon] = useState<MoonState>('idle');
+  useEffect(() => {
+    if (!celebrate) return;
+    const go = setTimeout(() => setMoon('happy'), reduced ? 0 : DURATION.gentle);
+    return () => clearTimeout(go);
+  }, [celebrate, reduced]);
   const orb = useSharedValue(reduced ? 1 : 0);
   const halo = useSharedValue(reduced ? 1 : 0);
   useEffect(() => {
@@ -156,7 +167,7 @@ function OrbArrival() {
         ]}
       />
       <Animated.View style={orbStyle}>
-        <BuddyOrb size={96} />
+        <BuddyOrb size={96} state={moon} />
       </Animated.View>
     </View>
   );

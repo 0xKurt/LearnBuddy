@@ -24,7 +24,7 @@ import { Rise } from '../lb/Motion.js';
 export function Thinking({ label }: { label: string }) {
   return (
     <Rise delay={120} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <BuddyOrb size={26} />
+      <BuddyOrb size={26} state="think" />
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"

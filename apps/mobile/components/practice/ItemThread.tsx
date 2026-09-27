@@ -13,6 +13,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -49,13 +50,21 @@ export function ItemThread({ turns, pending, hideVerdicts = false, thinkingLabel
   if (turns.length === 0 && pending === null) return null;
 
   let latestAnswerId: string | null = null;
-  for (const turn of turns) if (turn.role === 'learner') latestAnswerId = turn.id;
+  let latestReplyId: string | null = null;
+  for (const turn of turns) {
+    if (turn.role === 'learner') latestAnswerId = turn.id;
+    else latestReplyId = turn.id;
+  }
 
   return (
     <View style={{ gap: 12 }}>
-      {turns.map((turn) => {
+      {turns.map((turn, index) => {
         const mine = turn.role === 'learner';
         const fresh = !known.has(turn.id);
+        // Buddy's reply to a right answer that arrives now: his moon celebrates (happy).
+        const before = index > 0 ? turns[index - 1] : undefined;
+        const afterCorrect =
+          !hideVerdicts && before?.role === 'learner' && before.verdict === 'correct';
         // While a new answer is on its way, the previous judgement no longer applies.
         const verdict =
           mine && turn.id === latestAnswerId && pending === null && !hideVerdicts
@@ -66,6 +75,9 @@ export function ItemThread({ turns, pending, hideVerdicts = false, thinkingLabel
             mine={mine}
             text={turn.text}
             speaker={mine ? t('thread.you') : t('thread.buddy')}
+            orb={moonForReply({ fresh, afterCorrect })}
+            // Only the newest reply's orb moves, and none while Buddy is looking again.
+            alive={turn.id === latestReplyId && pending === null}
           />
         );
         return (
@@ -109,11 +121,15 @@ function Bubble({
   text,
   speaker,
   faded = false,
+  orb = 'idle',
+  alive = false,
 }: {
   mine: boolean;
   text: string;
   speaker: string;
   faded?: boolean;
+  orb?: MoonState;
+  alive?: boolean;
 }) {
   const spoken = useSpokenMath(text);
   const bubble = (
@@ -144,7 +160,7 @@ function Bubble({
   if (mine) return bubble;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
-      <BuddyOrb size={26} />
+      <BuddyOrb size={26} state={orb} breathe={alive} />
       {bubble}
     </View>
   );

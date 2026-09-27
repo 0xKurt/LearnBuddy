@@ -1,5 +1,5 @@
-// Buddy is thinking: his bubble with three softly pulsing dots, the small orb
-// next to it breathing — so a wait never looks like nothing is happening.
+// Buddy is thinking: his bubble with three softly pulsing dots, the small orb's
+// moon racing round beside it — so a wait never looks like nothing is happening.
 // Screen readers hear "Buddy schreibt …" (a polite live region); the dots are
 // decorative. With reduce motion the dots stand still at a soft tone.
 
@@ -59,7 +59,7 @@ export function TypingBubble({ label }: { label: string }) {
       accessibilityLiveRegion="polite"
       style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}
     >
-      <BuddyOrb size={26} />
+      <BuddyOrb size={26} state="think" />
       <View
         style={[
           {

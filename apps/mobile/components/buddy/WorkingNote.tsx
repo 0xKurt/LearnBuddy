@@ -1,6 +1,6 @@
 // Buddy is on something the learner is waiting for (their photos, the
 // practice they just finished): say so, instead of an unexplained pause —
-// with Buddy's breathing orb instead of a spinner.
+// with Buddy's orb, its moon racing round (thinking), instead of a spinner.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { Text, View } from 'react-native';
@@ -20,7 +20,7 @@ export function WorkingNote({ what }: { what: NonNullable<BuddyHome['working']> 
         accessibilityLiveRegion="polite"
         style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
       >
-        <BuddyOrb size={28} />
+        <BuddyOrb size={28} state="think" />
         <Text style={[TYPE.body, { flex: 1 }]}>{t(`working.${what}`)}</Text>
       </View>
     </Card>
