@@ -187,7 +187,7 @@ export async function streamRequest<S extends ZodTypeAny>(
     try {
       chunk = await reader.read();
     } catch {
-      throw new ApiError('network', 'Connection lost', 0);
+      throw streamLost();
     }
     if (chunk.done) break;
     for (const e of sse.push(decoder.decode(chunk.value, { stream: true }))) {
@@ -206,7 +206,16 @@ export async function streamRequest<S extends ZodTypeAny>(
     }
   }
   // The stream ended without a result: the message may have arrived; the caller reloads.
-  throw new ApiError('network', 'Connection lost', 0);
+  throw streamLost();
+}
+
+/**
+ * The connection broke after the request went out: the server may have the message and
+ * go on with it, so not "check your internet" (p2-J-sse-drop-copy). Still a network
+ * error for everything that decides by code.
+ */
+function streamLost(): ApiError {
+  return new ApiError('network', 'Connection lost', 0, { reason: 'stream_lost' });
 }
 
 function safeJson(text: string): unknown {

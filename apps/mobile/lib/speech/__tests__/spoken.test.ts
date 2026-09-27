@@ -18,6 +18,7 @@ import {
 const WORDS: SpokenWords = {
   frac: '{{num}} durch {{den}}',
   frac_long: 'Bruch: {{num}} durch {{den}}',
+  mixed: 'und {{num}} durch {{den}}',
   power: 'hoch {{exp}}',
   squared: 'hoch 2',
   cubed: 'hoch 3',
@@ -65,6 +66,11 @@ describe('questionReadText', () => {
     expect(questionReadText('Wähle das Verb', ['laufen', 'Haus'], WORDS)).toBe(
       'Wähle das Verb. A: laufen, B: Haus.',
     );
+  });
+
+  it('reads a fill-in gap as the gap word, not as underscores', () => {
+    expect(questionReadText('Ich helfe ___ Mutter.', null, WORDS)).toBe('Ich helfe Lücke Mutter.');
+    expect(questionReadText('**_____** ist ein Verb', null, WORDS)).toBe('Lücke ist ein Verb.');
   });
 
   it('skips empty choices without shifting the others', () => {

@@ -1,7 +1,7 @@
 // Buddy pointed to a part of the app ("Zeig mir meine Blätter", "Ich will
 // die Sprache ändern"): one button that opens it. Nothing happens on its own.
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
-import { router, type Href } from 'expo-router';
+import { router, usePathname, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -31,7 +31,11 @@ const AREA_ICON: Record<Area, IconName> = {
 
 export function AreaCard({ area }: { area: Area }) {
   const { t } = useTranslation('buddy');
+  const here = usePathname();
   const label = t(`area.${area}`);
+  // Already there (the history shows Buddy's "Verlauf" card too): no second copy of the
+  // same screen on the stack (p2-history-areacard-stacks-history).
+  if (here === AREA_ROUTE[area]) return null;
   return (
     <View
       style={[

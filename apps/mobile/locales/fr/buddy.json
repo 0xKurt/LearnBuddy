@@ -129,7 +129,7 @@
   "delivery": {
     "scheduled": "prévu {{when}}",
     "sending": "envoi en cours",
-    "accepted": "envoyé sur ton téléphone",
+    "accepted": "en route vers ton téléphone",
     "provider_accepted": "envoyé sur ton téléphone",
     "provider_rejected": "n'a pas pu être envoyé sur ton téléphone",
     "send_failed": "n'a pas pu être envoyé sur ton téléphone",
@@ -178,6 +178,7 @@
     "plan_step_agreed_in_app": "Convenu : {{title}} {{when}} – ça s'affiche ici dans l'appli (les messages sur ton téléphone sont désactivés)",
     "open_area": "Affiché : {{what}}",
     "set_contact_quiet": "Sur le téléphone seulement entre {{from}} et {{to}}, jamais après {{quiet}}",
+    "set_contact_days": "jamais ces jours-là : {{days}}",
     "request_material_undone": "Pas besoin de photo : {{title}}"
   },
   "intro": {

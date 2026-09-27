@@ -4,11 +4,13 @@
 // it. In voice mode the bar becomes voice-first: keyboard · big mic · camera,
 // and what she says is sent right away (the "Ich höre zu." look).
 
-import { useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Platform, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { composerAfterSend } from '../../lib/buddy/unsent.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -28,7 +30,8 @@ export function Composer({
   onPhoto,
 }: {
   disabled: boolean;
-  onSend: (text: string) => void;
+  /** Resolves false when the message never reached Buddy: her text comes back (audit M-76). */
+  onSend: (text: string) => Promise<boolean>;
   /** The camera: a photo says more than typing a worksheet. */
   onPhoto: () => void;
 }) {
@@ -41,10 +44,16 @@ export function Composer({
   const latest = useRef({ text, disabled });
   latest.current = { text, disabled };
   const trimmed = text.trim();
+  /** Sends and empties the field; a message that never arrived comes back into it. */
+  const deliver = (message: string) => {
+    setText('');
+    void onSend(message).then((delivered) =>
+      setText((current) => composerAfterSend(current, message, delivered)),
+    );
+  };
   const send = () => {
     if (!trimmed || disabled) return;
-    onSend(trimmed);
-    setText('');
+    deliver(trimmed);
   };
 
   const voice = useVoiceInput({
@@ -54,13 +63,25 @@ export function Composer({
       const next = mergeTranscript(latest.current.text, said, 'append', MAX_MESSAGE_LENGTH);
       // Voice mode sends at once; otherwise (or while a message is still on its way) she checks it first.
       if (useVoiceMode.getState().on && !latest.current.disabled) {
-        onSend(next.trim());
-        setText('');
+        deliver(next.trim());
       } else {
         setText(next);
       }
     },
   });
+
+  // Leaving the home (practice, capture, settings …) ends a dictation still listening: it
+  // would otherwise go on and send its text later (p2-lc-chat-mic-survives-leaving-home).
+  const cancelVoice = useRef(voice.cancel);
+  cancelVoice.current = voice.cancel;
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        cancelVoice.current();
+      },
+      [],
+    ),
+  );
 
   const frame = {
     gap: 10,
@@ -74,6 +95,18 @@ export function Composer({
     return (
       <View style={frame}>
         <MicStatus voice={voice} />
+        {/* Heard while a message was still on its way: shown with its own "Senden", never
+            hidden in a field voice mode does not show (composer-parked-transcript). */}
+        {trimmed ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[TYPE.body, { flex: 1, color: LB.ink }]} numberOfLines={3}>
+              {trimmed}
+            </Text>
+            <Btn onPress={send} disabled={disabled} pill size="sm">
+              {t('buddy:composer.send')}
+            </Btn>
+          </View>
+        ) : null}
         <View
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}
         >

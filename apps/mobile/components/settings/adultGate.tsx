@@ -47,6 +47,10 @@ export async function asAdultIfNeeded<T>(call: () => Promise<T>, opts: Options):
   } catch (err) {
     if (!(err instanceof ApiError) || err.code !== 'admin_required') throw err;
     if (!opts.pinSet) throw new AdultCancelled('no_pin');
+    // The server says no valid token came with the call: one still held here (its expiry
+    // judged by a wrong device clock) is dropped, so the PIN is really asked for
+    // (admin-token-clock-skew-loop).
+    clearAdminToken();
     opts.onPrompt?.();
     if (!(await requestAdmin(opts.purpose))) throw new AdultCancelled('cancelled');
     return await call();

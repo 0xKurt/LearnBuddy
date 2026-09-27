@@ -33,6 +33,8 @@ type Props = {
   pill?: boolean;
   /** Set for one choice of several (Segmented): read out as a radio button and whether it is chosen. */
   selected?: boolean;
+  /** Opens and closes something below it (a folding group): read out as expanded or collapsed. */
+  expanded?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
 };
@@ -78,6 +80,7 @@ export function Btn({
   grow = false,
   disabled = false,
   selected,
+  expanded,
   tone,
   pill = false,
   accessibilityLabel,
@@ -95,9 +98,11 @@ export function Btn({
       accessibilityRole={selected === undefined ? 'button' : 'radio'}
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
-      accessibilityState={
-        selected === undefined ? { disabled } : { disabled, selected, checked: selected }
-      }
+      accessibilityState={{
+        disabled,
+        ...(selected === undefined ? {} : { selected, checked: selected }),
+        ...(expanded === undefined ? {} : { expanded }),
+      }}
       android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
       style={{
         alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',

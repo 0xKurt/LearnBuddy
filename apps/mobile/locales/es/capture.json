@@ -36,7 +36,8 @@
     "upload_rejected": "La foto {{index}} no ha llegado.",
     "upload_file": "La foto {{index}} ya no está. Quítala y vuelve a hacerla.",
     "kept": "Tus fotos siguen aquí.",
-    "left": "Tu ficha no ha llegado. Hazle otra foto, por favor."
+    "left": "Tu ficha no ha llegado. Hazle otra foto, por favor.",
+    "left_kept": "Tu ficha aún no ha llegado. Tus fotos te esperan con Buddy: vuelve a enviarlas desde ahí."
   },
   "homework": {
     "title": "Fotografía tus deberes",
@@ -62,7 +63,8 @@
     "title_pages": "Página {{pages}} otra vez",
     "intro": "Solo lo que faltaba: lo demás ya está listo. Asegúrate de que salga la página entera.",
     "title_add": "Añadir una página",
-    "intro_add": "Sus preguntas se suman a esta hoja."
+    "intro_add": "Sus preguntas se suman a esta hoja.",
+    "added": "Página enviada. En cuanto se lea, sus preguntas se añadirán a esta ficha."
   },
   "draft": {
     "title": "Tus fotos aún no se han enviado",

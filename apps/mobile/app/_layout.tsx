@@ -21,7 +21,8 @@ import { postAnswer } from '../lib/api/endpoints.js';
 import { flushOutbox } from '../lib/api/outboxSync.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
-import { i18n } from '../lib/i18n/index.js';
+import { applyLocale, deviceLocale, i18n } from '../lib/i18n/index.js';
+import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { recoverCameraResult } from '../lib/capture/pendingCamera.js';
 import { adoptLocalWork } from '../lib/localWork.js';
 import {
@@ -35,10 +36,13 @@ import { LB } from '../lib/theme/colors.js';
 
 /** Answers kept on the device (closed app, lost connection): send them now. */
 async function sendKeptAnswers(): Promise<void> {
-  await flushOutbox(postAnswer, (sessionId) => {
+  const done = await flushOutbox(postAnswer, (sessionId) => {
     void queryClient.invalidateQueries({ queryKey: keys.session(sessionId) });
     void queryClient.invalidateQueries({ queryKey: keys.home });
-  }).catch(() => 0);
+  }).catch(() => null);
+  // An answer that arrived too late (question closed, session over) is not dropped
+  // silently (refused-offline-answers-dropped-silently).
+  if (done && done.refused > 0) toast.show(i18n.t('common:outbox_refused'));
 }
 
 /** "A message was opened" reports kept on the device (lib/push.ts): send them now. */
@@ -92,6 +96,8 @@ export default function RootLayout() {
       }
       clearAdminToken();
       userRef.current = null;
+      // The welcome screen speaks the phone's language, not the previous learner's.
+      applyLocale(deviceLocale());
       // Nothing of the previous learner stays reachable: cache and whole stack reset
       // (audit M-72). Her unsent answers and photos stay on the device unless she
       // signed out on purpose (settings deletes them there, after a warning).
@@ -100,14 +106,29 @@ export default function RootLayout() {
       router.replace('/');
       if (ended === 'expired') toast.show(i18n.t('common:session.expired'));
     });
-    // A new privacy text while the app is open: the server refuses until it is
-    // accepted again (409 consent_outdated), so go to the consent screen.
-    const offConsent = queryClient.getQueryCache().subscribe((event) => {
-      if (event.type !== 'updated' || event.action.type !== 'error') return;
+    const offQueries = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type !== 'updated') return;
+      // The profile's language, wherever the app was entered (a notification tap, a
+      // reload), not only through the start screen (p2-locale-not-applied-on-direct-routes).
+      if (event.action.type === 'success') {
+        const locale = learnerLocaleOf(event.query.queryKey, event.action.data);
+        if (locale) applyLocale(locale);
+        return;
+      }
+      if (event.action.type !== 'error') return;
       const err = event.action.error;
-      if (err instanceof ApiError && err.reason === 'consent_outdated') {
+      if (!(err instanceof ApiError)) return;
+      // A new privacy text while the app is open: the server refuses until it is
+      // accepted again (409 consent_outdated), so go to the consent screen.
+      if (err.reason === 'consent_outdated') {
         void queryClient.invalidateQueries({ queryKey: keys.me });
         router.replace('/consent');
+      }
+      // The deletion started: the account takes no more changes (409 deletion_running).
+      if (err.reason === 'deletion_running') {
+        void queryClient.invalidateQueries({ queryKey: keys.me });
+        if (router.canDismiss()) router.dismissAll();
+        router.replace('/deleting');
       }
     });
     // A tap (also the one that started the app) is kept until the API has it and
@@ -123,7 +144,7 @@ export default function RootLayout() {
     return () => {
       offOnline();
       offAdmin();
-      offConsent();
+      offQueries();
       offSession();
       offTap();
     };

@@ -54,5 +54,11 @@
   },
   "session": {
     "expired": "Se cerró tu sesión. Vuelve a entrar: lo que aún no se había enviado sigue aquí."
-  }
+  },
+  "deleting": {
+    "title": "Tu cuenta se está eliminando",
+    "body": "Normalmente solo tarda unos minutos. Después, todo lo que LearnBuddy guardó sobre ti habrá desaparecido. Ya no se puede cambiar nada.",
+    "sign_out": "Cerrar sesión"
+  },
+  "outbox_refused": "Una respuesta guardada llegó demasiado tarde: la tarea ya estaba cerrada."
 }

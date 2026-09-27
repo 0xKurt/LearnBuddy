@@ -129,7 +129,7 @@
   "delivery": {
     "scheduled": "llegará {{when}}",
     "sending": "enviando",
-    "accepted": "enviado a tu móvil",
+    "accepted": "de camino a tu móvil",
     "provider_accepted": "enviado a tu móvil",
     "provider_rejected": "no se ha podido enviar a tu móvil",
     "send_failed": "no se ha podido enviar a tu móvil",
@@ -178,6 +178,7 @@
     "plan_step_agreed_in_app": "Acordado: {{title}} {{when}} – aparece aquí en la app (los mensajes al móvil están desactivados)",
     "open_area": "Mostrado: {{what}}",
     "set_contact_quiet": "Al móvil solo de {{from}} a {{to}}, nunca después de las {{quiet}}",
+    "set_contact_days": "nunca estos días: {{days}}",
     "request_material_undone": "No hace falta foto: {{title}}"
   },
   "intro": {

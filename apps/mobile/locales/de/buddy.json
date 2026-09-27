@@ -129,7 +129,7 @@
   "delivery": {
     "scheduled": "kommt {{when}}",
     "sending": "wird geschickt",
-    "accepted": "an dein Handy geschickt",
+    "accepted": "unterwegs zu deinem Handy",
     "provider_accepted": "an dein Handy geschickt",
     "provider_rejected": "konnte nicht an dein Handy geschickt werden",
     "send_failed": "konnte nicht an dein Handy geschickt werden",
@@ -178,6 +178,7 @@
     "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Nachrichten aufs Handy sind aus)",
     "open_area": "Gezeigt: {{what}}",
     "set_contact_quiet": "Aufs Handy nur zwischen {{from}} und {{to}} Uhr, nie nach {{quiet}} Uhr",
+    "set_contact_days": "nie an diesen Tagen: {{days}}",
     "request_material_undone": "Kein Foto nötig: {{title}}"
   },
   "intro": {

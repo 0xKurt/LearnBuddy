@@ -84,6 +84,8 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
             full
             wrap
             onPress={() => folds.toggle(fold)}
+            // Screen readers hear whether the group is open (p2-ux-settings-fold-no-expanded-state).
+            expanded={open}
             accessibilityHint={summary}
             label={heading}
           >

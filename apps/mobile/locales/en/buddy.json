@@ -129,7 +129,7 @@
   "delivery": {
     "scheduled": "coming {{when}}",
     "sending": "being sent",
-    "accepted": "sent to your phone",
+    "accepted": "on its way to your phone",
     "provider_accepted": "sent to your phone",
     "provider_rejected": "couldn't be sent to your phone",
     "send_failed": "couldn't be sent to your phone",
@@ -149,7 +149,7 @@
   },
   "action": {
     "remember": "Noted: {{statement}}",
-    "remember_until": "Noted until {{date}}: {{statement}}",
+    "remember_until": "Noted until {{date}} (inclusive): {{statement}}",
     "correct_memory": "Corrected: {{statement}}",
     "forget": "Forgotten: {{statement}}",
     "set_level_school": "School year {{grade}}",
@@ -178,6 +178,7 @@
     "plan_step_agreed_in_app": "Agreed: {{title}} {{when}} – shows up here in the app (messages to your phone are off)",
     "open_area": "Shown: {{what}}",
     "set_contact_quiet": "To the phone only between {{from}} and {{to}}, never after {{quiet}}",
+    "set_contact_days": "never on these days: {{days}}",
     "request_material_undone": "No photo needed: {{title}}"
   },
   "intro": {

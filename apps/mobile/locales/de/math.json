@@ -2,6 +2,7 @@
   "spoken": {
     "frac": "{{num}} durch {{den}}",
     "frac_long": "Bruch: {{num}}, geteilt durch {{den}}",
+    "mixed": "und {{num}} durch {{den}}",
     "power": "hoch {{exp}}",
     "squared": "Quadrat",
     "cubed": "hoch 3",

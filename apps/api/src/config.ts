@@ -51,7 +51,7 @@ const Config = z
     /** HMAC key for short-lived admin sessions (PIN-gated, minors). */
     ADMIN_TOKEN_SECRET: z.string().min(32),
     /** Version of the privacy text the app shows; consent must match it. */
-    CONSENT_VERSION: z.string().min(1).default('2026-09-25'),
+    CONSENT_VERSION: z.string().min(1).default('2026-09-27'),
     /**
      * Oldest app build the API still serves (x-app-version, e.g. "1.4.0"); older builds get
      * 426 update_required and ask to update (audit M-69). Unset: every build is served.
