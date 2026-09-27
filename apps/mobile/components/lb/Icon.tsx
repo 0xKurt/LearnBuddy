@@ -27,7 +27,8 @@ export type IconName =
   | 'book'
   | 'keyboard'
   | 'headphones'
-  | 'stop';
+  | 'stop'
+  | 'file';
 
 type IconProps = {
   name: IconName;
@@ -226,6 +227,13 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
           <Path d="M4 15v-3a8 8 0 0116 0v3" {...common} />
           <Rect x={3} y={14} width={4.5} height={6.5} rx={1.8} {...common} />
           <Rect x={16.5} y={14} width={4.5} height={6.5} rx={1.8} {...common} />
+        </Svg>
+      );
+    case 'file':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" {...common} />
+          <Path d="M14 3v5h5M9 13h6M9 17h4" {...common} />
         </Svg>
       );
     case 'stop':

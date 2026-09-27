@@ -565,6 +565,18 @@ over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage 
 light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
 scanned school PDF (the tests script the model).
 
+**Files and sharing in the app** (`app/capture.tsx`, `lib/capture/files.ts`, `incoming.ts`,
+`drop.web.ts`, `components/capture/ShareIntake.tsx`). One more quiet choice next to the camera:
+"Aus Fotos" and "Aus Dateien" share one row under "Foto machen" (fits 360×740). "Aus Dateien" is
+`expo-document-picker` for PDFs and images; images go through the same preparation and photo check
+as camera photos, a PDF gets its own copy (`fileCopy.ts`: two shares called "Arbeitsblatt.pdf" stay
+two files) and shows as a page tile with its name; PDFs together over 15 MB, and other file types,
+are said in a toast, not dropped silently. In the browser the same button is a file input, and
+files dragged onto the page show a drop hint and land in the capture. A refusal from submit
+(`too_many_pages`, …) keeps the files on the screen and the send button waits until they change
+(the same files cannot pass); the draft remembers which entry is a PDF, and a sent set with a PDF
+has no page thumbnail (page numbers are not file positions there).
+
 **Deleting** ("Blatt löschen", D-7) takes the sheet and its merged pages out of the library,
 Buddy's picture, running sessions (open questions closed like "Frage passt nicht"), prepared
 practice (a step left without questions goes back to planned) and its homework help session

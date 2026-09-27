@@ -1,11 +1,12 @@
 {
   "title": "Fotografier dein Blatt",
-  "intro": "Arbeitsblatt, Buchseite oder Heft – ich mache Übungen daraus.",
+  "intro": "Arbeitsblatt, Buchseite oder Heft – als Foto oder PDF. Ich mache Übungen daraus.",
   "tip": "Tipp: Ganze Seite, gutes Licht, von oben.",
   "privacy": "Die Fotos werden spätestens 7 Tage nach dem Lesen gelöscht.",
   "camera": "Foto machen",
   "camera_more": "Noch ein Foto",
   "library": "Aus Fotos wählen",
+  "library_short": "Aus Fotos",
   "photos_title_one": "{{count}} Foto",
   "photos_title_other": "{{count}} Fotos",
   "photo_label": "Foto {{index}} von {{total}}",
@@ -76,5 +77,21 @@
     "discarded_other": "{{count}} Fotos verworfen.",
     "undo": "Rückgängig",
     "undo_label": "Verworfene Fotos zurückholen"
+  },
+  "files": {
+    "pick": "Aus Dateien",
+    "pick_label": "Aus Dateien wählen – PDF oder Bild",
+    "title_one": "{{count}} Datei",
+    "title_other": "{{count}} Dateien",
+    "pdf_label": "PDF {{index}} von {{total}}: {{name}}",
+    "drop": "Loslassen – ich nehme Fotos und PDFs.",
+    "error": "Deine Dateien gingen gerade nicht auf. Versuch es nochmal.",
+    "unsupported_one": "Eine Datei ist kein Bild und kein PDF – die lasse ich weg.",
+    "unsupported_other": "{{count}} Dateien sind kein Bild und kein PDF – die lasse ich weg.",
+    "too_large": "Das PDF ist zu groß – höchstens {{max}} MB gehen. Fotografier das Blatt lieber."
+  },
+  "share": {
+    "nothing": "Schick mir ein Foto oder PDF von deinem Blatt – Text und Links kann ich hier nicht lesen.",
+    "signed_out": "Melde dich zuerst an – dann teil das Blatt nochmal mit LearnBuddy."
   }
 }
