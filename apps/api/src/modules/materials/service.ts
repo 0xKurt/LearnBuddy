@@ -379,9 +379,10 @@ export async function retryMaterial(
     );
     if (runs.counted >= MAX_EXTRACTION_ATTEMPTS)
       throw new AppError('conflict', 'Retried too often', { reason: 'retry_limit' });
-    await tx.query(`update materials set status = 'queued', failure_reason = null where id = $1`, [
-      materialId,
-    ]);
+    await tx.query(
+      `update materials set status = 'queued', failure_reason = null, read_stage = null where id = $1`,
+      [materialId],
+    );
     const jobId = await enqueueJob(tx, {
       learnerId,
       kind: 'extract_material',
@@ -485,7 +486,9 @@ async function retryTransient(
         now,
       });
       if (requeued)
-        await tx.query(`update materials set status = 'queued' where id = $1`, [materialId]);
+        await tx.query(`update materials set status = 'queued', read_stage = null where id = $1`, [
+          materialId,
+        ]);
     });
     return;
   }
@@ -506,11 +509,11 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     return;
   }
   const started = await deps.db.query(
-    `update materials set status = 'processing'
+    `update materials set status = 'processing', read_stage = 'opening', read_stage_at = $4
       where id = $1
         and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')
       returning id`,
-    [materialId, job.id, job.lease_token],
+    [materialId, job.id, job.lease_token, deps.now()],
   );
   if (started.length === 0) return; // the lease went to another run
   const learner = await deps.db.one<{
@@ -556,6 +559,13 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   // Without a model nothing can read the photos: say so at once, not after minutes of futile
   // retries (p2-uf-llm-disabled-capture-dead-end). Not her sheet's fault: the run is uncounted.
   if (!deps.llm.available) return fail(deps, job, materialId, 'model_error', { uncounted: true });
+  // The photos are loaded: Buddy reads them now (the card on the home says so, rule 5).
+  await deps.db.query(
+    `update materials set read_stage = 'reading', read_stage_at = $4
+      where id = $1 and status = 'processing'
+        and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')`,
+    [materialId, job.id, job.lease_token, deps.now()],
+  );
   let result;
   try {
     const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {

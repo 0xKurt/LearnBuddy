@@ -84,7 +84,10 @@ export default function CaptureScreen() {
     add?: string | string[];
     /** Android: photos from a camera session the system cut off (lib/capture/pendingCamera.ts). */
     pending?: string | string[];
+    /** Opened from talk mode: once sent, back to the conversation there. */
+    from?: string | string[];
   }>();
+  const fromTalk = params.from === 'talk';
   const pending = params.pending === '1';
   const resume = params.resume === '1';
   /** What the photos are for; a resumed draft brings its own. */
@@ -348,6 +351,9 @@ export default function CaptureScreen() {
           // there (p2-J-06). Its questions join the sheet once read.
           void queryClient.invalidateQueries({ queryKey: keys.material(completes) });
           toast.show(t('capture:again.added'));
+          router.back();
+        } else if (fromTalk && router.canGoBack()) {
+          // Shown to Buddy while talking: back to talk mode, which says it is being read.
           router.back();
         } else {
           // Back to Buddy's home, which now shows the reading (opens it if it isn't in the stack).

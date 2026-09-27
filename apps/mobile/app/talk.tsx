@@ -7,37 +7,36 @@
 // something to tap (start learning, open a part of the app), the loop pauses
 // so she can tap it. The mic is only on while this screen is open, which she
 // opened herself; "Beenden" or the keyboard ends it.
+// Buddy's orb shows the state (components/voice/TalkOrb.tsx) — listening,
+// thinking, speaking, idle — and tapping it while he speaks interrupts him. Two
+// soft tones mark listening starting and ending (lib/speech/cues.ts). The camera
+// shows Buddy a photo: it goes into the same conversation, and she comes back here.
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  Linking,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { AccessibilityInfo, Linking, Platform, ScrollView, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AreaCard } from '../components/buddy/AreaCard.js';
-import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { OfferCard } from '../components/learn/OfferCard.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { MicButton } from '../components/voice/MicButton.js';
+import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
 import { useVoiceInput } from '../components/voice/useVoiceInput.js';
 import { newId } from '../lib/api/client.js';
 import { sendMessageStreamed } from '../lib/api/endpoints.js';
-import { setHome } from '../lib/api/queries.js';
+import { setHome, useHome } from '../lib/api/queries.js';
 import { useAnnounce } from '../lib/announce.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
+import { haptic } from '../lib/haptics.js';
+import { playCue } from '../lib/speech/cues.js';
+import { fadeIn } from '../lib/theme/enter.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
 import { talkListensByItself } from '../lib/speech/handsFree.js';
@@ -80,14 +79,19 @@ export default function TalkScreen() {
 
   function listen(): void {
     if (!open.current) return;
-    turnSeq.current++;
+    const me = ++turnSeq.current;
     stopSpeaking();
     setProblem(null);
     setPhase('listening');
-    if (voiceRef.current.state === 'idle') voiceRef.current.toggle();
+    // A soft tone first, then the microphone (it would hear the tone otherwise).
+    void playCue('listen').then(() => {
+      if (!open.current || turnSeq.current !== me) return;
+      if (voiceRef.current.state === 'idle') voiceRef.current.toggle();
+    });
   }
 
   async function answer(text: string): Promise<void> {
+    void playCue('done');
     setSaid(text);
     setReply(null);
     setLive(null);
@@ -216,6 +220,7 @@ export default function TalkScreen() {
   }, [phase, voice.state, voice.hint, voice.denied]);
 
   function onMic(): void {
+    haptic.tap();
     if (phase === 'listening' && voice.state === 'recording') {
       voice.toggle(); // Done speaking (or stop listening).
       return;
@@ -223,6 +228,16 @@ export default function TalkScreen() {
     if (phase === 'thinking') return;
     listen(); // Paused, or interrupting Buddy.
   }
+
+  /** A tap on Buddy while he speaks: he stops (and waits for the mic). */
+  function interrupt(): void {
+    haptic.tap();
+    stopSpeaking();
+  }
+
+  // Her photo is being read (she showed Buddy something): said here too.
+  const home = useHome();
+  const reading = home.data?.now?.type === 'material_processing';
 
   const listening = phase === 'listening' && voice.state === 'recording';
   const headline =
@@ -237,9 +252,19 @@ export default function TalkScreen() {
     ? voice.onDevice
       ? t('buddy:talk.listening_sub')
       : t('buddy:talk.tap_when_done')
-    : phase === 'paused' && !problem && !voice.hint && !voice.denied
-      ? t('buddy:talk.paused_sub')
-      : null;
+    : phase === 'speaking'
+      ? t('buddy:talk.tap_orb')
+      : phase === 'paused' && !problem && !voice.hint && !voice.denied
+        ? t('buddy:talk.paused_sub')
+        : null;
+  const orbMode: OrbMode =
+    phase === 'thinking' || voice.state === 'transcribing'
+      ? 'thinking'
+      : phase === 'speaking'
+        ? 'speaking'
+        : listening || voice.state === 'starting'
+          ? 'listening'
+          : 'idle';
 
   // Every phase change is heard on iOS too (Android reads the live region).
   useAnnounce(headline);
@@ -281,31 +306,66 @@ export default function TalkScreen() {
         >
           {headline}
         </Text>
-        {sub ? (
-          <Text style={[TYPE.title, { color: LB.ink2, fontWeight: '500', textAlign: 'center' }]}>
-            {sub}
-          </Text>
-        ) : null}
+        {/* The line under the headline keeps its room, so Buddy never jumps between states. */}
+        <View style={{ minHeight: TYPE.title.lineHeight, alignSelf: 'stretch' }}>
+          {sub ? (
+            <Animated.Text
+              key={sub}
+              entering={fadeIn()}
+              style={[TYPE.title, { color: LB.ink2, fontWeight: '500', textAlign: 'center' }]}
+            >
+              {sub}
+            </Animated.Text>
+          ) : null}
+        </View>
 
-        <PulsingOrb
-          active={listening || phase === 'speaking'}
-          listening={listening}
-          level={voice.level}
-        />
+        <View style={{ marginVertical: -10 }}>
+          <TalkOrb
+            mode={orbMode}
+            level={voice.level}
+            {...(phase === 'speaking'
+              ? { onPress: interrupt, pressLabel: t('buddy:talk.stop_speaking') }
+              : {})}
+          />
+        </View>
 
         {listening && voice.live ? (
           <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', fontStyle: 'italic' }]}>
             „{voice.live}“
           </Text>
         ) : said && !listening ? (
-          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>„{said}“</Text>
+          <Animated.Text
+            key={`said-${said}`}
+            entering={fadeIn()}
+            style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}
+          >
+            „{said}“
+          </Animated.Text>
         ) : null}
 
         {live && !reply && phase !== 'listening' ? (
-          <Text style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}>{live}</Text>
+          <Animated.Text
+            entering={fadeIn()}
+            style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}
+          >
+            {live}
+          </Animated.Text>
+        ) : null}
+        {reading ? (
+          <Animated.Text
+            entering={fadeIn()}
+            style={[TYPE.small, { textAlign: 'center' }]}
+            accessibilityLiveRegion="polite"
+          >
+            {t('buddy:now.processing_title')}
+          </Animated.Text>
         ) : null}
         {reply && phase !== 'listening' ? (
-          <View style={{ alignSelf: 'stretch', gap: 10 }}>
+          <Animated.View
+            key={reply.id}
+            entering={fadeIn()}
+            style={{ alignSelf: 'stretch', gap: 10 }}
+          >
             <Text style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}>
               {reply.text}
             </Text>
@@ -316,7 +376,7 @@ export default function TalkScreen() {
                 <AreaCard key={a.id} area={a.summary.area} />
               ) : null,
             )}
-          </View>
+          </Animated.View>
         ) : null}
 
         {problem || voice.hint || voice.denied ? (
@@ -340,7 +400,8 @@ export default function TalkScreen() {
         ) : null}
       </ScrollView>
 
-      {/* Voice first: keyboard · big mic · end (the reference layout). */}
+      {/* Voice first: keyboard · big mic · camera, like the chat's voice bar ("Beenden" is the
+          close button on top). */}
       <View
         style={{
           flexDirection: 'row',
@@ -367,64 +428,19 @@ export default function TalkScreen() {
           disabled={phase === 'thinking'}
           onPress={onMic}
         />
-        <View style={{ alignItems: 'center', width: 96 }}>
-          <Btn variant="ghost" size="sm" onPress={leave}>
-            {t('buddy:talk.end')}
-          </Btn>
+        <View style={{ alignItems: 'center', gap: 4, width: 96 }}>
+          <CircleBtn
+            icon="camera"
+            onPress={() => {
+              haptic.tap();
+              // The photo goes into the same conversation; capture brings her back here.
+              router.push({ pathname: '/capture', params: { from: 'talk' } });
+            }}
+            accessibilityLabel={t('buddy:talk.photo_label')}
+          />
+          <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:talk.photo')}</Text>
         </View>
       </View>
     </SafeAreaView>
-  );
-}
-
-/** Buddy's orb, gently breathing while it listens or speaks (still with reduced motion). */
-function PulsingOrb({
-  active,
-  listening,
-  level,
-}: {
-  active: boolean;
-  listening: boolean;
-  level: number;
-}) {
-  const scale = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    let loop: Animated.CompositeAnimation | null = null;
-    let cancelled = false;
-    if (!active) {
-      scale.setValue(1);
-      return;
-    }
-    void AccessibilityInfo.isReduceMotionEnabled()
-      .catch(() => false)
-      .then((reduce) => {
-        if (cancelled || reduce) return;
-        loop = Animated.loop(
-          Animated.sequence([
-            Animated.timing(scale, {
-              toValue: 1.06,
-              duration: 900,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: Platform.OS !== 'web',
-            }),
-            Animated.timing(scale, {
-              toValue: 1,
-              duration: 900,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: Platform.OS !== 'web',
-            }),
-          ]),
-        );
-        loop.start();
-      });
-    return () => {
-      cancelled = true;
-      loop?.stop();
-    };
-  }, [active, scale]);
-  return (
-    <Animated.View style={{ transform: [{ scale }], marginVertical: 18 }}>
-      <BuddyOrb size={200} listening={listening} level={level} />
-    </Animated.View>
   );
 }

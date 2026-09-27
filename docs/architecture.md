@@ -549,6 +549,17 @@ upload URL can deliver a late photo any more (a submit for a deleted material al
 A material becomes failed in one place (`markMaterialFailed`), from the job and from the tick's
 recovery alike: status, the purge and a context bump in one transaction.
 
+**Reading stages** (gap 5, migration 0035): the run holding the reading job's lease reports where
+it is — `read_stage` `opening` (photos being loaded) then `reading` (the model reads them), each
+stamped with the app clock; a requeued reading clears it. The home's `material_processing` card
+carries only real stages (`stage`: `sending` photos on their way, `waiting` for the reader,
+`reading`, and `building` — read, and the Buddy check it woke is due or running, with `found`,
+the tasks found, a result and never a count of work to do), the number of photos (`pages`) and
+the purpose (homework has no practice to build). All pages are read in one model call, so there
+is no page-by-page progress and none is shown; nothing moves by itself (CLAUDE.md rule 5). The app
+(`components/buddy/ReadingCard.tsx`, `lib/buddy/readingStages.ts`) shows the photo, the stage
+and the steps "Angekommen · Lesen · Übungen"; `reading-stages.int.test.ts`.
+
 **Outages are not failures.** The Storage gateway tells an absent photo (`null`) from a provider
 failure (`StorageError`): a failed download retries the run like a retryable model error (backoff
 1, 2, 4 min); a failed existence check on submit answers 503 `storage_unavailable`, never
@@ -858,7 +869,16 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
   screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
   the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
-  every phase is announced. Walkthrough: one full turn
+  every phase is announced. Buddy's orb shows the phase (`components/voice/TalkOrb.tsx`):
+  idle it breathes, listening it follows her voice level, thinking a light ring swirls around
+  it, speaking it pulses in a speech-like rhythm with soft waves (there is no level of Buddy's
+  voice to follow), cross-faded; with reduce motion only the layers fade. Tapping Buddy while he
+  speaks stops him ("Tipp auf Buddy, um ihn zu unterbrechen."). Two quiet synthesised tones
+  (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
+  iOS they play in a session that obeys the silent switch, then talk mode's session is restored
+  (needs live verification on a phone); the web plays none. The camera next to "Tastatur"
+  opens capture (`from=talk`): the photo goes into the same conversation and she comes back to
+  talk mode, which says while it is being read. Walkthrough: one full turn
   with Chromium's fake microphone and a scripted transcript.
 - **Pronunciation** — see Learning modes (`speak`). A judgement that lands after "Beenden" is
   refused (the write locks the session first, 409). Offline, the recording waits for the
