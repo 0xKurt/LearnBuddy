@@ -305,6 +305,11 @@ export const BuddyHome = z.object({
    * photos they just sent ('material') or the practice they just finished ('session').
    */
   working: z.enum(['material', 'session']).nullable().catch(null),
+  /**
+   * She answered a practice question today (her zone): the quiet "Heute geübt ✓" beside the
+   * greeting (DESIGN-BRIEF §What we are NOT allows it). Never a count, never missed days.
+   */
+  practiced_today: z.boolean().catch(false),
   /** Context version the home was built from (debugging and stale checks). */
   context_version: z.number().int(),
 });

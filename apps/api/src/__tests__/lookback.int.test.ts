@@ -207,4 +207,13 @@ describe.skipIf(!dbReady)('Looking back', () => {
     });
     expect(await buddyTexts()).toEqual([]);
   });
+  it('shows "practiced today" from her own answers, in her time zone', async () => {
+    const home = async () => (await l.api.get<BuddyHome>('/buddy')).body.practiced_today;
+    expect(await home()).toBe(false);
+    await shakyPractice(() => WAIT);
+    expect(await home()).toBe(true);
+    // 16:00 in Berlin; nine hours later it is the next day there.
+    env.clock.hours(9);
+    expect(await home()).toBe(false);
+  });
 });

@@ -888,7 +888,9 @@ the practice for a test (user feedback #2).
 `rules`: at most n a day, never after the quiet hour, so the card and the parents' PIN screen
 say exactly that), **done** (Buddy's actions of the last 72 h
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
-and delivery status of each message) and **system** status (model, push, contact, scheduler).
+and delivery status of each message), **system** status (model, push, contact, scheduler) and
+**practiced_today** (she answered, tried or looked at a practice question today in her zone:
+the quiet "Heute geübt ✓" beside the greeting — never a count, never missed days).
 The home is read in one repeatable-read transaction (one snapshot): a job that commits while
 it is read (a page joining the homework session) shows either before or after, never an old
 card next to "nothing working" — the app polls closely only while something is working

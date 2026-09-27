@@ -1,6 +1,7 @@
 {
   "greeting": "Hi {{name}}",
   "greeting_ask": "What's coming up?",
+  "practiced_today": "Practised today",
   "menu": {
     "open": "Open menu",
     "title": "More",
