@@ -50,6 +50,10 @@ test('learning modes: explain, homework help without the solution, practice with
     page.getByText('Du findest ihn mit der Frage „Wem?“', { exact: false }),
   ).toBeVisible();
   await shot(page, '22-explain-intro');
+  // "Anders erklären": a new explanation, the way she tapped (gaps.md #3).
+  await page.getByRole('button', { name: 'Mit Beispiel' }).click();
+  await expect(page.getByText('schenkst deiner Oma Blumen', { exact: false })).toBeVisible();
+  await shot(page, '22a-explain-again');
   await page.getByRole('button', { name: 'Verstanden – frag mich!' }).click();
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();

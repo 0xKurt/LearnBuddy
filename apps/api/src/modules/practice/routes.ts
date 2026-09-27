@@ -3,6 +3,7 @@
 import {
   AnswerRequest,
   HintRequest,
+  ReexplainRequest,
   SpeakRequest,
   StartPracticeRequest,
   StartTopicRequest,
@@ -22,6 +23,7 @@ import { check, readBody } from '../../http/validate.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { startTopic } from './generate.js';
 import { prepareHints } from './hints.js';
+import { reexplain } from './reexplain.js';
 import {
   answerItem,
   deferItem,
@@ -69,6 +71,13 @@ practiceRoutes.post('/sessions/:id/hint', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, HintRequest);
   return c.json(await hintItem(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/** "Anders erklären": a new explanation after the explanation or a closed question's solution. */
+practiceRoutes.post('/sessions/:id/reexplain', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, ReexplainRequest);
+  return c.json(await reexplain(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 practiceRoutes.post('/sessions/:id/reveal', async (c) => {

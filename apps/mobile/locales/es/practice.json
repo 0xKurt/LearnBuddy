@@ -132,5 +132,14 @@
   },
   "later": "Más tarde",
   "later_hint": "El ejercicio sigue abierto y vuelve después de los demás.",
-  "later_done": "Vale, ese vuelve más tarde."
+  "later_done": "Vale, ese vuelve más tarde.",
+  "reexplain": {
+    "label": "¿Te lo explico de otra forma?",
+    "simpler": "Más fácil",
+    "example": "Con un ejemplo",
+    "why": "¿Por qué es así?",
+    "hint": "Buddy te lo explica otra vez, de esta forma.",
+    "thinking": "Buddy lo explica de otra forma …",
+    "title": "Explicado de otra forma"
+  }
 }

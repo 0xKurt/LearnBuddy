@@ -24,6 +24,7 @@ import type {
   AnswerResponse,
   ItemView,
   PracticeTurnView,
+  ReexplainWay,
   SessionItemView,
   SessionView,
 } from '@learnbuddy/shared-types/contracts';
@@ -58,6 +59,7 @@ import { ExplainCard, ExplainText } from '../../components/practice/ExplainCard.
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
+import { Reexplain } from '../../components/practice/Reexplain.js';
 import { AgainButton } from '../../components/practice/AgainButton.js';
 import { SessionSummary } from '../../components/practice/SessionSummary.js';
 import { SelfSolvedCard, SolutionCard } from '../../components/practice/SolutionCard.js';
@@ -74,6 +76,7 @@ import {
   finishSession,
   flagItem,
   hintItem,
+  reexplainItem,
   revealItem,
 } from '../../lib/api/endpoints.js';
 import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js';
@@ -138,6 +141,11 @@ function verdictWordKey(verdict: PracticeTurnView['verdict']): string | null {
   return `practice:verdict.${verdict ?? 'unchecked'}`;
 }
 
+/** A turn about a question (not an "Anders erklären" of the session's explanation). */
+function aboutQuestion(turn: PracticeTurnView): boolean {
+  return turn.item_id !== null;
+}
+
 function backToBuddy(): void {
   // Pops back to Buddy when it is below in the stack, otherwise replaces this
   // screen with it (router.replace would leave a second Buddy on the stack).
@@ -187,6 +195,8 @@ export default function PracticeScreen() {
   /** "Frage passt nicht": the confirm sheet, and the question it is about. */
   const [flagFor, setFlagFor] = useState<string | null>(null);
   const [flagOpen, setFlagOpen] = useState(false);
+  /** "Anders erklären": the way she tapped, while Buddy writes (itemId null: the explanation). */
+  const [again, setAgain] = useState<{ itemId: string | null; way: ReexplainWay } | null>(null);
   const working = useRef(false);
   const lastSent = useRef<SentAnswer | null>(null);
   const finishStarted = useRef(false);
@@ -206,7 +216,7 @@ export default function PracticeScreen() {
     session.mode === 'explain' &&
     (session.intro?.trim() ?? '') !== '' &&
     !introRead &&
-    !(session.items.some((i) => i.status !== 'open') || session.turns.length > 0);
+    !(session.items.some((i) => i.status !== 'open') || session.turns.some(aboutQuestion));
   const toRead = onScreen && onScreen.status === 'open' && !introWaiting ? onScreen.item : null;
   // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
   // to the end lets the mic listen again, and a closed question moves on by itself.
@@ -424,6 +434,30 @@ export default function PracticeScreen() {
     }
   }
 
+  /** "Anders erklären": a new explanation of the explanation (itemId null) or of a solution. */
+  async function explainAgain(itemId: string | null, way: ReexplainWay): Promise<void> {
+    if (working.current) return;
+    working.current = true;
+    haptic.tap();
+    setAgain({ itemId, way });
+    setBusy(true);
+    try {
+      const res = await reexplainItem(id, itemId, way);
+      await store(res.session);
+      // Heard like every reply of Buddy's: read aloud in voice mode, else told to a screen reader.
+      const said = spokenText(res.reply.text, words);
+      if (useVoiceMode.getState().on) speakInOrder([{ text: said, lang: currentLocale() }]);
+      else announce(said);
+    } catch (err) {
+      toast.show(messageFor(err), 'error');
+      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+    } finally {
+      working.current = false;
+      setAgain(null);
+      setBusy(false);
+    }
+  }
+
   /** Homework help "Später": the task stays open and comes back after the others. */
   async function later(itemId: string): Promise<void> {
     if (working.current) return;
@@ -628,15 +662,31 @@ export default function PracticeScreen() {
 
   // ─────────────── explain: the explanation first ───────────────
 
-  const started = session.items.some((i) => i.status !== 'open') || session.turns.length > 0;
+  const started =
+    session.items.some((i) => i.status !== 'open') || session.turns.some(aboutQuestion);
+  // "Anders erklären" about the explanation itself (no question).
+  const introAgain = session.turns.filter((turn) => turn.item_id === null);
   if (intro && !introRead && !started) {
     return (
       <Screen title={title} right={endButton}>
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+          ref={scroll}
+          // The explanation and what she asked about it: a short conversation, shown at its end.
+          testID="scroll-thread"
+          contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 16 }}
           keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => {
+            if (introAgain.length > 0 || again !== null)
+              scroll.current?.scrollToEnd({ animated: true });
+          }}
         >
           <ExplainCard text={intro} />
+          <Reexplain
+            turns={introAgain}
+            pending={again?.itemId === null ? again.way : null}
+            disabled={busy || closing}
+            onAsk={(way) => void explainAgain(null, way)}
+          />
         </ScrollView>
         <BottomBar>
           <Btn size="lg" pill full onPress={() => setIntroRead(true)}>
@@ -652,7 +702,15 @@ export default function PracticeScreen() {
   const item = shown.item;
   const open = shown.status === 'open';
   const locked = busy || closing;
-  const turns = session.turns.filter((turn) => turn.item_id === item.id);
+  const itemTurns = session.turns.filter((turn) => turn.item_id === item.id);
+  // Her tries and Buddy's replies; "Anders erklären" exchanges stand after the solution.
+  const turns = itemTurns.filter((turn) => turn.reexplain === null);
+  const turnsAgain = itemTurns.filter((turn) => turn.reexplain !== null);
+  // After a shown solution — in homework after a task she solved herself (never in a test).
+  const canExplainAgain =
+    !open &&
+    !testing &&
+    (shown.answer !== null || (session.mode === 'help' && shown.status === 'correct'));
   const pendingText = pending?.itemId === item.id ? pending.text : null;
   const choices =
     item.kind === 'multiple_choice' && item.choices && item.choices.length > 0
@@ -666,7 +724,7 @@ export default function PracticeScreen() {
       .map((turn) => turn.text),
   );
   // Once there is a conversation (or the solution), keep its newest part in view.
-  const followEnd = turns.length > 0 || pendingText !== null || !open;
+  const followEnd = itemTurns.length > 0 || pendingText !== null || !open;
   // Only a question from a photo or from Buddy; never homework, never during a test.
   const flaggable =
     open &&
@@ -799,6 +857,15 @@ export default function PracticeScreen() {
           {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
             <ListenButton text={shown.answer} lang={item.lang} />
           ) : null}
+          {canExplainAgain ? (
+            <Reexplain
+              turns={turnsAgain}
+              pending={again?.itemId === item.id ? again.way : null}
+              disabled={locked}
+              delay={1000}
+              onAsk={(way) => void explainAgain(item.id, way)}
+            />
+          ) : null}
         </ScrollView>
         {open && choices ? (
           <View
@@ -884,6 +951,14 @@ export default function PracticeScreen() {
           onClose={() => setIntroOpen(false)}
         >
           <ExplainText text={intro} />
+          {introAgain
+            .filter((turn) => turn.role === 'tutor')
+            .map((turn) => (
+              <View key={turn.id} style={{ gap: 8 }}>
+                <Text style={TYPE.label}>{t('practice:reexplain.title')}</Text>
+                <ExplainText text={turn.text} />
+              </View>
+            ))}
         </Sheet>
       ) : null}
     </Screen>

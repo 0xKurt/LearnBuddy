@@ -132,5 +132,14 @@
   },
   "later": "Later",
   "later_hint": "The task stays open and comes back after the others.",
-  "later_done": "All right – that one comes back later."
+  "later_done": "All right – that one comes back later.",
+  "reexplain": {
+    "label": "Explain it differently?",
+    "simpler": "Simpler, please",
+    "example": "With an example",
+    "why": "Why is that?",
+    "hint": "Buddy explains it again, this way.",
+    "thinking": "Buddy is explaining it another way …",
+    "title": "Explained another way"
+  }
 }

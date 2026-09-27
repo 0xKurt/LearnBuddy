@@ -58,6 +58,11 @@
     "speak_almost": "Almost! Look at the marked words.",
     "speak_retry": "Try again – listen to it first.",
     "test_noted": "Noted – on to the next one.",
-    "test_no_hints": "There are no hints in a test – just write what you think, or skip the question."
+    "test_no_hints": "There are no hints in a test – just write what you think, or skip the question.",
+    "reexplain": {
+      "simpler": "Simpler, please",
+      "example": "With an example, please",
+      "why": "Why is that?"
+    }
   }
 }

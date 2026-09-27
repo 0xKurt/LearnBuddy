@@ -36,9 +36,11 @@ type Props = {
   pending: string | null;
   /** A running test: no verdicts until the end. */
   hideVerdicts?: boolean;
+  /** What Buddy is doing while `pending` is on its way (default: looking at her answer). */
+  thinkingLabel?: string;
 };
 
-export function ItemThread({ turns, pending, hideVerdicts = false }: Props) {
+export function ItemThread({ turns, pending, hideVerdicts = false, thinkingLabel }: Props) {
   const { t } = useTranslation('practice');
   // What was there when the screen opened stands still; what arrives now moves.
   const initial = useRef<ReadonlySet<string> | null>(null);
@@ -95,7 +97,7 @@ export function ItemThread({ turns, pending, hideVerdicts = false }: Props) {
               <Bubble mine faded text={pending} speaker={t('thread.you')} />
             </View>
           </Rise>
-          <Thinking label={t('thread.thinking')} />
+          <Thinking label={thinkingLabel ?? t('thread.thinking')} />
         </>
       ) : null}
     </View>

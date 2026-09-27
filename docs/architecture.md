@@ -471,7 +471,7 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 | What                            | Limit                                                                                              |
 | ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                           |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12, new explanations 60 (`config.ts`)                      |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512 |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                          |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                         |
@@ -746,6 +746,20 @@ confirm sheet): the question is archived for future practice and, if still open,
 and it counts neither as answered nor as shaky in the summary or the step's evidence. Only for
 questions from a photo or from Buddy in an active session; homework help and a running test get
 409 `flag_not_allowed`. Idempotent; bumps the context version.
+
+**"Anders erklären"** (gaps.md #3; `POST /practice/sessions/:id/reexplain`, `practice/reexplain.ts`,
+purpose `reexplain`, migration `0036_reexplain.sql`). After the session's explanation (explain
+mode, `item_id` null) and after a closed question's solution, three chips ("Einfacher bitte",
+"Mit Beispiel", "Warum ist das so?") ask the model for a NEW explanation that way — the way is an
+explicit tap (`ReexplainWay`), the model decides how to explain, the output is validated with
+zod. It sees what she already read, so it does not repeat it. Her request and the explanation are
+stored as turns (`verdict = not_an_attempt`, no attempts or hints counted; a turn about the intro
+has no `item_id`), idempotent per `client_turn_id`. Code decides where it is allowed: never in a
+running test (409 `reexplain_not_allowed`), a question only once closed (409 `try_first`), in
+homework only for a task she solved herself (409 `reveal_not_allowed`), and a homework explanation
+that states an open task's answer (`mentionsSolution`, any notation) gets one repair, then nothing
+is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
+Also after the last question closed and the session finished.
 
 ### Learning modes (migration `0003_learning_modes.sql`)
 

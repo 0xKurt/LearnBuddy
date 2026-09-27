@@ -132,5 +132,14 @@
   },
   "later": "Später",
   "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
-  "later_done": "Alles klar – die kommt später nochmal dran."
+  "later_done": "Alles klar – die kommt später nochmal dran.",
+  "reexplain": {
+    "label": "Anders erklärt?",
+    "simpler": "Einfacher bitte",
+    "example": "Mit Beispiel",
+    "why": "Warum ist das so?",
+    "hint": "Buddy erklärt es dir nochmal, auf diese Art.",
+    "thinking": "Buddy erklärt es nochmal anders …",
+    "title": "Nochmal anders erklärt"
+  }
 }

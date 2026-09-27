@@ -56,7 +56,7 @@ export type PracticeLearner = {
   birth_date: string;
 };
 
-type ItemRow = {
+export type ItemRow = {
   id: string;
   kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
   prompt: string;
@@ -77,7 +77,7 @@ type ItemRow = {
   spelling: 'strict' | 'gentle' | null;
 };
 
-type SessionRow = {
+export type SessionRow = {
   id: string;
   learner_id: string;
   step_id: string | null;
@@ -376,7 +376,7 @@ function currentOpen<
 export const REVEAL_AFTER_MISSES = 3;
 
 /** The solution as the learner sees it. */
-function shownSolution(
+export function shownSolution(
   i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit'>,
 ): string {
   if (i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null) {
@@ -386,7 +386,7 @@ function shownSolution(
 }
 
 /** Every form of the solution a homework reply must not state (audit H-9, M-28). */
-function solutionsOf(
+export function solutionsOf(
   i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit' | 'accepted_answers'>,
 ): string[] {
   return [...new Set([shownSolution(i), i.answer, ...i.accepted_answers])];
@@ -404,7 +404,11 @@ function workedReply(
 
 // ─────────────── view ───────────────
 
-async function loadSession(db: Db, learnerId: string, sessionId: string): Promise<SessionRow> {
+export async function loadSession(
+  db: Db,
+  learnerId: string,
+  sessionId: string,
+): Promise<SessionRow> {
   const s = await db.maybeOne<SessionRow>(
     `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
       where id = $1 and learner_id = $2`,
@@ -430,14 +434,15 @@ export async function sessionView(
   );
   const turns = await db.query<{
     id: string;
-    item_id: string;
+    item_id: string | null;
     role: 'learner' | 'tutor';
     text: string;
     verdict: PracticeTurnView['verdict'];
     pronunciation: PracticeTurnView['pronunciation'];
+    reexplain: PracticeTurnView['reexplain'];
     created_at: Date;
   }>(
-    `select id, item_id, role, text, verdict, pronunciation, created_at from practice_turns
+    `select id, item_id, role, text, verdict, pronunciation, reexplain, created_at from practice_turns
       where session_id = $1 order by seq`,
     [sessionId],
   );
@@ -499,6 +504,7 @@ export async function sessionView(
       text: tr.text,
       verdict: tr.verdict,
       pronunciation: tr.pronunciation,
+      reexplain: tr.reexplain,
       created_at: tr.created_at.toISOString(),
     })),
     current_item_id: active ? (current?.id ?? null) : null,
@@ -508,7 +514,7 @@ export async function sessionView(
 
 // ─────────────── answer ───────────────
 
-async function nextSeq(db: Db, sessionId: string): Promise<number> {
+export async function nextSeq(db: Db, sessionId: string): Promise<number> {
   const r = await db.one<{ n: number }>(
     `select coalesce(max(seq), 0)::int as n from practice_turns where session_id = $1`,
     [sessionId],
@@ -521,7 +527,7 @@ function outcomeOf(si: { status: string; first_try_correct: boolean | null }): I
   return 'revealed';
 }
 
-async function replay(
+export async function replay(
   db: Db,
   learnerId: string,
   sessionId: string,
