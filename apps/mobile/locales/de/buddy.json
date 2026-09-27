@@ -225,5 +225,9 @@
   },
   "a11y": {
     "reply": "Buddy: {{text}}"
+  },
+  "card": {
+    "close": "Karte ausblenden",
+    "shown": "Oben liegt eine Karte von Buddy. Du kannst sie ausblenden."
   }
 }

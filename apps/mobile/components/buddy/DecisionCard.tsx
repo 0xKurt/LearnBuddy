@@ -33,6 +33,8 @@ type Props = {
   onOutcome: (goalId: string, outcome: 'good' | 'ok' | 'hard') => void;
   /** Another card is on top: asked in the conversation, with quieter buttons. */
   inline?: boolean;
+  /** Room on the title's right (the close button of the card on top, TopOverlay). */
+  titleInset?: number;
 };
 
 export function DecisionCard({
@@ -42,8 +44,10 @@ export function DecisionCard({
   onAdultOptIn,
   onOutcome,
   inline = false,
+  titleInset = 0,
 }: Props) {
   const { t } = useTranslation('buddy');
+  const inset = { paddingRight: titleInset };
   const size = inline ? 'sm' : 'md';
   if (decision.type === 'how_did_it_go') {
     const goalId = decision.goal.id;
@@ -62,7 +66,7 @@ export function DecisionCard({
     if (inline) return <NoticeBubble text={title}>{answers}</NoticeBubble>;
     return (
       <Card tone="lavender" padding={16} radius={22}>
-        <Text accessibilityRole="header" style={TYPE.title}>
+        <Text accessibilityRole="header" style={[TYPE.title, inset]}>
           {title}
         </Text>
         <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -104,7 +108,7 @@ export function DecisionCard({
   }
   return (
     <Card tone="lavender" padding={16} radius={22}>
-      <Text accessibilityRole="header" style={TYPE.title}>
+      <Text accessibilityRole="header" style={[TYPE.title, inset]}>
         {t('decision.optin_title')}
       </Text>
       <Text style={[TYPE.small, { marginTop: 4 }]}>{body}</Text>

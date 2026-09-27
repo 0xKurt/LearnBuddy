@@ -1,7 +1,7 @@
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { followsEnd, homeLayout } from '../homeLayout.js';
+import { followsEnd, homeLayout, topKey } from '../homeLayout.js';
 
 type Parts = Pick<BuddyHome, 'now' | 'decision' | 'working'>;
 
@@ -52,6 +52,60 @@ describe('home layout (user feedback #6)', () => {
   });
 });
 
+describe('the card on top, closed on this phone (it lies over the menu)', () => {
+  const ready: NonNullable<BuddyHome['now']> = {
+    type: 'practice_ready',
+    step_id: '00000000-0000-4000-8000-000000000003',
+    title: 'Mathearbeit Brüche',
+    question_count: 4,
+    est_minutes: 5,
+    focus_topics: [],
+    goal: null,
+  };
+  const ok = { model: true, scheduler: 'ok' } as const;
+
+  it('stays closed while the card says the same, and comes back when it says something new', () => {
+    const closed = topKey({ now: ready, decision: null, system: ok });
+    expect(closed).not.toBeNull();
+    expect(homeLayout({ now: ready, decision: null, working: null }, closed).top).toBeNull();
+    // Another practice is ready: shown again.
+    const other = { ...ready, step_id: '00000000-0000-4000-8000-000000000004' };
+    expect(homeLayout({ now: other, decision: null, working: null }, closed).top).toBe('now');
+    // The same practice, now with fewer questions: something new, shown again.
+    expect(
+      homeLayout({ now: { ...ready, question_count: 3 }, decision: null, working: null }, closed)
+        .top,
+    ).toBe('now');
+  });
+
+  it('asks a closed decision at the end of the conversation instead', () => {
+    const closed = topKey({ now: null, decision: optIn });
+    expect(homeLayout({ now: null, decision: optIn, working: null }, closed)).toEqual({
+      top: null,
+      decisionInline: true,
+      working: null,
+    });
+  });
+
+  it('says "working" in the conversation when "Ich lese dein Blatt" is closed', () => {
+    const closed = topKey({ now: reading, decision: null });
+    expect(homeLayout({ now: reading, decision: null, working: 'material' }, closed).working).toBe(
+      'thread',
+    );
+  });
+
+  it('has a key for the system notes alone, and none when nothing is on top', () => {
+    expect(topKey({ now: null, decision: null, system: ok })).toBeNull();
+    expect(
+      topKey({ now: null, decision: null, system: { model: false, scheduler: 'ok' } }),
+    ).not.toBeNull();
+    // A note that comes up changes what is on top: shown again.
+    expect(
+      topKey({ now: ready, decision: null, system: { model: true, scheduler: 'stale' } }),
+    ).not.toBe(topKey({ now: ready, decision: null, system: ok }));
+  });
+});
+
 describe('where the conversation stands', () => {
   it('follows the newest message while she is at the end', () => {
     // Buddy's newer replies ("Übungen vorbereitet …") and his question at the end come into
@@ -69,6 +123,16 @@ describe('where the conversation stands', () => {
     expect(followsEnd(false, 150, 150, 500, 1400)).toBe(false);
     // Scrolling down, but not yet at the end: still not following.
     expect(followsEnd(false, 150, 600, 500, 1400)).toBe(false);
+  });
+
+  it('keeps following when the content shrank under it (not her scrolling up)', () => {
+    // The card on top got shorter: less room kept free above the thread, the browser pulls
+    // the offset back (walkthrough 09-buddy-prepared).
+    expect(followsEnd(true, 400, 250, 500, 800, 24, true)).toBe(true);
+    // Without a change of size the same jump is her scrolling up.
+    expect(followsEnd(true, 400, 250, 500, 800)).toBe(false);
+    // Not following stays not following.
+    expect(followsEnd(false, 400, 250, 500, 800, 24, true)).toBe(false);
   });
 
   it('follows again once she is back at the end', () => {

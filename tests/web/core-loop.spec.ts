@@ -14,6 +14,22 @@ mkdirSync(SHOTS, { recursive: true });
 
 /** The app scrolls inside its own views: a tall window shows a whole screen. */
 /** A photographed "worksheet", rendered by the browser itself. */
+/** Where the menu, the greeting and the ways to start stand on Buddy's home (card or not). */
+async function homePositions(page: Page): Promise<number[]> {
+  const ys: number[] = [];
+  for (const target of [
+    page.getByRole('button', { name: 'Menü öffnen' }),
+    page.getByText('Hallo Mia'),
+    // By its label: under a card that covers it, the row is left out for screen readers.
+    page.getByText('Arbeit', { exact: true }),
+  ]) {
+    const box = await target.boundingBox();
+    if (!box) throw new Error('not on the screen');
+    ys.push(Math.round(box.y));
+  }
+  return ys;
+}
+
 async function worksheetJpeg(page: Page, path: string): Promise<void> {
   // A phone photo is big: 1600 × 2000 pixels (800 × 1000 at twice the density).
   const sheet = await page
@@ -109,6 +125,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // is on screen, not below the fold (05-buddy-planned-360).
   await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Eltern fragen' })).toBeInViewport();
+  // The card lies over the greeting and the ways to start: they stand where they stand
+  // without a card (owner: "Die Meldung sollte einfach über dem Menü liegen").
+  const homeAt = await homePositions(page);
   await shot(page, '05-buddy-planned');
 
   // ── Messages to the phone need a parent: the PIN, not the student — and the parent sees
@@ -153,6 +172,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // time and visible as planned — and dropped once she has practised.
   await expect(page.getByText(/Übung bereit: /)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(/4 Aufgaben · ca\. 5 Min\./)).toBeVisible();
+  expect(await homePositions(page)).toEqual(homeAt);
+  // The chat still stands at its newest message under the card.
+  await expect(page.getByText(/Vorbereitet: Mathearbeit Brüche/)).toBeInViewport();
   await shot(page, '09-buddy-prepared');
 
   // ── The useful result: short practice, checked, with calm feedback ──
@@ -194,7 +216,23 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Mach ich – ab jetzt kurze Runden.')).toBeVisible();
   await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeVisible();
+  expect(await homePositions(page)).toEqual(homeAt);
+  await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeInViewport();
   await shot(page, '12-buddy-feedback');
+
+  // ── The card on top is closed with its button: nothing else moves, and on this phone it
+  // stays closed until it says something new ──
+  const card = page.getByTestId('home-card');
+  await expect(card).toBeVisible();
+  await page.getByRole('button', { name: 'Karte ausblenden' }).click();
+  await expect(card).toHaveCount(0);
+  expect(await homePositions(page)).toEqual(homeAt);
+  await page.getByRole('button', { name: 'Arbeit', exact: true }).click({ trial: true });
+  await shot(page, '12b-buddy-card-closed');
+  await page.reload();
+  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeVisible();
+  await expect(card).toHaveCount(0);
 
   // ── Secondary, but one tap away: what Buddy knows, the sheets, the settings ──
   const openMenu = async (item: string) => {

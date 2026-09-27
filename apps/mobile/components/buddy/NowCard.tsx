@@ -32,6 +32,8 @@ type Props = {
   thumb?: string | null;
   /** Buddy is already making practice from it: one card says both (no second note). */
   preparing?: boolean;
+  /** Room on the title's right (the close button of the card on top, TopOverlay). */
+  titleInset?: number;
 };
 
 export function NowCard({
@@ -44,13 +46,15 @@ export function NowCard({
   onRetryMaterial,
   thumb = null,
   preparing = false,
+  titleInset = 0,
 }: Props) {
   const { t } = useTranslation(['buddy', 'practice']);
+  const inset = { paddingRight: titleInset };
   switch (card.type) {
     case 'resume_practice':
       return (
         <Card tone="primaryLt" padding={16} radius={22}>
-          <Text accessibilityRole="header" style={TYPE.title}>
+          <Text accessibilityRole="header" style={[TYPE.title, inset]}>
             {card.mode === 'help'
               ? t('now.resume_title_help')
               : card.mode === 'explain'
@@ -75,7 +79,7 @@ export function NowCard({
     case 'practice_ready':
       return (
         <Card tone="primaryLt" padding={16} radius={22}>
-          <Text accessibilityRole="header" style={TYPE.title}>
+          <Text accessibilityRole="header" style={[TYPE.title, inset]}>
             {t('now.ready_title', { title: card.title })}
           </Text>
           <Text style={[TYPE.body, { marginTop: 4 }]}>
@@ -107,7 +111,7 @@ export function NowCard({
     case 'capture_needed':
       return (
         <Card tone="peach" padding={16} radius={22}>
-          <Text accessibilityRole="header" style={TYPE.title}>
+          <Text accessibilityRole="header" style={[TYPE.title, inset]}>
             {t('now.capture_title')}
           </Text>
           <Text style={[TYPE.body, { marginTop: 4 }]}>
@@ -126,7 +130,7 @@ export function NowCard({
     case 'material_processing':
       return (
         <Card tone="sky" padding={16} radius={22}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, inset]}>
             {thumb ? (
               <Image
                 source={{ uri: thumb }}
@@ -154,7 +158,7 @@ export function NowCard({
     case 'material_failed':
       return (
         <Card tone="butter" padding={16} radius={22}>
-          <Text accessibilityRole="header" style={TYPE.title}>
+          <Text accessibilityRole="header" style={[TYPE.title, inset]}>
             {card.title
               ? t('now.failed_title_named', { title: card.title })
               : t('now.failed_title')}
@@ -189,7 +193,7 @@ export function NowCard({
     case 'practice_result':
       return (
         <Card tone="mint" padding={16} radius={22}>
-          <Text accessibilityRole="header" style={TYPE.title}>
+          <Text accessibilityRole="header" style={[TYPE.title, inset]}>
             {t('now.result_title')}
           </Text>
           {/* The same true, kind words as the result screen — never a hit rate (feedback #1). */}

@@ -7,7 +7,9 @@
 // just sent is read aloud, and the mic is the composer's main control.
 // At most one card on top and one violet button; everything else Buddy asks in
 // the conversation, which stands at its newest message unless she scrolled up to read
-// (lib/homeLayout.ts, user feedback #6).
+// (lib/homeLayout.ts, user feedback #6). The card floats over the greeting and the row of
+// ways to start and can be closed (components/buddy/TopOverlay.tsx): nothing below it moves
+// when it comes or goes.
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
@@ -30,6 +32,7 @@ import { DecisionCard, optInRules, type OptInDecision } from '../components/budd
 import { whenText } from '../components/buddy/describe.js';
 import { NowCard } from '../components/buddy/NowCard.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
+import { CLOSE_INSET, TopOverlay } from '../components/buddy/TopOverlay.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
 import { ChoiceSheet } from '../components/learn/ChoiceSheet.js';
 import { TopicSheet } from '../components/learn/TopicSheet.js';
@@ -46,10 +49,11 @@ import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { VoiceModeToggle } from '../components/voice/VoiceModeToggle.js';
-import { announce } from '../lib/announce.js';
+import { announce, useAnnounce } from '../lib/announce.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { requestAdmin } from '../lib/adminFlow.js';
-import { followsEnd, homeLayout } from '../lib/homeLayout.js';
+import { useClosedCard } from '../lib/homeCard.js';
+import { followsEnd, homeLayout, topKey } from '../lib/homeLayout.js';
 import { ApiError, newId } from '../lib/api/client.js';
 import {
   acceptMissingPages,
@@ -75,6 +79,8 @@ import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
 const VISIBLE_MESSAGES = 6;
+/** Below the start row's round buttons: two lines of label and the room under the row. */
+const LABEL_ROOM = 40;
 
 /** iOS can't present a sheet while another one is still sliding away. */
 const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
@@ -145,7 +151,7 @@ export default function BuddyScreen() {
   const [choice, setChoice] = useState<'homework' | 'vocab' | null>(null);
   const scroll = useRef<ScrollView>(null);
   /** Where the conversation stands, and whether it follows its end. */
-  const threadBox = useRef({ y: 0, following: true });
+  const threadBox = useRef({ y: 0, following: true, view: 0, content: 0 });
   /** To its newest message, unless she scrolled up to read (lib/homeLayout.ts followsEnd). */
   function follow(): void {
     const b = threadBox.current;
@@ -170,6 +176,18 @@ export default function BuddyScreen() {
   // when a slow turn finishes): read aloud in voice mode, otherwise announced to a screen
   // reader (audit M-81) — only while the home is on screen.
   const thread = home.data?.thread;
+
+  // The card on top, unless she closed it on this phone (until it says something else).
+  const closedCard = useClosedCard((s) => s.closed);
+  const closeCard = useClosedCard((s) => s.close);
+  const cardKey = home.data ? topKey(home.data) : null;
+  const openCard = cardKey !== null && cardKey !== closedCard ? cardKey : null;
+  // It lies over the greeting: VoiceOver hears that it came (Android and the web read its
+  // live region).
+  useAnnounce(openCard ? t('buddy:card.shown') : null, { key: openCard ?? undefined });
+  /** How tall the card is, and where the conversation starts under it. */
+  const [cardHeight, setCardHeight] = useState(0);
+  const [threadTop, setThreadTop] = useState(0);
   useEffect(() => {
     const sent = awaitingReply.current;
     if (!sent || !thread || !focused.current) return;
@@ -379,12 +397,13 @@ export default function BuddyScreen() {
   }
 
   const h = home.data;
-  const layout = homeLayout(h);
+  const layout = homeLayout(h, closedCard);
   const decisionCard = h.decision ? (
     <DecisionCard
       key="decision"
       decision={h.decision}
       inline={layout.decisionInline}
+      titleInset={layout.top === 'decision' ? CLOSE_INSET : 0}
       busy={busy}
       onOptIn={(enable) =>
         enable ? void enableContact(false) : void act(() => answerContactOptIn(false))
@@ -528,21 +547,13 @@ export default function BuddyScreen() {
 
   // Once there is a conversation, it gets the room; the ring shrinks to a row.
   const talking = messages.length > 0 || shownPending !== null || notices.length > 0;
-  const top = [
-    !h.system.model ? (
-      <Banner key="model" tone="warning">
-        {t('buddy:system.no_model')}
-      </Banner>
-    ) : null,
-    h.system.scheduler === 'stale' ? (
-      <Banner key="scheduler" tone="warning">
-        {t('buddy:system.scheduler_stale')}
-      </Banner>
-    ) : null,
+  // The card first (the close button sits in its corner), then what the system says.
+  const card =
     layout.top === 'now' && h.now ? (
       <NowCard
         key="now"
         card={h.now}
+        titleInset={CLOSE_INSET}
         thumb={readingThumb}
         preparing={layout.working === 'card'}
         busy={busy}
@@ -572,9 +583,42 @@ export default function BuddyScreen() {
           })
         }
       />
+    ) : layout.top === 'decision' ? (
+      decisionCard
+    ) : null;
+  const notes = [
+    !h.system.model ? (
+      <Banner key="model" tone="warning">
+        {t('buddy:system.no_model')}
+      </Banner>
     ) : null,
-    layout.top === 'decision' ? decisionCard : null,
+    h.system.scheduler === 'stale' ? (
+      <Banner key="scheduler" tone="warning">
+        {t('buddy:system.scheduler_stale')}
+      </Banner>
+    ) : null,
   ].filter((node) => node !== null);
+  // Only system notes: the first one leaves room for the close button.
+  const top = openCard
+    ? card
+      ? [card, ...notes]
+      : notes.map((n, i) =>
+          i === 0 ? (
+            <View key={`inset-${n.key ?? i}`} style={{ paddingRight: CLOSE_INSET + 16 }}>
+              {n}
+            </View>
+          ) : (
+            n
+          ),
+        )
+    : [];
+  // What the card lies over at the top of the conversation stays reachable by scrolling.
+  const underCard = top.length > 0 ? Math.max(0, cardHeight - threadTop) : 0;
+  // While the card covers the ways to start (their round buttons; at most the ends of their
+  // labels would show under it), they and the greeting are left out — no edge peeking out
+  // beside the card, nothing a screen reader finds behind it — in place, so nothing moves.
+  // A shorter card leaves them as they are.
+  const covered = top.length > 0 && threadTop > 0 && cardHeight >= threadTop - LABEL_ROOM;
   // The one headline: her name gets the full width (long names wrap, never overlap).
   const greeting = (
     <View style={{ gap: talking ? 0 : 4 }}>
@@ -589,23 +633,21 @@ export default function BuddyScreen() {
         {t('buddy:greeting', { name: h.learner.name })}
       </Text>
       {/* Personal when something is coming up: the next test; otherwise the open question.
-          With a card on top that card is the personal line. */}
-      {talking && top.length > 0 ? null : (
-        <Text
-          numberOfLines={talking ? 1 : undefined}
-          style={[
-            talking ? TYPE.body : TYPE.title,
-            { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
-          ]}
-        >
-          {nextExam
-            ? t('buddy:next.line', {
-                title: nextExam.title,
-                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
-              })
-            : t('buddy:greeting_ask')}
-        </Text>
-      )}
+          The same with or without a card on top, so nothing moves when it comes or goes. */}
+      <Text
+        numberOfLines={talking ? 1 : undefined}
+        style={[
+          talking ? TYPE.body : TYPE.title,
+          { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
+        ]}
+      >
+        {nextExam
+          ? t('buddy:next.line', {
+              title: nextExam.title,
+              when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+            })
+          : t('buddy:greeting_ask')}
+      </Text>
     </View>
   );
 
@@ -649,52 +691,112 @@ export default function BuddyScreen() {
           </View>
         </View>
 
-        {/* What matters now stays on top; it never scrolls away under the conversation. */}
-        {top.length > 0 ? (
-          <ScrollView
-            testID="scroll-top"
-            style={{ flexGrow: 0, flexShrink: 1, maxHeight: '50%' }}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}
-          >
-            {top}
-          </ScrollView>
-        ) : null}
+        <View style={{ flex: 1 }}>
+          {/* What matters now lies on top, over the greeting and the ways to start: it never
+            pushes them down, and she can close it (only on this phone). */}
+          {openCard && top.length > 0 ? (
+            <TopOverlay
+              id={openCard}
+              closeLabel={t('buddy:card.close')}
+              onClose={() => closeCard(openCard)}
+              onHeight={setCardHeight}
+            >
+              {top}
+            </TopOverlay>
+          ) : null}
 
-        {talking ? (
-          <>
-            <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}>
-              {greeting}
-              {/* The ring, small: starting stays one tap away. */}
-              <StartRow items={orbitItems(h.next)} disabled={pending !== null} />
-            </View>
+          {talking ? (
+            <>
+              <View
+                style={{
+                  paddingHorizontal: 16,
+                  paddingTop: 12,
+                  paddingBottom: 4,
+                  gap: 12,
+                  opacity: covered ? 0 : 1,
+                }}
+                // Where the conversation starts under the card.
+                onLayout={(e) => setThreadTop(e.nativeEvent.layout.height)}
+                pointerEvents={covered ? 'none' : 'auto'}
+                accessibilityElementsHidden={covered}
+                importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
+              >
+                {greeting}
+                {/* The ring, small: starting stays one tap away. */}
+                <StartRow items={orbitItems(h.next)} disabled={pending !== null} />
+              </View>
+              <ScrollView
+                ref={scroll}
+                testID="scroll-thread"
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  justifyContent: 'flex-end',
+                  paddingHorizontal: 16,
+                  paddingTop: 12 + underCard,
+                  paddingBottom: 12,
+                  gap: 10,
+                }}
+                keyboardShouldPersistTaps="handled"
+                // A conversation: at its newest message, unless she scrolled up to read.
+                onScroll={(e) => {
+                  const b = threadBox.current;
+                  const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+                  b.following = followsEnd(
+                    b.following,
+                    b.y,
+                    contentOffset.y,
+                    layoutMeasurement.height,
+                    contentSize.height,
+                    undefined,
+                    b.view !== layoutMeasurement.height || b.content !== contentSize.height,
+                  );
+                  b.y = contentOffset.y;
+                  b.view = layoutMeasurement.height;
+                  b.content = contentSize.height;
+                }}
+                scrollEventThrottle={64}
+                onLayout={follow}
+                onContentSizeChange={follow}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={home.isRefetching}
+                    onRefresh={() => void home.refetch()}
+                  />
+                }
+              >
+                {h.thread.length > VISIBLE_MESSAGES || h.thread_has_more ? (
+                  <Btn size="sm" variant="ghost" center onPress={() => router.push('/history')}>
+                    {t('buddy:thread.load_more')}
+                  </Btn>
+                ) : null}
+                <Conversation
+                  contactOn={h.system.contact_enabled}
+                  messages={messages}
+                  pending={shownPending}
+                  notices={notices}
+                  live={live}
+                  busy={busy || pending !== null}
+                  showActions
+                  onUndo={(id) => void act(() => undoAction(id))}
+                  onOption={(messageId, option) => void send(option, newId(), messageId)}
+                  onResend={(m: MessageView) =>
+                    void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
+                  }
+                />
+              </ScrollView>
+            </>
+          ) : (
             <ScrollView
-              ref={scroll}
-              testID="scroll-thread"
+              testID="scroll-home"
               style={{ flex: 1 }}
               contentContainerStyle={{
                 flexGrow: 1,
-                justifyContent: 'flex-end',
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                gap: 10,
+                justifyContent: 'center',
+                padding: 16,
+                gap: 18,
               }}
               keyboardShouldPersistTaps="handled"
-              // A conversation: at its newest message, unless she scrolled up to read.
-              onScroll={(e) => {
-                const b = threadBox.current;
-                const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
-                b.following = followsEnd(
-                  b.following,
-                  b.y,
-                  contentOffset.y,
-                  layoutMeasurement.height,
-                  contentSize.height,
-                );
-                b.y = contentOffset.y;
-              }}
-              scrollEventThrottle={64}
-              onLayout={follow}
-              onContentSizeChange={follow}
               refreshControl={
                 <RefreshControl
                   refreshing={home.isRefetching}
@@ -702,61 +804,23 @@ export default function BuddyScreen() {
                 />
               }
             >
-              {h.thread.length > VISIBLE_MESSAGES || h.thread_has_more ? (
-                <Btn size="sm" variant="ghost" center onPress={() => router.push('/history')}>
-                  {t('buddy:thread.load_more')}
-                </Btn>
-              ) : null}
-              <Conversation
-                contactOn={h.system.contact_enabled}
-                messages={messages}
-                pending={shownPending}
-                notices={notices}
-                live={live}
-                busy={busy || pending !== null}
-                showActions
-                onUndo={(id) => void act(() => undoAction(id))}
-                onOption={(messageId, option) => void send(option, newId(), messageId)}
-                onResend={(m: MessageView) =>
-                  void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
-                }
+              {greeting}
+              {/* The ring: Buddy in the middle, ways to start around it. */}
+              <OrbitMenu
+                items={orbitItems(h.next)}
+                disabled={pending !== null}
+                // Only Buddy in the middle: nothing that could run into the labels on a small phone.
+                center={<BuddyOrb size={72} />}
               />
+              {/* First visit: one sentence about Buddy; the ring above shows how to start. */}
+              <Text
+                style={[TYPE.body, { color: LB.ink2, textAlign: 'center', paddingHorizontal: 12 }]}
+              >
+                {t('buddy:intro.body')}
+              </Text>
             </ScrollView>
-          </>
-        ) : (
-          <ScrollView
-            testID="scroll-home"
-            style={{ flex: 1 }}
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: 'center',
-              padding: 16,
-              gap: 18,
-            }}
-            keyboardShouldPersistTaps="handled"
-            refreshControl={
-              <RefreshControl
-                refreshing={home.isRefetching}
-                onRefresh={() => void home.refetch()}
-              />
-            }
-          >
-            {greeting}
-            {/* The ring: Buddy in the middle, ways to start around it. */}
-            <OrbitMenu
-              items={orbitItems(h.next)}
-              disabled={pending !== null}
-              // Only Buddy in the middle: nothing that could run into the labels on a small phone.
-              center={<BuddyOrb size={72} />}
-            />
-            {/* First visit: one sentence about Buddy; the ring above shows how to start. */}
-            <Text
-              style={[TYPE.body, { color: LB.ink2, textAlign: 'center', paddingHorizontal: 12 }]}
-            >
-              {t('buddy:intro.body')}
-            </Text>
-          </ScrollView>
-        )}
+          )}
+        </View>
         <Composer
           disabled={pending !== null}
           onSend={(text) => send(text)}
