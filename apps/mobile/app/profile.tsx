@@ -9,7 +9,14 @@
 import type { AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -44,6 +51,8 @@ const LANGUAGES: Array<{ value: AppLocale; label: string }> = [
 export default function Profile() {
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
+  // A small phone (360×740) gets tighter spacing so each step fits (CLAUDE.md rule 16).
+  const compact = useWindowDimensions().height < 780;
   const [relation, setRelation] = useState<'self' | 'child' | null>(null);
   const [name, setName] = useState('');
   const [day, setDay] = useState('');
@@ -149,7 +158,11 @@ export default function Profile() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 18 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingVertical: compact ? 12 : 16,
+            gap: compact ? 12 : 18,
+          }}
           keyboardShouldPersistTaps="handled"
         >
           {parentStep ? (
@@ -269,8 +282,8 @@ export default function Profile() {
             </Text>
           ) : null}
           {parentStep ? (
-            <Card tone="lavender" padding={20}>
-              <View style={{ gap: 12 }}>
+            <Card tone="lavender" padding={compact ? 16 : 20}>
+              <View style={{ gap: compact ? 10 : 12 }}>
                 <Checkbox
                   checked={consent}
                   onChange={setConsent}
@@ -321,12 +334,14 @@ export default function Profile() {
                     />
                   </View>
                 </View>
-                <Text style={[TYPE.small, { color: LB.ink2 }]}>{t('profile.pin_forgot')}</Text>
+                {/* While the two PINs differ, that is what matters; the reset hint returns after. */}
                 {pinRepeat.length === 4 && pin !== pinRepeat ? (
                   <Text style={[TYPE.small, { color: LB.danger }]}>
                     {t('profile.pin_mismatch')}
                   </Text>
-                ) : null}
+                ) : (
+                  <Text style={[TYPE.small, { color: LB.ink2 }]}>{t('profile.pin_forgot')}</Text>
+                )}
               </View>
             </Card>
           ) : null}

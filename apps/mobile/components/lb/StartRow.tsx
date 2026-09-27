@@ -29,7 +29,17 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
           accessibilityRole="button"
           accessibilityLabel={item.label}
           accessibilityState={{ disabled }}
-          style={{ flex: 1, alignItems: 'center', opacity: disabled ? 0.6 : 1 }}
+          // Each item is as wide as its label and shares what is left: on a 360 px phone
+          // "Hausaufgabe" keeps one line (equal fifths broke it mid-word) and a
+          // multi-word label ("Erklär mir was") wraps between words instead.
+          style={{
+            flexGrow: 1,
+            flexShrink: 1,
+            flexBasis: 'auto',
+            minWidth: NODE,
+            alignItems: 'center',
+            opacity: disabled ? 0.6 : 1,
+          }}
         >
           {({ pressed }) => (
             <>
@@ -53,6 +63,9 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
                 numberOfLines={2}
                 style={{
                   marginTop: 4,
+                  // Room for the longest single word ("Hausaufgabe"); longer labels wrap
+                  // between words, so neighbours never run into each other.
+                  maxWidth: 76,
                   // Readable at a glance (user feedback #17: 11 px was too small).
                   fontSize: 12,
                   lineHeight: 15,
