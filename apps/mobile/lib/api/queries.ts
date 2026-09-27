@@ -11,6 +11,8 @@ import { AppState, Platform } from 'react-native';
 import { currentSession } from '../auth/session.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
+import { writeHome } from './homeCache.js';
+import { keys } from './keys.js';
 import {
   getHome,
   getLibrary,
@@ -70,16 +72,7 @@ export function useOnline(): boolean {
   );
 }
 
-export const keys = {
-  me: ['me'] as const,
-  home: ['buddy', 'home'] as const,
-  settings: ['buddy', 'settings'] as const,
-  memory: ['buddy', 'memory'] as const,
-  library: ['library'] as const,
-  material: (id: string) => ['material', id] as const,
-  materialItems: (id: string) => ['material', id, 'items'] as const,
-  session: (id: string) => ['practice', id] as const,
-};
+export { keys };
 
 export const useMe = () => useQuery({ queryKey: keys.me, queryFn: getMe });
 
@@ -102,7 +95,7 @@ export const useHome = () =>
 export function setHome(home: BuddyHome): void {
   // A turn that finishes after sign-out never refills the cleared cache (shared phone).
   if (!currentSession()) return;
-  queryClient.setQueryData(keys.home, home);
+  writeHome(queryClient, home);
 }
 
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: getSettings });
