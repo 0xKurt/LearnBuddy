@@ -268,11 +268,23 @@ taken over while alive; it applies a decision (and its fallbacks) only while it 
 learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed`. A cancelled
 job can be planned again with the same key (an exam moved away and back).
 
+**No job kind ends silently** (`scheduler/terminal.ts`, audit S-5). Each kind has a terminal
+effect, enforced by the type of the registry, applied once per parked job by the tick: a parked
+Buddy check comes back once as a model-free fallback (the countdown before a test still
+prepares practice; an agreed reminder is still sent by its template); a parked turn recovery
+marks her message failed (`internal`); extraction, photo purge and account deletion are reported
+to the operator (parked counts and the last error per kind in `GET /health`).
+
 `POST /internal/tick` runs everything due within a 45 s budget: recovery → reading photos →
 Buddy per learner (one learner's failure does not stop the others) → delivery → receipts →
 maintenance. pg_cron calls it every minute via pg_net (`0002_scheduler.sql`, URL and secret from
 Supabase Vault). The Node server can run it in-process for development. A heartbeat makes a dead
-scheduler visible (`GET /health` → 503, and "scheduler: stale" in the app).
+scheduler visible: `GET /health` is 503 unless the last run is recent **and** finished without
+errors **and** no due work has waited over 10 minutes (`scheduler/health.ts`: state
+`ok | stale | failing`, last error, parked jobs per kind). The app shows "scheduler: stale" also
+when there never was a heartbeat but her own work is waiting (a misconfigured cron is not
+"unknown"), and `system.model` is false when no model is configured or today's allowance for
+conversations is used up.
 
 ### Events (ADR 0005 stage 4)
 

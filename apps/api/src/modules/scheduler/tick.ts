@@ -12,6 +12,7 @@ import { queueStalledTurns, runLearnerJobs } from '../buddy/check.js';
 import { checkReceipts, sendDueOutreach, type DeliveryStats } from '../buddy/delivery.js';
 import { executeAccountDeletion } from '../identity/privacy.js';
 import { abandonStaleUploads, purgePhotos, runExtraction } from '../materials/service.js';
+import { handleParkedJobs } from './terminal.js';
 import {
   claimJobs,
   finishJob,
@@ -70,6 +71,11 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
                             and j.payload ->> 'material_id' = m.id::text and j.status in ('queued','running'))`,
     );
     await abandonStaleUploads(deps);
+  });
+
+  // Every parked job gets its defined effect (terminal.ts): no job kind ends silently.
+  await guard('terminal', async () => {
+    await handleParkedJobs(deps);
   });
 
   // Reading photos first: a learner is usually waiting for it.

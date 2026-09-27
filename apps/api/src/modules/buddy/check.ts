@@ -182,9 +182,19 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
 
     const triggers = jobs.filter((j) => j.kind === 'buddy_check').map(triggerOf);
     const agreed = triggers.filter((t) => t.reason === 'step_due');
-    const others = triggers.filter((t) => t.reason !== 'step_due');
+    // A check whose worker failed all its attempts comes back once, model-free (terminal.ts).
+    const parked = triggers.filter((t) => t.reason !== 'step_due' && t.job.payload.fallback_only);
+    const others = triggers.filter((t) => t.reason !== 'step_due' && !t.job.payload.fallback_only);
 
     for (const trig of agreed) await sendAgreedReminder(deps, learner, trig);
+    if (parked.length > 0) {
+      try {
+        await fallback(deps, learner, parked, 'parked', { learnerId, token, jobs });
+      } catch (err) {
+        if (!(err instanceof LeaseLost)) throw err;
+        return { jobs: jobs.length, outcome: 'lease_lost' };
+      }
+    }
 
     let outcome = 'done';
     if (others.length > 0) {

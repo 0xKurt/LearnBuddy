@@ -19,10 +19,11 @@ import { identityRoutes } from './modules/identity/routes.js';
 import { materialRoutes } from './modules/materials/routes.js';
 import { voiceRoutes } from './modules/voice/routes.js';
 import { practiceRoutes } from './modules/practice/routes.js';
+import { schedulerHealth, type SchedulerHealth } from './modules/scheduler/health.js';
 import { runTick } from './modules/scheduler/tick.js';
 
 /** The scheduler counts as stalled after this long without a finished run. */
-export const SCHEDULER_STALE_MS = 10 * 60_000;
+export { SCHEDULER_STALE_MS } from './modules/scheduler/health.js';
 
 function sameSecret(given: string, expected: string): boolean {
   const a = createHash('sha256').update(given).digest();
@@ -103,26 +104,23 @@ export function createApp(deps: Deps): Hono<AppEnv> {
 
   const api = new Hono<AppEnv>();
 
-  /** Liveness for monitoring: database reachable and the scheduler actually running. */
+  /**
+   * Liveness for monitoring: database reachable and the scheduler actually running — a recent
+   * run without errors and no due work left waiting — plus parked jobs per kind (audit S-5).
+   */
   api.get('/health', async (c) => {
-    let dbOk = true;
-    let lastRun: Date | null = null;
+    let scheduler: SchedulerHealth | null = null;
     try {
-      const hb = await deps.db.maybeOne<{ last_finished_at: Date | null }>(
-        `select last_finished_at from system_heartbeats where name = 'tick'`,
-      );
-      lastRun = hb?.last_finished_at ?? null;
+      scheduler = await schedulerHealth(deps.db, deps.now());
     } catch {
-      dbOk = false;
+      scheduler = null;
     }
-    const schedulerOk =
-      lastRun !== null && deps.now().getTime() - lastRun.getTime() < SCHEDULER_STALE_MS;
-    const ok = dbOk && schedulerOk;
+    const ok = scheduler?.ok ?? false;
     return c.json(
       {
         ok,
-        database: dbOk,
-        scheduler: { ok: schedulerOk, last_run_at: lastRun ? lastRun.toISOString() : null },
+        database: scheduler !== null,
+        scheduler: scheduler ?? { ok: false, state: 'stale', last_run_at: null, parked: {} },
         model: deps.llm.available,
         push: deps.push.enabled,
       },

@@ -16,6 +16,7 @@ import type {
   UpcomingItem,
 } from '@learnbuddy/shared-types/contracts';
 
+import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
 import { daysBetween, localParts } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
@@ -512,13 +513,26 @@ async function systemOf(
   const hb = await deps.db.maybeOne<{ last_finished_at: Date | null }>(
     `select last_finished_at from system_heartbeats where name = 'tick'`,
   );
-  const scheduler = !hb?.last_finished_at
-    ? 'unknown'
-    : now.getTime() - hb.last_finished_at.getTime() < HEARTBEAT_STALE_MS
-      ? 'ok'
-      : 'stale';
+  const recent =
+    !!hb?.last_finished_at && now.getTime() - hb.last_finished_at.getTime() < HEARTBEAT_STALE_MS;
+  // Her own work waiting well past its time means nothing is running it — also when there has
+  // never been a heartbeat (a misconfigured scheduler is not "unknown", audit M-67).
+  const waiting = await deps.db.maybeOne(
+    `select 1 from jobs where learner_id = $1 and status = 'queued' and run_at < $2 limit 1`,
+    [learnerId, new Date(now.getTime() - HEARTBEAT_STALE_MS)],
+  );
+  const scheduler =
+    waiting || (hb?.last_finished_at && !recent) ? 'stale' : recent ? 'ok' : 'unknown';
+  // "Buddy can answer" only when a model is configured and today's allowance is not used up
+  // (audit p2-F-journey-outage-invisible-on-home).
+  const today = localParts(now, state.settings.timezone).date;
+  const used = await deps.db.maybeOne<{ calls: number }>(
+    `select calls from usage_daily where learner_id = $1 and day = $2 and kind = 'buddy_turn'`,
+    [learnerId, today],
+  );
+  const model = deps.llm.available && (used?.calls ?? 0) < DAILY_LIMITS.buddy_turn;
   return {
-    model: deps.llm.available,
+    model,
     push,
     contact_enabled: state.settings.contact_enabled,
     scheduler,
