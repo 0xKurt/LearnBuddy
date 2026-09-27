@@ -1007,4 +1007,5 @@ const speed = [...byKind].map(
 console.log(`\n${passed}/${total} Prüfungen\n${speed.join('\n')}`);
 out.splice(1, 0, `**${passed}/${total} Prüfungen** · ${speed.join(' · ')}`, '');
 if (process.env.LENA_OUT) writeFileSync(process.env.LENA_OUT, `${out.join('\n')}\n`);
-process.exit(0);
+// Machine-gradable: any failed check fails the run (audit evals-not-machine-gradable).
+process.exit(passed === total ? 0 : 1);

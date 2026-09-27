@@ -403,7 +403,9 @@ multi-region endpoint `eu`, not in `europe-west4` (probed 2026-09-26). A route c
 the task's eval passes on it (`evals/buddy`, `evals/tutor`, `evals/speak`, `evals/speed`).
 `evals/lena` plays whole journeys of a 12-year-old against the live model (child-like typing,
 photographed sheets, spoken answers, begging for the solution) and writes a transcript to read;
-report in `reports/Lena-Durchlauf.md`. A spoken or typed choice counts as the option it names —
+report in `reports/Lena-Durchlauf.md`. `evals/buddy`, `evals/tutor`, `evals/voice`, `evals/lena`
+and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/speak`,
+`evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
 ### Speed

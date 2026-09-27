@@ -252,3 +252,5 @@ console.log(
   `\n${CASES.length - failed}/${CASES.length} passed · model ${cost.model} · ${cost.n} tutor calls · $${(Number(cost.micros ?? 0) / 1e6).toFixed(4)} · wait median ${Math.round(sorted[Math.floor(sorted.length / 2)] ?? 0)}ms, max ${Math.round(sorted.at(-1) ?? 0)}ms`,
 );
 await env.close();
+// Machine-gradable: any failed case fails the run (audit evals-not-machine-gradable).
+process.exit(failed > 0 ? 1 : 0);

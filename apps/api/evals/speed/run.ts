@@ -195,3 +195,5 @@ for (const [step, rs] of by) {
 }
 console.log(`\n${over} step(s) over budget. Cost column: model cost in USD per 1000 such steps.`);
 await env.close();
+// Machine-gradable: a step over its budget fails the run (audit evals-not-machine-gradable).
+process.exit(over > 0 ? 1 : 0);

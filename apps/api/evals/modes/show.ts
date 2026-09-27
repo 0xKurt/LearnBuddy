@@ -5,7 +5,7 @@
 //   cd apps/api && npx tsx evals/modes/show.ts [explain|practice|vocab|speak|help|photo]
 // (the photo steps use test-results/web/worksheet.jpg from scripts/web-walkthrough.sh)
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import type { AnswerResponse, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { loadConfig } from '../../src/config.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
@@ -77,6 +77,17 @@ const say = async (s: SessionView, itemId: string, text: string) => {
   );
   return r.body;
 };
+// Rendered by scripts/web-walkthrough.sh (gitignored): the photo steps are skipped with a
+// note on a fresh checkout instead of crashing (audit modes-show-depends-on-walkthrough-artefact).
+const WORKSHEET = new URL('../../../../test-results/web/worksheet.jpg', import.meta.url);
+function haveWorksheet(step: string): boolean {
+  if (existsSync(WORKSHEET)) return true;
+  console.log(
+    `\n# ${step}: skipped — run scripts/web-walkthrough.sh once to render the worksheet photo`,
+  );
+  return false;
+}
+
 if (want('explain')) {
   console.log('\n# Erklär mir den Dativ');
   const s = await topic('explain', 'Erklär mir den Dativ, ich versteh das nicht');
@@ -122,39 +133,35 @@ if (want('help')) {
     ])
       await say(s, id, t);
   }
-  console.log('\n# Hausaufgabe Foto');
-  const created = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(
-    '/materials',
-    { client_request_id: crypto.randomUUID(), photo_mimes: ['image/jpeg'], purpose: 'homework' },
-  );
-  env.storage.put(
-    created.body.uploads[0]!.path,
-    new Uint8Array(
-      readFileSync(new URL('../../../../test-results/web/worksheet.jpg', import.meta.url)),
-    ),
-  );
-  await l.api.post(`/materials/${created.body.material.id}/submit`);
-  await env.flushBackground();
-  const m = (await l.api.get<MaterialView>(`/materials/${created.body.material.id}`)).body;
-  console.log('  material', m.status, m.failure_reason, m.session_id);
-  if (m.session_id) {
-    const hs = (await l.api.get<SessionView>(`/practice/sessions/${m.session_id}`)).body;
-    show(hs);
-    await say(hs, hs.items[0]!.item.id, 'hilfe');
+  if (haveWorksheet('Hausaufgabe Foto')) {
+    console.log('\n# Hausaufgabe Foto');
+    const created = await l.api.post<{
+      material: { id: string };
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: crypto.randomUUID(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'homework',
+    });
+    env.storage.put(created.body.uploads[0]!.path, new Uint8Array(readFileSync(WORKSHEET)));
+    await l.api.post(`/materials/${created.body.material.id}/submit`);
+    await env.flushBackground();
+    const m = (await l.api.get<MaterialView>(`/materials/${created.body.material.id}`)).body;
+    console.log('  material', m.status, m.failure_reason, m.session_id);
+    if (m.session_id) {
+      const hs = (await l.api.get<SessionView>(`/practice/sessions/${m.session_id}`)).body;
+      show(hs);
+      await say(hs, hs.items[0]!.item.id, 'hilfe');
+    }
   }
 }
-if (want('photo')) {
+if (want('photo') && haveWorksheet('Lernblatt Foto')) {
   console.log('\n# Lernblatt Foto (Mathe-Schreibweise, Figuren)');
   const created = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(
     '/materials',
     { client_request_id: crypto.randomUUID(), photo_mimes: ['image/jpeg'] },
   );
-  env.storage.put(
-    created.body.uploads[0]!.path,
-    new Uint8Array(
-      readFileSync(new URL('../../../../test-results/web/worksheet.jpg', import.meta.url)),
-    ),
-  );
+  env.storage.put(created.body.uploads[0]!.path, new Uint8Array(readFileSync(WORKSHEET)));
   await l.api.post(`/materials/${created.body.material.id}/submit`);
   await env.flushBackground();
   const items = await env.db.query<{

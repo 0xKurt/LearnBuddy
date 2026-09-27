@@ -122,6 +122,14 @@ describe.skipIf(!dbReady)('scale', () => {
     );
     expect(stalled.filter((s) => s === 'Seq Scan buddy_messages')).toEqual([]);
   });
+
+  it('has no dead material language column (0029)', async () => {
+    const col = await env.db.maybeOne(
+      `select 1 from information_schema.columns
+        where table_schema = 'public' and table_name = 'materials' and column_name = 'language'`,
+    );
+    expect(col).toBeNull();
+  });
 });
 
 describe.skipIf(!dbReady)('older app builds (M-69)', () => {
