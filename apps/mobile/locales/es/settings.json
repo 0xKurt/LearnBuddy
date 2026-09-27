@@ -100,17 +100,20 @@
     },
     "export": {
       "title": "Exportar datos",
-      "body": "Todo lo que está guardado, en forma de texto. Para tener una copia o compartirlo.",
+      "body": "Todo lo guardado, como archivo. Para conservarlo o pasarlo.",
       "cta": "Crear exportación",
       "working": "Creando la exportación…",
       "share_title": "Exportación de LearnBuddy",
-      "share_failed": "No se ha podido compartir. Inténtalo de nuevo."
+      "share_failed": "No se pudo entregar el archivo. Inténtalo de nuevo.",
+      "shared": "La exportación se ha entregado.",
+      "saved": "La exportación se ha guardado como archivo."
     },
     "delete": {
       "title": "Eliminar la cuenta",
       "body": "Todo se elimina definitivamente pasados 7 días. Hasta entonces, puedes cancelarlo.",
       "cta": "Eliminar la cuenta…",
       "scheduled": "La eliminación está programada: a partir del {{date}} a las {{time}}. Hasta entonces, puedes cancelarla.",
+      "running": "Tu cuenta se está eliminando ahora mismo. Ya no se puede cancelar.",
       "cancel": "Cancelar la eliminación",
       "cancelled": "Eliminación cancelada. Todo sigue como estaba.",
       "confirm_title": "¿Seguro que quieres eliminar la cuenta?",
@@ -152,7 +155,17 @@
       "password_saved": "Nueva contraseña guardada."
     },
     "open": "Abrir",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "profile": {
+      "title": "Corregir el perfil",
+      "current": "{{name}}, nacido/a el {{date}}",
+      "body": "¿El nombre o la fecha de nacimiento no son correctos? Aquí se puede corregir.",
+      "cta": "Corregir",
+      "sheet_title": "Corregir el perfil",
+      "name": "Nombre",
+      "save": "Guardar",
+      "saved": "Perfil guardado."
+    }
   },
   "status": {
     "title": "¿Funciona todo?",

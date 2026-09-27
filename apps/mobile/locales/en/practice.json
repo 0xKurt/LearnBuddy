@@ -58,6 +58,7 @@
     "recording": "I'm listening … {{time}} / {{max}}",
     "recording_label": "Recording, {{time}} of {{max}}",
     "listening": "Buddy is listening …",
+    "waiting_offline": "No connection right now. Your recording will be sent as soon as you're back online.",
     "send_failed": "Your recording hasn't reached Buddy yet.",
     "resend": "Send again",
     "record_new": "Record again",

@@ -13,7 +13,12 @@ import {
   type LlmResult,
 } from '../llm/gateway.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
-import type { StorageGateway, UploadTarget } from '../storage/gateway.js';
+import {
+  STORAGE_REMOVE_LIMIT,
+  StorageError,
+  type StorageGateway,
+  type UploadTarget,
+} from '../storage/gateway.js';
 
 /** The only clock in tests; the API never reads Date.now() for decisions. */
 export class TestClock {
@@ -147,6 +152,8 @@ export type FakeAuthOp = 'verify' | 'deleteUser';
 export class FakeAuth implements AuthVerifier {
   private readonly tokens = new Map<string, AuthUser>();
   readonly deleted: string[] = [];
+  /** Passwords set through the API (user id → password). */
+  readonly passwords = new Map<string, string>();
   private seq = 0;
   private readonly failures: { op: FakeAuthOp; error: Error }[] = [];
   /** While true every operation throws like an unreachable Supabase Auth. */
@@ -162,6 +169,13 @@ export class FakeAuth implements AuthVerifier {
     if (this.outage) throw authOutage();
     const i = this.failures.findIndex((f) => f.op === op);
     if (i >= 0) throw this.failures.splice(i, 1)[0]!.error;
+  }
+
+  /** The next `times` deleteUser calls fail like an Auth outage. */
+  failNextDelete(times = 1): this {
+    for (let i = 0; i < times; i++)
+      this.failNext('deleteUser', new Error('could not delete auth user'));
+    return this;
   }
 
   constructor(private readonly db: Db) {}
@@ -198,12 +212,40 @@ export class FakeAuth implements AuthVerifier {
     await this.db.query(`delete from auth.users where id = $1`, [userId]);
     for (const [token, u] of this.tokens) if (u.userId === userId) this.tokens.delete(token);
   }
+
+  async updatePassword(userId: string, password: string): Promise<void> {
+    this.passwords.set(userId, password);
+  }
 }
 
+export type StorageOp = 'sign' | 'list' | 'download' | 'remove';
+
+/**
+ * Photo storage stand-in with the provider's limits (at most 1000 paths per delete) and
+ * scripted outages (`failNext`), so failure paths are tested, not only the happy path.
+ */
 export class MemoryStorage implements StorageGateway {
   readonly objects = new Map<string, Uint8Array>();
+  /** Every remove request, as sent (to prove chunking). */
+  readonly removeCalls: string[][] = [];
+  private readonly failures = new Map<StorageOp, number>();
+
+  /** The next `times` calls of `op` fail like a provider outage (StorageError). */
+  failNext(op: StorageOp, times = 1): this {
+    this.failures.set(op, (this.failures.get(op) ?? 0) + times);
+    return this;
+  }
+
+  private maybeFail(op: StorageOp): void {
+    const n = this.failures.get(op) ?? 0;
+    if (n > 0) {
+      this.failures.set(op, n - 1);
+      throw new StorageError(op);
+    }
+  }
 
   async createUploadTarget(path: string): Promise<UploadTarget> {
+    this.maybeFail('sign');
     return { path, url: `memory://${path}`, token: 'memory' };
   }
   /** What the app's direct upload would do. */
@@ -211,12 +253,18 @@ export class MemoryStorage implements StorageGateway {
     this.objects.set(path, bytes);
   }
   async existing(paths: string[]): Promise<Set<string>> {
+    this.maybeFail('list');
     return new Set(paths.filter((p) => this.objects.has(p)));
   }
   async download(path: string): Promise<Uint8Array | null> {
+    this.maybeFail('download');
     return this.objects.get(path) ?? null;
   }
   async remove(paths: string[]): Promise<void> {
+    this.removeCalls.push([...paths]);
+    // The hosted API rejects the whole request above its object limit.
+    if (paths.length > STORAGE_REMOVE_LIMIT) throw new StorageError('remove');
+    this.maybeFail('remove');
     for (const p of paths) this.objects.delete(p);
   }
 }

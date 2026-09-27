@@ -115,7 +115,7 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
         await finishJob(deps.db, j, now, { status: 'done', result: { outcome: 'no_learner' } });
       return { jobs: jobs.length, outcome: 'no_learner' };
     }
-    const learner = { ...learnerRow, isMinor: isMinor(learnerRow.birth_date, now) };
+    const learner = { ...learnerRow, isMinor: isMinor(learnerRow, now) };
 
     // Interrupted conversation turns: take over with a new claim, run again.
     for (const job of jobs.filter((j) => j.kind === 'buddy_turn')) {
@@ -691,7 +691,8 @@ async function fallback(
         }>(
           `select m.id, m.title, m.goal_id, m.subject_id,
                   (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as n
-             from materials m where m.id = $1 and m.learner_id = $2 and m.status = 'ready'`,
+             from materials m where m.id = $1 and m.learner_id = $2 and m.status = 'ready'
+              and m.archived_at is null`,
           [trig.materialId, learner.id],
         );
         if (m && m.n > 0) {

@@ -12,6 +12,16 @@ type Playing = { token: number; onEnd: (why: ListenEnd) => void };
 
 let playing: Playing | null = null;
 let nextToken = 1;
+const startListeners = new Set<() => void>();
+
+/**
+ * Called whenever something starts being read aloud. The hands-free mic uses it to drop a
+ * recording that would otherwise hear Buddy's own voice (audit M-78).
+ */
+export function onSpeakStart(listener: () => void): () => void {
+  startListeners.add(listener);
+  return () => startListeners.delete(listener);
+}
 const voiceCache = new Map<string, string | null>();
 
 async function voiceFor(locale: string): Promise<string | null> {
@@ -41,6 +51,7 @@ export async function speak(
   lang: string,
   opts: { slow?: boolean; onEnd?: (why: ListenEnd) => void } = {},
 ): Promise<void> {
+  for (const listener of [...startListeners]) listener();
   const previous = playing;
   const token = nextToken++;
   playing = { token, onEnd: opts.onEnd ?? (() => undefined) };

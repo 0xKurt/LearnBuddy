@@ -5,12 +5,14 @@ import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
 
 export function WorkingNote({ what }: { what: NonNullable<BuddyHome['working']> }) {
   const { t } = useTranslation('buddy');
+  useAnnounce(t(`working.${what}`));
   return (
     <Card padding={16} radius={18}>
       <View

@@ -59,6 +59,10 @@ export const createLearner = (input: CreateLearnerRequest) =>
 export const updateLearner = (input: UpdateLearnerRequest) =>
   request('PATCH', '/learner', { body: input, schema: LearnerView });
 
+/** A new password; for a minor's profile the server wants the parents' admin token. */
+export const setPassword = (password: string) =>
+  request('PUT', '/account/password', { body: { password } });
+
 export const setPin = (pin: string, currentPin?: string) =>
   request('PUT', '/account/pin', {
     body: { pin, ...(currentPin ? { current_pin: currentPin } : {}) },
@@ -212,10 +216,10 @@ export const postAnswer = (id: string, body: AnswerRequest) =>
  * A recording for a speak question; retrying the same recording reuses its
  * client_turn_id. Waits while offline, like answerItem.
  */
-export const speakItem = (id: string, body: SpeakRequest) =>
+export const speakItem = (id: string, body: SpeakRequest, opts: { signal?: AbortSignal } = {}) =>
   sendWhenOnline(
     () => request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
-    { isConnectionError: noConnection },
+    { isConnectionError: noConnection, signal: opts.signal },
   );
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */
 export const startTopic = (body: StartTopicRequest) =>

@@ -13,7 +13,24 @@ export type JobKind =
   | 'buddy_check'
   | 'buddy_turn'
   | 'purge_photos'
+  | 'purge_content'
   | 'delete_account';
+
+/**
+ * Erasure jobs are never parked: a privacy promise does not expire after three tries.
+ * They retry with backoff until done, record why they wait (`last_error`), and /health
+ * reports them once overdue (docs/privacy.md §Export and deletion).
+ */
+export const PERSISTENT_KINDS: readonly JobKind[] = [
+  'purge_photos',
+  'purge_content',
+  'delete_account',
+];
+
+/** Backoff of a persistent job after `attempts` failed runs: 1, 2, 4 … minutes, at most 6 h. */
+export function backoffMs(attempts: number): number {
+  return Math.min(60_000 * 2 ** Math.max(0, Math.min(attempts - 1, 12)), 6 * 3_600_000);
+}
 
 export type JobRow = {
   id: string;
@@ -65,14 +82,16 @@ export async function enqueueJob(db: Db, job: NewJob): Promise<string | null> {
 export async function recoverExpiredLeases(db: Db, now: Date): Promise<number> {
   const rows = await db.query(
     `update jobs
-        set status = case when attempts >= max_attempts then 'failed' else 'queued' end,
+        set status = case when attempts >= max_attempts and not (kind = any($2::text[]))
+                          then 'failed' else 'queued' end,
             last_error = 'lease_expired',
             lease_token = null,
             lease_until = null,
-            finished_at = case when attempts >= max_attempts then $1::timestamptz else null end
+            finished_at = case when attempts >= max_attempts and not (kind = any($2::text[]))
+                               then $1::timestamptz else null end
       where status = 'running' and lease_until < $1
       returning id`,
-    [now],
+    [now, PERSISTENT_KINDS],
   );
   return rows.length;
 }
@@ -162,6 +181,45 @@ export async function retryJob(
       returning id`,
     [job.id, job.lease_token, opts.runAt, opts.error, opts.countAttempt, opts.now],
   );
+  return rows.length === 1;
+}
+
+/**
+ * A persistent job failed this run: queue it again after its backoff, never park it.
+ * False if the lease was lost.
+ */
+export async function rescheduleJob(
+  db: Db,
+  job: JobRow,
+  opts: { now: Date; error: string; runAt?: Date },
+): Promise<boolean> {
+  const rows = await db.query(
+    `update jobs set status = 'queued', run_at = $3, last_error = $4, lease_token = null,
+                     lease_until = null
+      where id = $1 and lease_token = $2 and status = 'running'
+      returning id`,
+    [
+      job.id,
+      job.lease_token,
+      opts.runAt ?? new Date(opts.now.getTime() + backoffMs(job.attempts)),
+      opts.error.slice(0, 200),
+    ],
+  );
+  return rows.length === 1;
+}
+
+/** Store a running job's progress (its resumable state); false if the lease was lost. */
+export async function saveJobPayload(
+  db: Db,
+  job: JobRow,
+  payload: Record<string, unknown>,
+): Promise<boolean> {
+  const rows = await db.query(
+    `update jobs set payload = $3 where id = $1 and lease_token = $2 and status = 'running'
+      returning id`,
+    [job.id, job.lease_token, payload],
+  );
+  if (rows.length === 1) job.payload = payload;
   return rows.length === 1;
 }
 

@@ -18,7 +18,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { adminToken } from '../../lib/admin.js';
 import { ApiError } from '../../lib/api/client.js';
 import { updateSettings } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
@@ -31,7 +30,7 @@ import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Segmented } from '../lb/Segmented.js';
 import { toast } from '../lb/Toast.js';
-import { AdultCancelled, asAdultIfNeeded, confirmAdult } from './adultGate.js';
+import { AdultCancelled, asAdultIfNeeded, confirmAdult, useAdminUnlocked } from './adultGate.js';
 import { Group } from './Group.js';
 import { Divider, Row } from './Row.js';
 
@@ -83,8 +82,10 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
     settings.paused_until !== null && new Date(settings.paused_until).getTime() > Date.now()
       ? settings.paused_until
       : null;
-  // For a minor the API only allows loosening with the parents' admin token (10 minutes).
-  const canLoosen = settings.can_loosen && (!isMinor || adminToken() !== null);
+  // For a minor the API only allows loosening with the parents' admin token, which
+  // lasts for one step: afterwards the button asks the parents again.
+  const unlocked = useAdminUnlocked();
+  const canLoosen = settings.can_loosen && (!isMinor || unlocked);
 
   async function patch(
     change: Change,
@@ -94,14 +95,14 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
     inFlight.current = true;
     setSaving(true);
     try {
-      if (opts.loosens && !canLoosen) await confirmAdult(pinSet);
+      if (opts.loosens && !canLoosen) await confirmAdult(pinSet, 'contact');
       const next = await asAdultIfNeeded(
         () => {
           const version =
             queryClient.getQueryData<BuddySettingsView>(keys.settings)?.version ?? settings.version;
           return updateSettings({ ...change, version });
         },
-        { pinSet },
+        { pinSet, purpose: 'contact' },
       );
       queryClient.setQueryData(keys.settings, next);
       // The home shows whether contact is on (system status, the opt-in card).

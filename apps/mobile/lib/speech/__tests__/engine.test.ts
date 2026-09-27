@@ -17,6 +17,7 @@ const ios: EngineFacts = {
   installedLocales: null,
   locale: 'de-DE',
   failedBefore: false,
+  deviceLocale: 'de-DE',
 };
 
 describe('chooseEngine', () => {
@@ -31,6 +32,14 @@ describe('chooseEngine', () => {
   it('falls back to our EU path when the device would need its servers', () => {
     expect(chooseEngine({ ...ios, onDeviceSupported: false })).toBe('server');
     expect(chooseEngine({ ...ios, available: false })).toBe('server');
+  });
+
+  it('on iOS uses the device only for the locale its on-device check covered (H-34)', () => {
+    // German iPhone, French vocabulary: iOS would drop "on-device only" and use Apple's servers.
+    expect(chooseEngine({ ...ios, locale: 'fr-FR' })).toBe('server');
+    expect(chooseEngine({ ...ios, locale: 'de-AT' })).toBe('server');
+    expect(chooseEngine({ ...ios, locale: 'de_DE' })).toBe('device');
+    expect(chooseEngine({ ...ios, deviceLocale: null })).toBe('server');
   });
 
   it('does not try a locale again that already failed on the device', () => {

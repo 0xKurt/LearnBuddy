@@ -65,7 +65,7 @@ export async function buildHome(
   return {
     learner: { id: learner.id, name: learner.display_name, is_minor: learner.isMinor },
     now: nowCard,
-    notice: noticeOf(state, now),
+    notice: noticeOf(state),
     decision,
     done,
     next: nextOf(state, today, now),
@@ -107,16 +107,12 @@ async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<Budd
 }
 
 /**
- * Pages Buddy could not read, while the sheet is still at hand (a day): Buddy says it at
- * the end of the conversation; the rest of the sheet is ready (docs/architecture.md §Material).
+ * Pages Buddy could not read, while the sheet is still at hand (a day after the reading,
+ * applied in loadBuddyState so Buddy's context says the same): Buddy says it at the end of
+ * the conversation; the rest of the sheet is ready (docs/architecture.md §Material).
  */
-function noticeOf(state: BuddyState, now: Date): HomeNotice | null {
-  const missing = state.materials.find(
-    (m) =>
-      m.status === 'ready' &&
-      m.page_problems.length > 0 &&
-      now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
-  );
+function noticeOf(state: BuddyState): HomeNotice | null {
+  const missing = state.materials.find((m) => m.status === 'ready' && m.page_problems.length > 0);
   if (!missing) return null;
   return {
     type: 'pages_missing',

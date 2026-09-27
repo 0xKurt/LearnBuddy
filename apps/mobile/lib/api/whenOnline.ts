@@ -17,17 +17,34 @@ type Options = {
   attempts?: number;
   /** Pause before the next attempt while online, doubled each time. */
   delayMs?: number;
+  /** Stops waiting for the connection (she records again or skips): rejects with WaitAborted. */
+  signal?: AbortSignal;
 };
 
+/** The wait for a connection was given up; nothing was sent. */
+export class WaitAborted extends Error {
+  constructor() {
+    super('waiting for the connection was cancelled');
+    this.name = 'WaitAborted';
+  }
+}
+
 /** Resolves once the device counts as online (immediately when it already does). */
-export function whenOnline(): Promise<void> {
+export function whenOnline(signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.reject(new WaitAborted());
   if (onlineManager.isOnline()) return Promise.resolve();
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const off = onlineManager.subscribe((online) => {
       if (!online) return;
       off();
+      signal?.removeEventListener('abort', onAbort);
       resolve();
     });
+    const onAbort = () => {
+      off();
+      reject(new WaitAborted());
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
   });
 }
 
@@ -35,11 +52,11 @@ const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 export async function sendWhenOnline<T>(
   send: () => Promise<T>,
-  { isConnectionError, attempts = 3, delayMs = 1000 }: Options,
+  { isConnectionError, attempts = 3, delayMs = 1000, signal }: Options,
 ): Promise<T> {
   let failedOnline = 0;
   for (;;) {
-    await whenOnline();
+    await whenOnline(signal);
     try {
       return await send();
     } catch (err) {

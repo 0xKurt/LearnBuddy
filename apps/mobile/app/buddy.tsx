@@ -42,6 +42,8 @@ import { LoadingState } from '../components/lb/LoadingState.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
+import { VoiceModeToggle } from '../components/voice/VoiceModeToggle.js';
+import { announce } from '../lib/announce.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { requestAdmin } from '../lib/adminFlow.js';
 import { ApiError, newId } from '../lib/api/client.js';
@@ -130,20 +132,36 @@ export default function BuddyScreen() {
   /** The message she sent last whose reply hasn't been read aloud yet (voice mode). */
   const awaitingReply = useRef<string | null>(null);
 
-  // Voice mode: Buddy's reply to what she just sent is read aloud once it is there
-  // (right with the answer, or later when a slow turn finishes).
+  /** The home is the screen she sees (a reply is never read over practice or talk, M-79). */
+  const focused = useRef(true);
+
+  // Buddy's reply to what she just sent, once it is there (right with the answer, or later
+  // when a slow turn finishes): read aloud in voice mode, otherwise announced to a screen
+  // reader (audit M-81) — only while the home is on screen.
   const thread = home.data?.thread;
   useEffect(() => {
     const sent = awaitingReply.current;
-    if (!sent || !thread) return;
+    if (!sent || !thread || !focused.current) return;
     const reply = replyAfter(thread, sent);
     if (!reply) return;
     awaitingReply.current = null;
-    if (voiceOn) speakInOrder([{ text: spokenText(reply.text, words), lang: currentLocale() }]);
-  }, [thread, voiceOn, words]);
+    const text = spokenText(reply.text, words);
+    if (voiceOn) speakInOrder([{ text, lang: currentLocale() }]);
+    else announce(t('buddy:a11y.reply', { text }));
+  }, [thread, voiceOn, words, t]);
 
-  // Going to another screen ends whatever is being read.
-  useFocusEffect(useCallback(() => () => stopListening(), []));
+  // Going to another screen ends whatever is being read, and a reply that comes later is not
+  // read there.
+  useFocusEffect(
+    useCallback(() => {
+      focused.current = true;
+      return () => {
+        focused.current = false;
+        awaitingReply.current = null;
+        stopListening();
+      };
+    }, []),
+  );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: keys.home });
 
@@ -190,7 +208,7 @@ export default function BuddyScreen() {
         if (!e.speakable) return;
         setLive(e.text);
         followEnd.current = true;
-        if (!useVoiceMode.getState().on) return;
+        if (!useVoiceMode.getState().on || !focused.current) return;
         cur.speaker ??= createStreamSpeaker(
           currentLocale(),
           (sentence) => spokenText(sentence, words),
@@ -208,6 +226,8 @@ export default function BuddyScreen() {
       if (res.status === 'failed') toast.show(turnFailureText(res.error_code), 'error');
     } catch (err) {
       cur.speaker?.cancel();
+      // Nothing to read when the reply comes after a failure she was told about.
+      awaitingReply.current = null;
       toast.show(messageFor(err), 'error');
       // The message may have reached the server (then it shows as failed or processing).
       await refresh();
@@ -220,7 +240,7 @@ export default function BuddyScreen() {
 
   async function enableContact(asAdult: boolean) {
     try {
-      if (asAdult && !(await requestAdmin())) return;
+      if (asAdult && !(await requestAdmin('contact'))) return;
       await act(async () => {
         const next = await answerContactOptIn(true);
         // Ask for notification permission only now, when it has a purpose.
@@ -545,11 +565,15 @@ export default function BuddyScreen() {
             accessibilityLabel={t('buddy:talk.open')}
           />
           <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
-          <CircleBtn
-            icon="more"
-            onPress={() => setMenuOpen(true)}
-            accessibilityLabel={t('buddy:menu.open')}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {/* Voice mode: Buddy reads replies aloud and the mic leads (audit M-77). */}
+            <VoiceModeToggle />
+            <CircleBtn
+              icon="more"
+              onPress={() => setMenuOpen(true)}
+              accessibilityLabel={t('buddy:menu.open')}
+            />
+          </View>
         </View>
 
         {/* What matters now stays on top; it never scrolls away under the conversation. */}

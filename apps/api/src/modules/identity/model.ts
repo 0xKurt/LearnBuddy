@@ -15,9 +15,8 @@ export type AccountRow = {
   consent_version: string;
   consent_at: Date;
   pin_hash: string | null;
-  pin_failed_count: number;
-  pin_locked_until: Date | null;
   deletion_due_at: Date | null;
+  deletion_started_at: Date | null;
 };
 
 export type LearnerRow = {
@@ -32,7 +31,10 @@ export type LearnerRow = {
   version: number;
 };
 
+/** Below this age nobody can hold the account (DSGVO Art. 8, docs/privacy.md). */
 export const MINOR_AGE = 16;
+/** A child profile stays behind the parents' PIN gate until this age (D-8). */
+export const CHILD_GATE_AGE = 18;
 
 /** Whole years between a birth date (YYYY-MM-DD) and `on` (UTC date). */
 export function ageOn(birthDate: string, on: Date): number {
@@ -44,8 +46,17 @@ export function ageOn(birthDate: string, on: Date): number {
   return age;
 }
 
-export function isMinor(birthDate: string, on: Date): boolean {
-  return ageOn(birthDate, on) < MINOR_AGE;
+/**
+ * Whether the profile is behind the parents' PIN gate: a child profile until
+ * 18 (D-8: 16- and 17-year-olds may be child profiles, and their parents keep
+ * the gate), a self profile never (only 16+ may hold the account).
+ */
+export function isMinor(
+  learner: { birth_date: string; relation: 'self' | 'child' },
+  on: Date,
+): boolean {
+  const age = ageOn(learner.birth_date, on);
+  return learner.relation === 'child' ? age < CHILD_GATE_AGE : age < MINOR_AGE;
 }
 
 export async function findAccountByUser(db: Db, authUserId: string): Promise<AccountRow | null> {
@@ -72,9 +83,11 @@ export async function verifyPin(pin: string, stored: string): Promise<boolean> {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-export const PIN_MAX_FAILURES = 5;
-export const PIN_LOCK_MINUTES = 15;
-export const ADMIN_SESSION_MINUTES = 10;
+/**
+ * The admin token proves the adult entered the PIN for one step; the app drops
+ * it after that step, and the server lets it lapse soon after (H-19).
+ */
+export const ADMIN_SESSION_MINUTES = 5;
 
 /** Short-lived proof that the account holder entered the PIN on this device. */
 export function issueAdminToken(

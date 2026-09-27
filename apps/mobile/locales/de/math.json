@@ -9,6 +9,9 @@
     "sqrt": "Wurzel aus {{body}}",
     "root": "{{index}}. Wurzel aus {{body}}",
     "cbrt": "dritte Wurzel aus {{body}}",
+    "period": "Periode {{body}}",
+    "segment": "Strecke {{body}}",
+    "vector": "Vektor {{body}}",
     "symbols": {
       "plus": "plus",
       "minus": "minus",
@@ -31,7 +34,15 @@
       "iff": "genau dann, wenn",
       "lparen": "Klammer auf",
       "rparen": "Klammer zu",
-      "percent": "Prozent"
+      "percent": "Prozent",
+      "angle": "Winkel",
+      "parallel": "parallel zu",
+      "perp": "senkrecht zu",
+      "triangle": "Dreieck",
+      "cong": "kongruent zu",
+      "sim": "ähnlich zu",
+      "in": "Element von",
+      "notin": "kein Element von"
     }
   },
   "figure": {

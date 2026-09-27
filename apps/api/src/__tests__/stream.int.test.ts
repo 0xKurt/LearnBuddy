@@ -103,6 +103,51 @@ describe.skipIf(!dbReady)('streamed replies', () => {
     });
   });
 
+  it('sends the first words while the model is still writing, not after the turn', async () => {
+    // Reads the body chunk by chunk (audit stream-test-buffered): a buffered response would
+    // only arrive after the gate opens, so the first reply event must come before that.
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const full = answer('Ein Nenner ist die Zahl unter dem Bruchstrich.').json;
+    env.llm.script('buddy_turn', async (req) => {
+      req.onPartial?.('{"lookups":[],"actions":[],"reply":"Ein Nenner ist');
+      await gate;
+      return full;
+    });
+    const res = await env.app.request('/v1/buddy/messages', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${l.token}`,
+        'content-type': 'application/json',
+        accept: 'text/event-stream',
+      },
+      body: JSON.stringify({ client_message_id: uuid(), text: 'was ist ein nenner' }),
+    });
+    expect(res.status).toBe(200);
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let early = '';
+    const timeout = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 5000));
+    while (!/^event: reply$/m.test(early)) {
+      const chunk = await Promise.race([reader.read(), timeout]);
+      if (chunk === 'timeout' || chunk.done) break;
+      early += decoder.decode(chunk.value, { stream: true });
+    }
+    expect(early).toMatch(/^event: reply$/m);
+    expect(early).toContain('Ein Nenner ist');
+    expect(early).not.toMatch(/^event: done$/m);
+    release();
+    let rest = '';
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      rest += decoder.decode(chunk.value, { stream: true });
+    }
+    expect(rest).toMatch(/^event: done$/m);
+  });
+
   it('never marks a reply speakable whose answer changes something', async () => {
     env.llm.script(
       'buddy_turn',

@@ -1,5 +1,5 @@
-// "Sprachmodus an/aus" in a screen header: a round 44 pt switch with the
-// headphones icon. On, it is filled and carries a small check badge (not only
+// "Sprachmodus an/aus" in a screen header (Buddy's home and practice): a round 44 pt
+// switch with the speaker icon (the headphones stand for conversation mode). On, it is filled and carries a small check badge (not only
 // a colour change); switching it on explains in one line what changes.
 // Switching it off stops whatever is being read aloud.
 
@@ -49,7 +49,7 @@ export function VoiceModeToggle() {
             opacity: pressed ? 0.78 : 1,
           }}
         >
-          <Icon name="headphones" size={21} color={on ? '#fff' : LB.ink} />
+          <Icon name="speak" size={21} color={on ? '#fff' : LB.ink} />
           {on ? (
             <View
               style={{

@@ -7,13 +7,20 @@
 // questions (both directions), each with its own FSRS state.
 
 import { Figure } from '@learnbuddy/shared-types/contracts';
-import { compileExpression } from '@learnbuddy/shared-math';
+import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
+import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { mentionsSolution } from './tutor.js';
 
-export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs.`;
+export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm; for geometry and sets also \\overline{3} (repeating decimal, segment), \\angle, \\parallel, \\perp, \\in, \\mathbb{N}, \\vec{v}. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs. A dollar sign meaning money is written \\$ ("kostet \\$5").`;
+
+/** How a number key is written (docs/architecture.md §Practice, grading; audit C-1). */
+export const NUMERIC_KEY_RULES = `numeric: answer = the number with a decimal point and no thousands separators (0.125, 1250 — never 0,125 or 1.250); a fraction (3/4) or mixed number (3 1/2) only when the task asks for that form; the unit separately in "unit" ("%" for percent). tolerance only when the task says to round, estimate or measure — otherwise null (exact).`;
+
+/** When case, ß and punctuation decide (decision D-2). */
+export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
 export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.`;
 
@@ -47,7 +54,9 @@ export const ItemDraft = z.object({
     .regex(/^[a-z]{2}$/)
     .nullable()
     .default(null)
-    .describe('vocab: ISO 639-1 language of the prompt, else null'),
+    .describe(
+      'ISO 639-1 language the prompt is written in (vocab: the foreign word; any other question: the language of the sheet or topic)',
+    ),
   lang: z
     .string()
     .regex(/^[a-z]{2}$/)
@@ -55,6 +64,22 @@ export const ItemDraft = z.object({
     .default(null)
     .describe('vocab: language of the answer; speak: language to say it in; else null'),
   figure: Figure.nullable().default(null),
+  tolerance: z
+    .number()
+    .positive()
+    .max(1_000_000)
+    .nullable()
+    .default(null)
+    .describe(
+      'numeric only: the ± difference still counted right when the task asks to round, estimate or measure (e.g. 0.05 for "miss auf den Millimeter genau" in cm); null for an exact result',
+    ),
+  spelling: z
+    .enum(['strict', 'gentle'])
+    .nullable()
+    .default(null)
+    .describe(
+      'short/long/vocab: "strict" when the task practises spelling, capitalisation or punctuation (Rechtschreibung, Kommasetzung, Groß-/Kleinschreibung); "gentle" when they do not matter for the answer; null to leave it to the subject',
+    ),
   source_excerpt: z.string().trim().max(300).nullable(),
   hints: z
     .array(z.string().trim().min(1).max(300))
@@ -115,11 +140,16 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
   }
 }
 
-/** LaTeX the model forgot to put between dollar signs: the whole text is math then. */
-function dollarMath(text: string): string {
-  if (text.includes('$') || !/\\(frac|sqrt|cdot|times|div|pi|le|ge|ne|approx)\b|\^\{/.test(text))
-    return text;
-  return `$${text}$`;
+/**
+ * An explicit tolerance only for a number key, and never wider than a tenth of the key
+ * (decision D-1: a wider tolerance only where the item declares one, and within bounds —
+ * a model-written tolerance must not turn 242 for 240 into a right answer).
+ */
+function usableTolerance(it: ItemDraft): number | null {
+  if (it.kind !== 'numeric' || it.tolerance === null) return null;
+  const key = parseCanonicalKey(it.answer);
+  if (key.value === null || key.value === 0) return null;
+  return it.tolerance <= Math.abs(key.value) / 10 ? it.tolerance : null;
 }
 
 /** Keep only items whose shape is consistent; returns them normalised. */
@@ -128,11 +158,15 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
   for (const raw of items) {
     const it = {
       ...raw,
-      prompt: dollarMath(raw.prompt),
-      answer: dollarMath(raw.answer),
-      accepted_answers: raw.accepted_answers.map(dollarMath),
-      choices: raw.choices ? raw.choices.map(dollarMath) : null,
+      // LaTeX without dollar signs: only the math runs of a sentence, a math field as a whole.
+      prompt: dollarMathRuns(raw.prompt),
+      answer: dollarMathField(raw.answer),
+      accepted_answers: raw.accepted_answers.map(dollarMathField),
+      choices: raw.choices ? raw.choices.map(dollarMathField) : null,
       figure: usableFigure(raw.figure),
+      tolerance: usableTolerance(raw),
+      spelling:
+        raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
     };
     if (it.kind === 'multiple_choice') {
       if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
@@ -156,7 +190,9 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
       out.push({ ...plain, answer: it.prompt, prompt_lang: null });
       continue;
     }
-    out.push({ ...plain, lang: null, prompt_lang: null });
+    // The question's language stays: voice mode reads it and listens in that language, not
+    // the app's (audit M-40). `lang` stays null: it marks translation and speaking items.
+    out.push({ ...plain, lang: null });
   }
   return out;
 }
@@ -175,8 +211,8 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) returning id`,
+                          hints, worked_solution, tolerance, spelling)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -197,6 +233,8 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
         it.figure ? JSON.stringify(it.figure) : null,
         it.hints,
         it.worked_solution,
+        it.tolerance,
+        it.spelling,
       ],
     );
     ids.push(row.id);

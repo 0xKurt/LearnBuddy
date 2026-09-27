@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { hasMath, parseMath, plainText, splitMath, type MathAtom } from '../parse.js';
+import { hasMath, parseMath, plainText, splitMath, THIN, type MathAtom } from '../parse.js';
 import { speakMathText, type SpokenWords } from '../speak.js';
 
 const T = ' ';
@@ -132,7 +132,52 @@ describe('parseMath', () => {
     for (const bad of ['\\frac{1', '}{', '^', 'x^', '\\sqrt[', '\\', '\\unknown{x}', '{{{']) {
       expect(() => parseMath(bad)).not.toThrow();
     }
-    expect(plainText(splitMath('$\\foo$'))).toBe('foo');
+    expect(plainText(splitMath('$\\foo$')).trim()).toBe('foo');
+  });
+
+  it('parses a blank inside math as a gap, not as subscripts (M-41)', () => {
+    expect(parseMath('\\frac{___}{8}')).toEqual([
+      { type: 'frac', num: [{ type: 'blank' }], den: [{ type: 'chars', text: '8' }] },
+    ]);
+    expect(parseMath('3 + \\square')).toEqual([
+      { type: 'chars', text: `3${THIN}+${THIN}` },
+      { type: 'blank' },
+    ]);
+    // Fewer than three underscores keep their LaTeX meaning.
+    expect(parseMath('x_1')).toEqual([
+      { type: 'chars', text: 'x' },
+      { type: 'sub', body: [{ type: 'chars', text: '1' }] },
+    ]);
+  });
+
+  it('never pairs currency dollars into math (M-42)', () => {
+    const text = 'The pen costs $5 and the book costs $3.';
+    expect(splitMath(text)).toEqual([{ type: 'plain', text }]);
+    expect(splitMath('Es kostet 5$ und das Heft 3$.')).toEqual([
+      { type: 'plain', text: 'Es kostet 5$ und das Heft 3$.' },
+    ]);
+    expect(splitMath('costs $2.50, the ruler $1')).toHaveLength(1);
+    // Real math right next to a price still works.
+    expect(splitMath('It costs $5 and $\\frac{1}{2}$ of it is left.').map((s) => s.type)).toEqual([
+      'plain',
+      'math',
+      'plain',
+    ]);
+    expect(hasMath('$x$ and $y$')).toBe(true);
+  });
+
+  it('draws and reads common school notation instead of glued names (M-44)', () => {
+    expect(plainText(splitMath('$0{,}\\overline{3}$'))).toBe('0,3\u0305');
+    expect(speakMathText('$0{,}\\overline{3}$', DE)).toBe('0, Periode 3');
+    expect(speakMathText('$\\overline{AB}$', DE)).toBe('Strecke AB');
+    expect(
+      speakMathText('$g \\parallel h$', { ...DE, symbols: { ...DE.symbols, '∥': 'parallel zu' } }),
+    ).toBe('g parallel zu h');
+    expect(plainText(splitMath('$g \\perp h$'))).toBe(`g${THIN}⊥${THIN}h`);
+    expect(plainText(splitMath('$x \\in \\mathbb{N}$'))).toBe(`x${THIN}∈${THIN}ℕ`);
+    expect(speakMathText('$\\vec{v}$', DE)).toBe('Vektor v');
+    // Anything else still never glues to its neighbours.
+    expect(plainText(splitMath('$g \\foo h$'))).toBe('g foo h');
   });
 });
 
@@ -146,6 +191,10 @@ const DE: SpokenWords = {
   sqrt: 'Wurzel aus {{body}}',
   root: '{{index}}. Wurzel aus {{body}}',
   cbrt: 'dritte Wurzel aus {{body}}',
+  period: 'Periode {{body}}',
+  segment: 'Strecke {{body}}',
+  vector: 'Vektor {{body}}',
+  blank: 'Lücke',
   symbols: { '+': 'plus', '−': 'minus', '=': 'gleich', '·': 'mal', π: 'pi', '≤': 'kleiner gleich' },
 };
 

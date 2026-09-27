@@ -13,12 +13,15 @@ import { HTTPException } from 'hono/http-exception';
 
 import type { Deps } from './deps.js';
 import type { AppEnv } from './http/context.js';
+import { accountBudgets } from './http/limits.js';
+import { isCheckViolation } from './lib/db.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
 import { olderThan } from './lib/version.js';
 import { pushDeviceRoutes } from './modules/devices/routes.js';
 import { buddyRoutes } from './modules/buddy/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
 import { materialRoutes } from './modules/materials/routes.js';
+import { erasureBacklog } from './modules/materials/purge.js';
 import { voiceRoutes } from './modules/voice/routes.js';
 import { practiceRoutes } from './modules/practice/routes.js';
 import { runTick } from './modules/scheduler/tick.js';
@@ -100,9 +103,28 @@ export function createApp(deps: Deps): Hono<AppEnv> {
       await next();
     });
   }
+  // Per-account budgets for answers and messages (D-14, docs/architecture.md §Limits).
+  app.use('*', accountBudgets);
 
   app.onError((err, c) => {
-    if (isAppError(err)) return c.json(err.toJSON(), err.status);
+    if (isAppError(err)) {
+      // Locks and rate limits say when to try again.
+      const retry = err.details?.retry_after_s;
+      if (typeof retry === 'number') c.header('Retry-After', String(retry));
+      return c.json(err.toJSON(), err.status);
+    }
+    // A row the schema refuses is a request the API should have refused: 422, not 500.
+    if (isCheckViolation(err)) {
+      console.warn('[api] check violation', {
+        method: c.req.method,
+        path: c.req.routePath,
+        constraint: (err as { constraint?: string }).constraint ?? null,
+      });
+      return c.json(
+        { error: { code: 'invalid_input', message: 'The request breaks a data rule' } },
+        422,
+      );
+    }
     if (err instanceof HTTPException) {
       const status = err.status;
       return c.json(
@@ -136,12 +158,21 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     }
     const schedulerOk =
       lastRun !== null && deps.now().getTime() - lastRun.getTime() < SCHEDULER_STALE_MS;
-    const ok = dbOk && schedulerOk;
+    // Erasure later than promised is a failure someone must look at (docs/privacy.md).
+    let erasure = { overdue_deletions: 0, overdue_photo_deletions: 0 };
+    try {
+      if (dbOk) erasure = await erasureBacklog(deps.db, deps.now());
+    } catch {
+      dbOk = false;
+    }
+    const erasureOk = erasure.overdue_deletions === 0 && erasure.overdue_photo_deletions === 0;
+    const ok = dbOk && schedulerOk && erasureOk;
     return c.json(
       {
         ok,
         database: dbOk,
         scheduler: { ok: schedulerOk, last_run_at: lastRun ? lastRun.toISOString() : null },
+        erasure: { ok: erasureOk, ...erasure },
         model: deps.llm.available,
         push: deps.push.enabled,
       },

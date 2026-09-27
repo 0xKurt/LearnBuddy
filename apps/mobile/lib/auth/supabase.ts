@@ -200,13 +200,6 @@ async function asSignedIn<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
-export async function changePassword(password: string): Promise<void> {
-  await asSignedIn(async () => {
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) throw new AuthFailure(reasonOf(error.message, error.status, error.code));
-  });
-}
-
 /**
  * Asks Supabase to move the account to a new address. Normally that only
  * happens once the link in the confirmation e-mail is opened ('pending'; with

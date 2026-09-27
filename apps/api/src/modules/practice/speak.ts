@@ -199,6 +199,14 @@ export async function speakItem(
 
   try {
     await deps.db.tx(async (tx) => {
+      // The model call took seconds: "Beenden" may have finished the session meanwhile. The
+      // session row is locked first (the same order as finishSession), so the judgement
+      // commits into an active session or not at all (audit M-34 speak-commits-after-finish).
+      const current = await tx.one<{ status: string }>(
+        `select status from practice_sessions where id = $1 and learner_id = $2 for update`,
+        [sessionId, learner.id],
+      );
+      if (current.status !== 'active') throw new AppError('conflict', 'Session has ended');
       const si = await tx.one<{ status: string; attempts: number; hints_used: number }>(
         `select status, attempts, hints_used from session_items where session_id = $1 and item_id = $2 for update`,
         [sessionId, item.id],

@@ -7,6 +7,7 @@ import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { onlineManager } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -14,6 +15,8 @@ import { ErrorBoundary } from '../components/lb/ErrorBoundary.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { OfflineFrame } from '../components/lb/OfflineFrame.js';
 import { toast, ToastHost } from '../components/lb/Toast.js';
+import { clearAdminToken, installAdminAutoClear } from '../lib/admin.js';
+import { ApiError } from '../lib/api/client.js';
 import { postAnswer } from '../lib/api/endpoints.js';
 import { flushOutbox } from '../lib/api/outboxSync.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
@@ -77,6 +80,8 @@ export default function RootLayout() {
       void retryPendingRelease().catch(() => undefined);
     });
     void clearLegacyLocalNotifications();
+    // The parents' PIN unlocks one step, never a phone left in the background.
+    const offAdmin = installAdminAutoClear(AppState);
     const offSession = onSessionChange((s, ended) => {
       if (s) {
         if (userRef.current === s.user_id) return;
@@ -85,6 +90,7 @@ export default function RootLayout() {
         void afterSignedIn(s.user_id);
         return;
       }
+      clearAdminToken();
       userRef.current = null;
       // Nothing of the previous learner stays reachable: cache and whole stack reset
       // (audit M-72). Her unsent answers and photos stay on the device unless she
@@ -93,6 +99,16 @@ export default function RootLayout() {
       if (router.canDismiss()) router.dismissAll();
       router.replace('/');
       if (ended === 'expired') toast.show(i18n.t('common:session.expired'));
+    });
+    // A new privacy text while the app is open: the server refuses until it is
+    // accepted again (409 consent_outdated), so go to the consent screen.
+    const offConsent = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type !== 'updated' || event.action.type !== 'error') return;
+      const err = event.action.error;
+      if (err instanceof ApiError && err.reason === 'consent_outdated') {
+        void queryClient.invalidateQueries({ queryKey: keys.me });
+        router.replace('/consent');
+      }
     });
     // A tap (also the one that started the app) is kept until the API has it and
     // sent once signed in (audit M-64). A warm tap goes back to Buddy without
@@ -106,6 +122,8 @@ export default function RootLayout() {
     });
     return () => {
       offOnline();
+      offAdmin();
+      offConsent();
       offSession();
       offTap();
     };

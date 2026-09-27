@@ -4,6 +4,7 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { useAnnounce } from '../../lib/announce.js';
 import type { PhotoProblem } from '../../lib/photo/quality.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -21,6 +22,7 @@ type Props = {
 export function PhotoCheckCard({ index, problems, disabled, onRetake, onKeep }: Props) {
   const { t } = useTranslation('capture');
   const main = problems[0] ?? 'blurry';
+  useAnnounce(t(`quality.${main}`, { index }));
   return (
     <View accessibilityLiveRegion="polite">
       <Card tone="butter" padding={16}>

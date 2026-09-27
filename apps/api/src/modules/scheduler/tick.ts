@@ -11,12 +11,21 @@ import type { Deps } from '../../deps.js';
 import { queueStalledTurns, runLearnerJobs } from '../buddy/check.js';
 import { checkReceipts, sendDueOutreach, type DeliveryStats } from '../buddy/delivery.js';
 import { executeAccountDeletion } from '../identity/privacy.js';
-import { abandonStaleUploads, purgePhotos, runExtraction } from '../materials/service.js';
+import {
+  drainStorageDeletions,
+  purgeClosedMemories,
+  purgeContent,
+  purgePhotos,
+  sweepForgottenPhotos,
+} from '../materials/purge.js';
+import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import {
   claimJobs,
   finishJob,
   learnersWithDueJobs,
+  PERSISTENT_KINDS,
   recoverExpiredLeases,
+  rescheduleJob,
   type JobRow,
 } from './jobs.js';
 
@@ -62,13 +71,19 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   await guard('recover', async () => {
     stats.recovered = await recoverExpiredLeases(deps.db, deps.now());
     stats.stalledTurns = await queueStalledTurns(deps);
-    // Material whose reading job gave up must not look "in progress" forever.
-    await deps.db.query(
-      `update materials m set status = 'failed', failure_reason = 'model_error'
-        where m.status in ('queued','processing')
-          and not exists (select 1 from jobs j where j.kind = 'extract_material'
-                            and j.payload ->> 'material_id' = m.id::text and j.status in ('queued','running'))`,
-    );
+    // Material whose reading job gave up must not look "in progress" forever. It fails the
+    // same way as in the job — with its photo purge and a context bump (repro-14).
+    await deps.db.tx(async (tx) => {
+      const stuck = await tx.query<{ id: string }>(
+        `select m.id from materials m
+          where m.status in ('queued','processing') and m.archived_at is null
+            and not exists (select 1 from jobs j where j.kind = 'extract_material'
+                              and j.payload ->> 'material_id' = m.id::text
+                              and j.status in ('queued','running'))
+          for update of m skip locked`,
+      );
+      for (const m of stuck) await markMaterialFailed(tx, m.id, 'model_error', deps.now());
+    });
     await abandonStaleUploads(deps);
   });
 
@@ -116,16 +131,28 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     while (left() > 5_000) {
       const [job] = await claimJobs(deps.db, {
         now: deps.now(),
-        kinds: ['purge_photos', 'delete_account'],
+        kinds: ['purge_photos', 'purge_content', 'delete_account'],
         limit: 1,
         leaseSeconds: 120,
       });
       if (!job) break;
       await runJobSafely(deps, job, () =>
-        job.kind === 'purge_photos' ? purgePhotos(deps, job) : executeAccountDeletion(deps, job),
+        job.kind === 'purge_photos'
+          ? purgePhotos(deps, job)
+          : job.kind === 'purge_content'
+            ? purgeContent(deps, job)
+            : executeAccountDeletion(deps, job),
       );
       stats.maintenance++;
     }
+  });
+  // Retention that no job carries: photos Storage still owes after an account deletion,
+  // photos no purge is planned for, and memories past their undo window (docs/privacy.md).
+  await guard('retention', async () => {
+    if (left() < 5_000) return;
+    await drainStorageDeletions(deps);
+    await sweepForgottenPhotos(deps);
+    await purgeClosedMemories(deps);
   });
 
   await deps.db.query(
@@ -154,12 +181,19 @@ export async function runQueuedExtraction(deps: Deps, learnerId: string): Promis
   await runLearnerJobs(deps, learnerId);
 }
 
-/** A handler that throws unexpectedly leaves the job to its lease/attempt limits. */
+/**
+ * A handler that throws unexpectedly leaves the job to its lease/attempt limits. Erasure
+ * jobs are never parked: they are queued again after a backoff, with the reason recorded.
+ */
 async function runJobSafely(deps: Deps, job: JobRow, fn: () => Promise<void>): Promise<void> {
   try {
     await fn();
   } catch (err) {
     const message = err instanceof Error ? err.message.slice(0, 200) : 'error';
+    if (PERSISTENT_KINDS.includes(job.kind)) {
+      await rescheduleJob(deps.db, job, { now: deps.now(), error: message });
+      return;
+    }
     if (job.attempts >= job.max_attempts) {
       await finishJob(deps.db, job, deps.now(), { status: 'failed', error: message });
     }

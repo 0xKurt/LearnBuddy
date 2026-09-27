@@ -9,6 +9,9 @@
     "sqrt": "square root of {{body}}",
     "root": "root {{index}} of {{body}}",
     "cbrt": "cube root of {{body}}",
+    "period": "{{body}} recurring",
+    "segment": "segment {{body}}",
+    "vector": "vector {{body}}",
     "symbols": {
       "plus": "plus",
       "minus": "minus",
@@ -31,7 +34,15 @@
       "iff": "if and only if",
       "lparen": "open bracket",
       "rparen": "close bracket",
-      "percent": "percent"
+      "percent": "percent",
+      "angle": "angle",
+      "parallel": "parallel to",
+      "perp": "perpendicular to",
+      "triangle": "triangle",
+      "cong": "congruent to",
+      "sim": "similar to",
+      "in": "element of",
+      "notin": "not an element of"
     }
   },
   "figure": {

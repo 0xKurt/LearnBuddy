@@ -6,6 +6,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAnnounce } from '../../lib/announce.js';
 import type { SendProgress } from '../../lib/capture/upload.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -39,6 +40,7 @@ export function SendBar({ progress, failure, hasPhotos, disabled, onSend }: Prop
       return t('progress.uploading', { current: p.current, count: p.total });
     return t('progress.submitting');
   };
+  useAnnounce(progress ? progressText(progress) : failure);
 
   return (
     <View

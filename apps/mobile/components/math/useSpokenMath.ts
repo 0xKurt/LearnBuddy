@@ -34,6 +34,10 @@ export function useSpokenWords(): SpokenWords {
       sqrt: raw('sqrt'),
       root: raw('root'),
       cbrt: raw('cbrt'),
+      period: raw('period'),
+      segment: raw('segment'),
+      vector: raw('vector'),
+      blank: t('blank.label'),
       symbols,
     };
     // i18n.language: rebuild the words when the language changes.

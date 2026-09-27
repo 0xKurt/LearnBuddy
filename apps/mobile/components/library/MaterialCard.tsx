@@ -69,13 +69,17 @@ export function MaterialCard({
   const date = formatDate(m.created_at, i18n.language);
   const meta = m.status === 'ready' ? `${date} · ${t('questions', { count: m.item_count })}` : date;
   const status = statusOf(m);
+  // The photos are gone (7 days after reading): reading again is not possible, only a new photo.
   const note =
-    m.status === 'failed'
-      ? t(`failure.${m.failure_reason ?? 'model_error'}`)
-      : m.status === 'awaiting_upload'
-        ? t('incomplete_hint')
-        : null;
-  const retryable = m.status === 'failed' && m.failure_reason !== 'not_learning_material';
+    m.status === 'failed' && m.photos_deleted && m.failure_reason !== 'not_learning_material'
+      ? t('photos_deleted')
+      : m.status === 'failed'
+        ? t(`failure.${m.failure_reason ?? 'model_error'}`)
+        : m.status === 'awaiting_upload'
+          ? t('incomplete_hint')
+          : null;
+  const retryable =
+    m.status === 'failed' && m.failure_reason !== 'not_learning_material' && !m.photos_deleted;
 
   return (
     <Card padding={16}>

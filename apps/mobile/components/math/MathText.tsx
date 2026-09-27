@@ -5,7 +5,7 @@
 // Screen readers get the whole text in words ("3 durch 4"), never the LaTeX.
 // Parsing: lib/math/parse.ts; spoken form: lib/math/speak.ts.
 
-import { useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
@@ -49,6 +49,8 @@ const THIN = ' ';
 /** An empty gap is as wide as a short word, and grows with the text size. */
 const EMPTY_GAP = '\u00A0'.repeat(7);
 const BOLD: TextStyle = { fontWeight: '700' };
+/** Her answer for a blank inside math (the text's only blank), or null. */
+const FilledBlank = createContext<string | null>(null);
 
 export function MathText({
   text,
@@ -104,51 +106,53 @@ export function MathText({
   const units = buildUnits(runs);
 
   return (
-    <View
-      // Inside a parent that speaks for it (a bubble, a button) it stays silent.
-      {...(accessible
-        ? {
-            accessible: true,
-            accessibilityRole: accessibilityRole ?? 'text',
-            accessibilityLabel: accessibilityLabel ?? spoken,
-          }
-        : { accessible: false })}
-      style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', flexShrink: 1 }}
-    >
-      {units.map((unit, i) => (
-        <View
-          key={i}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            flexShrink: 1,
-            minHeight: lineHeight,
-          }}
-        >
-          {unit.map((piece, j) => {
-            switch (piece.kind) {
-              case 'plain':
-                return (
-                  <Text key={j} style={[style, { lineHeight }, piece.bold ? BOLD : null]}>
-                    {piece.text}
-                  </Text>
-                );
-              case 'atom':
-                return <AtomView key={j} atom={piece.atom} m={piece.bold ? mBold : m} />;
-              case 'blank':
-                return (
-                  <Gap
-                    key={j}
-                    style={[style, { lineHeight }, piece.bold ? BOLD : null]}
-                    lineHeight={lineHeight}
-                    filled={filled}
-                  />
-                );
+    <FilledBlank.Provider value={withBlanks ? filled : null}>
+      <View
+        // Inside a parent that speaks for it (a bubble, a button) it stays silent.
+        {...(accessible
+          ? {
+              accessible: true,
+              accessibilityRole: accessibilityRole ?? 'text',
+              accessibilityLabel: accessibilityLabel ?? spoken,
             }
-          })}
-        </View>
-      ))}
-    </View>
+          : { accessible: false })}
+        style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', flexShrink: 1 }}
+      >
+        {units.map((unit, i) => (
+          <View
+            key={i}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flexShrink: 1,
+              minHeight: lineHeight,
+            }}
+          >
+            {unit.map((piece, j) => {
+              switch (piece.kind) {
+                case 'plain':
+                  return (
+                    <Text key={j} style={[style, { lineHeight }, piece.bold ? BOLD : null]}>
+                      {piece.text}
+                    </Text>
+                  );
+                case 'atom':
+                  return <AtomView key={j} atom={piece.atom} m={piece.bold ? mBold : m} />;
+                case 'blank':
+                  return (
+                    <Gap
+                      key={j}
+                      style={[style, { lineHeight }, piece.bold ? BOLD : null]}
+                      lineHeight={lineHeight}
+                      filled={filled}
+                    />
+                  );
+              }
+            })}
+          </View>
+        ))}
+      </View>
+    </FilledBlank.Provider>
   );
 }
 
@@ -307,7 +311,48 @@ function AtomView({ atom, m, size = m.size }: { atom: MathAtom; m: Metrics; size
     }
     case 'sqrt':
       return <Root index={atom.index} body={atom.body} m={m} size={size} />;
+    case 'overline':
+      // A bar over the digits of a period (0,3̅) or the letters of a segment (AB̅).
+      return (
+        <View style={{ borderTopWidth: Math.max(1, Math.round(size / 14)), borderColor: m.color }}>
+          <Row atoms={atom.body} m={m} size={size} />
+        </View>
+      );
+    case 'vec': {
+      const small = Math.max(9, Math.round(size * 0.6));
+      return (
+        <View style={{ alignItems: 'center' }}>
+          <Text style={[textStyle(m, small), { lineHeight: small, marginBottom: -2 }]}>→</Text>
+          <Row atoms={atom.body} m={m} size={size} />
+        </View>
+      );
+    }
+    case 'blank':
+      return <MathGap m={m} size={size} />;
   }
+}
+
+/** A blank inside math: the same light box as in the text, sized to the math around it. */
+function MathGap({ m, size }: { m: Metrics; size: number }) {
+  const filled = useContext(FilledBlank);
+  return (
+    <View
+      style={{
+        justifyContent: 'flex-end',
+        marginHorizontal: 2,
+        paddingHorizontal: 4,
+        backgroundColor: LB.paper,
+        borderBottomWidth: 2,
+        borderBottomColor: LB.ink2,
+        borderTopLeftRadius: 5,
+        borderTopRightRadius: 5,
+      }}
+    >
+      <Text style={[textStyle(m, size), filled ? { color: LB.primaryDk } : null]}>
+        {filled ?? '\u00A0'.repeat(4)}
+      </Text>
+    </View>
+  );
 }
 
 /** Letters (variables) in italics like in the schoolbook; digits and operators upright. */

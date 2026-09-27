@@ -1,6 +1,6 @@
 // Cost that grows with her data, not everybody's (audit M-68
 // p2-account-deletion-cascade-unindexed-fks, p2-state-subjects-counts-scan-all-tenants;
-// migration 0019_learner_indexes.sql).
+// migration 0017_fk_indexes.sql).
 // requires live verification in Claude Code session (needs a running Postgres)
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

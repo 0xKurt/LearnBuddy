@@ -1,9 +1,31 @@
 // Deterministic answer checks for the cases where exactness is decidable:
-// multiple choice, numbers (tolerance, units, decimal comma), exact matches
-// of short answers. Anything else ("unknown") is judged by the tutor model.
+// multiple choice, written numbers (exact, or within the key's own rounding), exact matches
+// of written answers, and named near misses. Anything else ("unknown") is judged by the tutor
+// model. docs/architecture.md §Practice (grading); audit C-1–C-7, H-1–H-6, M-30.
 // No word lists: this only compares the answer with the expected solution.
+//
+// A rule "correct" is final (no model sees the answer), so it is only said when it is certain:
+// - numbers: the same value in the key's form (packages/shared-math numeric-input.ts); the
+//   same value in another form (1/8 for 0.125) or a calculation (17·23 for 391) → the tutor;
+// - math: the same text with every operator, sign and relation kept (canonicalMath);
+// - words: the same text with case, ß and punctuation kept (canonicalText). A difference only
+//   there is a near miss where spelling is the point (decision D-2: language subjects and
+//   vocabulary, or an item marked strict) and otherwise for the tutor to judge gently.
 
-import { canonicalizeUnit, normalizeShortAnswer, parseNumericInput } from '@learnbuddy/shared-math';
+import {
+  canonicalMath,
+  canonicalText,
+  compareNumbers,
+  isMathText,
+  normalizeShortAnswer,
+  parseCanonicalKey,
+  parseNumericInput,
+  plainMath,
+  sameWrittenForm,
+  type ValueComparison,
+} from '@learnbuddy/shared-math';
+
+export { plainMath };
 
 export type ItemForCheck = {
   kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
@@ -12,22 +34,39 @@ export type ItemForCheck = {
   unit: string | null;
   choices: string[] | null;
   correct_choice: number | null;
+  /** An explicit ± tolerance for a rounded or measured number (migration 0012); else D-1. */
+  tolerance: number | null;
+  /** Whether case, ß and punctuation are the point (migration 0012); null: the subject decides. */
+  spelling: 'strict' | 'gentle' | null;
+  /** subjects.kind of the item's subject, when it has one. */
+  subject_kind: string | null;
 };
 
 /**
  * Near misses on a written answer, decided without a model (the kind of check
  * Anki, Quizlet and LibreLingo do):
+ * - 'spelling': the same except case, ß/ss or punctuation, where spelling is the point;
  * - 'close': the same except for accents/diacritics ("eleve" for "élève");
  * - 'missing_word': the key without its first word ("Küche" for "die Küche");
  * - 'typo': a small slip — Damerau distance within a limit that grows with the
  *   word (none up to 4 letters, 1 up to 8, else 2). A slip can also be another
  *   real word ("horse" for "house"), so it is never counted right: the app shows
- *   the spelling and she types it again.
+ *   the spelling and she types it again. Never for numbers ("15:35" is no slip of "14:35").
+ * 'folded' is no near miss: the same except case, ß/ss or punctuation where spelling is not
+ * the point — the tutor judges it (gently), the rules don't.
  */
-export type RuleVerdict = 'correct' | 'close' | 'missing_word' | 'typo' | 'incorrect' | 'unknown';
+export type RuleVerdict =
+  | 'correct'
+  | 'spelling'
+  | 'close'
+  | 'missing_word'
+  | 'typo'
+  | 'folded'
+  | 'incorrect'
+  | 'unknown';
 
 /** Near misses: partly right, not wrong. */
-export const NEAR_MISS = new Set<RuleVerdict>(['close', 'missing_word', 'typo']);
+export const NEAR_MISS = new Set<RuleVerdict>(['spelling', 'close', 'missing_word', 'typo']);
 
 /** Optimal-string-alignment distance: insert, delete, replace, swap two neighbours. */
 export function editDistance(a: string, b: string): number {
@@ -52,24 +91,7 @@ function allowedSlips(key: string): number {
   return letters <= 4 ? 0 : letters <= 8 ? 1 : 2;
 }
 
-/** $\\frac{a}{b}$ → a/b, x^{2} → x^2, \\sqrt{x} → √x, \\cdot → ·; without the dollar signs. */
-export function plainMath(s: string): string {
-  let out = s.replace(/\$/g, '');
-  for (let i = 0; i < 4; i++) out = out.replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, '$1/$2');
-  return out
-    .replace(/\\sqrt\{([^{}]*)\}/g, '√$1')
-    .replace(/\^\{([^{}]*)\}/g, '^$1')
-    .replace(/_\{([^{}]*)\}/g, '_$1')
-    .replace(/\\cdot/g, '·')
-    .replace(/\\times/g, '×')
-    .replace(/\\div/g, ':')
-    .replace(/\\pi/g, 'π')
-    .replace(/\\(left|right)/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/** Letters without accents: é → e, ß stays (it is a letter of its own). */
+/** Letters without accents: é → e. */
 function withoutAccents(s: string): string {
   return s
     .normalize('NFD')
@@ -77,44 +99,151 @@ function withoutAccents(s: string): string {
     .normalize('NFC');
 }
 
-function closeEnough(actual: number, expected: number): boolean {
-  if (expected === 0) return Math.abs(actual) <= 1e-9;
+/** Subject kinds (subjects.kind) where spelling, case and punctuation are what is learnt. */
+const LANGUAGE_SUBJECTS: ReadonlySet<string> = new Set([
+  'german',
+  'english',
+  'french',
+  'spanish',
+  'latin',
+  'other_language',
+]);
+
+/** Decision D-2: set per item; by default strict for vocabulary and language subjects. */
+export function spellingOf(
+  item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind'>,
+): 'strict' | 'gentle' {
+  if (item.spelling) return item.spelling;
+  return item.kind === 'vocab' ||
+    (item.subject_kind !== null && LANGUAGE_SUBJECTS.has(item.subject_kind))
+    ? 'strict'
+    : 'gentle';
+}
+
+type KeyedItem = {
+  answer: string;
+  accepted_answers: readonly string[];
+  unit: string | null;
+  tolerance?: number | null;
+};
+
+/**
+ * The value comparison against every key of an item (answer and accepted answers), for any
+ * caller that needs "does she state the right number?" — the rule check below and homework
+ * help (audit I-3). 'equal' when one key has the learner's value (in any form: 0,75 for
+ * $\frac{3}{4}$), 'different' when every key is a number and none has it, else 'unknown'
+ * (words, a calculation, another unit, an ambiguous "1.000"). Tolerance: decision D-1.
+ */
+export function compareWithKeys(item: KeyedItem, text: string): ValueComparison {
+  const given = parseNumericInput(text);
+  const results = [item.answer, ...item.accepted_answers].map((k) =>
+    compareNumbers(given, parseCanonicalKey(k), {
+      unit: item.unit,
+      tolerance: item.tolerance ?? null,
+    }),
+  );
+  if (results.includes('equal')) return 'equal';
+  if (results.length > 0 && results.every((r) => r === 'different')) return 'different';
+  return 'unknown';
+}
+
+/** The learner wrote this key's number, in its form (a rule can say "correct"). */
+function sameNumber(item: ItemForCheck, key: string, text: string): boolean {
+  const given = parseNumericInput(text);
+  const k = parseCanonicalKey(key);
   return (
-    Math.abs(actual - expected) <=
-    Math.max(Math.abs(expected) * 0.01, Math.abs(expected) < 1 ? 0.01 : 0)
+    compareNumbers(given, k, { unit: item.unit, tolerance: item.tolerance }) === 'equal' &&
+    sameWrittenForm(given, k)
   );
 }
 
+/** Does a typed or spoken text name this option, however it is written? */
+function namesOption(option: string, text: string): boolean {
+  if (isMathText(option) || isMathText(text)) {
+    const t = canonicalMath(text);
+    if (t !== '' && t === canonicalMath(option)) return true;
+    const given = parseNumericInput(text);
+    const k = parseCanonicalKey(option);
+    return compareNumbers(given, k) === 'equal' && sameWrittenForm(given, k);
+  }
+  const t = normalizeShortAnswer(text);
+  return t !== '' && t === normalizeShortAnswer(option);
+}
+
 /**
- * The option a spoken or typed answer names, or null: the option itself however it
- * is written ("2/3" for $\frac{2}{3}$), its letter as voice mode reads them ("B",
- * "b."), or the option said first and then explained further ("Die Brüche
- * gleichnamig machen, auf denselben Nenner bringen"). Only when exactly one
- * option fits; anything else is left to the tutor.
+ * The option a spoken or typed answer names, or null: the option itself however it is
+ * written ("2/3" for $\frac{2}{3}$, "richtig" for "Richtig"), or its letter as voice mode reads
+ * them ("B", "b."). Only when exactly one option fits: a letter that is also another option's
+ * text ("A" with the options the, a, an — audit H-5) and an option with more words after it
+ * ("Richtig ist das nicht" — audit M-30) are left to the tutor.
  */
 export function choiceNamed(text: string, choices: readonly string[]): number | null {
-  const norm = normalizeShortAnswer(plainMath(text));
-  const options = choices.map((c) => normalizeShortAnswer(plainMath(c)));
-  // Only a unique, non-empty option counts ("<", "=" normalise to nothing).
-  const exact = options.flatMap((o, i) => (o !== '' && o === norm ? [i] : []));
-  if (exact.length === 1) return exact[0]!;
-  if (exact.length > 1) return null;
-  const letter = /^([a-z])[.)]?$/i.exec(text.trim());
-  if (letter) {
-    const i = letter[1]!.toLowerCase().charCodeAt(0) - 97;
-    return i < choices.length ? i : null;
+  const t = text.trim();
+  const named = choices.flatMap((c, i) => (namesOption(c, t) ? [i] : []));
+  const letter = /^([a-z])[.)]?$/i.exec(t);
+  const index = letter ? letter[1]!.toLowerCase().charCodeAt(0) - 97 : -1;
+  const byLetter = index >= 0 && index < choices.length ? index : null;
+  if (named.length > 1) return null;
+  if (named.length === 1) return byLetter === null || byLetter === named[0] ? named[0]! : null;
+  return byLetter;
+}
+
+const STRENGTH: readonly RuleVerdict[] = [
+  'correct',
+  'spelling',
+  'close',
+  'missing_word',
+  'typo',
+  'folded',
+  'unknown',
+];
+
+/** A written answer against one key. */
+function writtenAgainst(item: ItemForCheck, key: string, text: string): RuleVerdict {
+  if (item.kind === 'formula' || isMathText(key) || isMathText(text)) {
+    // Math: every operator, sign and relation counts (x=5 is not x=-5, 3,4 is not 3/4).
+    if (canonicalMath(text) === canonicalMath(key)) return 'correct';
+    return sameNumber(item, key, text) ? 'correct' : 'unknown';
   }
-  const first = options
-    .map((o, i) => ({ o, i }))
-    // Said first and then explained — never a longer number ("125,5" is not the option "125").
-    .filter(({ o }) => o.length >= 3 && norm.startsWith(o) && /^\s+\D/u.test(norm.slice(o.length)));
-  return first.length === 1 ? first[0]!.i : null;
+  if (canonicalText(text) === canonicalText(key)) return 'correct';
+  const said = normalizeShortAnswer(text);
+  const wanted = normalizeShortAnswer(key);
+  if (said === '' || wanted === '') return 'unknown';
+  if (said === wanted) return spellingOf(item) === 'strict' ? 'spelling' : 'folded';
+  const saidPlain = withoutAccents(said);
+  const wantedPlain = withoutAccents(wanted);
+  if (saidPlain === wantedPlain) return 'close';
+  if (item.kind === 'vocab' || item.kind === 'short') {
+    const words = wanted.split(' ');
+    if (words.length >= 2 && words.slice(1).join(' ') === said) return 'missing_word';
+    const slips = allowedSlips(wanted);
+    if (slips > 0 && editDistance(saidPlain, wantedPlain) <= slips) return 'typo';
+  }
+  return 'unknown';
+}
+
+function numericVerdict(item: ItemForCheck, text: string): RuleVerdict {
+  const given = parseNumericInput(text);
+  // Not a number, or a calculation (17·23 for 391 — the task typed again, audit H-1): the tutor.
+  if (given.value === null || given.form === 'expression') return 'unknown';
+  let equalInOtherForm = false;
+  let allDifferent = true;
+  for (const keyText of [item.answer, ...item.accepted_answers]) {
+    const key = parseCanonicalKey(keyText);
+    const c = compareNumbers(given, key, { unit: item.unit, tolerance: item.tolerance });
+    if (c === 'equal') {
+      if (sameWrittenForm(given, key)) return 'correct';
+      equalInOtherForm = true;
+    }
+    if (c !== 'different') allDifferent = false;
+  }
+  if (equalInOtherForm) return 'unknown'; // decision D-3: another form is for the tutor
+  return allDifferent ? 'incorrect' : 'unknown';
 }
 
 export function ruleCheck(
   item: ItemForCheck,
   answer: { text: string | null; choice: number | null },
-  locale: string,
 ): RuleVerdict {
   if (item.kind === 'multiple_choice') {
     if (answer.choice !== null && item.correct_choice !== null) {
@@ -129,75 +258,23 @@ export function ruleCheck(
 
   const text = (answer.text ?? '').trim();
   if (!text) return 'unknown';
+  if (item.kind === 'numeric') return numericVerdict(item, text);
 
-  if (item.kind === 'numeric') {
-    const numLocale =
-      locale === 'de' || locale === 'fr' || locale === 'es' || locale === 'it' ? 'de' : 'en';
-    const given = parseNumericInput(text, numLocale);
-    const expected = parseNumericInput(item.answer, numLocale);
-    if (given.value === null || expected.value === null) return 'unknown';
-    const expectedUnit = canonicalizeUnit(item.unit) ?? expected.unit;
-    if (given.unit && expectedUnit && given.unit !== expectedUnit) return 'unknown';
-    return closeEnough(given.value, expected.value) ? 'correct' : 'incorrect';
-  }
-
-  // short / long / formula: an exact match (after normalisation) is decidable;
-  // everything else needs judgement.
-  // Math written as \\frac{3}{4} (stored) and 3/4 (typed) is the same answer.
-  const norm = normalizeShortAnswer(plainMath(text));
-  const targets = [item.answer, ...item.accepted_answers]
-    .map((a) => normalizeShortAnswer(plainMath(a)))
-    .filter(Boolean);
-  if (targets.includes(norm)) return 'correct';
-  if (targets.map(withoutAccents).includes(withoutAccents(norm))) return 'close';
-  if (item.kind === 'vocab' || item.kind === 'short') {
-    const folded = withoutAccents(norm);
-    const words = (x: string) => x.split(' ').filter(Boolean);
-    if (targets.some((t) => words(t).length >= 2 && words(t).slice(1).join(' ') === norm)) {
-      return 'missing_word';
-    }
-    if (
-      targets.some((t) => {
-        const slips = allowedSlips(t);
-        return slips > 0 && editDistance(folded, withoutAccents(t)) <= slips;
-      })
-    ) {
-      return 'typo';
-    }
-  }
-  if (item.kind === 'formula') {
-    const compact = (s: string) => s.replace(/\s+/g, '').toLowerCase();
-    if ([item.answer, ...item.accepted_answers].some((a) => compact(a) === compact(text)))
-      return 'correct';
-  }
-  return 'unknown';
-}
-
-/** A plain number or simple fraction ("3", "-0,75", "3/4", "\\frac{3}{4}"); null for anything else. */
-function plainNumber(s: string): number | null {
-  // Spaces only around the number: "3 1/2" is a mixed number, not 31/2.
-  const x = plainMath(s).trim();
-  const m = /^(-?\d+(?:[.,]\d+)?)(?:\/(\d+(?:[.,]\d+)?))?$/.exec(x);
-  if (!m) return null;
-  // "1.000" / "1,000" could be a thousand or one: not decidable.
-  if (/[.,]\d{3}$/.test(m[1]!) || (m[2] && /[.,]\d{3}$/.test(m[2]))) return null;
-  const num = Number(m[1]!.replace(',', '.'));
-  const den = m[2] ? Number(m[2].replace(',', '.')) : 1;
-  return den === 0 ? null : num / den;
+  // short / long / formula / vocab: the strongest verdict over the key and its accepted answers.
+  const verdicts = [item.answer, ...item.accepted_answers].map((k) =>
+    writtenAgainst(item, k, text),
+  );
+  return STRENGTH.find((v) => verdicts.includes(v)) ?? 'unknown';
 }
 
 /**
  * A plain number whose value differs from every expected number: wrong for
- * sure. Not for homework — there "12" may be a right step towards 11/12. The same value in another form ("4/8" for "1/2")
- * is not decided here: it may still be wrong (not reduced).
+ * sure. Not for homework — there "12" may be a right step towards 11/12. The same value in
+ * another form ("4/8" for "1/2") is not decided here: it may still be wrong (not reduced).
  */
 export function differentNumber(item: ItemForCheck, text: string): boolean {
   if (item.kind !== 'short' && item.kind !== 'formula' && item.kind !== 'numeric') return false;
-  const given = plainNumber(text);
-  if (given === null) return false;
-  const expected = [item.answer, ...item.accepted_answers].map(plainNumber);
-  if (expected.length === 0 || expected.some((v) => v === null)) return false;
-  return expected.every((v) => !closeEnough(given, v!));
+  return compareWithKeys(item, text) === 'different';
 }
 
 /**

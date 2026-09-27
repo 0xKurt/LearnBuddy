@@ -21,6 +21,14 @@ export type SpokenWords = {
   root: string;
   /** "dritte Wurzel aus {{body}}" */
   cbrt: string;
+  /** "Periode {{body}}" (\overline over digits: 0,\overline{3}) */
+  period: string;
+  /** "Strecke {{body}}" (\overline over letters: \overline{AB}) */
+  segment: string;
+  /** "Vektor {{body}}" */
+  vector: string;
+  /** "Lücke" (a gap to fill in inside math) */
+  blank: string;
   /** Operators and symbols by character. */
   symbols: Readonly<Record<string, string>>;
 };
@@ -50,6 +58,14 @@ export const SYMBOL_KEYS: Readonly<Record<string, string>> = {
   '(': 'lparen',
   ')': 'rparen',
   '%': 'percent',
+  '∠': 'angle',
+  '∥': 'parallel',
+  '⊥': 'perp',
+  '△': 'triangle',
+  '≅': 'cong',
+  '∼': 'sim',
+  '∈': 'in',
+  '∉': 'notin',
 };
 
 function fill(template: string, values: Record<string, string>): string {
@@ -106,6 +122,15 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
             if (index === '3') return ` ${fill(words.cbrt, { body })} `;
             return ` ${fill(words.root, { index, body })} `;
           }
+          case 'overline': {
+            const body = speakAtoms(a.body, words);
+            const digits = /^[0-9\s]+$/.test(body);
+            return ` ${fill(digits ? words.period : words.segment, { body })} `;
+          }
+          case 'vec':
+            return ` ${fill(words.vector, { body: speakAtoms(a.body, words) })} `;
+          case 'blank':
+            return ` ${words.blank} `;
         }
       })
       .join(''),

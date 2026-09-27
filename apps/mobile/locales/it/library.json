@@ -19,6 +19,7 @@
     "budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte."
   },
   "incomplete_hint": "Le foto non sono arrivate complete. Elimina la scheda e fotografala di nuovo.",
+  "photos_deleted": "Le foto non sono più salvate. Elimina il foglio e fotografalo di nuovo.",
   "practice": "Esercitati",
   "practice_label": "Esercitati su “{{title}}”",
   "retry": "Rileggi",

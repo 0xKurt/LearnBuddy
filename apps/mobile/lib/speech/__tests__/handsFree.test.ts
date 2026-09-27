@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { afterFeedback, useHandsFree } from '../handsFree.js';
+import { afterFeedback, talkListensByItself, useHandsFree } from '../handsFree.js';
 
 const items = (a: string, b: string) => [
   { item: { id: 'q1' }, status: a },
@@ -26,5 +26,13 @@ describe('hands-free practice', () => {
     useHandsFree.getState().disarm();
     useHandsFree.getState().listenNow();
     expect(useHandsFree.getState().ask).toBe(1);
+  });
+});
+
+describe('talkListensByItself (M-85)', () => {
+  it('never opens the mic by itself while a screen reader is on, or before it is known', () => {
+    expect(talkListensByItself(true)).toBe(false);
+    expect(talkListensByItself(null)).toBe(false);
+    expect(talkListensByItself(false)).toBe(true);
   });
 });
