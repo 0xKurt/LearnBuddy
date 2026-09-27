@@ -906,6 +906,14 @@ Also after the last question closed and the session finished.
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
 shown as "Frage von Buddy"), from a typed list (`typed`) or from homework (`homework`). All
 share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `insertItems`).
+A practice or practice test for a planned test stays within the sheets she photographed for it
+(live finding 6: a test "for the worksheet" asked to multiply and divide fractions, which the sheet
+never did). Buddy's `offer_learning` names the test (`goal`, or code takes the one active test
+whose title the offer names exactly) and the offer carries `goal_id`; `POST /practice/topic` with
+`goal_id` (the learner's own goal, else 404) gives the model the sheets' topics (from the
+questions read from them) and text, the schema lets each question's `topic` be only one of those
+topics, and a question on any other topic is dropped; the session belongs to the goal. A test
+with no read sheet is built from the topic she named, as before.
 Every prompt that writes questions, hints or explanations carries `LANGUAGE_RULES` (correct,
 natural language, real words, no "A/B" alternatives, reread and fix before answering — live
 finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1"). Code drops what it can recognise by

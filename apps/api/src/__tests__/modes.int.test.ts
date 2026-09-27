@@ -810,4 +810,94 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(fraction!.figure).toBeNull();
     expect(fraction!.prompt).toBe('Welcher Bruch ist dargestellt?');
   });
+  it('a practice test for a planned test stays within the sheets photographed for it (live finding 6)', async () => {
+    const goal = await env.db.one<{ id: string }>(
+      `insert into buddy_goals (learner_id, kind, title, due_date, topics)
+       values ($1, 'exam', 'Mathearbeit Brüche', '2026-10-01', '{Brüche}') returning id`,
+      [l.learnerId],
+    );
+    const sheet = await env.db.one<{ id: string }>(
+      `insert into materials (learner_id, client_request_id, status, photo_count, created_at, goal_id,
+                              title, extracted_text)
+       values ($1, gen_random_uuid(), 'ready', 1, $2, $3, 'Arbeitsblatt Brüche',
+               '1. Kürze 6/8. 2. Erweitere 3/4 mit 5.') returning id`,
+      [l.learnerId, env.clock.now(), goal.id],
+    );
+    for (const [prompt, topic] of [
+      ['Kürze 6/8.', 'Brüche kürzen'],
+      ['Erweitere 3/4 mit 5.', 'Brüche erweitern'],
+    ] as const) {
+      await env.db.query(
+        `insert into items (learner_id, material_id, kind, prompt, answer, topic, difficulty, origin)
+         values ($1, $2, 'short', $3, '3/4', $4, 2, 'material')`,
+        [l.learnerId, sheet.id, prompt, topic],
+      );
+    }
+    // Buddy offers the test by its title (the model named no goal): it is that test's.
+    env.llm.script('buddy_turn', {
+      json: {
+        reply: 'Hier ist dein Probetest.',
+        options: null,
+        actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Mathearbeit Brüche' } }],
+      },
+    });
+    await l.api.post('/buddy/messages', {
+      client_message_id: randomUUID(),
+      text: 'Mach mir einen Probetest für „Mathearbeit Brüche“.',
+    });
+    const offer = await env.db.one<{ result: { goal_id: string | null } }>(
+      `select result from buddy_actions where learner_id = $1 and tool = 'offer_learning'`,
+      [l.learnerId],
+    );
+    expect(offer.result.goal_id).toBe(goal.id);
+
+    env.llm.script('explain', (req) => {
+      const text = ScriptedGateway.textOf(req);
+      expect(text).toContain('TOPICS: Brüche erweitern | Brüche kürzen');
+      expect(text).toContain('Kürze 6/8');
+      // The model may only pick one of the sheet's topics.
+      expect(JSON.stringify(req.schema)).toContain('"enum":["Brüche erweitern","Brüche kürzen"]');
+      return {
+        usable: true,
+        title: 'Probetest Brüche',
+        subject: null,
+        intro: null,
+        items: [
+          item({ prompt: 'Kürze 9/12.', answer: '3/4', topic: 'Brüche kürzen' }),
+          item({ prompt: 'Erweitere 2/5 mit 3.', answer: '6/15', topic: 'Brüche erweitern' }),
+          // Not on the sheet: dropped.
+          item({ prompt: 'Berechne 2/3 · 3/5.', answer: '2/5', topic: 'Brüche multiplizieren' }),
+          item({ prompt: 'Berechne 3/4 : 2/3.', answer: '9/8', topic: 'Division' }),
+        ],
+      };
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'test',
+      text: 'Mathearbeit Brüche',
+      goal_id: offer.result.goal_id,
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.items.map((i) => i.item.topic)).toEqual(['Brüche kürzen', 'Brüche erweitern']);
+    const session = await env.db.one<{ goal_id: string }>(
+      `select goal_id from practice_sessions where id = $1`,
+      [res.body.id],
+    );
+    expect(session.goal_id).toBe(goal.id);
+
+    // Another learner's test is not hers to build from.
+    const other = await onboard(env, {
+      relation: 'child',
+      name: 'Mia',
+      birthDate: '2014-05-01',
+      pin: '1357',
+    });
+    const foreign = await other.api.post('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'test',
+      text: 'Mathearbeit Brüche',
+      goal_id: goal.id,
+    });
+    expect(foreign.status).toBe(404);
+  });
 });

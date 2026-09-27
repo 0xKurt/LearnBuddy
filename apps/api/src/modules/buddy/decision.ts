@@ -468,6 +468,11 @@ const offerLearning = z.object({
       .describe(
         "What to learn, in the learner's words (topic, the vocabulary they typed, or the homework task)",
       ),
+    goal: GoalRef.nullable()
+      .default(null)
+      .describe(
+        'practice or test for a planned test in STATE: its alias (g1) — the questions then stay within the sheets she photographed for it; otherwise null',
+      ),
   }),
 });
 

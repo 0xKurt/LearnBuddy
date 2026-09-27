@@ -26,7 +26,7 @@ export function OfferCard({ actionId, offer }: { actionId: string; offer: Offer 
   const label = t(`learn:${KIND_LABEL[offer.kind]}`);
 
   async function go(): Promise<void> {
-    const session = await start(offer.kind, offer.text, actionId);
+    const session = await start(offer.kind, offer.text, actionId, offer.goal_id);
     if (session) router.push(`/practice/${session.id}`);
   }
 

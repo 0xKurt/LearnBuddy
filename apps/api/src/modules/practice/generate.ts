@@ -33,7 +33,7 @@ import {
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.5';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.6';
 
 const SUBJECT_KINDS = [
   'math',
@@ -75,11 +75,47 @@ export const GeneratedSet = z.object({
   items: z.array(ItemDraft.omit({ hints: true, worked_solution: true })).max(25),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
-/** Parsed item by item: one broken item costs only itself (audit H-14, H-15). */
-const GeneratedParse = GeneratedSet.extend({
-  items: itemsOneByOne(ItemDraft.omit({ hints: true, worked_solution: true }), 25),
-});
+const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
 const GENERATED_SCHEMA = toJsonSchema(GeneratedSet);
+
+/** How much of the sheets' text grounds a test built from them. */
+const SHEET_CHARS = 6000;
+
+/**
+ * The sheets she photographed for the planned test a practice or test is for: their topics
+ * (from the questions read from them) and text. Null when it is for no test, or the test has
+ * no read sheet — then the topic she named decides, as before.
+ */
+async function sheetsOf(
+  deps: Deps,
+  learnerId: string,
+  input: StartTopicRequest,
+): Promise<{ goalId: string; topics: [string, ...string[]]; text: string } | null> {
+  if (!input.goal_id) return null;
+  const goal = await deps.db.maybeOne<{ id: string }>(
+    `select id from buddy_goals where id = $1 and learner_id = $2`,
+    [input.goal_id, learnerId],
+  );
+  if (!goal) throw new AppError('not_found', 'Goal not found');
+  if (input.kind !== 'test' && input.kind !== 'practice') return null;
+  const rows = await deps.db.query<{ topic: string | null; extracted_text: string | null }>(
+    `select distinct i.topic, m.extracted_text
+       from materials m
+       join items i on i.material_id = m.id and i.learner_id = m.learner_id
+      where m.learner_id = $1 and m.goal_id = $2 and m.status = 'ready'
+        and m.archived_at is null and m.purpose = 'study'
+        and i.archived_at is null and i.topic is not null`,
+    [learnerId, goal.id],
+  );
+  const topics = [...new Set(rows.map((r) => r.topic!.trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+  if (topics.length === 0) return null;
+  const text = [...new Set(rows.map((r) => r.extracted_text ?? ''))]
+    .join('\n\n')
+    .slice(0, SHEET_CHARS);
+  return { goalId: goal.id, topics: topics as [string, ...string[]], text };
+}
 
 const TASK: Record<StartTopicRequest['kind'], string> = {
   explain: `EXPLAIN the topic the learner named. "intro": a clear explanation for their age and grade — short paragraphs, 1–2 everyday examples, the one rule or idea that matters most, at most ~180 words; bold nothing, no headings. Then 3–5 items that check understanding (not just recall), easy to harder.`,
@@ -169,6 +205,15 @@ export async function startTopic(
   );
   const level =
     learner.level === 'school' ? `school, grade ${learner.grade ?? 'unknown'}` : learner.level;
+  const sheets = await sheetsOf(deps, learner.id, input);
+  // Built from her sheets: every question's topic is one of theirs — the schema offers only
+  // those, and a question on anything else is dropped (live finding 6).
+  const itemSchema = sheets
+    ? DraftItem.extend({
+        topic: z.enum(sheets.topics).describe('Exactly one of the SHEETS topics — never another'),
+      })
+    : DraftItem;
+  const setSchema = GeneratedSet.extend({ items: z.array(itemSchema).max(25) });
   let set: GeneratedSet;
   try {
     const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
@@ -185,6 +230,9 @@ export async function startTopic(
                 `LEARNER: ${learner.display_name}, ${ageOn(learner.birth_date, now)} years, level ${level}, app language ${learner.locale}`,
                 input.subject ? `SUBJECT (as the learner said): ${input.subject}` : null,
                 `TASK: ${TASK[input.kind]}`,
+                sheets
+                  ? `SHEETS (she photographed them for this test; stay strictly within them — only their topics, tasks like theirs with other numbers or words, nothing the sheets do not cover):\nTOPICS: ${sheets.topics.join(' | ')}\nTEXT:\n${sheets.text}`
+                  : null,
                 `LEARNER'S TEXT:\n${input.text}`,
               ]
                 .filter(Boolean)
@@ -193,7 +241,7 @@ export async function startTopic(
           ],
         },
       ],
-      schema: GENERATED_SCHEMA,
+      schema: sheets ? toJsonSchema(setSchema) : GENERATED_SCHEMA,
       maxOutputTokens: 10_000,
       temperature: 0.4,
       timeoutMs: 60_000,
@@ -202,7 +250,9 @@ export async function startTopic(
       // cost, more careful content (docs/architecture.md §Speed).
       thinkingBudget: 2048,
     });
-    const parsed = GeneratedParse.safeParse(res.json);
+    const parsed = GeneratedSet.extend({ items: itemsOneByOne(itemSchema, 25) }).safeParse(
+      res.json,
+    );
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
     set = parsed.data;
@@ -241,7 +291,7 @@ export async function startTopic(
         {
           mode: MODE[input.kind],
           stepId: null,
-          goalId: null,
+          goalId: sheets?.goalId ?? null,
           title: set.title,
           intro: input.kind === 'explain' ? set.intro : null,
           clientRequestId: input.client_request_id,

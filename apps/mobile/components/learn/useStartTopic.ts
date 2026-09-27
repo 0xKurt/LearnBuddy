@@ -46,6 +46,8 @@ export function useStartTopic() {
     kind: TopicKind,
     rawText: string,
     requestId?: string,
+    /** The planned test Buddy's offer is for: the questions stay within its sheets. */
+    goalId?: string | null,
   ): Promise<SessionView | null> {
     const text = rawText.trim();
     if (running.current || text.length < 2) return null;
@@ -55,7 +57,12 @@ export function useStartTopic() {
     last.current = { kind, text, id };
     setState({ status: 'preparing' });
     try {
-      const session = await startTopic({ client_request_id: id, kind, text });
+      const session = await startTopic({
+        client_request_id: id,
+        kind,
+        text,
+        ...(goalId ? { goal_id: goalId } : {}),
+      });
       last.current = null;
       // The home shows the new session (to resume it) from now on.
       void queryClient.invalidateQueries({ queryKey: keys.home });

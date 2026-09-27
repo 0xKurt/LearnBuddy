@@ -997,11 +997,22 @@ async function runSetVoice(action: ActionOf<'set_voice'>, ctx: ToolContext): Pro
 
 async function runOfferLearning(
   action: ActionOf<'offer_learning'>,
-  _ctx: ToolContext,
+  ctx: ToolContext,
 ): Promise<ToolOutcome> {
+  const a = action.args;
+  // Practice or a test for a planned test stays within its sheets (live finding 6): the goal
+  // the model named, or the one active goal whose title the offer names exactly.
+  const forGoal = a.kind === 'test' || a.kind === 'practice';
+  let goal = forGoal && a.goal ? goalOf(ctx, a.goal) : null;
+  if (forGoal && !goal) {
+    const named = [...ctx.aliases.goals.values()].filter(
+      (g) => g.status === 'active' && normalizeForMatch(g.title) === normalizeForMatch(a.text),
+    );
+    goal = named.length === 1 ? named[0]! : null;
+  }
   // Changes nothing: the learner starts it with a tap (the model never starts sessions).
   return {
-    summary: { tool: 'offer_learning', kind: action.args.kind, text: action.args.text },
+    summary: { tool: 'offer_learning', kind: a.kind, text: a.text, goal_id: goal?.id ?? null },
     undo: null,
   };
 }
