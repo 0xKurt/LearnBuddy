@@ -41,7 +41,10 @@
     "learner_exists": "Le profil existe déjà.",
     "weak_password": "Ce mot de passe n'est pas accepté. Choisis-en un autre, d'au moins 8 caractères.",
     "profile_invalid": "Cela ne va pas ensemble. Vérifie les informations.",
-    "stream_lost": "La connexion a été coupée en cours de route. Si ton message est arrivé, Buddy répondra quand même."
+    "stream_lost": "La connexion a été coupée en cours de route. Si ton message est arrivé, Buddy répondra quand même.",
+    "too_many_pages": "Ça fait trop de pages – 20 au maximum pour une fiche. Garde seulement celles dont tu as besoin.",
+    "file_unreadable": "Ce fichier ne s'ouvre pas. Prends-en un autre ou photographie la fiche.",
+    "file_too_large": "Le fichier est trop lourd – 15 Mo au maximum. Prends plutôt la fiche en photo."
   },
   "turn": {
     "model_unavailable": "Buddy n'a pas pu répondre à l'instant.",

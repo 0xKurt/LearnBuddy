@@ -24,6 +24,8 @@ import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
 import { applyLocale, deviceLocale, i18n } from '../lib/i18n/index.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
+import { ShareIntake } from '../components/capture/ShareIntake.js';
+import { clearIncoming } from '../lib/capture/incoming.js';
 import { recoverCameraResult } from '../lib/capture/pendingCamera.js';
 import { adoptLocalWork } from '../lib/localWork.js';
 import {
@@ -114,6 +116,7 @@ export default function RootLayout() {
         return;
       }
       clearAdminToken();
+      clearIncoming();
       userRef.current = null;
       // The welcome screen speaks the phone's language, not the previous learner's.
       applyLocale(deviceLocale());
@@ -203,12 +206,16 @@ export default function RootLayout() {
             <StatusBar style="dark" />
             <OfflineFrame>
               {ready ? (
-                <Stack
-                  screenOptions={{ headerShown: false, contentStyle: { backgroundColor: LB.bg } }}
-                >
-                  <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
-                  <Stack.Screen name="talk" options={{ presentation: 'fullScreenModal' }} />
-                </Stack>
+                <>
+                  <Stack
+                    screenOptions={{ headerShown: false, contentStyle: { backgroundColor: LB.bg } }}
+                  >
+                    <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
+                    <Stack.Screen name="talk" options={{ presentation: 'fullScreenModal' }} />
+                  </Stack>
+                  {/* Images and PDFs shared from other apps go to capture. */}
+                  <ShareIntake />
+                </>
               ) : (
                 <LoadingState />
               )}

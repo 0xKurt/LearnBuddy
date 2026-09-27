@@ -145,6 +145,14 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     does: 'reduce, pause or shift contact outside the app (never more)',
     run: ACT_HANDLERS.set_contact,
   },
+  set_voice: {
+    surfaces: TURN,
+    touches: ['settings'],
+    needsQuote: true,
+    undoable: true,
+    does: 'change how you sound when read aloud: slower, faster, normal, or another voice',
+    run: ACT_HANDLERS.set_voice,
+  },
   schedule_check: {
     surfaces: BOTH,
     touches: ['checks'],

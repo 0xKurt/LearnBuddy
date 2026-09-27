@@ -180,7 +180,23 @@
     "open_area": "Shown: {{what}}",
     "set_contact_quiet": "To the phone only between {{from}} and {{to}}, never after {{quiet}}",
     "set_contact_days": "never on these days: {{days}}",
-    "request_material_undone": "No photo needed: {{title}}"
+    "request_material_undone": "No photo needed: {{title}}",
+    "set_voice": "My voice: {{voice}}, {{speed}}"
+  },
+  "voice": {
+    "name": {
+      "warm": "warm",
+      "friendly": "friendly",
+      "bright": "bright",
+      "clear": "clear"
+    },
+    "speed": {
+      "slower2": "much slower",
+      "slower": "slower",
+      "normal": "normal speed",
+      "faster": "faster",
+      "faster2": "much faster"
+    }
   },
   "intro": {
     "title": "I'm Buddy.",

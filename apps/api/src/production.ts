@@ -7,6 +7,8 @@ import { createDb } from './lib/db.js';
 import { DisabledGateway } from './llm/gateway.js';
 import { VertexGateway } from './llm/vertex.js';
 import { DisabledPush, ExpoPush } from './push/transport.js';
+import { DisabledSpeech } from './speech/gateway.js';
+import { GoogleSpeech } from './speech/google.js';
 import { SupabaseStorage } from './storage/gateway.js';
 
 export function productionDeps(config: Config, background: Deps['background']): Deps {
@@ -20,6 +22,7 @@ export function productionDeps(config: Config, background: Deps['background']): 
     llm: config.LLM_BACKEND === 'vertex' ? new VertexGateway(config) : new DisabledGateway(),
     push:
       config.PUSH_BACKEND === 'expo' ? new ExpoPush(config.EXPO_ACCESS_TOKEN) : new DisabledPush(),
+    speech: config.SPEECH_BACKEND === 'google' ? new GoogleSpeech(config) : new DisabledSpeech(),
     background,
   };
 }

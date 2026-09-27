@@ -41,8 +41,12 @@ export type PageProblem = z.infer<typeof PageProblem>;
 
 export const CreateMaterialRequest = z.object({
   client_request_id: Uuid,
+  /**
+   * One entry per file, in page order: photos, or a PDF (worksheets shared as PDF). The API
+   * counts a PDF's pages on submit: 20 pages at most in all (reason too_many_pages).
+   */
   photo_mimes: z
-    .array(z.enum(['image/jpeg', 'image/png']))
+    .array(z.enum(['image/jpeg', 'image/png', 'application/pdf']))
     .min(1)
     .max(20),
   goal_id: Uuid.nullable().optional(),
@@ -78,6 +82,7 @@ export const MaterialView = z.object({
   session_status: z.enum(['active', 'finished', 'abandoned']).nullable().default(null),
   /** Pages not read completely, while Lena has not answered the notice. */
   page_problems: z.array(PageProblem),
+  /** Pages: a photo is one, a PDF counts its pages (known once submitted). */
   photo_count: z.number().int(),
   /** Pages added to a sheet: once read, their questions are part of that sheet. */
   merged_into: Uuid.nullable(),
@@ -339,6 +344,43 @@ export const TranscribeResponse = z.object({
   text: z.string(),
 });
 export type TranscribeResponse = z.infer<typeof TranscribeResponse>;
+
+// ─────────────── Buddy's voice (text to speech, ADR 0008) ───────────────
+
+/**
+ * The small curated set of Buddy's voices (ADR 0008): she changes it by asking Buddy
+ * ("andere Stimme"), never in a settings list. The server maps each to a provider voice.
+ */
+export const VOICE_NAMES = ['warm', 'friendly', 'bright', 'clear'] as const;
+export const VoiceName = z.enum(VOICE_NAMES);
+export type VoiceName = z.infer<typeof VoiceName>;
+
+/** Speaking speed in steps: -2 much slower … 0 normal … +2 much faster. */
+export const VOICE_SPEED_MIN = -2;
+export const VOICE_SPEED_MAX = 2;
+export const VoiceSpeed = z.number().int().min(VOICE_SPEED_MIN).max(VOICE_SPEED_MAX);
+
+/**
+ * One sentence (or a short word) to be read aloud in Buddy's natural voice. The app sends
+ * only the text as it is spoken (math already in words, lib/speech/spoken.ts) — nothing else
+ * about her. Voice and speed come from her settings on the server.
+ */
+export const SpeechRequest = z.object({
+  text: z.string().trim().min(1).max(600),
+  /** BCP 47 locale the text is read in ("de-DE", "fr-FR"). */
+  locale: z.string().regex(/^[a-z]{2}-[A-Z]{2}$/),
+  /** "Langsam": the slower speed for listening closely (vocabulary). */
+  slow: z.boolean().optional(),
+});
+export type SpeechRequest = z.infer<typeof SpeechRequest>;
+
+export const SpeechResponse = z.object({
+  mime: z.enum(['audio/mpeg', 'audio/wav']),
+  audio_base64: z.string().min(1),
+  voice: VoiceName,
+  speed: VoiceSpeed,
+});
+export type SpeechResponse = z.infer<typeof SpeechResponse>;
 
 export const AnswerResponse = z.object({
   session: SessionView,

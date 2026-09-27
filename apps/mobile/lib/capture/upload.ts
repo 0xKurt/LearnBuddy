@@ -89,13 +89,14 @@ function alreadyStored(status: number, body: string): boolean {
   return status === 409 || (status === 400 && /duplicate|already exists/i.test(body));
 }
 
-/** PUTs one prepared JPEG to its signed upload URL; resolves once storage has it. */
+/** PUTs one prepared JPEG (or a PDF) to its signed upload URL; resolves once storage has it. */
 export async function uploadPhoto(
   localUri: string,
   uploadUrl: string,
   position: number,
+  mime: UploadMime = 'image/jpeg',
 ): Promise<void> {
-  const res = await putPhoto(localUri, uploadUrl);
+  const res = await putPhoto(localUri, uploadUrl, mime);
   if (res.kind === 'file') throw new PhotoUploadError('file', position);
   if (res.kind === 'network') throw new PhotoUploadError('network', position);
   if (res.status >= 200 && res.status < 300) return;
@@ -109,6 +110,10 @@ export type SendProgress =
   | { step: 'submitting' };
 
 export type MaterialPurpose = 'study' | 'homework';
+
+/** What is uploaded: prepared photos are JPEGs; a PDF goes as it is. */
+export type UploadMime = 'image/jpeg' | 'application/pdf';
+export type UploadFile = { uri: string; mime: UploadMime };
 
 /**
  * What the photos are for: the capture step and goal they belong to, and
@@ -136,11 +141,11 @@ export class MaterialUpload {
   private readonly uploaded = new Set<number>();
   /** Submit was asked for at least once: the material may be on its way to being read. */
   private submitTried = false;
-  private readonly photoUris: readonly string[];
+  private readonly files: readonly UploadFile[];
   private readonly link: MaterialLink;
 
-  constructor(photoUris: readonly string[], link: MaterialLink, requestId: string = newId()) {
-    this.photoUris = [...photoUris];
+  constructor(files: readonly UploadFile[], link: MaterialLink, requestId: string = newId()) {
+    this.files = files.map((f) => ({ ...f }));
     this.link = link;
     this.currentRequestId = requestId;
   }
@@ -167,7 +172,7 @@ export class MaterialUpload {
 
   /** Resolves once the API has accepted the photos for reading. */
   async send(onProgress: (p: SendProgress) => void): Promise<void> {
-    const total = this.photoUris.length;
+    const total = this.files.length;
     let materialId = this.materialId;
     let targets = this.targets;
 
@@ -175,7 +180,7 @@ export class MaterialUpload {
       onProgress({ step: 'reserving' });
       const res = await createMaterial({
         client_request_id: this.currentRequestId,
-        photo_mimes: this.photoUris.map(() => 'image/jpeg' as const),
+        photo_mimes: this.files.map((f) => f.mime),
         ...(this.link.stepId ? { step_id: this.link.stepId } : {}),
         ...(this.link.goalId ? { goal_id: this.link.goalId } : {}),
         purpose: this.link.purpose ?? 'study',
@@ -192,13 +197,13 @@ export class MaterialUpload {
       this.targets = targets;
     }
 
-    for (const [position, uri] of this.photoUris.entries()) {
+    for (const [position, { uri, mime }] of this.files.entries()) {
       if (this.uploaded.has(position)) continue;
       const url = targets[position];
       if (url === undefined) throw new Error(`No upload URL for photo ${position + 1}`);
       onProgress({ step: 'uploading', current: position + 1, total });
       try {
-        await uploadPhoto(uri, url, position);
+        await uploadPhoto(uri, url, position, mime);
       } catch (err) {
         // Refused (e.g. the URL expired): the next try gets fresh URLs for the same material.
         if (err instanceof PhotoUploadError && err.kind === 'rejected') this.targets = null;
@@ -220,11 +225,9 @@ export class MaterialUpload {
 
   /** One URL per photo, by position. A mismatch starts a new material on the next try. */
   private targetsFrom(uploads: CreateMaterialResponse['uploads']): string[] {
-    const urls = this.photoUris.map(
-      (_, position) => uploads.find((u) => u.position === position)?.url,
-    );
+    const urls = this.files.map((_, position) => uploads.find((u) => u.position === position)?.url);
     const complete = urls.filter((u): u is string => u !== undefined);
-    if (uploads.length !== this.photoUris.length || complete.length !== urls.length) {
+    if (uploads.length !== this.files.length || complete.length !== urls.length) {
       this.currentRequestId = newId();
       this.materialId = null;
       throw new Error('The upload slots do not match the photos');
