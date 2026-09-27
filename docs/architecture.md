@@ -278,6 +278,18 @@ carries its decision, so what Buddy did in the background appears in the thread 
 and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
 is not skipped for good.
 
+**Looking back** (`modules/buddy/lookback.ts`, migration `0038_buddy_lookbacks.sql`; gaps #7):
+visible progress without pressure. After a finished practice or before a test
+(`session_finished`, `exam_countdown`) code may offer the check one fact — a topic that was
+shaky in a practice at least 5 days ago (and not since) and where now every question she
+practised (at least 2, the latest within 7 days) was right at once; before a test only from its
+subject, after a practice that session's topics first. The model may phrase it in
+`CheckDecision.look_back` (fact alias `p1`, one sentence) or leave it out; a look back that was
+not offered is rejected and repaired. It is a message in the thread only — never an outreach,
+never on the lock screen — and is kept in `buddy_lookbacks`: at most one per 7 days, the same
+topic not again within 60 days. Only what was reached: no counts, nothing still open, no missed
+days (rule 6).
+
 ## Delivery
 
 `modules/buddy/policy.ts` (pure) and `delivery.ts`.
