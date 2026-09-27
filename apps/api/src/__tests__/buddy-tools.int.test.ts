@@ -5,7 +5,7 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { SendMessageResponse } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
@@ -249,5 +249,26 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     expect(state.materials.map((x) => x.item_count)).toEqual([0]);
     expect(state.topics).toEqual([]);
     expect(state.totals.items).toBe(0);
+  });
+
+  it('the thread offers "Rückgängig" only when it would work (audit M-56)', async () => {
+    env.llm.script('buddy_turn', {
+      json: say('Schick mir ein Foto davon.', [
+        { tool: 'request_material', args: { goal: null, title: 'Arbeitsblatt Brüche' } },
+      ]),
+    });
+    await send(l, 'Ich hab ein Arbeitsblatt');
+    const undoable = async () => {
+      const home = (await l.api.get<BuddyHome>('/buddy')).body;
+      return home.thread.flatMap((m) => m.actions).map((a) => a.undoable);
+    };
+    expect(await undoable()).toEqual([true]);
+    // The photo arrived: the request is done and cannot be taken back.
+    await env.db.query(
+      `update buddy_steps set state = 'done', done_source = 'evidence', finished_at = $2
+        where learner_id = $1 and kind = 'capture'`,
+      [l.learnerId, env.clock.now()],
+    );
+    expect(await undoable()).toEqual([false]);
   });
 });
