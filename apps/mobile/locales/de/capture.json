@@ -36,7 +36,8 @@
     "upload_rejected": "Foto {{index}} ist nicht angekommen.",
     "upload_file": "Foto {{index}} ist nicht mehr da. Entfern es und mach es neu.",
     "kept": "Deine Fotos sind noch hier.",
-    "left": "Dein Blatt ist nicht angekommen. Fotografier es bitte nochmal."
+    "left": "Dein Blatt ist nicht angekommen. Fotografier es bitte nochmal.",
+    "left_kept": "Dein Blatt ist noch nicht angekommen. Deine Fotos warten bei Buddy – schick sie von dort nochmal."
   },
   "homework": {
     "title": "Fotografier deine Hausaufgabe",
@@ -62,7 +63,8 @@
     "title_pages": "Seite {{pages}} nochmal",
     "intro": "Nur was gefehlt hat – der Rest ist schon fertig. Achte darauf, dass die ganze Seite drauf ist.",
     "title_add": "Seite hinzufügen",
-    "intro_add": "Die Fragen dazu kommen zu diesem Blatt."
+    "intro_add": "Die Fragen dazu kommen zu diesem Blatt.",
+    "added": "Seite geschickt. Sobald sie gelesen ist, kommen ihre Fragen zu diesem Blatt."
   },
   "draft": {
     "title": "Deine Fotos sind noch nicht gesendet",

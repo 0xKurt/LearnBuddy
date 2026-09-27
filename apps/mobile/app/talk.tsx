@@ -244,6 +244,10 @@ export default function TalkScreen() {
   // Every phase change is heard on iOS too (Android reads the live region).
   useAnnounce(headline);
 
+  // Opened straight from a link (learnbuddy://talk), there is nothing to go back to: the
+  // way out leads to the start screen (deep-link-unmatched-and-talk-back).
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: LB.bg }}
@@ -260,11 +264,7 @@ export default function TalkScreen() {
           paddingTop: 8,
         }}
       >
-        <CircleBtn
-          icon="close"
-          onPress={() => router.back()}
-          accessibilityLabel={t('buddy:talk.end')}
-        />
+        <CircleBtn icon="close" onPress={leave} accessibilityLabel={t('buddy:talk.end')} />
         <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>
           {t('buddy:talk.title').toUpperCase()}
         </Text>
@@ -354,7 +354,7 @@ export default function TalkScreen() {
         <View style={{ alignItems: 'center', gap: 4, width: 96 }}>
           <CircleBtn
             icon="keyboard"
-            onPress={() => router.back()}
+            onPress={leave}
             accessibilityLabel={t('buddy:composer.keyboard')}
           />
           <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
@@ -368,7 +368,7 @@ export default function TalkScreen() {
           onPress={onMic}
         />
         <View style={{ alignItems: 'center', width: 96 }}>
-          <Btn variant="ghost" size="sm" onPress={() => router.back()}>
+          <Btn variant="ghost" size="sm" onPress={leave}>
             {t('buddy:talk.end')}
           </Btn>
         </View>

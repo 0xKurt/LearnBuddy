@@ -36,7 +36,8 @@
     "upload_rejected": "La photo {{index}} n'est pas arrivée.",
     "upload_file": "La photo {{index}} n'est plus là. Retire-la et reprends-la.",
     "kept": "Tes photos sont toujours là.",
-    "left": "Ta fiche n'est pas arrivée. Reprends-la en photo, s'il te plaît."
+    "left": "Ta fiche n'est pas arrivée. Reprends-la en photo, s'il te plaît.",
+    "left_kept": "Ta fiche n'est pas encore arrivée. Tes photos t'attendent chez Buddy – renvoie-les depuis là."
   },
   "homework": {
     "title": "Photographie tes devoirs",
@@ -62,7 +63,8 @@
     "title_pages": "Page {{pages}} à nouveau",
     "intro": "Seulement ce qui manquait – le reste est déjà prêt. Veille à ce que toute la page soit sur la photo.",
     "title_add": "Ajouter une page",
-    "intro_add": "Ses questions rejoignent cette feuille."
+    "intro_add": "Ses questions rejoignent cette feuille.",
+    "added": "Page envoyée. Dès qu'elle sera lue, ses questions rejoindront cette fiche."
   },
   "draft": {
     "title": "Tes photos ne sont pas encore envoyées",

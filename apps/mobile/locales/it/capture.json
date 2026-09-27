@@ -36,7 +36,8 @@
     "upload_rejected": "La foto {{index}} non è arrivata.",
     "upload_file": "La foto {{index}} non c'è più. Rimuovila e scattala di nuovo.",
     "kept": "Le tue foto sono ancora qui.",
-    "left": "La tua scheda non è arrivata. Fotografala di nuovo, per favore."
+    "left": "La tua scheda non è arrivata. Fotografala di nuovo, per favore.",
+    "left_kept": "La tua scheda non è ancora arrivata. Le tue foto ti aspettano da Buddy: rimandale da lì."
   },
   "homework": {
     "title": "Fotografa i tuoi compiti",
@@ -62,7 +63,8 @@
     "title_pages": "Di nuovo pagina {{pages}}",
     "intro": "Solo quello che mancava: il resto è già pronto. Fai in modo che ci sia tutta la pagina.",
     "title_add": "Aggiungi una pagina",
-    "intro_add": "Le sue domande si aggiungono a questo foglio."
+    "intro_add": "Le sue domande si aggiungono a questo foglio.",
+    "added": "Pagina inviata. Appena sarà letta, le sue domande si aggiungeranno a questa scheda."
   },
   "draft": {
     "title": "Le tue foto non sono ancora state inviate",
