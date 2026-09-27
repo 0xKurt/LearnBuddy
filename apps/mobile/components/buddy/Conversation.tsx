@@ -115,7 +115,8 @@ export function Conversation({
               entering={enterOf(m, 0)}
               style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}
             >
-              {mine ? null : <BuddyOrb size={26} breathe={m === lastBuddy} />}
+              {/* Only the newest Buddy moves (while he writes, the one writing does). */}
+              {mine ? null : <BuddyOrb size={26} breathe={m === lastBuddy && !thinking} />}
               <Pressable
                 accessibilityLabel={spoken}
                 accessibilityHint={t('thread.message_hint')}
@@ -322,7 +323,8 @@ export function Conversation({
           entering={riseIn(0)}
           style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}
         >
-          <BuddyOrb size={26} />
+          {/* Buddy is writing: his moon sways in the rhythm of speech. */}
+          <BuddyOrb size={26} state="speak" />
           <View
             accessibilityLiveRegion="polite"
             style={[

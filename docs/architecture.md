@@ -1047,10 +1047,15 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
   screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
   the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
-  every phase is announced. Buddy's orb shows the phase (`components/voice/TalkOrb.tsx`):
-  idle it breathes, listening it follows her voice level, thinking a light ring swirls around
-  it, speaking it pulses in a speech-like rhythm with soft waves (there is no level of Buddy's
-  voice to follow), cross-faded; with reduce motion only the layers fade. Tapping Buddy while he
+  every phase is announced. Buddy's orb shows the phase (`components/voice/TalkOrb.tsx`)
+  through his moon (docs/DESIGN-BRIEF.md §Buddy's moon, `lib/buddy/moon.ts` `talkMode`): idle it
+  circles, listening it parks at the upper right and glows with her voice level (the orb's sound
+  bars too), thinking it races round with a trail, paused without trouble it waits (bobs with a
+  ping: her turn), speaking it sways in a speech rhythm (there is no level of Buddy's voice to
+  follow); states blend, and with reduce motion the moon only cross-fades between still poses.
+  The moon runs on the UI thread: one Reanimated frame callback per moving orb writes a pose that
+  a few animated views read (moon in front and behind the glass, trail dots, ping, reflection) —
+  no JS re-render per frame. Tapping Buddy while he
   speaks stops him ("Tipp auf Buddy, um ihn zu unterbrechen."). Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored

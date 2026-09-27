@@ -161,11 +161,34 @@ The mental model is **"my learning companion is here when I want to practice"** 
 ### The first impression (icon and splash)
 
 The app icon and the splash screen are Buddy's orb — a blue → lilac → pink glass sphere with a
-white halo and a violet depth at its lower edge — on the soft pastel light of the app
-(`#faf7fd`). No letters, no mascot. The files are drawn by `scripts/brand/render-icons.mjs` (our
+white halo and a violet depth at its lower edge — with its small pearl moon at the upper right,
+on the soft pastel light of the app (`#faf7fd`). No letters, no mascot. In the icons the moon is
+drawn at 1.3 × its in-app size (the prototype's 2.1 was too big, owner 2026-09-27): it still
+reads at 48 px while the orb leads; Android's themed icon draws it as a crescent. The files are drawn by `scripts/brand/render-icons.mjs` (our
 own SVG, rendered by Chromium) into `apps/mobile/assets/`; change the script, not the PNGs. The
 native splash hands over to an identical picture in the app (`components/lb/SplashHandoff.tsx`)
 that settles and fades into the first screen.
+
+### Buddy's moon (his signature)
+
+Owner decision 2026-09-27 (with his daughter): Buddy's orb has one element only Buddy has — a
+small pearl moon on a tilted orbit that passes in front of and behind the glass. No face, no
+eyes. The moon is Buddy's attention made visible, and each state is a clearly different movement:
+
+| State  | When                                                                                      | What the moon does                                |
+| ------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| idle   | at rest (home, welcome, the newest chat avatar)                                           | circles slowly, a faint trail of light            |
+| listen | talk mode, the mic is on                                                                  | stops at the upper right and glows with her voice |
+| think  | Buddy is thinking (typing bubble, looking at her answer, working on her photo, talk mode) | races round, the trail becomes a ring             |
+| wait   | her turn (talk mode, paused without trouble)                                              | hovers and bobs, a soft ping                      |
+| speak  | Buddy speaks or writes his answer live                                                    | sways and pulses in a speech rhythm               |
+| happy  | a right answer, a finished session ("Geschafft!")                                         | spirals up, a shower of sparkles, glides back     |
+
+States blend softly (0.2 s), never jump. On small avatars the moon is simpler (no reflection,
+a short trail) and drawn a little larger so it stays a moon, not a speck; below 22 px there is
+none. Only the newest avatar in a conversation moves. With reduce motion the moon stands still in
+each state's pose and a change only cross-fades. The maths lives in `lib/buddy/moon.ts`
+(unit-tested), the drawing in `components/lb/BuddyOrb.tsx`.
 
 ---
 

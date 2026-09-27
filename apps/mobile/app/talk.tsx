@@ -29,6 +29,7 @@ import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { MicButton } from '../components/voice/MicButton.js';
 import { ReadAlongText } from '../components/voice/ReadAlongText.js';
 import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
+import { talkMode } from '../lib/buddy/moon.js';
 import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
 import { useVoiceInput } from '../components/voice/useVoiceInput.js';
 import { newId } from '../lib/api/client.js';
@@ -263,16 +264,14 @@ export default function TalkScreen() {
         : null;
   // While Buddy's natural voice for a sentence is still on its way, he is thinking (ADR 0008).
   const buddyVoice = useBuddyVoice();
-  const orbMode: OrbMode =
-    phase === 'thinking' ||
-    voice.state === 'transcribing' ||
-    (phase === 'speaking' && buddyVoice.phase === 'loading')
-      ? 'thinking'
-      : phase === 'speaking'
-        ? 'speaking'
-        : listening || voice.state === 'starting'
-          ? 'listening'
-          : 'idle';
+  // Paused without trouble is her turn: the moon waits (lib/buddy/moon.ts).
+  const orbMode: OrbMode = talkMode({
+    phase,
+    hearing: listening || voice.state === 'starting',
+    transcribing: voice.state === 'transcribing',
+    voiceLoading: buddyVoice.phase === 'loading',
+    trouble: !!problem || !!voice.hint || !!voice.denied,
+  });
 
   // Every phase change is heard on iOS too (Android reads the live region).
   useAnnounce(headline);

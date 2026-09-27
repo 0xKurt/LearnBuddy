@@ -1,5 +1,5 @@
 // The hand-off from the native splash screen to the app. The native splash
-// (app.json, expo-splash-screen) shows Buddy's orb on the page colour; this
+// (app.json, expo-splash-screen) shows Buddy's orb and its moon on the page colour; this
 // overlay draws exactly the same picture in the same place, so the native one
 // can go without a flicker. Once the app is ready the orb settles (a small
 // shrink) while the overlay fades away, and the first screen is there.
