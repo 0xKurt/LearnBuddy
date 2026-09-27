@@ -936,7 +936,12 @@ once (`abandonStaleUploads`, run by the scheduler).
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's
-  web build talks to it like to production. Test tooling only; never deployed.
+  web build talks to it like to production, through the same CORS as the API
+  (`src/http/cors.ts`): the allowed request headers are the app's own list
+  (`APP_REQUEST_HEADERS` in `shared-types`, which the client's header type is built from), so a
+  header the app starts sending cannot be missing from a preflight (`cors.int.test.ts`; a missing
+  `x-app-version` once made every browser call fail as "Keine Verbindung"). Test tooling only;
+  never deployed.
   `tests/web/layout.spec.ts` checks the home under stress (a long name on a 390 and a 320 px
   phone): nothing overlaps the ring's buttons, no two buttons share touch area, no sideways scroll.
   Every screenshot in the walkthroughs (`tests/web/fit.ts`) is taken at 390×844 and 360×740 and
