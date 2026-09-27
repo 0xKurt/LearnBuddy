@@ -16,6 +16,8 @@ import type { AppEnv } from './http/context.js';
 import { accountBudgets } from './http/limits.js';
 import { isCheckViolation } from './lib/db.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
+import { olderThan } from './lib/version.js';
+import { pushDeviceRoutes } from './modules/devices/routes.js';
 import { buddyRoutes } from './modules/buddy/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
 import { materialRoutes } from './modules/materials/routes.js';
@@ -56,7 +58,13 @@ export function createApp(deps: Deps): Hono<AppEnv> {
       cors({
         origin: (origin) => (origins.includes(origin) ? origin : null),
         allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowHeaders: ['content-type', 'authorization', 'x-timezone', 'x-admin-token'],
+        allowHeaders: [
+          'content-type',
+          'authorization',
+          'x-timezone',
+          'x-admin-token',
+          'x-app-version',
+        ],
         maxAge: 86_400,
       }),
     );
@@ -84,6 +92,17 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     c.set('deps', deps);
     await next();
   });
+  // Builds too old for this API say "please update" instead of failing somewhere
+  // inside (audit M-69). Builds that send no version (older ones, the web) pass.
+  const minimum = deps.config.MIN_APP_VERSION;
+  if (minimum) {
+    app.use('*', async (c, next) => {
+      const version = c.req.header('x-app-version');
+      if (version && /^\d+(\.\d+){0,2}$/.test(version) && olderThan(version, minimum))
+        throw new AppError('update_required', 'This app version is too old', { minimum });
+      await next();
+    });
+  }
   // Per-account budgets for answers and messages (D-14, docs/architecture.md §Limits).
   app.use('*', accountBudgets);
 
@@ -172,6 +191,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
   });
 
   api.route('/', identityRoutes);
+  api.route('/', pushDeviceRoutes);
   api.route('/buddy', buddyRoutes);
   api.route('/practice', practiceRoutes);
   api.route('/materials', materialRoutes);

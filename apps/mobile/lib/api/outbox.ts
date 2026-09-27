@@ -3,8 +3,9 @@
 // that, it is sent again on the next start or when the device is back online —
 // with the same client_turn_id, so the API records it once (it replays).
 // Answers the API refuses for good (question already closed, session ended)
-// are dropped. Signing out clears the outbox (another account never sends
-// them). Pure queue logic here (Node-testable); storage in outboxStorage*.ts.
+// are dropped. A session that merely ends keeps them for her next sign-in;
+// they are deleted when someone else signs in or an adult signs out on purpose
+// (lib/localWork.ts; another account never sends them). Pure queue logic here (Node-testable); storage in outboxStorage*.ts.
 
 import type { AnswerRequest } from '@learnbuddy/shared-types/contracts';
 
@@ -55,7 +56,8 @@ export type SendResult = 'sent' | 'refused' | 'no_connection' | 'try_later';
 export function failureOf(code: string, status: number): SendResult {
   if (code === 'network' || status === 0) return 'no_connection';
   if (code === 'invalid_response') return 'try_later';
-  const forGood = status >= 400 && status < 500 && ![401, 408, 429].includes(status);
+  // 426: this build is too old — after the update the answer can still be sent.
+  const forGood = status >= 400 && status < 500 && ![401, 408, 426, 429].includes(status);
   return forGood ? 'refused' : 'try_later';
 }
 

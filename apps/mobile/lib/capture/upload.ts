@@ -134,6 +134,8 @@ export class MaterialUpload {
   /** Signed upload URL per photo position (index = position). */
   private targets: string[] | null = null;
   private readonly uploaded = new Set<number>();
+  /** Submit was asked for at least once: the material may be on its way to being read. */
+  private submitTried = false;
   private readonly photoUris: readonly string[];
   private readonly link: MaterialLink;
 
@@ -151,6 +153,16 @@ export class MaterialUpload {
   /** The material, once the API reserved it. */
   get material(): string | null {
     return this.materialId;
+  }
+
+  /**
+   * A reservation nobody will use once this photo set changes: reserved, but
+   * never submitted, so it is certainly still waiting for photos. The capture
+   * screen deletes it instead of leaving an "unvollständig" sheet behind
+   * (audit M-20). After a submit attempt it is left alone: it may be read.
+   */
+  get abandonedReservation(): string | null {
+    return this.materialId && !this.submitTried ? this.materialId : null;
   }
 
   /** Resolves once the API has accepted the photos for reading. */
@@ -172,7 +184,10 @@ export class MaterialUpload {
       materialId = res.material.id;
       this.materialId = materialId;
       // An earlier try already got through; only its answer was lost.
-      if (res.material.status !== 'awaiting_upload') return;
+      if (res.material.status !== 'awaiting_upload') {
+        this.submitTried = true;
+        return;
+      }
       targets = this.targetsFrom(res.uploads);
       this.targets = targets;
     }
@@ -193,6 +208,7 @@ export class MaterialUpload {
     }
 
     onProgress({ step: 'submitting' });
+    this.submitTried = true;
     try {
       await submitMaterial(materialId);
     } catch (err) {

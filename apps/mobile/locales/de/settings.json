@@ -50,7 +50,8 @@
     "summary": "Buddy meldet sich zwischen {{start}} und {{end}} Uhr, höchstens {{count}}× pro Woche, nie nach {{quiet}} Uhr.",
     "tell_buddy": "Sag Buddy einfach, wenn du Ruhe willst.",
     "more": "Zeiten anpassen",
-    "less": "Weniger anzeigen"
+    "less": "Weniger anzeigen",
+    "device_elsewhere": "Buddys Nachrichten gehen gerade an ein anderes Gerät, nicht an dieses Handy."
   },
   "profile": {
     "title": "Dein Profil",
@@ -127,7 +128,9 @@
       "cta": "Abmelden",
       "confirm_title": "Wirklich abmelden?",
       "confirm_body": "Zum Wiederanmelden braucht es die E-Mail-Adresse und das Passwort.",
-      "confirm_cta": "Ja, abmelden"
+      "confirm_cta": "Ja, abmelden",
+      "confirm_unsent": "Auf diesem Gerät sind noch Antworten oder Fotos, die nicht gesendet sind. Beim Abmelden werden sie gelöscht. Mit Verbindung werden sie gleich gesendet – dann einfach kurz warten.",
+      "confirm_cta_unsent": "Trotzdem abmelden"
     },
     "access": {
       "email_title": "E-Mail-Adresse",

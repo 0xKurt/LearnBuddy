@@ -50,7 +50,8 @@
     "summary": "Buddy te escribe entre las {{start}} y las {{end}}, como mucho {{count}}× por semana, nunca después de las {{quiet}}.",
     "tell_buddy": "Díselo a Buddy cuando quieras tranquilidad.",
     "more": "Ajustar horarios",
-    "less": "Mostrar menos"
+    "less": "Mostrar menos",
+    "device_elsewhere": "Los mensajes de Buddy llegan ahora a otro dispositivo, no a este móvil."
   },
   "profile": {
     "title": "Tu perfil",
@@ -127,7 +128,9 @@
       "cta": "Cerrar sesión",
       "confirm_title": "¿Seguro que quieres cerrar sesión?",
       "confirm_body": "Para volver a iniciar sesión hacen falta el correo electrónico y la contraseña.",
-      "confirm_cta": "Sí, cerrar sesión"
+      "confirm_cta": "Sí, cerrar sesión",
+      "confirm_unsent": "En este dispositivo hay respuestas o fotos que aún no se enviaron. Al cerrar sesión se borran. Con conexión se envían enseguida: espera un momento.",
+      "confirm_cta_unsent": "Cerrar sesión igualmente"
     },
     "access": {
       "email_title": "Dirección de correo",

@@ -95,6 +95,42 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect(report).toEqual({ scriptErrors: [], unexpected: 0, pending: 0 });
   });
 
+  it('keeps purpose and sheet on a failed card, and the sheet being read comes first (M-18, M-19)', async () => {
+    env.llm.script('extraction', { error: new LlmError('invalid_output', 'truncated') });
+    const created = await l.api.post<{
+      material: { id: string };
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: uuid(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'homework',
+    });
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    await l.api.post(`/materials/${created.body.material.id}/submit`);
+    await env.flushBackground();
+    const failed = (await l.api.get<BuddyHome>('/buddy')).body.now;
+    expect(failed).toMatchObject({
+      type: 'material_failed',
+      material_id: created.body.material.id,
+      purpose: 'homework',
+      completes: null,
+    });
+
+    // Three hours later she photographs a new sheet; the model is busy, so it waits to be read.
+    env.clock.hours(3);
+    env.llm.script('extraction', { error: new LlmError('unavailable', 'busy') });
+    const next = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(
+      '/materials',
+      { client_request_id: uuid(), photo_mimes: ['image/jpeg'] },
+    );
+    for (const u of next.body.uploads) env.storage.put(u.path);
+    expect((await l.api.post(`/materials/${next.body.material.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+    // The card is about the sheet being read, not yesterday's failure (whose retry is not offered).
+    const now = (await l.api.get<BuddyHome>('/buddy')).body.now;
+    expect(now).toMatchObject({ type: 'material_processing', material_id: next.body.material.id });
+  });
+
   it('reports unreadable photos, allows a bounded number of retries, and keeps photos only 7 days', async () => {
     env.llm.script('extraction', {
       json: {

@@ -4,11 +4,16 @@
 
 import { clearAdminToken } from './admin.js';
 import { signOut } from './auth/supabase.js';
+import { releaseLocalWork } from './localWork.js';
 import { unregisterDeviceForPush } from './push.js';
 
 export async function signOutHere(): Promise<void> {
   clearAdminToken();
-  // Still signed in: tell the server this phone no longer gets Buddy's messages.
+  // Still signed in: tell the server this phone no longer gets Buddy's messages
+  // (bounded in time; retried later if it cannot reach the server).
   await unregisterDeviceForPush();
+  // A deliberate sign-out: nothing of hers stays on the device for the next person
+  // (settings warned first when something was unsent; lib/localWork.ts).
+  await releaseLocalWork().catch(() => undefined);
   await signOut();
 }

@@ -10,6 +10,8 @@
 // answer (timeout, 5xx, dropped connection), the outcome is unknown and the
 // caller must NOT resend automatically.
 
+import { PUSH_CHANNEL_ID } from '@learnbuddy/shared-types/contracts';
+
 export type PushMessage = {
   to: string;
   title: string;
@@ -99,6 +101,8 @@ export class ExpoPush implements PushTransport {
             data: m.data,
             sound: 'default',
             priority: 'default',
+            // The Android channel the app creates (lib/push.ts): its settings apply.
+            channelId: PUSH_CHANNEL_ID,
             ...(m.collapseId ? { collapseId: m.collapseId } : {}),
           })),
         ),

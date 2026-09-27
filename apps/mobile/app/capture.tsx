@@ -27,6 +27,7 @@ import { Icon } from '../components/lb/Icon.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
 import { toast } from '../components/lb/Toast.js';
+import { deleteMaterial } from '../lib/api/endpoints.js';
 import { keys, queryClient } from '../lib/api/queries.js';
 import {
   MAX_PHOTOS,
@@ -37,8 +38,13 @@ import {
   type MaterialPurpose,
   type SendProgress,
 } from '../lib/capture/upload.js';
-import type { DraftLink } from '../lib/capture/draft.js';
+import type { CaptureDraft, DraftLink } from '../lib/capture/draft.js';
 import { drafts } from '../lib/capture/draftStorage.js';
+import {
+  clearCameraOpen,
+  markCameraOpen,
+  takePendingPhotos,
+} from '../lib/capture/pendingCamera.js';
 import { messageFor } from '../lib/errors.js';
 import type { PhotoProblem } from '../lib/photo/quality.js';
 import { LB } from '../lib/theme/colors.js';
@@ -76,7 +82,10 @@ export default function CaptureScreen() {
     pages?: string | string[];
     resume?: string | string[];
     add?: string | string[];
+    /** Android: photos from a camera session the system cut off (lib/capture/pendingCamera.ts). */
+    pending?: string | string[];
   }>();
+  const pending = params.pending === '1';
   const resume = params.resume === '1';
   /** What the photos are for; a resumed draft brings its own. */
   const [link, setLink] = useState<DraftLink>(() => ({
@@ -109,28 +118,50 @@ export default function CaptureScreen() {
   /** Changed here since opening: only then is the draft written (and an older one replaced). */
   const dirty = useRef(false);
 
+  /** Photos left from before when this capture opened fresh: she decides first (audit M-21). */
+  const [leftover, setLeftover] = useState<CaptureDraft | null>(null);
+
+  function applyDraft(d: CaptureDraft) {
+    const uris = d.photos.map((p) => p.uri);
+    setLink(d.link);
+    setPhotos(uris);
+    setProblems(
+      Object.fromEntries(d.photos.filter((p) => p.problems.length).map((p) => [p.uri, p.problems])),
+    );
+    setKept(new Set(d.photos.filter((p) => p.kept).map((p) => p.uri)));
+    // Already on its way before: the same material, nothing sent twice.
+    if (d.requestId) upload.current = new MaterialUpload(uris, uploadLink(d.link), d.requestId);
+  }
+
   useEffect(() => {
     mounted.current = true;
-    if (resume) {
-      void drafts.load().then((d) => {
-        if (!d || !mounted.current || dirty.current) return;
-        const uris = d.photos.map((p) => p.uri);
-        setLink(d.link);
-        setPhotos(uris);
-        setProblems(
-          Object.fromEntries(
-            d.photos.filter((p) => p.problems.length).map((p) => [p.uri, p.problems]),
-          ),
-        );
-        setKept(new Set(d.photos.filter((p) => p.kept).map((p) => p.uri)));
-        // Already on its way before: the same material, nothing sent twice.
-        if (d.requestId) upload.current = new MaterialUpload(uris, uploadLink(d.link), d.requestId);
-      });
-    }
+    void (resume ? drafts.load() : drafts.leftBehind()).then(async (d) => {
+      if (!mounted.current || dirty.current) return;
+      if (d && resume) applyDraft(d);
+      else if (d) setLeftover(d);
+      if (!pending) return;
+      // The photo taken when the app was cut off joins the capture it was for.
+      const recovered = await takePendingPhotos();
+      if (!recovered || !mounted.current) return;
+      if (!d) setLink(recovered.link);
+      void addPhotos(recovered.uris);
+    });
     return () => {
       mounted.current = false;
     };
-  }, [resume]);
+  }, [resume, pending]);
+
+  function continueLeftover() {
+    if (!leftover) return;
+    applyDraft(leftover);
+    dirty.current = true;
+    setLeftover(null);
+  }
+
+  async function discardLeftover() {
+    if (leftover) await drafts.discard(leftover);
+    setLeftover(null);
+  }
 
   // The draft follows every change, so closing the app loses nothing.
   useEffect(() => {
@@ -142,9 +173,13 @@ export default function CaptureScreen() {
     });
   }, [photos, problems, kept, link]);
 
-  /** The first change in a fresh capture replaces a draft left from before. */
+  /**
+   * The first change here: from now on the draft follows this screen. A draft
+   * left from before was offered first (leftover); one still being sent is
+   * never deleted — its send finishes (drafts.discard keeps it).
+   */
   async function touch() {
-    if (!dirty.current && !resume) await drafts.discard();
+    if (!dirty.current && !resume && !leftover) await drafts.discard();
     dirty.current = true;
   }
 
@@ -152,6 +187,10 @@ export default function CaptureScreen() {
   const room = MAX_PHOTOS - photos.length;
 
   function photosChanged() {
+    // A reservation for the old photo set that was never submitted: gone, not left
+    // behind as an "unvollständig" sheet (audit M-20).
+    const abandoned = upload.current?.abandonedReservation;
+    if (abandoned) void deleteMaterial(abandoned).catch(() => undefined);
     upload.current = null;
     setFailure(null);
   }
@@ -195,7 +234,13 @@ export default function CaptureScreen() {
           const permission = await ImagePicker.requestCameraPermissionsAsync();
           setCameraBlocked(!permission.granted);
           if (!permission.granted) return;
-          result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'] });
+          // Android may kill the app meanwhile: note what the photo is for (audit M-22).
+          await markCameraOpen(link);
+          try {
+            result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'] });
+          } finally {
+            void clearCameraOpen();
+          }
         } else {
           // The system photo picker needs no photo-library permission.
           result = await ImagePicker.launchImageLibraryAsync({
@@ -255,6 +300,15 @@ export default function CaptureScreen() {
     return `${messageFor(err)} ${t('capture:error.kept')}`;
   }
 
+  async function keepIfFree(requestId: string) {
+    if (await drafts.load()) return;
+    await drafts.save({
+      requestId,
+      photos: photos.map((uri) => ({ uri, problems: problems[uri] ?? [], kept: kept.has(uri) })),
+      link,
+    });
+  }
+
   async function send() {
     if (sending.current || busy || photos.length === 0) return;
     sending.current = true;
@@ -263,6 +317,7 @@ export default function CaptureScreen() {
     setFailure(null);
     setProgress({ step: 'reserving' });
     drafts.startSending(current.requestId);
+    let delivered = false;
     dirty.current = true;
     // The request id goes into the draft first: after a crash the same material goes on.
     await drafts.save({
@@ -273,7 +328,8 @@ export default function CaptureScreen() {
     try {
       // Keeps going if the learner leaves meanwhile: they asked for it to be sent.
       await current.send(setProgress);
-      if (current.material) await drafts.sent(current.material, photos);
+      delivered = true;
+      if (current.material) await drafts.sent(current.material, photos, current.requestId);
       void queryClient.invalidateQueries({ queryKey: keys.home });
       void queryClient.invalidateQueries({ queryKey: keys.library });
       // Back to Buddy's home, which now shows the reading (opens it if it isn't in the stack).
@@ -283,6 +339,9 @@ export default function CaptureScreen() {
       else toast.show(t('capture:error.left'), 'error');
     } finally {
       drafts.stopSending(current.requestId);
+      // She left meanwhile and started another capture: these photos are offered again
+      // when the draft slot is free (home: "Deine Fotos sind noch nicht gesendet").
+      if (!mounted.current && !delivered) void keepIfFree(current.requestId);
       sending.current = false;
       setProgress(null);
     }
@@ -368,7 +427,24 @@ export default function CaptureScreen() {
           </View>
         ) : null}
 
-        {review ? null : room > 0 ? (
+        {leftover && photos.length === 0 ? (
+          <Card tone="butter" padding={16}>
+            <View style={{ gap: 10 }}>
+              <Text accessibilityRole="header" style={TYPE.title}>
+                {t('capture:draft.title')}
+              </Text>
+              <Text style={TYPE.body}>
+                {t('capture:draft.body', { count: leftover.photos.length })}
+              </Text>
+              <Btn pill full onPress={continueLeftover}>
+                {t('capture:draft.resume')}
+              </Btn>
+              <Btn pill full variant="ghost" onPress={() => void discardLeftover()}>
+                {t('capture:draft.discard')}
+              </Btn>
+            </View>
+          </Card>
+        ) : review ? null : room > 0 ? (
           // First the camera is the one main action; once there are photos, sending is.
           <Card padding={16}>
             <View style={{ gap: 10 }}>

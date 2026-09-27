@@ -54,7 +54,8 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 (`config.ts`; the region itself is an open decision, D-4).
 
 - Auth: `Authorization: Bearer <Supabase access token>`, verified with Supabase Auth
-  (`auth/verifier.ts`). The API never sees passwords.
+  (`auth/verifier.ts`). The API never sees passwords. Only a token Supabase Auth definitely
+  rejects (a 4xx other than 408/429) is 401; when Supabase Auth cannot answer (network, 5xx, 429) the API answers 503 `unavailable`, so an auth outage never looks like a sign-out.
 - Every learner-scoped route takes the learner from the verified user (`http/context.ts`), never
   from the body, the path or a model output. The device sends its IANA zone in `x-timezone`.
 - Minors: loosening contact rules, account data, sign-in details, a birth-date correction and
@@ -67,6 +68,14 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 - Errors: `{"error": {"code", "message", "details"?}}` with stable codes (`lib/errors.ts`); no
   provider bodies, SQL or user content in messages or logs.
 - Bodies are JSON ≤ 64 KB, validated with zod (`http/validate.ts`); photos go straight to storage.
+- Older app builds (audit M-69): responses the home is built from are forward compatible — a
+  card, notice, decision, action or message kind a build does not know is left out
+  (`tolerantArray`, `.catch` in `contracts/buddy.ts`), never the whole response. The app sends
+  `x-app-version`; with `MIN_APP_VERSION` set, older builds get 426 `update_required` ("bitte
+  aktualisieren"), and kept answers wait for the update instead of being dropped.
+- Indexes (migration `0017_fk_indexes.sql`): every foreign key has an index, so the account
+  deletion cascade and the per-subject counts cost her data, not everybody's
+  (`scale.int.test.ts` keeps it so for future foreign keys).
 
 | Route                                                                                                | Purpose                                                                                          |
 | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -78,6 +87,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                            |
 | `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                          |
 | `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                                                          |
+| `POST /push-devices/claim`, `POST /push-devices/release` (no session)                                | one learner per install (push)                                                                   |
 | `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                                                           |
 | `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                                                                    |
 | `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                                                               |
@@ -206,6 +216,19 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
   or push is disabled. Only the app can record `opened`. The text is always also in the thread.
 - `DeviceNotRegistered` (ticket or receipt) deactivates the token.
+- Devices (`modules/devices/`, migration `0018_push_device_binding.sql`, D-6): a token is
+  registered with a random install id, and an install holds at most one active token (partial
+  unique index). Registering deactivates the install's other tokens; a signed-in person's
+  `POST /push-devices/claim` (on every start and sign-in) deactivates tokens on that install
+  that belong to other learners; sign-out sends `POST /push-devices/release` (no session
+  needed, bounded to 4 s, kept on the device and retried until the server has it). With
+  contact on and the permission already given, each signed-in start registers the current
+  token again, so the phone in use is the newest token; settings says when her messages go to
+  another device. Every push targets the Android channel `buddy` the app creates.
+- `opened` (app, `lib/push.ts`): every tap — also the one that cold-starts the app, read with
+  `getLastNotificationResponse` — is kept on the device (`lib/pushQueue.ts`, 7 days) and sent
+  once signed in, retried on start and when back online; only a clear 4xx drops it.
+  Not yet verified on a device (audit §17, `repro-19`).
 - Lock-screen texts carry no scores or personal details.
 
 ## Background work
@@ -353,6 +376,9 @@ under 900 px) or tilted (`lib/photo/tilt.ts`: the ink pixels are projected at tr
 sharpest profile gives the angle of the text lines; 10° or more, or 8° difference between the upper
 and lower half — a phone held at a slant to the side). A phone tipped forward (lines level but
 smaller towards the top) is not judged: the line spacing was not reliable with a few lines of text.
+Only thin strokes count as ink (paper within 4 px): the inside of a dark table around the sheet
+does not, and points are thinned by a position hash, not every n-th in raster order — a dark desk
+border used to make straight sheets "schief" (audit M-26, dark-desk variants in the unit test).
 Tilt is only advised when the photo is otherwise fine. Nothing leaves the device for this. A photo with a problem is marked "Schwer lesbar"
 and a calm card says what is wrong and how to do better, with "Neu fotografieren" (replaces it and
 opens the camera) and "Trotzdem behalten". Calibrated on sixteen rendered sample photos (in focus,
@@ -432,6 +458,16 @@ and in Buddy's context alike. A second school subject on one sheet
 Pages keep the order they were taken in; there is no reordering — the notice about a missing page
 shows that page's photo while it is on the phone (kept a day, below), so the number is never
 ambiguous.
+
+**Capture never loses photos by starting another one** (audit N-6): a fresh capture with photos
+left from before first offers "Weiter" / "Verwerfen" instead of silently replacing them; a draft
+being sent is never deleted, and a finished send only ends its own draft. A reservation for a photo
+set she then changed is deleted if it was never submitted (no "unvollständig" leftover). On
+Android the camera result survives the system killing the app: capture notes what the photo is
+for before the camera opens, and the next start recovers it (`getPendingResultAsync`,
+`lib/capture/pendingCamera.ts`; needs a device run). The failed-reading card names the sheet and
+"Neues Foto" keeps its purpose (homework stays homework) and, for a page, the sheet it belongs to;
+a sheet being read now comes before an older failure on the home.
 
 **Photos survive the app being closed** (`apps/mobile/lib/capture/draft.ts`). Every photo is
 copied where the system does not clean up (documents; data URLs in a browser) and the capture screen
@@ -709,8 +745,17 @@ once (`abandonStaleUploads`, run by the scheduler).
   only answers the API clearly refuses (4xx: question closed, session ended) are dropped — server
   trouble, an expired login or a proxy page keep them for later. An answer being sent live is
   skipped by the outbox, and one flush runs at a time, so an answer never goes out twice at once.
-  Signing out clears them (`tests/web/offline.spec.ts`: app open → exactly one request; app
-  closed → sent on the next start). Recordings (pronunciation) are not kept — too large; closing the
+  (`tests/web/offline.spec.ts`: app open → exactly one request; app closed → sent on the next
+  start). **Sessions and unsent work** (`lib/auth/refresh.ts`, `lib/localWork.ts`): only a
+  definite "this session is over" from Supabase Auth (a 4xx such as `refresh_token_not_found`)
+  ends the session; no connection, 5xx, 408 and 429 keep the tokens and retry after a backoff
+  (2 s … 60 s), and a request meanwhile fails as `unavailable`, not "sign in again". A session
+  that ends by itself (password changed on another device, revoked) keeps the outbox and the photo
+  draft for her next sign-in and says so in a toast; they are deleted only when a different user
+  signs in on the device (the owner is recorded per device), or when an adult signs out on purpose
+  — the sign-out sheet first sends what it can and says when unsent answers or photos would be
+  deleted. Sign-out revokes only this device's refresh token at Supabase (scope `local`, also after
+  a cold start, at most 4 s), resets the navigation stack and clears the query cache. Recordings (pronunciation) are not kept — too large; closing the
   app while one waits drops it.
 - **About**: version from the app config; privacy, imprint and support rows only when
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set

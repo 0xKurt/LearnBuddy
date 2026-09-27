@@ -14,6 +14,7 @@ import {
   MaterialView,
   MemoryList,
   MessageView,
+  tolerantArray,
   MeResponse,
   ReplyStreamEvent,
   SendMessageResponse,
@@ -87,7 +88,7 @@ export const getHome = () => request('GET', '/buddy', { schema: BuddyHome });
 
 export const getThread = (before: string) =>
   request('GET', `/buddy/thread?before=${encodeURIComponent(before)}`, {
-    schema: z.object({ messages: z.array(MessageView), has_more: z.boolean() }),
+    schema: z.object({ messages: tolerantArray(MessageView), has_more: z.boolean() }),
   });
 
 /** Idempotent: pass the same clientMessageId when retrying. */
@@ -145,11 +146,14 @@ export const getSettings = () => request('GET', '/buddy/settings', { schema: Bud
 export const updateSettings = (body: UpdateBuddySettingsRequest) =>
   request('PATCH', '/buddy/settings', { body, schema: BuddySettingsView });
 
-export const registerPushToken = (token: string, platform: 'ios' | 'android') =>
-  request('POST', '/buddy/push-tokens', { body: { token, platform } });
-/** This device no longer gets Buddy's messages (signing out). */
-export const unregisterPushToken = (token: string) =>
-  request('DELETE', '/buddy/push-tokens', { body: { token } });
+export const registerPushToken = (token: string, platform: 'ios' | 'android', deviceId: string) =>
+  request('POST', '/buddy/push-tokens', { body: { token, platform, device_id: deviceId } });
+/** Signed in on this install: nobody else's messages arrive here any more. */
+export const claimPushDevice = (deviceId: string) =>
+  request('POST', '/push-devices/claim', { body: { device_id: deviceId } });
+/** Signing out: this install gets no more messages (works without a session). */
+export const releasePushDevice = (deviceId: string) =>
+  request('POST', '/push-devices/release', { body: { device_id: deviceId } });
 
 // ─────────────── material ───────────────
 

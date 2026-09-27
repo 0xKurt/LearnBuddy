@@ -19,6 +19,11 @@ export type AuthUser = {
 };
 
 export interface AuthVerifier {
+  /**
+   * The user a token belongs to; null only when the token is definitely
+   * invalid or expired. When Supabase Auth cannot answer (network, 5xx, 429)
+   * it throws AppError('unavailable') — an outage is not a sign-out.
+   */
   verify(token: string): Promise<AuthUser | null>;
   /** Deletes the auth user; the database cascades from it (account deletion). */
   deleteUser(userId: string): Promise<void>;
@@ -50,18 +55,42 @@ export function authenticatedAtOf(token: string): number | null {
   }
 }
 
+/**
+ * What a failed token check means. Only a definite answer from Supabase Auth
+ * about the token (a 4xx other than 408/429) makes it invalid; a network
+ * error (status 0 / none), a 5xx or a rate limit says nothing about the
+ * token and must never reach the app as 401 (audit H-27).
+ */
+export function verifyFailureOf(error: { status?: number | undefined }): 'invalid' | 'unavailable' {
+  const status = error.status;
+  if (status === undefined || status === 0) return 'unavailable';
+  if (status === 408 || status === 429 || status >= 500) return 'unavailable';
+  return status >= 400 ? 'invalid' : 'unavailable';
+}
+
 export class SupabaseAuthVerifier implements AuthVerifier {
   private readonly client;
 
-  constructor(config: Config) {
+  constructor(config: Pick<Config, 'SUPABASE_URL' | 'SUPABASE_SERVICE_ROLE_KEY'>) {
     this.client = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }
 
   async verify(token: string): Promise<AuthUser | null> {
-    const { data, error } = await this.client.auth.getUser(token);
-    if (error || !data.user) return null;
+    let result: Awaited<ReturnType<typeof this.client.auth.getUser>>;
+    try {
+      result = await this.client.auth.getUser(token);
+    } catch {
+      throw new AppError('unavailable', 'The sign-in service cannot be reached');
+    }
+    const { data, error } = result;
+    if (error) {
+      if (verifyFailureOf(error) === 'unavailable')
+        throw new AppError('unavailable', 'The sign-in service cannot be reached');
+      return null;
+    }
+    if (!data.user) return null;
     return {
       userId: data.user.id,
       email: data.user.email ?? null,

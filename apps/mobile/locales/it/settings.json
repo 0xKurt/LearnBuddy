@@ -50,7 +50,8 @@
     "summary": "Buddy ti scrive tra le {{start}} e le {{end}}, al massimo {{count}}× a settimana, mai dopo le {{quiet}}.",
     "tell_buddy": "Dillo a Buddy quando vuoi un po' di pace.",
     "more": "Modifica orari",
-    "less": "Mostra meno"
+    "less": "Mostra meno",
+    "device_elsewhere": "I messaggi di Buddy ora arrivano a un altro dispositivo, non a questo telefono."
   },
   "profile": {
     "title": "Il tuo profilo",
@@ -127,7 +128,9 @@
       "cta": "Esci",
       "confirm_title": "Vuoi davvero uscire?",
       "confirm_body": "Per accedere di nuovo servono l'indirizzo email e la password.",
-      "confirm_cta": "Sì, esci"
+      "confirm_cta": "Sì, esci",
+      "confirm_unsent": "Su questo dispositivo ci sono ancora risposte o foto non inviate. Uscendo vengono cancellate. Con la connessione vengono inviate subito: aspetta un attimo.",
+      "confirm_cta_unsent": "Esci comunque"
     },
     "access": {
       "email_title": "Indirizzo email",

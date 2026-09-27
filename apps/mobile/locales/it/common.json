@@ -51,5 +51,8 @@
     "say_it": "Tocca il microfono e dillo e basta.",
     "or_say": "Oppure di' la tua risposta.",
     "topic": "Dillo invece di scriverlo"
+  },
+  "session": {
+    "expired": "La sessione è terminata. Accedi di nuovo: ciò che non era ancora stato inviato è ancora qui."
   }
 }
