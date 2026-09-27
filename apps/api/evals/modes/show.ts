@@ -4,6 +4,7 @@
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
 //   cd apps/api && npx tsx evals/modes/show.ts [explain|practice|vocab|speak|help|photo]
 // (the photo steps use test-results/web/worksheet.jpg from scripts/web-walkthrough.sh)
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 import { readFileSync } from 'node:fs';
 import type { AnswerResponse, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { loadConfig } from '../../src/config.js';

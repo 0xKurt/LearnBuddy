@@ -2,6 +2,7 @@
 // message, spoken numbers and fractions in answer mode, a French answer.
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables, a local Postgres and espeak-ng.
 //   cd apps/api && npx tsx evals/voice/run.ts
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';

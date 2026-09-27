@@ -11,6 +11,7 @@
 //     npx tsx evals/lena/run.ts [journey-id …]   (LENA_OUT=transcript.md)
 //
 // Needs a local Postgres, espeak-ng and Chromium (PLAYWRIGHT_BROWSERS_PATH).
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';

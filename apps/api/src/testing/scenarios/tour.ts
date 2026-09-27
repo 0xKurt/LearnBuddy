@@ -2,6 +2,7 @@
 // the other walkthroughs: something remembered (then undone), a message that
 // fails once and is sent again, something to edit in "Was Buddy weiß", and an
 // explanation to read again. Test tooling only.
+// requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import { LlmError } from '../../llm/gateway.js';
 import type { ScriptedGateway } from '../fakes.js';

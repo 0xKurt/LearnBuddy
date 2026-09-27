@@ -7,6 +7,7 @@
 //     npx tsx evals/buddy/run.ts [case-id …]
 //
 // Reads apps/api/.env.local like the dev server. Exit code 1 if a case fails.
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { config as loadDotenv } from 'dotenv';
 

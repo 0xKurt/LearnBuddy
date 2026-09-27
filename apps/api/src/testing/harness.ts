@@ -84,6 +84,10 @@ export async function createTestEnv(
       while (pending.length > 0) await pending.shift();
     },
     close: async () => {
+      // Work the routes started in the background finishes (or fails) first: a task still
+      // running on a closed pool would surface as an unhandled rejection in another test
+      // (harness-close-does-not-drain-background).
+      while (pending.length > 0) await Promise.allSettled(pending.splice(0));
       await db.close();
       await database.drop();
     },

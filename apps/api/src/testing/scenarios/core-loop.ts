@@ -2,6 +2,7 @@
 // (dev-stack.ts). The answers are fixed like in the integration tests; the
 // server still enforces everything (quotes must match what was typed).
 // Test tooling only.
+// requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import type { LlmRequest } from '../../llm/gateway.js';
 import type { ScriptedGateway } from '../fakes.js';

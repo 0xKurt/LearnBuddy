@@ -3,6 +3,7 @@
 // Prints every reply and what Buddy did, for a person to judge.
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
 //   cd apps/api && npx tsx evals/lena/day.ts
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import type {
   AnswerResponse,

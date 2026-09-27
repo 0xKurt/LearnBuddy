@@ -2,6 +2,7 @@
 // case starts from a known moment, sets up state through the real code or
 // SQL, sends one learner message and checks the STORED outcome — what was
 // actually applied — not the wording of the reply.
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import type { TestEnv, Learner } from '../../src/testing/harness.js';
 

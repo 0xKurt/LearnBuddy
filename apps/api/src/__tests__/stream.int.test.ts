@@ -223,4 +223,39 @@ describe.skipIf(!dbReady)('streamed replies', () => {
     expect(bad.status).toBe(422);
     expect(bad.headers.get('content-type')).toContain('application/json');
   });
+
+  it('delivers the first words while the model is still writing — the response is not buffered (stream-test-buffered)', async () => {
+    let firstWordsSeen!: () => void;
+    const seen = new Promise<'seen'>((r) => (firstWordsSeen = () => r('seen')));
+    let order: 'seen' | 'timeout' | null = null;
+    env.llm.script('buddy_turn', async (req) => {
+      // The model has written the start of its reply and is still writing.
+      req.onPartial?.('{"concern":false,"lookups":[],"actions":[],"reply":"Ein Nenner ist');
+      order = await Promise.race([
+        seen,
+        new Promise<'timeout'>((r) => setTimeout(() => r('timeout'), 2000)),
+      ]);
+      return answer('Ein Nenner ist die Zahl unter dem Bruchstrich.').json;
+    });
+    const res = await env.app.request('/v1/buddy/messages', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${l.token}`,
+        'content-type': 'application/json',
+        accept: 'text/event-stream',
+      },
+      body: JSON.stringify({ client_message_id: uuid(), text: 'was ist ein nenner' }),
+    });
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let text = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      text += decoder.decode(value, { stream: true });
+      if (text.includes('event: reply')) firstWordsSeen();
+    }
+    expect(order).toBe('seen');
+    expect(text).toContain('event: done');
+  });
 });

@@ -4,6 +4,7 @@
 // is live. Used to pick the tutor model (docs/architecture.md §Model calls):
 //   VERTEX_ROUTES='{"tutor":"eu/gemini-3.1-flash-lite"}' npx tsx evals/tutor/run.ts
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 

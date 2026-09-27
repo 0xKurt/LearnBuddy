@@ -15,7 +15,7 @@ import pg from 'pg';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const MIGRATIONS = join(ROOT, 'infra/supabase/migrations');
 const SHIM = join(ROOT, 'infra/supabase/test-shim.sql');
-const LOCK_KEY = 7_319_004;
+export const LOCK_KEY = 7_319_004;
 
 export const TEST_DATABASE_URL =
   process.env.LB_TEST_DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/postgres';
@@ -68,6 +68,43 @@ export async function testDatabaseAvailable(): Promise<boolean> {
 
 export type TestDatabase = { url: string; drop(): Promise<void> };
 
+/** The template database of the current migration set. */
+export function templateName(): string {
+  return `lb_tpl_${schema().hash}`;
+}
+
+/** Marks a template as completely built (only then is it copied). */
+const BUILT = 'lb built ';
+/** Test databases and templates of other runs are left alone for this long. */
+const STALE_MS = 24 * 3_600_000;
+
+/**
+ * Leftovers of interrupted runs (audit template-db-lifecycle, template-force-drop-and-single-lock):
+ * test databases older than a day (their name carries the creation time), unfinished template
+ * builds, and templates of other migration sets not built within the last day — never what a
+ * concurrent run (e.g. another branch on the same server) may still be using.
+ */
+async function dropLeftovers(admin: pg.Client, current: string): Promise<void> {
+  const rows = await admin.query<{ datname: string; note: string | null }>(
+    `select datname, shobj_description(oid, 'pg_database') as note from pg_database
+      where datname like 'lb_test_%' or datname like 'lb_tpl_%' or datname like 'lb_tplbuild_%'`,
+  );
+  const now = Date.now();
+  for (const { datname, note } of rows.rows) {
+    let stale = false;
+    if (datname.startsWith('lb_tplbuild_'))
+      stale = true; // a build dies with its lock holder
+    else if (datname.startsWith('lb_test_')) {
+      const born = parseInt(datname.slice('lb_test_'.length).split('_')[0] ?? '', 36);
+      stale = Number.isFinite(born) && now - born > STALE_MS;
+    } else if (datname !== current) {
+      const built = note?.startsWith(BUILT) ? Date.parse(note.slice(BUILT.length)) : NaN;
+      stale = !Number.isFinite(built) || now - built > STALE_MS;
+    }
+    if (stale) await admin.query(`drop database if exists "${datname}" with (force)`);
+  }
+}
+
 export async function createTestDatabase(): Promise<TestDatabase> {
   const { sql, hash } = schema();
   const template = `lb_tpl_${hash}`;
@@ -78,27 +115,34 @@ export async function createTestDatabase(): Promise<TestDatabase> {
     // Serialise template creation and copying across parallel test workers.
     await admin.query('select pg_advisory_lock($1)', [LOCK_KEY]);
     try {
-      const exists = await admin.query('select 1 from pg_database where datname = $1', [template]);
-      if (exists.rowCount === 0) {
-        await admin.query(`create database "${template}"`);
-        const setup = new pg.Client({ connectionString: urlFor(template) });
+      await dropLeftovers(admin, template);
+      const exists = await admin.query<{ note: string | null }>(
+        `select shobj_description(oid, 'pg_database') as note from pg_database where datname = $1`,
+        [template],
+      );
+      // A template without the "built" mark is a half-built one from an older helper: rebuild.
+      const complete = exists.rows[0]?.note?.startsWith(BUILT) ?? false;
+      if (!complete) {
+        if (exists.rowCount)
+          await admin.query(`drop database if exists "${template}" with (force)`);
+        // Built under another name and renamed when complete: an interrupted build is
+        // never mistaken for the template.
+        const build = `lb_tplbuild_${hash}_${randomBytes(4).toString('hex')}`;
+        await admin.query(`create database "${build}"`);
+        const setup = new pg.Client({ connectionString: urlFor(build) });
         await setup.connect();
         try {
           await setup.query(sql);
         } catch (err) {
           await setup.end();
-          await admin.query(`drop database if exists "${template}"`);
+          await admin.query(`drop database if exists "${build}" with (force)`);
           throw err;
         }
         await setup.end();
-        // Old templates and databases left behind by crashed runs.
-        const stale = await admin.query<{ datname: string }>(
-          `select datname from pg_database
-            where (datname like 'lb_tpl_%' and datname <> $1)`,
-          [template],
+        await admin.query(`alter database "${build}" rename to "${template}"`);
+        await admin.query(
+          `comment on database "${template}" is '${BUILT}${new Date().toISOString()}'`,
         );
-        for (const row of stale.rows)
-          await admin.query(`drop database if exists "${row.datname}" with (force)`);
       }
       await admin.query(`create database "${name}" template "${template}"`);
     } finally {

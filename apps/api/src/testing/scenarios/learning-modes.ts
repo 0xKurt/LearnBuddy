@@ -3,6 +3,7 @@
 // help (hints only), a photo-free practice with math and a figure, and a
 // practice test followed by "die wackligen nochmal".
 // Test tooling only; answers are keyed by the learner's text, never guessed.
+// requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ScriptedGateway } from '../fakes.js';

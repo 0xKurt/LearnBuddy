@@ -884,6 +884,11 @@ once (`abandonStaleUploads`, run by the scheduler).
   aliases in that order, and jobs due together run in it. Before, ties were broken by however the
   table happened to hold the rows — the most likely cause of one failed run of the core-loop test
   in about 40 (its log was lost and it did not come back in 36 further runs, so this is not proven).
+  A template is built under a temporary name and marked complete, so a killed build is never
+  copied; test databases and templates that interrupted runs left behind are dropped after a
+  day, never those a concurrent run may still use. Closing a test environment waits for the
+  background work it started. Every file under `src/testing` and `evals` carries the rule-8
+  banner (`testing/__tests__/banner.test.ts`).
 - Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
   hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain
   `pnpm test` outside them skips the database tests.

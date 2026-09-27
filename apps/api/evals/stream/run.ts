@@ -4,6 +4,7 @@
 // answer (actions and all) is there — which is when code can check and apply it.
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
 //   cd apps/api && npx tsx evals/stream/run.ts [rounds]
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import type { SendMessageResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 
