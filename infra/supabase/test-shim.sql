@@ -14,6 +14,15 @@ do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin bypassrls; end if;
 end $$;
 
+-- Supabase's own grants for the exposed public schema (supabase/postgres init scripts): every
+-- table, sequence and function created in it later is granted to the API roles, so a new
+-- SECURITY DEFINER function is callable with the anon key unless a migration revokes it.
+-- Mirrored here so tests see the same privileges as a hosted project.
+grant usage on schema public to anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+
 create table if not exists auth.users (
   id uuid primary key default gen_random_uuid(),
   email text

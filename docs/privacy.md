@@ -46,8 +46,11 @@ Logs contain route names and error classes only — no request bodies, messages 
 - The app only talks to the API. The API connects to Postgres with a privileged role and scopes
   every query by the learner derived from the verified token; model output can only reference
   the learner's own rows through aliases.
-- Row level security is enabled on every table **without policies**: the anon/authenticated
-  keys that ship in the app can read or write nothing directly.
+- Row level security is enabled on every table **without policies**, and no database function
+  is executable by the anon/authenticated roles (`0022_revoke_app_key_access.sql`): the keys
+  that ship in the app can read, write or call nothing directly.
+- The API reaches a non-local database only over TLS with certificate verification
+  (`apps/api/src/lib/db.ts`); a connection string asking for less is refused at startup.
 - Photos are uploaded with short-lived signed URLs to paths under the account id; the bucket is
   private.
 
