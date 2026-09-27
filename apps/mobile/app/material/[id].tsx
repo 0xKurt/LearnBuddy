@@ -14,7 +14,7 @@ import { Btn } from '../../components/lb/Btn.js';
 import { Card } from '../../components/lb/Card.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { LbTextInput } from '../../components/lb/LbTextInput.js';
-import { LoadingState } from '../../components/lb/LoadingState.js';
+import { QuestionsSkeleton } from '../../components/lb/Skeletons.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { Sheet } from '../../components/lb/Sheet.js';
 import { toast } from '../../components/lb/Toast.js';
@@ -181,7 +181,7 @@ export default function MaterialScreen() {
         />
       </View>
     ) : (
-      <LoadingState label={t('library:items.loading')} />
+      <QuestionsSkeleton label={t('library:items.loading')} />
     );
   } else {
     // No questions: all deleted, or the photos are not (yet) read — say which.

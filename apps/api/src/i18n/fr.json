@@ -58,7 +58,12 @@
     "speak_almost": "Presque ! Regarde les mots marqués.",
     "speak_retry": "Réessaie – écoute-le d'abord.",
     "test_noted": "Noté – on continue.",
-    "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question."
+    "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question.",
+    "reexplain": {
+      "simpler": "Plus simple, s'il te plaît",
+      "example": "Avec un exemple, s'il te plaît",
+      "why": "Pourquoi c'est comme ça ?"
+    }
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

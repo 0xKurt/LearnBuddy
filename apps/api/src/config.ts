@@ -29,6 +29,7 @@ const VertexRoutes = z
     pronounce: ModelSpec,
     transcribe: ModelSpec,
     hints: ModelSpec,
+    reexplain: ModelSpec,
   })
   .partial()
   .strict();
@@ -229,4 +230,6 @@ export const DAILY_LIMITS = {
   pronounce: 200,
   transcribe: 400,
   hints: 60,
+  /** "Anders erklären": a new explanation after an explanation or a solution. */
+  reexplain: 60,
 } as const;

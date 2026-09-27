@@ -132,5 +132,14 @@
   },
   "later": "Plus tard",
   "later_hint": "L'exercice reste ouvert et revient après les autres.",
-  "later_done": "D'accord – celui-là revient plus tard."
+  "later_done": "D'accord – celui-là revient plus tard.",
+  "reexplain": {
+    "label": "Expliquer autrement ?",
+    "simpler": "Plus simple",
+    "example": "Avec un exemple",
+    "why": "Pourquoi c'est comme ça ?",
+    "hint": "Buddy te l'explique encore, de cette façon.",
+    "thinking": "Buddy l'explique autrement …",
+    "title": "Expliqué autrement"
+  }
 }

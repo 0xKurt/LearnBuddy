@@ -37,7 +37,7 @@ import { check, readBody } from '../../http/validate.js';
 import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { t } from '../../i18n/index.js';
-import { startFromStep } from '../practice/service.js';
+import { sessionView, startFromStep } from '../practice/service.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
 import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
@@ -140,8 +140,14 @@ buddyRoutes.post('/messages/:clientMessageId/stop', async (c) => {
 
 buddyRoutes.post('/steps/:id/start', async (c) => {
   const stepId = check(Uuid, c.req.param('id'));
-  const sessionId = await startFromStep(depsOf(c), c.get('learner').id, stepId);
-  return c.json({ session_id: sessionId });
+  const deps = depsOf(c);
+  const learnerId = c.get('learner').id;
+  const sessionId = await startFromStep(deps, learnerId, stepId);
+  // The session comes along: the app shows its first question at once (gaps.md #2).
+  return c.json({
+    session_id: sessionId,
+    session: await sessionView(deps.db, learnerId, sessionId),
+  });
 });
 
 /**

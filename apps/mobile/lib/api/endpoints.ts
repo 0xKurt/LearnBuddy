@@ -28,6 +28,7 @@ import {
   type AppLocale,
   type CreateLearnerRequest,
   type CreateMaterialRequest,
+  type ReexplainWay,
   type SpeakRequest,
   type StartPracticeRequest,
   type StartTopicRequest,
@@ -254,6 +255,19 @@ export const hintItem = (id: string, itemId: string) =>
   hintTurns.run(`${id}:${itemId}`, (clientTurnId) =>
     request('POST', `/practice/sessions/${id}/hint`, {
       body: { client_turn_id: clientTurnId, item_id: itemId },
+      schema: AnswerResponse,
+    }),
+  );
+/** An "Anders erklären" tap whose answer was lost is sent again as the same turn. */
+const reexplainTurns = turnIds(newId, noConnection);
+/**
+ * "Anders erklären": a new explanation, the way she tapped — of the session's explanation
+ * (itemId null) or of a closed question's solution.
+ */
+export const reexplainItem = (id: string, itemId: string | null, way: ReexplainWay) =>
+  reexplainTurns.run(`${id}:${itemId ?? 'intro'}:${way}`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${id}/reexplain`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId, way },
       schema: AnswerResponse,
     }),
   );

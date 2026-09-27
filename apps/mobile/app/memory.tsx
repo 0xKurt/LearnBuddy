@@ -6,27 +6,21 @@
 // before the API confirmed it.
 
 import type { MemoryView, UpdateMemoryRequest } from '@learnbuddy/shared-types/contracts';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useRef, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, RefreshControl, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
-import { LoadingState } from '../components/lb/LoadingState.js';
+import { Rise, useListEntrance } from '../components/lb/Motion.js';
+import { MemorySkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { MemoryItem } from '../components/memory/MemoryItem.js';
-import { useRevealInput } from '../components/settings/useRevealInput.js';
 import { ApiError } from '../lib/api/client.js';
 import { updateMemory } from '../lib/api/endpoints.js';
 import { keys, queryClient, useMemory } from '../lib/api/queries.js';
@@ -37,10 +31,40 @@ import { TYPE } from '../lib/theme/type.js';
 /** Temporary situations always carry an end; they expire by themselves. */
 const isTemporary = (m: MemoryView) => m.kind === 'constraint' || m.valid_until !== null;
 
+/** One row of the (virtualised) list. */
+type Row =
+  | { type: 'intro' | 'empty' | 'lasting' | 'temporary' | 'temporary_hint'; key: string }
+  | { type: 'memory'; key: string; memory: MemoryView; temporary: boolean };
+
+function rowsOf(memories: MemoryView[]): Row[] {
+  const lasting = memories.filter((m) => !isTemporary(m));
+  const temporary = memories.filter(isTemporary);
+  const entries = (list: MemoryView[], temp: boolean): Row[] =>
+    list.map((m) => ({ type: 'memory', key: m.id, memory: m, temporary: temp }));
+  return [
+    { type: 'intro', key: 'intro' },
+    ...(memories.length === 0 ? [{ type: 'empty', key: 'empty' } as const] : []),
+    ...(lasting.length > 0
+      ? [{ type: 'lasting', key: 'lasting' } as const, ...entries(lasting, false)]
+      : []),
+    ...(temporary.length > 0
+      ? [
+          { type: 'temporary', key: 'temporary' } as const,
+          { type: 'temporary_hint', key: 'temporary_hint' } as const,
+          ...entries(temporary, true),
+        ]
+      : []),
+  ];
+}
+
+/** A field that got the focus is scrolled to near the top once the keyboard is up. */
+const AFTER_KEYBOARD_MS = 280;
+
 export default function MemoryScreen() {
   const { t } = useTranslation(['memory', 'common']);
   const memory = useMemory();
-  const { scroll, content, reveal } = useRevealInput();
+  const list = useRef<FlashListRef<Row>>(null);
+  const entering = useListEntrance(memory.data !== undefined);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -106,41 +130,92 @@ export default function MemoryScreen() {
             />
           </View>
         ) : (
-          <LoadingState label={t('common:loading')} />
+          <MemorySkeleton label={t('common:loading')} />
         )}
       </Screen>
     );
   }
 
-  const items = memory.data.memories;
-  const lasting = items.filter((m) => !isTemporary(m));
-  const temporary = items.filter(isTemporary);
+  const rows = rowsOf(memory.data.memories);
 
-  const renderItem = (m: MemoryView, temp: boolean) => (
-    <MemoryItem
-      key={m.id}
-      memory={m}
-      temporary={temp}
-      editing={editingId === m.id}
-      draft={draft}
-      saving={savingId === m.id}
-      locked={savingId !== null}
-      onDraft={setDraft}
-      onEdit={() => {
-        setEditingId(m.id);
-        setDraft(m.statement);
-      }}
-      onCancel={() => setEditingId(null)}
-      onSave={() =>
-        void change(m, { statement: draft.trim(), version: m.version }, t('memory:saved'))
-      }
-      onRemove={() => {
-        setRemoveTarget(m);
-        setRemoveOpen(true);
-      }}
-      onInputFocus={reveal}
-    />
+  /** Keeps the field she is typing in above the keyboard. */
+  const reveal = (index: number) => {
+    setTimeout(() => {
+      void list.current?.scrollToIndex({ index, animated: true, viewOffset: -12 });
+    }, AFTER_KEYBOARD_MS);
+  };
+
+  const heading = (text: string) => (
+    <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: 4 }]}>
+      {text}
+    </Text>
   );
+
+  const renderRow = (row: Row, index: number) => {
+    switch (row.type) {
+      case 'intro':
+        return (
+          <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4, marginBottom: 28 }]}>
+            {t('memory:intro')}
+          </Text>
+        );
+      case 'empty':
+        return (
+          <Card padding={24}>
+            <View style={{ gap: 10, alignItems: 'center' }}>
+              <BuddyOrb size={56} />
+              <Text accessibilityRole="header" style={[TYPE.title, { textAlign: 'center' }]}>
+                {t('memory:empty_title')}
+              </Text>
+              <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
+                {t('memory:empty_body')}
+              </Text>
+            </View>
+          </Card>
+        );
+      case 'lasting':
+        return <View style={{ marginBottom: 12 }}>{heading(t('memory:lasting'))}</View>;
+      case 'temporary':
+        return (
+          <View style={{ marginTop: 16, marginBottom: 12 }}>{heading(t('memory:temporary'))}</View>
+        );
+      case 'temporary_hint':
+        return (
+          <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4, marginBottom: 12 }]}>
+            {t('memory:temporary_hint')}
+          </Text>
+        );
+      case 'memory': {
+        const m = row.memory;
+        return (
+          <Rise animate={entering(index)} index={index} style={{ marginBottom: 12 }}>
+            <MemoryItem
+              memory={m}
+              temporary={row.temporary}
+              editing={editingId === m.id}
+              draft={draft}
+              saving={savingId === m.id}
+              locked={savingId !== null}
+              onDraft={setDraft}
+              onEdit={() => {
+                setEditingId(m.id);
+                setDraft(m.statement);
+              }}
+              onCancel={() => setEditingId(null)}
+              onSave={() =>
+                void change(m, { statement: draft.trim(), version: m.version }, t('memory:saved'))
+              }
+              onRemove={() => {
+                setRemoveTarget(m);
+                setRemoveOpen(true);
+              }}
+              onInputFocus={() => reveal(index)}
+            />
+          </Rise>
+        );
+      }
+    }
+  };
 
   return (
     <Screen back title={title}>
@@ -148,56 +223,21 @@ export default function MemoryScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
+        {/* Only what is on screen is drawn (gaps.md #22). */}
+        <FlashList
+          ref={list}
           testID="scroll-list"
-          ref={scroll}
+          data={rows}
+          keyExtractor={(row) => row.key}
+          getItemType={(row) => row.type}
+          extraData={{ editingId, draft, savingId }}
           contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />
           }
-        >
-          <View ref={content} style={{ gap: 28 }}>
-            <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>
-              {t('memory:intro')}
-            </Text>
-
-            {items.length === 0 ? (
-              <Card padding={24}>
-                <View style={{ gap: 10, alignItems: 'center' }}>
-                  <BuddyOrb size={56} />
-                  <Text accessibilityRole="header" style={[TYPE.title, { textAlign: 'center' }]}>
-                    {t('memory:empty_title')}
-                  </Text>
-                  <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
-                    {t('memory:empty_body')}
-                  </Text>
-                </View>
-              </Card>
-            ) : null}
-
-            {lasting.length > 0 ? (
-              <View style={{ gap: 12 }}>
-                <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: 4 }]}>
-                  {t('memory:lasting')}
-                </Text>
-                {lasting.map((m) => renderItem(m, false))}
-              </View>
-            ) : null}
-
-            {temporary.length > 0 ? (
-              <View style={{ gap: 12 }}>
-                <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: 4 }]}>
-                  {t('memory:temporary')}
-                </Text>
-                <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>
-                  {t('memory:temporary_hint')}
-                </Text>
-                {temporary.map((m) => renderItem(m, true))}
-              </View>
-            ) : null}
-          </View>
-        </ScrollView>
+          renderItem={({ item, index }) => renderRow(item, index)}
+        />
       </KeyboardAvoidingView>
 
       <Sheet

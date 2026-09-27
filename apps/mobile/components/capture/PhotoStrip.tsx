@@ -9,6 +9,7 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
+import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
 const THUMB_WIDTH = 112;
 const THUMB_HEIGHT = 148;
@@ -71,14 +72,21 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
                   </Text>
                 </View>
               ) : (
-                <Image
-                  source={{ uri }}
-                  accessible
-                  accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
-                  contentFit="cover"
-                  transition={120}
-                  style={{ flex: 1 }}
-                />
+                // A tap shows the photo full screen, to zoom in (gaps.md #1).
+                <ZoomablePhoto
+                  uri={uri}
+                  label={t('photo_label', { index: i + 1, total: uris.length })}
+                  fill
+                >
+                  <Image
+                    source={{ uri }}
+                    accessible
+                    accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
+                    contentFit="cover"
+                    transition={120}
+                    style={{ flex: 1 }}
+                  />
+                </ZoomablePhoto>
               )}
               {/* Page number; the image label already says it for screen readers. */}
               <View

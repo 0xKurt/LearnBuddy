@@ -74,6 +74,15 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     },
   });
+  // "Anders erklären" under the Dativ explanation (tests/web/modes.spec.ts taps "Mit Beispiel").
+  llm.byDefault('reexplain', (req) =>
+    ScriptedGateway.textOf(req).includes('WAY: example')
+      ? {
+          explanation:
+            'Stell dir vor, du schenkst deiner Oma Blumen. Wem schenkst du sie? Der Oma – „der Oma“ ist der Dativ.',
+        }
+      : { explanation: 'Frag „Wem?“. Die Antwort darauf steht im Dativ.' },
+  );
   // Hints are written in the background after each topic session starts (hints.ts);
   // the fractions question gets two, everything else none (tests/web/modes.spec.ts taps "Tipp").
   llm.byDefault('hints', (req) =>

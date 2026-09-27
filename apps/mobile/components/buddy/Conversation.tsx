@@ -355,7 +355,7 @@ export function Conversation({
 }
 
 /** The day a part of the conversation is from: "Heute", "Gestern", or "Montag, 28. September". */
-function DayLine({ day }: { day: string }) {
+export function DayLine({ day }: { day: string }) {
   const { t, i18n: i } = useTranslation('buddy');
   const now = new Date();
   const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);

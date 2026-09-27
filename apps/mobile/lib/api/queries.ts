@@ -2,10 +2,10 @@
 // feeds back into: mutations that return a fresh home write it into the
 // cache instead of refetching.
 
-import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, SessionView } from '@learnbuddy/shared-types/contracts';
 import NetInfo from '@react-native-community/netinfo';
 import { focusManager, onlineManager, QueryClient, useQuery } from '@tanstack/react-query';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { currentSession } from '../auth/session.js';
@@ -123,3 +123,24 @@ export const useMaterialItems = (id: string) =>
 
 export const usePracticeSession = (id: string) =>
   useQuery({ queryKey: keys.session(id), queryFn: () => getSession(id) });
+
+/** A session the server just started (and returned): its first question shows at once. */
+export function seedSession(view: SessionView): void {
+  queryClient.setQueryData(keys.session(view.id), view);
+}
+
+/**
+ * A practice to go on with is on screen (Buddy's card): it is loaded now, so "Weiter üben"
+ * shows the question at once (gaps.md #2). Loaded, never started — nothing changes on the
+ * server until she taps.
+ */
+export function usePrefetchSession(id: string | null): void {
+  useEffect(() => {
+    if (!id) return;
+    void queryClient.prefetchQuery({
+      queryKey: keys.session(id),
+      queryFn: () => getSession(id),
+      staleTime: 30_000,
+    });
+  }, [id]);
+}

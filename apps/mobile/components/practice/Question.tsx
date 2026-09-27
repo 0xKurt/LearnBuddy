@@ -5,16 +5,23 @@
 // answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { LB } from '../../lib/theme/colors.js';
+import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
-import { FigureView } from '../math/FigureView.js';
+import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
 
 type ProgressProps = {
@@ -30,6 +37,15 @@ type ProgressProps = {
 export function ProgressRow({ position, total, closed, right }: ProgressProps) {
   const { t } = useTranslation('practice');
   const share = total > 0 ? Math.max(0, Math.min(1, closed / total)) : 0;
+  // The bar grows softly to where she is now (at once with reduce motion).
+  const reduced = useReducedMotion();
+  const width = useSharedValue(share);
+  useEffect(() => {
+    width.value = reduced
+      ? share
+      : withTiming(share, { duration: DURATION.gentle * 2, easing: EASE.standard });
+  }, [share, reduced, width]);
+  const fill = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Text style={[TYPE.label, { color: LB.ink2, fontSize: 14 }]}>
@@ -47,13 +63,8 @@ export function ProgressRow({ position, total, closed, right }: ProgressProps) {
           overflow: 'hidden',
         }}
       >
-        <View
-          style={{
-            width: `${share * 100}%`,
-            height: '100%',
-            borderRadius: 4,
-            backgroundColor: LB.primary,
-          }}
+        <Animated.View
+          style={[{ height: '100%', borderRadius: 4, backgroundColor: LB.primary }, fill]}
         />
       </View>
       {right}
@@ -119,7 +130,7 @@ export function QuestionCard({
       />
       {figure ? (
         <View style={{ marginTop: 12 }}>
-          <FigureView figure={figure} maxHeight={figureMaxHeight} />
+          <ZoomableFigure figure={figure} maxHeight={figureMaxHeight} />
         </View>
       ) : null}
     </Card>

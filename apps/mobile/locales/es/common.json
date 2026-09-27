@@ -65,5 +65,10 @@
     "practice_now": "Practicar ahora",
     "not_today": "Hoy no",
     "less_often": "Escribir menos"
+  },
+  "zoom": {
+    "hint": "Separa dos dedos para ampliar, toca dos veces para acercar.",
+    "open_hint": "Abre la imagen en grande.",
+    "photo": "Tu foto"
   }
 }

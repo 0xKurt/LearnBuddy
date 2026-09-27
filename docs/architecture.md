@@ -514,7 +514,7 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 | What                            | Limit                                                                                              |
 | ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                           |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12, new explanations 60 (`config.ts`)                      |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512 |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                          |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                         |
@@ -856,6 +856,20 @@ and it counts neither as answered nor as shaky in the summary or the step's evid
 questions from a photo or from Buddy in an active session; homework help and a running test get
 409 `flag_not_allowed`. Idempotent; bumps the context version.
 
+**"Anders erklären"** (gaps.md #3; `POST /practice/sessions/:id/reexplain`, `practice/reexplain.ts`,
+purpose `reexplain`, migration `0036_reexplain.sql`). After the session's explanation (explain
+mode, `item_id` null) and after a closed question's solution, three chips ("Einfacher bitte",
+"Mit Beispiel", "Warum ist das so?") ask the model for a NEW explanation that way — the way is an
+explicit tap (`ReexplainWay`), the model decides how to explain, the output is validated with
+zod. It sees what she already read, so it does not repeat it. Her request and the explanation are
+stored as turns (`verdict = not_an_attempt`, no attempts or hints counted; a turn about the intro
+has no `item_id`), idempotent per `client_turn_id`. Code decides where it is allowed: never in a
+running test (409 `reexplain_not_allowed`), a question only once closed (409 `try_first`), in
+homework only for a task she solved herself (409 `reveal_not_allowed`), and a homework explanation
+that states an open task's answer (`mentionsSolution`, any notation) gets one repair, then nothing
+is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
+Also after the last question closed and the session finished.
+
 ### Learning modes (migration `0003_learning_modes.sql`)
 
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
@@ -1106,6 +1120,14 @@ once (`abandonStaleUploads`, run by the scheduler).
   deleted. Sign-out revokes only this device's refresh token at Supabase (scope `local`, also after
   a cold start, at most 4 s), resets the navigation stack and clears the query cache. Recordings (pronunciation) are not kept — too large; closing the
   app while one waits drops it.
+- **Instant start** (gaps.md #2, `lib/api/persist.ts`, `lib/api/deviceCache.ts`): the home and
+  `/me` are kept on the device (AsyncStorage / localStorage, per user) and shown at once on the
+  next start as stale data that refreshes in the background. Only settled data is kept — no card
+  on top, notice, decision, work in progress or message still being answered (CLAUDE.md rule 5);
+  they come with the first refresh. Any end of the session removes every kept copy. A practice to
+  go on with is loaded while its card is on screen (loaded, never started), and starting a
+  prepared step returns the session with its id (`StartStepResponse.session`), so the first
+  question needs no second request.
 - **About**: version from the app config; privacy, imprint and support rows only when
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set
   (`apps/mobile/.env.example`).

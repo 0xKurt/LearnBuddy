@@ -58,7 +58,12 @@
     "speak_almost": "Quasi! Guarda le parole segnate.",
     "speak_retry": "Riprova – ascoltalo prima.",
     "test_noted": "Annotato – andiamo avanti.",
-    "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda."
+    "test_no_hints": "Nel test non ci sono suggerimenti: scrivi quello che pensi o salta la domanda.",
+    "reexplain": {
+      "simpler": "Più semplice, per favore",
+      "example": "Con un esempio, per favore",
+      "why": "Perché è così?"
+    }
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

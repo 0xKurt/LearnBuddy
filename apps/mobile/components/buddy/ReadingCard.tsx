@@ -25,6 +25,7 @@ import { EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
+import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
 type Processing = Extract<NowCard, { type: 'material_processing' }>;
 
@@ -54,14 +55,16 @@ export function ReadingCard({
         style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingRight: titleInset }}
       >
         {thumb ? (
-          <View style={[{ borderRadius: 8, backgroundColor: LB.paper, padding: 3 }, SHADOW.soft]}>
-            <Image
-              source={{ uri: thumb }}
-              accessible={false}
-              style={{ width: 40, height: 52, borderRadius: 6 }}
-              contentFit="cover"
-            />
-          </View>
+          <ZoomablePhoto uri={thumb}>
+            <View style={[{ borderRadius: 8, backgroundColor: LB.paper, padding: 3 }, SHADOW.soft]}>
+              <Image
+                source={{ uri: thumb }}
+                accessible={false}
+                style={{ width: 40, height: 52, borderRadius: 6 }}
+                contentFit="cover"
+              />
+            </View>
+          </ZoomablePhoto>
         ) : null}
         <View style={{ flex: 1, gap: 2 }}>
           {/* A new stage fades in (keyed on what it says). */}

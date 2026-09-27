@@ -221,13 +221,20 @@ export const PronunciationFeedback = z.object({
 });
 export type PronunciationFeedback = z.infer<typeof PronunciationFeedback>;
 
+/** How the learner wants it explained again (the chips "Einfacher bitte", "Mit Beispiel", "Warum ist das so?"). */
+export const ReexplainWay = z.enum(['simpler', 'example', 'why']);
+export type ReexplainWay = z.infer<typeof ReexplainWay>;
+
 export const PracticeTurnView = z.object({
   id: Uuid,
-  item_id: Uuid,
+  /** The question it is about; null for a new explanation of the session's own explanation. */
+  item_id: Uuid.nullable(),
   role: z.enum(['learner', 'tutor']),
   text: z.string(),
   verdict: z.enum(['correct', 'partially_correct', 'incorrect', 'not_an_attempt']).nullable(),
   pronunciation: PronunciationFeedback.nullable(),
+  /** Part of an "Anders erklären" exchange (her request and the new explanation), else null. */
+  reexplain: ReexplainWay.nullable(),
   created_at: IsoDateTime,
 });
 export type PracticeTurnView = z.infer<typeof PracticeTurnView>;
@@ -289,6 +296,19 @@ export type AnswerRequest = z.infer<typeof AnswerRequest>;
 /** "Tipp": the next prepared hint for an open question — at once, no model. */
 export const HintRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
 export type HintRequest = z.infer<typeof HintRequest>;
+
+/**
+ * "Anders erklären": a new explanation, written by the model, after the session's explanation
+ * (item_id null, explain mode) or after a closed question's solution. Answered like an answer
+ * (AnswerResponse, verdict not_an_attempt): her request and the explanation become turns.
+ * Never in a running test; in homework help only for a task she solved herself.
+ */
+export const ReexplainRequest = z.object({
+  client_turn_id: Uuid,
+  item_id: Uuid.nullable(),
+  way: ReexplainWay,
+});
+export type ReexplainRequest = z.infer<typeof ReexplainRequest>;
 
 export const AnswerVerdict = z.enum([
   'correct',
