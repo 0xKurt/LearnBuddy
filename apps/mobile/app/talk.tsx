@@ -32,6 +32,7 @@ import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { MicButton } from '../components/voice/MicButton.js';
+import { ReadAlongText } from '../components/voice/ReadAlongText.js';
 import { useVoiceInput } from '../components/voice/useVoiceInput.js';
 import { newId } from '../lib/api/client.js';
 import { sendMessageStreamed } from '../lib/api/endpoints.js';
@@ -136,7 +137,9 @@ export default function TalkScreen() {
       setReply(r);
       setLive(null);
       setPhase('speaking');
-      void speak(spokenText(r.text, words), currentLocale(), {
+      // Read as shown, sentence by sentence (math in words), so the text reads along.
+      void speak(r.text, currentLocale(), {
+        transform: (sentence) => spokenText(sentence, words),
         onEnd: (why) => {
           spokenEnd = why;
           goOn();
@@ -306,9 +309,10 @@ export default function TalkScreen() {
         ) : null}
         {reply && phase !== 'listening' ? (
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            <Text style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}>
-              {reply.text}
-            </Text>
+            <ReadAlongText
+              text={reply.text}
+              style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}
+            />
             {reply.actions.map((a) =>
               a.summary.tool === 'offer_learning' ? (
                 <OfferCard key={a.id} actionId={a.id} offer={a.summary} />
