@@ -839,6 +839,10 @@ the practice for a test (user feedback #2).
 say exactly that), **done** (Buddy's actions of the last 72 h
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
 and delivery status of each message) and **system** status (model, push, contact, scheduler).
+The home is read in one repeatable-read transaction (one snapshot): a job that commits while
+it is read (a page joining the homework session) shows either before or after, never an old
+card next to "nothing working" — the app polls closely only while something is working
+(`home-snapshot.int.test.ts`).
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
 **one** card (pinned): the **now** card, else the **decision**; with a now card the decision
@@ -849,7 +853,7 @@ the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, fiv
 around it ("Arbeit" — with a test planned it prepares her for it; homework; pronunciation;
 vocabulary; explain —
 `docs/UX-PRINCIPLES.md` §6). Once there is a conversation the ring becomes one row of the same
-five (`components/lb/StartRow.tsx`) and the conversation takes the rest of the screen, at
+five (`components/lb/StartRow.tsx`; each as wide as its label, so a word never breaks) and the conversation takes the rest of the screen, at
 its newest message but never so far that her own last message is pushed out at the top; a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did stands under its message with "Rückgängig"; no tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says

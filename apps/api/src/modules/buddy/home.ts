@@ -22,7 +22,7 @@ import type { Deps } from '../../deps.js';
 import { daysBetween, localParts } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
-import { loadBuddyState } from './state.js';
+import { loadBuddyState, loadSettings } from './state.js';
 import { resumable } from '../practice/lifecycle.js';
 
 const THREAD_LIMIT = 30;
@@ -51,19 +51,36 @@ export async function buildHome(
   learner: LearnerLite,
   beforeMessageId?: string,
 ): Promise<BuddyHome> {
+  // Ensure the settings row exists outside the snapshot (a first-time insert inside a
+  // repeatable-read transaction could fail on a concurrent one).
+  await loadSettings(deps.db, learner.id);
+  // One snapshot for the whole screen: the parts are read by separate queries, and a
+  // job committing between them (a page joining the homework session) must not give a
+  // card from before it next to "nothing is working" from after it — the app would
+  // then stop polling closely and keep the stale card (web walkthrough flake).
+  return deps.db.tx(async (db) => {
+    await db.query('set transaction isolation level repeatable read');
+    return homeFrom({ ...deps, db }, learner, beforeMessageId);
+  });
+}
+
+async function homeFrom(
+  deps: Deps,
+  learner: LearnerLite,
+  beforeMessageId: string | undefined,
+): Promise<BuddyHome> {
   const now = deps.now();
   const state = await loadBuddyState(deps.db, learner.id, now);
   const tz = state.settings.timezone;
   const today = localParts(now, tz).date;
 
-  const [nowCard, decision, done, thread, system, working] = await Promise.all([
-    nowCardOf(deps, learner.id, state, today, now),
-    decisionOf(state, learner, today, now),
-    doneOf(deps, learner, now),
-    threadOf(deps, learner, beforeMessageId),
-    systemOf(deps, learner.id, state),
-    workingOf(deps, learner.id, now),
-  ]);
+  // One after the other: they share the snapshot's connection.
+  const nowCard = await nowCardOf(deps, learner.id, state, today, now);
+  const decision = await decisionOf(state, learner, today, now);
+  const done = await doneOf(deps, learner, now);
+  const thread = await threadOf(deps, learner, beforeMessageId);
+  const system = await systemOf(deps, learner.id, state);
+  const working = await workingOf(deps, learner.id, now);
 
   return {
     learner: { id: learner.id, name: learner.display_name, is_minor: learner.isMinor },
@@ -326,8 +343,10 @@ async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<Acti
       order by seq desc limit 12`,
     [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
   );
-  return Promise.all(
-    rows.map(async (r) => ({
+  const views: ActionView[] = [];
+  // One after the other: the home is read on one connection (one snapshot).
+  for (const r of rows) {
+    views.push({
       id: r.id,
       status: r.status,
       // Offered only when it would work now (nothing changed since).
@@ -339,8 +358,9 @@ async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<Acti
         !(await needsAdult(deps, learner, r.undo, now)),
       summary: r.result,
       created_at: r.created_at.toISOString(),
-    })),
-  );
+    });
+  }
+  return views;
 }
 
 function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
