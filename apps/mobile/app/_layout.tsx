@@ -36,10 +36,13 @@ import { LB } from '../lib/theme/colors.js';
 
 /** Answers kept on the device (closed app, lost connection): send them now. */
 async function sendKeptAnswers(): Promise<void> {
-  await flushOutbox(postAnswer, (sessionId) => {
+  const done = await flushOutbox(postAnswer, (sessionId) => {
     void queryClient.invalidateQueries({ queryKey: keys.session(sessionId) });
     void queryClient.invalidateQueries({ queryKey: keys.home });
-  }).catch(() => 0);
+  }).catch(() => null);
+  // An answer that arrived too late (question closed, session over) is not dropped
+  // silently (refused-offline-answers-dropped-silently).
+  if (done && done.refused > 0) toast.show(i18n.t('common:outbox_refused'));
 }
 
 /** "A message was opened" reports kept on the device (lib/push.ts): send them now. */

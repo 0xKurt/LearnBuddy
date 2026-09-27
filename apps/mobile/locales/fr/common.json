@@ -59,5 +59,6 @@
     "title": "Ton compte est en cours de suppression",
     "body": "Cela ne prend généralement que quelques minutes. Ensuite, tout ce que LearnBuddy a enregistré sur toi aura disparu. Plus rien ne peut être modifié.",
     "sign_out": "Se déconnecter"
-  }
+  },
+  "outbox_refused": "Une réponse enregistrée est arrivée trop tard – l'exercice était déjà terminé."
 }

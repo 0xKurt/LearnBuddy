@@ -59,5 +59,6 @@
     "title": "Il tuo account è in fase di eliminazione",
     "body": "Di solito ci vogliono solo pochi minuti. Dopo, tutto ciò che LearnBuddy ha salvato su di te sarà cancellato. Non si può più modificare nulla.",
     "sign_out": "Esci"
-  }
+  },
+  "outbox_refused": "Una risposta salvata è arrivata troppo tardi: l'esercizio era già chiuso."
 }

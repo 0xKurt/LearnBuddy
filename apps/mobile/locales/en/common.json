@@ -59,5 +59,6 @@
     "title": "Your account is being deleted",
     "body": "This usually takes just a few minutes. Afterwards, everything LearnBuddy stored about you is gone. Nothing can be changed any more.",
     "sign_out": "Sign out"
-  }
+  },
+  "outbox_refused": "A saved answer arrived too late – the task was already closed."
 }
