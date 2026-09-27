@@ -594,6 +594,11 @@ the purpose (homework has no practice to build). All pages are read in one model
 is no page-by-page progress and none is shown; nothing moves by itself (CLAUDE.md rule 5). The app
 (`components/buddy/ReadingCard.tsx`, `lib/buddy/readingStages.ts`) shows the photo, the stage
 and the steps "Angekommen · Lesen · Übungen"; `reading-stages.int.test.ts`.
+"Mein Stoff" follows a sheet being read the same way (live finding 3: the list still said "Ohne
+Titel · wird gelesen" once the sheet was read): it is fetched every 2.5 s and on every visit while
+a row is `queued`/`processing`, a fresher view of the sheet from its own screen is written into the
+list at once, and a home poll that no longer reports a reading refreshes a list that still shows
+one (`lib/api/libraryCache.ts`).
 
 **Outages are not failures.** The Storage gateway tells an absent photo (`null`) from a provider
 failure (`StorageError`): a failed download retries the run like a retryable model error (backoff

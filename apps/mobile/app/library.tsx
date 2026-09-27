@@ -4,9 +4,8 @@
 // photographing a new sheet.
 
 import type { LibraryView, MaterialView, SubjectKind } from '@learnbuddy/shared-types/contracts';
-import { focusManager } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -65,8 +64,6 @@ function rowsOf(groups: Group[]): Row[] {
   ]);
 }
 
-const isReading = (m: MaterialView) => m.status === 'queued' || m.status === 'processing';
-
 function mapMaterials(
   view: LibraryView,
   fn: (list: MaterialView[]) => MaterialView[],
@@ -114,18 +111,8 @@ export default function LibraryScreen() {
       });
     }
   }
-  const reading = groups.some((g) => g.materials.some(isReading));
   const rows = rowsOf(groups);
   const entering = useListEntrance(view !== undefined);
-
-  // While a sheet is being read, follow it here as the home does.
-  useEffect(() => {
-    if (!reading) return;
-    const timer = setInterval(() => {
-      if (focusManager.isFocused()) void queryClient.invalidateQueries({ queryKey: keys.library });
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [reading]);
 
   const openCapture = () => router.push('/capture');
 
