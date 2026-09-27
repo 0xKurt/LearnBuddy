@@ -9,6 +9,7 @@ import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { PinPad } from '../components/lb/PinPad.js';
 import { Screen } from '../components/lb/Screen.js';
+import { useAnnounce } from '../lib/announce.js';
 import { finishAdmin } from '../lib/adminFlow.js';
 import { ApiError } from '../lib/api/client.js';
 import { openAdminSession } from '../lib/api/endpoints.js';
@@ -48,6 +49,9 @@ export default function Pin() {
       setBusy(false);
     }
   }
+
+  // VoiceOver hears the error too, again after each wrong attempt (audit M-80).
+  useAnnounce(error, { key: attempt, liveRegion: false });
 
   return (
     <Screen>

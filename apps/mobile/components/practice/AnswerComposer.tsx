@@ -60,6 +60,9 @@ type Props = {
   onHint?: () => void;
 };
 
+/** "Prüfen" is never narrower than this; below it, it takes its own line. */
+const CHECK_MIN_WIDTH = 132;
+
 export function AnswerComposer({
   kind,
   prompt = '',
@@ -113,7 +116,7 @@ export function AnswerComposer({
     // Hands-free (voice mode): on the phone listening ends by itself when she pauses.
     untilPause: voiceMode,
   });
-  useHandsFreeMic(voice, disabled);
+  useHandsFreeMic(voice, disabled, prompt);
   // iOS number pads lack minus, comma and letters (units); this one has them all.
   const keyboardType: KeyboardTypeOptions =
     kind === 'numeric' && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
@@ -145,6 +148,8 @@ export function AnswerComposer({
           onChangeText={(typed) => {
             // Typing ends the hands-free loop: she answers with the keyboard now.
             useHandsFree.getState().disarm();
+            // …and a recording still running would replace what she types (audit M-78).
+            if (voice.state === 'starting' || voice.state === 'recording') voice.cancel();
             onChange(typed);
           }}
           selection={forced}
@@ -213,8 +218,10 @@ export function AnswerComposer({
           <MicButton voice={voice} size="lg" label={t('common:voice.answer')} disabled={disabled} />
         </View>
       ) : null}
-      {/* One main action: "Prüfen" takes the room; "Lösung zeigen" stays a quiet side option. */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      {/* One main action: "Prüfen" takes the room; "Lösung zeigen" stays a quiet side option.
+          When the side options leave "Prüfen" too little room (a small phone, large text), it
+          wraps onto its own full-width line instead of being squeezed away (audit M-83). */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
         {onHint ? (
           <Btn
             variant="ghost"
@@ -231,7 +238,7 @@ export function AnswerComposer({
             {revealLabel ?? t('show_solution')}
           </Btn>
         ) : null}
-        <View style={{ flex: 1 }}>
+        <View style={{ flexGrow: 1, flexShrink: 0, flexBasis: CHECK_MIN_WIDTH }}>
           <Btn
             full
             pill

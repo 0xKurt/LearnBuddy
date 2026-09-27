@@ -210,6 +210,8 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
   }, [finish, recorder, setPhase]);
 
   const stop = useCallback(() => finish(true), [finish]);
+  /** Ends the recording and throws it away (she answered another way). */
+  const cancel = useCallback(() => finish(false), [finish]);
 
   // Going to the background ends a recording without sending it.
   useEffect(() => {
@@ -238,5 +240,6 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
     denied,
     start,
     stop,
+    cancel,
   };
 }

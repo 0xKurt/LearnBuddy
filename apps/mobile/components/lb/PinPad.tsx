@@ -9,6 +9,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { MAX_FONT_SCALE } from './Btn.js';
 
 type Props = {
   onComplete: (pin: string) => void;
@@ -109,7 +110,13 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
                   ...(k.value === 'digit' ? SHADOW.soft : null),
                 }}
               >
-                <Text style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}>{k.label}</Text>
+                {/* Fixed key boxes: the digit grows with the system text only this far (M-84). */}
+                <Text
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
+                  style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}
+                >
+                  {k.label}
+                </Text>
               </View>
             )}
           </Pressable>

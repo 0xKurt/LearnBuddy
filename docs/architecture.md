@@ -514,7 +514,14 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`lib/speech/handsFree.ts`): question read → the mic listens (ends by itself when she pauses, on
   the phone) → her answer or question is checked → the feedback is read → the mic listens again,
   or, once the question is closed, the next one comes. Typing, switching voice mode off or leaving
-  ends the loop; the microphone never starts before her own tap on that screen. Pronunciation
+  ends the loop; the microphone never starts before her own tap on that screen. One listening
+  belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, typing, the
+  screen locking while it checks), Buddy starting to speak or the next question cancels a
+  running mic and drops its late text. Questions carry the language they are written in
+  (`prompt_lang`, also for ordinary questions): voice mode reads them and listens in that
+  language, not the app's. The switch sits in the practice header and on Buddy's home (speaker
+  icon; the headphones open conversation mode). The home reads a late reply only while it is
+  on screen. Pronunciation
   recordings stay tap by tap. Buddy's chat replies stream and are read sentence by sentence
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
@@ -523,9 +530,21 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
   Tapping the mic while Buddy speaks interrupts it. When the answer carries a button
   (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
-  screen — opened by her — is open; "Beenden" or the keyboard ends it. Walkthrough: one full turn
+  screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
+  the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
+  every phase is announced. Walkthrough: one full turn
   with Chromium's fake microphone and a scripted transcript.
-- **Pronunciation** — see Learning modes (`speak`).
+- **Pronunciation** — see Learning modes (`speak`). A judgement that lands after "Beenden" is
+  refused (the write locks the session first, 409). Offline, the recording waits for the
+  connection with "Neu aufnehmen" / "Diesmal überspringen" available, which cancel the wait.
+- **Screen readers** — `lib/announce.ts`: Android reads live regions by itself, iOS has none,
+  so toasts, capture and dictation status, what the mic understood, the PIN error (again after
+  each attempt), Buddy's reply ("Buddy: …", when voice mode is off), practice feedback with its
+  verdict word and math in words, the revealed solution and the conversation phases are
+  announced explicitly (`announcePlan` decides, unit-tested). Button labels follow the system
+  text size up to 1.6× (`Btn` grows with `minHeight` instead of clipping), "Prüfen" wraps onto
+  its own line rather than shrink, and toasts sit above the iOS keyboard. Not yet checked on a
+  device at AX3/AX5.
 
 ## Home
 

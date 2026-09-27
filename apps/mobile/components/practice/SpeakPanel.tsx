@@ -308,8 +308,8 @@ export function SpeakPanel({
       // She left the question meanwhile: nothing is shown or read aloud for a screen she left.
       if (!mounted.current) return;
       setSending('idle');
+      // The screen reads or announces the feedback (practice/[id].tsx readFeedback).
       await onResult(res);
-      AccessibilityInfo.announceForAccessibility(res.reply.text);
     } catch (err) {
       if (err instanceof WaitAborted) return; // she recorded again or skipped while offline
       if (!mounted.current) return;

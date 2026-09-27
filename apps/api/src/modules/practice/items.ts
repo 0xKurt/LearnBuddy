@@ -48,7 +48,9 @@ export const ItemDraft = z.object({
     .regex(/^[a-z]{2}$/)
     .nullable()
     .default(null)
-    .describe('vocab: ISO 639-1 language of the prompt, else null'),
+    .describe(
+      'ISO 639-1 language the prompt is written in (vocab: the foreign word; any other question: the language of the sheet or topic)',
+    ),
   lang: z
     .string()
     .regex(/^[a-z]{2}$/)
@@ -151,7 +153,9 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
       out.push({ ...plain, answer: it.prompt, prompt_lang: null });
       continue;
     }
-    out.push({ ...plain, lang: null, prompt_lang: null });
+    // The question's language stays: voice mode reads it and listens in that language, not
+    // the app's (audit M-40). `lang` stays null: it marks translation and speaking items.
+    out.push({ ...plain, lang: null });
   }
   return out;
 }

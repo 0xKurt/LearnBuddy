@@ -28,7 +28,6 @@ import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  AccessibilityInfo,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -73,6 +72,7 @@ import {
 import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import { announce } from '../../lib/announce.js';
 import type { SpokenWords } from '../../lib/math/speak.js';
 import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/speech/listen.js';
 import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
@@ -117,7 +117,8 @@ function questionParts(item: ItemView, words: SpokenWords, t: TFunction): Spoken
             item.kind === 'multiple_choice' ? item.choices : null,
             words,
           ),
-          lang: app,
+          // The sheet's language (a German biology sheet stays German on an English phone).
+          lang: item.prompt_lang ?? app,
         },
       ];
   }
@@ -227,13 +228,24 @@ export default function PracticeScreen() {
     if (!voiceOn) useHandsFree.getState().disarm();
   }, [voiceOn]);
 
-  /** Voice mode: Buddy's reaction after an answer, with the verdict word first. */
-  function readFeedback(res: AnswerResponse, itemId: string): void {
-    if (!useVoiceMode.getState().on) return;
+  /** Buddy's reaction after an answer or a hint, with the verdict word first and math in words. */
+  function feedbackText(res: AnswerResponse): string {
     // A running test says no verdict (the result comes at the end).
     const testing = res.session.mode === 'test' && res.session.status === 'active';
     const key = testing ? null : verdictWordKey(res.verdict);
-    const text = feedbackReadText(key ? t(key) : null, res.reply.text, words);
+    return feedbackReadText(key ? t(key) : null, res.reply.text, words);
+  }
+
+  /**
+   * Voice mode reads the feedback aloud; otherwise a screen reader hears the same words —
+   * the verdict too, never raw LaTeX (audit M-82).
+   */
+  function readFeedback(res: AnswerResponse, itemId: string): void {
+    const text = feedbackText(res);
+    if (!useVoiceMode.getState().on) {
+      announce(text);
+      return;
+    }
     speakInOrder([{ text, lang: currentLocale() }], (why) => {
       if (why !== 'done') return;
       const hands = useHandsFree.getState();
@@ -318,8 +330,7 @@ export default function PracticeScreen() {
       if (answerText !== null) setText((current) => (current.trim() === answerText ? '' : current));
       if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
         Keyboard.dismiss();
-      if (useVoiceMode.getState().on) readFeedback(res, itemId);
-      else AccessibilityInfo.announceForAccessibility(res.reply.text);
+      readFeedback(res, itemId);
     } catch (err) {
       // The typed answer stays in the field, so trying again is one tap.
       toast.show(messageFor(err), 'error');
@@ -347,7 +358,11 @@ export default function PracticeScreen() {
     setPinnedId(itemId);
     setBusy(true);
     try {
-      await store(await revealItem(id, itemId));
+      const revealed = await revealItem(id, itemId);
+      await store(revealed);
+      // "Lösung zeigen": the solution is said too, math in words (audit M-82).
+      const answer = revealed.items.find((i) => i.item.id === itemId)?.answer;
+      if (answer) announce(`${t('practice:solution.title')}: ${spokenText(answer, words)}`);
       lastSent.current = null;
       setText('');
       Keyboard.dismiss();
@@ -369,7 +384,7 @@ export default function PracticeScreen() {
     try {
       const res = await hintItem(id, itemId);
       await store(res.session);
-      if (useVoiceMode.getState().on) readFeedback(res, itemId);
+      readFeedback(res, itemId);
     } catch (err) {
       toast.show(messageFor(err), 'error');
       if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
@@ -730,7 +745,7 @@ export default function PracticeScreen() {
             kind={item.kind}
             prompt={item.prompt}
             unit={item.unit}
-            lang={item.kind === 'vocab' ? item.lang : null}
+            lang={item.kind === 'vocab' ? item.lang : item.prompt_lang}
             value={text}
             disabled={locked}
             onChange={setText}

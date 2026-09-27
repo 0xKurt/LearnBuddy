@@ -35,9 +35,11 @@ import { useVoiceInput } from '../components/voice/useVoiceInput.js';
 import { newId } from '../lib/api/client.js';
 import { sendMessageStreamed } from '../lib/api/endpoints.js';
 import { setHome } from '../lib/api/queries.js';
+import { useAnnounce } from '../lib/announce.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
+import { talkListensByItself } from '../lib/speech/handsFree.js';
 import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { LB } from '../lib/theme/colors.js';
@@ -110,8 +112,10 @@ export default function TalkScreen() {
     let final: MessageView | null = null;
     const goOn = () => {
       if (stale() || !final || !spokenEnd) return;
-      // Read to the end: listen again — unless there is something to tap first.
-      if (spokenEnd === 'done' && !hasCard(final)) listen();
+      // Read to the end: listen again — unless there is something to tap first, or a screen
+      // reader is on (it would be recorded; she taps the mic or uses Magic Tap).
+      if (spokenEnd === 'done' && !hasCard(final) && talkListensByItself(screenReader.current))
+        listen();
       else setPhase((p) => (p === 'speaking' ? 'paused' : p));
     };
     try {
@@ -185,9 +189,33 @@ export default function TalkScreen() {
     }
   }
 
-  // Start listening once when the screen opens (she opened it to talk).
+  // Start listening once when the screen opens (she opened it to talk) — not with a screen
+  // reader on (audit M-85): the phone would hear VoiceOver itself.
+  const screenReader = useRef<boolean | null>(null);
   useEffect(() => {
-    listen();
+    let alive = true;
+    // The browser cannot tell (react-native-web always answers true): no screen reader assumed.
+    const known: Promise<boolean> =
+      Platform.OS === 'web' ? Promise.resolve(false) : AccessibilityInfo.isScreenReaderEnabled();
+    known
+      .then((on) => {
+        if (!alive) return;
+        screenReader.current = on;
+        if (talkListensByItself(on)) listen();
+      })
+      .catch(() => {
+        screenReader.current = null;
+      });
+    const sub =
+      Platform.OS === 'web'
+        ? null
+        : AccessibilityInfo.addEventListener('screenReaderChanged', (on) => {
+            screenReader.current = on;
+          });
+    return () => {
+      alive = false;
+      sub?.remove();
+    };
   }, []);
 
   // Leaving (or opening a card on top) ends everything: no reading aloud, no
@@ -240,8 +268,15 @@ export default function TalkScreen() {
       ? t('buddy:talk.paused_sub')
       : null;
 
+  // Every phase change is heard on iOS too (Android reads the live region).
+  useAnnounce(headline);
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: LB.bg }}
+      // VoiceOver's Magic Tap (two-finger double tap) is the mic: speak, done, interrupt.
+      onMagicTap={onMic}
+    >
       <Glow height={700} />
       <View
         style={{

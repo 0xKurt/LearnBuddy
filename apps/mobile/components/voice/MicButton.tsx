@@ -19,6 +19,7 @@ import {
   View,
 } from 'react-native';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { formatClock } from '../../lib/speech/voice.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -169,6 +170,18 @@ export function MicButton({
  */
 export function MicStatus({ voice }: { voice: VoiceInput }) {
   const { t } = useTranslation('common');
+  // VoiceOver hears the same states (audit M-80): writing down, no mic, nothing understood.
+  const status =
+    voice.state === 'transcribing'
+      ? t('voice.transcribing')
+      : voice.denied
+        ? Platform.OS === 'web'
+          ? t('voice.denied_web')
+          : t('voice.denied')
+        : voice.hint && voice.state === 'idle'
+          ? t(`voice.problem.${voice.hint}`)
+          : null;
+  useAnnounce(status, { liveRegion: voice.state === 'transcribing' });
 
   if (voice.state === 'recording') {
     const time = formatClock(voice.elapsedMs);
