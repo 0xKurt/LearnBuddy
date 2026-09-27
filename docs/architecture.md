@@ -302,7 +302,16 @@ An event never bypasses the contact rules.
 zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) with explicit output-token cap, thinking budget and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
-tokens, cost, latency and outcome — never with prompt or answer text.
+tokens, cost, latency and outcome — never with prompt or answer text; a safety block keeps the
+provider's finish reason (`blocked:SAFETY`). A call that produced nothing usable — provider
+down, request refused, safety block — gives its reservation back.
+
+**One error classification at every external seam** (`lib/outcome.ts`, audit S-7): `ok`,
+`refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never
+retried automatically), `transient` (5xx, 429, network — retry later is fine), `unknown` (no
+answer: a model call may be retried because it changes nothing; a push is never repeated).
+`LlmError.outcome` and the push errors carry it; a provider 4xx is `refused`, no longer retried
+three times as an outage.
 
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
 to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1

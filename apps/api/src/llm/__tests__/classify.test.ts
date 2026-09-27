@@ -44,3 +44,12 @@ describe('provider errors → outcome', () => {
     expect(outcomeOfStatus(502)).toBe('transient');
   });
 });
+
+describe('push errors → outcome', () => {
+  it('an unanswered push is unknown (never repeated), a busy one transient, a refusal refused', async () => {
+    const { PushRejectedError, PushUncertainError } = await import('../../push/transport.js');
+    expect(new PushUncertainError('x').outcome).toBe('unknown');
+    expect(new PushRejectedError('busy', 60).outcome).toBe('transient');
+    expect(new PushRejectedError('no', null).outcome).toBe('refused');
+  });
+});

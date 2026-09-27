@@ -10,6 +10,8 @@
 // answer (timeout, 5xx, dropped connection), the outcome is unknown and the
 // caller must NOT resend automatically.
 
+import type { Outcome } from '../lib/outcome.js';
+
 export type PushMessage = {
   to: string;
   title: string;
@@ -27,6 +29,8 @@ export type PushReceipt = { status: 'ok' } | { status: 'error'; error: string };
 
 /** The provider may or may not have accepted the request. */
 export class PushUncertainError extends Error {
+  /** Shared classification (lib/outcome.ts): a push is never repeated blindly. */
+  readonly outcome: Outcome = 'unknown';
   constructor(message: string) {
     super(message);
     this.name = 'PushUncertainError';
@@ -40,6 +44,10 @@ export class PushRejectedError extends Error {
     super(message);
     this.name = 'PushRejectedError';
     this.retryAfterSeconds = retryAfterSeconds;
+  }
+  /** Shared classification (lib/outcome.ts): busy (retry after) or a definitive no. */
+  get outcome(): Outcome {
+    return this.retryAfterSeconds === null ? 'refused' : 'transient';
   }
 }
 
