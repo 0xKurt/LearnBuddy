@@ -44,8 +44,6 @@ type Props = {
   onResend?: (message: MessageView) => void;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
-  /** Where her own last message starts (y within this view), so it is never scrolled away. */
-  onLastMineLayout?: (y: number) => void;
   /** Undo is locked while this is true (default: busy); history locks only while undoing. */
   undoBusy?: boolean;
 };
@@ -61,7 +59,6 @@ export function Conversation({
   onOption,
   onResend,
   onUndo,
-  onLastMineLayout,
   undoBusy,
 }: Props) {
   const { t } = useTranslation('buddy');
@@ -69,8 +66,6 @@ export function Conversation({
   const words = useSpokenWords();
   const last = messages[messages.length - 1];
   const breaks = dayBreaks(messages.map((m) => m.created_at));
-  // Her last message: the one being sent, else the last she sent.
-  const lastMine = pending ? null : [...messages].reverse().find((m) => m.role === 'learner');
   const thinking =
     pending !== null || messages.some((m) => m.role === 'learner' && m.status === 'processing');
   return (
@@ -83,15 +78,7 @@ export function Conversation({
           (a) => a.summary.tool !== 'offer_learning' && a.summary.tool !== 'open_area',
         );
         return (
-          <View
-            key={m.id}
-            style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}
-            onLayout={
-              m === lastMine && onLastMineLayout
-                ? (e) => onLastMineLayout(e.nativeEvent.layout.y)
-                : undefined
-            }
-          >
+          <View key={m.id} style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}>
             {day ? <DayLine day={day} /> : null}
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
               {mine ? null : <BuddyOrb size={26} />}
@@ -221,10 +208,7 @@ export function Conversation({
       })}
       {notices}
       {pending ? (
-        <View
-          style={{ alignItems: 'flex-end' }}
-          onLayout={onLastMineLayout ? (e) => onLastMineLayout(e.nativeEvent.layout.y) : undefined}
-        >
+        <View style={{ alignItems: 'flex-end' }}>
           <View
             style={{
               maxWidth: '86%',

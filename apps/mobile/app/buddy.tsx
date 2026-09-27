@@ -6,8 +6,8 @@
 // Voice mode (speaker switch next to the menu): Buddy's reply to what she
 // just sent is read aloud, and the mic is the composer's main control.
 // At most one card on top and one violet button; everything else Buddy asks in
-// the conversation, and her own last message never scrolls away (lib/homeLayout.ts,
-// user feedback #6).
+// the conversation, which stands at its newest message unless she scrolled up to read
+// (lib/homeLayout.ts, user feedback #6).
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
@@ -49,7 +49,7 @@ import { VoiceModeToggle } from '../components/voice/VoiceModeToggle.js';
 import { announce } from '../lib/announce.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { requestAdmin } from '../lib/adminFlow.js';
-import { followTarget, homeLayout } from '../lib/homeLayout.js';
+import { followsEnd, homeLayout } from '../lib/homeLayout.js';
 import { ApiError, newId } from '../lib/api/client.js';
 import {
   acceptMissingPages,
@@ -144,17 +144,14 @@ export default function BuddyScreen() {
   const [topic, setTopic] = useState<TopicKind | null>(null);
   const [choice, setChoice] = useState<'homework' | 'vocab' | null>(null);
   const scroll = useRef<ScrollView>(null);
-  /** The conversation's size, its box, and where her own last message starts in it. */
-  const threadBox = useRef({ content: 0, view: 0, convY: 0, mineY: null as number | null });
-  const hasMine = useRef(false);
-  /** Scrolls the conversation to where it stands (lib/homeLayout.ts followTarget). */
+  /** Where the conversation stands, and whether it follows its end. */
+  const threadBox = useRef({ y: 0, following: true });
+  /** To its newest message, unless she scrolled up to read (lib/homeLayout.ts followsEnd). */
   function follow(): void {
     const b = threadBox.current;
-    const mine = hasMine.current && b.mineY !== null ? b.convY + b.mineY : null;
-    scroll.current?.scrollTo({
-      y: followTarget(b.content, b.view, mine),
-      animated: followEnd.current,
-    });
+    // Something she sent (or its reply) always brings her back to the end.
+    if (followEnd.current) b.following = true;
+    if (b.following) scroll.current?.scrollToEnd({ animated: followEnd.current });
     followEnd.current = false;
   }
   /** The photo of the sheet being read, while it is on the phone (it arrived). */
@@ -529,7 +526,6 @@ export default function BuddyScreen() {
       ? { text: pending.text }
       : null;
 
-  hasMine.current = shownPending !== null || messages.some((m) => m.role === 'learner');
   // Once there is a conversation, it gets the room; the ring shrinks to a row.
   const talking = messages.length > 0 || shownPending !== null || notices.length > 0;
   const top = [
@@ -683,15 +679,22 @@ export default function BuddyScreen() {
                 gap: 10,
               }}
               keyboardShouldPersistTaps="handled"
-              // A conversation: at its newest message, but her own last message stays in view.
-              onLayout={(e) => {
-                threadBox.current.view = e.nativeEvent.layout.height;
-                follow();
+              // A conversation: at its newest message, unless she scrolled up to read.
+              onScroll={(e) => {
+                const b = threadBox.current;
+                const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+                b.following = followsEnd(
+                  b.following,
+                  b.y,
+                  contentOffset.y,
+                  layoutMeasurement.height,
+                  contentSize.height,
+                );
+                b.y = contentOffset.y;
               }}
-              onContentSizeChange={(_, height) => {
-                threadBox.current.content = height;
-                follow();
-              }}
+              scrollEventThrottle={64}
+              onLayout={follow}
+              onContentSizeChange={follow}
               refreshControl={
                 <RefreshControl
                   refreshing={home.isRefetching}
@@ -704,31 +707,20 @@ export default function BuddyScreen() {
                   {t('buddy:thread.load_more')}
                 </Btn>
               ) : null}
-              <View
-                onLayout={(e) => {
-                  threadBox.current.convY = e.nativeEvent.layout.y;
-                  follow();
-                }}
-              >
-                <Conversation
-                  onLastMineLayout={(y) => {
-                    threadBox.current.mineY = y;
-                    follow();
-                  }}
-                  contactOn={h.system.contact_enabled}
-                  messages={messages}
-                  pending={shownPending}
-                  notices={notices}
-                  live={live}
-                  busy={busy || pending !== null}
-                  showActions
-                  onUndo={(id) => void act(() => undoAction(id))}
-                  onOption={(messageId, option) => void send(option, newId(), messageId)}
-                  onResend={(m: MessageView) =>
-                    void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
-                  }
-                />
-              </View>
+              <Conversation
+                contactOn={h.system.contact_enabled}
+                messages={messages}
+                pending={shownPending}
+                notices={notices}
+                live={live}
+                busy={busy || pending !== null}
+                showActions
+                onUndo={(id) => void act(() => undoAction(id))}
+                onOption={(messageId, option) => void send(option, newId(), messageId)}
+                onResend={(m: MessageView) =>
+                  void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
+                }
+              />
             </ScrollView>
           </>
         ) : (
