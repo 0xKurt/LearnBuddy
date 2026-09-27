@@ -124,7 +124,9 @@
       "cta": "Abmelden",
       "confirm_title": "Wirklich abmelden?",
       "confirm_body": "Zum Wiederanmelden braucht es die E-Mail-Adresse und das Passwort.",
-      "confirm_cta": "Ja, abmelden"
+      "confirm_cta": "Ja, abmelden",
+      "confirm_unsent": "Auf diesem Gerät sind noch Antworten oder Fotos, die nicht gesendet sind. Beim Abmelden werden sie gelöscht. Mit Verbindung werden sie gleich gesendet – dann einfach kurz warten.",
+      "confirm_cta_unsent": "Trotzdem abmelden"
     },
     "access": {
       "email_title": "E-Mail-Adresse",

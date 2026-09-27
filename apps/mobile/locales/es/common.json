@@ -51,5 +51,8 @@
     "say_it": "Toca el micro y dilo sin más.",
     "or_say": "O di tu respuesta.",
     "topic": "Decirlo en vez de escribirlo"
+  },
+  "session": {
+    "expired": "Se cerró tu sesión. Vuelve a entrar: lo que aún no se había enviado sigue aquí."
   }
 }

@@ -13,12 +13,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '../components/lb/ErrorBoundary.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { OfflineFrame } from '../components/lb/OfflineFrame.js';
-import { ToastHost } from '../components/lb/Toast.js';
+import { toast, ToastHost } from '../components/lb/Toast.js';
 import { outreachOpened, postAnswer } from '../lib/api/endpoints.js';
-import { clearOutbox, flushOutbox } from '../lib/api/outboxSync.js';
-import { drafts } from '../lib/capture/draftStorage.js';
+import { flushOutbox } from '../lib/api/outboxSync.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { loadSession, onSessionChange } from '../lib/auth/session.js';
+import { i18n } from '../lib/i18n/index.js';
+import { adoptLocalWork } from '../lib/localWork.js';
 import { clearLegacyLocalNotifications, onNotificationTap } from '../lib/push.js';
 import { LB } from '../lib/theme/colors.js';
 
@@ -34,23 +35,34 @@ export default function RootLayout() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    void loadSession().finally(() => {
-      setReady(true);
-      void sendKeptAnswers();
-    });
+    void loadSession()
+      .then(async (s) => {
+        if (s) await adoptLocalWork(s.user_id).catch(() => undefined);
+      })
+      .finally(() => {
+        setReady(true);
+        void sendKeptAnswers();
+      });
     // Back online: send what was answered meanwhile.
     const offOnline = onlineManager.subscribe((online) => {
       if (online) void sendKeptAnswers();
     });
     void clearLegacyLocalNotifications();
-    const offSession = onSessionChange((s) => {
-      if (!s) {
-        void clearOutbox();
-        // A shared phone: the next person does not find her photos.
-        void drafts.clearAll();
-        queryClient.clear();
-        router.replace('/');
+    const offSession = onSessionChange((s, ended) => {
+      if (s) {
+        // Someone else's leftovers go; hers (after an expired session) are sent now.
+        void adoptLocalWork(s.user_id)
+          .catch(() => undefined)
+          .then(sendKeptAnswers);
+        return;
       }
+      // Nothing of the previous learner stays reachable: cache and whole stack reset
+      // (audit M-72). Her unsent answers and photos stay on the device unless she
+      // signed out on purpose (settings deletes them there, after a warning).
+      queryClient.clear();
+      if (router.canDismiss()) router.dismissAll();
+      router.replace('/');
+      if (ended === 'expired') toast.show(i18n.t('common:session.expired'));
     });
     const offTap = onNotificationTap((outreachId) => {
       void outreachOpened(outreachId, null)

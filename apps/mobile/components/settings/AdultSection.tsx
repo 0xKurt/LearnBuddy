@@ -11,10 +11,17 @@ import { Share, Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { clearAdminToken } from '../../lib/admin.js';
-import { cancelDeletion, exportAccount, requestDeletion } from '../../lib/api/endpoints.js';
+import {
+  cancelDeletion,
+  exportAccount,
+  postAnswer,
+  requestDeletion,
+} from '../../lib/api/endpoints.js';
+import { flushOutbox } from '../../lib/api/outboxSync.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { currentSession } from '../../lib/auth/session.js';
 import { signOut } from '../../lib/auth/supabase.js';
+import { hasUnsentWork, releaseLocalWork } from '../../lib/localWork.js';
 import { unregisterDeviceForPush } from '../../lib/push.js';
 import { messageFor } from '../../lib/errors.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -51,6 +58,8 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
   const inFlight = useRef(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
+  // Unsent answers or photos on this device: signing out would delete them, so the sheet says so.
+  const [unsent, setUnsent] = useState(false);
 
   const minor = learner.is_minor;
   const email = currentSession()?.email ?? '';
@@ -118,13 +127,27 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
       void queryClient.invalidateQueries({ queryKey: keys.me });
     });
 
+  const askSignOut = () => {
+    setUnsent(false);
+    setSignOutOpen(true);
+    // Send what can be sent first; whatever is still left is named in the sheet.
+    void flushOutbox(postAnswer, () => undefined)
+      .catch(() => 0)
+      .then(() => hasUnsentWork())
+      .then(setUnsent)
+      .catch(() => undefined);
+  };
+
   const signOutNow = () => {
     setSignOutOpen(false);
     return run('signout', async () => {
       await afterModalCloses();
       clearAdminToken();
-      // Still signed in: tell the server this phone no longer gets Buddy's messages.
+      // Still signed in: tell the server this phone no longer gets Buddy's messages
+      // (bounded in time; retried later if it cannot reach the server).
       await unregisterDeviceForPush();
+      // On purpose: nothing of hers stays on the device for the next person.
+      await releaseLocalWork().catch(() => undefined);
       // The root layout returns to the start screen once the session is gone.
       await signOut();
     });
@@ -222,12 +245,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                     : t('settings:adult.signout.body_no_email')
                 }
               >
-                <Btn
-                  pill
-                  variant="outline"
-                  onPress={() => setSignOutOpen(true)}
-                  disabled={busy !== null}
-                >
+                <Btn pill variant="outline" onPress={askSignOut} disabled={busy !== null}>
                   {t('settings:adult.signout.cta')}
                 </Btn>
               </Row>
@@ -258,8 +276,15 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         onClose={() => setSignOutOpen(false)}
       >
         <Text style={TYPE.body}>{t('settings:adult.signout.confirm_body')}</Text>
-        <Btn pill full onPress={() => void signOutNow()}>
-          {t('settings:adult.signout.confirm_cta')}
+        {unsent ? (
+          <Text style={[TYPE.body, { color: LB.ink2 }]}>
+            {t('settings:adult.signout.confirm_unsent')}
+          </Text>
+        ) : null}
+        <Btn pill full variant={unsent ? 'danger' : 'primary'} onPress={() => void signOutNow()}>
+          {unsent
+            ? t('settings:adult.signout.confirm_cta_unsent')
+            : t('settings:adult.signout.confirm_cta')}
         </Btn>
       </Sheet>
     </View>

@@ -8,6 +8,7 @@ import { Platform } from 'react-native';
 
 import { ENV } from '../env.js';
 import type { RecoveryLink } from './recovery.js';
+import { createRefresher, RefreshBackoff } from './refresh.js';
 import { clearSession, currentSession, saveSession, type Session } from './session.js';
 
 export const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON_KEY, {
@@ -226,21 +227,48 @@ export async function changeEmail(email: string): Promise<'changed' | 'pending'>
   });
 }
 
-/** Exchanges the refresh token; clears the session when it is no longer valid. */
-export async function refreshSession(refreshToken: string): Promise<Session | null> {
-  const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
-  if (error || !data.session) {
-    // A network failure is not a sign-out: keep the tokens and try again later.
-    if (error && reasonOf(error.message, error.status) === 'network') return null;
-    await clearSession();
-    return null;
-  }
-  const next = toSession(data.session);
-  await saveSession(next);
-  return next;
+/**
+ * Exchanges the refresh token (lib/auth/refresh.ts). Only a definite "this
+ * session is over" from Supabase Auth clears it; an outage (no connection,
+ * 5xx, 429) keeps the tokens and is retried after a backoff (audit H-28).
+ */
+export const refreshSession = createRefresher({
+  client: supabase.auth,
+  toSession,
+  save: saveSession,
+  clear: () => clearSession('expired'),
+  backoff: new RefreshBackoff(() => Date.now()),
+});
+
+/** Resolves undefined when `p` takes longer than `ms` (sign-out never waits on the network). */
+function within<T>(p: Promise<T>, ms: number): Promise<T | undefined> {
+  return Promise.race([p, new Promise<undefined>((r) => setTimeout(() => r(undefined), ms))]);
 }
 
+/**
+ * Signing out on this device. The refresh token of this session (only this
+ * one: other devices of the family stay signed in) is revoked at Supabase with
+ * the stored access token, even right after a cold start when the Supabase
+ * client holds no session (audit signout-no-server-revoke). Best effort, at
+ * most a few seconds: offline, the tokens are still deleted here.
+ */
 export async function signOut(): Promise<void> {
-  await supabase.auth.signOut().catch(() => undefined);
-  await clearSession();
+  const s = currentSession();
+  if (s) {
+    const revoke = async () => {
+      let access = s.access_token;
+      if (s.expires_at * 1000 - Date.now() < 30_000) {
+        const next = await refreshSession(s.refresh_token);
+        if (!next) return;
+        access = next.access_token;
+      }
+      await supabase.auth.admin.signOut(access, 'local');
+    };
+    await within(
+      revoke().catch(() => undefined),
+      4000,
+    );
+  }
+  await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+  await clearSession('signed_out');
 }

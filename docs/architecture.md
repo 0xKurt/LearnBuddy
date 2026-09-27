@@ -573,8 +573,17 @@ once (`abandonStaleUploads`, run by the scheduler).
   only answers the API clearly refuses (4xx: question closed, session ended) are dropped — server
   trouble, an expired login or a proxy page keep them for later. An answer being sent live is
   skipped by the outbox, and one flush runs at a time, so an answer never goes out twice at once.
-  Signing out clears them (`tests/web/offline.spec.ts`: app open → exactly one request; app
-  closed → sent on the next start). Recordings (pronunciation) are not kept — too large; closing the
+  (`tests/web/offline.spec.ts`: app open → exactly one request; app closed → sent on the next
+  start). **Sessions and unsent work** (`lib/auth/refresh.ts`, `lib/localWork.ts`): only a
+  definite "this session is over" from Supabase Auth (a 4xx such as `refresh_token_not_found`)
+  ends the session; no connection, 5xx, 408 and 429 keep the tokens and retry after a backoff
+  (2 s … 60 s), and a request meanwhile fails as `unavailable`, not "sign in again". A session
+  that ends by itself (password changed on another device, revoked) keeps the outbox and the photo
+  draft for her next sign-in and says so in a toast; they are deleted only when a different user
+  signs in on the device (the owner is recorded per device), or when an adult signs out on purpose
+  — the sign-out sheet first sends what it can and says when unsent answers or photos would be
+  deleted. Sign-out revokes only this device's refresh token at Supabase (scope `local`, also after
+  a cold start, at most 4 s), resets the navigation stack and clears the query cache. Recordings (pronunciation) are not kept — too large; closing the
   app while one waits drops it.
 - **About**: version from the app config; privacy, imprint and support rows only when
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set

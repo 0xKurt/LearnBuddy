@@ -124,7 +124,9 @@
       "cta": "Se déconnecter",
       "confirm_title": "Vraiment te déconnecter?",
       "confirm_body": "Pour te reconnecter, il faudra l'adresse e-mail et le mot de passe.",
-      "confirm_cta": "Oui, me déconnecter"
+      "confirm_cta": "Oui, me déconnecter",
+      "confirm_unsent": "Cet appareil contient encore des réponses ou des photos non envoyées. La déconnexion les supprime. Avec une connexion, elles partent tout de suite – attends un instant.",
+      "confirm_cta_unsent": "Me déconnecter quand même"
     },
     "access": {
       "email_title": "Adresse e-mail",

@@ -124,7 +124,9 @@
       "cta": "Sign out",
       "confirm_title": "Really sign out?",
       "confirm_body": "Signing in again needs the e-mail address and the password.",
-      "confirm_cta": "Yes, sign out"
+      "confirm_cta": "Yes, sign out",
+      "confirm_unsent": "This device still has answers or photos that were not sent. Signing out deletes them. With a connection they are sent right away – just wait a moment.",
+      "confirm_cta_unsent": "Sign out anyway"
     },
     "access": {
       "email_title": "E-mail address",

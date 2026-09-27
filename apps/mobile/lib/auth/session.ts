@@ -40,14 +40,23 @@ async function remove(key: string): Promise<void> {
   else await SecureStore.deleteItemAsync(key);
 }
 
-let cached: Session | null = null;
-const listeners = new Set<(s: Session | null) => void>();
+/**
+ * Why the session ended: `signed_out` — someone chose to (settings); `expired`
+ * — Supabase Auth said it is over (password changed elsewhere, revoked). An
+ * expired session never deletes her unsent answers or photos (audit H-28,
+ * M-73): they wait for her next sign-in and go only if someone else signs in.
+ */
+export type SessionEnd = 'signed_out' | 'expired';
 
-function emit(): void {
-  for (const l of listeners) l(cached);
+let cached: Session | null = null;
+type Listener = (s: Session | null, ended: SessionEnd | null) => void;
+const listeners = new Set<Listener>();
+
+function emit(ended: SessionEnd | null): void {
+  for (const l of listeners) l(cached, ended);
 }
 
-export function onSessionChange(listener: (s: Session | null) => void): () => void {
+export function onSessionChange(listener: Listener): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
@@ -86,11 +95,32 @@ export async function saveSession(s: Session): Promise<void> {
     write(KEYS.user, s.user_id),
     write(KEYS.email, s.email),
   ]);
-  emit();
+  emit(null);
 }
 
-export async function clearSession(): Promise<void> {
+export async function clearSession(ended: SessionEnd): Promise<void> {
   cached = null;
   await Promise.all(Object.values(KEYS).map((k) => remove(k)));
-  emit();
+  emit(ended);
+}
+
+// Whose unsent answers and photos are on this device. Survives the session:
+// they are deleted only when a different user signs in (a shared phone).
+const OWNER_KEY = 'lb.local_owner';
+
+export async function localOwner(): Promise<string | null> {
+  try {
+    return await read(OWNER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export async function setLocalOwner(userId: string | null): Promise<void> {
+  try {
+    if (userId) await write(OWNER_KEY, userId);
+    else await remove(OWNER_KEY);
+  } catch {
+    // Unavailable storage: decided again at the next sign-in.
+  }
 }

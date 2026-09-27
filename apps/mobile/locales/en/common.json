@@ -51,5 +51,8 @@
     "say_it": "Tap the mic and just say it.",
     "or_say": "Or say your answer.",
     "topic": "Say it instead of typing"
+  },
+  "session": {
+    "expired": "You were signed out. Sign in again – anything not sent yet is still here."
   }
 }

@@ -85,6 +85,10 @@ async function authorised(
   if (res.status === 401 && currentSession()) {
     const next = await refreshOnce();
     if (next) res = await send(next.access_token);
+    // Still signed in but no new token: the sign-in service could not answer
+    // (outage, rate limit). Not "sign in again" — try later (audit H-28).
+    else if (currentSession())
+      throw new ApiError('unavailable', 'Sign-in service unreachable', 503);
   }
   return res;
 }

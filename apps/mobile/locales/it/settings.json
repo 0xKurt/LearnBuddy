@@ -124,7 +124,9 @@
       "cta": "Esci",
       "confirm_title": "Vuoi davvero uscire?",
       "confirm_body": "Per accedere di nuovo servono l'indirizzo email e la password.",
-      "confirm_cta": "Sì, esci"
+      "confirm_cta": "Sì, esci",
+      "confirm_unsent": "Su questo dispositivo ci sono ancora risposte o foto non inviate. Uscendo vengono cancellate. Con la connessione vengono inviate subito: aspetta un attimo.",
+      "confirm_cta_unsent": "Esci comunque"
     },
     "access": {
       "email_title": "Indirizzo email",
