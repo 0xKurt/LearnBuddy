@@ -17,6 +17,11 @@ const entry = (id: string, savedAt = '2026-09-25T10:00:00Z'): OutboxEntry => ({
 });
 
 describe('outbox', () => {
+  it('keeps answers while the app must be updated (426) or the sign-in service is down', () => {
+    expect(failureOf('update_required', 426)).toBe('try_later');
+    expect(failureOf('unavailable', 503)).toBe('try_later');
+  });
+
   it('keeps one entry per client_turn_id and drops the oldest when full', () => {
     let list = withEntry([], entry('a'));
     list = withEntry(list, entry('a'));

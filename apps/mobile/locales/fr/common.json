@@ -51,5 +51,8 @@
     "say_it": "Touche le micro et dis-le simplement.",
     "or_say": "Ou dis ta réponse.",
     "topic": "Le dire au lieu de l’écrire"
+  },
+  "session": {
+    "expired": "La session s’est terminée. Reconnecte-toi : ce qui n’était pas encore envoyé est toujours là."
   }
 }

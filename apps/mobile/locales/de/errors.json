@@ -18,7 +18,8 @@
     "internal": "Da ist was schiefgegangen. Versuch's gleich nochmal.",
     "model_unavailable": "Buddy kann gerade nicht antworten. Versuch's später nochmal.",
     "unavailable": "Gerade nicht erreichbar. Versuch's gleich nochmal.",
-    "invalid_response": "Die Antwort war unerwartet. Versuch es nochmal."
+    "invalid_response": "Die Antwort war unerwartet. Versuch es nochmal.",
+    "update_required": "Diese Version von LearnBuddy ist zu alt. Bitte aktualisiere die App im App Store oder bei Google Play."
   },
   "reason": {
     "consent_outdated": "Die Datenschutzhinweise wurden aktualisiert. Bitte lies sie nochmal.",

@@ -15,11 +15,18 @@ import { Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { adminToken, clearAdminToken } from '../../lib/admin.js';
-import { cancelDeletion, exportAccount, requestDeletion } from '../../lib/api/endpoints.js';
+import {
+  cancelDeletion,
+  exportAccount,
+  postAnswer,
+  requestDeletion,
+} from '../../lib/api/endpoints.js';
+import { flushOutbox } from '../../lib/api/outboxSync.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { currentSession } from '../../lib/auth/session.js';
 import { deliverExport } from '../../lib/exportFile.js';
 import { signOutHere } from '../../lib/leave.js';
+import { hasUnsentWork } from '../../lib/localWork.js';
 import { messageFor } from '../../lib/errors.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -62,6 +69,8 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
   const inFlight = useRef(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
+  // Unsent answers or photos on this device: signing out would delete them, so the sheet says so.
+  const [unsent, setUnsent] = useState(false);
 
   const minor = learner.is_minor;
   const email = currentSession()?.email ?? '';
@@ -150,10 +159,22 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
       void queryClient.invalidateQueries({ queryKey: keys.me });
     });
 
+  const askSignOut = () => {
+    setUnsent(false);
+    setSignOutOpen(true);
+    // Send what can be sent first; whatever is still left is named in the sheet.
+    void flushOutbox(postAnswer, () => undefined)
+      .catch(() => 0)
+      .then(() => hasUnsentWork())
+      .then(setUnsent)
+      .catch(() => undefined);
+  };
+
   const signOutNow = () => {
     setSignOutOpen(false);
     return run('signout', async () => {
       await afterModalCloses();
+      // On purpose: push released, nothing of hers left for the next person (lib/leave.ts).
       await signOutHere();
     });
   };
@@ -254,12 +275,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                     : t('settings:adult.signout.body_no_email')
                 }
               >
-                <Btn
-                  pill
-                  variant="outline"
-                  onPress={() => setSignOutOpen(true)}
-                  disabled={busy !== null}
-                >
+                <Btn pill variant="outline" onPress={askSignOut} disabled={busy !== null}>
                   {t('settings:adult.signout.cta')}
                 </Btn>
               </Row>
@@ -287,8 +303,15 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         onClose={() => setSignOutOpen(false)}
       >
         <Text style={TYPE.body}>{t('settings:adult.signout.confirm_body')}</Text>
-        <Btn pill full onPress={() => void signOutNow()}>
-          {t('settings:adult.signout.confirm_cta')}
+        {unsent ? (
+          <Text style={[TYPE.body, { color: LB.ink2 }]}>
+            {t('settings:adult.signout.confirm_unsent')}
+          </Text>
+        ) : null}
+        <Btn pill full variant={unsent ? 'danger' : 'primary'} onPress={() => void signOutNow()}>
+          {unsent
+            ? t('settings:adult.signout.confirm_cta_unsent')
+            : t('settings:adult.signout.confirm_cta')}
         </Btn>
       </Sheet>
     </View>

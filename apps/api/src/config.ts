@@ -52,6 +52,14 @@ const Config = z
     ADMIN_TOKEN_SECRET: z.string().min(32),
     /** Version of the privacy text the app shows; consent must match it. */
     CONSENT_VERSION: z.string().min(1).default('2026-09-25'),
+    /**
+     * Oldest app build the API still serves (x-app-version, e.g. "1.4.0"); older builds get
+     * 426 update_required and ask to update (audit M-69). Unset: every build is served.
+     */
+    MIN_APP_VERSION: z
+      .string()
+      .regex(/^\d+(\.\d+){0,2}$/)
+      .optional(),
     /** Comma-separated browser origins (Expo web in development). Native apps need none. */
     CORS_ORIGINS: z.string().optional(),
     /** Node server only: run the scheduler in-process every N seconds (0 = off; pg_cron in production). */

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { IsoDateTime, LocalDate, LocalTime, Uuid } from './common.js';
+import { IsoDateTime, LocalDate, LocalTime, tolerantArray, Uuid } from './common.js';
 import { PageProblem } from './learning.js';
 
 // ─────────────── what Buddy did (rendered as cards, not prose) ───────────────
@@ -149,8 +149,9 @@ export const MessageView = z.object({
   /** Quick answers Buddy offered with this message. */
   options: z.array(z.string()).nullable(),
   reply_to_id: Uuid.nullable(),
-  outreach: OutreachView.nullable(),
-  actions: z.array(ActionView),
+  /** A delivery state this build does not know reads as "no delivery line" (M-69). */
+  outreach: OutreachView.nullable().catch(null),
+  actions: tolerantArray(ActionView),
   created_at: IsoDateTime,
 });
 export type MessageView = z.infer<typeof MessageView>;
@@ -209,6 +210,12 @@ export const NowCard = z.discriminatedUnion('type', [
     material_id: Uuid,
     reason: z.string().nullable(),
     retryable: z.boolean(),
+    /** "Neues Foto" re-opens capture for the same purpose … */
+    purpose: z.enum(['study', 'homework']),
+    /** … and, for a failed retake or added page, the sheet it belongs to. */
+    completes: Uuid.nullable(),
+    /** The sheet's title, when it has one. */
+    title: z.string().nullable(),
   }),
   z.object({ type: z.literal('practice_result'), session_id: Uuid, result: PracticeResultBrief }),
 ]);
@@ -254,28 +261,32 @@ export type UpcomingItem = z.infer<typeof UpcomingItem>;
 
 export const SystemStatus = z.object({
   model: z.boolean(),
-  push: z.enum(['active', 'no_token', 'disabled', 'invalid']),
+  push: z.enum(['active', 'no_token', 'disabled', 'invalid']).catch('disabled'),
   contact_enabled: z.boolean(),
   /** 'stale' = background work has not run recently: Buddy cannot act on its own. */
-  scheduler: z.enum(['ok', 'stale', 'unknown']),
+  scheduler: z.enum(['ok', 'stale', 'unknown']).catch('unknown'),
 });
 export type SystemStatus = z.infer<typeof SystemStatus>;
 
+// Forward compatible (audit M-69): the API deploys at once, store builds lag.
+// A card, notice, decision, action or message this build does not know is
+// left out (never the whole home); an unknown presentation state reads as
+// the calmest known one.
 export const BuddyHome = z.object({
   learner: z.object({ id: Uuid, name: z.string(), is_minor: z.boolean() }),
-  now: NowCard.nullable(),
-  notice: HomeNotice.nullable(),
-  decision: Decision.nullable(),
-  done: z.array(ActionView),
-  next: z.array(UpcomingItem),
-  thread: z.array(MessageView),
+  now: NowCard.nullable().catch(null),
+  notice: HomeNotice.nullable().catch(null),
+  decision: Decision.nullable().catch(null),
+  done: tolerantArray(ActionView),
+  next: tolerantArray(UpcomingItem),
+  thread: tolerantArray(MessageView),
   thread_has_more: z.boolean(),
   system: SystemStatus,
   /**
    * Buddy is working on something the learner is waiting for right now: what to do with the
    * photos they just sent ('material') or the practice they just finished ('session').
    */
-  working: z.enum(['material', 'session']).nullable(),
+  working: z.enum(['material', 'session']).nullable().catch(null),
   /** Context version the home was built from (debugging and stale checks). */
   context_version: z.number().int(),
 });
@@ -367,11 +378,23 @@ export const UpdateBuddySettingsRequest = z.object({
 });
 export type UpdateBuddySettingsRequest = z.infer<typeof UpdateBuddySettingsRequest>;
 
+/** Android notification channel the app creates and every push targets. */
+export const PUSH_CHANNEL_ID = 'buddy';
+
+/** A random id of this app install (not the hardware): push tokens are bound to it. */
+export const DeviceId = z.string().regex(/^[A-Za-z0-9-]{16,64}$/);
+
 export const RegisterPushTokenRequest = z.object({
   token: z.string().min(10).max(300),
   platform: z.enum(['ios', 'android']),
+  /** Missing only from older app builds. */
+  device_id: DeviceId.optional(),
 });
 export type RegisterPushTokenRequest = z.infer<typeof RegisterPushTokenRequest>;
+
+/** Claim (signed in) or release (signing out) this install's push binding. */
+export const PushDeviceRequest = z.object({ device_id: DeviceId });
+export type PushDeviceRequest = z.infer<typeof PushDeviceRequest>;
 
 export const OutreachOpenedRequest = z.object({
   response: z.enum(['start', 'later', 'not_now', 'dismissed']).nullable(),

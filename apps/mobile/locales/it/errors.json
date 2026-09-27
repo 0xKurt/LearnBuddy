@@ -18,7 +18,8 @@
     "internal": "Qualcosa è andato storto. Riprova tra un attimo.",
     "model_unavailable": "Al momento Buddy non può rispondere. Riprova più tardi.",
     "unavailable": "Al momento non è raggiungibile. Riprova tra un attimo.",
-    "invalid_response": "La risposta non era quella prevista. Riprova."
+    "invalid_response": "La risposta non era quella prevista. Riprova.",
+    "update_required": "Questa versione di LearnBuddy è troppo vecchia. Aggiorna l’app nell’App Store o su Google Play."
   },
   "reason": {
     "consent_outdated": "L'informativa sulla privacy è stata aggiornata. Rileggila, per favore.",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDraftStore, type DraftLink, type DraftStorage } from '../draft.js';
+import { cameraOpenOf, createDraftStore, type DraftLink, type DraftStorage } from '../draft.js';
 
 function memory() {
   const kv = new Map<string, string>();
@@ -85,7 +85,7 @@ describe('photo drafts', () => {
       photos: [p1, p2].map((uri) => ({ uri, problems: [], kept: false })),
       link: LINK,
     });
-    await s.sent('mat-1', [p1, p2]);
+    await s.sent('mat-1', [p1, p2], 'r');
     expect(await s.load()).toBeNull();
     expect(await s.sentPage('mat-1', 2)).toBe(p2);
     expect(await s.sentPage('mat-1', 3)).toBeNull();
@@ -101,7 +101,7 @@ describe('photo drafts', () => {
     const s = createDraftStore(m.storage);
     const a = await s.keep('cache/a.jpg');
     const b = await s.keep('cache/b.jpg');
-    await s.sent('mat', [b]);
+    await s.sent('mat', [b], 'r0');
     await s.save({ requestId: null, photos: [{ uri: a, problems: [], kept: false }], link: LINK });
     await s.clearAll();
     expect(await s.load()).toBeNull();
@@ -115,5 +115,34 @@ describe('photo drafts', () => {
     expect(await createDraftStore(m.storage).load()).toBeNull();
     m.kv.set('lb.capture.draft.v1', JSON.stringify({ v: 1, photos: [] }));
     expect(await createDraftStore(m.storage).load()).toBeNull();
+  });
+
+  it('never deletes photos that are being sent, and a finished send keeps a newer draft (M-21)', async () => {
+    const m = memory();
+    const s = createDraftStore(m.storage);
+    const a = await s.keep('cache/a.jpg');
+    await s.save({ requestId: 'r1', photos: [{ uri: a, problems: [], kept: false }], link: LINK });
+    s.startSending('r1');
+    // A fresh capture starts meanwhile: the sending photos stay.
+    expect(await s.discard()).toBe(false);
+    expect(m.files.has(a)).toBe(true);
+    const b = await s.keep('cache/b.jpg');
+    await s.save({ requestId: null, photos: [{ uri: b, problems: [], kept: false }], link: LINK });
+    // The first send finishes: the new draft is still there.
+    await s.sent('mat-1', [a], 'r1');
+    s.stopSending('r1');
+    expect((await s.load())?.photos.map((p) => p.uri)).toEqual([b]);
+    // Not sending any more: "Verwerfen" works again.
+    expect(await s.discard()).toBe(true);
+    expect(m.files.has(b)).toBe(false);
+  });
+
+  it('recovers a photo from a cut-off camera only into a recent capture (M-22)', () => {
+    const now = new Date('2026-09-28T14:00:00Z');
+    const noted = JSON.stringify({ link: LINK, at: '2026-09-28T13:50:00Z' });
+    expect(cameraOpenOf(noted, now)?.link).toEqual(LINK);
+    expect(cameraOpenOf(noted, new Date('2026-09-28T15:00:00Z'))).toBeNull();
+    expect(cameraOpenOf('{"link":{}}', now)).toBeNull();
+    expect(cameraOpenOf(null, now)).toBeNull();
   });
 });

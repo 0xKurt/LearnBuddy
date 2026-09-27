@@ -33,6 +33,7 @@ import {
 import { check, readBody } from '../../http/validate.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { startFromStep } from '../practice/service.js';
+import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
 import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
 import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
@@ -460,15 +461,7 @@ buddyRoutes.patch('/settings', async (c) => {
 
 buddyRoutes.post('/push-tokens', async (c) => {
   const input = await readBody(c, RegisterPushTokenRequest);
-  const deps = depsOf(c);
-  await deps.db.query(
-    `insert into push_tokens (learner_id, token, platform, status, registered_at)
-     values ($1, $2, $3, 'active', $4)
-     on conflict (token) do update
-       set learner_id = excluded.learner_id, platform = excluded.platform, status = 'active',
-           invalid_reason = null, registered_at = excluded.registered_at`,
-    [c.get('learner').id, input.token, input.platform, deps.now()],
-  );
+  await registerPushToken(depsOf(c), c.get('learner').id, input);
   return c.json({ ok: true });
 });
 

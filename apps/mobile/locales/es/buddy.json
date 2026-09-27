@@ -66,7 +66,8 @@
     "pages_rest_untitled": "Todo lo demás está listo.",
     "pages_retake_one": "Hacer otra foto",
     "pages_retake_other": "Fotografiar de nuevo estas páginas",
-    "pages_ok": "Así está bien"
+    "pages_ok": "Así está bien",
+    "failed_title_named": "No pude leer «{{title}}»"
   },
   "when": {
     "today": "hoy",

@@ -17,6 +17,8 @@ export const ERROR_STATUS = {
   internal: 500,
   model_unavailable: 503,
   unavailable: 503,
+  /** This app build is older than MIN_APP_VERSION: the app asks to update it. */
+  update_required: 426,
 } as const;
 
 export type ErrorCode = keyof typeof ERROR_STATUS;

@@ -8,6 +8,7 @@ import { focusManager, onlineManager, QueryClient, useQuery } from '@tanstack/re
 import { useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { currentSession } from '../auth/session.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
 import {
@@ -99,6 +100,8 @@ export const useHome = () =>
   });
 
 export function setHome(home: BuddyHome): void {
+  // A turn that finishes after sign-out never refills the cleared cache (shared phone).
+  if (!currentSession()) return;
   queryClient.setQueryData(keys.home, home);
 }
 

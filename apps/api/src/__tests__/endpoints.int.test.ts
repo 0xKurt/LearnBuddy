@@ -167,4 +167,31 @@ describe.skipIf(!dbReady)('endpoints outside the main journeys', () => {
     // Again (a retry after a lost answer): fine, nothing left.
     expect((await lena.api.delete('/buddy/push-tokens', { token })).status).toBe(200);
   });
+
+  it('answers 503, never 401, while the sign-in service is down (H-27)', async () => {
+    env.auth.failNext('verify');
+    const down = await lena.api.get<{ error: { code: string } }>('/me');
+    expect(down.status).toBe(503);
+    expect(down.body.error.code).toBe('unavailable');
+    env.auth.outage = true;
+    try {
+      expect((await lena.api.get('/buddy')).status).toBe(503);
+    } finally {
+      env.auth.outage = false;
+    }
+    // Back: the same token works; nothing was revoked by the outage.
+    expect((await lena.api.get('/me')).status).toBe(200);
+  });
+
+  it('the auth stand-in fails like Supabase Auth: deleting a user can fail and be retried (S-2)', async () => {
+    const { userId, token } = await env.auth.createUser();
+    env.auth.failNext('deleteUser');
+    await expect(env.auth.deleteUser(userId)).rejects.toMatchObject({ code: 'unavailable' });
+    // Nothing happened: the user and the token are still there.
+    expect(await env.auth.verify(token)).toMatchObject({ userId });
+    await env.auth.deleteUser(userId);
+    expect(await env.auth.verify(token)).toBeNull();
+    const left = await env.db.query(`select 1 from auth.users where id = $1`, [userId]);
+    expect(left).toEqual([]);
+  });
 });

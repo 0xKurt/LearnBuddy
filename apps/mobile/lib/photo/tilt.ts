@@ -22,7 +22,17 @@ export type TiltMetrics = {
 
 const MAX_POINTS = 6_000;
 
-/** The ink: pixels clearly darker than the paper (not the table around it). */
+/** How far (px) a dark pixel may be from the paper to count as ink, not as a dark area. */
+const STROKE_REACH = 4;
+
+/**
+ * The ink: pixels clearly darker than the paper that lie in a thin stroke —
+ * paper within a few pixels above/below or left/right. The inside of a large
+ * dark area (the table around the sheet) is not ink: its regular grid of
+ * points lined up at steep angles and made straight pages look tilted
+ * (audit M-26). Points are thinned by a pixel hash, not every n-th in raster
+ * order, for the same reason.
+ */
 function inkPoints(
   gray: Float32Array,
   width: number,
@@ -31,15 +41,37 @@ function inkPoints(
   paper: number,
 ): { xs: Int32Array; ys: Int32Array } {
   const threshold = dark + 0.35 * (paper - dark);
+  const r = STROKE_REACH;
+  const isDark = (i: number) => gray[i]! < threshold;
+  const inStroke = (x: number, y: number) => {
+    const i = y * width + x;
+    if (!isDark(i)) return false;
+    const vertical =
+      (y >= r && !isDark(i - r * width)) || (y + r < height && !isDark(i + r * width));
+    const horizontal = (x >= r && !isDark(i - r)) || (x + r < width && !isDark(i + r));
+    return vertical || horizontal;
+  };
+  const stroke = new Uint8Array(width * height);
   let n = 0;
-  for (let i = 0; i < gray.length; i++) if (gray[i]! < threshold) n++;
-  const step = Math.max(1, Math.ceil(n / MAX_POINTS));
-  const xs: number[] = [];
-  const ys: number[] = [];
-  let k = 0;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if (gray[y * width + x]! < threshold && k++ % step === 0) {
+      if (inStroke(x, y)) {
+        stroke[y * width + x] = 1;
+        n++;
+      }
+    }
+  }
+  const keep = Math.min(1, MAX_POINTS / Math.max(1, n));
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!stroke[y * width + x]) continue;
+      // A well-mixed hash of the position in [0, 1): an even, lattice-free sample.
+      let h = Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1);
+      h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+      h ^= h >>> 13;
+      if ((h >>> 0) / 4294967296 < keep) {
         xs.push(x);
         ys.push(y);
       }

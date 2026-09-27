@@ -40,6 +40,11 @@ export function dropAnswer(clientTurnId: string): Promise<void> {
   });
 }
 
+/** Answers still waiting to be sent. */
+export async function hasKeptAnswers(): Promise<boolean> {
+  return (await serial(load)).length > 0;
+}
+
 export function clearOutbox(): Promise<void> {
   return serial(() => writeOutbox(null));
 }

@@ -50,7 +50,8 @@
     "summary": "Buddy gets in touch between {{start}} and {{end}}, at most {{count}}× a week, never after {{quiet}}.",
     "tell_buddy": "Just tell Buddy when you want some quiet.",
     "more": "Adjust times",
-    "less": "Show less"
+    "less": "Show less",
+    "device_elsewhere": "Buddy’s messages currently go to another device, not to this phone."
   },
   "profile": {
     "title": "Your profile",
@@ -127,7 +128,9 @@
       "cta": "Sign out",
       "confirm_title": "Really sign out?",
       "confirm_body": "Signing in again needs the e-mail address and the password.",
-      "confirm_cta": "Yes, sign out"
+      "confirm_cta": "Yes, sign out",
+      "confirm_unsent": "This device still has answers or photos that were not sent. Signing out deletes them. With a connection they are sent right away – just wait a moment.",
+      "confirm_cta_unsent": "Sign out anyway"
     },
     "access": {
       "email_title": "E-mail address",
