@@ -405,6 +405,20 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       item_id: byTopic('Brüche vergleichen').id,
       choice: 0,
     });
+    // Only the capital letter differs, in maths: never right by rule, the tutor judges it
+    // gently (decision D-2, audit C-7).
+    env.llm.script('tutor', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain(
+        'RULE CHECK: differs from the solution only in capitalisation',
+      );
+      return {
+        intent: 'answer',
+        verdict: 'correct',
+        reply: 'Genau, der Nenner.',
+        gave_hint: false,
+        revealed_answer: false,
+      };
+    });
     await lina.api.post(`/practice/sessions/${sessionId}/answer`, {
       client_turn_id: ids.turn3,
       item_id: byTopic('Begriffe').id,
@@ -446,7 +460,8 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     expect(replay.body.reply.text).toBe(
       'Genau – der Wert bleibt gleich, nur die Darstellung ändert sich.',
     );
-    expect(env.llm.callsFor('tutor')).toHaveLength(1);
+    // "nenner" and the free text were judged by the tutor, once each.
+    expect(env.llm.callsFor('tutor')).toHaveLength(2);
 
     // Finishing wakes Buddy right away to plan what comes next (here: nothing to add today).
     env.llm.script('buddy_check', (req) => {

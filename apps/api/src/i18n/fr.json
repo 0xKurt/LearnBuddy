@@ -27,6 +27,7 @@
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
     "cannot_check": "Je ne peux pas vérifier ça pour le moment. Tu peux regarder la solution et comparer toi-même.",
     "accents": "Presque – vérifie encore les accents.",
+    "spelling": "Presque juste – regarde bien les majuscules et la ponctuation.",
     "hint_request": "Un indice, s'il te plaît",
     "worked_intro": "Regarde, voilà comment faire :",
     "solution_is": "La réponse est : {{answer}}",

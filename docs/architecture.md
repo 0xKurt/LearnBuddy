@@ -400,16 +400,59 @@ selection already skips archived items) and rename the material (`PATCH /materia
 
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics). Answers are checked by rules where exactness is decidable (multiple choice,
-numbers with decimal comma and units, exact matches, and near misses on written answers — missing
+written numbers, exact matches, and near misses on written answers — missing
 accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
 fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in
-homework). Answers the model judges right that the rules did not know are added to the item's
+homework). See **Grading** below for what "decidable" means. Answers the model judges right that the rules did not know are added to the item's
 accepted answers, so the rules know them next time; otherwise the tutor model judges with a
 structured decision, and the server enforces invariants (a non-attempt is never graded, a
 revealed answer never counts as right, a rule-checked wrong answer stays wrong). Without a model,
 nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced repetition (FSRS,
 no short-term steps) once per session: first try → Good, with help → Hard, revealed → Again.
 Finishing records evidence on Buddy's step (only if something was answered) and wakes Buddy.
+
+**Grading** (`evaluate.ts` + `packages/shared-math`; audit C-1–C-7, H-1–H-6; decisions D-1–D-3;
+migration `0012_item_answer_rules.sql`). A rule "correct" is final — no model sees the answer —
+so the rules only say it when it is certain; everything else goes to the tutor (`unknown`).
+
+- _One key format._ Keys are written with a decimal point and no thousands separators (0.125,
+  1250), a fraction or mixed number only when the task asks for that form, the unit apart ("%"
+  for percent): `NUMERIC_KEY_RULES` in both prompts. Code reads a key with `parseCanonicalKey`,
+  never with the learner's parser, so "0.125" is 0.125 for every learner. LaTeX keys are read
+  as written (`$3\frac{1}{2}$` is 3½, never 31/2).
+- _Learner numbers, locale-independent._ `parseNumericInput` reads the separator from the text:
+  "0,125", "2,5", "1.234,5" mean the same in every locale. One separator before exactly three
+  digits ("1.000", "2,375") is ambiguous → no value → the tutor, unless the whole part is 0.
+  "3 1/2" is a mixed number; "%" (also said: "Prozent", "percent", …) is a unit, never ÷ 100.
+  Calculations from the math keys (17·23, √144) are evaluated by the bounded parser of
+  `expression.ts` (at most 64 characters, digits and + − · : / ^ √ π only) — never a general
+  evaluator — and marked as a calculation.
+- _Tolerance (D-1)._ An integer, fraction or mixed-number key must match exactly; a decimal key
+  accepts less than half a unit of its last written decimal (key 3.14: 3,1416 yes, 3,1 no); a
+  wider tolerance only when the item declares one (`items.tolerance`, zod-validated, kept only for
+  numeric items and at most a tenth of the key). No percentage rule.
+- _Form (D-3)._ The key's value in the key's form is correct (0,125 for 0.125; 4,0 for 4; the
+  same fraction as written). The same value in another form (1/8 for 0.125, 6/8 for 3/4, 7/2
+  for 3 1/2) or a calculation that gives it is for the tutor. A written number with another value
+  is wrong for sure (outside homework).
+- _Math_ (a digit, an operator or LaTeX in the key or the answer, and every formula): compared
+  with every operator, sign, relation and decimal separator kept (`canonicalMath`): x=5 is not
+  x=-5, 3,4 is not 3/4, x^2-2x is not x^2+2x. No near miss (no "typo" for 15:35 against 14:35,
+  no "missing word" for 5 against x = 5).
+- _Words._ Correct only when equal after NFC and collapsing spaces — case, ß and punctuation
+  count. A difference only there is, per item (`items.spelling`) or by default for vocabulary and
+  language subjects (German, English, French, Spanish, Latin, other language), a near miss "Fast
+  richtig – schau nochmal genau auf Groß- und Kleinschreibung, ß und Satzzeichen" (D-2, strict);
+  elsewhere the tutor judges it gently (rule verdict `folded`).
+- _Choices._ An option is named by its text (however written; words fold case) or by its badge
+  letter — but a letter that is also another option's text ("A" with the, a, an) and an option
+  followed by more words ("Richtig ist das nicht") go to the tutor.
+- The value comparison is shared: `compareWithKeys` (answer and accepted answers, any form) for
+  every caller that asks "does she state the right number?" — homework help included.
+- Proven by a truth table and property tests (fast-check) over generated values in de/fr/es/it/en:
+  a right value written as a learner in that locale writes it is never `incorrect`; the last
+  place ± 1, a flipped sign or a swapped operator is never `correct`
+  (`practice/__tests__/evaluate.test.ts`, `shared-math/src/__tests__/numeric-input.test.ts`).
 
 **Hint ladder** (migration `0008_item_hints.sql`, practice and explanations only). Each question gets
 2–3 hints (what is asked → which rule → the first step) and the solution explained step by step:

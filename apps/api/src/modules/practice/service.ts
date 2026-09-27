@@ -22,7 +22,7 @@ import type { Deps } from '../../deps.js';
 import { isUniqueViolation, type Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
-import { t } from '../../i18n/index.js';
+import { t, type MessageKey } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
@@ -72,6 +72,8 @@ type ItemRow = {
   figure: Figure | null;
   hints: string[];
   worked_solution: string | null;
+  tolerance: number | null;
+  spelling: 'strict' | 'gentle' | null;
 };
 
 type SessionRow = {
@@ -454,6 +456,13 @@ function asTestTurn<
   return { ...j, reply: t(locale, key), gaveHint: false, revealed: false };
 }
 
+/** The fixed, kind reply to a near miss the rules found (a slip shows the spelling instead). */
+const NEAR_MISS_REPLY: Partial<Record<RuleVerdict, MessageKey>> = {
+  spelling: 'practice.spelling',
+  close: 'practice.accents',
+  missing_word: 'practice.missing_word',
+};
+
 export async function answerItem(
   deps: Deps,
   learner: PracticeLearner,
@@ -466,10 +475,13 @@ export async function answerItem(
 
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  const item = await deps.db.maybeOne<ItemRow & SessionItemRow & { extracted_text: string | null }>(
+  const item = await deps.db.maybeOne<
+    ItemRow & SessionItemRow & { extracted_text: string | null; subject_kind: string | null }
+  >(
     `select i.*, si.status, si.attempts, si.hints_used, si.first_try_correct, si.position, si.item_id,
-            m.extracted_text
+            m.extracted_text, s.kind as subject_kind
        from session_items si join items i on i.id = si.item_id left join materials m on m.id = i.material_id
+       left join subjects s on s.id = i.subject_id
       where si.session_id = $1 and si.item_id = $2`,
     [sessionId, input.item_id],
   );
@@ -485,11 +497,10 @@ export async function answerItem(
       reason: 'use_speak',
     });
   }
-  const byRules: RuleVerdict = ruleCheck(
-    item,
-    { text: input.text ?? null, choice: input.choice ?? null },
-    learner.locale,
-  );
+  const byRules: RuleVerdict = ruleCheck(item, {
+    text: input.text ?? null,
+    choice: input.choice ?? null,
+  });
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -527,10 +538,7 @@ export async function answerItem(
       reply:
         rule === 'typo'
           ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
-          : t(
-              learner.locale,
-              rule === 'missing_word' ? 'practice.missing_word' : 'practice.accents',
-            ),
+          : t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents'),
       gaveHint: false,
       revealed: false,
     };
@@ -675,11 +683,11 @@ export async function answerItem(
       if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
       // No model: say what the rules know, never pretend to have judged.
       judged =
-        rule === 'close'
+        rule === 'close' || rule === 'spelling'
           ? {
               verdict: 'partially_correct',
               evaluatedBy: 'rule',
-              reply: t(learner.locale, 'practice.accents'),
+              reply: t(learner.locale, NEAR_MISS_REPLY[rule] ?? 'practice.accents'),
               gaveHint: false,
               revealed: false,
             }
