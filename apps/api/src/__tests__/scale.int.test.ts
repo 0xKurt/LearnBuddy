@@ -85,6 +85,43 @@ describe.skipIf(!dbReady)('scale', () => {
     expect(used.some((s) => s.endsWith(' items'))).toBe(true);
     expect(used.filter((s) => s.startsWith('Seq Scan') && /items|materials/.test(s))).toEqual([]);
   });
+
+  it("the scheduler finds a sheet's jobs and stalled turns without scanning all jobs and messages (0028)", async () => {
+    // A long history of someone else: finished jobs and answered messages.
+    await env.db.query(
+      `insert into jobs (learner_id, kind, run_at, dedupe_key, payload, status)
+       select $1, 'extract_material', $2, 'old:' || n, jsonb_build_object('material_id', gen_random_uuid()), 'done'
+         from generate_series(1, 5000) n`,
+      [other.learnerId, env.clock.now()],
+    );
+    await env.db.query(
+      `insert into buddy_messages (learner_id, role, text, status, created_at)
+       select $1, 'learner', 'Hallo', 'done', $2 from generate_series(1, 5000)`,
+      [other.learnerId, env.clock.now()],
+    );
+    await env.db.query('analyze jobs; analyze buddy_messages');
+    const plan = async (sql: string, params: unknown[]) => {
+      const [row] = await env.db.query<{ 'QUERY PLAN': { Plan: PlanNode }[] }>(
+        `explain (format json) ${sql}`,
+        params,
+      );
+      return scans(row!['QUERY PLAN'][0]!.Plan);
+    };
+    // materials/service.ts retryMaterial and the tick's recovery of stuck sheets.
+    const retry = await plan(
+      `select count(*) from jobs where kind = 'extract_material' and payload ->> 'material_id' = $1`,
+      ['00000000-0000-4000-8000-000000000001'],
+    );
+    expect(retry.filter((s) => s === 'Seq Scan jobs')).toEqual([]);
+    // buddy/check.ts queueStalledTurns.
+    const stalled = await plan(
+      `select id, learner_id, claim_token from buddy_messages
+        where role = 'learner' and status = 'processing' and (claimed_at is null or claimed_at < $1)
+        limit 50`,
+      [env.clock.now()],
+    );
+    expect(stalled.filter((s) => s === 'Seq Scan buddy_messages')).toEqual([]);
+  });
 });
 
 describe.skipIf(!dbReady)('older app builds (M-69)', () => {

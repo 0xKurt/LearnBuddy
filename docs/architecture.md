@@ -77,7 +77,8 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   aktualisieren"), and kept answers wait for the update instead of being dropped.
 - Indexes (migration `0017_fk_indexes.sql`): every foreign key has an index, so the account
   deletion cascade and the per-subject counts cost her data, not everybody's
-  (`scale.int.test.ts` keeps it so for future foreign keys).
+  (`scale.int.test.ts` keeps it so for future foreign keys). `0028_scan_indexes.sql` does the
+  same for the scheduler's per-minute lookups (jobs by material, turns still processing).
 
 | Route                                                                                                | Purpose                                                                                          |
 | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -286,6 +287,8 @@ is not skipped for good.
   the opt-in card for 14 days.
 - Every status write of a claimed row is conditioned on the claim (status `sending` and the
   lease it set): a slow run can never send or overwrite a row another run settled.
+- A push carries the message's expiry (`expiration`): a phone that was off does not get a stale
+  message later — the thread has it anyway.
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device

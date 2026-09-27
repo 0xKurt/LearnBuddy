@@ -387,7 +387,7 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
           where status = 'scheduled' and send_at <= $1
             -- No contact for an account that has not agreed to the current privacy text.
             and ${consentCurrentSql('buddy_outreach.learner_id', 3)}
-          order by send_at limit $2
+          order by send_at, seq limit $2
           for update skip locked
        )
        update buddy_outreach o set status = 'sending', lease_until = $1 + interval '2 minutes'
@@ -479,6 +479,7 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
       body: t(o.locale, `push.${o.kind}`),
       data: { type: 'buddy_outreach', outreach_id: o.id },
       collapseId: o.topic_key.slice(0, 64),
+      expiresAt: o.expires_at,
     };
     let ticket: PushTicket | undefined;
     try {
