@@ -5,7 +5,9 @@ import {
   OPENED_MAX,
   outreachIdOf,
   parsePushQueue,
+  withAction,
   withOpened,
+  withoutAction,
   withoutOpened,
   withRelease,
 } from '../pushQueue.js';
@@ -47,5 +49,26 @@ describe('push queue (M-64, M-65)', () => {
     expect(outreachIdOf({ type: 'other', outreach_id: id(3) })).toBeNull();
     expect(outreachIdOf({ type: 'buddy_outreach', outreach_id: 'x' })).toBeNull();
     expect(outreachIdOf(null)).toBeNull();
+  });
+
+  it('keeps a pressed button across a restart until the API has it, once per message and button', () => {
+    let q = withAction(EMPTY_QUEUE, id(1), 'not_today', now);
+    q = withAction(q, id(1), 'not_today', now);
+    q = withAction(q, id(1), 'less_often', now);
+    const back = parsePushQueue(JSON.stringify(q), now);
+    expect(back.actions.map((e) => [e.id, e.action])).toEqual([
+      [id(1), 'not_today'],
+      [id(1), 'less_often'],
+    ]);
+    expect(withoutAction(back, id(1), 'not_today').actions.map((e) => e.action)).toEqual([
+      'less_often',
+    ]);
+  });
+
+  it('reads a queue from an older version (no buttons yet), and drops presses a week old', () => {
+    const old = JSON.stringify({ opened: [], release: true });
+    expect(parsePushQueue(old, now)).toEqual({ opened: [], actions: [], release: true });
+    const q = withAction(EMPTY_QUEUE, id(2), 'less_often', new Date('2026-09-10T10:00:00Z'));
+    expect(parsePushQueue(JSON.stringify(q), now).actions).toEqual([]);
   });
 });

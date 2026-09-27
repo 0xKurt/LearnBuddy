@@ -16,6 +16,8 @@ import {
   MessageView,
   tolerantArray,
   MeResponse,
+  type OutreachAction,
+  OutreachActionResponse,
   ReplyStreamEvent,
   SendMessageResponse,
   SessionView,
@@ -129,6 +131,13 @@ export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =
 
 export const answerContactOptIn = (enable: boolean) =>
   request('POST', '/buddy/contact/opt-in', { body: { enable }, schema: BuddyHome });
+
+/** A button pressed on a notification: the API decides what it does (gaps #16, rule 5). */
+export const outreachAct = (outreachId: string, action: OutreachAction) =>
+  request('POST', `/buddy/outreach/${outreachId}/act`, {
+    body: { action },
+    schema: OutreachActionResponse,
+  });
 
 export const outreachOpened = (
   outreachId: string,

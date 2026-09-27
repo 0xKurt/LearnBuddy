@@ -59,5 +59,8 @@
     "speak_retry": "Versuch's nochmal – hör es dir vorher an.",
     "test_noted": "Notiert – weiter geht's.",
     "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage."
+  },
+  "contact": {
+    "less_often": "Alles klar – aufs Handy schreibe ich dir ab jetzt nur noch, wenn's wirklich wichtig ist. Alles andere findest du hier. Ändern kannst du das in den Einstellungen."
   }
 }

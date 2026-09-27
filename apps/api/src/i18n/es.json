@@ -59,5 +59,8 @@
     "speak_retry": "Inténtalo otra vez – escúchalo antes.",
     "test_noted": "Anotado – seguimos.",
     "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta."
+  },
+  "contact": {
+    "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."
   }
 }

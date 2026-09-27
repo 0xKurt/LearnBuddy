@@ -4,6 +4,7 @@ import { localParts } from '../../../lib/time.js';
 import {
   decideContact,
   IN_APP_REASONS,
+  loosens,
   type ContactSettings,
   type OutreachProposal,
   type PastContact,
@@ -18,6 +19,7 @@ const base: ContactSettings = {
   preferred_end: '18:30',
   avoid_weekdays: [],
   paused_until: null,
+  phone_only_important: false,
 };
 
 // Wednesday 2026-09-23, 10:00 in Berlin (UTC+2).
@@ -70,6 +72,27 @@ describe('decideContact — Buddy initiatives', () => {
       reason: 'low_relevance',
     });
     expect(decideContact(base, idea({ relevance: null }), [], WED_10).kind).toBe('suppress');
+  });
+
+  it('after "Seltener schreiben" only important initiatives go to the phone; the rest waits in the app', () => {
+    const fewer = { ...base, phone_only_important: true };
+    const d = decideContact(fewer, idea({ relevance: 0.8 }), [], WED_10);
+    expect(d).toEqual({ kind: 'suppress', reason: 'only_important' });
+    expect(d.kind === 'suppress' && IN_APP_REASONS.includes(d.reason)).toBe(true);
+    expect(decideContact(fewer, idea({ relevance: 0.9 }), [], WED_10).kind).toBe('schedule');
+    // Her agreed reminders and answers to her own actions are not affected.
+    expect(decideContact(fewer, idea({ origin: 'agreed', relevance: null }), [], WED_10).kind).toBe(
+      'schedule',
+    );
+    expect(
+      decideContact(fewer, idea({ origin: 'learner', relevance: null }), [], WED_10).kind,
+    ).toBe('schedule');
+  });
+
+  it('turning "Seltener schreiben" off again loosens contact (the PIN under 16)', () => {
+    const fewer = { ...base, phone_only_important: true };
+    expect(loosens(fewer, base, WED_10)).toBe(true);
+    expect(loosens(base, fewer, WED_10)).toBe(false);
   });
 
   it('lands at the start of the preferred window the same day', () => {

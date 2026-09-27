@@ -28,11 +28,14 @@ import { recoverCameraResult } from '../lib/capture/pendingCamera.js';
 import { adoptLocalWork } from '../lib/localWork.js';
 import {
   clearLegacyLocalNotifications,
+  flushActions,
   flushOpened,
   onNotificationTap,
+  registerPushCategories,
   retryPendingRelease,
   syncPushDevice,
 } from '../lib/push.js';
+import { practiceRoute } from '../lib/pushActions.js';
 import { LB } from '../lib/theme/colors.js';
 
 /** Answers kept on the device (closed app, lost connection): send them now. */
@@ -46,9 +49,22 @@ async function sendKeptAnswers(): Promise<void> {
   if (done && done.refused > 0) toast.show(i18n.t('common:outbox_refused'));
 }
 
-/** "A message was opened" reports kept on the device (lib/push.ts): send them now. */
+/** "Jetzt üben" pressed in this run of the app: where its answer should lead. */
+const practiceWanted = new Set<string>();
+let showPractice: (route: string) => void = () => undefined;
+
+/**
+ * What the device still owes the API about notifications (lib/push.ts) — "opened" reports and
+ * pressed buttons: send them now. The answer to "Jetzt üben" opens the practice it started.
+ */
 function sendOpenedReports(): void {
   void flushOpened(setHome).catch(() => undefined);
+  void flushActions((e, res) => {
+    void queryClient.invalidateQueries({ queryKey: keys.home });
+    if (e.action === 'practice_now' && practiceWanted.delete(e.id)) {
+      showPractice(practiceRoute(res.session_id));
+    }
+  }).catch(() => undefined);
 }
 
 /** Signed in: her leftovers are sent, this device is hers for push. */
@@ -62,6 +78,8 @@ async function afterSignedIn(userId: string): Promise<void> {
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const readyRef = useRef(false);
+  // Where a notification button asked to go before the app was ready.
+  const pendingRoute = useRef<string | null>(null);
   // Whose session the app runs with: token refreshes save the session again and must not
   // count as a new sign-in.
   const userRef = useRef<string | null>(null);
@@ -136,8 +154,18 @@ export default function RootLayout() {
     // sent once signed in (audit M-64). A warm tap goes back to Buddy without
     // stacking a second Buddy screen (p2-tap-replace-stacks-second-buddy); on a
     // cold start the start screen leads there anyway.
-    const offTap = onNotificationTap(() => {
+    // "Jetzt üben" leads straight to the prepared practice once the API started it (on a cold
+    // start: as soon as the app is ready); "Heute nicht" and "Seltener schreiben" only report.
+    showPractice = (route) => {
+      if (readyRef.current && currentSession()) router.push(route);
+      else pendingRoute.current = route;
+    };
+    void registerPushCategories();
+    const offTap = onNotificationTap((outreachId, press) => {
+      if (press.kind === 'action' && press.action === 'practice_now')
+        practiceWanted.add(outreachId);
       sendOpenedReports();
+      if (press.kind === 'action') return;
       if (!readyRef.current || !currentSession()) return;
       if (router.canDismiss()) router.dismissTo('/buddy');
       else router.replace('/buddy');
@@ -150,6 +178,14 @@ export default function RootLayout() {
       offTap();
     };
   }, []);
+
+  // "Jetzt üben" pressed while the app was starting: its practice opens once it is ready.
+  useEffect(() => {
+    if (!ready || !pendingRoute.current || !currentSession()) return;
+    const route = pendingRoute.current;
+    pendingRoute.current = null;
+    router.push(route);
+  }, [ready]);
 
   // Android cut the app off while the camera was open: the photo goes on to capture (M-22).
   useEffect(() => {

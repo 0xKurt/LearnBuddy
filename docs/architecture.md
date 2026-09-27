@@ -335,6 +335,21 @@ days (rule 6).
   `getLastNotificationResponse` — is kept on the device (`lib/pushQueue.ts`, 7 days) and sent
   once signed in, retried on start and when back online; only a clear 4xx drops it.
   Not yet verified on a device (audit §17, `repro-19`).
+- **Buttons on a notification** (gaps #16; migration `0039_notification_actions.sql`): the
+  server sets `categoryId` per push — `lb_practice` ("Jetzt üben", "Heute nicht", "Seltener
+  schreiben") when the message is about practice that is prepared, `lb_message` ("Heute nicht",
+  "Seltener schreiben") otherwise; the app registers the buttons (`lib/pushActions.ts`). A press
+  is kept on the device like a tap and sent to `POST /buddy/outreach/:id/act`; code decides what
+  it does. "Jetzt üben" starts that prepared practice and the app opens it (not just the home).
+  "Heute nicht" moves its practice (and an agreed reminder) to tomorrow and cancels Buddy's own
+  messages planned for the rest of her day. "Seltener schreiben" sets `phone_only_important`:
+  Buddy's own initiatives then reach the phone only at relevance ≥ 0.85 (the rest waits in the
+  app, `only_important`); agreed reminders and answers to her own actions are unaffected. It only
+  reduces contact, so it needs no PIN; Buddy says in the thread what changed, and settings shows
+  the way back — which, being a loosening, needs the parents under 16. The two lock-screen
+  buttons do not open the app: they report no `opened`; when the app is not running, a
+  background task (`lib/pushTask.ts`, expo-task-manager, defined from the entry `index.ts`)
+  sends them. Not yet verified on a device.
 - **Lock-screen texts are built by code** (S-6): title "Buddy" and a fixed sentence per kind
   (`i18n push.*`: "Deine verabredete Erinnerung ist da."), never a title, a count, a score or
   anything the model wrote. Buddy's words are in the thread. Texts whose words depend on the day

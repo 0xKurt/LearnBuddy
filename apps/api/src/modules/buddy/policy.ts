@@ -11,7 +11,8 @@
 //   buddy   — Buddy's own initiative. Needs relevance ≥ 0.6 and a topic not
 //             raised in the last 72 h; to the phone only when contact is on,
 //             not paused, in the preferred window, outside quiet hours and on
-//             a day she did not rule out.
+//             a day she did not rule out — and, after "Seltener schreiben",
+//             only when it is important (relevance ≥ 0.85).
 //   learner — Buddy's answer to something the learner just did (her photos were
 //             read, her practice is finished). Sent now outside quiet hours when
 //             contact is on.
@@ -39,6 +40,8 @@ export type ContactSettings = {
   preferred_end: string;
   avoid_weekdays: number[];
   paused_until: Date | null;
+  /** "Seltener schreiben" (a notification button): only important initiatives to the phone. */
+  phone_only_important: boolean;
 };
 
 export type PastContact = {
@@ -64,16 +67,24 @@ export type SuppressReason =
   | 'paused'
   | 'low_relevance'
   | 'duplicate_topic'
-  | 'no_slot';
+  | 'no_slot'
+  | 'only_important';
 
 /** Not to the phone, but the message waits in the app. The other reasons drop it. */
-export const IN_APP_REASONS: readonly SuppressReason[] = ['contact_disabled', 'paused', 'no_slot'];
+export const IN_APP_REASONS: readonly SuppressReason[] = [
+  'contact_disabled',
+  'paused',
+  'no_slot',
+  'only_important',
+];
 
 export type PolicyDecision =
   | { kind: 'schedule'; sendAt: Date }
   | { kind: 'suppress'; reason: SuppressReason };
 
 export const MIN_RELEVANCE = 0.6;
+/** After "Seltener schreiben": what still reaches the phone (time-critical and ready). */
+export const IMPORTANT_RELEVANCE = 0.85;
 export const TOPIC_DEDUPE_HOURS = 72;
 const MAX_LOOKAHEAD_DAYS = 14;
 
@@ -128,6 +139,14 @@ export function decideContact(
   if (!s.contact_enabled) return { kind: 'suppress', reason: 'contact_disabled' };
   if (s.paused_until && s.paused_until.getTime() > now.getTime()) {
     return { kind: 'suppress', reason: 'paused' };
+  }
+
+  if (
+    proposal.origin === 'buddy' &&
+    s.phone_only_important &&
+    (proposal.relevance ?? 0) < IMPORTANT_RELEVANCE
+  ) {
+    return { kind: 'suppress', reason: 'only_important' };
   }
 
   const earliest = new Date(Math.max(proposal.earliest.getTime(), now.getTime()));
@@ -195,6 +214,7 @@ function findSlot(
 /** True when the change allows more contact to the phone than before (needs the adult under 16). */
 export function loosens(before: ContactSettings, after: ContactSettings, now: Date): boolean {
   if (!before.contact_enabled && after.contact_enabled) return true;
+  if (before.phone_only_important && !after.phone_only_important) return true;
   if (before.avoid_weekdays.some((d) => !after.avoid_weekdays.includes(d))) return true;
   const pausedBefore =
     before.paused_until && before.paused_until > now ? before.paused_until.getTime() : 0;
