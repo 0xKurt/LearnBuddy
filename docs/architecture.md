@@ -607,8 +607,14 @@ once (`abandonStaleUploads`, run by the scheduler).
   `vercel.json` through Vercel's own builder detector and, when given `DATABASE_URL` /
   `LB_DEPLOY_URL`, checks TLS, region, the app keys' grants and `/v1/health` of a deploy. A
   real preview deploy answering `/v1/health` has not been recorded yet.
+- The scheduler trigger chain up to the network (`scheduler-trigger.int.test.ts`): the
+  `lb-tick` cron entry, `lb_invoke_tick()` reading Vault and posting to `{lb_api_url}/internal/tick`
+  with the secret (the shim's `net.http_post` records the request), and that request replayed
+  against the app turning `/v1/health` healthy. Streaming is read chunk by chunk
+  (`stream.int.test.ts`), so a buffered response fails.
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
-  devices, Supabase Auth/Storage themselves, pg_cron/pg_net on a hosted project.
+  devices, Supabase Auth/Storage themselves, pg_cron firing and pg_net sending on a hosted
+  project.
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's

@@ -39,10 +39,20 @@ create table if not exists vault.decrypted_secrets (
   decrypted_secret text
 );
 
+-- pg_net stand-in: records each request so tests can replay it against the API
+-- (scheduler-trigger.int.test.ts) instead of sending it.
+create table if not exists net.test_requests (
+  id bigserial primary key,
+  url text not null,
+  headers jsonb not null,
+  body jsonb not null
+);
 create or replace function net.http_post(
   url text, body jsonb default '{}'::jsonb, params jsonb default '{}'::jsonb,
   headers jsonb default '{}'::jsonb, timeout_milliseconds int default 5000
-) returns bigint language sql as $$ select 0::bigint $$;
+) returns bigint language sql as $$
+  insert into net.test_requests (url, headers, body) values (url, headers, body) returning id
+$$;
 
 create table if not exists cron.job (jobname text primary key, schedule text, command text);
 create or replace function cron.schedule(job_name text, schedule text, command text)
