@@ -9,6 +9,7 @@ import {
   daysUntil,
   formatDay,
   formatDayShort,
+  formatIsoWeekdays,
   formatLastDay,
   formatTime,
   formatWeekday,
@@ -94,21 +95,27 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
       return t('action.mark_step_done', { title: a.title });
     case 'request_material':
       return t('action.request_material', { title: a.title });
-    case 'set_contact':
-      return a.paused_until
-        ? t('action.set_contact_pause', { date: formatLastDay(a.paused_until, locale) })
-        : a.quiet_start
-          ? t('action.set_contact_quiet', {
-              from: a.preferred_start,
-              to: a.preferred_end,
-              quiet: a.quiet_start,
-              count: a.max_per_week,
-            })
-          : t('action.set_contact', {
-              from: a.preferred_start,
-              to: a.preferred_end,
-              count: a.max_per_week,
-            });
+    case 'set_contact': {
+      if (a.paused_until) {
+        return t('action.set_contact_pause', { date: formatLastDay(a.paused_until, locale) });
+      }
+      const rules = a.quiet_start
+        ? t('action.set_contact_quiet', {
+            from: a.preferred_start,
+            to: a.preferred_end,
+            quiet: a.quiet_start,
+            count: a.max_per_week,
+          })
+        : t('action.set_contact', {
+            from: a.preferred_start,
+            to: a.preferred_end,
+            count: a.max_per_week,
+          });
+      // Days she asked to be left alone are part of what was agreed (p2-set-contact-card-omits-avoided-weekdays).
+      return a.avoid_weekdays.length > 0
+        ? `${rules}, ${t('action.set_contact_days', { days: formatIsoWeekdays(a.avoid_weekdays, locale) })}`
+        : rules;
+    }
     case 'offer_learning':
       return t('action.offer_learning', {
         what: i18n.t(`learn:${KIND_LABEL[a.kind]}`),

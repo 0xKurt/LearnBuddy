@@ -81,3 +81,13 @@ export function formatWeekday(date: string, locale: string): string {
     new Date(Date.UTC(y, m - 1, d)),
   );
 }
+
+/** ISO weekdays (1 = Monday … 7 = Sunday) as names: "Samstag, Sonntag". */
+export function formatIsoWeekdays(days: readonly number[], locale: string): string {
+  // 1 January 2024 was a Monday, so ISO weekday d is 2024-01-0d.
+  return [...days]
+    .filter((d) => Number.isInteger(d) && d >= 1 && d <= 7)
+    .sort((a, b) => a - b)
+    .map((d) => formatWeekday(`2024-01-0${d}`, locale))
+    .join(', ');
+}

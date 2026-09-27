@@ -115,7 +115,7 @@
   "delivery": {
     "scheduled": "arriva {{when}}",
     "sending": "invio in corso",
-    "accepted": "inviato al tuo telefono",
+    "accepted": "in arrivo sul tuo telefono",
     "provider_accepted": "inviato al tuo telefono",
     "provider_rejected": "non è stato possibile inviarlo al tuo telefono",
     "send_failed": "non è stato possibile inviarlo al tuo telefono",
@@ -163,7 +163,8 @@
     "offer_learning": "Proposto: {{what}} – «{{text}}»",
     "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
     "open_area": "Mostrato: {{what}}",
-    "set_contact_quiet": "Messaggi solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}, al massimo {{count}} a settimana"
+    "set_contact_quiet": "Messaggi solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}, al massimo {{count}} a settimana",
+    "set_contact_days": "mai in questi giorni: {{days}}"
   },
   "intro": {
     "title": "Sono Buddy.",

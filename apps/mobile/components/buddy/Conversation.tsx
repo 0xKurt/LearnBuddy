@@ -6,6 +6,8 @@
 import type { ReactNode } from 'react';
 import { MathText } from '../math/MathText.js';
 import { withoutEmphasis } from '../../lib/math/emphasis.js';
+import { speakMathText } from '../../lib/math/speak.js';
+import { useSpokenWords } from '../math/useSpokenMath.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -57,6 +59,8 @@ export function Conversation({
   undoBusy,
 }: Props) {
   const { t } = useTranslation('buddy');
+  // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
+  const words = useSpokenWords();
   const last = messages[messages.length - 1];
   const thinking =
     pending !== null || messages.some((m) => m.role === 'learner' && m.status === 'processing');
@@ -74,7 +78,7 @@ export function Conversation({
               {mine ? null : <BuddyOrb size={26} />}
               <View
                 accessible
-                accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${withoutEmphasis(m.text)}`}
+                accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(withoutEmphasis(m.text), words)}`}
                 style={[
                   {
                     flexShrink: 1,

@@ -40,7 +40,8 @@
     "reauth_required": "Please confirm this with your password (sign in again).",
     "learner_exists": "The profile already exists.",
     "weak_password": "This password can't be used. Please choose another one, at least 8 characters.",
-    "profile_invalid": "That doesn't fit together. Please check the details."
+    "profile_invalid": "That doesn't fit together. Please check the details.",
+    "stream_lost": "The connection dropped midway. If your message arrived, Buddy will still answer."
   },
   "turn": {
     "model_unavailable": "Buddy couldn't answer just now.",
