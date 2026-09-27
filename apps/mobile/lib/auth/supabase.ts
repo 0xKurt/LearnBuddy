@@ -7,7 +7,7 @@ import { createClient, type Session as SupabaseSession } from '@supabase/supabas
 import { Platform } from 'react-native';
 
 import { ENV } from '../env.js';
-import type { RecoveryLink } from './recovery.js';
+import { savedByLostTry, type RecoveryLink } from './recovery.js';
 import { createRefresher, RefreshBackoff } from './refresh.js';
 import { clearSession, currentSession, saveSession, type Session } from './session.js';
 
@@ -99,7 +99,8 @@ export async function signUp(email: string, password: string): Promise<boolean> 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: 'learnbuddy://' },
+    // The same redirect rule as every auth e-mail (signup-redirect-hardcoded-scheme).
+    options: { emailRedirectTo: authRedirect('') },
   });
   if (error) throw new AuthFailure(reasonOf(error.message, error.status, error.code));
   if (!data.session) return false;
@@ -154,9 +155,22 @@ export async function startRecovery(link: RecoveryLink): Promise<void> {
 }
 
 /** Sets the new password on the recovery session and signs in with it. */
+/** The last save that got no answer (network): its password may already be set. */
+let lostTry: { password: string } | null = null;
+
 export async function finishRecovery(password: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) throw new AuthFailure(reasonOf(error.message, error.status, error.code));
+  if (error) {
+    const reason = reasonOf(error.message, error.status, error.code);
+    if (reason === 'network') {
+      lostTry = { password };
+      throw new AuthFailure(reason);
+    }
+    const saved = savedByLostTry(reason, password, lostTry);
+    lostTry = null;
+    if (!saved) throw new AuthFailure(reason);
+  }
+  lostTry = null;
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new AuthFailure('link_invalid');
   await saveSession(toSession(data.session));

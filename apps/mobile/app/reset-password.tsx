@@ -200,7 +200,9 @@ export default function ResetPassword() {
             onChangeRepeat={setRepeat}
             onSubmit={() => void save()}
           />
-          <Btn variant="ghost" pill center onPress={leave}>
+          {/* Not while saving: leaving then would change the password without a word
+              (p2-leave-during-save-race). */}
+          <Btn variant="ghost" pill center disabled={busy} onPress={leave}>
             {backLabel}
           </Btn>
         </ScrollView>

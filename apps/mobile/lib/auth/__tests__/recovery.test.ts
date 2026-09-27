@@ -5,6 +5,7 @@ import {
   MIN_PASSWORD_LENGTH,
   parseRecoveryUrl,
   passwordProblem,
+  savedByLostTry,
   withoutSecrets,
 } from '../recovery.js';
 
@@ -102,5 +103,17 @@ describe('withoutSecrets', () => {
       'https://a.org/reset-password',
     );
     expect(withoutSecrets('https://a.org/reset-password')).toBe('https://a.org/reset-password');
+  });
+});
+
+describe('a new password whose first save got no answer (p2-lost-response-then-same-password)', () => {
+  it('"same password" on the retry of a lost try means it was saved', () => {
+    expect(savedByLostTry('same_password', 'neu12345', { password: 'neu12345' })).toBe(true);
+  });
+
+  it('otherwise it is the real refusal', () => {
+    expect(savedByLostTry('same_password', 'neu12345', null)).toBe(false);
+    expect(savedByLostTry('same_password', 'neu12345', { password: 'anders99' })).toBe(false);
+    expect(savedByLostTry('weak_password', 'neu12345', { password: 'neu12345' })).toBe(false);
   });
 });
