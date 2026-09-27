@@ -48,7 +48,8 @@ Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, 
 `/api/v1` (the app calls `/v1/…`; Vercel rewrites `/v1/*` to the function).
 
 - Auth: `Authorization: Bearer <Supabase access token>`, verified with Supabase Auth
-  (`auth/verifier.ts`). The API never sees passwords.
+  (`auth/verifier.ts`). The API never sees passwords. Only a token Supabase Auth definitely
+  rejects (a 4xx other than 408/429) is 401; when Supabase Auth cannot answer (network, 5xx, 429) the API answers 503 `unavailable`, so an auth outage never looks like a sign-out.
 - Every learner-scoped route takes the learner from the verified user (`http/context.ts`), never
   from the body, the path or a model output. The device sends its IANA zone in `x-timezone`.
 - Minors: loosening contact rules and account data need a short-lived admin token (PIN,

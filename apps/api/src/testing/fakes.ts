@@ -4,6 +4,7 @@
 
 import type { AuthUser, AuthVerifier } from '../auth/verifier.js';
 import type { Db } from '../lib/db.js';
+import { AppError } from '../lib/errors.js';
 import {
   LlmError,
   type LlmGateway,
@@ -132,10 +133,36 @@ export class ScriptedGateway implements LlmGateway {
   }
 }
 
+/** What the real verifier throws when Supabase Auth cannot answer (auth/verifier.ts). */
+export const authOutage = (): AppError =>
+  new AppError('unavailable', 'The sign-in service cannot be reached');
+
+export type FakeAuthOp = 'verify' | 'deleteUser';
+
+/**
+ * Supabase Auth in tests. Like the real one it can fail: `failNext` makes the
+ * next call(s) of an operation throw, `outage` makes every call throw until
+ * it is switched off (audit S-2, H-27).
+ */
 export class FakeAuth implements AuthVerifier {
   private readonly tokens = new Map<string, AuthUser>();
   readonly deleted: string[] = [];
   private seq = 0;
+  private readonly failures: { op: FakeAuthOp; error: Error }[] = [];
+  /** While true every operation throws like an unreachable Supabase Auth. */
+  outage = false;
+
+  /** The next call of `op` throws `error` (default: the verifier's outage error). */
+  failNext(op: FakeAuthOp, error: Error = authOutage()): this {
+    this.failures.push({ op, error });
+    return this;
+  }
+
+  private maybeFail(op: FakeAuthOp): void {
+    if (this.outage) throw authOutage();
+    const i = this.failures.findIndex((f) => f.op === op);
+    if (i >= 0) throw this.failures.splice(i, 1)[0]!.error;
+  }
 
   constructor(private readonly db: Db) {}
 
@@ -161,10 +188,12 @@ export class FakeAuth implements AuthVerifier {
   }
 
   async verify(token: string): Promise<AuthUser | null> {
+    this.maybeFail('verify');
     return this.tokens.get(token) ?? null;
   }
 
   async deleteUser(userId: string): Promise<void> {
+    this.maybeFail('deleteUser');
     this.deleted.push(userId);
     await this.db.query(`delete from auth.users where id = $1`, [userId]);
     for (const [token, u] of this.tokens) if (u.userId === userId) this.tokens.delete(token);

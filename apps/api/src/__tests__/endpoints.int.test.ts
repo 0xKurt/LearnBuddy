@@ -167,4 +167,19 @@ describe.skipIf(!dbReady)('endpoints outside the main journeys', () => {
     // Again (a retry after a lost answer): fine, nothing left.
     expect((await lena.api.delete('/buddy/push-tokens', { token })).status).toBe(200);
   });
+
+  it('answers 503, never 401, while the sign-in service is down (H-27)', async () => {
+    env.auth.failNext('verify');
+    const down = await lena.api.get<{ error: { code: string } }>('/me');
+    expect(down.status).toBe(503);
+    expect(down.body.error.code).toBe('unavailable');
+    env.auth.outage = true;
+    try {
+      expect((await lena.api.get('/buddy')).status).toBe(503);
+    } finally {
+      env.auth.outage = false;
+    }
+    // Back: the same token works; nothing was revoked by the outage.
+    expect((await lena.api.get('/me')).status).toBe(200);
+  });
 });
