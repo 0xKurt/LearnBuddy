@@ -40,7 +40,8 @@
     "reauth_required": "Confermalo con la tua password, per favore (accedi di nuovo).",
     "learner_exists": "Il profilo esiste già.",
     "weak_password": "Questa password non va bene. Scegline un'altra di almeno 8 caratteri.",
-    "profile_invalid": "Così non torna. Controlla i dati."
+    "profile_invalid": "Così non torna. Controlla i dati.",
+    "stream_lost": "La connessione si è interrotta a metà. Se il tuo messaggio è arrivato, Buddy risponderà comunque."
   },
   "turn": {
     "model_unavailable": "Buddy non ha potuto rispondere in questo momento.",

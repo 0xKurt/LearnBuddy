@@ -11,7 +11,6 @@ import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioRecorder,
-  useAudioRecorderState,
   type RecordingOptions,
 } from 'expo-audio';
 import { File } from 'expo-file-system';
@@ -99,6 +98,20 @@ async function readRecording(uri: string): Promise<{ base64: string; mime: Speak
   }
 }
 
+/** Removes a recording that is not needed (thrown away, or left behind by a failed stop). */
+function discardFile(uri: string | null): void {
+  if (!uri) return;
+  if (Platform.OS === 'web') {
+    URL.revokeObjectURL(uri);
+    return;
+  }
+  try {
+    new File(uri).delete();
+  } catch {
+    // Already gone.
+  }
+}
+
 async function allowRecording(allowed: boolean): Promise<void> {
   try {
     // While recording, iOS needs the recording session; afterwards playback goes back to the speaker.
@@ -110,12 +123,32 @@ async function allowRecording(allowed: boolean): Promise<void> {
 
 export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }: Options) {
   const recorder = useAudioRecorder(SPEECH_RECORDING);
-  const state = useAudioRecorderState(recorder, 120);
   const [phase, setPhaseState] = useState<RecordPhase>('idle');
+  // Timer and sound level, asked from the recorder only while it records — an idle mic on
+  // screen polls nothing (p2-idle-recorders-polled-every-120ms).
+  const [state, setState] = useState<{ durationMillis: number; metering?: number }>({
+    durationMillis: 0,
+  });
+  useEffect(() => {
+    if (phase !== 'recording') return;
+    const poll = setInterval(() => {
+      try {
+        const s = recorder.getStatus();
+        setState({ durationMillis: s.durationMillis, metering: s.metering });
+      } catch {
+        // Released meanwhile: the phase follows.
+      }
+    }, 120);
+    return () => clearInterval(poll);
+  }, [phase, recorder]);
   /** Microphone access was refused; canAskAgain = false means only the settings can change it. */
   const [denied, setDenied] = useState<{ canAskAgain: boolean } | null>(null);
   const phaseRef = useRef<RecordPhase>('idle');
   const startedAt = useRef(0);
+  /** The file being recorded, known from the start: removed even when stopping fails. */
+  const fileUri = useRef<string | null>(null);
+  /** Cancelled while still asking for the mic / preparing: it must not start recording. */
+  const cancelled = useRef(false);
   const limit = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useRef(true);
   const handlers = useRef<Handlers>({ onRecorded, onFailed });
@@ -150,14 +183,24 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
         uri = null;
       }
       await allowRecording(false);
+      const known = fileUri.current;
+      fileUri.current = null;
       try {
+        if (!deliver) {
+          // Thrown away (left the screen, answered another way): delete it, unread. A
+          // recorder already released on unmount has no uri any more — the one noted at the
+          // start is used (p2-recording-file-left-on-unmount).
+          discardFile(uri ?? known);
+          return;
+        }
         if (!uri) {
-          if (deliver) handlers.current.onFailed('failed');
+          discardFile(known);
+          handlers.current.onFailed('failed');
           return;
         }
         const tooShort = durationMs < MIN_RECORDING_MS;
         const read = await readRecording(uri);
-        if (!deliver || !mounted.current) return;
+        if (!mounted.current) return;
         if (tooShort || read.base64.length < MIN_AUDIO_BASE64) {
           handlers.current.onFailed('too_short');
         } else if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64) {
@@ -181,6 +224,7 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
 
   const start = useCallback(async (): Promise<void> => {
     if (phaseRef.current !== 'idle') return;
+    cancelled.current = false;
     setPhase('starting');
     try {
       let perm = await getRecordingPermissionsAsync();
@@ -194,11 +238,15 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
       if (mounted.current) setDenied(null);
       await allowRecording(true);
       await recorder.prepareToRecordAsync();
-      if (!mounted.current) {
+      // Left the screen, or a second tap while the mic was being prepared: no recording
+      // starts (tap-during-starting-uncancellable).
+      if (!mounted.current || cancelled.current) {
         await allowRecording(false);
+        setPhase('idle');
         return;
       }
       recorder.record();
+      fileUri.current = recorder.uri;
       startedAt.current = Date.now();
       setPhase('recording');
       limit.current = setTimeout(() => void finish(true), maxRef.current);
@@ -211,7 +259,10 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
 
   const stop = useCallback(() => finish(true), [finish]);
   /** Ends the recording and throws it away (she answered another way). */
-  const cancel = useCallback(() => finish(false), [finish]);
+  const cancel = useCallback(() => {
+    if (phaseRef.current === 'starting') cancelled.current = true;
+    return finish(false);
+  }, [finish]);
 
   // Going to the background ends a recording without sending it.
   useEffect(() => {
@@ -225,6 +276,7 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
     mounted.current = true;
     return () => {
       mounted.current = false;
+      cancelled.current = true;
       void finish(false);
     };
   }, [finish]);

@@ -89,3 +89,16 @@ export function withoutSecrets(url: string): string {
   const cut = url.search(/[?#]/);
   return cut < 0 ? url : url.slice(0, cut);
 }
+
+/**
+ * Saving the new password again after the first try got no answer: "that is your current
+ * password" then means the first try did arrive — it is done, not a reason to pick another
+ * one (p2-lost-response-then-same-password).
+ */
+export function savedByLostTry(
+  reason: string,
+  password: string,
+  lostTry: { password: string } | null,
+): boolean {
+  return reason === 'same_password' && lostTry !== null && lostTry.password === password;
+}

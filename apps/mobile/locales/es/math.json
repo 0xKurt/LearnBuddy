@@ -2,6 +2,7 @@
   "spoken": {
     "frac": "{{num}} entre {{den}}",
     "frac_long": "fracción: {{num}}, dividido entre {{den}}",
+    "mixed": "y {{num}} entre {{den}}",
     "power": "elevado a {{exp}}",
     "squared": "al cuadrado",
     "cubed": "al cubo",

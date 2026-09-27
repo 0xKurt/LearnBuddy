@@ -898,9 +898,13 @@ once (`abandonStaleUploads`, run by the scheduler).
   the device is back, with the same `client_turn_id` (`lib/api/whenOnline.ts`). Typed answers are
   also kept on the device until the API has them (`lib/api/outbox.ts`, AsyncStorage /
   localStorage): after the app was closed they are sent on the next start or when back online;
-  only answers the API clearly refuses (4xx: question closed, session ended) are dropped — server
-  trouble, an expired login or a proxy page keep them for later. An answer being sent live is
-  skipped by the outbox, and one flush runs at a time, so an answer never goes out twice at once.
+  only answers the API clearly refuses (4xx: question closed, session ended) are dropped, and
+  the app says so once — server trouble, an expired login or a proxy page keep them for later.
+  Trouble with one answer does not hold back the next ones (a pass stops only without a
+  connection or after three troubles in a row, `lib/api/flush.ts`). An answer being sent live is
+  skipped by the outbox, and one flush runs at a time (a request meanwhile gets one more pass),
+  so an answer never goes out twice at once. A "Tipp" whose answer was lost is asked again with
+  the same `client_turn_id` (`lib/api/turnIds.ts`).
   (`tests/web/offline.spec.ts`: app open → exactly one request; app closed → sent on the next
   start). **Sessions and unsent work** (`lib/auth/refresh.ts`, `lib/localWork.ts`): only a
   definite "this session is over" from Supabase Auth (a 4xx such as `refresh_token_not_found`)

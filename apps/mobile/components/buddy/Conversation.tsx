@@ -7,6 +7,8 @@
 import type { ReactNode } from 'react';
 import { MathText } from '../math/MathText.js';
 import { withoutEmphasis } from '../../lib/math/emphasis.js';
+import { speakMathText } from '../../lib/math/speak.js';
+import { useSpokenWords } from '../math/useSpokenMath.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -37,8 +39,9 @@ type Props = {
   showActions?: boolean;
   /** Whether Buddy may message her phone (agreed reminders say where they arrive). */
   contactOn?: boolean;
-  onOption: (messageId: string, option: string) => void;
-  onResend: (message: MessageView) => void;
+  /** Quick answers and "Nochmal senden"; left out (History), they are not shown at all. */
+  onOption?: (messageId: string, option: string) => void;
+  onResend?: (message: MessageView) => void;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
   /** Where her own last message starts (y within this view), so it is never scrolled away. */
@@ -62,6 +65,8 @@ export function Conversation({
   undoBusy,
 }: Props) {
   const { t } = useTranslation('buddy');
+  // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
+  const words = useSpokenWords();
   const last = messages[messages.length - 1];
   const breaks = dayBreaks(messages.map((m) => m.created_at));
   // Her last message: the one being sent, else the last she sent.
@@ -92,7 +97,7 @@ export function Conversation({
               {mine ? null : <BuddyOrb size={26} />}
               <View
                 accessible
-                accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${withoutEmphasis(m.text)}`}
+                accessibilityLabel={`${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(withoutEmphasis(m.text), words)}`}
                 style={[
                   {
                     flexShrink: 1,
@@ -189,14 +194,14 @@ export function Conversation({
                   {failedLabel(m.failure_code)}
                 </Text>
                 {/* Resending cannot help once today's allowance is used up. */}
-                {m.failure_code === 'budget' ? null : (
+                {m.failure_code === 'budget' || !onResend ? null : (
                   <Btn size="sm" variant="outline" onPress={() => onResend(m)} disabled={busy}>
                     {t('thread.resend')}
                   </Btn>
                 )}
               </View>
             ) : null}
-            {m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
+            {onOption && m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                 {m.options.map((o) => (
                   <Btn

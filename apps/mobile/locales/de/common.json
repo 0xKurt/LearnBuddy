@@ -54,5 +54,11 @@
   },
   "session": {
     "expired": "Du wurdest abgemeldet. Melde dich neu an – was noch nicht gesendet war, ist noch da."
-  }
+  },
+  "deleting": {
+    "title": "Dein Konto wird gerade gelöscht",
+    "body": "Das dauert meist nur ein paar Minuten. Danach ist alles weg, was LearnBuddy über dich gespeichert hat. Ändern lässt sich jetzt nichts mehr.",
+    "sign_out": "Abmelden"
+  },
+  "outbox_refused": "Eine gespeicherte Antwort kam zu spät an – die Aufgabe war schon abgeschlossen."
 }

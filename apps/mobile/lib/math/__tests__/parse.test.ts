@@ -184,6 +184,7 @@ describe('parseMath', () => {
 const DE: SpokenWords = {
   frac: '{{num}} durch {{den}}',
   frac_long: 'Bruch: {{num}}, durch {{den}}',
+  mixed: 'und {{num}} durch {{den}}',
   power: 'hoch {{exp}}',
   squared: 'Quadrat',
   cubed: 'hoch 3',
@@ -199,6 +200,16 @@ const DE: SpokenWords = {
 };
 
 describe('speakMathText', () => {
+  it('reads a mixed number as one number and ":" as division (p2-mixed-number-and-division-spoken-wrong)', () => {
+    const words = { ...DE, symbols: { ...DE.symbols, ':': 'geteilt durch' } };
+    expect(speakMathText('$3\\frac{1}{2}$', words)).toBe('3 und 1 durch 2');
+    expect(speakMathText('$3\\,\\frac{1}{2}$', words)).toBe('3 und 1 durch 2');
+    expect(speakMathText('$6 : 3$', words)).toBe('6 geteilt durch 3');
+    // Not a mixed number: a decimal, or letters in the fraction.
+    expect(speakMathText('$2\\frac{x}{3}$', words)).toBe('2 x durch 3');
+    expect(speakMathText('$0,5\\frac{1}{2}$', words)).toBe('0,5 1 durch 2');
+  });
+
   it('reads a simple fraction', () => {
     expect(speakMathText('$\\frac{3}{4}$', DE)).toBe('3 durch 4');
   });

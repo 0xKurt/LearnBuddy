@@ -17,6 +17,7 @@ import { LoadingState } from '../components/lb/LoadingState.js';
 import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
 import { AdultCancelled, asAdultIfNeeded } from '../components/settings/adultGate.js';
+import { ApiError } from '../lib/api/client.js';
 import { createAccount, getMe } from '../lib/api/endpoints.js';
 import { keys, queryClient, useMe } from '../lib/api/queries.js';
 import { ENV } from '../lib/env.js';
@@ -45,7 +46,14 @@ export default function Consent() {
   if (me.isPending) return <LoadingState />;
 
   async function accept() {
-    if (!me.data || busy) return;
+    if (busy) return;
+    if (!me.data) {
+      // The current text's version could not be loaded (offline, API unreachable): say so
+      // and try again, never a silent tap (consent-cta-silent-noop).
+      toast.show(messageFor(me.error), 'error');
+      void me.refetch();
+      return;
+    }
     const version = me.data.consent_version;
     setBusy(true);
     try {
@@ -61,6 +69,9 @@ export default function Consent() {
         if (err.reason === 'no_pin') toast.show(t('consent.parents_needed'));
       } else {
         toast.show(messageFor(err), 'error');
+        // The text changed meanwhile: load its version, so the next tap agrees to the
+        // current one instead of sending the old one again (p2-consent-outdated-toast-loop).
+        if (err instanceof ApiError && err.reason === 'consent_outdated') void me.refetch();
       }
     } finally {
       setBusy(false);

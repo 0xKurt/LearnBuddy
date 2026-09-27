@@ -109,8 +109,8 @@ export default function History() {
           showActions
           onUndo={(id) => void undo(id)}
           undoBusy={undoing}
-          onOption={() => undefined}
-          onResend={() => undefined}
+          // No quick answers or "Nochmal senden" here: that is the chat's job; History
+          // shows no buttons that cannot be pressed (history-dead-controls).
         />
       </ScrollView>
     </Screen>

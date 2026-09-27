@@ -16,6 +16,7 @@ import {
   AccessibilityInfo,
   Animated,
   Easing,
+  Linking,
   Platform,
   ScrollView,
   Text,
@@ -126,10 +127,9 @@ export default function TalkScreen() {
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
         setLive(null);
-        setProblem(
+        tellProblem(
           res.status === 'failed' ? turnFailureText(res.error_code) : t('buddy:talk.slow'),
         );
-        setPhase('paused');
         return;
       }
       final = r;
@@ -145,9 +145,18 @@ export default function TalkScreen() {
     } catch (err) {
       if (stale()) return;
       setLive(null);
-      setProblem(messageFor(err));
-      setPhase('paused');
+      tellProblem(messageFor(err));
     }
+  }
+
+  /**
+   * A turn that failed is said, not only shown: she may not be looking at the screen in
+   * conversation mode (p2-F-journey-talk-failure-silent). Then the mic waits for a tap.
+   */
+  function tellProblem(text: string): void {
+    setProblem(text);
+    setPhase('paused');
+    void speak(text, currentLocale());
   }
 
   // Start listening once when the screen opens (she opened it to talk) — not with a screen
@@ -187,8 +196,11 @@ export default function TalkScreen() {
       return () => {
         open.current = false;
         stopSpeaking();
-        if (voiceRef.current.state === 'recording') voiceRef.current.toggle();
-        setPhase((p) => (p === 'thinking' ? p : 'paused'));
+        // What she was saying is dropped, not sent: a turn started now would be ignored and
+        // leave the screen stuck in "thinking" (talk-stuck-thinking-on-blur). A turn already
+        // on its way is ignored as well (stale), so the screen is paused when she comes back.
+        voiceRef.current.cancel();
+        setPhase('paused');
       };
     }, []),
   );
@@ -232,6 +244,10 @@ export default function TalkScreen() {
   // Every phase change is heard on iOS too (Android reads the live region).
   useAnnounce(headline);
 
+  // Opened straight from a link (learnbuddy://talk), there is nothing to go back to: the
+  // way out leads to the start screen (deep-link-unmatched-and-talk-back).
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: LB.bg }}
@@ -248,11 +264,7 @@ export default function TalkScreen() {
           paddingTop: 8,
         }}
       >
-        <CircleBtn
-          icon="close"
-          onPress={() => router.back()}
-          accessibilityLabel={t('buddy:talk.end')}
-        />
+        <CircleBtn icon="close" onPress={leave} accessibilityLabel={t('buddy:talk.end')} />
         <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>
           {t('buddy:talk.title').toUpperCase()}
         </Text>
@@ -320,6 +332,12 @@ export default function TalkScreen() {
                   : '')}
           </Text>
         ) : null}
+        {/* The same way out as everywhere else the mic is refused (talk-denied-no-settings-action). */}
+        {!problem && voice.denied && Platform.OS !== 'web' ? (
+          <Btn variant="soft" pill center onPress={() => void Linking.openSettings()}>
+            {t('common:voice.open_settings')}
+          </Btn>
+        ) : null}
       </ScrollView>
 
       {/* Voice first: keyboard · big mic · end (the reference layout). */}
@@ -336,7 +354,7 @@ export default function TalkScreen() {
         <View style={{ alignItems: 'center', gap: 4, width: 96 }}>
           <CircleBtn
             icon="keyboard"
-            onPress={() => router.back()}
+            onPress={leave}
             accessibilityLabel={t('buddy:composer.keyboard')}
           />
           <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
@@ -350,7 +368,7 @@ export default function TalkScreen() {
           onPress={onMic}
         />
         <View style={{ alignItems: 'center', width: 96 }}>
-          <Btn variant="ghost" size="sm" onPress={() => router.back()}>
+          <Btn variant="ghost" size="sm" onPress={leave}>
             {t('buddy:talk.end')}
           </Btn>
         </View>

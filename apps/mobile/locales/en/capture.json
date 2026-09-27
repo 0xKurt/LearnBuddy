@@ -36,7 +36,8 @@
     "upload_rejected": "Photo {{index}} didn't arrive.",
     "upload_file": "Photo {{index}} is gone. Remove it and take it again.",
     "kept": "Your photos are still here.",
-    "left": "Your sheet didn't arrive. Please photograph it again."
+    "left": "Your sheet didn't arrive. Please photograph it again.",
+    "left_kept": "Your sheet hasn't arrived yet. Your photos are waiting on Buddy's screen – send them again from there."
   },
   "homework": {
     "title": "Photograph your homework",
@@ -62,7 +63,8 @@
     "title_pages": "Page {{pages}} again",
     "intro": "Only what was missing – the rest is already done. Make sure the whole page is in the photo.",
     "title_add": "Add a page",
-    "intro_add": "Its questions join this sheet."
+    "intro_add": "Its questions join this sheet.",
+    "added": "Page sent. Once it's read, its questions join this sheet."
   },
   "draft": {
     "title": "Your photos haven't been sent yet",

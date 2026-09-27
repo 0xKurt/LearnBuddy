@@ -40,7 +40,8 @@
     "reauth_required": "Bitte bestätige das mit deinem Passwort (neu anmelden).",
     "learner_exists": "Das Profil gibt es schon.",
     "weak_password": "Dieses Passwort geht nicht. Bitte nimm ein anderes, mindestens 8 Zeichen.",
-    "profile_invalid": "Das passt so nicht zusammen. Bitte prüf die Angaben."
+    "profile_invalid": "Das passt so nicht zusammen. Bitte prüf die Angaben.",
+    "stream_lost": "Die Verbindung ist mittendrin abgerissen. Ist deine Nachricht angekommen, antwortet Buddy trotzdem."
   },
   "turn": {
     "model_unavailable": "Buddy konnte gerade nicht antworten.",

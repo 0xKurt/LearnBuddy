@@ -205,6 +205,12 @@ export default function CaptureScreen() {
         const prepared = await preparePhoto(source);
         // Where the system does not clean up: the photo survives the app being closed.
         const photo = { ...prepared, uri: await drafts.keep(prepared.uri) };
+        // She left while it was being prepared: the copy belongs to no draft — delete it
+        // instead of leaving it in the app's documents (p2-prepared-copies-leak-on-early-exit).
+        if (!mounted.current) {
+          void drafts.drop([photo.uri]);
+          return;
+        }
         if (replace && i === 0) {
           setPhotos((prev) => prev.map((p) => (p === replace ? photo.uri : p)));
           setProblems(({ [replace]: _gone, ...rest }) => rest);
@@ -300,13 +306,16 @@ export default function CaptureScreen() {
     return `${messageFor(err)} ${t('capture:error.kept')}`;
   }
 
-  async function keepIfFree(requestId: string) {
-    if (await drafts.load()) return;
+  /** Keeps these photos as the draft if the slot is free; true when they are kept. */
+  async function keepIfFree(requestId: string): Promise<boolean> {
+    const existing = await drafts.load();
+    if (existing) return existing.requestId === requestId;
     await drafts.save({
       requestId,
       photos: photos.map((uri) => ({ uri, problems: problems[uri] ?? [], kept: kept.has(uri) })),
       link,
     });
+    return true;
   }
 
   async function send() {
@@ -318,6 +327,7 @@ export default function CaptureScreen() {
     setProgress({ step: 'reserving' });
     drafts.startSending(current.requestId);
     let delivered = false;
+    let failedAway = false;
     dirty.current = true;
     // The request id goes into the draft first: after a crash the same material goes on.
     await drafts.save({
@@ -332,16 +342,35 @@ export default function CaptureScreen() {
       if (current.material) await drafts.sent(current.material, photos, current.requestId);
       void queryClient.invalidateQueries({ queryKey: keys.home });
       void queryClient.invalidateQueries({ queryKey: keys.library });
-      // Back to Buddy's home, which now shows the reading (opens it if it isn't in the stack).
-      if (mounted.current) router.dismissTo('/buddy');
+      if (mounted.current) {
+        if (link.add && completes && router.canGoBack()) {
+          // A page added to a sheet: back to that sheet, with a word that it is on its way
+          // there (p2-J-06). Its questions join the sheet once read.
+          void queryClient.invalidateQueries({ queryKey: keys.material(completes) });
+          toast.show(t('capture:again.added'));
+          router.back();
+        } else {
+          // Back to Buddy's home, which now shows the reading (opens it if it isn't in the stack).
+          router.dismissTo('/buddy');
+        }
+      }
     } catch (err) {
       if (mounted.current) setFailure(failureText(err));
-      else toast.show(t('capture:error.left'), 'error');
+      else failedAway = true;
     } finally {
       drafts.stopSending(current.requestId);
       // She left meanwhile and started another capture: these photos are offered again
-      // when the draft slot is free (home: "Deine Fotos sind noch nicht gesendet").
-      if (!mounted.current && !delivered) void keepIfFree(current.requestId);
+      // when the draft slot is free (home: "Deine Fotos sind noch nicht gesendet"). The
+      // toast says what is true: waiting on the home, or really gone
+      // (left-mid-send-copy-contradiction).
+      if (!mounted.current && !delivered) {
+        void keepIfFree(current.requestId)
+          .catch(() => false)
+          .then((kept) => {
+            if (failedAway)
+              toast.show(t(kept ? 'capture:error.left_kept' : 'capture:error.left'), 'error');
+          });
+      }
       sending.current = false;
       setProgress(null);
     }

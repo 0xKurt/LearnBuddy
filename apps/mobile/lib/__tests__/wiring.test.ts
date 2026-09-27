@@ -111,7 +111,8 @@ describe('wiring', () => {
   it('every screen can be reached', () => {
     const screens = files(join(MOBILE, 'app'), /\.tsx$/)
       .map((f) => relative(join(MOBILE, 'app'), f).replace(/\.tsx$/, ''))
-      .filter((s) => !s.startsWith('_') && s !== 'index');
+      // _layout, and expo-router's own special routes (+not-found) are never linked to.
+      .filter((s) => !s.startsWith('_') && !s.startsWith('+') && s !== 'index');
     const everything = [...code.values()].join('\n');
     for (const [screen, how] of Object.entries(OPENED_BY_LINK))
       expect(how.test(everything), `${screen} is opened by a link`).toBe(true);

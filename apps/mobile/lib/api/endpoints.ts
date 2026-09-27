@@ -37,6 +37,7 @@ import { z } from 'zod';
 
 import { setAdminToken } from '../admin.js';
 import { ApiError, newId, request, streamRequest } from './client.js';
+import { turnIds } from './turnIds.js';
 import { dropAnswer, keepAnswer, resultOf, sendingLive } from './outboxSync.js';
 import { sendWhenOnline } from './whenOnline.js';
 
@@ -229,12 +230,16 @@ export const revealItem = (id: string, itemId: string) =>
     body: { item_id: itemId },
     schema: SessionView,
   });
+/** A "Tipp" whose answer was lost is asked again as the same turn (lib/api/turnIds.ts). */
+const hintTurns = turnIds(newId, noConnection);
 /** "Tipp": the next prepared hint at once; with none prepared, the tutor writes one. */
 export const hintItem = (id: string, itemId: string) =>
-  request('POST', `/practice/sessions/${id}/hint`, {
-    body: { client_turn_id: newId(), item_id: itemId },
-    schema: AnswerResponse,
-  });
+  hintTurns.run(`${id}:${itemId}`, (clientTurnId) =>
+    request('POST', `/practice/sessions/${id}/hint`, {
+      body: { client_turn_id: clientTurnId, item_id: itemId },
+      schema: AnswerResponse,
+    }),
+  );
 /** "Frage passt nicht": skipped here, never asked again. */
 export const flagItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/items/${itemId}/flag`, { schema: SessionView });

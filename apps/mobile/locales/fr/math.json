@@ -2,6 +2,7 @@
   "spoken": {
     "frac": "{{num}} sur {{den}}",
     "frac_long": "fraction : {{num}}, divisé par {{den}}",
+    "mixed": "et {{num}} sur {{den}}",
     "power": "puissance {{exp}}",
     "squared": "au carré",
     "cubed": "au cube",

@@ -180,6 +180,12 @@ export function useVoiceInput({
       else void rec.stop();
       return;
     }
+    // A second tap while the mic is still being prepared means "never mind": nothing is
+    // recorded (tap-during-starting-uncancellable).
+    if (state === 'starting') {
+      cancel();
+      return;
+    }
     if (state !== 'idle') return;
     setHint(null);
     stopListening();

@@ -30,12 +30,14 @@ export function useHandsFreeMic(voice: VoiceInput, disabled: boolean, turn?: str
     if (disabled && listening(current.current.voice)) current.current.voice.cancel();
   }, [disabled]);
 
-  // A new question: whatever was being recorded belonged to the old one.
+  // A new question: whatever was being recorded — or is still being written down — belonged
+  // to the old one; its text must not land as an answer to the new one
+  // (stale-recording-answers-new-question).
   const lastTurn = useRef(turn);
   useEffect(() => {
     if (lastTurn.current === turn) return;
     lastTurn.current = turn;
-    if (listening(current.current.voice)) current.current.voice.cancel();
+    if (current.current.voice.state !== 'idle') current.current.voice.cancel();
   }, [turn]);
 
   // Buddy starts reading aloud: the mic would only hear Buddy.
