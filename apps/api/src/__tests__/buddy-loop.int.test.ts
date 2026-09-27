@@ -264,7 +264,9 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       // While Buddy thinks about it, Lina's screen says so.
       expect((await lina.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
       const text = ScriptedGateway.textOf(req);
-      expect(text).toContain('g1 exam "Mathearbeit Brüche" on Friday 2026-10-02 (in 4 days)');
+      expect(text).toContain(
+        'g1 exam "Mathearbeit Brüche" on Friday 2026-10-02 (in 4 days; say "Freitag")',
+      );
       expect(text).toContain('material: 1 ready (4 questions)');
       expect(text).toContain(
         'new material is ready: "Brüche kürzen und vergleichen" with 4 questions',

@@ -253,6 +253,27 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     expect(fix.refusal()).toMatch(/did not say \(15\)/);
   });
 
+  it('a day is named the way she says it: the weekday within a week, never "in 4 days" (live finding 9)', async () => {
+    for (const [title, due] of [
+      ['Mathearbeit', '2026-10-01'],
+      ['Vokabeltest', '2026-10-12'],
+    ] as const) {
+      await env.db.query(
+        `insert into buddy_goals (learner_id, kind, title, due_date) values ($1, 'exam', $2, $3)`,
+        [l.learnerId, title, due],
+      );
+    }
+    env.llm.script('buddy_turn', (req: LlmRequest) => {
+      const text = ScriptedGateway.textOf(req);
+      // Code renders the words; the prompt says to use them.
+      expect(text).toContain('"Mathearbeit" on Thursday 2026-10-01 (in 3 days; say "Donnerstag")');
+      expect(text).toContain('say "Montag, 12. Oktober"');
+      expect(req.system).toContain('never "in 4 days"');
+      return say('Die Mathearbeit ist am Donnerstag.');
+    });
+    expect((await send(l, 'Wann ist nochmal die Mathearbeit?')).status).toBe(200);
+  });
+
   it('undoing a forget never makes a second copy (p2-J-memory-F7)', async () => {
     const remember = {
       tool: 'remember',

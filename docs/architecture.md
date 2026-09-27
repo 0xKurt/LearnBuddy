@@ -199,6 +199,9 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 - **Days** are resolved from the day the model counted from (the attempt's "Now"), not from
   when the message was written; an older message (a resend, a recovery after midnight) is
   named in STATE so the model asks when a day she named has passed (audit M-51).
+- **Naming days** (live finding 9: "in 4 Tagen" for Thursday): every date in STATE carries the
+  words for it in her language, rendered by code (`say "Donnerstag"` within a week — `dayLabel` —,
+  later weekday and date via Intl), and the prompt says to use them, never "in N days".
 
 ## Tools
 

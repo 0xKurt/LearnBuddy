@@ -10,7 +10,8 @@
 // else. Lists are bounded, and totals are shown so the model knows when it
 // sees only part of something (no silent truncation).
 
-import { addDays, daysBetween, localParts, weekdayName } from '../../lib/time.js';
+import { dayLabel } from '../../i18n/index.js';
+import { addDays, daysBetween, localParts, weekdayName, weekdayOf } from '../../lib/time.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import type { LearnerContext } from '../../http/context.js';
 import type { BuddyState, GoalRow, MemoryRow, StepRow, SubjectRow } from './state.js';
@@ -54,7 +55,24 @@ function lastDayOf(end: Date, tz: string): string {
   return localParts(new Date(end.getTime() - 1), tz).date;
 }
 
-function fmtDay(date: string, today: string): string {
+/**
+ * How the learner's language names a day, rendered by code (live finding 9: the model wrote
+ * "in 4 Tagen" for Thursday): within a week its weekday ("Donnerstag", "Morgen"), later the
+ * weekday with the date.
+ */
+export function spokenDay(date: string, today: string, locale: string): string {
+  const d = daysBetween(today, date);
+  if (d >= 0 && d < 7) return dayLabel(locale, weekdayOf(date), d);
+  const [y, m, day] = date.split('-').map(Number);
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(y!, m! - 1, day!)));
+}
+
+function fmtDay(date: string, today: string, locale: string): string {
   const d = daysBetween(today, date);
   const rel =
     d === 0
@@ -66,7 +84,7 @@ function fmtDay(date: string, today: string): string {
           : d > 0
             ? `in ${d} days`
             : `${-d} days ago`;
-  return `${weekdayName(date)} ${date} (${rel})`;
+  return `${weekdayName(date)} ${date} (${rel}; say "${spokenDay(date, today, locale)}")`;
 }
 
 export function buildContext(
@@ -143,7 +161,7 @@ export function buildContext(
     const alias = `st${++si}`;
     aliases.steps.set(alias, st);
     const when = st.planned_date
-      ? ` ${fmtDay(st.planned_date, today)}${st.planned_time ? ` ${st.planned_time}` : ''}`
+      ? ` ${fmtDay(st.planned_date, today, learner.locale)}${st.planned_time ? ` ${st.planned_time}` : ''}`
       : '';
     const agreed = st.agreed ? ' [agreed with learner]' : '';
     const extra =
@@ -160,7 +178,7 @@ export function buildContext(
   for (const g of state.goals) {
     const alias = `g${++gi}`;
     aliases.goals.set(alias, g);
-    const date = g.due_date ? ` on ${fmtDay(g.due_date, today)}` : '';
+    const date = g.due_date ? ` on ${fmtDay(g.due_date, today, learner.locale)}` : '';
     const subj = g.subject_id
       ? ` · subject ${subjectAlias.get(g.subject_id) ?? '?'} ${g.subject_name ?? ''}`
       : '';
