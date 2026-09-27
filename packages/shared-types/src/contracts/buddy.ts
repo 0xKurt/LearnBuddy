@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { IsoDateTime, LocalDate, LocalTime, tolerantArray, Uuid } from './common.js';
-import { PageProblem } from './learning.js';
+import { PageProblem, VoiceName, VoiceSpeed } from './learning.js';
 
 // ─────────────── what Buddy did (rendered as cards, not prose) ───────────────
 
@@ -75,6 +75,8 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     quiet_start: LocalTime.optional(),
   }),
   z.object({ tool: z.literal('schedule_check'), at: IsoDateTime }),
+  /** Buddy's voice as she asked for it ("sprich langsamer", "andere Stimme"), ADR 0008. */
+  z.object({ tool: z.literal('set_voice'), voice: VoiceName, speed: VoiceSpeed }),
   /** Buddy offers to start learning; the app shows a button that starts it (POST /practice/topic). */
   z.object({
     tool: z.literal('offer_learning'),

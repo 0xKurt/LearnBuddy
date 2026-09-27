@@ -222,6 +222,11 @@ summary plus undo data. Enforced here, not in the prompt:
   Year 8 → 7), and a label the system does not have is rejected. The card shows the stored
   meaning ("Klasse 8", "8e année de scolarité"). Audit M-39; a live eval of the label choice
   for fr/es/it is still to do.
+- `set_voice` ("sprich langsamer", "schneller", "wieder normal", "andere Stimme", ADR 0008): the
+  model says only the direction (`slower`/`faster`/`normal`, `other` or a named voice of the
+  curated four) with her quote; code takes one step within −2…+2 and picks the next voice. Past
+  the limit, or a change that changes nothing, is rejected back to the model, which says so.
+  Undo (`restore_voice`) only while nothing changed the settings since.
 - Thread action cards offer "Rückgängig" only where `undoApplies` holds, like `done` (audit
   M-56); history offers it too, for the same 7 days.
 
@@ -483,6 +488,7 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 | PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)    |
 | Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
 | Requests per account            | abuse protection only: practice answers 600/h, messages to Buddy 120/h (429 + `Retry-After`)       |
+| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always   |
 
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
@@ -822,8 +828,19 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   answers like "drei Viertel" are heard as 3/4). Live checks with espeak-ng recordings
   (`evals/voice/run.ts`): 5/6 with context; the lite model invented words and is not used. The
   recording is never stored.
+- **Buddy's natural voice** (ADR 0008): everything read aloud goes sentence by sentence through
+  `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → Google Cloud TTS, Chirp 3:
+  HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and
+  speed come from her settings (`buddy_settings.voice`, `voice_speed`, tool `set_voice`); audio is
+  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
+  (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
+  sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
+  error) or is unreachable — never silence. `useBuddyVoice()` (`lib/speech/voiceState.ts`)
+  exposes `idle | loading | speaking`, the sentences and the one being played with its progress:
+  conversation mode highlights the sentence being read (no word timings from Chirp 3 HD).
+  Dev stack: `LB_DEV_SPEECH=fake` answers with silent WAV audio of the sentence's length.
 - **Voice mode** (app): Buddy's replies, questions, an explanation and feedback are read aloud
-  with the device's voices (`expo-speech`); she answers with the mic — in the chat, in every
+  (natural voice above, else the device's voices); she answers with the mic — in the chat, in every
   practice mode, and in the sheet where she names a topic (`TopicSheet`, which starts at once in
   voice mode). **Practice is hands-free** after her first tap on a mic there
   (`lib/speech/handsFree.ts`): question read → the mic listens (ends by itself when she pauses, on

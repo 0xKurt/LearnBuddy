@@ -18,6 +18,7 @@ import {
   purgePhotos,
   sweepForgottenPhotos,
 } from '../materials/purge.js';
+import { purgeSpeechCache } from '../voice/speech.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
 import { handleParkedJobs } from './terminal.js';
@@ -167,12 +168,14 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     }
   });
   // Retention that no job carries: photos Storage still owes after an account deletion,
-  // photos no purge is planned for, and memories past their undo window (docs/privacy.md).
+  // photos no purge is planned for, memories past their undo window and Buddy's spoken audio
+  // after a day (docs/privacy.md).
   await guard('retention', async () => {
     if (left() < 5_000) return;
     await drainStorageDeletions(deps);
     await sweepForgottenPhotos(deps);
     await purgeClosedMemories(deps);
+    await purgeSpeechCache(deps);
   });
 
   await deps.db.query(

@@ -35,6 +35,9 @@ function isoDate(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/** Buddy's speed steps (-2 … +2) as locale keys. */
+const SPEED_KEY = ['slower2', 'slower', 'normal', 'faster', 'faster2'] as const;
+
 /** contactOn = false: agreed reminders only reach her here in the app — the card says so. */
 export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } = {}): string {
   const locale = i18n.language;
@@ -121,6 +124,11 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
       });
     case 'open_area':
       return t('action.open_area', { what: t(`area.${a.area}`) });
+    case 'set_voice':
+      return t('action.set_voice', {
+        voice: t(`voice.name.${a.voice}`),
+        speed: t(`voice.speed.${SPEED_KEY[a.speed + 2] ?? 'normal'}`),
+      });
     case 'schedule_check':
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),

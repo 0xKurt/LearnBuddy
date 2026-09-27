@@ -7,6 +7,7 @@ import type { Config } from './config.js';
 import type { Db } from './lib/db.js';
 import type { LlmGateway } from './llm/gateway.js';
 import type { PushTransport } from './push/transport.js';
+import type { SpeechGateway } from './speech/gateway.js';
 import type { StorageGateway } from './storage/gateway.js';
 
 export type Deps = {
@@ -18,6 +19,8 @@ export type Deps = {
   storage: StorageGateway;
   llm: LlmGateway;
   push: PushTransport;
+  /** Text to speech for Buddy's natural voice (ADR 0008). */
+  speech: SpeechGateway;
   /**
    * Starts work that should not hold up the response (Vercel waitUntil,
    * detached in the Node server). Only an accelerator: the same work is

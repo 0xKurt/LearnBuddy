@@ -20,6 +20,7 @@ import {
   SendMessageResponse,
   SessionView,
   StartStepResponse,
+  SpeechResponse,
   TranscribeResponse,
   type AnswerRequest,
   type AppLocale,
@@ -28,6 +29,7 @@ import {
   type SpeakRequest,
   type StartPracticeRequest,
   type StartTopicRequest,
+  type SpeechRequest,
   type TranscribeRequest,
   type UpdateBuddySettingsRequest,
   type UpdateLearnerRequest,
@@ -258,3 +260,7 @@ export const finishSession = (id: string) =>
 /** Speech to text for a spoken message or answer (≤ ~60 s); '' when nothing was understood. */
 export const transcribe = (body: TranscribeRequest) =>
   request('POST', '/voice/transcribe', { body, schema: TranscribeResponse });
+
+/** One sentence in Buddy's natural voice (ADR 0008); voice and speed are her settings. */
+export const synthesizeSpeech = (body: SpeechRequest) =>
+  request('POST', '/voice/speech', { body, schema: SpeechResponse });
