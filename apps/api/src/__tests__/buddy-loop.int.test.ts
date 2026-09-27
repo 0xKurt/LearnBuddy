@@ -245,13 +245,8 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     expect(early.status).toBe(422);
     expect(early.body).toMatchObject({ error: { details: { reason: 'photos_missing' } } });
 
-    env.storage.put(created.body.uploads[0]!.path);
-    const submitted = await lina.api.post<{ status: string }>(
-      `/materials/${created.body.material.id}/submit`,
-    );
-    expect(submitted.status).toBe(202);
-    expect(submitted.body.status).toBe('queued');
-    // Reading starts right away, and Buddy acts on the result while Lina waits.
+    // Reading starts right away, and Buddy acts on the result while Lina waits (scripted
+    // before the submit: the reading and Buddy's check run in the background from there on).
     env.llm.script('buddy_check', async (req) => {
       // While Buddy thinks about it, Lina's screen says so.
       expect((await lina.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
@@ -284,6 +279,12 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
         },
       };
     });
+    env.storage.put(created.body.uploads[0]!.path);
+    const submitted = await lina.api.post<{ status: string }>(
+      `/materials/${created.body.material.id}/submit`,
+    );
+    expect(submitted.status).toBe(202);
+    expect(submitted.body.status).toBe('queued');
     await env.flushBackground();
 
     const material = await lina.api.get<{
@@ -406,6 +407,20 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       item_id: byTopic('Brüche vergleichen').id,
       choice: 0,
     });
+    // Only the capital letter differs, in maths: never right by rule, the tutor judges it
+    // gently (decision D-2, audit C-7).
+    env.llm.script('tutor', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain(
+        'RULE CHECK: differs from the solution only in capitalisation',
+      );
+      return {
+        intent: 'answer',
+        verdict: 'correct',
+        reply: 'Genau, der Nenner.',
+        gave_hint: false,
+        revealed_answer: false,
+      };
+    });
     await lina.api.post(`/practice/sessions/${sessionId}/answer`, {
       client_turn_id: ids.turn3,
       item_id: byTopic('Begriffe').id,
@@ -447,7 +462,8 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     expect(replay.body.reply.text).toBe(
       'Genau – der Wert bleibt gleich, nur die Darstellung ändert sich.',
     );
-    expect(env.llm.callsFor('tutor')).toHaveLength(1);
+    // "nenner" and the free text were judged by the tutor, once each.
+    expect(env.llm.callsFor('tutor')).toHaveLength(2);
 
     // Finishing wakes Buddy right away to plan what comes next (here: nothing to add today).
     env.llm.script('buddy_check', (req) => {

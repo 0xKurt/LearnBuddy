@@ -74,8 +74,11 @@ materialRoutes.post('/:id/submit', async (c) => {
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
   const { jobId } = await submitMaterial(deps, learnerId, materialId);
+  // The answer is the state this request left (queued), read before the reading starts:
+  // otherwise it depends on how far the background work got (flaky 'processing').
+  const view = await materialView(deps.db, learnerId, materialId);
   if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
-  return c.json(await materialView(deps.db, learnerId, materialId), 202);
+  return c.json(view, 202);
 });
 
 materialRoutes.post('/:id/retry', async (c) => {
@@ -83,8 +86,11 @@ materialRoutes.post('/:id/retry', async (c) => {
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
   const { jobId } = await retryMaterial(deps, learnerId, materialId);
+  // The answer is the state this request left (queued), read before the reading starts:
+  // otherwise it depends on how far the background work got (flaky 'processing').
+  const view = await materialView(deps.db, learnerId, materialId);
   if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
-  return c.json(await materialView(deps.db, learnerId, materialId), 202);
+  return c.json(view, 202);
 });
 
 /** "Passt so": the pages Buddy could not read are fine as they are. */
