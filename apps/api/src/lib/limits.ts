@@ -10,9 +10,11 @@
 // - a rate limit (`limit` per `windowMs`): the attempt beyond the limit is
 //   refused until the window ends;
 // - a lockout (`lock` set): the attempt that reaches `limit` still runs, and
-//   locks the budget for `lock.baseMs`, doubling with every lock that follows
-//   (15 min, 30 min, 1 h … up to `lock.maxMs`). `reset` (e.g. the right PIN)
-//   clears count, lock and escalation.
+//   locks the budget for `lock.ms` — the same every time, no escalation
+//   (ADR 0006). After the lock the count starts again. `reset` (e.g. the
+//   right PIN) clears count and lock.
+//
+// Budgets exist only against abuse and never limit normal use (ADR 0006).
 
 import type { Db } from './db.js';
 import { AppError } from './errors.js';
@@ -20,21 +22,21 @@ import { AppError } from './errors.js';
 export type LimitPolicy = {
   limit: number;
   windowMs: number;
-  lock?: { baseMs: number; maxMs: number };
+  lock?: { ms: number };
 };
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
-/** Budgets decided in D-14 (docs/architecture.md §Limits). */
+/** Budgets (docs/architecture.md §Limits, ADR 0006). */
 export const POLICIES = {
-  /** Wrong PINs, shared by every route that checks the PIN. */
-  pin: { limit: 5, windowMs: 24 * HOUR, lock: { baseMs: 15 * MINUTE, maxMs: 24 * HOUR } },
+  /** Wrong PINs, shared by every route that checks the PIN: 5 wrong → 15 minutes. */
+  pin: { limit: 5, windowMs: 24 * HOUR, lock: { ms: 15 * MINUTE } },
   /** Replacing a forgotten PIN after a fresh password sign-in. */
   pin_recovery: { limit: 5, windowMs: HOUR },
-  /** Practice answers (typed and spoken). */
+  /** Practice answers (typed and spoken): a script, not a learner (10 a minute for an hour). */
   answers: { limit: 600, windowMs: HOUR },
-  /** Messages to Buddy. */
+  /** Messages to Buddy: a script, not a learner (2 a minute for an hour). */
   messages: { limit: 120, windowMs: HOUR },
 } as const satisfies Record<string, LimitPolicy>;
 
@@ -63,20 +65,15 @@ export async function consume(
   policy: LimitPolicy = POLICIES[scope],
 ): Promise<ConsumeResult> {
   const lock = policy.lock ?? null;
-  // $1 scope, $2 account, $3 now, $4 window ms, $5 limit, $6 lock on?, $7 base ms, $8 max ms
+  // $1 scope, $2 account, $3 now, $4 window ms, $5 limit, $6 lock on?, $7 lock ms
   const row = await db.one<CounterRow>(
-    `with p as (
-       select $3::timestamptz as now, ($4::bigint * interval '1 millisecond') as win,
-              $5::int as lim, $6::boolean as lockout,
-              $7::bigint as base_ms, $8::bigint as max_ms
-     )
+    `with p as (select $3::timestamptz as now, $5::int as lim, $6::boolean as lockout)
      insert into attempt_counters as a
-       (scope, account_id, window_start, count, locked_until, lock_level, refused, updated_at)
+       (scope, account_id, window_start, count, locked_until, refused, updated_at)
      select $1, $2, p.now,
             case when p.lockout and 1 >= p.lim then 0 else 1 end,
             case when p.lockout and 1 >= p.lim
-                 then p.now + least(p.base_ms, p.max_ms) * interval '1 millisecond' end,
-            case when p.lockout and 1 >= p.lim then 1 else 0 end,
+                 then p.now + $7::bigint * interval '1 millisecond' end,
             false, p.now
        from p
      on conflict (scope, account_id) do update set
@@ -96,31 +93,15 @@ export async function consume(
          when a.locked_until > $3::timestamptz then a.locked_until
          when $6::boolean and (case when a.window_start + ($4::bigint * interval '1 millisecond') <= $3::timestamptz
                                     then 1 else a.count + 1 end) >= $5::int
-           then $3::timestamptz + least($7::bigint * power(2, a.lock_level)::bigint, $8::bigint)
-                                  * interval '1 millisecond'
+           then $3::timestamptz + $7::bigint * interval '1 millisecond'
          else null end,
-       lock_level = case
-         when a.locked_until > $3::timestamptz then a.lock_level
-         when $6::boolean and (case when a.window_start + ($4::bigint * interval '1 millisecond') <= $3::timestamptz
-                                    then 1 else a.count + 1 end) >= $5::int
-           then least(a.lock_level + 1, 30)
-         else a.lock_level end,
        refused = coalesce(a.locked_until > $3::timestamptz, false)
          or (not $6::boolean
              and a.window_start + ($4::bigint * interval '1 millisecond') > $3::timestamptz
              and a.count >= $5::int),
        updated_at = $3::timestamptz
      returning count, window_start, locked_until, refused`,
-    [
-      scope,
-      accountId,
-      now,
-      policy.windowMs,
-      policy.limit,
-      lock !== null,
-      lock?.baseMs ?? 0,
-      lock?.maxMs ?? 0,
-    ],
+    [scope, accountId, now, policy.windowMs, policy.limit, lock !== null, lock?.ms ?? 0],
   );
   if (row.refused) {
     const until =
@@ -155,7 +136,7 @@ export async function lockedUntil(
   return row?.locked_until && row.locked_until > now ? row.locked_until : null;
 }
 
-/** Clears count, lock and escalation (e.g. after the right PIN). */
+/** Clears count and lock (e.g. after the right PIN). */
 export async function resetCounter(db: Db, scope: LimitScope, accountId: string): Promise<void> {
   await db.query(`delete from attempt_counters where scope = $1 and account_id = $2`, [
     scope,

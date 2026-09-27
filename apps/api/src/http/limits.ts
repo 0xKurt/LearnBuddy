@@ -1,6 +1,7 @@
 // Per-account request budgets for the endpoints a script could hammer
-// (docs/architecture.md §Limits, D-14): practice answers (typed and spoken)
-// 600 an hour, messages to Buddy 120 an hour. One middleware in app.ts, in
+// (docs/architecture.md §Limits, ADR 0006): practice answers (typed and spoken)
+// 600 an hour, messages to Buddy 120 an hour — abuse protection far above what
+// a learner does, never a limit on normal use. One middleware in app.ts, in
 // front of the module routes, using the shared primitive in lib/limits.ts.
 // Refused requests get 429 with Retry-After and change nothing.
 

@@ -43,9 +43,9 @@ describe.skipIf(!dbReady)('attempt counters', () => {
     );
   });
 
-  it('locks at the limit, escalates, and resets on success', async () => {
+  it('locks at the limit for the same time every time (no escalation), and resets on success', async () => {
     const l = await onboard(env);
-    const policy = { limit: 3, windowMs: 3_600_000, lock: { baseMs: 60_000, maxMs: 150_000 } };
+    const policy = { limit: 3, windowMs: 3_600_000, lock: { ms: 60_000 } };
     const take = () => consume(env.db, 'pin', l.accountId, env.clock.now(), policy);
     const burst = await Promise.all(Array.from({ length: 8 }, take));
     expect(burst.filter((r) => r.allowed)).toHaveLength(3);
@@ -53,16 +53,13 @@ describe.skipIf(!dbReady)('attempt counters', () => {
     const locked = await lockedUntil(env.db, 'pin', l.accountId, env.clock.now());
     expect(locked!.getTime() - env.clock.now().getTime()).toBe(60_000);
 
-    env.clock.advance(61_000);
-    for (let i = 0; i < 3; i++) await take();
-    const second = await lockedUntil(env.db, 'pin', l.accountId, env.clock.now());
-    expect(second!.getTime() - env.clock.now().getTime()).toBe(120_000);
-
-    env.clock.advance(121_000);
-    for (let i = 0; i < 3; i++) await take();
-    const third = await lockedUntil(env.db, 'pin', l.accountId, env.clock.now());
-    // Capped at maxMs.
-    expect(third!.getTime() - env.clock.now().getTime()).toBe(150_000);
+    // A second and a third lock last exactly as long as the first (ADR 0006).
+    for (let round = 0; round < 2; round++) {
+      env.clock.advance(61_000);
+      for (let i = 0; i < 3; i++) await take();
+      const again = await lockedUntil(env.db, 'pin', l.accountId, env.clock.now());
+      expect(again!.getTime() - env.clock.now().getTime()).toBe(60_000);
+    }
 
     await resetCounter(env.db, 'pin', l.accountId);
     expect(await lockedUntil(env.db, 'pin', l.accountId, env.clock.now())).toBeNull();

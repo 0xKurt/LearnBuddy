@@ -90,7 +90,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
       await next();
     });
   }
-  // Per-account budgets for answers and messages (D-14, docs/architecture.md §Limits).
+  // Per-account budgets for answers and messages (abuse protection only, ADR 0006, docs/architecture.md §Limits).
   app.use('*', accountBudgets);
 
   app.onError((err, c) => {

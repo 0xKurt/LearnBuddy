@@ -124,7 +124,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
     expect(ok.body.is_minor).toBe(true);
   });
 
-  it('locks the PIN after 5 wrong attempts for 15 minutes, then longer', async () => {
+  it('locks the PIN for 15 minutes after 5 wrong attempts, every time, no escalation (ADR 0006)', async () => {
     const l = await onboard(env, { relation: 'child', pin: '4711' });
     // Later, changing it needs the current PIN or a fresh password sign-in.
     env.clock.minutes(6);
@@ -141,18 +141,14 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
     expect(locked.status).toBe(423);
     expect(locked.body).toMatchObject({ error: { code: 'pin_locked' } });
     env.clock.minutes(16);
-    // Five more wrong ones after the first lock: now 30 minutes (D-14, escalating).
+    // Five more wrong ones after the first lock: again 15 minutes, not longer.
     for (let i = 0; i < 5; i++) await l.api.post('/account/admin-session', { pin: '0000' });
-    env.clock.minutes(16);
+    env.clock.minutes(14);
     expect((await l.api.post('/account/admin-session', { pin: '4711' })).status).toBe(423);
-    env.clock.minutes(15);
+    env.clock.minutes(2);
     const ok = await l.api.post<{ admin_token: string }>('/account/admin-session', { pin: '4711' });
     expect(ok.status).toBe(200);
     expect(ok.body.admin_token).toBeTruthy();
-    // The right PIN clears the escalation: the next lock is 15 minutes again.
-    for (let i = 0; i < 5; i++) await l.api.post('/account/admin-session', { pin: '0000' });
-    env.clock.minutes(16);
-    expect((await l.api.post('/account/admin-session', { pin: '4711' })).status).toBe(200);
   }, 30_000);
 
   it('counts wrong current PINs on PUT /account/pin and honours the lock (H-17)', async () => {
@@ -437,7 +433,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
     });
   });
 
-  it('budgets messages and answers per account with 429 and Retry-After (D-14)', async () => {
+  it('budgets messages and answers per account with 429 and Retry-After (abuse protection, ADR 0006)', async () => {
     const l = await onboard(env);
     const now = env.clock.now();
     await env.db.query(
