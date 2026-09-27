@@ -75,9 +75,45 @@ class QueryDb implements Db {
 
 export type PgDb = Db & { close(): Promise<void>; pool: pg.Pool };
 
-export function createDb(connectionString: string, opts: { max?: number } = {}): PgDb {
+/** Loopback or a Unix socket: the connection never leaves the machine. */
+export function isLocalDatabaseHost(host: string): boolean {
+  const h = host.replace(/^\[|\]$/g, '').toLowerCase();
+  return (
+    h === '' ||
+    h === 'localhost' ||
+    h === '::1' ||
+    /^127(\.\d{1,3}){3}$/.test(h) ||
+    h.startsWith('/')
+  );
+}
+
+/** Connection-string parameters that would silently replace the TLS settings below. */
+const URL_TLS_PARAMS = ['ssl', 'sslmode', 'uselibpqcompat'] as const;
+
+/**
+ * Connection and TLS settings (audit M-7 database-tls-not-enforced). Learners' data leaves the
+ * machine only encrypted and to a verified server: any non-local host gets TLS with certificate
+ * verification, whatever `sslmode` the pasted URL carries (node-pg lets URL parameters override
+ * an explicit `ssl` option, so they are removed). `ca` is the provider's root certificate (PEM;
+ * Supabase: Dashboard → Database → SSL). Local hosts (tests, dev stack) connect without TLS.
+ */
+export function connectionOptions(
+  connectionString: string,
+  ca?: string,
+): { connectionString: string; ssl: false | { rejectUnauthorized: true; ca?: string } } {
+  const url = new URL(connectionString);
+  const host = url.hostname || url.searchParams.get('host') || '';
+  if (isLocalDatabaseHost(decodeURIComponent(host))) return { connectionString, ssl: false };
+  for (const param of URL_TLS_PARAMS) url.searchParams.delete(param);
+  return {
+    connectionString: url.toString(),
+    ssl: ca ? { rejectUnauthorized: true, ca } : { rejectUnauthorized: true },
+  };
+}
+
+export function createDb(connectionString: string, opts: { max?: number; ca?: string } = {}): PgDb {
   const pool = new pg.Pool({
-    connectionString,
+    ...connectionOptions(connectionString, opts.ca),
     max: opts.max ?? 5,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
@@ -103,4 +139,10 @@ export function createDb(connectionString: string, opts: { max?: number } = {}):
 export function isUniqueViolation(err: unknown, constraint?: string): boolean {
   const e = err as { code?: string; constraint?: string } | null;
   return !!e && e.code === '23505' && (!constraint || e.constraint === constraint);
+}
+
+/** Postgres check_violation (a row the schema's rules refuse). */
+export function isCheckViolation(err: unknown, constraint?: string): boolean {
+  const e = err as { code?: string; constraint?: string } | null;
+  return !!e && e.code === '23514' && (!constraint || e.constraint === constraint);
 }

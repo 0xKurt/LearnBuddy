@@ -10,10 +10,14 @@ import type { Db } from '../../lib/db.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 
 export type BuddyEvent =
-  /** Photos of learning material were read and questions made. */
-  | { type: 'material_ready'; materialId: string }
+  /**
+   * Photos of learning material were read and questions made. `materialId` is the reading
+   * (the event's row: each reading once); `rootId` the sheet its questions joined, when
+   * the photos were pages added to an earlier sheet.
+   */
+  | { type: 'material_ready'; materialId: string; rootId?: string }
   /** Photos of homework were read (a help session exists; Buddy is not woken). */
-  | { type: 'homework_ready'; materialId: string }
+  | { type: 'homework_ready'; materialId: string; rootId?: string }
   /** A practice session ended with at least one answer. */
   | { type: 'session_finished'; sessionId: string };
 
@@ -38,7 +42,7 @@ const wakeBuddy: Subscriber = async (db, learnerId, eventId, e, at) => {
     payload: {
       reason: e.type,
       event_id: eventId,
-      ...(e.type === 'session_finished' ? { session_id: ref } : { material_id: ref }),
+      ...(e.type === 'session_finished' ? { session_id: ref } : { material_id: e.rootId ?? ref }),
     },
   });
 };

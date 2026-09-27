@@ -10,8 +10,16 @@ pnpm -r --parallel typecheck
 echo "→ lint (staged only)"
 pnpm exec lint-staged
 
-echo "→ tests (affected workspaces)"
-pnpm -r --parallel test
+echo "→ tests (all workspaces, API integration tests on a real Postgres)"
+# Integration tests must never skip silently: without a reachable Postgres
+# (LB_TEST_DATABASE_URL, default 127.0.0.1:5432) the gate fails instead of
+# passing with every database test skipped (audit precommit-green-without-postgres).
+export LB_REQUIRE_TEST_DB=1
+pnpm -r --parallel test || {
+  echo "✗ tests failed. If the API reports 'LB_REQUIRE_TEST_DB=1 but no Postgres', start a" >&2
+  echo "  Postgres 16 (or set LB_TEST_DATABASE_URL) — see README.md §Develop." >&2
+  exit 1
+}
 
 # Mobile-bundle smoke test. The earlier gates (tsc, vitest) don't actually
 # run the Metro bundler, so module-resolution issues (.js → .ts rewrites,

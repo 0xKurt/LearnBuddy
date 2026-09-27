@@ -39,3 +39,12 @@ export function afterFeedback(
   if (items.find((i) => i.item.id === itemId)?.status === 'open') return 'listen';
   return items.some((i) => i.status === 'open') ? 'next' : 'stay';
 }
+
+/**
+ * Conversation mode opens the mic by itself (on arrival, after each reply) only without a
+ * screen reader: with VoiceOver/TalkBack on, the mic would record the screen reader's own
+ * speech ("Beenden, Taste") and send it (audit M-85). Then she taps the mic, or Magic Tap.
+ */
+export function talkListensByItself(screenReaderOn: boolean | null): boolean {
+  return screenReaderOn === false;
+}

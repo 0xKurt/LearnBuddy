@@ -97,7 +97,13 @@ describe.skipIf(!dbReady)('terminal states and honest outages', () => {
       key: `turn:${msg.id}:x`,
       payload: { message_id: msg.id },
     });
-    await dyingJob(env, { learnerId: null, kind: 'purge_photos', key: 'purge:x', payload: {} });
+    // Erasure kinds are never parked (PERSISTENT_KINDS); a reading job is.
+    await dyingJob(env, {
+      learnerId: l.learnerId,
+      kind: 'extract_material',
+      key: 'extract:x',
+      payload: { material_id: '00000000-0000-4000-8000-00000000dead' },
+    });
 
     const stats = await runTick(env.deps);
     expect(stats.errors).toEqual([]);
@@ -122,13 +128,13 @@ describe.skipIf(!dbReady)('terminal states and honest outages', () => {
     expect(handled).toEqual([
       { kind: 'buddy_check', terminal: 'fallback_queued' },
       { kind: 'buddy_turn', terminal: 'message_failed' },
-      { kind: 'purge_photos', terminal: 'reported' },
+      { kind: 'extract_material', terminal: 'reported' },
     ]);
     const h = await health(env);
     expect(h.body.scheduler.parked).toMatchObject({
       buddy_check: { count: 1 },
       buddy_turn: { count: 1 },
-      purge_photos: { count: 1 },
+      extract_material: { count: 1 },
     });
   });
 

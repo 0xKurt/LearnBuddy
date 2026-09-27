@@ -20,6 +20,7 @@
     "blocked": "Il filtro di sicurezza blocca questa scheda. Rileggerla non servirà: scrivi semplicemente le domande."
   },
   "incomplete_hint": "Le foto non sono arrivate complete. Elimina la scheda e fotografala di nuovo.",
+  "photos_deleted": "Le foto non sono più salvate. Elimina il foglio e fotografalo di nuovo.",
   "practice": "Esercitati",
   "practice_label": "Esercitati su “{{title}}”",
   "retry": "Rileggi",

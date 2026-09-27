@@ -7,9 +7,10 @@
 //                   before a test, "how did it go", the answer to her photos); an agreed
 //                   reminder is sent by its template (audit failed-countdown-never-fires-no-fallback)
 //   buddy_turn    — her message is marked failed with a code, never "processing" forever
-//   extract_material, purge_photos, delete_account — reported to the operator: parked counts
-//                   and the last error per kind in GET /health (their retry policy lives with
-//                   the materials and privacy modules)
+//   extract_material — reported to the operator: parked counts and the last error per kind
+//                   in GET /health
+//   purge_photos, purge_content, delete_account — never parked (PERSISTENT_KINDS retry with
+//                   backoff; overdue erasure is its own /health section)
 // Handling is recorded on the job (`result.terminal`), so each parked job is handled once.
 
 import type { Deps } from '../../deps.js';
@@ -44,7 +45,10 @@ export const TERMINAL: { [K in JobKind]: TerminalEffect } = {
     return 'message_failed';
   },
   extract_material: operator,
+  // Erasure kinds are never parked (jobs.ts PERSISTENT_KINDS); should one ever be, the
+  // operator sees it in /health.
   purge_photos: operator,
+  purge_content: operator,
   delete_account: operator,
 };
 

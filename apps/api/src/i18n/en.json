@@ -42,6 +42,7 @@
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",
     "cannot_check": "I can't check that right now. You can look at the solution and compare yourself.",
     "accents": "Almost – check the accents again.",
+    "spelling": "Almost right – look closely at capital letters and punctuation.",
     "hint_request": "A hint, please",
     "worked_intro": "Here's how it works:",
     "solution_is": "The answer is: {{answer}}",

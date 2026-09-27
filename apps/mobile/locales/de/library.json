@@ -20,6 +20,7 @@
     "blocked": "Der Schutzfilter lässt dieses Blatt nicht durch. Nochmal lesen hilft nicht – tipp die Aufgaben einfach ab."
   },
   "incomplete_hint": "Die Fotos sind nicht ganz angekommen. Lösch das Blatt und fotografier es neu.",
+  "photos_deleted": "Die Fotos sind nicht mehr gespeichert. Lösch das Blatt und fotografier es neu.",
   "practice": "Üben",
   "practice_label": "„{{title}}“ üben",
   "retry": "Nochmal lesen",

@@ -45,34 +45,46 @@ Postgres in `apps/api/src/__tests__/` (see [Testing](#testing)).
 ## API
 
 Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, `/api`,
-`/api/v1` (the app calls `/v1/…`; Vercel rewrites `/v1/*` to the function).
+`/api/v1` (the app calls `/v1/…`). On Vercel the single function `apps/api/api/index.ts` gets
+every `/v1/*` and `/api/*` request through two rewrites (nested paths included; the original
+path stays in the request URL); Node is pinned by `engines` in `apps/api/package.json`, and only
+`apps/api/public/` is served statically. The database connection uses TLS with certificate
+verification for every non-local host (`lib/db.ts`, CA in `DATABASE_CA_CERT`); a URL asking for
+less is refused at boot, and a database region outside the EU is logged as a boot warning
+(`config.ts`; the region itself is an open decision, D-4).
 
 - Auth: `Authorization: Bearer <Supabase access token>`, verified with Supabase Auth
   (`auth/verifier.ts`). The API never sees passwords.
 - Every learner-scoped route takes the learner from the verified user (`http/context.ts`), never
   from the body, the path or a model output. The device sends its IANA zone in `x-timezone`.
-- Minors: loosening contact rules and account data need a short-lived admin token (PIN,
-  `x-admin-token`, 10 minutes, HMAC). Tightening (pause, quieter) is always allowed.
+- Minors: loosening contact rules, account data, sign-in details, a birth-date correction and
+  agreeing to a new privacy text need a short-lived admin token (PIN, `x-admin-token`,
+  5 minutes, HMAC; the app drops it after the one step). A child profile counts as a minor
+  until 18 (D-8). Tightening (pause, quieter) is always allowed.
+- Consent: every route behind `requireAccount` answers 409 `consent_outdated` while the
+  account's `consent_version` is not the current one; `/me`, `POST /account`, the PIN, export
+  and deletion (`requireAccountAnyConsent`) keep working.
 - Errors: `{"error": {"code", "message", "details"?}}` with stable codes (`lib/errors.ts`); no
   provider bodies, SQL or user content in messages or logs.
 - Bodies are JSON ≤ 64 KB, validated with zod (`http/validate.ts`); photos go straight to storage.
 
-| Route                                                                                                | Purpose                                                  |
-| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `GET /me`, `POST /account`, `POST /learner`, `PATCH /learner`                                        | onboarding (consent version must match)                  |
-| `PUT /account/pin`, `POST /account/admin-session`                                                    | PIN gate (5 tries, 15 min lock)                          |
-| `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder)                                 |
-| `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system |
-| `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)    |
-| `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                  |
-| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                  |
-| `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                   |
-| `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                            |
-| `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                       |
-| `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one      |
-| `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                 |
-| `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived              |
-| `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                               |
+| Route                                                                                                | Purpose                                                                                          |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `GET /me`, `POST /account`, `POST /learner`, `PATCH /learner`                                        | onboarding (consent version must match); child + PIN in one request; birth-date correction (PIN) |
+| `PUT /account/pin`, `POST /account/admin-session`                                                    | PIN gate (shared lock, §Limits)                                                                  |
+| `PUT /account/password`                                                                              | new password (Supabase admin), PIN for a minor                                                   |
+| `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder; also without a profile)                                                 |
+| `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system                                         |
+| `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                            |
+| `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                          |
+| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                                                          |
+| `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                                                           |
+| `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                                                                    |
+| `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                                                               |
+| `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                              |
+| `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                         |
+| `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                      |
+| `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                       |
 
 ## Buddy decisions
 
@@ -265,15 +277,34 @@ finishing and retrying are compare-and-set on the token, so a worker whose lease
 overwrite its successor. A Buddy check heartbeats its leases (the learner's check lease and
 its claimed jobs) before every model call, so a check that runs longer than one lease is never
 taken over while alive; it applies a decision (and its fallbacks) only while it still holds the
-learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed`. A cancelled
-job can be planned again with the same key (an exam moved away and back).
+learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed` — except the
+erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KINDS` in
+`scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
+again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
+lease. A cancelled job can be planned again with the same key (an exam moved away and back).
+
+**Erasure** (`modules/materials/purge.ts`, `identity/privacy.ts`, migration `0016_erasure.sql`;
+D-7, D-9). The account deletion is a resumable job whose stage lives in its payload: `start`
+(marks `accounts.deletion_started_at`; from here it cannot be cancelled — `DELETE
+/account/deletion` answers 409 `deletion_running` — and the account takes no more writes) →
+`photos` (every live photo path goes to the `storage_deletions` queue) → `content` (the learner's
+tables, children first, 2 000 rows per statement, 20 s per run, resuming at the saved table) →
+`auth` (the auth user, which cascades the account, profile and settings). The account does not
+wait for Storage: queued paths are removed in requests of ≤ 1 000 (the Storage limit, also
+enforced by the test fake) and retried with backoff until gone. Maintenance after the job loop
+works that queue, re-plans a purge for photos no job will delete any more (failed or read more
+than 7 days ago, deleted), and erases removed/replaced memories after their 7-day undo window
+(below). `GET /health` fails (503, `erasure`) when an account is more than a day past its
+deletion date or a queued path is more than a day old. `/me` says `deletion_running` once the
+hold is over. Every foreign-key column is indexed (`0017_fk_indexes.sql`), so the cascades follow
+the learner's own rows, not the table size.
 
 **No job kind ends silently** (`scheduler/terminal.ts`, audit S-5). Each kind has a terminal
 effect, enforced by the type of the registry, applied once per parked job by the tick: a parked
 Buddy check comes back once as a model-free fallback (the countdown before a test still
 prepares practice; an agreed reminder is still sent by its template); a parked turn recovery
-marks her message failed (`internal`); extraction, photo purge and account deletion are reported
-to the operator (parked counts and the last error per kind in `GET /health`).
+marks her message failed (`internal`); a parked extraction is reported to the operator (parked
+counts and the last error per kind in `GET /health`); erasure kinds are never parked (above).
 
 `POST /internal/tick` runs everything due within a 45 s budget: recovery → reading photos →
 Buddy per learner (one learner's failure does not stop the others) → delivery → receipts →
@@ -370,17 +401,24 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                  |
-| ------------------------------- | -------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                               |
-| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                  |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768              |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                             |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos |
-| Jobs                            | 3 attempts, leases 120–180 s; tick budget 45 s                                         |
-| Turn stall                      | taken over after 3 minutes                                                             |
-| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                    |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                   |
+| What                            | Limit                                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                       |
+| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                          |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                      |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                     |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos         |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s        |
+| Turn stall                      | taken over after 3 minutes                                                                     |
+| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                            |
+| Memory                          | 60 active items; temporary ≤ 60 days                                                           |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, then 30 min, 1 h … ≤ 24 h; the right PIN resets (423 + `Retry-After`) |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                      |
+| Requests per account            | practice answers (typed + spoken) 600/h, messages to Buddy 120/h (429 + `Retry-After`)         |
+
+Budgets are rows in `attempt_counters` (migration 0014) changed by one atomic upsert with the app
+clock (`lib/limits.ts` `consume`); answers and messages are counted by one middleware in front of
+the routes (`http/limits.ts`). Password-reset e-mails are Supabase Auth's own rate limit.
 
 Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
 gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
@@ -417,7 +455,28 @@ questions (validated item by item) → the capture step Buddy asked for is done 
 Buddy is woken. Status is what the database says: `awaiting_upload → queued → processing →
 ready | failed(reason)`. Photos are deleted 7 days after reading (also when unreadable), at once
 when they are not learning material (a letter, a recipe: they cannot be read again anyway), and
-immediately when the learner deletes the material.
+immediately when the learner deletes the material — and once more 2 hours later, when no signed
+upload URL can deliver a late photo any more (a submit for a deleted material also purges at once).
+A material becomes failed in one place (`markMaterialFailed`), from the job and from the tick's
+recovery alike: status, the purge and a context bump in one transaction.
+
+**Outages are not failures.** The Storage gateway tells an absent photo (`null`) from a provider
+failure (`StorageError`): a failed download retries the run like a retryable model error (backoff
+1, 2, 4 min); a failed existence check on submit answers 503 `storage_unavailable`, never
+"photos missing". Runs refused for the daily budget or lost to an outage are marked `uncounted`
+and do not use up the 3 runs. After the photo purge, retry answers 409 `photos_deleted`, and
+`MaterialView.photos_deleted` hides "Nochmal lesen" (the card says to photograph it again). Each
+photo in the reading request is preceded by a label ("Photo 2 of 3:"), so page numbers in the
+report name real photos.
+
+**Deleting** ("Blatt löschen", D-7) takes the sheet and its merged pages out of the library,
+Buddy's picture, running sessions (open questions closed like "Frage passt nicht"), prepared
+practice (a step left without questions goes back to planned) and its homework help session
+(abandoned) in one transaction, and plans `purge_content`: the transcript, title and page report
+are erased and the questions deleted with their answers, practice turns and memory state; sessions,
+steps and events keep only ids and counts. "Frage löschen" erases that question the same way. A
+reading still running for a deleted sheet ends without result: the final transaction re-checks
+`archived_at` under the row lock (no questions, no ready, no wake-up).
 
 **What counts as learning material** is said in the prompt: school or study content; everyday
 papers (a recipe, a letter, a receipt, an advert) are not, unless printed as a school task (live:
@@ -450,8 +509,12 @@ hinzufügen" (on the sheet's question list) send the photos as a material of the
 `completes`, so upload, reading, retries and failures work exactly as for any photo. Once read, its
 questions join the sheet (`merged_into`): same material, same subject; for homework the tasks are
 appended to the sheet's help session while it is open (else a new help session). The part is hidden
-from lists and Buddy's context (only its own missing pages still show). If the sheet was deleted
-meanwhile, the pages stay a sheet of their own. A second school subject on one sheet
+from lists and Buddy's context (only its own missing pages still show). Its reading is its own
+event (`material_ready` keyed on the part, the check looks at the sheet), so added pages wake
+Buddy like the first ones did. A part that fails keeps the sheet's title and subject. If the sheet
+was deleted meanwhile, the pages stay a sheet of their own; deleting a sheet also deletes the
+pages merged into it. The page notice lasts 24 hours from the reading (`ready_at`), in the home
+and in Buddy's context alike. A second school subject on one sheet
 (`other_subject` with the topics of its questions) files those questions under that subject.
 Pages keep the order they were taken in; there is no reordering — the notice about a missing page
 shows that page's photo while it is on the phone (kept a day, below), so the number is never
@@ -487,16 +550,59 @@ selection already skips archived items) and rename the material (`PATCH /materia
 
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics). Answers are checked by rules where exactness is decidable (multiple choice,
-numbers with decimal comma and units, exact matches, and near misses on written answers — missing
+written numbers, exact matches, and near misses on written answers — missing
 accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
 fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in
-homework). Answers the model judges right that the rules did not know are added to the item's
+homework). See **Grading** below for what "decidable" means. Answers the model judges right that the rules did not know are added to the item's
 accepted answers, so the rules know them next time; otherwise the tutor model judges with a
 structured decision, and the server enforces invariants (a non-attempt is never graded, a
 revealed answer never counts as right, a rule-checked wrong answer stays wrong). Without a model,
 nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced repetition (FSRS,
 no short-term steps) once per session: first try → Good, with help → Hard, revealed → Again.
 Finishing records evidence on Buddy's step (only if something was answered) and wakes Buddy.
+
+**Grading** (`evaluate.ts` + `packages/shared-math`; audit C-1–C-7, H-1–H-6; decisions D-1–D-3;
+migration `0012_item_answer_rules.sql`). A rule "correct" is final — no model sees the answer —
+so the rules only say it when it is certain; everything else goes to the tutor (`unknown`).
+
+- _One key format._ Keys are written with a decimal point and no thousands separators (0.125,
+  1250), a fraction or mixed number only when the task asks for that form, the unit apart ("%"
+  for percent): `NUMERIC_KEY_RULES` in both prompts. Code reads a key with `parseCanonicalKey`,
+  never with the learner's parser, so "0.125" is 0.125 for every learner. LaTeX keys are read
+  as written (`$3\frac{1}{2}$` is 3½, never 31/2).
+- _Learner numbers, locale-independent._ `parseNumericInput` reads the separator from the text:
+  "0,125", "2,5", "1.234,5" mean the same in every locale. One separator before exactly three
+  digits ("1.000", "2,375") is ambiguous → no value → the tutor, unless the whole part is 0.
+  "3 1/2" is a mixed number; "%" (also said: "Prozent", "percent", …) is a unit, never ÷ 100.
+  Calculations from the math keys (17·23, √144) are evaluated by the bounded parser of
+  `expression.ts` (at most 64 characters, digits and + − · : / ^ √ π only) — never a general
+  evaluator — and marked as a calculation.
+- _Tolerance (D-1)._ An integer, fraction or mixed-number key must match exactly; a decimal key
+  accepts less than half a unit of its last written decimal (key 3.14: 3,1416 yes, 3,1 no); a
+  wider tolerance only when the item declares one (`items.tolerance`, zod-validated, kept only for
+  numeric items and at most a tenth of the key). No percentage rule.
+- _Form (D-3)._ The key's value in the key's form is correct (0,125 for 0.125; 4,0 for 4; the
+  same fraction as written). The same value in another form (1/8 for 0.125, 6/8 for 3/4, 7/2
+  for 3 1/2) or a calculation that gives it is for the tutor. A written number with another value
+  is wrong for sure (outside homework).
+- _Math_ (a digit, an operator or LaTeX in the key or the answer, and every formula): compared
+  with every operator, sign, relation and decimal separator kept (`canonicalMath`): x=5 is not
+  x=-5, 3,4 is not 3/4, x^2-2x is not x^2+2x. No near miss (no "typo" for 15:35 against 14:35,
+  no "missing word" for 5 against x = 5).
+- _Words._ Correct only when equal after NFC and collapsing spaces — case, ß and punctuation
+  count. A difference only there is, per item (`items.spelling`) or by default for vocabulary and
+  language subjects (German, English, French, Spanish, Latin, other language), a near miss "Fast
+  richtig – schau nochmal genau auf Groß- und Kleinschreibung, ß und Satzzeichen" (D-2, strict);
+  elsewhere the tutor judges it gently (rule verdict `folded`).
+- _Choices._ An option is named by its text (however written; words fold case) or by its badge
+  letter — but a letter that is also another option's text ("A" with the, a, an) and an option
+  followed by more words ("Richtig ist das nicht") go to the tutor.
+- The value comparison is shared: `compareWithKeys` (answer and accepted answers, any form) for
+  every caller that asks "does she state the right number?" — homework help included.
+- Proven by a truth table and property tests (fast-check) over generated values in de/fr/es/it/en:
+  a right value written as a learner in that locale writes it is never `incorrect`; the last
+  place ± 1, a flipped sign or a swapped operator is never `correct`
+  (`practice/__tests__/evaluate.test.ts`, `shared-math/src/__tests__/numeric-input.test.ts`).
 
 **Hint ladder** (migration `0008_item_hints.sql`, practice and explanations only). Each question gets
 2–3 hints (what is asked → which rule → the first step) and the solution explained step by step:
@@ -557,8 +663,14 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
   not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores)
   would replace `speakItem`'s model call behind the same contract.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
-  renders fractions, powers, roots; `apps/mobile/components/math/`); LaTeX the model forgot to
-  wrap is wrapped server-side, and rule checks compare \\frac{3}{4} and 3/4 as equal. A question
+  renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
+  symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
+  `apps/mobile/lib/math/`). An unknown command shows its name set apart by spaces. A `$` right
+  before a digit never closes math and one followed by a space never opens it, so prices
+  ("$5 and $3") stay text. LaTeX the model forgot to wrap is wrapped server-side — in a sentence
+  only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
+  compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
+  when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
   (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
   not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
@@ -569,7 +681,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
 
 - **Speech to text** — on the device first, strictly on-device (`expo-speech-recognition` with
   `requiresOnDeviceRecognition`; the words appear while she speaks, nothing leaves the phone).
-  `lib/speech/engine.ts` decides per tap (unit-tested): iOS when on-device is supported; Android
+  `lib/speech/engine.ts` decides per tap (unit-tested): iOS when on-device is supported and the
+  language is exactly the phone's own locale (iOS checks on-device support for that locale only
+  and would send any other language to Apple, D-11); Android
   only with the language's offline model installed; never the browser's Web Speech (server-side)
   and never the system's server mode. If the recogniser fails for the language, the same tap
   continues as a recording and that language goes straight to the server for the rest of the
@@ -587,7 +701,14 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`lib/speech/handsFree.ts`): question read → the mic listens (ends by itself when she pauses, on
   the phone) → her answer or question is checked → the feedback is read → the mic listens again,
   or, once the question is closed, the next one comes. Typing, switching voice mode off or leaving
-  ends the loop; the microphone never starts before her own tap on that screen. Pronunciation
+  ends the loop; the microphone never starts before her own tap on that screen. One listening
+  belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, typing, the
+  screen locking while it checks), Buddy starting to speak or the next question cancels a
+  running mic and drops its late text. Questions carry the language they are written in
+  (`prompt_lang`, also for ordinary questions): voice mode reads them and listens in that
+  language, not the app's. The switch sits in the practice header and on Buddy's home (speaker
+  icon; the headphones open conversation mode). The home reads a late reply only while it is
+  on screen. Pronunciation
   recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
@@ -596,9 +717,21 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
   Tapping the mic while Buddy speaks interrupts it. When the answer carries a button
   (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
-  screen — opened by her — is open; "Beenden" or the keyboard ends it. Walkthrough: one full turn
+  screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
+  the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
+  every phase is announced. Walkthrough: one full turn
   with Chromium's fake microphone and a scripted transcript.
-- **Pronunciation** — see Learning modes (`speak`).
+- **Pronunciation** — see Learning modes (`speak`). A judgement that lands after "Beenden" is
+  refused (the write locks the session first, 409). Offline, the recording waits for the
+  connection with "Neu aufnehmen" / "Diesmal überspringen" available, which cancel the wait.
+- **Screen readers** — `lib/announce.ts`: Android reads live regions by itself, iOS has none,
+  so toasts, capture and dictation status, what the mic understood, the PIN error (again after
+  each attempt), Buddy's reply ("Buddy: …", when voice mode is off), practice feedback with its
+  verdict word and math in words, the revealed solution and the conversation phases are
+  announced explicitly (`announcePlan` decides, unit-tested). Button labels follow the system
+  text size up to 1.6× (`Btn` grows with `minHeight` instead of clipping), "Prüfen" wraps onto
+  its own line rather than shrink, and toasts sit above the iOS keyboard. Not yet checked on a
+  device at AX3/AX5.
 
 ## Home
 
@@ -647,8 +780,12 @@ once (`abandonStaleUploads`, run by the scheduler).
   (`lib/auth/recovery.ts`), asks for the new password twice (sign-up rule, ≥ 8 characters) and
   then saves the session. Expired or used links get a calm "ask for a new one".
 - **Changing e-mail or password** is in the parents' area (`AccountAccessCard`); for a minor's
-  profile the parents' PIN comes first. An e-mail change is only requested: it counts once the
-  confirmation links are opened (`double_confirm_changes`), and the app says exactly that.
+  profile the parents' PIN comes first. A new password goes through the API
+  (`PUT /account/password`, Supabase admin), which checks the admin token itself, so the gate
+  holds on the server. An e-mail change is only requested: it counts once the confirmation links
+  to the old and the new address are opened (`double_confirm_changes`), and the app says exactly
+  that. `secure_password_change` is on, so a password change straight against Supabase Auth
+  with a device token needs a recent sign-in or a nonce sent to the account's e-mail.
 - **Offline**: on phones NetInfo feeds TanStack Query's `onlineManager` (only `isConnected`;
   NetInfo's own reachability ping is off); on the web the browser's `online`/`offline` events do
   (NetInfo on Chromium misses the connection coming back). Queries pause instead of failing, a calm line says so at the top
@@ -678,10 +815,24 @@ once (`abandonStaleUploads`, run by the scheduler).
   aliases in that order, and jobs due together run in it. Before, ties were broken by however the
   table happened to hold the rows — the most likely cause of one failed run of the core-loop test
   in about 40 (its log was lost and it did not come back in 36 further runs, so this is not proven).
-- Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). Without one the
-  database tests are skipped; `LB_REQUIRE_TEST_DB=1` (CI) makes that a failure.
+- Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
+  hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain
+  `pnpm test` outside them skips the database tests.
+- The app keys (anon, authenticated) reach nothing in the database: the test shim grants what a
+  hosted Supabase project grants by default, and `database-exposure.int.test.ts` fails for any
+  public function they can execute or any table without row level security.
+- Deploy checks: `scripts/deploy-check.sh` (CI job `deploy-check`, and before promoting) runs
+  `vercel.json` through Vercel's own builder detector and, when given `DATABASE_URL` /
+  `LB_DEPLOY_URL`, checks TLS, region, the app keys' grants and `/v1/health` of a deploy. A
+  real preview deploy answering `/v1/health` has not been recorded yet.
+- The scheduler trigger chain up to the network (`scheduler-trigger.int.test.ts`): the
+  `lb-tick` cron entry, `lb_invoke_tick()` reading Vault and posting to `{lb_api_url}/internal/tick`
+  with the secret (the shim's `net.http_post` records the request), and that request replayed
+  against the app turning `/v1/health` healthy. Streaming is read chunk by chunk
+  (`stream.int.test.ts`), so a buffered response fails.
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
-  devices, Supabase Auth/Storage themselves, pg_cron/pg_net on a hosted project.
+  devices, Supabase Auth/Storage themselves, pg_cron firing and pg_net sending on a hosted
+  project.
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's

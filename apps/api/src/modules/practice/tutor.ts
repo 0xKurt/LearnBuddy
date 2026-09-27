@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.3';
+export const TUTOR_PROMPT_VERSION = 'tutor.v3.4';
 
 export const TutorDecision = z.object({
   intent: z
@@ -74,9 +74,12 @@ export type TutorItem = {
 const RULE_TEXT: Record<RuleVerdict, string> = {
   incorrect: 'the answer is WRONG',
   correct: 'the answer is right',
+  spelling: 'close: right except capitalisation, ß/ss or punctuation, which matter here',
   close: 'close: right except accents',
   missing_word: 'close: a word is missing (e.g. the article)',
   typo: 'close: a small spelling slip',
+  folded:
+    'differs from the solution only in capitalisation, ß/ss or punctuation — judge gently whether that matters for this question',
   unknown: 'not decidable by rules — judge it',
 };
 

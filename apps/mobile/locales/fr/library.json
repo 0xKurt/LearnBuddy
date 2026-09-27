@@ -20,6 +20,7 @@
     "blocked": "Le filtre de sécurité bloque cette fiche. La relire n'y changera rien – tape simplement les questions."
   },
   "incomplete_hint": "Les photos ne sont pas arrivées en entier. Supprime la fiche et reprends-la en photo.",
+  "photos_deleted": "Les photos ne sont plus enregistrées. Supprime la feuille et reprends-la en photo.",
   "practice": "S'entraîner",
   "practice_label": "S'entraîner sur «{{title}}»",
   "retry": "Relire",

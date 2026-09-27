@@ -17,6 +17,7 @@
     "mathjs": "^14.0.1"
   },
   "devDependencies": {
+    "fast-check": "^4.10.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }

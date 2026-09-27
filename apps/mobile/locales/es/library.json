@@ -20,6 +20,7 @@
     "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe las preguntas."
   },
   "incomplete_hint": "Las fotos no han llegado completas. Elimina la ficha y vuelve a hacerle una foto.",
+  "photos_deleted": "Las fotos ya no están guardadas. Borra la hoja y vuelve a hacerle fotos.",
   "practice": "Practicar",
   "practice_label": "Practicar “{{title}}”",
   "retry": "Volver a leer",

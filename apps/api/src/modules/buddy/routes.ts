@@ -332,13 +332,15 @@ buddyRoutes.patch('/memory/:id', async (c) => {
       throw new AppError('stale', 'This changed meanwhile; reload');
     if ('retract' in input) {
       await tx.query(
-        `update buddy_memories set status = 'retracted', version = version + 1 where id = $1`,
-        [memoryId],
+        `update buddy_memories set status = 'retracted', closed_at = $2, version = version + 1
+          where id = $1`,
+        [memoryId, now],
       );
     } else {
       await tx.query(
-        `update buddy_memories set status = 'superseded', version = version + 1 where id = $1`,
-        [memoryId],
+        `update buddy_memories set status = 'superseded', closed_at = $2, version = version + 1
+          where id = $1`,
+        [memoryId, now],
       );
       await tx.query(
         `insert into buddy_memories (learner_id, kind, statement, source, valid_until, supersedes_id, created_at)

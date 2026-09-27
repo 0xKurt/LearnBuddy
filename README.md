@@ -25,8 +25,9 @@ pnpm typecheck && pnpm lint && pnpm test
 
 API integration tests run against a real Postgres 16 on `127.0.0.1:5432` (user/password
 `postgres`, or set `LB_TEST_DATABASE_URL`); each test file gets its own throwaway database built
-from the real migrations. Without Postgres they are skipped locally (`LB_REQUIRE_TEST_DB=1`
-makes that a failure, as in CI).
+from the real migrations. The pre-commit hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing
+database fails the gate instead of skipping those tests; a plain `pnpm test` without Postgres
+skips them.
 
 Run the API (`apps/api/.env.local`, template `apps/api/.env.example`):
 
@@ -49,8 +50,11 @@ Mobile app: `pnpm --filter @learnbuddy/mobile start` (template `apps/mobile/.env
 1. Reset the Supabase database and apply `infra/supabase/migrations` (ADR 0004 §Transition).
 2. In Supabase Vault set `lb_api_url` (`https://<api>/v1`) and `lb_tick_secret` (= `TICK_SECRET`):
    pg_cron then calls `POST /internal/tick` every minute.
-3. Configure the API environment (`apps/api/.env.example`); `GET /health` must report the
-   scheduler as running.
+3. Configure the API environment (`apps/api/.env.example`, including `DATABASE_CA_CERT`);
+   `GET https://<api>/v1/health` must report the scheduler as running.
+4. `scripts/deploy-check.sh` (also in CI) validates the Vercel config with Vercel's own
+   detector; with `DATABASE_URL` it checks TLS, region and that the app keys can call no
+   database function, and with `LB_DEPLOY_URL` it smoke-tests `/v1/health` of a deploy.
 
 ## Rules
 

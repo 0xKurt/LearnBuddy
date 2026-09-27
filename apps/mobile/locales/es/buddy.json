@@ -206,5 +206,8 @@
     "end": "Terminar",
     "speak": "Hablar",
     "interrupt": "Interrumpir y hablar"
+  },
+  "a11y": {
+    "reply": "Buddy: {{text}}"
   }
 }

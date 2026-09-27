@@ -295,9 +295,9 @@ async function runCorrectMemory(
   requireQuote(ctx, a.quote);
   const old = memoryOf(ctx, a.memory);
   const updated = await ctx.db.query(
-    `update buddy_memories set status = 'superseded', version = version + 1
+    `update buddy_memories set status = 'superseded', closed_at = $3, version = version + 1
       where id = $1 and learner_id = $2 and status = 'active' returning id`,
-    [old.id, ctx.learnerId],
+    [old.id, ctx.learnerId, ctx.now],
   );
   if (updated.length !== 1) throw new ToolRejection(`memory ${a.memory} changed meanwhile`);
   const row = await ctx.db.one<{ id: string }>(
@@ -326,9 +326,9 @@ async function runForget(action: ActionOf<'forget'>, ctx: ToolContext): Promise<
   requireQuote(ctx, a.quote);
   const m = memoryOf(ctx, a.memory);
   const updated = await ctx.db.query(
-    `update buddy_memories set status = 'retracted', version = version + 1
+    `update buddy_memories set status = 'retracted', closed_at = $3, version = version + 1
       where id = $1 and learner_id = $2 and status = 'active' returning id`,
-    [m.id, ctx.learnerId],
+    [m.id, ctx.learnerId, ctx.now],
   );
   if (updated.length !== 1) throw new ToolRejection(`memory ${a.memory} changed meanwhile`);
   return {
@@ -1027,21 +1027,21 @@ export async function runUndo(
   switch (undo.type) {
     case 'retract_memory': {
       const r = await db.query(
-        `update buddy_memories set status = 'retracted', version = version + 1
+        `update buddy_memories set status = 'retracted', closed_at = $3, version = version + 1
           where id = $1 and learner_id = $2 and status = 'active' returning id`,
-        [undo.memory_id, learnerId],
+        [undo.memory_id, learnerId, now],
       );
       return r.length === 1;
     }
     case 'restore_memory': {
       const r = await db.query(
-        `update buddy_memories set status = 'retracted', version = version + 1
+        `update buddy_memories set status = 'retracted', closed_at = $3, version = version + 1
           where id = $1 and learner_id = $2 and status = 'active' returning id`,
-        [undo.new_id, learnerId],
+        [undo.new_id, learnerId, now],
       );
       if (r.length !== 1) return false;
       await db.query(
-        `update buddy_memories set status = 'active', version = version + 1
+        `update buddy_memories set status = 'active', closed_at = null, version = version + 1
           where id = $1 and learner_id = $2 and status = 'superseded'`,
         [undo.old_id, learnerId],
       );
@@ -1049,7 +1049,7 @@ export async function runUndo(
     }
     case 'unretract_memory': {
       const r = await db.query(
-        `update buddy_memories set status = 'active', version = version + 1
+        `update buddy_memories set status = 'active', closed_at = null, version = version + 1
           where id = $1 and learner_id = $2 and status = 'retracted' returning id`,
         [undo.memory_id, learnerId],
       );

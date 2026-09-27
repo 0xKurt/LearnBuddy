@@ -99,17 +99,20 @@
     },
     "export": {
       "title": "Export data",
-      "body": "Everything that is stored, as text. To keep or pass on.",
+      "body": "Everything stored, as a file. To keep or pass on.",
       "cta": "Create export",
       "working": "Creating the export …",
       "share_title": "LearnBuddy export",
-      "share_failed": "Sharing didn't work. Please try again."
+      "share_failed": "The file couldn't be handed over. Please try again.",
+      "shared": "The export has been handed over.",
+      "saved": "The export has been saved as a file."
     },
     "delete": {
       "title": "Delete account",
       "body": "Everything is deleted for good after 7 days. Until then you can cancel it.",
       "cta": "Delete account …",
       "scheduled": "Deletion is scheduled: from {{date}} at {{time}}. Until then you can cancel it.",
+      "running": "Your account is being deleted right now. This can no longer be cancelled.",
       "cancel": "Cancel deletion",
       "cancelled": "Deletion cancelled. Everything stays as it was.",
       "confirm_title": "Really delete the account?",
@@ -149,7 +152,17 @@
       "password_saved": "New password saved."
     },
     "open": "Open",
-    "close": "Close"
+    "close": "Close",
+    "profile": {
+      "title": "Correct the profile",
+      "current": "{{name}}, born {{date}}",
+      "body": "Is the name or the birth date wrong? You can put it right here.",
+      "cta": "Correct",
+      "sheet_title": "Correct the profile",
+      "name": "Name",
+      "save": "Save",
+      "saved": "Profile saved."
+    }
   },
   "status": {
     "title": "Is everything working?",

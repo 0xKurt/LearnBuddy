@@ -29,6 +29,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
+import { StorageError } from '../../storage/gateway.js';
 import { insertItems, usableItems } from '../practice/items.js';
 import { createSession } from '../practice/service.js';
 import {
@@ -39,9 +40,9 @@ import {
   HOMEWORK_SYSTEM,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
+import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
-const PHOTO_RETENTION_DAYS = 7;
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 
@@ -61,6 +62,7 @@ type MaterialRow = {
   completes_material_id: string | null;
   merged_into: string | null;
   archived_at: Date | null;
+  photos_deleted_at: Date | null;
   created_at: Date;
 };
 
@@ -92,6 +94,7 @@ function toView(
     title: m.title,
     status: m.status,
     failure_reason: m.failure_reason,
+    photos_deleted: m.photos_deleted_at !== null,
     item_count: m.item_count,
     purpose: m.purpose,
     session_id: m.session_id,
@@ -239,12 +242,33 @@ export async function submitMaterial(
     [materialId, learnerId],
   );
   if (!m) throw new AppError('not_found', 'Material not found');
+  if (m.archived_at) {
+    // Deleted while the photos were on their way: whatever arrived goes now.
+    await enqueueJob(deps.db, {
+      learnerId,
+      kind: 'purge_photos',
+      runAt: deps.now(),
+      dedupeKey: `purge:${materialId}:submitted:${deps.now().toISOString()}`,
+      payload: { material_id: materialId },
+    });
+    throw new AppError('not_found', 'Material not found');
+  }
   if (m.status !== 'awaiting_upload') return { jobId: null }; // idempotent
   const photos = await deps.db.query<{ position: number; storage_path: string }>(
     `select position, storage_path from material_photos where material_id = $1 order by position`,
     [materialId],
   );
-  const present = await deps.storage.existing(photos.map((p) => p.storage_path));
+  let present: Set<string>;
+  try {
+    present = await deps.storage.existing(photos.map((p) => p.storage_path));
+  } catch (err) {
+    // Storage could not say: never tell her the photos did not arrive (rule 5).
+    if (err instanceof StorageError)
+      throw new AppError('unavailable', 'Photo storage is not reachable', {
+        reason: 'storage_unavailable',
+      });
+    throw err;
+  }
   const missing = photos.filter((p) => !present.has(p.storage_path)).map((p) => p.position);
   if (missing.length > 0) {
     throw new AppError('invalid_input', 'Some photos did not arrive', {
@@ -291,11 +315,22 @@ export async function retryMaterial(
         reason: m.failure_reason,
       });
     }
-    const runs = await tx.one<{ n: number }>(
-      `select count(*)::int as n from jobs where kind = 'extract_material' and payload ->> 'material_id' = $1`,
+    if (m.photos_deleted_at) {
+      // The photos are gone (retention or deletion): a new reading has nothing to read.
+      throw new AppError('conflict', 'The photos of this material are deleted', {
+        reason: 'photos_deleted',
+      });
+    }
+    // Runs refused for the daily budget or lost to a provider/Storage outage were not
+    // her sheet's fault and do not count (budget-refusals-consume-retry-runs).
+    const runs = await tx.one<{ n: number; counted: number }>(
+      `select count(*)::int as n,
+              count(*) filter (where coalesce((result ->> 'uncounted')::boolean, false) = false)::int
+                as counted
+         from jobs where kind = 'extract_material' and payload ->> 'material_id' = $1`,
       [materialId],
     );
-    if (runs.n >= MAX_EXTRACTION_ATTEMPTS)
+    if (runs.counted >= MAX_EXTRACTION_ATTEMPTS)
       throw new AppError('conflict', 'Retried too often', { reason: 'retry_limit' });
     await tx.query(`update materials set status = 'queued', failure_reason = null where id = $1`, [
       materialId,
@@ -313,43 +348,85 @@ export async function retryMaterial(
   });
 }
 
+/**
+ * The one way a material becomes failed — from the reading job and from the scheduler's
+ * recovery alike: status, the photo purge after the retention period (at once when it is
+ * not learning material) and Buddy's context, in the caller's transaction.
+ */
+export async function markMaterialFailed(
+  tx: Db,
+  materialId: string,
+  reason: NonNullable<MaterialView['failure_reason']>,
+  now: Date,
+): Promise<void> {
+  const m = await tx.maybeOne<{ learner_id: string; completes_material_id: string | null }>(
+    `update materials set status = 'failed', failure_reason = $2 where id = $1
+     returning learner_id, completes_material_id`,
+    [materialId, reason],
+  );
+  if (!m) return;
+  if (m.completes_material_id) {
+    // A page photographed for a sheet stays recognisable as that sheet's page (p2-J-04).
+    await tx.query(
+      `update materials p set title = coalesce(p.title, r.title), subject_id = coalesce(p.subject_id, r.subject_id)
+         from materials r where p.id = $1 and r.id = $2`,
+      [materialId, m.completes_material_id],
+    );
+  }
+  // Unusable photos are not kept longer than readable ones, and a photo of
+  // something else (a letter, a recipe) not at all: it cannot be read again
+  // anyway (docs/privacy.md).
+  // The same holds for photos the safety filter refused to read.
+  const keepMs =
+    reason === 'not_learning_material' || reason === 'blocked'
+      ? 0
+      : PHOTO_RETENTION_DAYS * 86_400_000;
+  await enqueueJob(tx, {
+    learnerId: m.learner_id,
+    kind: 'purge_photos',
+    runAt: new Date(now.getTime() + keepMs),
+    dedupeKey: `purge:${materialId}`,
+    payload: { material_id: materialId },
+  });
+  await bumpContext(tx, m.learner_id);
+}
+
 async function fail(
   deps: Deps,
   job: JobRow,
   materialId: string,
   reason: NonNullable<MaterialView['failure_reason']>,
+  opts: { uncounted?: boolean } = {},
 ): Promise<void> {
-  const now = deps.now();
-  await deps.db.tx(async (tx) => {
-    await tx.query(`update materials set status = 'failed', failure_reason = $2 where id = $1`, [
-      materialId,
-      reason,
-    ]);
-    const m = await tx.one<{ learner_id: string }>(
-      `select learner_id from materials where id = $1`,
-      [materialId],
-    );
-    // Unusable photos are not kept longer than readable ones, and a photo of
-    // something else (a letter, a recipe) not at all: it cannot be read again
-    // anyway (docs/privacy.md).
-    // The same holds for photos the safety filter refused to read.
-    const keepMs =
-      reason === 'not_learning_material' || reason === 'blocked'
-        ? 0
-        : PHOTO_RETENTION_DAYS * 86_400_000;
-    await enqueueJob(tx, {
-      learnerId: m.learner_id,
-      kind: 'purge_photos',
-      runAt: new Date(now.getTime() + keepMs),
-      dedupeKey: `purge:${materialId}`,
-      payload: { material_id: materialId },
-    });
-    await bumpContext(tx, m.learner_id);
-  });
+  await deps.db.tx((tx) => markMaterialFailed(tx, materialId, reason, deps.now()));
   await finishJob(deps.db, job, deps.now(), {
     status: 'done',
-    result: { outcome: 'failed', reason },
+    result: { outcome: 'failed', reason, ...(opts.uncounted ? { uncounted: true } : {}) },
   });
+}
+
+/**
+ * A reading run hit an outage (model provider or Storage): try again with backoff, and if
+ * it keeps failing, fail as `model_error` without using up one of her runs.
+ */
+async function retryTransient(
+  deps: Deps,
+  job: JobRow,
+  materialId: string,
+  error: string,
+): Promise<void> {
+  const now = deps.now();
+  if (job.attempts < job.max_attempts) {
+    await deps.db.query(`update materials set status = 'queued' where id = $1`, [materialId]);
+    await retryJob(deps.db, job, {
+      runAt: new Date(now.getTime() + 60_000 * 2 ** Math.max(0, job.attempts - 1)),
+      error,
+      countAttempt: true,
+      now,
+    });
+    return;
+  }
+  return fail(deps, job, materialId, 'model_error', { uncounted: true });
 }
 
 /** The extraction job. Idempotent: a re-run after a crash starts over for the same material. */
@@ -379,9 +456,19 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     [materialId],
   );
   const parts: LlmPart[] = [];
-  for (const p of photos) {
-    const bytes = await deps.storage.download(p.storage_path);
+  for (const [i, p] of photos.entries()) {
+    let bytes: Uint8Array | null;
+    try {
+      bytes = await deps.storage.download(p.storage_path);
+    } catch (err) {
+      // An outage is not a missing photo (storage-errors-reported-as-missing-photos).
+      if (err instanceof StorageError) return retryTransient(deps, job, materialId, 'storage');
+      throw err;
+    }
     if (!bytes) return fail(deps, job, materialId, 'photos_missing');
+    // Each photo is labelled, so a page number in the report names this photo, not the
+    // model's count of unlabelled images (p2-model-page-numbers-unlabeled-images).
+    parts.push({ text: `Photo ${i + 1} of ${photos.length}:` });
     parts.push({ inlineData: { mimeType: p.mime, data: Buffer.from(bytes).toString('base64') } });
   }
   const now = deps.now();
@@ -424,17 +511,9 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     result = ExtractionResult.safeParse(res.json);
   } catch (err) {
     if (isAppError(err) && err.code === 'budget_exhausted')
-      return fail(deps, job, materialId, 'budget_exhausted');
-    if (err instanceof LlmError && err.retryable && job.attempts < job.max_attempts) {
-      await deps.db.query(`update materials set status = 'queued' where id = $1`, [materialId]);
-      await retryJob(deps.db, job, {
-        runAt: new Date(now.getTime() + 60_000 * job.attempts),
-        error: err.kind,
-        countAttempt: true,
-        now,
-      });
-      return;
-    }
+      return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
+    if (err instanceof LlmError && err.retryable)
+      return retryTransient(deps, job, materialId, err.kind);
     // The provider's safety filter refused this sheet: reading it again gives the same
     // answer, so it ends here with its own honest words and no retry (audit p2-T8).
     if (err instanceof LlmError && err.kind === 'blocked')
@@ -453,11 +532,13 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   if ((!x.readable && !somePageRead) || items.length === 0)
     return fail(deps, job, materialId, 'unreadable');
 
-  await deps.db.tx(async (tx) => {
+  const outcome = await deps.db.tx(async (tx) => {
     const current = await tx.one<MaterialRow>(`select * from materials where id = $1 for update`, [
       materialId,
     ]);
-    if (current.status === 'ready') return; // a concurrent run finished first
+    if (current.status === 'ready') return 'ready'; // a concurrent run finished first
+    // Deleted while it was being read: no questions, no "ready", no wake-up (repro-13).
+    if (current.archived_at) return 'deleted';
     // Pages for an earlier sheet join it (migration 0011): its questions, subject and session.
     const target = current.completes_material_id
       ? await tx.maybeOne<MaterialRow>(
@@ -591,14 +672,16 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         ],
       );
     }
+    // One event per reading: pages added to a sheet wake Buddy about that sheet again
+    // (merged-part-no-wake); the event is the part's, the check looks at the sheet.
     await emitEvent(
       tx,
       current.learner_id,
       homework
-        ? { type: 'homework_ready', materialId: home.id }
-        : { type: 'material_ready', materialId: home.id },
+        ? { type: 'homework_ready', materialId: materialId, rootId: home.id }
+        : { type: 'material_ready', materialId: materialId, rootId: home.id },
       now,
-      { questions: items.length },
+      { questions: items.length, ...(target ? { root_id: home.id } : {}) },
     );
     await enqueueJob(tx, {
       learnerId: current.learner_id,
@@ -608,10 +691,11 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       payload: { material_id: materialId },
     });
     await bumpContext(tx, current.learner_id);
+    return 'ready';
   });
   await finishJob(deps.db, job, deps.now(), {
     status: 'done',
-    result: { outcome: 'ready', items: items.length },
+    result: outcome === 'ready' ? { outcome, items: items.length } : { outcome: 'nothing_to_do' },
   });
 }
 
@@ -626,21 +710,6 @@ export function pageProblemsOf(pages: PageReport[], photoCount: number): PagePro
     out.set(p.page, { page: p.page, read: p.read, problem: p.problem });
   }
   return [...out.values()].sort((a, b) => a.page - b.page);
-}
-
-/** Raw photos are deleted 7 days after reading (docs/privacy.md). */
-export async function purgePhotos(deps: Deps, job: JobRow): Promise<void> {
-  const materialId = String(job.payload.material_id ?? '');
-  const photos = await deps.db.query<{ storage_path: string }>(
-    `select storage_path from material_photos where material_id = $1`,
-    [materialId],
-  );
-  await deps.storage.remove(photos.map((p) => p.storage_path));
-  await deps.db.query(`update materials set photos_deleted_at = $2 where id = $1`, [
-    materialId,
-    deps.now(),
-  ]);
-  await finishJob(deps.db, job, deps.now(), { status: 'done', result: { removed: photos.length } });
 }
 
 /**
@@ -669,6 +738,12 @@ export async function abandonStaleUploads(deps: Deps): Promise<number> {
   });
 }
 
+/**
+ * "Blatt löschen" (D-7): the sheet and the pages added to it are gone for her at once —
+ * out of the library, of Buddy's picture, of running sessions and prepared practice — and
+ * their content and photos are erased by jobs right after (purge.ts). A reading still
+ * running for it ends without a result (runExtraction re-checks under the row lock).
+ */
 export async function archiveMaterial(
   deps: Deps,
   learnerId: string,
@@ -681,20 +756,84 @@ export async function archiveMaterial(
       [materialId, learnerId, now],
     );
     if (r.length === 0) throw new AppError('not_found', 'Material not found');
-    await tx.query(
-      `update items set archived_at = $2 where material_id = $1 and archived_at is null`,
-      [materialId, now],
+    // Pages that joined it go with it (root-delete-leaves-part-notice). Pages still on their
+    // way stay a sheet of their own when they are read: she did not delete those.
+    const parts = await tx.query<{ id: string }>(
+      `update materials set archived_at = $3
+        where learner_id = $2 and archived_at is null and merged_into = $1
+        returning id`,
+      [materialId, learnerId, now],
     );
-    // Deleted by the learner: the photos go now, not after the retention period.
-    await enqueueJob(tx, {
+    const ids = [materialId, ...parts.map((p) => p.id)];
+    const items = await tx.query<{ id: string }>(
+      `update items set archived_at = $2 where material_id = any($1::uuid[]) and archived_at is null
+       returning id`,
+      [ids, now],
+    );
+    await withdrawItems(
+      tx,
       learnerId,
-      kind: 'purge_photos',
-      runAt: now,
-      dedupeKey: `purge:${materialId}:archived`,
-      payload: { material_id: materialId },
-    });
+      items.map((i) => i.id),
+      now,
+    );
+    // A help session for this homework ends: there is nothing left to help with.
+    await tx.query(
+      `update practice_sessions set status = 'abandoned', last_activity_at = $3
+        where learner_id = $2 and material_id = any($1::uuid[]) and status = 'active'`,
+      [ids, learnerId, now],
+    );
+    for (const id of ids) {
+      // Deleted by the learner: the photos go now, not after the retention period, and
+      // once more when no upload URL can deliver a late photo any more.
+      await enqueueJob(tx, {
+        learnerId,
+        kind: 'purge_photos',
+        runAt: now,
+        dedupeKey: `purge:${id}:archived`,
+        payload: { material_id: id },
+      });
+      await enqueueJob(tx, {
+        learnerId,
+        kind: 'purge_photos',
+        runAt: new Date(now.getTime() + UPLOAD_URL_TTL_MS),
+        dedupeKey: `purge:${id}:late`,
+        payload: { material_id: id },
+      });
+    }
+    await enqueueContentPurge(tx, learnerId, { materialId }, now);
     await bumpContext(tx, learnerId);
   });
+}
+
+/**
+ * Deleted questions leave every running session (closed as taken out, like "Frage passt
+ * nicht") and Buddy's prepared practice; a prepared step left without questions goes back
+ * to planned so Buddy prepares it anew (p2-HW-05, p2-stale-prepared-step-after-material-delete).
+ */
+async function withdrawItems(tx: Db, learnerId: string, itemIds: string[], now: Date) {
+  if (itemIds.length === 0) return;
+  await tx.query(
+    `update session_items si set status = 'skipped', flagged_at = $3, closed_at = $3
+       from practice_sessions ps
+      where ps.id = si.session_id and ps.learner_id = $2 and ps.status = 'active'
+        and si.status = 'open' and si.item_id = any($1::uuid[])`,
+    [itemIds, learnerId, now],
+  );
+  await tx.query(
+    `update buddy_steps s
+        set payload = jsonb_set(s.payload, '{item_ids}', kept.ids),
+            state = case when jsonb_array_length(kept.ids) = 0 and s.state = 'prepared'
+                         then 'planned' else s.state end,
+            version = s.version + 1
+       from (select b.id, coalesce((select jsonb_agg(x) from jsonb_array_elements(b.payload -> 'item_ids') x
+                                     where not (x #>> '{}' = any($1::text[]))), '[]'::jsonb) as ids
+               from buddy_steps b
+              where b.learner_id = $2 and b.state in ('planned','prepared')
+                and jsonb_typeof(b.payload -> 'item_ids') = 'array'
+                and b.payload -> 'item_ids' ?| $1::text[]) kept
+      where s.id = kept.id`,
+    [itemIds, learnerId],
+  );
 }
 
 export async function libraryView(db: Db, learnerId: string): Promise<LibraryView> {
@@ -810,9 +949,21 @@ export async function archiveMaterialItem(
         for update of i`,
       [itemId, materialId, learnerId],
     );
-    if (!item) throw new AppError('not_found', 'Question not found');
+    if (!item) {
+      // Deleted before and already erased: deleting it again is fine (idempotent).
+      const erased = await tx.maybeOne(
+        `select 1 from jobs j join materials m on m.id = $2 and m.learner_id = $3
+          where j.kind = 'purge_content' and j.learner_id = $3 and j.dedupe_key = $1`,
+        [`purge-content:item:${itemId}`, materialId, learnerId],
+      );
+      if (erased) return;
+      throw new AppError('not_found', 'Question not found');
+    }
     if (item.archived_at) return;
     await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
+    await withdrawItems(tx, learnerId, [itemId], now);
+    // "Frage löschen" deletes it (D-7): its text, solution and her answers go by job.
+    await enqueueContentPurge(tx, learnerId, { itemId }, now);
     // Buddy's picture of her material changed (question counts, what can be practised).
     await bumpContext(tx, learnerId);
   });

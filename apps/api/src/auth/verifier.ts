@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 import type { Config } from '../config.js';
+import { AppError } from '../lib/errors.js';
 
 export type AuthUser = {
   userId: string;
@@ -21,6 +22,11 @@ export interface AuthVerifier {
   verify(token: string): Promise<AuthUser | null>;
   /** Deletes the auth user; the database cascades from it (account deletion). */
   deleteUser(userId: string): Promise<void>;
+  /**
+   * Sets a new password (service role). The API calls it only after its own
+   * checks: for a minor's profile the parents' PIN (PUT /account/password).
+   */
+  updatePassword(userId: string, password: string): Promise<void>;
 }
 
 /** Latest interactive authentication recorded in a (verified) Supabase token. */
@@ -66,5 +72,15 @@ export class SupabaseAuthVerifier implements AuthVerifier {
   async deleteUser(userId: string): Promise<void> {
     const { error } = await this.client.auth.admin.deleteUser(userId);
     if (error && !/not.?found/i.test(error.message)) throw new Error('could not delete auth user');
+  }
+
+  async updatePassword(userId: string, password: string): Promise<void> {
+    const { error } = await this.client.auth.admin.updateUserById(userId, { password });
+    if (error) {
+      // Supabase refuses weak or reused passwords with a 422; say so, never its text.
+      if (error.status === 422)
+        throw new AppError('invalid_input', 'Password not accepted', { reason: 'weak_password' });
+      throw new AppError('unavailable', 'Sign-in service unavailable');
+    }
   }
 }

@@ -58,6 +58,7 @@
     "recording": "Ich höre mit … {{time}} / {{max}}",
     "recording_label": "Aufnahme läuft, {{time}} von {{max}}",
     "listening": "Buddy hört zu …",
+    "waiting_offline": "Gerade ist keine Verbindung. Deine Aufnahme geht los, sobald du wieder online bist.",
     "send_failed": "Deine Aufnahme ist noch nicht bei Buddy angekommen.",
     "resend": "Nochmal senden",
     "record_new": "Neu aufnehmen",

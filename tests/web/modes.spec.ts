@@ -114,7 +114,7 @@ test('learning modes: explain, homework help without the solution, practice with
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
   // (Recording can't run in headless Chromium; this checks the controls and the layout.)
-  const voiceSwitch = page.getByRole('switch', { name: 'Sprachmodus' });
+  const voiceSwitch = page.getByRole('switch', { name: 'Sprachmodus' }).last();
   await expect(voiceSwitch).toHaveAttribute('aria-checked', 'false');
   // Multiple choice: the mic only joins the options in voice mode.
   await expect(page.getByRole('button', { name: 'Antwort sagen' })).toHaveCount(0);
@@ -128,12 +128,22 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '27-practice-voice-mode');
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('Hallo Lena')).toBeVisible();
-  // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).
+  // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo),
+  // and the home has the same switch (audit M-77).
+  const homeSwitch = page.getByRole('switch', { name: 'Sprachmodus' }).last();
+  await expect(homeSwitch).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('button', { name: 'Tastatur' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
   await shot(page, '26-buddy-voice-mode');
   // "Tastatur" goes back to typing.
   await page.getByRole('button', { name: 'Tastatur' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+  await expect(homeSwitch).toHaveAttribute('aria-checked', 'false');
+  // Switched on from the home itself, and off again.
+  await homeSwitch.click();
+  await expect(homeSwitch).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
+  await homeSwitch.click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
   // ── Practice test: no verdicts or solutions until the end ──

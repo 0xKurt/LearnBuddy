@@ -1,6 +1,8 @@
-// Sign-in details in the parents' area: change the account's e-mail address or
-// password (Supabase Auth, lib/auth/supabase.ts). For a minor's profile the
-// parents' PIN comes first — this is the adults' login, not the child's.
+// Sign-in details in the parents' area: change the account's e-mail address
+// (Supabase Auth, lib/auth/supabase.ts) or password (PUT /account/password,
+// so the server checks the parents' PIN too). For a minor's profile the
+// parents' PIN comes first — this is the adults' login, not the child's — and
+// counts for this one sheet: closing it drops the admin token.
 // An e-mail change is only asked for here: Supabase sends confirmation links
 // (with secure e-mail change to the old and the new address) and the new
 // address counts only once confirmed, so that is what the sheet says.
@@ -9,9 +11,10 @@ import { useState } from 'react';
 import { AccessibilityInfo, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { adminToken } from '../../lib/admin.js';
+import { adminToken, clearAdminToken } from '../../lib/admin.js';
+import { setPassword as savePasswordOnServer } from '../../lib/api/endpoints.js';
 import { looksLikeEmail, passwordProblem } from '../../lib/auth/recovery.js';
-import { changeEmail, changePassword } from '../../lib/auth/supabase.js';
+import { changeEmail } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -21,7 +24,7 @@ import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
-import { AdultCancelled, afterModalCloses, confirmAdult } from './adultGate.js';
+import { AdultCancelled, afterModalCloses, asAdultIfNeeded, confirmAdult } from './adultGate.js';
 import { Divider, Row } from './Row.js';
 
 type Props = {
@@ -53,7 +56,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
     try {
       if (minor) {
         const prompted = adminToken() === null;
-        await confirmAdult(pinSet);
+        await confirmAdult(pinSet, 'credentials');
         // The PIN screen has to be gone before the sheet can open.
         if (prompted) await afterModalCloses();
       }
@@ -78,6 +81,8 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
     setOpen(null);
     setPassword('');
     setRepeat('');
+    // The PIN was for this sheet only.
+    clearAdminToken();
   }
 
   const emailValid =
@@ -93,7 +98,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
       const result = await changeEmail(address);
       if (result === 'changed') {
         toast.show(t('settings:adult.access.email_changed'));
-        setOpen(null);
+        close();
       } else {
         setPendingEmail(address);
       }
@@ -111,11 +116,13 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
     setBusy(true);
     setFailure(null);
     try {
-      await changePassword(password);
+      // The server checks the parents' PIN itself (asks again if it lapsed meanwhile).
+      await asAdultIfNeeded(() => savePasswordOnServer(password), {
+        pinSet,
+        purpose: 'credentials',
+      });
       toast.show(t('settings:adult.access.password_saved'));
-      setOpen(null);
-      setPassword('');
-      setRepeat('');
+      close();
     } catch (err) {
       const message = messageFor(err);
       setFailure(message);

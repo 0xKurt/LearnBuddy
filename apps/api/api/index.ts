@@ -1,4 +1,5 @@
-// Vercel function: every /api/* (and, via the rewrite, /v1/*) request.
+// Vercel function: every /v1/* and /api/* request (vercel.json rewrites them all here; the
+// original path stays in the request URL, and createApp routes /v1 and /api alike).
 import { waitUntil } from '@vercel/functions';
 import { handle } from 'hono/vercel';
 

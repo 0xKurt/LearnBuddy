@@ -4,8 +4,10 @@
 // "$\sqrt{16}$", "2*3" → "$2\cdot 3$". Words stay words ("3/4 kg" → "$\frac{3}{4}$ kg").
 //
 // The grouping follows how the answer check reads the text
-// (packages/shared-math: "/" and "·" left to right, "^" binds tighter), so the
-// preview never shows a different fraction than the one that gets checked.
+// (packages/shared-math: "/" and "·" left to right, "^" binds tighter, and a
+// whole number, a gap and a fraction — "3 1/2" — is the mixed number 3½, not
+// 31/2), so the preview never shows a different number than the one that gets
+// checked (audit p2-mixed-number-preview-vs-grader).
 // Pure logic without React Native imports, so it runs in the unit tests.
 
 export type TypedMath = {

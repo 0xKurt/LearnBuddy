@@ -16,10 +16,13 @@ import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { toast } from '../components/lb/Toast.js';
-import { createLearner, getMe, setPin } from '../lib/api/endpoints.js';
+import { ApiError } from '../lib/api/client.js';
+import { createLearner, getMe } from '../lib/api/endpoints.js';
 import { keys, queryClient } from '../lib/api/queries.js';
+import { ageOf, birthDateOf } from '../lib/birthDate.js';
 import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
+import { signOutHere } from '../lib/leave.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
@@ -30,26 +33,6 @@ const LANGUAGES: Array<{ value: AppLocale; label: string }> = [
   { value: 'es', label: 'Español' },
   { value: 'it', label: 'Italiano' },
 ];
-
-function birthDateOf(day: string, month: string, year: string): string | null {
-  const d = Number(day);
-  const m = Number(month);
-  const y = Number(year);
-  if (!Number.isInteger(d) || !Number.isInteger(m) || !Number.isInteger(y) || y < 1920) return null;
-  const date = new Date(Date.UTC(y, m - 1, d));
-  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d)
-    return null;
-  if (date.getTime() > Date.now()) return null;
-  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
-
-function ageOf(iso: string): number {
-  const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
-  const now = new Date();
-  let age = now.getFullYear() - y;
-  if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < d)) age -= 1;
-  return age;
-}
 
 export default function Profile() {
   const { t } = useTranslation('auth');
@@ -64,6 +47,7 @@ export default function Profile() {
   const [pin, setPinValue] = useState('');
   const [pinRepeat, setPinRepeat] = useState('');
   const [busy, setBusy] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   // For a child two short steps, each fitting the screen: the child, then the parents.
   const [step, setStep] = useState<'learner' | 'parent'>('learner');
 
@@ -78,27 +62,47 @@ export default function Profile() {
   const parentStep = relation === 'child' && step === 'parent';
 
   async function submit() {
-    if (!relation || !birthDate) return;
+    if (!relation || !birthDate || busy) return;
     setBusy(true);
     try {
+      // One request: the child's profile, the parents' consent and their PIN
+      // together, so nothing is left half done (H-20).
       await createLearner({
         relation,
         display_name: name.trim(),
         birth_date: birthDate,
         locale,
         minor_consent: relation === 'child' ? consent : false,
+        ...(relation === 'child' ? { pin } : {}),
       });
-      if (relation === 'child') await setPin(pin);
       applyLocale(locale);
-      // Load the fresh state before routing, so the gate never decides on stale data.
-      await queryClient.fetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: 0 });
-      router.replace('/');
+      await goOn();
     } catch (err) {
-      // A profile created without its PIN is completed in the settings (with the password).
+      // The profile exists already (e.g. the answer to the first tap got lost): go on.
+      if (err instanceof ApiError && err.reason === 'learner_exists') {
+        await goOn().catch(() => toast.show(messageFor(err), 'error'));
+        return;
+      }
       toast.show(messageFor(err), 'error');
-      await queryClient.invalidateQueries({ queryKey: keys.me });
     } finally {
       setBusy(false);
+    }
+  }
+
+  /** Loads the fresh state before routing, so the gate never decides on stale data. */
+  async function goOn() {
+    await queryClient.fetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: 0 });
+    router.replace('/');
+  }
+
+  /** Wrong account or not now: always a way out (H-22). */
+  async function leave() {
+    if (leaving) return;
+    setLeaving(true);
+    try {
+      await signOutHere();
+    } finally {
+      setLeaving(false);
     }
   }
 
@@ -268,6 +272,7 @@ export default function Profile() {
             paddingHorizontal: 20,
             paddingTop: 8,
             paddingBottom: Math.max(insets.bottom, 16),
+            gap: 4,
           }}
         >
           {relation === 'child' && !parentStep ? (
@@ -279,6 +284,16 @@ export default function Profile() {
               {t('profile.cta')}
             </Btn>
           )}
+          <Btn
+            variant="ghost"
+            size="sm"
+            pill
+            center
+            disabled={busy || leaving}
+            onPress={() => void leave()}
+          >
+            {t('profile.sign_out')}
+          </Btn>
         </View>
       </KeyboardAvoidingView>
     </Screen>

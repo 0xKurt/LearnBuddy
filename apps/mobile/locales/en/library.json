@@ -20,6 +20,7 @@
     "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the questions."
   },
   "incomplete_hint": "The photos didn't fully arrive. Delete the sheet and photograph it again.",
+  "photos_deleted": "The photos are no longer stored. Delete the sheet and take new photos.",
   "practice": "Practise",
   "practice_label": "Practise “{{title}}”",
   "retry": "Read again",

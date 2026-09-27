@@ -19,10 +19,18 @@ import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { ageOn } from '../identity/model.js';
-import { FIGURE_RULES, ItemDraft, MATH_RULES, insertItems, usableItems } from './items.js';
+import {
+  FIGURE_RULES,
+  ItemDraft,
+  MATH_RULES,
+  NUMERIC_KEY_RULES,
+  SPELLING_RULES,
+  insertItems,
+  usableItems,
+} from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.2';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.3';
 
 const SUBJECT_KINDS = [
   'math',
@@ -82,7 +90,9 @@ Rules:
 - Only well-established school knowledge; if unsure about a fact, leave it out. If the request is not about school learning, set usable = false and items = [].
 - Everything is answered in the app by typing or choosing (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
-- Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index). numeric: the number (decimal point), unit separately.
+- Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
+- ${NUMERIC_KEY_RULES}
+- ${SPELLING_RULES}
 - ${MATH_RULES}
 - ${FIGURE_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).

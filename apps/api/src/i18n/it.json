@@ -42,6 +42,7 @@
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
     "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla da solo.",
     "accents": "Quasi – controlla di nuovo gli accenti.",
+    "spelling": "Quasi giusto – guarda bene maiuscole e punteggiatura.",
     "hint_request": "Un suggerimento, per favore",
     "worked_intro": "Guarda, si fa così:",
     "solution_is": "La risposta è: {{answer}}",

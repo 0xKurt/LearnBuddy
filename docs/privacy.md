@@ -10,34 +10,48 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   passwords) and accepts the current privacy text: `accounts.consent_version` must equal the
   API's `CONSENT_VERSION`, otherwise the account is not created.
 - Each account has exactly one **learner profile**: the adult themselves (`relation = self`,
-  only from 16 years) or a child (`relation = child`). A profile under 16 requires the account
-  holder's consent (DSGVO Art. 8), stored as `minor_consent_version` / `minor_consent_at`.
+  only from 16 years) or a child (`relation = child`). A child profile records the account
+  holder's consent (DSGVO Art. 8 under 16; recorded for 16- and 17-year-olds too), stored as
+  `minor_consent_version` / `minor_consent_at` and renewed when the parents agree to a new
+  privacy text. A child profile stays behind the parents' PIN gate until 18 (D-8); at 18 it
+  becomes the learner's own. After a privacy-text change the API serves nothing learner-facing
+  until the account holder agreed again; for a minor's profile that needs the PIN. Export and
+  deletion keep working, also for an account that never finished its profile.
+- Name and birth date can be corrected (GDPR Art. 16) in the parents' area; for a minor's
+  profile a birth-date correction needs the PIN and is checked against the same age rules.
 - The birth date is stored to know whether the learner is a minor and to pitch the language;
   the display name can be a nickname.
-- **PIN gate** for minors: data export, deletion and anything that increases contact need a
-  short-lived admin token obtained with the account holder's PIN (scrypt hash; 5 wrong attempts
-  lock for 15 minutes; token valid 10 minutes, HMAC-signed, bound to the account; the app
-  forgets it as soon as the parents leave the settings or the one step they unlocked is done,
-  so the child holding the phone afterwards cannot use it). Reducing
+- **PIN gate** for minors: data export, deletion, anything that increases contact, a new
+  password, a birth-date correction and agreeing to a new privacy text need a short-lived admin
+  token obtained with the account holder's PIN (scrypt hash; 5 wrong attempts across every
+  route that takes the PIN lock it for 15 minutes, then 30 minutes, 1 hour and so on, counted
+  atomically; token valid 5 minutes, HMAC-signed, bound to the account; the app drops it as soon
+  as the one step it was asked for is done, when the app goes to the background and when the
+  parents leave the settings, so the child holding the phone afterwards cannot use it). A
+  forgotten PIN is replaced after signing in again with the password (at most 5 times an hour,
+  never while the PIN is locked). Reducing
   contact (pause, quieter) never needs the PIN. Buddy's own tools can never increase contact.
 
 ## What is stored
 
-| Data                                                                                                         | Where                                                             | Retention                                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Account, consent, PIN hash                                                                                   | `accounts`                                                        | until deletion                                                                                                                               |
-| Learner profile (name, birth date, level, grade, language)                                                   | `learners`                                                        | until deletion                                                                                                                               |
-| Conversation with Buddy                                                                                      | `buddy_messages`                                                  | until deletion                                                                                                                               |
-| What Buddy knows, with the learner's own words as source                                                     | `buddy_memories`                                                  | until corrected/removed or deletion; temporary situations end by themselves (≤ 60 days)                                                      |
-| Goals, steps, decisions, actions (audit of what Buddy did and why)                                           | `buddy_goals`, `buddy_steps`, `buddy_decisions`, `buddy_actions`  | until deletion                                                                                                                               |
-| Contact settings, push tokens, messages outside the app and their delivery status                            | `buddy_settings`, `push_tokens`, `buddy_outreach`                 | until deletion                                                                                                                               |
-| Photos of study material                                                                                     | Supabase Storage, private bucket `material-photos`                | **7 days after reading** (also when unreadable); at once when it is not learning material; immediately when the learner deletes the material |
-| Photos not yet sent, and sent photos on the phone                                                            | the app's own storage on the device (browser: its local storage)  | unsent: until sent or discarded, at most 7 days; sent: 1 day (for the notice about a page that could not be read)                            |
-| Voice recordings (speaking practice; spoken messages/answers when the device cannot recognise speech itself) | not stored — sent once to the model (Vertex AI, EU) and discarded | never stored; only the written result (judgement or text) is kept where it is used                                                           |
-| Transcribed text and questions from the material                                                             | `materials`, `items`                                              | until the material or the account is deleted                                                                                                 |
-| Practice sessions, answers, spaced-repetition state                                                          | `practice_sessions`, `practice_turns`, `item_states`              | until deletion                                                                                                                               |
-| What happened, for Buddy to react to (material read, practice finished; ids and counts only)                 | `buddy_events`                                                    | until deletion                                                                                                                               |
-| Model usage (tokens, cost, outcome — no content)                                                             | `llm_calls`, `usage_daily`                                        | until deletion                                                                                                                               |
+| Data                                                                                                         | Where                                                             | Retention                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Account, consent, PIN hash                                                                                   | `accounts`                                                        | until deletion                                                                                                                                                                                                                                                                           |
+| Wrong-PIN and request counters (counts and times only)                                                       | `attempt_counters`                                                | until deletion                                                                                                                                                                                                                                                                           |
+| Learner profile (name, birth date, level, grade, language)                                                   | `learners`                                                        | until deletion                                                                                                                                                                                                                                                                           |
+| Conversation with Buddy                                                                                      | `buddy_messages`                                                  | until deletion                                                                                                                                                                                                                                                                           |
+| What Buddy knows, with the learner's own words as source                                                     | `buddy_memories`                                                  | until deletion; a removed or corrected item is erased (with its quote and its copies in Buddy's audit trail) 7 days after the removal — the undo window; temporary situations end by themselves (≤ 60 days) and are erased 7 days later                                                  |
+| Goals, steps, decisions, actions (audit of what Buddy did and why)                                           | `buddy_goals`, `buddy_steps`, `buddy_decisions`, `buddy_actions`  | until deletion                                                                                                                                                                                                                                                                           |
+| Contact settings, push tokens, messages outside the app and their delivery status                            | `buddy_settings`, `push_tokens`, `buddy_outreach`                 | until deletion                                                                                                                                                                                                                                                                           |
+| Photos of study material                                                                                     | Supabase Storage, private bucket `material-photos`                | **7 days after reading** (also when unreadable); at once when it is not learning material; immediately when the learner deletes the material (and again 2 hours later for photos that were still on their way). A Storage outage delays this: the deletion is retried until it succeeded |
+| Photos not yet sent, and sent photos on the phone                                                            | the app's own storage on the device (browser: its local storage)  | unsent: until sent or discarded, at most 7 days; sent: 1 day (for the notice about a page that could not be read)                                                                                                                                                                        |
+| Voice recordings (speaking practice; spoken messages/answers when the device cannot recognise speech itself) | not stored — sent once to the model (Vertex AI, EU) and discarded | never stored; only the written result (judgement or text) is kept where it is used                                                                                                                                                                                                       |
+| Transcribed text and questions from the material                                                             | `materials`, `items`                                              | until the material (or the question) or the account is deleted: deleting erases the text, the questions and the answers given to them within minutes; what remains is a row with ids, dates and counts                                                                                   |
+| Practice sessions, answers, spaced-repetition state                                                          | `practice_sessions`, `practice_turns`, `item_states`              | until deletion (answers and state of a deleted question: with the question)                                                                                                                                                                                                              |
+| What happened, for Buddy to react to (material read, practice finished; ids and counts only)                 | `buddy_events`                                                    | until deletion                                                                                                                                                                                                                                                                           |
+| Model usage (tokens, cost, outcome — no content)                                                             | `llm_calls`, `usage_daily`                                        | until deletion                                                                                                                                                                                                                                                                           |
+| Background work planned or done for the learner (kind, time, ids, outcome)                                   | `jobs`                                                            | until deletion                                                                                                                                                                                                                                                                           |
+| Photo paths whose deletion Storage still owes after an account deletion (account/material ids only)          | `storage_deletions`                                               | until Storage confirmed the deletion                                                                                                                                                                                                                                                     |
 
 Logs contain route names and error classes only — no request bodies, messages or answers.
 
@@ -46,8 +60,11 @@ Logs contain route names and error classes only — no request bodies, messages 
 - The app only talks to the API. The API connects to Postgres with a privileged role and scopes
   every query by the learner derived from the verified token; model output can only reference
   the learner's own rows through aliases.
-- Row level security is enabled on every table **without policies**: the anon/authenticated
-  keys that ship in the app can read or write nothing directly.
+- Row level security is enabled on every table **without policies**, and no database function
+  is executable by the anon/authenticated roles (`0022_revoke_app_key_access.sql`): the keys
+  that ship in the app can read, write or call nothing directly.
+- The API reaches a non-local database only over TLS with certificate verification
+  (`apps/api/src/lib/db.ts`); a connection string asking for less is refused at startup.
 - Photos are uploaded with short-lived signed URLs to paths under the account id; the bucket is
   private.
 
@@ -69,10 +86,21 @@ Logs contain route names and error classes only — no request bodies, messages 
 
 ## Export and deletion (DSGVO Art. 15, 17, 20)
 
-- `GET /account/export` returns everything stored about the learner as JSON, immediately.
+- `GET /account/export` returns everything stored about the learner as JSON, immediately —
+  including model usage (`llm_calls`) and background jobs (`jobs`).
 - `POST /account/deletion` schedules deletion after a **7-day hold** (cancellable with
-  `DELETE /account/deletion`). The scheduler then removes the photos from storage, deletes the
-  auth user and the account; every learner-scoped row is removed by `ON DELETE CASCADE`.
+  `DELETE /account/deletion`). During the hold the app works as before; nothing else changes.
+  When the hold is over the scheduler carries it out as a resumable job (docs/architecture.md
+  §Background work): from its start it cannot be cancelled (409 `deletion_running`) and the
+  account takes no more changes; it deletes the learner's rows table by table, then the auth user
+  and the account. It is never given up: failures are retried with backoff, and `GET /health`
+  reports a deletion more than a day overdue. The photos go to a Storage deletion queue first:
+  the account deletion does **not** wait for Storage (D-9); the queue removes them in chunks of
+  at most 1 000 and retries until they are gone (monitored the same way). A repeated request
+  while a deletion is scheduled keeps the date and makes sure a job is planned.
+- Deleting a sheet or a question in the app deletes its content (D-7), see the table above. The
+  conversation with Buddy is not changed by it: what she wrote there stays until the account is
+  deleted.
 
 ## Processors
 
@@ -90,7 +118,11 @@ Logs contain route names and error classes only — no request bodies, messages 
   model is installed) — the audio does not leave the phone. Where the phone could only recognise
   on Apple's/Google's servers, and always in the browser (Chrome's Web Speech is server-side), the
   app records instead and uses our own EU path (`/voice/transcribe`, Vertex AI). The decision is
-  code (`apps/mobile/lib/speech/engine.ts`), not a setting.
+  code (`apps/mobile/lib/speech/engine.ts`), not a setting. On iPhone the on-device check only
+  covers the phone's own language, and iOS would silently send any other language to Apple's
+  servers; so the system recogniser is used only when the language she speaks is exactly the
+  phone's language (with region), every other language goes the recording path (EU). **Not yet
+  verified on a real iPhone**; until it is, treat the iOS on-device promise as unproven.
 - **Expo push service** (optional): off unless `PUSH_BACKEND=expo`. It adds a US subprocessor and
   sends notification titles and bodies via Apple/Google. Texts are written without scores or
   personal details, but they are about the learner's tests. **legal review required before

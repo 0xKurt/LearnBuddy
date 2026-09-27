@@ -37,6 +37,12 @@ type Props = {
   accessibilityHint?: string;
 };
 
+/**
+ * How far a button label follows the system text size (iOS AX sizes go past 3×): large enough
+ * to help, small enough that a CTA never clips or squeezes its neighbour to nothing.
+ */
+export const MAX_FONT_SCALE = 1.6;
+
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
   sm: { height: 44, paddingHorizontal: 16, fontSize: 15 },
   md: { height: 48, paddingHorizontal: 22, fontSize: 16 },
@@ -104,7 +110,9 @@ export function Btn({
       {({ pressed }) => (
         <View
           style={{
-            ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { height: s.height }),
+            // minHeight, not height: large system text grows the button instead of clipping it
+            // (audit M-84); the label's scaling is capped below so a row still fits.
+            ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { minHeight: s.height }),
             ...(grow ? { flexGrow: 1 } : {}),
             gap: icon ? 10 : 0,
             paddingHorizontal: s.paddingHorizontal,
@@ -137,6 +145,7 @@ export function Btn({
             </View>
           ) : (
             <Text
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
               {...(wrap
                 ? {}
                 : { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.82 })}

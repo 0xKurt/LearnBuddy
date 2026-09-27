@@ -4,9 +4,15 @@
 
 import { z } from 'zod';
 
-import { FIGURE_RULES, ItemDraft, MATH_RULES } from '../practice/items.js';
+import {
+  FIGURE_RULES,
+  ItemDraft,
+  MATH_RULES,
+  NUMERIC_KEY_RULES,
+  SPELLING_RULES,
+} from '../practice/items.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v3.7';
+export const EXTRACT_PROMPT_VERSION = 'extract.v3.8';
 
 const SUBJECT_KINDS = [
   'math',
@@ -87,7 +93,8 @@ export const EXTRACT_SYSTEM = `You read photos of a learner's study material (wo
 3. Write practice questions that check exactly this material, pitched at the learner's level (LEARNER). Each has the correct answer.
    - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to 8) — answers are checked against this list without a model). Up to 25 pairs; the app asks both directions itself.
    - Otherwise 8–15 questions. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
-   - numeric: answer is the number (decimal point), unit separately in "unit".
+   - ${NUMERIC_KEY_RULES}
+   - ${SPELLING_RULES}
    - ${MATH_RULES}
    - ${FIGURE_RULES}
    - accepted_answers: other correct formulations (synonyms, spelling variants).
@@ -108,6 +115,8 @@ export const HOMEWORK_SYSTEM = `You read photos of a learner's homework for the 
    - prompt: the task exactly as printed (you may add the needed context from the sheet in one sentence).
    - answer: the correct final answer, as short as possible. It is used only to check the learner's answer and to plan hints; the learner never sees it.
    - kind: numeric for a single number (unit in "unit"), multiple_choice if the task offers choices, long for explanations or texts, short otherwise.
+   - ${NUMERIC_KEY_RULES}
+   - ${SPELLING_RULES}
    - ${MATH_RULES}
    - ${FIGURE_RULES}
    - topic: 2–4 words.

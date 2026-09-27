@@ -9,6 +9,9 @@
     "sqrt": "raíz cuadrada de {{body}}",
     "root": "raíz de índice {{index}} de {{body}}",
     "cbrt": "raíz cúbica de {{body}}",
+    "period": "periodo {{body}}",
+    "segment": "segmento {{body}}",
+    "vector": "vector {{body}}",
     "symbols": {
       "plus": "más",
       "minus": "menos",
@@ -31,7 +34,15 @@
       "iff": "si y solo si",
       "lparen": "abre paréntesis",
       "rparen": "cierra paréntesis",
-      "percent": "por ciento"
+      "percent": "por ciento",
+      "angle": "ángulo",
+      "parallel": "paralela a",
+      "perp": "perpendicular a",
+      "triangle": "triángulo",
+      "cong": "congruente con",
+      "sim": "semejante a",
+      "in": "pertenece a",
+      "notin": "no pertenece a"
     }
   },
   "figure": {

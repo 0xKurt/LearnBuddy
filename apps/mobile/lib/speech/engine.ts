@@ -22,6 +22,11 @@ export type EngineFacts = {
   locale: string;
   /** This locale already failed on the device during this app run. */
   failedBefore: boolean;
+  /**
+   * iOS: the locale `onDeviceSupported` was checked for — the phone's own language
+   * (expo-speech-recognition asks SFSpeechRecognizer() without a locale). null = unknown.
+   */
+  deviceLocale: string | null;
 };
 
 const norm = (l: string) => l.replace('_', '-').toLowerCase();
@@ -43,6 +48,11 @@ export function chooseEngine(f: EngineFacts): SpeechEngine {
     if (f.installedLocales === null) return 'server';
     return installedMatch(f.installedLocales, f.locale) !== null ? 'device' : 'server';
   }
+  // iOS reports on-device support per locale, but the check only covered the phone's own
+  // language, and for any other locale iOS silently drops "on-device only" and sends the
+  // audio to Apple (audit H-34). So the device is used only for exactly that locale;
+  // everything else takes our EU recording path (D-11).
+  if (f.deviceLocale === null || norm(f.deviceLocale) !== norm(f.locale)) return 'server';
   return 'device';
 }
 

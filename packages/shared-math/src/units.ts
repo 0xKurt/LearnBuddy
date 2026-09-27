@@ -1,5 +1,5 @@
-// Unit alias map for parseNumericInput. Doc 07 §4.3.
-// Maps German + English words to canonical SI symbols.
+// Unit alias map for parseNumericInput (docs/architecture.md §Practice, grading).
+// Maps unit symbols and unit names to one canonical symbol. Keys are lower case.
 
 export const UNIT_ALIASES: Record<string, string> = {
   // length
@@ -68,8 +68,44 @@ export const UNIT_ALIASES: Record<string, string> = {
   milliliter: 'ml',
   ml: 'ml',
 
+  // area, volume, temperature (school units; audit p2-NM-06)
+  dm: 'dm',
+  'mm²': 'mm²',
+  'mm^2': 'mm²',
+  'cm²': 'cm²',
+  'cm^2': 'cm²',
+  'dm²': 'dm²',
+  'dm^2': 'dm²',
+  'm²': 'm²',
+  'm^2': 'm²',
+  'km²': 'km²',
+  'km^2': 'km²',
+  'cm³': 'cm³',
+  'cm^3': 'cm³',
+  'dm³': 'dm³',
+  'dm^3': 'dm³',
+  'm³': 'm³',
+  'm^3': 'm³',
+  '°c': '°C',
+  std: 'h',
+  t: 't',
+
+  // percent and per mille: a unit, never "÷ 100" (audit C-4). The unit's names as they are
+  // said, so a dictated "25 Prozent" is read like "25 %".
+  '%': '%',
+  prozent: '%',
+  percent: '%',
+  'per cent': '%',
+  'pour cent': '%',
+  pourcent: '%',
+  'por ciento': '%',
+  'per cento': '%',
+  '‰': '‰',
+  promille: '‰',
+
   // currency / counts
   euro: 'EUR',
+  eur: 'EUR',
   '€': 'EUR',
   dollar: 'USD',
   $: 'USD',
