@@ -138,7 +138,7 @@
     "remember_until": "Noted until {{date}}: {{statement}}",
     "correct_memory": "Corrected: {{statement}}",
     "forget": "Forgotten: {{statement}}",
-    "set_level_school": "Year {{grade}}",
+    "set_level_school": "School year {{grade}}",
     "set_level_school_unknown": "School",
     "set_level_university": "University",
     "set_level_adult": "Further education",

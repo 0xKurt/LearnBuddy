@@ -197,17 +197,100 @@ const forget = z.object({
   args: z.object({ memory: MemoryRef, quote: Quote }),
 });
 
+const year = (lo: number, hi: number) => z.number().int().min(lo).max(hi);
+
+/**
+ * The school year as the learner's own school system names it (audit M-39): the model picks
+ * the label she used, code converts it (schoolYearsOf). One entry per system.
+ */
+export const SchoolYear = z.discriminatedUnion('system', [
+  z
+    .object({ system: z.literal('de'), klasse: year(1, 13) })
+    .describe('Germany, Austria, Switzerland: "7. Klasse" → klasse 7'),
+  z
+    .object({
+      system: z.literal('fr'),
+      classe: z.enum([
+        'CP',
+        'CE1',
+        'CE2',
+        'CM1',
+        'CM2',
+        '6e',
+        '5e',
+        '4e',
+        '3e',
+        '2nde',
+        '1re',
+        'Tle',
+      ]),
+    })
+    .describe('France: "je suis en 4e" → classe 4e'),
+  z
+    .object({
+      system: z.literal('es'),
+      etapa: z.enum(['primaria', 'eso', 'bachillerato']),
+      curso: year(1, 6),
+    })
+    .describe('Spain: "2º de la ESO" → etapa eso, curso 2'),
+  z
+    .object({
+      system: z.literal('it'),
+      scuola: z.enum(['primaria', 'media', 'superiore']),
+      classe: year(1, 5),
+    })
+    .describe('Italy: "terza media" → scuola media, classe 3'),
+  z
+    .object({ system: z.literal('uk'), year: year(1, 13) })
+    .describe('England and Wales: "Year 8" → year 8'),
+  z
+    .object({ system: z.literal('us'), grade: year(1, 12) })
+    .describe('USA, Canada: "8th grade" → grade 8'),
+]);
+export type SchoolYear = z.infer<typeof SchoolYear>;
+
+const FR_CLASSES = ['CP', 'CE1', 'CE2', 'CM1', 'CM2', '6e', '5e', '4e', '3e', '2nde', '1re', 'Tle'];
+
+/**
+ * Years of schooling, counted like the German Klasse (1 = first school year) — the one scale
+ * `learners.grade` and every prompt use. Null when the label does not exist in that system
+ * (e.g. 5º de la ESO).
+ */
+export function schoolYearsOf(y: SchoolYear): number | null {
+  switch (y.system) {
+    case 'de':
+      return y.klasse;
+    case 'fr':
+      return FR_CLASSES.indexOf(y.classe) + 1;
+    case 'es': {
+      const [offset, max] = y.etapa === 'primaria' ? [0, 6] : y.etapa === 'eso' ? [6, 4] : [10, 2];
+      return y.curso <= max ? offset + y.curso : null;
+    }
+    case 'it': {
+      const [offset, max] =
+        y.scuola === 'primaria' ? [0, 5] : y.scuola === 'media' ? [5, 3] : [8, 5];
+      return y.classe <= max ? offset + y.classe : null;
+    }
+    case 'uk':
+      // Year 1 starts a year earlier than German Klasse 1 (age 5–6).
+      return Math.max(1, y.year - 1);
+    case 'us':
+      return y.grade;
+  }
+}
+
 const setLevel = z.object({
   tool: z.literal('set_level'),
   args: z.object({
     level: z.enum(['school', 'university', 'adult']),
-    grade: z
-      .number()
-      .int()
-      .min(1)
-      .max(13)
+    school_year: SchoolYear.nullable()
+      .default(null)
+      .describe(
+        'level school: the school year in her own school system, as she said it (never convert it yourself); null otherwise or when unknown',
+      ),
+    grade: year(1, 13)
       .nullable()
-      .describe('School grade (Klasse), null otherwise'),
+      .describe('Only when school_year cannot be given: the German Klasse number; else null'),
     quote: Quote,
   }),
 });

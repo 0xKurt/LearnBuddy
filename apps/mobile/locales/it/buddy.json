@@ -138,7 +138,7 @@
     "remember_until": "Annotato fino a {{date}} compreso: {{statement}}",
     "correct_memory": "Corretto: {{statement}}",
     "forget": "Dimenticato: {{statement}}",
-    "set_level_school": "{{grade}}º anno",
+    "set_level_school": "{{grade}}º anno di scuola",
     "set_level_school_unknown": "Scuola",
     "set_level_university": "Università",
     "set_level_adult": "Formazione continua",

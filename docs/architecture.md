@@ -195,6 +195,15 @@ summary plus undo data. Enforced here, not in the prompt:
 - temporary situations need an end (≤ 60 days); plans lie ≤ 1 year ahead;
 - undo is refused when the object changed since (version check) — no blind overwrite of, e.g.,
   an adult's later settings change.
+- `set_level`: the model names the school year the way her school system does (`SchoolYear`:
+  de Klasse, fr CP…Tle, es primaria/ESO/bachillerato, it primaria/media/superiore, uk Year, us
+  grade — a zod enum per system); code converts it into years of schooling, the German-Klasse
+  scale `learners.grade` and every prompt use ("4e" → 8, "2º ESO" → 8, "terza media" → 8,
+  Year 8 → 7), and a label the system does not have is rejected. The card shows the stored
+  meaning ("Klasse 8", "8e année de scolarité"). Audit M-39; a live eval of the label choice
+  for fr/es/it is still to do.
+- Thread action cards offer "Rückgängig" only where `undoApplies` holds, like `done` (audit
+  M-56); history offers it too, for the same 7 days.
 
 ### Lookups (ADR 0005, stage 1)
 
