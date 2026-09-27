@@ -39,6 +39,24 @@ async function say(page: Page, text: string): Promise<void> {
   await page.getByRole('button', { name: 'Senden' }).click();
 }
 
+/**
+ * The card on top lies over the ways to start (docs/architecture.md §Home): she swipes it up
+ * out of the way — or closes it with its button — and only this phone forgets it.
+ */
+async function swipeCardAway(page: Page): Promise<void> {
+  const card = page.getByTestId('home-card');
+  const box = await card.boundingBox();
+  if (!box) throw new Error('no card on top');
+  const x = box.x + box.width - 60;
+  const y = box.y + box.height - 24;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y - 30, { steps: 4 });
+  await page.mouse.move(x, y - 140, { steps: 6 });
+  await page.mouse.up();
+  await expect(card).toHaveCount(0);
+}
+
 const openMenu = async (page: Page, item: string) => {
   await page.getByRole('button', { name: 'Menü öffnen' }).click();
   await page.getByRole('button', { name: item }).click();
@@ -282,6 +300,9 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toHaveCount(0);
 
   // ── An explanation read again from the questions ──
+  // The paused homework lies on top, over the ways to start: swiped away first.
+  await expect(page.getByText('Weiter mit deiner Hausaufgabe')).toBeVisible();
+  await swipeCardAway(page);
   await page.getByRole('button', { name: 'Erklär mir was', exact: true }).click();
   await page.getByRole('textbox').last().fill('Nomen');
   await page.getByRole('button', { name: "Los geht's" }).last().click();

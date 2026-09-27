@@ -225,5 +225,9 @@
   },
   "a11y": {
     "reply": "Buddy: {{text}}"
+  },
+  "card": {
+    "close": "Ocultar tarjeta",
+    "shown": "Buddy ha puesto una tarjeta arriba. Puedes ocultarla."
   }
 }

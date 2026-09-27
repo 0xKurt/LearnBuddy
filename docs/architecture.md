@@ -883,9 +883,22 @@ card next to "nothing working" — the app polls closely only while something is
 (`home-snapshot.int.test.ts`).
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
-**one** card (pinned): the **now** card, else the **decision**; with a now card the decision
+**one** card on top: the **now** card, else the **decision** (with the system notes — no
+model, background work stale — under it); with a now card the decision
 is asked at the end of the conversation with quieter buttons, so there is one violet button
-(`lib/homeLayout.ts`); "Buddy is working" is said once (inside "Ich lese dein Blatt …", with
+(`lib/homeLayout.ts`). The card **lies over** the greeting and the row of ways to start, directly
+under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the header, the
+greeting, the row and the conversation stand in exactly the same place with or without it, so
+nothing jumps when a card comes or goes (owner feedback: "Die Meldung sollte einfach über dem
+Menü liegen. Kann man dann ja wegklicken."). Its close button (`<Btn>`, 44 pt, "Karte
+ausblenden") or a swipe up hides it **on this phone only** (`lib/homeCard.ts`, kept in
+AsyncStorage / localStorage) until what it says changes (`topKey`: a different card, or the same
+card with new content, shows again); nothing is answered on the server — "Heute nicht" stays the
+card's own button. A closed decision is asked at the end of the conversation instead. While the
+card covers the row's buttons, the greeting and the row are left out in place (no edge peeking
+out, nothing a screen reader finds behind it); the conversation keeps the room the card covers
+at its top free (so its oldest shown message can be scrolled into view) and still stands at its
+newest message. VoiceOver hears that a card came; Android and the web read its live region; "Buddy is working" is said once (inside "Ich lese dein Blatt …", with
 the photo, or as a line at the end of the conversation); the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
 the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, five ways to start
 around it ("Arbeit" — with a test planned it prepares her for it; homework; pronunciation;
@@ -894,7 +907,8 @@ vocabulary; explain —
 five (`components/lb/StartRow.tsx`; each as wide as its label, so a word never breaks) and the conversation takes the rest of the screen, at
 its newest message like any chat (a new message scrolls to it; when she scrolled up to read she
 is not pulled down until she is back at the end or sends something; `lib/homeLayout.ts`
-`followsEnd`) — the card on top has its own room above it, so it never covers her message; a
+`followsEnd`; a jump of the offset because the content or the view changed size is not her
+scrolling up) — the card on top covers only the top of the conversation, never its newest message; a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did stands under its message with "Rückgängig"; no tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
