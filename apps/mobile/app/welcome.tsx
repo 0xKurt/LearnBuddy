@@ -5,7 +5,14 @@
 
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,6 +37,10 @@ export default function Welcome() {
   const [shown, setShown] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
+  // A small phone (e.g. 360×740) gets a smaller orb and tighter spacing, so the
+  // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16).
+  const compact = useWindowDimensions().height < 780;
+  const gap = compact ? 10 : 14;
 
   const valid = /\S+@\S+\.\S+/.test(email.trim()) && password.length >= 8;
 
@@ -77,14 +88,14 @@ export default function Welcome() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: 16,
+            paddingTop: compact ? 8 : 16,
             paddingBottom: 24,
-            gap: 14,
+            gap,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ alignItems: 'center', gap: 14, marginBottom: 4 }}>
-            <BuddyOrb size={88} />
+          <View style={{ alignItems: 'center', gap, marginBottom: 4 }}>
+            <BuddyOrb size={compact ? 64 : 88} />
             <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
               {t('welcome.title')}
             </Text>
