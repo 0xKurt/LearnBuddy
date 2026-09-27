@@ -135,6 +135,8 @@ export class ScriptedGateway implements LlmGateway {
 export class FakeAuth implements AuthVerifier {
   private readonly tokens = new Map<string, AuthUser>();
   readonly deleted: string[] = [];
+  /** Passwords set through the API (user id → password). */
+  readonly passwords = new Map<string, string>();
   private seq = 0;
 
   constructor(private readonly db: Db) {}
@@ -168,6 +170,10 @@ export class FakeAuth implements AuthVerifier {
     this.deleted.push(userId);
     await this.db.query(`delete from auth.users where id = $1`, [userId]);
     for (const [token, u] of this.tokens) if (u.userId === userId) this.tokens.delete(token);
+  }
+
+  async updatePassword(userId: string, password: string): Promise<void> {
+    this.passwords.set(userId, password);
   }
 }
 

@@ -41,21 +41,61 @@ function bearer(c: AppContext): string | null {
   return scheme?.toLowerCase() === 'bearer' && token ? token : null;
 }
 
-/** Verified Supabase user. */
-export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
+/**
+ * The verified Supabase user of this request. Verified once per request: the
+ * rate-limit middleware (http/limits.ts) may have done it already.
+ */
+export async function authenticate(c: AppContext): Promise<AuthUser> {
+  const known = c.get('user') as AuthUser | undefined;
+  if (known) return known;
   const token = bearer(c);
   if (!token) throw new AppError('unauthenticated', 'Missing bearer token');
   const user = await depsOf(c).auth.verify(token);
   if (!user) throw new AppError('unauthenticated', 'Invalid or expired token');
   c.set('user', user);
+  return user;
+}
+
+/** Verified Supabase user. */
+export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
+  await authenticate(c);
   await next();
 };
 
-/** Verified user with an account (consent given). */
-export const requireAccount: MiddlewareHandler<AppEnv> = async (c, next) => {
+async function loadAccount(c: AppContext): Promise<AccountRow> {
+  const known = c.get('account') as AccountRow | undefined;
+  if (known) return known;
   const account = await findAccountByUser(depsOf(c).db, c.get('user').userId);
   if (!account) throw new AppError('forbidden', 'No account yet', { reason: 'account_missing' });
   c.set('account', account);
+  return account;
+}
+
+/**
+ * Verified user with an account whose consent covers the current privacy text
+ * (docs/privacy.md: `consent_version` must equal CONSENT_VERSION). After a
+ * version bump everything learner-facing answers 409 consent_outdated until
+ * the account holder has agreed again (POST /account).
+ */
+export const requireAccount: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const account = await loadAccount(c);
+  const current = depsOf(c).config.CONSENT_VERSION;
+  if (account.consent_version !== current) {
+    throw new AppError('conflict', 'The privacy text has changed; please review it again', {
+      reason: 'consent_outdated',
+      current,
+    });
+  }
+  await next();
+};
+
+/**
+ * An account, whatever the consent version: for what must keep working before
+ * the new text is accepted — the PIN (the adult needs it to agree again),
+ * export and deletion (data subject rights never depend on consent).
+ */
+export const requireAccountAnyConsent: MiddlewareHandler<AppEnv> = async (c, next) => {
+  await loadAccount(c);
   await next();
 };
 
@@ -83,7 +123,7 @@ export const requireLearner: MiddlewareHandler<AppEnv> = async (c, next) => {
   );
   c.set('learner', {
     ...learner,
-    isMinor: isMinor(learner.birth_date, now),
+    isMinor: isMinor(learner, now),
     timezone: settings.timezone,
   });
   await next();
@@ -96,17 +136,34 @@ export const requireLearner: MiddlewareHandler<AppEnv> = async (c, next) => {
  */
 export function actorOf(c: AppContext): 'learner' | 'account_holder' {
   if (!c.get('learner').isMinor) return 'learner';
+  return hasValidAdminToken(c) ? 'account_holder' : 'learner';
+}
+
+/** A valid, unexpired admin token for this account in x-admin-token. */
+export function hasValidAdminToken(c: AppContext): boolean {
   const deps = depsOf(c);
   const token = c.req.header('x-admin-token');
-  const valid =
+  return (
     token !== undefined &&
-    verifyAdminToken(deps.config.ADMIN_TOKEN_SECRET, token, c.get('account').id, deps.now());
-  return valid ? 'account_holder' : 'learner';
+    verifyAdminToken(deps.config.ADMIN_TOKEN_SECRET, token, c.get('account').id, deps.now())
+  );
 }
 
 /** True when the request may do account-holder things (always for adults). */
 export function hasAccountHolderRights(c: AppContext): boolean {
   return !c.get('learner').isMinor || actorOf(c) === 'account_holder';
+}
+
+/**
+ * The same proof for routes that run without a learner profile (account-level
+ * privacy, consent, credentials): with no profile, or an adult one, the
+ * signed-in user is the account holder; for a minor's profile the admin token
+ * is required.
+ */
+export function assertAccountHolderOf(c: AppContext, learner: LearnerRow | null): void {
+  if (!learner || !isMinor(learner, depsOf(c).now())) return;
+  if (!hasValidAdminToken(c))
+    throw new AppError('admin_required', 'An adult has to confirm this with the PIN');
 }
 
 /**

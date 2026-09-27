@@ -13,6 +13,8 @@ import { HTTPException } from 'hono/http-exception';
 
 import type { Deps } from './deps.js';
 import type { AppEnv } from './http/context.js';
+import { accountBudgets } from './http/limits.js';
+import { isCheckViolation } from './lib/db.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
 import { buddyRoutes } from './modules/buddy/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
@@ -81,9 +83,28 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     c.set('deps', deps);
     await next();
   });
+  // Per-account budgets for answers and messages (D-14, docs/architecture.md §Limits).
+  app.use('*', accountBudgets);
 
   app.onError((err, c) => {
-    if (isAppError(err)) return c.json(err.toJSON(), err.status);
+    if (isAppError(err)) {
+      // Locks and rate limits say when to try again.
+      const retry = err.details?.retry_after_s;
+      if (typeof retry === 'number') c.header('Retry-After', String(retry));
+      return c.json(err.toJSON(), err.status);
+    }
+    // A row the schema refuses is a request the API should have refused: 422, not 500.
+    if (isCheckViolation(err)) {
+      console.warn('[api] check violation', {
+        method: c.req.method,
+        path: c.req.routePath,
+        constraint: (err as { constraint?: string }).constraint ?? null,
+      });
+      return c.json(
+        { error: { code: 'invalid_input', message: 'The request breaks a data rule' } },
+        422,
+      );
+    }
     if (err instanceof HTTPException) {
       const status = err.status;
       return c.json(

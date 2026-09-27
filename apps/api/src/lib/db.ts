@@ -104,3 +104,9 @@ export function isUniqueViolation(err: unknown, constraint?: string): boolean {
   const e = err as { code?: string; constraint?: string } | null;
   return !!e && e.code === '23505' && (!constraint || e.constraint === constraint);
 }
+
+/** Postgres check_violation (a row the schema's rules refuse). */
+export function isCheckViolation(err: unknown, constraint?: string): boolean {
+  const e = err as { code?: string; constraint?: string } | null;
+  return !!e && e.code === '23514' && (!constraint || e.constraint === constraint);
+}

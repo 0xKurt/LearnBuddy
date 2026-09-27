@@ -169,13 +169,11 @@ export async function onboard(
     birth_date: opts.birthDate ?? (relation === 'child' ? '2014-03-10' : '1995-06-01'),
     locale: opts.locale ?? 'de',
     minor_consent: relation === 'child',
+    // The parents' first PIN goes with the profile, in one request (as the app sends it).
+    ...(opts.pin ? { pin: opts.pin } : {}),
   });
   if (learner.status !== 201)
     throw new Error(`learner: ${learner.status} ${JSON.stringify(learner.body)}`);
-  if (opts.pin) {
-    const pin = await api.put('/account/pin', { pin: opts.pin });
-    if (pin.status !== 200) throw new Error(`pin: ${pin.status} ${JSON.stringify(pin.body)}`);
-  }
   return { api, token, userId, accountId: account.body.account_id, learnerId: learner.body.id };
 }
 
