@@ -27,6 +27,7 @@ import {
   type LlmRequest,
   type LlmResult,
   type LlmUsage,
+  TRUNCATED,
 } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
 import { costMicros } from './pricing.js';
@@ -184,7 +185,7 @@ export class VertexGateway implements LlmGateway {
     if (!candidate) throw new LlmError('blocked', 'no candidate returned', usage);
     const reason = candidate.finishReason;
     if (reason === FinishReason.MAX_TOKENS) {
-      throw new LlmError('invalid_output', 'output truncated at the token limit', usage);
+      throw new LlmError('invalid_output', 'output truncated at the token limit', usage, TRUNCATED);
     }
     if (reason && reason !== FinishReason.STOP) {
       throw new LlmError('blocked', `finish reason ${reason}`, usage, String(reason));

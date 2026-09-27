@@ -264,7 +264,9 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       // While Buddy thinks about it, Lina's screen says so.
       expect((await lina.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
       const text = ScriptedGateway.textOf(req);
-      expect(text).toContain('g1 exam "Mathearbeit Brüche" on Friday 2026-10-02 (in 4 days)');
+      expect(text).toContain(
+        'g1 exam "Mathearbeit Brüche" on Friday 2026-10-02 (in 4 days; say "Freitag")',
+      );
       expect(text).toContain('material: 1 ready (4 questions)');
       expect(text).toContain(
         'new material is ready: "Brüche kürzen und vergleichen" with 4 questions',
@@ -536,7 +538,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
             tool: 'remember',
             args: {
               kind: 'preference',
-              statement: 'Möchte kurze Übungen (ca. 5 Minuten)',
+              statement: 'Möchte kürzere Übungen',
               quote: 'mach die Übungen bitte kürzer',
               until: null,
             },
@@ -554,7 +556,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     }>('/buddy/memory');
     expect(memory.body.memories).toEqual([
       expect.objectContaining({
-        statement: 'Möchte kurze Übungen (ca. 5 Minuten)',
+        statement: 'Möchte kürzere Übungen',
         source: 'learner_stated',
         quote: 'mach die Übungen bitte kürzer',
       }),
@@ -566,7 +568,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     env.clock.set('2026-10-01T13:00:00Z');
     env.llm.script('buddy_check', (req) => {
       const text = ScriptedGateway.textOf(req);
-      expect(text).toContain('[preference] Möchte kurze Übungen (ca. 5 Minuten)');
+      expect(text).toContain('[preference] Möchte kürzere Übungen');
       expect(text).toContain('"Mathearbeit Brüche" is in 1 day(s).');
       expect(text).toMatch(/secure: .*Brüche kürzen/);
       // Wake-ups that piled up while the scheduler was not running are listed once.

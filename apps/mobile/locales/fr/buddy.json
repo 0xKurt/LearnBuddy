@@ -24,6 +24,9 @@
     "ready_focus": "Surtout: {{topics}}",
     "ready_for_exam": "Pour «{{exam}}» {{when}}",
     "ready_cta": "S'entraîner maintenant",
+    "ready_cta_short": "S'entraîner",
+    "more": "Toucher pour plus",
+    "less": "Toucher pour moins",
     "ready_later": "Pas aujourd'hui",
     "capture_title": "Envoie-moi une photo",
     "capture_body": "Prends «{{title}}» en photo – j'en ferai des exercices.",
@@ -108,7 +111,6 @@
     "rules_settings": "comme indiqué dans les réglages",
     "optin_done": "C'est autorisé : je t'écris aussi sur ton téléphone – {{rules}}. Tu peux le modifier dans les réglages.",
     "optin_done_minor": "C'est autorisé : Buddy écrit maintenant aussi à {{name}} sur son téléphone – {{rules}}. Modifiable dans les réglages.",
-    "optin_done_no_device": "C'est autorisé. Mais ce téléphone n'a pas pu être inscrit pour les notifications – les messages de Buddy seront ici, dans l'appli.",
     "optin_body_rules": "Par exemple juste avant un contrôle ou quand des exercices t'attendent. Jamais après {{time}}.",
     "rules_short": "jamais après {{time}}"
   },

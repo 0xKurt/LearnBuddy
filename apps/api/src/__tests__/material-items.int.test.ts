@@ -145,15 +145,7 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
         ...body,
       });
     expect((await answer(idOf(FRANCE), { text: 'Paris' })).status).toBe(200);
-    env.llm.script('tutor', {
-      json: {
-        intent: 'answer',
-        verdict: 'incorrect',
-        reply: 'Schau nochmal auf die Karte.',
-        gave_hint: true,
-        revealed_answer: false,
-      },
-    });
+    // A wrong choice: the rules know it (kind feedback, no model).
     expect((await answer(idOf(ITALY), { choice: 0 })).status).toBe(200);
     expect((await answer(idOf(ITALY), { choice: 1 })).status).toBe(200);
     env.llm.script('tutor', {

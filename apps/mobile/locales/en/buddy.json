@@ -24,6 +24,9 @@
     "ready_focus": "Mostly: {{topics}}",
     "ready_for_exam": "For “{{exam}}” {{when}}",
     "ready_cta": "Practise now",
+    "ready_cta_short": "Practise",
+    "more": "Tap for more",
+    "less": "Tap for less",
     "ready_later": "Not today",
     "capture_title": "Send me a photo",
     "capture_body": "Take a photo of “{{title}}” – I'll turn it into practice.",
@@ -108,7 +111,6 @@
     "rules_settings": "as set in the settings",
     "optin_done": "Allowed: I'll message your phone too now – {{rules}}. You can change this in the settings.",
     "optin_done_minor": "Allowed: Buddy will message {{name}}'s phone too now – {{rules}}. You can change this in the settings.",
-    "optin_done_no_device": "Allowed. This phone could not be set up for notifications, though – Buddy's messages will be here in the app.",
     "optin_body_rules": "For example just before a test or when practice is ready. Never after {{time}}.",
     "rules_short": "never after {{time}}"
   },

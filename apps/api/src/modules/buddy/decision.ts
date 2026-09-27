@@ -181,7 +181,7 @@ const remember = z.object({
       .min(3)
       .max(200)
       .describe(
-        'Short third-person statement in the learner\'s language, e.g. "Hat donnerstags Fußball"',
+        'Short third-person statement in the learner\'s language with only what her quote says — no day, time, place or detail she did not say (she said "hab gleich Handballtraining" → "Hat Handballtraining", never "Hat sonntags Handballtraining")',
       ),
     quote: Quote,
     until: UntilSpecSchema.nullable().describe('Required for kind=constraint, otherwise null'),
@@ -192,7 +192,12 @@ const correctMemory = z.object({
   tool: z.literal('correct_memory'),
   args: z.object({
     memory: MemoryRef,
-    statement: z.string().trim().min(3).max(200),
+    statement: z
+      .string()
+      .trim()
+      .min(3)
+      .max(200)
+      .describe('The corrected statement: what was known, changed only by what her quote says'),
     quote: Quote,
     until: UntilSpecSchema.nullable()
       .default(null)
@@ -462,6 +467,11 @@ const offerLearning = z.object({
       .max(600)
       .describe(
         "What to learn, in the learner's words (topic, the vocabulary they typed, or the homework task)",
+      ),
+    goal: GoalRef.nullable()
+      .default(null)
+      .describe(
+        'practice or test for a planned test in STATE: its alias (g1) — the questions then stay within the sheets she photographed for it; otherwise null',
       ),
   }),
 });

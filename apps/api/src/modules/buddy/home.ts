@@ -193,6 +193,48 @@ function preparedBrief(state: BuddyState, step: StepRow, today: string): Prepare
   };
 }
 
+/**
+ * A sheet whose reading failed: why, and what she can do ("Nochmal lesen", "Neues Foto").
+ * What "Neues Foto" re-opens: the same purpose, and for a failed retake or added page the
+ * sheet it belongs to (audit M-18); the title names the sheet.
+ */
+async function failedCard(
+  deps: Deps,
+  learnerId: string,
+  failed: Pick<BuddyState['materials'][number], 'id' | 'failure_reason'>,
+): Promise<NowCard> {
+  const row = await deps.db.maybeOne<{
+    n: number;
+    purpose: 'study' | 'homework';
+    completes: string | null;
+    title: string | null;
+  }>(
+    `select (select count(*)::int from jobs where learner_id = $1 and kind = 'extract_material'
+               and payload ->> 'material_id' = $2::text) as n,
+            m.purpose, m.completes_material_id as completes,
+            coalesce(root.title, m.title) as title
+       from materials m
+       left join materials root on root.id = m.completes_material_id and root.learner_id = $1
+      where m.id = $2::uuid and m.learner_id = $1`,
+    [learnerId, failed.id],
+  );
+  return {
+    type: 'material_failed',
+    material_id: failed.id,
+    reason: failed.failure_reason,
+    retryable:
+      failed.failure_reason !== 'not_learning_material' &&
+      failed.failure_reason !== 'blocked' &&
+      (row?.n ?? 0) < 3,
+    purpose: row?.purpose ?? 'study',
+    completes: row?.completes ?? null,
+    title: row?.title ?? null,
+  };
+}
+
+/** How long a reading that just failed stays on top of everything else. */
+const JUST_FAILED_MS = 30 * 60_000;
+
 async function nowCardOf(
   deps: Deps,
   learnerId: string,
@@ -203,6 +245,21 @@ async function nowCardOf(
   // Open sessions to go on with, keyed on her last activity (audit H-7, decision D-5): one
   // she used in the last 12 hours comes first; an older paused one (homework up to 14 days)
   // comes after Buddy's prepared practice, so it never hides that.
+  // Her photos could not be read just now: she is told at once, above a result or prepared
+  // practice — the "reading" line must never just vanish (live finding 2, rule 5).
+  const justFailed = await deps.db.maybeOne<{ id: string }>(
+    `select m.id from materials m
+      where m.learner_id = $1 and m.status = 'failed' and m.archived_at is null
+        and exists (select 1 from jobs j where j.kind = 'extract_material'
+                      and j.payload ->> 'material_id' = m.id::text
+                      and j.finished_at > $2::timestamptz)
+      order by m.created_at desc limit 1`,
+    [learnerId, new Date(now.getTime() - JUST_FAILED_MS)],
+  );
+  const justFailedMaterial = justFailed
+    ? state.materials.find((m) => m.id === justFailed.id)
+    : undefined;
+  if (justFailedMaterial) return failedCard(deps, learnerId, justFailedMaterial);
   const open = state.sessions.filter((s) => resumable(s, now));
   const resumeCard = (active: (typeof open)[number]): NowCard => {
     const goal = active.goal_id ? state.goals.find((g) => g.id === active.goal_id) : undefined;
@@ -309,37 +366,7 @@ async function nowCardOf(
   const failed = state.materials.find(
     (m) => m.status === 'failed' && now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
   );
-  if (failed) {
-    // What "Neues Foto" re-opens: the same purpose, and for a failed retake or
-    // added page the sheet it belongs to (audit M-18); the title names the sheet.
-    const row = await deps.db.maybeOne<{
-      n: number;
-      purpose: 'study' | 'homework';
-      completes: string | null;
-      title: string | null;
-    }>(
-      `select (select count(*)::int from jobs where learner_id = $1 and kind = 'extract_material'
-                 and payload ->> 'material_id' = $2::text) as n,
-              m.purpose, m.completes_material_id as completes,
-              coalesce(root.title, m.title) as title
-         from materials m
-         left join materials root on root.id = m.completes_material_id and root.learner_id = $1
-        where m.id = $2::uuid and m.learner_id = $1`,
-      [learnerId, failed.id],
-    );
-    return {
-      type: 'material_failed',
-      material_id: failed.id,
-      reason: failed.failure_reason,
-      retryable:
-        failed.failure_reason !== 'not_learning_material' &&
-        failed.failure_reason !== 'blocked' &&
-        (row?.n ?? 0) < 3,
-      purpose: row?.purpose ?? 'study',
-      completes: row?.completes ?? null,
-      title: row?.title ?? null,
-    };
-  }
+  if (failed) return failedCard(deps, learnerId, failed);
   const capture = state.steps.find((s) => s.kind === 'capture' && s.state === 'planned');
   if (capture) {
     const goal = capture.goal_id ? state.goals.find((g) => g.id === capture.goal_id) : undefined;
@@ -566,6 +593,15 @@ async function threadOf(
     if (await needsAdult(deps, learner, a.undo, now)) adultOnly.add(a.id);
     if (await undoApplies(deps.db, learnerId, a.undo)) undoWorks.add(a.id);
   }
+  // Quick answers belong to their moment: once she acted since (sent a photo, started a
+  // practice), "Foto machen / Später fotografieren" are gone (live finding 8).
+  const acted = await deps.db.one<{ at: Date | null }>(
+    `select greatest(
+       (select max(created_at) from materials where learner_id = $1),
+       (select max(started_at) from practice_sessions where learner_id = $1)) as at`,
+    [learnerId],
+  );
+  const stale = (at: Date) => acted.at !== null && acted.at.getTime() > at.getTime();
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -575,7 +611,7 @@ async function threadOf(
       status: m.status,
       failure_code: m.failure_code,
       client_message_id: m.client_message_id,
-      options: m.ask?.options ?? null,
+      options: m.ask?.options && !stale(m.created_at) ? m.ask.options : null,
       reply_to_id: m.reply_to_id,
       outreach: o
         ? {

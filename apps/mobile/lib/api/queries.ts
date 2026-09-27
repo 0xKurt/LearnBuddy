@@ -12,6 +12,7 @@ import { currentSession } from '../auth/session.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
 import { writeHome } from './homeCache.js';
+import { followHome, followMaterial, libraryPollMs } from './libraryCache.js';
 import { keys } from './keys.js';
 import { followResumeCard } from './sessionCache.js';
 import {
@@ -81,7 +82,11 @@ export const useMe = () => useQuery({ queryKey: keys.me, queryFn: getMe });
 export const useHome = () =>
   useQuery({
     queryKey: keys.home,
-    queryFn: getHome,
+    queryFn: async () => {
+      const home = await getHome();
+      followHome(queryClient, home);
+      return home;
+    },
     refetchInterval: (q) => {
       const h = q.state.data;
       if (!h) return false;
@@ -101,12 +106,23 @@ export function setHome(home: BuddyHome): void {
 
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: getSettings });
 export const useMemory = () => useQuery({ queryKey: keys.memory, queryFn: getMemory });
-export const useLibrary = () => useQuery({ queryKey: keys.library, queryFn: getLibrary });
+/** Follows a sheet being read (live finding 3): fetched often while one is, and on every visit. */
+export const useLibrary = () =>
+  useQuery({
+    queryKey: keys.library,
+    queryFn: getLibrary,
+    refetchInterval: (q) => libraryPollMs(q.state.data),
+    refetchOnMount: (q) => (libraryPollMs(q.state.data) === false ? true : 'always'),
+  });
 
 export const useMaterial = (id: string) =>
   useQuery({
     queryKey: keys.material(id),
-    queryFn: () => getMaterial(id),
+    queryFn: async () => {
+      const m = await getMaterial(id);
+      followMaterial(queryClient, m);
+      return m;
+    },
     refetchInterval: (q) =>
       q.state.data && ['queued', 'processing'].includes(q.state.data.status) ? 3000 : false,
   });
@@ -115,7 +131,11 @@ export const useMaterial = (id: string) =>
 export const useMaterialItems = (id: string) =>
   useQuery({
     queryKey: keys.materialItems(id),
-    queryFn: () => getMaterialItems(id),
+    queryFn: async () => {
+      const v = await getMaterialItems(id);
+      followMaterial(queryClient, v.material);
+      return v;
+    },
     refetchInterval: (q) =>
       q.state.data && ['queued', 'processing'].includes(q.state.data.material.status)
         ? 3000

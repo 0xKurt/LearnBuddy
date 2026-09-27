@@ -24,6 +24,9 @@
     "ready_focus": "Sobre todo: {{topics}}",
     "ready_for_exam": "Para “{{exam}}” {{when}}",
     "ready_cta": "Practicar ahora",
+    "ready_cta_short": "Practicar",
+    "more": "Toca para ver más",
+    "less": "Toca para ver menos",
     "ready_later": "Hoy no",
     "capture_title": "Mándame una foto",
     "capture_body": "Haz una foto de “{{title}}”: yo lo convierto en ejercicios.",
@@ -108,7 +111,6 @@
     "rules_settings": "como está en los ajustes",
     "optin_done": "Permitido: ahora también te escribo al móvil – {{rules}}. Puedes cambiarlo en los ajustes.",
     "optin_done_minor": "Permitido: Buddy ahora también escribe a {{name}} al móvil – {{rules}}. Se puede cambiar en los ajustes.",
-    "optin_done_no_device": "Permitido. Pero este móvil no se ha podido registrar para notificaciones: los mensajes de Buddy estarán aquí en la app.",
     "optin_body_rules": "Por ejemplo, justo antes de un examen o cuando tengas ejercicios preparados. Nunca después de las {{time}}.",
     "rules_short": "nunca después de las {{time}}"
   },

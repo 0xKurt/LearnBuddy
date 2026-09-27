@@ -810,4 +810,139 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(fraction!.figure).toBeNull();
     expect(fraction!.prompt).toBe('Welcher Bruch ist dargestellt?');
   });
+  it('a practice test for a planned test stays within the sheets photographed for it (live finding 6)', async () => {
+    const goal = await env.db.one<{ id: string }>(
+      `insert into buddy_goals (learner_id, kind, title, due_date, topics)
+       values ($1, 'exam', 'Mathearbeit Brüche', '2026-10-01', '{Brüche}') returning id`,
+      [l.learnerId],
+    );
+    const sheet = await env.db.one<{ id: string }>(
+      `insert into materials (learner_id, client_request_id, status, photo_count, created_at, goal_id,
+                              title, extracted_text)
+       values ($1, gen_random_uuid(), 'ready', 1, $2, $3, 'Arbeitsblatt Brüche',
+               '1. Kürze 6/8. 2. Erweitere 3/4 mit 5.') returning id`,
+      [l.learnerId, env.clock.now(), goal.id],
+    );
+    for (const [prompt, topic] of [
+      ['Kürze 6/8.', 'Brüche kürzen'],
+      ['Erweitere 3/4 mit 5.', 'Brüche erweitern'],
+    ] as const) {
+      await env.db.query(
+        `insert into items (learner_id, material_id, kind, prompt, answer, topic, difficulty, origin)
+         values ($1, $2, 'short', $3, '3/4', $4, 2, 'material')`,
+        [l.learnerId, sheet.id, prompt, topic],
+      );
+    }
+    // Buddy offers the test by its title (the model named no goal): it is that test's.
+    env.llm.script('buddy_turn', {
+      json: {
+        reply: 'Hier ist dein Probetest.',
+        options: null,
+        actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Mathearbeit Brüche' } }],
+      },
+    });
+    await l.api.post('/buddy/messages', {
+      client_message_id: randomUUID(),
+      text: 'Mach mir einen Probetest für „Mathearbeit Brüche“.',
+    });
+    const offer = await env.db.one<{ result: { goal_id: string | null } }>(
+      `select result from buddy_actions where learner_id = $1 and tool = 'offer_learning'`,
+      [l.learnerId],
+    );
+    expect(offer.result.goal_id).toBe(goal.id);
+
+    env.llm.script('explain', (req) => {
+      const text = ScriptedGateway.textOf(req);
+      expect(text).toContain('TOPICS: Brüche erweitern | Brüche kürzen');
+      expect(text).toContain('Kürze 6/8');
+      // The model may only pick one of the sheet's topics.
+      expect(JSON.stringify(req.schema)).toContain('"enum":["Brüche erweitern","Brüche kürzen"]');
+      return {
+        usable: true,
+        title: 'Probetest Brüche',
+        subject: null,
+        intro: null,
+        items: [
+          item({ prompt: 'Kürze 9/12.', answer: '3/4', topic: 'Brüche kürzen' }),
+          item({ prompt: 'Erweitere 2/5 mit 3.', answer: '6/15', topic: 'Brüche erweitern' }),
+          // Not on the sheet: dropped.
+          item({ prompt: 'Berechne 2/3 · 3/5.', answer: '2/5', topic: 'Brüche multiplizieren' }),
+          item({ prompt: 'Berechne 3/4 : 2/3.', answer: '9/8', topic: 'Division' }),
+        ],
+      };
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'test',
+      text: 'Mathearbeit Brüche',
+      goal_id: offer.result.goal_id,
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.items.map((i) => i.item.topic)).toEqual(['Brüche kürzen', 'Brüche erweitern']);
+    const session = await env.db.one<{ goal_id: string }>(
+      `select goal_id from practice_sessions where id = $1`,
+      [res.body.id],
+    );
+    expect(session.goal_id).toBe(goal.id);
+
+    // Another learner's test is not hers to build from.
+    const other = await onboard(env, {
+      relation: 'child',
+      name: 'Mia',
+      birthDate: '2014-05-01',
+      pin: '1357',
+    });
+    const foreign = await other.api.post('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'test',
+      text: 'Mathearbeit Brüche',
+      goal_id: goal.id,
+    });
+    expect(foreign.status).toBe(404);
+  });
+  it('"Kurz erklärt" is short: a long explanation gets one repair round, then a cut (live finding 7)', async () => {
+    // The explanation as written live: ~150 words in three paragraphs.
+    const LONG =
+      'Der Dativ ist einer der vier Fälle im Deutschen. Du nutzt ihn, um das Indirekte Objekt in einem Satz zu bestimmen. Das ist meistens die Person oder Sache, die etwas empfängt oder der etwas passiert. Du kannst nach dem Dativ ganz einfach mit dem Fragezeichen Wem? fragen.\n\nSchauen wir uns zwei Beispiele an. Im Satz Ich schenke meiner Schwester ein Buch fragst du: Wem schenke ich ein Buch? Die Antwort lautet meiner Schwester. Dieser Teil steht also im Dativ. Ein weiteres Beispiel: Das Essen schmeckt dem Hund. Wem schmeckt das Essen? Dem Hund.\n\nDas Wichtigste beim Dativ ist, dass sich die Begleiter und Endungen verändern. Aus der Vater wird im Dativ dem Vater, aus die Mutter wird der Mutter, aus das Kind wird dem Kind und im Plural wird aus die Kinder den Kindern.';
+    const explained = (intro: string) => ({
+      json: {
+        usable: true,
+        title: 'Der Dativ',
+        subject: { name: 'Deutsch', kind: 'german' },
+        intro,
+        items: [item({ prompt: 'Mit welcher Frage findest du den Dativ?', answer: 'Wem?' })],
+      },
+    });
+    env.llm.script('explain', explained(LONG), (req) => {
+      expect(req.system).toContain('You shorten an explanation');
+      expect(ScriptedGateway.textOf(req)).toContain('Das Wichtigste beim Dativ');
+      return {
+        intro:
+          'Den Dativ findest du mit der Frage „Wem?“. Beispiel: „Das Essen schmeckt dem Hund.“ – Wem? Dem Hund!.',
+      };
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'explain',
+      text: 'Erklär mir den Dativ',
+    });
+    expect(res.status).toBe(201);
+    // Short, and the doubled punctuation is gone.
+    expect(res.body.intro).toBe(
+      'Den Dativ findest du mit der Frage „Wem?“ Beispiel: „Das Essen schmeckt dem Hund.“ – Wem? Dem Hund!',
+    );
+
+    // The repair is still too long (or fails): cut after the last whole sentence within 80 words.
+    env.llm.script('explain', explained(LONG), { json: { intro: LONG } });
+    const cut = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'explain',
+      text: 'Erklär mir den Dativ nochmal',
+    });
+    const words = (cut.body.intro ?? '').split(/\s+/).filter(Boolean).length;
+    expect(words).toBeLessThanOrEqual(80);
+    expect(words).toBeGreaterThan(20);
+    expect(cut.body.intro).toMatch(/\.$/);
+    expect(cut.body.intro).not.toContain('Wem?.');
+  });
 });

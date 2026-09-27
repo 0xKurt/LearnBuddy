@@ -24,6 +24,13 @@ export const SPELLING_RULES = `spelling: "strict" when the task practises spelli
 
 export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.`;
 
+/**
+ * Correct language (live finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1",
+ * "Gib den Zähler des Bruches a/8 an"). The prompt asks for a self-check; code drops what it
+ * can recognise structurally (placeholderQuestion).
+ */
+export const LANGUAGE_RULES = `Language: everything you write yourself (questions, choices, hints, explanations) is correct, natural language — right spelling, grammar and punctuation, real words only, one clear wording (never "A/B" alternatives like "echtere/größer"). Before you answer, reread every question and fix each mistake. A question never names what it asks for with a placeholder letter or word (not "Gib den Zähler des Bruches $\\frac{a}{8}$ an" — ask "Welcher Bruch ist gefärbt?").`;
+
 /** The most other accepted answers per item — the number the prompts name (audit H-14). */
 export const MAX_ACCEPTED = 8;
 
@@ -192,6 +199,47 @@ function usableTolerance(it: ItemDraft): number | null {
   return it.tolerance <= Math.abs(key.value) / 10 ? it.tolerance : null;
 }
 
+const FRAC = /\\frac\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}/g;
+const PLAIN_FRAC =
+  /(?<![\p{L}\p{N}])(\p{L}|\?)\/(\d+)(?![\p{L}\p{N}])|(?<![\p{L}\p{N}])(\d+)\/(\p{L}|\?)(?![\p{L}\p{N}])/gu;
+const RELATION = /[=<>≤≥≠≈]|\\(?:le|ge|ne|approx|lt|gt)(?![a-z])/;
+/** A fraction part that stands for something unknown: one letter, a word in \text{}, "?" or a gap. */
+const UNKNOWN_PART = /^\s*(?:\p{L}|\\text\{[^}]*\}|\?|_+|\\_+|\\square|\.\.\.|…)\s*$/u;
+const NUMBER_PART = /^\s*\d+\s*$/;
+
+/**
+ * A number question that names what it asks for with a placeholder: a fraction with a number
+ * on one side and an unknown on the other ($\frac{a}{8}$, $\frac{\text{Zähler}}{4}$, a/8,
+ * $\frac{3}{?}$), with nothing that pins the unknown down — no relation (=, <, ≤ …) and the
+ * letter nowhere else in the question (live finding 5: "Gib den Zähler des Bruches a/8 an").
+ * Structure only, no words. Numeric items only: in algebra (formula) letters are the point.
+ */
+export function placeholderQuestion(it: Pick<ItemDraft, 'kind' | 'prompt'>): boolean {
+  if (it.kind !== 'numeric') return false;
+  if (RELATION.test(it.prompt)) return false;
+  const found: { unknown: string; at: number; length: number }[] = [];
+  for (const m of it.prompt.matchAll(FRAC)) {
+    const [whole, top = '', bottom = ''] = m;
+    const unknown =
+      UNKNOWN_PART.test(top) && NUMBER_PART.test(bottom)
+        ? top
+        : UNKNOWN_PART.test(bottom) && NUMBER_PART.test(top)
+          ? bottom
+          : null;
+    if (unknown !== null)
+      found.push({ unknown: unknown.trim(), at: m.index, length: whole.length });
+  }
+  for (const m of it.prompt.matchAll(PLAIN_FRAC)) {
+    found.push({ unknown: (m[1] ?? m[4] ?? '').trim(), at: m.index, length: m[0].length });
+  }
+  return found.some(({ unknown, at, length }) => {
+    // A letter used elsewhere in the question ("für x = 12", "welches $a$") is bound there.
+    if (!/^\p{L}$/u.test(unknown)) return true;
+    const rest = it.prompt.slice(0, at) + ' ' + it.prompt.slice(at + length);
+    return !new RegExp(`(?<![\\p{L}\\\\])${unknown}(?!\\p{L})`, 'u').test(rest);
+  });
+}
+
 /** Keep only items whose shape is consistent; returns them normalised. */
 export function usableItems(items: ItemDraft[]): ItemDraft[] {
   const out: ItemDraft[] = [];
@@ -208,6 +256,8 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
       spelling:
         raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
     };
+    // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
+    if (placeholderQuestion(it)) continue;
     if (it.kind === 'multiple_choice') {
       if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
       if (it.correct_choice >= it.choices.length) continue;

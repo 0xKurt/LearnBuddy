@@ -140,7 +140,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '06-parent-pin');
   for (const digit of pin) await page.getByRole('button', { name: digit, exact: true }).click();
   await expect(page.getByText('Hallo Mia')).toBeVisible();
-  await expect(page.getByText(/^Erlaubt[.:]/)).toBeVisible();
+  // The web cannot set up this phone for notifications: no toast over the chat about it (live
+  // finding 8) — settings says it calmly.
+  await expect(page.getByText(/^Erlaubt[.:]/)).toHaveCount(0);
   await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeHidden();
 
   // ── The worksheet: photographed, sent, read in the background ──
@@ -170,8 +172,13 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // ── Buddy acts on it by itself: reads it, prepares practice, says so ──
   // Here in the app the card says it now, and Buddy's message about it is in the chat with it
   // (she is in the app, so it is shown here, not pushed).
-  await expect(page.getByText(/Übung bereit: /)).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText(/4 Aufgaben · ca\. 5 Min\./)).toBeVisible();
+  // One slim line (owner request): what, how long, "Jetzt üben"; details on a tap.
+  await expect(
+    page.getByRole('button', { name: /^Übung bereit: Mathearbeit Brüche\./ }),
+  ).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(page.getByText(/^4 Aufgaben · ca\. 5 Min\.$/)).toBeVisible();
   expect(await homePositions(page)).toEqual(homeAt);
   // The chat still stands at its newest message under the card.
   await expect(page.getByText(/Vorbereitet: Mathearbeit Brüche/)).toBeInViewport();
@@ -277,6 +284,8 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // Every group is closed with what is set now; one tap opens it.
   await page.getByRole('button', { name: 'Darf Buddy dir aufs Handy schreiben?' }).click();
   await expect(page.getByRole('button', { name: 'Nicht mehr erlauben' })).toBeVisible();
+  // Where the note about phone messages lives, calmly (instead of a toast on the home).
+  await expect(page.getByText(/Alles kommt hier in der App\./)).toBeVisible();
   await shot(page, '15b-settings-contact', { opened: true });
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('Hallo Mia')).toBeVisible();

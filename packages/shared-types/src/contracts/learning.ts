@@ -330,6 +330,11 @@ export const StartTopicRequest = z.object({
   kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help', 'test']),
   text: z.string().trim().min(2).max(3000),
   subject: z.string().trim().max(60).nullable().optional(),
+  /**
+   * practice / test for a planned test (Buddy's offer names it): the questions stay within the
+   * topics of the sheets photographed for it, and the session belongs to it.
+   */
+  goal_id: Uuid.nullable().optional(),
 });
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 

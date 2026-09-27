@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.4';
+export const TUTOR_PROMPT_VERSION = 'tutor.v3.5';
 
 export const TutorDecision = z.object({
   intent: z
@@ -86,8 +86,10 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
 export function tutorContext(input: {
   item: TutorItem;
   hintsGiven: number;
-  /** Hints written when the question was prepared; the next one is preparedHints[hintsGiven]. */
+  /** Hints written when the question was prepared; the next one is preparedHints[preparedShown]. */
   preparedHints?: string[];
+  /** Prepared hints already shown (defaults to hintsGiven). */
+  preparedShown?: number;
   attempts: number;
   ruleVerdict: RuleVerdict;
   mode: 'practice' | 'test' | 'help' | 'explain';
@@ -114,7 +116,9 @@ export function tutorContext(input: {
   if (prepared.length) {
     lines.push(
       '',
-      `PREPARED HINTS (the next one to give is #${Math.min(input.hintsGiven + 1, prepared.length)}; say it in your words, fitted to the answer; never skip ahead, never repeat an earlier one):`,
+      (input.preparedShown ?? input.hintsGiven) < prepared.length
+        ? `PREPARED HINTS (the next one to give is #${(input.preparedShown ?? input.hintsGiven) + 1}; say it in your words, fitted to the answer; never skip ahead, never repeat an earlier one):`
+        : 'PREPARED HINTS (all shown already: write the next, more specific hint yourself — never repeat one, never the answer):',
       ...prepared.map((h, n) => `${n + 1}. ${h}`),
     );
   }

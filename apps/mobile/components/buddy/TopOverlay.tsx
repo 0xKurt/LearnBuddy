@@ -31,9 +31,11 @@ type Props = {
   onClose: () => void;
   /** The card's height from the top of the area it lies over (to keep the chat's top reachable). */
   onHeight: (height: number) => void;
+  /** Where the close button sits from the top (centred on a slim bar, SLIM_CLOSE_TOP). */
+  closeTop?: number;
 };
 
-export function TopOverlay({ id, children, closeLabel, onClose, onHeight }: Props) {
+export function TopOverlay({ id, children, closeLabel, onClose, onHeight, closeTop = 2 }: Props) {
   const lift = useRef(new Animated.Value(0)).current;
   const [viewH, setViewH] = useState(0);
   const [contentH, setContentH] = useState(0);
@@ -111,7 +113,7 @@ export function TopOverlay({ id, children, closeLabel, onClose, onHeight }: Prop
         >
           {children}
         </ScrollView>
-        <View style={{ position: 'absolute', top: 2, right: 2 }}>
+        <View style={{ position: 'absolute', top: closeTop, right: 2 }}>
           <Btn
             variant="ghost"
             size="sm"

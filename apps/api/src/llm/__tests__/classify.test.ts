@@ -4,7 +4,7 @@ import { ApiError } from '@google/genai';
 import { describe, expect, it } from 'vitest';
 
 import { outcomeOfStatus } from '../../lib/outcome.js';
-import { LlmError } from '../gateway.js';
+import { LlmError, TRUNCATED } from '../gateway.js';
 import { classify } from '../vertex.js';
 
 describe('provider errors → outcome', () => {
@@ -51,5 +51,17 @@ describe('push errors → outcome', () => {
     expect(new PushUncertainError('x').outcome).toBe('unknown');
     expect(new PushRejectedError('busy', 60).outcome).toBe('transient');
     expect(new PushRejectedError('no', null).outcome).toBe('refused');
+  });
+});
+
+describe('an answer cut off at the token limit (live finding 2)', () => {
+  it('is worth another try; other unusable output is not', () => {
+    const cut = new LlmError('invalid_output', 'output truncated', null, TRUNCATED);
+    expect(cut.truncated).toBe(true);
+    expect(cut.outcome).toBe('transient');
+    expect(cut.retryable).toBe(true);
+    const broken = new LlmError('invalid_output', 'output is not valid JSON');
+    expect(broken.truncated).toBe(false);
+    expect(broken.retryable).toBe(false);
   });
 });

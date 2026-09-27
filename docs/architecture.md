@@ -188,11 +188,20 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 - **Her words**: a quote must be whole words from what she wrote since Buddy's last answer —
   several quick messages count together (audit M-49) — and a quote of fewer than four letters
   counts only as a whole message (a bare "Ja"), never as a fragment ("ge" in "geschlagen").
+- **Only what she said** (live finding 4: "hab gleich Handballtraining" became "hat sonntags
+  Nachmittag Handballtraining"): a memory (`remember`, `correct_memory`) may name a day, time of
+  day, month or number only if her quote does (a correction: or the statement known before) —
+  `unsupportedSpecifics` in `buddy/text.ts`, from the platform's calendar names (Intl/CLDR in her
+  locale, weekdays and times of day also as a word's start: "sonntags"), not a word list. Refused
+  with the details named, so the model restates it; the prompt says the same (buddy.17).
 - **Dialogue order**: Buddy messages that arrived after her message (a reminder posted while
   she typed) are placed before her unanswered messages, so the model always answers her last.
 - **Days** are resolved from the day the model counted from (the attempt's "Now"), not from
   when the message was written; an older message (a resend, a recovery after midnight) is
   named in STATE so the model asks when a day she named has passed (audit M-51).
+- **Naming days** (live finding 9: "in 4 Tagen" for Thursday): every date in STATE carries the
+  words for it in her language, rendered by code (`say "Donnerstag"` within a week — `dayLabel` —,
+  later weekday and date via Intl), and the prompt says to use them, never "in N days".
 
 ## Tools
 
@@ -592,8 +601,23 @@ carries only real stages (`stage`: `sending` photos on their way, `waiting` for 
 the tasks found, a result and never a count of work to do), the number of photos (`pages`) and
 the purpose (homework has no practice to build). All pages are read in one model call, so there
 is no page-by-page progress and none is shown; nothing moves by itself (CLAUDE.md rule 5). The app
-(`components/buddy/ReadingCard.tsx`, `lib/buddy/readingStages.ts`) shows the photo, the stage
-and the steps "Angekommen · Lesen · Übungen"; `reading-stages.int.test.ts`.
+(`components/buddy/SlimBar.tsx` `ReadingBar`, `lib/buddy/readingStages.ts`) shows it as one slim
+bar on top of the home (owner request: the card was "ein Riesenbrett"; ~60 pt): the photo, the
+stage in a few words and the steps as dots inline, the step being worked on named; a tap opens
+the details (the line "Du kannst die App solange schließen", every step by name). Prepared
+practice gets the same bar (`ReadyBar`: "Übung bereit", what and how long in one line, a compact
+"Jetzt üben"; the test it is for, the focus and "Heute nicht" on a tap). Screen readers hear the
+whole content as the bar's label; closing and swiping it away stay as before;
+`reading-stages.int.test.ts`.
+"Mein Stoff" follows a sheet being read the same way (live finding 3: the list still said "Ohne
+Titel · wird gelesen" once the sheet was read): it is fetched every 2.5 s and on every visit while
+a row is `queued`/`processing`, a fresher view of the sheet from its own screen is written into the
+list at once, and a home poll that no longer reports a reading refreshes a list that still shows
+one (`lib/api/libraryCache.ts`).
+
+**Quick answers belong to their moment** (live finding 8): a Buddy message's options
+("Foto machen / Später fotografieren") are sent with the thread only while she has not acted since
+— a material created or a practice started after the message removes them (`home.ts` threadOf).
 
 **Outages are not failures.** The Storage gateway tells an absent photo (`null`) from a provider
 failure (`StorageError`): a failed download retries the run like a retryable model error (backoff
@@ -603,6 +627,18 @@ and do not use up the 3 runs. After the photo purge, retry answers 409 `photos_d
 `MaterialView.photos_deleted` hides "Nochmal lesen" (the card says to photograph it again). Each
 photo in the reading request is preceded by a label ("Photo 2 of 3:"), so page numbers in the
 report name real photos.
+
+**Cut off at the token limit** (live finding 2: a 2-task homework sheet ran on for 40 s, the
+reading line vanished and nothing was said). An answer stopped at the output limit
+(`LlmError.truncated`, finish reason `MAX_TOKENS`) is a transient failure, not a refusal: the run
+reads again at once with `LEAN_RULES` added (brief transcription, at most 10 questions, short
+hints, "never repeat"); cut off again, the job retries with backoff and starts lean (its
+`last_error` is `truncated`); after the last run the sheet fails as `model_error`, uncounted, so
+"Nochmal lesen" stays offered. Homework asks for less in the first place (schema without
+`worked_solution`, which she never sees there; at most 12 tasks; an 8 000-token limit instead of
+12 000, so a run-on stops sooner). A reading that failed in the last 30 minutes is the home's
+card above everything else (a result, prepared practice, an open session) — the "reading" line
+never just disappears (rule 5); after that it falls back behind them for the rest of the day.
 
 **PDFs** (`modules/materials/pdf.ts`, migration `0042_material_pdf.sql`; gaps.md #6): a worksheet
 that came as a PDF (WhatsApp, IServ, Schul-Cloud, Dateien) is a file of the material next to
@@ -840,14 +876,20 @@ so the rules only say it when it is certain; everything else goes to the tutor (
 questions from a photo in the (background) reading call, questions on a topic in a separate
 background call right after the session starts (`hints.ts`, purpose `hints`) — writing them in the
 start call made her wait 8–11 s instead of 5–6 s. A hint that states the result in any form
-(also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. While practising: a
-rule-decided wrong answer gets the next prepared hint at once (no model); the "Tipp" button
+(also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
+hints she was really shown as hints (migration `0043_prepared_hints_used.sql`: `hints_used` = every
+hint shown, prepared or written by the tutor; `prepared_hints_used` = which prepared one is next).
+While practising: a rule-decided wrong answer gets kind feedback at once ("Noch nicht ganz –
+probier's nochmal. Mit „Tipp“ …", no model) and uses up no hint (live finding 1: the feedback used
+to consume the only prepared hint, so the first "Tipp" showed the solution); the "Tipp" button
 (`POST /practice/sessions/:id/hint`, idempotent, `hint_available` in the view — never the hints
-themselves) gives the next prepared hint at once, or, with none prepared (yet), lets the tutor write
-one as for "weiß nicht". The tutor model, when it must judge,
-sees the prepared hints; a reply that gives the solution away before the second hint is replaced
-by the prepared hint, without a second call. After the third wrong try (`REVEAL_AFTER_MISSES`), or
-a request for help after the last hint, the worked solution is shown and the question counts as
+themselves) gives the next prepared hint at once, or, with none left, lets the tutor write one: a
+request for help, never graded (`not_an_attempt`), and the tutor's own hint is shown and counted as a
+hint. The tutor model, when it must judge, sees the prepared hints; a reply that gives the solution
+away before the second hint is replaced by the next prepared hint (or a first-step question), without
+a second call. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
+she asks for help again once every prepared hint and at least `HINTS_BEFORE_SOLUTION` (2) hints were
+shown — never on the first "Tipp"; the question then counts as
 revealed (FSRS brings it back soon). Tests give no hints; homework keeps its own rules (never the
 solution).
 
@@ -877,6 +919,22 @@ Also after the last question closed and the session finished.
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
 shown as "Frage von Buddy"), from a typed list (`typed`) or from homework (`homework`). All
 share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `insertItems`).
+A practice or practice test for a planned test stays within the sheets she photographed for it
+(live finding 6: a test "for the worksheet" asked to multiply and divide fractions, which the sheet
+never did). Buddy's `offer_learning` names the test (`goal`, or code takes the one active test
+whose title the offer names exactly) and the offer carries `goal_id`; `POST /practice/topic` with
+`goal_id` (the learner's own goal, else 404) gives the model the sheets' topics (from the
+questions read from them) and text, the schema lets each question's `topic` be only one of those
+topics, and a question on any other topic is dropped; the session belongs to the goal. A test
+with no read sheet is built from the topic she named, as before.
+Every prompt that writes questions, hints or explanations carries `LANGUAGE_RULES` (correct,
+natural language, real words, no "A/B" alternatives, reread and fix before answering — live
+finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1"). Code drops what it can recognise by
+structure: a numeric question that names the number it asks for with a placeholder
+(`placeholderQuestion`: a fraction with a number on one side and a letter, `\text{…}` or "?" on
+the other — $\frac{a}{8}$, a/8 — with no relation sign and the letter nowhere else in the
+question). Algebra (formula items) keeps its letters. Spelling itself cannot be checked without a
+word list, so it stays a prompt rule.
 
 - **help** — homework, from a photo (`materials.purpose = 'homework'`: the tasks as printed, a
   help session is created when they are read) or typed (`POST /practice/topic` kind `help`; tasks
@@ -894,7 +952,13 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
   under the same check); "Später" (`POST …/items/:itemId/defer`, `session_items.deferred_at`)
   sets a task aside — still open, it comes back after the others. No FSRS for homework.
 - **explain** — `POST /practice/topic` kind `explain`: a short explanation (`session.intro`) at
-  the learner's grade, then 3–5 check questions; the tutor sees the explanation.
+  the learner's grade, then 3–5 check questions; the tutor sees the explanation. "Kurz erklärt"
+  means short (live finding 7: ~200 words, bare example sentences, "Wem?."): the prompt asks for
+  at most 70 words in 1–2 paragraphs with example sentences in quotation marks; code
+  (`practice/brief.ts`) removes doubled punctuation ("?." → "?") and, over `INTRO_MAX_WORDS`
+  (80), asks the model once to shorten it (a small call, purpose `explain`), then cuts after the
+  last whole sentence within the limit. "Anders erklären" gets the same clean-up and limit
+  (`REEXPLAIN_MAX_WORDS`, prompt: 2–4 sentences, at most 60 words).
 - **practice on a topic** — kind `practice`: Buddy's own questions, marked as such.
 - **test** (migration `0005_test_mode.sql`) — kind `test` (start tile "Probetest", or Buddy's
   `offer_learning` shortly before an exam): 8–12 questions like a class test. Code enforces:

@@ -49,7 +49,7 @@ describe('act tool registry', () => {
     };
     const plan = {
       tool: 'offer_learning' as const,
-      args: { kind: 'practice' as const, text: 'Brüche' },
+      args: { kind: 'practice' as const, text: 'Brüche', goal: null },
     };
     expect(askedButActed({ asks_permission: true, actions: [drop] })).toHaveLength(1);
     // Asking about something else after doing a harmless thing is fine.

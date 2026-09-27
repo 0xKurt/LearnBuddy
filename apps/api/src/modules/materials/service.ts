@@ -39,6 +39,8 @@ import {
   ExtractionResult,
   type PageReport,
   HOMEWORK_SYSTEM,
+  HomeworkExtraction,
+  LEAN_RULES,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
 import {
@@ -52,6 +54,7 @@ import {
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
+const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 
@@ -670,13 +673,13 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')`,
     [materialId, job.id, job.lease_token, deps.now()],
   );
-  let result;
-  try {
-    const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
+  const homework = m.purpose === 'homework';
+  const read = (lean: boolean) =>
+    callModel(deps, learner.id, localParts(now, tz.timezone).date, {
       purpose: 'extraction',
       tier: 'smart',
       promptVersion: EXTRACT_PROMPT_VERSION,
-      system: m.purpose === 'homework' ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM,
+      system: `${homework ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM}${lean ? `\n\n${LEAN_RULES}` : ''}`,
       contents: [
         {
           role: 'user',
@@ -688,19 +691,36 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
           ],
         },
       ],
-      schema: EXTRACTION_SCHEMA,
-      maxOutputTokens: 12_000,
+      schema: homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+      // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
+      // reading that runs on is cut off after seconds, not after 40 (live finding 2).
+      maxOutputTokens: homework ? 8_000 : 12_000,
       temperature: 0.3,
       timeoutMs: 120_000,
       // Read once in the background: time to think (see generate.ts).
       thinkingBudget: 2048,
     });
+  let result;
+  try {
+    // A run after one that was cut off starts lean at once.
+    let lean = job.last_error === 'truncated';
+    let res;
+    try {
+      res = await read(lean);
+    } catch (err) {
+      // Cut off at the token limit: read again at once, told to be brief (live finding 2).
+      if (!(err instanceof LlmError && err.truncated) || lean) throw err;
+      lean = true;
+      res = await read(lean);
+    }
     result = ExtractionParse.safeParse(res.json);
   } catch (err) {
     if (isAppError(err) && err.code === 'budget_exhausted')
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
+    // An outage, or cut off twice: try again later; after the last run she gets an honest
+    // failed card with "Nochmal lesen" (rule 5), never silence.
     if (err instanceof LlmError && err.retryable)
-      return retryTransient(deps, job, materialId, err.kind);
+      return retryTransient(deps, job, materialId, err.truncated ? 'truncated' : err.kind);
     // The provider's safety filter refused this sheet: reading it again gives the same
     // answer, so it ends here with its own honest words and no retry (audit p2-T8).
     if (err instanceof LlmError && err.kind === 'blocked')
