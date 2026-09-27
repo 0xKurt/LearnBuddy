@@ -146,3 +146,26 @@ describe('photo drafts', () => {
     expect(cameraOpenOf(null, now)).toBeNull();
   });
 });
+
+describe('PDFs in a draft', () => {
+  it('keeps which file is a PDF; a send with a PDF has no photo per page', async () => {
+    const m = memory();
+    const t = new Date('2026-09-28T14:00:00Z');
+    const s = createDraftStore(m.storage, () => t);
+    await s.save({
+      requestId: null,
+      photos: [
+        { uri: 'a.pdf', problems: [], kept: false, pdf: 'Blatt.pdf' },
+        { uri: 'b.jpg', problems: [], kept: false },
+      ],
+      link: LINK,
+    });
+    expect((await s.load())?.photos.map((p) => p.pdf)).toEqual(['Blatt.pdf', null]);
+    await s.sent('mat-pdf', ['a.pdf', 'b.jpg'], 'r1', false);
+    // Page 2 is not the second file: nothing is shown rather than the wrong page.
+    expect(await s.sentPage('mat-pdf', 1)).toBeNull();
+    expect(await s.sentPage('mat-pdf', 2)).toBeNull();
+    await s.sent('mat-photos', ['c.jpg'], 'r2');
+    expect(await s.sentPage('mat-photos', 1)).toBe('c.jpg');
+  });
+});

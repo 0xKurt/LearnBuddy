@@ -41,8 +41,12 @@ export type PageProblem = z.infer<typeof PageProblem>;
 
 export const CreateMaterialRequest = z.object({
   client_request_id: Uuid,
+  /**
+   * One entry per file, in page order: photos, or a PDF (worksheets shared as PDF). The API
+   * counts a PDF's pages on submit: 20 pages at most in all (reason too_many_pages).
+   */
   photo_mimes: z
-    .array(z.enum(['image/jpeg', 'image/png']))
+    .array(z.enum(['image/jpeg', 'image/png', 'application/pdf']))
     .min(1)
     .max(20),
   goal_id: Uuid.nullable().optional(),
@@ -78,6 +82,7 @@ export const MaterialView = z.object({
   session_status: z.enum(['active', 'finished', 'abandoned']).nullable().default(null),
   /** Pages not read completely, while Lena has not answered the notice. */
   page_problems: z.array(PageProblem),
+  /** Pages: a photo is one, a PDF counts its pages (known once submitted). */
   photo_count: z.number().int(),
   /** Pages added to a sheet: once read, their questions are part of that sheet. */
   merged_into: Uuid.nullable(),

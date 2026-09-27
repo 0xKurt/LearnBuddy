@@ -41,7 +41,10 @@
     "learner_exists": "El perfil ya existe.",
     "weak_password": "Esta contraseña no sirve. Elige otra de al menos 8 caracteres.",
     "profile_invalid": "Esto no encaja. Revisa los datos.",
-    "stream_lost": "La conexión se cortó a mitad. Si tu mensaje llegó, Buddy responderá igualmente."
+    "stream_lost": "La conexión se cortó a mitad. Si tu mensaje llegó, Buddy responderá igualmente.",
+    "too_many_pages": "Son demasiadas páginas – una ficha puede tener 20 como máximo. Elige solo las que necesitas.",
+    "file_unreadable": "Este archivo no se abre. Elige otro o haz una foto de la ficha.",
+    "file_too_large": "El archivo es demasiado grande – 15 MB como máximo. Mejor haz una foto de la ficha."
   },
   "turn": {
     "model_unavailable": "Buddy no ha podido responder en este momento.",

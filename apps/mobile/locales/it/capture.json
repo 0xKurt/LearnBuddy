@@ -1,11 +1,12 @@
 {
   "title": "Fotografa la tua scheda",
-  "intro": "Scheda, pagina del libro o quaderno – lo trasformo in esercizi.",
+  "intro": "Scheda, pagina del libro o quaderno – in foto o PDF. Ne faccio degli esercizi.",
   "tip": "Consiglio: pagina intera, buona luce, dall'alto.",
   "privacy": "Le foto vengono cancellate al più tardi 7 giorni dopo la lettura.",
   "camera": "Scatta una foto",
   "camera_more": "Un'altra foto",
   "library": "Scegli tra le tue foto",
+  "library_short": "Da foto",
   "photos_title_one": "{{count}} foto",
   "photos_title_other": "{{count}} foto",
   "photo_label": "Foto {{index}} di {{total}}",
@@ -76,5 +77,21 @@
     "discarded_other": "{{count}} foto scartate.",
     "undo": "Annulla",
     "undo_label": "Recupera le foto scartate"
+  },
+  "files": {
+    "pick": "Da file",
+    "pick_label": "Scegli dai file – PDF o immagine",
+    "title_one": "{{count}} file",
+    "title_other": "{{count}} file",
+    "pdf_label": "PDF {{index}} di {{total}}: {{name}}",
+    "drop": "Rilascia qui – prendo foto e PDF.",
+    "error": "I tuoi file non si sono aperti. Riprova.",
+    "unsupported_one": "Un file non è né un'immagine né un PDF – lo lascio fuori.",
+    "unsupported_other": "{{count}} file non sono immagini né PDF – li lascio fuori.",
+    "too_large": "Il PDF è troppo grande – al massimo {{max}} MB. Meglio fotografare la scheda."
+  },
+  "share": {
+    "nothing": "Mandami una foto o un PDF della tua scheda – qui non posso leggere testo o link.",
+    "signed_out": "Prima accedi – poi condividi di nuovo la scheda con LearnBuddy."
   }
 }

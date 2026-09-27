@@ -1,11 +1,12 @@
 {
   "title": "Photograph your sheet",
-  "intro": "Worksheet, textbook page or exercise book – I'll turn it into practice.",
+  "intro": "Worksheet, textbook page or notebook – as a photo or PDF. I'll make practice from it.",
   "tip": "Tip: whole page, good light, from above.",
   "privacy": "Photos are deleted at the latest 7 days after reading.",
   "camera": "Take photo",
   "camera_more": "Another photo",
   "library": "Choose from photos",
+  "library_short": "From photos",
   "photos_title_one": "{{count}} photo",
   "photos_title_other": "{{count}} photos",
   "photo_label": "Photo {{index}} of {{total}}",
@@ -76,5 +77,21 @@
     "discarded_other": "{{count}} photos discarded.",
     "undo": "Undo",
     "undo_label": "Bring back the discarded photos"
+  },
+  "files": {
+    "pick": "From files",
+    "pick_label": "Choose from files – PDF or image",
+    "title_one": "{{count}} file",
+    "title_other": "{{count}} files",
+    "pdf_label": "PDF {{index}} of {{total}}: {{name}}",
+    "drop": "Drop it here – I take photos and PDFs.",
+    "error": "Your files didn't open just now. Please try again.",
+    "unsupported_one": "One file isn't an image or a PDF – I'll leave it out.",
+    "unsupported_other": "{{count}} files aren't images or PDFs – I'll leave them out.",
+    "too_large": "The PDF is too big – {{max}} MB at most. Better take a photo of the sheet."
+  },
+  "share": {
+    "nothing": "Send me a photo or PDF of your sheet – I can't read text or links here.",
+    "signed_out": "Please sign in first – then share the sheet with LearnBuddy again."
   }
 }

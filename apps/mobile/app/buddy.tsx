@@ -427,7 +427,7 @@ export default function BuddyScreen() {
             : t('capture:draft.discarded', { count: shownDraft.photos.length })
         }
         detail={draft ? t('capture:draft.body', { count: draft.photos.length }) : null}
-        thumb={draft ? (draft.photos[0]?.uri ?? null) : null}
+        thumb={draft ? (draft.photos.find((p) => !p.pdf)?.uri ?? null) : null}
       >
         {draft ? (
           <>

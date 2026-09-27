@@ -1,3 +1,5 @@
 packages:
   - apps/*
   - packages/*
+patchedDependencies:
+  xcode@3.0.1: patches/xcode@3.0.1.patch

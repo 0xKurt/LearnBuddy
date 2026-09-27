@@ -37,16 +37,25 @@ const Draft = z.object({
         uri: z.string().min(1),
         problems: z.array(z.enum(PROBLEMS)),
         kept: z.boolean(),
+        /** A PDF (its file name); null for a photo. */
+        pdf: z.string().nullable().default(null),
       }),
     )
     .min(1),
   link: Link,
   savedAt: z.string(),
 });
-export type CaptureDraft = z.infer<typeof Draft>;
+export type CaptureDraft = z.output<typeof Draft>;
+export type DraftPhoto = CaptureDraft['photos'][number];
 
 const Sent = z.array(
-  z.object({ materialId: z.string(), uris: z.array(z.string()), sentAt: z.string() }),
+  z.object({
+    materialId: z.string(),
+    uris: z.array(z.string()),
+    sentAt: z.string(),
+    /** One photo per page: false when a PDF was among them (its pages are not photos here). */
+    paged: z.boolean().default(true),
+  }),
 );
 export type SentPhotos = z.infer<typeof Sent>;
 
@@ -127,9 +136,9 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
       return draft;
     },
 
-    async save(draft: Omit<CaptureDraft, 'v' | 'savedAt'>): Promise<void> {
+    async save(draft: Omit<z.input<typeof Draft>, 'v' | 'savedAt'>): Promise<void> {
       if (draft.photos.length === 0) return storage.write(DRAFT_KEY, null);
-      const full: CaptureDraft = { ...draft, v: 1, savedAt: now().toISOString() };
+      const full: z.input<typeof Draft> = { ...draft, v: 1, savedAt: now().toISOString() };
       await storage.write(DRAFT_KEY, JSON.stringify(full));
     },
 
@@ -156,11 +165,16 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
      * Sent: the draft ends; the photos stay a day for the page notice. Only
      * this send's draft ends — a newer capture started meanwhile keeps its own.
      */
-    async sent(materialId: string, uris: readonly string[], requestId: string): Promise<void> {
+    async sent(
+      materialId: string,
+      uris: readonly string[],
+      requestId: string,
+      paged = true,
+    ): Promise<void> {
       const current = parse(Draft, await storage.read(DRAFT_KEY));
       if (!current || current.requestId === requestId) await storage.write(DRAFT_KEY, null);
       const list = (await readSent()).filter((s) => s.materialId !== materialId);
-      list.push({ materialId, uris: [...uris], sentAt: now().toISOString() });
+      list.push({ materialId, uris: [...uris], sentAt: now().toISOString(), paged });
       await storage.write(SENT_KEY, JSON.stringify(list));
       await this.prune();
     },
@@ -168,7 +182,7 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
     /** The photo of one page of a sent material (1-based), while it is kept. */
     async sentPage(materialId: string, page: number): Promise<string | null> {
       const entry = (await readSent()).find((s) => s.materialId === materialId);
-      return entry?.uris[page - 1] ?? null;
+      return entry?.paged ? (entry.uris[page - 1] ?? null) : null;
     },
 
     /** Signed out: the draft and every kept photo are deleted. */
