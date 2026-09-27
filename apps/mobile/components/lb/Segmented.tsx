@@ -10,10 +10,13 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  size = 'md',
 }: {
   options: Array<{ value: T; label: string }>;
   value: T | null;
   onChange: (v: T) => void;
+  /** 'sm' for a longer row of short choices (still a 44 pt touch target). */
+  size?: 'sm' | 'md';
 }) {
   return (
     <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -22,6 +25,7 @@ export function Segmented<T extends string>({
           key={o.value}
           variant={o.value === value ? 'primary' : 'outline'}
           pill
+          size={size}
           selected={o.value === value}
           onPress={() => onChange(o.value)}
           accessibilityLabel={o.label}

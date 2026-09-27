@@ -242,7 +242,9 @@ export default function BuddyScreen() {
         followEnd.current = true;
       });
       setHome(res.home);
-      if (res.status === 'failed') toast.show(turnFailureText(res.error_code), 'error');
+      // The failed message says why in the thread, with "Nochmal senden" right there; a toast
+      // would sit on top of exactly that. Screen readers still hear it.
+      if (res.status === 'failed') announce(turnFailureText(res.error_code));
     } catch (err) {
       // Nothing to read when the reply comes after a failure she was told about.
       awaitingReply.current = null;

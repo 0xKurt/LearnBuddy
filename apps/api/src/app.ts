@@ -8,11 +8,11 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 
 import type { Deps } from './deps.js';
 import type { AppEnv } from './http/context.js';
+import { appCors } from './http/cors.js';
 import { accountBudgets } from './http/limits.js';
 import { isCheckViolation } from './lib/db.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
@@ -54,21 +54,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
     .map((o) => o.trim())
     .filter(Boolean);
   if (origins.length > 0) {
-    app.use(
-      '*',
-      cors({
-        origin: (origin) => (origins.includes(origin) ? origin : null),
-        allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowHeaders: [
-          'content-type',
-          'authorization',
-          'x-timezone',
-          'x-admin-token',
-          'x-app-version',
-        ],
-        maxAge: 86_400,
-      }),
-    );
+    app.use('*', appCors({ allowOrigin: (origin) => origins.includes(origin) }));
   }
   // Photos go straight to storage; API bodies are small JSON.
   const smallBodies = bodyLimit({

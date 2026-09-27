@@ -79,15 +79,16 @@ export default function Consent() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 14 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 12, gap: 12 }}>
         <View style={{ gap: 8 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
             {t('consent.title')}
           </Text>
           <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('consent.intro')}</Text>
         </View>
-        <Card padding={16}>
-          <View style={{ gap: 10 }}>
+        {/* Six points and the agreement fit a small phone (360×740) without scrolling. */}
+        <Card padding={14}>
+          <View style={{ gap: 8 }}>
             {POINTS.map((p) => (
               <View key={p} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                 <View
@@ -105,7 +106,7 @@ export default function Consent() {
                 >
                   <Icon name="check" size={15} color={LB.primaryDk} />
                 </View>
-                <Text style={[TYPE.body, { flex: 1, fontSize: 15, lineHeight: 21 }]}>
+                <Text style={[TYPE.body, { flex: 1, fontSize: 14, lineHeight: 20 }]}>
                   {t(`consent.${p}`)}
                 </Text>
               </View>

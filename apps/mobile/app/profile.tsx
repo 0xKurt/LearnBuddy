@@ -147,7 +147,7 @@ export default function Profile() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24, gap: 22 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 18 }}
           keyboardShouldPersistTaps="handled"
         >
           {parentStep ? (
@@ -255,7 +255,8 @@ export default function Profile() {
               </View>
               <View style={{ gap: 8 }}>
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
-                <Segmented options={LANGUAGES} value={locale} onChange={setLocale} />
+                {/* Compact: five languages in two rows, so the step fits a small phone. */}
+                <Segmented size="sm" options={LANGUAGES} value={locale} onChange={setLocale} />
               </View>
             </>
           ) : null}
