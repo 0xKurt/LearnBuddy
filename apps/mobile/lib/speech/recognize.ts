@@ -21,6 +21,7 @@ import {
   type Heard,
   type SpeechEngine,
 } from './engine.js';
+import { deviceEnd } from './deviceEnd.js';
 import { levelFromRecognizer } from './level.js';
 
 /** Locales that failed on the device during this app run: straight to the EU path next time. */
@@ -95,6 +96,8 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
   /** Only the hook instance that started listening reacts to the (app-wide) recogniser events. */
   const mine = useRef(false);
   const outcome = useRef<'none' | 'fallback' | 'failed'>('none');
+  /** The system ended the listening (not she): what was heard so far is no answer. */
+  const interrupted = useRef(false);
   const locale = useRef('');
   const startedAt = useRef(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -127,7 +130,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
     mounted.current = true;
     const sub = AppState.addEventListener('change', (s) => {
       if (s !== 'active' && mine.current) {
-        outcome.current = 'failed';
+        interrupted.current = true;
         ExpoSpeechRecognitionModule.abort();
       }
     });
@@ -165,7 +168,11 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
 
   useSpeechRecognitionEvent('error', (e) => {
     if (!mine.current) return;
-    if (e.error === 'aborted') return;
+    // Aborted while she was not ending it herself: a call, Control Centre, another app.
+    if (e.error === 'aborted') {
+      if (phaseRef.current !== 'stopping') interrupted.current = true;
+      return;
+    }
     if (e.error === 'no-speech' || e.error === 'speech-timeout') return; // 'end' says "nothing heard"
     if (e.error === 'not-allowed') refused = true;
     if (
@@ -184,15 +191,16 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
     if (!mine.current) return;
     mine.current = false;
     clearTimer();
-    const text = heardText(heardRef.current);
-    const how = outcome.current;
+    const end = deviceEnd(heardText(heardRef.current), outcome.current, interrupted.current);
+    interrupted.current = false;
     heardRef.current = NOTHING_HEARD;
     if (mounted.current) setHeard(NOTHING_HEARD);
     setPhase('idle');
     if (!mounted.current) return;
-    if (text) h.current.onText(text);
-    else if (how === 'fallback') h.current.onFallback();
-    else if (how === 'none') h.current.onFailed('empty');
+    if (end.kind === 'text') h.current.onText(end.text);
+    else if (end.kind === 'fallback') h.current.onFallback();
+    else if (end.kind === 'empty') h.current.onFailed('empty');
+    else if (end.kind === 'failed') h.current.onFailed('failed');
   });
 
   const start = useCallback(
@@ -218,6 +226,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
         heardRef.current = NOTHING_HEARD;
         setHeard(NOTHING_HEARD);
         outcome.current = 'none';
+        interrupted.current = false;
         mine.current = true;
         ExpoSpeechRecognitionModule.start({
           lang: (installedList && installedMatch(installedList, lang)) || lang,
