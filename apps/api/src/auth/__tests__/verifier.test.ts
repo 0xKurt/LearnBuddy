@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { authenticatedAtOf, SupabaseAuthVerifier, verifyFailureOf } from '../verifier.js';
 
@@ -38,6 +38,8 @@ describe('SupabaseAuthVerifier failure classes', () => {
   let base = '';
   let answer: { status: number; body: unknown } = { status: 200, body: {} };
   beforeAll(async () => {
+    // supabase-js logs failed fetches; the failures are the point here.
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     server = createServer((_req, res) => {
       res.writeHead(answer.status, { 'content-type': 'application/json' });
       res.end(JSON.stringify(answer.body));
@@ -46,6 +48,7 @@ describe('SupabaseAuthVerifier failure classes', () => {
     base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   });
   afterAll(async () => {
+    vi.restoreAllMocks();
     await new Promise<void>((r) => server.close(() => r()));
   });
   const verifier = (url: string) =>

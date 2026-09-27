@@ -182,4 +182,16 @@ describe.skipIf(!dbReady)('endpoints outside the main journeys', () => {
     // Back: the same token works; nothing was revoked by the outage.
     expect((await lena.api.get('/me')).status).toBe(200);
   });
+
+  it('the auth stand-in fails like Supabase Auth: deleting a user can fail and be retried (S-2)', async () => {
+    const { userId, token } = await env.auth.createUser();
+    env.auth.failNext('deleteUser');
+    await expect(env.auth.deleteUser(userId)).rejects.toMatchObject({ code: 'unavailable' });
+    // Nothing happened: the user and the token are still there.
+    expect(await env.auth.verify(token)).toMatchObject({ userId });
+    await env.auth.deleteUser(userId);
+    expect(await env.auth.verify(token)).toBeNull();
+    const left = await env.db.query(`select 1 from auth.users where id = $1`, [userId]);
+    expect(left).toEqual([]);
+  });
 });
