@@ -3,6 +3,8 @@
 
 import { z } from 'zod';
 
+import { isLocalDatabaseHost } from './lib/db.js';
+
 /**
  * Children's data is processed in the EU only (docs/privacy.md): the EU multi-region "eu" or a
  * europe-* region. "global" and other regions are refused at startup, never silently used.
@@ -36,6 +38,11 @@ const Config = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     /** Postgres connection (Supabase transaction pooler in production). */
     DATABASE_URL: z.string().min(1),
+    /**
+     * Root certificate (PEM) of the database server, for TLS verification of non-local hosts
+     * (lib/db.ts connectionOptions). Supabase: Dashboard → Database → SSL configuration.
+     */
+    DATABASE_CA_CERT: z.string().optional(),
     SUPABASE_URL: z.string().url(),
     /** Used only to verify user tokens and to sign storage URLs. */
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
@@ -93,6 +100,8 @@ const Config = z
           'required when LLM_BACKEND=vertex (set LLM_BACKEND=disabled to run without a model)',
       });
     }
+    const tls = databaseTlsIssue(c.DATABASE_URL);
+    if (tls) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['DATABASE_URL'], message: tls });
     if (c.NODE_ENV === 'production' && !c.TICK_SECRET) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -111,6 +120,77 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     throw new Error(`Invalid configuration: ${issues}`);
   }
   return parsed.data;
+}
+
+/** Modes that would allow a plaintext or unverified connection when written into the URL. */
+const WEAK_SSLMODES = new Set(['disable', 'allow', 'prefer', 'no-verify']);
+
+function databaseHost(url: string): string | null {
+  try {
+    const u = new URL(url);
+    return decodeURIComponent(u.hostname || u.searchParams.get('host') || '');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A remote database is only reached over verified TLS (lib/db.ts forces it). A URL that asks
+ * for less is refused at boot instead of being silently upgraded, so the operator notices.
+ */
+export function databaseTlsIssue(url: string): string | null {
+  const host = databaseHost(url);
+  if (host === null) return 'not a valid postgres:// URL';
+  if (isLocalDatabaseHost(host)) return null;
+  const mode = new URL(url).searchParams.get('sslmode');
+  if (mode && WEAK_SSLMODES.has(mode.toLowerCase())) {
+    return `sslmode=${mode} would send learner data unencrypted or unverified; remove it (TLS with certificate verification is always used for ${host})`;
+  }
+  return null;
+}
+
+/**
+ * EU member-state regions of the providers we use. London (eu-west-2) and Zurich
+ * (eu-central-2) are not in the EU.
+ */
+const EU_DATABASE_REGIONS = new Set([
+  'eu-central-1',
+  'eu-west-1',
+  'eu-west-3',
+  'eu-north-1',
+  'eu-south-1',
+  'eu-south-2',
+]);
+
+/**
+ * Where the database lives, as far as the host name tells (audit H-33). docs/privacy.md promises
+ * an EU region. The region decision is open (D-4), so this only warns; it never refuses to boot.
+ */
+export function databaseRegionWarning(url: string): string | null {
+  const host = databaseHost(url);
+  if (host === null || isLocalDatabaseHost(host)) return null;
+  const pooler = /^aws-\d+-([a-z]+-[a-z]+-\d+)\.pooler\.supabase\.com$/.exec(host.toLowerCase());
+  if (pooler) {
+    const region = pooler[1]!;
+    return EU_DATABASE_REGIONS.has(region)
+      ? null
+      : `database region ${region} (${host}) is not an EU member state, but docs/privacy.md promises an EU region`;
+  }
+  return `database region cannot be read from ${host}; confirm it is an EU member state (docs/privacy.md)`;
+}
+
+/** Problems worth an operator's attention that do not stop the API (logged at boot). */
+export function bootWarnings(c: Config): string[] {
+  const warnings: string[] = [];
+  const region = databaseRegionWarning(c.DATABASE_URL);
+  if (region) warnings.push(region);
+  const host = databaseHost(c.DATABASE_URL);
+  if (host !== null && !isLocalDatabaseHost(host) && !c.DATABASE_CA_CERT) {
+    warnings.push(
+      `DATABASE_CA_CERT is not set: TLS to ${host} is verified against the system roots only (Supabase needs its own CA from Dashboard → Database → SSL)`,
+    );
+  }
+  return warnings;
 }
 
 /** Per-learner daily limits for model calls (cost and abuse bound). */

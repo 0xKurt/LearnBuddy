@@ -1,16 +1,25 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": null,
+  "buildCommand": "",
+  "outputDirectory": "public",
   "regions": ["fra1"],
   "functions": {
-    "api/[[...slug]].ts": {
-      "runtime": "nodejs22.x",
+    "api/index.ts": {
       "maxDuration": 300,
       "memory": 1024
     }
   },
-  "rewrites": [{ "source": "/v1/(.*)", "destination": "/api/$1" }],
+  "rewrites": [
+    {
+      "source": "/v1/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -19,10 +28,22 @@
           "key": "Strict-Transport-Security",
           "value": "max-age=63072000; includeSubDomains; preload"
         },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
       ]
     }
   ]

@@ -4,7 +4,7 @@ import { loadConfig } from '../../config.js';
 import { modelFor, splitModelSpec } from '../vertex.js';
 
 const env = {
-  DATABASE_URL: 'x',
+  DATABASE_URL: 'postgres://127.0.0.1/x',
   SUPABASE_URL: 'http://x.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',

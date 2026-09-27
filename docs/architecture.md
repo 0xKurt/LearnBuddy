@@ -45,7 +45,13 @@ Postgres in `apps/api/src/__tests__/` (see [Testing](#testing)).
 ## API
 
 Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, `/api`,
-`/api/v1` (the app calls `/v1/…`; Vercel rewrites `/v1/*` to the function).
+`/api/v1` (the app calls `/v1/…`). On Vercel the single function `apps/api/api/index.ts` gets
+every `/v1/*` and `/api/*` request through two rewrites (nested paths included; the original
+path stays in the request URL); Node is pinned by `engines` in `apps/api/package.json`, and only
+`apps/api/public/` is served statically. The database connection uses TLS with certificate
+verification for every non-local host (`lib/db.ts`, CA in `DATABASE_CA_CERT`); a URL asking for
+less is refused at boot, and a database region outside the EU is logged as a boot warning
+(`config.ts`; the region itself is an open decision, D-4).
 
 - Auth: `Authorization: Bearer <Supabase access token>`, verified with Supabase Auth
   (`auth/verifier.ts`). The API never sees passwords.
@@ -591,8 +597,16 @@ once (`abandonStaleUploads`, run by the scheduler).
   aliases in that order, and jobs due together run in it. Before, ties were broken by however the
   table happened to hold the rows — the most likely cause of one failed run of the core-loop test
   in about 40 (its log was lost and it did not come back in 36 further runs, so this is not proven).
-- Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). Without one the
-  database tests are skipped; `LB_REQUIRE_TEST_DB=1` (CI) makes that a failure.
+- Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
+  hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain
+  `pnpm test` outside them skips the database tests.
+- The app keys (anon, authenticated) reach nothing in the database: the test shim grants what a
+  hosted Supabase project grants by default, and `database-exposure.int.test.ts` fails for any
+  public function they can execute or any table without row level security.
+- Deploy checks: `scripts/deploy-check.sh` (CI job `deploy-check`, and before promoting) runs
+  `vercel.json` through Vercel's own builder detector and, when given `DATABASE_URL` /
+  `LB_DEPLOY_URL`, checks TLS, region, the app keys' grants and `/v1/health` of a deploy. A
+  real preview deploy answering `/v1/health` has not been recorded yet.
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
   devices, Supabase Auth/Storage themselves, pg_cron/pg_net on a hosted project.
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
