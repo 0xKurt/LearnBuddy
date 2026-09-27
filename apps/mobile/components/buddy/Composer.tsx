@@ -9,6 +9,7 @@ import { Platform, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { composerAfterSend } from '../../lib/buddy/unsent.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -28,7 +29,8 @@ export function Composer({
   onPhoto,
 }: {
   disabled: boolean;
-  onSend: (text: string) => void;
+  /** Resolves false when the message never reached Buddy: her text comes back (audit M-76). */
+  onSend: (text: string) => Promise<boolean>;
   /** The camera: a photo says more than typing a worksheet. */
   onPhoto: () => void;
 }) {
@@ -40,10 +42,16 @@ export function Composer({
   const latest = useRef({ text, disabled });
   latest.current = { text, disabled };
   const trimmed = text.trim();
+  /** Sends and empties the field; a message that never arrived comes back into it. */
+  const deliver = (message: string) => {
+    setText('');
+    void onSend(message).then((delivered) =>
+      setText((current) => composerAfterSend(current, message, delivered)),
+    );
+  };
   const send = () => {
     if (!trimmed || disabled) return;
-    onSend(trimmed);
-    setText('');
+    deliver(trimmed);
   };
 
   const voice = useVoiceInput({
@@ -53,8 +61,7 @@ export function Composer({
       const next = mergeTranscript(latest.current.text, said, 'append', MAX_MESSAGE_LENGTH);
       // Voice mode sends at once; otherwise (or while a message is still on its way) she checks it first.
       if (useVoiceMode.getState().on && !latest.current.disabled) {
-        onSend(next.trim());
-        setText('');
+        deliver(next.trim());
       } else {
         setText(next);
       }

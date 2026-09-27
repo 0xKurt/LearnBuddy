@@ -59,6 +59,7 @@ import {
 } from '../lib/api/endpoints.js';
 import { keys, queryClient, setHome, useHome } from '../lib/api/queries.js';
 import type { CaptureDraft } from '../lib/capture/draft.js';
+import { inThread } from '../lib/buddy/unsent.js';
 import { drafts } from '../lib/capture/draftStorage.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
@@ -187,7 +188,7 @@ export default function BuddyScreen() {
     text: string,
     clientMessageId: string = newId(),
     replyToId: string | null = null,
-  ) {
+  ): Promise<boolean> {
     setPending({ id: clientMessageId, text });
     setLive(null);
     followEnd.current = true;
@@ -209,12 +210,15 @@ export default function BuddyScreen() {
       });
       setHome(res.home);
       if (res.status === 'failed') toast.show(turnFailureText(res.error_code), 'error');
+      return true;
     } catch (err) {
       // Nothing to read when the reply comes after a failure she was told about.
       awaitingReply.current = null;
       toast.show(messageFor(err), 'error');
-      // The message may have reached the server (then it shows as failed or processing).
-      await refresh();
+      // The message may have reached the server (then it shows as failed or processing);
+      // otherwise the composer gets her text back (audit M-76).
+      await refresh().catch(() => undefined);
+      return inThread(queryClient.getQueryData<BuddyHome>(keys.home), clientMessageId);
     } finally {
       setPending(null);
       setLive(null);
@@ -661,7 +665,7 @@ export default function BuddyScreen() {
         )}
         <Composer
           disabled={pending !== null}
-          onSend={(text) => void send(text)}
+          onSend={(text) => send(text)}
           onPhoto={() => router.push('/capture')}
         />
       </KeyboardAvoidingView>
