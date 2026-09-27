@@ -19,6 +19,7 @@ import { flushOutbox } from '../lib/api/outboxSync.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
 import { i18n } from '../lib/i18n/index.js';
+import { recoverCameraResult } from '../lib/capture/pendingCamera.js';
 import { adoptLocalWork } from '../lib/localWork.js';
 import {
   clearLegacyLocalNotifications,
@@ -109,6 +110,14 @@ export default function RootLayout() {
       offTap();
     };
   }, []);
+
+  // Android cut the app off while the camera was open: the photo goes on to capture (M-22).
+  useEffect(() => {
+    if (!ready || !currentSession()) return;
+    void recoverCameraResult().then((found) => {
+      if (found) router.push({ pathname: '/capture', params: { resume: '1', pending: '1' } });
+    });
+  }, [ready]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: LB.bg }}>

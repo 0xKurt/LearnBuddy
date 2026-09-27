@@ -204,6 +204,12 @@ export const NowCard = z.discriminatedUnion('type', [
     material_id: Uuid,
     reason: z.string().nullable(),
     retryable: z.boolean(),
+    /** "Neues Foto" re-opens capture for the same purpose … */
+    purpose: z.enum(['study', 'homework']),
+    /** … and, for a failed retake or added page, the sheet it belongs to. */
+    completes: Uuid.nullable(),
+    /** The sheet's title, when it has one. */
+    title: z.string().nullable(),
   }),
   z.object({ type: z.literal('practice_result'), session_id: Uuid, result: PracticeResultBrief }),
 ]);

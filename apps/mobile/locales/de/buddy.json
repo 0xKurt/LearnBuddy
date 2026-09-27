@@ -65,7 +65,8 @@
     "pages_rest_untitled": "Alles andere ist fertig.",
     "pages_retake_one": "Nochmal fotografieren",
     "pages_retake_other": "Diese Seiten nochmal fotografieren",
-    "pages_ok": "Passt so"
+    "pages_ok": "Passt so",
+    "failed_title_named": "„{{title}}“ konnte ich nicht lesen"
   },
   "when": {
     "today": "heute",

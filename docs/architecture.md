@@ -338,6 +338,9 @@ under 900 px) or tilted (`lib/photo/tilt.ts`: the ink pixels are projected at tr
 sharpest profile gives the angle of the text lines; 10° or more, or 8° difference between the upper
 and lower half — a phone held at a slant to the side). A phone tipped forward (lines level but
 smaller towards the top) is not judged: the line spacing was not reliable with a few lines of text.
+Only thin strokes count as ink (paper within 4 px): the inside of a dark table around the sheet
+does not, and points are thinned by a position hash, not every n-th in raster order — a dark desk
+border used to make straight sheets "schief" (audit M-26, dark-desk variants in the unit test).
 Tilt is only advised when the photo is otherwise fine. Nothing leaves the device for this. A photo with a problem is marked "Schwer lesbar"
 and a calm card says what is wrong and how to do better, with "Neu fotografieren" (replaces it and
 opens the camera) and "Trotzdem behalten". Calibrated on sixteen rendered sample photos (in focus,
@@ -392,6 +395,16 @@ meanwhile, the pages stay a sheet of their own. A second school subject on one s
 Pages keep the order they were taken in; there is no reordering — the notice about a missing page
 shows that page's photo while it is on the phone (kept a day, below), so the number is never
 ambiguous.
+
+**Capture never loses photos by starting another one** (audit N-6): a fresh capture with photos
+left from before first offers "Weiter" / "Verwerfen" instead of silently replacing them; a draft
+being sent is never deleted, and a finished send only ends its own draft. A reservation for a photo
+set she then changed is deleted if it was never submitted (no "unvollständig" leftover). On
+Android the camera result survives the system killing the app: capture notes what the photo is
+for before the camera opens, and the next start recovers it (`getPendingResultAsync`,
+`lib/capture/pendingCamera.ts`; needs a device run). The failed-reading card names the sheet and
+"Neues Foto" keeps its purpose (homework stays homework) and, for a page, the sheet it belongs to;
+a sheet being read now comes before an older failure on the home.
 
 **Photos survive the app being closed** (`apps/mobile/lib/capture/draft.ts`). Every photo is
 copied where the system does not clean up (documents; data URLs in a browser) and the capture screen

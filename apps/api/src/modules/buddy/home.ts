@@ -193,22 +193,7 @@ async function nowCardOf(
       goal: goal ? goalBrief(goal, today) : null,
     };
   }
-  const failed = state.materials.find(
-    (m) => m.status === 'failed' && now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
-  );
-  if (failed) {
-    const attempts = await deps.db.maybeOne<{ n: number }>(
-      `select count(*)::int as n from jobs where learner_id = $1 and kind = 'extract_material'
-          and payload ->> 'material_id' = $2`,
-      [learnerId, failed.id],
-    );
-    return {
-      type: 'material_failed',
-      material_id: failed.id,
-      reason: failed.failure_reason,
-      retryable: failed.failure_reason !== 'not_learning_material' && (attempts?.n ?? 0) < 3,
-    };
-  }
+  // The sheet being read now comes before an older failure (audit M-19).
   // Photos still on their way count only briefly: an upload the app gave up on is not
   // "being sent" for hours (and Buddy then still asks for the photo).
   const processing = state.materials.find((m) => {
@@ -221,6 +206,37 @@ async function nowCardOf(
       type: 'material_processing',
       material_id: processing.id,
       status: processing.status as 'awaiting_upload' | 'queued' | 'processing',
+    };
+  }
+  const failed = state.materials.find(
+    (m) => m.status === 'failed' && now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
+  );
+  if (failed) {
+    // What "Neues Foto" re-opens: the same purpose, and for a failed retake or
+    // added page the sheet it belongs to (audit M-18); the title names the sheet.
+    const row = await deps.db.maybeOne<{
+      n: number;
+      purpose: 'study' | 'homework';
+      completes: string | null;
+      title: string | null;
+    }>(
+      `select (select count(*)::int from jobs where learner_id = $1 and kind = 'extract_material'
+                 and payload ->> 'material_id' = $2::text) as n,
+              m.purpose, m.completes_material_id as completes,
+              coalesce(root.title, m.title) as title
+         from materials m
+         left join materials root on root.id = m.completes_material_id and root.learner_id = $1
+        where m.id = $2::uuid and m.learner_id = $1`,
+      [learnerId, failed.id],
+    );
+    return {
+      type: 'material_failed',
+      material_id: failed.id,
+      reason: failed.failure_reason,
+      retryable: failed.failure_reason !== 'not_learning_material' && (row?.n ?? 0) < 3,
+      purpose: row?.purpose ?? 'study',
+      completes: row?.completes ?? null,
+      title: row?.title ?? null,
     };
   }
   const capture = state.steps.find((s) => s.kind === 'capture' && s.state === 'planned');

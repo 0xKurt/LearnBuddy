@@ -454,10 +454,15 @@ export default function BuddyScreen() {
           })
         }
         onSkip={(stepId) => void act(() => skipStep(stepId))}
-        onCapture={(stepId, goalId) =>
+        onCapture={({ stepId, goalId, purpose, completes }) =>
           router.push({
             pathname: '/capture',
-            params: { ...(stepId ? { stepId } : {}), ...(goalId ? { goalId } : {}) },
+            params: {
+              ...(stepId ? { stepId } : {}),
+              ...(goalId ? { goalId } : {}),
+              ...(purpose === 'homework' ? { purpose } : {}),
+              ...(completes ? { completes } : {}),
+            },
           })
         }
         onRetryMaterial={(id) =>

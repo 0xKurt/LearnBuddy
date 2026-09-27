@@ -26,6 +26,7 @@ const Link = z.object({
   add: z.boolean().default(false),
 });
 export type DraftLink = z.output<typeof Link>;
+export const DraftLinkSchema = Link;
 
 const Draft = z.object({
   v: z.literal(1),
@@ -62,6 +63,26 @@ export type DraftStorage = {
   /** Deletes kept copies; missing ones are fine. */
   drop(uris: readonly string[]): Promise<void>;
 };
+
+/**
+ * Android may kill the app while the camera is open (low memory); the photo
+ * is then handed over on the next start (ImagePicker.getPendingResultAsync,
+ * lib/capture/pendingCamera.ts). What the capture was for is noted before the
+ * camera opens, so the recovered photo lands in the right capture (audit M-22).
+ */
+export const CameraOpen = z.object({ link: Link, at: z.string() });
+export type CameraOpen = z.output<typeof CameraOpen>;
+
+/** A camera hand-over older than this is not recovered (she has moved on). */
+export const CAMERA_RECOVERY_MS = 30 * 60_000;
+
+/** The noted capture, if it is recent enough to recover a photo into. */
+export function cameraOpenOf(raw: string | null, now: Date): CameraOpen | null {
+  const c = parse(CameraOpen, raw);
+  if (!c) return null;
+  const age = now.getTime() - Date.parse(c.at);
+  return Number.isFinite(age) && age >= 0 && age <= CAMERA_RECOVERY_MS ? c : null;
+}
 
 const DRAFT_KEY = 'lb.capture.draft.v1';
 const SENT_KEY = 'lb.capture.sent.v1';
@@ -112,11 +133,16 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
       await storage.write(DRAFT_KEY, JSON.stringify(full));
     },
 
-    /** "Verwerfen": the draft and its photos are gone. */
-    async discard(draft: CaptureDraft | null = null): Promise<void> {
+    /**
+     * "Verwerfen": the draft and its photos are gone — never while they are
+     * being sent (a requested send finishes; audit M-21). False when kept.
+     */
+    async discard(draft: CaptureDraft | null = null): Promise<boolean> {
       const d = draft ?? parse(Draft, await storage.read(DRAFT_KEY));
+      if (d?.requestId && sending.has(d.requestId)) return false;
       await storage.write(DRAFT_KEY, null);
       if (d) await storage.drop(d.photos.map((p) => p.uri));
+      return true;
     },
 
     startSending(requestId: string) {
@@ -126,9 +152,13 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
       sending.delete(requestId);
     },
 
-    /** Sent: the draft ends; the photos stay a day for the page notice. */
-    async sent(materialId: string, uris: readonly string[]): Promise<void> {
-      await storage.write(DRAFT_KEY, null);
+    /**
+     * Sent: the draft ends; the photos stay a day for the page notice. Only
+     * this send's draft ends — a newer capture started meanwhile keeps its own.
+     */
+    async sent(materialId: string, uris: readonly string[], requestId: string): Promise<void> {
+      const current = parse(Draft, await storage.read(DRAFT_KEY));
+      if (!current || current.requestId === requestId) await storage.write(DRAFT_KEY, null);
       const list = (await readSent()).filter((s) => s.materialId !== materialId);
       list.push({ materialId, uris: [...uris], sentAt: now().toISOString() });
       await storage.write(SENT_KEY, JSON.stringify(list));
@@ -143,7 +173,9 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
 
     /** Signed out: the draft and every kept photo are deleted. */
     async clearAll(): Promise<void> {
-      await this.discard();
+      const d = parse(Draft, await storage.read(DRAFT_KEY));
+      await storage.write(DRAFT_KEY, null);
+      if (d) await storage.drop(d.photos.map((p) => p.uri));
       const list = await readSent();
       await storage.drop(list.flatMap((s) => s.uris));
       await storage.write(SENT_KEY, null);

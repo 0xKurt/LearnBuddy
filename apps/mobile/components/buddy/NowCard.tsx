@@ -10,13 +10,21 @@ import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { whenText } from './describe.js';
 
+/** Where a capture from the card leads: the step, goal, purpose and sheet it belongs to. */
+export type CaptureTarget = {
+  stepId: string | null;
+  goalId: string | null;
+  purpose?: 'study' | 'homework';
+  completes?: string | null;
+};
+
 type Props = {
   card: NowCardData;
   busy: boolean;
   onResume: (sessionId: string) => void;
   onStart: (stepId: string) => void;
   onSkip: (stepId: string) => void;
-  onCapture: (stepId: string | null, goalId: string | null) => void;
+  onCapture: (target: CaptureTarget) => void;
   onRetryMaterial: (materialId: string) => void;
 };
 
@@ -98,7 +106,10 @@ export function NowCard({
             {t('now.capture_body', { title: card.title })}
           </Text>
           <View style={{ marginTop: 12 }}>
-            <Btn onPress={() => onCapture(card.step_id, card.goal?.id ?? null)} disabled={busy}>
+            <Btn
+              onPress={() => onCapture({ stepId: card.step_id, goalId: card.goal?.id ?? null })}
+              disabled={busy}
+            >
               {t('now.capture_cta')}
             </Btn>
           </View>
@@ -124,7 +135,9 @@ export function NowCard({
       return (
         <Card tone="butter" padding={16} radius={22}>
           <Text accessibilityRole="header" style={TYPE.title}>
-            {t('now.failed_title')}
+            {card.title
+              ? t('now.failed_title_named', { title: card.title })
+              : t('now.failed_title')}
           </Text>
           <Text style={[TYPE.body, { marginTop: 4 }]}>
             {t(`now.failed_${card.reason ?? 'model_error'}`)}
@@ -137,7 +150,15 @@ export function NowCard({
             ) : null}
             <Btn
               variant={card.retryable ? 'outline' : 'primary'}
-              onPress={() => onCapture(null, null)}
+              // The same purpose (homework stays homework) and, for a page, the same sheet (M-18).
+              onPress={() =>
+                onCapture({
+                  stepId: null,
+                  goalId: null,
+                  purpose: card.purpose,
+                  completes: card.completes,
+                })
+              }
               disabled={busy}
             >
               {t('now.failed_new_photo')}

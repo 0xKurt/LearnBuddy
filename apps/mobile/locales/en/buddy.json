@@ -65,7 +65,8 @@
     "pages_rest_untitled": "Everything else is ready.",
     "pages_retake_one": "Take it again",
     "pages_retake_other": "Take these pages again",
-    "pages_ok": "That's fine"
+    "pages_ok": "That's fine",
+    "failed_title_named": "I couldn’t read “{{title}}”"
   },
   "when": {
     "today": "today",
