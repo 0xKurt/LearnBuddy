@@ -38,7 +38,6 @@ import { setHome } from '../lib/api/queries.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
-import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -94,17 +93,10 @@ export default function TalkScreen() {
     const me = ++turnSeq.current;
     // She spoke again (or left): this answer no longer drives the screen or the voice.
     const stale = () => turnSeq.current !== me || !open.current;
-    // Buddy's reply is read sentence by sentence while it is written — but only when
-    // the answer changes nothing (the server says `speakable`); anything else is read
-    // once it is stored (docs/architecture.md §Speed).
-    // Set from the stream callback (a holder, so the checks below see it).
-    const cur: { speaker: StreamSpeaker | null } = { speaker: null };
-    /** Stops the streamed reading; its end no longer counts. */
-    const drop = () => {
-      const was = cur.speaker;
-      cur.speaker = null;
-      was?.cancel();
-    };
+    // Buddy's reply is shown while it is written when the answer changes nothing (the
+    // server says `speakable`), but read aloud only once it is stored: after the provider's
+    // final safety verdict and validation, so she never hears words that are withdrawn
+    // (docs/architecture.md §Speed, audit M-52 / repro-28).
     let round = 0;
     let spokenEnd: ListenEnd | null = null;
     let final: MessageView | null = null;
@@ -118,36 +110,17 @@ export default function TalkScreen() {
       const res = await sendMessageStreamed(text, id, null, (e) => {
         if (stale()) return;
         if (e.round !== round) {
-          // A new attempt replaces what was read of the last one.
-          drop();
+          // A new attempt replaces what was shown of the last one.
           round = e.round;
           setLive(null);
         }
         if (!e.speakable) return;
         setLive(e.text);
-        setPhase('speaking');
-        if (!cur.speaker) {
-          const me = createStreamSpeaker(
-            currentLocale(),
-            (sentence) => spokenText(sentence, words),
-            (why) => {
-              if (cur.speaker !== me) return;
-              spokenEnd = why;
-              goOn();
-            },
-          );
-          cur.speaker = me;
-        }
-        cur.speaker.feed(e.text, e.done);
       });
       setHome(res.home);
-      if (stale()) {
-        drop();
-        return;
-      }
+      if (stale()) return;
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
-        drop();
         setLive(null);
         setProblem(
           res.status === 'failed' ? turnFailureText(res.error_code) : t('buddy:talk.slow'),
@@ -158,17 +131,6 @@ export default function TalkScreen() {
       final = r;
       setReply(r);
       setLive(null);
-      // She interrupted Buddy while it was reading: never start again over her.
-      if (spokenEnd === 'stopped') {
-        goOn();
-        return;
-      }
-      if (cur.speaker && cur.speaker.text === r.text) {
-        goOn(); // Already read (or still reading) exactly this.
-        return;
-      }
-      drop();
-      spokenEnd = null;
       setPhase('speaking');
       void speak(spokenText(r.text, words), currentLocale(), {
         onEnd: (why) => {
@@ -177,7 +139,6 @@ export default function TalkScreen() {
         },
       });
     } catch (err) {
-      drop();
       if (stale()) return;
       setLive(null);
       setProblem(messageFor(err));

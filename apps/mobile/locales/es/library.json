@@ -16,7 +16,8 @@
     "not_learning_material": "Esto no parece ni una ficha, ni un cuaderno, ni una página de libro.",
     "model_error": "Algo ha fallado durante la lectura.",
     "photos_missing": "No han llegado todas las fotos.",
-    "budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar."
+    "budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
+    "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe las preguntas."
   },
   "incomplete_hint": "Las fotos no han llegado completas. Elimina la ficha y vuelve a hacerle una foto.",
   "practice": "Practicar",

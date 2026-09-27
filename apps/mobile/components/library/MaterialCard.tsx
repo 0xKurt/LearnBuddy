@@ -75,7 +75,10 @@ export function MaterialCard({
       : m.status === 'awaiting_upload'
         ? t('incomplete_hint')
         : null;
-  const retryable = m.status === 'failed' && m.failure_reason !== 'not_learning_material';
+  const retryable =
+    m.status === 'failed' &&
+    m.failure_reason !== 'not_learning_material' &&
+    m.failure_reason !== 'blocked';
 
   return (
     <Card padding={16}>

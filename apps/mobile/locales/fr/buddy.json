@@ -37,6 +37,7 @@
     "failed_model_error": "Un problème est survenu pendant la lecture.",
     "failed_photos_missing": "Les photos ne sont pas arrivées en entier.",
     "failed_budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain.",
+    "failed_blocked": "Je n'ai pas le droit de lire cette fiche – le filtre de sécurité la bloque. La relire n'y changera rien. Tape simplement les questions dont tu as besoin.",
     "failed_retry": "Relire",
     "failed_new_photo": "Nouvelle photo",
     "result_title": "C'est fait!",
@@ -102,7 +103,14 @@
     "resend": "Renvoyer",
     "load_more": "Messages plus anciens",
     "you": "Toi",
-    "buddy": "Buddy"
+    "buddy": "Buddy",
+    "failed_reason": {
+      "model_unavailable": "Buddy n'a pas pu répondre",
+      "budget": "Buddy ne peut plus répondre aujourd'hui",
+      "invalid": "Buddy s'est emmêlé",
+      "stale": "Pas de réponse – trop de choses à la fois",
+      "internal": "Pas de réponse – un souci est survenu"
+    }
   },
   "delivery": {
     "scheduled": "prévu {{when}}",

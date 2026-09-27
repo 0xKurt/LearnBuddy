@@ -16,7 +16,8 @@
     "not_learning_material": "Ça ne ressemble ni à une fiche, ni à un cahier, ni à une page de manuel.",
     "model_error": "Un problème est survenu pendant la lecture.",
     "photos_missing": "Toutes les photos ne sont pas arrivées.",
-    "budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain."
+    "budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain.",
+    "blocked": "Le filtre de sécurité bloque cette fiche. La relire n'y changera rien – tape simplement les questions."
   },
   "incomplete_hint": "Les photos ne sont pas arrivées en entier. Supprime la fiche et reprends-la en photo.",
   "practice": "S'entraîner",

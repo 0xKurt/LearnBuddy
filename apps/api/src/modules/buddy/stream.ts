@@ -6,10 +6,12 @@
 // — no lookups (then this reply is thrown away), and only actions that touch
 // nothing (a button to tap) — may be shown and spoken before the answer is
 // validated and applied. Anything else is shown once it is applied: nothing is
-// ever claimed before it is true (CLAUDE.md rules 1 and 5).
+// ever claimed before it is true (CLAUDE.md rules 1 and 5). Shown is not spoken: the app
+// reads a reply aloud only once it is validated and stored, after the provider's final
+// safety verdict (audit M-52).
 
 import { partialString } from '../../llm/partial.js';
-import { ACT_TOOLS } from './registry.js';
+import { ACT_TOOLS, REPLY_MAX } from './registry.js';
 
 export type ReplyProgress = {
   /** The reply as far as it is written. */
@@ -26,7 +28,10 @@ const REPLY_KEY = /"reply"\s*:/;
 export function replyProgress(raw: string): ReplyProgress | null {
   const reply = partialString(raw, 'reply');
   if (!reply) return null;
-  return { text: reply.text, speakable: changesNothing(raw), done: reply.done };
+  // Only text that can pass validation is shown early: a reply over the schema's limit is
+  // withdrawn later, so it is never shown while written (audit repro-28).
+  const fits = reply.text.trim().length <= REPLY_MAX;
+  return { text: reply.text, speakable: fits && changesNothing(raw), done: reply.done };
 }
 
 function changesNothing(raw: string): boolean {
@@ -41,7 +46,13 @@ function changesNothing(raw: string): boolean {
     return false;
   }
   if (!before || typeof before !== 'object') return false;
-  const { lookups, actions } = before as { lookups?: unknown; actions?: unknown };
+  const { lookups, actions, concern } = before as {
+    lookups?: unknown;
+    actions?: unknown;
+    concern?: unknown;
+  };
+  // A safeguarding answer: code replaces the model's words, so they are never shown.
+  if (concern === true) return false;
   if (Array.isArray(lookups) && lookups.length > 0) return false;
   if (!Array.isArray(actions)) return false;
   return actions.every((a) => {

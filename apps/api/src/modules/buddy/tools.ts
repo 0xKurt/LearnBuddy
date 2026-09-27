@@ -8,7 +8,7 @@
 // message goes back to the model for one repair round.
 //
 // Enforced here, not in the prompt: aliases resolve to this learner only;
-// quotes must occur in the learner's latest message; dates are resolved from
+// quotes must be whole words from what the learner wrote since Buddy's last answer; dates are resolved from
 // DaySpec/UntilSpec in the learner's zone and must lie in the allowed range;
 // agreed times may not fall into quiet hours; contact can only be reduced or
 // shifted, never turned on or increased.
@@ -58,7 +58,10 @@ export type ToolContext = {
   /** When the learner wrote the message this decision answers (or now for checks). */
   reference: Date;
   mode: 'turn' | 'check';
-  latestLearnerText: string | null;
+  /** What the learner wrote that this decision answers (one or several quick messages). */
+  learnerWords: readonly string[] | null;
+  /** The turn is a safeguarding answer (TurnDecision.concern): nothing about it is remembered. */
+  concern: boolean;
   triggerMessageId: string | null;
   /** Learner's app language, for titles the server writes itself. */
   locale: string;
@@ -123,11 +126,19 @@ const MAX_PLAN_DAYS = 366;
 function requireQuote(ctx: ToolContext, quote: string | null): void {
   if (ctx.mode !== 'turn')
     throw new ToolRejection('this change is not allowed in a background check');
-  if (!quote || !ctx.latestLearnerText || !quoteOccursIn(quote, ctx.latestLearnerText)) {
+  if (!quote || !ctx.learnerWords || !quoteOccursIn(quote, ctx.learnerWords)) {
     throw new ToolRejection(
-      `quote "${quote ?? ''}" is not the learner's exact words from their latest message; only what they just said can justify this change`,
+      `quote "${quote ?? ''}" is not the learner's exact words (whole words) from what they wrote since your last answer; only what they just said can justify this change`,
     );
   }
+}
+
+/** Code-enforced, not only prompted: a disclosure of distress never becomes a memory (audit M-9). */
+function refuseDuringConcern(ctx: ToolContext): void {
+  if (ctx.concern)
+    throw new ToolRejection(
+      'nothing is remembered from a message about distress (concern is true); leave memory alone',
+    );
 }
 
 function today(ctx: ToolContext): string {
@@ -226,6 +237,7 @@ async function currentStep(ctx: ToolContext, alias: string): Promise<StepRow> {
 
 async function runRemember(action: ActionOf<'remember'>, ctx: ToolContext): Promise<ToolOutcome> {
   const a = action.args;
+  refuseDuringConcern(ctx);
   requireQuote(ctx, a.quote);
   let validUntil: Date | null = null;
   if (a.kind === 'constraint') {
@@ -278,6 +290,7 @@ async function runCorrectMemory(
   ctx: ToolContext,
 ): Promise<ToolOutcome> {
   const a = action.args;
+  refuseDuringConcern(ctx);
   requireQuote(ctx, a.quote);
   const old = memoryOf(ctx, a.memory);
   const updated = await ctx.db.query(

@@ -20,6 +20,7 @@ import {
 } from '@google/genai';
 
 import type { Config } from '../config.js';
+import { outcomeOfStatus } from '../lib/outcome.js';
 import {
   LlmError,
   type LlmGateway,
@@ -185,7 +186,7 @@ export class VertexGateway implements LlmGateway {
       throw new LlmError('invalid_output', 'output truncated at the token limit', usage);
     }
     if (reason && reason !== FinishReason.STOP) {
-      throw new LlmError('blocked', `finish reason ${reason}`, usage);
+      throw new LlmError('blocked', `finish reason ${reason}`, usage, String(reason));
     }
     const text = streamedText ?? response.text;
     if (typeof text !== 'string' || text.trim() === '') {
@@ -199,13 +200,17 @@ export class VertexGateway implements LlmGateway {
   }
 }
 
-function classify(err: unknown): LlmError {
+/** Provider errors → the shared outcome classes (lib/outcome.ts). Exported for unit tests. */
+export function classify(err: unknown): LlmError {
   if (err instanceof GenAiApiError) {
     if (err.status === 429) return new LlmError('rate_limited', 'provider rate limit');
-    if (err.status >= 500) return new LlmError('unavailable', `provider error ${err.status}`);
-    // The provider's reason (e.g. an unsupported schema) is kept for the logs, cut short.
+    if (outcomeOfStatus(err.status) === 'transient')
+      return new LlmError('unavailable', `provider error ${err.status}`);
+    // A definitive "no" to the request itself (bad schema, bad argument, no permission):
+    // the same request fails the same way, so it is not retried. The provider's reason is
+    // kept for the logs, cut short.
     return new LlmError(
-      'unavailable',
+      'refused',
       `provider rejected the request (${err.status}): ${err.message.slice(0, 500)}`,
     );
   }

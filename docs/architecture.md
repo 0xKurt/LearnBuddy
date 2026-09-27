@@ -107,7 +107,36 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 - Interrupted turn (process died, function frozen) → after 3 minutes the scheduler (or a client
   retry) takes over with a new claim token; the old runner can no longer publish or fail it.
 - Failure → the message is marked `failed` with a stable code (`model_unavailable`,
-  `model_invalid`, `budget_exhausted`, `stale`); nothing half-applied, no invented reply.
+  `model_invalid`, `budget_exhausted`, `stale`, `internal` for anything else — a database
+  error or a bug never leaves it "processing"); nothing half-applied, no invented reply. The
+  message keeps why (`buddy_messages.failure_code`, migration 0020), so the app says what
+  happened ("Buddy konnte gerade nicht antworten") instead of "not arrived", and offers no
+  resend once the day's allowance is used up.
+- **Safeguarding** (audit I-9, decision D-10). Distress — being hurt, bullied, abused or
+  threatened, thoughts of self-harm — is a code path, not an improvisation:
+  - the model marks it with `concern` (first field of `TurnDecisionForModel`, zod-validated);
+    code then answers with a fixed reply per locale and age (`i18n` `safeguarding.*`: a trusted
+    adult and a helpline — DE Nummer gegen Kummer 116 111, FR 119, ES Fundación ANAR
+    900 20 20 10, IT Telefono Azzurro 19696, EN Childline 0800 1111; adults: someone they trust
+    and 112). The model's own words are never shown or streamed. `remember`/`correct_memory`
+    are refused in such a turn, and the prompt forbids storing health, family trouble, abuse or
+    self-harm as knowledge (`docs/privacy.md`). No parent is notified (the child's privacy).
+  - a provider safety block (`LlmError('blocked')`, finish reason kept in `llm_calls`) is not a
+    glitch to resend: code stores the same kind of fixed reply as Buddy's answer, marks her
+    message `failure_code = 'blocked'`, releases the budget reservation, and replaces the
+    blocked text with a neutral placeholder in every later prompt — one block can never mute
+    Buddy (audit H-31, H-32).
+  - The copy needs pedagogical and legal review before real learners (noted for the ADR).
+  - Live check: `evals/buddy` has distress cases in all five languages and one "test nerves are
+    not a concern" case; whether Vertex blocks such messages is only verifiable live.
+- **Her words**: a quote must be whole words from what she wrote since Buddy's last answer —
+  several quick messages count together (audit M-49) — and a quote of fewer than four letters
+  counts only as a whole message (a bare "Ja"), never as a fragment ("ge" in "geschlagen").
+- **Dialogue order**: Buddy messages that arrived after her message (a reminder posted while
+  she typed) are placed before her unanswered messages, so the model always answers her last.
+- **Days** are resolved from the day the model counted from (the attempt's "Now"), not from
+  when the message was written; an older message (a resend, a recovery after midnight) is
+  named in STATE so the model asks when a day she named has passed (audit M-51).
 
 ## Tools
 
@@ -262,12 +291,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
   what the answer does. Only an answer that changes nothing — no lookups, only actions that touch
-  nothing (an offer button) — is shown and read aloud while it is written; everything else
-  appears once it is validated and applied, as before (rules 1 and 5: nothing is claimed before
-  it is true). A rejected or repaired answer starts a new `round` whose text replaces the last;
-  the app never reads over an interruption. The app reads it sentence by sentence
-  (`lib/speech/sentences.ts`, `streamSpeaker.ts`) on the conversation screen and in voice mode,
-  and shows it growing in the chat; `expo/fetch` streams on the phone. Measured (live, 3.6 Flash,
+  nothing (an offer button), no safeguarding `concern`, and no longer than validation allows
+  (700 characters) — is shown while it is written; everything else appears once it is
+  validated and applied, as before (rules 1 and 5: nothing is claimed before it is true). A
+  rejected or repaired answer starts a new `round` whose text replaces the last. **Shown is not
+  spoken**: the app reads a reply aloud only once it is stored — after the provider's final
+  safety verdict (the finish reason arrives with the last chunk) and zod validation — so a child
+  never hears words that are withdrawn (audit M-52, repro-28); `expo/fetch` streams on the
+  phone. Measured (live, 3.6 Flash,
   `evals/stream/run.ts`, medians): first words after 1.35–1.6 s instead of the whole answer after
   1.76–1.86 s — about 0.3–0.5 s, more for long explanations. Most of the wait is before the model
   writes its first character; the order change kept 22/22 in `evals/buddy`. On a deployed API
@@ -501,7 +532,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   the phone) → her answer or question is checked → the feedback is read → the mic listens again,
   or, once the question is closed, the next one comes. Typing, switching voice mode off or leaving
   ends the loop; the microphone never starts before her own tap on that screen. Pronunciation
-  recordings stay tap by tap. Buddy's chat replies stream and are read sentence by sentence
+  recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer

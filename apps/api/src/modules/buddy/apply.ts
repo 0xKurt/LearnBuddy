@@ -38,7 +38,10 @@ export type ApplyInput = {
   aliases: Aliases;
   now: Date;
   reference: Date;
-  latestLearnerText: string | null;
+  /** What the learner wrote that this decision answers; null for background checks. */
+  learnerWords: readonly string[] | null;
+  /** A safeguarding answer (TurnDecision.concern). */
+  concern?: boolean;
   triggerMessageId: string | null;
   /** Turn processing claim: only the current owner of the message may publish. */
   messageClaim: { id: string; token: string } | null;
@@ -97,7 +100,8 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
               now: input.now,
               reference: input.reference,
               mode: input.meta.mode,
-              latestLearnerText: input.latestLearnerText,
+              learnerWords: input.learnerWords,
+              concern: input.concern ?? false,
               triggerMessageId: input.triggerMessageId,
               locale: input.locale,
               created,

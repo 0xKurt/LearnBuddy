@@ -7,6 +7,13 @@
   "title": {
     "buddy": "Buddy"
   },
+  "safeguarding": {
+    "blocked": "Darauf kann ich hier nicht antworten. Wenn dich gerade etwas bedrückt oder dir jemand wehtut: Sprich bitte mit einem Erwachsenen, dem du vertraust – oder ruf die Nummer gegen Kummer an: 116 111 (kostenlos und anonym). Ich bin weiter für dich da.",
+    "concern": "Danke, dass du mir das erzählst – das ist wichtig, und du bist damit nicht allein. Sprich bitte mit einem Erwachsenen, dem du vertraust. Du kannst auch die Nummer gegen Kummer anrufen: 116 111 (kostenlos und anonym, du musst deinen Namen nicht sagen). Ich bin weiter für dich da.",
+    "blocked_adult": "Darauf kann ich hier nicht antworten. Wenn dich gerade etwas bedrückt, sprich bitte mit jemandem, dem du vertraust. Wenn du in Gefahr bist, ruf den Notruf 112 an.",
+    "concern_adult": "Danke, dass du mir das erzählst – das ist wichtig. Sprich bitte mit jemandem, dem du vertraust. Wenn du in Gefahr bist, ruf den Notruf 112 an. Ich bin weiter für dich da.",
+    "held_back": "(Eine Nachricht, die der Schutzfilter zurückgehalten hat.)"
+  },
   "reminder": {
     "practice_ready": "Wie verabredet: {{title}}. {{count}} Aufgaben liegen bereit, ca. {{minutes}} Minuten.",
     "practice": "Wie verabredet: {{title}}.",

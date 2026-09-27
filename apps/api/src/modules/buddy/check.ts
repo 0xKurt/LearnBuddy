@@ -385,7 +385,8 @@ async function decide(
       pushAvailable: await pushAvailable(deps, learner.id),
     });
     const dialogue = state.messages
-      .filter((m) => m.status === 'done')
+      // A message the safety filter held back never goes to the model again (audit H-32).
+      .filter((m) => m.status === 'done' && m.failure_code !== 'blocked')
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text }));
     const tail = `${describeTriggers(state, triggers, today)}${repair ? `\n\n${repairMessage(repair)}` : ''}`;
@@ -520,7 +521,7 @@ async function decide(
       aliases: ctx.aliases,
       now: at,
       reference: at,
-      latestLearnerText: null,
+      learnerWords: null,
       triggerMessageId: null,
       messageClaim: null,
       actions: d.actions,

@@ -138,6 +138,12 @@ export const MessageView = z.object({
   role: z.enum(['learner', 'buddy']),
   text: z.string(),
   status: z.enum(['processing', 'done', 'failed']),
+  /**
+   * Why a learner message failed (status failed) or was held back by the safety filter
+   * (status done, 'blocked'): blocked · model_unavailable · budget · invalid · stale · internal.
+   * The app says what really happened instead of "not arrived" (CLAUDE.md rule 5).
+   */
+  failure_code: z.string().nullable().default(null),
   /** The app's idempotency key (learner messages); resend a failed message with it. */
   client_message_id: Uuid.nullable(),
   /** Quick answers Buddy offered with this message. */

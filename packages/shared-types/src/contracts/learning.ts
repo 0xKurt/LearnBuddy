@@ -20,6 +20,8 @@ export const MaterialFailure = z.enum([
   'not_learning_material',
   'model_error',
   'budget_exhausted',
+  /** The provider's safety filter refused to read it; reading again would not help. */
+  'blocked',
 ]);
 export type MaterialFailure = z.infer<typeof MaterialFailure>;
 

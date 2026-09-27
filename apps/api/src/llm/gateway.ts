@@ -5,6 +5,8 @@
 // Implementations: VertexGateway (production), DisabledGateway (no model
 // configured — callers degrade honestly), ScriptedGateway (tests only).
 
+import type { Outcome } from '../lib/outcome.js';
+
 export type JsonSchema = { [key: string]: JsonValue };
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -65,24 +67,50 @@ export type LlmUsage = {
 export type LlmResult = { json: unknown; usage: LlmUsage };
 
 export type LlmErrorKind =
-  | 'unavailable' // not configured / provider down
+  | 'unavailable' // not configured / provider down (5xx, network)
   | 'timeout'
   | 'rate_limited'
-  | 'blocked' // safety filter or no candidate
+  | 'blocked' // the provider's safety filter held the answer back, or no candidate
+  | 'refused' // the provider rejected the request itself (4xx other than 429)
   | 'invalid_output'; // not JSON / truncated
 
 export class LlmError extends Error {
   readonly kind: LlmErrorKind;
   readonly usage: LlmUsage | null;
-  constructor(kind: LlmErrorKind, message: string, usage: LlmUsage | null = null) {
+  /** The provider's finish reason when it stopped the answer (e.g. SAFETY), for the audit. */
+  readonly finishReason: string | null;
+  constructor(
+    kind: LlmErrorKind,
+    message: string,
+    usage: LlmUsage | null = null,
+    finishReason: string | null = null,
+  ) {
     super(message);
     this.name = 'LlmError';
     this.kind = kind;
     this.usage = usage;
+    this.finishReason = finishReason;
   }
-  /** Transient provider problems may be retried later; bad output may not. */
+  /** The shared classification of external results (lib/outcome.ts). */
+  get outcome(): Exclude<Outcome, 'ok'> {
+    switch (this.kind) {
+      case 'unavailable':
+      case 'rate_limited':
+        return 'transient';
+      case 'timeout':
+        return 'unknown';
+      case 'blocked':
+      case 'refused':
+      case 'invalid_output':
+        return 'refused';
+    }
+  }
+  /**
+   * A model call changes nothing outside, so transient and unknown outcomes may be retried
+   * later; a refusal (a block, a rejected request, unusable output) gives the same answer again.
+   */
   get retryable(): boolean {
-    return this.kind === 'timeout' || this.kind === 'rate_limited' || this.kind === 'unavailable';
+    return this.outcome !== 'refused';
   }
 }
 

@@ -16,7 +16,8 @@
     "not_learning_material": "Non sembra né una scheda, né un quaderno, né la pagina di un libro.",
     "model_error": "Qualcosa è andato storto durante la lettura.",
     "photos_missing": "Non sono arrivate tutte le foto.",
-    "budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte."
+    "budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte.",
+    "blocked": "Il filtro di sicurezza blocca questa scheda. Rileggerla non servirà: scrivi semplicemente le domande."
   },
   "incomplete_hint": "Le foto non sono arrivate complete. Elimina la scheda e fotografala di nuovo.",
   "practice": "Esercitati",

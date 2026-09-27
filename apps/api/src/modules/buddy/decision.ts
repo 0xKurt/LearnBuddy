@@ -64,7 +64,9 @@ export const Quote = z
   .string()
   .min(1)
   .max(300)
-  .describe("the learner's exact words (latest message)");
+  .describe(
+    "the learner's exact words, whole words as written (what they wrote since your last answer)",
+  );
 
 // Days and durations as the learner described them; the server computes the date
 // (hard rule 2). The model sees ONE flat object per spec — a kind plus the fields

@@ -206,7 +206,10 @@ async function nowCardOf(
       type: 'material_failed',
       material_id: failed.id,
       reason: failed.failure_reason,
-      retryable: failed.failure_reason !== 'not_learning_material' && (attempts?.n ?? 0) < 3,
+      retryable:
+        failed.failure_reason !== 'not_learning_material' &&
+        failed.failure_reason !== 'blocked' &&
+        (attempts?.n ?? 0) < 3,
     };
   }
   // Photos still on their way count only briefly: an upload the app gave up on is not
@@ -354,6 +357,7 @@ async function threadOf(
     role: 'learner' | 'buddy';
     text: string;
     status: 'processing' | 'done' | 'failed';
+    failure_code: string | null;
     client_message_id: string | null;
     ask: { options?: string[] } | null;
     reply_to_id: string | null;
@@ -361,7 +365,8 @@ async function threadOf(
     decision_id: string | null;
     created_at: Date;
   }>(
-    `select id, role, text, status, client_message_id, ask, reply_to_id, outreach_id, decision_id, created_at
+    `select id, role, text, status, failure_code, client_message_id, ask, reply_to_id, outreach_id,
+            decision_id, created_at
        from buddy_messages
       where learner_id = $1
         and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))
@@ -416,6 +421,7 @@ async function threadOf(
       role: m.role,
       text: m.text,
       status: m.status,
+      failure_code: m.failure_code,
       client_message_id: m.client_message_id,
       options: m.ask?.options ?? null,
       reply_to_id: m.reply_to_id,
