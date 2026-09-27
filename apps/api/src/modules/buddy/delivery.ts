@@ -86,6 +86,9 @@ export type OutreachPlan = {
  */
 const SAID = ['scheduled', 'sending', 'accepted', 'provider_accepted', 'send_uncertain', 'in_app'];
 
+/** She counts as in the app when she used it this recently. */
+const IN_APP_WINDOW_MS = 3 * 60_000;
+
 /** A late agreed reminder says so when it is more than this late. */
 const LATE_MS = 15 * 60_000;
 
@@ -118,7 +121,22 @@ export async function planOutreach(db: Db, input: OutreachPlanInput): Promise<Ou
   );
   // Not to the phone is not "not at all": it waits in the app (ADR 0006).
   const inApp = decision.kind === 'suppress' && IN_APP_REASONS.includes(decision.reason);
-  const status = decision.kind === 'schedule' ? 'scheduled' : inApp ? 'in_app' : 'suppressed';
+  // Due now while she is in the app: shown there at once, with the change it is about (the
+  // card of a practice it prepared), not a delivery run later — the same rule the delivery
+  // applies (sendDueOutreach), so her answer never trails the card it belongs to.
+  const hereNow =
+    decision.kind === 'schedule' &&
+    decision.sendAt.getTime() - input.now.getTime() < 60_000 &&
+    input.settings.last_seen_at !== null &&
+    input.now.getTime() - input.settings.last_seen_at.getTime() < IN_APP_WINDOW_MS;
+  const status = hereNow
+    ? 'in_app'
+    : decision.kind === 'schedule'
+      ? 'scheduled'
+      : inApp
+        ? 'in_app'
+        : 'suppressed';
+  const reason = hereNow ? 'learner_in_app' : decision.kind === 'suppress' ? decision.reason : null;
   const row = await db.maybeOne<{ id: string }>(
     `insert into buddy_outreach (learner_id, kind, origin, decision_id, goal_id, step_id, topic_key, dedupe_key,
                                  title, body, why, relevance, status, status_reason, send_at, expires_at,
@@ -140,7 +158,7 @@ export async function planOutreach(db: Db, input: OutreachPlanInput): Promise<Ou
       input.why,
       input.relevance,
       status,
-      decision.kind === 'suppress' ? decision.reason : null,
+      reason,
       decision.kind === 'schedule' ? decision.sendAt : null,
       input.expiresAt,
       input.template ? JSON.stringify(input.template) : null,
@@ -163,8 +181,8 @@ export async function planOutreach(db: Db, input: OutreachPlanInput): Promise<Ou
   return {
     id: row?.id ?? null,
     status,
-    reason: decision.kind === 'suppress' ? decision.reason : null,
-    sendAt: decision.kind === 'schedule' ? decision.sendAt : null,
+    reason,
+    sendAt: decision.kind === 'schedule' && !hereNow ? decision.sendAt : null,
   };
 }
 
@@ -301,8 +319,6 @@ async function settleInApp(
     return true;
   });
 }
-
-const IN_APP_WINDOW_MS = 3 * 60_000;
 
 /** The notification's buttons: practice ready (prepared, not done) or any other message. */
 async function categoryOf(db: Db, stepId: string | null): Promise<string> {

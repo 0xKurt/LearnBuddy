@@ -168,8 +168,8 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Senden' }).click();
 
   // ── Buddy acts on it by itself: reads it, prepares practice, says so ──
-  // Here in the app the card says it now; the message about it is planned for Mia's preferred
-  // time and visible as planned — and dropped once she has practised.
+  // Here in the app the card says it now, and Buddy's message about it is in the chat with it
+  // (she is in the app, so it is shown here, not pushed).
   await expect(page.getByText(/Übung bereit: /)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(/4 Aufgaben · ca\. 5 Min\./)).toBeVisible();
   expect(await homePositions(page)).toEqual(homeAt);

@@ -19,6 +19,7 @@ import {
   scheduleExamWakeups,
   scheduleStepReminder,
 } from '../modules/buddy/plan.js';
+import { planOutreach } from '../modules/buddy/delivery.js';
 import { loadSettings } from '../modules/buddy/state.js';
 import { runTick } from '../modules/scheduler/tick.js';
 import { PushRejectedError, PushUncertainError } from '../push/transport.js';
@@ -434,6 +435,54 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     const [out] = await outreachOf(env, l.learnerId);
     expect(out).toMatchObject({ status: 'in_app', status_reason: 'learner_in_app' });
     expect(env.push.attempts).toEqual([]);
+  });
+
+  it('her answer that is due now is in the thread at once while she is in the app, not a run later', async () => {
+    await withPhone();
+    const plan = (at: string) =>
+      env.db.tx(async (tx) => {
+        const settings = await loadSettings(tx, l.learnerId);
+        return planOutreach(tx, {
+          learnerId: l.learnerId,
+          settings,
+          now: env.clock.now(),
+          decisionId: null,
+          origin: 'learner',
+          kind: 'result',
+          topicKey: `material:${at}`,
+          dedupeKey: `result:${at}`,
+          title: 'Buddy',
+          body: `Aus deinem Blatt habe ich eine Übung gemacht (${at}).`,
+          why: null,
+          relevance: 0.8,
+          earliest: env.clock.now(),
+          expiresAt: new Date(env.clock.now().getTime() + 24 * 3_600_000),
+          goalId: null,
+          stepId: null,
+        });
+      });
+    const thread = () =>
+      env.db.query<{ text: string }>(
+        `select text from buddy_messages where learner_id = $1 and outreach_id is not null order by seq`,
+        [l.learnerId],
+      );
+
+    // She is in the app (her photos were just read): shown there with the change, no push.
+    await l.api.get('/buddy');
+    const here = await plan('here');
+    expect(here).toMatchObject({ status: 'in_app', reason: 'learner_in_app', sendAt: null });
+    expect((await thread()).map((m) => m.text)).toEqual([
+      'Aus deinem Blatt habe ich eine Übung gemacht (here).',
+    ]);
+
+    // She left the app: it goes to the phone through the delivery, as before.
+    env.clock.minutes(10);
+    const away = await plan('away');
+    expect(away.status).toBe('scheduled');
+    expect(await thread()).toHaveLength(1);
+    await tick(env);
+    expect(env.push.attempts).toHaveLength(1);
+    expect(await thread()).toHaveLength(2);
   });
 
   it('does not start something unasked while the learner is in the app, but does after they left', async () => {
