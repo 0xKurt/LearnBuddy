@@ -895,6 +895,14 @@ Also after the last question closed and the session finished.
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
 shown as "Frage von Buddy"), from a typed list (`typed`) or from homework (`homework`). All
 share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `insertItems`).
+Every prompt that writes questions, hints or explanations carries `LANGUAGE_RULES` (correct,
+natural language, real words, no "A/B" alternatives, reread and fix before answering — live
+finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1"). Code drops what it can recognise by
+structure: a numeric question that names the number it asks for with a placeholder
+(`placeholderQuestion`: a fraction with a number on one side and a letter, `\text{…}` or "?" on
+the other — $\frac{a}{8}$, a/8 — with no relation sign and the letter nowhere else in the
+question). Algebra (formula items) keeps its letters. Spelling itself cannot be checked without a
+word list, so it stays a prompt rule.
 
 - **help** — homework, from a photo (`materials.purpose = 'homework'`: the tasks as printed, a
   help session is created when they are read) or typed (`POST /practice/topic` kind `help`; tasks
