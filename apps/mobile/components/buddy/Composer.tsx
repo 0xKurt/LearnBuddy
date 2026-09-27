@@ -40,6 +40,7 @@ export function Composer({
   const voiceMode = useVoiceMode((s) => s.on);
   const setVoiceMode = useVoiceMode((s) => s.setOn);
   const [text, setText] = useState('');
+  const [focused, setFocused] = useState(false);
   const latest = useRef({ text, disabled });
   latest.current = { text, disabled };
   const trimmed = text.trim();
@@ -151,6 +152,10 @@ export function Composer({
             paddingLeft: 4,
             paddingRight: 6,
             minHeight: 60,
+            // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
+            outlineStyle: 'solid',
+            outlineWidth: focused ? 4 : 0,
+            outlineColor: LB.ring,
           },
           SHADOW.float,
         ]}
@@ -164,6 +169,8 @@ export function Composer({
         <TextInput
           value={text}
           onChangeText={setText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder={t('buddy:composer.placeholder')}
           placeholderTextColor={LB.ink3}
           accessibilityLabel={t('buddy:composer.placeholder')}
@@ -184,6 +191,7 @@ export function Composer({
             fontSize: 16,
             lineHeight: 22,
             color: LB.ink,
+            outlineWidth: 0,
           }}
         />
         {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}

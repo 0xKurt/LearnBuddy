@@ -21,6 +21,22 @@ export function tolerantArray<S extends z.ZodTypeAny>(element: S) {
   );
 }
 
+/**
+ * Every request header the app sends to the API (docs/architecture.md §API).
+ * A browser build only gets through CORS when the preflight allows each of
+ * them, so the API's CORS, the dev stack and the app's client share this list:
+ * a header the client adds without listing it here does not type-check.
+ */
+export const APP_REQUEST_HEADERS = [
+  'accept',
+  'authorization',
+  'content-type',
+  'x-timezone',
+  'x-app-version',
+  'x-admin-token',
+] as const;
+export type AppRequestHeader = (typeof APP_REQUEST_HEADERS)[number];
+
 export const AppLocale = z.enum(['de', 'en', 'fr', 'es', 'it']);
 export type AppLocale = z.infer<typeof AppLocale>;
 

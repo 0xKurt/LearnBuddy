@@ -25,6 +25,10 @@ export const toast = {
   hide(): void {
     useToastStore.setState({ message: null });
   },
+  /** Hides this message if it is the one showing (it no longer holds), leaves any other. */
+  dismiss(message: string): void {
+    useToastStore.setState((s) => (s.message === message ? { message: null } : s));
+  },
 };
 
 export function ToastHost() {

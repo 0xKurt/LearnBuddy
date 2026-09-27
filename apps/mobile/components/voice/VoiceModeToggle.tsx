@@ -21,7 +21,11 @@ export function VoiceModeToggle() {
     const next = !on;
     setOn(next);
     if (next) toast.show(t('voice.mode_on'), 'info');
-    else stopListening();
+    else {
+      // "Ich lese dir vor …" is no longer true once it is off.
+      toast.dismiss(t('voice.mode_on'));
+      stopListening();
+    }
   }
 
   return (

@@ -3,6 +3,7 @@
 // present, and the error envelope as ApiError. Responses are validated with
 // the shared zod contracts.
 
+import type { AppRequestHeader } from '@learnbuddy/shared-types/contracts';
 import Constants from 'expo-constants';
 import type { z, ZodTypeAny } from 'zod';
 
@@ -70,7 +71,11 @@ async function authorised(
   fetchFn: FetchLike = fetch,
 ): Promise<Response> {
   const send = async (token: string | null): Promise<Response> => {
-    const headers: Record<string, string> = { accept, 'x-timezone': deviceTimeZone() };
+    // Only listed headers: anything else fails the browser's CORS preflight.
+    const headers: { [H in AppRequestHeader]?: string } = {
+      accept,
+      'x-timezone': deviceTimeZone(),
+    };
     if (APP_VERSION) headers['x-app-version'] = APP_VERSION;
     if (body !== undefined) headers['content-type'] = 'application/json';
     if (token) headers.authorization = `Bearer ${token}`;
@@ -79,7 +84,7 @@ async function authorised(
     try {
       return await fetchFn(`${ENV.API_URL}/v1${path}`, {
         method,
-        headers,
+        headers: headers as Record<string, string>,
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch {

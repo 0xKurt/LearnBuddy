@@ -94,6 +94,7 @@ export function AnswerComposer({
   // Where the cursor is (reported by the field); set `forced` once after an insert to move it.
   const selection = useRef<Selection | null>(null);
   const [forced, setForced] = useState<Selection | undefined>(undefined);
+  const [focused, setFocused] = useState(false);
 
   const insert = (insertion: Insertion) => {
     const next = insertAtCursor(value, selection.current, insertion);
@@ -147,6 +148,10 @@ export function AnswerComposer({
             paddingLeft: 16,
             paddingRight: 6,
             minHeight: 60,
+            // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
+            outlineStyle: 'solid',
+            outlineWidth: focused ? 4 : 0,
+            outlineColor: LB.ring,
           },
           SHADOW.float,
         ]}
@@ -166,6 +171,8 @@ export function AnswerComposer({
             selection.current = e.nativeEvent.selection;
             if (forced) setForced(undefined);
           }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder={t('answer.placeholder')}
           placeholderTextColor={LB.ink3}
           accessibilityLabel={t('answer.label')}
@@ -199,6 +206,7 @@ export function AnswerComposer({
             fontSize: 16,
             lineHeight: 22,
             color: LB.ink,
+            outlineWidth: 0,
           }}
         />
         {unit ? (

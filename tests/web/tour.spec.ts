@@ -65,6 +65,10 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await say(page, 'ich mag Katzen');
   const resend = page.getByRole('button', { name: 'Nochmal senden' });
   await expect(resend).toBeVisible();
+  // Said once, in the thread next to "Nochmal senden" — no toast on top of it.
+  await expect(page.getByText('Buddy konnte gerade nicht antworten.', { exact: true })).toHaveCount(
+    0,
+  );
   await shot(page, '41-failed-message');
   await resend.click();
   await expect(page.getByText('Katzen, schön! Das merke ich mir.')).toBeVisible();
