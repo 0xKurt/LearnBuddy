@@ -48,6 +48,23 @@ export async function overflows(page: Page): Promise<Overflow[]> {
 }
 
 /**
+ * Waits until the screen stops changing: an entrance, a verdict or the summary's arrival has
+ * finished, so a shot never keeps an element caught half-faded mid-animation. What moves
+ * forever (Buddy's breathing orb, typing dots) never settles and only costs the wait.
+ */
+export async function settle(page: Page, maxMs = 1600): Promise<void> {
+  await page.waitForTimeout(150);
+  const until = Date.now() + maxMs;
+  let last = await page.screenshot();
+  while (Date.now() < until) {
+    await page.waitForTimeout(120);
+    const next = await page.screenshot();
+    if (next.equals(last)) return;
+    last = next;
+  }
+}
+
+/**
  * Screenshot at every phone size and the overflow found there (into fit.jsonl);
  * fails on anything that must be scrolled. `opened`: a detail she opened on
  * purpose (a settings group) may push the closed ones below it off the screen.
@@ -62,7 +79,7 @@ export async function shot(
   const found: Overflow[] = [];
   for (const phone of PHONES) {
     await page.setViewportSize(phone);
-    await page.waitForTimeout(300);
+    await settle(page);
     const here = await overflows(page);
     found.push(...here);
     appendFileSync(REPORT, `${JSON.stringify({ name, phone: phone.width, overflows: here })}\n`);

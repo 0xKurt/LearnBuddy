@@ -144,6 +144,11 @@ function NodeLabel({ text, above = false }: { text: string; above?: boolean }) {
         fontWeight: '600',
         color: LB.ink,
         textAlign: 'center',
+        // The ring runs behind the labels beside and under the nodes: a soft veil keeps the
+        // line from crossing the words.
+        backgroundColor: LB.veil,
+        borderRadius: 6,
+        overflow: 'hidden',
       }}
     >
       {text}

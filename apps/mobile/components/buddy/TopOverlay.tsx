@@ -7,9 +7,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, ScrollView, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { useSvgId } from '../../lib/theme/svgId.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 
@@ -93,13 +95,14 @@ export function TopOverlay({ id, children, closeLabel, onClose, onHeight }: Prop
         }),
       }}
     >
+      <UnderFade />
       <View
         accessibilityLiveRegion="polite"
         // The Pastell-Soft float: one soft shadow, the card's own tint.
-        style={{ ...SHADOW.float, borderRadius: 22, backgroundColor: LB.bg, flexShrink: 1 }}
+        style={{ ...SHADOW.float, borderRadius: RADIUS, backgroundColor: LB.bg, flexShrink: 1 }}
       >
         <ScrollView
-          style={{ flexGrow: 0, borderRadius: 22 }}
+          style={{ flexGrow: 0, borderRadius: RADIUS }}
           contentContainerStyle={{ gap: 8 }}
           scrollEnabled={!fits}
           bounces={false}
@@ -122,5 +125,47 @@ export function TopOverlay({ id, children, closeLabel, onClose, onHeight }: Prop
         </View>
       </View>
     </Animated.View>
+  );
+}
+
+/** The card's rounded corners; the fade behind them. */
+const RADIUS = 22;
+/** How far below the card the conversation fades out. */
+const FADE_BELOW = 18;
+
+/**
+ * Behind the card's lower edge: what scrolls under the card fades out softly there instead of
+ * peeking out at its rounded corners and being cut off hard at its edge.
+ */
+function UnderFade() {
+  const id = useSvgId('under');
+  return (
+    <View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: -FADE_BELOW,
+        height: RADIUS + FADE_BELOW,
+      }}
+    >
+      <Svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1 1">
+        <Defs>
+          <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={LB.bg} stopOpacity={1} />
+            <Stop
+              offset={String(RADIUS / (RADIUS + FADE_BELOW))}
+              stopColor={LB.bg}
+              stopOpacity={0.9}
+            />
+            <Stop offset="1" stopColor={LB.bg} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="1" height="1" fill={`url(#${id})`} />
+      </Svg>
+    </View>
   );
 }
