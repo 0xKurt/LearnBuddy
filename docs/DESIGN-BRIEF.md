@@ -158,6 +158,15 @@ That's it. Anything more impactful is admin-side.
 
 The mental model is **"my learning companion is here when I want to practice"** — not "the app is keeping score of what I owe it."
 
+### The first impression (icon and splash)
+
+The app icon and the splash screen are Buddy's orb — a blue → lilac → pink glass sphere with a
+white halo and a violet depth at its lower edge — on the soft pastel light of the app
+(`#faf7fd`). No letters, no mascot. The files are drawn by `scripts/brand/render-icons.mjs` (our
+own SVG, rendered by Chromium) into `apps/mobile/assets/`; change the script, not the PNGs. The
+native splash hands over to an identical picture in the app (`components/lb/SplashHandoff.tsx`)
+that settles and fades into the first screen.
+
 ---
 
 ## Hard constraints that affect design

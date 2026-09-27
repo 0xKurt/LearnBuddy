@@ -1,6 +1,7 @@
 {
   "greeting": "Salut {{name}}",
   "greeting_ask": "Qu'est-ce qui t'attend ?",
+  "practiced_today": "Entraînement fait aujourd'hui",
   "menu": {
     "open": "Ouvrir le menu",
     "title": "Plus",

@@ -307,6 +307,11 @@ export const BuddyHome = z.object({
    * photos they just sent ('material') or the practice they just finished ('session').
    */
   working: z.enum(['material', 'session']).nullable().catch(null),
+  /**
+   * She answered a practice question today (her zone): the quiet "Heute geübt ✓" beside the
+   * greeting (DESIGN-BRIEF §What we are NOT allows it). Never a count, never missed days.
+   */
+  practiced_today: z.boolean().catch(false),
   /** Context version the home was built from (debugging and stale checks). */
   context_version: z.number().int(),
 });
@@ -375,6 +380,8 @@ export const BuddySettingsView = z.object({
   preferred_end: LocalTime,
   avoid_weekdays: z.array(z.number().int().min(1).max(7)),
   paused_until: IsoDateTime.nullable(),
+  /** "Seltener schreiben": only important messages from Buddy reach the phone. */
+  only_important: z.boolean(),
   timezone: z.string(),
   version: z.number().int(),
   /** Whether this device may loosen the rules without the adult's PIN. */
@@ -390,6 +397,8 @@ export const UpdateBuddySettingsRequest = z.object({
   preferred_end: LocalTime.optional(),
   avoid_weekdays: z.array(z.number().int().min(1).max(7)).max(7).optional(),
   paused_until: IsoDateTime.nullable().optional(),
+  /** Off again allows more contact: under 16 with the parents' PIN. */
+  only_important: z.boolean().optional(),
   version: z.number().int(),
 });
 export type UpdateBuddySettingsRequest = z.infer<typeof UpdateBuddySettingsRequest>;
@@ -411,6 +420,27 @@ export type RegisterPushTokenRequest = z.infer<typeof RegisterPushTokenRequest>;
 /** Claim (signed in) or release (signing out) this install's push binding. */
 export const PushDeviceRequest = z.object({ device_id: DeviceId });
 export type PushDeviceRequest = z.infer<typeof PushDeviceRequest>;
+
+/** Notification category ids (the server sets one per push; the app registers the buttons). */
+export const PUSH_CATEGORY = {
+  /** A message about practice that is ready: "Jetzt üben", "Heute nicht", "Seltener schreiben". */
+  practice: 'lb_practice',
+  /** Any other message from Buddy: "Heute nicht", "Seltener schreiben". */
+  message: 'lb_message',
+} as const;
+
+/** A button pressed on a notification (lib/push.ts), sent through the API (rule 5). */
+export const OutreachAction = z.enum(['practice_now', 'not_today', 'less_often']);
+export type OutreachAction = z.infer<typeof OutreachAction>;
+
+export const OutreachActionRequest = z.object({ action: OutreachAction });
+export type OutreachActionRequest = z.infer<typeof OutreachActionRequest>;
+
+export const OutreachActionResponse = z.object({
+  /** "Jetzt üben": the practice session the prepared practice started (null: none open). */
+  session_id: Uuid.nullable(),
+});
+export type OutreachActionResponse = z.infer<typeof OutreachActionResponse>;
 
 export const OutreachOpenedRequest = z.object({
   response: z.enum(['start', 'later', 'not_now', 'dismissed']).nullable(),

@@ -19,7 +19,7 @@ import type {
 
 import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
-import { daysBetween, localParts } from '../../lib/time.js';
+import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
 import { loadBuddyState, loadSettings } from './state.js';
@@ -81,6 +81,7 @@ async function homeFrom(
   const thread = await threadOf(deps, learner, beforeMessageId);
   const system = await systemOf(deps, learner.id, state);
   const working = await workingOf(deps, learner.id, now);
+  const practicedToday = await practicedSince(deps, learner.id, startOfLocalDay(now, tz));
 
   return {
     learner: { id: learner.id, name: learner.display_name, is_minor: learner.isMinor },
@@ -93,8 +94,25 @@ async function homeFrom(
     thread_has_more: thread.hasMore,
     system,
     working,
+    practiced_today: practicedToday,
     context_version: state.settings.context_version,
   };
+}
+
+/**
+ * Whether she worked on a practice question since `since`: answered, tried or looked at the
+ * solution. A question skipped untouched (e.g. when a session is finished early) or taken out
+ * as not fitting does not count.
+ */
+async function practicedSince(deps: Deps, learnerId: string, since: Date): Promise<boolean> {
+  const row = await deps.db.maybeOne(
+    `select 1 from session_items si join practice_sessions ps on ps.id = si.session_id
+      where ps.learner_id = $1 and si.flagged_at is null and si.closed_at >= $2
+        and (si.status in ('correct', 'revealed', 'missed') or si.attempts > 0)
+      limit 1`,
+    [learnerId, since],
+  );
+  return row !== null;
 }
 
 /** A check the learner's own action started (their photos, their finished practice) that is due or running. */

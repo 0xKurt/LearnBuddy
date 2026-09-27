@@ -283,6 +283,18 @@ carries its decision, so what Buddy did in the background appears in the thread 
 and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
 is not skipped for good.
 
+**Looking back** (`modules/buddy/lookback.ts`, migration `0038_buddy_lookbacks.sql`; gaps #7):
+visible progress without pressure. After a finished practice or before a test
+(`session_finished`, `exam_countdown`) code may offer the check one fact — a topic that was
+shaky in a practice at least 5 days ago (and not since) and where now every question she
+practised (at least 2, the latest within 7 days) was right at once; before a test only from its
+subject, after a practice that session's topics first. The model may phrase it in
+`CheckDecision.look_back` (fact alias `p1`, one sentence) or leave it out; a look back that was
+not offered is rejected and repaired. It is a message in the thread only — never an outreach,
+never on the lock screen — and is kept in `buddy_lookbacks`: at most one per 7 days, the same
+topic not again within 60 days. Only what was reached: no counts, nothing still open, no missed
+days (rule 6).
+
 ## Delivery
 
 `modules/buddy/policy.ts` (pure) and `delivery.ts`.
@@ -328,6 +340,21 @@ is not skipped for good.
   `getLastNotificationResponse` — is kept on the device (`lib/pushQueue.ts`, 7 days) and sent
   once signed in, retried on start and when back online; only a clear 4xx drops it.
   Not yet verified on a device (audit §17, `repro-19`).
+- **Buttons on a notification** (gaps #16; migration `0039_notification_actions.sql`): the
+  server sets `categoryId` per push — `lb_practice` ("Jetzt üben", "Heute nicht", "Seltener
+  schreiben") when the message is about practice that is prepared, `lb_message` ("Heute nicht",
+  "Seltener schreiben") otherwise; the app registers the buttons (`lib/pushActions.ts`). A press
+  is kept on the device like a tap and sent to `POST /buddy/outreach/:id/act`; code decides what
+  it does. "Jetzt üben" starts that prepared practice and the app opens it (not just the home).
+  "Heute nicht" moves its practice (and an agreed reminder) to tomorrow and cancels Buddy's own
+  messages planned for the rest of her day. "Seltener schreiben" sets `phone_only_important`:
+  Buddy's own initiatives then reach the phone only at relevance ≥ 0.85 (the rest waits in the
+  app, `only_important`); agreed reminders and answers to her own actions are unaffected. It only
+  reduces contact, so it needs no PIN; Buddy says in the thread what changed, and settings shows
+  the way back — which, being a loosening, needs the parents under 16. The two lock-screen
+  buttons do not open the app: they report no `opened`; when the app is not running, a
+  background task (`lib/pushTask.ts`, expo-task-manager, defined from the entry `index.ts`)
+  sends them. Not yet verified on a device.
 - **Lock-screen texts are built by code** (S-6): title "Buddy" and a fixed sentence per kind
   (`i18n push.*`: "Deine verabredete Erinnerung ist da."), never a title, a count, a score or
   anything the model wrote. Buddy's words are in the thread. Texts whose words depend on the day
@@ -947,7 +974,9 @@ the practice for a test (user feedback #2).
 `rules`: at most n a day, never after the quiet hour, so the card and the parents' PIN screen
 say exactly that), **done** (Buddy's actions of the last 72 h
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
-and delivery status of each message) and **system** status (model, push, contact, scheduler).
+and delivery status of each message), **system** status (model, push, contact, scheduler) and
+**practiced_today** (she answered, tried or looked at a practice question today in her zone:
+the quiet "Heute geübt ✓" beside the greeting — never a count, never missed days).
 The home is read in one repeatable-read transaction (one snapshot): a job that commits while
 it is read (a page joining the homework session) shows either before or after, never an old
 card next to "nothing working" — the app polls closely only while something is working

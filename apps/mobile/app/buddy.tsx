@@ -42,6 +42,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
+import { Icon } from '../components/lb/Icon.js';
 import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
 import { StartRow } from '../components/lb/StartRow.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
@@ -633,21 +634,36 @@ export default function BuddyScreen() {
         {t('buddy:greeting', { name: h.learner.name })}
       </Text>
       {/* Personal when something is coming up: the next test; otherwise the open question.
-          The same with or without a card on top, so nothing moves when it comes or goes. */}
-      <Text
-        numberOfLines={talking ? 1 : undefined}
-        style={[
-          talking ? TYPE.body : TYPE.title,
-          { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
-        ]}
+          The same with or without a card on top, so nothing moves when it comes or goes.
+          Beside it, quietly, whether she practised today — never a count (rule 6). */}
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          alignItems: 'center',
+          columnGap: 8,
+          rowGap: 4,
+        }}
       >
-        {nextExam
-          ? t('buddy:next.line', {
-              title: nextExam.title,
-              when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
-            })
-          : t('buddy:greeting_ask')}
-      </Text>
+        <Text
+          numberOfLines={talking ? 1 : undefined}
+          style={[
+            talking ? TYPE.body : TYPE.title,
+            { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
+          ]}
+        >
+          {nextExam
+            ? t('buddy:next.line', {
+                title: nextExam.title,
+                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+              })
+            : t('buddy:greeting_ask')}
+        </Text>
+        {h.practiced_today && !talking ? (
+          <PracticedToday label={t('buddy:practiced_today')} />
+        ) : null}
+      </View>
     </View>
   );
 
@@ -893,5 +909,27 @@ export default function BuddyScreen() {
       />
       <TopicSheet kind={topic} onClose={() => setTopic(null)} />
     </SafeAreaView>
+  );
+}
+
+/** The quiet "Heute geübt ✓" beside the greeting: a mark of what she did, never a number. */
+function PracticedToday({ label }: { label: string }) {
+  return (
+    <View
+      accessible
+      accessibilityLabel={label}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 9,
+        paddingVertical: 3,
+        borderRadius: 999,
+        backgroundColor: LB.mint,
+      }}
+    >
+      <Icon name="check" size={13} color={LB.successText} />
+      <Text style={[TYPE.label, { color: LB.successText }]}>{label}</Text>
+    </View>
   );
 }

@@ -47,7 +47,10 @@
     "tell_buddy": "Just tell Buddy when you want some quiet.",
     "more": "Adjust times",
     "less": "Show less",
-    "device_elsewhere": "Buddy’s messages currently go to another device, not to this phone."
+    "device_elsewhere": "Buddy’s messages currently go to another device, not to this phone.",
+    "only_important": "You asked Buddy to write less often: only what really matters reaches your phone. Everything else waits in the app.",
+    "only_important_end": "Everything to my phone again",
+    "only_important_ended": "Buddy sends everything to your phone again."
   },
   "profile": {
     "title": "Your profile",

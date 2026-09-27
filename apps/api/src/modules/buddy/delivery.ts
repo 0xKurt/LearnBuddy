@@ -23,6 +23,8 @@
 //   - Every status write of a claimed row is fenced by its claim, so a slow worker can never
 //     overwrite (or send) a row another run already settled.
 
+import { PUSH_CATEGORY } from '@learnbuddy/shared-types/contracts';
+
 import type { Deps } from '../../deps.js';
 import { consentCurrentSql } from '../scheduler/jobs.js';
 import type { Db } from '../../lib/db.js';
@@ -302,6 +304,17 @@ async function settleInApp(
 
 const IN_APP_WINDOW_MS = 3 * 60_000;
 
+/** The notification's buttons: practice ready (prepared, not done) or any other message. */
+async function categoryOf(db: Db, stepId: string | null): Promise<string> {
+  const ready = stepId
+    ? await db.maybeOne(
+        `select 1 from buddy_steps where id = $1 and kind = 'practice' and state = 'prepared'`,
+        [stepId],
+      )
+    : null;
+  return ready ? PUSH_CATEGORY.practice : PUSH_CATEGORY.message;
+}
+
 export type DeliveryStats = {
   sent: number;
   inApp: number;
@@ -439,12 +452,14 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
     );
     if (!mine) continue;
     // The lock screen gets a fixed text per kind: no title, count, score or name (S-6).
+    // The buttons under it are chosen by code: "Jetzt üben" only for practice that is ready.
     const message: PushMessage = {
       to: token.token,
       title: t(o.locale, 'title.buddy'),
       body: t(o.locale, `push.${o.kind}`),
       data: { type: 'buddy_outreach', outreach_id: o.id },
       collapseId: o.topic_key.slice(0, 64),
+      categoryId: await categoryOf(deps.db, o.step_id),
       expiresAt: o.expires_at,
     };
     let ticket: PushTicket | undefined;

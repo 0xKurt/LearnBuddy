@@ -47,7 +47,10 @@
     "tell_buddy": "Sag Buddy einfach, wenn du Ruhe willst.",
     "more": "Zeiten anpassen",
     "less": "Weniger anzeigen",
-    "device_elsewhere": "Buddys Nachrichten gehen gerade an ein anderes Gerät, nicht an dieses Handy."
+    "device_elsewhere": "Buddys Nachrichten gehen gerade an ein anderes Gerät, nicht an dieses Handy.",
+    "only_important": "Du hast dir gewünscht, dass Buddy seltener schreibt: aufs Handy kommt nur noch, was wirklich wichtig ist. Alles andere wartet in der App.",
+    "only_important_end": "Wieder alles aufs Handy",
+    "only_important_ended": "Buddy schreibt dir wieder alles aufs Handy."
   },
   "profile": {
     "title": "Dein Profil",

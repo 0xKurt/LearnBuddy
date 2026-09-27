@@ -257,6 +257,11 @@ export function buildContext(
     if (st.paused_until && st.paused_until > now) {
       lines.push(`- paused through ${lastDayOf(st.paused_until, tz)}`);
     }
+    if (st.phone_only_important) {
+      lines.push(
+        '- she asked for fewer messages: only important ones (relevance ≥ 0.85) reach the phone; the rest waits in the app',
+      );
+    }
     if (!opts.pushAvailable)
       lines.push('- no working push channel on the device: messages only appear in the app');
   }

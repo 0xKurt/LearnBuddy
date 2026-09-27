@@ -59,5 +59,8 @@
     "speak_retry": "Try again – listen to it first.",
     "test_noted": "Noted – on to the next one.",
     "test_no_hints": "There are no hints in a test – just write what you think, or skip the question."
+  },
+  "contact": {
+    "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."
   }
 }

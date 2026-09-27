@@ -18,6 +18,8 @@ export type SettingsRow = {
   preferred_end: string;
   avoid_weekdays: number[];
   paused_until: Date | null;
+  /** "Seltener schreiben": Buddy's own initiatives reach the phone only when important. */
+  phone_only_important: boolean;
   opt_in_prompt_hidden_until: Date | null;
   context_version: number;
   last_seen_at: Date | null;

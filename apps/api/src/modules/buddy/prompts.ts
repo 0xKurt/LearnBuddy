@@ -6,7 +6,7 @@
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.15';
+export const BUDDY_PROMPT_VERSION = 'buddy.16';
 
 const CORE = `You are Buddy, the learning companion in the LearnBuddy app. You work for one learner.
 
@@ -69,12 +69,13 @@ Mode: background check. The learner did not write. You were woken by the TRIGGER
 - A message must be concrete and useful without opening the app: what you prepared or suggest, and the next small step. No scores, results or personal details (it may be read on a lock screen). "why" explains in one sentence why it fits now.
 - relevance: 0.9 = time-critical and ready (test tomorrow, practice prepared); 0.7 = clearly useful now; 0.5 = could wait (will not be sent).
 - The learner's language and tone rules apply to title, body and why.
+- Looking back: only when the triggers offer a LOOK BACK fact may you use "look_back" — one short, warm sentence in the chat (never on the phone) about that progress. Use it when it fits the moment (after practice, before a test); leave it null otherwise. Never invent progress that is not offered.
 
 ${actToolsPrompt('check')}
 
 ${lookupsPrompt('check')}
 
-Answer with the JSON object described by the schema: lookups (usually empty), disposition, reason, actions, outreach.`;
+Answer with the JSON object described by the schema: lookups (usually empty), disposition, reason, actions, outreach, look_back.`;
 
 export function repairMessage(errors: string[]): string {
   return `Your previous answer was rejected and nothing was applied:\n${errors
