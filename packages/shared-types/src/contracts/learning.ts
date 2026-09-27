@@ -69,6 +69,11 @@ export const MaterialView = z.object({
   purpose: z.enum(['study', 'homework']),
   /** homework: the help session, once the tasks are read. */
   session_id: Uuid.nullable(),
+  /**
+   * The state of that session: active — tasks still open ("Weiter mit der Hausaufgabe");
+   * finished — every task solved; abandoned — closed after a long pause or with the sheet.
+   */
+  session_status: z.enum(['active', 'finished', 'abandoned']).nullable().default(null),
   /** Pages not read completely, while Lena has not answered the notice. */
   page_problems: z.array(PageProblem),
   photo_count: z.number().int(),
@@ -178,7 +183,17 @@ export const SessionItemView = z.object({
   hints_left: z.number().int().min(0).default(0),
   /** "Tipp" works for this question now: a prepared hint at once, else the tutor writes one. */
   hint_available: z.boolean().default(false),
-  /** Only once the item is closed. */
+  /**
+   * "Lösung zeigen" works now: only after a real try or a hint (never from the first second),
+   * never in homework help and never while a test runs (a test has "Überspringen").
+   */
+  reveal_available: z.boolean().default(false),
+  /** Homework help: set aside with "Später" (still open; it comes back after the others). */
+  deferred: z.boolean().default(false),
+  /**
+   * Only once the item is closed — and after a finished test also for a question she never
+   * got to (status still open: "nicht bearbeitet").
+   */
   answer: z.string().nullable(),
 });
 export type SessionItemView = z.infer<typeof SessionItemView>;
@@ -211,9 +226,12 @@ export const PracticeTurnView = z.object({
 export type PracticeTurnView = z.infer<typeof PracticeTurnView>;
 
 export const PracticeSummary = z.object({
+  /** Closed questions (solved, revealed, skipped, missed); never shown as a score. */
   answered: z.number().int(),
   first_try: z.number().int(),
+  /** Topics where every closed question was right at once. Never also in shaky_topics. */
   secure_topics: z.array(z.string()),
+  /** Topics with at least one question that needed help, was shown or missed. */
   shaky_topics: z.array(z.string()),
 });
 export type PracticeSummary = z.infer<typeof PracticeSummary>;

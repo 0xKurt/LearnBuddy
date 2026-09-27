@@ -19,6 +19,7 @@ import {
   sweepForgottenPhotos,
 } from '../materials/purge.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
+import { closeIdleSessions } from '../practice/lifecycle.js';
 import {
   claimJobs,
   finishJob,
@@ -35,6 +36,8 @@ export type TickStats = {
   extractions: number;
   learners: number;
   maintenance: number;
+  /** Idle practice sessions finished or abandoned by this run. */
+  idleSessions: number;
   delivery: DeliveryStats | null;
   receipts: { checked: number; rejected: number } | null;
   errors: string[];
@@ -50,6 +53,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     extractions: 0,
     learners: 0,
     maintenance: 0,
+    idleSessions: 0,
     delivery: null,
     receipts: null,
     errors: [],
@@ -85,6 +89,12 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
       for (const m of stuck) await markMaterialFailed(tx, m.id, 'model_error', deps.now());
     });
     await abandonStaleUploads(deps);
+  });
+
+  // Sessions left alone past their limit are closed; their step goes back to Buddy
+  // (decision D-5, practice/lifecycle.ts).
+  await guard('sessions', async () => {
+    stats.idleSessions = await closeIdleSessions(deps);
   });
 
   // Reading photos first: a learner is usually waiting for it.

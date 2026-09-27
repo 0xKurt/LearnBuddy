@@ -22,7 +22,9 @@ import { ageOn } from '../identity/model.js';
 import {
   FIGURE_RULES,
   ItemDraft,
+  itemsOneByOne,
   MATH_RULES,
+  MAX_ACCEPTED,
   NUMERIC_KEY_RULES,
   SPELLING_RULES,
   insertItems,
@@ -30,7 +32,7 @@ import {
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.3';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.4';
 
 const SUBJECT_KINDS = [
   'math',
@@ -56,7 +58,7 @@ const SUBJECT_KINDS = [
 export const GeneratedSet = z.object({
   usable: z
     .boolean()
-    .describe('false if the request is not about school learning or cannot be done well'),
+    .describe('false if the request is not about learning something or cannot be done well'),
   title: z.string().trim().min(1).max(80),
   subject: z
     .object({ name: z.string().trim().min(1).max(40), kind: z.enum(SUBJECT_KINDS) })
@@ -72,22 +74,26 @@ export const GeneratedSet = z.object({
   items: z.array(ItemDraft.omit({ hints: true, worked_solution: true })).max(25),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
+/** Parsed item by item: one broken item costs only itself (audit H-14, H-15). */
+const GeneratedParse = GeneratedSet.extend({
+  items: itemsOneByOne(ItemDraft.omit({ hints: true, worked_solution: true }), 25),
+});
 const GENERATED_SCHEMA = toJsonSchema(GeneratedSet);
 
 const TASK: Record<StartTopicRequest['kind'], string> = {
   explain: `EXPLAIN the topic the learner named. "intro": a clear explanation for their age and grade — short paragraphs, 1–2 everyday examples, the one rule or idea that matters most, at most ~180 words; bold nothing, no headings. Then 3–5 items that check understanding (not just recall), easy to harder.`,
   practice: `Write 6–10 PRACTICE questions on the topic the learner named, at their grade, easy to harder, mixing kinds sensibly. intro = null.`,
-  vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to 8) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. intro = null. If there are no pairs, usable = false.`,
+  vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. intro = null. If there are no pairs, usable = false.`,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words. intro = null.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers). intro = null.`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own. intro = null.`,
 };
 
-const SYSTEM = `You prepare learning in the LearnBuddy app for a school student (see LEARNER). You never do homework for them; you help them learn.
+const SYSTEM = `You prepare learning in the LearnBuddy app for the learner in LEARNER — a school student, a university student or an adult learner (further education, work, languages, personal interest); their level says which. You never do homework for them; you help them learn.
 
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
-- Only well-established school knowledge; if unsure about a fact, leave it out. If the request is not about school learning, set usable = false and items = [].
+- Only well-established knowledge at their level (school topics for a school student; study or professional topics for a university or adult learner); if unsure about a fact, leave it out. If the request is not about learning something (for example a request to chat, to write something for them, or nothing to learn), set usable = false and items = [].
 - Everything is answered in the app by typing or choosing (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
@@ -194,7 +200,7 @@ export async function startTopic(
       // cost, more careful content (docs/architecture.md §Speed).
       thinkingBudget: 2048,
     });
-    const parsed = GeneratedSet.safeParse(res.json);
+    const parsed = GeneratedParse.safeParse(res.json);
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
     set = parsed.data;

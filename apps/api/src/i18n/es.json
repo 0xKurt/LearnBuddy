@@ -35,6 +35,7 @@
     "typo": "Casi – se escribe {{answer}}. Escríbelo otra vez.",
     "help_step": "Vamos paso a paso: ¿qué datos te da el ejercicio y qué hay que buscar?",
     "help_solved": "¡Genial, lo has resuelto tú solo!",
+    "help_final_answer": "¡Eso va bien! Ahora escríbeme tu resultado final, tal como lo pide el ejercicio.",
     "heard_retry": "No te he oído bien. Inténtalo otra vez un poco más alto y más cerca del móvil.",
     "speak_good": "¡Suena genial!",
     "speak_almost": "¡Casi! Mira las palabras marcadas.",

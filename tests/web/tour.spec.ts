@@ -223,7 +223,12 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Frage 1 von 2')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
   await shot(page, '51-homework-photo');
+  // "Später": the first task stays open and comes back after the other (audit H-11).
+  await page.getByRole('button', { name: 'Später' }).click();
+  await expect(page.getByText('Frage 2 von 2')).toBeVisible();
+  // "Beenden" pauses the homework (D-5): it waits on the home card.
   await page.getByRole('button', { name: 'Übung beenden' }).click();
+  await expect(page.getByText('Hausaufgabe Quadrat – noch 2 Aufgaben')).toBeVisible();
 
   // ── A hard-to-read photo kept anyway ──
   await page.getByRole('button', { name: 'Arbeitsblatt fotografieren' }).click();

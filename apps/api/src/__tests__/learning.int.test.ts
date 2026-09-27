@@ -346,7 +346,32 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
       item_id: find('Wie heißt der längste Fluss Europas?'),
       text: 'Wolga',
     });
-    // Reveal another one.
+    // Reveal another one: not from the first second (user feedback #8) — after a hint.
+    const tooSoon = await l.api.post(`/practice/sessions/${s.id}/reveal`, {
+      item_id: find('Hauptstadt von Italien?'),
+    });
+    expect(tooSoon.status).toBe(409);
+    expect(tooSoon.body).toMatchObject({ error: { details: { reason: 'try_first' } } });
+    expect(
+      started.body.items.find((i) => i.item.prompt === 'Hauptstadt von Italien?')!.reveal_available,
+    ).toBe(false);
+    env.llm.script('tutor', {
+      json: {
+        intent: 'help_request',
+        verdict: 'not_an_attempt',
+        reply: 'Tipp: Die Stadt ist sehr alt.',
+        gave_hint: true,
+        revealed_answer: false,
+      },
+    });
+    const hinted = await l.api.post<{ session: SessionView }>(`/practice/sessions/${s.id}/hint`, {
+      client_turn_id: uuid(),
+      item_id: find('Hauptstadt von Italien?'),
+    });
+    expect(
+      hinted.body.session.items.find((i) => i.item.prompt === 'Hauptstadt von Italien?')!
+        .reveal_available,
+    ).toBe(true);
     const revealed = await l.api.post<SessionView>(`/practice/sessions/${s.id}/reveal`, {
       item_id: find('Hauptstadt von Italien?'),
     });

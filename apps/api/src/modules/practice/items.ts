@@ -24,6 +24,9 @@ export const SPELLING_RULES = `spelling: "strict" when the task practises spelli
 
 export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.`;
 
+/** The most other accepted answers per item — the number the prompts name (audit H-14). */
+export const MAX_ACCEPTED = 8;
+
 export const ItemDraft = z.object({
   kind: z
     .enum(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak'])
@@ -37,7 +40,7 @@ export const ItemDraft = z.object({
     .min(1)
     .max(600)
     .describe('The correct answer (speak: the same text as prompt)'),
-  accepted_answers: z.array(z.string().trim().min(1).max(200)).max(6),
+  accepted_answers: z.array(z.string().trim().min(1).max(200)).max(MAX_ACCEPTED),
   unit: z.string().trim().max(20).nullable(),
   choices: z.array(z.string().trim().min(1).max(200)).max(6).nullable(),
   correct_choice: z.number().int().min(0).max(5).nullable(),
@@ -63,7 +66,8 @@ export const ItemDraft = z.object({
     .nullable()
     .default(null)
     .describe('vocab: language of the answer; speak: language to say it in; else null'),
-  figure: Figure.nullable().default(null),
+  // A figure over a bound (9 points, 8 columns) is dropped, never the question (audit H-15).
+  figure: Figure.nullable().default(null).catch(null),
   tolerance: z
     .number()
     .positive()
@@ -100,6 +104,42 @@ export const ItemDraft = z.object({
     ),
 });
 export type ItemDraft = z.infer<typeof ItemDraft>;
+
+/**
+ * Clips what only exceeds a list bound, so a rich item is kept rather than lost: accepted
+ * answers beyond MAX_ACCEPTED (and empty or overlong ones), hints beyond 3.
+ */
+function clipDraft(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return raw;
+  const o = { ...(raw as Record<string, unknown>) };
+  if (Array.isArray(o.accepted_answers)) {
+    o.accepted_answers = o.accepted_answers
+      .filter((a): a is string => typeof a === 'string' && a.trim().length > 0 && a.length <= 200)
+      .slice(0, MAX_ACCEPTED);
+  }
+  if (Array.isArray(o.hints)) o.hints = o.hints.slice(0, 3);
+  return o;
+}
+
+/**
+ * A list of items the model wrote, read one by one: an item that does not fit its schema is
+ * dropped, never the whole list (audit H-14, H-15; "the server checks every item on its own").
+ * At most `max` are read. Use it in place of z.array(schema) where the result is parsed; the
+ * JSON schema for the model keeps z.array(schema).max(max).
+ */
+export function itemsOneByOne<S extends z.ZodTypeAny>(schema: S, max: number) {
+  return z
+    .array(z.unknown())
+    .catch([])
+    .transform((list): Array<z.output<S>> => {
+      const out: Array<z.output<S>> = [];
+      for (const raw of list.slice(0, max)) {
+        const r = schema.safeParse(clipDraft(raw));
+        if (r.success) out.push(r.data as z.output<S>);
+      }
+      return out;
+    });
+}
 
 /** The solution as a learner would see it (a choice's text for multiple choice). */
 function solutionText(it: ItemDraft): string {

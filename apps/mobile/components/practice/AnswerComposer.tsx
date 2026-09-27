@@ -1,5 +1,7 @@
 // The field for typed answers (short, long, numeric, formula, vocab) with
-// "Prüfen" and "Lösung zeigen" (not in homework help: there is no solution to show). A number's unit stands next to the field.
+// "Prüfen", "Tipp" and a quiet side option: "Lösung zeigen" only after a try or a hint,
+// "Später" in homework help (there is no solution to show). A number's unit stands next to
+// the field.
 // Autocorrect is off so the phone never "fixes" what the learner actually
 // wrote. For math questions a row of keys (², √, π, …) sits above the field
 // and inserts at the cursor.
@@ -52,10 +54,16 @@ type Props = {
   onChange: (text: string) => void;
   /** Checks this answer (the field's text, or what she just said in voice mode). */
   onCheck: (value: string) => void;
-  /** Absent when the session never shows the solution (homework help). */
+  /**
+   * The quiet side option: "Lösung zeigen" once she tried or got a hint (never from the first
+   * second, user feedback #8), "Überspringen" in a test, "Später" in homework help (the task
+   * stays open). Absent when none applies.
+   */
   onReveal?: () => void;
-  /** The quiet side option's words (default "Lösung zeigen"; "Überspringen" in a test). */
+  /** The quiet side option's words (default "Lösung zeigen"). */
   revealLabel?: string;
+  /** What the side option does, for screen readers (e.g. "Später": it comes back). */
+  revealHint?: string;
   /** "Tipp": the next prepared hint; absent when none is left. */
   onHint?: () => void;
 };
@@ -74,6 +82,7 @@ export function AnswerComposer({
   onCheck,
   onReveal,
   revealLabel,
+  revealHint,
   onHint,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
@@ -234,7 +243,13 @@ export function AnswerComposer({
           </Btn>
         ) : null}
         {onReveal ? (
-          <Btn variant="ghost" pill onPress={onReveal} disabled={disabled}>
+          <Btn
+            variant="ghost"
+            pill
+            onPress={onReveal}
+            disabled={disabled}
+            accessibilityHint={revealHint}
+          >
             {revealLabel ?? t('show_solution')}
           </Btn>
         ) : null}

@@ -38,6 +38,8 @@ type Props = {
   onResend: (message: MessageView) => void;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
+  /** Undo is locked while this is true (default: busy); history locks only while undoing. */
+  undoBusy?: boolean;
 };
 
 export function Conversation({
@@ -51,6 +53,7 @@ export function Conversation({
   onOption,
   onResend,
   onUndo,
+  undoBusy,
 }: Props) {
   const { t } = useTranslation('buddy');
   const last = messages[messages.length - 1];
@@ -142,7 +145,7 @@ export function Conversation({
                           size="sm"
                           variant="ghost"
                           onPress={() => onUndo(a.id)}
-                          disabled={busy}
+                          disabled={undoBusy ?? busy}
                           accessibilityLabel={t('done.undo_label', { what })}
                         >
                           {t('done.undo')}

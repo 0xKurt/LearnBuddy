@@ -388,10 +388,15 @@ screen and is not built. What the phone cannot see (a page cut off at the edge, 
 text) the model reports per page (below).
 
 `modules/materials/`. `create` reserves the material and signed upload URLs (idempotent per
-client id) → the app uploads directly → `submit` verifies the photos arrived and queues the
-reading (and starts it right away via `waitUntil`) → the job reads them with the model into
-questions (validated item by item) → the capture step Buddy asked for is done with evidence →
-Buddy is woken. Status is what the database says: `awaiting_upload → queued → processing →
+client id; a request id whose material was given up or deleted starts a new material, so a draft
+resent the next day never loops on "gibt es nicht mehr" — audit H-13) → the app uploads directly
+→ `submit` verifies the photos arrived and queues the reading (and starts it right away via
+`waitUntil`) → the job reads them with the model into questions (validated item by item:
+`itemsOneByOne` drops a broken item, never the list; more than 8 accepted answers are clipped
+to the 8 the prompts name, a figure over a bound is dropped and the question kept — audit H-14,
+H-15) → the capture step Buddy asked for is done with evidence (a study photo sent without a
+link — the composer camera, "Mein Stoff" — while exactly one capture step is open is that
+photo: it joins its goal, audit H-16) → Buddy is woken. Status is what the database says: `awaiting_upload → queued → processing →
 ready | failed(reason)`. Photos are deleted 7 days after reading (also when unreadable), at once
 when they are not learning material (a letter, a recipe: they cannot be read again anyway), and
 immediately when the learner deletes the material — and once more 2 hours later, when no signed
@@ -510,6 +515,38 @@ nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced 
 no short-term steps) once per session: first try → Good, with help → Hard, revealed → Again.
 Finishing records evidence on Buddy's step (only if something was answered) and wakes Buddy.
 
+**Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
+`0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
+nothing stays open forever:
+
+- _Finished on the server._ The transaction that closes the last open question (answer, hint
+  fallback, reveal, "Frage passt nicht", a recording) finishes the session and gives Buddy's
+  step its evidence (`finishIfComplete`); a lost `/finish` call changes nothing, and a late one
+  is a no-op. Every writer locks the session row first, so an answer to a session that ended
+  meanwhile is refused (409) behind the same lock. Buddy's follow-up check is queued by the
+  `session_finished` event and runs on the next scheduler tick.
+- _"Beenden"._ In a test it hands the test in (the review shows questions she never got to as
+  "nicht bearbeitet", with their solution). Everywhere else it is a pause: the app goes back to
+  Buddy without finishing; `POST …/finish` on homework help with open tasks only touches its
+  last activity.
+- _Resuming_ is keyed on `last_activity_at`: a session used in the last 12 h is the first now
+  card; an older open one (homework help up to 14 days, any other session up to 3 days) comes
+  after Buddy's prepared practice. Every open session is loaded into Buddy's state, however old.
+  A homework sheet leads to its help session (`POST /practice/sessions {material_id}` returns
+  it; after an abandoned one, a new session with the tasks not solved yet; `MaterialView.
+session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
+- _Idle sessions_ are closed by the scheduler (`closeIdleSessions`): help after 14 days, other
+  sessions after 3 days without activity are `abandoned` and their step goes back to `prepared`
+  (Buddy can offer it again); a session with nothing open left is finished instead.
+- _Summary_ (`practice/summary.ts`): one computation for the result screen and the home card —
+  a topic "sits" only when every closed question of it was right at once, otherwise it is shaky;
+  never both. The app says it in words (`apps/mobile/lib/practice/summaryLine.ts`): homework
+  "Du hast N Aufgaben selbst gelöst", otherwise "Du hast N Fragen beantwortet" and only a whole
+  round right at once is named — never a hit rate, never a zero (user feedback #1, #3).
+- _"Lösung zeigen"_ only after a try or a hint (`reveal_available`, 409 `try_first`; a spoken
+  sentence can always be skipped), user feedback #8. A wrong choice that leaves a single untried
+  option closes the question with the worked solution — shown, never right (feedback #9).
+
 **Grading** (`evaluate.ts` + `packages/shared-math`; audit C-1–C-7, H-1–H-6; decisions D-1–D-3;
 migration `0012_item_answer_rules.sql`). A rule "correct" is final — no model sees the answer —
 so the rules only say it when it is certain; everything else goes to the tutor (`unknown`).
@@ -587,8 +624,16 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
   the model adds are dropped — `fromLearnerText`). The stored solution only guides hints. The
   server enforces "never the solution": no reveal endpoint (409 `reveal_not_allowed`), closed
   items carry no answer, and a tutor reply that contains the solution in any notation
-  (`givesAwayHomework`) gets one repair round, then is replaced by a safe hint. Confirming what
-  the learner worked out is allowed. No FSRS for homework.
+  (`givesAwayHomework`: the key, accepted answers, the right choice) gets one repair round, then
+  is replaced by a safe hint. Order matters (audit H-9, M-28): code first decides whether the
+  task is solved (`homeworkSolved`: her value equals a key in any form via `compareWithKeys`,
+  "5" for "x = 5", or a key in her words with no other numbers than the task's — a list of
+  guesses is no solution); a "correct" it cannot confirm becomes "Fast" with a fixed nudge for
+  the final result; only then the leak check runs on the final verdict and reply, and only the
+  task text (never her message) may state a value. Confirming what code confirmed is allowed.
+  "Tipp" works here too (a prepared hint only if it does not state the solution, else the tutor
+  under the same check); "Später" (`POST …/items/:itemId/defer`, `session_items.deferred_at`)
+  sets a task aside — still open, it comes back after the others. No FSRS for homework.
 - **explain** — `POST /practice/topic` kind `explain`: a short explanation (`session.intro`) at
   the learner's grade, then 3–5 check questions; the tutor sees the explanation.
 - **practice on a topic** — kind `practice`: Buddy's own questions, marked as such.
@@ -684,8 +729,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
 
 ## Home
 
-`modules/buddy/home.ts`. Everything is derived from stored state: **now** (resume practice ›
-result of the last practice › prepared practice › material failed › material being read, or
+`modules/buddy/home.ts`. Everything is derived from stored state: **now** (practice used in the
+last 12 h › result of the last practice › prepared practice › an older paused session (see
+Session lifecycle) › material failed › material being read, or
 photos still being sent for up to 10 minutes › photo needed), **working** (Buddy is acting on
 the learner's own photos or just-finished practice: her photos still being read — also homework,
 also behind another card, so the app keeps following the home — or a due or running check they

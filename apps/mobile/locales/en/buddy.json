@@ -40,7 +40,6 @@
     "failed_retry": "Read again",
     "failed_new_photo": "New photo",
     "result_title": "Done!",
-    "result_body": "{{first_try}} of {{answered}} right the first time.",
     "result_secure": "You've got this: {{topics}}",
     "result_shaky": "Let's practise again: {{topics}}",
     "resume_body_untitled_one": "{{count}} question left",

@@ -40,7 +40,6 @@
     "failed_retry": "Volver a leer",
     "failed_new_photo": "Nueva foto",
     "result_title": "¡Lo has conseguido!",
-    "result_body": "Has respondido {{answered}} y has acertado {{first_try}} a la primera.",
     "result_secure": "Lo dominas: {{topics}}",
     "result_shaky": "Vamos a practicar otra vez: {{topics}}",
     "resume_body_untitled_one": "Queda {{count}} pregunta",

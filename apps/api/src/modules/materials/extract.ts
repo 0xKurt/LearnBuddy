@@ -7,7 +7,9 @@ import { z } from 'zod';
 import {
   FIGURE_RULES,
   ItemDraft,
+  itemsOneByOne,
   MATH_RULES,
+  MAX_ACCEPTED,
   NUMERIC_KEY_RULES,
   SPELLING_RULES,
 } from '../practice/items.js';
@@ -85,13 +87,16 @@ export const ExtractionResult = z.object({
 });
 export type ExtractionResult = z.infer<typeof ExtractionResult>;
 
+/** How the answer is parsed: item by item, so one broken item costs only itself (H-14, H-15). */
+export const ExtractionParse = ExtractionResult.extend({ items: itemsOneByOne(ItemDraft, 25) });
+
 export const EXTRACT_SYSTEM = `You read photos of a learner's study material (worksheets, textbook pages, notebook pages, vocabulary lists) for the LearnBuddy app.
 
 1. Decide whether this is learning material (is_learning_material) and whether it is readable (readable: false only if nothing at all can be read). If not, return empty items. Learning material is school or study content (worksheets, textbook or notebook pages, vocabulary, tasks); everyday papers (a recipe, a letter, a receipt, an advert, packaging) are not, unless they are printed as a school task.
    A page that is cut off or partly unreadable does not make the rest unreadable: use what you can read, and report every photo in pages (one entry each, in order): read "all", "part" (text cut off at an edge, covered by a finger, blurred or in a reflection in places) or "none", with the problem. Text that stops mid-sentence at the edge of the photo is cut off (read "part", cut_off): transcribe it only up to where it stops and end it with "[…]", never complete it. A single photo of something else among school pages is read "none" with not_material; the other pages still count. Answers already written in by hand are the learner's own attempts: never take them as the solution and do not ask about them. Never guess what you cannot see: write questions only from what is readable.
 2. Transcribe the material faithfully into extracted_text (Markdown). Don't add anything that isn't there.
 3. Write practice questions that check exactly this material, pitched at the learner's level (LEARNER). Each has the correct answer.
-   - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to 8) — answers are checked against this list without a model). Up to 25 pairs; the app asks both directions itself.
+   - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Up to 25 pairs; the app asks both directions itself.
    - Otherwise 8–15 questions. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}

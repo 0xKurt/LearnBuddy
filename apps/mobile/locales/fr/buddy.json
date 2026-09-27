@@ -40,7 +40,6 @@
     "failed_retry": "Relire",
     "failed_new_photo": "Nouvelle photo",
     "result_title": "C'est fait!",
-    "result_body": "Bonnes réponses du premier coup: {{first_try}} sur {{answered}}.",
     "result_secure": "Tu maîtrises: {{topics}}",
     "result_shaky": "On s'entraîne encore sur: {{topics}}",
     "resume_body_untitled_one": "Encore {{count}} question",

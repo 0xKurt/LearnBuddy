@@ -24,6 +24,7 @@ type Props = {
   busy: boolean;
   /** Some action is running; no second one meanwhile. */
   disabled: boolean;
+  /** Practise it; a homework sheet opens its help session (the server finds it). */
   onPractice: () => void;
   /** Its questions (app/material/[id].tsx). */
   onOpen: () => void;
@@ -78,6 +79,13 @@ export function MaterialCard({
         : m.status === 'awaiting_upload'
           ? t('incomplete_hint')
           : null;
+  // A homework sheet leads back to its help session, never to drill practice (audit H-7).
+  const action =
+    m.purpose !== 'homework'
+      ? 'practice'
+      : m.session_status === 'finished'
+        ? 'homework_view'
+        : 'homework_continue';
   const retryable =
     m.status === 'failed' && m.failure_reason !== 'not_learning_material' && !m.photos_deleted;
 
@@ -119,9 +127,9 @@ export function MaterialCard({
               pill
               disabled={disabled}
               onPress={onPractice}
-              accessibilityLabel={t('practice_label', { title })}
+              accessibilityLabel={t(`${action}_label`, { title })}
             >
-              {t('practice')}
+              {t(action)}
             </Btn>
           ) : null}
           {m.status === 'ready' ? (

@@ -52,7 +52,7 @@ const europe = (purpose: 'study' | 'homework' = 'study') => ({
       kind: 'multiple_choice',
       prompt: ITALY,
       answer: 'Rom',
-      choices: ['Mailand', 'Rom'],
+      choices: ['Mailand', 'Rom', 'Neapel'],
       correct_choice: 1,
       topic: 'Hauptstädte',
     }),
@@ -123,7 +123,7 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
       [RIVER, 'short', 'Flüsse', 'never_asked'],
     ]);
     // Choices are shown; which one is right is not. No answers anywhere.
-    expect(list.body.items[1]!.choices).toEqual(['Mailand', 'Rom']);
+    expect(list.body.items[1]!.choices).toEqual(['Mailand', 'Rom', 'Neapel']);
     for (const i of list.body.items) {
       expect(Object.keys(i)).not.toContain('answer');
       expect(Object.keys(i)).not.toContain('correct_choice');
@@ -156,6 +156,23 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
     });
     expect((await answer(idOf(ITALY), { choice: 0 })).status).toBe(200);
     expect((await answer(idOf(ITALY), { choice: 1 })).status).toBe(200);
+    env.llm.script('tutor', {
+      json: {
+        intent: 'help_request',
+        verdict: 'not_an_attempt',
+        reply: 'Er fließt durch Russland.',
+        gave_hint: true,
+        revealed_answer: false,
+      },
+    });
+    expect(
+      (
+        await lena.api.post(`/practice/sessions/${s.id}/hint`, {
+          client_turn_id: randomUUID(),
+          item_id: idOf(RIVER),
+        })
+      ).status,
+    ).toBe(200);
     expect(
       (await lena.api.post(`/practice/sessions/${s.id}/reveal`, { item_id: idOf(RIVER) })).status,
     ).toBe(200);

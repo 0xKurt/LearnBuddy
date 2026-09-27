@@ -5,6 +5,7 @@
 import type { PageProblem } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
+import { summarize, type SummaryRow } from '../practice/summary.js';
 
 export type SettingsRow = {
   learner_id: string;
@@ -131,6 +132,8 @@ export type SessionBrief = {
   goal_id: string | null;
   step_id: string | null;
   started_at: Date;
+  /** Resuming is keyed on this, not on started_at (audit H-7; practice/lifecycle.ts). */
+  last_activity_at: Date;
   finished_at: Date | null;
   total: number;
   answered: number;
@@ -289,25 +292,36 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     [learnerId, LIMITS.materials, now],
   );
 
-  const sessions = await db.query<SessionBrief>(
-    `select ps.id, ps.status, ps.goal_id, ps.step_id, ps.started_at, ps.finished_at, ps.mode, ps.title,
+  // The newest sessions, and every one still open however old (the scheduler closes idle
+  // ones, practice/lifecycle.ts): an open homework is never out of reach (audit H-7).
+  // Secure and shaky topics come from the one summary the result screen uses (feedback #3).
+  const sessionRows = await db.query<
+    Omit<SessionBrief, 'secure_topics' | 'shaky_topics'> & { topic_rows: SummaryRow[] }
+  >(
+    `select ps.id, ps.status, ps.goal_id, ps.step_id, ps.started_at, ps.last_activity_at,
+            ps.finished_at, ps.mode, ps.title,
             count(si.item_id)::int as total,
             count(*) filter (where si.status <> 'open')::int as answered,
-            count(*) filter (where si.first_try_correct)::int as first_try,
-            coalesce(array_agg(distinct i.topic) filter (
-              where si.status = 'correct' and si.hints_used = 0 and i.topic is not null), '{}') as secure_topics,
-            coalesce(array_agg(distinct i.topic) filter (
-              where si.status in ('revealed','skipped','missed') or si.hints_used > 0), '{}') as shaky_topics
+            count(*) filter (where si.status = 'correct' and si.first_try_correct)::int as first_try,
+            coalesce(json_agg(json_build_object('topic', i.topic, 'status', si.status,
+                                                'first_try_correct', si.first_try_correct))
+                       filter (where si.item_id is not null), '[]'::json) as topic_rows
        from practice_sessions ps
        -- A question she flagged as unfit counts as neither answered nor shaky.
        left join session_items si on si.session_id = ps.id and si.flagged_at is null
        left join items i on i.id = si.item_id
       where ps.learner_id = $1
+        and (ps.status = 'active'
+             or ps.id in (select id from practice_sessions where learner_id = $1
+                           order by started_at desc, seq desc limit $2))
       group by ps.id
-      order by ps.started_at desc, ps.seq desc
-      limit $2`,
+      order by ps.started_at desc, ps.seq desc`,
     [learnerId, LIMITS.sessions],
   );
+  const sessions: SessionBrief[] = sessionRows.map(({ topic_rows, ...s }) => {
+    const summary = summarize(topic_rows);
+    return { ...s, secure_topics: summary.secure_topics, shaky_topics: summary.shaky_topics };
+  });
 
   const outreach = await db.query<OutreachRow>(
     `select id, kind, origin, topic_key, title, body, why, status, send_at, sent_at, opened_at,
