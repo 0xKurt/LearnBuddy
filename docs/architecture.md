@@ -64,7 +64,9 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   until 18 (D-8). Tightening (pause, quieter) is always allowed.
 - Consent: every route behind `requireAccount` answers 409 `consent_outdated` while the
   account's `consent_version` is not the current one; `/me`, `POST /account`, the PIN, export
-  and deletion (`requireAccountAnyConsent`) keep working.
+  and deletion (`requireAccountAnyConsent`) keep working, and so does unregistering a phone
+  (`DELETE /buddy/push-tokens`, it only reduces contact). The scheduler does the same: no
+  reading, Buddy check or outreach for such an account (they wait queued); erasure jobs run.
 - Errors: `{"error": {"code", "message", "details"?}}` with stable codes (`lib/errors.ts`); no
   provider bodies, SQL or user content in messages or logs.
 - Bodies are JSON ≤ 64 KB, validated with zod (`http/validate.ts`); photos go straight to storage.

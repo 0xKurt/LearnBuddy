@@ -15,7 +15,8 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   `minor_consent_version` / `minor_consent_at` and renewed when the parents agree to a new
   privacy text. A child profile stays behind the parents' PIN gate until 18 (D-8); at 18 it
   becomes the learner's own. After a privacy-text change the API serves nothing learner-facing
-  until the account holder agreed again; for a minor's profile that needs the PIN. Export and
+  until the account holder agreed again, and the scheduler reads no photos, runs no Buddy check
+  and sends no message for it meanwhile; for a minor's profile that needs the PIN. Export and
   deletion keep working, also for an account that never finished its profile.
 - Name and birth date can be corrected (GDPR Art. 16) in the parents' area; for a minor's
   profile a birth-date correction needs the PIN and is checked against the same age rules.

@@ -96,10 +96,31 @@ export async function recoverExpiredLeases(db: Db, now: Date): Promise<number> {
   return rows.length;
 }
 
-/** Claim up to `limit` due jobs of the given kinds (any learner). */
+/**
+ * SQL: the job's learner belongs to an account whose consent covers the privacy text in
+ * force (`$n` = CONSENT_VERSION), or `$n` is null. After a version bump the scheduler
+ * processes nothing for an account until it agreed again — like the API (docs/privacy.md).
+ */
+export function consentCurrentSql(learnerCol: string, param: number): string {
+  return `($${param}::text is null or exists (
+            select 1 from learners cl join accounts ca on ca.id = cl.account_id
+             where cl.id = ${learnerCol} and ca.consent_version = $${param}))`;
+}
+
+/**
+ * Claim up to `limit` due jobs of the given kinds (any learner). With `consentVersion`,
+ * only jobs of learners whose account agreed to that version.
+ */
 export async function claimJobs(
   db: Db,
-  opts: { now: Date; kinds: JobKind[]; limit: number; leaseSeconds: number; learnerId?: string },
+  opts: {
+    now: Date;
+    kinds: JobKind[];
+    limit: number;
+    leaseSeconds: number;
+    learnerId?: string;
+    consentVersion?: string;
+  },
 ): Promise<JobRow[]> {
   return db.tx(async (tx) =>
     tx.query<JobRow>(
@@ -107,6 +128,7 @@ export async function claimJobs(
          select id from jobs
           where status = 'queued' and run_at <= $1 and kind = any($2::text[])
             and ($5::uuid is null or learner_id = $5)
+            and ${consentCurrentSql('jobs.learner_id', 6)}
           order by run_at, seq
           limit $3
           for update skip locked
@@ -119,25 +141,37 @@ export async function claimJobs(
          from due
         where j.id = due.id
        returning j.*`,
-      [opts.now, opts.kinds, opts.limit, opts.leaseSeconds, opts.learnerId ?? null],
+      [
+        opts.now,
+        opts.kinds,
+        opts.limit,
+        opts.leaseSeconds,
+        opts.learnerId ?? null,
+        opts.consentVersion ?? null,
+      ],
     ),
   );
 }
 
-/** Learners that have due jobs of these kinds (for per-learner batching). */
+/**
+ * Learners that have due jobs of these kinds (for per-learner batching); with
+ * `consentVersion`, only learners whose account agreed to that version.
+ */
 export async function learnersWithDueJobs(
   db: Db,
   now: Date,
   kinds: JobKind[],
   limit: number,
+  consentVersion?: string,
 ): Promise<string[]> {
   const rows = await db.query<{ learner_id: string }>(
     `select learner_id from jobs
       where status = 'queued' and run_at <= $1 and kind = any($2::text[]) and learner_id is not null
+        and ${consentCurrentSql('jobs.learner_id', 4)}
       group by learner_id
       order by min(run_at), min(seq)
       limit $3`,
-    [now, kinds, limit],
+    [now, kinds, limit, consentVersion ?? null],
   );
   return rows.map((r) => r.learner_id);
 }

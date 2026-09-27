@@ -25,6 +25,7 @@ import {
   depsOf,
   hasAccountHolderRights,
   requireAccount,
+  requireAccountAnyConsent,
   requireLearner,
   requireUser,
   type AppContext,
@@ -43,7 +44,17 @@ import { runUndo, undoLoosensContact, type UndoSpec } from './tools.js';
 import { receiveLearnerMessage, type OnReply, type TurnOutcome } from './turn.js';
 
 export const buddyRoutes = new Hono<AppEnv>();
-buddyRoutes.use('*', requireUser, requireAccount, requireLearner);
+buddyRoutes.use(
+  '*',
+  requireUser,
+  // Unregistering a phone only ever reduces contact: it works while a new privacy text
+  // waits for consent (a sign-out from the consent screen); everything else needs it.
+  (c, next) =>
+    c.req.method === 'DELETE' && c.req.path.endsWith('/push-tokens')
+      ? requireAccountAnyConsent(c, next)
+      : requireAccount(c, next),
+  requireLearner,
+);
 
 const home = (c: AppContext) => {
   const l = c.get('learner');

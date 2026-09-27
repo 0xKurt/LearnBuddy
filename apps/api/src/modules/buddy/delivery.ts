@@ -22,6 +22,7 @@
 //     overwrite (or send) a row another run already settled.
 
 import type { Deps } from '../../deps.js';
+import { consentCurrentSql } from '../scheduler/jobs.js';
 import type { Db } from '../../lib/db.js';
 import { daysBetween, localParts, weekdayOf } from '../../lib/time.js';
 import { dayLabel, t, type MessageKey } from '../../i18n/index.js';
@@ -379,6 +380,8 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
       `with due as (
          select id from buddy_outreach
           where status = 'scheduled' and send_at <= $1
+            -- No contact for an account that has not agreed to the current privacy text.
+            and ${consentCurrentSql('buddy_outreach.learner_id', 3)}
           order by send_at limit $2
           for update skip locked
        )
@@ -387,7 +390,7 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
        returning o.id, o.learner_id, o.origin, o.kind, o.title, o.body, o.body_template, o.topic_key,
                  o.relevance, o.send_at, o.expires_at, o.step_id, o.goal_id, o.decision_id, o.lease_until,
                  (select locale from learners where id = o.learner_id) as locale`,
-      [now, limit],
+      [now, limit, deps.config.CONSENT_VERSION],
     );
   });
 
