@@ -840,14 +840,20 @@ so the rules only say it when it is certain; everything else goes to the tutor (
 questions from a photo in the (background) reading call, questions on a topic in a separate
 background call right after the session starts (`hints.ts`, purpose `hints`) — writing them in the
 start call made her wait 8–11 s instead of 5–6 s. A hint that states the result in any form
-(also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. While practising: a
-rule-decided wrong answer gets the next prepared hint at once (no model); the "Tipp" button
+(also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
+hints she was really shown as hints (migration `0043_prepared_hints_used.sql`: `hints_used` = every
+hint shown, prepared or written by the tutor; `prepared_hints_used` = which prepared one is next).
+While practising: a rule-decided wrong answer gets kind feedback at once ("Noch nicht ganz –
+probier's nochmal. Mit „Tipp“ …", no model) and uses up no hint (live finding 1: the feedback used
+to consume the only prepared hint, so the first "Tipp" showed the solution); the "Tipp" button
 (`POST /practice/sessions/:id/hint`, idempotent, `hint_available` in the view — never the hints
-themselves) gives the next prepared hint at once, or, with none prepared (yet), lets the tutor write
-one as for "weiß nicht". The tutor model, when it must judge,
-sees the prepared hints; a reply that gives the solution away before the second hint is replaced
-by the prepared hint, without a second call. After the third wrong try (`REVEAL_AFTER_MISSES`), or
-a request for help after the last hint, the worked solution is shown and the question counts as
+themselves) gives the next prepared hint at once, or, with none left, lets the tutor write one: a
+request for help, never graded (`not_an_attempt`), and the tutor's own hint is shown and counted as a
+hint. The tutor model, when it must judge, sees the prepared hints; a reply that gives the solution
+away before the second hint is replaced by the next prepared hint (or a first-step question), without
+a second call. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
+she asks for help again once every prepared hint and at least `HINTS_BEFORE_SOLUTION` (2) hints were
+shown — never on the first "Tipp"; the question then counts as
 revealed (FSRS brings it back soon). Tests give no hints; homework keeps its own rules (never the
 solution).
 

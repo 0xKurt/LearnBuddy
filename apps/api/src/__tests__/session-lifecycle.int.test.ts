@@ -425,8 +425,7 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
     const s = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id })).body;
     const byPrompt = (p: string) => s.items.find((i) => i.item.prompt === p)!.item.id;
     await answer(l, s.id, byPrompt('Kürze 4/8.'), '1/2');
-    // Wrong first, then right: with help.
-    env.llm.script('tutor', tutor('Teile Zähler und Nenner durch dieselbe Zahl.'));
+    // Wrong first (the rules know it: kind feedback, no model), then right.
     await answer(l, s.id, byPrompt('Kürze 2/6.'), '2/3');
     await answer(l, s.id, byPrompt('Kürze 2/6.'), '1/3');
     const last = await answer(l, s.id, byPrompt('Wie heißt der untere Teil?'), 'Nenner');

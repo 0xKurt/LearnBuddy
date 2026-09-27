@@ -94,6 +94,8 @@ type SessionItemRow = {
   status: 'open' | 'correct' | 'revealed' | 'skipped' | 'missed';
   attempts: number;
   hints_used: number;
+  /** Prepared hints shown so far (migration 0043): the next "Tipp" is items.hints[this]. */
+  prepared_hints_used: number;
   first_try_correct: boolean | null;
   /** "Frage passt nicht": taken out by the learner (closed as skipped, archived). */
   flagged_at?: Date | null;
@@ -375,6 +377,20 @@ function currentOpen<
  */
 export const REVEAL_AFTER_MISSES = 3;
 
+/**
+ * Asked for help again, the solution is explained only once she has seen this many hints and
+ * every prepared one (live finding 1: the first "Tipp" after a miss showed the solution).
+ */
+export const HINTS_BEFORE_SOLUTION = 2;
+
+/** Whether a (further) request for help shows the solution: the end of the hint ladder. */
+function ladderDone(i: { hints: string[]; hints_used: number; prepared_hints_used: number }) {
+  return (
+    i.prepared_hints_used >= i.hints.length &&
+    i.hints_used >= Math.max(i.hints.length, HINTS_BEFORE_SOLUTION)
+  );
+}
+
 /** The solution as the learner sees it. */
 export function shownSolution(
   i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit'>,
@@ -425,8 +441,8 @@ export async function sessionView(
 ): Promise<SessionView> {
   const s = await loadSession(db, learnerId, sessionId);
   const items = await db.query<SessionItemRow & ItemRow>(
-    `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.first_try_correct,
-            si.flagged_at, si.deferred_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
+    `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.prepared_hints_used,
+            si.first_try_correct, si.flagged_at, si.deferred_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution
        from session_items si join items i on i.id = si.item_id
       where si.session_id = $1 order by si.position`,
@@ -483,7 +499,7 @@ export async function sessionView(
       hints_used: i.hints_used,
       hints_left:
         i.status === 'open' && active && givesHints(s.mode)
-          ? Math.max(0, i.hints.length - i.hints_used)
+          ? Math.max(0, i.hints.length - i.prepared_hints_used)
           : 0,
       hint_available:
         i.status === 'open' && active && offersHintButton(s.mode) && i.kind !== 'speak',
@@ -577,7 +593,10 @@ export async function answerItem(
   learner: PracticeLearner,
   sessionId: string,
   input: AnswerRequest,
+  /** "Tipp" with no prepared hint left: a request for help, never an answer to grade. */
+  opts: { hintRequest?: boolean } = {},
 ): Promise<AnswerResponse> {
+  const hintRequest = opts.hintRequest === true;
   const now = deps.now();
   const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
   if (replayed) return replayed;
@@ -587,7 +606,8 @@ export async function answerItem(
   const item = await deps.db.maybeOne<
     ItemRow & SessionItemRow & { extracted_text: string | null; subject_kind: string | null }
   >(
-    `select i.*, si.status, si.attempts, si.hints_used, si.first_try_correct, si.position, si.item_id,
+    `select i.*, si.status, si.attempts, si.hints_used, si.prepared_hints_used, si.first_try_correct,
+            si.position, si.item_id,
             m.extracted_text, s.kind as subject_kind
        from session_items si join items i on i.id = si.item_id left join materials m on m.id = i.material_id
        left join subjects s on s.id = i.subject_id
@@ -606,17 +626,20 @@ export async function answerItem(
       reason: 'use_speak',
     });
   }
-  const byRules: RuleVerdict = ruleCheck(item, {
-    text: input.text ?? null,
-    choice: input.choice ?? null,
-  });
+  // A request for help is not an answer: nothing for the rules to check.
+  const byRules: RuleVerdict = hintRequest
+    ? 'unknown'
+    : ruleCheck(item, {
+        text: input.text ?? null,
+        choice: input.choice ?? null,
+      });
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
-    byRules === 'unknown' && session.mode !== 'help' && differentNumber(item, text)
+    byRules === 'unknown' && !hintRequest && session.mode !== 'help' && differentNumber(item, text)
       ? 'incorrect'
       : byRules;
-  const nextHint = givesHints(session.mode) ? (item.hints[item.hints_used] ?? null) : null;
+  const nextHint = givesHints(session.mode) ? (item.hints[item.prepared_hints_used] ?? null) : null;
   // Two options and one was wrong: tapping the other one is no knowledge. A wrong choice that
   // leaves a single untried option closes the question with the solution explained — shown,
   // never right (user feedback #9).
@@ -641,10 +664,21 @@ export async function answerItem(
     evaluatedBy: 'rule' | 'model' | null;
     reply: string;
     gaveHint: boolean;
+    /** The hint shown is the next prepared one (prepared_hints_used moves on). */
+    usedPrepared?: boolean;
     revealed: boolean;
   };
   let judged: Judged;
-  if (rule === 'correct') {
+  if (hintRequest && givesHints(session.mode) && ladderDone(item)) {
+    // Asked again at the end of the ladder: the solution explained, at once, no model.
+    judged = {
+      verdict: 'not_an_attempt',
+      evaluatedBy: 'rule',
+      reply: workedReply(learner.locale, item),
+      gaveHint: false,
+      revealed: true,
+    };
+  } else if (rule === 'correct') {
     judged = {
       verdict: 'correct',
       evaluatedBy: 'rule',
@@ -693,13 +727,14 @@ export async function answerItem(
       gaveHint: false,
       revealed: true,
     };
-  } else if (rule === 'incorrect' && nextHint !== null) {
-    // Wrong for sure and a prepared hint is next: at once, no model, never the same twice.
+  } else if (givesHints(session.mode) && rule === 'incorrect') {
+    // Wrong for sure: kind feedback at once, no model. It is no hint and uses none up — the
+    // hints stay for "Tipp" (live finding 1).
     judged = {
       verdict: 'incorrect',
       evaluatedBy: 'rule',
-      reply: nextHint,
-      gaveHint: true,
+      reply: t(learner.locale, 'practice.try_again'),
+      gaveHint: false,
       revealed: false,
     };
   } else {
@@ -728,6 +763,7 @@ export async function answerItem(
                 item,
                 hintsGiven: item.hints_used,
                 preparedHints: givesHints(session.mode) ? item.hints : [],
+                preparedShown: item.prepared_hints_used,
                 attempts: item.attempts,
                 ruleVerdict: rule,
                 mode: session.mode,
@@ -814,18 +850,36 @@ export async function answerItem(
           };
         }
       }
-      judged = {
-        verdict: d.verdict,
-        evaluatedBy: 'model',
-        reply: d.reply,
-        gaveHint: d.gave_hint,
-        revealed: d.revealed_answer,
-      };
+      judged = hintRequest
+        ? {
+            // "Tipp": whatever the model called it, this is help, shown as a hint — never a
+            // graded answer, and its own gentle hint is kept (live finding 1).
+            verdict: 'not_an_attempt',
+            evaluatedBy: 'model',
+            reply: d.reply,
+            gaveHint: !d.revealed_answer,
+            revealed: d.revealed_answer,
+          }
+        : {
+            verdict: d.verdict,
+            evaluatedBy: 'model',
+            reply: d.reply,
+            gaveHint: d.gave_hint,
+            revealed: d.revealed_answer,
+          };
     } catch (err) {
       if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
       // No model: say what the rules know, never pretend to have judged.
-      judged =
-        rule === 'close' || rule === 'spelling'
+      judged = hintRequest
+        ? {
+            // "Tipp" without a model: a general first step, honestly no judgement.
+            verdict: 'not_an_attempt',
+            evaluatedBy: 'rule',
+            reply: t(learner.locale, 'practice.help_step'),
+            gaveHint: false,
+            revealed: false,
+          }
+        : rule === 'close' || rule === 'spelling'
           ? {
               verdict: 'partially_correct',
               evaluatedBy: 'rule',
@@ -862,19 +916,18 @@ export async function answerItem(
     ) {
       judged = {
         ...judged,
-        reply: nextHint ?? t(learner.locale, 'practice.not_quite'),
-        gaveHint: nextHint !== null,
+        reply:
+          nextHint ?? t(learner.locale, hintRequest ? 'practice.help_step' : 'practice.try_again'),
+        gaveHint: nextHint !== null || hintRequest,
+        usedPrepared: nextHint !== null,
         revealed: false,
       };
     }
-    // Never withheld forever: after the third wrong try, or when she asks again after the
-    // last prepared hint, the solution is explained and the question comes back soon (FSRS).
+    // Never withheld forever: after the third wrong try, or when she asks again at the end of
+    // the hint ladder, the solution is explained and the question comes back soon (FSRS).
     const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
     const misses = item.attempts + (attempted ? 1 : 0);
-    const askedAfterLastHint =
-      judged.verdict === 'not_an_attempt' &&
-      item.hints.length > 0 &&
-      item.hints_used >= item.hints.length;
+    const askedAfterLastHint = judged.verdict === 'not_an_attempt' && ladderDone(item);
     if (
       !judged.revealed &&
       judged.verdict !== 'correct' &&
@@ -885,6 +938,7 @@ export async function answerItem(
         ...judged,
         reply: workedReply(learner.locale, item),
         gaveHint: false,
+        usedPrepared: false,
         revealed: true,
       };
     }
@@ -898,7 +952,7 @@ export async function answerItem(
       // meanwhile is refused behind the same lock, and closing the last question finishes it.
       await lockActiveSession(tx, learner.id, sessionId);
       const si = await tx.one<SessionItemRow>(
-        `select item_id, position, status, attempts, hints_used, first_try_correct
+        `select item_id, position, status, attempts, hints_used, prepared_hints_used, first_try_correct
            from session_items where session_id = $1 and item_id = $2 for update`,
         [sessionId, item.id],
       );
@@ -942,6 +996,7 @@ export async function answerItem(
       const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';
       const attempts = si.attempts + (attempted ? 1 : 0);
       const hints = si.hints_used + (judged.gaveHint ? 1 : 0);
+      const prepared = si.prepared_hints_used + (judged.usedPrepared ? 1 : 0);
       let status: SessionItemRow['status'] = 'open';
       let firstTry: boolean | null = si.first_try_correct;
       if (judged.verdict === 'correct') {
@@ -959,9 +1014,9 @@ export async function answerItem(
       await tx.query(
         `update session_items set attempts = $3, hints_used = $4, status = $5, first_try_correct = $6,
                                   closed_at = case when $5 = 'open' then null else $7::timestamptz end,
-                                  deferred_at = null
+                                  deferred_at = null, prepared_hints_used = $8
           where session_id = $1 and item_id = $2`,
-        [sessionId, item.id, attempts, hints, status, firstTry, now],
+        [sessionId, item.id, attempts, hints, status, firstTry, now, prepared],
       );
       if (status !== 'open' && learnsFsrs(session.mode)) {
         await reviewItem(
@@ -1025,13 +1080,14 @@ export async function hintItem(
         {
           status: SessionItemRow['status'];
           hints_used: number;
+          prepared_hints_used: number;
           hints: string[];
         } & Pick<
           ItemRow,
           'kind' | 'prompt' | 'answer' | 'accepted_answers' | 'choices' | 'correct_choice' | 'unit'
         >
       >(
-        `select si.status, si.hints_used, i.hints, i.kind, i.prompt, i.answer, i.accepted_answers,
+        `select si.status, si.hints_used, si.prepared_hints_used, i.hints, i.kind, i.prompt, i.answer, i.accepted_answers,
                 i.choices, i.correct_choice, i.unit
            from session_items si join items i on i.id = si.item_id
           where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
@@ -1040,7 +1096,7 @@ export async function hintItem(
       );
       if (!si) throw new AppError('not_found', 'Question not in this session');
       if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
-      const hint = si.hints[si.hints_used];
+      const hint = si.hints[si.prepared_hints_used];
       if (hint === undefined) throw new NoPreparedHint();
       if (
         session.mode === 'help' &&
@@ -1067,7 +1123,8 @@ export async function hintItem(
         [sessionId, learner.id, input.item_id, seq + 1, hint],
       );
       await tx.query(
-        `update session_items set hints_used = hints_used + 1, deferred_at = null
+        `update session_items set hints_used = hints_used + 1,
+                                  prepared_hints_used = prepared_hints_used + 1, deferred_at = null
           where session_id = $1 and item_id = $2`,
         [sessionId, input.item_id],
       );
@@ -1079,11 +1136,17 @@ export async function hintItem(
   } catch (err) {
     // None prepared (yet, or used up): the tutor writes one, as for "weiß nicht".
     if (err instanceof NoPreparedHint) {
-      return answerItem(deps, learner, sessionId, {
-        client_turn_id: input.client_turn_id,
-        item_id: input.item_id,
-        text: t(learner.locale, 'practice.hint_request'),
-      });
+      return answerItem(
+        deps,
+        learner,
+        sessionId,
+        {
+          client_turn_id: input.client_turn_id,
+          item_id: input.item_id,
+          text: t(learner.locale, 'practice.hint_request'),
+        },
+        { hintRequest: true },
+      );
     }
     if (isUniqueViolation(err)) {
       const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id);

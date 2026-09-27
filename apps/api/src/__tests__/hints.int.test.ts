@@ -115,20 +115,23 @@ describe.skipIf(!dbReady)('hint ladder', () => {
 
     const first = await answer(l, s, id, '2/6');
     expect(first.body.verdict).toBe('incorrect');
-    expect(first.body.reply.text).toBe(HINTS[0]);
+    // Feedback on a miss is no hint: the prepared ones stay for "Tipp".
+    expect(first.body.reply.text).toContain('Tipp');
+    expect(first.body.session.items[0]).toMatchObject({ hints_used: 0, hints_left: 3 });
 
     // The "Tipp" button: the next one, at once — idempotent per client_turn_id.
     const turnId = randomUUID();
     const tapped = await hint(l, s, id, turnId);
     expect(tapped.status).toBe(200);
-    expect(tapped.body.reply.text).toBe(HINTS[1]);
+    expect(tapped.body.reply.text).toBe(HINTS[0]);
     // Asking for a hint is not an answer: nothing is graded.
     expect(tapped.body.verdict).toBe('not_an_attempt');
     expect((await hint(l, s, id, turnId)).body.reply.id).toBe(tapped.body.reply.id);
-    expect(tapped.body.session.items[0]).toMatchObject({ hints_used: 2, hints_left: 1 });
+    expect(tapped.body.session.items[0]).toMatchObject({ hints_used: 1, hints_left: 2 });
 
     const second = await answer(l, s, id, '0,5');
-    expect(second.body.reply.text).toBe(HINTS[2]);
+    expect(second.body.verdict).toBe('incorrect');
+    expect((await hint(l, s, id)).body.reply.text).toBe(HINTS[1]);
     expect(env.llm.callsFor('tutor')).toHaveLength(calls); // no model so far
 
     // Third wrong try: the solution, explained — and the question comes back (FSRS).
@@ -137,6 +140,56 @@ describe.skipIf(!dbReady)('hint ladder', () => {
     expect(third.body.session.items[0]).toMatchObject({ status: 'revealed', hints_left: 0 });
     // No hint for a closed question.
     expect((await hint(l, s, id)).status).toBe(409);
+  });
+
+  it('a miss never burns the only prepared hint, and the first "Tipp" is a hint, not the solution (live finding 1)', async () => {
+    // As recorded live: a question from the sheet with one prepared hint.
+    const s = await start(
+      env,
+      l,
+      [item({ prompt: 'Kürze den Bruch $\\frac{6}{8}$ so weit wie möglich.', answer: '3/4' })],
+      'practice',
+      [
+        {
+          n: 1,
+          hints: ['Teile Zähler und Nenner durch dieselbe Zahl.'],
+          worked_solution: 'Teile beide durch 2: 3/4.',
+        },
+      ],
+    );
+    const id = s.items[0]!.item.id;
+    const wrong = await answer(l, s, id, '6/4');
+    expect(wrong.body.verdict).toBe('incorrect');
+    // Feedback, not a hint: the ladder is untouched.
+    expect(wrong.body.reply.text).not.toBe('Teile Zähler und Nenner durch dieselbe Zahl.');
+    expect(wrong.body.session.items[0]).toMatchObject({ hints_used: 0, hints_left: 1 });
+
+    // First "Tipp": the prepared hint.
+    const first = await hint(l, s, id);
+    expect(first.body.reply.text).toBe('Teile Zähler und Nenner durch dieselbe Zahl.');
+    expect(first.body.session.items[0]).toMatchObject({ status: 'open', hints_used: 1 });
+
+    // Second "Tipp": none prepared left — the tutor's own gentle hint is shown, as a hint.
+    env.llm.script('tutor', {
+      json: {
+        intent: 'help_request',
+        verdict: 'not_an_attempt',
+        reply: 'Durch welche Zahl kannst du 6 und 8 beide teilen?',
+        gave_hint: false,
+        revealed_answer: false,
+      },
+    });
+    const second = await hint(l, s, id);
+    expect(second.body.reply.text).toBe('Durch welche Zahl kannst du 6 und 8 beide teilen?');
+    expect(second.body.verdict).toBe('not_an_attempt');
+    expect(second.body.session.items[0]).toMatchObject({ status: 'open', hints_used: 2 });
+
+    // Only now, asked again, the solution explained (the documented ladder), without a model.
+    const calls = env.llm.callsFor('tutor').length;
+    const third = await hint(l, s, id);
+    expect(third.body.reply.text).toContain('Teile beide durch 2');
+    expect(third.body.session.items[0]).toMatchObject({ status: 'revealed' });
+    expect(env.llm.callsFor('tutor')).toHaveLength(calls);
   });
 
   it('writes a hint with the tutor when none is prepared (yet)', async () => {
