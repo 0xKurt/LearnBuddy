@@ -626,18 +626,20 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
 });
 
 describe.skipIf(!dbReady)('photos without a model', () => {
-  it('are refused at once instead of failing after minutes of retries (p2-uf-llm-disabled-capture-dead-end)', async () => {
+  it('fail at once, honestly, instead of after minutes of retries (p2-uf-llm-disabled-capture-dead-end)', async () => {
     const env = await createTestEnv({ start: '2026-09-28T14:00:00Z', model: 'disabled' });
     try {
       const lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
-      const res = await lena.api.post<{ error: { code: string } }>('/materials', {
-        client_request_id: randomUUID(),
-        photo_mimes: ['image/jpeg'],
-        purpose: 'study',
-      });
-      expect(res.status).toBe(503);
-      expect(res.body.error.code).toBe('model_unavailable');
-      expect(await env.db.query(`select 1 from materials`)).toEqual([]);
+      const m = await create(env, lena);
+      for (const p of m.paths) env.storage.put(p);
+      expect((await lena.api.post(`/materials/${m.id}/submit`)).status).toBe(202);
+      await env.flushBackground();
+      const view = (await lena.api.get<MaterialView>(`/materials/${m.id}`)).body;
+      expect(view).toMatchObject({ status: 'failed', failure_reason: 'model_error' });
+      const job = await env.db.one<{ attempts: number; result: { uncounted?: boolean } }>(
+        `select attempts, result from jobs where kind = 'extract_material'`,
+      );
+      expect(job).toMatchObject({ attempts: 1, result: { uncounted: true } });
     } finally {
       await env.close();
     }

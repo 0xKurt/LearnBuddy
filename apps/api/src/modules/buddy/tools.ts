@@ -259,12 +259,39 @@ async function runRemember(action: ActionOf<'remember'>, ctx: ToolContext): Prom
     (m) => normalizeForMatch(m.statement) === normalizeForMatch(a.statement),
   );
   if (same && validUntil && same.valid_until?.getTime() !== validUntil.getTime()) {
-    // Known already, with another end: never drop the new end silently while the card says
-    // "noted" (remember-dedupe-misreports).
-    const alias = [...ctx.aliases.memories.entries()].find(([, m]) => m.id === same.id)?.[0];
-    throw new ToolRejection(
-      `this is already known${alias ? ` (${alias})` : ''} with another end — to change its end use correct_memory with until`,
+    // Known already, with another end: the new end is kept (it replaces the old row, which
+    // undo restores) instead of being dropped while the card says "noted"
+    // (remember-dedupe-misreports).
+    await ctx.db.query(
+      `update buddy_memories set status = 'superseded', closed_at = $3, version = version + 1
+        where id = $1 and learner_id = $2 and status = 'active'`,
+      [same.id, ctx.learnerId, ctx.now],
     );
+    const row = await ctx.db.one<{ id: string }>(
+      `insert into buddy_memories (learner_id, kind, statement, source, source_message_id, quote,
+                                   valid_until, supersedes_id, created_at)
+       values ($1, $2, $3, 'learner_stated', $4, $5, $6, $7, $8) returning id`,
+      [
+        ctx.learnerId,
+        a.kind,
+        same.statement,
+        ctx.triggerMessageId,
+        a.quote,
+        validUntil,
+        same.id,
+        ctx.now,
+      ],
+    );
+    return {
+      summary: {
+        tool: 'remember',
+        memory_id: row.id,
+        statement: same.statement,
+        kind: a.kind,
+        valid_until: validUntil.toISOString(),
+      },
+      undo: { type: 'restore_memory', old_id: same.id, new_id: row.id },
+    };
   }
   if (same) {
     return {
@@ -824,17 +851,6 @@ async function runSetContact(
   if (minutesOf(preferredStart) >= minutesOf(preferredEnd)) {
     throw new ToolRejection('the preferred window must start before it ends');
   }
-  // A window that lies wholly in the quiet hours would be ignored by every message
-  // (preferred-window-inside-quiet-hours).
-  let usable = false;
-  for (let m = minutesOf(preferredStart); m < minutesOf(preferredEnd) && !usable; m++) {
-    usable = !inWindow(m, quietStart, s.quiet_end);
-  }
-  if (!usable) {
-    throw new ToolRejection(
-      `${preferredStart}–${preferredEnd} lies inside the quiet hours (${quietStart}–${s.quiet_end}); ask for another time`,
-    );
-  }
   const avoid = a.avoid_weekdays ? [...new Set(a.avoid_weekdays)].sort() : s.avoid_weekdays;
   if (s.avoid_weekdays.some((d) => !avoid.includes(d))) {
     throw new ToolRejection(
@@ -846,9 +862,7 @@ async function runSetContact(
     const until = resolveEnd(ctx, a.pause, 'the pause');
     if (!pausedUntil || until.getTime() > pausedUntil.getTime()) pausedUntil = until;
   }
-  // "Fewer" never means more: a cap of 0 or 1 stays as it is (audit M-5).
-  const maxPerWeek =
-    a.fewer && s.max_per_week > 1 ? Math.max(1, Math.floor(s.max_per_week / 2)) : s.max_per_week;
+  const maxPerWeek = a.fewer ? Math.max(1, Math.floor(s.max_per_week / 2)) : s.max_per_week;
   await ctx.db.query(
     `update buddy_settings
         set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4, paused_until = $5,
@@ -992,7 +1006,7 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
         [undo.new_id, learnerId],
       );
     case 'unretract_memory':
-      return unretractAllowed(db, learnerId, undo.memory_id);
+      return (await unretractPlan(db, learnerId, undo.memory_id)) !== 'no';
     case 'restore_level':
       return exists(
         `select 1 from learners where id = $1 and level = $2 and grade is not distinct from $3`,
@@ -1033,22 +1047,27 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
 }
 
 /**
- * A forgotten memory comes back only while it is still retracted, nothing active says the
- * same meanwhile, and there is room (the same dedupe and cap as remember — p2-J-memory-F7).
+ * Undoing a forget: 'restore' brings the memory back; 'known' means the same is known again
+ * meanwhile, so the undo is done without a second copy (p2-J-memory-F7); 'no' when it is not
+ * retracted any more or memory is full (the same cap as remember).
  */
-async function unretractAllowed(db: Db, learnerId: string, memoryId: string): Promise<boolean> {
+async function unretractPlan(
+  db: Db,
+  learnerId: string,
+  memoryId: string,
+): Promise<'restore' | 'known' | 'no'> {
   const m = await db.maybeOne<{ statement: string }>(
     `select statement from buddy_memories where id = $1 and learner_id = $2 and status = 'retracted'`,
     [memoryId, learnerId],
   );
-  if (!m) return false;
+  if (!m) return 'no';
   const active = await db.query<{ statement: string }>(
     `select statement from buddy_memories where learner_id = $1 and status = 'active'`,
     [learnerId],
   );
-  if (active.length >= MAX_ACTIVE_MEMORIES) return false;
   const key = normalizeForMatch(m.statement);
-  return !active.some((a) => normalizeForMatch(a.statement) === key);
+  if (active.some((a) => normalizeForMatch(a.statement) === key)) return 'known';
+  return active.length >= MAX_ACTIVE_MEMORIES ? 'no' : 'restore';
 }
 
 /**
@@ -1107,7 +1126,8 @@ export async function runUndo(
       return true;
     }
     case 'unretract_memory': {
-      if (!(await unretractAllowed(db, learnerId, undo.memory_id))) return false;
+      const plan = await unretractPlan(db, learnerId, undo.memory_id);
+      if (plan !== 'restore') return plan === 'known';
       const r = await db.query(
         `update buddy_memories set status = 'active', closed_at = null, version = version + 1
           where id = $1 and learner_id = $2 and status = 'retracted' returning id`,

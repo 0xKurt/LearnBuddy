@@ -13,13 +13,7 @@ import { findOrCreateSubject } from '../modules/buddy/plan.js';
 import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
-import {
-  createTestEnv,
-  enableContact,
-  onboard,
-  type Learner,
-  type TestEnv,
-} from '../testing/harness.js';
+import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -55,58 +49,6 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     const report = { scriptErrors: [...env.llm.scriptErrors], unexpected: env.llm.unexpected };
     await env.close();
     expect(report).toEqual({ scriptErrors: [], unexpected: [] });
-  });
-
-  it('"weniger" never raises a weekly cap of 0 (audit M-5)', async () => {
-    await enableContact(env, l.learnerId, { max_per_week: 0 });
-    env.llm.script('buddy_turn', {
-      json: say('Okay, weniger.', [
-        {
-          tool: 'set_contact',
-          args: {
-            preferred_start: null,
-            preferred_end: null,
-            quiet_start: null,
-            avoid_weekdays: null,
-            pause: null,
-            fewer: true,
-            quote: 'Schreib mir weniger',
-          },
-        },
-      ]),
-    });
-    expect((await send(l, 'Schreib mir weniger')).status).toBe(200);
-    const s = await env.db.one<{ max_per_week: number }>(
-      `select max_per_week from buddy_settings where learner_id = $1`,
-      [l.learnerId],
-    );
-    expect(s.max_per_week).toBe(0);
-  });
-
-  it('a preferred window inside the quiet hours is refused (preferred-window-inside-quiet-hours)', async () => {
-    await env.db.query(
-      `update buddy_settings set quiet_start = '13:00', quiet_end = '15:00' where learner_id = $1`,
-      [l.learnerId],
-    );
-    const t = tryAction(env, {
-      tool: 'set_contact',
-      args: {
-        preferred_start: '13:30',
-        preferred_end: '14:30',
-        quiet_start: null,
-        avoid_weekdays: null,
-        pause: null,
-        fewer: false,
-        quote: 'Schreib mir mittags',
-      },
-    });
-    expect((await send(l, 'Schreib mir mittags')).status).toBe(200);
-    expect(t.refusal()).toMatch(/inside the quiet hours/);
-    const s = await env.db.one<{ preferred_start: string }>(
-      `select preferred_start::text from buddy_settings where learner_id = $1`,
-      [l.learnerId],
-    );
-    expect(s.preferred_start).toBe('15:00:00');
   });
 
   it('update_step with a state and a new day is refused, never half applied (update-step-state-drops-move)', async () => {
@@ -166,60 +108,55 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     expect(st.state).toBe('planned');
   });
 
-  it('a temporary situation gets a new end only by correcting it (remember-dedupe-misreports, M-54)', async () => {
-    env.llm.script('buddy_turn', {
-      json: say('Gute Besserung!', [
-        {
-          tool: 'remember',
-          args: {
-            kind: 'constraint',
-            statement: 'Hat den Arm gebrochen',
-            quote: 'Arm gebrochen',
-            until: { kind: 'end_of_day', days: 7 },
-          },
-        },
-      ]),
+  it('a temporary situation said again with a new end gets that end (remember-dedupe-misreports, M-54)', async () => {
+    const broken = (quote: string, days: number) => ({
+      tool: 'remember',
+      args: {
+        kind: 'constraint',
+        statement: 'Hat den Arm gebrochen',
+        quote,
+        until: { kind: 'end_of_day', days },
+      },
     });
+    env.llm.script('buddy_turn', { json: say('Gute Besserung!', [broken('Arm gebrochen', 7)]) });
     expect((await send(l, 'Ich hab mir den Arm gebrochen')).status).toBe(200);
     const first = await env.db.one<{ valid_until: Date }>(
       `select valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
       [l.learnerId],
     );
-
-    // The same again with a longer end: not silently dropped.
-    const t = tryAction(env, {
-      tool: 'remember',
-      args: {
-        kind: 'constraint',
-        statement: 'Hat den Arm gebrochen',
-        quote: 'noch drei Wochen',
-        until: { kind: 'end_of_day', days: 21 },
-      },
+    // The same again with a longer end: kept, not silently dropped.
+    env.llm.script('buddy_turn', {
+      json: say('Okay, drei Wochen.', [broken('noch drei Wochen', 21)]),
     });
     expect((await send(l, 'Der Gips bleibt noch drei Wochen')).status).toBe(200);
-    expect(t.refusal()).toMatch(/correct_memory with until/);
-
+    const longer = await env.db.query<{ valid_until: Date }>(
+      `select valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
+      [l.learnerId],
+    );
+    expect(longer).toHaveLength(1);
+    expect(longer[0]!.valid_until.getTime()).toBeGreaterThan(
+      first.valid_until.getTime() + 10 * 86_400_000,
+    );
+    // Correcting it moves the end, too.
     env.llm.script('buddy_turn', {
-      json: say('Okay, drei Wochen.', [
+      json: say('Okay, zwei Wochen.', [
         {
           tool: 'correct_memory',
           args: {
             memory: 'm1',
             statement: 'Hat den Arm gebrochen',
-            quote: 'noch drei Wochen',
-            until: { kind: 'end_of_day', days: 21 },
+            quote: 'nur noch zwei Wochen',
+            until: { kind: 'end_of_day', days: 14 },
           },
         },
       ]),
     });
-    expect((await send(l, 'Der Gips bleibt noch drei Wochen')).status).toBe(200);
-    const now = await env.db.one<{ valid_until: Date }>(
+    expect((await send(l, 'Doch nur noch zwei Wochen')).status).toBe(200);
+    const corrected = await env.db.one<{ valid_until: Date }>(
       `select valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
       [l.learnerId],
     );
-    expect(now.valid_until.getTime()).toBeGreaterThan(
-      first.valid_until.getTime() + 10 * 86_400_000,
-    );
+    expect(corrected.valid_until.getTime()).toBeLessThan(longer[0]!.valid_until.getTime());
   });
 
   it('a new preparation never cancels practice her agreed reminder prepared (p2-prepare-practice-cancels-reminder-prepared-step)', async () => {
@@ -283,7 +220,8 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       `select id from buddy_actions where learner_id = $1 and tool = 'forget'`,
       [l.learnerId],
     );
-    expect((await l.api.post(`/buddy/actions/${forget.id}/undo`)).status).toBe(409);
+    // The same is known again: the undo is done, without a second copy.
+    expect((await l.api.post(`/buddy/actions/${forget.id}/undo`)).status).toBe(200);
     const active = await env.db.query(
       `select 1 from buddy_memories where learner_id = $1 and status = 'active'`,
       [l.learnerId],

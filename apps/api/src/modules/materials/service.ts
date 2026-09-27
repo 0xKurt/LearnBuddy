@@ -115,10 +115,6 @@ export async function createMaterial(
   material: MaterialView;
   uploads: Array<{ position: number; path: string; url: string; token: string }>;
 }> {
-  // Without a model nothing can read the photos: say so now, not after minutes of futile
-  // retries with retry offers that cannot work (p2-uf-llm-disabled-capture-dead-end).
-  if (!deps.llm.available)
-    throw new AppError('model_unavailable', 'No model can read photos right now');
   // Everything referenced must belong to this learner.
   const step = input.step_id
     ? await deps.db.maybeOne<{ id: string; goal_id: string | null }>(
@@ -516,6 +512,9 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         ? 'unknown'
         : learner.level;
 
+  // Without a model nothing can read the photos: say so at once, not after minutes of futile
+  // retries (p2-uf-llm-disabled-capture-dead-end). Not her sheet's fault: the run is uncounted.
+  if (!deps.llm.available) return fail(deps, job, materialId, 'model_error', { uncounted: true });
   let result;
   try {
     const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
