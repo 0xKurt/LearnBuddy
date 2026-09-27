@@ -6,6 +6,7 @@
 // requires live verification on a real iPhone / Android phone (not testable
 // in the browser or the Node test runner).
 
+import { getLocales } from 'expo-localization';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -42,6 +43,20 @@ function installedLocales(): Promise<readonly string[] | null> {
   return installed;
 }
 
+/**
+ * iOS: the locale SFSpeechRecognizer() (no locale given) stands for — the phone's first
+ * language with its region. The on-device check of expo-speech-recognition refers to it.
+ * requires live verification on a real iPhone (docs/privacy.md §Processors).
+ */
+function iosRecognizerLocale(): string | null {
+  if (Platform.OS !== 'ios') return null;
+  const first = getLocales()[0];
+  if (!first) return null;
+  return first.regionCode && !first.languageTag.includes('-')
+    ? `${first.languageTag}-${first.regionCode}`
+    : first.languageTag;
+}
+
 /** Which engine this tap uses for `locale`. Never throws: anything unclear means our EU path. */
 export async function engineFor(locale: string): Promise<SpeechEngine> {
   try {
@@ -53,6 +68,7 @@ export async function engineFor(locale: string): Promise<SpeechEngine> {
       installedLocales: await installedLocales(),
       locale,
       failedBefore: refused || failedLocales.has(locale),
+      deviceLocale: iosRecognizerLocale(),
     });
   } catch {
     return 'server';

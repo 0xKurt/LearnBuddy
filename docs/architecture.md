@@ -45,7 +45,13 @@ Postgres in `apps/api/src/__tests__/` (see [Testing](#testing)).
 ## API
 
 Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, `/api`,
-`/api/v1` (the app calls `/v1/…`; Vercel rewrites `/v1/*` to the function).
+`/api/v1` (the app calls `/v1/…`). On Vercel the single function `apps/api/api/index.ts` gets
+every `/v1/*` and `/api/*` request through two rewrites (nested paths included; the original
+path stays in the request URL); Node is pinned by `engines` in `apps/api/package.json`, and only
+`apps/api/public/` is served statically. The database connection uses TLS with certificate
+verification for every non-local host (`lib/db.ts`, CA in `DATABASE_CA_CERT`); a URL asking for
+less is refused at boot, and a database region outside the EU is logged as a boot warning
+(`config.ts`; the region itself is an open decision, D-4).
 
 - Auth: `Authorization: Bearer <Supabase access token>`, verified with Supabase Auth
   (`auth/verifier.ts`). The API never sees passwords.
@@ -570,8 +576,14 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
   not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores)
   would replace `speakItem`'s model call behind the same contract.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
-  renders fractions, powers, roots; `apps/mobile/components/math/`); LaTeX the model forgot to
-  wrap is wrapped server-side, and rule checks compare \\frac{3}{4} and 3/4 as equal. A question
+  renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
+  symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
+  `apps/mobile/lib/math/`). An unknown command shows its name set apart by spaces. A `$` right
+  before a digit never closes math and one followed by a space never opens it, so prices
+  ("$5 and $3") stay text. LaTeX the model forgot to wrap is wrapped server-side — in a sentence
+  only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
+  compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
+  when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
   (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
   not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
@@ -582,7 +594,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
 
 - **Speech to text** — on the device first, strictly on-device (`expo-speech-recognition` with
   `requiresOnDeviceRecognition`; the words appear while she speaks, nothing leaves the phone).
-  `lib/speech/engine.ts` decides per tap (unit-tested): iOS when on-device is supported; Android
+  `lib/speech/engine.ts` decides per tap (unit-tested): iOS when on-device is supported and the
+  language is exactly the phone's own locale (iOS checks on-device support for that locale only
+  and would send any other language to Apple, D-11); Android
   only with the language's offline model installed; never the browser's Web Speech (server-side)
   and never the system's server mode. If the recogniser fails for the language, the same tap
   continues as a recording and that language goes straight to the server for the rest of the
@@ -600,7 +614,14 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`lib/speech/handsFree.ts`): question read → the mic listens (ends by itself when she pauses, on
   the phone) → her answer or question is checked → the feedback is read → the mic listens again,
   or, once the question is closed, the next one comes. Typing, switching voice mode off or leaving
-  ends the loop; the microphone never starts before her own tap on that screen. Pronunciation
+  ends the loop; the microphone never starts before her own tap on that screen. One listening
+  belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, typing, the
+  screen locking while it checks), Buddy starting to speak or the next question cancels a
+  running mic and drops its late text. Questions carry the language they are written in
+  (`prompt_lang`, also for ordinary questions): voice mode reads them and listens in that
+  language, not the app's. The switch sits in the practice header and on Buddy's home (speaker
+  icon; the headphones open conversation mode). The home reads a late reply only while it is
+  on screen. Pronunciation
   recordings stay tap by tap. Buddy's chat replies stream and are read sentence by sentence
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
@@ -609,9 +630,21 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
   Tapping the mic while Buddy speaks interrupts it. When the answer carries a button
   (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
-  screen — opened by her — is open; "Beenden" or the keyboard ends it. Walkthrough: one full turn
+  screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
+  the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
+  every phase is announced. Walkthrough: one full turn
   with Chromium's fake microphone and a scripted transcript.
-- **Pronunciation** — see Learning modes (`speak`).
+- **Pronunciation** — see Learning modes (`speak`). A judgement that lands after "Beenden" is
+  refused (the write locks the session first, 409). Offline, the recording waits for the
+  connection with "Neu aufnehmen" / "Diesmal überspringen" available, which cancel the wait.
+- **Screen readers** — `lib/announce.ts`: Android reads live regions by itself, iOS has none,
+  so toasts, capture and dictation status, what the mic understood, the PIN error (again after
+  each attempt), Buddy's reply ("Buddy: …", when voice mode is off), practice feedback with its
+  verdict word and math in words, the revealed solution and the conversation phases are
+  announced explicitly (`announcePlan` decides, unit-tested). Button labels follow the system
+  text size up to 1.6× (`Btn` grows with `minHeight` instead of clipping), "Prüfen" wraps onto
+  its own line rather than shrink, and toasts sit above the iOS keyboard. Not yet checked on a
+  device at AX3/AX5.
 
 ## Home
 
@@ -695,10 +728,24 @@ once (`abandonStaleUploads`, run by the scheduler).
   aliases in that order, and jobs due together run in it. Before, ties were broken by however the
   table happened to hold the rows — the most likely cause of one failed run of the core-loop test
   in about 40 (its log was lost and it did not come back in 36 further runs, so this is not proven).
-- Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). Without one the
-  database tests are skipped; `LB_REQUIRE_TEST_DB=1` (CI) makes that a failure.
+- Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
+  hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain
+  `pnpm test` outside them skips the database tests.
+- The app keys (anon, authenticated) reach nothing in the database: the test shim grants what a
+  hosted Supabase project grants by default, and `database-exposure.int.test.ts` fails for any
+  public function they can execute or any table without row level security.
+- Deploy checks: `scripts/deploy-check.sh` (CI job `deploy-check`, and before promoting) runs
+  `vercel.json` through Vercel's own builder detector and, when given `DATABASE_URL` /
+  `LB_DEPLOY_URL`, checks TLS, region, the app keys' grants and `/v1/health` of a deploy. A
+  real preview deploy answering `/v1/health` has not been recorded yet.
+- The scheduler trigger chain up to the network (`scheduler-trigger.int.test.ts`): the
+  `lb-tick` cron entry, `lb_invoke_tick()` reading Vault and posting to `{lb_api_url}/internal/tick`
+  with the secret (the shim's `net.http_post` records the request), and that request replayed
+  against the app turning `/v1/health` healthy. Streaming is read chunk by chunk
+  (`stream.int.test.ts`), so a buffered response fails.
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
-  devices, Supabase Auth/Storage themselves, pg_cron/pg_net on a hosted project.
+  devices, Supabase Auth/Storage themselves, pg_cron firing and pg_net sending on a hosted
+  project.
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's

@@ -121,7 +121,9 @@ export type ItemOrigin = z.infer<typeof ItemOrigin>;
 /**
  * A question as shown while it is open: never includes the answer.
  * Texts may contain math between dollar signs in a small LaTeX subset
- * (\frac{a}{b}, x^{2}, x_{1}, \sqrt{x}, \cdot, \times, \div, \pi, \le, \ge, \ne, \approx, \degree).
+ * (\frac{a}{b}, x^{2}, x_{1}, \sqrt{x}, \cdot, \times, \div, \pi, \le, \ge, \ne, \approx, \degree;
+ * \overline, \angle, \parallel, \perp, \in, \mathbb, \vec; a blank "___" or \square inside math).
+ * A dollar for money is written \$; a "$" before a digit never closes math.
  */
 export const ItemView = z.object({
   id: Uuid,

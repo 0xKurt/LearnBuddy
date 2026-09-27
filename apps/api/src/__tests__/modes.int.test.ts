@@ -708,6 +708,60 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(stored.map((r) => r.text)).toEqual(['🎤 Je mapelle Lena', "🎤 Je m'appelle Lena"]);
   });
 
+  it('refuses a pronunciation judgement that lands after "Beenden" (M-34)', async () => {
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Aussprache',
+        subject: { name: 'Französisch', kind: 'french' },
+        intro: null,
+        items: [
+          item({
+            kind: 'speak',
+            prompt: 'Bonjour.',
+            answer: 'Bonjour.',
+            lang: 'fr',
+            topic: 'Grüßen',
+          }),
+        ],
+      },
+    });
+    const s = (
+      await l.api.post<SessionView>('/practice/topic', {
+        client_request_id: randomUUID(),
+        kind: 'speak',
+        text: 'Bonjour.',
+      })
+    ).body;
+    const speakId = s.items[0]!.item.id;
+    // She taps "Beenden" while the model is still listening.
+    env.llm.script('pronounce', async () => {
+      const finished = await l.api.post(`/practice/sessions/${s.id}/finish`, {});
+      expect(finished.status).toBe(200);
+      return {
+        audible: true,
+        heard: 'Bonjour',
+        overall: 'good',
+        words: [{ text: 'Bonjour', ok: true, tip: null }],
+        reply: 'Klingt super!',
+      };
+    });
+    const late = await l.api.post(`/practice/sessions/${s.id}/speak`, {
+      client_turn_id: randomUUID(),
+      item_id: speakId,
+      mime: 'audio/m4a',
+      audio_base64: Buffer.alloc(2_000, 7).toString('base64'),
+    });
+    expect(late.status).toBe(409);
+    const turns = await env.db.query('select 1 from practice_turns where session_id = $1', [s.id]);
+    expect(turns).toEqual([]);
+    const si = await env.db.one<{ attempts: number; status: string }>(
+      'select attempts, status from session_items where session_id = $1',
+      [s.id],
+    );
+    expect(si).toEqual({ attempts: 0, status: 'open' });
+  });
+
   it('keeps figures the app can draw and drops broken ones without losing the question', async () => {
     env.llm.script('explain', {
       json: {

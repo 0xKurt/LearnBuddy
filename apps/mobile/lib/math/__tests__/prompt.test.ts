@@ -35,10 +35,15 @@ describe('parsePrompt', () => {
   it('leaves "___" as text when blanks are off', () => {
     expect(kinds('a ___ b', false)).toEqual(['a ___ b']);
   });
-  it('works next to math and never looks for blanks inside $…$', () => {
+  it('works next to math and counts a blank inside $…$ as one of the blanks', () => {
     expect(kinds('$\\frac{3}{4}$ = ___')).toEqual(['$', ' = ', '[0]']);
-    expect(kinds('$x_{___}$ und ___')).toEqual(['$', ' und ', '[0]']);
-    expect(countBlanks('$a___b$')).toBe(0);
+    // The math blank is blank 0 (drawn by MathText), the plain one after it blank 1.
+    expect(kinds('$x_{___}$ und ___')).toEqual(['$', ' und ', '[1]']);
+    expect(countBlanks('$a___b$')).toBe(1);
+    // Audit M-41: the most common fraction exercise.
+    expect(countBlanks('Erweitere: $\\frac{3}{4} = \\frac{___}{8}$')).toBe(1);
+    expect(countBlanks('$3 + \\square = 7$')).toBe(1);
+    expect(countBlanks('$a__b$')).toBe(0);
   });
   it('keeps bold around, before and after a blank', () => {
     expect(kinds('**Ergänze:** Ich helfe ___ Mutter.')).toEqual([
@@ -79,6 +84,16 @@ describe('promptForSpeech', () => {
     expect(promptForSpeech('$\\frac{3}{4}$ = ___', { blanks: true, blankWord: 'Lücke' })).toBe(
       '$\\frac{3}{4}$ = Lücke',
     );
+  });
+  it('reads a blank inside math as the blank word, filled or not', () => {
+    const text = 'Erweitere: $\\frac{3}{4} = \\frac{___}{8}$';
+    expect(promptForSpeech(text, { blanks: true, blankWord: 'Lücke' })).toBe(
+      'Erweitere: $\\frac{3}{4} = \\frac{\\text{Lücke}}{8}$',
+    );
+    expect(
+      promptForSpeech(text, { blanks: true, blankWord: 'Lücke', filledWord: 'Lücke, darin: 6' }),
+    ).toBe('Erweitere: $\\frac{3}{4} = \\frac{\\text{Lücke, darin: 6}}{8}$');
+    expect(fillableAnswer(text, '6')).toBe('6');
   });
   it('leaves underscores alone when blanks are off', () => {
     expect(promptForSpeech('a ___ b', { blanks: false, blankWord: 'Lücke' })).toBe('a ___ b');

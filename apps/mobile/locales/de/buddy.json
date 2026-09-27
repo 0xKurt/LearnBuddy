@@ -198,5 +198,8 @@
     "end": "Beenden",
     "speak": "Sprechen",
     "interrupt": "Unterbrechen und sprechen"
+  },
+  "a11y": {
+    "reply": "Buddy: {{text}}"
   }
 }

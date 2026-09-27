@@ -1,7 +1,7 @@
 import { onlineManager } from '@tanstack/react-query';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { sendWhenOnline, whenOnline } from '../whenOnline.js';
+import { sendWhenOnline, WaitAborted, whenOnline } from '../whenOnline.js';
 
 class Offline extends Error {}
 const isConnectionError = (err: unknown) => err instanceof Offline;
@@ -28,6 +28,33 @@ describe('whenOnline', () => {
     onlineManager.setOnline(true);
     await waiting;
     expect(done).toBe(true);
+  });
+});
+
+describe('cancelling the wait (M-35 speak-offline-wait-no-cancel)', () => {
+  it('gives up waiting when she cancels, and never sends', async () => {
+    onlineManager.setOnline(false);
+    const controller = new AbortController();
+    let sent = 0;
+    const result = sendWhenOnline(
+      async () => {
+        sent += 1;
+        return 'ok';
+      },
+      { isConnectionError, signal: controller.signal },
+    );
+    await tick();
+    controller.abort();
+    await expect(result).rejects.toBeInstanceOf(WaitAborted);
+    onlineManager.setOnline(true);
+    await tick();
+    expect(sent).toBe(0);
+  });
+
+  it('rejects at once for a signal that is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(whenOnline(controller.signal)).rejects.toBeInstanceOf(WaitAborted);
   });
 });
 

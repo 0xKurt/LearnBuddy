@@ -12,6 +12,7 @@ import { PinPad } from '../components/lb/PinPad.js';
 import { Screen } from '../components/lb/Screen.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { finishAdmin, pendingAdminPurpose } from '../lib/adminFlow.js';
+import { useAnnounce } from '../lib/announce.js';
 import { ApiError } from '../lib/api/client.js';
 import { openAdminSession } from '../lib/api/endpoints.js';
 import { messageFor } from '../lib/errors.js';
@@ -65,6 +66,9 @@ export default function Pin() {
       setBusy(false);
     }
   }
+
+  // VoiceOver hears the error too, again after each wrong attempt (audit M-80).
+  useAnnounce(error, { key: attempt, liveRegion: false });
 
   return (
     <Screen>

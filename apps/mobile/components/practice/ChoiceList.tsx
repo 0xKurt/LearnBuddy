@@ -42,7 +42,7 @@ export function SpokenChoiceBar({ prompt, disabled, onText, onReadAgain }: Spoke
     onText,
     untilPause: true,
   });
-  useHandsFreeMic(voice, disabled);
+  useHandsFreeMic(voice, disabled, prompt);
   return (
     <BottomBar>
       <MicStatus voice={voice} />

@@ -60,8 +60,11 @@ Logs contain route names and error classes only — no request bodies, messages 
 - The app only talks to the API. The API connects to Postgres with a privileged role and scopes
   every query by the learner derived from the verified token; model output can only reference
   the learner's own rows through aliases.
-- Row level security is enabled on every table **without policies**: the anon/authenticated
-  keys that ship in the app can read or write nothing directly.
+- Row level security is enabled on every table **without policies**, and no database function
+  is executable by the anon/authenticated roles (`0022_revoke_app_key_access.sql`): the keys
+  that ship in the app can read, write or call nothing directly.
+- The API reaches a non-local database only over TLS with certificate verification
+  (`apps/api/src/lib/db.ts`); a connection string asking for less is refused at startup.
 - Photos are uploaded with short-lived signed URLs to paths under the account id; the bucket is
   private.
 
@@ -99,7 +102,11 @@ Logs contain route names and error classes only — no request bodies, messages 
   model is installed) — the audio does not leave the phone. Where the phone could only recognise
   on Apple's/Google's servers, and always in the browser (Chrome's Web Speech is server-side), the
   app records instead and uses our own EU path (`/voice/transcribe`, Vertex AI). The decision is
-  code (`apps/mobile/lib/speech/engine.ts`), not a setting.
+  code (`apps/mobile/lib/speech/engine.ts`), not a setting. On iPhone the on-device check only
+  covers the phone's own language, and iOS would silently send any other language to Apple's
+  servers; so the system recogniser is used only when the language she speaks is exactly the
+  phone's language (with region), every other language goes the recording path (EU). **Not yet
+  verified on a real iPhone**; until it is, treat the iOS on-device promise as unproven.
 - **Expo push service** (optional): off unless `PUSH_BACKEND=expo`. It adds a US subprocessor and
   sends notification titles and bodies via Apple/Google. Texts are written without scores or
   personal details, but they are about the learner's tests. **legal review required before

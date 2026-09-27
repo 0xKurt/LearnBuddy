@@ -9,6 +9,9 @@
     "sqrt": "racine carrée de {{body}}",
     "root": "racine {{index}}-ième de {{body}}",
     "cbrt": "racine cubique de {{body}}",
+    "period": "période {{body}}",
+    "segment": "segment {{body}}",
+    "vector": "vecteur {{body}}",
     "symbols": {
       "plus": "plus",
       "minus": "moins",
@@ -31,7 +34,15 @@
       "iff": "si et seulement si",
       "lparen": "parenthèse ouvrante",
       "rparen": "parenthèse fermante",
-      "percent": "pour cent"
+      "percent": "pour cent",
+      "angle": "angle",
+      "parallel": "parallèle à",
+      "perp": "perpendiculaire à",
+      "triangle": "triangle",
+      "cong": "isométrique à",
+      "sim": "semblable à",
+      "in": "appartient à",
+      "notin": "n'appartient pas à"
     }
   },
   "figure": {

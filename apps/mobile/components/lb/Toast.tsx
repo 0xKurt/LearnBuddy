@@ -1,12 +1,14 @@
 // One short message at the bottom (errors, confirmations). Screen readers
-// hear it as a live region. Looks: a dark pill floating on a soft shadow; an
+// hear it (a live region on Android and the web, an announcement on iOS), and it
+// sits above the keyboard on iOS, where it used to hide behind it (audit M-76, M-80). Looks: a dark pill floating on a soft shadow; an
 // error also carries a round warning mark (never colour alone).
 
-import { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Keyboard, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
 
+import { announce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 
@@ -28,8 +30,10 @@ export const toast = {
 export function ToastHost() {
   const { message, tone, seq } = useToastStore();
   const insets = useSafeAreaInsets();
+  const keyboard = useIosKeyboardHeight();
   useEffect(() => {
     if (!message) return;
+    announce(message, { liveRegion: true });
     const timer = setTimeout(() => toast.hide(), 4500);
     return () => clearTimeout(timer);
   }, [message, seq]);
@@ -43,7 +47,7 @@ export function ToastHost() {
         position: 'absolute',
         left: 16,
         right: 16,
-        bottom: insets.bottom + 90,
+        bottom: Math.max(insets.bottom + 90, keyboard + 16),
         alignItems: 'center',
       }}
     >
@@ -84,4 +88,24 @@ export function ToastHost() {
       </View>
     </View>
   );
+}
+
+/**
+ * iOS: how much of the screen the keyboard covers (0 when hidden). Android resizes the
+ * window for the keyboard, so the toast is above it already.
+ */
+function useIosKeyboardHeight(): number {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    const show = Keyboard.addListener('keyboardWillShow', (e) =>
+      setHeight(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener('keyboardWillHide', () => setHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return height;
 }

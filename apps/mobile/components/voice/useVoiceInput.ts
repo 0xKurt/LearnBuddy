@@ -15,11 +15,13 @@ import type { TranscribeRequest } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { announce } from '../../lib/announce.js';
 import { transcribe } from '../../lib/api/endpoints.js';
 import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type Recording } from '../../lib/speech/record.js';
 import { engineFor, useDeviceRecognition } from '../../lib/speech/recognize.js';
+import { TurnGuard } from '../../lib/speech/turnGuard.js';
 import { transcriptContext, transcriptLang } from '../../lib/speech/spoken.js';
 import { MAX_DICTATION_MS, voiceLocale } from '../../lib/speech/voice.js';
 import { toast } from '../lb/Toast.js';
@@ -63,6 +65,11 @@ export type VoiceInput = {
   denied: { canAskAgain: boolean } | null;
   /** Starts listening when idle, stops (and transcribes) while recording. */
   toggle: () => void;
+  /**
+   * Ends listening and throws away what it would have written (she answered another way,
+   * the question changed, Buddy started speaking). A transcript already on its way is dropped.
+   */
+  cancel: () => void;
 };
 
 export function useVoiceInput({
@@ -77,6 +84,8 @@ export function useVoiceInput({
   const [choosing, setChoosing] = useState(false);
   const [hint, setHint] = useState<VoiceHint | null>(null);
   const mounted = useRef(true);
+  /** cancel() drops text from a listening that began before it (lib/speech/turnGuard.ts). */
+  const guard = useRef(new TurnGuard()).current;
   const latest = useRef({ purpose, lang, context, onText });
   latest.current = { purpose, lang, context, onText };
 
@@ -87,7 +96,15 @@ export function useVoiceInput({
     };
   }, []);
 
+  /** The understood text goes to the screen, and a screen reader hears it (audit M-80). */
+  function deliver(text: string): void {
+    announce(text);
+    latest.current.onText(text);
+  }
+
   async function send(r: Recording): Promise<void> {
+    if (!guard.current()) return;
+    const token = guard.begin();
     const opts = latest.current;
     setTranscribing(true);
     try {
@@ -98,9 +115,9 @@ export function useVoiceInput({
         lang: transcriptLang(opts.lang),
         context: opts.purpose === 'answer' ? transcriptContext(opts.context) : null,
       });
-      if (!mounted.current) return;
+      if (!mounted.current || !guard.holds(token)) return;
       const text = res.text.trim();
-      if (text) latest.current.onText(text);
+      if (text) deliver(text);
       else setHint('empty');
     } catch (err) {
       if (mounted.current) toast.show(messageFor(err), 'error');
@@ -119,7 +136,9 @@ export function useVoiceInput({
 
   const device = useDeviceRecognition({
     maxMs: MAX_DICTATION_MS,
-    onText: (text) => latest.current.onText(text),
+    onText: (text) => {
+      if (guard.current()) deliver(text);
+    },
     // The phone can't do this language after all: the same tap goes on as a recording.
     onFallback: () => void rec.start(),
     onFailed: setHint,
@@ -141,10 +160,15 @@ export function useVoiceInput({
           : 'idle';
 
   async function begin(): Promise<void> {
+    guard.begin();
     const locale = voiceLocale(latest.current.lang ?? i18n.language);
     setChoosing(true);
     const engine = await engineFor(locale);
     if (!mounted.current) return;
+    if (!guard.current()) {
+      setChoosing(false);
+      return;
+    }
     setChoosing(false);
     if (engine === 'device') await device.start(locale, { untilPause });
     else await rec.start();
@@ -162,6 +186,13 @@ export function useVoiceInput({
     void begin();
   }
 
+  function cancel(): void {
+    guard.cancel();
+    setChoosing(false);
+    if (onDevice) device.stop();
+    else void rec.cancel();
+  }
+
   return {
     state,
     onDevice,
@@ -172,5 +203,6 @@ export function useVoiceInput({
     hint,
     denied: rec.denied,
     toggle,
+    cancel,
   };
 }
