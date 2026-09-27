@@ -10,6 +10,7 @@ import type { SendMessageResponse } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
+import { searchMaterials } from '../modules/buddy/connectors/material.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -299,5 +300,20 @@ describe.skipIf(!dbReady)('Buddy lookups', () => {
       [lena.learnerId],
     );
     expect(goal.status).toBe('active');
+  });
+
+  it('never hands the text of a homework sheet to the chat model (p2-sec-homework-solution-chat-unenforced)', async () => {
+    await env.db.query(
+      `insert into materials (learner_id, client_request_id, status, photo_count, title, extracted_text,
+                              ready_at, purpose)
+       values ($1, $2, 'ready', 1, 'Hausaufgabe Brüche', 'Aufgabe 1: Kürze 6/8. Ergebnis 3/4', $3, 'homework')`,
+      [lena.learnerId, randomUUID(), env.clock.now()],
+    );
+    const hits = await searchMaterials(env.db, lena.learnerId, 'Europe/Berlin', 'Kürze', 3);
+    expect(hits).toEqual([
+      expect.objectContaining({ title: 'Hausaufgabe Brüche', excerpt: '', homework: true }),
+    ]);
+    const newest = await searchMaterials(env.db, lena.learnerId, 'Europe/Berlin', '', 3);
+    expect(JSON.stringify(newest)).not.toContain('6/8');
   });
 });

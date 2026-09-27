@@ -13,6 +13,11 @@ export type MaterialHit = {
   read_on: string | null;
   /** The passages that match, joined with " … "; the start of the sheet without a query. */
   excerpt: string;
+  /**
+   * Homework: its text is never handed to the chat model, only that it exists — the help
+   * session helps with it, hints only (audit S-6 p2-sec-homework-solution-chat-unenforced).
+   */
+  homework?: true;
 };
 
 export async function searchMaterials(
@@ -27,15 +32,16 @@ export async function searchMaterials(
     title: string | null;
     subject: string | null;
     ready_at: Date | null;
+    purpose: 'study' | 'homework';
     excerpt: string;
   }>(
     q === null
-      ? `select m.title, s.name as subject, m.ready_at, left(m.extracted_text, 600) as excerpt
+      ? `select m.title, s.name as subject, m.ready_at, m.purpose, left(m.extracted_text, 600) as excerpt
            from materials m left join subjects s on s.id = m.subject_id
           where m.learner_id = $1 and m.status = 'ready' and m.archived_at is null
             and m.extracted_text is not null
           order by m.ready_at desc nulls last limit $2`
-      : `select m.title, s.name as subject, m.ready_at,
+      : `select m.title, s.name as subject, m.ready_at, m.purpose,
                 ts_headline('simple', m.extracted_text, to_tsquery('simple', $3),
                   'MaxWords=60, MinWords=20, MaxFragments=3, FragmentDelimiter=" … "') as excerpt
            from materials m left join subjects s on s.id = m.subject_id
@@ -53,6 +59,8 @@ export async function searchMaterials(
     title: r.title ?? '',
     subject: r.subject,
     read_on: r.ready_at ? localParts(r.ready_at, timezone).date : null,
-    excerpt: r.excerpt.replace(/\s+/g, ' ').trim().slice(0, 700),
+    ...(r.purpose === 'homework'
+      ? { excerpt: '', homework: true as const }
+      : { excerpt: r.excerpt.replace(/\s+/g, ' ').trim().slice(0, 700) }),
   }));
 }

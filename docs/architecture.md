@@ -201,7 +201,8 @@ summary plus undo data. Enforced here, not in the prompt:
 ### Lookups (ADR 0005, stage 1)
 
 `modules/buddy/lookups.ts` + `connectors/`. Before answering, a turn or check may read:
-`search_material` (passages of her read worksheets, Postgres full text, prefix words),
+`search_material` (passages of her read worksheets, Postgres full text, prefix words; a
+homework sheet only by title, never its text — help with homework happens in the help session),
 `practice_history` (finished sessions: what sat, what was shaky) and `find_questions`
 (questions on a topic with the latest result — never the solutions). Registered once (name,
 schema, surfaces, connectors); the model-facing schema and prompt lines are generated from the
