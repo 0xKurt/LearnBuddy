@@ -8,7 +8,10 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
 
 - The **account holder** signs up with Supabase Auth (e-mail/password; the API never sees
   passwords) and accepts the current privacy text: `accounts.consent_version` must equal the
-  API's `CONSENT_VERSION`, otherwise the account is not created.
+  API's `CONSENT_VERSION`, otherwise the account is not created. The text lives in the app
+  (`auth:consent.*`); any change to it ships together with a new `CONSENT_VERSION`, so every
+  account agrees again (2026-09-27: the contact point names the D-8 rule — a child profile
+  stays behind the parents until 18).
 - Each account has exactly one **learner profile**: the adult themselves (`relation = self`,
   only from 16 years) or a child (`relation = child`). A child profile records the account
   holder's consent (DSGVO Art. 8 under 16; recorded for 16- and 17-year-olds too), stored as
@@ -93,7 +96,8 @@ Logs contain route names and error classes only — no request bodies, messages 
   `DELETE /account/deletion`). During the hold the app works as before; nothing else changes.
   When the hold is over the scheduler carries it out as a resumable job (docs/architecture.md
   §Background work): from its start it cannot be cancelled (409 `deletion_running`) and the
-  account takes no more changes; it deletes the learner's rows table by table, then the auth user
+  account takes no more changes (the app then shows only "Dein Konto wird gerade gelöscht" with
+  a sign-out, `app/deleting.tsx`); it deletes the learner's rows table by table, then the auth user
   and the account. It is never given up: failures are retried with backoff, and `GET /health`
   reports a deletion more than a day overdue. The photos go to a Storage deletion queue first:
   the account deletion does **not** wait for Storage (D-9); the queue removes them in chunks of
