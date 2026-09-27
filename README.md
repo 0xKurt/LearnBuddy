@@ -14,7 +14,7 @@ adapts to feedback — on one calm screen, without pressure.
 - `apps/mobile` — Expo SDK 54 / React Native app (one Buddy screen + practice, capture, memory, settings)
 - `packages/shared-types` — zod contracts shared by API and app (`@learnbuddy/shared-types/contracts`)
 - `packages/shared-math` — numeric/short-answer normalisation for rule-based checks
-- `infra/supabase/migrations` — the schema (`0001_baseline.sql`, `0002_scheduler.sql`)
+- `infra/supabase/migrations` — the schema (`0001_baseline.sql` and the numbered migrations after it)
 
 ## Develop
 
