@@ -14,7 +14,7 @@ import {
   SPELLING_RULES,
 } from '../practice/items.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v3.9';
+export const EXTRACT_PROMPT_VERSION = 'extract.v3.10';
 
 const SUBJECT_KINDS = [
   'math',
@@ -52,7 +52,12 @@ export const PAGE_PROBLEMS = [
   'other',
 ] as const;
 export const PageReport = z.object({
-  page: z.number().int().min(1).max(20).describe('Position of the photo, starting at 1'),
+  page: z
+    .number()
+    .int()
+    .min(1)
+    .max(20)
+    .describe('Page number as labelled (a photo is one page, a PDF one per PDF page), from 1'),
   read: z
     .enum(['all', 'part', 'none'])
     .describe('all: everything read; part: some of it missing (e.g. cut off at the edge); none'),
@@ -106,10 +111,10 @@ export type ExtractionResult = z.infer<typeof ExtractionResult>;
 /** How the answer is parsed: item by item, so one broken item costs only itself (H-14, H-15). */
 export const ExtractionParse = ExtractionResult.extend({ items: itemsOneByOne(ItemDraft, 25) });
 
-export const EXTRACT_SYSTEM = `You read photos of a learner's study material (worksheets, textbook pages, notebook pages, vocabulary lists) for the LearnBuddy app.
+export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study material (worksheets, textbook pages, notebook pages, vocabulary lists) for the LearnBuddy app.
 
 1. Decide whether this is learning material (is_learning_material) and whether it is readable (readable: false only if nothing at all can be read). If not, return empty items. Learning material is school or study content (worksheets, textbook or notebook pages, vocabulary, tasks); everyday papers (a recipe, a letter, a receipt, an advert, packaging) are not, unless they are printed as a school task.
-   A page that is cut off or partly unreadable does not make the rest unreadable: use what you can read, and report every photo in pages (one entry each, in order): read "all", "part" (text cut off at an edge, covered by a finger, blurred or in a reflection in places) or "none", with the problem. Text that stops mid-sentence at the edge of the photo is cut off (read "part", cut_off): transcribe it only up to where it stops and end it with "[…]", never complete it. A single photo of something else among school pages is read "none" with not_material; the other pages still count. Answers already written in by hand are the learner's own attempts: never take them as the solution and do not ask about them. Never guess what you cannot see: write questions only from what is readable.
+   A page that is cut off or partly unreadable does not make the rest unreadable: use what you can read, and report every photo in pages (one entry each, in order; a PDF counts one page per PDF page: its label says which page numbers its pages have): read "all", "part" (text cut off at an edge, covered by a finger, blurred or in a reflection in places) or "none", with the problem. Text that stops mid-sentence at the edge of the photo is cut off (read "part", cut_off): transcribe it only up to where it stops and end it with "[…]", never complete it. A single photo of something else among school pages is read "none" with not_material; the other pages still count. Answers already written in by hand are the learner's own attempts: never take them as the solution and do not ask about them. Never guess what you cannot see: write questions only from what is readable.
 2. Transcribe the material faithfully into extracted_text (Markdown). Don't add anything that isn't there.
 3. Write practice questions that check exactly this material, pitched at the learner's level (LEARNER). Each has the correct answer.
    - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Up to 25 pairs; the app asks both directions itself.
@@ -128,10 +133,10 @@ export const EXTRACT_SYSTEM = `You read photos of a learner's study material (wo
 Answer with the JSON object described by the schema.`;
 
 /** Homework: the tasks as they are, with a solution the learner never sees (it guides the hints). */
-export const HOMEWORK_SYSTEM = `You read photos of a learner's homework for the LearnBuddy app. The learner wants help to solve it THEMSELVES.
+export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homework for the LearnBuddy app. The learner wants help to solve it THEMSELVES.
 
 1. is_learning_material: is this school work? readable: can you read it (false only if nothing at all can be read)? If not, return empty items. Learning material is school or study content (worksheets, textbook or notebook pages, vocabulary, tasks); everyday papers (a recipe, a letter, a receipt, an advert, packaging) are not, unless they are printed as a school task.
-   A page that is cut off or partly unreadable does not make the rest unreadable: use what you can read, and report every photo in pages (one entry each, in order): read "all", "part" (text cut off at an edge, covered by a finger, blurred or in a reflection in places) or "none", with the problem. Text that stops mid-sentence at the edge of the photo is cut off (read "part", cut_off): transcribe it only up to where it stops and end it with "[…]", never complete it. A single photo of something else among school pages is read "none" with not_material; the other pages still count. Answers already written in by hand are the learner's own attempts: never take them as the solution and do not ask about them. Never guess what you cannot see: list only tasks you can read completely.
+   A page that is cut off or partly unreadable does not make the rest unreadable: use what you can read, and report every photo in pages (one entry each, in order; a PDF counts one page per PDF page: its label says which page numbers its pages have): read "all", "part" (text cut off at an edge, covered by a finger, blurred or in a reflection in places) or "none", with the problem. Text that stops mid-sentence at the edge of the photo is cut off (read "part", cut_off): transcribe it only up to where it stops and end it with "[…]", never complete it. A single photo of something else among school pages is read "none" with not_material; the other pages still count. Answers already written in by hand are the learner's own attempts: never take them as the solution and do not ask about them. Never guess what you cannot see: list only tasks you can read completely.
 2. Transcribe it faithfully into extracted_text (Markdown).
 3. One item per task (or per numbered sub-task), in the order printed, up to 12:
    - prompt: the task exactly as printed (you may add the needed context from the sheet in one sentence).

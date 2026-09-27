@@ -547,6 +547,24 @@ and do not use up the 3 runs. After the photo purge, retry answers 409 `photos_d
 photo in the reading request is preceded by a label ("Photo 2 of 3:"), so page numbers in the
 report name real photos.
 
+**PDFs** (`modules/materials/pdf.ts`, migration `0042_material_pdf.sql`; gaps.md #6): a worksheet
+that came as a PDF (WhatsApp, IServ, Schul-Cloud, Dateien) is a file of the material next to
+photos (`photo_mimes` takes `application/pdf`; stored as `…/<position>.pdf` in the same private
+bucket). The model reads PDFs directly (Gemini accepts `application/pdf` inline), so nothing is
+rendered to images, on the server or on the phone. Code only counts the pages (`pdf-lib`, on
+submit): a photo is one page, a PDF as many as it has, and the material's `photo_count` becomes
+that page total — **20 pages at most**, photos and PDF pages together, like 20 photos. The label
+before a PDF says which page numbers its pages have ("PDF with pages 1–3 of 4 (one page report per
+PDF page):"), so the page report names real pages; a foreign page is deleted at once only when its
+whole file is foreign (a photo; a PDF with one foreign page among others keeps its retention).
+Refused at submit with 422 and a reason — the material is set aside and its files purged at once,
+the app keeps the files for another choice: `too_many_pages` (with `pages`, `max`),
+`file_unreadable` (not a PDF that opens; `position`), `file_too_large` (all PDFs of one material
+over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage while counting is
+503 `storage_unavailable` as for photos. PDFs are not photo-checked on the phone (the check is for
+light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
+scanned school PDF (the tests script the model).
+
 **Deleting** ("Blatt löschen", D-7) takes the sheet and its merged pages out of the library,
 Buddy's picture, running sessions (open questions closed like "Frage passt nicht"), prepared
 practice (a step left without questions goes back to planned) and its homework help session
