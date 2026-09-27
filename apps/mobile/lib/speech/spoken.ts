@@ -3,13 +3,18 @@
 // locale (useSpokenWords), **bold** markers are never read, and a question
 // with choices is read as "…? A: …, B: …".
 
-import { withoutEmphasis } from '../math/emphasis.js';
+import { markdownPlain } from '../buddy/markdown.js';
 import { speakMathText, type SpokenWords } from '../math/speak.js';
 import { baseLanguage } from './voice.js';
 
-/** A model-written text as it is read aloud: no **bold** markers, math in words. */
+/**
+ * A model-written text as it is read aloud: no Markdown (bold, italic, list markers), math
+ * in words; each line of a list is its own sentence (the voice pauses between them).
+ */
 export function spokenText(text: string, words: SpokenWords): string {
-  return speakMathText(withoutEmphasis(text), words).replace(/\s+/g, ' ').trim();
+  return speakMathText(markdownPlain(text, { spoken: true }), words)
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /** Gaps of three or more underscores outside $…$ as the blank word (math reads its own). */

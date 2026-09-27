@@ -92,6 +92,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder; also without a profile)                                                 |
 | `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system                                         |
 | `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                            |
+| `POST /buddy/messages/:clientMessageId/stop`                                                         | "Stopp" while Buddy writes: the turn ends stopped, or says it was already answered (§Turns)      |
 | `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                          |
 | `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                                                          |
 | `POST /push-devices/claim`, `POST /push-devices/release` (no session)                                | one learner per install (push)                                                                   |
@@ -157,6 +158,16 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   message keeps why (`buddy_messages.failure_code`, migration 0020), so the app says what
   happened ("Buddy konnte gerade nicht antworten") instead of "not arrived", and offers no
   resend once the day's allowance is used up.
+- **Stopped** (`POST /buddy/messages/:clientMessageId/stop`, migration 0034): while Buddy writes,
+  the app's send button is "Stopp". Under the settings lock, her still-processing message (and
+  the unanswered ones before it that wait for the same answer) become `failed` with
+  `failure_code = 'stopped'` and lose their claim; the context is bumped. The running turn can
+  then neither apply its answer (apply.ts checks the claim under the same row lock) nor start
+  another model call (each round re-checks its claim); a call already under way finishes in the
+  background and its answer is dropped. Nothing of the reply is stored — the thread shows her
+  message "Gestoppt" with "Nochmal senden" (the same `client_message_id` runs again). A turn
+  that finished first stays finished: the answer says `done` and the reply is there. Only her
+  own messages (404 otherwise); `stop.int.test.ts`.
 - **Safeguarding** (audit I-9, decision D-10). Distress — being hurt, bullied, abused or
   threatened, thoughts of self-harm — is a code path, not an improvisation:
   - the model marks it with `concern` (first field of `TurnDecisionForModel`, zod-validated);

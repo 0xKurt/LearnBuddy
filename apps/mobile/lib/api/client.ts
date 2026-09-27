@@ -69,6 +69,7 @@ async function authorised(
   body: unknown,
   accept: string,
   fetchFn: FetchLike = fetch,
+  signal?: AbortSignal,
 ): Promise<Response> {
   const send = async (token: string | null): Promise<Response> => {
     // Only listed headers: anything else fails the browser's CORS preflight.
@@ -86,8 +87,10 @@ async function authorised(
         method,
         headers: headers as Record<string, string>,
         body: body !== undefined ? JSON.stringify(body) : undefined,
+        ...(signal ? { signal } : {}),
       });
     } catch {
+      if (signal?.aborted) throw aborted();
       throw new ApiError('network', 'No connection', 0);
     }
   };
@@ -171,10 +174,23 @@ async function readJson<S extends ZodTypeAny>(
 export async function streamRequest<S extends ZodTypeAny>(
   method: Method,
   path: string,
-  opts: { body?: unknown; schema: S; onEvent: (event: SseEvent) => void },
+  opts: {
+    body?: unknown;
+    schema: S;
+    onEvent: (event: SseEvent) => void;
+    /** Ends the stream on this side ("Stopp"): the call throws `aborted`. */
+    signal?: AbortSignal;
+  },
 ): Promise<z.infer<S>> {
   // expo/fetch streams the body on the phone as well (React Native's fetch does not).
-  const res = await authorised(method, path, opts.body, 'text/event-stream', streamingFetch);
+  const res = await authorised(
+    method,
+    path,
+    opts.body,
+    'text/event-stream',
+    streamingFetch,
+    opts.signal,
+  );
   const reader =
     (res.headers.get('content-type') ?? '').includes('text/event-stream') && res.body
       ? res.body.getReader()
@@ -187,7 +203,12 @@ export async function streamRequest<S extends ZodTypeAny>(
     try {
       chunk = await reader.read();
     } catch {
+      if (opts.signal?.aborted) throw aborted();
       throw streamLost();
+    }
+    if (opts.signal?.aborted) {
+      void reader.cancel().catch(() => undefined);
+      throw aborted();
     }
     if (chunk.done) break;
     for (const e of sse.push(decoder.decode(chunk.value, { stream: true }))) {
@@ -216,6 +237,11 @@ export async function streamRequest<S extends ZodTypeAny>(
  */
 function streamLost(): ApiError {
   return new ApiError('network', 'Connection lost', 0, { reason: 'stream_lost' });
+}
+
+/** She ended the call herself (the stream was stopped on this side): nothing to report. */
+function aborted(): ApiError {
+  return new ApiError('aborted', 'Stopped', 0);
 }
 
 function safeJson(text: string): unknown {

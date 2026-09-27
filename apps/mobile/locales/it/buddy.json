@@ -70,7 +70,19 @@
     "processing_body_practice": "Poi ne faccio subito degli esercizi. Nel frattempo puoi chiudere l'app.",
     "next_title": "Prossimo: {{title}}",
     "next_body_exam_one": "{{count}} esercizio · circa {{minutes}} min · verifica {{when}}",
-    "next_body_exam_other": "{{count}} esercizi · circa {{minutes}} min · verifica {{when}}"
+    "next_body_exam_other": "{{count}} esercizi · circa {{minutes}} min · verifica {{when}}",
+    "waiting_title": "Tra poco leggo il tuo foglio …",
+    "reading_title_one": "Sto leggendo il tuo foglio …",
+    "reading_title_other": "Sto leggendo le tue {{count}} pagine …",
+    "building_title": "Foglio letto",
+    "building_body_one": "{{count}} esercizio trovato · preparo degli esercizi",
+    "building_body_other": "{{count}} esercizi trovati · preparo degli esercizi",
+    "steps": {
+      "sent": "Arrivato",
+      "read": "Lettura",
+      "build": "Esercizi",
+      "a11y": "Passo {{step}} di {{total}}: {{label}}"
+    }
   },
   "when": {
     "today": "oggi",
@@ -121,10 +133,17 @@
       "budget": "Oggi Buddy non può più rispondere",
       "invalid": "Buddy si è confuso",
       "stale": "Nessuna risposta: troppe cose insieme",
-      "internal": "Nessuna risposta: qualcosa è andato storto"
+      "internal": "Nessuna risposta: qualcosa è andato storto",
+      "stopped": "Fermato"
     },
     "today": "Oggi",
-    "yesterday": "Ieri"
+    "yesterday": "Ieri",
+    "stop": "Stop",
+    "stop_label": "Ferma la risposta",
+    "stopped": "Fermato.",
+    "new_reply": "Nuova risposta",
+    "new_reply_label": "Vai alla nuova risposta",
+    "message_hint": "Tieni premuto per copiare o leggere ad alta voce"
   },
   "delivery": {
     "scheduled": "arriva {{when}}",
@@ -221,7 +240,11 @@
     "end": "Termina",
     "speak": "Parla",
     "interrupt": "Interrompi e parla",
-    "short": "Parla"
+    "short": "Parla",
+    "photo": "Foto",
+    "photo_label": "Mostra una foto",
+    "stop_speaking": "Interrompi Buddy",
+    "tap_orb": "Tocca Buddy per interromperlo."
   },
   "a11y": {
     "reply": "Buddy: {{text}}"
@@ -229,5 +252,13 @@
   "card": {
     "close": "Nascondi scheda",
     "shown": "Buddy ha messo una scheda in alto. Puoi nasconderla."
+  },
+  "message": {
+    "title_buddy": "Messaggio di Buddy",
+    "title_mine": "Il tuo messaggio",
+    "copy": "Copia",
+    "speak": "Leggi ad alta voce",
+    "copied": "Copiato",
+    "copy_failed": "Copia non riuscita"
   }
 }

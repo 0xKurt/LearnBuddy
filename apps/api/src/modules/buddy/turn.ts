@@ -268,11 +268,13 @@ async function decideTurn(
           const thisRound = ++round;
           // Still working: a turn of several model calls must not look stalled and be taken
           // over while it runs (turn-cost-and-stall-window).
-          await deps.db.query(
+          const mine = await deps.db.query(
             `update buddy_messages set claimed_at = $3
-              where id = $1 and claim_token = $2 and status = 'processing'`,
+              where id = $1 and claim_token = $2 and status = 'processing' returning id`,
             [message.id, message.claim_token, deps.now()],
           );
+          // Stopped by her, or taken over: no further model call for a turn that is not ours.
+          if (mine.length === 0) throw new ClaimLost();
           let last = '';
           const result = await callModel(deps, learner.id, today, {
             purpose: 'buddy_turn',
@@ -306,6 +308,7 @@ async function decideTurn(
       // The audit keeps what was looked up (tools and whether they worked), not the results.
       if (looked.steps.length > 0) meta.output = { lookups: looked.steps, final: raw };
     } catch (err) {
+      if (err instanceof ClaimLost) return currentOutcome(deps, message.id);
       if (err instanceof LlmError && err.kind === 'blocked') {
         // The provider's safety filter held back her words or Buddy's answer. That is not
         // a glitch to resend: code answers with a fixed, caring reply (D-10), and her
@@ -515,6 +518,48 @@ async function failTurn(deps: Deps, message: ClaimedMessage, code: string): Prom
   return rows.length === 1
     ? { status: 'failed', errorCode: code }
     : currentOutcome(deps, message.id);
+}
+
+/** The turn is no longer this runner's (stopped, or taken over): it ends without a word. */
+class ClaimLost extends Error {}
+
+/**
+ * She stopped Buddy's reply (POST /buddy/messages/:id/stop). Her message and the unanswered
+ * ones before it that wait for the same answer become "stopped": nothing of the reply is
+ * stored, and the running turn can no longer apply its answer (its claim is gone; apply.ts
+ * checks it under the same row lock). A turn that already finished stays as it is — then the
+ * reply is there, and that is what she sees. Null: no such message (yet).
+ */
+export async function stopTurn(
+  deps: Deps,
+  learnerId: string,
+  clientMessageId: string,
+): Promise<TurnOutcome | null> {
+  return deps.db.tx(async (tx) => {
+    // Lock order: the learner's settings row first, like every fenced write (docs §Turns).
+    await tx.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learnerId]);
+    const msg = await tx.maybeOne<{
+      id: string;
+      status: TurnOutcome['status'];
+      failure_code: string | null;
+    }>(
+      `select id, status, failure_code from buddy_messages
+        where learner_id = $1 and client_message_id = $2 and role = 'learner' for update`,
+      [learnerId, clientMessageId],
+    );
+    if (!msg) return null;
+    if (msg.status !== 'processing') return { status: msg.status, errorCode: msg.failure_code };
+    await tx.query(
+      `update buddy_messages b set status = 'failed', failure_code = 'stopped', claim_token = null
+         from buddy_messages me
+        where me.id = $1 and b.learner_id = me.learner_id and b.role = 'learner'
+          and b.status = 'processing' and (b.id = me.id or (b.claim_token is null and b.seq < me.seq))`,
+      [msg.id],
+    );
+    // What Buddy's next decision sees has changed (her message is no longer waiting).
+    await bumpContext(tx, learnerId);
+    return { status: 'failed', errorCode: 'stopped' };
+  });
 }
 
 async function currentOutcome(deps: Deps, messageId: string): Promise<TurnOutcome> {

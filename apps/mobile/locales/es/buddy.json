@@ -70,7 +70,19 @@
     "processing_body_practice": "Después hago ejercicios con ella enseguida. Mientras tanto puedes cerrar la app.",
     "next_title": "Lo siguiente: {{title}}",
     "next_body_exam_one": "{{count}} ejercicio · unos {{minutes}} min · examen {{when}}",
-    "next_body_exam_other": "{{count}} ejercicios · unos {{minutes}} min · examen {{when}}"
+    "next_body_exam_other": "{{count}} ejercicios · unos {{minutes}} min · examen {{when}}",
+    "waiting_title": "Enseguida leo tu hoja …",
+    "reading_title_one": "Estoy leyendo tu hoja …",
+    "reading_title_other": "Estoy leyendo tus {{count}} páginas …",
+    "building_title": "Hoja leída",
+    "building_body_one": "{{count}} tarea encontrada · preparo ejercicios",
+    "building_body_other": "{{count}} tareas encontradas · preparo ejercicios",
+    "steps": {
+      "sent": "Recibido",
+      "read": "Leyendo",
+      "build": "Ejercicios",
+      "a11y": "Paso {{step}} de {{total}}: {{label}}"
+    }
   },
   "when": {
     "today": "hoy",
@@ -121,10 +133,17 @@
       "budget": "Buddy ya no puede responder hoy",
       "invalid": "Buddy se ha liado",
       "stale": "Sin respuesta: demasiado a la vez",
-      "internal": "Sin respuesta: algo ha fallado"
+      "internal": "Sin respuesta: algo ha fallado",
+      "stopped": "Parado"
     },
     "today": "Hoy",
-    "yesterday": "Ayer"
+    "yesterday": "Ayer",
+    "stop": "Parar",
+    "stop_label": "Parar la respuesta",
+    "stopped": "Parado.",
+    "new_reply": "Nueva respuesta",
+    "new_reply_label": "Ir a la nueva respuesta",
+    "message_hint": "Mantén pulsado para copiar o leer en voz alta"
   },
   "delivery": {
     "scheduled": "llegará {{when}}",
@@ -221,7 +240,11 @@
     "end": "Terminar",
     "speak": "Hablar",
     "interrupt": "Interrumpir y hablar",
-    "short": "Hablar"
+    "short": "Hablar",
+    "photo": "Foto",
+    "photo_label": "Enseñar una foto",
+    "stop_speaking": "Interrumpir a Buddy",
+    "tap_orb": "Toca a Buddy para interrumpirlo."
   },
   "a11y": {
     "reply": "Buddy: {{text}}"
@@ -229,5 +252,13 @@
   "card": {
     "close": "Ocultar tarjeta",
     "shown": "Buddy ha puesto una tarjeta arriba. Puedes ocultarla."
+  },
+  "message": {
+    "title_buddy": "Mensaje de Buddy",
+    "title_mine": "Tu mensaje",
+    "copy": "Copiar",
+    "speak": "Leer en voz alta",
+    "copied": "Copiado",
+    "copy_failed": "No se ha podido copiar"
   }
 }

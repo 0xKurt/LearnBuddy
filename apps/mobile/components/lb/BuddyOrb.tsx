@@ -1,36 +1,76 @@
 // Buddy's face: a soft pastel orb (blue → lilac → pink, like light through
 // glass) with a white glow. With `listening`, sound bars appear in it (the
 // voice-first look). The same Buddy at every size; decorative for screen readers.
-import { View } from 'react-native';
+// Alive at rest (gap 18): it breathes slowly, and a tap makes it bob gently —
+// nothing happens because of the tap, it only answers the touch. With reduce
+// motion it stands still.
+import { useEffect } from 'react';
+import { Pressable, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { barHeights } from '../../lib/speech/level.js';
 import { LB } from '../../lib/theme/colors.js';
+import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 
 const BAR_X = [33, 41, 49, 57, 65];
 /** The tallest bar at full voice (in the 100-unit viewBox). */
 const BAR_MAX = 44;
+/** One slow breath (in and out), like someone calm at rest. */
+export const BREATH_MS = 4200;
 
 export function BuddyOrb({
   size = 32,
   listening = false,
   level = 0.5,
+  breathe = true,
+  reactToTap = size >= 48,
 }: {
   size?: number;
   listening?: boolean;
   /** How loud she is (0…1): the sound bars follow it while listening. */
   level?: number;
+  /** Breathe slowly at rest (off where another motion drives it, or many orbs stand together). */
+  breathe?: boolean;
+  /** Bob gently when touched (decorative: the tap starts nothing); default for a large orb. */
+  reactToTap?: boolean;
 }) {
+  const reduce = useReducedMotion();
+  const breath = useSharedValue(0);
+  const bob = useSharedValue(1);
+  useEffect(() => {
+    if (!breathe || reduce) {
+      cancelAnimation(breath);
+      breath.value = 0;
+      return;
+    }
+    breath.value = withRepeat(
+      withTiming(1, { duration: BREATH_MS / 2, easing: EASE.breathe }),
+      -1,
+      true,
+    );
+    return () => cancelAnimation(breath);
+  }, [breathe, reduce, breath]);
+  const style = useAnimatedStyle(() => ({
+    // A breath is barely a size change: 4 % in.
+    transform: [{ scale: (1 + breath.value * 0.04) * bob.value }],
+  }));
+
   const heights = barHeights(level).map((h) => h * BAR_MAX);
   const base = useSvgId('g');
   const ids = { orbBody: `${base}orbBody`, orbShine: `${base}orbShine` };
-  return (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={{ width: size, height: size }}
-    >
+  const orb = (
+    <Animated.View style={[{ width: size, height: size }, style]}>
       <Svg width={size} height={size} viewBox="0 0 100 100">
         <Defs>
           <RadialGradient id={ids.orbBody} cx="30%" cy="55%" r="80%">
@@ -69,6 +109,30 @@ export function BuddyOrb({
             ))
           : null}
       </Svg>
+    </Animated.View>
+  );
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{ width: size, height: size }}
+    >
+      {reactToTap ? (
+        <Pressable
+          accessible={false}
+          onPressIn={() => {
+            if (reduce) return;
+            bob.value = withSequence(
+              withTiming(0.92, { duration: DURATION.quick, easing: EASE.standard }),
+              withSpring(1, SPRING),
+            );
+          }}
+        >
+          {orb}
+        </Pressable>
+      ) : (
+        orb
+      )}
     </View>
   );
 }
