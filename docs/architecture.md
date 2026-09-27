@@ -199,10 +199,17 @@ summary plus undo data. Enforced here, not in the prompt:
 - contact can only be reduced or shifted by Buddy (`set_contact`), never enabled or increased;
   quiet hours may only start earlier ("nicht nach 19 Uhr" → 19:00), and the preferred window then
   ends there — a reply may only claim what the tool actually changed (found by the Lena run);
+  "fewer" never raises a cap of 0 or 1, and a preferred window wholly inside the quiet hours is
+  refused;
 - agreed times may not fall into quiet hours; checks lie between 1 hour and 21 days ahead;
-- temporary situations need an end (≤ 60 days); plans lie ≤ 1 year ahead;
+- temporary situations need an end (≤ 60 days); plans lie ≤ 1 year ahead; a known situation
+  gets a new end only through `correct_memory` with `until` (`remember` refuses instead of
+  dropping it);
+- `update_step` either changes the state or moves the step, never both; `prepare_practice`
+  never replaces a step her agreed reminder prepared;
 - undo is refused when the object changed since (version check) — no blind overwrite of, e.g.,
-  an adult's later settings change.
+  an adult's later settings change; undoing `close_goal` opens the steps it cancelled again;
+  undoing `forget` is refused when the same is known again meanwhile or memory is full.
 
 ### Lookups (ADR 0005, stage 1)
 

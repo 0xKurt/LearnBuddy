@@ -17,6 +17,8 @@
 
 import { randomUUID } from 'node:crypto';
 
+import { z } from 'zod';
+
 import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
 import { addDays, daysBetween, localParts, weekdayOf, zonedToInstant } from '../../lib/time.js';
@@ -40,7 +42,11 @@ import { claimMessage, processTurn, pushAvailable, TURN_STALL_MS } from './turn.
 
 const CHECK_SCHEMA = toJsonSchema(CheckDecision);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
-const CHECK_STEP_SCHEMA = toJsonSchema(CheckDecision.extend({ lookups: lookupsField }));
+// Lookups first, as in a turn: the model chooses what to read before it writes a decision
+// (p2-check-step-schema-lookups-last).
+const CHECK_STEP_SCHEMA = toJsonSchema(
+  z.object({ lookups: lookupsField }).extend(CheckDecision.shape),
+);
 const LEASE_SECONDS = 150;
 const IN_APP_DEFER_MS = 20 * 60_000;
 const IN_APP_WINDOW_MS = 3 * 60_000;

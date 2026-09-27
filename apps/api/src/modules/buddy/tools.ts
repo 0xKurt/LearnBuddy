@@ -92,6 +92,11 @@ export type UndoSpec =
       outcome: string | null;
       /** Undo only if nothing changed the goal since (no blind overwrite). */
       expect_version: number;
+      /**
+       * Steps closing the goal cancelled: undo opens them again, each only if nothing
+       * changed it since (restore-goal-leaves-steps-cancelled). Absent in older records.
+       */
+      steps?: Array<{ id: string; state: string; expect_version: number }>;
     }
   | { type: 'cancel_step'; step_id: string }
   | {
@@ -245,14 +250,22 @@ async function runRemember(action: ActionOf<'remember'>, ctx: ToolContext): Prom
     if (!a.until) throw new ToolRejection('a temporary situation (constraint) needs an until');
     validUntil = resolveEnd(ctx, a.until, 'this situation');
   }
-  const existing = await ctx.db.query<{ id: string; statement: string }>(
-    `select id, statement from buddy_memories
+  const existing = await ctx.db.query<{ id: string; statement: string; valid_until: Date | null }>(
+    `select id, statement, valid_until from buddy_memories
       where learner_id = $1 and status = 'active' and (valid_until is null or valid_until > $2)`,
     [ctx.learnerId, ctx.now],
   );
   const same = existing.find(
     (m) => normalizeForMatch(m.statement) === normalizeForMatch(a.statement),
   );
+  if (same && validUntil && same.valid_until?.getTime() !== validUntil.getTime()) {
+    // Known already, with another end: never drop the new end silently while the card says
+    // "noted" (remember-dedupe-misreports).
+    const alias = [...ctx.aliases.memories.entries()].find(([, m]) => m.id === same.id)?.[0];
+    throw new ToolRejection(
+      `this is already known${alias ? ` (${alias})` : ''} with another end — to change its end use correct_memory with until`,
+    );
+  }
   if (same) {
     return {
       summary: {
@@ -294,6 +307,10 @@ async function runCorrectMemory(
   refuseDuringConcern(ctx);
   requireQuote(ctx, a.quote);
   const old = memoryOf(ctx, a.memory);
+  // A temporary situation may end at another time now (audit M-54 p2-J-memory-F1).
+  if (a.until && old.kind !== 'constraint')
+    throw new ToolRejection(`memory ${a.memory} is not a temporary situation; until must be null`);
+  const validUntil = a.until ? resolveEnd(ctx, a.until, 'this situation') : old.valid_until;
   const updated = await ctx.db.query(
     `update buddy_memories set status = 'superseded', closed_at = $3, version = version + 1
       where id = $1 and learner_id = $2 and status = 'active' returning id`,
@@ -310,7 +327,7 @@ async function runCorrectMemory(
       a.statement,
       ctx.triggerMessageId,
       a.quote,
-      old.valid_until,
+      validUntil,
       old.id,
       ctx.now,
     ],
@@ -440,10 +457,15 @@ async function runCloseGoal(
     `update buddy_goals set status = $2, outcome = $3, closed_at = $4, version = version + 1 where id = $1`,
     [g.id, a.status, a.outcome, ctx.now],
   );
+  const open = await ctx.db.query<{ id: string; state: string; version: number }>(
+    `select id, state, version from buddy_steps
+      where goal_id = $1 and state in ('planned','prepared') for update`,
+    [g.id],
+  );
   await ctx.db.query(
     `update buddy_steps set state = 'cancelled', version = version + 1, finished_at = $2
-      where goal_id = $1 and state in ('planned','prepared')`,
-    [g.id, ctx.now],
+      where id = any($1::uuid[])`,
+    [open.map((st) => st.id), ctx.now],
   );
   await cancelGoalWakeups(ctx.db, ctx.learnerId, g.id);
   return {
@@ -463,6 +485,7 @@ async function runCloseGoal(
       status: 'active',
       outcome: null,
       expect_version: g.version + 1,
+      steps: open.map((st) => ({ id: st.id, state: st.state, expect_version: st.version + 1 })),
     },
   };
 }
@@ -512,10 +535,11 @@ async function runPreparePractice(
       );
     }
   }
-  // A newer preparation replaces an unstarted older one for the same scope.
+  // A newer preparation replaces an unstarted older one for the same scope — never one she
+  // agreed to (its reminder prepared it; p2-prepare-practice-cancels-reminder-prepared-step).
   await ctx.db.query(
     `update buddy_steps set state = 'cancelled', version = version + 1, finished_at = $4
-      where learner_id = $1 and kind = 'practice' and state = 'prepared'
+      where learner_id = $1 and kind = 'practice' and state = 'prepared' and not agreed
         and goal_id is not distinct from $2 and (payload ->> 'subject_id') is not distinct from $3`,
     [ctx.learnerId, goal?.id ?? null, subjectId, ctx.now],
   );
@@ -645,6 +669,12 @@ async function runUpdateStep(
     done_source: s.done_source,
     expect_version: s.version + 1,
   };
+  if (a.state && (a.day || a.time)) {
+    // Never report a move that was not made (update-step-state-drops-move).
+    throw new ToolRejection(
+      `a ${a.state} step is not moved — change either its state or its day/time`,
+    );
+  }
   if (a.state) {
     await ctx.db.query(
       `update buddy_steps set state = $2, version = version + 1, finished_at = $3 where id = $1`,
@@ -794,6 +824,17 @@ async function runSetContact(
   if (minutesOf(preferredStart) >= minutesOf(preferredEnd)) {
     throw new ToolRejection('the preferred window must start before it ends');
   }
+  // A window that lies wholly in the quiet hours would be ignored by every message
+  // (preferred-window-inside-quiet-hours).
+  let usable = false;
+  for (let m = minutesOf(preferredStart); m < minutesOf(preferredEnd) && !usable; m++) {
+    usable = !inWindow(m, quietStart, s.quiet_end);
+  }
+  if (!usable) {
+    throw new ToolRejection(
+      `${preferredStart}–${preferredEnd} lies inside the quiet hours (${quietStart}–${s.quiet_end}); ask for another time`,
+    );
+  }
   const avoid = a.avoid_weekdays ? [...new Set(a.avoid_weekdays)].sort() : s.avoid_weekdays;
   if (s.avoid_weekdays.some((d) => !avoid.includes(d))) {
     throw new ToolRejection(
@@ -805,7 +846,9 @@ async function runSetContact(
     const until = resolveEnd(ctx, a.pause, 'the pause');
     if (!pausedUntil || until.getTime() > pausedUntil.getTime()) pausedUntil = until;
   }
-  const maxPerWeek = a.fewer ? Math.max(1, Math.floor(s.max_per_week / 2)) : s.max_per_week;
+  // "Fewer" never means more: a cap of 0 or 1 stays as it is (audit M-5).
+  const maxPerWeek =
+    a.fewer && s.max_per_week > 1 ? Math.max(1, Math.floor(s.max_per_week / 2)) : s.max_per_week;
   await ctx.db.query(
     `update buddy_settings
         set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4, paused_until = $5,
@@ -949,10 +992,7 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
         [undo.new_id, learnerId],
       );
     case 'unretract_memory':
-      return exists(
-        `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'retracted'`,
-        [undo.memory_id, learnerId],
-      );
+      return unretractAllowed(db, learnerId, undo.memory_id);
     case 'restore_level':
       return exists(
         `select 1 from learners where id = $1 and level = $2 and grade is not distinct from $3`,
@@ -990,6 +1030,25 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
         learnerId,
       ]);
   }
+}
+
+/**
+ * A forgotten memory comes back only while it is still retracted, nothing active says the
+ * same meanwhile, and there is room (the same dedupe and cap as remember — p2-J-memory-F7).
+ */
+async function unretractAllowed(db: Db, learnerId: string, memoryId: string): Promise<boolean> {
+  const m = await db.maybeOne<{ statement: string }>(
+    `select statement from buddy_memories where id = $1 and learner_id = $2 and status = 'retracted'`,
+    [memoryId, learnerId],
+  );
+  if (!m) return false;
+  const active = await db.query<{ statement: string }>(
+    `select statement from buddy_memories where learner_id = $1 and status = 'active'`,
+    [learnerId],
+  );
+  if (active.length >= MAX_ACTIVE_MEMORIES) return false;
+  const key = normalizeForMatch(m.statement);
+  return !active.some((a) => normalizeForMatch(a.statement) === key);
 }
 
 /**
@@ -1048,6 +1107,7 @@ export async function runUndo(
       return true;
     }
     case 'unretract_memory': {
+      if (!(await unretractAllowed(db, learnerId, undo.memory_id))) return false;
       const r = await db.query(
         `update buddy_memories set status = 'active', closed_at = null, version = version + 1
           where id = $1 and learner_id = $2 and status = 'retracted' returning id`,
@@ -1106,6 +1166,29 @@ export async function runUndo(
         daysBetween(localParts(now, settings.timezone).date, undo.due_date) >= 0
       ) {
         await scheduleExamWakeups(db, learnerId, undo.goal_id, undo.due_date, settings, now);
+      }
+      for (const st of undo.steps ?? []) {
+        const [step] = await db.query<{
+          id: string;
+          version: number;
+          agreed: boolean;
+          planned_date: string | null;
+          planned_time: string | null;
+        }>(
+          `update buddy_steps set state = $3, finished_at = null, version = version + 1
+            where id = $1 and learner_id = $2 and state = 'cancelled' and version = $4
+            returning id, version, agreed, planned_date, planned_time`,
+          [st.id, learnerId, st.state, st.expect_version],
+        );
+        // Her agreed reminder comes back with it, if its time is still ahead.
+        if (step?.agreed && step.planned_date) {
+          const when = zonedToInstant(
+            step.planned_date,
+            step.planned_time ?? settings.preferred_start,
+            settings.timezone,
+          );
+          if (when.getTime() > now.getTime()) await scheduleStepReminder(db, learnerId, step, when);
+        }
       }
       return true;
     }
