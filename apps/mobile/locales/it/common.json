@@ -54,5 +54,10 @@
   },
   "session": {
     "expired": "La sessione è terminata. Accedi di nuovo: ciò che non era ancora stato inviato è ancora qui."
+  },
+  "deleting": {
+    "title": "Il tuo account è in fase di eliminazione",
+    "body": "Di solito ci vogliono solo pochi minuti. Dopo, tutto ciò che LearnBuddy ha salvato su di te sarà cancellato. Non si può più modificare nulla.",
+    "sign_out": "Esci"
   }
 }
