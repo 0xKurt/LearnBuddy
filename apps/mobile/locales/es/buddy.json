@@ -66,7 +66,11 @@
     "pages_retake_one": "Hacer otra foto",
     "pages_retake_other": "Fotografiar de nuevo estas páginas",
     "pages_ok": "Así está bien",
-    "failed_title_named": "No pude leer «{{title}}»"
+    "failed_title_named": "No pude leer «{{title}}»",
+    "processing_body_practice": "Después hago ejercicios con ella enseguida. Mientras tanto puedes cerrar la app.",
+    "next_title": "Lo siguiente: {{title}}",
+    "next_body_exam_one": "{{count}} ejercicio · unos {{minutes}} min · examen {{when}}",
+    "next_body_exam_other": "{{count}} ejercicios · unos {{minutes}} min · examen {{when}}"
   },
   "when": {
     "today": "hoy",
@@ -81,17 +85,27 @@
     "optin_body": "Por ejemplo, justo antes de un examen o cuando tengas ejercicios preparados. Como mucho una vez al día y nunca por la noche.",
     "optin_yes": "Sí, claro",
     "optin_no": "Mejor no",
-    "optin_minor_body": "Esto tienen que permitirlo tus padres.",
+    "optin_minor_body": "Esto lo permiten tus padres con su PIN.",
     "optin_minor_cta": "Preguntar a mis padres",
     "outcome_title": "¿Qué tal te fue en “{{title}}”?",
     "outcome_good": "Bien",
     "outcome_ok": "Más o menos",
-    "outcome_hard": "Difícil"
+    "outcome_hard": "Difícil",
+    "optin_body_rules_one": "Por ejemplo, justo antes de un examen o cuando tengas ejercicios preparados. Como mucho una vez al día y nunca después de las {{time}}.",
+    "optin_body_rules_other": "Por ejemplo, justo antes de un examen o cuando tengas ejercicios preparados. Como mucho {{count}} veces al día y nunca después de las {{time}}.",
+    "optin_parent": "Para los padres: permitís que Buddy escriba a {{name}} al móvil. {{rules}} Se puede cambiar en cualquier momento en los ajustes.",
+    "rules_short_one": "como mucho una vez al día, nunca después de las {{time}}",
+    "rules_short_other": "como mucho {{count}} veces al día, nunca después de las {{time}}",
+    "rules_settings": "como está en los ajustes",
+    "optin_done": "Permitido: ahora también te escribo al móvil – {{rules}}. Puedes cambiarlo en los ajustes.",
+    "optin_done_minor": "Permitido: Buddy ahora también escribe a {{name}} al móvil – {{rules}}. Se puede cambiar en los ajustes.",
+    "optin_done_no_device": "Permitido. Pero este móvil no se ha podido registrar para notificaciones: los mensajes de Buddy estarán aquí en la app."
   },
   "done": {
     "undo": "Deshacer",
     "undo_label": "Deshacer: {{what}}",
-    "undone": "deshecho"
+    "undone": "deshecho",
+    "undo_request_material": "No hace falta foto"
   },
   "next": {
     "line": "{{title}} · {{when}}"
@@ -110,7 +124,9 @@
       "invalid": "Buddy se ha liado",
       "stale": "Sin respuesta: demasiado a la vez",
       "internal": "Sin respuesta: algo ha fallado"
-    }
+    },
+    "today": "Hoy",
+    "yesterday": "Ayer"
   },
   "delivery": {
     "scheduled": "llegará {{when}}",
@@ -156,7 +172,7 @@
     "update_step_skipped": "Saltado: {{title}}",
     "update_step_cancelled": "Cancelado: {{title}}",
     "mark_step_done": "Hecho: {{title}}",
-    "request_material": "Foto pedida: {{title}}",
+    "request_material": "Espero tu foto: {{title}}",
     "set_contact_pause": "Sin mensajes hasta el {{date}} inclusive",
     "set_contact": "Mensajes solo de {{from}} a {{to}}, como máximo {{count}} por semana",
     "schedule_check": "Vuelvo a pasarme {{when}}",
@@ -164,7 +180,8 @@
     "plan_step_agreed_in_app": "Acordado: {{title}} {{when}} – aparece aquí en la app (los mensajes al móvil están desactivados)",
     "open_area": "Mostrado: {{what}}",
     "set_contact_quiet": "Mensajes solo de {{from}} a {{to}}, nunca después de las {{quiet}}, como máximo {{count}} por semana",
-    "set_contact_days": "nunca estos días: {{days}}"
+    "set_contact_days": "nunca estos días: {{days}}",
+    "request_material_undone": "No hace falta foto: {{title}}"
   },
   "intro": {
     "title": "Soy Buddy.",
@@ -181,7 +198,6 @@
     "vocab": "Vocabulario",
     "test_message": "Hazme un examen de prueba para «{{title}}».",
     "exam_short": "Examen",
-    "test": "Examen de prueba",
     "speak": "Pronunciación"
   },
   "area": {
@@ -206,7 +222,8 @@
     "slow": "Está tardando más – la respuesta aparecerá en el chat.",
     "end": "Terminar",
     "speak": "Hablar",
-    "interrupt": "Interrumpir y hablar"
+    "interrupt": "Interrumpir y hablar",
+    "short": "Hablar"
   },
   "a11y": {
     "reply": "Buddy: {{text}}"

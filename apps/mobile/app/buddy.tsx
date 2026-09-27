@@ -3,8 +3,11 @@
 // undo. Starting something is a tap on a suggestion, the camera, or just
 // saying it. No lists, no menus to learn. docs/architecture.md §Home.
 // Taps are direct API calls (no model); only free text goes to Buddy.
-// Voice mode (headphones switch next to the menu): Buddy's reply to what she
+// Voice mode (speaker switch next to the menu): Buddy's reply to what she
 // just sent is read aloud, and the mic is the composer's main control.
+// At most one card on top and one violet button; everything else Buddy asks in
+// the conversation, and her own last message never scrolls away (lib/homeLayout.ts,
+// user feedback #6).
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
@@ -23,7 +26,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
-import { DecisionCard } from '../components/buddy/DecisionCard.js';
+import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
 import { NowCard } from '../components/buddy/NowCard.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
@@ -46,6 +49,7 @@ import { VoiceModeToggle } from '../components/voice/VoiceModeToggle.js';
 import { announce } from '../lib/announce.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { requestAdmin } from '../lib/adminFlow.js';
+import { followTarget, homeLayout } from '../lib/homeLayout.js';
 import { ApiError, newId } from '../lib/api/client.js';
 import {
   acceptMissingPages,
@@ -118,6 +122,21 @@ export default function BuddyScreen() {
     };
     // Only when the page in question changes.
   }, [missingPage]);
+  const readingId =
+    home.data?.now?.type === 'material_processing' ? home.data.now.material_id : null;
+  useEffect(() => {
+    if (!readingId) {
+      setReadingThumb(null);
+      return;
+    }
+    let alive = true;
+    void drafts.sentPage(readingId, 1).then((uri) => {
+      if (alive) setReadingThumb(uri);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [readingId]);
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   /** Buddy's reply while it is being written (an answer that changes nothing). */
   const [live, setLive] = useState<string | null>(null);
@@ -125,6 +144,21 @@ export default function BuddyScreen() {
   const [topic, setTopic] = useState<TopicKind | null>(null);
   const [choice, setChoice] = useState<'homework' | 'vocab' | null>(null);
   const scroll = useRef<ScrollView>(null);
+  /** The conversation's size, its box, and where her own last message starts in it. */
+  const threadBox = useRef({ content: 0, view: 0, convY: 0, mineY: null as number | null });
+  const hasMine = useRef(false);
+  /** Scrolls the conversation to where it stands (lib/homeLayout.ts followTarget). */
+  function follow(): void {
+    const b = threadBox.current;
+    const mine = hasMine.current && b.mineY !== null ? b.convY + b.mineY : null;
+    scroll.current?.scrollTo({
+      y: followTarget(b.content, b.view, mine),
+      animated: followEnd.current,
+    });
+    followEnd.current = false;
+  }
+  /** The photo of the sheet being read, while it is on the phone (it arrived). */
+  const [readingThumb, setReadingThumb] = useState<string | null>(null);
   // After sending, follow the conversation to its end once the new content has rendered.
   const followEnd = useRef(false);
   const voiceOn = useVoiceMode((s) => s.on);
@@ -226,15 +260,49 @@ export default function BuddyScreen() {
     }
   }
 
+  /** "Höchstens einmal am Tag, nie nach 20:00 Uhr" from the stored rules. */
+  function rulesShort(decision: OptInDecision | null): string {
+    const r = decision?.rules;
+    if (!r || r.max_per_day < 1) return t('buddy:decision.rules_settings');
+    return t('buddy:decision.rules_short', { count: r.max_per_day, time: r.quiet_start });
+  }
+
   async function enableContact(asAdult: boolean) {
+    const name = home.data?.learner.name ?? '';
+    const decision = home.data?.decision?.type === 'contact_opt_in' ? home.data.decision : null;
     try {
-      if (asAdult && !(await requestAdmin('contact'))) return;
+      // The parents see what they allow (user feedback #4): the rules, not only "Buddy may".
+      if (
+        asAdult &&
+        !(await requestAdmin(
+          'contact',
+          t('buddy:decision.optin_parent', {
+            name,
+            rules: decision ? optInRules(t, decision) : t('buddy:decision.optin_body'),
+          }),
+        ))
+      )
+        return;
+      let registered = false;
+      let enabled = false;
       await act(async () => {
         const next = await answerContactOptIn(true);
+        enabled = next.system.contact_enabled;
         // Ask for notification permission only now, when it has a purpose.
-        await registerDeviceForPush().catch(() => false);
+        if (enabled) registered = await registerDeviceForPush().catch(() => false);
         return next;
       });
+      // … and afterwards it is confirmed, with what was allowed.
+      if (enabled) {
+        const rules = rulesShort(decision);
+        toast.show(
+          !registered
+            ? t('buddy:decision.optin_done_no_device')
+            : asAdult
+              ? t('buddy:decision.optin_done_minor', { name, rules })
+              : t('buddy:decision.optin_done', { rules }),
+        );
+      }
     } finally {
       // The PIN was for this one step, also when it failed (docs/privacy.md §PIN gate).
       if (asAdult) clearAdminToken();
@@ -249,19 +317,17 @@ export default function BuddyScreen() {
   function orbitItems(next: BuddyHome['next']): OrbitItem[] {
     const exam = next.find((i) => i.kind === 'exam');
     return [
-      exam
-        ? {
-            key: 'test',
-            icon: 'check',
-            label: t('buddy:suggest.test'),
-            onPress: () => void send(t('buddy:suggest.test_message', { title: exam.title })),
-          }
-        : {
-            key: 'exam',
-            icon: 'clock',
-            label: t('buddy:suggest.exam_short'),
-            onPress: () => void send(t('buddy:suggest.exam')),
-          },
+      // Always "Arbeit" where she looks for it (user feedback #17); with a test planned it
+      // prepares her for that one.
+      {
+        key: 'exam',
+        icon: 'clock',
+        label: t('buddy:suggest.exam_short'),
+        onPress: () =>
+          void send(
+            exam ? t('buddy:suggest.test_message', { title: exam.title }) : t('buddy:suggest.exam'),
+          ),
+      },
       {
         key: 'homework',
         icon: 'pencil',
@@ -314,7 +380,23 @@ export default function BuddyScreen() {
   }
 
   const h = home.data;
+  const layout = homeLayout(h);
+  const decisionCard = h.decision ? (
+    <DecisionCard
+      key="decision"
+      decision={h.decision}
+      inline={layout.decisionInline}
+      busy={busy}
+      onOptIn={(enable) =>
+        enable ? void enableContact(false) : void act(() => answerContactOptIn(false))
+      }
+      onAdultOptIn={() => void enableContact(true)}
+      onOutcome={(goalId, outcome) => void act(() => reportOutcome(goalId, outcome))}
+    />
+  ) : null;
   // What Buddy tells at the end of the conversation, with its buttons: nothing on top moves.
+  // The violet button belongs to the card on top when there is one.
+  const quiet = layout.top ? 'soft' : 'primary';
   const shownDraft = draft ?? letGo;
   const missing = h.notice?.type === 'pages_missing' ? h.notice : null;
   const notices = [
@@ -333,6 +415,7 @@ export default function BuddyScreen() {
           <>
             <Btn
               size="sm"
+              variant={quiet}
               onPress={() => router.push({ pathname: '/capture', params: { resume: '1' } })}
             >
               {t('capture:draft.resume')}
@@ -395,6 +478,7 @@ export default function BuddyScreen() {
         {missing.pages.some((p) => p.problem !== 'not_material') ? (
           <Btn
             size="sm"
+            variant={quiet}
             disabled={busy}
             onPress={() =>
               router.push({
@@ -428,6 +512,11 @@ export default function BuddyScreen() {
         </Btn>
       </NoticeBubble>
     ) : null,
+    // The open question while another card is on top, and "Buddy is working" said once.
+    layout.decisionInline ? decisionCard : null,
+    layout.working === 'thread' && h.working ? (
+      <WorkingNote key="working" what={h.working} />
+    ) : null,
   ].filter((node) => node !== null);
   // The next test in one line; everything else Buddy says in the conversation.
   const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
@@ -438,6 +527,7 @@ export default function BuddyScreen() {
       ? { text: pending.text }
       : null;
 
+  hasMine.current = shownPending !== null || messages.some((m) => m.role === 'learner');
   // Once there is a conversation, it gets the room; the ring shrinks to a row.
   const talking = messages.length > 0 || shownPending !== null || notices.length > 0;
   const top = [
@@ -451,10 +541,12 @@ export default function BuddyScreen() {
         {t('buddy:system.scheduler_stale')}
       </Banner>
     ) : null,
-    h.now ? (
+    layout.top === 'now' && h.now ? (
       <NowCard
         key="now"
         card={h.now}
+        thumb={readingThumb}
+        preparing={layout.working === 'card'}
         busy={busy}
         onResume={(id) => router.push(`/practice/${id}`)}
         onStart={(stepId) =>
@@ -483,20 +575,7 @@ export default function BuddyScreen() {
         }
       />
     ) : null,
-    h.working ? <WorkingNote key="working" what={h.working} /> : null,
-    h.decision ? (
-      <DecisionCard
-        key="decision"
-        decision={h.decision}
-        compact={h.now !== null}
-        busy={busy}
-        onOptIn={(enable) =>
-          enable ? void enableContact(false) : void act(() => answerContactOptIn(false))
-        }
-        onAdultOptIn={() => void enableContact(true)}
-        onOutcome={(goalId, outcome) => void act(() => reportOutcome(goalId, outcome))}
-      />
-    ) : null,
+    layout.top === 'decision' ? decisionCard : null,
   ].filter((node) => node !== null);
   // The one headline: her name gets the full width (long names wrap, never overlap).
   const greeting = (
@@ -549,11 +628,17 @@ export default function BuddyScreen() {
           }}
         >
           {/* Talking with Buddy hands-free (conversation mode). */}
-          <CircleBtn
+          {/* With its word, so a 12-year-old reads it as "talk" (user feedback #18). */}
+          <Btn
+            size="sm"
+            pill
+            variant="outline"
             icon="headphones"
             onPress={() => router.push('/talk')}
             accessibilityLabel={t('buddy:talk.open')}
-          />
+          >
+            {t('buddy:talk.short')}
+          </Btn>
           <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {/* Voice mode: Buddy reads replies aloud and the mic leads (audit M-77). */}
@@ -596,10 +681,14 @@ export default function BuddyScreen() {
                 gap: 10,
               }}
               keyboardShouldPersistTaps="handled"
-              // A conversation: always at its newest message.
-              onContentSizeChange={() => {
-                scroll.current?.scrollToEnd({ animated: followEnd.current });
-                followEnd.current = false;
+              // A conversation: at its newest message, but her own last message stays in view.
+              onLayout={(e) => {
+                threadBox.current.view = e.nativeEvent.layout.height;
+                follow();
+              }}
+              onContentSizeChange={(_, height) => {
+                threadBox.current.content = height;
+                follow();
               }}
               refreshControl={
                 <RefreshControl
@@ -613,20 +702,31 @@ export default function BuddyScreen() {
                   {t('buddy:thread.load_more')}
                 </Btn>
               ) : null}
-              <Conversation
-                contactOn={h.system.contact_enabled}
-                messages={messages}
-                pending={shownPending}
-                notices={notices}
-                live={live}
-                busy={busy || pending !== null}
-                showActions
-                onUndo={(id) => void act(() => undoAction(id))}
-                onOption={(messageId, option) => void send(option, newId(), messageId)}
-                onResend={(m: MessageView) =>
-                  void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
-                }
-              />
+              <View
+                onLayout={(e) => {
+                  threadBox.current.convY = e.nativeEvent.layout.y;
+                  follow();
+                }}
+              >
+                <Conversation
+                  onLastMineLayout={(y) => {
+                    threadBox.current.mineY = y;
+                    follow();
+                  }}
+                  contactOn={h.system.contact_enabled}
+                  messages={messages}
+                  pending={shownPending}
+                  notices={notices}
+                  live={live}
+                  busy={busy || pending !== null}
+                  showActions
+                  onUndo={(id) => void act(() => undoAction(id))}
+                  onOption={(messageId, option) => void send(option, newId(), messageId)}
+                  onResend={(m: MessageView) =>
+                    void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
+                  }
+                />
+              </View>
             </ScrollView>
           </>
         ) : (

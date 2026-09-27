@@ -73,7 +73,7 @@
   "adult": {
     "title_minor": "Para los padres",
     "title_self": "Tu cuenta",
-    "intro_minor": "Aquí los padres gestionan la cuenta. Algunas cosas solo se pueden hacer con el PIN.",
+    "intro_minor": "Aquí los padres gestionan la cuenta. Solo se abre con su PIN.",
     "intro_self": "Tus datos y tu inicio de sesión.",
     "needs_pin": "Solo se puede con el PIN de los padres.",
     "pin": {
@@ -165,7 +165,8 @@
       "name": "Nombre",
       "save": "Guardar",
       "saved": "Perfil guardado."
-    }
+    },
+    "forgot_intro": "Ponéis un PIN nuevo con la contraseña de la cuenta. Todo lo demás de aquí sigue cerrado hasta entonces."
   },
   "status": {
     "title": "¿Funciona todo?",

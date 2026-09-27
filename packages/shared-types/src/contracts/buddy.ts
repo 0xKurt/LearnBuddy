@@ -176,6 +176,17 @@ export const PracticeResultBrief = z.object({
 });
 export type PracticeResultBrief = z.infer<typeof PracticeResultBrief>;
 
+/** Practice Buddy has prepared for today, ready to start. */
+export const PreparedPractice = z.object({
+  step_id: Uuid,
+  title: z.string(),
+  question_count: z.number().int(),
+  est_minutes: z.number().int(),
+  focus_topics: z.array(z.string()),
+  goal: GoalBrief.nullable(),
+});
+export type PreparedPractice = z.infer<typeof PreparedPractice>;
+
 export const NowCard = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('resume_practice'),
@@ -185,15 +196,7 @@ export const NowCard = z.discriminatedUnion('type', [
     title: z.string(),
     remaining: z.number().int(),
   }),
-  z.object({
-    type: z.literal('practice_ready'),
-    step_id: Uuid,
-    title: z.string(),
-    question_count: z.number().int(),
-    est_minutes: z.number().int(),
-    focus_topics: z.array(z.string()),
-    goal: GoalBrief.nullable(),
-  }),
+  z.object({ type: z.literal('practice_ready') }).extend(PreparedPractice.shape),
   z.object({
     type: z.literal('capture_needed'),
     step_id: Uuid.nullable(),
@@ -223,6 +226,11 @@ export const NowCard = z.discriminatedUnion('type', [
     /** help: homework — solved by herself, no hit rate (docs/UX-PRINCIPLES.md). */
     mode: z.enum(['practice', 'test', 'help', 'explain']).default('practice'),
     result: PracticeResultBrief,
+    /**
+     * What is ready next, so the result never hides prepared practice (user feedback #2).
+     * An unreadable one reads as none.
+     */
+    next: PreparedPractice.nullable().catch(null),
   }),
 ]);
 export type NowCard = z.infer<typeof NowCard>;
@@ -246,8 +254,16 @@ export type HomeNotice = z.infer<typeof HomeNotice>;
 export const Decision = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('contact_opt_in'),
-    /** False for minors: an adult enables contact in the settings (PIN). */
+    /** False for minors: an adult enables contact with the PIN. */
     can_enable_here: z.boolean(),
+    /**
+     * What would be allowed, from the stored rules, so the card (and the parents' PIN)
+     * says exactly that (user feedback #4). Null from an older API.
+     */
+    rules: z
+      .object({ max_per_day: z.number().int(), quiet_start: LocalTime })
+      .nullable()
+      .catch(null),
   }),
   z.object({ type: z.literal('how_did_it_go'), goal: GoalBrief }),
 ]);

@@ -11,7 +11,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { PinPad } from '../components/lb/PinPad.js';
 import { Screen } from '../components/lb/Screen.js';
 import { clearAdminToken } from '../lib/admin.js';
-import { finishAdmin, pendingAdminPurpose } from '../lib/adminFlow.js';
+import { finishAdmin, pendingAdminDetail, pendingAdminPurpose } from '../lib/adminFlow.js';
 import { useAnnounce } from '../lib/announce.js';
 import { ApiError } from '../lib/api/client.js';
 import { openAdminSession } from '../lib/api/endpoints.js';
@@ -29,6 +29,7 @@ export default function Pin() {
   const inFlight = useRef(false);
   // Fixed when the screen opens: what the parents are asked to approve.
   const [purpose] = useState(pendingAdminPurpose);
+  const [detail] = useState(pendingAdminDetail);
 
   // Leaving the screen any other way counts as "cancelled".
   useEffect(
@@ -88,7 +89,7 @@ export default function Pin() {
             {t('pin.title')}
           </Text>
           <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 360 }]}>
-            {purpose ? t(`pin.purpose.${purpose}`) : t('pin.body')}
+            {detail ?? (purpose ? t(`pin.purpose.${purpose}`) : t('pin.body'))}
           </Text>
         </View>
         {error ? (
@@ -108,6 +109,22 @@ export default function Pin() {
         <View style={{ marginTop: 4 }}>
           <PinPad onComplete={(pin) => void submit(pin)} resetKey={attempt} disabled={busy} />
         </View>
+        {/* Opening the parents' area: a forgotten PIN is set anew with the account's
+            password there (components/settings/PinCard.tsx). */}
+        {purpose === 'parents' ? (
+          <Btn
+            variant="ghost"
+            pill
+            center
+            onPress={() => {
+              done.current = true;
+              finishAdmin(false, true);
+              router.back();
+            }}
+          >
+            {t('pin.forgot')}
+          </Btn>
+        ) : null}
         <Btn variant="ghost" pill center onPress={() => router.back()}>
           {t('pin.cancel')}
         </Btn>

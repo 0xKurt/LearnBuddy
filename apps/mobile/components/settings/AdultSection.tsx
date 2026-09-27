@@ -8,13 +8,18 @@
 // one confirming is the adult. The export is handed over as a file
 // (lib/exportFile.ts). Deletion is scheduled with a 7-day hold; the date shown
 // is the API's.
+// For a minor's profile the area itself opens only with the parents' PIN (the
+// e-mail and sign-out are theirs; lib/parentsGate.ts), and closes when the app
+// goes to the background.
 
 import type { LearnerView, MeResponse } from '@learnbuddy/shared-types/contracts';
-import { useRef, useState } from 'react';
-import { Text, View, type TextInput } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { adminToken, clearAdminToken } from '../../lib/admin.js';
+import { requestAdmin, takeForgotPin } from '../../lib/adminFlow.js';
+import { openParents, type ParentsView } from '../../lib/parentsGate.js';
 import {
   cancelDeletion,
   exportAccount,
@@ -63,7 +68,15 @@ function setDeletionDue(due: string | null): void {
 }
 
 export function AdultSection({ account, learner, onInputFocus }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<ParentsView | null>(null);
+  const [opening, setOpening] = useState(false);
+  // The phone may go back to the child: the area closes with the app (like the PIN).
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'background') setOpen(null);
+    });
+    return () => sub.remove();
+  }, []);
   const { t, i18n } = useTranslation(['settings', 'common']);
   const [busy, setBusy] = useState<Task | null>(null);
   const inFlight = useRef(false);
@@ -159,6 +172,29 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
       void queryClient.invalidateQueries({ queryKey: keys.me });
     });
 
+  /** Opening asks for the parents' PIN on a minor's profile (lib/parentsGate.ts). */
+  async function toggle() {
+    if (open) {
+      setOpen(null);
+      return;
+    }
+    setOpening(true);
+    try {
+      setOpen(
+        await openParents(
+          { minor, pinSet },
+          {
+            request: () => requestAdmin('parents'),
+            takeForgot: takeForgotPin,
+            clear: clearAdminToken,
+          },
+        ),
+      );
+    } finally {
+      setOpening(false);
+    }
+  }
+
   const askSignOut = () => {
     setUnsent(false);
     setSignOutOpen(true);
@@ -193,10 +229,18 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         icon="shield"
       >
         {/* Closed by default: the learner's settings stay short; parents open it when needed. */}
-        <Btn pill variant="outline" onPress={() => setOpen((v) => !v)}>
+        <Btn pill variant="outline" disabled={opening} onPress={() => void toggle()}>
           {open ? t('settings:adult.close') : t('settings:adult.open')}
         </Btn>
-        {open ? (
+        {open === 'pin_only' ? (
+          <>
+            <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>
+              {t('settings:adult.forgot_intro')}
+            </Text>
+            <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
+          </>
+        ) : null}
+        {open === 'all' ? (
           <>
             {minor ? (
               <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />

@@ -91,3 +91,27 @@ export function formatIsoWeekdays(days: readonly number[], locale: string): stri
     .map((d) => formatWeekday(`2024-01-0${d}`, locale))
     .join(', ');
 }
+
+/** YYYY-MM-DD of an instant on the device's calendar. */
+export function localDateOf(iso: string | Date): string {
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/**
+ * Where a new day starts in the conversation (user feedback #22): for each message the
+ * device-local day to show above it, or null. A day is shown where it changes, and above
+ * the first message when that is not from today — so yesterday's chat reads as
+ * yesterday's. Only the day, never how many days passed (CLAUDE.md rule 6).
+ */
+export function dayBreaks(createdAt: readonly string[], now: Date = new Date()): (string | null)[] {
+  const today = localDateOf(now);
+  let previous: string | null = null;
+  return createdAt.map((iso, i) => {
+    const day = localDateOf(iso);
+    const show = i === 0 ? day !== today : day !== previous;
+    previous = day;
+    return show ? day : null;
+  });
+}

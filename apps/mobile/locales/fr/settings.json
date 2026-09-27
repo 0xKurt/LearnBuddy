@@ -73,7 +73,7 @@
   "adult": {
     "title_minor": "Pour les parents",
     "title_self": "Ton compte",
-    "intro_minor": "Ici, les parents gèrent le compte. Certaines choses nécessitent le code PIN.",
+    "intro_minor": "C'est ici que les parents gèrent le compte. Cet espace s'ouvre seulement avec leur code PIN.",
     "intro_self": "Tes données et ta connexion.",
     "needs_pin": "Nécessite le code PIN des parents.",
     "pin": {
@@ -165,7 +165,8 @@
       "name": "Nom",
       "save": "Enregistrer",
       "saved": "Profil enregistré."
-    }
+    },
+    "forgot_intro": "Vous définissez un nouveau code PIN avec le mot de passe du compte. Tout le reste ici reste fermé d'ici là."
   },
   "status": {
     "title": "Tout fonctionne?",

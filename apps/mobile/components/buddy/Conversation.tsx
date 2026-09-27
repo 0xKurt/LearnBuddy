@@ -1,7 +1,8 @@
 // The latest part of the conversation. Buddy's messages that were also
 // sent outside the app show what really happened to them. What Buddy did
 // with a message stands right under it, with "Rückgängig" while that still
-// applies — there is no separate list of it on the home.
+// applies — there is no separate list of it on the home. Where a new day starts
+// a quiet line names it (never how many days passed).
 
 import type { ReactNode } from 'react';
 import { MathText } from '../math/MathText.js';
@@ -21,6 +22,7 @@ import { AreaCard } from './AreaCard.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { deliveryText, describeAction } from './describe.js';
 import { i18n } from '../../lib/i18n/index.js';
+import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
 
 type Props = {
   messages: MessageView[];
@@ -41,6 +43,8 @@ type Props = {
   onResend: (message: MessageView) => void;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
+  /** Where her own last message starts (y within this view), so it is never scrolled away. */
+  onLastMineLayout?: (y: number) => void;
   /** Undo is locked while this is true (default: busy); history locks only while undoing. */
   undoBusy?: boolean;
 };
@@ -56,24 +60,38 @@ export function Conversation({
   onOption,
   onResend,
   onUndo,
+  onLastMineLayout,
   undoBusy,
 }: Props) {
   const { t } = useTranslation('buddy');
   // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
   const words = useSpokenWords();
   const last = messages[messages.length - 1];
+  const breaks = dayBreaks(messages.map((m) => m.created_at));
+  // Her last message: the one being sent, else the last she sent.
+  const lastMine = pending ? null : [...messages].reverse().find((m) => m.role === 'learner');
   const thinking =
     pending !== null || messages.some((m) => m.role === 'learner' && m.status === 'processing');
   return (
     <View style={{ gap: 10 }}>
-      {messages.map((m) => {
+      {messages.map((m, index) => {
         const mine = m.role === 'learner';
+        const day = breaks[index] ?? null;
         // What Buddy did (✓ list); offers are not done yet, they have their own card.
         const done = m.actions.filter(
           (a) => a.summary.tool !== 'offer_learning' && a.summary.tool !== 'open_area',
         );
         return (
-          <View key={m.id} style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}>
+          <View
+            key={m.id}
+            style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}
+            onLayout={
+              m === lastMine && onLastMineLayout
+                ? (e) => onLastMineLayout(e.nativeEvent.layout.y)
+                : undefined
+            }
+          >
+            {day ? <DayLine day={day} /> : null}
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
               {mine ? null : <BuddyOrb size={26} />}
               <View
@@ -143,7 +161,11 @@ export function Conversation({
                           },
                         ]}
                       >
-                        {a.status === 'undone' ? `${what} – ${t('done.undone')}` : `✓ ${what}`}
+                        {a.status !== 'undone'
+                          ? `✓ ${what}`
+                          : a.summary.tool === 'request_material'
+                            ? t('action.request_material_undone', { title: a.summary.title })
+                            : `${what} – ${t('done.undone')}`}
                       </Text>
                       {onUndo && a.undoable && a.status !== 'undone' ? (
                         <Btn
@@ -153,7 +175,10 @@ export function Conversation({
                           disabled={undoBusy ?? busy}
                           accessibilityLabel={t('done.undo_label', { what })}
                         >
-                          {t('done.undo')}
+                          {/* Taking back a request for a photo: "no photo needed" (#14). */}
+                          {a.summary.tool === 'request_material'
+                            ? t('done.undo_request_material')
+                            : t('done.undo')}
                         </Btn>
                       ) : null}
                     </View>
@@ -195,7 +220,10 @@ export function Conversation({
       })}
       {notices}
       {pending ? (
-        <View style={{ alignItems: 'flex-end' }}>
+        <View
+          style={{ alignItems: 'flex-end' }}
+          onLayout={onLastMineLayout ? (e) => onLastMineLayout(e.nativeEvent.layout.y) : undefined}
+        >
           <View
             style={{
               maxWidth: '86%',
@@ -241,6 +269,27 @@ export function Conversation({
         </View>
       ) : null}
     </View>
+  );
+}
+
+/** The day a part of the conversation is from: "Heute", "Gestern", or "Montag, 28. September". */
+function DayLine({ day }: { day: string }) {
+  const { t, i18n: i } = useTranslation('buddy');
+  const now = new Date();
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const label =
+    day === localDateOf(now)
+      ? t('thread.today')
+      : day === localDateOf(yesterday)
+        ? t('thread.yesterday')
+        : formatDay(day, i.language);
+  return (
+    <Text
+      accessibilityRole="header"
+      style={[TYPE.small, { alignSelf: 'center', color: LB.ink2, fontSize: 12, marginVertical: 4 }]}
+    >
+      {label}
+    </Text>
   );
 }
 

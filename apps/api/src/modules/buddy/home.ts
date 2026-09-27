@@ -13,6 +13,7 @@ import type {
   HomeNotice,
   NowCard,
   OutreachView,
+  PreparedPractice,
   UpcomingItem,
 } from '@learnbuddy/shared-types/contracts';
 
@@ -125,6 +126,38 @@ function noticeOf(state: BuddyState): HomeNotice | null {
   };
 }
 
+type StepRow = BuddyState['steps'][number];
+
+/** Prepared practice for today ("Heute nicht" moved it away), the earliest test first. */
+function preparedOf(state: BuddyState, today: string): StepRow | undefined {
+  return state.steps
+    .filter(
+      (s) =>
+        s.kind === 'practice' &&
+        s.state === 'prepared' &&
+        (s.payload.item_ids?.length ?? 0) > 0 &&
+        // "Heute nicht" moved it to tomorrow: not on today's card.
+        (!s.planned_date || daysBetween(today, s.planned_date) <= 0),
+    )
+    .sort((a, b) => {
+      const ga = state.goals.find((g) => g.id === a.goal_id)?.due_date ?? '9999-12-31';
+      const gb = state.goals.find((g) => g.id === b.goal_id)?.due_date ?? '9999-12-31';
+      return ga < gb ? -1 : ga > gb ? 1 : 0;
+    })[0];
+}
+
+function preparedBrief(state: BuddyState, step: StepRow, today: string): PreparedPractice {
+  const goal = step.goal_id ? state.goals.find((g) => g.id === step.goal_id) : undefined;
+  return {
+    step_id: step.id,
+    title: step.title,
+    question_count: step.payload.item_ids?.length ?? 0,
+    est_minutes: step.payload.est_minutes ?? 10,
+    focus_topics: step.payload.focus_topics ?? [],
+    goal: goal ? goalBrief(goal, today) : null,
+  };
+}
+
 async function nowCardOf(
   deps: Deps,
   learnerId: string,
@@ -157,6 +190,9 @@ async function nowCardOf(
       s.finished_at &&
       now.getTime() - s.finished_at.getTime() < 30 * 60_000,
   );
+  // Today's prepared practice (the earliest test first). What was just finished is not it
+  // (its step is no longer 'prepared').
+  const prepared = preparedOf(state, today);
   if (justFinished) {
     return {
       type: 'practice_result',
@@ -168,34 +204,11 @@ async function nowCardOf(
         secure_topics: justFinished.secure_topics,
         shaky_topics: justFinished.shaky_topics,
       },
+      // The result never hides what is ready next (user feedback #2): the one card says both.
+      next: prepared ? preparedBrief(state, prepared, today) : null,
     };
   }
-  const prepared = state.steps
-    .filter(
-      (s) =>
-        s.kind === 'practice' &&
-        s.state === 'prepared' &&
-        (s.payload.item_ids?.length ?? 0) > 0 &&
-        // "Heute nicht" moved it to tomorrow: not on today's card.
-        (!s.planned_date || daysBetween(today, s.planned_date) <= 0),
-    )
-    .sort((a, b) => {
-      const ga = state.goals.find((g) => g.id === a.goal_id)?.due_date ?? '9999-12-31';
-      const gb = state.goals.find((g) => g.id === b.goal_id)?.due_date ?? '9999-12-31';
-      return ga < gb ? -1 : ga > gb ? 1 : 0;
-    })[0];
-  if (prepared) {
-    const goal = prepared.goal_id ? state.goals.find((g) => g.id === prepared.goal_id) : undefined;
-    return {
-      type: 'practice_ready',
-      step_id: prepared.id,
-      title: prepared.title,
-      question_count: prepared.payload.item_ids?.length ?? 0,
-      est_minutes: prepared.payload.est_minutes ?? 10,
-      focus_topics: prepared.payload.focus_topics ?? [],
-      goal: goal ? goalBrief(goal, today) : null,
-    };
-  }
+  if (prepared) return { type: 'practice_ready', ...preparedBrief(state, prepared, today) };
   if (open[0]) return resumeCard(open[0]);
   // The sheet being read now comes before an older failure (audit M-19).
   // Photos still on their way count only briefly: an upload the app gave up on is not
@@ -277,7 +290,11 @@ function decisionOf(
   const hidden = s.opt_in_prompt_hidden_until && s.opt_in_prompt_hidden_until > now;
   const somethingToFollow = state.totals.activeGoals > 0;
   if (!s.contact_enabled && !hidden && somethingToFollow) {
-    return { type: 'contact_opt_in', can_enable_here: !learner.isMinor };
+    return {
+      type: 'contact_opt_in',
+      can_enable_here: !learner.isMinor,
+      rules: { max_per_day: s.max_per_day, quiet_start: s.quiet_start },
+    };
   }
   return null;
 }

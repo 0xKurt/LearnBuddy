@@ -73,7 +73,7 @@
   "adult": {
     "title_minor": "Für Eltern",
     "title_self": "Dein Konto",
-    "intro_minor": "Hier regeln Eltern das Konto. Manches geht nur mit der PIN.",
+    "intro_minor": "Hier regeln Eltern das Konto. Öffnen geht nur mit ihrer PIN.",
     "intro_self": "Deine Daten und deine Anmeldung.",
     "needs_pin": "Geht nur mit der PIN der Eltern.",
     "pin": {
@@ -165,7 +165,8 @@
       "name": "Name",
       "save": "Speichern",
       "saved": "Profil gespeichert."
-    }
+    },
+    "forgot_intro": "Eine neue PIN legt ihr mit dem Passwort des Kontos fest. Alles andere hier bleibt bis dahin zu."
   },
   "status": {
     "title": "Läuft alles?",
