@@ -224,6 +224,29 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect((await l.api.get<{ status: string }>(`/materials/${id}`)).body.status).toBe('ready');
   });
 
+  it('quick answers go once she acted: "Foto machen" is gone after the photo was sent (live finding 8)', async () => {
+    env.llm.script('buddy_turn', {
+      json: {
+        reply: 'Hast du ein Arbeitsblatt dazu?',
+        options: ['Foto machen', 'Später fotografieren'],
+        actions: [],
+      },
+    });
+    await l.api.post('/buddy/messages', { client_message_id: uuid(), text: 'Mathe am Donnerstag' });
+    const last = (h: BuddyHome) => h.thread[h.thread.length - 1]!;
+    expect(last((await l.api.get<BuddyHome>('/buddy')).body).options).toEqual([
+      'Foto machen',
+      'Später fotografieren',
+    ]);
+    env.clock.minutes(1);
+    env.llm.script('extraction', readable());
+    env.llm.script('buddy_check', WAIT);
+    await upload(env, l);
+    const home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(last(home).text).toBe('Hast du ein Arbeitsblatt dazu?');
+    expect(last(home).options).toBeNull();
+  });
+
   it('reports unreadable photos, allows a bounded number of retries, and keeps photos only 7 days', async () => {
     env.llm.script('extraction', {
       json: {

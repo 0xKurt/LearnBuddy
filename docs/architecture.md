@@ -609,6 +609,10 @@ a row is `queued`/`processing`, a fresher view of the sheet from its own screen 
 list at once, and a home poll that no longer reports a reading refreshes a list that still shows
 one (`lib/api/libraryCache.ts`).
 
+**Quick answers belong to their moment** (live finding 8): a Buddy message's options
+("Foto machen / Später fotografieren") are sent with the thread only while she has not acted since
+— a material created or a practice started after the message removes them (`home.ts` threadOf).
+
 **Outages are not failures.** The Storage gateway tells an absent photo (`null`) from a provider
 failure (`StorageError`): a failed download retries the run like a retryable model error (backoff
 1, 2, 4 min); a failed existence check on submit answers 503 `storage_unavailable`, never

@@ -108,7 +108,6 @@
     "rules_settings": "come indicato nelle impostazioni",
     "optin_done": "Permesso: ora ti scrivo anche sul telefono – {{rules}}. Puoi cambiarlo nelle impostazioni.",
     "optin_done_minor": "Permesso: ora Buddy scrive anche a {{name}} sul telefono – {{rules}}. Si può cambiare nelle impostazioni.",
-    "optin_done_no_device": "Permesso. Però questo telefono non è stato registrato per le notifiche: i messaggi di Buddy saranno qui nell'app.",
     "optin_body_rules": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Mai dopo le {{time}}.",
     "rules_short": "mai dopo le {{time}}"
   },

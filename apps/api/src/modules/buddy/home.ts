@@ -593,6 +593,15 @@ async function threadOf(
     if (await needsAdult(deps, learner, a.undo, now)) adultOnly.add(a.id);
     if (await undoApplies(deps.db, learnerId, a.undo)) undoWorks.add(a.id);
   }
+  // Quick answers belong to their moment: once she acted since (sent a photo, started a
+  // practice), "Foto machen / Später fotografieren" are gone (live finding 8).
+  const acted = await deps.db.one<{ at: Date | null }>(
+    `select greatest(
+       (select max(created_at) from materials where learner_id = $1),
+       (select max(started_at) from practice_sessions where learner_id = $1)) as at`,
+    [learnerId],
+  );
+  const stale = (at: Date) => acted.at !== null && acted.at.getTime() > at.getTime();
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -602,7 +611,7 @@ async function threadOf(
       status: m.status,
       failure_code: m.failure_code,
       client_message_id: m.client_message_id,
-      options: m.ask?.options ?? null,
+      options: m.ask?.options && !stale(m.created_at) ? m.ask.options : null,
       reply_to_id: m.reply_to_id,
       outreach: o
         ? {

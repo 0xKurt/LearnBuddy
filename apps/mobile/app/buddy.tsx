@@ -388,15 +388,15 @@ export default function BuddyScreen() {
         if (enabled) registered = await registerDeviceForPush().catch(() => false);
         return next;
       });
-      // … and afterwards it is confirmed, with what was allowed.
-      if (enabled) {
+      // … and afterwards it is confirmed, with what was allowed. A phone that could not be set
+      // up for notifications is no toast over the chat (live finding 8): the card in the chat
+      // says what was allowed, and settings says calmly that this phone is not set up yet.
+      if (enabled && registered) {
         const rules = rulesShort(decision);
         toast.show(
-          !registered
-            ? t('buddy:decision.optin_done_no_device')
-            : asAdult
-              ? t('buddy:decision.optin_done_minor', { name, rules })
-              : t('buddy:decision.optin_done', { rules }),
+          asAdult
+            ? t('buddy:decision.optin_done_minor', { name, rules })
+            : t('buddy:decision.optin_done', { rules }),
         );
       }
     } finally {

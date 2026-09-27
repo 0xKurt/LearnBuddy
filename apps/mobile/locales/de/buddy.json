@@ -108,7 +108,6 @@
     "rules_settings": "so, wie es in den Einstellungen steht",
     "optin_done": "Erlaubt: Ich schreibe dir jetzt auch aufs Handy – {{rules}}. Ändern kannst du das in den Einstellungen.",
     "optin_done_minor": "Erlaubt: Buddy schreibt {{name}} jetzt auch aufs Handy – {{rules}}. Ändern geht in den Einstellungen.",
-    "optin_done_no_device": "Erlaubt. Dieses Handy konnte aber nicht für Mitteilungen angemeldet werden – Buddys Nachrichten stehen dann hier in der App.",
     "optin_body_rules": "Zum Beispiel kurz vor einer Arbeit oder wenn eine Übung bereitliegt. Nie nach {{time}} Uhr.",
     "rules_short": "nie nach {{time}} Uhr"
   },
