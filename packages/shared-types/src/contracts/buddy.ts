@@ -361,11 +361,23 @@ export const UpdateBuddySettingsRequest = z.object({
 });
 export type UpdateBuddySettingsRequest = z.infer<typeof UpdateBuddySettingsRequest>;
 
+/** Android notification channel the app creates and every push targets. */
+export const PUSH_CHANNEL_ID = 'buddy';
+
+/** A random id of this app install (not the hardware): push tokens are bound to it. */
+export const DeviceId = z.string().regex(/^[A-Za-z0-9-]{16,64}$/);
+
 export const RegisterPushTokenRequest = z.object({
   token: z.string().min(10).max(300),
   platform: z.enum(['ios', 'android']),
+  /** Missing only from older app builds. */
+  device_id: DeviceId.optional(),
 });
 export type RegisterPushTokenRequest = z.infer<typeof RegisterPushTokenRequest>;
+
+/** Claim (signed in) or release (signing out) this install's push binding. */
+export const PushDeviceRequest = z.object({ device_id: DeviceId });
+export type PushDeviceRequest = z.infer<typeof PushDeviceRequest>;
 
 export const OutreachOpenedRequest = z.object({
   response: z.enum(['start', 'later', 'not_now', 'dismissed']).nullable(),

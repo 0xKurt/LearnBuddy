@@ -50,7 +50,8 @@
     "summary": "Buddy te contacte entre {{start}} et {{end}}, au plus {{count}}× par semaine, jamais après {{quiet}}.",
     "tell_buddy": "Dis-le simplement à Buddy si tu veux du calme.",
     "more": "Modifier les horaires",
-    "less": "Afficher moins"
+    "less": "Afficher moins",
+    "device_elsewhere": "Les messages de Buddy arrivent en ce moment sur un autre appareil, pas sur ce téléphone."
   },
   "profile": {
     "title": "Ton profil",

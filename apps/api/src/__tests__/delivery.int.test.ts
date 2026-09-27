@@ -159,6 +159,100 @@ describe.skipIf(!dbReady)('background work and delivery', () => {
     env.clock.minutes(10);
   }
 
+  describe('one learner per device (M-65, D-6)', () => {
+    const DEVICE = 'install-3f9c2a7e-0b1d-4c55';
+    const tokenOf = (learnerId: string) =>
+      env.db.query<{ token: string; status: string; invalid_reason: string | null }>(
+        `select token, status, invalid_reason from push_tokens where learner_id = $1`,
+        [learnerId],
+      );
+    const release = (deviceId: string) =>
+      env.app.request('/v1/push-devices/release', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ device_id: deviceId }),
+      });
+
+    async function aOnSharedPhone() {
+      await enableContact(env, l.learnerId);
+      await l.api.post('/buddy/push-tokens', {
+        token: 'ExponentPushToken[shared-0001]',
+        platform: 'android',
+        device_id: DEVICE,
+      });
+      await seedExam(env, l.learnerId, { title: 'Mathearbeit', due: '2026-10-01', questions: 6 });
+      // A signs out offline: the release never reaches the server.
+      env.clock.minutes(10);
+    }
+
+    it('a sibling signing in on the phone stops the previous learner’s pushes to it', async () => {
+      await aOnSharedPhone();
+      const b = await onboard(env, { relation: 'child', name: 'Tom', birthDate: '2013-05-01' });
+      const claimed = await b.api.post<{ released: number }>('/push-devices/claim', {
+        device_id: DEVICE,
+      });
+      expect(claimed.status).toBe(200);
+      expect(claimed.body.released).toBe(1);
+      expect(await tokenOf(l.learnerId)).toEqual([
+        {
+          token: 'ExponentPushToken[shared-0001]',
+          status: 'invalid',
+          invalid_reason: 'device_switched',
+        },
+      ]);
+      // A's exam message is due: nothing goes to the phone B now uses.
+      env.clock.set('2026-09-28T13:00:00Z');
+      env.llm.script(
+        'buddy_check',
+        checkAnswer('Übung für Donnerstag', 'Ich habe eine kurze Übung vorbereitet.'),
+      );
+      await tick(env);
+      expect(env.push.attempts).toEqual([]);
+      const [out] = await outreachOf(env, l.learnerId);
+      expect(out?.status).not.toBe('accepted');
+    });
+
+    it('registering another learner’s token on the device deactivates the old one', async () => {
+      await aOnSharedPhone();
+      const b = await onboard(env, { relation: 'child', name: 'Tom', birthDate: '2013-05-01' });
+      await b.api.post('/buddy/push-tokens', {
+        token: 'ExponentPushToken[shared-0002]',
+        platform: 'android',
+        device_id: DEVICE,
+      });
+      expect((await tokenOf(l.learnerId))[0]).toMatchObject({
+        status: 'invalid',
+        invalid_reason: 'replaced_on_device',
+      });
+      expect((await tokenOf(b.learnerId))[0]?.status).toBe('active');
+      env.clock.set('2026-09-28T13:00:00Z');
+      env.llm.script(
+        'buddy_check',
+        checkAnswer('Übung für Donnerstag', 'Ich habe eine kurze Übung vorbereitet.'),
+      );
+      await tick(env);
+      expect(env.push.attempts.map((m) => m.to)).not.toContain('ExponentPushToken[shared-0001]');
+    });
+
+    it('claiming her own phone again keeps her token; a late release switches it off', async () => {
+      await aOnSharedPhone();
+      const own = await l.api.post<{ released: number }>('/push-devices/claim', {
+        device_id: DEVICE,
+      });
+      expect(own.body.released).toBe(0);
+      expect((await tokenOf(l.learnerId))[0]?.status).toBe('active');
+      // The retried release arrives later, without a session.
+      expect((await release(DEVICE)).status).toBe(200);
+      expect((await tokenOf(l.learnerId))[0]).toMatchObject({
+        status: 'invalid',
+        invalid_reason: 'signed_out',
+      });
+      // Unknown or malformed ids: the same calm answer / a validation error.
+      expect((await release('install-00000000-0000-0000')).status).toBe(200);
+      expect((await release('x')).status).toBe(422);
+    });
+  });
+
   it('keeps an agreed reminder in the app when contact outside the app is off', async () => {
     await seedAgreedStep(env, l.learnerId, {
       title: 'Geschichte wiederholen',

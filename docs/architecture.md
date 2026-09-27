@@ -67,6 +67,7 @@ Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, 
 | `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)    |
 | `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                  |
 | `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                  |
+| `POST /push-devices/claim`, `POST /push-devices/release` (no session)                                | one learner per install (push)                           |
 | `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                   |
 | `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                            |
 | `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                       |
@@ -195,6 +196,19 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
   or push is disabled. Only the app can record `opened`. The text is always also in the thread.
 - `DeviceNotRegistered` (ticket or receipt) deactivates the token.
+- Devices (`modules/devices/`, migration `0018_push_device_binding.sql`, D-6): a token is
+  registered with a random install id, and an install holds at most one active token (partial
+  unique index). Registering deactivates the install's other tokens; a signed-in person's
+  `POST /push-devices/claim` (on every start and sign-in) deactivates tokens on that install
+  that belong to other learners; sign-out sends `POST /push-devices/release` (no session
+  needed, bounded to 4 s, kept on the device and retried until the server has it). With
+  contact on and the permission already given, each signed-in start registers the current
+  token again, so the phone in use is the newest token; settings says when her messages go to
+  another device. Every push targets the Android channel `buddy` the app creates.
+- `opened` (app, `lib/push.ts`): every tap — also the one that cold-starts the app, read with
+  `getLastNotificationResponse` — is kept on the device (`lib/pushQueue.ts`, 7 days) and sent
+  once signed in, retried on start and when back online; only a clear 4xx drops it.
+  Not yet verified on a device (audit §17, `repro-19`).
 - Lock-screen texts carry no scores or personal details.
 
 ## Background work

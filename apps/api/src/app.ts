@@ -14,6 +14,7 @@ import { HTTPException } from 'hono/http-exception';
 import type { Deps } from './deps.js';
 import type { AppEnv } from './http/context.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
+import { pushDeviceRoutes } from './modules/devices/routes.js';
 import { buddyRoutes } from './modules/buddy/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
 import { materialRoutes } from './modules/materials/routes.js';
@@ -141,6 +142,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
   });
 
   api.route('/', identityRoutes);
+  api.route('/', pushDeviceRoutes);
   api.route('/buddy', buddyRoutes);
   api.route('/practice', practiceRoutes);
   api.route('/materials', materialRoutes);

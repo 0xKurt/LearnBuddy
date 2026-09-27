@@ -14,7 +14,7 @@ import type {
   SystemStatus,
   UpdateBuddySettingsRequest,
 } from '@learnbuddy/shared-types/contracts';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -23,7 +23,7 @@ import { ApiError } from '../../lib/api/client.js';
 import { updateSettings } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
-import { registerDeviceForPush } from '../../lib/push.js';
+import { registerDeviceForPush, registeredHere } from '../../lib/push.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatLastDay, formatWeekday } from '../../lib/time.js';
@@ -183,7 +183,20 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
   const avoidedDays = settings.avoid_weekdays
     .map((d) => formatWeekday(`2024-01-0${d}`, lang))
     .join(', ');
-  const deviceMissing = settings.contact_enabled && (push === 'no_token' || push === 'invalid');
+  // Another device (a parent's phone, an old one) may hold the messages: say so per device (M-65).
+  const [here, setHere] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    void registeredHere()
+      .then((v) => live && setHere(v))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [push, saving]);
+  const elsewhere = push === 'active' && here === false;
+  const deviceMissing =
+    settings.contact_enabled && (push === 'no_token' || push === 'invalid' || elsewhere);
   const secondary = [TYPE.body, { color: LB.ink2 }];
   // The details are sensible defaults; she tells Buddy in the chat when she wants less.
   // Only loosening (more, later, other days) needs this place — for a minor with the PIN.
@@ -249,7 +262,13 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
         <Card tone="butter" padding={20}>
           <View style={{ gap: 10 }}>
             <Text style={TYPE.body}>
-              {t(push === 'no_token' ? 'contact.device_no_token' : 'contact.device_invalid')}
+              {t(
+                elsewhere
+                  ? 'contact.device_elsewhere'
+                  : push === 'no_token'
+                    ? 'contact.device_no_token'
+                    : 'contact.device_invalid',
+              )}
             </Text>
             <Btn pill variant="outline" onPress={() => void registerDevice()} disabled={saving}>
               {t('contact.device_register')}

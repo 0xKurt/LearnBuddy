@@ -57,6 +57,8 @@ for (const m of read(join(API, 'app.ts')).matchAll(/api\.(get|post)\('([^']*)'/g
 const SERVER_ONLY: Record<string, string> = {
   'GET /health': 'monitoring',
   'POST /internal/tick': 'the scheduler (pg_cron) calls it every minute',
+  'DELETE /buddy/push-tokens':
+    'older app builds sign out with it; this build releases the install (POST /push-devices/release)',
 };
 
 // ─────────────── app calls ───────────────

@@ -50,7 +50,8 @@
     "summary": "Buddy gets in touch between {{start}} and {{end}}, at most {{count}}× a week, never after {{quiet}}.",
     "tell_buddy": "Just tell Buddy when you want some quiet.",
     "more": "Adjust times",
-    "less": "Show less"
+    "less": "Show less",
+    "device_elsewhere": "Buddy’s messages currently go to another device, not to this phone."
   },
   "profile": {
     "title": "Your profile",

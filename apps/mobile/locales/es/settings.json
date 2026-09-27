@@ -50,7 +50,8 @@
     "summary": "Buddy te escribe entre las {{start}} y las {{end}}, como mucho {{count}}× por semana, nunca después de las {{quiet}}.",
     "tell_buddy": "Díselo a Buddy cuando quieras tranquilidad.",
     "more": "Ajustar horarios",
-    "less": "Mostrar menos"
+    "less": "Mostrar menos",
+    "device_elsewhere": "Los mensajes de Buddy llegan ahora a otro dispositivo, no a este móvil."
   },
   "profile": {
     "title": "Tu perfil",
