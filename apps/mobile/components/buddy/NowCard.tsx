@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { summaryLines } from '../../lib/practice/summaryLine.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -44,7 +45,7 @@ export function NowCard({
   thumb = null,
   preparing = false,
 }: Props) {
-  const { t } = useTranslation('buddy');
+  const { t } = useTranslation(['buddy', 'practice']);
   switch (card.type) {
     case 'resume_practice':
       return (
@@ -191,18 +192,22 @@ export function NowCard({
           <Text accessibilityRole="header" style={TYPE.title}>
             {t('now.result_title')}
           </Text>
+          {/* The same true, kind words as the result screen — never a hit rate (feedback #1). */}
           <Text style={[TYPE.body, { marginTop: 4 }]}>
-            {t('now.result_body', {
-              answered: card.result.answered,
-              first_try: card.result.first_try,
-            })}
+            {summaryLines(card.result, card.mode)
+              .map((l) =>
+                l.count === undefined
+                  ? t(`practice:${l.key}`)
+                  : t(`practice:${l.key}`, { count: l.count }),
+              )
+              .join(' ')}
           </Text>
-          {card.result.secure_topics.length > 0 ? (
+          {card.mode !== 'help' && card.result.secure_topics.length > 0 ? (
             <Text style={[TYPE.small, { marginTop: 4 }]}>
               {t('now.result_secure', { topics: card.result.secure_topics.join(', ') })}
             </Text>
           ) : null}
-          {card.result.shaky_topics.length > 0 ? (
+          {card.mode !== 'help' && card.result.shaky_topics.length > 0 ? (
             <Text style={[TYPE.small, { marginTop: 2 }]}>
               {t('now.result_shaky', { topics: card.result.shaky_topics.join(', ') })}
             </Text>

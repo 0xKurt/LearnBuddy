@@ -12,7 +12,7 @@
 
 import { z } from 'zod';
 
-import { NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
+import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
 export const TUTOR_PROMPT_VERSION = 'tutor.v3.4';
 
@@ -151,16 +151,23 @@ export function mathNorm(x: string): string {
 }
 
 /**
- * Homework: does the reply give the solution away? The model's own flag, or the
- * solution itself appearing in the reply (any math notation). Code enforces what
- * the prompt asks for. A solution that is a single short word or number counts
- * only as a separate token that is not already part of the task.
+ * Homework: does the reply give the solution away? The model's own flag, or any form of
+ * the solution (the key, an accepted answer, the right choice) appearing in the reply, in
+ * any math notation. Code enforces what the prompt asks for. `task` is the task as printed
+ * — never the learner's message: values she guessed are no licence to confirm one of them
+ * (audit M-28). Run it on the FINAL verdict, after code decided whether the task is solved
+ * (audit H-9): only a task code confirmed as solved may be confirmed.
  */
-export function givesAwayHomework(d: TutorDecision, solution: string, task: string): boolean {
+export function givesAwayHomework(
+  d: TutorDecision,
+  solutions: string | readonly string[],
+  task: string,
+): boolean {
   if (d.revealed_answer) return true;
   // Confirming what the learner worked out themselves is the point, not a give-away.
   if (d.verdict === 'correct') return false;
-  return mentionsSolution(d.reply, solution, task);
+  const all = typeof solutions === 'string' ? [solutions] : solutions;
+  return all.some((s) => mentionsSolution(d.reply, s, task));
 }
 
 /**
@@ -191,12 +198,45 @@ export function mentionsSolution(text: string, solution: string, task: string): 
   return !words(task).has(sol) && words(text).has(sol);
 }
 
+export type HomeworkKey = {
+  prompt: string;
+  answer: string;
+  accepted_answers: readonly string[];
+  unit: string | null;
+  tolerance?: number | null;
+};
+
 /**
  * Homework: a task is solved only when the learner has the final answer — a right
- * intermediate step ("common denominator 12") keeps it open. The model's "correct"
- * stands only if the learner's words contain the solution.
+ * intermediate step ("common denominator 12") keeps it open. The model's "correct" stands
+ * only when code finds the answer in her words (audit H-10):
+ * - her answer has the value of the key or an accepted answer, in any form (0,875 for
+ *   $\frac{7}{8}$; the value comparison of I-1, decision D-1); or
+ * - her words contain the key or an accepted answer (any math notation), and every other
+ *   number she wrote is one of the task's own or the solution's — a list of guesses
+ *   ("1/8, 3/8, 5/8 oder 7/8") is no solution (audit M-28), a worked line
+ *   ("6/8 + 1/8 = 7/8") is.
  */
-export function homeworkSolved(learnerText: string, solution: string): boolean {
-  const sol = mathNorm(solution);
-  return sol.length > 0 && mathNorm(learnerText).includes(sol);
+export function homeworkSolved(item: HomeworkKey, learnerText: string): boolean;
+/** Older form (learner text, solution): no task text, no accepted answers. */
+export function homeworkSolved(learnerText: string, solution: string): boolean;
+export function homeworkSolved(first: HomeworkKey | string, second: string): boolean {
+  const [item, learnerText]: [HomeworkKey, string] =
+    typeof first === 'string'
+      ? [{ prompt: '', answer: second, accepted_answers: [], unit: null }, first]
+      : [first, second];
+  const keys = [item.answer, ...item.accepted_answers];
+  // "x = 5" asks for the value of x: "5" is that answer too (the right-hand side of a key
+  // that names one variable).
+  const values = keys.flatMap((k) => {
+    const m = /^\$?\s*[a-zA-Z]\s*=\s*([^=]+?)\s*\$?$/.exec(k.trim());
+    return m ? [m[1]!] : [];
+  });
+  const withValues = { ...item, accepted_answers: [...item.accepted_answers, ...values] };
+  if (compareWithKeys(withValues, learnerText) === 'equal') return true;
+  const said = mathNorm(learnerText);
+  if (!keys.some((k) => mathNorm(k).length > 0 && said.includes(mathNorm(k)))) return false;
+  const same = (a: number) => (b: number) => Math.abs(a - b) < 1e-9;
+  const known = [...keys.flatMap((k) => valuesIn(k)), ...valuesIn(item.prompt)];
+  return valuesIn(learnerText).every((v) => known.some(same(v)));
 }

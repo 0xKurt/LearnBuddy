@@ -1,12 +1,18 @@
-// The end of a session: what the server counted (answered, right on the
-// first try) and which topics sit or deserve another look. No scores, no
-// streaks, nothing about what is still "due". After a practice test, every
-// question with its solution (the first time she sees them).
+// The end of a session: one or two true, kind sentences (what she did; a whole round right
+// at once is named) and which topics sit or deserve another look — from the one summary the
+// server computes, so a topic is never in both lists (user feedback #1, #3). No hit rate, no
+// zero, no scores, no streaks, nothing about what is still "due". After a practice test,
+// every question with its solution (the first time she sees them); questions she never got
+// to are marked as such, not as wrong (audit M-36).
 //
-// A warm, calm moment: Buddy's orb, the headline, the two numbers on white
-// cards – no confetti, nothing that counts what is left.
+// A warm, calm moment: Buddy's orb, the headline, the sentences on a white card – no
+// confetti, nothing that counts what is left.
 
-import type { PracticeSummary, SessionItemView } from '@learnbuddy/shared-types/contracts';
+import type {
+  PracticeSummary,
+  SessionItemView,
+  SessionMode,
+} from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -16,20 +22,26 @@ import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
+import { summaryLines } from '../../lib/practice/summaryLine.js';
 import { Icon } from '../lb/Icon.js';
 import { MathText } from '../math/MathText.js';
 
 type Props = {
   summary: PracticeSummary;
-  /** Homework help: the tasks were solved by the learner, with hints. */
-  homework?: boolean;
+  mode: SessionMode;
   /** A practice test: the questions to go through, with their solutions. */
   review?: readonly SessionItemView[] | null;
 };
 
-export function SessionSummary({ summary, homework = false, review = null }: Props) {
+export function SessionSummary({ summary, mode, review = null }: Props) {
   const { t } = useTranslation('practice');
-  const hasTopics = summary.secure_topics.length > 0 || summary.shaky_topics.length > 0;
+  const homework = mode === 'help';
+  const lines = summaryLines(summary, mode).map((l) =>
+    l.count === undefined ? t(l.key) : t(l.key, { count: l.count }),
+  );
+  // Homework is about solving it herself, not about topics that "sit".
+  const secure = homework ? [] : summary.secure_topics;
+  const shaky = homework ? [] : summary.shaky_topics;
   return (
     <View style={{ gap: 18 }}>
       <View style={{ alignItems: 'center', gap: 14, paddingTop: 12 }}>
@@ -42,24 +54,16 @@ export function SessionSummary({ summary, homework = false, review = null }: Pro
               : t('summary.title')}
         </Text>
       </View>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <Stat
-          value={summary.answered}
-          label={homework ? t('summary_help.answered') : t('summary.answered')}
-        />
-        <Stat value={summary.first_try} label={t('summary.first_try')} />
-      </View>
-      {hasTopics ? (
+      {lines.length > 0 || secure.length > 0 || shaky.length > 0 ? (
         <View style={[SOFT_CARD, { gap: 8 }]}>
-          {summary.secure_topics.length > 0 ? (
-            <Text style={TYPE.body}>
-              {t('summary.secure', { topics: summary.secure_topics.join(', ') })}
-            </Text>
+          {lines.length > 0 ? (
+            <Text style={[TYPE.body, { fontWeight: '600' }]}>{lines.join(' ')}</Text>
           ) : null}
-          {summary.shaky_topics.length > 0 ? (
-            <Text style={TYPE.body}>
-              {t('summary.shaky', { topics: summary.shaky_topics.join(', ') })}
-            </Text>
+          {secure.length > 0 ? (
+            <Text style={TYPE.body}>{t('summary.secure', { topics: secure.join(', ') })}</Text>
+          ) : null}
+          {shaky.length > 0 ? (
+            <Text style={TYPE.body}>{t('summary.shaky', { topics: shaky.join(', ') })}</Text>
           ) : null}
         </View>
       ) : null}
@@ -84,7 +88,9 @@ function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
     ? t('summary_test.right')
     : row.status === 'skipped'
       ? t('summary_test.skipped')
-      : t('summary_test.missed');
+      : row.status === 'open'
+        ? t('summary_test.untouched')
+        : t('summary_test.missed');
   const answer =
     row.answer === null
       ? null
@@ -112,29 +118,6 @@ function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
           style={[TYPE.body, { fontWeight: '600' }]}
         />
       ) : null}
-    </View>
-  );
-}
-
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <View
-      accessible
-      accessibilityLabel={`${label}: ${value}`}
-      style={[SOFT_CARD, { flex: 1, paddingVertical: 16, gap: 2 }]}
-    >
-      <Text
-        style={{
-          fontSize: 34,
-          lineHeight: 40,
-          fontWeight: '700',
-          color: LB.primaryDk,
-          letterSpacing: -0.6,
-        }}
-      >
-        {value}
-      </Text>
-      <Text style={[TYPE.small, { color: LB.ink2 }]}>{label}</Text>
     </View>
   );
 }

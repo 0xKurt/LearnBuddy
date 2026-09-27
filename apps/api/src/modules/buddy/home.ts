@@ -23,6 +23,7 @@ import { daysBetween, localParts } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
 import { loadBuddyState } from './state.js';
+import { resumable } from '../practice/lifecycle.js';
 
 const THREAD_LIMIT = 30;
 const DONE_WINDOW_MS = 72 * 3_600_000;
@@ -164,13 +165,11 @@ async function nowCardOf(
   today: string,
   now: Date,
 ): Promise<NowCard | null> {
-  const active = state.sessions.find(
-    (s) =>
-      s.status === 'active' &&
-      now.getTime() - s.started_at.getTime() < 12 * 3_600_000 &&
-      s.answered < s.total,
-  );
-  if (active) {
+  // Open sessions to go on with, keyed on her last activity (audit H-7, decision D-5): one
+  // she used in the last 12 hours comes first; an older paused one (homework up to 14 days)
+  // comes after Buddy's prepared practice, so it never hides that.
+  const open = state.sessions.filter((s) => resumable(s, now));
+  const resumeCard = (active: (typeof open)[number]): NowCard => {
     const goal = active.goal_id ? state.goals.find((g) => g.id === active.goal_id) : undefined;
     const step = active.step_id ? state.steps.find((s) => s.id === active.step_id) : undefined;
     return {
@@ -180,7 +179,9 @@ async function nowCardOf(
       title: active.title ?? goal?.title ?? step?.title ?? '',
       remaining: active.total - active.answered,
     };
-  }
+  };
+  const recent = open.find((s) => now.getTime() - s.last_activity_at.getTime() < 12 * 3_600_000);
+  if (recent) return resumeCard(recent);
   const justFinished = state.sessions.find(
     (s) =>
       s.status === 'finished' &&
@@ -196,6 +197,7 @@ async function nowCardOf(
     return {
       type: 'practice_result',
       session_id: justFinished.id,
+      mode: justFinished.mode,
       result: {
         answered: justFinished.answered,
         first_try: justFinished.first_try,
@@ -207,6 +209,7 @@ async function nowCardOf(
     };
   }
   if (prepared) return { type: 'practice_ready', ...preparedBrief(state, prepared, today) };
+  if (open[0]) return resumeCard(open[0]);
   // The sheet being read now comes before an older failure (audit M-19).
   // Photos still on their way count only briefly: an upload the app gave up on is not
   // "being sent" for hours (and Buddy then still asks for the photo).
@@ -449,6 +452,18 @@ async function threadOf(
         [learnerId, decisionIds],
       )
     : [];
+  // "Rückgängig" only where it would work now — the same gate as doneOf (audit M-56, repro-06):
+  // after the photo arrived, undoing the request for it would only answer 409.
+  const undoable = new Map<string, boolean>();
+  for (const a of actions) {
+    undoable.set(
+      a.id,
+      a.status === 'applied' &&
+        a.undo !== null &&
+        now.getTime() - a.created_at.getTime() < UNDO_WINDOW_MS &&
+        (await undoApplies(deps.db, learnerId, a.undo)),
+    );
+  }
   const outreach = outreachIds.length
     ? await deps.db.query<{
         id: string;
@@ -507,11 +522,8 @@ async function threadOf(
         .map((a) => ({
           id: a.id,
           status: a.status,
-          undoable:
-            a.status === 'applied' &&
-            a.undo !== null &&
-            !adultOnly.has(a.id) &&
-            now.getTime() - a.created_at.getTime() < UNDO_WINDOW_MS,
+          // Only where it would work now (audit M-56), and never one only an adult may undo.
+          undoable: !adultOnly.has(a.id) && (undoable.get(a.id) ?? false),
           summary: a.result,
           created_at: a.created_at.toISOString(),
         })),

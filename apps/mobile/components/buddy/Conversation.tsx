@@ -43,6 +43,8 @@ type Props = {
   onUndo?: (actionId: string) => void;
   /** Where her own last message starts (y within this view), so it is never scrolled away. */
   onLastMineLayout?: (y: number) => void;
+  /** Undo is locked while this is true (default: busy); history locks only while undoing. */
+  undoBusy?: boolean;
 };
 
 export function Conversation({
@@ -57,6 +59,7 @@ export function Conversation({
   onResend,
   onUndo,
   onLastMineLayout,
+  undoBusy,
 }: Props) {
   const { t } = useTranslation('buddy');
   const last = messages[messages.length - 1];
@@ -165,7 +168,7 @@ export function Conversation({
                           size="sm"
                           variant="ghost"
                           onPress={() => onUndo(a.id)}
-                          disabled={busy}
+                          disabled={undoBusy ?? busy}
                           accessibilityLabel={t('done.undo_label', { what })}
                         >
                           {/* Taking back a request for a photo: "no photo needed" (#14). */}

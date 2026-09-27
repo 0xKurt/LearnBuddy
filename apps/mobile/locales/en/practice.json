@@ -3,7 +3,8 @@
   "loading": "Getting your questions …",
   "end": "End",
   "end_label": "End practice",
-  "end_hint": "Back to Buddy. Your answers stay saved.",
+  "end_hint": "Back to Buddy. Your answers are saved – you can carry on here later.",
+  "end_hint_test": "Hands in the practice test and shows you how it went.",
   "progress": "Question {{current}} of {{total}}",
   "answer": {
     "label": "Your answer",
@@ -35,8 +36,6 @@
   "finish_failed": "I couldn't load your result just now.",
   "summary": {
     "title": "Done!",
-    "answered": "Answered",
-    "first_try": "Right on the first try",
     "secure": "Solid: {{topics}}",
     "shaky": "Worth another look: {{topics}}"
   },
@@ -96,8 +95,7 @@
     "sheet_title": "The explanation"
   },
   "summary_help": {
-    "title": "Homework done",
-    "answered": "Solved yourself"
+    "title": "Homework done"
   },
   "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
   "skip": "Skip",
@@ -107,7 +105,8 @@
     "right": "Right",
     "missed": "Not right yet",
     "skipped": "Skipped",
-    "solution": "Answer: {{answer}}"
+    "solution": "Answer: {{answer}}",
+    "untouched": "Not answered"
   },
   "again": {
     "shaky": "Practise the shaky ones again",
@@ -122,5 +121,16 @@
     "sheet_body": "This question won't come up again.",
     "confirm": "Take it out",
     "done": "Got it – the question is out."
-  }
+  },
+  "summary_line": {
+    "help_one": "You solved {{count}} task yourself.",
+    "help_other": "You solved {{count}} tasks yourself.",
+    "answered_one": "You answered {{count}} question.",
+    "answered_other": "You answered {{count}} questions.",
+    "all_first": "All of it right the first time.",
+    "first_one": "Right the first time."
+  },
+  "later": "Later",
+  "later_hint": "The task stays open and comes back after the others.",
+  "later_done": "All right – that one comes back later."
 }

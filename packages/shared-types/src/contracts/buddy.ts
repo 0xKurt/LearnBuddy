@@ -223,6 +223,8 @@ export const NowCard = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('practice_result'),
     session_id: Uuid,
+    /** help: homework — solved by herself, no hit rate (docs/UX-PRINCIPLES.md). */
+    mode: z.enum(['practice', 'test', 'help', 'explain']).default('practice'),
     result: PracticeResultBrief,
     /**
      * What is ready next, so the result never hides prepared practice (user feedback #2).

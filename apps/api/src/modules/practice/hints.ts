@@ -19,7 +19,7 @@ import { ItemDraft } from './items.js';
 import type { PracticeLearner } from './service.js';
 import { mentionsSolution } from './tutor.js';
 
-export const HINTS_PROMPT_VERSION = 'hints.v1';
+export const HINTS_PROMPT_VERSION = 'hints.v2';
 
 const HintSet = z.object({
   items: z
@@ -34,7 +34,7 @@ const HintSet = z.object({
 });
 const HINTS_SCHEMA = toJsonSchema(HintSet);
 
-const SYSTEM = `You write the help a good teacher prepares for practice questions in the LearnBuddy app (a school student, see LEARNER).
+const SYSTEM = `You write the help a good teacher prepares for practice questions in the LearnBuddy app (for the learner in LEARNER: a school student, a university student or an adult learner — pitch it at their level).
 
 For every question in the list:
 - hints: 2–3 hints, each more specific than the one before — (1) what is asked, (2) which rule or idea helps, (3) the first step. Never the answer — not in another form either (no 31/20 when the answer is 1 11/20, no "it starts with N…" for a word) and no step that already produces it.

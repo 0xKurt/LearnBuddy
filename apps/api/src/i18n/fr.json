@@ -50,6 +50,7 @@
     "typo": "Presque – ça s'écrit {{answer}}. Tape-le encore une fois.",
     "help_step": "Allons-y pas à pas : qu'est-ce qui est donné dans l'exercice, et qu'est-ce qu'on cherche ?",
     "help_solved": "Bravo – tu l'as trouvé tout seul !",
+    "help_final_answer": "Ça a l'air bien ! Écris-moi maintenant ton résultat final, comme l'exercice le demande.",
     "heard_retry": "Je ne t'ai pas bien entendu. Réessaie un peu plus fort et plus près du téléphone.",
     "speak_good": "C'est super !",
     "speak_almost": "Presque ! Regarde les mots marqués.",

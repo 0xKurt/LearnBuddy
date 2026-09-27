@@ -156,7 +156,15 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
           'Cool, dann bereiten wir uns bis Freitag zusammen vor! Hast du ein Arbeitsblatt dazu? Ein Foto reicht.',
         options: null,
         actions: [
-          { tool: 'set_level', args: { level: 'school', grade: 7, quote: 'in der 7. Klasse' } },
+          {
+            tool: 'set_level',
+            args: {
+              level: 'school',
+              school_year: { system: 'de', klasse: 7 },
+              grade: null,
+              quote: 'in der 7. Klasse',
+            },
+          },
           {
             tool: 'plan_exam',
             args: {

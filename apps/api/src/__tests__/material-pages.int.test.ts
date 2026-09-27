@@ -7,7 +7,12 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { BuddyHome, LibraryView, MaterialView } from '@learnbuddy/shared-types/contracts';
+import type {
+  BuddyHome,
+  LibraryView,
+  MaterialView,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -258,8 +263,19 @@ describe.skipIf(!dbReady)('pages Buddy could not read', () => {
 
     // Homework finished before page 2 came: page 2 gets its own help session.
     const hw = await send(env, lena, { photos: 1, purpose: 'homework', result: sheet([]) });
-    await lena.api.post(`/practice/sessions/${hw.session_id}/finish`);
+    const help = (await lena.api.get<SessionView>(`/practice/sessions/${hw.session_id}`)).body;
+    for (const [n, key] of ['Nomen', 'Verb'].entries()) {
+      await lena.api.post(`/practice/sessions/${help.id}/answer`, {
+        client_turn_id: randomUUID(),
+        item_id: help.items[n]!.item.id,
+        text: key,
+      });
+    }
     await env.flushBackground();
+    // Every task solved: the help session finished with the last one (audit H-12).
+    expect(
+      (await lena.api.get<SessionView>(`/practice/sessions/${hw.session_id}`)).body.status,
+    ).toBe('finished');
     const late = await send(env, lena, {
       photos: 1,
       completes: hw.id,

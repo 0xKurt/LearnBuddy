@@ -62,7 +62,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Auf Anhieb richtig')).toBeVisible();
+  await expect(page.getByText('Alles saß gleich beim ersten Mal', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 
   // ── Homework help: hints only, no "show solution", solved by herself ──
@@ -78,6 +78,9 @@ test('learning modes: explain, homework help without the solution, practice with
     page.getByText('Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.'),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
+  // "Tipp" is there in homework too (user feedback #7); one task: nothing to set aside.
+  await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Später' })).toHaveCount(0);
   await page.getByLabel('Deine Antwort').fill('keine Ahnung');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
@@ -96,6 +99,9 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '24-homework-solved');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Hausaufgabe geschafft')).toBeVisible();
+  // What she solved herself — no hit rate, no zero (user feedback #1).
+  await expect(page.getByText('Du hast 1 Aufgabe selbst gelöst.')).toBeVisible();
+  await expect(page.getByText('Auf Anhieb richtig')).toHaveCount(0);
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 
   // ── Practice without a photo: fractions drawn, math rendered ──
