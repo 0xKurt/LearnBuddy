@@ -604,6 +604,18 @@ and do not use up the 3 runs. After the photo purge, retry answers 409 `photos_d
 photo in the reading request is preceded by a label ("Photo 2 of 3:"), so page numbers in the
 report name real photos.
 
+**Cut off at the token limit** (live finding 2: a 2-task homework sheet ran on for 40 s, the
+reading line vanished and nothing was said). An answer stopped at the output limit
+(`LlmError.truncated`, finish reason `MAX_TOKENS`) is a transient failure, not a refusal: the run
+reads again at once with `LEAN_RULES` added (brief transcription, at most 10 questions, short
+hints, "never repeat"); cut off again, the job retries with backoff and starts lean (its
+`last_error` is `truncated`); after the last run the sheet fails as `model_error`, uncounted, so
+"Nochmal lesen" stays offered. Homework asks for less in the first place (schema without
+`worked_solution`, which she never sees there; at most 12 tasks; an 8 000-token limit instead of
+12 000, so a run-on stops sooner). A reading that failed in the last 30 minutes is the home's
+card above everything else (a result, prepared practice, an open session) — the "reading" line
+never just disappears (rule 5); after that it falls back behind them for the rest of the day.
+
 **PDFs** (`modules/materials/pdf.ts`, migration `0042_material_pdf.sql`; gaps.md #6): a worksheet
 that came as a PDF (WhatsApp, IServ, Schul-Cloud, Dateien) is a file of the material next to
 photos (`photo_mimes` takes `application/pdf`; stored as `…/<position>.pdf` in the same private

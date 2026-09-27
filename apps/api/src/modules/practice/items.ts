@@ -24,6 +24,13 @@ export const SPELLING_RULES = `spelling: "strict" when the task practises spelli
 
 export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.`;
 
+/**
+ * Correct language (live finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1",
+ * "Gib den Zähler des Bruches a/8 an"). The prompt asks for a self-check; code drops what it
+ * can recognise structurally (placeholderQuestion).
+ */
+export const LANGUAGE_RULES = `Language: everything you write yourself (questions, choices, hints, explanations) is correct, natural language — right spelling, grammar and punctuation, real words only, one clear wording (never "A/B" alternatives like "echtere/größer"). Before you answer, reread every question and fix each mistake. A question never names what it asks for with a placeholder letter or word (not "Gib den Zähler des Bruches $\\frac{a}{8}$ an" — ask "Welcher Bruch ist gefärbt?").`;
+
 /** The most other accepted answers per item — the number the prompts name (audit H-14). */
 export const MAX_ACCEPTED = 8;
 

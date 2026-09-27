@@ -80,6 +80,9 @@ export type LlmErrorKind =
   | 'refused' // the provider rejected the request itself (4xx other than 429)
   | 'invalid_output'; // not JSON / truncated
 
+/** The finish reason of an answer cut off at the output token limit. */
+export const TRUNCATED = 'MAX_TOKENS';
+
 export class LlmError extends Error {
   readonly kind: LlmErrorKind;
   readonly usage: LlmUsage | null;
@@ -99,6 +102,9 @@ export class LlmError extends Error {
   }
   /** The shared classification of external results (lib/outcome.ts). */
   get outcome(): Exclude<Outcome, 'ok'> {
+    // Cut off at the token limit: the same request can well finish the next time (a model
+    // that ran into a loop), so it is worth another try (live finding 2).
+    if (this.truncated) return 'transient';
     switch (this.kind) {
       case 'unavailable':
       case 'rate_limited':
@@ -110,6 +116,10 @@ export class LlmError extends Error {
       case 'invalid_output':
         return 'refused';
     }
+  }
+  /** The answer was cut off at the output token limit (finish reason MAX_TOKENS). */
+  get truncated(): boolean {
+    return this.kind === 'invalid_output' && this.finishReason === TRUNCATED;
   }
   /**
    * A model call changes nothing outside, so transient and unknown outcomes may be retried

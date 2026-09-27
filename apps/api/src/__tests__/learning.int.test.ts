@@ -6,7 +6,7 @@
 import type { BuddyHome, LibraryView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { LlmError } from '../llm/gateway.js';
+import { LlmError, TRUNCATED } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import {
   createTestEnv,
@@ -129,6 +129,99 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     // The card is about the sheet being read, not yesterday's failure (whose retry is not offered).
     const now = (await l.api.get<BuddyHome>('/buddy')).body.now;
     expect(now).toMatchObject({ type: 'material_processing', material_id: next.body.material.id });
+  });
+
+  it('a reading cut off at the token limit is read again at once, told to be brief (live finding 2)', async () => {
+    const cutOff = () => new LlmError('invalid_output', 'output truncated', null, TRUNCATED);
+    env.llm.script('extraction', { error: cutOff() }, (req) => {
+      expect(req.system).toContain('KEEP IT SHORT');
+      // Homework asks for no worked solution (fewer tokens to write).
+      expect(JSON.stringify(req.schema)).not.toContain('worked_solution');
+      return readable().json;
+    });
+    const created = await l.api.post<{
+      material: { id: string };
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: uuid(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'homework',
+    });
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    await l.api.post(`/materials/${created.body.material.id}/submit`);
+    await env.flushBackground();
+    const m = await l.api.get<{ status: string }>(`/materials/${created.body.material.id}`);
+    expect(m.body.status).toBe('ready');
+    expect(env.llm.callsFor('extraction')[0]!.system).not.toContain('KEEP IT SHORT');
+  });
+
+  it('cut off every time: an honest failed card with "Nochmal lesen", above her practice (live finding 2)', async () => {
+    // A sheet read earlier, with practice prepared from it.
+    env.llm.script('extraction', readable());
+    env.llm.script('buddy_check', WAIT);
+    const study = await upload(env, l);
+    const items = await env.db.query<{ id: string }>(
+      `select id from items where material_id = $1`,
+      [study],
+    );
+    await env.db.query(
+      `insert into buddy_steps (learner_id, kind, title, state, payload)
+       values ($1, 'practice', 'Europa', 'prepared', $2)`,
+      [l.learnerId, JSON.stringify({ item_ids: items.map((i) => i.id), est_minutes: 5 })],
+    );
+    expect((await l.api.get<BuddyHome>('/buddy')).body.now).toMatchObject({
+      type: 'practice_ready',
+    });
+
+    const cutOff = { error: new LlmError('invalid_output', 'output truncated', null, TRUNCATED) };
+    env.llm.script('extraction', cutOff, cutOff);
+    const created = await l.api.post<{
+      material: { id: string };
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: uuid(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'homework',
+    });
+    const id = created.body.material.id;
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    await l.api.post(`/materials/${id}/submit`);
+    await env.flushBackground();
+    // Not given up after one run: read again later (a transient failure), and she sees it.
+    expect((await l.api.get<{ status: string }>(`/materials/${id}`)).body.status).toBe('queued');
+    expect((await l.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
+
+    // The later runs start brief at once, and are cut off too.
+    for (const minutes of [2, 3]) {
+      env.llm.script('extraction', cutOff);
+      env.clock.advance(minutes * 60_000);
+      await tick(env);
+      await env.flushBackground();
+    }
+    const calls = env.llm.callsFor('extraction');
+    expect(calls.slice(-2).every((c) => c.system.includes('KEEP IT SHORT'))).toBe(true);
+    expect(
+      (await l.api.get<{ status: string; failure_reason: string }>(`/materials/${id}`)).body,
+    ).toMatchObject({ status: 'failed', failure_reason: 'model_error' });
+    // The failure is said at once, above the prepared practice — never silence (rule 5).
+    const home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.working).toBeNull();
+    expect(home.now).toMatchObject({
+      type: 'material_failed',
+      material_id: id,
+      purpose: 'homework',
+      retryable: true,
+    });
+    // Half an hour later the prepared practice is on top again; the sheet can still be read
+    // again (not her sheet's fault).
+    env.clock.advance(31 * 60_000);
+    expect((await l.api.get<BuddyHome>('/buddy')).body.now).toMatchObject({
+      type: 'practice_ready',
+    });
+    env.llm.script('extraction', readable());
+    expect((await l.api.post(`/materials/${id}/retry`)).status).toBe(202);
+    await env.flushBackground();
+    expect((await l.api.get<{ status: string }>(`/materials/${id}`)).body.status).toBe('ready');
   });
 
   it('reports unreadable photos, allows a bounded number of retries, and keeps photos only 7 days', async () => {
