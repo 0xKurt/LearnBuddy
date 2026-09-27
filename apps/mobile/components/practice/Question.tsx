@@ -21,7 +21,7 @@ import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
-import { FigureView } from '../math/FigureView.js';
+import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
 
 type ProgressProps = {
@@ -130,7 +130,7 @@ export function QuestionCard({
       />
       {figure ? (
         <View style={{ marginTop: 12 }}>
-          <FigureView figure={figure} maxHeight={figureMaxHeight} />
+          <ZoomableFigure figure={figure} maxHeight={figureMaxHeight} />
         </View>
       ) : null}
     </Card>

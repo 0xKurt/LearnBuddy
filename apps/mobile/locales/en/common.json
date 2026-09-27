@@ -60,5 +60,10 @@
     "body": "This usually takes just a few minutes. Afterwards, everything LearnBuddy stored about you is gone. Nothing can be changed any more.",
     "sign_out": "Sign out"
   },
-  "outbox_refused": "A saved answer arrived too late – the task was already closed."
+  "outbox_refused": "A saved answer arrived too late – the task was already closed.",
+  "zoom": {
+    "hint": "Pinch with two fingers to zoom, double-tap to zoom in.",
+    "open_hint": "Opens the picture full screen.",
+    "photo": "Your photo"
+  }
 }

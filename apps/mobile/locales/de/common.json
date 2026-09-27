@@ -60,5 +60,10 @@
     "body": "Das dauert meist nur ein paar Minuten. Danach ist alles weg, was LearnBuddy über dich gespeichert hat. Ändern lässt sich jetzt nichts mehr.",
     "sign_out": "Abmelden"
   },
-  "outbox_refused": "Eine gespeicherte Antwort kam zu spät an – die Aufgabe war schon abgeschlossen."
+  "outbox_refused": "Eine gespeicherte Antwort kam zu spät an – die Aufgabe war schon abgeschlossen.",
+  "zoom": {
+    "hint": "Mit zwei Fingern vergrößern, doppelt tippen zum Heranzoomen.",
+    "open_hint": "Öffnet das Bild groß.",
+    "photo": "Dein Foto"
+  }
 }

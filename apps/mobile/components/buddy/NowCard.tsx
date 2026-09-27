@@ -10,6 +10,7 @@ import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 import { whenText } from './describe.js';
 
 /** Where a capture from the card leads: the step, goal, purpose and sheet it belongs to. */
@@ -132,12 +133,14 @@ export function NowCard({
         <Card tone="sky" padding={16} radius={22}>
           <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, inset]}>
             {thumb ? (
-              <Image
-                source={{ uri: thumb }}
-                accessible={false}
-                style={{ width: 36, height: 48, borderRadius: 6 }}
-                contentFit="cover"
-              />
+              <ZoomablePhoto uri={thumb}>
+                <Image
+                  source={{ uri: thumb }}
+                  accessible={false}
+                  style={{ width: 36, height: 48, borderRadius: 6 }}
+                  contentFit="cover"
+                />
+              </ZoomablePhoto>
             ) : null}
             <Text accessibilityRole="header" style={[TYPE.title, { flex: 1 }]}>
               {card.status === 'awaiting_upload'

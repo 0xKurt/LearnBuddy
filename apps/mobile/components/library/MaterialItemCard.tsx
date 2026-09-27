@@ -12,7 +12,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
-import { FigureView } from '../math/FigureView.js';
+import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
 
 const RESULT_TONE: Record<ItemResult, 'success' | 'primary' | 'gray'> = {
@@ -42,7 +42,7 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
           <Chip tone={RESULT_TONE[item.result]}>{t(`items.result.${item.result}`)}</Chip>
         </View>
         <MathText text={item.prompt} style={TYPE.body} />
-        {item.figure ? <FigureView figure={item.figure} /> : null}
+        {item.figure ? <ZoomableFigure figure={item.figure} /> : null}
         {choices ? (
           <View style={{ gap: 6 }}>
             <Text style={TYPE.label}>{t('items.choices')}</Text>

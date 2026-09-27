@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { Btn } from '../lb/Btn.js';
+import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
 const THUMB_WIDTH = 112;
 const THUMB_HEIGHT = 148;
@@ -31,61 +32,63 @@ export function PhotoStrip({ uris, flagged, disabled, onRemove }: Props) {
       {uris.map((uri, i) => (
         <View key={uri} style={{ width: THUMB_WIDTH, gap: 6 }}>
           <View style={{ borderRadius: 18, backgroundColor: LB.paper, ...SHADOW.soft }}>
-            <View
-              style={{
-                width: THUMB_WIDTH,
-                height: THUMB_HEIGHT,
-                borderRadius: 18,
-                overflow: 'hidden',
-                backgroundColor: LB.canvas,
-              }}
-            >
-              <Image
-                source={{ uri }}
-                accessible
-                accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
-                contentFit="cover"
-                transition={120}
-                style={{ flex: 1 }}
-              />
-              {/* Page number; the image label already says it for screen readers. */}
+            <ZoomablePhoto uri={uri} label={t('photo_label', { index: i + 1, total: uris.length })}>
               <View
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
                 style={{
-                  position: 'absolute',
-                  top: 8,
-                  left: 8,
-                  minWidth: 24,
-                  height: 24,
-                  borderRadius: 12,
-                  paddingHorizontal: 6,
-                  backgroundColor: LB.primary,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  width: THUMB_WIDTH,
+                  height: THUMB_HEIGHT,
+                  borderRadius: 18,
+                  overflow: 'hidden',
+                  backgroundColor: LB.canvas,
                 }}
               >
-                <Text style={{ color: LB.paper, fontSize: 12, fontWeight: '700' }}>{i + 1}</Text>
-              </View>
-              {flagged?.has(uri) ? (
+                <Image
+                  source={{ uri }}
+                  accessible
+                  accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
+                  contentFit="cover"
+                  transition={120}
+                  style={{ flex: 1 }}
+                />
+                {/* Page number; the image label already says it for screen readers. */}
                 <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                   style={{
                     position: 'absolute',
-                    left: 6,
-                    right: 6,
-                    bottom: 6,
-                    borderRadius: 10,
-                    paddingVertical: 3,
-                    backgroundColor: LB.butter,
+                    top: 8,
+                    left: 8,
+                    minWidth: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    paddingHorizontal: 6,
+                    backgroundColor: LB.primary,
                     alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ color: LB.warningText, fontSize: 12, fontWeight: '700' }}>
-                    {t('quality.flag')}
-                  </Text>
+                  <Text style={{ color: LB.paper, fontSize: 12, fontWeight: '700' }}>{i + 1}</Text>
                 </View>
-              ) : null}
-            </View>
+                {flagged?.has(uri) ? (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: 6,
+                      right: 6,
+                      bottom: 6,
+                      borderRadius: 10,
+                      paddingVertical: 3,
+                      backgroundColor: LB.butter,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={{ color: LB.warningText, fontSize: 12, fontWeight: '700' }}>
+                      {t('quality.flag')}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </ZoomablePhoto>
           </View>
           <Btn
             size="sm"

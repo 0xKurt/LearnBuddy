@@ -10,6 +10,7 @@ import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
+import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
 type Props = {
   text: string;
@@ -46,12 +47,14 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
           ]}
         >
           {thumb ? (
-            <Image
-              source={{ uri: thumb }}
-              accessible={false}
-              style={{ width: 32, height: 42, borderRadius: 6 }}
-              contentFit="cover"
-            />
+            <ZoomablePhoto uri={thumb}>
+              <Image
+                source={{ uri: thumb }}
+                accessible={false}
+                style={{ width: 32, height: 42, borderRadius: 6 }}
+                contentFit="cover"
+              />
+            </ZoomablePhoto>
           ) : null}
           <View style={{ flexShrink: 1, gap: 2 }}>
             <Text style={[TYPE.body, { color: LB.ink }]}>{text}</Text>

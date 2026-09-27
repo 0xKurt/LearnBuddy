@@ -60,5 +60,10 @@
     "body": "Cela ne prend généralement que quelques minutes. Ensuite, tout ce que LearnBuddy a enregistré sur toi aura disparu. Plus rien ne peut être modifié.",
     "sign_out": "Se déconnecter"
   },
-  "outbox_refused": "Une réponse enregistrée est arrivée trop tard – l'exercice était déjà terminé."
+  "outbox_refused": "Une réponse enregistrée est arrivée trop tard – l'exercice était déjà terminé.",
+  "zoom": {
+    "hint": "Écarte deux doigts pour agrandir, touche deux fois pour zoomer.",
+    "open_hint": "Ouvre l'image en grand.",
+    "photo": "Ta photo"
+  }
 }
