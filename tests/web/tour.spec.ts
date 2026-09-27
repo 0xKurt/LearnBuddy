@@ -20,14 +20,17 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
   await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Pia');
-  await page.getByLabel('TT').fill('03');
-  await page.getByLabel('MM').fill('07');
-  await page.getByLabel('JJJJ').fill('2014');
+  await page.getByLabel('Tag', { exact: true }).fill('03');
+  await page.getByLabel('Monat', { exact: true }).fill('07');
+  await page.getByLabel('Jahr', { exact: true }).fill('2014');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('checkbox').click();
   await page.getByLabel('PIN der Eltern').fill('2468');
   await page.getByLabel('PIN wiederholen').fill('2468');
   await page.getByRole('button', { name: "Los geht's" }).click();
+  // The hand-over: what is set, then the phone goes to the child (user feedback #10).
+  await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's, Pia!" }).click();
   await expect(page.getByText('Hallo Pia')).toBeVisible();
 }
 
@@ -119,7 +122,18 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // ── For parents: after leaving the settings the PIN counts no more ──
   await page.getByRole('button', { name: 'Zurück' }).click();
   await openMenu(page, 'Einstellungen');
+  // A child's account: the parents' area itself opens only with their PIN — the e-mail and
+  // "Abmelden" are theirs (user feedback #13). Cancelling keeps it closed.
   await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  await expect(
+    page.getByText('Für die Eltern: Den Elternbereich öffnen. Bitte die PIN eingeben.'),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'PIN vergessen?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Abbrechen' }).last().click();
+  await expect(page.getByText('Daten exportieren')).toHaveCount(0);
+  await expect(page.getByText(email)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
   await expect(page.getByText('Daten exportieren')).toBeVisible();
   await page.getByRole('button', { name: 'Konto löschen …' }).click();
   // A child's account: the parents' PIN first (the pad names the step), then their confirmation.
@@ -191,13 +205,13 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Foto machen' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
-  // The sample photo is small for a phone photo: kept anyway.
-  await page.getByRole('button', { name: 'Trotzdem behalten' }).click();
+  // The sample sheet (800 × 1080) reads well: no "sehr klein" warning (user feedback #16).
+  await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await expect(page.getByText('Schwer lesbar')).toHaveCount(0);
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Noch ein Foto' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
   await expect(page.getByRole('img', { name: 'Foto 2 von 2' })).toBeVisible();
-  await page.getByRole('button', { name: 'Trotzdem behalten' }).click();
   await page.getByRole('button', { name: 'Senden' }).click();
   // Before the help session: what is missing, while the sheet is still at hand.
   await expect(page.getByText('Eine Seite konnte ich nicht ganz lesen')).toBeVisible({
@@ -289,6 +303,8 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // ── Signing out, and the password link that no longer works ──
   await openMenu(page, 'Einstellungen');
   await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  // The parents' area opens with their (new) PIN.
+  for (const digit of '1357') await page.getByRole('button', { name: digit, exact: true }).click();
   await page.getByRole('button', { name: 'Abmelden' }).last().click();
   await page.getByRole('button', { name: 'Ja, abmelden' }).click();
   await expect(page.getByRole('button', { name: 'Konto erstellen' })).toBeVisible();

@@ -73,7 +73,7 @@
   "adult": {
     "title_minor": "Per i genitori",
     "title_self": "Il tuo account",
-    "intro_minor": "Qui i genitori gestiscono l'account. Alcune cose richiedono il PIN.",
+    "intro_minor": "Qui i genitori gestiscono l'account. Si apre solo con il loro PIN.",
     "intro_self": "I tuoi dati e il tuo accesso.",
     "needs_pin": "Serve il PIN dei genitori.",
     "pin": {
@@ -165,7 +165,8 @@
       "name": "Nome",
       "save": "Salva",
       "saved": "Profilo salvato."
-    }
+    },
+    "forgot_intro": "Un nuovo PIN si imposta con la password dell'account. Tutto il resto qui rimane chiuso fino ad allora."
   },
   "status": {
     "title": "Funziona tutto?",

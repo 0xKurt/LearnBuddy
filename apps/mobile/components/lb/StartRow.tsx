@@ -17,7 +17,8 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
         flexDirection: 'row',
         justifyContent: 'space-between',
         gap: 0,
-        marginHorizontal: -12,
+        // Five labels share the width: a little past the gutter, never to the screen edge.
+        marginHorizontal: -6,
       }}
     >
       {items.map((item) => (
@@ -52,8 +53,9 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
                 numberOfLines={2}
                 style={{
                   marginTop: 4,
-                  fontSize: 11,
-                  lineHeight: 14,
+                  // Readable at a glance (user feedback #17: 11 px was too small).
+                  fontSize: 12,
+                  lineHeight: 15,
                   letterSpacing: -0.2,
                   fontWeight: '600',
                   color: LB.ink,

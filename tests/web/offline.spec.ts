@@ -19,9 +19,9 @@ test('answers given offline arrive once: app open, and after it was closed', asy
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Ich selbst' }).click();
   await page.getByLabel('Wie soll Buddy dich nennen?').fill('Sam');
-  await page.getByLabel('TT').fill('10');
-  await page.getByLabel('MM').fill('02');
-  await page.getByLabel('JJJJ').fill('2000');
+  await page.getByLabel('Tag', { exact: true }).fill('10');
+  await page.getByLabel('Monat', { exact: true }).fill('02');
+  await page.getByLabel('Jahr', { exact: true }).fill('2000');
   await page.getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('Hallo Sam')).toBeVisible();
 
