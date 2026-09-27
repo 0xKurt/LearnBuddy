@@ -269,7 +269,8 @@ is not skipped for good.
 - Policy: opt-in; pause; quiet hours in the learner's zone; Buddy's own messages need relevance
   ≥ 0.6, go into the preferred window, at most 1/day and 4/week, no repeat of a topic within
   72 h (topic keys are stored with real ids), no second message while the last one is unanswered
-  (48 h; writing to Buddy counts as answering what is in the thread). **All contact counts,
+  (48 h; writing to Buddy counts as answering what is in the thread, and so does starting or
+  finishing the step a message was about). **All contact counts,
   in the app too** (D-12): with push off, "schreib mir weniger" means fewer messages in the
   thread. Agreed reminders go out at the agreed minute (quiet hours and pause apply, limits and
   avoided weekdays do not). Buddy's answer to her own action (origin `learner`: her photos were
@@ -277,7 +278,8 @@ is not skipped for good.
   contact is on and it is not night, never held back by limits.
 - The whole policy runs again at send time (tightened days, window, caps, pause, the unanswered
   gate); a message about something already done is cancelled. A message is linked to its goal
-  and step (`step: "new"` = the practice prepared in the same decision), so "practice is ready"
+  and step (`step: "new"` = the practice prepared in the same decision; a link that does not
+  resolve rejects the decision instead of being dropped), so "practice is ready"
   is dropped once that practice was done. Pausing or switching off cancels everything Buddy
   planned on its own — nothing is sent in bulk afterwards; agreed reminders stay and wait in the
   app. Planned messages are listed on the home under what comes next. Stopping contact hides

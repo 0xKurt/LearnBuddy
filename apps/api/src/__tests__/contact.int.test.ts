@@ -15,6 +15,7 @@ import { loadSettings } from '../modules/buddy/state.js';
 import { enqueueJob } from '../modules/scheduler/jobs.js';
 import { runTick } from '../modules/scheduler/tick.js';
 import { testDatabaseAvailable } from '../testing/database.js';
+import { ScriptedGateway } from '../testing/fakes.js';
 import {
   createTestEnv,
   enableContact,
@@ -301,6 +302,105 @@ describe.skipIf(!dbReady)('contact promises', () => {
       [stepId],
     );
     expect(step.state).toBe('planned');
+  });
+
+  it('an outreach message about an unknown goal is refused, not sent without its link (p2-outreach-links-silently-dropped)', async () => {
+    const l = await onboard(env);
+    await enableContact(env, l.learnerId);
+    await env.db.query(
+      `insert into buddy_goals (learner_id, kind, title, due_date) values ($1, 'exam', 'Mathearbeit', '2026-10-02')`,
+      [l.learnerId],
+    );
+    await enqueueJob(env.db, {
+      learnerId: l.learnerId,
+      kind: 'buddy_check',
+      runAt: new Date('2026-09-28T13:00:00Z'),
+      dedupeKey: 'check:links',
+      payload: { reason: 'checkin_requested', note: 'links' },
+    });
+    env.clock.set('2026-09-28T13:00:00Z');
+    const about = (goal: string) => {
+      const x = idea('practice:a');
+      return { json: { ...x.json, outreach: { ...x.json.outreach, goal } } };
+    };
+    const wrong = about('g9');
+    const right = about('g1');
+    env.llm.script('buddy_check', wrong, (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain('outreach: unknown goal g9');
+      return right.json;
+    });
+    await tick(env);
+    const row = await env.db.one<{ goal_id: string | null }>(
+      `select goal_id from buddy_outreach where learner_id = $1`,
+      [l.learnerId],
+    );
+    expect(row.goal_id).not.toBeNull();
+  });
+
+  it('doing the practice a message was about answers it, without tapping the push (previous-unanswered-needs-push-tap)', async () => {
+    const l = await onboard(env);
+    await enableContact(env, l.learnerId);
+    await env.db.query(
+      `insert into buddy_goals (learner_id, kind, title, due_date) values ($1, 'exam', 'Mathearbeit', '2026-10-02')`,
+      [l.learnerId],
+    );
+    const step = await env.db.one<{ id: string }>(
+      `insert into buddy_steps (learner_id, kind, title, state, planned_date, finished_at, done_source)
+       values ($1, 'practice', 'Brüche', 'done', '2026-09-28', $2, 'evidence') returning id`,
+      [l.learnerId, new Date('2026-09-28T12:00:00Z')],
+    );
+    await env.db.query(
+      `insert into buddy_outreach (learner_id, kind, origin, topic_key, dedupe_key, title, body, status,
+                                   send_at, sent_at, expires_at, step_id, created_at)
+       values ($1, 'idea', 'buddy', 'practice:old', 'old', 'Idee', 'Übung ist bereit', 'accepted',
+               $2, $2, $3, $4, $2)`,
+      [l.learnerId, new Date('2026-09-28T11:00:00Z'), new Date('2026-09-28T20:00:00Z'), step.id],
+    );
+    await enqueueJob(env.db, {
+      learnerId: l.learnerId,
+      kind: 'buddy_check',
+      runAt: new Date('2026-09-29T13:00:00Z'),
+      dedupeKey: 'check:answered',
+      payload: { reason: 'checkin_requested', note: 'answered' },
+    });
+    env.clock.set('2026-09-29T13:00:00Z');
+    env.llm.script('buddy_check', idea('practice:new'));
+    await tick(env);
+    const rows = await outreach(env, l.learnerId);
+    expect(rows[1]).toBeDefined();
+    expect(rows[1]!.status_reason).not.toBe('previous_unanswered');
+    expect(rows[1]!.status).not.toBe('suppressed');
+  });
+
+  it('a reminder job that runs again sends nothing twice (agreed-reminder-duplicate-on-rerun)', async () => {
+    const l = await onboard(env);
+    await mathItems(env, l.learnerId, 6);
+    const stepId = await env.db.tx(async (tx) => {
+      const subject = await findOrCreateSubject(tx, l.learnerId, 'Mathe', 'math');
+      const step = await tx.one<{ id: string; version: number }>(
+        `insert into buddy_steps (learner_id, kind, title, state, planned_date, planned_time, agreed, payload)
+         values ($1, 'practice', 'Brüche üben', 'planned', '2026-09-28', '16:00', true, $2)
+         returning id, version`,
+        [l.learnerId, { subject_id: subject.id, focus_topics: [] }],
+      );
+      await scheduleStepReminder(tx, l.learnerId, step, new Date('2026-09-28T14:00:00Z'));
+      return step.id;
+    });
+    env.clock.set('2026-09-28T14:00:00Z');
+    await tick(env);
+    const step = await env.db.one<{ state: string }>(
+      `select state from buddy_steps where id = $1`,
+      [stepId],
+    );
+    expect(step.state).toBe('prepared');
+    // The worker died after the reminder was stored: the job runs once more.
+    await env.db.query(
+      `update jobs set status = 'queued', finished_at = null, result = null
+        where kind = 'buddy_check' and payload ->> 'step_id' = $1`,
+      [stepId],
+    );
+    await tick(env);
+    expect(await outreach(env, l.learnerId)).toHaveLength(1);
   });
 
   it('plan_step keeps the subject she named, and an agreed reminder is never silently unscheduled (M-58)', async () => {

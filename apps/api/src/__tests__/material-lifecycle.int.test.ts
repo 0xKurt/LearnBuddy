@@ -597,6 +597,32 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
     await tick(env);
     expect(env.storage.objects.has(m.paths[0]!)).toBe(false);
   });
+
+  it('a page added to a sheet does not complete a newer photo request of the test (p2-J-01)', async () => {
+    const goal = await env.db.one<{ id: string }>(
+      `insert into buddy_goals (learner_id, kind, title, due_date)
+       values ($1, 'exam', 'Erdkunde-Test', '2026-10-05') returning id`,
+      [lena.learnerId],
+    );
+    const first = await create(env, lena);
+    await env.db.query(`update materials set goal_id = $2 where id = $1`, [first.id, goal.id]);
+    env.llm.script('extraction', { json: sheet() });
+    for (const p of first.paths) env.storage.put(p);
+    expect((await lena.api.post(`/materials/${first.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+    // Later Buddy asks for the next chapter.
+    const request = await env.db.one<{ id: string }>(
+      `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date)
+       values ($1, $2, 'capture', 'Kapitel 2 fotografieren', 'planned', '2026-09-28') returning id`,
+      [lena.learnerId, goal.id],
+    );
+    await send(env, lena, { completes: first.id });
+    const step = await env.db.one<{ state: string }>(
+      `select state from buddy_steps where id = $1`,
+      [request.id],
+    );
+    expect(step.state).toBe('planned');
+  });
 });
 
 describe.skipIf(!dbReady)('photos without a model', () => {

@@ -180,6 +180,8 @@ export type BuddyState = {
 /** A turn still "processing" after this long is considered interrupted. */
 export const TURN_STALL_MS = 3 * 60_000;
 
+// Questions here are what practice can use: homework tasks belong to their help session
+// and are never counted as practice questions (p2-HW-06).
 export const LIMITS = {
   messages: 24,
   goals: 12,
@@ -252,7 +254,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const subjects = await db.query<SubjectRow>(
     `select s.id, s.name, s.kind,
-            (select count(*) from items i where i.subject_id = s.id and i.archived_at is null)::int as item_count,
+            (select count(*) from items i where i.subject_id = s.id and i.archived_at is null
+                and i.origin <> 'homework')::int as item_count,
             (select count(*) from materials m where m.subject_id = s.id and m.archived_at is null and m.merged_into is null)::int as material_count
        from subjects s
       where s.learner_id = $1 and s.archived_at is null
@@ -271,7 +274,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             count(*) filter (where st.last_outcome in ('with_help','revealed'))::int as shaky,
             count(*) filter (where st.last_outcome = 'first_try' and st.due <= $3)::int as due
        from items i left join item_states st on st.item_id = i.id
-      where i.learner_id = $1 and i.archived_at is null
+      where i.learner_id = $1 and i.archived_at is null and i.origin <> 'homework'
       group by i.subject_id, coalesce(i.topic, '')
       order by count(*) desc, i.subject_id, coalesce(i.topic, '')
       limit $2`,
@@ -284,7 +287,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             -- still at hand) — the home notice and Buddy's context see the same window.
             case when m.pages_resolved_at is null and m.ready_at > $3::timestamptz - interval '24 hours'
                  then m.page_problems else '[]'::jsonb end as page_problems,
-            (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count
+            (select count(*) from items i where i.material_id = m.id and i.archived_at is null
+                and i.origin <> 'homework')::int as item_count
        from materials m
       where m.learner_id = $1 and m.archived_at is null
         -- A merged part only while its own missing pages are not answered.
@@ -331,7 +335,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
        (select count(*) from buddy_steps where learner_id = $1 and state in ('planned','prepared','in_progress'))::int as steps,
        (select count(*) from buddy_memories where learner_id = $1 and status = 'active'
           and (valid_until is null or valid_until > $2))::int as memories,
-       (select count(*) from items where learner_id = $1 and archived_at is null)::int as items`,
+       (select count(*) from items where learner_id = $1 and archived_at is null
+                                           and origin <> 'homework')::int as items`,
     [learnerId, now],
   );
 

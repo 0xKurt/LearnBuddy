@@ -702,8 +702,9 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       }
     }
     // The capture step Buddy asked for (or, without one, the goal's open
-    // capture step) is now done — with evidence.
-    if (!homework && (current.step_id || current.goal_id)) {
+    // capture step) is now done — with evidence. A page added to an earlier sheet completes
+    // only a step it was sent for: a later request is about other material (p2-J-01).
+    if (!homework && (current.step_id || (current.goal_id && !current.completes_material_id))) {
       await tx.query(
         `update buddy_steps set state = 'done', done_source = 'evidence', finished_at = $4, version = version + 1,
                                 evidence = $5

@@ -236,15 +236,12 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           relevance: input.outreach.relevance,
           earliest: input.now,
           expiresAt: new Date(input.now.getTime() + input.outreach.expires_in_hours * 3_600_000),
-          goalId: input.outreach.goal
-            ? (input.aliases.goals.get(input.outreach.goal)?.id ?? null)
-            : null,
-          stepId:
-            input.outreach.step === 'new'
-              ? created.stepId
-              : input.outreach.step
-                ? (input.aliases.steps.get(input.outreach.step)?.id ?? null)
-                : null,
+          goalId: outreachLink(input.outreach.goal, (a) => input.aliases.goals.get(a)?.id, 'goal'),
+          stepId: outreachLink(
+            input.outreach.step,
+            (a) => (a === 'new' ? (created.stepId ?? undefined) : input.aliases.steps.get(a)?.id),
+            'step',
+          ),
         });
       }
 
@@ -274,6 +271,22 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
     }
     throw err;
   }
+}
+
+/**
+ * What an outreach message refers to: a link the model named must resolve — it decides
+ * whether the message is obsolete when its step or goal is done — so an unknown one rejects
+ * the decision instead of being dropped silently (p2-outreach-links-silently-dropped).
+ */
+function outreachLink(
+  alias: string | null | undefined,
+  resolve: (alias: string) => string | undefined,
+  what: 'goal' | 'step',
+): string | null {
+  if (!alias) return null;
+  const id = resolve(alias);
+  if (!id) throw new ToolRejection(`outreach: unknown ${what} ${alias}`);
+  return id;
 }
 
 export async function recordUnapplied(

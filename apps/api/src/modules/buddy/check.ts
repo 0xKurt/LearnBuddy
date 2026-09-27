@@ -296,7 +296,11 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
       origin: 'agreed',
       kind: 'reminder',
       topicKey: `step:${step.id}`,
-      dedupeKey: `step:${step.id}:v${step.version}`,
+      // Keyed by the reminder job (step and version when it was planned), not by the version
+      // this handler bumps itself: a re-run never sends it twice (agreed-reminder-duplicate-on-rerun).
+      dedupeKey: trig.job.dedupe_key.startsWith('step:')
+        ? trig.job.dedupe_key
+        : `step:${step.id}:v${step.version}`,
       title: t(learner.locale, 'title.buddy'),
       body,
       why: null,

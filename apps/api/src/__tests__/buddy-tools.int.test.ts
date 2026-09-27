@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
 import { findOrCreateSubject } from '../modules/buddy/plan.js';
+import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import {
@@ -288,5 +289,27 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       [l.learnerId],
     );
     expect(active).toHaveLength(1);
+  });
+
+  it("homework tasks are not counted as practice questions in Buddy's picture (p2-HW-06)", async () => {
+    await env.db.tx(async (tx) => {
+      const subject = await findOrCreateSubject(tx, l.learnerId, 'Mathe', 'math');
+      const m = await tx.one<{ id: string }>(
+        `insert into materials (learner_id, client_request_id, subject_id, status, photo_count, created_at, purpose)
+         values ($1, gen_random_uuid(), $2, 'ready', 1, $3, 'homework') returning id`,
+        [l.learnerId, subject.id, env.clock.now()],
+      );
+      for (let i = 0; i < 3; i++)
+        await tx.query(
+          `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, topic, origin)
+           values ($1, $2, $3, 'short', $4, 'x', 'Brüche', 'homework')`,
+          [l.learnerId, m.id, subject.id, `Aufgabe ${i}`],
+        );
+    });
+    const state = await loadBuddyState(env.db, l.learnerId, env.clock.now());
+    expect(state.subjects.map((x) => x.item_count)).toEqual([0]);
+    expect(state.materials.map((x) => x.item_count)).toEqual([0]);
+    expect(state.topics).toEqual([]);
+    expect(state.totals.items).toBe(0);
   });
 });

@@ -107,7 +107,12 @@ export async function contactHistory(db: Db, learnerId: string, now: Date): Prom
     answered: boolean;
   }>(
     `select id, topic_key, origin, coalesce(sent_at, send_at, created_at) as at,
-            (opened_at is not null or responded_at is not null) as answered
+            (opened_at is not null or responded_at is not null
+             -- Doing what it was about answers it too, without tapping the push
+             -- (previous-unanswered-needs-push-tap).
+             or exists (select 1 from buddy_steps st
+                         where st.id = buddy_outreach.step_id
+                           and st.state in ('in_progress','done'))) as answered
        from buddy_outreach
       where learner_id = $1 and status = any($2::text[])
         -- Her own action's result is not an initiative (policy.ts).
