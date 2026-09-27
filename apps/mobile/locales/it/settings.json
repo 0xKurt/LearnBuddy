@@ -99,11 +99,13 @@
     },
     "export": {
       "title": "Esporta i dati",
-      "body": "Tutto ciò che è salvato, come testo. Per conservarlo o condividerlo.",
+      "body": "Tutto ciò che è salvato, come file. Da conservare o inoltrare.",
       "cta": "Crea l'esportazione",
       "working": "Creazione dell'esportazione…",
       "share_title": "Esportazione LearnBuddy",
-      "share_failed": "La condivisione non è riuscita. Riprova."
+      "share_failed": "Non è stato possibile consegnare il file. Riprova.",
+      "shared": "L'esportazione è stata consegnata.",
+      "saved": "L'esportazione è stata salvata come file."
     },
     "delete": {
       "title": "Elimina l'account",
@@ -150,7 +152,17 @@
       "password_saved": "Nuova password salvata."
     },
     "open": "Apri",
-    "close": "Chiudi"
+    "close": "Chiudi",
+    "profile": {
+      "title": "Correggere il profilo",
+      "current": "{{name}}, nato/a il {{date}}",
+      "body": "Il nome o la data di nascita sono sbagliati? Qui si possono correggere.",
+      "cta": "Correggi",
+      "sheet_title": "Correggere il profilo",
+      "name": "Nome",
+      "save": "Salva",
+      "saved": "Profilo salvato."
+    }
   },
   "status": {
     "title": "Funziona tutto?",

@@ -220,7 +220,7 @@ export default function BuddyScreen() {
 
   async function enableContact(asAdult: boolean) {
     try {
-      if (asAdult && !(await requestAdmin())) return;
+      if (asAdult && !(await requestAdmin('contact'))) return;
       await act(async () => {
         const next = await answerContactOptIn(true);
         // Ask for notification permission only now, when it has a purpose.

@@ -101,6 +101,10 @@ class DevAuth implements AuthVerifier {
     await this.db.query(`delete from auth.users where id = $1`, [userId]);
     for (const [email, u] of this.users) if (u.id === userId) this.users.delete(email);
   }
+
+  async updatePassword(userId: string, password: string): Promise<void> {
+    for (const u of this.users.values()) if (u.id === userId) u.password = password;
+  }
 }
 
 class DevStorage extends MemoryStorage {

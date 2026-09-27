@@ -51,28 +51,34 @@ Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, 
   (`auth/verifier.ts`). The API never sees passwords.
 - Every learner-scoped route takes the learner from the verified user (`http/context.ts`), never
   from the body, the path or a model output. The device sends its IANA zone in `x-timezone`.
-- Minors: loosening contact rules and account data need a short-lived admin token (PIN,
-  `x-admin-token`, 10 minutes, HMAC). Tightening (pause, quieter) is always allowed.
+- Minors: loosening contact rules, account data, sign-in details, a birth-date correction and
+  agreeing to a new privacy text need a short-lived admin token (PIN, `x-admin-token`,
+  5 minutes, HMAC; the app drops it after the one step). A child profile counts as a minor
+  until 18 (D-8). Tightening (pause, quieter) is always allowed.
+- Consent: every route behind `requireAccount` answers 409 `consent_outdated` while the
+  account's `consent_version` is not the current one; `/me`, `POST /account`, the PIN, export
+  and deletion (`requireAccountAnyConsent`) keep working.
 - Errors: `{"error": {"code", "message", "details"?}}` with stable codes (`lib/errors.ts`); no
   provider bodies, SQL or user content in messages or logs.
 - Bodies are JSON ≤ 64 KB, validated with zod (`http/validate.ts`); photos go straight to storage.
 
-| Route                                                                                                | Purpose                                                  |
-| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `GET /me`, `POST /account`, `POST /learner`, `PATCH /learner`                                        | onboarding (consent version must match)                  |
-| `PUT /account/pin`, `POST /account/admin-session`                                                    | PIN gate (5 tries, 15 min lock)                          |
-| `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder)                                 |
-| `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system |
-| `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)    |
-| `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                  |
-| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                  |
-| `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                   |
-| `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                            |
-| `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                       |
-| `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one      |
-| `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                 |
-| `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived              |
-| `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                               |
+| Route                                                                                                | Purpose                                                                                          |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `GET /me`, `POST /account`, `POST /learner`, `PATCH /learner`                                        | onboarding (consent version must match); child + PIN in one request; birth-date correction (PIN) |
+| `PUT /account/pin`, `POST /account/admin-session`                                                    | PIN gate (shared lock, §Limits)                                                                  |
+| `PUT /account/password`                                                                              | new password (Supabase admin), PIN for a minor                                                   |
+| `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder; also without a profile)                                                 |
+| `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system                                         |
+| `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                            |
+| `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                          |
+| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                                                          |
+| `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                                                           |
+| `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                                                                    |
+| `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                                                               |
+| `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                              |
+| `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                         |
+| `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                      |
+| `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                       |
 
 ## Buddy decisions
 
@@ -302,17 +308,24 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                   |
-| ------------------------------- | --------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                |
-| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                   |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768               |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                              |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos  |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s |
-| Turn stall                      | taken over after 3 minutes                                                              |
-| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                     |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                    |
+| What                            | Limit                                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                       |
+| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                          |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                      |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                     |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos         |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s        |
+| Turn stall                      | taken over after 3 minutes                                                                     |
+| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                            |
+| Memory                          | 60 active items; temporary ≤ 60 days                                                           |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, then 30 min, 1 h … ≤ 24 h; the right PIN resets (423 + `Retry-After`) |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                      |
+| Requests per account            | practice answers (typed + spoken) 600/h, messages to Buddy 120/h (429 + `Retry-After`)         |
+
+Budgets are rows in `attempt_counters` (migration 0014) changed by one atomic upsert with the app
+clock (`lib/limits.ts` `consume`); answers and messages are counted by one middleware in front of
+the routes (`http/limits.ts`). Password-reset e-mails are Supabase Auth's own rate limit.
 
 Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
 gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
@@ -647,8 +660,12 @@ once (`abandonStaleUploads`, run by the scheduler).
   (`lib/auth/recovery.ts`), asks for the new password twice (sign-up rule, ≥ 8 characters) and
   then saves the session. Expired or used links get a calm "ask for a new one".
 - **Changing e-mail or password** is in the parents' area (`AccountAccessCard`); for a minor's
-  profile the parents' PIN comes first. An e-mail change is only requested: it counts once the
-  confirmation links are opened (`double_confirm_changes`), and the app says exactly that.
+  profile the parents' PIN comes first. A new password goes through the API
+  (`PUT /account/password`, Supabase admin), which checks the admin token itself, so the gate
+  holds on the server. An e-mail change is only requested: it counts once the confirmation links
+  to the old and the new address are opened (`double_confirm_changes`), and the app says exactly
+  that. `secure_password_change` is on, so a password change straight against Supabase Auth
+  with a device token needs a recent sign-in or a nonce sent to the account's e-mail.
 - **Offline**: on phones NetInfo feeds TanStack Query's `onlineManager` (only `isConnected`;
   NetInfo's own reachability ping is off); on the web the browser's `online`/`offline` events do
   (NetInfo on Chromium misses the connection coming back). Queries pause instead of failing, a calm line says so at the top

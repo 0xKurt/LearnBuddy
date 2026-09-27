@@ -34,6 +34,10 @@ enable_signup = true
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
+# A password change straight against Supabase Auth needs a recent sign-in or a
+# nonce sent to the account's e-mail (the app changes it through the API, which
+# checks the parents' PIN; docs/architecture.md §App: account and connection).
+secure_password_change = true
 enable_confirmations = true
 
 [edge_runtime]

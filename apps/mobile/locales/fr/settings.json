@@ -99,11 +99,13 @@
     },
     "export": {
       "title": "Exporter les données",
-      "body": "Tout ce qui est enregistré, sous forme de texte. Pour le sauvegarder ou le transmettre.",
+      "body": "Tout ce qui est enregistré, sous forme de fichier. Pour le conserver ou le transmettre.",
       "cta": "Créer l'export",
       "working": "Création de l'export…",
       "share_title": "Export LearnBuddy",
-      "share_failed": "Le partage n'a pas marché. Réessaie."
+      "share_failed": "Le fichier n'a pas pu être transmis. Réessaie.",
+      "shared": "L'export a été transmis.",
+      "saved": "L'export a été enregistré comme fichier."
     },
     "delete": {
       "title": "Supprimer le compte",
@@ -150,7 +152,17 @@
       "password_saved": "Nouveau mot de passe enregistré."
     },
     "open": "Ouvrir",
-    "close": "Fermer"
+    "close": "Fermer",
+    "profile": {
+      "title": "Corriger le profil",
+      "current": "{{name}}, né(e) le {{date}}",
+      "body": "Le nom ou la date de naissance est faux ? Vous pouvez le corriger ici.",
+      "cta": "Corriger",
+      "sheet_title": "Corriger le profil",
+      "name": "Nom",
+      "save": "Enregistrer",
+      "saved": "Profil enregistré."
+    }
   },
   "status": {
     "title": "Tout fonctionne?",
