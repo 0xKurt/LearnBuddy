@@ -116,7 +116,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Eltern fragen' }).click();
   await expect(page.getByText('PIN der Eltern')).toBeVisible();
   await expect(
-    page.getByText(/Ihr erlaubt, dass Buddy Mia aufs Handy schreibt\. .*nie nach 20:00 Uhr/),
+    page.getByText(/Ihr erlaubt, dass Buddy Mia aufs Handy schreibt\. .*Nie nach 20:00 Uhr/),
   ).toBeVisible();
   await shot(page, '06-parent-pin');
   for (const digit of pin) await page.getByRole('button', { name: digit, exact: true }).click();
