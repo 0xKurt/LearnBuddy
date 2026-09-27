@@ -13,7 +13,13 @@
 // agreed times may not fall into quiet hours; contact can only be reduced or
 // shifted, never turned on or increased.
 
-import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
+import {
+  VOICE_NAMES,
+  VOICE_SPEED_MAX,
+  VOICE_SPEED_MIN,
+  type ActionSummary,
+  type VoiceName,
+} from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
 import {
@@ -118,6 +124,13 @@ export type UndoSpec =
       paused_until: string | null;
       /** Written by undo records from before ADR 0006; ignored. */
       max_per_week?: number;
+      expect_version: number;
+    }
+  | {
+      type: 'restore_voice';
+      voice: VoiceName;
+      speed: number;
+      /** Undo only while the settings are as the action left them (no blind overwrite). */
       expect_version: number;
     }
   | { type: 'cancel_check'; job_id: string };
@@ -905,6 +918,59 @@ async function runSetContact(
   };
 }
 
+/**
+ * Buddy's voice as she asked for it (ADR 0008). Code decides the step: "slower" is one step
+ * down from where it is, "other" the next voice of the curated set; the limits are enforced
+ * here, and a request that changes nothing is sent back to the model to say so.
+ */
+async function runSetVoice(action: ActionOf<'set_voice'>, ctx: ToolContext): Promise<ToolOutcome> {
+  const a = action.args;
+  requireQuote(ctx, a.quote);
+  if (a.speed === null && a.voice === null) {
+    throw new ToolRejection('set_voice needs speed or voice');
+  }
+  const s = ctx.settings;
+  let speed = s.voice_speed;
+  if (a.speed === 'slower') {
+    if (speed <= VOICE_SPEED_MIN)
+      throw new ToolRejection(
+        'the voice is already as slow as it goes — tell her so, change nothing',
+      );
+    speed -= 1;
+  } else if (a.speed === 'faster') {
+    if (speed >= VOICE_SPEED_MAX)
+      throw new ToolRejection(
+        'the voice is already as fast as it goes — tell her so, change nothing',
+      );
+    speed += 1;
+  } else if (a.speed === 'normal') {
+    speed = 0;
+  }
+  let voice: VoiceName = s.voice;
+  if (a.voice === 'other') {
+    voice = VOICE_NAMES[(VOICE_NAMES.indexOf(s.voice) + 1) % VOICE_NAMES.length]!;
+  } else if (a.voice !== null) {
+    voice = a.voice;
+  }
+  if (voice === s.voice && speed === s.voice_speed) {
+    throw new ToolRejection('that is already how you sound — change nothing and say so');
+  }
+  await ctx.db.query(
+    `update buddy_settings set voice = $2, voice_speed = $3, version = version + 1
+      where learner_id = $1`,
+    [ctx.learnerId, voice, speed],
+  );
+  return {
+    summary: { tool: 'set_voice', voice, speed },
+    undo: {
+      type: 'restore_voice',
+      voice: s.voice,
+      speed: s.voice_speed,
+      expect_version: s.version + 1,
+    },
+  };
+}
+
 async function runOfferLearning(
   action: ActionOf<'offer_learning'>,
   _ctx: ToolContext,
@@ -983,6 +1049,7 @@ export const ACT_HANDLERS: {
   mark_step_done: runMarkStepDone,
   request_material: runRequestMaterial,
   set_contact: runSetContact,
+  set_voice: runSetVoice,
   offer_learning: runOfferLearning,
   open_area: runOpenArea,
   schedule_check: runScheduleCheck,
@@ -1037,6 +1104,11 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
         [undo.step_id, learnerId, undo.expect_version],
       );
     case 'restore_settings':
+      return exists(`select 1 from buddy_settings where learner_id = $1 and version = $2`, [
+        learnerId,
+        undo.expect_version,
+      ]);
+    case 'restore_voice':
       return exists(`select 1 from buddy_settings where learner_id = $1 and version = $2`, [
         learnerId,
         undo.expect_version,
@@ -1277,6 +1349,15 @@ export async function runUndo(
           undo.expect_version,
           undo.quiet_start ?? null,
         ],
+      );
+      return r.length === 1;
+    }
+    case 'restore_voice': {
+      // Only while nothing changed the settings since (an adult's change is never overwritten).
+      const r = await db.query(
+        `update buddy_settings set voice = $2, voice_speed = $3, version = version + 1
+          where learner_id = $1 and version = $4 returning learner_id`,
+        [learnerId, undo.voice, undo.speed, undo.expect_version],
       );
       return r.length === 1;
     }

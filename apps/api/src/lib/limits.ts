@@ -38,6 +38,11 @@ export const POLICIES = {
   answers: { limit: 600, windowMs: HOUR },
   /** Messages to Buddy: a script, not a learner (2 a minute for an hour). */
   messages: { limit: 120, windowMs: HOUR },
+  /**
+   * Sentences newly read in Buddy's natural voice (cost protection, ADR 0008): far above a
+   * whole hour of conversation. Beyond it the app reads with the phone's voice — never silence.
+   */
+  speech: { limit: 1000, windowMs: HOUR },
 } as const satisfies Record<string, LimitPolicy>;
 
 export type LimitScope = keyof typeof POLICIES;

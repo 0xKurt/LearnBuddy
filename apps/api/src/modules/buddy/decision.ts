@@ -12,6 +12,7 @@
 // The same zod schemas generate the JSON schema sent to the model and
 // validate its answer.
 
+import { VOICE_NAMES } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 const SUBJECT_KINDS = [
@@ -418,6 +419,25 @@ const setContact = z.object({
   }),
 });
 
+const setVoice = z.object({
+  tool: z.literal('set_voice'),
+  args: z.object({
+    speed: z
+      .enum(['slower', 'faster', 'normal'])
+      .nullable()
+      .describe(
+        'How you are read aloud: "sprich langsamer" → slower (one step each time she asks), "schneller" → faster, "wieder normal" → normal; null = unchanged',
+      ),
+    voice: z
+      .enum(['other', ...VOICE_NAMES])
+      .nullable()
+      .describe(
+        '"andere Stimme" → other (the next one); one of the named voices only if she chose it; null = unchanged',
+      ),
+    quote: Quote,
+  }),
+});
+
 const scheduleCheck = z.object({
   tool: z.literal('schedule_check'),
   args: z.object({
@@ -472,6 +492,7 @@ export const ACT_SCHEMAS = {
   mark_step_done: markStepDone,
   request_material: requestMaterial,
   set_contact: setContact,
+  set_voice: setVoice,
   schedule_check: scheduleCheck,
   offer_learning: offerLearning,
   open_area: openArea,

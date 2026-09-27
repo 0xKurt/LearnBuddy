@@ -293,6 +293,23 @@ ls -la "$GOOGLE_APPLICATION_CREDENTIALS"
 
 ---
 
+## Natürliche Stimme (Cloud Text-to-Speech, ADR 0008)
+
+Buddy liest mit einer natürlichen Stimme vor (Chirp 3: HD über den EU-Endpunkt), sobald
+`SPEECH_BACKEND=google` gesetzt ist. Gleiches Projekt, gleicher Service Account:
+
+1. **Console → APIs & Services → Library** → „Cloud Text-to-Speech API“ → **Enable**.
+2. **IAM** → dem Service Account zusätzlich die Rolle **Service Usage Consumer**
+   (`roles/serviceusage.serviceUsageConsumer`) geben — der Aufruf wird über
+   `x-goog-user-project` dem Projekt berechnet.
+3. Env: `SPEECH_BACKEND=google` (Endpunkt fest `eu-texttospeech.googleapis.com`).
+4. Test (lokal, mit gesetzten Credentials):
+   `curl -s -X POST https://eu-texttospeech.googleapis.com/v1/text:synthesize -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: $GOOGLE_CLOUD_PROJECT" -H 'content-type: application/json' -d '{"input":{"text":"Hallo, ich bin Buddy."},"voice":{"languageCode":"de-DE","name":"de-DE-Chirp3-HD-Sulafat"},"audioConfig":{"audioEncoding":"MP3","speakingRate":0.88}}' | head -c 120`
+   → `{"audioContent": "…"}`.
+5. Die Punkte unter „Live verification“ in `docs/adr/0008-natural-voice.md` abhaken.
+
+Ohne diese Schritte (oder bei Fehlern) liest die App wie bisher mit der Stimme des Telefons.
+
 ## Danach
 
 Mit gesetzten Variablen nutzt Buddy das Modell für Gespräche, Hintergrund-Checks, das Lesen von

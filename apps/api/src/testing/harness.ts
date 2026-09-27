@@ -11,7 +11,15 @@ import { createDb, type PgDb } from '../lib/db.js';
 import { DisabledGateway, type LlmGateway } from '../llm/gateway.js';
 import { DisabledPush } from '../push/transport.js';
 import { createTestDatabase, type TestDatabase } from './database.js';
-import { FakeAuth, FakePush, MemoryStorage, ScriptedGateway, TestClock } from './fakes.js';
+import {
+  FakeAuth,
+  FakePush,
+  FakeSpeech,
+  MemoryStorage,
+  ScriptedGateway,
+  TestClock,
+} from './fakes.js';
+import { DisabledSpeech } from '../speech/gateway.js';
 
 export type TestEnv = {
   deps: Deps;
@@ -19,6 +27,7 @@ export type TestEnv = {
   clock: TestClock;
   llm: ScriptedGateway;
   push: FakePush;
+  speech: FakeSpeech;
   auth: FakeAuth;
   storage: MemoryStorage;
   app: Hono<AppEnv>;
@@ -36,6 +45,7 @@ export async function createTestEnv(
     /** A real model for evaluations (evals/buddy); overrides `model`. */
     gateway?: LlmGateway;
     push?: 'fake' | 'disabled';
+    speech?: 'fake' | 'disabled';
     config?: Record<string, string>;
   } = {},
 ): Promise<TestEnv> {
@@ -56,6 +66,7 @@ export async function createTestEnv(
   // Background hints for new questions are answered with "none" unless a test scripts them.
   const llm = new ScriptedGateway().byDefault('hints', { json: { items: [] } });
   const push = new FakePush();
+  const speech = new FakeSpeech();
   const auth = new FakeAuth(db);
   const storage = new MemoryStorage();
   const pending: Array<Promise<void>> = [];
@@ -67,6 +78,7 @@ export async function createTestEnv(
     storage,
     llm: opts.gateway ?? (opts.model === 'disabled' ? new DisabledGateway() : llm),
     push: opts.push === 'disabled' ? new DisabledPush() : push,
+    speech: opts.speech === 'disabled' ? new DisabledSpeech() : speech,
     background: (task) => {
       pending.push(task());
     },
@@ -77,6 +89,7 @@ export async function createTestEnv(
     clock,
     llm,
     push,
+    speech,
     auth,
     storage,
     app: createApp(deps),

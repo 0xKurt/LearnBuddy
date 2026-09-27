@@ -179,7 +179,23 @@
     "open_area": "Mostrado: {{what}}",
     "set_contact_quiet": "Al móvil solo de {{from}} a {{to}}, nunca después de las {{quiet}}",
     "set_contact_days": "nunca estos días: {{days}}",
-    "request_material_undone": "No hace falta foto: {{title}}"
+    "request_material_undone": "No hace falta foto: {{title}}",
+    "set_voice": "Mi voz: {{voice}}, {{speed}}"
+  },
+  "voice": {
+    "name": {
+      "warm": "cálida",
+      "friendly": "amable",
+      "bright": "luminosa",
+      "clear": "clara"
+    },
+    "speed": {
+      "slower2": "mucho más lenta",
+      "slower": "más lenta",
+      "normal": "velocidad normal",
+      "faster": "más rápida",
+      "faster2": "mucho más rápida"
+    }
   },
   "intro": {
     "title": "Soy Buddy.",

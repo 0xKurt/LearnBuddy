@@ -51,7 +51,8 @@ const SAFETY: SafetySetting[] = [
   },
 ];
 
-function ensureCredentialsFile(config: Config): void {
+/** The service account (inline JSON on Vercel) as a file for Google's client libraries; shared with speech/google.ts. */
+export function ensureCredentialsFile(config: Config): void {
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS || !config.GOOGLE_APPLICATION_CREDENTIALS_JSON)
     return;
   const path = join(tmpdir(), 'learnbuddy-vertex-sa.json');
