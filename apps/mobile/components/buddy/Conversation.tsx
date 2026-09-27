@@ -39,8 +39,9 @@ type Props = {
   showActions?: boolean;
   /** Whether Buddy may message her phone (agreed reminders say where they arrive). */
   contactOn?: boolean;
-  onOption: (messageId: string, option: string) => void;
-  onResend: (message: MessageView) => void;
+  /** Quick answers and "Nochmal senden"; left out (History), they are not shown at all. */
+  onOption?: (messageId: string, option: string) => void;
+  onResend?: (message: MessageView) => void;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
   /** Where her own last message starts (y within this view), so it is never scrolled away. */
@@ -193,14 +194,14 @@ export function Conversation({
                   {failedLabel(m.failure_code)}
                 </Text>
                 {/* Resending cannot help once today's allowance is used up. */}
-                {m.failure_code === 'budget' ? null : (
+                {m.failure_code === 'budget' || !onResend ? null : (
                   <Btn size="sm" variant="outline" onPress={() => onResend(m)} disabled={busy}>
                     {t('thread.resend')}
                   </Btn>
                 )}
               </View>
             ) : null}
-            {m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
+            {onOption && m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                 {m.options.map((o) => (
                   <Btn
