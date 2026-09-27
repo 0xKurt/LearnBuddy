@@ -10,8 +10,7 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   passwords) and accepts the current privacy text: `accounts.consent_version` must equal the
   API's `CONSENT_VERSION`, otherwise the account is not created. The text lives in the app
   (`auth:consent.*`); any change to it ships together with a new `CONSENT_VERSION`, so every
-  account agrees again (2026-09-27: the contact point names the D-8 rule — a child profile
-  stays behind the parents until 18).
+  account agrees again (2026-09-27: the consent points were reworded).
 - Each account has exactly one **learner profile**: the adult themselves (`relation = self`,
   only from 16 years) or a child (`relation = child`). A child profile records the account
   holder's consent (DSGVO Art. 8 under 16; recorded for 16- and 17-year-olds too), stored as
