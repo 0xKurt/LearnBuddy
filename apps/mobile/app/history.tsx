@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Conversation } from '../components/buddy/Conversation.js';
 import { Btn } from '../components/lb/Btn.js';
-import { LoadingState } from '../components/lb/LoadingState.js';
+import { ChatSkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
 import { ApiError } from '../lib/api/client.js';
@@ -31,7 +31,12 @@ export default function History() {
     if (live) setSeen((s) => mergeThread(s, live));
   }, [live]);
 
-  if (home.isPending || !home.data) return <LoadingState />;
+  if (home.isPending || !home.data)
+    return (
+      <Screen back title={t('thread.title')}>
+        <ChatSkeleton label={t('common:loading')} rows={6} />
+      </Screen>
+    );
   const messages = mergeThread(seen, home.data.thread);
   const more = hasMore ?? home.data.thread_has_more;
 

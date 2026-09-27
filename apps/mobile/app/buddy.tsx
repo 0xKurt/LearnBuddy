@@ -44,7 +44,7 @@ import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
 import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
 import { StartRow } from '../components/lb/StartRow.js';
-import { LoadingState } from '../components/lb/LoadingState.js';
+import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
@@ -378,7 +378,12 @@ export default function BuddyScreen() {
     setTimeout(next, SHEET_SWAP_MS);
   }
 
-  if (home.isPending) return <LoadingState label={t('common:loading')} />;
+  if (home.isPending)
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+        <HomeSkeleton label={t('common:loading')} />
+      </SafeAreaView>
+    );
   // A failed background refresh keeps what is on screen (audit M-71); the error screen is
   // only for a home that never loaded.
   if (home.isError && !home.data) {

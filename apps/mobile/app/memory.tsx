@@ -21,7 +21,7 @@ import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
-import { LoadingState } from '../components/lb/LoadingState.js';
+import { MemorySkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
@@ -106,7 +106,7 @@ export default function MemoryScreen() {
             />
           </View>
         ) : (
-          <LoadingState label={t('common:loading')} />
+          <MemorySkeleton label={t('common:loading')} />
         )}
       </Screen>
     );

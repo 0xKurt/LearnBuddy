@@ -15,10 +15,10 @@ import { MaterialCard } from '../components/library/MaterialCard.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
-import { LoadingState } from '../components/lb/LoadingState.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
 import { Sheet } from '../components/lb/Sheet.js';
+import { LibrarySkeleton } from '../components/lb/Skeletons.js';
 import { toast } from '../components/lb/Toast.js';
 import { ApiError } from '../lib/api/client.js';
 import { deleteMaterial, retryMaterial, startPractice } from '../lib/api/endpoints.js';
@@ -208,7 +208,7 @@ export default function LibraryScreen() {
         />
       </View>
     ) : (
-      <LoadingState label={t('common:loading')} />
+      <LibrarySkeleton label={t('common:loading')} />
     );
   } else {
     content = (

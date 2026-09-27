@@ -44,7 +44,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/Btn.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
+import { Appear, Rise, SlideIn } from '../../components/lb/Motion.js';
 import { LoadingState } from '../../components/lb/LoadingState.js';
+import { PracticeSkeleton } from '../../components/lb/Skeletons.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { Sheet } from '../../components/lb/Sheet.js';
 import { toast } from '../../components/lb/Toast.js';
@@ -78,6 +80,7 @@ import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js'
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { announce } from '../../lib/announce.js';
+import { haptic } from '../../lib/haptics.js';
 import type { SpokenWords } from '../../lib/math/speak.js';
 import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/speech/listen.js';
 import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
@@ -190,6 +193,9 @@ export default function PracticeScreen() {
   const scroll = useRef<ScrollView>(null);
 
   const session = query.data;
+  // The session ran here while the screen was open: its end is a moment (SessionSummary).
+  const sawActive = useRef(false);
+  if (session?.status === 'active') sawActive.current = true;
   const voiceOn = useVoiceMode((s) => s.on);
   const words = useSpokenWords();
 
@@ -241,11 +247,19 @@ export default function PracticeScreen() {
     return feedbackReadText(key ? t(key) : null, res.reply.text, words);
   }
 
+  /** A right answer feels like one; "not yet" is a soft nudge (never in a running test). */
+  function feel(res: AnswerResponse): void {
+    if (res.session.mode === 'test' && res.session.status === 'active') return;
+    if (res.verdict === 'correct') haptic.success();
+    else if (res.verdict === 'partially_correct' || res.verdict === 'incorrect') haptic.soft();
+  }
+
   /**
    * Voice mode reads the feedback aloud; otherwise a screen reader hears the same words —
    * the verdict too, never raw LaTeX (audit M-82).
    */
   function readFeedback(res: AnswerResponse, itemId: string): void {
+    feel(res);
     const text = feedbackText(res);
     if (!useVoiceMode.getState().on) {
       announce(text);
@@ -334,6 +348,7 @@ export default function PracticeScreen() {
         ? prev.clientTurnId
         : newId();
     lastSent.current = { clientTurnId, itemId, text: answerText, choice };
+    haptic.tap();
     setPinnedId(itemId);
     setPending({ itemId, text: shownText });
     setBusy(true);
@@ -393,6 +408,7 @@ export default function PracticeScreen() {
   async function askHint(itemId: string): Promise<void> {
     if (working.current) return;
     working.current = true;
+    haptic.tap();
     setPinnedId(itemId);
     setBusy(true);
     try {
@@ -491,7 +507,7 @@ export default function PracticeScreen() {
     }
     return (
       <Screen>
-        <LoadingState label={t('practice:loading')} />
+        <PracticeSkeleton label={t('practice:loading')} />
       </Screen>
     );
   }
@@ -511,13 +527,14 @@ export default function PracticeScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <SessionSummary
+              celebrate={sawActive.current}
               summary={session.summary}
               mode={session.mode}
               review={session.mode === 'test' ? session.items : null}
             />
           </ScrollView>
           <BottomBar>
-            <View style={{ gap: 10 }}>
+            <Appear delay={sawActive.current ? 900 : 0} style={{ gap: 10 }}>
               {session.mode !== 'help' && session.summary.shaky_topics.length > 0 ? (
                 <AgainButton title={session.title} topics={session.summary.shaky_topics} />
               ) : session.mode !== 'help' && session.summary.secure_topics.length > 0 ? (
@@ -530,7 +547,7 @@ export default function PracticeScreen() {
               <Btn size="lg" pill full onPress={backToBuddy}>
                 {t('practice:back_to_buddy')}
               </Btn>
-            </View>
+            </Appear>
           </BottomBar>
         </Screen>
       );
@@ -722,19 +739,24 @@ export default function PracticeScreen() {
               {t(testing ? 'practice:test_note' : 'practice:help_note')}
             </Text>
           ) : null}
-          {speaking ? (
-            <SpeakCard item={item} turns={turns} />
-          ) : (
-            <QuestionCard
-              prompt={item.prompt}
-              topic={item.topic}
-              figure={item.figure}
-              figureMaxHeight={Math.round(windowHeight * 0.14)}
-              fromBuddy={item.origin === 'buddy'}
-              // Her short answer appears in the gap of a fill-in sentence while she types.
-              answer={typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined}
-            />
-          )}
+          {/* The next question comes in softly from the side (keyed by the question). */}
+          <SlideIn key={item.id}>
+            {speaking ? (
+              <SpeakCard item={item} turns={turns} />
+            ) : (
+              <QuestionCard
+                prompt={item.prompt}
+                topic={item.topic}
+                figure={item.figure}
+                figureMaxHeight={Math.round(windowHeight * 0.14)}
+                fromBuddy={item.origin === 'buddy'}
+                // Her short answer appears in the gap of a fill-in sentence while she types.
+                answer={
+                  typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
+                }
+              />
+            )}
+          </SlideIn>
           {tools.length > 0 ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
           ) : null}
@@ -760,13 +782,19 @@ export default function PracticeScreen() {
           }}
         >
           <ItemThread turns={turns} pending={pendingText} hideVerdicts={testing} />
-          {session.mode === 'help' && shown.status === 'correct' ? <SelfSolvedCard /> : null}
+          {session.mode === 'help' && shown.status === 'correct' ? (
+            <Rise delay={180}>
+              <SelfSolvedCard />
+            </Rise>
+          ) : null}
           {shown.status !== 'open' && shown.answer !== null ? (
-            <SolutionCard
-              status={shown.status}
-              answer={shown.answer}
-              numeric={item.kind === 'numeric'}
-            />
+            <Rise delay={180}>
+              <SolutionCard
+                status={shown.status}
+                answer={shown.answer}
+                numeric={item.kind === 'numeric'}
+              />
+            </Rise>
           ) : null}
           {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
             <ListenButton text={shown.answer} lang={item.lang} />
@@ -829,9 +857,11 @@ export default function PracticeScreen() {
         ) : null}
         {open ? null : (
           <BottomBar>
-            <Btn size="lg" pill full onPress={next}>
-              {t('practice:next')}
-            </Btn>
+            <Appear delay={120}>
+              <Btn size="lg" pill full onPress={next}>
+                {t('practice:next')}
+              </Btn>
+            </Appear>
           </BottomBar>
         )}
       </KeyboardAvoidingView>

@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
-import { LoadingState } from '../components/lb/LoadingState.js';
+import { SettingsSkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { AboutSection } from '../components/settings/AboutSection.js';
 import { AdultSection } from '../components/settings/AdultSection.js';
@@ -71,7 +71,7 @@ export default function SettingsScreen() {
   if (!settings.data || !me.data) {
     return (
       <Screen back title={title}>
-        <LoadingState label={t('common:loading')} />
+        <SettingsSkeleton label={t('common:loading')} />
       </Screen>
     );
   }
