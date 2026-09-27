@@ -29,22 +29,31 @@ export const ERASURE_OVERDUE_MS = 86_400_000;
 
 const DAY = 86_400_000;
 
-/** Photos of one material leave Storage; `photos_deleted_at` only once they really did. */
+/**
+ * Photos of one material leave Storage; `photos_deleted_at` only once they really did.
+ * With `positions` in the payload only those photos go (a photo of something else inside a
+ * sheet that was read — p2-page-not-material-photo-kept-7-days); the rest keep their retention.
+ */
 export async function purgePhotos(deps: Deps, job: JobRow): Promise<void> {
   const materialId = String(job.payload.material_id ?? '');
+  const positions = Array.isArray(job.payload.positions)
+    ? job.payload.positions.filter((p): p is number => Number.isInteger(p))
+    : null;
   const photos = await deps.db.query<{ storage_path: string }>(
-    `select storage_path from material_photos where material_id = $1`,
-    [materialId],
+    `select storage_path from material_photos
+      where material_id = $1 and ($2::int[] is null or position = any($2::int[]))`,
+    [materialId, positions],
   );
   // A Storage failure throws: the job is retried with backoff (scheduler/jobs.ts PERSISTENT_KINDS).
   await removeAll(
     deps.storage,
     photos.map((p) => p.storage_path),
   );
-  await deps.db.query(`update materials set photos_deleted_at = $2 where id = $1`, [
-    materialId,
-    deps.now(),
-  ]);
+  if (!positions)
+    await deps.db.query(`update materials set photos_deleted_at = $2 where id = $1`, [
+      materialId,
+      deps.now(),
+    ]);
   await finishJob(deps.db, job, deps.now(), { status: 'done', result: { removed: photos.length } });
 }
 

@@ -61,8 +61,15 @@ export type PageReport = z.infer<typeof PageReport>;
 export const ExtractionResult = z.object({
   is_learning_material: z.boolean(),
   readable: z.boolean(),
-  // A broken page report must not cost the questions that were read.
-  pages: z.array(PageReport).max(20).describe('One entry per photo, in order').catch([]),
+  // A broken page report must not cost the questions that were read, and one broken
+  // entry must not cost the other pages' reports (page-report-catch-all-or-nothing).
+  pages: z
+    .preprocess(
+      (v) => (Array.isArray(v) ? v.filter((p) => PageReport.safeParse(p).success) : v),
+      z.array(PageReport).max(20),
+    )
+    .describe('One entry per photo, in order')
+    .catch([]),
   title: z.string().trim().min(1).max(80).nullable().describe('Short title of this material'),
   subject: z
     .object({ name: z.string().trim().min(1).max(40), kind: z.enum(SUBJECT_KINDS) })

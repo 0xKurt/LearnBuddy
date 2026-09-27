@@ -115,6 +115,10 @@ export async function createMaterial(
   material: MaterialView;
   uploads: Array<{ position: number; path: string; url: string; token: string }>;
 }> {
+  // Without a model nothing can read the photos: say so now, not after minutes of futile
+  // retries with retry offers that cannot work (p2-uf-llm-disabled-capture-dead-end).
+  if (!deps.llm.available)
+    throw new AppError('model_unavailable', 'No model can read photos right now');
   // Everything referenced must belong to this learner.
   const step = input.step_id
     ? await deps.db.maybeOne<{ id: string; goal_id: string | null }>(
@@ -149,15 +153,14 @@ export async function createMaterial(
     : null;
   if (goalId && !goal) throw new AppError('not_found', 'Goal not found');
   const material = await deps.db.tx(async (tx) => {
-    const existing = await tx.maybeOne<{ id: string }>(
-      `select id from materials where learner_id = $1 and client_request_id = $2`,
-      [learner.id, input.client_request_id],
-    );
-    if (existing) return existing.id;
-    const row = await tx.one<{ id: string }>(
+    // One row per client request id, also when two sends race: the loser of the insert
+    // waits for the winner and answers with its material (create-material-idempotency-race).
+    const row = await tx.maybeOne<{ id: string }>(
       `insert into materials (learner_id, client_request_id, goal_id, step_id, subject_id, photo_count,
                               created_at, purpose, completes_material_id)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       on conflict (learner_id, client_request_id) do nothing
+       returning id`,
       [
         learner.id,
         input.client_request_id,
@@ -170,6 +173,13 @@ export async function createMaterial(
         completes?.root ?? null,
       ],
     );
+    if (!row) {
+      const existing = await tx.one<{ id: string }>(
+        `select id from materials where learner_id = $1 and client_request_id = $2`,
+        [learner.id, input.client_request_id],
+      );
+      return existing.id;
+    }
     if (completes) {
       // The notice about the missing pages has been answered.
       await tx.query(
@@ -398,11 +408,24 @@ async function fail(
   reason: NonNullable<MaterialView['failure_reason']>,
   opts: { uncounted?: boolean } = {},
 ): Promise<void> {
-  await deps.db.tx((tx) => markMaterialFailed(tx, materialId, reason, deps.now()));
-  await finishJob(deps.db, job, deps.now(), {
-    status: 'done',
-    result: { outcome: 'failed', reason, ...(opts.uncounted ? { uncounted: true } : {}) },
+  // Fenced: a run whose lease was taken over must not fail a sheet another run owns now
+  // (extraction-status-writes-unfenced). Job and material change in one transaction.
+  await deps.db.tx(async (tx) => {
+    const finished = await finishJob(tx, job, deps.now(), {
+      status: 'done',
+      result: { outcome: 'failed', reason, ...(opts.uncounted ? { uncounted: true } : {}) },
+    });
+    if (finished) await markMaterialFailed(tx, materialId, reason, deps.now());
   });
+}
+
+/** Locks this run's job row; false when its lease was lost to another run. */
+async function holdsLease(tx: Db, job: JobRow): Promise<boolean> {
+  const row = await tx.maybeOne(
+    `select 1 from jobs where id = $1 and lease_token = $2 and status = 'running' for update`,
+    [job.id, job.lease_token],
+  );
+  return row !== null;
 }
 
 /**
@@ -417,12 +440,15 @@ async function retryTransient(
 ): Promise<void> {
   const now = deps.now();
   if (job.attempts < job.max_attempts) {
-    await deps.db.query(`update materials set status = 'queued' where id = $1`, [materialId]);
-    await retryJob(deps.db, job, {
-      runAt: new Date(now.getTime() + 60_000 * 2 ** Math.max(0, job.attempts - 1)),
-      error,
-      countAttempt: true,
-      now,
+    await deps.db.tx(async (tx) => {
+      const requeued = await retryJob(tx, job, {
+        runAt: new Date(now.getTime() + 60_000 * 2 ** Math.max(0, job.attempts - 1)),
+        error,
+        countAttempt: true,
+        now,
+      });
+      if (requeued)
+        await tx.query(`update materials set status = 'queued' where id = $1`, [materialId]);
     });
     return;
   }
@@ -442,7 +468,14 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     });
     return;
   }
-  await deps.db.query(`update materials set status = 'processing' where id = $1`, [materialId]);
+  const started = await deps.db.query(
+    `update materials set status = 'processing'
+      where id = $1
+        and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')
+      returning id`,
+    [materialId, job.id, job.lease_token],
+  );
+  if (started.length === 0) return; // the lease went to another run
   const learner = await deps.db.one<{
     id: string;
     locale: string;
@@ -529,10 +562,23 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   // cost the whole sheet (the model says so for a cut-off page at times); the
   // page report tells Lena what is missing.
   const somePageRead = x.pages.some((p) => p.page <= m.photo_count && p.read !== 'none');
-  if ((!x.readable && !somePageRead) || items.length === 0)
-    return fail(deps, job, materialId, 'unreadable');
+  if (!x.readable && !somePageRead) return fail(deps, job, materialId, 'unreadable');
+  // Questions were written but none passed validation: the reading went wrong, not the
+  // photo — no lighting advice for a fine photo (empty-after-validation-says-unreadable).
+  if (items.length === 0)
+    return fail(deps, job, materialId, x.items.length > 0 ? 'model_error' : 'unreadable');
 
-  const outcome = await deps.db.tx(async (tx) => {
+  await deps.db.tx(async (tx) => {
+    // A run past its lease writes nothing: the run that took over owns the sheet now.
+    if (!(await holdsLease(tx, job))) return;
+    const outcome = await readyTx(tx);
+    await finishJob(tx, job, deps.now(), {
+      status: 'done',
+      result: outcome === 'ready' ? { outcome, items: items.length } : { outcome: 'nothing_to_do' },
+    });
+  });
+
+  async function readyTx(tx: Db): Promise<'ready' | 'deleted'> {
     const current = await tx.one<MaterialRow>(`select * from materials where id = $1 for update`, [
       materialId,
     ]);
@@ -690,13 +736,21 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       dedupeKey: `purge:${materialId}`,
       payload: { material_id: materialId },
     });
+    // A photo of something else among the pages (a letter, a recipe) is not kept at all,
+    // like a whole sheet that is not learning material (docs/privacy.md).
+    const foreign = pageProblems.filter((p) => p.problem === 'not_material' && p.read === 'none');
+    if (foreign.length > 0) {
+      await enqueueJob(tx, {
+        learnerId: current.learner_id,
+        kind: 'purge_photos',
+        runAt: now,
+        dedupeKey: `purge:${materialId}:not_material`,
+        payload: { material_id: materialId, positions: foreign.map((p) => p.page - 1) },
+      });
+    }
     await bumpContext(tx, current.learner_id);
     return 'ready';
-  });
-  await finishJob(deps.db, job, deps.now(), {
-    status: 'done',
-    result: outcome === 'ready' ? { outcome, items: items.length } : { outcome: 'nothing_to_do' },
-  });
+  }
 }
 
 /**

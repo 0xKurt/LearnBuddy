@@ -497,4 +497,123 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
     );
     expect(runs.result.uncounted).toBe(true);
   });
+
+  it('a reading run that lost its lease writes nothing: it cannot fail a sheet the next run read (extraction-status-writes-unfenced)', async () => {
+    const m = await create(env, lena);
+    for (const p of m.paths) env.storage.put(p);
+    // While the model is slow, the lease runs out, another run takes over and reads the
+    // sheet; then the slow answer arrives, unusable.
+    env.llm.script('extraction', async () => {
+      await env.db.query(
+        `update jobs set lease_token = gen_random_uuid() where kind = 'extract_material'
+            and payload ->> 'material_id' = $1`,
+        [m.id],
+      );
+      await env.db.query(`update materials set status = 'ready' where id = $1`, [m.id]);
+      return { nonsense: true };
+    });
+    expect((await lena.api.post(`/materials/${m.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+    const row = await env.db.one<{ status: string; failure_reason: string | null }>(
+      `select status, failure_reason from materials where id = $1`,
+      [m.id],
+    );
+    expect(row).toEqual({ status: 'ready', failure_reason: null });
+    const purges = await env.db.query(
+      `select 1 from jobs where kind = 'purge_photos' and payload ->> 'material_id' = $1`,
+      [m.id],
+    );
+    expect(purges).toEqual([]);
+  });
+
+  it('a reading run that lost its lease stores no questions (extraction-status-writes-unfenced)', async () => {
+    const m = await create(env, lena);
+    for (const p of m.paths) env.storage.put(p);
+    env.llm.script('extraction', async () => {
+      await env.db.query(
+        `update jobs set lease_token = gen_random_uuid() where kind = 'extract_material'
+            and payload ->> 'material_id' = $1`,
+        [m.id],
+      );
+      return sheet();
+    });
+    expect((await lena.api.post(`/materials/${m.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+    const items = await env.db.query(`select 1 from items where material_id = $1`, [m.id]);
+    expect(items).toEqual([]);
+    const row = await env.db.one<{ status: string }>(`select status from materials where id = $1`, [
+      m.id,
+    ]);
+    expect(row.status).toBe('processing');
+  });
+
+  it('two sends of the same new sheet at once get the same sheet, never a 500 (create-material-idempotency-race)', async () => {
+    for (let round = 0; round < 5; round++) {
+      const body = {
+        client_request_id: randomUUID(),
+        photo_mimes: ['image/jpeg', 'image/jpeg'],
+        purpose: 'study',
+      };
+      const results = await Promise.all(
+        Array.from({ length: 4 }, () =>
+          lena.api.post<{ material: MaterialView }>('/materials', body),
+        ),
+      );
+      expect(results.map((r) => r.status)).toEqual([201, 201, 201, 201]);
+      expect(new Set(results.map((r) => r.body.material.id)).size).toBe(1);
+      const photos = await env.db.one<{ n: number }>(
+        `select count(*)::int as n from material_photos where material_id = $1`,
+        [results[0]!.body.material.id],
+      );
+      expect(photos.n).toBe(2);
+    }
+  });
+
+  it('questions that all fail validation are not blamed on the photo (empty-after-validation-says-unreadable)', async () => {
+    const broken = { ...item('Welche Stadt?', 'Paris'), kind: 'multiple_choice', choices: null };
+    const m = await send(env, lena, { result: { ...sheet(), items: [broken] } });
+    expect(m.view).toMatchObject({ status: 'failed', failure_reason: 'model_error' });
+    // A sheet with no questions at all on a readable photo stays "unreadable".
+    const empty = await send(env, lena, { result: { ...sheet(), items: [] } });
+    expect(empty.view).toMatchObject({ status: 'failed', failure_reason: 'unreadable' });
+  });
+
+  it('a photo of something else inside a read sheet is deleted at once (p2-page-not-material-photo-kept-7-days)', async () => {
+    const m = await send(env, lena, {
+      photos: 2,
+      result: sheet([
+        { page: 1, read: 'all', problem: null },
+        { page: 2, read: 'none', problem: 'not_material' },
+      ]),
+    });
+    expect(m.view.status).toBe('ready');
+    await tick(env);
+    expect(env.storage.objects.has(m.paths[0]!)).toBe(true);
+    expect(env.storage.objects.has(m.paths[1]!)).toBe(false);
+    expect((await lena.api.get<MaterialView>(`/materials/${m.id}`)).body.photos_deleted).toBe(
+      false,
+    );
+    env.clock.advance(7 * DAY + 60_000);
+    await tick(env);
+    expect(env.storage.objects.has(m.paths[0]!)).toBe(false);
+  });
+});
+
+describe.skipIf(!dbReady)('photos without a model', () => {
+  it('are refused at once instead of failing after minutes of retries (p2-uf-llm-disabled-capture-dead-end)', async () => {
+    const env = await createTestEnv({ start: '2026-09-28T14:00:00Z', model: 'disabled' });
+    try {
+      const lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
+      const res = await lena.api.post<{ error: { code: string } }>('/materials', {
+        client_request_id: randomUUID(),
+        photo_mimes: ['image/jpeg'],
+        purpose: 'study',
+      });
+      expect(res.status).toBe(503);
+      expect(res.body.error.code).toBe('model_unavailable');
+      expect(await env.db.query(`select 1 from materials`)).toEqual([]);
+    } finally {
+      await env.close();
+    }
+  });
 });
