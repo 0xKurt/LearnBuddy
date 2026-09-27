@@ -9,6 +9,8 @@ export type SpokenWords = {
   frac: string;
   /** "Bruch: {{num}} durch {{den}}" (numerator or denominator longer than one term) */
   frac_long: string;
+  /** "und {{num}} durch {{den}}": the fraction of a mixed number ($3\frac{1}{2}$ → "3 und 1 durch 2") */
+  mixed: string;
   /** "hoch {{exp}}" */
   power: string;
   squared: string;
@@ -43,6 +45,8 @@ export const SYMBOL_KEYS: Readonly<Record<string, string>> = {
   '·': 'times',
   '×': 'times',
   '÷': 'div',
+  // Division as written in German-speaking schools ("6 : 3"); only inside math.
+  ':': 'div',
   '/': 'slash',
   π: 'pi',
   '≤': 'le',
@@ -89,10 +93,19 @@ function isShort(atoms: MathAtom[]): boolean {
   return atoms.length === 1 && atoms[0]?.type === 'chars' && /^[\w.,]+$/.test(atoms[0].text);
 }
 
+/** A whole number right before a simple fraction: a mixed number (3½), not "3 times ½". */
+function followsWholeNumber(atoms: MathAtom[], i: number): boolean {
+  let j = i - 1;
+  while (j >= 0 && atoms[j]?.type === 'text' && (atoms[j] as { text: string }).text.trim() === '')
+    j -= 1;
+  const prev = atoms[j];
+  return prev?.type === 'chars' && /(^|[^\d.,])\d+$/.test(prev.text);
+}
+
 function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
   return squash(
     atoms
-      .map((a) => {
+      .map((a, i) => {
         switch (a.type) {
           case 'chars':
             return speakChars(a.text, words);
@@ -103,7 +116,10 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
           case 'frac': {
             const num = speakAtoms(a.num, words);
             const den = speakAtoms(a.den, words);
-            const template = isShort(a.num) && isShort(a.den) ? words.frac : words.frac_long;
+            const short = isShort(a.num) && isShort(a.den);
+            if (short && /^\d+$/.test(num) && /^\d+$/.test(den) && followsWholeNumber(atoms, i))
+              return ` ${fill(words.mixed, { num, den })} `;
+            const template = short ? words.frac : words.frac_long;
             return ` ${fill(template, { num, den })} `;
           }
           case 'sup': {

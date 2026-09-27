@@ -16,6 +16,7 @@ import {
   AccessibilityInfo,
   Animated,
   Easing,
+  Linking,
   Platform,
   ScrollView,
   Text,
@@ -126,10 +127,9 @@ export default function TalkScreen() {
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
         setLive(null);
-        setProblem(
+        tellProblem(
           res.status === 'failed' ? turnFailureText(res.error_code) : t('buddy:talk.slow'),
         );
-        setPhase('paused');
         return;
       }
       final = r;
@@ -145,9 +145,18 @@ export default function TalkScreen() {
     } catch (err) {
       if (stale()) return;
       setLive(null);
-      setProblem(messageFor(err));
-      setPhase('paused');
+      tellProblem(messageFor(err));
     }
+  }
+
+  /**
+   * A turn that failed is said, not only shown: she may not be looking at the screen in
+   * conversation mode (p2-F-journey-talk-failure-silent). Then the mic waits for a tap.
+   */
+  function tellProblem(text: string): void {
+    setProblem(text);
+    setPhase('paused');
+    void speak(text, currentLocale());
   }
 
   // Start listening once when the screen opens (she opened it to talk) — not with a screen
@@ -187,8 +196,11 @@ export default function TalkScreen() {
       return () => {
         open.current = false;
         stopSpeaking();
-        if (voiceRef.current.state === 'recording') voiceRef.current.toggle();
-        setPhase((p) => (p === 'thinking' ? p : 'paused'));
+        // What she was saying is dropped, not sent: a turn started now would be ignored and
+        // leave the screen stuck in "thinking" (talk-stuck-thinking-on-blur). A turn already
+        // on its way is ignored as well (stale), so the screen is paused when she comes back.
+        voiceRef.current.cancel();
+        setPhase('paused');
       };
     }, []),
   );
@@ -319,6 +331,12 @@ export default function TalkScreen() {
                   ? t(`common:voice.problem.${voice.hint}`)
                   : '')}
           </Text>
+        ) : null}
+        {/* The same way out as everywhere else the mic is refused (talk-denied-no-settings-action). */}
+        {!problem && voice.denied && Platform.OS !== 'web' ? (
+          <Btn variant="soft" pill center onPress={() => void Linking.openSettings()}>
+            {t('common:voice.open_settings')}
+          </Btn>
         ) : null}
       </ScrollView>
 

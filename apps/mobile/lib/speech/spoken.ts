@@ -12,6 +12,14 @@ export function spokenText(text: string, words: SpokenWords): string {
   return speakMathText(withoutEmphasis(text), words).replace(/\s+/g, ' ').trim();
 }
 
+/** Gaps of three or more underscores outside $…$ as the blank word (math reads its own). */
+function withSpokenBlanks(text: string, words: SpokenWords): string {
+  return text
+    .split(/(\$[^$]*\$)/)
+    .map((part) => (part.startsWith('$') ? part : part.replace(/_{3,}/g, ` ${words.blank} `)))
+    .join('');
+}
+
 /** "A", "B", … for the n-th choice (0-based); past Z it counts on ("27"). */
 export function choiceLetter(index: number): string {
   return index >= 0 && index < 26 ? String.fromCharCode(65 + index) : String(index + 1);
@@ -30,7 +38,9 @@ export function questionReadText(
   choices: readonly string[] | null,
   words: SpokenWords,
 ): string {
-  const question = endSentence(spokenText(prompt, words));
+  // A fill-in gap outside math ("Ich helfe ___ Mutter.") is read as the gap word, as the
+  // screen reader says it, never as underscores (p2-voice-reads-blank-as-underscores).
+  const question = endSentence(spokenText(withSpokenBlanks(prompt, words), words));
   const options = (choices ?? [])
     .map((c, i) => ({ letter: choiceLetter(i), text: spokenText(c, words) }))
     .filter((c) => c.text.length > 0)

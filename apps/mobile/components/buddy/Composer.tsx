@@ -4,7 +4,8 @@
 // it. In voice mode the bar becomes voice-first: keyboard · big mic · camera,
 // and what she says is sent right away (the "Ich höre zu." look).
 
-import { useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Platform, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,6 +69,19 @@ export function Composer({
     },
   });
 
+  // Leaving the home (practice, capture, settings …) ends a dictation still listening: it
+  // would otherwise go on and send its text later (p2-lc-chat-mic-survives-leaving-home).
+  const cancelVoice = useRef(voice.cancel);
+  cancelVoice.current = voice.cancel;
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        cancelVoice.current();
+      },
+      [],
+    ),
+  );
+
   const frame = {
     gap: 10,
     paddingHorizontal: 12,
@@ -80,6 +94,18 @@ export function Composer({
     return (
       <View style={frame}>
         <MicStatus voice={voice} />
+        {/* Heard while a message was still on its way: shown with its own "Senden", never
+            hidden in a field voice mode does not show (composer-parked-transcript). */}
+        {trimmed ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[TYPE.body, { flex: 1, color: LB.ink }]} numberOfLines={3}>
+              {trimmed}
+            </Text>
+            <Btn onPress={send} disabled={disabled} pill size="sm">
+              {t('buddy:composer.send')}
+            </Btn>
+          </View>
+        ) : null}
         <View
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}
         >

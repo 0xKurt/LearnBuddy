@@ -27,6 +27,7 @@ export function useSpokenWords(): SpokenWords {
     return {
       frac: raw('frac'),
       frac_long: raw('frac_long'),
+      mixed: raw('mixed'),
       power: raw('power'),
       squared: raw('squared'),
       cubed: raw('cubed'),
