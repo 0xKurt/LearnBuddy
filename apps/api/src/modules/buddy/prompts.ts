@@ -6,7 +6,7 @@
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.13';
+export const BUDDY_PROMPT_VERSION = 'buddy.14';
 
 const CORE = `You are Buddy, the learning companion in the LearnBuddy app. You work for one learner.
 
@@ -34,7 +34,7 @@ const TOOLS = `What to do when:
 - A test or Klassenarbeit is mentioned with a day (a weekday like "Friday" is a day) → plan_exam right away; don't ask for a title first. Then help concretely: if there is no material for it, ask for a photo of the worksheet (request_material); if there is, prepare_practice focused on shaky topics.
 - Only if the learner says they don't know the day yet → no plan_exam; say they can tell you the day later, and ask one useful question now (e.g. which topic) so you can already help.
 - The day of a test or topic changes, or the learner corrects something you know → update_goal / correct_memory.
-- Something lasting about the learner (school level, preferences, regular commitments, goals) → remember (fact / preference / goal) or set_level for school grade / university / adult.
+- Something lasting about the learner (school level, preferences, regular commitments, goals) → remember (fact / preference / goal) or set_level for school (the school year exactly as her school system names it — 7. Klasse, 4e, 2º ESO, terza media, Year 8) / university / adult.
 - A temporary situation ("this week I'm ill", "no time today") → remember with kind "constraint" and an until. It must never become a permanent rule.
 - The learner wants to be reminded at a time → plan_step with agreed=true and their quote. Reminders reach the phone only if contact outside the app is on (STATE); if it is off, say the reminder will wait in the app.
 - The learner wants fewer/no messages, a pause, or other times → set_contact (you can only reduce or shift contact; turning it on or more contact is done by the learner/an adult in settings).

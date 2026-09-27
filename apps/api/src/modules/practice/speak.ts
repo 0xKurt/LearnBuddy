@@ -21,7 +21,7 @@ import type { AudioMime } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { reviewItem } from './fsrs.js';
-import { sessionView, type PracticeLearner } from './service.js';
+import { finishIfComplete, sessionView, type PracticeLearner } from './service.js';
 
 export const PRONOUNCE_PROMPT_VERSION = 'pronounce.v2.1';
 
@@ -253,6 +253,7 @@ export async function speakItem(
         sessionId,
         now,
       ]);
+      await finishIfComplete(tx, learner.id, sessionId, now);
     });
   } catch (err) {
     if (isUniqueViolation(err)) {

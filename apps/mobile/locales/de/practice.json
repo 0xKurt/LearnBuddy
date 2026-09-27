@@ -3,7 +3,8 @@
   "loading": "Ich hole deine Fragen …",
   "end": "Beenden",
   "end_label": "Übung beenden",
-  "end_hint": "Zurück zu Buddy. Deine Antworten bleiben gespeichert.",
+  "end_hint": "Zurück zu Buddy. Deine Antworten bleiben gespeichert – du kannst später hier weitermachen.",
+  "end_hint_test": "Gibt den Probetest ab und zeigt dir, wie es lief.",
   "progress": "Frage {{current}} von {{total}}",
   "answer": {
     "label": "Deine Antwort",
@@ -35,8 +36,6 @@
   "finish_failed": "Dein Ergebnis konnte ich gerade nicht laden.",
   "summary": {
     "title": "Geschafft!",
-    "answered": "Beantwortet",
-    "first_try": "Auf Anhieb richtig",
     "secure": "Sitzt: {{topics}}",
     "shaky": "Schauen wir nochmal an: {{topics}}"
   },
@@ -96,8 +95,7 @@
     "sheet_title": "Die Erklärung"
   },
   "summary_help": {
-    "title": "Hausaufgabe geschafft",
-    "answered": "Selbst gelöst"
+    "title": "Hausaufgabe geschafft"
   },
   "test_note": "Probetest – eine Antwort pro Frage, keine Tipps. Das Ergebnis siehst du am Ende.",
   "skip": "Überspringen",
@@ -107,7 +105,8 @@
     "right": "Richtig",
     "missed": "Noch nicht richtig",
     "skipped": "Übersprungen",
-    "solution": "Lösung: {{answer}}"
+    "solution": "Lösung: {{answer}}",
+    "untouched": "Nicht bearbeitet"
   },
   "again": {
     "shaky": "Die wackligen nochmal üben",
@@ -122,5 +121,16 @@
     "sheet_body": "Diese Frage kommt nicht mehr dran.",
     "confirm": "Rausnehmen",
     "done": "Alles klar – die Frage ist raus."
-  }
+  },
+  "summary_line": {
+    "help_one": "Du hast {{count}} Aufgabe selbst gelöst.",
+    "help_other": "Du hast {{count}} Aufgaben selbst gelöst.",
+    "answered_one": "Du hast {{count}} Frage beantwortet.",
+    "answered_other": "Du hast {{count}} Fragen beantwortet.",
+    "all_first": "Alles saß gleich beim ersten Mal.",
+    "first_one": "Gleich beim ersten Mal richtig."
+  },
+  "later": "Später",
+  "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
+  "later_done": "Alles klar – die kommt später nochmal dran."
 }

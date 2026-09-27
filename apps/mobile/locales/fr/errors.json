@@ -28,7 +28,7 @@
     "photos_missing": "Toutes les photos ne sont pas arrivées. Réessaie, s'il te plaît.",
     "photos_deleted": "Les photos ne sont plus enregistrées. Reprends simplement la feuille en photo.",
     "storage_unavailable": "Impossible de vérifier les photos pour le moment. Réessaie dans un instant.",
-    "no_questions": "Il n'y a pas encore d'exercices pour ça. Prends d'abord une fiche en photo.",
+    "no_questions": "Il n'y a rien à réviser ici pour l'instant. Envoie-moi une photo de tes cours et je te prépare des questions.",
     "changed_since": "Ça a changé depuis et ne peut plus être annulé automatiquement.",
     "retry_limit": "On a déjà essayé de nombreuses fois. Le mieux, c'est de prendre une nouvelle photo.",
     "pin_required": "Saisis le code PIN actuel, s'il te plaît.",

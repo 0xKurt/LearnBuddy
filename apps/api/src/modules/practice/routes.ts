@@ -24,6 +24,7 @@ import { startTopic } from './generate.js';
 import { prepareHints } from './hints.js';
 import {
   answerItem,
+  deferItem,
   finishSession,
   flagItem,
   hintItem,
@@ -74,6 +75,13 @@ practiceRoutes.post('/sessions/:id/reveal', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const { item_id } = await readBody(c, z.object({ item_id: Uuid }));
   return c.json(await revealItem(depsOf(c), c.get('learner').id, sessionId, item_id));
+});
+
+/** Homework help "Später": the task stays open and comes back after the others. */
+practiceRoutes.post('/sessions/:id/items/:itemId/defer', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const itemId = check(Uuid, c.req.param('itemId'));
+  return c.json(await deferItem(depsOf(c), c.get('learner').id, sessionId, itemId));
 });
 
 /** "Frage passt nicht": out of this session (skipped, no FSRS) and out of future practice. */

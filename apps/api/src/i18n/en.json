@@ -50,6 +50,7 @@
     "typo": "Almost – it's spelled {{answer}}. Type it once more.",
     "help_step": "Let's go step by step: what does the task give you, and what are you looking for?",
     "help_solved": "Great – you solved that yourself!",
+    "help_final_answer": "That looks good! Now write down your final result – the way the task asks for it.",
     "heard_retry": "I couldn't hear you well. Try again a bit louder and closer to the phone.",
     "speak_good": "Sounds great!",
     "speak_almost": "Almost! Look at the marked words.",

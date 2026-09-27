@@ -3,7 +3,8 @@
   "loading": "Je récupère tes questions…",
   "end": "Terminer",
   "end_label": "Terminer l'entraînement",
-  "end_hint": "Retour à Buddy. Tes réponses restent enregistrées.",
+  "end_hint": "Retour à Buddy. Tes réponses sont enregistrées – tu pourras continuer ici plus tard.",
+  "end_hint_test": "Rend le test d'entraînement et te montre comment ça s'est passé.",
   "progress": "Question {{current}} sur {{total}}",
   "answer": {
     "label": "Ta réponse",
@@ -35,8 +36,6 @@
   "finish_failed": "Je n'ai pas pu charger ton résultat pour le moment.",
   "summary": {
     "title": "C'est fait!",
-    "answered": "Réponses",
-    "first_try": "Justes du premier coup",
     "secure": "Tu maîtrises: {{topics}}",
     "shaky": "On revoit ça ensemble: {{topics}}"
   },
@@ -96,8 +95,7 @@
     "sheet_title": "L'explication"
   },
   "summary_help": {
-    "title": "Devoirs terminés",
-    "answered": "Trouvés toi-même"
+    "title": "Devoirs terminés"
   },
   "test_note": "Test d'entraînement – une réponse par question, pas d'indices. Tu verras le résultat à la fin.",
   "skip": "Passer",
@@ -107,7 +105,8 @@
     "right": "Juste",
     "missed": "Pas encore juste",
     "skipped": "Passée",
-    "solution": "Solution : {{answer}}"
+    "solution": "Solution : {{answer}}",
+    "untouched": "Pas traité"
   },
   "again": {
     "shaky": "Revoir ce qui n'est pas encore sûr",
@@ -122,5 +121,16 @@
     "sheet_body": "Cette question ne reviendra plus.",
     "confirm": "La retirer",
     "done": "D'accord – la question est retirée."
-  }
+  },
+  "summary_line": {
+    "help_one": "Tu as résolu {{count}} exercice toi-même.",
+    "help_other": "Tu as résolu {{count}} exercices toi-même.",
+    "answered_one": "Tu as répondu à {{count}} question.",
+    "answered_other": "Tu as répondu à {{count}} questions.",
+    "all_first": "Tout était juste du premier coup.",
+    "first_one": "Juste du premier coup."
+  },
+  "later": "Plus tard",
+  "later_hint": "L'exercice reste ouvert et revient après les autres.",
+  "later_done": "D'accord – celui-là revient plus tard."
 }

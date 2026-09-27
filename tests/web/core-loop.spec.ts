@@ -164,7 +164,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
     if (n === 1 || current.choice) await shot(page, `10-practice-q${n}`);
     await page.getByRole('button', { name: 'Weiter' }).click();
   }
-  await expect(page.getByText('Auf Anhieb richtig')).toBeVisible();
+  // A true, kind sentence instead of a hit rate (user feedback #1).
+  await expect(page.getByText('Alles saß gleich beim ersten Mal', { exact: false })).toBeVisible();
+  await expect(page.getByText('Auf Anhieb richtig')).toHaveCount(0);
   await shot(page, '11-practice-summary');
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 

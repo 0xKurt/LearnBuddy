@@ -299,13 +299,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(miss.body.reply.text).toBe("Notiert – weiter geht's.");
     expect(miss.body.session.items.find((i) => i.item.id === b)?.status).toBe('missed');
 
-    // A plain number with another value is wrong for sure, even as a short answer: no model call.
-    const before = env.llm.callsFor('tutor').length;
-    const fraction = await answer(l, s, d, '3/8');
-    expect(fraction.body.verdict).toBe('incorrect');
-    expect(fraction.body.reply.text).toBe("Notiert – weiter geht's.");
-    expect(env.llm.callsFor('tutor')).toHaveLength(before);
-
     // Skipping is possible, but shows nothing while the test runs.
     const skipped = await l.api.post<SessionView>(`/practice/sessions/${s.id}/reveal`, {
       item_id: c,
@@ -320,6 +313,15 @@ describe.skipIf(!dbReady)('learning modes', () => {
     env.llm.script('buddy_check', {
       json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
     });
+    // A plain number with another value is wrong for sure, even as a short answer: no model call.
+    // As the last open question, it closes the test on the server (audit H-12).
+    const before = env.llm.callsFor('tutor').length;
+    const fraction = await answer(l, s, d, '3/8');
+    expect(fraction.body.verdict).toBe('incorrect');
+    expect(fraction.body.reply.text).toBe("Notiert – weiter geht's.");
+    expect(env.llm.callsFor('tutor')).toHaveLength(before);
+    expect(fraction.body.session.status).toBe('finished');
+
     const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`, {});
     await env.flushBackground();
     expect(done.body.reveal_allowed).toBe(true);

@@ -238,6 +238,13 @@ export const hintItem = (id: string, itemId: string) =>
 /** "Frage passt nicht": skipped here, never asked again. */
 export const flagItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/items/${itemId}/flag`, { schema: SessionView });
+/** Homework help "Später": the task stays open and comes back after the others. */
+export const deferItem = (id: string, itemId: string) =>
+  request('POST', `/practice/sessions/${id}/items/${itemId}/defer`, { schema: SessionView });
+/**
+ * "Beenden" of a test (handed in) or of a session with nothing open; homework help with open
+ * tasks is only paused by the server (decision D-5).
+ */
 export const finishSession = (id: string) =>
   request('POST', `/practice/sessions/${id}/finish`, { schema: SessionView });
 

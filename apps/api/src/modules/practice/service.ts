@@ -13,7 +13,6 @@ import type {
   SessionMode,
   AnswerResponse,
   HintRequest,
-  PracticeSummary,
   PracticeTurnView,
   SessionView,
 } from '@learnbuddy/shared-types/contracts';
@@ -30,6 +29,7 @@ import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { differentNumber, NEAR_MISS, plainMath, ruleCheck, type RuleVerdict } from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
+import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
 import {
   TUTOR_PROMPT_VERSION,
@@ -40,6 +40,7 @@ import {
   homeworkSolved,
   mentionsSolution,
   tutorContext,
+  type TutorDecision as TutorDecisionT,
 } from './tutor.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 
@@ -96,6 +97,8 @@ type SessionItemRow = {
   first_try_correct: boolean | null;
   /** "Frage passt nicht": taken out by the learner (closed as skipped, archived). */
   flagged_at?: Date | null;
+  /** Homework help "Später": still open, behind the other open tasks (migration 0024). */
+  deferred_at?: Date | null;
 };
 
 // ─────────────── start ───────────────
@@ -225,6 +228,11 @@ export async function startManual(
   );
   if (!owned.goal || !owned.subject || !owned.material)
     throw new AppError('not_found', 'Not found');
+  if (scope.materialId) {
+    // A homework sheet is helped with, not drilled: it leads to its help session (audit H-7).
+    const help = await helpSessionFor(deps, learnerId, scope.materialId);
+    if (help) return help;
+  }
   const itemIds = await selectPracticeItems(
     deps.db,
     learnerId,
@@ -248,6 +256,68 @@ export async function startManual(
   });
 }
 
+/**
+ * The help session of a homework sheet (null when the material is no homework): the open or
+ * solved one as it is; after a long pause (abandoned) a fresh one with the tasks she has not
+ * solved yet. Every way back to a sheet ends here, never at "no questions" (audit H-7).
+ */
+async function helpSessionFor(
+  deps: Deps,
+  learnerId: string,
+  materialId: string,
+): Promise<string | null> {
+  const now = deps.now();
+  return deps.db.tx(async (tx) => {
+    const m = await tx.maybeOne<{
+      purpose: 'study' | 'homework';
+      title: string | null;
+      goal_id: string | null;
+    }>(
+      `select purpose, title, goal_id from materials
+        where id = $1 and learner_id = $2 and archived_at is null for update`,
+      [materialId, learnerId],
+    );
+    if (!m) throw new AppError('not_found', 'Material not found');
+    if (m.purpose !== 'homework') return null;
+    const last = await tx.maybeOne<{ id: string; status: SessionRow['status'] }>(
+      `select id, status from practice_sessions
+        where material_id = $1 and learner_id = $2 and mode = 'help'
+        order by started_at desc, seq desc limit 1`,
+      [materialId, learnerId],
+    );
+    if (last && last.status !== 'abandoned') return last.id;
+    const unsolved = await tx.query<{ id: string }>(
+      `select i.id from items i
+        where i.material_id = $1 and i.learner_id = $2 and i.archived_at is null
+          and i.origin = 'homework'
+          and not exists (select 1 from session_items si where si.item_id = i.id and si.status = 'correct')
+        order by i.seq`,
+      [materialId, learnerId],
+    );
+    if (unsolved.length === 0) {
+      if (last) return last.id;
+      throw new AppError('not_found', 'No tasks on this sheet', { reason: 'no_questions' });
+    }
+    const id = await createSession(
+      tx,
+      learnerId,
+      unsolved.map((u) => u.id),
+      {
+        mode: 'help',
+        stepId: null,
+        goalId: m.goal_id,
+        materialId,
+        title: m.title,
+        intro: null,
+        clientRequestId: null,
+      },
+      now,
+    );
+    await bumpContext(tx, learnerId);
+    return id;
+  });
+}
+
 /** Practice and explanations feed spaced repetition; tests and homework do not. */
 function learnsFsrs(mode: SessionMode): boolean {
   return mode === 'practice' || mode === 'explain';
@@ -256,6 +326,46 @@ function learnsFsrs(mode: SessionMode): boolean {
 /** The hint ladder runs in practice and explanations (tests give none; homework has its own rules). */
 function givesHints(mode: SessionMode): boolean {
   return mode === 'practice' || mode === 'explain';
+}
+
+/**
+ * "Tipp" on request: also in homework help (the help sheet promises tips; user feedback #7),
+ * where a hint never carries the solution (checked like every homework reply).
+ */
+function offersHintButton(mode: SessionMode): boolean {
+  return mode === 'practice' || mode === 'explain' || mode === 'help';
+}
+
+/**
+ * "Lösung zeigen" only after a real try or a hint, never from the first second (user feedback
+ * #8); a spoken sentence can always be skipped. Never in homework, never while a test runs.
+ */
+function revealReady(
+  mode: SessionMode,
+  si: { kind: ItemRow['kind']; attempts: number; hints_used: number },
+): boolean {
+  if (mode === 'help' || mode === 'test') return false;
+  return si.kind === 'speak' || si.attempts > 0 || si.hints_used > 0;
+}
+
+/**
+ * The open question to show next: the first open one in order; in homework help a task set
+ * aside ("Später") comes after the others, the one set aside longest ago first.
+ */
+function currentOpen<
+  T extends { status: SessionItemRow['status']; position: number; deferred_at?: Date | null },
+>(items: readonly T[]): T | undefined {
+  const open = items.filter((i) => i.status === 'open');
+  return [...open].sort((a, b) => {
+    const da = a.deferred_at ? a.deferred_at.getTime() : null;
+    const db = b.deferred_at ? b.deferred_at.getTime() : null;
+    if (da === null || db === null) {
+      if (da !== db) return da === null ? -1 : 1;
+    } else if (da !== db) {
+      return da - db;
+    }
+    return a.position - b.position;
+  })[0];
 }
 
 /**
@@ -273,6 +383,13 @@ function shownSolution(
     return i.choices[i.correct_choice] ?? i.answer;
   }
   return `${i.answer}${i.unit ? ` ${i.unit}` : ''}`;
+}
+
+/** Every form of the solution a homework reply must not state (audit H-9, M-28). */
+function solutionsOf(
+  i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit' | 'accepted_answers'>,
+): string[] {
+  return [...new Set([shownSolution(i), i.answer, ...i.accepted_answers])];
 }
 
 /** The worked solution when prepared, otherwise the plain solution. */
@@ -305,7 +422,7 @@ export async function sessionView(
   const s = await loadSession(db, learnerId, sessionId);
   const items = await db.query<SessionItemRow & ItemRow>(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.first_try_correct,
-            si.flagged_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
+            si.flagged_at, si.deferred_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution
        from session_items si join items i on i.id = si.item_id
       where si.session_id = $1 order by si.position`,
@@ -330,9 +447,12 @@ export async function sessionView(
       where ps.id = $1`,
     [sessionId],
   );
-  const current = items.find((i) => i.status === 'open');
+  const current = currentOpen(items);
+  const active = s.status === 'active';
   // Homework never shows the solution; a test shows the answers once it is finished.
-  const revealAllowed = s.mode !== 'help' && !(s.mode === 'test' && s.status === 'active');
+  const revealAllowed = s.mode !== 'help' && !(s.mode === 'test' && active);
+  // A finished test shows every solution, also of the questions she never got to (audit M-36).
+  const testOver = s.mode === 'test' && s.status === 'finished';
   return {
     id: s.id,
     mode: s.mode,
@@ -357,14 +477,16 @@ export async function sessionView(
       attempts: i.attempts,
       hints_used: i.hints_used,
       hints_left:
-        i.status === 'open' && s.status === 'active' && givesHints(s.mode)
+        i.status === 'open' && active && givesHints(s.mode)
           ? Math.max(0, i.hints.length - i.hints_used)
           : 0,
       hint_available:
-        i.status === 'open' && s.status === 'active' && givesHints(s.mode) && i.kind !== 'speak',
+        i.status === 'open' && active && offersHintButton(s.mode) && i.kind !== 'speak',
+      reveal_available: i.status === 'open' && active && revealReady(s.mode, i),
+      deferred: i.status === 'open' && s.mode === 'help' && Boolean(i.deferred_at),
       // Never leak the solution of an open question, nor ever in help mode (homework).
       answer:
-        i.status === 'open' || !revealAllowed
+        (i.status === 'open' && !testOver) || !revealAllowed
           ? null
           : i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null
             ? (i.choices[i.correct_choice] ?? i.answer)
@@ -379,27 +501,8 @@ export async function sessionView(
       pronunciation: tr.pronunciation,
       created_at: tr.created_at.toISOString(),
     })),
-    current_item_id: s.status === 'active' ? (current?.id ?? null) : null,
+    current_item_id: active ? (current?.id ?? null) : null,
     summary: s.status === 'finished' ? summarize(items) : null,
-  };
-}
-
-function summarize(items: Array<SessionItemRow & { topic: string | null }>): PracticeSummary {
-  // A question she took out as not fitting was neither answered nor shaky.
-  const closed = items.filter((i) => i.status !== 'open' && !i.flagged_at);
-  const byTopic = new Map<string, { secure: number; shaky: number }>();
-  for (const i of closed) {
-    if (!i.topic) continue;
-    const t = byTopic.get(i.topic) ?? { secure: 0, shaky: 0 };
-    if (i.status === 'correct' && i.first_try_correct) t.secure++;
-    else t.shaky++;
-    byTopic.set(i.topic, t);
-  }
-  return {
-    answered: closed.length,
-    first_try: closed.filter((i) => i.first_try_correct).length,
-    secure_topics: [...byTopic.entries()].filter(([, v]) => v.shaky === 0).map(([k]) => k),
-    shaky_topics: [...byTopic.entries()].filter(([, v]) => v.shaky > 0).map(([k]) => k),
   };
 }
 
@@ -508,6 +611,24 @@ export async function answerItem(
       ? 'incorrect'
       : byRules;
   const nextHint = givesHints(session.mode) ? (item.hints[item.hints_used] ?? null) : null;
+  // Two options and one was wrong: tapping the other one is no knowledge. A wrong choice that
+  // leaves a single untried option closes the question with the solution explained — shown,
+  // never right (user feedback #9).
+  let onlyOneLeft = false;
+  if (
+    givesHints(session.mode) &&
+    item.kind === 'multiple_choice' &&
+    item.choices &&
+    rule === 'incorrect'
+  ) {
+    const wrong = await deps.db.query<{ text: string }>(
+      `select distinct text from practice_turns
+        where session_id = $1 and item_id = $2 and role = 'learner' and verdict = 'incorrect'`,
+      [sessionId, item.id],
+    );
+    const tried = new Set([...wrong.map((w) => w.text), text]);
+    onlyOneLeft = item.choices.filter((c) => !tried.has(c)).length <= 1;
+  }
 
   type Judged = {
     verdict: 'correct' | 'partially_correct' | 'incorrect' | 'not_an_attempt' | null;
@@ -555,9 +676,10 @@ export async function answerItem(
   } else if (
     givesHints(session.mode) &&
     rule === 'incorrect' &&
-    item.attempts + 1 >= REVEAL_AFTER_MISSES
+    (item.attempts + 1 >= REVEAL_AFTER_MISSES || onlyOneLeft)
   ) {
-    // The third wrong try, wrong for sure: the solution explained, at once and without a model.
+    // The third wrong try (or no real choice left), wrong for sure: the solution explained, at
+    // once and without a model.
     judged = {
       verdict: 'incorrect',
       evaluatedBy: 'rule',
@@ -639,38 +761,52 @@ export async function answerItem(
         if (!parsed.success) throw new Error('tutor output invalid');
         return enforceTutorInvariants(parsed.data, rule);
       };
-      let d = await askTutor(tutorContents);
-      if (session.mode === 'help' && givesAwayHomework(d, item.answer, `${item.prompt}\n${text}`)) {
+      // Homework: a task is solved only when code finds her final answer (by value, or the key
+      // or an accepted answer in her words). A "correct" code cannot confirm is a right step:
+      // the task stays open, and the reply must not say "right" under a "Fast" (audit H-10).
+      // This runs FIRST, so the leak check judges the final verdict and reply (audit H-9).
+      const solvedByHer = (x: TutorDecisionT): TutorDecisionT =>
+        session.mode === 'help' &&
+        item.kind !== 'long' &&
+        x.verdict === 'correct' &&
+        !homeworkSolved(item, text)
+          ? {
+              ...x,
+              verdict: 'partially_correct',
+              reply: t(learner.locale, 'practice.help_final_answer'),
+              gave_hint: false,
+              revealed_answer: false,
+            }
+          : x;
+      // Only the task itself may state a value; her own guesses are no licence (audit M-28).
+      const leaks = (x: TutorDecisionT) =>
+        session.mode === 'help' && givesAwayHomework(x, solutionsOf(item), item.prompt);
+      let d = solvedByHer(await askTutor(tutorContents));
+      if (leaks(d)) {
         // Homework: the solution must not be given. One repair with the reason, then a safe hint.
-        d = await askTutor([
-          ...tutorContents,
-          { role: 'model', parts: [{ text: d.reply }] },
-          {
-            role: 'user',
-            parts: [
-              {
-                text: 'SYSTEM CHECK (not the learner): that reply gives the solution away, which is not allowed for homework. Write it again as one small hint or question without the answer.',
-              },
-            ],
-          },
-        ]);
-        if (givesAwayHomework(d, item.answer, `${item.prompt}\n${text}`)) {
+        d = solvedByHer(
+          await askTutor([
+            ...tutorContents,
+            { role: 'model', parts: [{ text: d.reply }] },
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: 'SYSTEM CHECK (not the learner): that reply gives the solution away, which is not allowed for homework. Write it again as one small hint or question without the answer.',
+                },
+              ],
+            },
+          ]),
+        );
+        if (leaks(d)) {
           d = {
             ...d,
+            verdict: d.verdict === 'correct' ? 'partially_correct' : d.verdict,
             reply: t(learner.locale, 'practice.help_step'),
             gave_hint: true,
             revealed_answer: false,
           };
         }
-      }
-      if (
-        session.mode === 'help' &&
-        item.kind !== 'long' &&
-        d.verdict === 'correct' &&
-        !homeworkSolved(text, item.answer)
-      ) {
-        // A right step, not the final answer yet: the task stays open.
-        d = { ...d, verdict: 'partially_correct' };
       }
       judged = {
         verdict: d.verdict,
@@ -752,6 +888,9 @@ export async function answerItem(
 
   try {
     await deps.db.tx(async (tx) => {
+      // The session row first (one order everywhere): an answer to a session that ended
+      // meanwhile is refused behind the same lock, and closing the last question finishes it.
+      await lockActiveSession(tx, learner.id, sessionId);
       const si = await tx.one<SessionItemRow>(
         `select item_id, position, status, attempts, hints_used, first_try_correct
            from session_items where session_id = $1 and item_id = $2 for update`,
@@ -810,9 +949,11 @@ export async function answerItem(
         status = 'missed';
         firstTry = false;
       }
+      // Working on a task she set aside brings it back in line (deferred_at cleared).
       await tx.query(
         `update session_items set attempts = $3, hints_used = $4, status = $5, first_try_correct = $6,
-                                  closed_at = case when $5 = 'open' then null else $7::timestamptz end
+                                  closed_at = case when $5 = 'open' then null else $7::timestamptz end,
+                                  deferred_at = null
           where session_id = $1 and item_id = $2`,
         [sessionId, item.id, attempts, hints, status, firstTry, now],
       );
@@ -829,6 +970,7 @@ export async function answerItem(
         sessionId,
         now,
       ]);
+      await finishIfComplete(tx, learner.id, sessionId, now);
     });
   } catch (err) {
     // A concurrent duplicate of the same answer won: return its result.
@@ -852,7 +994,9 @@ class NoPreparedHint extends Error {}
  * "Tipp": the next prepared hint for an open question, at once and without a model;
  * with none prepared (yet), the tutor writes one like for "weiß nicht".
  * Recorded as a learner turn ("Tipp, bitte") and a tutor turn; idempotent per
- * client_turn_id; 409 for a closed question or outside practice and explanations.
+ * client_turn_id; 409 for a closed question or in a test. In homework help a prepared hint
+ * is used only when it does not state the solution; otherwise the tutor writes one, under
+ * the same leak check as every homework reply (user feedback #7).
  */
 export async function hintItem(
   deps: Deps,
@@ -865,17 +1009,24 @@ export async function hintItem(
   if (replayed) return replayed;
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  if (!givesHints(session.mode)) {
+  if (!offersHintButton(session.mode)) {
     throw new AppError('conflict', 'No hints in this mode', { reason: 'no_hints' });
   }
   try {
     await deps.db.tx(async (tx) => {
-      const si = await tx.maybeOne<{
-        status: SessionItemRow['status'];
-        hints_used: number;
-        hints: string[];
-      }>(
-        `select si.status, si.hints_used, i.hints
+      await lockActiveSession(tx, learner.id, sessionId);
+      const si = await tx.maybeOne<
+        {
+          status: SessionItemRow['status'];
+          hints_used: number;
+          hints: string[];
+        } & Pick<
+          ItemRow,
+          'kind' | 'prompt' | 'answer' | 'accepted_answers' | 'choices' | 'correct_choice' | 'unit'
+        >
+      >(
+        `select si.status, si.hints_used, i.hints, i.kind, i.prompt, i.answer, i.accepted_answers,
+                i.choices, i.correct_choice, i.unit
            from session_items si join items i on i.id = si.item_id
           where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
           for update of si`,
@@ -885,6 +1036,12 @@ export async function hintItem(
       if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
       const hint = si.hints[si.hints_used];
       if (hint === undefined) throw new NoPreparedHint();
+      if (
+        session.mode === 'help' &&
+        solutionsOf(si).some((sol) => mentionsSolution(hint, sol, si.prompt))
+      ) {
+        throw new NoPreparedHint();
+      }
       const seq = await nextSeq(tx, sessionId);
       await tx.query(
         `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id)
@@ -904,7 +1061,8 @@ export async function hintItem(
         [sessionId, learner.id, input.item_id, seq + 1, hint],
       );
       await tx.query(
-        `update session_items set hints_used = hints_used + 1 where session_id = $1 and item_id = $2`,
+        `update session_items set hints_used = hints_used + 1, deferred_at = null
+          where session_id = $1 and item_id = $2`,
         [sessionId, input.item_id],
       );
       await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
@@ -932,7 +1090,10 @@ export async function hintItem(
   return replayedNow;
 }
 
-/** "Show me the solution": close the question as not known (FSRS: again). */
+/**
+ * "Show me the solution": close the question as not known (FSRS: again). Only after a real
+ * try or a hint (user feedback #8); in a running test it is "Überspringen" (any time).
+ */
 export async function revealItem(
   deps: Deps,
   learnerId: string,
@@ -941,10 +1102,15 @@ export async function revealItem(
 ): Promise<SessionView> {
   const now = deps.now();
   await deps.db.tx(async (tx) => {
-    const s = await loadSession(tx, learnerId, sessionId);
-    if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
-    const si = await tx.maybeOne<SessionItemRow>(
-      `select item_id, status from session_items where session_id = $1 and item_id = $2 for update`,
+    const s = await lockActiveSession(tx, learnerId, sessionId);
+    const si = await tx.maybeOne<
+      Pick<SessionItemRow, 'item_id' | 'status' | 'attempts' | 'hints_used'> & {
+        kind: ItemRow['kind'];
+      }
+    >(
+      `select si.item_id, si.status, si.attempts, si.hints_used, i.kind
+         from session_items si join items i on i.id = si.item_id
+        where si.session_id = $1 and si.item_id = $2 for update of si`,
       [sessionId, itemId],
     );
     if (!si) throw new AppError('not_found', 'Question not in this session');
@@ -954,12 +1120,53 @@ export async function revealItem(
         reason: 'reveal_not_allowed',
       });
     }
+    if (s.mode !== 'test' && !revealReady(s.mode, si)) {
+      throw new AppError('conflict', 'Try it first, or ask for a hint', { reason: 'try_first' });
+    }
     await tx.query(
       `update session_items set status = 'skipped', first_try_correct = false, closed_at = $3
         where session_id = $1 and item_id = $2`,
       [sessionId, itemId, now],
     );
     if (learnsFsrs(s.mode)) await reviewItem(tx, learnerId, itemId, 'revealed', now);
+    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+      sessionId,
+      now,
+    ]);
+    await finishIfComplete(tx, learnerId, sessionId, now);
+  });
+  return sessionView(deps.db, learnerId, sessionId);
+}
+
+/**
+ * Homework help "Später": the task stays open (nothing solved, nothing shown) and moves
+ * behind the other open tasks, so she can get help with the next one (audit H-11).
+ * Idempotent; 409 outside homework help or once the session ended.
+ */
+export async function deferItem(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string,
+  itemId: string,
+): Promise<SessionView> {
+  const now = deps.now();
+  await deps.db.tx(async (tx) => {
+    const s = await lockActiveSession(tx, learnerId, sessionId);
+    if (s.mode !== 'help') {
+      throw new AppError('conflict', 'Only homework tasks are set aside', {
+        reason: 'defer_not_allowed',
+      });
+    }
+    const si = await tx.maybeOne<Pick<SessionItemRow, 'status'>>(
+      `select status from session_items where session_id = $1 and item_id = $2 for update`,
+      [sessionId, itemId],
+    );
+    if (!si) throw new AppError('not_found', 'Question not in this session');
+    if (si.status !== 'open') return;
+    await tx.query(
+      `update session_items set deferred_at = $3 where session_id = $1 and item_id = $2`,
+      [sessionId, itemId, now],
+    );
     await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
       sessionId,
       now,
@@ -1030,13 +1237,102 @@ export async function flagItem(
       sessionId,
       now,
     ]);
+    await finishIfComplete(tx, learnerId, sessionId, now);
     // Buddy's prepared practice and picture of her questions may include it.
     await bumpContext(tx, learnerId);
   });
   return sessionView(deps.db, learnerId, sessionId);
 }
 
-/** End the session; Buddy's step gets evidence, and Buddy is woken to plan next. */
+// ─────────────── lifecycle ───────────────
+
+/** The session row, locked, and still running — else 404 / 409 (one lock order: session first). */
+async function lockActiveSession(
+  db: Db,
+  learnerId: string,
+  sessionId: string,
+): Promise<SessionRow> {
+  const s = await db.maybeOne<SessionRow>(
+    `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+      where id = $1 and learner_id = $2 for update`,
+    [sessionId, learnerId],
+  );
+  if (!s) throw new AppError('not_found', 'Session not found');
+  if (s.status !== 'active') throw new AppError('conflict', 'Session has ended');
+  return s;
+}
+
+/**
+ * Finish the (locked, active) session: Buddy's step gets its evidence — done only if
+ * something was answered, else back to prepared — and Buddy is woken to plan next.
+ */
+async function finishLocked(db: Db, learnerId: string, s: SessionRow, now: Date): Promise<void> {
+  const counts = await db.one<{ answered: number; first_try: number; total: number }>(
+    `select count(*) filter (where status <> 'open' and flagged_at is null)::int as answered,
+            count(*) filter (where first_try_correct)::int as first_try,
+            count(*)::int as total
+       from session_items where session_id = $1`,
+    [s.id],
+  );
+  await db.query(
+    `update practice_sessions set status = 'finished', finished_at = $2, last_activity_at = $2 where id = $1`,
+    [s.id, now],
+  );
+  if (s.step_id) {
+    if (counts.answered > 0) {
+      await db.query(
+        `update buddy_steps set state = 'done', done_source = 'evidence', finished_at = $2, version = version + 1,
+                                evidence = $3
+          where id = $1 and state in ('planned','prepared','in_progress')`,
+        [s.step_id, now, { session_id: s.id, ...counts }],
+      );
+    } else {
+      // Nothing answered: the step is still open, not "done".
+      await db.query(
+        `update buddy_steps set state = 'prepared', version = version + 1 where id = $1 and state = 'in_progress'`,
+        [s.step_id],
+      );
+    }
+  }
+  if (counts.answered > 0) {
+    await emitEvent(db, learnerId, { type: 'session_finished', sessionId: s.id }, now, counts);
+  }
+  await bumpContext(db, learnerId);
+}
+
+/**
+ * Once no question is open any more, the session is finished on the server — in the same
+ * transaction as the answer that closed the last one, so a lost /finish call (network, a
+ * killed app) never leaves an answered session invisible and Buddy's step without evidence
+ * (audit H-12). The caller holds the session lock.
+ */
+export async function finishIfComplete(
+  db: Db,
+  learnerId: string,
+  sessionId: string,
+  now: Date,
+): Promise<boolean> {
+  const s = await db.maybeOne<SessionRow>(
+    `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+      where id = $1 and learner_id = $2 for update`,
+    [sessionId, learnerId],
+  );
+  if (!s || s.status !== 'active') return false;
+  const open = await db.one<{ n: number }>(
+    `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
+    [sessionId],
+  );
+  if (open.n > 0) return false;
+  await finishLocked(db, learnerId, s, now);
+  return true;
+}
+
+/**
+ * "Beenden". A test is handed in (untouched questions are reviewed as "nicht bearbeitet").
+ * Homework help with open tasks is paused, never finished: the tasks stay where they are
+ * and the sheet leads back to them (decision D-5, audit H-8). Everything else is finished,
+ * with Buddy's step getting its evidence. Idempotent.
+ */
 export async function finishSession(
   deps: Deps,
   learnerId: string,
@@ -1051,37 +1347,20 @@ export async function finishSession(
     );
     if (!s) throw new AppError('not_found', 'Session not found');
     if (s.status !== 'active') return; // idempotent
-    const counts = await tx.one<{ answered: number; first_try: number; total: number }>(
-      `select count(*) filter (where status <> 'open' and flagged_at is null)::int as answered,
-              count(*) filter (where first_try_correct)::int as first_try,
-              count(*)::int as total
-         from session_items where session_id = $1`,
-      [sessionId],
-    );
-    await tx.query(
-      `update practice_sessions set status = 'finished', finished_at = $2, last_activity_at = $2 where id = $1`,
-      [sessionId, now],
-    );
-    if (s.step_id) {
-      if (counts.answered > 0) {
-        await tx.query(
-          `update buddy_steps set state = 'done', done_source = 'evidence', finished_at = $2, version = version + 1,
-                                  evidence = $3
-            where id = $1 and state in ('planned','prepared','in_progress')`,
-          [s.step_id, now, { session_id: sessionId, ...counts }],
-        );
-      } else {
-        // Nothing answered: the step is still open, not "done".
-        await tx.query(
-          `update buddy_steps set state = 'prepared', version = version + 1 where id = $1 and state = 'in_progress'`,
-          [s.step_id],
-        );
+    if (s.mode === 'help') {
+      const open = await tx.one<{ n: number }>(
+        `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
+        [sessionId],
+      );
+      if (open.n > 0) {
+        await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+          sessionId,
+          now,
+        ]);
+        return;
       }
     }
-    if (counts.answered > 0) {
-      await emitEvent(tx, learnerId, { type: 'session_finished', sessionId }, now, counts);
-    }
-    await bumpContext(tx, learnerId);
+    await finishLocked(tx, learnerId, s, now);
   });
   return sessionView(deps.db, learnerId, sessionId);
 }
