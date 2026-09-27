@@ -20,10 +20,12 @@ import type { Deps } from '../../deps.js';
 import type { LearnerContext } from '../../http/context.js';
 import { isUniqueViolation } from '../../lib/db.js';
 import { isAppError } from '../../lib/errors.js';
-import { localParts } from '../../lib/time.js';
+import { localParts, weekdayName } from '../../lib/time.js';
+import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
+import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext } from './context.js';
 import { askedButActed, TurnDecision, TurnDecisionForModel } from './registry.js';
@@ -31,7 +33,7 @@ import { bumpContext } from './plan.js';
 import { replyProgress, type ReplyProgress } from './stream.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
 import { lookupsField, withLookups } from './lookups.js';
-import { loadBuddyState } from './state.js';
+import { loadBuddyState, type MessageRow } from './state.js';
 
 const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
@@ -86,6 +88,15 @@ export async function receiveLearnerMessage(
         [learner.id, input.text, input.clientMessageId, input.replyToId, token, now],
       );
       await bumpContext(tx, learner.id);
+      // She is here and writing: what Buddy posted to her thread so far has been seen and
+      // answered, so the "previous message unanswered" gate does not hold back the next idea
+      // because of an in-app message she simply chatted past (D-12 counts those).
+      await tx.query(
+        `update buddy_outreach o set responded_at = $2
+          where o.learner_id = $1 and o.responded_at is null
+            and exists (select 1 from buddy_messages m where m.outreach_id = o.id and m.created_at <= $2)`,
+        [learner.id, now],
+      );
       // A reply to one of Buddy's outreach messages counts as an answer to it.
       if (input.replyToId) {
         await tx.query(
@@ -129,7 +140,7 @@ export async function claimMessage(
 ): Promise<ClaimedMessage | null> {
   const token = randomUUID();
   return deps.db.maybeOne<ClaimedMessage>(
-    `update buddy_messages set status = 'processing', claim_token = $3, claimed_at = $4
+    `update buddy_messages set status = 'processing', claim_token = $3, claimed_at = $4, failure_code = null
       where id = $1 and learner_id = $2 and role = 'learner' and status <> 'done'
         and claim_token is not distinct from $5
       returning id, text, created_at, claim_token`,
@@ -137,8 +148,33 @@ export async function claimMessage(
   );
 }
 
-/** Runs the decision loop for one claimed learner message. */
+/** Stable codes for why a turn failed: stored on the message, sent to the app. */
+const FAILURE_CODE: Record<string, string> = {
+  model_unavailable: 'model_unavailable',
+  budget_exhausted: 'budget',
+  model_invalid: 'invalid',
+  stale: 'stale',
+};
+
+/**
+ * Runs the decision loop for one claimed learner message. Whatever goes wrong — the model,
+ * the database, a bug — ends with the message marked failed and a stable code, never
+ * "processing" forever (audit M-46).
+ */
 export async function processTurn(
+  deps: Deps,
+  learner: TurnLearner,
+  message: ClaimedMessage,
+  onReply?: OnReply,
+): Promise<TurnOutcome> {
+  try {
+    return await decideTurn(deps, learner, message, onReply);
+  } catch (err) {
+    return failTurn(deps, message, isAppError(err) ? err.code : 'internal');
+  }
+}
+
+async function decideTurn(
   deps: Deps,
   learner: TurnLearner,
   message: ClaimedMessage,
@@ -160,12 +196,20 @@ export async function processTurn(
       return { status: 'done', errorCode: null };
     }
 
+    const tz = state.settings.timezone;
+    const written = localParts(message.created_at, tz).date;
+    const today = localParts(now, tz).date;
     const ctx = buildContext(learner, state, now, {
       pushAvailable: await pushAvailable(deps, learner.id),
+      // Days are resolved from today, the day the model counts from (Next days); when the
+      // message is older (a resend, a recovery after midnight) the model is told so.
+      ...(written !== today
+        ? {
+            modelNote: `NOTE: the learner wrote their latest message on ${weekdayName(written)} ${written}. Today is ${today}; "today", "tomorrow" and in_days count from today. If a day they named has passed, ask.`,
+          }
+        : {}),
     });
-    // Everything the learner wrote counts, also messages whose own turn is
-    // still running or failed: this answer covers them.
-    const dialogue = state.messages.map((m) => ({ role: m.role, text: m.text }));
+    const { dialogue, learnerWords } = turnDialogue(state.messages, message.id, learner.locale);
     const contents: LlmMessage[] = buildContents(
       ctx.state,
       dialogue,
@@ -198,41 +242,36 @@ export async function processTurn(
     let raw: unknown;
     try {
       const looked = await withLookups({
-        ctx: { deps, learnerId: learner.id, timezone: state.settings.timezone },
+        ctx: { deps, learnerId: learner.id, timezone: tz },
         surface: 'turn',
         contents,
         call: async (messages, final) => {
           const thisRound = ++round;
           let last = '';
-          const result = await callModel(
-            deps,
-            learner.id,
-            localParts(now, state.settings.timezone).date,
-            {
-              purpose: 'buddy_turn',
-              tier: 'smart',
-              promptVersion: BUDDY_PROMPT_VERSION,
-              system: TURN_SYSTEM,
-              contents: messages,
-              schema: final ? TURN_SCHEMA : TURN_STEP_SCHEMA,
-              maxOutputTokens: 2048,
-              temperature: 0.4,
-              timeoutMs: 30_000,
-              thinkingBudget: 512,
-              ...(onReply
-                ? {
-                    onPartial: (raw: string) => {
-                      const p = replyProgress(raw);
-                      if (!p) return;
-                      const key = `${p.text}|${p.speakable}|${p.done}`;
-                      if (key === last) return;
-                      last = key;
-                      onReply(thisRound, p);
-                    },
-                  }
-                : {}),
-            },
-          );
+          const result = await callModel(deps, learner.id, today, {
+            purpose: 'buddy_turn',
+            tier: 'smart',
+            promptVersion: BUDDY_PROMPT_VERSION,
+            system: TURN_SYSTEM,
+            contents: messages,
+            schema: final ? TURN_SCHEMA : TURN_STEP_SCHEMA,
+            maxOutputTokens: 2048,
+            temperature: 0.4,
+            timeoutMs: 30_000,
+            thinkingBudget: 512,
+            ...(onReply
+              ? {
+                  onPartial: (raw: string) => {
+                    const p = replyProgress(raw);
+                    if (!p) return;
+                    const key = `${p.text}|${p.speakable}|${p.done}`;
+                    if (key === last) return;
+                    last = key;
+                    onReply(thisRound, p);
+                  },
+                }
+              : {}),
+          });
           meta.model = result.usage.model;
           return result.json;
         },
@@ -241,10 +280,17 @@ export async function processTurn(
       // The audit keeps what was looked up (tools and whether they worked), not the results.
       if (looked.steps.length > 0) meta.output = { lookups: looked.steps, final: raw };
     } catch (err) {
+      if (err instanceof LlmError && err.kind === 'blocked') {
+        // The provider's safety filter held back her words or Buddy's answer. That is not
+        // a glitch to resend: code answers with a fixed, caring reply (D-10), and her
+        // message is never sent to the model again (audit H-31, H-32).
+        await record('failed', [err.finishReason ? `blocked:${err.finishReason}` : 'blocked']);
+        return answerWithSafeguarding(deps, learner, message, 'blocked');
+      }
       const code = isAppError(err)
         ? err.code
         : err instanceof LlmError
-          ? err.kind === 'invalid_output' || err.kind === 'blocked'
+          ? err.kind === 'invalid_output'
             ? 'model_invalid'
             : 'model_unavailable'
           : 'internal';
@@ -270,6 +316,21 @@ export async function processTurn(
       repairErrors = contradictions;
       continue;
     }
+    // "Never the homework solution" is enforced in code in the chat too, not only prompted
+    // (audit S-6 p2-sec-homework-solution-chat-unenforced).
+    const leak = parsed.data.concern
+      ? []
+      : await homeworkLeak(deps, learner.id, parsed.data.reply, learnerWords);
+    if (leak.length > 0) {
+      await record('rejected', leak);
+      if (repairErrors) return failTurn(deps, message, 'model_invalid');
+      repairErrors = leak;
+      continue;
+    }
+    // Distress: the words she gets are fixed by code, not improvised (D-10, audit H-31).
+    const reply = parsed.data.concern
+      ? { text: safeguardingText(learner, 'concern'), options: null }
+      : { text: parsed.data.reply, options: parsed.data.options };
 
     const result = await applyDecision(deps.db, {
       learnerId: learner.id,
@@ -277,12 +338,14 @@ export async function processTurn(
       contextVersion: ctx.contextVersion,
       aliases: ctx.aliases,
       now,
-      reference: message.created_at,
-      latestLearnerText: message.text,
+      // The day the model counted from (audit M-51): not the day the message was written.
+      reference: now,
+      learnerWords,
+      concern: parsed.data.concern,
       triggerMessageId: message.id,
       messageClaim: { id: message.id, token: message.claim_token },
       actions: parsed.data.actions,
-      reply: { text: parsed.data.reply, options: parsed.data.options },
+      reply,
       outreach: null,
       meta,
     });
@@ -299,12 +362,117 @@ export async function processTurn(
   return failTurn(deps, message, 'stale');
 }
 
+/**
+ * What the model sees of the conversation, and the learner's words this turn answers.
+ *   - A message the safety filter held back is replaced by a neutral placeholder, so one
+ *     block can never mute Buddy for the rest of the conversation (audit H-32).
+ *   - Her unanswered run (several quick messages) all count as her words (audit M-49).
+ *   - Buddy's messages posted after her message (a reminder that arrived meanwhile) are
+ *     placed before her run, so the dialogue always ends with her (audit M-50).
+ */
+export function turnDialogue(
+  messages: ReadonlyArray<Pick<MessageRow, 'id' | 'role' | 'text' | 'status' | 'failure_code'>>,
+  triggerId: string,
+  locale: string,
+): {
+  dialogue: Array<{ role: 'learner' | 'buddy'; text: string }>;
+  learnerWords: string[];
+} {
+  const heldBack = t(locale, 'safeguarding.held_back');
+  const shown = messages.map((m) => ({
+    ...m,
+    text: m.role === 'learner' && m.failure_code === 'blocked' ? heldBack : m.text,
+  }));
+  const at = shown.findIndex((m) => m.id === triggerId);
+  if (at < 0) {
+    return { dialogue: shown.map((m) => ({ role: m.role, text: m.text })), learnerWords: [] };
+  }
+  let runStart = at;
+  while (runStart > 0 && shown[runStart - 1]!.role === 'learner') runStart--;
+  const run = shown.slice(runStart, at + 1);
+  const ordered = [...shown.slice(0, runStart), ...shown.slice(at + 1), ...run];
+  return {
+    dialogue: ordered.map((m) => ({ role: m.role, text: m.text })),
+    learnerWords: run
+      .filter((m) => m.role === 'learner' && m.failure_code !== 'blocked')
+      .map((m) => m.text),
+  };
+}
+
+/**
+ * While she has homework open in a help session, a chat reply that states the solution of
+ * an open task is refused — unless she wrote that solution herself (then Buddy may confirm).
+ */
+async function homeworkLeak(
+  deps: Deps,
+  learnerId: string,
+  reply: string,
+  learnerWords: readonly string[],
+): Promise<string[]> {
+  const open = await deps.db.query<{
+    prompt: string;
+    answer: string;
+    accepted_answers: string[];
+    unit: string | null;
+    tolerance: number | null;
+  }>(
+    `select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance
+       from practice_sessions ps
+       join session_items si on si.session_id = ps.id and si.status = 'open'
+       join items i on i.id = si.item_id
+      where ps.learner_id = $1 and ps.mode = 'help' and ps.status = 'active'`,
+    [learnerId],
+  );
+  const hers = learnerWords.join('\n');
+  return open.some((i) => !homeworkSolved(i, hers) && mentionsSolution(reply, i.answer, i.prompt))
+    ? [
+        'reply: it gives away the solution of her open homework task. Help her find it herself (a question, a first step) — never the result.',
+      ]
+    : [];
+}
+
+function safeguardingText(learner: TurnLearner, kind: 'blocked' | 'concern'): string {
+  return t(learner.locale, learner.isMinor ? `safeguarding.${kind}` : `safeguarding.${kind}_adult`);
+}
+
+/**
+ * The safety filter held back the turn: Buddy answers with the fixed reply for the
+ * learner's language and age, her message is answered (no "send again") and marked so
+ * it is never sent to the model again. Depends on nothing Buddy decided, so no fence.
+ */
+async function answerWithSafeguarding(
+  deps: Deps,
+  learner: TurnLearner,
+  message: ClaimedMessage,
+  kind: 'blocked',
+): Promise<TurnOutcome> {
+  const now = deps.now();
+  const answered = await deps.db.tx(async (tx) => {
+    // Lock order: the learner's settings row first, like every fenced write (docs §Turns).
+    await tx.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learner.id]);
+    const owned = await tx.query(
+      `update buddy_messages set status = 'done', failure_code = 'blocked'
+        where id = $1 and status = 'processing' and claim_token = $2 returning id`,
+      [message.id, message.claim_token],
+    );
+    if (owned.length !== 1) return false;
+    await tx.query(
+      `insert into buddy_messages (learner_id, role, text, reply_to_id, created_at)
+       values ($1, 'buddy', $2, $3, $4)`,
+      [learner.id, safeguardingText(learner, kind), message.id, now],
+    );
+    await bumpContext(tx, learner.id);
+    return true;
+  });
+  return answered ? { status: 'done', errorCode: null } : currentOutcome(deps, message.id);
+}
+
 async function failTurn(deps: Deps, message: ClaimedMessage, code: string): Promise<TurnOutcome> {
   // Only the current owner may mark it failed.
   const rows = await deps.db.query(
-    `update buddy_messages set status = 'failed'
+    `update buddy_messages set status = 'failed', failure_code = $3
       where id = $1 and status = 'processing' and claim_token = $2 returning id`,
-    [message.id, message.claim_token],
+    [message.id, message.claim_token, FAILURE_CODE[code] ?? 'internal'],
   );
   return rows.length === 1
     ? { status: 'failed', errorCode: code }

@@ -103,14 +103,22 @@ The model never writes ids, dates or instants (`modules/buddy/decision.ts`):
 - **Aliases** — STATE lists entities as `g1`, `st2`, `m3`, `f1`; tools resolve them for this
   learner only (`context.ts`). "new" references a test planned earlier in the same answer.
 - **DaySpec / UntilSpec** — "weekday 5", "in 1 day", a named date, "end of week"; resolved in
-  the learner's zone against the time the learner _wrote_ (`lib/time.ts`). Nonexistent or
-  doubled local times (clock changes) are rejected, never guessed.
+  the learner's zone against the day the model counted from (the "Now" in its STATE; `lib/time.ts`).
+  Nonexistent or doubled local times (clock changes) are rejected, never guessed — also for a
+  time the model gives `schedule_check`.
 - **Quotes** — changes to memory, goals, agreed reminders or settings carry the learner's exact
-  words from their latest message, checked by normalised substring match (provenance, not
-  language understanding).
+  words — whole words from what she wrote since Buddy's last answer — checked by normalised
+  word-boundary match (provenance, not language understanding; §Turns).
 - **Context fence** — `buddy_settings.context_version` is bumped by every change a decision
-  depends on. `apply.ts` applies a whole decision in one transaction only if the version is
-  unchanged (compare-and-set, row lock); otherwise the decision is stale and nothing is applied.
+  depends on, including the learner's time zone (the `x-timezone` header bumps it in the same
+  statement when the zone changes). `apply.ts` applies a whole decision in one transaction only
+  if the version is unchanged (compare-and-set, row lock); otherwise the decision is stale and
+  nothing is applied. A lock conflict Postgres breaks (deadlock, serialization) counts as stale.
+- **One lock order** — every transaction that bumps the context locks the learner's
+  `buddy_settings` row first (`plan.ts lockContext`), then steps, goals, memories or outreach,
+  as applying a decision does; a tap during an apply waits instead of deadlocking (repro-01).
+- **Undo never loosens contact for a minor without the adult**: undoing "fewer messages" or a
+  pause needs the PIN like the same change in the settings, and the button is not offered to her.
 - **All or nothing** — the first rejected action rolls back the whole decision; the reasons go
   back to the model for one repair round, then the turn fails honestly.
 - Every decision — applied, waiting, stale, rejected, failed — is stored in `buddy_decisions`
@@ -129,7 +137,36 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 - Interrupted turn (process died, function frozen) → after 3 minutes the scheduler (or a client
   retry) takes over with a new claim token; the old runner can no longer publish or fail it.
 - Failure → the message is marked `failed` with a stable code (`model_unavailable`,
-  `model_invalid`, `budget_exhausted`, `stale`); nothing half-applied, no invented reply.
+  `model_invalid`, `budget_exhausted`, `stale`, `internal` for anything else — a database
+  error or a bug never leaves it "processing"); nothing half-applied, no invented reply. The
+  message keeps why (`buddy_messages.failure_code`, migration 0020), so the app says what
+  happened ("Buddy konnte gerade nicht antworten") instead of "not arrived", and offers no
+  resend once the day's allowance is used up.
+- **Safeguarding** (audit I-9, decision D-10). Distress — being hurt, bullied, abused or
+  threatened, thoughts of self-harm — is a code path, not an improvisation:
+  - the model marks it with `concern` (first field of `TurnDecisionForModel`, zod-validated);
+    code then answers with a fixed reply per locale and age (`i18n` `safeguarding.*`: a trusted
+    adult and a helpline — DE Nummer gegen Kummer 116 111, FR 119, ES Fundación ANAR
+    900 20 20 10, IT Telefono Azzurro 19696, EN Childline 0800 1111; adults: someone they trust
+    and 112). The model's own words are never shown or streamed. `remember`/`correct_memory`
+    are refused in such a turn, and the prompt forbids storing health, family trouble, abuse or
+    self-harm as knowledge (`docs/privacy.md`). No parent is notified (the child's privacy).
+  - a provider safety block (`LlmError('blocked')`, finish reason kept in `llm_calls`) is not a
+    glitch to resend: code stores the same kind of fixed reply as Buddy's answer, marks her
+    message `failure_code = 'blocked'`, releases the budget reservation, and replaces the
+    blocked text with a neutral placeholder in every later prompt — one block can never mute
+    Buddy (audit H-31, H-32).
+  - The copy needs pedagogical and legal review before real learners (noted for the ADR).
+  - Live check: `evals/buddy` has distress cases in all five languages and one "test nerves are
+    not a concern" case; whether Vertex blocks such messages is only verifiable live.
+- **Her words**: a quote must be whole words from what she wrote since Buddy's last answer —
+  several quick messages count together (audit M-49) — and a quote of fewer than four letters
+  counts only as a whole message (a bare "Ja"), never as a fragment ("ge" in "geschlagen").
+- **Dialogue order**: Buddy messages that arrived after her message (a reminder posted while
+  she typed) are placed before her unanswered messages, so the model always answers her last.
+- **Days** are resolved from the day the model counted from (the attempt's "Now"), not from
+  when the message was written; an older message (a resend, a recovery after midnight) is
+  named in STATE so the model asks when a day she named has passed (audit M-51).
 
 ## Tools
 
@@ -185,8 +222,13 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 `session_finished`, `step_due`, `checkin_requested`, `routine`). Gates, cheapest first:
 
 1. one worker per learner (lease on `buddy_settings`);
-2. agreed reminders → fixed template (i18n), no model; with contact off or paused the reminder
-   waits in the app, as Buddy promised;
+2. agreed reminders → fixed template (i18n), no model. An agreed reminder never vanishes
+   (D-13): with contact off or paused, when quiet hours were moved over it, when a pause lands
+   while it waits for a slot, or when the scheduler is hours late, it waits in the app — late
+   ones say so ("Ich wollte dich um 17:30 erinnern – sorry, das kommt verspätet. …"). It
+   prepares practice only from what she named (the goal's material, or the subject and topics
+   `plan_step` stored) and otherwise only reminds; an agreed reminder whose usual time is over
+   today is refused so Buddy asks for a time, never silently unscheduled;
 3. learner is in the app right now → an unasked look (routine, countdown, a scheduled check) waits
    20 minutes; what follows from the learner's own action (photos read, practice finished) runs now —
    right after the reading or the practice, not on the next scheduler run;
@@ -195,22 +237,37 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
 7. apply with the context fence; the contact policy decides whether and when a message is sent;
 8. provider outage → retry in 10 minutes (bounded), then fallbacks keep time-critical help
-   working (prepared practice before a test, "how did it go").
+   working (prepared practice before a test, "how did it go", and Buddy's own promise to look
+   again as an honest in-app line). A check that answers her own action falls back also after
+   three stale rounds, so she is never left without an answer.
+
+A background check never replaces practice she asked for in the chat, and the message it posts
+carries its decision, so what Buddy did in the background appears in the thread with its cards
+and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
+is not skipped for good.
 
 ## Delivery
 
 `modules/buddy/policy.ts` (pure) and `delivery.ts`.
 
 - Policy: opt-in; pause; quiet hours in the learner's zone; Buddy's own messages need relevance
-  ≥ 0.6, go into the preferred window, at most 1/day and 4/week (all contact counts), no repeat
-  of a topic within 72 h (topic keys are stored with real ids), no second message while the last
-  one is unanswered (48 h). Agreed reminders go out at the agreed minute (quiet hours and pause
-  apply, limits and avoided weekdays do not).
-- Rules are re-checked at send time; a message about something already done is cancelled.
-  A message is linked to its goal and step (`step: "new"` = the practice prepared in the same
-  decision), so "practice is ready" is dropped once that practice was done. Pausing cancels
-  everything planned — nothing is sent in bulk afterwards. Planned messages are listed on the
-  home under what comes next.
+  ≥ 0.6, go into the preferred window, at most 1/day and 4/week, no repeat of a topic within
+  72 h (topic keys are stored with real ids), no second message while the last one is unanswered
+  (48 h; writing to Buddy counts as answering what is in the thread). **All contact counts,
+  in the app too** (D-12): with push off, "schreib mir weniger" means fewer messages in the
+  thread. Agreed reminders go out at the agreed minute (quiet hours and pause apply, limits and
+  avoided weekdays do not). Buddy's answer to her own action (origin `learner`: her photos were
+  read, her practice is finished) is not an initiative: always in the app, pushed now when
+  contact is on and it is not night, never held back by limits.
+- The whole policy runs again at send time (tightened days, window, caps, pause, the unanswered
+  gate); a message about something already done is cancelled. A message is linked to its goal
+  and step (`step: "new"` = the practice prepared in the same decision), so "practice is ready"
+  is dropped once that practice was done. Pausing or switching off cancels everything Buddy
+  planned on its own — nothing is sent in bulk afterwards; agreed reminders stay and wait in the
+  app. Planned messages are listed on the home under what comes next. Stopping contact hides
+  the opt-in card for 14 days.
+- Every status write of a claimed row is conditioned on the claim (status `sending` and the
+  lease it set): a slow run can never send or overwrite a row another run settled.
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
@@ -229,14 +286,21 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
   `getLastNotificationResponse` — is kept on the device (`lib/pushQueue.ts`, 7 days) and sent
   once signed in, retried on start and when back online; only a clear 4xx drops it.
   Not yet verified on a device (audit §17, `repro-19`).
-- Lock-screen texts carry no scores or personal details.
+- **Lock-screen texts are built by code** (S-6): title "Buddy" and a fixed sentence per kind
+  (`i18n push.*`: "Deine verabredete Erinnerung ist da."), never a title, a count, a score or
+  anything the model wrote. Buddy's words are in the thread. Texts whose words depend on the day
+  ("Morgen ist …") are stored as a template (`buddy_outreach.body_template`) and rendered when
+  they reach the thread; `send_uncertain` rows swept after a crash are mirrored to the thread too.
 
 ## Background work
 
 `modules/scheduler/`. One durable queue (`jobs`) for extraction, Buddy checks, turn recovery,
 photo purge and account deletion. Claimed with `FOR UPDATE SKIP LOCKED` and a lease token;
 finishing and retrying are compare-and-set on the token, so a worker whose lease expired cannot
-overwrite its successor. At most `max_attempts` (default 3), then parked as `failed` — except the
+overwrite its successor. A Buddy check heartbeats its leases (the learner's check lease and
+its claimed jobs) before every model call, so a check that runs longer than one lease is never
+taken over while alive; it applies a decision (and its fallbacks) only while it still holds the
+learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed` — except the
 erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KINDS` in
 `scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
@@ -258,11 +322,23 @@ deletion date or a queued path is more than a day old. `/me` says `deletion_runn
 hold is over. Every foreign-key column is indexed (`0017_fk_indexes.sql`), so the cascades follow
 the learner's own rows, not the table size.
 
+**No job kind ends silently** (`scheduler/terminal.ts`, audit S-5). Each kind has a terminal
+effect, enforced by the type of the registry, applied once per parked job by the tick: a parked
+Buddy check comes back once as a model-free fallback (the countdown before a test still
+prepares practice; an agreed reminder is still sent by its template); a parked turn recovery
+marks her message failed (`internal`); a parked extraction is reported to the operator (parked
+counts and the last error per kind in `GET /health`); erasure kinds are never parked (above).
+
 `POST /internal/tick` runs everything due within a 45 s budget: recovery → reading photos →
 Buddy per learner (one learner's failure does not stop the others) → delivery → receipts →
 maintenance. pg_cron calls it every minute via pg_net (`0002_scheduler.sql`, URL and secret from
 Supabase Vault). The Node server can run it in-process for development. A heartbeat makes a dead
-scheduler visible (`GET /health` → 503, and "scheduler: stale" in the app).
+scheduler visible: `GET /health` is 503 unless the last run is recent **and** finished without
+errors **and** no due work has waited over 10 minutes (`scheduler/health.ts`: state
+`ok | stale | failing`, last error, parked jobs per kind). The app shows "scheduler: stale" also
+when there never was a heartbeat but her own work is waiting (a misconfigured cron is not
+"unknown"), and `system.model` is false when no model is configured or today's allowance for
+conversations is used up.
 
 ### Events (ADR 0005 stage 4)
 
@@ -280,7 +356,16 @@ An event never bypasses the contact rules.
 zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) with explicit output-token cap, thinking budget and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
-tokens, cost, latency and outcome — never with prompt or answer text.
+tokens, cost, latency and outcome — never with prompt or answer text; a safety block keeps the
+provider's finish reason (`blocked:SAFETY`). A call that produced nothing usable — provider
+down, request refused, safety block — gives its reservation back.
+
+**One error classification at every external seam** (`lib/outcome.ts`, audit S-7): `ok`,
+`refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never
+retried automatically), `transient` (5xx, 429, network — retry later is fine), `unknown` (no
+answer: a model call may be retried because it changes nothing; a push is never repeated).
+`LlmError.outcome` and the push errors carry it; a provider 4xx is `refused`, no longer retried
+three times as an outage.
 
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
 to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1
@@ -316,12 +401,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
   what the answer does. Only an answer that changes nothing — no lookups, only actions that touch
-  nothing (an offer button) — is shown and read aloud while it is written; everything else
-  appears once it is validated and applied, as before (rules 1 and 5: nothing is claimed before
-  it is true). A rejected or repaired answer starts a new `round` whose text replaces the last;
-  the app never reads over an interruption. The app reads it sentence by sentence
-  (`lib/speech/sentences.ts`, `streamSpeaker.ts`) on the conversation screen and in voice mode,
-  and shows it growing in the chat; `expo/fetch` streams on the phone. Measured (live, 3.6 Flash,
+  nothing (an offer button), no safeguarding `concern`, and no longer than validation allows
+  (700 characters) — is shown while it is written; everything else appears once it is
+  validated and applied, as before (rules 1 and 5: nothing is claimed before it is true). A
+  rejected or repaired answer starts a new `round` whose text replaces the last. **Shown is not
+  spoken**: the app reads a reply aloud only once it is stored — after the provider's final
+  safety verdict (the finish reason arrives with the last chunk) and zod validation — so a child
+  never hears words that are withdrawn (audit M-52, repro-28); `expo/fetch` streams on the
+  phone. Measured (live, 3.6 Flash,
   `evals/stream/run.ts`, medians): first words after 1.35–1.6 s instead of the whole answer after
   1.76–1.86 s — about 0.3–0.5 s, more for long explanations. Most of the wait is before the model
   writes its first character; the order change kept 22/22 in `evals/buddy`. On a deployed API
@@ -703,7 +790,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   language, not the app's. The switch sits in the practice header and on Buddy's home (speaker
   icon; the headphones open conversation mode). The home reads a late reply only while it is
   on screen. Pronunciation
-  recordings stay tap by tap. Buddy's chat replies stream and are read sentence by sentence
+  recordings stay tap by tap. Buddy's chat replies stream on screen and are read once stored
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer

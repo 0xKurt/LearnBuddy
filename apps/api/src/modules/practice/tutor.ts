@@ -217,7 +217,14 @@ export type HomeworkKey = {
  *   ("1/8, 3/8, 5/8 oder 7/8") is no solution (audit M-28), a worked line
  *   ("6/8 + 1/8 = 7/8") is.
  */
-export function homeworkSolved(item: HomeworkKey, learnerText: string): boolean {
+export function homeworkSolved(item: HomeworkKey, learnerText: string): boolean;
+/** Older form (learner text, solution): no task text, no accepted answers. */
+export function homeworkSolved(learnerText: string, solution: string): boolean;
+export function homeworkSolved(first: HomeworkKey | string, second: string): boolean {
+  const [item, learnerText]: [HomeworkKey, string] =
+    typeof first === 'string'
+      ? [{ prompt: '', answer: second, accepted_answers: [], unit: null }, first]
+      : [first, second];
   const keys = [item.answer, ...item.accepted_answers];
   // "x = 5" asks for the value of x: "5" is that answer too (the right-hand side of a key
   // that names one variable).

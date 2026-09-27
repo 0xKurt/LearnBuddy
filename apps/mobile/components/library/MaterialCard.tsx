@@ -72,7 +72,10 @@ export function MaterialCard({
   const status = statusOf(m);
   // The photos are gone (7 days after reading): reading again is not possible, only a new photo.
   const note =
-    m.status === 'failed' && m.photos_deleted && m.failure_reason !== 'not_learning_material'
+    m.status === 'failed' &&
+    m.photos_deleted &&
+    m.failure_reason !== 'not_learning_material' &&
+    m.failure_reason !== 'blocked'
       ? t('photos_deleted')
       : m.status === 'failed'
         ? t(`failure.${m.failure_reason ?? 'model_error'}`)
@@ -87,7 +90,10 @@ export function MaterialCard({
         ? 'homework_view'
         : 'homework_continue';
   const retryable =
-    m.status === 'failed' && m.failure_reason !== 'not_learning_material' && !m.photos_deleted;
+    m.status === 'failed' &&
+    m.failure_reason !== 'not_learning_material' &&
+    m.failure_reason !== 'blocked' &&
+    !m.photos_deleted;
 
   return (
     <Card padding={16}>

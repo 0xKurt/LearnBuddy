@@ -20,6 +20,7 @@ import {
 } from '../materials/purge.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
+import { handleParkedJobs } from './terminal.js';
 import {
   claimJobs,
   finishJob,
@@ -95,6 +96,11 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   // (decision D-5, practice/lifecycle.ts).
   await guard('sessions', async () => {
     stats.idleSessions = await closeIdleSessions(deps);
+  });
+
+  // Every parked job gets its defined effect (terminal.ts): no job kind ends silently.
+  await guard('terminal', async () => {
+    await handleParkedJobs(deps);
   });
 
   // Reading photos first: a learner is usually waiting for it.

@@ -65,7 +65,6 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
-import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -193,39 +192,24 @@ export default function BuddyScreen() {
     setLive(null);
     followEnd.current = true;
     awaitingReply.current = clientMessageId;
-    // Buddy's reply appears while it is written when the answer changes nothing; in voice
-    // mode it is also read sentence by sentence (docs/architecture.md §Speed).
+    // Buddy's reply appears while it is written when the answer changes nothing
+    // (docs/architecture.md §Speed). It is read aloud only once it is stored: after the
+    // provider's final safety verdict and validation, never text that is withdrawn later
+    // (audit M-52, repro-28) — the effect above reads it from the thread.
     let round = 0;
-    const cur: { speaker: StreamSpeaker | null } = { speaker: null };
     try {
       const res = await sendMessageStreamed(text, clientMessageId, replyToId, (e) => {
         if (e.round !== round) {
           round = e.round;
-          cur.speaker?.cancel();
-          cur.speaker = null;
           setLive(null);
         }
         if (!e.speakable) return;
         setLive(e.text);
         followEnd.current = true;
-        if (!useVoiceMode.getState().on || !focused.current) return;
-        cur.speaker ??= createStreamSpeaker(
-          currentLocale(),
-          (sentence) => spokenText(sentence, words),
-          () => undefined,
-        );
-        cur.speaker.feed(e.text, e.done);
       });
-      // Already read while it was written: the effect below does not read it again.
-      if (cur.speaker) {
-        const reply = replyAfter(res.home.thread, clientMessageId);
-        if (reply && reply.text === cur.speaker.text) awaitingReply.current = null;
-        else cur.speaker.cancel();
-      }
       setHome(res.home);
       if (res.status === 'failed') toast.show(turnFailureText(res.error_code), 'error');
     } catch (err) {
-      cur.speaker?.cancel();
       // Nothing to read when the reply comes after a failure she was told about.
       awaitingReply.current = null;
       toast.show(messageFor(err), 'error');
@@ -308,7 +292,9 @@ export default function BuddyScreen() {
   }
 
   if (home.isPending) return <LoadingState label={t('common:loading')} />;
-  if (home.isError) {
+  // A failed background refresh keeps what is on screen (audit M-71); the error screen is
+  // only for a home that never loaded.
+  if (home.isError && !home.data) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg, justifyContent: 'center' }}>
         <EmptyState

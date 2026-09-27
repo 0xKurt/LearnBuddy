@@ -69,6 +69,22 @@ Logs contain route names and error classes only — no request bodies, messages 
 - Photos are uploaded with short-lived signed URLs to paths under the account id; the bucket is
   private.
 
+## Distress and sensitive disclosures
+
+- What Buddy remembers is for planning (tests, preferences, temporary situations). Health,
+  family trouble, being hurt, abuse and self-harm are **never** stored as knowledge: the prompt
+  forbids it, and in a turn the model marks as a `concern` the memory tools are refused in code
+  (`modules/buddy/tools.ts`), so such a disclosure cannot reach the memory screen, the export,
+  later prompts or a lock screen.
+- A child's distress message is answered with a fixed text per language that points to a
+  trusted adult and a free helpline (docs/architecture.md §Turns, Safeguarding). Buddy does
+  **not** notify the parents: the helpline, not the app, is the right place for a child who may
+  be hurt at home (decision D-10). The message itself stays in the conversation like any other
+  and is deleted with it. **Pedagogical and legal review** of the text and of this policy is
+  required before production use.
+- A message the provider's safety filter blocked is kept (her conversation, her data), marked
+  `blocked`, and never sent to the model again.
+
 ## Export and deletion (DSGVO Art. 15, 17, 20)
 
 - `GET /account/export` returns everything stored about the learner as JSON, immediately —

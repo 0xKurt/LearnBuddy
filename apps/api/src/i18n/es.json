@@ -7,7 +7,22 @@
   "title": {
     "buddy": "Buddy"
   },
+  "safeguarding": {
+    "blocked": "Aquí no puedo responder a eso. Si algo te preocupa o alguien te hace daño, habla con un adulto de confianza, o llama a la Fundación ANAR: 900 20 20 10 (gratis y confidencial). Sigo aquí para ti.",
+    "concern": "Gracias por contármelo: es importante y no estás solo/a con esto. Habla con un adulto de confianza. También puedes llamar a la Fundación ANAR: 900 20 20 10 (gratis y confidencial, no hace falta que digas tu nombre). Sigo aquí para ti.",
+    "blocked_adult": "Aquí no puedo responder a eso. Si algo te preocupa, habla con alguien de confianza. Si estás en peligro, llama al 112.",
+    "concern_adult": "Gracias por contármelo: es importante. Habla con alguien de confianza. Si estás en peligro, llama al 112. Sigo aquí para ti.",
+    "held_back": "(Un mensaje que el filtro de seguridad retuvo.)"
+  },
+  "push": {
+    "reminder": "Aquí está tu recordatorio acordado.",
+    "idea": "Buddy tiene una idea para ti.",
+    "checkin": "Buddy quiere saber cómo vas.",
+    "result": "Buddy tiene algo listo para ti."
+  },
   "reminder": {
+    "late": "Quería recordártelo a las {{time}}; perdona, llega tarde. {{text}}",
+    "checkin_unavailable": "Quería saber cómo estás, pero ahora mismo no lo consigo del todo. Escríbeme si quieres.",
     "practice_ready": "Como acordamos: {{title}}. Hay {{count}} ejercicios listos, unos {{minutes}} minutos.",
     "practice": "Como acordamos: {{title}}.",
     "capture": "Como acordamos: {{title}} – basta con una foto, yo me encargo del resto."

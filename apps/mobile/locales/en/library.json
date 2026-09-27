@@ -16,7 +16,8 @@
     "not_learning_material": "That doesn't look like a worksheet, exercise book or textbook page.",
     "model_error": "Something went wrong while reading.",
     "photos_missing": "Not all photos arrived.",
-    "budget_exhausted": "I can't read any more sheets today. It'll work again tomorrow."
+    "budget_exhausted": "I can't read any more sheets today. It'll work again tomorrow.",
+    "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the questions."
   },
   "incomplete_hint": "The photos didn't fully arrive. Delete the sheet and photograph it again.",
   "photos_deleted": "The photos are no longer stored. Delete the sheet and take new photos.",
