@@ -7,6 +7,7 @@ import type { LibraryView, MaterialView, SubjectKind } from '@learnbuddy/shared-
 import { focusManager } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { FlashList } from '@shopify/flash-list';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { MaterialCard } from '../components/library/MaterialCard.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
+import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
 import { Sheet } from '../components/lb/Sheet.js';
@@ -50,6 +52,18 @@ const KIND_TONE: Record<SubjectKind, SubjectTone> = {
 };
 
 type Group = { key: string; title: string; tone: SubjectTone | 'paper'; materials: MaterialView[] };
+
+/** One row of the (virtualised) list: a subject's heading or one of its sheets. */
+type Row =
+  | { type: 'heading'; key: string; title: string; tone: SubjectTone | 'paper'; first: boolean }
+  | { type: 'sheet'; key: string; material: MaterialView; tone: SubjectTone | 'paper' };
+
+function rowsOf(groups: Group[]): Row[] {
+  return groups.flatMap((g, n): Row[] => [
+    { type: 'heading', key: `h:${g.key}`, title: g.title, tone: g.tone, first: n === 0 },
+    ...g.materials.map((m): Row => ({ type: 'sheet', key: m.id, material: m, tone: g.tone })),
+  ]);
+}
 
 const isReading = (m: MaterialView) => m.status === 'queued' || m.status === 'processing';
 
@@ -101,6 +115,8 @@ export default function LibraryScreen() {
     }
   }
   const reading = groups.some((g) => g.materials.some(isReading));
+  const rows = rowsOf(groups);
+  const entering = useListEntrance(view !== undefined);
 
   // While a sheet is being read, follow it here as the home does.
   useEffect(() => {
@@ -213,12 +229,12 @@ export default function LibraryScreen() {
   } else {
     content = (
       <>
-        <ScrollView
-          testID="scroll-list"
-          contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 26, flexGrow: 1 }}
-          refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
-        >
-          {groups.length === 0 ? (
+        {groups.length === 0 ? (
+          <ScrollView
+            testID="scroll-list"
+            contentContainerStyle={{ padding: 16, paddingBottom: 24, flexGrow: 1 }}
+            refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
+          >
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <EmptyState
                 orb
@@ -238,32 +254,48 @@ export default function LibraryScreen() {
                 }
               />
             </View>
-          ) : (
-            groups.map((g) => (
-              <Section
-                key={g.key}
-                title={g.title}
-                dot={g.tone === 'paper' ? LB.ink4 : TONE_DEEP[g.tone]}
-              >
-                <View style={{ gap: 12 }}>
-                  {g.materials.map((m) => (
-                    <MaterialCard
-                      key={m.id}
-                      material={m}
-                      tone={g.tone}
-                      busy={busyId === m.id}
-                      disabled={busyId !== null}
-                      onPractice={() => practice(m)}
-                      onOpen={() => router.push(`/material/${m.id}`)}
-                      onRetry={() => readAgain(m)}
-                      onDelete={() => askDelete(m)}
-                    />
-                  ))}
-                </View>
-              </Section>
-            ))
-          )}
-        </ScrollView>
+          </ScrollView>
+        ) : (
+          // A school year of sheets gets long: only what is on screen is drawn (gaps.md #22).
+          <FlashList
+            testID="scroll-list"
+            data={rows}
+            keyExtractor={(row) => row.key}
+            getItemType={(row) => row.type}
+            extraData={busyId}
+            contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+            refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
+            renderItem={({ item: row, index }) =>
+              row.type === 'heading' ? (
+                <Rise
+                  animate={entering(index)}
+                  index={index}
+                  style={{ marginTop: row.first ? 0 : 14, marginBottom: 10 }}
+                >
+                  <Section
+                    title={row.title}
+                    dot={row.tone === 'paper' ? LB.ink4 : TONE_DEEP[row.tone]}
+                  >
+                    {null}
+                  </Section>
+                </Rise>
+              ) : (
+                <Rise animate={entering(index)} index={index} style={{ marginBottom: 12 }}>
+                  <MaterialCard
+                    material={row.material}
+                    tone={row.tone}
+                    busy={busyId === row.material.id}
+                    disabled={busyId !== null}
+                    onPractice={() => practice(row.material)}
+                    onOpen={() => router.push(`/material/${row.material.id}`)}
+                    onRetry={() => readAgain(row.material)}
+                    onDelete={() => askDelete(row.material)}
+                  />
+                </Rise>
+              )
+            }
+          />
+        )}
         {groups.length > 0 ? (
           <View
             style={{

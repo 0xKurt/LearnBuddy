@@ -1,13 +1,15 @@
 // The whole conversation, newest at the bottom, with what each answer changed. Older pages
 // and the polled live window are merged by message id (lib/threadMerge.ts), so nothing is
-// lost while Buddy writes (audit M-75).
+// lost while Buddy writes (audit M-75). A virtualised list of days (lib/dayGroups.ts): only
+// the days on screen are drawn, however long the history gets (gaps.md #22).
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
+import { FlashList } from '@shopify/flash-list';
 import { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Conversation } from '../components/buddy/Conversation.js';
+import { Conversation, DayLine } from '../components/buddy/Conversation.js';
 import { Btn } from '../components/lb/Btn.js';
 import { ChatSkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
@@ -16,6 +18,7 @@ import { ApiError } from '../lib/api/client.js';
 import { getThread, undoAction } from '../lib/api/endpoints.js';
 import { keys, queryClient, useHome } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
+import { dayGroups } from '../lib/dayGroups.js';
 import { mergeThread } from '../lib/threadMerge.js';
 
 export default function History() {
@@ -92,32 +95,46 @@ export default function History() {
 
   return (
     <Screen back title={t('thread.title')}>
-      <ScrollView testID="scroll-thread" contentContainerStyle={{ padding: 16, gap: 16 }}>
-        {more ? (
-          <View style={{ alignItems: 'center' }}>
-            <Btn
-              variant="outline"
-              size="sm"
-              pill
-              center
-              onPress={() => void loadMore()}
-              disabled={loading}
-            >
-              {t('thread.load_more')}
-            </Btn>
+      <FlashList
+        testID="scroll-thread"
+        data={dayGroups(messages)}
+        keyExtractor={(g) => g.day}
+        extraData={{ undoing, loading, more }}
+        // A chat: it opens at the newest message; older pages load above without a jump.
+        maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
+        contentContainerStyle={{ padding: 16 }}
+        ListHeaderComponent={
+          more ? (
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <Btn
+                variant="outline"
+                size="sm"
+                pill
+                center
+                onPress={() => void loadMore()}
+                disabled={loading}
+              >
+                {t('thread.load_more')}
+              </Btn>
+            </View>
+          ) : null
+        }
+        renderItem={({ item: g }) => (
+          <View style={{ gap: 10, marginBottom: 10 }}>
+            {g.todayLine ? <DayLine day={g.day} /> : null}
+            <Conversation
+              messages={g.messages}
+              pending={null}
+              busy
+              showActions
+              onUndo={(id) => void undo(id)}
+              undoBusy={undoing}
+              // No quick answers or "Nochmal senden" here: that is the chat's job; History
+              // shows no buttons that cannot be pressed (history-dead-controls).
+            />
           </View>
-        ) : null}
-        <Conversation
-          messages={messages}
-          pending={null}
-          busy
-          showActions
-          onUndo={(id) => void undo(id)}
-          undoBusy={undoing}
-          // No quick answers or "Nochmal senden" here: that is the chat's job; History
-          // shows no buttons that cannot be pressed (history-dead-controls).
-        />
-      </ScrollView>
+        )}
+      />
     </Screen>
   );
 }

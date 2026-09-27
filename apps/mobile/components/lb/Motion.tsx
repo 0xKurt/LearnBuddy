@@ -7,7 +7,7 @@
 // Each runs once, when it mounts; `index` staggers a group. Reduce motion: no movement,
 // the content is simply there.
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -87,4 +87,16 @@ export function Appear({ children, delay = 0, animate = true, style, ...rest }: 
       {children}
     </Animated.View>
   );
+}
+
+/**
+ * For lists: the rows that are there when the list first shows rise in one after the other;
+ * rows that come later (scrolling, a refresh, a recycled row) just stand. Returns whether the
+ * row at `index` should animate. `ready`: the list's data has arrived.
+ */
+export function useListEntrance(ready: boolean, max = 8, windowMs = 900) {
+  const since = useRef<number | null>(null);
+  if (ready && since.current === null) since.current = Date.now();
+  return (index: number) =>
+    since.current !== null && index < max && Date.now() - since.current < windowMs;
 }
