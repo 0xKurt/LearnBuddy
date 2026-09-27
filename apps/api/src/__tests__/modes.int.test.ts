@@ -900,4 +900,49 @@ describe.skipIf(!dbReady)('learning modes', () => {
     });
     expect(foreign.status).toBe(404);
   });
+  it('"Kurz erklärt" is short: a long explanation gets one repair round, then a cut (live finding 7)', async () => {
+    // The explanation as written live: ~150 words in three paragraphs.
+    const LONG =
+      'Der Dativ ist einer der vier Fälle im Deutschen. Du nutzt ihn, um das Indirekte Objekt in einem Satz zu bestimmen. Das ist meistens die Person oder Sache, die etwas empfängt oder der etwas passiert. Du kannst nach dem Dativ ganz einfach mit dem Fragezeichen Wem? fragen.\n\nSchauen wir uns zwei Beispiele an. Im Satz Ich schenke meiner Schwester ein Buch fragst du: Wem schenke ich ein Buch? Die Antwort lautet meiner Schwester. Dieser Teil steht also im Dativ. Ein weiteres Beispiel: Das Essen schmeckt dem Hund. Wem schmeckt das Essen? Dem Hund.\n\nDas Wichtigste beim Dativ ist, dass sich die Begleiter und Endungen verändern. Aus der Vater wird im Dativ dem Vater, aus die Mutter wird der Mutter, aus das Kind wird dem Kind und im Plural wird aus die Kinder den Kindern.';
+    const explained = (intro: string) => ({
+      json: {
+        usable: true,
+        title: 'Der Dativ',
+        subject: { name: 'Deutsch', kind: 'german' },
+        intro,
+        items: [item({ prompt: 'Mit welcher Frage findest du den Dativ?', answer: 'Wem?' })],
+      },
+    });
+    env.llm.script('explain', explained(LONG), (req) => {
+      expect(req.system).toContain('You shorten an explanation');
+      expect(ScriptedGateway.textOf(req)).toContain('Das Wichtigste beim Dativ');
+      return {
+        intro:
+          'Den Dativ findest du mit der Frage „Wem?“. Beispiel: „Das Essen schmeckt dem Hund.“ – Wem? Dem Hund!.',
+      };
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'explain',
+      text: 'Erklär mir den Dativ',
+    });
+    expect(res.status).toBe(201);
+    // Short, and the doubled punctuation is gone.
+    expect(res.body.intro).toBe(
+      'Den Dativ findest du mit der Frage „Wem?“ Beispiel: „Das Essen schmeckt dem Hund.“ – Wem? Dem Hund!',
+    );
+
+    // The repair is still too long (or fails): cut after the last whole sentence within 80 words.
+    env.llm.script('explain', explained(LONG), { json: { intro: LONG } });
+    const cut = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'explain',
+      text: 'Erklär mir den Dativ nochmal',
+    });
+    const words = (cut.body.intro ?? '').split(/\s+/).filter(Boolean).length;
+    expect(words).toBeLessThanOrEqual(80);
+    expect(words).toBeGreaterThan(20);
+    expect(cut.body.intro).toMatch(/\.$/);
+    expect(cut.body.intro).not.toContain('Wem?.');
+  });
 });

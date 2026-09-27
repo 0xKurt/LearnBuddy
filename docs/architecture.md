@@ -939,7 +939,13 @@ word list, so it stays a prompt rule.
   under the same check); "Später" (`POST …/items/:itemId/defer`, `session_items.deferred_at`)
   sets a task aside — still open, it comes back after the others. No FSRS for homework.
 - **explain** — `POST /practice/topic` kind `explain`: a short explanation (`session.intro`) at
-  the learner's grade, then 3–5 check questions; the tutor sees the explanation.
+  the learner's grade, then 3–5 check questions; the tutor sees the explanation. "Kurz erklärt"
+  means short (live finding 7: ~200 words, bare example sentences, "Wem?."): the prompt asks for
+  at most 70 words in 1–2 paragraphs with example sentences in quotation marks; code
+  (`practice/brief.ts`) removes doubled punctuation ("?." → "?") and, over `INTRO_MAX_WORDS`
+  (80), asks the model once to shorten it (a small call, purpose `explain`), then cuts after the
+  last whole sentence within the limit. "Anders erklären" gets the same clean-up and limit
+  (`REEXPLAIN_MAX_WORDS`, prompt: 2–4 sentences, at most 60 words).
 - **practice on a topic** — kind `practice`: Buddy's own questions, marked as such.
 - **test** (migration `0005_test_mode.sql`) — kind `test` (start tile "Probetest", or Buddy's
   `offer_learning` shortly before an exam): 8–12 questions like a class test. Code enforces:
