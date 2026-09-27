@@ -476,8 +476,14 @@ share one validated shape (`practice/items.ts`: `ItemDraft`, `usableItems`, `ins
   not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores)
   would replace `speakItem`'s model call behind the same contract.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
-  renders fractions, powers, roots; `apps/mobile/components/math/`); LaTeX the model forgot to
-  wrap is wrapped server-side, and rule checks compare \\frac{3}{4} and 3/4 as equal. A question
+  renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
+  symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
+  `apps/mobile/lib/math/`). An unknown command shows its name set apart by spaces. A `$` right
+  before a digit never closes math and one followed by a space never opens it, so prices
+  ("$5 and $3") stay text. LaTeX the model forgot to wrap is wrapped server-side — in a sentence
+  only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
+  compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
+  when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
   (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
   not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.

@@ -15,7 +15,13 @@ export type MathAtom =
   | { type: 'sup'; body: MathAtom[] }
   /** Lowered after the atom before it (x_{1}). */
   | { type: 'sub'; body: MathAtom[] }
-  | { type: 'sqrt'; index: MathAtom[] | null; body: MathAtom[] };
+  | { type: 'sqrt'; index: MathAtom[] | null; body: MathAtom[] }
+  /** \overline{…}: a repeating decimal (0,\overline{3}) or a segment (\overline{AB}). */
+  | { type: 'overline'; body: MathAtom[] }
+  /** \vec{…}: a vector, drawn with an arrow above. */
+  | { type: 'vec'; body: MathAtom[] }
+  /** A gap to fill in inside math: "___" (3+ underscores), \square or \Box. */
+  | { type: 'blank' };
 
 export type MathSegment = { type: 'plain'; text: string } | { type: 'math'; atoms: MathAtom[] };
 
@@ -58,6 +64,39 @@ export const SYMBOLS: Readonly<Record<string, string>> = {
   phi: 'φ',
   varphi: 'φ',
   omega: 'ω',
+  // Geometry and sets (grade 5–8).
+  angle: '∠',
+  measuredangle: '∠',
+  parallel: '∥',
+  perp: '⊥',
+  bot: '⊥',
+  triangle: '△',
+  cong: '≅',
+  sim: '∼',
+  in: '∈',
+  notin: '∉',
+  subset: '⊂',
+  subseteq: '⊆',
+  cup: '∪',
+  cap: '∩',
+  emptyset: '∅',
+  varnothing: '∅',
+  setminus: '∖',
+  mid: '|',
+  equiv: '≡',
+  neg: '¬',
+  wedge: '∧',
+  vee: '∨',
+  prime: '′',
+};
+
+/** \mathbb{…} letters for the number sets. */
+const BLACKBOARD: Readonly<Record<string, string>> = {
+  N: 'ℕ',
+  Z: 'ℤ',
+  Q: 'ℚ',
+  R: 'ℝ',
+  C: 'ℂ',
 };
 
 /** A thin space: the gap around + − = … (narrower than a normal space). */
@@ -81,6 +120,17 @@ const BINARY = new Set([
   '⇒',
   '→',
   '⇔',
+  '∥',
+  '⊥',
+  '≅',
+  '∼',
+  '∈',
+  '∉',
+  '⊂',
+  '⊆',
+  '∪',
+  '∩',
+  '≡',
 ]);
 
 /**
@@ -105,6 +155,11 @@ export function mathSpans(text: string): MathSpan[] {
     }
     const display = text[i + 1] === '$';
     const open = display ? 2 : 1;
+    // Math starts right after its dollar sign ("$\frac…"); "5$ und" or "$ 3" is money.
+    if (!display && /\s/.test(text[i + 1] ?? ' ')) {
+      i += 1;
+      continue;
+    }
     const close = findClosingDollar(text, i + open, display);
     if (close === -1) {
       i += open;
@@ -143,8 +198,14 @@ function findClosingDollar(text: string, from: number, display: boolean): number
       continue;
     }
     if (text[j] === '$') {
-      if (!display) return j;
-      if (text[j + 1] === '$') return j;
+      if (display) {
+        if (text[j + 1] === '$') return j;
+        continue;
+      }
+      // A dollar sign right before a digit opens an amount ("… costs $3"), it never closes
+      // math: "$5 and the book costs $3" is two prices, not math around the words between.
+      if (/[0-9]/.test(text[j + 1] ?? '')) continue;
+      return j;
     }
   }
   return -1;
@@ -205,6 +266,11 @@ function parseList(r: Reader, inGroup: boolean): MathAtom[] {
     if (c === '{') {
       r.pos++;
       out.push(...parseList(r, true));
+      continue;
+    }
+    if (c === '_' && r.src.startsWith('___', r.pos)) {
+      while (r.peek() === '_') r.pos++;
+      out.push({ type: 'blank' });
       continue;
     }
     if (c === '^' || c === '_') {
@@ -303,7 +369,7 @@ function parseCommand(r: Reader): MathAtom[] {
       const close = matchingBrace(r.src, r.pos);
       const raw = r.src.slice(r.pos + 1, close === -1 ? r.src.length : close);
       r.pos = close === -1 ? r.src.length : close + 1;
-      return [{ type: 'text', text: raw }];
+      return [{ type: 'text', text: raw.replace(/\\\$/g, '$') }];
     }
     case ',':
     case ';':
@@ -324,6 +390,28 @@ function parseCommand(r: Reader): MathAtom[] {
       return [{ type: 'chars', text: name }];
     case '\\':
       return [{ type: 'text', text: ' ' }];
+    case 'square':
+    case 'Box':
+      return [{ type: 'blank' }];
+    case 'overline':
+    case 'bar':
+      return [{ type: 'overline', body: parseArgument(r, false) }];
+    case 'vec':
+    case 'overrightarrow':
+      return [{ type: 'vec', body: parseArgument(r, false) }];
+    case 'mathbb': {
+      const arg = parseArgument(r, false);
+      const letter = arg.length === 1 && arg[0]?.type === 'chars' ? arg[0].text : '';
+      const set = BLACKBOARD[letter];
+      return set ? [{ type: 'chars', text: set }] : arg;
+    }
+    case 'mathbf':
+    case 'mathit':
+    case 'boldsymbol':
+    case 'displaystyle':
+    case 'textstyle':
+      // Style only: show the argument as it is.
+      return parseArgument(r, false);
     case 'sin':
     case 'cos':
     case 'tan':
@@ -336,8 +424,9 @@ function parseCommand(r: Reader): MathAtom[] {
     default: {
       const char = SYMBOLS[name];
       if (char !== undefined) return [{ type: 'symbol', name, char }];
-      // Unknown command: show its name rather than a raw backslash or nothing.
-      return name.length > 0 ? [{ type: 'text', text: name }] : [];
+      // Unknown command: its name, set apart by spaces so it never glues to its neighbours
+      // ("g \foo h" → "g foo h", not "gfooh").
+      return name.length > 0 ? [{ type: 'text', text: ` ${name} ` }] : [];
     }
   }
 }
@@ -423,6 +512,10 @@ function mapChildren(a: MathAtom): MathAtom {
       return { type: 'sub', body: finish(a.body) };
     case 'sqrt':
       return { type: 'sqrt', index: a.index ? finish(a.index) : null, body: finish(a.body) };
+    case 'overline':
+      return { type: 'overline', body: finish(a.body) };
+    case 'vec':
+      return { type: 'vec', body: finish(a.body) };
     default:
       return a;
   }
@@ -453,6 +546,13 @@ function atomsToPlain(atoms: MathAtom[]): string {
           return a.index
             ? `√[${atomsToPlain(a.index)}](${atomsToPlain(a.body)})`
             : `√(${atomsToPlain(a.body)})`;
+        case 'overline':
+          // A combining overline on every character: 0,3̅.
+          return [...atomsToPlain(a.body)].map((ch) => `${ch}\u0305`).join('');
+        case 'vec':
+          return `${atomsToPlain(a.body)}\u20D7`;
+        case 'blank':
+          return '___';
       }
     })
     .join('');

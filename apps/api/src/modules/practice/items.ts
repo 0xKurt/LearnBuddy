@@ -11,9 +11,10 @@ import { compileExpression } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
+import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { mentionsSolution } from './tutor.js';
 
-export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs.`;
+export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm; for geometry and sets also \\overline{3} (repeating decimal, segment), \\angle, \\parallel, \\perp, \\in, \\mathbb{N}, \\vec{v}. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs. A dollar sign meaning money is written \\$ ("kostet \\$5").`;
 
 export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.`;
 
@@ -115,23 +116,17 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
   }
 }
 
-/** LaTeX the model forgot to put between dollar signs: the whole text is math then. */
-function dollarMath(text: string): string {
-  if (text.includes('$') || !/\\(frac|sqrt|cdot|times|div|pi|le|ge|ne|approx)\b|\^\{/.test(text))
-    return text;
-  return `$${text}$`;
-}
-
 /** Keep only items whose shape is consistent; returns them normalised. */
 export function usableItems(items: ItemDraft[]): ItemDraft[] {
   const out: ItemDraft[] = [];
   for (const raw of items) {
     const it = {
       ...raw,
-      prompt: dollarMath(raw.prompt),
-      answer: dollarMath(raw.answer),
-      accepted_answers: raw.accepted_answers.map(dollarMath),
-      choices: raw.choices ? raw.choices.map(dollarMath) : null,
+      // LaTeX without dollar signs: only the math runs of a sentence, a math field as a whole.
+      prompt: dollarMathRuns(raw.prompt),
+      answer: dollarMathField(raw.answer),
+      accepted_answers: raw.accepted_answers.map(dollarMathField),
+      choices: raw.choices ? raw.choices.map(dollarMathField) : null,
       figure: usableFigure(raw.figure),
     };
     if (it.kind === 'multiple_choice') {

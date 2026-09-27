@@ -25,6 +25,10 @@ const WORDS: SpokenWords = {
   sqrt: 'Wurzel aus {{body}}',
   root: '{{index}}. Wurzel aus {{body}}',
   cbrt: 'dritte Wurzel aus {{body}}',
+  period: 'Periode {{body}}',
+  segment: 'Strecke {{body}}',
+  vector: 'Vektor {{body}}',
+  blank: 'Lücke',
   symbols: { '+': 'plus', '=': 'gleich', '<': 'kleiner als', '>': 'größer als' },
 };
 

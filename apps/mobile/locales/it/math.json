@@ -9,6 +9,9 @@
     "sqrt": "radice quadrata di {{body}}",
     "root": "radice di indice {{index}} di {{body}}",
     "cbrt": "radice cubica di {{body}}",
+    "period": "periodo {{body}}",
+    "segment": "segmento {{body}}",
+    "vector": "vettore {{body}}",
     "symbols": {
       "plus": "più",
       "minus": "meno",
@@ -31,7 +34,15 @@
       "iff": "se e solo se",
       "lparen": "parentesi aperta",
       "rparen": "parentesi chiusa",
-      "percent": "per cento"
+      "percent": "per cento",
+      "angle": "angolo",
+      "parallel": "parallela a",
+      "perp": "perpendicolare a",
+      "triangle": "triangolo",
+      "cong": "congruente a",
+      "sim": "simile a",
+      "in": "appartiene a",
+      "notin": "non appartiene a"
     }
   },
   "figure": {

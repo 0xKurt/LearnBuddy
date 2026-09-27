@@ -1,8 +1,9 @@
 // A question or message text as runs to draw: plain words, $…$ math, **bold**
 // and — in questions — fill-in blanks ("Ich helfe ___ Mutter.": three or more
-// underscores). Bold may wrap math and blanks; blanks and bold markers inside
-// $…$ belong to the math and are left alone. Pure logic without React Native
-// imports, so it runs in the unit tests.
+// underscores). Bold may wrap math and blanks; bold markers inside $…$ belong to
+// the math. A blank inside math ("$\frac{3}{4} = \frac{___}{8}$", or \square) is
+// a blank atom of the math (parse.ts): counted, filled and read like any other.
+// Pure logic without React Native imports, so it runs in the unit tests.
 
 import { mathSpans, parseMath, type MathAtom } from './parse.js';
 
@@ -27,6 +28,12 @@ type RawRun =
 
 const BOLD = /\*\*([^*\n]+?)\*\*/g;
 const BLANK = /_{3,}/g;
+/** A blank written inside math (parse.ts turns each into a { type: 'blank' } atom). */
+const MATH_BLANK = /_{3,}|\\(?:square|Box)(?![a-zA-Z])/g;
+
+function mathBlanks(inner: string): number {
+  return [...inner.matchAll(MATH_BLANK)].length;
+}
 /** Stands in for math while bold and blanks are searched (never "*" or "_"). */
 const MASK = '';
 
@@ -75,6 +82,7 @@ function scan(text: string, options: PromptOptions): RawRun[] {
           inner: mark.math.inner,
           bold: r.bold,
         });
+        if (options.blanks) blankIndex += mathBlanks(mark.math.inner);
       } else out.push({ type: 'blank', index: blankIndex++, bold: r.bold });
       at = mark.end;
     }
@@ -97,9 +105,12 @@ export function parsePrompt(text: string, options: PromptOptions): PromptRun[] {
   });
 }
 
-/** How many blanks the text has (outside math). */
+/** How many blanks the text has, in plain text and inside math. */
 export function countBlanks(text: string): number {
-  return scan(text, { blanks: true }).filter((r) => r.type === 'blank').length;
+  return scan(text, { blanks: true }).reduce(
+    (n, r) => n + (r.type === 'blank' ? 1 : r.type === 'math' ? mathBlanks(r.inner) : 0),
+    0,
+  );
 }
 
 /**
@@ -113,7 +124,11 @@ export function promptForSpeech(
 ): string {
   return scan(text, options)
     .map((r) => {
-      if (r.type === 'blank') return ` ${options.filledWord ?? options.blankWord} `;
+      const word = options.filledWord ?? options.blankWord;
+      if (r.type === 'blank') return ` ${word} `;
+      // Inside math the blank is read as the same word ("3 durch 4 gleich Lücke durch 8").
+      if (r.type === 'math' && options.blanks)
+        return r.raw.replace(MATH_BLANK, () => `\\text{${word.replace(/[{}]/g, '')}}`);
       return r.raw;
     })
     .join('')

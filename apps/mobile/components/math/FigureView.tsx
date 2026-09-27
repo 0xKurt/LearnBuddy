@@ -25,6 +25,7 @@ import Svg, {
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import { plotFrame, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { FIGURE, LB } from '../../lib/theme/colors.js';
@@ -331,22 +332,25 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
   const xs = x1 - x0 || 1;
   const ys = y1 - y0 || 1;
   const h = Math.round(Math.min(Math.max(width * 0.8, 220), 380));
-  const left = 8;
-  const right = 12;
-  const top = 12;
-  const bottom = 8;
-  const pw = width - left - right;
-  const ph = h - top - bottom;
+  const ph0 = h - 12 - 8;
+  const yStep = niceStep(ys, Math.max(4, Math.min(10, Math.floor(ph0 / 32))));
+  const yTicks = ticksFor(y0, y1, yStep);
+  // The left margin makes room for the y labels when the y-axis runs along the left edge.
+  const { left, top, pw, ph, axisY } = plotFrame({
+    width,
+    height: h,
+    x0,
+    x1,
+    yLabels: [...yTicks.map(formatNumber), '0'],
+    fontSize: SMALL,
+  });
   const X = (v: number) => left + ((v - x0) / xs) * pw;
   const Y = (v: number) => top + (1 - (v - y0) / ys) * ph;
 
   const xStep = niceStep(xs, Math.max(4, Math.min(10, Math.floor(pw / 40))));
-  const yStep = niceStep(ys, Math.max(4, Math.min(10, Math.floor(ph / 32))));
   const xTicks = ticksFor(x0, x1, xStep);
-  const yTicks = ticksFor(y0, y1, yStep);
   // Axes through 0 when 0 is in range, else along the edge.
   const axisX = Y(y0 <= 0 && y1 >= 0 ? 0 : y0);
-  const axisY = X(x0 <= 0 && x1 >= 0 ? 0 : x0);
 
   const graphs = useMemo(
     () =>
@@ -478,7 +482,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                 strokeWidth={1}
               />
               <HaloText
-                x={axisY - 6}
+                x={axisY - Y_LABEL_GAP}
                 y={Y(v) + 4}
                 size={SMALL}
                 weight="400"
