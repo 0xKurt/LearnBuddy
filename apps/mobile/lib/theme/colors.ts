@@ -20,6 +20,8 @@ export const LB = {
   ring: 'rgba(106,72,215,0.22)',
   // A text field's resting border: soft, but visible on white and on the page.
   field: 'rgba(60,40,120,0.16)',
+  // The page seen through a hint laid over it (a file dragged over capture in the browser).
+  veil: 'rgba(250,247,253,0.96)',
   success: '#6b8d6a',
   warning: '#b58a3c',
   danger: '#b1493c',

@@ -35,6 +35,13 @@ import { CheckDecision } from './registry.js';
 import { planOutreach, type BodyTemplate } from './delivery.js';
 import { markHandled } from './events.js';
 import { lookupsField, withLookups } from './lookups.js';
+import {
+  describeLookBack,
+  findLookBack,
+  LOOK_BACK_TRIGGERS,
+  lookBackErrors,
+  type LookBackFact,
+} from './lookback.js';
 import { bumpContext } from './plan.js';
 import { BUDDY_PROMPT_VERSION, CHECK_SYSTEM, repairMessage } from './prompts.js';
 import { loadBuddyState, type BuddyState, type SettingsRow } from './state.js';
@@ -366,6 +373,19 @@ function describeTriggers(state: BuddyState, triggers: Trigger[], today: string)
   return [...new Set(lines)].join('\n');
 }
 
+/** What a look back is about: the session just finished, or the subject of the test ahead. */
+function lookBackFocus(
+  state: BuddyState,
+  triggers: Trigger[],
+): { sessionId: string | null; subjectId: string | null } {
+  const sessionId = triggers.find((t) => t.sessionId)?.sessionId ?? null;
+  const examGoal = triggers.find((t) => t.reason === 'exam_countdown' && t.goalId)?.goalId;
+  const subjectId = examGoal
+    ? (state.goals.find((g) => g.id === examGoal)?.subject_id ?? null)
+    : null;
+  return { sessionId, subjectId };
+}
+
 async function decide(
   deps: Deps,
   learner: LearnerRow & { isMinor: boolean },
@@ -452,7 +472,17 @@ async function decide(
       .filter((m) => m.status === 'done' && m.failure_code !== 'blocked')
       .slice(-8)
       .map((m) => ({ role: m.role, text: m.text }));
-    const tail = `${describeTriggers(state, triggers, today)}${repair ? `\n\n${repairMessage(repair)}` : ''}`;
+    // After practice or before a test, code may offer one look back (lookback.ts).
+    const lookBack: LookBackFact | null = triggers.some((t) => LOOK_BACK_TRIGGERS.has(t.reason))
+      ? await findLookBack(
+          deps.db,
+          learner.id,
+          at,
+          state.settings.timezone,
+          lookBackFocus(state, triggers),
+        )
+      : null;
+    const tail = `${describeTriggers(state, triggers, today)}${lookBack ? `\n\n${describeLookBack(lookBack)}` : ''}${repair ? `\n\n${repairMessage(repair)}` : ''}`;
     const meta = {
       mode: 'check' as const,
       attempt,
@@ -531,12 +561,15 @@ async function decide(
     if (meta.output === undefined) meta.output = raw;
 
     const parsed = CheckDecision.safeParse(raw);
-    const semantic =
-      parsed.success &&
-      parsed.data.disposition === 'wait' &&
-      (parsed.data.actions.length > 0 || parsed.data.outreach)
-        ? ['disposition "wait" must have no actions and no outreach']
-        : [];
+    const semantic = parsed.success
+      ? [
+          ...(parsed.data.disposition === 'wait' &&
+          (parsed.data.actions.length > 0 || parsed.data.outreach)
+            ? ['disposition "wait" must have no actions and no outreach']
+            : []),
+          ...lookBackErrors(parsed.data, lookBack),
+        ]
+      : [];
     if (!parsed.success || semantic.length > 0) {
       const errors = parsed.success
         ? semantic
@@ -594,6 +627,7 @@ async function decide(
       actions: d.actions,
       reply: null,
       outreach: d.outreach,
+      lookBack: d.look_back && lookBack ? { text: d.look_back.text, fact: lookBack } : null,
       // Her own photos or practice: the answer is not an initiative (policy.ts).
       outreachOrigin: answersLearner ? 'learner' : 'buddy',
       meta,
@@ -602,6 +636,7 @@ async function decide(
       await finishAll({
         outcome: 'act',
         actions: applied.actions.map((a) => a.summary.tool),
+        look_back: Boolean(d.look_back && lookBack),
         outreach: applied.outreach
           ? { status: applied.outreach.status, reason: applied.outreach.reason }
           : null,

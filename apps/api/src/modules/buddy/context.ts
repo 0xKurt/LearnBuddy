@@ -237,6 +237,12 @@ export function buildContext(
   }
 
   const st = state.settings;
+  // How her replies sound when read aloud (set_voice changes it, ADR 0008).
+  lines.push(
+    '',
+    '## Your voice when read aloud',
+    `- ${st.voice} · speed ${st.voice_speed === 0 ? 'normal' : st.voice_speed > 0 ? `faster (+${st.voice_speed} of +2)` : `slower (${st.voice_speed} of -2)`} · voices: warm, friendly, bright, clear`,
+  );
   lines.push('', '## Contact outside the app');
   lines.push(
     '- Messages in the app are not limited; a topic you raised in the last 72 hours is not sent again.',
@@ -250,6 +256,11 @@ export function buildContext(
     );
     if (st.paused_until && st.paused_until > now) {
       lines.push(`- paused through ${lastDayOf(st.paused_until, tz)}`);
+    }
+    if (st.phone_only_important) {
+      lines.push(
+        '- she asked for fewer messages: only important ones (relevance ≥ 0.85) reach the phone; the rest waits in the app',
+      );
     }
     if (!opts.pushAvailable)
       lines.push('- no working push channel on the device: messages only appear in the app');

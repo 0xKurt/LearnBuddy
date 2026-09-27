@@ -13,6 +13,11 @@
 //
 // Opened (audit M-64): a tap — also one that started the app — is kept on the
 // device (lib/pushQueue.ts) until the API has it, and sent once signed in.
+//
+// Buttons (gaps #16, lib/pushActions.ts): the server picks each message's category; the app
+// registers the buttons. A press is kept like a tap and sent to the API, which decides what it
+// does. "Heute nicht" and "Seltener schreiben" work from the lock screen: when the app is not
+// running, the background task (lib/pushTask.ts) sends them.
 
 import { PUSH_CHANNEL_ID, type BuddyHome } from '@learnbuddy/shared-types/contracts';
 import Constants from 'expo-constants';
@@ -21,9 +26,12 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { newId } from './api/client.js';
+import type { OutreachActionResponse } from '@learnbuddy/shared-types/contracts';
+
 import {
   claimPushDevice,
   getSettings,
+  outreachAct,
   outreachOpened,
   registerPushToken,
   releasePushDevice,
@@ -31,13 +39,18 @@ import {
 import { readItem, writeItem } from './api/outboxStorage.js';
 import { resultOf } from './api/outboxSync.js';
 import { currentSession } from './auth/session.js';
+import { i18n } from './i18n/index.js';
+import { categorySpecs, pressOf, type Press } from './pushActions.js';
 import {
   outreachIdOf,
   parsePushQueue,
+  withAction,
   withOpened,
+  withoutAction,
   withoutOpened,
   withRelease,
   type PushQueue,
+  type QueuedAction,
 } from './pushQueue.js';
 
 if (Platform.OS !== 'web') {
@@ -63,6 +76,17 @@ function within<T>(p: Promise<T>, ms = PUSH_TIMEOUT_MS): Promise<T> {
     p,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
   ]);
+}
+
+/**
+ * The buttons under Buddy's notifications, titled in the app's language (registered on start
+ * and when she signs in; the server names the category per message).
+ */
+export async function registerPushCategories(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  for (const c of categorySpecs((key) => i18n.t(`common:${key}`))) {
+    await Notifications.setNotificationCategoryAsync(c.id, c.actions).catch(() => undefined);
+  }
 }
 
 export async function clearLegacyLocalNotifications(): Promise<void> {
@@ -176,6 +200,7 @@ export async function unregisterDeviceForPush(): Promise<void> {
 export async function syncPushDevice(): Promise<void> {
   if ((await readQueue()).release && !(await tryRelease())) return;
   if (!currentSession()) return;
+  void registerPushCategories();
   await within(claimPushDevice(await deviceId())).catch(() => undefined);
   if (!pushPossible()) return;
   try {
@@ -216,23 +241,70 @@ export function flushOpened(onHome: (home: BuddyHome) => void): Promise<void> {
   return flushingOpened;
 }
 
+let flushingActions: Promise<void> | null = null;
+
+/**
+ * Sends the kept button presses, oldest first, with the same rule as the opened reports: only
+ * a clear "no" drops one. `onDone` gets each answer (e.g. the practice "Jetzt üben" started).
+ */
+export function flushActions(
+  onDone: (e: { id: string; action: QueuedAction }, res: OutreachActionResponse) => void,
+): Promise<void> {
+  flushingActions ??= (async () => {
+    if (!currentSession()) return;
+    for (const e of (await readQueue()).actions) {
+      try {
+        onDone(e, await outreachAct(e.id, e.action));
+      } catch (err) {
+        if (resultOf(err) !== 'refused') break;
+      }
+      await updateQueue((q) => withoutAction(q, e.id, e.action));
+    }
+  })().finally(() => {
+    flushingActions = null;
+  });
+  return flushingActions;
+}
+
+/** A press on one of Buddy's notifications, kept on the device until the API has it. */
+export async function keepPress(
+  data: unknown,
+  actionIdentifier: string,
+): Promise<{ id: string; press: Press } | null> {
+  const id = outreachIdOf(data);
+  if (!id) return null;
+  const press = pressOf(actionIdentifier);
+  const at = new Date();
+  await updateQueue((q) => {
+    if (press.kind === 'open') return withOpened(q, id, at);
+    const kept = withAction(q, id, press.action, at);
+    // "Jetzt üben" opened the app; the lock-screen buttons did not.
+    return press.opens ? withOpened(kept, id, at) : kept;
+  });
+  return { id, press };
+}
+
 const handled = new Set<string>();
 
 /**
- * Calls back with the outreach id when the learner taps one of Buddy's
- * notifications — including the tap that started the app (read here once; the
- * listener may have missed it) — after keeping the "opened" report on the device.
+ * Calls back with the outreach id and what was pressed when the learner taps one of Buddy's
+ * notifications or one of its buttons — including the tap that started the app (read here
+ * once; the listener may have missed it) — after keeping the report on the device.
  */
-export function onNotificationTap(callback: (outreachId: string) => void): () => void {
+export function onNotificationTap(
+  callback: (outreachId: string, press: Press) => void,
+): () => void {
   if (Platform.OS === 'web') return () => undefined;
   const handle = (response: Notifications.NotificationResponse | null) => {
     if (!response) return;
-    const key = response.notification.request.identifier;
+    const key = `${response.notification.request.identifier}:${response.actionIdentifier}`;
     if (handled.has(key)) return;
     handled.add(key);
-    const id = outreachIdOf(response.notification.request.content.data);
-    if (!id) return;
-    void updateQueue((q) => withOpened(q, id, new Date())).then(() => callback(id));
+    void keepPress(response.notification.request.content.data, response.actionIdentifier).then(
+      (kept) => {
+        if (kept) callback(kept.id, kept.press);
+      },
+    );
   };
   const sub = Notifications.addNotificationResponseReceivedListener(handle);
   try {

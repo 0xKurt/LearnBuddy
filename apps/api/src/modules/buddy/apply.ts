@@ -14,6 +14,7 @@ import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import type { Db } from '../../lib/db.js';
 import { canonicalTopicKey, type Aliases } from './context.js';
 import type { AnyAction, Outreach } from './decision.js';
+import type { LookBackFact } from './lookback.js';
 import { planOutreach, type OutreachPlan } from './delivery.js';
 import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
@@ -50,6 +51,8 @@ export type ApplyInput = {
   actions: AnyAction[];
   reply: { text: string; options: string[] | null } | null;
   outreach: Outreach | null;
+  /** A look-back Buddy says in the app (lookback.ts): the model's sentence and the fact. */
+  lookBack?: { text: string; fact: LookBackFact } | null;
   /** 'learner' when the outreach answers something she just did (policy.ts). */
   outreachOrigin?: 'buddy' | 'learner';
   meta: DecisionMeta;
@@ -144,7 +147,10 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           JSON.stringify(input.meta.triggers),
           input.contextVersion,
           input.meta.attempt,
-          input.meta.mode === 'check' && input.actions.length === 0 && !input.outreach
+          input.meta.mode === 'check' &&
+          input.actions.length === 0 &&
+          !input.outreach &&
+          !input.lookBack
             ? 'wait'
             : 'applied',
           input.meta.reason,
@@ -189,6 +195,30 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           ],
         );
         replyMessageId = msg.id;
+      }
+      if (input.lookBack) {
+        // Said once, in the app only (never pushed): the row keeps it rare (lookback.ts).
+        const f = input.lookBack.fact;
+        const msg = await tx.one<{ id: string }>(
+          `insert into buddy_messages (learner_id, role, text, decision_id, created_at)
+           values ($1, 'buddy', $2, $3, $4) returning id`,
+          [input.learnerId, input.lookBack.text, decision.id, input.now],
+        );
+        await tx.query(
+          `insert into buddy_lookbacks (learner_id, subject_id, topic_key, topic, shaky_at,
+                                        message_id, decision_id, said_at, created_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
+          [
+            input.learnerId,
+            f.subjectId,
+            f.topicKey,
+            f.topic,
+            f.shakyAt,
+            msg.id,
+            decision.id,
+            input.now,
+          ],
+        );
       }
       if (input.triggerMessageId) {
         // The answer covers this message and earlier ones the model saw in its dialogue
@@ -245,7 +275,12 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         });
       }
 
-      if (outcomes.length > 0 || input.reply || (outreach && outreach.status !== 'suppressed')) {
+      if (
+        outcomes.length > 0 ||
+        input.reply ||
+        input.lookBack ||
+        (outreach && outreach.status !== 'suppressed')
+      ) {
         await tx.query(
           `update buddy_settings set context_version = context_version + 1 where learner_id = $1`,
           [input.learnerId],

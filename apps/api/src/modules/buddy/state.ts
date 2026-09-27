@@ -2,7 +2,7 @@
 // model context, the home screen and deterministic decisions. All queries are
 // scoped by learner_id; nothing here trusts client input.
 
-import type { PageProblem } from '@learnbuddy/shared-types/contracts';
+import type { PageProblem, VoiceName } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
 import { summarize, type SummaryRow } from '../practice/summary.js';
@@ -18,10 +18,16 @@ export type SettingsRow = {
   preferred_end: string;
   avoid_weekdays: number[];
   paused_until: Date | null;
+  /** "Seltener schreiben": Buddy's own initiatives reach the phone only when important. */
+  phone_only_important: boolean;
   opt_in_prompt_hidden_until: Date | null;
   context_version: number;
   last_seen_at: Date | null;
   version: number;
+  /** Buddy's voice when read aloud (ADR 0008). */
+  voice: VoiceName;
+  /** -2 … +2 steps from the normal speed. */
+  voice_speed: number;
   /** Which worker runs this learner's background checks (check.ts), if any. */
   check_lease_token?: string | null;
 };

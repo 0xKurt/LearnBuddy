@@ -10,10 +10,13 @@
 // (lib/homeLayout.ts, user feedback #6). The card floats over the greeting and the row of
 // ways to start and can be closed (components/buddy/TopOverlay.tsx): nothing below it moves
 // when it comes or goes.
+// While Buddy writes, the send button is "Stopp" (the turn ends stopped, §Turns); scrolled up to
+// read, "↓ Neue Antwort" brings her to a reply that came meanwhile (lib/buddy/newReply.ts).
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Animated from 'react-native-reanimated';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -42,6 +45,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
+import { Icon } from '../components/lb/Icon.js';
 import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
 import { StartRow } from '../components/lb/StartRow.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
@@ -55,6 +59,10 @@ import { requestAdmin } from '../lib/adminFlow.js';
 import { useClosedCard } from '../lib/homeCard.js';
 import { followsEnd, homeLayout, topKey } from '../lib/homeLayout.js';
 import { ApiError, newId } from '../lib/api/client.js';
+import { newestBuddyId, seenAfter, showNewReply, type ReplySeen } from '../lib/buddy/newReply.js';
+import { haptic } from '../lib/haptics.js';
+import { fadeOut, riseIn } from '../lib/theme/enter.js';
+import { SHADOW } from '../lib/theme/shadow.js';
 import {
   acceptMissingPages,
   answerContactOptIn,
@@ -62,6 +70,7 @@ import {
   retryMaterial,
   sendMessageStreamed,
   skipStep,
+  stopMessage,
   startStep,
   undoAction,
 } from '../lib/api/endpoints.js';
@@ -153,6 +162,11 @@ export default function BuddyScreen() {
     };
   }, [readingId]);
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
+  /** The message being answered right now and how to end its stream ("Stopp"). */
+  const sending = useRef<{ id: string; controller: AbortController } | null>(null);
+  /** Whether the conversation stands at its end (drives "↓ Neue Antwort"), and what she saw there. */
+  const [atEnd, setAtEnd] = useState(true);
+  const [seen, setSeen] = useState<ReplySeen>({ seen: null });
   /** Buddy's reply while it is being written (an answer that changes nothing). */
   const [live, setLive] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -164,8 +178,11 @@ export default function BuddyScreen() {
   /** To its newest message, unless she scrolled up to read (lib/homeLayout.ts followsEnd). */
   function follow(): void {
     const b = threadBox.current;
-    // Something she sent (or its reply) always brings her back to the end.
-    if (followEnd.current) b.following = true;
+    // Something she sent always brings her back to the end (a reply only while she follows it).
+    if (followEnd.current) {
+      b.following = true;
+      setAtEnd(true);
+    }
     if (b.following) scroll.current?.scrollToEnd({ animated: followEnd.current });
     followEnd.current = false;
   }
@@ -185,6 +202,14 @@ export default function BuddyScreen() {
   // when a slow turn finishes): read aloud in voice mode, otherwise announced to a screen
   // reader (audit M-81) — only while the home is on screen.
   const thread = home.data?.thread;
+  // At the end of the conversation she sees Buddy's newest reply (no "↓ Neue Antwort" for it).
+  const newestReply = thread ? newestBuddyId(thread) : null;
+  useEffect(() => {
+    setSeen((prev) => {
+      const next = seenAfter(prev, atEnd, newestReply);
+      return next.seen === prev.seen ? prev : next;
+    });
+  }, [atEnd, newestReply]);
 
   // The card on top, unless she closed it on this phone (until it says something else).
   const closedCard = useClosedCard((s) => s.closed);
@@ -230,6 +255,7 @@ export default function BuddyScreen() {
       const next = await fn();
       if (next) setHome(next);
     } catch (err) {
+      haptic.soft();
       toast.show(messageFor(err), 'error');
       if (
         err instanceof ApiError &&
@@ -251,21 +277,30 @@ export default function BuddyScreen() {
     setLive(null);
     followEnd.current = true;
     awaitingReply.current = clientMessageId;
+    const controller = new AbortController();
+    sending.current = { id: clientMessageId, controller };
     // Buddy's reply appears while it is written when the answer changes nothing
     // (docs/architecture.md §Speed). It is read aloud only once it is stored: after the
     // provider's final safety verdict and validation, never text that is withdrawn later
     // (audit M-52, repro-28) — the effect above reads it from the thread.
     let round = 0;
     try {
-      const res = await sendMessageStreamed(text, clientMessageId, replyToId, (e) => {
-        if (e.round !== round) {
-          round = e.round;
-          setLive(null);
-        }
-        if (!e.speakable) return;
-        setLive(e.text);
-        followEnd.current = true;
-      });
+      const res = await sendMessageStreamed(
+        text,
+        clientMessageId,
+        replyToId,
+        (e) => {
+          if (e.round !== round) {
+            round = e.round;
+            setLive(null);
+          }
+          if (!e.speakable) return;
+          // Written at the end: seen there while she follows it; scrolled up to read, she
+          // stays where she is and "↓ Neue Antwort" shows.
+          setLive(e.text);
+        },
+        controller.signal,
+      );
       setHome(res.home);
       // The failed message says why in the thread, with "Nochmal senden" right there; a toast
       // would sit on top of exactly that. Screen readers still hear it.
@@ -274,15 +309,50 @@ export default function BuddyScreen() {
     } catch (err) {
       // Nothing to read when the reply comes after a failure she was told about.
       awaitingReply.current = null;
+      // She stopped it: the home from the stop says where it stands.
+      if (err instanceof ApiError && err.code === 'aborted') return true;
+      haptic.soft();
       toast.show(messageFor(err), 'error');
       // The message may have reached the server (then it shows as failed or processing);
       // otherwise the composer gets her text back (audit M-76).
       await refresh().catch(() => undefined);
       return inThread(queryClient.getQueryData<BuddyHome>(keys.home), clientMessageId);
     } finally {
+      if (sending.current?.id === clientMessageId) sending.current = null;
       setPending(null);
       setLive(null);
-      followEnd.current = true;
+    }
+  }
+
+  /**
+   * "Stopp": the server ends the turn (stopped — or it was answered already, then the reply
+   * is there), then this side stops listening to the stream. A message the server has not
+   * stored yet is asked about once more; failing that, the answer comes as usual.
+   */
+  async function stopReply(): Promise<void> {
+    const cur = sending.current;
+    if (!cur) return;
+    haptic.tap();
+    const ask = () => stopMessage(cur.id);
+    try {
+      let res;
+      try {
+        res = await ask();
+      } catch (err) {
+        if (!(err instanceof ApiError && err.code === 'not_found')) throw err;
+        await new Promise((r) => setTimeout(r, 700));
+        res = await ask();
+      }
+      // Nothing of a stopped (or answered-and-stopped) reply is read aloud.
+      awaitingReply.current = null;
+      cur.controller.abort();
+      setHome(res.home);
+      if (res.status === 'failed') announce(t('buddy:thread.stopped'));
+    } catch (err) {
+      // Not found twice (it never arrived) or no connection: the reply goes on as it is.
+      if (err instanceof ApiError && err.code === 'not_found') return;
+      haptic.soft();
+      toast.show(messageFor(err), 'error');
     }
   }
 
@@ -441,7 +511,7 @@ export default function BuddyScreen() {
             : t('capture:draft.discarded', { count: shownDraft.photos.length })
         }
         detail={draft ? t('capture:draft.body', { count: draft.photos.length }) : null}
-        thumb={draft ? (draft.photos[0]?.uri ?? null) : null}
+        thumb={draft ? (draft.photos.find((p) => !p.pdf)?.uri ?? null) : null}
       >
         {draft ? (
           <>
@@ -559,6 +629,10 @@ export default function BuddyScreen() {
       ? { text: pending.text }
       : null;
 
+  // "↓ Neue Antwort": she scrolled up and Buddy answered (or is writing) meanwhile.
+  const newest = newestBuddyId(h.thread);
+  const pill = showNewReply(seen, atEnd, newest, live !== null);
+
   // Once there is a conversation, it gets the room; the ring shrinks to a row.
   const talking = messages.length > 0 || shownPending !== null || notices.length > 0;
   // The card first (the close button sits in its corner), then what the system says.
@@ -648,21 +722,36 @@ export default function BuddyScreen() {
         {t('buddy:greeting', { name: h.learner.name })}
       </Text>
       {/* Personal when something is coming up: the next test; otherwise the open question.
-          The same with or without a card on top, so nothing moves when it comes or goes. */}
-      <Text
-        numberOfLines={talking ? 1 : undefined}
-        style={[
-          talking ? TYPE.body : TYPE.title,
-          { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
-        ]}
+          The same with or without a card on top, so nothing moves when it comes or goes.
+          Beside it, quietly, whether she practised today — never a count (rule 6). */}
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          alignItems: 'center',
+          columnGap: 8,
+          rowGap: 4,
+        }}
       >
-        {nextExam
-          ? t('buddy:next.line', {
-              title: nextExam.title,
-              when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
-            })
-          : t('buddy:greeting_ask')}
-      </Text>
+        <Text
+          numberOfLines={talking ? 1 : undefined}
+          style={[
+            talking ? TYPE.body : TYPE.title,
+            { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
+          ]}
+        >
+          {nextExam
+            ? t('buddy:next.line', {
+                title: nextExam.title,
+                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+              })
+            : t('buddy:greeting_ask')}
+        </Text>
+        {h.practiced_today && !talking ? (
+          <PracticedToday label={t('buddy:practiced_today')} />
+        ) : null}
+      </View>
     </View>
   );
 
@@ -757,6 +846,7 @@ export default function BuddyScreen() {
                 onScroll={(e) => {
                   const b = threadBox.current;
                   const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+                  const was = b.following;
                   b.following = followsEnd(
                     b.following,
                     b.y,
@@ -769,6 +859,7 @@ export default function BuddyScreen() {
                   b.y = contentOffset.y;
                   b.view = layoutMeasurement.height;
                   b.content = contentSize.height;
+                  if (was !== b.following) setAtEnd(b.following);
                 }}
                 scrollEventThrottle={64}
                 onLayout={follow}
@@ -800,6 +891,37 @@ export default function BuddyScreen() {
                   }
                 />
               </ScrollView>
+              {pill ? (
+                <Animated.View
+                  entering={riseIn(0)}
+                  exiting={fadeOut()}
+                  pointerEvents="box-none"
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 12,
+                    alignItems: 'center',
+                  }}
+                >
+                  <View style={[{ borderRadius: 22 }, SHADOW.float]}>
+                    <Btn
+                      size="sm"
+                      pill
+                      variant="outline"
+                      accessibilityLabel={t('buddy:thread.new_reply_label')}
+                      onPress={() => {
+                        haptic.tap();
+                        threadBox.current.following = true;
+                        setAtEnd(true);
+                        scroll.current?.scrollToEnd({ animated: true });
+                      }}
+                    >
+                      {`↓ ${t('buddy:thread.new_reply')}`}
+                    </Btn>
+                  </View>
+                </Animated.View>
+              ) : null}
             </>
           ) : (
             <ScrollView
@@ -838,6 +960,8 @@ export default function BuddyScreen() {
         </View>
         <Composer
           disabled={pending !== null}
+          writing={pending !== null}
+          onStop={() => void stopReply()}
           onSend={(text) => send(text)}
           onPhoto={() => router.push('/capture')}
         />
@@ -908,5 +1032,27 @@ export default function BuddyScreen() {
       />
       <TopicSheet kind={topic} onClose={() => setTopic(null)} />
     </SafeAreaView>
+  );
+}
+
+/** The quiet "Heute geübt ✓" beside the greeting: a mark of what she did, never a number. */
+function PracticedToday({ label }: { label: string }) {
+  return (
+    <View
+      accessible
+      accessibilityLabel={label}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 9,
+        paddingVertical: 3,
+        borderRadius: 999,
+        backgroundColor: LB.mint,
+      }}
+    >
+      <Icon name="check" size={13} color={LB.successText} />
+      <Text style={[TYPE.label, { color: LB.successText }]}>{label}</Text>
+    </View>
   );
 }

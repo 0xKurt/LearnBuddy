@@ -1,11 +1,12 @@
 {
   "title": "Haz una foto de tu ficha",
-  "intro": "Ficha, página del libro o cuaderno: lo convierto en ejercicios.",
+  "intro": "Ficha, página del libro o cuaderno – en foto o PDF. Hago ejercicios con ello.",
   "tip": "Consejo: la página entera, buena luz y desde arriba.",
   "privacy": "Las fotos se eliminan, a más tardar, 7 días después de su lectura.",
   "camera": "Hacer una foto",
   "camera_more": "Otra foto",
   "library": "Elegir entre tus fotos",
+  "library_short": "De fotos",
   "photos_title_one": "{{count}} foto",
   "photos_title_other": "{{count}} fotos",
   "photo_label": "Foto {{index}} de {{total}}",
@@ -76,5 +77,21 @@
     "discarded_other": "{{count}} fotos descartadas.",
     "undo": "Deshacer",
     "undo_label": "Recuperar las fotos descartadas"
+  },
+  "files": {
+    "pick": "De archivos",
+    "pick_label": "Elegir de archivos – PDF o imagen",
+    "title_one": "{{count}} archivo",
+    "title_other": "{{count}} archivos",
+    "pdf_label": "PDF {{index}} de {{total}}: {{name}}",
+    "drop": "Suéltalo aquí – acepto fotos y PDF.",
+    "error": "Tus archivos no se han abierto. Inténtalo de nuevo.",
+    "unsupported_one": "Un archivo no es una imagen ni un PDF – lo dejo fuera.",
+    "unsupported_other": "{{count}} archivos no son imágenes ni PDF – los dejo fuera.",
+    "too_large": "El PDF es demasiado grande – {{max}} MB como máximo. Mejor haz una foto de la ficha."
+  },
+  "share": {
+    "nothing": "Envíame una foto o un PDF de tu ficha – aquí no puedo leer texto ni enlaces.",
+    "signed_out": "Inicia sesión primero – luego vuelve a compartir la ficha con LearnBuddy."
   }
 }

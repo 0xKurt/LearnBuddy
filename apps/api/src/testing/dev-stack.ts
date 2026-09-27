@@ -17,10 +17,11 @@ import type { Deps } from '../deps.js';
 import { createDb } from '../lib/db.js';
 import { DisabledGateway } from '../llm/gateway.js';
 import { DisabledPush } from '../push/transport.js';
+import { DisabledSpeech } from '../speech/gateway.js';
 import { runTick } from '../modules/scheduler/tick.js';
 import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
-import { ScriptedGateway } from './fakes.js';
+import { FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptTour } from './scenarios/tour.js';
@@ -60,6 +61,8 @@ async function main(): Promise<void> {
     storage,
     llm: model,
     push: new DisabledPush(),
+    // LB_DEV_SPEECH=fake: Buddy's own voice as silent audio (exercises playback and read-along).
+    speech: process.env.LB_DEV_SPEECH === 'fake' ? new FakeSpeech() : new DisabledSpeech(),
     background: (task) => {
       void task().catch((err: unknown) => console.error('[dev-stack] background', err));
     },

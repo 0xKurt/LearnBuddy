@@ -6,6 +6,8 @@
 import {
   type BuddySettingsView,
   MemoryList,
+  OutreachActionRequest,
+  type OutreachActionResponse,
   OutreachOpenedRequest,
   RegisterPushTokenRequest,
   SendMessageRequest,
@@ -32,7 +34,9 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
+import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
+import { t } from '../../i18n/index.js';
 import { sessionView, startFromStep } from '../practice/service.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
@@ -41,7 +45,7 @@ import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } fro
 import { loosens } from './policy.js';
 import { loadSettings, type SettingsRow } from './state.js';
 import { runUndo, undoLoosensContact, type UndoSpec } from './tools.js';
-import { receiveLearnerMessage, type OnReply, type TurnOutcome } from './turn.js';
+import { receiveLearnerMessage, stopTurn, type OnReply, type TurnOutcome } from './turn.js';
 
 export const buddyRoutes = new Hono<AppEnv>();
 buddyRoutes.use(
@@ -118,6 +122,20 @@ buddyRoutes.post('/messages', async (c) => {
   });
 });
 
+// "Stopp": she ends Buddy's reply while it is written (docs/architecture.md §Turns). The
+// answer says where the turn stands: stopped, or already answered (then the reply is there).
+buddyRoutes.post('/messages/:clientMessageId/stop', async (c) => {
+  const clientMessageId = check(Uuid, c.req.param('clientMessageId'));
+  const outcome = await stopTurn(depsOf(c), c.get('learner').id, clientMessageId);
+  if (!outcome) throw new AppError('not_found', 'Message not found');
+  const body: SendMessageResponse = {
+    status: outcome.status,
+    error_code: outcome.errorCode,
+    home: await home(c),
+  };
+  return c.json(body);
+});
+
 // ─────────────── explicit taps ───────────────
 
 buddyRoutes.post('/steps/:id/start', async (c) => {
@@ -132,8 +150,53 @@ buddyRoutes.post('/steps/:id/start', async (c) => {
   });
 });
 
-// "Heute nicht": the step steps aside until tomorrow — not skipped for good (audit M-57).
-// An agreed reminder moves with it to the same time tomorrow.
+/**
+ * "Heute nicht": the step steps aside until tomorrow — not skipped for good (audit M-57).
+ * An agreed reminder moves with it to the same time tomorrow. Throws 404 / 409.
+ */
+async function stepAsideUntilTomorrow(
+  tx: Db,
+  learnerId: string,
+  stepId: string,
+  settings: SettingsRow,
+  now: Date,
+): Promise<void> {
+  const step = await tx.maybeOne<{
+    state: string;
+    agreed: boolean;
+    planned_date: string | null;
+    planned_time: string | null;
+  }>(
+    `select state, agreed, planned_date, planned_time from buddy_steps
+      where id = $1 and learner_id = $2 for update`,
+    [stepId, learnerId],
+  );
+  if (!step) throw new AppError('not_found', 'Step not found');
+  if (!['planned', 'prepared'].includes(step.state))
+    throw new AppError('conflict', 'This step is no longer open');
+  const today = localParts(now, settings.timezone).date;
+  const tomorrow = addDays(today, 1);
+  const moved = await tx.one<{ id: string; version: number }>(
+    `update buddy_steps set planned_date = greatest(coalesce(planned_date, $2::date), $2::date),
+                            version = version + 1
+      where id = $1 returning id, version`,
+    [stepId, tomorrow],
+  );
+  await tx.query(
+    `update jobs set status = 'cancelled'
+      where learner_id = $1 and kind = 'buddy_check' and status = 'queued' and payload ->> 'step_id' = $2`,
+    [learnerId, stepId],
+  );
+  if (step.agreed) {
+    const at = zonedToInstant(
+      tomorrow,
+      step.planned_time ?? settings.preferred_start,
+      settings.timezone,
+    );
+    await scheduleStepReminder(tx, learnerId, moved, at);
+  }
+}
+
 buddyRoutes.post('/steps/:id/skip', async (c) => {
   const stepId = check(Uuid, c.req.param('id'));
   const deps = depsOf(c);
@@ -142,40 +205,7 @@ buddyRoutes.post('/steps/:id/skip', async (c) => {
   await deps.db.tx(async (tx) => {
     await lockContext(tx, learnerId);
     const settings = await loadSettings(tx, learnerId);
-    const step = await tx.maybeOne<{
-      state: string;
-      agreed: boolean;
-      planned_date: string | null;
-      planned_time: string | null;
-    }>(
-      `select state, agreed, planned_date, planned_time from buddy_steps
-        where id = $1 and learner_id = $2 for update`,
-      [stepId, learnerId],
-    );
-    if (!step) throw new AppError('not_found', 'Step not found');
-    if (!['planned', 'prepared'].includes(step.state))
-      throw new AppError('conflict', 'This step is no longer open');
-    const today = localParts(now, settings.timezone).date;
-    const tomorrow = addDays(today, 1);
-    const moved = await tx.one<{ id: string; version: number }>(
-      `update buddy_steps set planned_date = greatest(coalesce(planned_date, $2::date), $2::date),
-                              version = version + 1
-        where id = $1 returning id, version`,
-      [stepId, tomorrow],
-    );
-    await tx.query(
-      `update jobs set status = 'cancelled'
-        where learner_id = $1 and kind = 'buddy_check' and status = 'queued' and payload ->> 'step_id' = $2`,
-      [learnerId, stepId],
-    );
-    if (step.agreed) {
-      const at = zonedToInstant(
-        tomorrow,
-        step.planned_time ?? settings.preferred_start,
-        settings.timezone,
-      );
-      await scheduleStepReminder(tx, learnerId, moved, at);
-    }
+    await stepAsideUntilTomorrow(tx, learnerId, stepId, settings, now);
     await bumpContext(tx, learnerId);
   });
   return c.json(await home(c));
@@ -296,6 +326,79 @@ buddyRoutes.post('/outreach/:id/opened', async (c) => {
   return c.json(await home(c));
 });
 
+// A button on one of Buddy's notifications (gaps #16; docs/architecture.md §Delivery). Code
+// decides what each does; the app only reports which was pressed (rule 5). Repeating one is
+// harmless. "Seltener schreiben" only reduces contact, so it needs no PIN (rule 6).
+buddyRoutes.post('/outreach/:id/act', async (c) => {
+  const outreachId = check(Uuid, c.req.param('id'));
+  const { action } = await readBody(c, OutreachActionRequest);
+  const deps = depsOf(c);
+  const learner = c.get('learner');
+  const now = deps.now();
+  const outreach = await deps.db.tx(async (tx) => {
+    await lockContext(tx, learner.id);
+    const settings = await loadSettings(tx, learner.id);
+    const o = await tx.maybeOne<{ id: string; step_id: string | null }>(
+      `update buddy_outreach
+          set response = $3,
+              responded_at = coalesce(responded_at, $4),
+              -- Only "Jetzt üben" opens the app: the other buttons are answered from the lock screen.
+              opened_at = case when $5 then coalesce(opened_at, $4) else opened_at end
+        where id = $1 and learner_id = $2 returning id, step_id`,
+      [
+        outreachId,
+        learner.id,
+        { practice_now: 'start', not_today: 'not_now', less_often: 'less' }[action],
+        now,
+        action === 'practice_now',
+      ],
+    );
+    if (!o) throw new AppError('not_found', 'Message not found');
+    if (action === 'not_today') {
+      // Its practice moves to tomorrow (when still open), and Buddy's own messages planned
+      // for the rest of her day are not sent. Agreed reminders stay.
+      const open = o.step_id
+        ? await tx.maybeOne(
+            `select 1 from buddy_steps where id = $1 and state in ('planned','prepared')`,
+            [o.step_id],
+          )
+        : null;
+      if (open && o.step_id) await stepAsideUntilTomorrow(tx, learner.id, o.step_id, settings, now);
+      const tomorrow = addDays(localParts(now, settings.timezone).date, 1);
+      await tx.query(
+        `update buddy_outreach set status = 'cancelled', status_reason = 'not_today'
+          where learner_id = $1 and status = 'scheduled' and origin = 'buddy' and send_at < $2`,
+        [learner.id, zonedToInstant(tomorrow, '00:00', settings.timezone)],
+      );
+    }
+    if (action === 'less_often' && !settings.phone_only_important) {
+      await tx.query(
+        `update buddy_settings set phone_only_important = true, version = version + 1
+          where learner_id = $1`,
+        [learner.id],
+      );
+      // Said in the thread, so she sees what changed and where to change it back.
+      await tx.query(
+        `insert into buddy_messages (learner_id, role, text, created_at) values ($1, 'buddy', $2, $3)`,
+        [learner.id, t(learner.locale, 'contact.less_often'), now],
+      );
+    }
+    await bumpContext(tx, learner.id);
+    return o;
+  });
+  let sessionId: string | null = null;
+  if (action === 'practice_now' && outreach.step_id) {
+    try {
+      sessionId = await startFromStep(deps, learner.id, outreach.step_id);
+    } catch (err) {
+      // Done or gone meanwhile: the app opens Buddy instead.
+      if (!isAppError(err)) throw err;
+    }
+  }
+  const body: OutreachActionResponse = { session_id: sessionId };
+  return c.json(body);
+});
+
 // ─────────────── memory ───────────────
 
 buddyRoutes.get('/memory', async (c) => {
@@ -382,6 +485,7 @@ function settingsView(s: SettingsRow, canLoosen: boolean): BuddySettingsView {
     preferred_end: s.preferred_end,
     avoid_weekdays: s.avoid_weekdays,
     paused_until: s.paused_until ? s.paused_until.toISOString() : null,
+    only_important: s.phone_only_important,
     timezone: s.timezone,
     version: s.version,
     can_loosen: canLoosen,
@@ -421,6 +525,7 @@ buddyRoutes.patch('/settings', async (c) => {
           : input.paused_until
             ? new Date(input.paused_until)
             : null,
+      phone_only_important: input.only_important ?? before.phone_only_important,
     };
     if (after.preferred_start >= after.preferred_end) {
       throw new AppError('invalid_input', 'The preferred window must start before it ends');
@@ -429,7 +534,7 @@ buddyRoutes.patch('/settings', async (c) => {
     const row = await tx.one<SettingsRow>(
       `update buddy_settings
           set contact_enabled = $2, quiet_start = $3, quiet_end = $4, preferred_start = $5, preferred_end = $6,
-              avoid_weekdays = $7, paused_until = $8,
+              avoid_weekdays = $7, paused_until = $8, phone_only_important = $11,
               contact_changed_by = case when contact_enabled <> $2 then $9::text else contact_changed_by end,
               contact_changed_at = case when contact_enabled <> $2 then $10::timestamptz else contact_changed_at end,
               version = version + 1, context_version = context_version + 1
@@ -445,6 +550,7 @@ buddyRoutes.patch('/settings', async (c) => {
         after.paused_until,
         by,
         now,
+        after.phone_only_important,
       ],
     );
     if (!row.contact_enabled || (row.paused_until && row.paused_until > now)) {

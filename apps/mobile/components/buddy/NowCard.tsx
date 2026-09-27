@@ -1,8 +1,7 @@
 // The one thing that matters right now, with its single next action.
 
 import type { NowCard as NowCardData, PreparedPractice } from '@learnbuddy/shared-types/contracts';
-import { Image } from 'expo-image';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { summaryLines } from '../../lib/practice/summaryLine.js';
@@ -10,8 +9,8 @@ import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 import { whenText } from './describe.js';
+import { ReadingCard } from './ReadingCard.js';
 
 /** Where a capture from the card leads: the step, goal, purpose and sheet it belongs to. */
 export type CaptureTarget = {
@@ -129,34 +128,9 @@ export function NowCard({
         </Card>
       );
     case 'material_processing':
+      // The real stages of the reading (gap 5): photo, what happens now, the steps.
       return (
-        <Card tone="sky" padding={16} radius={22}>
-          <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12 }, inset]}>
-            {thumb ? (
-              <ZoomablePhoto uri={thumb}>
-                <Image
-                  source={{ uri: thumb }}
-                  accessible={false}
-                  style={{ width: 36, height: 48, borderRadius: 6 }}
-                  contentFit="cover"
-                />
-              </ZoomablePhoto>
-            ) : null}
-            <Text accessibilityRole="header" style={[TYPE.title, { flex: 1 }]}>
-              {card.status === 'awaiting_upload'
-                ? t('now.sending_title')
-                : t('now.processing_title')}
-            </Text>
-            <ActivityIndicator color={LB.ink2} />
-          </View>
-          <Text style={[TYPE.small, { marginTop: 8 }]}>
-            {card.status === 'awaiting_upload'
-              ? t('now.sending_body')
-              : preparing
-                ? t('now.processing_body_practice')
-                : t('now.processing_body')}
-          </Text>
-        </Card>
+        <ReadingCard card={card} thumb={thumb} preparing={preparing} titleInset={titleInset} />
       );
     case 'material_failed':
       return (

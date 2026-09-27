@@ -241,10 +241,12 @@ type ZoomableProps = {
   children: ReactNode;
   /** The large picture in the viewer (defaults to the small one again). */
   large?: ReactNode;
+  /** The tap target fills the box it sits in (a thumbnail that stretches). */
+  fill?: boolean;
 };
 
 /** A picture that opens full screen when tapped. */
-export function Zoomable({ label, children, large }: ZoomableProps) {
+export function Zoomable({ label, children, large, fill = false }: ZoomableProps) {
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
   return (
@@ -254,7 +256,7 @@ export function Zoomable({ label, children, large }: ZoomableProps) {
         accessibilityLabel={label}
         accessibilityHint={t('zoom.open_hint')}
         onPress={() => setOpen(true)}
-        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, flex: fill ? 1 : undefined })}
       >
         {children}
       </Pressable>
@@ -270,16 +272,19 @@ export function ZoomablePhoto({
   uri,
   label,
   children,
+  fill,
 }: {
   uri: string;
   /** What the photo is (defaults to "Dein Foto"). */
   label?: string;
   children: ReactNode;
+  fill?: boolean;
 }) {
   const { t } = useTranslation('common');
   return (
     <Zoomable
       label={label ?? t('zoom.photo')}
+      fill={fill}
       large={
         <Image
           source={{ uri }}

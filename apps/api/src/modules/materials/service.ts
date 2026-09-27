@@ -41,6 +41,14 @@ import {
   HOMEWORK_SYSTEM,
 } from './extract.js';
 import { emitEvent } from '../buddy/events.js';
+import {
+  filesWhollyIn,
+  MAX_PAGES,
+  MAX_PDF_BYTES,
+  PDF_MIME,
+  pageRanges,
+  pdfPageCount,
+} from './pdf.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
@@ -226,7 +234,7 @@ export async function createMaterial(
       await bumpContext(tx, learner.id);
     }
     for (const [position, mime] of input.photo_mimes.entries()) {
-      const ext = mime === 'image/png' ? 'png' : 'jpg';
+      const ext = mime === 'image/png' ? 'png' : mime === PDF_MIME ? 'pdf' : 'jpg';
       await tx.query(
         `insert into material_photos (material_id, position, storage_path, mime) values ($1, $2, $3, $4)`,
         [row.id, position, `${learner.account_id}/${row.id}/${position}.${ext}`, mime],
@@ -323,13 +331,21 @@ export async function submitMaterial(
       missing,
     });
   }
+  const pages = await countPdfPages(deps, learnerId, materialId);
   const now = deps.now();
   return deps.db.tx(async (tx) => {
     const upd = await tx.query(
-      `update materials set status = 'queued' where id = $1 and status = 'awaiting_upload' returning id`,
-      [materialId],
+      `update materials set status = 'queued', photo_count = $2
+        where id = $1 and status = 'awaiting_upload' returning id`,
+      [materialId, pages.total],
     );
     if (upd.length === 0) return { jobId: null };
+    for (const [position, count] of pages.pdfs) {
+      await tx.query(
+        `update material_photos set page_count = $3 where material_id = $1 and position = $2`,
+        [materialId, position, count],
+      );
+    }
     const jobId = await enqueueJob(tx, {
       learnerId,
       kind: 'extract_material',
@@ -340,6 +356,79 @@ export async function submitMaterial(
     });
     await bumpContext(tx, learnerId);
     return { jobId };
+  });
+}
+
+/**
+ * The pages of the uploaded files: a photo is one page, a PDF as many as it has. A file
+ * that is not a readable PDF, PDFs too large for the model call, or more than 20 pages
+ * together end this material here: it is set aside and its files deleted at once, and she
+ * is told why (never a reading that cannot work).
+ */
+async function countPdfPages(
+  deps: Deps,
+  learnerId: string,
+  materialId: string,
+): Promise<{ total: number; pdfs: Map<number, number> }> {
+  const files = await deps.db.query<{ position: number; storage_path: string; mime: string }>(
+    `select position, storage_path, mime from material_photos where material_id = $1 order by position`,
+    [materialId],
+  );
+  const pdfs = new Map<number, number>();
+  let bytesTotal = 0;
+  let refusal: { reason: string; details: Record<string, unknown> } | null = null;
+  for (const f of files) {
+    if (f.mime !== PDF_MIME) continue;
+    let bytes: Uint8Array | null;
+    try {
+      bytes = await deps.storage.download(f.storage_path);
+    } catch (err) {
+      if (err instanceof StorageError)
+        throw new AppError('unavailable', 'Photo storage is not reachable', {
+          reason: 'storage_unavailable',
+        });
+      throw err;
+    }
+    if (!bytes) {
+      throw new AppError('invalid_input', 'Some photos did not arrive', {
+        reason: 'photos_missing',
+        missing: [f.position],
+      });
+    }
+    bytesTotal += bytes.length;
+    if (bytesTotal > MAX_PDF_BYTES) {
+      refusal = { reason: 'file_too_large', details: { max_mb: MAX_PDF_BYTES / 1024 / 1024 } };
+      break;
+    }
+    const count = await pdfPageCount(bytes);
+    if (count === null) {
+      refusal = { reason: 'file_unreadable', details: { position: f.position } };
+      break;
+    }
+    pdfs.set(f.position, count);
+  }
+  const total = files.length - pdfs.size + [...pdfs.values()].reduce((a, b) => a + b, 0);
+  if (!refusal && total > MAX_PAGES)
+    refusal = { reason: 'too_many_pages', details: { pages: total, max: MAX_PAGES } };
+  if (!refusal) return { total, pdfs };
+  await deps.db.tx(async (tx) => {
+    const set = await tx.query(
+      `update materials set status = 'failed', failure_reason = 'unreadable', archived_at = $2
+        where id = $1 and status = 'awaiting_upload' and archived_at is null returning id`,
+      [materialId, deps.now()],
+    );
+    if (set.length === 0) return;
+    await enqueueJob(tx, {
+      learnerId,
+      kind: 'purge_photos',
+      runAt: deps.now(),
+      dedupeKey: `purge:${materialId}:refused`,
+      payload: { material_id: materialId },
+    });
+  });
+  throw new AppError('invalid_input', 'These files cannot be read as one material', {
+    reason: refusal.reason,
+    ...refusal.details,
   });
 }
 
@@ -379,9 +468,10 @@ export async function retryMaterial(
     );
     if (runs.counted >= MAX_EXTRACTION_ATTEMPTS)
       throw new AppError('conflict', 'Retried too often', { reason: 'retry_limit' });
-    await tx.query(`update materials set status = 'queued', failure_reason = null where id = $1`, [
-      materialId,
-    ]);
+    await tx.query(
+      `update materials set status = 'queued', failure_reason = null, read_stage = null where id = $1`,
+      [materialId],
+    );
     const jobId = await enqueueJob(tx, {
       learnerId,
       kind: 'extract_material',
@@ -485,7 +575,9 @@ async function retryTransient(
         now,
       });
       if (requeued)
-        await tx.query(`update materials set status = 'queued' where id = $1`, [materialId]);
+        await tx.query(`update materials set status = 'queued', read_stage = null where id = $1`, [
+          materialId,
+        ]);
     });
     return;
   }
@@ -506,11 +598,11 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     return;
   }
   const started = await deps.db.query(
-    `update materials set status = 'processing'
+    `update materials set status = 'processing', read_stage = 'opening', read_stage_at = $4
       where id = $1
         and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')
       returning id`,
-    [materialId, job.id, job.lease_token],
+    [materialId, job.id, job.lease_token, deps.now()],
   );
   if (started.length === 0) return; // the lease went to another run
   const learner = await deps.db.one<{
@@ -521,10 +613,18 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     birth_date: string;
   }>(`select id, locale, level, grade, birth_date from learners where id = $1`, [m.learner_id]);
 
-  const photos = await deps.db.query<{ storage_path: string; mime: 'image/jpeg' | 'image/png' }>(
-    `select storage_path, mime from material_photos where material_id = $1 order by position`,
+  const photos = await deps.db.query<{
+    position: number;
+    storage_path: string;
+    mime: 'image/jpeg' | 'image/png' | 'application/pdf';
+    page_count: number | null;
+  }>(
+    `select position, storage_path, mime, page_count from material_photos
+      where material_id = $1 order by position`,
     [materialId],
   );
+  const ranges = pageRanges(photos);
+  const pageTotal = ranges.at(-1)?.last ?? 0;
   const parts: LlmPart[] = [];
   for (const [i, p] of photos.entries()) {
     let bytes: Uint8Array | null;
@@ -538,7 +638,14 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     if (!bytes) return fail(deps, job, materialId, 'photos_missing');
     // Each photo is labelled, so a page number in the report names this photo, not the
     // model's count of unlabelled images (p2-model-page-numbers-unlabeled-images).
-    parts.push({ text: `Photo ${i + 1} of ${photos.length}:` });
+    // A PDF brings its pages in one file: the label says which page numbers they are.
+    const range = ranges[i]!;
+    parts.push({
+      text:
+        p.mime === PDF_MIME
+          ? `PDF with pages ${range.first}–${range.last} of ${pageTotal} (one page report per PDF page):`
+          : `Photo ${range.first} of ${pageTotal}:`,
+    });
     parts.push({ inlineData: { mimeType: p.mime, data: Buffer.from(bytes).toString('base64') } });
   }
   const now = deps.now();
@@ -556,6 +663,13 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   // Without a model nothing can read the photos: say so at once, not after minutes of futile
   // retries (p2-uf-llm-disabled-capture-dead-end). Not her sheet's fault: the run is uncounted.
   if (!deps.llm.available) return fail(deps, job, materialId, 'model_error', { uncounted: true });
+  // The photos are loaded: Buddy reads them now (the card on the home says so, rule 5).
+  await deps.db.query(
+    `update materials set read_stage = 'reading', read_stage_at = $4
+      where id = $1 and status = 'processing'
+        and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')`,
+    [materialId, job.id, job.lease_token, deps.now()],
+  );
   let result;
   try {
     const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
@@ -780,13 +894,18 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     // A photo of something else among the pages (a letter, a recipe) is not kept at all,
     // like a whole sheet that is not learning material (docs/privacy.md).
     const foreign = pageProblems.filter((p) => p.problem === 'not_material' && p.read === 'none');
-    if (foreign.length > 0) {
+    if (filesWhollyIn(photos, new Set(foreign.map((p) => p.page))).length > 0) {
       await enqueueJob(tx, {
         learnerId: current.learner_id,
         kind: 'purge_photos',
         runAt: now,
         dedupeKey: `purge:${materialId}:not_material`,
-        payload: { material_id: materialId, positions: foreign.map((p) => p.page - 1) },
+        payload: {
+          material_id: materialId,
+          // Only whole files: a PDF with one foreign page among the sheet's pages is kept
+          // for its retention like the rest.
+          positions: filesWhollyIn(photos, new Set(foreign.map((p) => p.page))),
+        },
       });
     }
     await bumpContext(tx, current.learner_id);

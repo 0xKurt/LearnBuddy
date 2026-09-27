@@ -96,6 +96,16 @@ const Config = z
           return z.NEVER;
         }
       }),
+    /**
+     * Buddy's natural voice (ADR 0008): 'google' = Cloud Text-to-Speech (Chirp 3: HD voices)
+     * through its EU endpoint, with the Vertex service account. 'disabled': the app reads
+     * aloud with the phone's own voice, as before.
+     */
+    SPEECH_BACKEND: z.enum(['google', 'disabled']).default('disabled'),
+    /** Only the EU endpoint: the text of her replies is processed in the EU (docs/privacy.md). */
+    SPEECH_ENDPOINT: z
+      .enum(['eu-texttospeech.googleapis.com'])
+      .default('eu-texttospeech.googleapis.com'),
     /** Push via Expo is off until legal review (ADR 0004 §4). */
     PUSH_BACKEND: z.enum(['expo', 'disabled']).default('disabled'),
     EXPO_ACCESS_TOKEN: z.string().optional(),
@@ -107,6 +117,14 @@ const Config = z
         path: ['GOOGLE_CLOUD_PROJECT'],
         message:
           'required when LLM_BACKEND=vertex (set LLM_BACKEND=disabled to run without a model)',
+      });
+    }
+    if (c.SPEECH_BACKEND === 'google' && !c.GOOGLE_CLOUD_PROJECT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['GOOGLE_CLOUD_PROJECT'],
+        message:
+          'required when SPEECH_BACKEND=google (set SPEECH_BACKEND=disabled to use the phone voice)',
       });
     }
     const tls = databaseTlsIssue(c.DATABASE_URL);

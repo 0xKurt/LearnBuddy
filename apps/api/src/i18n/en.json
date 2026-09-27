@@ -64,5 +64,8 @@
       "example": "With an example, please",
       "why": "Why is that?"
     }
+  },
+  "contact": {
+    "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."
   }
 }

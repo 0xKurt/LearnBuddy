@@ -145,6 +145,14 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     does: 'reduce, pause or shift contact outside the app (never more)',
     run: ACT_HANDLERS.set_contact,
   },
+  set_voice: {
+    surfaces: TURN,
+    touches: ['settings'],
+    needsQuote: true,
+    undoable: true,
+    does: 'change how you sound when read aloud: slower, faster, normal, or another voice',
+    run: ACT_HANDLERS.set_voice,
+  },
   schedule_check: {
     surfaces: BOTH,
     touches: ['checks'],
@@ -291,6 +299,23 @@ export const CheckDecision = z.object({
   reason: z.string().trim().min(1).max(300).describe('Short audit note (not shown to the learner)'),
   actions: z.array(CheckActionSchema).max(3),
   outreach: Outreach.nullable(),
+  /** Looking back (lookback.ts): only about the fact the server offered, only in the app. */
+  look_back: z
+    .object({
+      fact: z
+        .string()
+        .regex(/^p\d{1,2}$/, 'must be the LOOK BACK alias, e.g. p1')
+        .describe('The LOOK BACK fact alias from the triggers (p1)'),
+      text: z
+        .string()
+        .trim()
+        .min(2)
+        .max(200)
+        .describe("One short, warm sentence in the learner's language, shown in the chat"),
+    })
+    .nullable()
+    .optional()
+    .describe('Only when a LOOK BACK fact is offered and it fits; otherwise null'),
 });
 
 /** The catalogue of act tools for the prompt, generated from the registry. */

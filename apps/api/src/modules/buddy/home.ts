@@ -19,7 +19,7 @@ import type {
 
 import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
-import { daysBetween, localParts } from '../../lib/time.js';
+import { daysBetween, localParts, startOfLocalDay } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
 import { loadBuddyState, loadSettings } from './state.js';
@@ -81,6 +81,7 @@ async function homeFrom(
   const thread = await threadOf(deps, learner, beforeMessageId);
   const system = await systemOf(deps, learner.id, state);
   const working = await workingOf(deps, learner.id, now);
+  const practicedToday = await practicedSince(deps, learner.id, startOfLocalDay(now, tz));
 
   return {
     learner: { id: learner.id, name: learner.display_name, is_minor: learner.isMinor },
@@ -93,8 +94,25 @@ async function homeFrom(
     thread_has_more: thread.hasMore,
     system,
     working,
+    practiced_today: practicedToday,
     context_version: state.settings.context_version,
   };
+}
+
+/**
+ * Whether she worked on a practice question since `since`: answered, tried or looked at the
+ * solution. A question skipped untouched (e.g. when a session is finished early) or taken out
+ * as not fitting does not count.
+ */
+async function practicedSince(deps: Deps, learnerId: string, since: Date): Promise<boolean> {
+  const row = await deps.db.maybeOne(
+    `select 1 from session_items si join practice_sessions ps on ps.id = si.session_id
+      where ps.learner_id = $1 and si.flagged_at is null and si.closed_at >= $2
+        and (si.status in ('correct', 'revealed', 'missed') or si.attempts > 0)
+      limit 1`,
+    [learnerId, since],
+  );
+  return row !== null;
 }
 
 /** A check the learner's own action started (their photos, their finished practice) that is due or running. */
@@ -236,10 +254,56 @@ async function nowCardOf(
     return (m.status === 'queued' || m.status === 'processing') && age < 2 * 3_600_000;
   });
   if (processing) {
+    // Where the reading really is (migration 0035): the stage the reading run reported.
+    const row = await deps.db.one<{
+      read_stage: 'opening' | 'reading' | null;
+      purpose: 'study' | 'homework';
+    }>(`select read_stage, purpose from materials where id = $1`, [processing.id]);
     return {
       type: 'material_processing',
       material_id: processing.id,
       status: processing.status as 'awaiting_upload' | 'queued' | 'processing',
+      stage:
+        processing.status === 'awaiting_upload'
+          ? 'sending'
+          : processing.status === 'processing' && row.read_stage === 'reading'
+            ? 'reading'
+            : 'waiting',
+      pages: Math.max(1, processing.photo_count),
+      found: null,
+      purpose: row.purpose,
+    };
+  }
+  // Read, and the Buddy check it woke is making practice from it right now: the same card
+  // goes on with what was found (a result), until the check is done.
+  const building = await deps.db.maybeOne<{
+    id: string;
+    photo_count: number;
+    found: number | null;
+  }>(
+    `select m.id, m.photo_count, (e.data ->> 'questions')::int as found
+       from buddy_events e
+       join materials m on m.id = e.ref_id and m.learner_id = $1
+      where e.learner_id = $1 and e.type = 'material_ready' and m.archived_at is null
+        and m.created_at > $2::timestamptz - interval '2 hours'
+        and exists (select 1 from jobs j
+                     where j.learner_id = $1 and j.kind = 'buddy_check'
+                       and j.status in ('queued', 'running')
+                       and j.payload ->> 'event_id' = e.id::text
+                       and j.run_at <= $2::timestamptz + interval '1 minute')
+      order by e.created_at desc
+      limit 1`,
+    [learnerId, now],
+  );
+  if (building) {
+    return {
+      type: 'material_processing',
+      material_id: building.id,
+      status: 'ready',
+      stage: 'building',
+      pages: Math.max(1, building.photo_count),
+      found: building.found,
+      purpose: 'study',
     };
   }
   const failed = state.materials.find(

@@ -16,10 +16,13 @@ import {
   MessageView,
   tolerantArray,
   MeResponse,
+  type OutreachAction,
+  OutreachActionResponse,
   ReplyStreamEvent,
   SendMessageResponse,
   SessionView,
   StartStepResponse,
+  SpeechResponse,
   TranscribeResponse,
   type AnswerRequest,
   type AppLocale,
@@ -29,6 +32,7 @@ import {
   type SpeakRequest,
   type StartPracticeRequest,
   type StartTopicRequest,
+  type SpeechRequest,
   type TranscribeRequest,
   type UpdateBuddySettingsRequest,
   type UpdateLearnerRequest,
@@ -103,10 +107,12 @@ export const sendMessageStreamed = (
   clientMessageId: string,
   replyToId: string | null,
   onReply: (event: ReplyStreamEvent) => void,
+  signal?: AbortSignal,
 ) =>
   streamRequest('POST', '/buddy/messages', {
     body: { client_message_id: clientMessageId, text, reply_to_id: replyToId },
     schema: SendMessageResponse,
+    ...(signal ? { signal } : {}),
     onEvent: (e) => {
       if (e.event !== 'reply') return;
       try {
@@ -117,6 +123,10 @@ export const sendMessageStreamed = (
       }
     },
   });
+
+/** "Stopp" while Buddy writes: the turn ends stopped, or the answer says it was already there. */
+export const stopMessage = (clientMessageId: string) =>
+  request('POST', `/buddy/messages/${clientMessageId}/stop`, { schema: SendMessageResponse });
 
 export const startStep = (stepId: string) =>
   request('POST', `/buddy/steps/${stepId}/start`, { schema: StartStepResponse });
@@ -130,6 +140,13 @@ export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =
 
 export const answerContactOptIn = (enable: boolean) =>
   request('POST', '/buddy/contact/opt-in', { body: { enable }, schema: BuddyHome });
+
+/** A button pressed on a notification: the API decides what it does (gaps #16, rule 5). */
+export const outreachAct = (outreachId: string, action: OutreachAction) =>
+  request('POST', `/buddy/outreach/${outreachId}/act`, {
+    body: { action },
+    schema: OutreachActionResponse,
+  });
 
 export const outreachOpened = (
   outreachId: string,
@@ -272,3 +289,7 @@ export const finishSession = (id: string) =>
 /** Speech to text for a spoken message or answer (≤ ~60 s); '' when nothing was understood. */
 export const transcribe = (body: TranscribeRequest) =>
   request('POST', '/voice/transcribe', { body, schema: TranscribeResponse });
+
+/** One sentence in Buddy's natural voice (ADR 0008); voice and speed are her settings. */
+export const synthesizeSpeech = (body: SpeechRequest) =>
+  request('POST', '/voice/speech', { body, schema: SpeechResponse });

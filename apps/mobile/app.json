@@ -6,10 +6,7 @@
     "version": "0.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#f0eee9"
-    },
+    "icon": "./assets/icon.png",
     "ios": {
       "bundleIdentifier": "com.learnbuddy.app",
       "supportsTablet": false,
@@ -23,7 +20,10 @@
       "package": "com.learnbuddy.app",
       "predictiveBackGestureEnabled": true,
       "adaptiveIcon": {
-        "backgroundColor": "#f0eee9"
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "backgroundImage": "./assets/adaptive-background.png",
+        "monochromeImage": "./assets/adaptive-monochrome.png",
+        "backgroundColor": "#faf7fd"
       },
       "permissions": ["CAMERA"],
       "intentFilters": [
@@ -41,10 +41,20 @@
       ]
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#faf7fd"
+        }
+      ],
       "expo-secure-store",
       [
         "expo-image-picker",
@@ -56,7 +66,7 @@
       [
         "expo-notifications",
         {
-          "color": "#b1715c"
+          "color": "#6a48d7"
         }
       ],
       "expo-localization",
@@ -71,6 +81,22 @@
         {
           "microphonePermission": "Damit du mit Buddy sprechen statt tippen und Sätze laut üben kannst.",
           "speechRecognitionPermission": "Damit dein iPhone selbst aufschreibt, was du sagst – direkt auf dem Gerät."
+        }
+      ],
+      [
+        "./plugins/withShareDisplayName.js",
+        {
+          "target": "LearnBuddyShare",
+          "displayName": "LearnBuddy"
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": "SUBQUERY (extensionItems, $extensionItem, SUBQUERY ($extensionItem.attachments, $attachment, ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO \"public.image\" OR ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO \"com.adobe.pdf\").@count >= 1).@count >= 1",
+          "iosShareExtensionName": "LearnBuddy Share",
+          "androidIntentFilters": ["image/*", "application/pdf"],
+          "androidMultiIntentFilters": ["image/*", "application/pdf"]
         }
       ]
     ]

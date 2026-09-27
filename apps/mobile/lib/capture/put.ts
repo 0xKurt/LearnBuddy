@@ -6,7 +6,11 @@ import { FileSystemSessionType, FileSystemUploadType, uploadAsync } from 'expo-f
 
 import type { PutResult } from './putTypes.js';
 
-export async function putPhoto(localUri: string, uploadUrl: string): Promise<PutResult> {
+export async function putPhoto(
+  localUri: string,
+  uploadUrl: string,
+  contentType: string = 'image/jpeg',
+): Promise<PutResult> {
   try {
     const file = new File(localUri);
     if (!file.exists || file.size === 0) return { kind: 'file' };
@@ -18,7 +22,7 @@ export async function putPhoto(localUri: string, uploadUrl: string): Promise<Put
       httpMethod: 'PUT',
       uploadType: FileSystemUploadType.BINARY_CONTENT,
       sessionType: FileSystemSessionType.BACKGROUND,
-      headers: { 'content-type': 'image/jpeg' },
+      headers: { 'content-type': contentType },
     });
     return { kind: 'response', status: res.status, body: res.body };
   } catch {

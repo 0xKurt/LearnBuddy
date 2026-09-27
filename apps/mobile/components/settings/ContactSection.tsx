@@ -8,6 +8,8 @@
 // API rejects with admin_required is retried once after the PIN. A stale
 // version reloads the settings and says so. Switching off or pausing cancels
 // messages that were already planned (done by the API in the same step).
+// "Seltener schreiben" (a notification button, gaps #16) is shown with the way back;
+// going back allows more, so for a minor it asks the parents.
 
 import type {
   BuddySettingsView,
@@ -148,6 +150,11 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
       toast.show(t('contact.pause_ended_toast'));
   }
 
+  async function allImportant() {
+    if (await patch({ only_important: false }, { loosens: true }))
+      toast.show(t('contact.only_important_ended'));
+  }
+
   async function save(change: Change, opts: { loosens?: boolean } = {}) {
     if (await patch(change, opts)) toast.show(t('saved'));
   }
@@ -237,6 +244,14 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
             <Btn pill variant="outline" onPress={() => void endPause()} disabled={saving}>
               {t('contact.pause_end')}
             </Btn>
+          ) : null}
+          {settings.contact_enabled && settings.only_important ? (
+            <>
+              <Text style={secondary}>{t('contact.only_important')}</Text>
+              <Btn pill variant="outline" onPress={() => void allImportant()} disabled={saving}>
+                {t('contact.only_important_end')}
+              </Btn>
+            </>
           ) : null}
           <View style={{ marginTop: 4, gap: 8 }}>
             {settings.contact_enabled ? (

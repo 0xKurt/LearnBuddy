@@ -12,7 +12,12 @@ type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string
 
 export type LlmPart =
   | { text: string }
-  | { inlineData: { mimeType: 'image/jpeg' | 'image/png' | AudioMime; data: string } };
+  | {
+      inlineData: {
+        mimeType: 'image/jpeg' | 'image/png' | 'application/pdf' | AudioMime;
+        data: string;
+      };
+    };
 
 /** Recordings the model listens to directly (speak questions). */
 export type AudioMime =

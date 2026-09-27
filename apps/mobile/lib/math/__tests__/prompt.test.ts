@@ -115,3 +115,34 @@ describe('fillableAnswer', () => {
     expect(fillableAnswer('a ___ b', 'x\ny')).toBeNull();
   });
 });
+
+describe('parsePrompt italic', () => {
+  const slant = (text: string) =>
+    parsePrompt(text, { blanks: true }).map((r) =>
+      r.type === 'plain' ? `${r.bold ? 'B' : ''}${r.italic ? 'I' : ''}:${r.text}` : r.type,
+    );
+  it('reads *italic* and _italic_, alone and inside bold', () => {
+    expect(slant('Das ist *wichtig* und _so_.')).toEqual([
+      ':Das ist ',
+      'I:wichtig',
+      ': und ',
+      'I:so',
+      ':.',
+    ]);
+    expect(slant('**ganz *sehr* fett**')).toEqual(['B:ganz ', 'BI:sehr', 'B: fett']);
+  });
+  it('leaves products, indices and blanks as they are', () => {
+    expect(slant('2 * 3 * 4 und 2*3*4')).toEqual([':2 * 3 * 4 und 2*3*4']);
+    expect(slant('x_1 und ___ hier')).toEqual([':x_1 und ', 'blank', ': hier']);
+  });
+  it('does not add an italic flag to runs without it', () => {
+    expect(parsePrompt('a', { blanks: false })).toEqual([
+      { type: 'plain', text: 'a', bold: false },
+    ]);
+  });
+  it('reads italic text without its markers', () => {
+    expect(promptForSpeech('Das ist *wichtig*.', { blanks: false, blankWord: 'Lücke' })).toBe(
+      'Das ist wichtig.',
+    );
+  });
+});

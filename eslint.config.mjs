@@ -24,6 +24,8 @@ export default tseslint.config(
       '**/babel.config.js',
       '**/metro.config.js',
       '**/tailwind.config.js',
+      // Expo config plugins (app.json), loaded by the Expo CLI as CommonJS.
+      'apps/mobile/plugins/**',
     ],
   },
   js.configs.recommended,

@@ -61,6 +61,11 @@
     "sign_out": "Abmelden"
   },
   "outbox_refused": "Eine gespeicherte Antwort kam zu spät an – die Aufgabe war schon abgeschlossen.",
+  "push": {
+    "practice_now": "Jetzt üben",
+    "not_today": "Heute nicht",
+    "less_often": "Seltener schreiben"
+  },
   "zoom": {
     "hint": "Mit zwei Fingern vergrößern, doppelt tippen zum Heranzoomen.",
     "open_hint": "Öffnet das Bild groß.",

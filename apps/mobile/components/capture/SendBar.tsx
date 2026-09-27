@@ -20,6 +20,11 @@ type Props = {
   failure: string | null;
   hasPhotos: boolean;
   disabled: boolean;
+  /**
+   * The files themselves were refused (too many pages, a PDF that does not open): sending
+   * the same again cannot work, so the button waits until she changes them.
+   */
+  refused?: boolean;
   onSend: () => void;
 };
 
@@ -30,7 +35,14 @@ function fractionOf(p: SendProgress): number {
   return 1;
 }
 
-export function SendBar({ progress, failure, hasPhotos, disabled, onSend }: Props) {
+export function SendBar({
+  progress,
+  failure,
+  hasPhotos,
+  disabled,
+  refused = false,
+  onSend,
+}: Props) {
   const { t } = useTranslation('capture');
   const insets = useSafeAreaInsets();
 
@@ -76,9 +88,9 @@ export function SendBar({ progress, failure, hasPhotos, disabled, onSend }: Prop
         full
         variant={hasPhotos ? 'primary' : 'outline'}
         onPress={onSend}
-        disabled={disabled || !hasPhotos}
+        disabled={disabled || refused || !hasPhotos}
       >
-        {failure ? t('send_again') : t('send')}
+        {failure && !refused ? t('send_again') : t('send')}
       </Btn>
     </View>
   );

@@ -36,4 +36,19 @@ describe('ExpoPush payload', () => {
     ]);
     expect(sent).toEqual([expect.objectContaining({ expiration: 1790618400 })]);
   });
+
+  it('carries the category the server chose, so the phone shows its buttons (gaps #16)', async () => {
+    let sent: unknown = null;
+    const push = new ExpoPush(undefined, async (_url, init) => {
+      sent = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({ data: [{ status: 'ok', id: 't1' }] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    await push.send([
+      { to: 'ExponentPushToken[x]', title: 'T', body: 'B', data: {}, categoryId: 'lb_practice' },
+    ]);
+    expect(sent).toEqual([expect.objectContaining({ categoryId: 'lb_practice' })]);
+  });
 });

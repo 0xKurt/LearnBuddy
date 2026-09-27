@@ -47,7 +47,10 @@
     "tell_buddy": "Dis-le simplement à Buddy si tu veux du calme.",
     "more": "Modifier les horaires",
     "less": "Afficher moins",
-    "device_elsewhere": "Les messages de Buddy arrivent en ce moment sur un autre appareil, pas sur ce téléphone."
+    "device_elsewhere": "Les messages de Buddy arrivent en ce moment sur un autre appareil, pas sur ce téléphone.",
+    "only_important": "Tu as demandé à Buddy d'écrire moins souvent : seul ce qui est vraiment important arrive sur ton téléphone. Le reste t'attend dans l'app.",
+    "only_important_end": "Tout sur mon téléphone à nouveau",
+    "only_important_ended": "Buddy t'envoie de nouveau tout sur ton téléphone."
   },
   "profile": {
     "title": "Ton profil",

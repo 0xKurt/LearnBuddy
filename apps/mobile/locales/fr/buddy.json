@@ -1,6 +1,7 @@
 {
   "greeting": "Salut {{name}}",
   "greeting_ask": "Qu'est-ce qui t'attend ?",
+  "practiced_today": "Entraînement fait aujourd'hui",
   "menu": {
     "open": "Ouvrir le menu",
     "title": "Plus",
@@ -70,7 +71,19 @@
     "processing_body_practice": "Ensuite, j'en fais tout de suite des exercices. Tu peux fermer l'appli en attendant.",
     "next_title": "Ensuite : {{title}}",
     "next_body_exam_one": "{{count}} exercice · env. {{minutes}} min · contrôle {{when}}",
-    "next_body_exam_other": "{{count}} exercices · env. {{minutes}} min · contrôle {{when}}"
+    "next_body_exam_other": "{{count}} exercices · env. {{minutes}} min · contrôle {{when}}",
+    "waiting_title": "Je lis ta feuille dans un instant …",
+    "reading_title_one": "Je lis ta feuille …",
+    "reading_title_other": "Je lis tes {{count}} pages …",
+    "building_title": "Feuille lue",
+    "building_body_one": "{{count}} exercice trouvé · je prépare des exercices",
+    "building_body_other": "{{count}} exercices trouvés · je prépare des exercices",
+    "steps": {
+      "sent": "Arrivé",
+      "read": "Lecture",
+      "build": "Exercices",
+      "a11y": "Étape {{step}} sur {{total}} : {{label}}"
+    }
   },
   "when": {
     "today": "aujourd'hui",
@@ -121,10 +134,17 @@
       "budget": "Buddy ne peut plus répondre aujourd'hui",
       "invalid": "Buddy s'est emmêlé",
       "stale": "Pas de réponse – trop de choses à la fois",
-      "internal": "Pas de réponse – un souci est survenu"
+      "internal": "Pas de réponse – un souci est survenu",
+      "stopped": "Arrêté"
     },
     "today": "Aujourd'hui",
-    "yesterday": "Hier"
+    "yesterday": "Hier",
+    "stop": "Stop",
+    "stop_label": "Arrêter la réponse",
+    "stopped": "Arrêté.",
+    "new_reply": "Nouvelle réponse",
+    "new_reply_label": "Aller à la nouvelle réponse",
+    "message_hint": "Appui long pour copier ou lire à voix haute"
   },
   "delivery": {
     "scheduled": "prévu {{when}}",
@@ -179,7 +199,23 @@
     "open_area": "Affiché : {{what}}",
     "set_contact_quiet": "Sur le téléphone seulement entre {{from}} et {{to}}, jamais après {{quiet}}",
     "set_contact_days": "jamais ces jours-là : {{days}}",
-    "request_material_undone": "Pas besoin de photo : {{title}}"
+    "request_material_undone": "Pas besoin de photo : {{title}}",
+    "set_voice": "Ma voix : {{voice}}, {{speed}}"
+  },
+  "voice": {
+    "name": {
+      "warm": "chaleureuse",
+      "friendly": "amicale",
+      "bright": "lumineuse",
+      "clear": "nette"
+    },
+    "speed": {
+      "slower2": "beaucoup plus lente",
+      "slower": "plus lente",
+      "normal": "vitesse normale",
+      "faster": "plus rapide",
+      "faster2": "beaucoup plus rapide"
+    }
   },
   "intro": {
     "title": "Moi, c'est Buddy.",
@@ -221,7 +257,11 @@
     "end": "Terminer",
     "speak": "Parler",
     "interrupt": "Interrompre et parler",
-    "short": "Parler"
+    "short": "Parler",
+    "photo": "Photo",
+    "photo_label": "Montrer une photo",
+    "stop_speaking": "Interrompre Buddy",
+    "tap_orb": "Touche Buddy pour l’interrompre."
   },
   "a11y": {
     "reply": "Buddy : {{text}}"
@@ -229,5 +269,13 @@
   "card": {
     "close": "Masquer la carte",
     "shown": "Buddy a mis une carte en haut. Tu peux la masquer."
+  },
+  "message": {
+    "title_buddy": "Message de Buddy",
+    "title_mine": "Ton message",
+    "copy": "Copier",
+    "speak": "Lire à voix haute",
+    "copied": "Copié",
+    "copy_failed": "La copie n'a pas marché"
   }
 }

@@ -92,6 +92,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `GET /account/export`, `POST/DELETE /account/deletion`                                               | privacy (account holder; also without a profile)                                                 |
 | `GET /buddy`, `GET /buddy/thread`                                                                    | the home: now / decision / done / next / thread / system                                         |
 | `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                            |
+| `POST /buddy/messages/:clientMessageId/stop`                                                         | "Stopp" while Buddy writes: the turn ends stopped, or says it was already answered (§Turns)      |
 | `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                          |
 | `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                                                          |
 | `POST /push-devices/claim`, `POST /push-devices/release` (no session)                                | one learner per install (push)                                                                   |
@@ -157,6 +158,16 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   message keeps why (`buddy_messages.failure_code`, migration 0020), so the app says what
   happened ("Buddy konnte gerade nicht antworten") instead of "not arrived", and offers no
   resend once the day's allowance is used up.
+- **Stopped** (`POST /buddy/messages/:clientMessageId/stop`, migration 0034): while Buddy writes,
+  the app's send button is "Stopp". Under the settings lock, her still-processing message (and
+  the unanswered ones before it that wait for the same answer) become `failed` with
+  `failure_code = 'stopped'` and lose their claim; the context is bumped. The running turn can
+  then neither apply its answer (apply.ts checks the claim under the same row lock) nor start
+  another model call (each round re-checks its claim); a call already under way finishes in the
+  background and its answer is dropped. Nothing of the reply is stored — the thread shows her
+  message "Gestoppt" with "Nochmal senden" (the same `client_message_id` runs again). A turn
+  that finished first stays finished: the answer says `done` and the reply is there. Only her
+  own messages (404 otherwise); `stop.int.test.ts`.
 - **Safeguarding** (audit I-9, decision D-10). Distress — being hurt, bullied, abused or
   threatened, thoughts of self-harm — is a code path, not an improvisation:
   - the model marks it with `concern` (first field of `TurnDecisionForModel`, zod-validated);
@@ -222,6 +233,11 @@ summary plus undo data. Enforced here, not in the prompt:
   Year 8 → 7), and a label the system does not have is rejected. The card shows the stored
   meaning ("Klasse 8", "8e année de scolarité"). Audit M-39; a live eval of the label choice
   for fr/es/it is still to do.
+- `set_voice` ("sprich langsamer", "schneller", "wieder normal", "andere Stimme", ADR 0008): the
+  model says only the direction (`slower`/`faster`/`normal`, `other` or a named voice of the
+  curated four) with her quote; code takes one step within −2…+2 and picks the next voice. Past
+  the limit, or a change that changes nothing, is rejected back to the model, which says so.
+  Undo (`restore_voice`) only while nothing changed the settings since.
 - Thread action cards offer "Rückgängig" only where `undoApplies` holds, like `done` (audit
   M-56); history offers it too, for the same 7 days.
 
@@ -278,6 +294,18 @@ carries its decision, so what Buddy did in the background appears in the thread 
 and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
 is not skipped for good.
 
+**Looking back** (`modules/buddy/lookback.ts`, migration `0038_buddy_lookbacks.sql`; gaps #7):
+visible progress without pressure. After a finished practice or before a test
+(`session_finished`, `exam_countdown`) code may offer the check one fact — a topic that was
+shaky in a practice at least 5 days ago (and not since) and where now every question she
+practised (at least 2, the latest within 7 days) was right at once; before a test only from its
+subject, after a practice that session's topics first. The model may phrase it in
+`CheckDecision.look_back` (fact alias `p1`, one sentence) or leave it out; a look back that was
+not offered is rejected and repaired. It is a message in the thread only — never an outreach,
+never on the lock screen — and is kept in `buddy_lookbacks`: at most one per 7 days, the same
+topic not again within 60 days. Only what was reached: no counts, nothing still open, no missed
+days (rule 6).
+
 ## Delivery
 
 `modules/buddy/policy.ts` (pure) and `delivery.ts`.
@@ -323,6 +351,21 @@ is not skipped for good.
   `getLastNotificationResponse` — is kept on the device (`lib/pushQueue.ts`, 7 days) and sent
   once signed in, retried on start and when back online; only a clear 4xx drops it.
   Not yet verified on a device (audit §17, `repro-19`).
+- **Buttons on a notification** (gaps #16; migration `0039_notification_actions.sql`): the
+  server sets `categoryId` per push — `lb_practice` ("Jetzt üben", "Heute nicht", "Seltener
+  schreiben") when the message is about practice that is prepared, `lb_message` ("Heute nicht",
+  "Seltener schreiben") otherwise; the app registers the buttons (`lib/pushActions.ts`). A press
+  is kept on the device like a tap and sent to `POST /buddy/outreach/:id/act`; code decides what
+  it does. "Jetzt üben" starts that prepared practice and the app opens it (not just the home).
+  "Heute nicht" moves its practice (and an agreed reminder) to tomorrow and cancels Buddy's own
+  messages planned for the rest of her day. "Seltener schreiben" sets `phone_only_important`:
+  Buddy's own initiatives then reach the phone only at relevance ≥ 0.85 (the rest waits in the
+  app, `only_important`); agreed reminders and answers to her own actions are unaffected. It only
+  reduces contact, so it needs no PIN; Buddy says in the thread what changed, and settings shows
+  the way back — which, being a loosening, needs the parents under 16. The two lock-screen
+  buttons do not open the app: they report no `opened`; when the app is not running, a
+  background task (`lib/pushTask.ts`, expo-task-manager, defined from the entry `index.ts`)
+  sends them. Not yet verified on a device.
 - **Lock-screen texts are built by code** (S-6): title "Buddy" and a fixed sentence per kind
   (`i18n push.*`: "Deine verabredete Erinnerung ist da."), never a title, a count, a score or
   anything the model wrote. Buddy's words are in the thread. Texts whose words depend on the day
@@ -483,6 +526,7 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 | PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)    |
 | Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
 | Requests per account            | abuse protection only: practice answers 600/h, messages to Buddy 120/h (429 + `Retry-After`)       |
+| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always   |
 
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
@@ -538,6 +582,17 @@ upload URL can deliver a late photo any more (a submit for a deleted material al
 A material becomes failed in one place (`markMaterialFailed`), from the job and from the tick's
 recovery alike: status, the purge and a context bump in one transaction.
 
+**Reading stages** (gap 5, migration 0035): the run holding the reading job's lease reports where
+it is — `read_stage` `opening` (photos being loaded) then `reading` (the model reads them), each
+stamped with the app clock; a requeued reading clears it. The home's `material_processing` card
+carries only real stages (`stage`: `sending` photos on their way, `waiting` for the reader,
+`reading`, and `building` — read, and the Buddy check it woke is due or running, with `found`,
+the tasks found, a result and never a count of work to do), the number of photos (`pages`) and
+the purpose (homework has no practice to build). All pages are read in one model call, so there
+is no page-by-page progress and none is shown; nothing moves by itself (CLAUDE.md rule 5). The app
+(`components/buddy/ReadingCard.tsx`, `lib/buddy/readingStages.ts`) shows the photo, the stage
+and the steps "Angekommen · Lesen · Übungen"; `reading-stages.int.test.ts`.
+
 **Outages are not failures.** The Storage gateway tells an absent photo (`null`) from a provider
 failure (`StorageError`): a failed download retries the run like a retryable model error (backoff
 1, 2, 4 min); a failed existence check on submit answers 503 `storage_unavailable`, never
@@ -546,6 +601,60 @@ and do not use up the 3 runs. After the photo purge, retry answers 409 `photos_d
 `MaterialView.photos_deleted` hides "Nochmal lesen" (the card says to photograph it again). Each
 photo in the reading request is preceded by a label ("Photo 2 of 3:"), so page numbers in the
 report name real photos.
+
+**PDFs** (`modules/materials/pdf.ts`, migration `0042_material_pdf.sql`; gaps.md #6): a worksheet
+that came as a PDF (WhatsApp, IServ, Schul-Cloud, Dateien) is a file of the material next to
+photos (`photo_mimes` takes `application/pdf`; stored as `…/<position>.pdf` in the same private
+bucket). The model reads PDFs directly (Gemini accepts `application/pdf` inline), so nothing is
+rendered to images, on the server or on the phone. Code only counts the pages (`pdf-lib`, on
+submit): a photo is one page, a PDF as many as it has, and the material's `photo_count` becomes
+that page total — **20 pages at most**, photos and PDF pages together, like 20 photos. The label
+before a PDF says which page numbers its pages have ("PDF with pages 1–3 of 4 (one page report per
+PDF page):"), so the page report names real pages; a foreign page is deleted at once only when its
+whole file is foreign (a photo; a PDF with one foreign page among others keeps its retention).
+Refused at submit with 422 and a reason — the material is set aside and its files purged at once,
+the app keeps the files for another choice: `too_many_pages` (with `pages`, `max`),
+`file_unreadable` (not a PDF that opens; `position`), `file_too_large` (all PDFs of one material
+over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage while counting is
+503 `storage_unavailable` as for photos. PDFs are not photo-checked on the phone (the check is for
+light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
+scanned school PDF (the tests script the model).
+
+**Files and sharing in the app** (`app/capture.tsx`, `lib/capture/files.ts`, `incoming.ts`,
+`drop.web.ts`, `components/capture/ShareIntake.tsx`). One more quiet choice next to the camera:
+"Aus Fotos" and "Aus Dateien" share one row under "Foto machen" (fits 360×740). "Aus Dateien" is
+`expo-document-picker` for PDFs and images; images go through the same preparation and photo check
+as camera photos, a PDF gets its own copy (`fileCopy.ts`: two shares called "Arbeitsblatt.pdf" stay
+two files) and shows as a page tile with its name; PDFs together over 15 MB, and other file types,
+are said in a toast, not dropped silently. In the browser the same button is a file input, and
+files dragged onto the page show a drop hint and land in the capture. A refusal from submit
+(`too_many_pages`, …) keeps the files on the screen and the send button waits until they change
+(the same files cannot pass); the draft remembers which entry is a PDF, and a sent set with a PDF
+has no page thumbnail (page numbers are not file positions there).
+
+_Teilen an LearnBuddy_ (`expo-share-intent` 5.1 for SDK 54, its config plugin in `app.json`):
+Android gets intent filters for `SEND` and `SEND_MULTIPLE` of `image/*` and `application/pdf`; iOS
+a share extension (target `LearnBuddyShare`, shown as "LearnBuddy" — `plugins/withShareDisplayName.js`;
+activation rule: images and PDFs; app group `group.com.learnbuddy.app`). `ShareIntake` (root
+layout) hands the shared files to the capture screen (`incoming.ts`: the open capture takes them at
+once, else it is opened with `shared=1`; files wait until a draft left from before is decided).
+Signed out: a toast, nothing kept. Text or links shared: a toast. The iOS extension opens
+`learnbuddy://dataUrl=learnbuddyShareKey`, which `app/+native-intent.tsx` keeps from the router.
+The plugin needs pnpm's patch of `xcode@3.0.1` (`patches/`, as the package documents) or iOS
+prebuild fails. Web and Expo Go: the native module is absent and nothing happens.
+
+**Not verified — must be checked on devices (EAS build), in this order:** (1) `expo prebuild` ran
+here for both platforms (the manifest has both filters, the Xcode project the `LearnBuddyShare`
+target with display name "LearnBuddy"), but nothing native was compiled or run. (2) The app group
+`group.com.learnbuddy.app` and the extension bundle id `com.learnbuddy.app.share-extension` must
+exist for the Apple team (EAS credentials; one extension target only — see the package's FAQ). (3)
+Android: share one photo, several photos, a PDF from WhatsApp, Files and Chrome — cold (app closed)
+and warm; the capture opens with the files; a `content://` URI from a messenger is copied and
+uploaded. (4) iOS: the same from Photos, Files, WhatsApp and Safari's PDF view; the share sheet
+shows "LearnBuddy"; after sharing the app opens on the capture, not on "not found". (5) Signed out,
+and during a running send: files are not lost silently. (6) "Aus Dateien" on both platforms: a PDF
+from iCloud/Google Drive (download on pick), a HEIC photo. (7) A real scanned school PDF read by
+the Vertex model: pages and page report right.
 
 **Deleting** ("Blatt löschen", D-7) takes the sheet and its merged pages out of the library,
 Buddy's picture, running sessions (open questions closed like "Frage passt nicht"), prepared
@@ -836,8 +945,19 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   answers like "drei Viertel" are heard as 3/4). Live checks with espeak-ng recordings
   (`evals/voice/run.ts`): 5/6 with context; the lite model invented words and is not used. The
   recording is never stored.
+- **Buddy's natural voice** (ADR 0008): everything read aloud goes sentence by sentence through
+  `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → Google Cloud TTS, Chirp 3:
+  HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and
+  speed come from her settings (`buddy_settings.voice`, `voice_speed`, tool `set_voice`); audio is
+  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
+  (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
+  sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
+  error) or is unreachable — never silence. `useBuddyVoice()` (`lib/speech/voiceState.ts`)
+  exposes `idle | loading | speaking`, the sentences and the one being played with its progress:
+  conversation mode highlights the sentence being read (no word timings from Chirp 3 HD).
+  Dev stack: `LB_DEV_SPEECH=fake` answers with silent WAV audio of the sentence's length.
 - **Voice mode** (app): Buddy's replies, questions, an explanation and feedback are read aloud
-  with the device's voices (`expo-speech`); she answers with the mic — in the chat, in every
+  (natural voice above, else the device's voices); she answers with the mic — in the chat, in every
   practice mode, and in the sheet where she names a topic (`TopicSheet`, which starts at once in
   voice mode). **Practice is hands-free** after her first tap on a mic there
   (`lib/speech/handsFree.ts`): question read → the mic listens (ends by itself when she pauses, on
@@ -861,7 +981,16 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
   screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
   the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
-  every phase is announced. Walkthrough: one full turn
+  every phase is announced. Buddy's orb shows the phase (`components/voice/TalkOrb.tsx`):
+  idle it breathes, listening it follows her voice level, thinking a light ring swirls around
+  it, speaking it pulses in a speech-like rhythm with soft waves (there is no level of Buddy's
+  voice to follow), cross-faded; with reduce motion only the layers fade. Tapping Buddy while he
+  speaks stops him ("Tipp auf Buddy, um ihn zu unterbrechen."). Two quiet synthesised tones
+  (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
+  iOS they play in a session that obeys the silent switch, then talk mode's session is restored
+  (needs live verification on a phone); the web plays none. The camera next to "Tastatur"
+  opens capture (`from=talk`): the photo goes into the same conversation and she comes back to
+  talk mode, which says while it is being read. Walkthrough: one full turn
   with Chromium's fake microphone and a scripted transcript.
 - **Pronunciation** — see Learning modes (`speak`). A judgement that lands after "Beenden" is
   refused (the write locks the session first, 409). Offline, the recording waits for the
@@ -890,7 +1019,9 @@ the practice for a test (user feedback #2).
 `rules`: at most n a day, never after the quiet hour, so the card and the parents' PIN screen
 say exactly that), **done** (Buddy's actions of the last 72 h
 with status and undo), **next** (tests and planned steps), the **thread** (with the action cards
-and delivery status of each message) and **system** status (model, push, contact, scheduler).
+and delivery status of each message), **system** status (model, push, contact, scheduler) and
+**practiced_today** (she answered, tried or looked at a practice question today in her zone:
+the quiet "Heute geübt ✓" beside the greeting — never a count, never missed days).
 The home is read in one repeatable-read transaction (one snapshot): a job that commits while
 it is read (a page joining the homework session) shows either before or after, never an old
 card next to "nothing working" — the app polls closely only while something is working

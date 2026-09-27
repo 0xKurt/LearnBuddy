@@ -8,9 +8,15 @@
 // read and a help session is made — hints only, never the solution),
 // completes (an earlier material whose missing pages these are) with pages
 // (their numbers, for the hint), resume=1 (go on with the photos left from
-// before: they are kept as a draft until sent, lib/capture/draft.ts).
+// before: they are kept as a draft until sent, lib/capture/draft.ts), shared=1
+// (files shared from another app wait in lib/capture/incoming.ts).
+//
+// Besides camera and photos, "Aus Dateien" takes PDFs and images from the files
+// app; in the browser they can also be dropped onto the screen. A PDF is sent as
+// it is: no photo check, the API counts its pages (docs/architecture.md §Material).
 
 import { Uuid } from '@learnbuddy/shared-types/contracts';
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -27,6 +33,7 @@ import { Icon } from '../components/lb/Icon.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
 import { toast } from '../components/lb/Toast.js';
+import { ApiError } from '../lib/api/client.js';
 import { deleteMaterial } from '../lib/api/endpoints.js';
 import { keys, queryClient } from '../lib/api/queries.js';
 import {
@@ -37,9 +44,14 @@ import {
   type MaterialLink,
   type MaterialPurpose,
   type SendProgress,
+  type UploadFile,
 } from '../lib/capture/upload.js';
 import type { CaptureDraft, DraftLink } from '../lib/capture/draft.js';
 import { drafts } from '../lib/capture/draftStorage.js';
+import { useFileDrop } from '../lib/capture/drop.js';
+import { ownCopy, sizeOf } from '../lib/capture/fileCopy.js';
+import { displayName, MAX_PDF_MB, sortIncoming, type IncomingFile } from '../lib/capture/files.js';
+import { takeIncoming } from '../lib/capture/incoming.js';
 import {
   clearCameraOpen,
   markCameraOpen,
@@ -60,6 +72,19 @@ function purposeParam(value: string | string[] | undefined): MaterialPurpose {
 function pagesParam(value: string | string[] | undefined): string | null {
   const v = Array.isArray(value) ? value[0] : value;
   return v && /^\d{1,2}(,\d{1,2})*$/.test(v) ? v.split(',').join(', ') : null;
+}
+
+/** The API refused the files themselves: that material is gone, other files start anew. */
+const FILE_REFUSALS = new Set(['too_many_pages', 'file_unreadable', 'file_too_large']);
+
+/** One picked thing in page order: a photo, or a PDF (its name). */
+type Entry = { uri: string; pdf: string | null };
+
+function uploadFiles(
+  uris: readonly string[],
+  pdfs: Readonly<Record<string, string>>,
+): UploadFile[] {
+  return uris.map((uri) => ({ uri, mime: pdfs[uri] ? 'application/pdf' : 'image/jpeg' }));
 }
 
 function uploadLink(l: DraftLink): MaterialLink {
@@ -84,7 +109,10 @@ export default function CaptureScreen() {
     add?: string | string[];
     /** Android: photos from a camera session the system cut off (lib/capture/pendingCamera.ts). */
     pending?: string | string[];
+    /** Opened from talk mode: once sent, back to the conversation there. */
+    from?: string | string[];
   }>();
+  const fromTalk = params.from === 'talk';
   const pending = params.pending === '1';
   const resume = params.resume === '1';
   /** What the photos are for; a resumed draft brings its own. */
@@ -106,9 +134,13 @@ export default function CaptureScreen() {
   const [problems, setProblems] = useState<Record<string, PhotoProblem[]>>({});
   /** Photos she chose to keep despite a problem. */
   const [kept, setKept] = useState<ReadonlySet<string>>(new Set());
+  /** The files among them that are PDFs, with their names (uri → name). */
+  const [pdfs, setPdfs] = useState<Readonly<Record<string, string>>>({});
   const [preparing, setPreparing] = useState<{ current: number; total: number } | null>(null);
   const [progress, setProgress] = useState<SendProgress | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  /** The API refused these files (not a network problem): she changes them first. */
+  const [refused, setRefused] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
   // One upload per photo set: a retry reuses it (same client_request_id); a changed set drops it.
   const upload = useRef<MaterialUpload | null>(null);
@@ -120,6 +152,10 @@ export default function CaptureScreen() {
 
   /** Photos left from before when this capture opened fresh: she decides first (audit M-21). */
   const [leftover, setLeftover] = useState<CaptureDraft | null>(null);
+  /** The draft from before has been looked at (shared files wait until then). */
+  const [loaded, setLoaded] = useState(false);
+  /** Files that came while photos were being prepared or sent. */
+  const deferred = useRef<IncomingFile[]>([]);
 
   function applyDraft(d: CaptureDraft) {
     const uris = d.photos.map((p) => p.uri);
@@ -129,14 +165,35 @@ export default function CaptureScreen() {
       Object.fromEntries(d.photos.filter((p) => p.problems.length).map((p) => [p.uri, p.problems])),
     );
     setKept(new Set(d.photos.filter((p) => p.kept).map((p) => p.uri)));
+    const pdfNames = Object.fromEntries(
+      d.photos.flatMap((p) => (p.pdf ? [[p.uri, p.pdf] as const] : [])),
+    );
+    setPdfs(pdfNames);
     // Already on its way before: the same material, nothing sent twice.
-    if (d.requestId) upload.current = new MaterialUpload(uris, uploadLink(d.link), d.requestId);
+    if (d.requestId)
+      upload.current = new MaterialUpload(
+        uploadFiles(uris, pdfNames),
+        uploadLink(d.link),
+        d.requestId,
+      );
+  }
+
+  /** What the draft keeps of the photos on the screen. */
+  function draftPhotos() {
+    return photos.map((uri) => ({
+      uri,
+      problems: problems[uri] ?? [],
+      kept: kept.has(uri),
+      pdf: pdfs[uri] ?? null,
+    }));
   }
 
   useEffect(() => {
     mounted.current = true;
     void (resume ? drafts.load() : drafts.leftBehind()).then(async (d) => {
-      if (!mounted.current || dirty.current) return;
+      if (!mounted.current) return;
+      setLoaded(true);
+      if (dirty.current) return;
       if (d && resume) applyDraft(d);
       else if (d) setLeftover(d);
       if (!pending) return;
@@ -168,10 +225,10 @@ export default function CaptureScreen() {
     if (!dirty.current) return;
     void drafts.save({
       requestId: upload.current?.requestId ?? null,
-      photos: photos.map((uri) => ({ uri, problems: problems[uri] ?? [], kept: kept.has(uri) })),
+      photos: draftPhotos(),
       link,
     });
-  }, [photos, problems, kept, link]);
+  }, [photos, problems, kept, pdfs, link]);
 
   /**
    * The first change here: from now on the draft follows this screen. A draft
@@ -186,6 +243,21 @@ export default function CaptureScreen() {
   const busy = preparing !== null || progress !== null;
   const room = MAX_PHOTOS - photos.length;
 
+  // Files shared from another app, now or while this screen is open (ShareIntake) — once
+  // the draft from before is loaded and, if there is one, she has decided about it.
+  const addFilesNow = useRef(addFiles);
+  addFilesNow.current = addFiles;
+  useEffect(() => {
+    if (!loaded || leftover) return;
+    return takeIncoming((files) => void addFilesNow.current(files));
+  }, [loaded, leftover]);
+  useEffect(() => {
+    if (busy || deferred.current.length === 0) return;
+    void addFiles(deferred.current.splice(0));
+  }, [busy]);
+  // In the browser a sheet can also be dropped onto the screen.
+  const dropping = useFileDrop((files) => void addFilesNow.current(files), loaded && !leftover);
+
   function photosChanged() {
     // A reservation for the old photo set that was never submitted: gone, not left
     // behind as an "unvollständig" sheet (audit M-20).
@@ -193,16 +265,28 @@ export default function CaptureScreen() {
     if (abandoned) void deleteMaterial(abandoned).catch(() => undefined);
     upload.current = null;
     setFailure(null);
+    setRefused(false);
   }
 
   /** `replace`: the photo a retake stands in for — same place, only once the new one is there. */
   async function addPhotos(sources: string[], replace: string | null = null) {
+    await addEntries(
+      sources.map((uri) => ({ uri, pdf: null })),
+      replace,
+    );
+  }
+
+  /** Photos are prepared and checked; a PDF gets its own copy and is taken as it is. */
+  async function addEntries(entries: Entry[], replace: string | null = null) {
     let failed = 0;
     await touch();
-    for (const [i, source] of sources.entries()) {
-      setPreparing({ current: i + 1, total: sources.length });
+    for (const [i, entry] of entries.entries()) {
+      const source = entry.uri;
+      setPreparing({ current: i + 1, total: entries.length });
       try {
-        const prepared = await preparePhoto(source);
+        const prepared = entry.pdf
+          ? { uri: await ownCopy(source, 'pdf'), problems: [] }
+          : await preparePhoto(source);
         // Where the system does not clean up: the photo survives the app being closed.
         const photo = { ...prepared, uri: await drafts.keep(prepared.uri) };
         // She left while it was being prepared: the copy belongs to no draft — delete it
@@ -218,6 +302,8 @@ export default function CaptureScreen() {
         } else {
           setPhotos((prev) => (prev.length < MAX_PHOTOS ? [...prev, photo.uri] : prev));
         }
+        const pdfName = entry.pdf;
+        if (pdfName) setPdfs((prev) => ({ ...prev, [photo.uri]: pdfName }));
         if (photo.problems.length > 0)
           setProblems((prev) => ({ ...prev, [photo.uri]: photo.problems }));
         photosChanged();
@@ -227,6 +313,57 @@ export default function CaptureScreen() {
     }
     setPreparing(null);
     if (failed > 0) toast.show(t('capture:error.prepare', { count: failed }), 'error');
+  }
+
+  /**
+   * Files from "Aus Dateien", another app's share sheet or a drop in the browser: photos
+   * and PDFs in the order they came; other file types and PDFs too large are said, not
+   * silently dropped.
+   */
+  async function addFiles(files: readonly IncomingFile[]) {
+    if (busy) {
+      // Taken once the photos before them are ready or sent.
+      deferred.current.push(...files);
+      return;
+    }
+    const sized = files.map((f) => (f.size === null ? { ...f, size: sizeOf(f.uri) } : f));
+    const { take, unsupported, tooLarge } = sortIncoming(sized);
+    if (unsupported > 0) toast.show(t('capture:files.unsupported', { count: unsupported }));
+    if (tooLarge > 0) toast.show(t('capture:files.too_large', { max: MAX_PDF_MB }), 'error');
+    if (take.length > room) toast.show(t('capture:limit', { max: MAX_PHOTOS }));
+    const entries = take
+      .slice(0, Math.max(0, room))
+      .map((f) => ({ uri: f.uri, pdf: f.kind === 'pdf' ? displayName(f) : null }));
+    if (entries.length > 0) await addEntries(entries);
+  }
+
+  async function pickFiles() {
+    if (picking.current || busy || room <= 0) return;
+    picking.current = true;
+    try {
+      let result: DocumentPicker.DocumentPickerResult;
+      try {
+        result = await DocumentPicker.getDocumentAsync({
+          type: ['application/pdf', 'image/*'],
+          multiple: true,
+          copyToCacheDirectory: true,
+        });
+      } catch {
+        toast.show(t('capture:files.error'), 'error');
+        return;
+      }
+      if (result.canceled) return;
+      await addFiles(
+        result.assets.map((a) => ({
+          uri: a.uri,
+          name: a.name,
+          mimeType: a.mimeType ?? null,
+          size: a.size ?? null,
+        })),
+      );
+    } finally {
+      picking.current = false;
+    }
   }
 
   async function pick(source: 'camera' | 'library', replace: string | null = null) {
@@ -279,6 +416,7 @@ export default function CaptureScreen() {
     if (busy) return;
     dirty.current = true;
     setPhotos((prev) => prev.filter((p) => p !== uri));
+    setPdfs(({ [uri]: _gone, ...rest }) => rest);
     void drafts.drop([uri]);
     photosChanged();
   }
@@ -303,6 +441,10 @@ export default function CaptureScreen() {
       );
       return `${what} ${t('capture:error.kept')}`;
     }
+    // Refused files: the message says what to change; "your photos are still here" would
+    // invite sending the same again.
+    if (err instanceof ApiError && err.reason && FILE_REFUSALS.has(err.reason))
+      return messageFor(err);
     return `${messageFor(err)} ${t('capture:error.kept')}`;
   }
 
@@ -310,18 +452,15 @@ export default function CaptureScreen() {
   async function keepIfFree(requestId: string): Promise<boolean> {
     const existing = await drafts.load();
     if (existing) return existing.requestId === requestId;
-    await drafts.save({
-      requestId,
-      photos: photos.map((uri) => ({ uri, problems: problems[uri] ?? [], kept: kept.has(uri) })),
-      link,
-    });
+    await drafts.save({ requestId, photos: draftPhotos(), link });
     return true;
   }
 
   async function send() {
     if (sending.current || busy || photos.length === 0) return;
     sending.current = true;
-    if (!upload.current) upload.current = new MaterialUpload(photos, uploadLink(link));
+    if (!upload.current)
+      upload.current = new MaterialUpload(uploadFiles(photos, pdfs), uploadLink(link));
     const current = upload.current;
     setFailure(null);
     setProgress({ step: 'reserving' });
@@ -330,16 +469,19 @@ export default function CaptureScreen() {
     let failedAway = false;
     dirty.current = true;
     // The request id goes into the draft first: after a crash the same material goes on.
-    await drafts.save({
-      requestId: current.requestId,
-      photos: photos.map((uri) => ({ uri, problems: problems[uri] ?? [], kept: kept.has(uri) })),
-      link,
-    });
+    await drafts.save({ requestId: current.requestId, photos: draftPhotos(), link });
     try {
       // Keeps going if the learner leaves meanwhile: they asked for it to be sent.
       await current.send(setProgress);
       delivered = true;
-      if (current.material) await drafts.sent(current.material, photos, current.requestId);
+      // With a PDF among them, page numbers are not photo positions (no page thumbnail).
+      if (current.material)
+        await drafts.sent(
+          current.material,
+          photos,
+          current.requestId,
+          !photos.some((uri) => pdfs[uri]),
+        );
       void queryClient.invalidateQueries({ queryKey: keys.home });
       void queryClient.invalidateQueries({ queryKey: keys.library });
       if (mounted.current) {
@@ -349,12 +491,20 @@ export default function CaptureScreen() {
           void queryClient.invalidateQueries({ queryKey: keys.material(completes) });
           toast.show(t('capture:again.added'));
           router.back();
+        } else if (fromTalk && router.canGoBack()) {
+          // Shown to Buddy while talking: back to talk mode, which says it is being read.
+          router.back();
         } else {
           // Back to Buddy's home, which now shows the reading (opens it if it isn't in the stack).
           router.dismissTo('/buddy');
         }
       }
     } catch (err) {
+      // The files were refused (too many pages, not a PDF, too large): that material is
+      // gone; with other files she starts a new one.
+      const refusedFiles = err instanceof ApiError && !!err.reason && FILE_REFUSALS.has(err.reason);
+      if (refusedFiles && upload.current === current) upload.current = null;
+      if (refusedFiles && mounted.current) setRefused(true);
       if (mounted.current) setFailure(failureText(err));
       else failedAway = true;
     } finally {
@@ -408,9 +558,16 @@ export default function CaptureScreen() {
         {photos.length === 0 ? <CaptureTips /> : null}
 
         {photos.length > 0 ? (
-          <Section title={t('capture:photos_title', { count: photos.length })}>
+          <Section
+            title={
+              photos.some((uri) => pdfs[uri])
+                ? t('capture:files.title', { count: photos.length })
+                : t('capture:photos_title', { count: photos.length })
+            }
+          >
             <PhotoStrip
               uris={photos}
+              pdfs={pdfs}
               flagged={new Set(photos.filter((uri) => (problems[uri]?.length ?? 0) > 0))}
               disabled={busy}
               onRemove={remove}
@@ -506,9 +663,33 @@ export default function CaptureScreen() {
               >
                 {photos.length === 0 ? t('capture:camera') : t('capture:camera_more')}
               </Btn>
-              <Btn variant="ghost" pill full disabled={busy} onPress={() => void pick('library')}>
-                {t('capture:library')}
-              </Btn>
+              {/* One row, two quiet choices: a photo from the gallery, or a file (PDF too). */}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Btn
+                    variant="ghost"
+                    pill
+                    full
+                    disabled={busy}
+                    onPress={() => void pick('library')}
+                    accessibilityLabel={t('capture:library')}
+                  >
+                    {t('capture:library_short')}
+                  </Btn>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Btn
+                    variant="ghost"
+                    pill
+                    full
+                    disabled={busy}
+                    onPress={() => void pickFiles()}
+                    accessibilityLabel={t('capture:files.pick_label')}
+                  >
+                    {t('capture:files.pick')}
+                  </Btn>
+                </View>
+              </View>
             </View>
           </Card>
         ) : (
@@ -523,8 +704,49 @@ export default function CaptureScreen() {
         failure={failure}
         hasPhotos={photos.length > 0}
         disabled={busy}
+        refused={refused}
         onSend={() => void send()}
       />
+
+      {dropping ? (
+        // The browser: files dragged over the page. A hint only; the drop works anywhere.
+        <View
+          pointerEvents="none"
+          accessibilityLiveRegion="polite"
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            right: 12,
+            bottom: 12,
+            borderRadius: 28,
+            borderWidth: 2,
+            borderStyle: 'dashed',
+            borderColor: LB.primary,
+            backgroundColor: LB.veil,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 36,
+              backgroundColor: LB.lavender,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name="file" size={32} color={LB.primaryDk} />
+          </View>
+          <Text style={[TYPE.title, { textAlign: 'center', maxWidth: 260 }]}>
+            {t('capture:files.drop')}
+          </Text>
+        </View>
+      ) : null}
     </Screen>
   );
 }

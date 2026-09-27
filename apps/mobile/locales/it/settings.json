@@ -47,7 +47,10 @@
     "tell_buddy": "Dillo a Buddy quando vuoi un po' di pace.",
     "more": "Modifica orari",
     "less": "Mostra meno",
-    "device_elsewhere": "I messaggi di Buddy ora arrivano a un altro dispositivo, non a questo telefono."
+    "device_elsewhere": "I messaggi di Buddy ora arrivano a un altro dispositivo, non a questo telefono.",
+    "only_important": "Hai chiesto a Buddy di scrivere meno spesso: sul telefono arriva solo ciò che è davvero importante. Il resto ti aspetta nell'app.",
+    "only_important_end": "Di nuovo tutto sul telefono",
+    "only_important_ended": "Buddy ti manda di nuovo tutto sul telefono."
   },
   "profile": {
     "title": "Il tuo profilo",

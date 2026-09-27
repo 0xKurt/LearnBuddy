@@ -64,5 +64,8 @@
       "example": "Con un esempio, per favore",
       "why": "Perché è così?"
     }
+  },
+  "contact": {
+    "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."
   }
 }

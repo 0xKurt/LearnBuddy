@@ -1,11 +1,12 @@
 {
   "title": "Prends ta fiche en photo",
-  "intro": "Fiche, page de manuel ou cahier – j'en fais des exercices.",
+  "intro": "Fiche, page de manuel ou cahier – en photo ou en PDF. J'en fais des exercices.",
   "tip": "Astuce: la page entière, une bonne lumière, prise d'en haut.",
   "privacy": "Les photos sont supprimées au plus tard 7 jours après leur lecture.",
   "camera": "Prendre une photo",
   "camera_more": "Encore une photo",
   "library": "Choisir parmi tes photos",
+  "library_short": "Depuis Photos",
   "photos_title_one": "{{count}} photo",
   "photos_title_other": "{{count}} photos",
   "photo_label": "Photo {{index}} sur {{total}}",
@@ -76,5 +77,21 @@
     "discarded_other": "{{count}} photos jetées.",
     "undo": "Annuler",
     "undo_label": "Récupérer les photos jetées"
+  },
+  "files": {
+    "pick": "Depuis Fichiers",
+    "pick_label": "Choisir dans Fichiers – PDF ou image",
+    "title_one": "{{count}} fichier",
+    "title_other": "{{count}} fichiers",
+    "pdf_label": "PDF {{index}} sur {{total}} : {{name}}",
+    "drop": "Dépose-le ici – je prends les photos et les PDF.",
+    "error": "Tes fichiers ne se sont pas ouverts. Réessaie.",
+    "unsupported_one": "Un fichier n'est ni une image ni un PDF – je le laisse de côté.",
+    "unsupported_other": "{{count}} fichiers ne sont ni des images ni des PDF – je les laisse de côté.",
+    "too_large": "Le PDF est trop lourd – {{max}} Mo au maximum. Prends plutôt la fiche en photo."
+  },
+  "share": {
+    "nothing": "Envoie-moi une photo ou un PDF de ta fiche – je ne peux pas lire de texte ni de liens ici.",
+    "signed_out": "Connecte-toi d'abord – puis partage à nouveau la fiche avec LearnBuddy."
   }
 }

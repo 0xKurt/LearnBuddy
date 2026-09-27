@@ -1,6 +1,8 @@
 // In-memory stand-ins for the outside world in tests: the model, push,
-// auth and photo storage. The database is never faked (testing/database.ts).
+// auth, photo storage and text to speech. The database is never faked (testing/database.ts).
 // requires live verification in Claude Code session (paired with a real Postgres)
+
+import type { VoiceName } from '@learnbuddy/shared-types/contracts';
 
 import type { AuthUser, AuthVerifier } from '../auth/verifier.js';
 import type { Db } from '../lib/db.js';
@@ -13,6 +15,7 @@ import {
   type LlmResult,
 } from '../llm/gateway.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
+import type { SpeechAudio, SpeechError, SpeechGateway, SpeechInput } from '../speech/gateway.js';
 import {
   STORAGE_REMOVE_LIMIT,
   StorageError,
@@ -313,4 +316,57 @@ export class FakePush implements PushTransport {
     }
     return out;
   }
+}
+
+/**
+ * Text to speech in tests and the dev stack: a WAV of silence as long as the text would take
+ * to say (so playback, progress and read-along can be exercised without Google). Records every
+ * call; `failNext` makes the provider fail the way the real one can.
+ */
+export class FakeSpeech implements SpeechGateway {
+  readonly available = true;
+  readonly calls: SpeechInput[] = [];
+  private failures: SpeechError[] = [];
+
+  voiceId(voice: VoiceName, locale: string): string {
+    return `fake-${locale}-${voice}`;
+  }
+
+  localeFor(locale: string): string | null {
+    return /^(de|en|fr|es|it)-[A-Z]{2}$/.test(locale) ? locale : null;
+  }
+
+  failNext(...errors: SpeechError[]): this {
+    this.failures.push(...errors);
+    return this;
+  }
+
+  async synthesize(input: SpeechInput): Promise<SpeechAudio> {
+    this.calls.push(input);
+    const failure = this.failures.shift();
+    if (failure) throw failure;
+    const ms = Math.min(8000, Math.max(300, (input.text.length * 60) / input.rate));
+    return { mime: 'audio/wav', audio: silentWav(ms) };
+  }
+}
+
+/** 8 kHz, 8-bit mono PCM silence. */
+export function silentWav(ms: number): Buffer {
+  const rate = 8000;
+  const samples = Math.round((rate * ms) / 1000);
+  const b = Buffer.alloc(44 + samples, 0x80);
+  b.write('RIFF', 0, 'ascii');
+  b.writeUInt32LE(36 + samples, 4);
+  b.write('WAVE', 8, 'ascii');
+  b.write('fmt ', 12, 'ascii');
+  b.writeUInt32LE(16, 16);
+  b.writeUInt16LE(1, 20); // PCM
+  b.writeUInt16LE(1, 22); // mono
+  b.writeUInt32LE(rate, 24);
+  b.writeUInt32LE(rate, 28); // byte rate
+  b.writeUInt16LE(1, 32); // block align
+  b.writeUInt16LE(8, 34); // bits per sample
+  b.write('data', 36, 'ascii');
+  b.writeUInt32LE(samples, 40);
+  return b;
 }
