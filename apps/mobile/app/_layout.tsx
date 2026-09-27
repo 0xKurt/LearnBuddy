@@ -19,6 +19,7 @@ import { clearAdminToken, installAdminAutoClear } from '../lib/admin.js';
 import { ApiError } from '../lib/api/client.js';
 import { postAnswer } from '../lib/api/endpoints.js';
 import { flushOutbox } from '../lib/api/outboxSync.js';
+import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
 import { applyLocale, deviceLocale, i18n } from '../lib/i18n/index.js';
@@ -69,6 +70,8 @@ export default function RootLayout() {
     void loadSession()
       .then(async (s) => {
         userRef.current = s?.user_id ?? null;
+        // Her last conversation at once; it refreshes in the background (gaps.md #2).
+        if (s) await restoreCache(s.user_id);
         if (s) await afterSignedIn(s.user_id);
         else void retryPendingRelease().catch(() => undefined);
       })
@@ -84,6 +87,7 @@ export default function RootLayout() {
       void retryPendingRelease().catch(() => undefined);
     });
     void clearLegacyLocalNotifications();
+    const offKeep = keepCache();
     // The parents' PIN unlocks one step, never a phone left in the background.
     const offAdmin = installAdminAutoClear(AppState);
     const offSession = onSessionChange((s, ended) => {
@@ -102,6 +106,7 @@ export default function RootLayout() {
       // (audit M-72). Her unsent answers and photos stay on the device unless she
       // signed out on purpose (settings deletes them there, after a warning).
       queryClient.clear();
+      void forgetCache();
       if (router.canDismiss()) router.dismissAll();
       router.replace('/');
       if (ended === 'expired') toast.show(i18n.t('common:session.expired'));
@@ -142,6 +147,7 @@ export default function RootLayout() {
       else router.replace('/buddy');
     });
     return () => {
+      offKeep();
       offOnline();
       offAdmin();
       offQueries();

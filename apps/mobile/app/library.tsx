@@ -24,7 +24,7 @@ import { LibrarySkeleton } from '../components/lb/Skeletons.js';
 import { toast } from '../components/lb/Toast.js';
 import { ApiError } from '../lib/api/client.js';
 import { deleteMaterial, retryMaterial, startPractice } from '../lib/api/endpoints.js';
-import { keys, queryClient, useLibrary } from '../lib/api/queries.js';
+import { keys, queryClient, seedSession, useLibrary } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { LB, TONE_DEEP, type SubjectTone } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -158,6 +158,7 @@ export default function LibraryScreen() {
   const practice = (m: MaterialView) =>
     void act(m, async () => {
       const session = await startPractice({ material_id: m.id, mode: 'practice' });
+      seedSession(session);
       router.push(`/practice/${session.id}`);
     });
 

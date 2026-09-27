@@ -386,7 +386,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
 
   it('5 · shows a useful result: practice with rule checks, a model-judged answer, evidence on the step', async () => {
     env.clock.hours(5); // Monday 15:02 local
-    const started = await lina.api.post<{ session_id: string }>(
+    const started = await lina.api.post<{ session_id: string; session?: SessionView }>(
       `/buddy/steps/${practiceStepId}/start`,
     );
     expect(started.status).toBe(200);
@@ -399,6 +399,8 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
 
     let view = (await lina.api.get<SessionView>(`/practice/sessions/${sessionId}`)).body;
     expect(view.items).toHaveLength(4);
+    // The session comes along with the start, so the app shows it at once (gaps.md #2).
+    expect(started.body.session).toEqual(view);
     // Open questions never carry their solution to the client.
     expect(view.items.every((i) => i.answer === null)).toBe(true);
     const byTopic = (topic: string) => view.items.find((i) => i.item.topic === topic)!.item;

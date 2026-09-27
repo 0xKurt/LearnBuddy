@@ -989,6 +989,14 @@ once (`abandonStaleUploads`, run by the scheduler).
   deleted. Sign-out revokes only this device's refresh token at Supabase (scope `local`, also after
   a cold start, at most 4 s), resets the navigation stack and clears the query cache. Recordings (pronunciation) are not kept — too large; closing the
   app while one waits drops it.
+- **Instant start** (gaps.md #2, `lib/api/persist.ts`, `lib/api/deviceCache.ts`): the home and
+  `/me` are kept on the device (AsyncStorage / localStorage, per user) and shown at once on the
+  next start as stale data that refreshes in the background. Only settled data is kept — no card
+  on top, notice, decision, work in progress or message still being answered (CLAUDE.md rule 5);
+  they come with the first refresh. Any end of the session removes every kept copy. A practice to
+  go on with is loaded while its card is on screen (loaded, never started), and starting a
+  prepared step returns the session with its id (`StartStepResponse.session`), so the first
+  question needs no second request.
 - **About**: version from the app config; privacy, imprint and support rows only when
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set
   (`apps/mobile/.env.example`).

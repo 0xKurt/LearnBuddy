@@ -65,7 +65,14 @@ import {
   startStep,
   undoAction,
 } from '../lib/api/endpoints.js';
-import { keys, queryClient, setHome, useHome } from '../lib/api/queries.js';
+import {
+  keys,
+  queryClient,
+  seedSession,
+  setHome,
+  useHome,
+  usePrefetchSession,
+} from '../lib/api/queries.js';
 import type { CaptureDraft } from '../lib/capture/draft.js';
 import { inThread } from '../lib/buddy/unsent.js';
 import { drafts } from '../lib/capture/draftStorage.js';
@@ -88,6 +95,8 @@ const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
 export default function BuddyScreen() {
   const { t } = useTranslation(['buddy', 'common', 'learn']);
   const home = useHome();
+  // A practice to go on with is loaded while its card is on screen (gaps.md #2).
+  usePrefetchSession(home.data?.now?.type === 'resume_practice' ? home.data.now.session_id : null);
   const [busy, setBusy] = useState(false);
   /** Photos left from before, not sent yet (lib/capture/draft.ts), and one just let go. */
   const [draft, setDraft] = useState<CaptureDraft | null>(null);
@@ -565,7 +574,8 @@ export default function BuddyScreen() {
         onResume={(id) => router.push(`/practice/${id}`)}
         onStart={(stepId) =>
           void act(async () => {
-            const { session_id } = await startStep(stepId);
+            const { session_id, session } = await startStep(stepId);
+            if (session) seedSession(session);
             router.push(`/practice/${session_id}`);
           })
         }

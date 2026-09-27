@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { IsoDateTime, LocalDate, LocalTime, tolerantArray, Uuid } from './common.js';
-import { PageProblem } from './learning.js';
+import { PageProblem, SessionView } from './learning.js';
 
 // ─────────────── what Buddy did (rendered as cards, not prose) ───────────────
 
@@ -415,5 +415,9 @@ export const OutreachOpenedRequest = z.object({
 });
 export type OutreachOpenedRequest = z.infer<typeof OutreachOpenedRequest>;
 
-export const StartStepResponse = z.object({ session_id: Uuid });
+export const StartStepResponse = z.object({
+  session_id: Uuid,
+  /** The started session itself, so the first question shows without another request. */
+  session: SessionView.optional(),
+});
 export type StartStepResponse = z.infer<typeof StartStepResponse>;
