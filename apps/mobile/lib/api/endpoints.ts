@@ -208,10 +208,10 @@ export const postAnswer = (id: string, body: AnswerRequest) =>
  * A recording for a speak question; retrying the same recording reuses its
  * client_turn_id. Waits while offline, like answerItem.
  */
-export const speakItem = (id: string, body: SpeakRequest) =>
+export const speakItem = (id: string, body: SpeakRequest, opts: { signal?: AbortSignal } = {}) =>
   sendWhenOnline(
     () => request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
-    { isConnectionError: noConnection },
+    { isConnectionError: noConnection, signal: opts.signal },
   );
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */
 export const startTopic = (body: StartTopicRequest) =>

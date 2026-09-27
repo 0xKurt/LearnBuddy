@@ -28,6 +28,8 @@ import {
 
 import { ApiError, newId } from '../../lib/api/client.js';
 import { speakItem } from '../../lib/api/endpoints.js';
+import { useOnline } from '../../lib/api/queries.js';
+import { WaitAborted } from '../../lib/api/whenOnline.js';
 import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
@@ -264,17 +266,22 @@ export function SpeakPanel({
   const [problem, setProblem] = useState<Exclude<RecordFailure, 'denied'> | null>(null);
   const pending = useRef<Pending | null>(null);
   const mounted = useRef(true);
+  /** Cancels the wait for a connection (nothing has been sent yet while it waits). */
+  const waiting = useRef<AbortController | null>(null);
+  const online = useOnline();
   const lang = item.lang ?? item.prompt_lang ?? 'en';
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      waiting.current?.abort();
     };
   }, []);
 
   // A new question starts clean.
   useEffect(() => {
+    waiting.current?.abort();
     pending.current = null;
     setSending('idle');
     setProblem(null);
@@ -284,18 +291,27 @@ export function SpeakPanel({
     const p = pending.current;
     if (!p) return;
     setSending('sending');
+    const controller = new AbortController();
+    waiting.current = controller;
     try {
-      const res = await speakItem(sessionId, {
-        client_turn_id: p.clientTurnId,
-        item_id: p.itemId,
-        mime: p.mime,
-        audio_base64: p.base64,
-      });
+      const res = await speakItem(
+        sessionId,
+        {
+          client_turn_id: p.clientTurnId,
+          item_id: p.itemId,
+          mime: p.mime,
+          audio_base64: p.base64,
+        },
+        { signal: controller.signal },
+      );
       pending.current = null;
-      if (mounted.current) setSending('idle');
+      // She left the question meanwhile: nothing is shown or read aloud for a screen she left.
+      if (!mounted.current) return;
+      setSending('idle');
       await onResult(res);
       AccessibilityInfo.announceForAccessibility(res.reply.text);
     } catch (err) {
+      if (err instanceof WaitAborted) return; // she recorded again or skipped while offline
       if (!mounted.current) return;
       if (outdated(err)) {
         pending.current = null;
@@ -338,8 +354,17 @@ export function SpeakPanel({
   }
 
   function discard(): void {
+    waiting.current?.abort();
     pending.current = null;
     setSending('idle');
+  }
+
+  /** Offline, the recording waits for the connection; she may drop it or skip meanwhile. */
+  const waitingOffline = sending === 'sending' && !online;
+
+  function skipWhileWaiting(): void {
+    discard();
+    onSkip?.();
   }
 
   const recordLabel = recording
@@ -388,7 +413,7 @@ export function SpeakPanel({
         </View>
       ) : null}
 
-      {sending === 'sending' ? (
+      {sending === 'sending' && !waitingOffline ? (
         <View
           accessible
           accessibilityRole="progressbar"
@@ -397,6 +422,24 @@ export function SpeakPanel({
         >
           <ActivityIndicator color={LB.primary} />
           <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('speak.listening')}</Text>
+        </View>
+      ) : null}
+
+      {waitingOffline ? (
+        <View style={{ gap: 8 }}>
+          <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+            {t('speak.waiting_offline')}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+            <Btn variant="ghost" onPress={discard} disabled={disabled}>
+              {t('speak.record_new')}
+            </Btn>
+            {onSkip ? (
+              <Btn variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
+                {t('speak.skip')}
+              </Btn>
+            ) : null}
+          </View>
         </View>
       ) : null}
 
@@ -433,7 +476,7 @@ export function SpeakPanel({
         {recordLabel}
       </Btn>
 
-      {onSkip && !recording ? (
+      {onSkip && !recording && !waitingOffline ? (
         <Btn variant="ghost" center onPress={onSkip} disabled={locked}>
           {t('speak.skip')}
         </Btn>
