@@ -47,7 +47,7 @@ import {
 } from './plan.js';
 import type { GoalRow, MemoryRow, SettingsRow, StepRow } from './state.js';
 import { loosens } from './policy.js';
-import { normalizeForMatch, quoteOccursIn } from './text.js';
+import { normalizeForMatch, quoteOccursIn, unsupportedSpecifics } from './text.js';
 
 export class ToolRejection extends Error {
   constructor(message: string) {
@@ -149,6 +149,28 @@ function requireQuote(ctx: ToolContext, quote: string | null): void {
   if (!quote || !ctx.learnerWords || !quoteOccursIn(quote, ctx.learnerWords)) {
     throw new ToolRejection(
       `quote "${quote ?? ''}" is not the learner's exact words (whole words) from what they wrote since your last answer; only what they just said can justify this change`,
+    );
+  }
+}
+
+/**
+ * A memory repeats only what she said: every day, time of day, month or number in the statement
+ * must be in her quote (or in what was known already, for a correction) — live finding 4.
+ */
+function requireSupported(
+  ctx: ToolContext,
+  statement: string,
+  quote: string | null,
+  known: string | null = null,
+): void {
+  const extra = unsupportedSpecifics(
+    statement,
+    [quote ?? '', ...(known ? [known] : [])],
+    ctx.locale,
+  );
+  if (extra.length > 0) {
+    throw new ToolRejection(
+      `the statement adds details the learner did not say (${extra.join(', ')}); keep only what her quote says — or quote the words where she said it`,
     );
   }
 }
@@ -259,6 +281,7 @@ async function runRemember(action: ActionOf<'remember'>, ctx: ToolContext): Prom
   const a = action.args;
   refuseDuringConcern(ctx);
   requireQuote(ctx, a.quote);
+  requireSupported(ctx, a.statement, a.quote);
   let validUntil: Date | null = null;
   if (a.kind === 'constraint') {
     if (!a.until) throw new ToolRejection('a temporary situation (constraint) needs an until');
@@ -348,6 +371,7 @@ async function runCorrectMemory(
   refuseDuringConcern(ctx);
   requireQuote(ctx, a.quote);
   const old = memoryOf(ctx, a.memory);
+  requireSupported(ctx, a.statement, a.quote, old.statement);
   // A temporary situation may end at another time now (audit M-54 p2-J-memory-F1).
   if (a.until && old.kind !== 'constraint')
     throw new ToolRejection(`memory ${a.memory} is not a temporary situation; until must be null`);

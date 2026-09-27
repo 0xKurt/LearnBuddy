@@ -188,6 +188,12 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 - **Her words**: a quote must be whole words from what she wrote since Buddy's last answer —
   several quick messages count together (audit M-49) — and a quote of fewer than four letters
   counts only as a whole message (a bare "Ja"), never as a fragment ("ge" in "geschlagen").
+- **Only what she said** (live finding 4: "hab gleich Handballtraining" became "hat sonntags
+  Nachmittag Handballtraining"): a memory (`remember`, `correct_memory`) may name a day, time of
+  day, month or number only if her quote does (a correction: or the statement known before) —
+  `unsupportedSpecifics` in `buddy/text.ts`, from the platform's calendar names (Intl/CLDR in her
+  locale, weekdays and times of day also as a word's start: "sonntags"), not a word list. Refused
+  with the details named, so the model restates it; the prompt says the same (buddy.17).
 - **Dialogue order**: Buddy messages that arrived after her message (a reminder posted while
   she typed) are placed before her unanswered messages, so the model always answers her last.
 - **Days** are resolved from the day the model counted from (the attempt's "Now"), not from
