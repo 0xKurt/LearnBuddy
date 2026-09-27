@@ -336,7 +336,9 @@ days (rule 6).
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
-  or push is disabled. Only the app can record `opened`. The text is always also in the thread.
+  or push is disabled; a message due now while she is in the app (used it in the last 3 min) is
+  `in_app` from the start and in the thread in the same transaction as the change it is about
+  (the card of the practice it prepared), not a delivery run later (`planOutreach`). Only the app can record `opened`. The text is always also in the thread.
 - `DeviceNotRegistered` (ticket or receipt) deactivates the token.
 - Devices (`modules/devices/`, migration `0018_push_device_binding.sql`, D-6): a token is
   registered with a random install id, and an install holds at most one active token (partial
@@ -1125,7 +1127,10 @@ once (`abandonStaleUploads`, run by the scheduler).
   next start as stale data that refreshes in the background. Only settled data is kept — no card
   on top, notice, decision, work in progress or message still being answered (CLAUDE.md rule 5);
   they come with the first refresh. Any end of the session removes every kept copy. A practice to
-  go on with is loaded while its card is on screen (loaded, never started), and starting a
+  go on with is loaded while its card is on screen (loaded, never started; `lib/api/sessionCache.ts`):
+  when the card changes for the same session (a re-photographed page joined the homework help)
+  or the kept copy has fewer open questions than the card says, the copy is dropped and loaded
+  again — never shown as current (rule 5). Starting a
   prepared step returns the session with its id (`StartStepResponse.session`), so the first
   question needs no second request.
 - **About**: version from the app config; privacy, imprint and support rows only when
@@ -1181,6 +1186,9 @@ once (`abandonStaleUploads`, run by the scheduler).
   Every screenshot in the walkthroughs (`tests/web/fit.ts`) is taken at 390×844 and 360×740 and
   fails when anything has to be scrolled to be seen; only a conversation (`testID="scroll-thread"`)
   and a browsed list (`"scroll-list"`) may grow. Measurements go to `test-results/web/fit.jsonl`.
+  Before each screenshot the walkthrough waits until the screen stops changing (at most 1.6 s,
+  `settle`), so no entrance or celebration is caught half-faded; endless loops (the breathing
+  orb) only cost the wait. Product timing is not changed for the tests.
   `tests/web/tour.spec.ts` taps every control the other walkthroughs don't (undo, resend, earlier
   messages, changing and removing what Buddy knows, contact with the parents' PIN, times,
   language, a pause, a new PIN, the export, scheduling and cancelling a deletion, a dark photo

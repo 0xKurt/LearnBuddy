@@ -105,7 +105,7 @@ export default function BuddyScreen() {
   const { t } = useTranslation(['buddy', 'common', 'learn']);
   const home = useHome();
   // A practice to go on with is loaded while its card is on screen (gaps.md #2).
-  usePrefetchSession(home.data?.now?.type === 'resume_practice' ? home.data.now.session_id : null);
+  usePrefetchSession(home.data?.now);
   const [busy, setBusy] = useState(false);
   /** Photos left from before, not sent yet (lib/capture/draft.ts), and one just let go. */
   const [draft, setDraft] = useState<CaptureDraft | null>(null);

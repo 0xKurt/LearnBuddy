@@ -2,7 +2,7 @@
 // feeds back into: mutations that return a fresh home write it into the
 // cache instead of refetching.
 
-import type { BuddyHome, SessionView } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, NowCard, SessionView } from '@learnbuddy/shared-types/contracts';
 import NetInfo from '@react-native-community/netinfo';
 import { focusManager, onlineManager, QueryClient, useQuery } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore } from 'react';
@@ -13,6 +13,7 @@ import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
 import { writeHome } from './homeCache.js';
 import { keys } from './keys.js';
+import { followResumeCard } from './sessionCache.js';
 import {
   getHome,
   getLibrary,
@@ -132,15 +133,18 @@ export function seedSession(view: SessionView): void {
 /**
  * A practice to go on with is on screen (Buddy's card): it is loaded now, so "Weiter üben"
  * shows the question at once (gaps.md #2). Loaded, never started — nothing changes on the
- * server until she taps.
+ * server until she taps. When the card changes (a page joined the help), the copy is loaded
+ * again (lib/api/sessionCache.ts).
  */
-export function usePrefetchSession(id: string | null): void {
+export function usePrefetchSession(card: NowCard | null | undefined): void {
+  const resume = card?.type === 'resume_practice' ? card : null;
+  const id = resume?.session_id ?? null;
+  const remaining = resume?.remaining ?? null;
+  const title = resume?.title ?? null;
+  const mode = resume?.mode ?? null;
   useEffect(() => {
-    if (!id) return;
-    void queryClient.prefetchQuery({
-      queryKey: keys.session(id),
-      queryFn: () => getSession(id),
-      staleTime: 30_000,
-    });
-  }, [id]);
+    if (!resume) return;
+    followResumeCard(queryClient, resume, getSession);
+    // The card's content, not its object identity (every poll makes a new one).
+  }, [id, remaining, title, mode]);
 }

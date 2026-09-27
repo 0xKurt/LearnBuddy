@@ -95,21 +95,23 @@ function MarkedWords({ feedback }: { feedback: PronunciationFeedback }) {
     <View accessible accessibilityLabel={summary} style={{ gap: 6 }}>
       <Text style={[TYPE.title, { fontSize: 24, lineHeight: 36, fontWeight: '500' }]}>
         {feedback.words.map((w, i) => (
-          <Text
-            key={`${i}-${w.text}`}
-            style={
-              w.ok
-                ? { color: LB.successText }
-                : {
-                    color: LB.warningText,
-                    fontWeight: '700',
-                    textDecorationLine: 'underline',
-                    textDecorationColor: LB.warning,
-                  }
-            }
-          >
+          // The space before a word stays outside it: the underline marks only the word.
+          <Text key={`${i}-${w.text}`}>
             {i > 0 ? ' ' : ''}
-            {w.text}
+            <Text
+              style={
+                w.ok
+                  ? { color: LB.successText }
+                  : {
+                      color: LB.warningText,
+                      fontWeight: '700',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: LB.warning,
+                    }
+              }
+            >
+              {w.text}
+            </Text>
           </Text>
         ))}
       </Text>
