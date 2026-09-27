@@ -82,6 +82,13 @@ describe('photo quality', () => {
       expect(photo(f).problems, f).toEqual([]);
   });
 
+  it('does not call a readable 800 × 1080 sheet "sehr klein" (user feedback #16)', () => {
+    // The sample sheet as its own original: a messenger copy or a screenshot is this size.
+    const img = decode(readFileSync(join(DIR, 'sharp.jpg')), { useTArray: true });
+    expect(Math.min(img.width, img.height)).toBe(800);
+    expect(assessPixels(img.data, img.width, img.height, 800).problems).toEqual([]);
+  });
+
   it('names what is wrong', () => {
     expect(photo('blur.jpg').problems).toEqual(['blurry']);
     expect(photo('blur_strong.jpg').problems).toEqual(['blurry']);
