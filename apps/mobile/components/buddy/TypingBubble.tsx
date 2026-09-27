@@ -85,12 +85,12 @@ export function TypingBubble({ label }: { label: string }) {
 
 function Dot({ v }: { v: SharedValue<number> }) {
   const style = useAnimatedStyle(() => ({
-    opacity: 0.35 + v.value * 0.65,
+    opacity: 0.28 + v.value * 0.5,
     transform: [{ translateY: -v.value * 3 }, { scale: 0.9 + v.value * 0.15 }],
   }));
   return (
     <Animated.View
-      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: LB.lavenderDeep }, style]}
+      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: LB.primary }, style]}
     />
   );
 }

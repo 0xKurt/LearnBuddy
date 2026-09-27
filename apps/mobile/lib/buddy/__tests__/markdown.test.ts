@@ -80,8 +80,9 @@ describe('markdownPlain', () => {
       'Tipp: erst kürzen\n\n1. $\\frac{6}{8}$\n2. fertig',
     );
   });
-  it('drops bullets', () => {
-    expect(markdownPlain('- a\n- b')).toBe('a\nb');
+  it('writes bullets as •, and leaves them out when spoken', () => {
+    expect(markdownPlain('- a\n- b')).toBe('• a\n• b');
+    expect(markdownPlain('- a\n- b', { spoken: true })).toBe('a.\nb.');
   });
   it('leaves a formula with stars and underscores alone', () => {
     expect(markdownPlain('Rechne $a_1 * b_2$')).toBe('Rechne $a_1 * b_2$');

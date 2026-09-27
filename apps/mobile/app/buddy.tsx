@@ -168,7 +168,7 @@ export default function BuddyScreen() {
   /** To its newest message, unless she scrolled up to read (lib/homeLayout.ts followsEnd). */
   function follow(): void {
     const b = threadBox.current;
-    // Something she sent (or its reply) always brings her back to the end.
+    // Something she sent always brings her back to the end (a reply only while she follows it).
     if (followEnd.current) {
       b.following = true;
       setAtEnd(true);
@@ -285,8 +285,9 @@ export default function BuddyScreen() {
             setLive(null);
           }
           if (!e.speakable) return;
+          // Written at the end: seen there while she follows it; scrolled up to read, she
+          // stays where she is and "↓ Neue Antwort" shows.
           setLive(e.text);
-          followEnd.current = true;
         },
         controller.signal,
       );
@@ -310,7 +311,6 @@ export default function BuddyScreen() {
       if (sending.current?.id === clientMessageId) sending.current = null;
       setPending(null);
       setLive(null);
-      followEnd.current = true;
     }
   }
 

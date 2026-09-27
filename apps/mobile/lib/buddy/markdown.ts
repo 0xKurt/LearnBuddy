@@ -85,8 +85,9 @@ function logicalLines(text: string): string[] {
 }
 
 /**
- * The reply for a copy or a screen reader: the markers gone, the list items on their lines.
- * `spoken`: every list item ends as a sentence, so a voice pauses between them.
+ * The reply for a copy: the markers gone, the list items on their lines with "•" or their
+ * number. `spoken` (a voice, a screen reader): no bullet, and every list item ends as a
+ * sentence, so the voice pauses between them.
  */
 export function markdownPlain(text: string, opts: { spoken?: boolean } = {}): string {
   const item = (s: string) => (opts.spoken && !/[.!?:;,…]$/.test(s.trim()) ? `${s.trim()}.` : s);
@@ -95,7 +96,9 @@ export function markdownPlain(text: string, opts: { spoken?: boolean } = {}): st
       b.type === 'para'
         ? withoutMarkers(b.text)
         : b.items
-            .map((i) => item(`${b.ordered ? `${i.marker} ` : ''}${withoutMarkers(i.text)}`))
+            .map((i) =>
+              item(`${b.ordered || !opts.spoken ? `${i.marker} ` : ''}${withoutMarkers(i.text)}`),
+            )
             .join('\n'),
     )
     .join('\n\n');

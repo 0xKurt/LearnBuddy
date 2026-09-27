@@ -102,7 +102,7 @@ export function Conversation({
         const done = m.actions.filter(
           (a) => a.summary.tool !== 'offer_learning' && a.summary.tool !== 'open_area',
         );
-        const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(markdownPlain(m.text), words)}`;
+        const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(markdownPlain(m.text, { spoken: true }), words)}`;
         const stopped = mine && m.status === 'failed' && m.failure_code === 'stopped';
         return (
           <Animated.View
