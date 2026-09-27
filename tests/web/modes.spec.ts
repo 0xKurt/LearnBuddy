@@ -55,6 +55,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByLabel(/Ich helfe Lücke Mutter/)).toBeVisible();
   await page.getByLabel('Deine Antwort').fill('der');
   await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
+  // The focus ring is the answer pill's, not the browser's black box around the bare field.
+  expect(
+    await page.getByLabel('Deine Antwort').evaluate((el) => getComputedStyle(el).outlineWidth),
+  ).toBe('0px');
   await shot(page, '22b-fill-blank');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
@@ -151,6 +155,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
   await homeSwitch.click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+  // Off again: "Ich lese dir vor …" no longer holds, so it does not stay on screen.
+  await expect(explained).toHaveCount(0);
 
   // ── Practice test: no verdicts or solutions until the end ──
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
