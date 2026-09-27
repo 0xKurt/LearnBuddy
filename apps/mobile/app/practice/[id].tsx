@@ -58,6 +58,7 @@ import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceLis
 import { ExplainCard, ExplainText } from '../../components/practice/ExplainCard.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
+import { TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
 import { AgainButton } from '../../components/practice/AgainButton.js';
@@ -819,54 +820,58 @@ export default function PracticeScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
           ) : null}
         </ScrollView>
-        <ScrollView
-          ref={scroll}
-          testID="scroll-thread"
-          style={{ flex: 1 }}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'flex-end',
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            gap: 12,
-          }}
-          onContentSizeChange={() => {
-            if (followEnd) scroll.current?.scrollToEnd({ animated: true });
-          }}
-          onLayout={() => {
-            // The keyboard shrinks this view; keep the latest reply visible above it.
-            if (followEnd) scroll.current?.scrollToEnd({ animated: false });
-          }}
-        >
-          <ItemThread turns={turns} pending={pendingText} hideVerdicts={testing} />
-          {session.mode === 'help' && shown.status === 'correct' ? (
-            <Rise delay={180}>
-              <SelfSolvedCard />
-            </Rise>
-          ) : null}
-          {shown.status !== 'open' && shown.answer !== null ? (
-            <Rise delay={180}>
-              <SolutionCard
-                status={shown.status}
-                answer={shown.answer}
-                numeric={item.kind === 'numeric'}
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            ref={scroll}
+            testID="scroll-thread"
+            style={[{ flex: 1 }, topEdgeMask]}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: 'flex-end',
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              gap: 12,
+            }}
+            onContentSizeChange={() => {
+              if (followEnd) scroll.current?.scrollToEnd({ animated: true });
+            }}
+            onLayout={() => {
+              // The keyboard shrinks this view; keep the latest reply visible above it.
+              if (followEnd) scroll.current?.scrollToEnd({ animated: false });
+            }}
+          >
+            <ItemThread turns={turns} pending={pendingText} hideVerdicts={testing} />
+            {session.mode === 'help' && shown.status === 'correct' ? (
+              <Rise delay={180}>
+                <SelfSolvedCard />
+              </Rise>
+            ) : null}
+            {shown.status !== 'open' && shown.answer !== null ? (
+              <Rise delay={180}>
+                <SolutionCard
+                  status={shown.status}
+                  answer={shown.answer}
+                  numeric={item.kind === 'numeric'}
+                />
+              </Rise>
+            ) : null}
+            {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
+              <ListenButton text={shown.answer} lang={item.lang} />
+            ) : null}
+            {canExplainAgain ? (
+              <Reexplain
+                turns={turnsAgain}
+                pending={again?.itemId === item.id ? again.way : null}
+                disabled={locked}
+                delay={1000}
+                onAsk={(way) => void explainAgain(item.id, way)}
               />
-            </Rise>
-          ) : null}
-          {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
-            <ListenButton text={shown.answer} lang={item.lang} />
-          ) : null}
-          {canExplainAgain ? (
-            <Reexplain
-              turns={turnsAgain}
-              pending={again?.itemId === item.id ? again.way : null}
-              disabled={locked}
-              delay={1000}
-              onAsk={(way) => void explainAgain(item.id, way)}
-            />
-          ) : null}
-        </ScrollView>
+            ) : null}
+          </ScrollView>
+          {/* What scrolls up under the question fades out instead of peeking out (finding 8). */}
+          <TopEdgeFade />
+        </View>
         {open && choices ? (
           <View
             style={{

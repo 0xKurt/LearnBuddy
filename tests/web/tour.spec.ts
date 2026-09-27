@@ -207,9 +207,12 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   });
   // Read now, and a practice made from its one question: "1 Aufgabe", not "1 Aufgaben".
   await expect(page.getByText(/^1 Aufgabe · ca\. \d+ Min\.$/)).toBeVisible({ timeout: 15_000 });
+  // The slim bar opens on a tap: the details and "Heute nicht".
+  await page.getByRole('button', { name: /^Übung bereit: Nomen und Verben\./ }).click();
+  await shot(page, '51-ready-bar-open');
   // "Heute nicht": the practice steps aside without a trace of pressure.
   await page.getByRole('button', { name: 'Heute nicht' }).click();
-  await expect(page.getByText('Übung bereit: Nomen und Verben')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Übung bereit: / })).toHaveCount(0);
   await openMenu(page, 'Mein Stoff');
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   // A page she forgot can be added to the sheet.

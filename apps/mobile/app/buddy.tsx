@@ -33,6 +33,8 @@ import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
+import { SLIM_CLOSE_TOP } from '../components/buddy/SlimBar.js';
+import { TopEdgeFade, topEdgeMask } from '../components/lb/EdgeFade.js';
 import { NowCard } from '../components/buddy/NowCard.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
 import { CLOSE_INSET, TopOverlay } from '../components/buddy/TopOverlay.js';
@@ -708,6 +710,10 @@ export default function BuddyScreen() {
   // beside the card, nothing a screen reader finds behind it — in place, so nothing moves.
   // A shorter card leaves them as they are.
   const covered = top.length > 0 && threadTop > 0 && cardHeight >= threadTop - LABEL_ROOM;
+  // The first-visit layout: a card on top lies over the greeting — also the slim bar, which
+  // would leave it half hidden under its fade; the greeting steps back in place (nothing moves).
+  // (A position measured with onLayout goes stale on the web: it only reports size changes.)
+  const greetingCovered = top.length > 0;
   // The one headline: her name gets the full width (long names wrap, never overlap).
   const greeting = (
     <View style={{ gap: talking ? 0 : 4 }}>
@@ -804,6 +810,12 @@ export default function BuddyScreen() {
               closeLabel={t('buddy:card.close')}
               onClose={() => closeCard(openCard)}
               onHeight={setCardHeight}
+              closeTop={
+                layout.top === 'now' &&
+                (h.now?.type === 'practice_ready' || h.now?.type === 'material_processing')
+                  ? SLIM_CLOSE_TOP
+                  : undefined
+              }
             >
               {top}
             </TopOverlay>
@@ -832,7 +844,7 @@ export default function BuddyScreen() {
               <ScrollView
                 ref={scroll}
                 testID="scroll-thread"
-                style={{ flex: 1 }}
+                style={[{ flex: 1 }, topEdgeMask]}
                 contentContainerStyle={{
                   flexGrow: 1,
                   justifyContent: 'flex-end',
@@ -891,6 +903,9 @@ export default function BuddyScreen() {
                   }
                 />
               </ScrollView>
+              {/* A message scrolled up under the ways to start fades out there instead of a
+                  hard-cut violet sliver (live finding 8). */}
+              {!covered && threadTop > 0 ? <TopEdgeFade top={threadTop} /> : null}
               {pill ? (
                 <Animated.View
                   entering={riseIn(0)}
@@ -941,7 +956,14 @@ export default function BuddyScreen() {
                 />
               }
             >
-              {greeting}
+              {/* Under a card on top the greeting steps back instead of peeking out half hidden. */}
+              <View
+                style={{ opacity: greetingCovered ? 0 : 1 }}
+                accessibilityElementsHidden={greetingCovered}
+                importantForAccessibility={greetingCovered ? 'no-hide-descendants' : 'auto'}
+              >
+                {greeting}
+              </View>
               {/* The ring: Buddy in the middle, ways to start around it. */}
               <OrbitMenu
                 items={orbitItems(h.next)}

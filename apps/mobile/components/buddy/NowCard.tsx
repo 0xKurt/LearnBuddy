@@ -10,7 +10,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { whenText } from './describe.js';
-import { ReadingCard } from './ReadingCard.js';
+import { ReadingBar, ReadyBar } from './SlimBar.js';
 
 /** Where a capture from the card leads: the step, goal, purpose and sheet it belongs to. */
 export type CaptureTarget = {
@@ -77,36 +77,15 @@ export function NowCard({
         </Card>
       );
     case 'practice_ready':
+      // One slim line with "Jetzt üben"; the test it is for and "Heute nicht" on a tap.
       return (
-        <Card tone="primaryLt" padding={16} radius={22}>
-          <Text accessibilityRole="header" style={[TYPE.title, inset]}>
-            {t('now.ready_title', { title: card.title })}
-          </Text>
-          <Text style={[TYPE.body, { marginTop: 4 }]}>
-            {t('now.ready_body', { count: card.question_count, minutes: card.est_minutes })}
-          </Text>
-          {card.goal?.due_date ? (
-            <Text style={[TYPE.small, { marginTop: 2 }]}>
-              {t('now.ready_for_exam', {
-                exam: card.goal.title,
-                when: whenText(card.goal.due_date),
-              })}
-            </Text>
-          ) : null}
-          {card.focus_topics.length > 0 ? (
-            <Text style={[TYPE.small, { marginTop: 2 }]}>
-              {t('now.ready_focus', { topics: card.focus_topics.join(', ') })}
-            </Text>
-          ) : null}
-          <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            <Btn onPress={() => onStart(card.step_id)} disabled={busy}>
-              {t('now.ready_cta')}
-            </Btn>
-            <Btn variant="ghost" onPress={() => onSkip(card.step_id)} disabled={busy}>
-              {t('now.ready_later')}
-            </Btn>
-          </View>
-        </Card>
+        <ReadyBar
+          card={card}
+          busy={busy}
+          titleInset={titleInset}
+          onStart={onStart}
+          onSkip={onSkip}
+        />
       );
     case 'capture_needed':
       return (
@@ -128,10 +107,8 @@ export function NowCard({
         </Card>
       );
     case 'material_processing':
-      // The real stages of the reading (gap 5): photo, what happens now, the steps.
-      return (
-        <ReadingCard card={card} thumb={thumb} preparing={preparing} titleInset={titleInset} />
-      );
+      // The real stages of the reading (gap 5) as one slim line: photo, status, dots.
+      return <ReadingBar card={card} thumb={thumb} preparing={preparing} titleInset={titleInset} />;
     case 'material_failed':
       return (
         <Card tone="butter" padding={16} radius={22}>

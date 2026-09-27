@@ -601,8 +601,14 @@ carries only real stages (`stage`: `sending` photos on their way, `waiting` for 
 the tasks found, a result and never a count of work to do), the number of photos (`pages`) and
 the purpose (homework has no practice to build). All pages are read in one model call, so there
 is no page-by-page progress and none is shown; nothing moves by itself (CLAUDE.md rule 5). The app
-(`components/buddy/ReadingCard.tsx`, `lib/buddy/readingStages.ts`) shows the photo, the stage
-and the steps "Angekommen · Lesen · Übungen"; `reading-stages.int.test.ts`.
+(`components/buddy/SlimBar.tsx` `ReadingBar`, `lib/buddy/readingStages.ts`) shows it as one slim
+bar on top of the home (owner request: the card was "ein Riesenbrett"; ~60 pt): the photo, the
+stage in a few words and the steps as dots inline, the step being worked on named; a tap opens
+the details (the line "Du kannst die App solange schließen", every step by name). Prepared
+practice gets the same bar (`ReadyBar`: "Übung bereit", what and how long in one line, a compact
+"Jetzt üben"; the test it is for, the focus and "Heute nicht" on a tap). Screen readers hear the
+whole content as the bar's label; closing and swiping it away stay as before;
+`reading-stages.int.test.ts`.
 "Mein Stoff" follows a sheet being read the same way (live finding 3: the list still said "Ohne
 Titel · wird gelesen" once the sheet was read): it is fetched every 2.5 s and on every visit while
 a row is `queued`/`processing`, a fresher view of the sheet from its own screen is written into the
