@@ -110,6 +110,7 @@
       "body": "Everything is deleted for good after 7 days. Until then you can cancel it.",
       "cta": "Delete account …",
       "scheduled": "Deletion is scheduled: from {{date}} at {{time}}. Until then you can cancel it.",
+      "running": "Your account is being deleted right now. This can no longer be cancelled.",
       "cancel": "Cancel deletion",
       "cancelled": "Deletion cancelled. Everything stays as it was.",
       "confirm_title": "Really delete the account?",

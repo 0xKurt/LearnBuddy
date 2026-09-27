@@ -16,6 +16,7 @@ import {
   type AccountRow,
   type LearnerRow,
 } from '../modules/identity/model.js';
+import { assertNotDeleting } from '../modules/identity/privacy.js';
 
 export type LearnerContext = LearnerRow & { isMinor: boolean; timezone: string };
 
@@ -55,6 +56,8 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
 export const requireAccount: MiddlewareHandler<AppEnv> = async (c, next) => {
   const account = await findAccountByUser(depsOf(c).db, c.get('user').userId);
   if (!account) throw new AppError('forbidden', 'No account yet', { reason: 'account_missing' });
+  // A deletion that has begun takes no more writes and cannot be cancelled (docs/privacy.md).
+  assertNotDeleting(account.deletion_started_at);
   c.set('account', account);
   await next();
 };

@@ -187,16 +187,18 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
               <Row
                 question={t('settings:adult.delete.title')}
                 answer={
-                  due
-                    ? t('settings:adult.delete.scheduled', {
-                        date: formatDate(due, lang),
-                        time: formatTime(due, lang),
-                      })
-                    : undefined
+                  account.deletion_running
+                    ? t('settings:adult.delete.running')
+                    : due
+                      ? t('settings:adult.delete.scheduled', {
+                          date: formatDate(due, lang),
+                          time: formatTime(due, lang),
+                        })
+                      : undefined
                 }
                 hint={due ? undefined : t('settings:adult.delete.body')}
               >
-                {due ? (
+                {account.deletion_running ? null : due ? (
                   <Btn pill onPress={() => void cancelScheduledDeletion()} disabled={busy !== null}>
                     {t('settings:adult.delete.cancel')}
                   </Btn>

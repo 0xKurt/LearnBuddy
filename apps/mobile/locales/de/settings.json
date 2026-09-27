@@ -110,6 +110,7 @@
       "body": "Alles wird nach 7 Tagen endgültig gelöscht. Bis dahin kannst du es abbrechen.",
       "cta": "Konto löschen …",
       "scheduled": "Die Löschung ist geplant: ab {{date}} um {{time}} Uhr. Bis dahin kannst du sie abbrechen.",
+      "running": "Dein Konto wird gerade gelöscht. Das lässt sich nicht mehr abbrechen.",
       "cancel": "Löschung abbrechen",
       "cancelled": "Löschung abgebrochen. Alles bleibt, wie es war.",
       "confirm_title": "Konto wirklich löschen?",

@@ -24,6 +24,8 @@ export const MeResponse = z.object({
       locale: AppLocale,
       pin_set: z.boolean(),
       deletion_due_at: IsoDateTime.nullable(),
+      /** The 7-day hold is over and the deletion is being carried out (no longer cancellable). */
+      deletion_running: z.boolean(),
       consent_current: z.boolean(),
     })
     .nullable(),

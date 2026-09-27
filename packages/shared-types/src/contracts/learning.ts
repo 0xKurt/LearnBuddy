@@ -61,6 +61,8 @@ export const MaterialView = z.object({
   title: z.string().nullable(),
   status: MaterialStatus,
   failure_reason: MaterialFailure.nullable(),
+  /** The photos are gone (retention or deletion): reading it again is not possible. */
+  photos_deleted: z.boolean(),
   item_count: z.number().int(),
   subject_name: z.string().nullable(),
   goal_id: Uuid.nullable(),
