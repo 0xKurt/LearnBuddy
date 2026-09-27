@@ -99,11 +99,13 @@
     },
     "export": {
       "title": "Daten exportieren",
-      "body": "Alles, was gespeichert ist, als Text. Zum Sichern oder Weitergeben.",
+      "body": "Alles, was gespeichert ist, als Datei. Zum Sichern oder Weitergeben.",
       "cta": "Export erstellen",
       "working": "Export wird erstellt …",
       "share_title": "LearnBuddy-Export",
-      "share_failed": "Teilen hat nicht geklappt. Versuch es nochmal."
+      "share_failed": "Die Datei ließ sich nicht übergeben. Versuch es nochmal.",
+      "shared": "Der Export ist übergeben.",
+      "saved": "Der Export ist als Datei gespeichert."
     },
     "delete": {
       "title": "Konto löschen",
@@ -149,7 +151,17 @@
       "password_saved": "Neues Passwort gespeichert."
     },
     "open": "Öffnen",
-    "close": "Schließen"
+    "close": "Schließen",
+    "profile": {
+      "title": "Profil korrigieren",
+      "current": "{{name}}, geboren am {{date}}",
+      "body": "Stimmt der Name oder das Geburtsdatum nicht? Hier lässt es sich richtigstellen.",
+      "cta": "Korrigieren",
+      "sheet_title": "Profil korrigieren",
+      "name": "Name",
+      "save": "Speichern",
+      "saved": "Profil gespeichert."
+    }
   },
   "status": {
     "title": "Läuft alles?",

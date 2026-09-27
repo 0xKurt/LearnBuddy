@@ -1,4 +1,7 @@
 // Consent to the current privacy text (its version comes from the API).
+// Declining is a real choice: "Nicht einverstanden" signs out (H-22). When the
+// text changed for an account with a minor's profile, agreeing again is the
+// parents' decision: the API asks for their PIN, and the PIN screen opens.
 
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -13,11 +16,13 @@ import { Icon } from '../components/lb/Icon.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
+import { AdultCancelled, asAdultIfNeeded } from '../components/settings/adultGate.js';
 import { createAccount, getMe } from '../lib/api/endpoints.js';
 import { keys, queryClient, useMe } from '../lib/api/queries.js';
 import { ENV } from '../lib/env.js';
 import { messageFor } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
+import { signOutHere } from '../lib/leave.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
@@ -40,15 +45,33 @@ export default function Consent() {
   if (me.isPending) return <LoadingState />;
 
   async function accept() {
-    if (!me.data) return;
+    if (!me.data || busy) return;
+    const version = me.data.consent_version;
     setBusy(true);
     try {
-      await createAccount(currentLocale(), me.data.consent_version);
+      await asAdultIfNeeded(() => createAccount(currentLocale(), version), {
+        pinSet: me.data.account?.pin_set ?? false,
+        purpose: 'consent',
+      });
       // Load the fresh state before routing, so the gate never decides on stale data.
       await queryClient.fetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: 0 });
       router.replace('/');
     } catch (err) {
-      toast.show(messageFor(err), 'error');
+      if (err instanceof AdultCancelled) {
+        if (err.reason === 'no_pin') toast.show(t('consent.parents_needed'));
+      } else {
+        toast.show(messageFor(err), 'error');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function decline() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await signOutHere();
     } finally {
       setBusy(false);
     }
@@ -109,6 +132,9 @@ export default function Consent() {
         </Card>
         <Btn size="lg" pill full disabled={!accepted || busy} onPress={() => void accept()}>
           {t('consent.cta')}
+        </Btn>
+        <Btn variant="ghost" size="sm" pill center disabled={busy} onPress={() => void decline()}>
+          {t('consent.decline')}
         </Btn>
       </View>
     </Screen>

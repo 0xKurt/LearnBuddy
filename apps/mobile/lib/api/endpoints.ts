@@ -58,6 +58,10 @@ export const createLearner = (input: CreateLearnerRequest) =>
 export const updateLearner = (input: UpdateLearnerRequest) =>
   request('PATCH', '/learner', { body: input, schema: LearnerView });
 
+/** A new password; for a minor's profile the server wants the parents' admin token. */
+export const setPassword = (password: string) =>
+  request('PUT', '/account/password', { body: { password } });
+
 export const setPin = (pin: string, currentPin?: string) =>
   request('PUT', '/account/pin', {
     body: { pin, ...(currentPin ? { current_pin: currentPin } : {}) },

@@ -12,7 +12,7 @@
     "stale": "Ça a été modifié entre-temps. Je l'ai rechargé.",
     "too_large": "C'est trop volumineux.",
     "invalid_input": "Quelque chose ne va pas dans la saisie.",
-    "pin_locked": "Trop de tentatives. Attends 15 minutes, s'il te plaît.",
+    "pin_locked": "Trop de tentatives. Le code PIN est bloqué pour le moment – réessayez plus tard.",
     "rate_limited": "Respire un peu – on continue dans un instant.",
     "budget_exhausted": "Buddy ne peut plus répondre aujourd'hui – retour demain. Tu peux quand même t'entraîner.",
     "internal": "Quelque chose n'a pas marché. Réessaie dans un instant.",
@@ -34,7 +34,10 @@
     "deletion_scheduled": "La suppression du compte est programmée.",
     "account_missing": "Configure d'abord ton compte, s'il te plaît.",
     "learner_missing": "Crée d'abord ton profil, s'il te plaît.",
-    "reauth_required": "Confirme cette action avec ton mot de passe (en te reconnectant)."
+    "reauth_required": "Confirme cette action avec ton mot de passe (en te reconnectant).",
+    "learner_exists": "Le profil existe déjà.",
+    "weak_password": "Ce mot de passe n'est pas accepté. Choisis-en un autre, d'au moins 8 caractères.",
+    "profile_invalid": "Cela ne va pas ensemble. Vérifie les informations."
   },
   "turn": {
     "model_unavailable": "Buddy n'a pas pu répondre à l'instant.",

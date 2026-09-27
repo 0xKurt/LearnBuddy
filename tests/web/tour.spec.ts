@@ -122,12 +122,17 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
   await expect(page.getByText('Daten exportieren')).toBeVisible();
   await page.getByRole('button', { name: 'Konto löschen …' }).click();
+  // A child's account: the parents' PIN first (the pad names the step), then their confirmation.
+  await expect(
+    page.getByText('Für die Eltern: Das Konto löschen. Bitte die PIN eingeben.'),
+  ).toBeVisible();
+  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
   await page.getByRole('button', { name: 'Ja, in 7 Tagen löschen' }).click();
-  // A child's account: the parents' PIN again.
+  await expect(page.getByText(/Die Löschung ist geplant/).first()).toBeVisible();
+  // The PIN counted for that one step: cancelling asks for it again.
+  await page.getByRole('button', { name: 'Löschung abbrechen' }).click();
   await expect(page.getByRole('button', { name: '2', exact: true })).toBeVisible();
   for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
-  await expect(page.getByText(/Die Löschung ist geplant/).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Löschung abbrechen' }).click();
   await expect(page.getByText(/Löschung abgebrochen/)).toBeVisible();
   await shot(page, '45-parents', { opened: true });
   // A new PIN, with the current one.
@@ -137,10 +142,18 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByLabel('Neue PIN wiederholen').fill('1357');
   await page.getByRole('button', { name: 'PIN speichern' }).click();
   await expect(page.getByText('PIN gespeichert.')).toBeVisible();
-  // The export is made (on a phone it opens the share sheet; a browser may not share).
-  const exported = page.waitForResponse((r) => r.url().endsWith('/v1/account/export'));
+  // The export is made as a file (a download in the browser), with the parents' new PIN:
+  // each gated step asks for it again.
+  const exported = page.waitForResponse(
+    (r) => r.url().endsWith('/v1/account/export') && r.status() === 200,
+  );
   await page.getByRole('button', { name: 'Export erstellen' }).click();
+  await expect(
+    page.getByText('Für die Eltern: Alle Daten exportieren. Bitte die PIN eingeben.'),
+  ).toBeVisible();
+  for (const digit of '1357') await page.getByRole('button', { name: digit, exact: true }).click();
   expect((await exported).status()).toBe(200);
+  await expect(page.getByText('Der Export ist als Datei gespeichert.')).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── A sheet Buddy could not read: read again ──

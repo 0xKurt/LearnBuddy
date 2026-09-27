@@ -1,4 +1,5 @@
-// The adult's PIN (modal). Opens a 10-minute admin session in memory.
+// The adult's PIN (modal). Opens a short admin session in memory for the one
+// step it names (lib/adminFlow.ts purpose), so the parents see what they approve.
 
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -9,19 +10,24 @@ import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { PinPad } from '../components/lb/PinPad.js';
 import { Screen } from '../components/lb/Screen.js';
-import { finishAdmin } from '../lib/adminFlow.js';
+import { clearAdminToken } from '../lib/admin.js';
+import { finishAdmin, pendingAdminPurpose } from '../lib/adminFlow.js';
 import { ApiError } from '../lib/api/client.js';
 import { openAdminSession } from '../lib/api/endpoints.js';
 import { messageFor } from '../lib/errors.js';
+import { formatTime } from '../lib/time.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
 export default function Pin() {
-  const { t } = useTranslation('auth');
+  const { t, i18n } = useTranslation('auth');
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const done = useRef(false);
+  const inFlight = useRef(false);
+  // Fixed when the screen opens: what the parents are asked to approve.
+  const [purpose] = useState(pendingAdminPurpose);
 
   // Leaving the screen any other way counts as "cancelled".
   useEffect(
@@ -32,19 +38,30 @@ export default function Pin() {
   );
 
   async function submit(pin: string) {
+    if (inFlight.current || done.current) return;
+    inFlight.current = true;
     setBusy(true);
     try {
       await openAdminSession(pin);
       done.current = true;
-      finishAdmin(true);
+      // Nobody waiting (e.g. a pad left over from a double tap): keep no token.
+      if (!finishAdmin(true)) clearAdminToken();
       router.back();
     } catch (err) {
       if (err instanceof ApiError && err.reason === 'wrong_pin') setError(t('pin.wrong'));
-      else if (err instanceof ApiError && err.code === 'pin_locked') setError(t('pin.locked'));
-      else if (err instanceof ApiError && err.reason === 'pin_not_set') setError(t('pin.not_set'));
+      else if (err instanceof ApiError && err.code === 'pin_locked') {
+        const until = err.details?.until;
+        setError(
+          typeof until === 'string'
+            ? t('pin.locked_until', { time: formatTime(until, i18n.language) })
+            : t('pin.locked'),
+        );
+      } else if (err instanceof ApiError && err.reason === 'pin_not_set')
+        setError(t('pin.not_set'));
       else setError(messageFor(err));
       setAttempt((a) => a + 1);
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -67,7 +84,7 @@ export default function Pin() {
             {t('pin.title')}
           </Text>
           <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 360 }]}>
-            {t('pin.body')}
+            {purpose ? t(`pin.purpose.${purpose}`) : t('pin.body')}
           </Text>
         </View>
         {error ? (

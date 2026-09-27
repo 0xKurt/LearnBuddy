@@ -7,6 +7,7 @@ import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { onlineManager } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -14,6 +15,8 @@ import { ErrorBoundary } from '../components/lb/ErrorBoundary.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { OfflineFrame } from '../components/lb/OfflineFrame.js';
 import { ToastHost } from '../components/lb/Toast.js';
+import { clearAdminToken, installAdminAutoClear } from '../lib/admin.js';
+import { ApiError } from '../lib/api/client.js';
 import { outreachOpened, postAnswer } from '../lib/api/endpoints.js';
 import { clearOutbox, flushOutbox } from '../lib/api/outboxSync.js';
 import { drafts } from '../lib/capture/draftStorage.js';
@@ -43,13 +46,26 @@ export default function RootLayout() {
       if (online) void sendKeptAnswers();
     });
     void clearLegacyLocalNotifications();
+    // The parents' PIN unlocks one step, never a phone left in the background.
+    const offAdmin = installAdminAutoClear(AppState);
     const offSession = onSessionChange((s) => {
       if (!s) {
+        clearAdminToken();
         void clearOutbox();
         // A shared phone: the next person does not find her photos.
         void drafts.clearAll();
         queryClient.clear();
         router.replace('/');
+      }
+    });
+    // A new privacy text while the app is open: the server refuses until it is
+    // accepted again (409 consent_outdated), so go to the consent screen.
+    const offConsent = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type !== 'updated' || event.action.type !== 'error') return;
+      const err = event.action.error;
+      if (err instanceof ApiError && err.reason === 'consent_outdated') {
+        void queryClient.invalidateQueries({ queryKey: keys.me });
+        router.replace('/consent');
       }
     });
     const offTap = onNotificationTap((outreachId) => {
@@ -60,6 +76,8 @@ export default function RootLayout() {
     });
     return () => {
       offOnline();
+      offAdmin();
+      offConsent();
       offSession();
       offTap();
     };

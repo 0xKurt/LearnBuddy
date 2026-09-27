@@ -1,21 +1,25 @@
 // The parents' area ("Für Eltern" for a minor's profile, "Dein Konto" for an
 // adult learner), set apart from the learner's own settings: the parents'
 // PIN, the sign-in's e-mail and password, data export, account deletion and
-// sign-out (docs/privacy.md §Export and deletion). For a minor, export and deletion need the parents: the API
-// answers admin_required, the PIN screen opens and the call is retried once.
-// Deletion is scheduled with a 7-day hold; the date shown is the API's.
+// sign-out (docs/privacy.md §Export and deletion), and correcting the profile.
+// For a minor, export and deletion need the parents: the API answers
+// admin_required, the PIN screen opens (naming the step) and the call is
+// retried once; for deletion the PIN comes before the confirmation, so the
+// one confirming is the adult. The export is handed over as a file
+// (lib/exportFile.ts). Deletion is scheduled with a 7-day hold; the date shown
+// is the API's.
 
 import type { LearnerView, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
-import { Share, Text, View, type TextInput } from 'react-native';
+import { Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { clearAdminToken } from '../../lib/admin.js';
+import { adminToken, clearAdminToken } from '../../lib/admin.js';
 import { cancelDeletion, exportAccount, requestDeletion } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { currentSession } from '../../lib/auth/session.js';
-import { signOut } from '../../lib/auth/supabase.js';
-import { unregisterDeviceForPush } from '../../lib/push.js';
+import { deliverExport } from '../../lib/exportFile.js';
+import { signOutHere } from '../../lib/leave.js';
 import { messageFor } from '../../lib/errors.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -25,12 +29,19 @@ import { Card } from '../lb/Card.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { AccountAccessCard } from './AccountAccessCard.js';
-import { AdultCancelled, afterModalCloses, asAdultIfNeeded } from './adultGate.js';
+import { AdultCancelled, afterModalCloses, asAdultIfNeeded, confirmAdult } from './adultGate.js';
 import { Group } from './Group.js';
 import { PinCard } from './PinCard.js';
+import { ProfileFixCard } from './ProfileFixCard.js';
 import { Row } from './Row.js';
 
 type Task = 'export' | 'delete' | 'cancel' | 'signout';
+
+/** The file export (M-11): what the parents get told afterwards. */
+const EXPORT_DONE = {
+  shared: 'settings:adult.export.shared',
+  saved: 'settings:adult.export.saved',
+} as const;
 
 type Props = {
   account: NonNullable<MeResponse['account']>;
@@ -56,7 +67,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
   const email = currentSession()?.email ?? '';
   const due = account.deletion_due_at;
   const lang = i18n.language;
-  const gate = { pinSet: account.pin_set };
+  const pinSet = account.pin_set;
 
   /** One account task at a time (a ref, so a double tap cannot start two). */
   async function run(task: Task, work: () => Promise<void>) {
@@ -81,29 +92,47 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
     run('export', async () => {
       const shown = { pin: false };
       const data = await asAdultIfNeeded(() => exportAccount(), {
-        ...gate,
+        pinSet,
+        purpose: 'export',
         onPrompt: () => {
           shown.pin = true;
         },
       });
-      // The PIN screen has to be gone before the share sheet can open.
+      // The PIN screen has to be gone before the share sheet or folder picker can open.
       if (shown.pin) await afterModalCloses();
       try {
-        await Share.share({
-          title: t('settings:adult.export.share_title'),
-          message: JSON.stringify(data, null, 2),
-        });
+        const result = await deliverExport(
+          JSON.stringify(data, null, 2),
+          t('settings:adult.export.share_title'),
+        );
+        if (result !== 'cancelled') toast.show(t(EXPORT_DONE[result]));
       } catch {
         toast.show(t('settings:adult.export.share_failed'), 'error');
       }
     });
 
+  /** For a minor the PIN comes first, then the confirmation (from the adult). */
+  const askDeletion = () =>
+    run('delete', async () => {
+      if (minor) {
+        const prompted = adminToken() === null;
+        await confirmAdult(pinSet, 'delete');
+        if (prompted) await afterModalCloses();
+      }
+      setDeleteOpen(true);
+    });
+
+  const closeDeletion = () => {
+    setDeleteOpen(false);
+    clearAdminToken();
+  };
+
   const scheduleDeletion = () => {
     setDeleteOpen(false);
     return run('delete', async () => {
-      // The sheet has to be gone before the parents' PIN screen can open.
+      // The sheet has to be gone before the parents' PIN screen could open (token lapsed).
       await afterModalCloses();
-      const res = await asAdultIfNeeded(() => requestDeletion(), gate);
+      const res = await asAdultIfNeeded(() => requestDeletion(), { pinSet, purpose: 'delete' });
       setDeletionDue(res.deletion_due_at);
       toast.show(t('settings:adult.delete.scheduled_toast'));
       void queryClient.invalidateQueries({ queryKey: keys.me });
@@ -112,7 +141,10 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
 
   const cancelScheduledDeletion = () =>
     run('cancel', async () => {
-      const res = await asAdultIfNeeded(() => cancelDeletion(), gate);
+      const res = await asAdultIfNeeded(() => cancelDeletion(), {
+        pinSet,
+        purpose: 'cancel_deletion',
+      });
       setDeletionDue(res.deletion_due_at);
       toast.show(t('settings:adult.delete.cancelled'));
       void queryClient.invalidateQueries({ queryKey: keys.me });
@@ -122,11 +154,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
     setSignOutOpen(false);
     return run('signout', async () => {
       await afterModalCloses();
-      clearAdminToken();
-      // Still signed in: tell the server this phone no longer gets Buddy's messages.
-      await unregisterDeviceForPush();
-      // The root layout returns to the start screen once the session is gone.
-      await signOut();
+      await signOutHere();
     });
   };
 
@@ -152,6 +180,8 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
             {minor ? (
               <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
             ) : null}
+
+            <ProfileFixCard learner={learner} pinSet={pinSet} enabled={busy === null} />
 
             <AccountAccessCard
               minor={minor}
@@ -204,7 +234,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                   <Btn
                     pill
                     variant="danger"
-                    onPress={() => setDeleteOpen(true)}
+                    onPress={() => void askDeletion()}
                     disabled={busy !== null}
                   >
                     {t('settings:adult.delete.cta')}
@@ -240,12 +270,9 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         visible={deleteOpen}
         title={t('settings:adult.delete.confirm_title')}
         closeLabel={t('common:actions.cancel')}
-        onClose={() => setDeleteOpen(false)}
+        onClose={closeDeletion}
       >
         <Text style={TYPE.body}>{t('settings:adult.delete.confirm_body')}</Text>
-        {minor ? (
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
-        ) : null}
         <Btn pill variant="danger" full onPress={() => void scheduleDeletion()}>
           {t('settings:adult.delete.confirm_cta')}
         </Btn>

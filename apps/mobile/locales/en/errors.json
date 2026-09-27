@@ -12,7 +12,7 @@
     "stale": "That was changed in the meantime. I've reloaded it.",
     "too_large": "That's too large.",
     "invalid_input": "Something about the input isn't right.",
-    "pin_locked": "Too many attempts. Please wait 15 minutes.",
+    "pin_locked": "Too many attempts. The PIN is locked for now – please try again later.",
     "rate_limited": "Take a breath – we'll continue in a moment.",
     "budget_exhausted": "Buddy can't answer any more today – back tomorrow. Practising still works.",
     "internal": "Something went wrong. Try again in a moment.",
@@ -34,7 +34,10 @@
     "deletion_scheduled": "The account is scheduled for deletion.",
     "account_missing": "Please set up your account first.",
     "learner_missing": "Please create your profile first.",
-    "reauth_required": "Please confirm this with your password (sign in again)."
+    "reauth_required": "Please confirm this with your password (sign in again).",
+    "learner_exists": "The profile already exists.",
+    "weak_password": "This password can't be used. Please choose another one, at least 8 characters.",
+    "profile_invalid": "That doesn't fit together. Please check the details."
   },
   "turn": {
     "model_unavailable": "Buddy couldn't answer just now.",
