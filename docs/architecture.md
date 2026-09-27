@@ -134,10 +134,16 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 `TurnDecision` (JSON schema) — after up to two rounds of lookups (below) — validates and applies it.
 
 - Duplicate request → replay (done) or "processing" (202); never a second run.
-- A newer message during a turn supersedes it: the newer turn answers both.
+- A newer message during a turn supersedes it: the newer turn answers both. The older one is
+  released, not "done": it becomes done with the newer answer, or failed with the newer
+  failure. An answer closes earlier failed, superseded or crashed (stalled) messages only
+  within the 24-message dialogue the model saw.
+- `reply_to_id` is stored only when it names one of her own messages.
 - Stale context → rebuild and ask again (≤ 4 rounds); invalid output → one repair round.
 - Interrupted turn (process died, function frozen) → after 3 minutes the scheduler (or a client
   retry) takes over with a new claim token; the old runner can no longer publish or fail it.
+  After three takeovers that died too, the message fails (`internal`) instead of being run
+  (and billed) again every few minutes.
 - Failure → the message is marked `failed` with a stable code (`model_unavailable`,
   `model_invalid`, `budget_exhausted`, `stale`, `internal` for anything else — a database
   error or a bug never leaves it "processing"); nothing half-applied, no invented reply. The

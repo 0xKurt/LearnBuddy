@@ -177,6 +177,9 @@ export type BuddyState = {
   totals: { activeGoals: number; openSteps: number; memories: number; items: number };
 };
 
+/** A turn still "processing" after this long is considered interrupted. */
+export const TURN_STALL_MS = 3 * 60_000;
+
 export const LIMITS = {
   messages: 24,
   goals: 12,

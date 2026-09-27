@@ -189,6 +189,90 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
     expect(home.thread[2]!.options).toEqual(['Mathe', 'Englisch']);
   });
 
+  it('a superseded message is not "done" when the newer turn fails (superseded-message-done-without-reply)', async () => {
+    const l = await onboard(env);
+    env.llm.script(
+      'buddy_turn',
+      async () => {
+        const second = await send(l, 'Und Englisch?');
+        expect(second.body.status).toBe('failed');
+        return say('Mathe, alles klar.');
+      },
+      { error: new LlmError('unavailable', 'down') },
+      { error: new LlmError('unavailable', 'down') },
+      { error: new LlmError('unavailable', 'down') },
+      { error: new LlmError('unavailable', 'down') },
+    );
+    const first = await send(l, 'Ich muss Mathe lernen.');
+    expect(first.body.status).toBe('failed');
+    const rows = await env.db.query<{ text: string; status: string }>(
+      `select text, status from buddy_messages where learner_id = $1 order by seq`,
+      [l.learnerId],
+    );
+    expect(rows).toEqual([
+      { text: 'Ich muss Mathe lernen.', status: 'failed' },
+      { text: 'Und Englisch?', status: 'failed' },
+    ]);
+    env.llm.reset();
+  });
+
+  it('an answer closes a message stuck in a crashed turn, but never failed ones the model did not see', async () => {
+    const l = await onboard(env);
+    const t0 = new Date(env.clock.now().getTime() - 3_600_000);
+    // 26 old messages that failed on their own, then one whose turn crashed 10 minutes ago.
+    for (let i = 0; i < 26; i++) {
+      await env.db.query(
+        `insert into buddy_messages (learner_id, role, text, status, failure_code, created_at)
+         values ($1, 'learner', $2, 'failed', 'model_unavailable', $3)`,
+        [l.learnerId, `alt ${i}`, new Date(t0.getTime() + i * 1000)],
+      );
+    }
+    await env.db.query(
+      `insert into buddy_messages (learner_id, role, text, status, claim_token, claimed_at, created_at)
+       values ($1, 'learner', 'hängt', 'processing', gen_random_uuid(), $2, $2)`,
+      [l.learnerId, new Date(env.clock.now().getTime() - 10 * 60_000)],
+    );
+    env.llm.script('buddy_turn', answer('Da bin ich wieder.'));
+    expect((await send(l, 'Hallo?')).body.status).toBe('done');
+    const rows = await env.db.query<{ text: string; status: string }>(
+      `select text, status from buddy_messages where learner_id = $1 and role = 'learner' order by seq`,
+      [l.learnerId],
+    );
+    // The window is the 24 newest messages: "Hallo?", "hängt" and the 22 newest old ones.
+    expect(rows.filter((r) => r.status === 'failed').map((r) => r.text)).toEqual([
+      'alt 0',
+      'alt 1',
+      'alt 2',
+      'alt 3',
+    ]);
+    expect(rows.find((r) => r.text === 'hängt')!.status).toBe('done');
+  });
+
+  it('a reply_to_id that is not hers is not stored and never a 500 (reply-to-id-not-scoped)', async () => {
+    const lena = await onboard(env);
+    const tom = await onboard(env);
+    env.llm.script('buddy_turn', answer('Hallo Lena.'));
+    await send(lena, 'Hallo');
+    const lenas = await env.db.one<{ id: string }>(
+      `select id from buddy_messages where learner_id = $1 and role = 'buddy'`,
+      [lena.learnerId],
+    );
+    env.llm.script('buddy_turn', answer('Hallo Tom.'), answer('Nochmal hallo.'));
+    for (const replyTo of [lenas.id, '00000000-0000-4000-8000-00000000ffff']) {
+      const res = await tom.api.post<SendMessageResponse>('/buddy/messages', {
+        client_message_id: uuid(),
+        text: 'Hi',
+        reply_to_id: replyTo,
+      });
+      expect(res.status).toBe(200);
+    }
+    const stored = await env.db.query<{ reply_to_id: string | null }>(
+      `select reply_to_id from buddy_messages where learner_id = $1 and role = 'learner'`,
+      [tom.learnerId],
+    );
+    expect(stored).toEqual([{ reply_to_id: null }, { reply_to_id: null }]);
+  });
+
   it('gives the model one repair round with the reason, then applies the corrected answer', async () => {
     const l = await onboard(env);
     env.llm.script(
@@ -273,6 +357,29 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
     const limited = await send(l, 'Noch da?');
     expect(limited.body).toMatchObject({ status: 'failed', error_code: 'budget_exhausted' });
     expect(env.llm.calls.length).toBe(before);
+  });
+
+  it('a turn that keeps crashing is taken over three times, then fails (p2-J-stall-recovery-loop-drains-budget)', async () => {
+    const l = await onboard(env);
+    const msg = await env.db.one<{ id: string }>(
+      `insert into buddy_messages (learner_id, role, text, status, claim_token, claimed_at, created_at)
+       values ($1, 'learner', 'Hallo', 'processing', gen_random_uuid(), $2, $2) returning id`,
+      [l.learnerId, new Date(env.clock.now().getTime() - 10 * 60_000)],
+    );
+    // Three earlier takeovers, each of which died like the first run.
+    for (let i = 0; i < 3; i++) {
+      await env.db.query(
+        `insert into jobs (learner_id, kind, run_at, dedupe_key, payload, status, attempts, finished_at)
+         values ($1, 'buddy_turn', $2, $3, $4, 'done', 1, $2)`,
+        [l.learnerId, env.clock.now(), `turn:${msg.id}:try${i}`, { message_id: msg.id }],
+      );
+    }
+    await tick(env);
+    const row = await env.db.one<{ status: string; failure_code: string | null }>(
+      `select status, failure_code from buddy_messages where id = $1`,
+      [msg.id],
+    );
+    expect(row).toEqual({ status: 'failed', failure_code: 'internal' });
   });
 
   it('resumes an interrupted turn exactly once; the stalled runner can no longer publish', async () => {

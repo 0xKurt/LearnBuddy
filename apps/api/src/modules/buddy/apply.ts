@@ -15,7 +15,7 @@ import type { Db } from '../../lib/db.js';
 import { canonicalTopicKey, type Aliases } from './context.js';
 import type { AnyAction, Outreach } from './decision.js';
 import { planOutreach, type OutreachPlan } from './delivery.js';
-import { loadSettings, type SettingsRow } from './state.js';
+import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
 import { ToolRejection, type ToolOutcome } from './tools.js';
 
@@ -191,12 +191,29 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         replyMessageId = msg.id;
       }
       if (input.triggerMessageId) {
-        // The answer covers this message and earlier ones that failed on their own.
+        // The answer covers this message and earlier ones the model saw in its dialogue
+        // window (never older ones it did not see — old-failed-messages-marked-done-unseen)
+        // that failed on their own, were superseded by this one (claim released) or are
+        // stuck in a crashed turn (p2-J-stuck-processing-not-closed).
         await tx.query(
           `update buddy_messages set status = 'done'
             where learner_id = $2 and role = 'learner'
-              and (id = $1 or (status = 'failed' and seq < (select seq from buddy_messages where id = $1)))`,
-          [input.triggerMessageId, input.learnerId],
+              and (id = $1
+                   or (seq < (select seq from buddy_messages where id = $1)
+                       and seq >= (select coalesce(min(w.seq), 0) from (
+                                     select seq from buddy_messages
+                                      where learner_id = $2
+                                        and seq <= (select seq from buddy_messages where id = $1)
+                                      order by seq desc limit $4) w)
+                       and (status = 'failed'
+                            or (status = 'processing'
+                                and (claim_token is null or claimed_at < $3)))))`,
+          [
+            input.triggerMessageId,
+            input.learnerId,
+            new Date(input.now.getTime() - TURN_STALL_MS),
+            LIMITS.messages,
+          ],
         );
       }
 
