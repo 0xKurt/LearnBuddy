@@ -30,7 +30,7 @@ import { claimJobs, enqueueJob, finishJob, retryJob, type JobRow } from '../sche
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext, canonicalTopicKey } from './context.js';
 import { CheckDecision } from './registry.js';
-import { planOutreach } from './delivery.js';
+import { planOutreach, type BodyTemplate } from './delivery.js';
 import { markHandled } from './events.js';
 import { lookupsField, withLookups } from './lookups.js';
 import { bumpContext } from './plan.js';
@@ -226,7 +226,12 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
           agreed: boolean;
           goal_id: string | null;
           version: number;
-          payload: { item_ids?: string[]; est_minutes?: number };
+          payload: {
+            item_ids?: string[];
+            est_minutes?: number;
+            subject_id?: string | null;
+            focus_topics?: string[];
+          };
         }>(`select * from buddy_steps where id = $1 and learner_id = $2 for update`, [
           trig.stepId,
           learner.id,
@@ -237,12 +242,15 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
     }
     let count = step.payload.item_ids?.length ?? 0;
     let minutes = step.payload.est_minutes ?? 0;
-    if (step.kind === 'practice' && count === 0) {
+    // Practice for what she named — the test's material or the subject — and nothing else:
+    // without either, the reminder only reminds (audit H-30), never "6 Aufgaben" from any subject.
+    const subjectId = step.payload.subject_id ?? null;
+    if (step.kind === 'practice' && count === 0 && (step.goal_id || subjectId)) {
       const items = await selectPracticeItems(
         tx,
         learner.id,
-        { goalId: step.goal_id },
-        [],
+        { goalId: step.goal_id, subjectId },
+        step.payload.focus_topics ?? [],
         questionCountFor(10),
         now,
       );
@@ -256,12 +264,14 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
         );
       }
     }
-    const body =
+    const key =
       step.kind === 'capture'
-        ? t(learner.locale, 'reminder.capture', { title: step.title })
+        ? ('reminder.capture' as const)
         : count > 0
-          ? t(learner.locale, 'reminder.practice_ready', { title: step.title, count, minutes })
-          : t(learner.locale, 'reminder.practice', { title: step.title });
+          ? ('reminder.practice_ready' as const)
+          : ('reminder.practice' as const);
+    const params = { title: step.title, count, minutes };
+    const body = t(learner.locale, key, params);
     const plan = await planOutreach(tx, {
       learnerId: learner.id,
       settings,
@@ -280,6 +290,8 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
       goalId: step.goal_id,
       stepId: step.id,
       inAppWhenOff: true,
+      // Rendered when shown: a reminder that arrives late says so (D-13).
+      template: { key, params, agreed_at: trig.job.run_at.toISOString() },
     });
     await bumpContext(tx, learner.id);
     return { outcome: plan.status, reason: plan.reason };
@@ -569,6 +581,8 @@ async function decide(
       actions: d.actions,
       reply: null,
       outreach: d.outreach,
+      // Her own photos or practice: the answer is not an initiative (policy.ts).
+      outreachOrigin: answersLearner ? 'learner' : 'buddy',
       meta,
     });
     if (applied.status === 'applied') {
@@ -591,6 +605,12 @@ async function decide(
       continue;
     }
     // stale → loop with fresh state
+  }
+  // She kept chatting while Buddy tried three times: what she is waiting for (her photos,
+  // her practice) still gets its fixed answer (audit p2-check-stale-exhaustion-drops-reaction).
+  if (answersLearner) {
+    await fallback(deps, learner, triggers, 'stale', lease);
+    return 'fallback:stale';
   }
   await finishAll({ outcome: 'stale' });
   return 'stale';
@@ -674,26 +694,29 @@ async function fallback(
 
       let proposal: {
         kind: 'idea' | 'checkin' | 'result';
+        origin: 'buddy' | 'learner';
         topic: string;
         body: string;
+        template: BodyTemplate | null;
         relevance: number;
         goalId: string | null;
         stepId: string | null;
+        /** Buddy said it would come back: the promise waits in the app when contact is off. */
+        inAppWhenOff?: boolean;
       } | null = null;
       if (trig.reason === 'exam_countdown' && goal?.status === 'active' && goal.due_date) {
         const inDays = daysBetween(today, goal.due_date);
         const day = dayLabel(learner.locale, weekdayOf(goal.due_date), inDays);
         const p = await prepared(goal.id, goal.subject_id, goal.title);
         if (p) {
+          const params = { exam: goal.title, count: p.count, minutes: p.minutes };
           proposal = {
             kind: 'idea',
+            origin: 'buddy',
             topic: `exam:${goal.id}:prep`,
-            body: t(learner.locale, 'exam.prepared', {
-              day,
-              exam: goal.title,
-              count: p.count,
-              minutes: p.minutes,
-            }),
+            body: t(learner.locale, 'exam.prepared', { day, ...params }),
+            // "Morgen" is rendered on the day it is read (audit M-60).
+            template: { key: 'exam.prepared', params, due_date: goal.due_date },
             relevance: inDays <= 1 ? 0.85 : 0.7,
             goalId: goal.id,
             stepId: p.stepId,
@@ -712,8 +735,14 @@ async function fallback(
           }
           proposal = {
             kind: 'idea',
+            origin: 'buddy',
             topic: `exam:${goal.id}:material`,
             body: t(learner.locale, 'exam.need_material', { day, exam: goal.title }),
+            template: {
+              key: 'exam.need_material',
+              params: { exam: goal.title },
+              due_date: goal.due_date,
+            },
             relevance: 0.7,
             goalId: goal.id,
             stepId: null,
@@ -722,8 +751,10 @@ async function fallback(
       } else if (trig.reason === 'exam_followup' && goal?.status === 'active') {
         proposal = {
           kind: 'checkin',
+          origin: 'buddy',
           topic: `exam:${goal.id}:followup`,
           body: t(learner.locale, 'exam.followup', { exam: goal.title }),
+          template: null,
           relevance: 0.7,
           goalId: goal.id,
           stepId: null,
@@ -749,6 +780,9 @@ async function fallback(
           );
           proposal = {
             kind: 'result',
+            // Her photos: the result always reaches her, like any answer (audit M-61).
+            origin: 'learner',
+            template: null,
             topic: `material:${m.id}`,
             body: m.title
               ? t(learner.locale, 'material.ready', { title: m.title, count: m.n })
@@ -758,6 +792,20 @@ async function fallback(
             stepId: p?.stepId ?? null,
           };
         }
+      } else if (trig.reason === 'checkin_requested') {
+        // Buddy said "ich schaue nochmal vorbei": without the model it still keeps its word,
+        // honestly (audit p2-F-journey-checkin-promise-dropped).
+        proposal = {
+          kind: 'checkin',
+          origin: 'buddy',
+          topic: `checkin:${trig.job.id}`,
+          body: t(learner.locale, 'reminder.checkin_unavailable'),
+          template: null,
+          relevance: 0.7,
+          goalId: null,
+          stepId: null,
+          inAppWhenOff: true,
+        };
       }
 
       let outreach = null;
@@ -767,7 +815,7 @@ async function fallback(
           settings,
           now,
           decisionId: null,
-          origin: 'buddy',
+          origin: proposal.origin,
           kind: proposal.kind,
           topicKey: proposal.topic,
           dedupeKey: `fallback:${proposal.topic}:${trig.job.id}`,
@@ -779,6 +827,8 @@ async function fallback(
           expiresAt: new Date(now.getTime() + 24 * 3_600_000),
           goalId: proposal.goalId,
           stepId: proposal.stepId,
+          inAppWhenOff: proposal.inAppWhenOff ?? false,
+          template: proposal.template,
         });
       }
       await tx.query(

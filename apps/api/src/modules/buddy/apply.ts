@@ -50,6 +50,8 @@ export type ApplyInput = {
   actions: AnyAction[];
   reply: { text: string; options: string[] | null } | null;
   outreach: Outreach | null;
+  /** 'learner' when the outreach answers something she just did (policy.ts). */
+  outreachOrigin?: 'buddy' | 'learner';
   meta: DecisionMeta;
 };
 
@@ -207,7 +209,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           settings: settingsNow,
           now: input.now,
           decisionId: decision.id,
-          origin: 'buddy',
+          origin: input.outreachOrigin ?? 'buddy',
           kind: input.outreach.kind,
           topicKey,
           dedupeKey: `buddy:${decision.id}`,

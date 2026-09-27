@@ -192,4 +192,46 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     expect(res.status).toBe(200);
     expect(env.llm.callsFor('extraction')).toHaveLength(1);
   });
+
+  it('never gives away an open homework solution in the chat (S-6, enforced in code)', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    await env.db.tx(async (tx) => {
+      const item = await tx.one<{ id: string }>(
+        `insert into items (learner_id, origin, kind, prompt, answer) values ($1, 'typed', 'short', 'Was ist 3/4 + 1/8?', '7/8')
+         returning id`,
+        [l.learnerId],
+      );
+      const session = await tx.one<{ id: string }>(
+        `insert into practice_sessions (learner_id, mode, status, started_at, last_activity_at)
+         values ($1, 'help', 'active', $2, $2) returning id`,
+        [l.learnerId, env.clock.now()],
+      );
+      await tx.query(
+        `insert into session_items (session_id, item_id, position) values ($1, $2, 0)`,
+        [session.id, item.id],
+      );
+    });
+    env.llm.script(
+      'buddy_turn',
+      { json: { concern: false, reply: 'Das ist 7/8.', options: null, actions: [] } },
+      {
+        json: {
+          concern: false,
+          reply: 'Mach erst beide Nenner gleich: Wie viele Achtel sind 3/4?',
+          options: null,
+          actions: [],
+        },
+      },
+    );
+    const res = await send(l, 'Sag mir einfach was 3/4 + 1/8 ist');
+    expect(res.body.status).toBe('done');
+    const reply = res.body.home.thread[res.body.home.thread.length - 1]!;
+    expect(reply.text).not.toContain('7/8');
+    // Once she has it herself, Buddy may say so.
+    env.llm.script('buddy_turn', {
+      json: { concern: false, reply: 'Genau, 7/8!', options: null, actions: [] },
+    });
+    const mine = await send(l, 'ist es 7/8?');
+    expect(mine.body.home.thread[mine.body.home.thread.length - 1]!.text).toBe('Genau, 7/8!');
+  });
 });

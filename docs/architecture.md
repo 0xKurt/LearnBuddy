@@ -200,8 +200,13 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 `session_finished`, `step_due`, `checkin_requested`, `routine`). Gates, cheapest first:
 
 1. one worker per learner (lease on `buddy_settings`);
-2. agreed reminders → fixed template (i18n), no model; with contact off or paused the reminder
-   waits in the app, as Buddy promised;
+2. agreed reminders → fixed template (i18n), no model. An agreed reminder never vanishes
+   (D-13): with contact off or paused, when quiet hours were moved over it, when a pause lands
+   while it waits for a slot, or when the scheduler is hours late, it waits in the app — late
+   ones say so ("Ich wollte dich um 17:30 erinnern – sorry, das kommt verspätet. …"). It
+   prepares practice only from what she named (the goal's material, or the subject and topics
+   `plan_step` stored) and otherwise only reminds; an agreed reminder whose usual time is over
+   today is refused so Buddy asks for a time, never silently unscheduled;
 3. learner is in the app right now → an unasked look (routine, countdown, a scheduled check) waits
    20 minutes; what follows from the learner's own action (photos read, practice finished) runs now —
    right after the reading or the practice, not on the next scheduler run;
@@ -210,28 +215,47 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
 7. apply with the context fence; the contact policy decides whether and when a message is sent;
 8. provider outage → retry in 10 minutes (bounded), then fallbacks keep time-critical help
-   working (prepared practice before a test, "how did it go").
+   working (prepared practice before a test, "how did it go", and Buddy's own promise to look
+   again as an honest in-app line). A check that answers her own action falls back also after
+   three stale rounds, so she is never left without an answer.
+
+A background check never replaces practice she asked for in the chat, and the message it posts
+carries its decision, so what Buddy did in the background appears in the thread with its cards
+and undo. "Heute nicht" on a prepared practice moves it (and an agreed reminder) to tomorrow; it
+is not skipped for good.
 
 ## Delivery
 
 `modules/buddy/policy.ts` (pure) and `delivery.ts`.
 
 - Policy: opt-in; pause; quiet hours in the learner's zone; Buddy's own messages need relevance
-  ≥ 0.6, go into the preferred window, at most 1/day and 4/week (all contact counts), no repeat
-  of a topic within 72 h (topic keys are stored with real ids), no second message while the last
-  one is unanswered (48 h). Agreed reminders go out at the agreed minute (quiet hours and pause
-  apply, limits and avoided weekdays do not).
-- Rules are re-checked at send time; a message about something already done is cancelled.
-  A message is linked to its goal and step (`step: "new"` = the practice prepared in the same
-  decision), so "practice is ready" is dropped once that practice was done. Pausing cancels
-  everything planned — nothing is sent in bulk afterwards. Planned messages are listed on the
-  home under what comes next.
+  ≥ 0.6, go into the preferred window, at most 1/day and 4/week, no repeat of a topic within
+  72 h (topic keys are stored with real ids), no second message while the last one is unanswered
+  (48 h; writing to Buddy counts as answering what is in the thread). **All contact counts,
+  in the app too** (D-12): with push off, "schreib mir weniger" means fewer messages in the
+  thread. Agreed reminders go out at the agreed minute (quiet hours and pause apply, limits and
+  avoided weekdays do not). Buddy's answer to her own action (origin `learner`: her photos were
+  read, her practice is finished) is not an initiative: always in the app, pushed now when
+  contact is on and it is not night, never held back by limits.
+- The whole policy runs again at send time (tightened days, window, caps, pause, the unanswered
+  gate); a message about something already done is cancelled. A message is linked to its goal
+  and step (`step: "new"` = the practice prepared in the same decision), so "practice is ready"
+  is dropped once that practice was done. Pausing or switching off cancels everything Buddy
+  planned on its own — nothing is sent in bulk afterwards; agreed reminders stay and wait in the
+  app. Planned messages are listed on the home under what comes next. Stopping contact hides
+  the opt-in card for 14 days.
+- Every status write of a claimed row is conditioned on the claim (status `sending` and the
+  lease it set): a slow run can never send or overwrite a row another run settled.
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
   or push is disabled. Only the app can record `opened`. The text is always also in the thread.
 - `DeviceNotRegistered` (ticket or receipt) deactivates the token.
-- Lock-screen texts carry no scores or personal details.
+- **Lock-screen texts are built by code** (S-6): title "Buddy" and a fixed sentence per kind
+  (`i18n push.*`: "Deine verabredete Erinnerung ist da."), never a title, a count, a score or
+  anything the model wrote. Buddy's words are in the thread. Texts whose words depend on the day
+  ("Morgen ist …") are stored as a template (`buddy_outreach.body_template`) and rendered when
+  they reach the thread; `send_uncertain` rows swept after a crash are mirrored to the thread too.
 
 ## Background work
 

@@ -174,7 +174,11 @@ async function nowCardOf(
   const prepared = state.steps
     .filter(
       (s) =>
-        s.kind === 'practice' && s.state === 'prepared' && (s.payload.item_ids?.length ?? 0) > 0,
+        s.kind === 'practice' &&
+        s.state === 'prepared' &&
+        (s.payload.item_ids?.length ?? 0) > 0 &&
+        // "Heute nicht" moved it to tomorrow: not on today's card.
+        (!s.planned_date || daysBetween(today, s.planned_date) <= 0),
     )
     .sort((a, b) => {
       const ga = state.goals.find((g) => g.id === a.goal_id)?.due_date ?? '9999-12-31';
@@ -321,7 +325,12 @@ function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
     });
   }
   for (const s of state.steps) {
-    if (s.state !== 'planned' || !s.planned_date || daysBetween(today, s.planned_date) < 0)
+    if (!s.planned_date || daysBetween(today, s.planned_date) < 0) continue;
+    // Planned steps, and prepared practice she moved to a later day.
+    if (
+      s.state !== 'planned' &&
+      !(s.state === 'prepared' && daysBetween(today, s.planned_date) > 0)
+    )
       continue;
     if (s.kind === 'capture') continue; // shown as the "now" card
     items.push({
@@ -414,7 +423,7 @@ async function threadOf(
     ? await deps.db.query<{
         id: string;
         kind: OutreachView['kind'];
-        origin: OutreachView['origin'];
+        origin: OutreachView['origin'] | 'learner';
         title: string;
         body: string;
         why: string | null;
@@ -451,7 +460,8 @@ async function threadOf(
         ? {
             id: o.id,
             kind: o.kind,
-            origin: o.origin,
+            // Her own action's result is shown like Buddy's message (older apps know two origins).
+            origin: o.origin === 'learner' ? 'buddy' : o.origin,
             title: o.title,
             body: o.body,
             why: o.why,

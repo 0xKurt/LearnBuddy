@@ -10,6 +10,11 @@
 //   buddy  — Buddy's own initiative. Needs relevance ≥ 0.6, lands in the
 //            preferred window, respects caps, avoided weekdays, topic dedupe,
 //            and never follows up while the previous initiative is unanswered.
+//   learner — Buddy's answer to something the learner just did (her photos were
+//            read, her practice is finished). Not an initiative: no relevance,
+//            window, caps or unanswered gate; sent now outside quiet hours when
+//            contact is on, otherwise it waits in the app (delivery.ts).
+// Caps count every message Buddy sent on its own, in the app too (D-12).
 // Silence is a normal outcome and is always logged with its reason.
 
 import {
@@ -38,6 +43,8 @@ export type ContactSettings = {
 };
 
 export type PastContact = {
+  /** The outreach row (to leave a row out of its own history at send time). */
+  id?: string;
   /** When it was (or is scheduled to be) sent. */
   at: Date;
   topicKey: string;
@@ -47,7 +54,7 @@ export type PastContact = {
 };
 
 export type OutreachProposal = {
-  origin: 'agreed' | 'buddy';
+  origin: 'agreed' | 'buddy' | 'learner';
   topicKey: string;
   /** Model-rated relevance 0..1 (required for Buddy's initiatives). */
   relevance: number | null;
@@ -116,6 +123,14 @@ export function decideContact(
   }
 
   const earliest = new Date(Math.max(proposal.earliest.getTime(), now.getTime()));
+
+  if (proposal.origin === 'learner') {
+    // Her own action's result: now, unless it is the middle of the night for her.
+    const minute = minutesOf(localParts(earliest, s.timezone).time);
+    return inWindow(minute, s.quiet_start, s.quiet_end)
+      ? { kind: 'suppress', reason: 'no_slot' }
+      : { kind: 'schedule', sendAt: earliest };
+  }
 
   if (proposal.origin === 'agreed') {
     // Agreed time, moved out of quiet hours if the settings changed since.

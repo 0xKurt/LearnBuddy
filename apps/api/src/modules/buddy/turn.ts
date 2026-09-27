@@ -25,6 +25,7 @@ import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
+import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext } from './context.js';
 import { askedButActed, TurnDecision, TurnDecisionForModel } from './registry.js';
@@ -87,6 +88,15 @@ export async function receiveLearnerMessage(
         [learner.id, input.text, input.clientMessageId, input.replyToId, token, now],
       );
       await bumpContext(tx, learner.id);
+      // She is here and writing: what Buddy posted to her thread so far has been seen and
+      // answered, so the "previous message unanswered" gate does not hold back the next idea
+      // because of an in-app message she simply chatted past (D-12 counts those).
+      await tx.query(
+        `update buddy_outreach o set responded_at = $2
+          where o.learner_id = $1 and o.responded_at is null
+            and exists (select 1 from buddy_messages m where m.outreach_id = o.id and m.created_at <= $2)`,
+        [learner.id, now],
+      );
       // A reply to one of Buddy's outreach messages counts as an answer to it.
       if (input.replyToId) {
         await tx.query(
@@ -306,6 +316,17 @@ async function decideTurn(
       repairErrors = contradictions;
       continue;
     }
+    // "Never the homework solution" is enforced in code in the chat too, not only prompted
+    // (audit S-6 p2-sec-homework-solution-chat-unenforced).
+    const leak = parsed.data.concern
+      ? []
+      : await homeworkLeak(deps, learner.id, parsed.data.reply, learnerWords);
+    if (leak.length > 0) {
+      await record('rejected', leak);
+      if (repairErrors) return failTurn(deps, message, 'model_invalid');
+      repairErrors = leak;
+      continue;
+    }
     // Distress: the words she gets are fixed by code, not improvised (D-10, audit H-31).
     const reply = parsed.data.concern
       ? { text: safeguardingText(learner, 'concern'), options: null }
@@ -376,6 +397,34 @@ export function turnDialogue(
       .filter((m) => m.role === 'learner' && m.failure_code !== 'blocked')
       .map((m) => m.text),
   };
+}
+
+/**
+ * While she has homework open in a help session, a chat reply that states the solution of
+ * an open task is refused — unless she wrote that solution herself (then Buddy may confirm).
+ */
+async function homeworkLeak(
+  deps: Deps,
+  learnerId: string,
+  reply: string,
+  learnerWords: readonly string[],
+): Promise<string[]> {
+  const open = await deps.db.query<{ prompt: string; answer: string }>(
+    `select i.prompt, i.answer
+       from practice_sessions ps
+       join session_items si on si.session_id = ps.id and si.status = 'open'
+       join items i on i.id = si.item_id
+      where ps.learner_id = $1 and ps.mode = 'help' and ps.status = 'active'`,
+    [learnerId],
+  );
+  const hers = learnerWords.join('\n');
+  return open.some(
+    (i) => !homeworkSolved(hers, i.answer) && mentionsSolution(reply, i.answer, i.prompt),
+  )
+    ? [
+        'reply: it gives away the solution of her open homework task. Help her find it herself (a question, a first step) — never the result.',
+      ]
+    : [];
 }
 
 function safeguardingText(learner: TurnLearner, kind: 'blocked' | 'concern'): string {

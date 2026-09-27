@@ -14,7 +14,15 @@
     "concern_adult": "Grazie per avermelo detto: è importante. Parlane con qualcuno di cui ti fidi. Se sei in pericolo, chiama il 112. Io sono sempre qui per te.",
     "held_back": "(Un messaggio trattenuto dal filtro di sicurezza.)"
   },
+  "push": {
+    "reminder": "Ecco il promemoria che avevamo concordato.",
+    "idea": "Buddy ha un'idea per te.",
+    "checkin": "Buddy vorrebbe sapere come va.",
+    "result": "Buddy ha qualcosa di pronto per te."
+  },
   "reminder": {
+    "late": "Volevo ricordartelo alle {{time}}: scusa, arriva in ritardo. {{text}}",
+    "checkin_unavailable": "Volevo sapere come stai, ma adesso non ci riesco bene. Scrivimi se ti va.",
     "practice_ready": "Come d'accordo: {{title}}. Ci sono {{count}} esercizi pronti, circa {{minutes}} minuti.",
     "practice": "Come d'accordo: {{title}}.",
     "capture": "Come d'accordo: {{title}} – basta una foto, al resto penso io."

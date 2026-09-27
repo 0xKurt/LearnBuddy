@@ -494,6 +494,24 @@ async function runPreparePractice(
       'there are no questions for this yet — ask for a photo of the material (request_material) instead',
     );
   }
+  // A background check never replaces practice she asked for in the chat (audit M-55): the
+  // card she expects stays.
+  if (ctx.mode === 'check') {
+    const hers = await ctx.db.maybeOne(
+      `select 1 from buddy_steps st
+        where st.learner_id = $1 and st.kind = 'practice' and st.state = 'prepared'
+          and st.goal_id is not distinct from $2 and (st.payload ->> 'subject_id') is not distinct from $3
+          and exists (select 1 from buddy_actions a join buddy_decisions d on d.id = a.decision_id
+                       where a.learner_id = $1 and d.mode = 'turn' and a.status = 'applied'
+                         and a.tool = 'prepare_practice' and a.result ->> 'step_id' = st.id::text)`,
+      [ctx.learnerId, goal?.id ?? null, subjectId],
+    );
+    if (hers) {
+      throw new ToolRejection(
+        'the learner already has practice she asked for prepared for this; leave it (no prepare_practice)',
+      );
+    }
+  }
   // A newer preparation replaces an unstarted older one for the same scope.
   await ctx.db.query(
     `update buddy_steps set state = 'cancelled', version = version + 1, finished_at = $4
@@ -560,18 +578,41 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
       );
     }
   }
+  // What the practice is about, as she named it (audit H-30): the reminder prepares
+  // questions from this subject (or the goal's material) and nothing else.
+  const subjectId = a.subject
+    ? (ctx.aliases.subjects.get(a.subject)?.id ??
+      (() => {
+        throw new ToolRejection(`unknown subject ${a.subject}`);
+      })())
+    : null;
+  // An agreed reminder is always scheduled, never silently dropped (audit M-58): without a
+  // time it goes at her preferred start — unless that is already over today.
+  const when = a.agreed
+    ? (at ?? zonedToInstant(date, ctx.settings.preferred_start, ctx.settings.timezone))
+    : null;
+  if (when && when.getTime() <= ctx.now.getTime()) {
+    throw new ToolRejection(
+      `the usual reminder time (${ctx.settings.preferred_start}) is already over on ${date} — ask the learner for a time`,
+    );
+  }
   const step = await ctx.db.one<{ id: string; version: number }>(
-    `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, planned_time, agreed)
-     values ($1, $2, $3, $4, 'planned', $5, $6, $7) returning id, version`,
-    [ctx.learnerId, goal?.id ?? null, a.kind, a.title, date, a.time, a.agreed],
+    `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, planned_time, agreed,
+                              payload)
+     values ($1, $2, $3, $4, 'planned', $5, $6, $7, $8) returning id, version`,
+    [
+      ctx.learnerId,
+      goal?.id ?? null,
+      a.kind,
+      a.title,
+      date,
+      a.time,
+      a.agreed,
+      { subject_id: subjectId, focus_topics: a.focus_topics ?? [] },
+    ],
   );
   ctx.created.stepId = step.id;
-  if (a.agreed) {
-    const when = at ?? zonedToInstant(date, ctx.settings.preferred_start, ctx.settings.timezone);
-    if (when.getTime() > ctx.now.getTime()) {
-      await scheduleStepReminder(ctx.db, ctx.learnerId, step, when);
-    }
-  }
+  if (when) await scheduleStepReminder(ctx.db, ctx.learnerId, step, when);
   return {
     summary: {
       tool: 'plan_step',
@@ -648,8 +689,12 @@ async function runUpdateStep(
   );
   if (s.agreed) {
     const when = at ?? zonedToInstant(date, ctx.settings.preferred_start, ctx.settings.timezone);
-    if (when.getTime() > ctx.now.getTime())
-      await scheduleStepReminder(ctx.db, ctx.learnerId, updated, when);
+    // Moving an agreed reminder into the past would drop it silently (audit M-58).
+    if (when.getTime() <= ctx.now.getTime())
+      throw new ToolRejection(
+        `${date} ${time ?? ctx.settings.preferred_start} is already over — ask for a time`,
+      );
+    await scheduleStepReminder(ctx.db, ctx.learnerId, updated, when);
   }
   return {
     summary: { tool: 'update_step', step_id: s.id, title: s.title, date, time, state: s.state },
@@ -769,10 +814,11 @@ async function runSetContact(
     [ctx.learnerId, preferredStart, preferredEnd, avoid, pausedUntil, maxPerWeek, quietStart],
   );
   if (pausedUntil && pausedUntil.getTime() > ctx.now.getTime()) {
-    // Nothing queued during a pause is sent afterwards (no backlog).
+    // Nothing Buddy queued on its own during a pause is sent afterwards (no backlog); an
+    // agreed reminder stays and waits in the app at its time (D-13).
     await ctx.db.query(
       `update buddy_outreach set status = 'cancelled', status_reason = 'paused'
-        where learner_id = $1 and status = 'scheduled'`,
+        where learner_id = $1 and status = 'scheduled' and origin = 'buddy'`,
       [ctx.learnerId],
     );
   }

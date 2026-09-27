@@ -14,7 +14,15 @@
     "concern_adult": "Danke, dass du mir das erzählst – das ist wichtig. Sprich bitte mit jemandem, dem du vertraust. Wenn du in Gefahr bist, ruf den Notruf 112 an. Ich bin weiter für dich da.",
     "held_back": "(Eine Nachricht, die der Schutzfilter zurückgehalten hat.)"
   },
+  "push": {
+    "reminder": "Deine verabredete Erinnerung ist da.",
+    "idea": "Buddy hat eine Idee für dich.",
+    "checkin": "Buddy möchte kurz nachfragen.",
+    "result": "Buddy hat etwas für dich fertig."
+  },
   "reminder": {
+    "late": "Ich wollte dich um {{time}} erinnern – sorry, das kommt verspätet. {{text}}",
+    "checkin_unavailable": "Ich wollte nochmal nach dir schauen, komme gerade aber nicht richtig dran. Schreib mir einfach, wenn du magst.",
     "practice_ready": "Wie verabredet: {{title}}. {{count}} Aufgaben liegen bereit, ca. {{minutes}} Minuten.",
     "practice": "Wie verabredet: {{title}}.",
     "capture": "Wie verabredet: {{title}} – ein Foto reicht, den Rest mache ich."

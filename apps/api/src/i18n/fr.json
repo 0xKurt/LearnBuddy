@@ -14,7 +14,15 @@
     "concern_adult": "Merci de me le dire – c'est important. Parles-en à quelqu'un de confiance. Si tu es en danger, appelle le 112. Je suis toujours là pour toi.",
     "held_back": "(Un message retenu par le filtre de sécurité.)"
   },
+  "push": {
+    "reminder": "Ton rappel convenu est là.",
+    "idea": "Buddy a une idée pour toi.",
+    "checkin": "Buddy aimerait prendre de tes nouvelles.",
+    "result": "Buddy a quelque chose de prêt pour toi."
+  },
   "reminder": {
+    "late": "Je voulais te le rappeler à {{time}} – désolé, ça arrive en retard. {{text}}",
+    "checkin_unavailable": "Je voulais prendre de tes nouvelles, mais je n'y arrive pas bien en ce moment. Écris-moi si tu veux.",
     "practice_ready": "Comme convenu : {{title}}. {{count}} exercices sont prêts, environ {{minutes}} minutes.",
     "practice": "Comme convenu : {{title}}.",
     "capture": "Comme convenu : {{title}} – une photo suffit, je m'occupe du reste."

@@ -34,7 +34,8 @@ import { check, readBody } from '../../http/validate.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { startFromStep } from '../practice/service.js';
 import { buildHome } from './home.js';
-import { bumpContext, cancelGoalWakeups, lockContext } from './plan.js';
+import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
+import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
 import { loosens } from './policy.js';
 import { loadSettings, type SettingsRow } from './state.js';
 import { runUndo, undoLoosensContact, type UndoSpec } from './tools.js';
@@ -113,28 +114,50 @@ buddyRoutes.post('/steps/:id/start', async (c) => {
   return c.json({ session_id: sessionId });
 });
 
+// "Heute nicht": the step steps aside until tomorrow — not skipped for good (audit M-57).
+// An agreed reminder moves with it to the same time tomorrow.
 buddyRoutes.post('/steps/:id/skip', async (c) => {
   const stepId = check(Uuid, c.req.param('id'));
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
+  const now = deps.now();
   await deps.db.tx(async (tx) => {
     await lockContext(tx, learnerId);
-    const step = await tx.maybeOne<{ state: string }>(
-      `select state from buddy_steps where id = $1 and learner_id = $2 for update`,
+    const settings = await loadSettings(tx, learnerId);
+    const step = await tx.maybeOne<{
+      state: string;
+      agreed: boolean;
+      planned_date: string | null;
+      planned_time: string | null;
+    }>(
+      `select state, agreed, planned_date, planned_time from buddy_steps
+        where id = $1 and learner_id = $2 for update`,
       [stepId, learnerId],
     );
     if (!step) throw new AppError('not_found', 'Step not found');
     if (!['planned', 'prepared'].includes(step.state))
       throw new AppError('conflict', 'This step is no longer open');
-    await tx.query(
-      `update buddy_steps set state = 'skipped', finished_at = $2, version = version + 1 where id = $1`,
-      [stepId, deps.now()],
+    const today = localParts(now, settings.timezone).date;
+    const tomorrow = addDays(today, 1);
+    const moved = await tx.one<{ id: string; version: number }>(
+      `update buddy_steps set planned_date = greatest(coalesce(planned_date, $2::date), $2::date),
+                              version = version + 1
+        where id = $1 returning id, version`,
+      [stepId, tomorrow],
     );
     await tx.query(
       `update jobs set status = 'cancelled'
         where learner_id = $1 and kind = 'buddy_check' and status = 'queued' and payload ->> 'step_id' = $2`,
       [learnerId, stepId],
     );
+    if (step.agreed) {
+      const at = zonedToInstant(
+        tomorrow,
+        step.planned_time ?? settings.preferred_start,
+        settings.timezone,
+      );
+      await scheduleStepReminder(tx, learnerId, moved, at);
+    }
     await bumpContext(tx, learnerId);
   });
   return c.json(await home(c));
@@ -411,11 +434,19 @@ buddyRoutes.patch('/settings', async (c) => {
       ],
     );
     if (!row.contact_enabled || (row.paused_until && row.paused_until > now)) {
-      // Nothing queued is sent later in bulk.
+      // Nothing Buddy queued on its own is sent later in bulk. A reminder she agreed to (and
+      // the answer to her own action) stays: at its time it waits in the app (D-13, H-37 1B).
       await tx.query(
         `update buddy_outreach set status = 'cancelled', status_reason = $2
-          where learner_id = $1 and status = 'scheduled'`,
+          where learner_id = $1 and status = 'scheduled' and origin = 'buddy'`,
         [learnerId, row.contact_enabled ? 'paused' : 'contact_disabled'],
+      );
+    }
+    if (before.contact_enabled && !row.contact_enabled) {
+      // A "no" is at least a "not now": the home does not ask again right away (audit M-62).
+      await tx.query(
+        `update buddy_settings set opt_in_prompt_hidden_until = $2 where learner_id = $1`,
+        [learnerId, new Date(now.getTime() + 14 * 86_400_000)],
       );
     }
     return row;

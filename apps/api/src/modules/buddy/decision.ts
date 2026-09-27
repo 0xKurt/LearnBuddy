@@ -272,6 +272,17 @@ const planStep = z.object({
       .boolean()
       .describe('true only if the learner asked for / agreed to this time (a reminder)'),
     quote: Quote.nullable().describe('Required when agreed=true'),
+    // Optional in parsing (older scripted answers have neither); the model sees both.
+    subject: SubjectRef.nullable()
+      .optional()
+      .describe(
+        'kind practice without a goal: the subject (f1) she wants to practise; null if it has no material yet',
+      ),
+    focus_topics: z
+      .array(z.string().trim().min(1).max(60))
+      .max(5)
+      .optional()
+      .describe('kind practice: topics she named, in her words'),
   }),
 });
 

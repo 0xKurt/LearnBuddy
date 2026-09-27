@@ -312,9 +312,10 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       `select status, status_reason, topic_key from buddy_outreach where learner_id = $1`,
       [lina.learnerId],
     );
-    // Proposed, but not sent: the adult has not enabled contact. Stored with the real goal id.
+    // Not sent to the phone — the adult has not enabled contact — but it answers her own photos,
+    // so it waits in the app (audit M-61). Stored with the real goal id.
     expect(outreach).toEqual({
-      status: 'suppressed',
+      status: 'in_app',
       status_reason: 'contact_disabled',
       topic_key: `exam:${goalId}:first-practice`,
     });
@@ -570,20 +571,21 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       sent_at: Date;
     }>(
       `select status, ticket_id, send_at, sent_at from buddy_outreach
-        where learner_id = $1 and status <> 'suppressed'`,
+        where learner_id = $1 and topic_key like '%:day-before'`,
       [lina.learnerId],
     );
     // Sent within the preferred window (15:00–18:30 local) — and only "accepted" by the provider, not "delivered".
     expect(out.status).toBe('accepted');
     expect(out.sent_at.toISOString()).toBe('2026-10-01T13:00:00.000Z');
     expect(env.push.sent).toHaveLength(1);
+    // The lock screen gets a fixed text for the kind of message: no title, no count, no
+    // score, nothing about her (S-6); Buddy's words are in the app.
     expect(env.push.sent[0]).toMatchObject({
       to: 'ExponentPushToken[lina-phone-01]',
-      title: 'Morgen ist die Mathearbeit',
+      title: 'Buddy',
+      body: 'Buddy hat eine Idee für dich.',
       data: { type: 'buddy_outreach' },
     });
-    // No scores or personal details on the lock screen.
-    expect(env.push.sent[0]!.body).not.toMatch(/\d+\s*\/\s*\d+|richtig|falsch/i);
 
     // The prepared practice respects "short": questionCountFor(5 min) caps it.
     const prepared = await env.db.one<{ payload: { item_ids: string[]; est_minutes: number } }>(
