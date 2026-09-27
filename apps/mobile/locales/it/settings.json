@@ -110,6 +110,7 @@
       "body": "Tutto viene eliminato definitivamente dopo 7 giorni. Fino ad allora puoi annullare.",
       "cta": "Elimina l'account…",
       "scheduled": "Eliminazione programmata: {{date}}, ore {{time}}. Fino ad allora puoi annullarla.",
+      "running": "Il tuo account è in fase di eliminazione. Non si può più annullare.",
       "cancel": "Annulla l'eliminazione",
       "cancelled": "Eliminazione annullata. Tutto resta com'era.",
       "confirm_title": "Eliminare davvero l'account?",

@@ -110,6 +110,7 @@
       "body": "Todo se elimina definitivamente pasados 7 días. Hasta entonces, puedes cancelarlo.",
       "cta": "Eliminar la cuenta…",
       "scheduled": "La eliminación está programada: a partir del {{date}} a las {{time}}. Hasta entonces, puedes cancelarla.",
+      "running": "Tu cuenta se está eliminando ahora mismo. Ya no se puede cancelar.",
       "cancel": "Cancelar la eliminación",
       "cancelled": "Eliminación cancelada. Todo sigue como estaba.",
       "confirm_title": "¿Seguro que quieres eliminar la cuenta?",

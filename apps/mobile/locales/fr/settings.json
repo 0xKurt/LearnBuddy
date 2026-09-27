@@ -110,6 +110,7 @@
       "body": "Tout est définitivement supprimé au bout de 7 jours. D'ici là, tu peux annuler.",
       "cta": "Supprimer le compte…",
       "scheduled": "La suppression est prévue: à partir du {{date}} à {{time}}. D'ici là, tu peux l'annuler.",
+      "running": "Ton compte est en cours de suppression. Ce n'est plus possible d'annuler.",
       "cancel": "Annuler la suppression",
       "cancelled": "Suppression annulée. Tout reste comme avant.",
       "confirm_title": "Vraiment supprimer le compte?",
