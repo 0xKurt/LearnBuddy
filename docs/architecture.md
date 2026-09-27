@@ -81,14 +81,22 @@ The model never writes ids, dates or instants (`modules/buddy/decision.ts`):
 - **Aliases** — STATE lists entities as `g1`, `st2`, `m3`, `f1`; tools resolve them for this
   learner only (`context.ts`). "new" references a test planned earlier in the same answer.
 - **DaySpec / UntilSpec** — "weekday 5", "in 1 day", a named date, "end of week"; resolved in
-  the learner's zone against the time the learner _wrote_ (`lib/time.ts`). Nonexistent or
-  doubled local times (clock changes) are rejected, never guessed.
+  the learner's zone against the day the model counted from (the "Now" in its STATE; `lib/time.ts`).
+  Nonexistent or doubled local times (clock changes) are rejected, never guessed — also for a
+  time the model gives `schedule_check`.
 - **Quotes** — changes to memory, goals, agreed reminders or settings carry the learner's exact
-  words from their latest message, checked by normalised substring match (provenance, not
-  language understanding).
+  words — whole words from what she wrote since Buddy's last answer — checked by normalised
+  word-boundary match (provenance, not language understanding; §Turns).
 - **Context fence** — `buddy_settings.context_version` is bumped by every change a decision
-  depends on. `apply.ts` applies a whole decision in one transaction only if the version is
-  unchanged (compare-and-set, row lock); otherwise the decision is stale and nothing is applied.
+  depends on, including the learner's time zone (the `x-timezone` header bumps it in the same
+  statement when the zone changes). `apply.ts` applies a whole decision in one transaction only
+  if the version is unchanged (compare-and-set, row lock); otherwise the decision is stale and
+  nothing is applied. A lock conflict Postgres breaks (deadlock, serialization) counts as stale.
+- **One lock order** — every transaction that bumps the context locks the learner's
+  `buddy_settings` row first (`plan.ts lockContext`), then steps, goals, memories or outreach,
+  as applying a decision does; a tap during an apply waits instead of deadlocking (repro-01).
+- **Undo never loosens contact for a minor without the adult**: undoing "fewer messages" or a
+  pause needs the PIN like the same change in the settings, and the button is not offered to her.
 - **All or nothing** — the first rejected action rolls back the whole decision; the reasons go
   back to the model for one repair round, then the turn fails honestly.
 - Every decision — applied, waiting, stale, rejected, failed — is stored in `buddy_decisions`
@@ -230,7 +238,10 @@ start of the preferred window, `exam_followup` the day after, `material_ready`,
 `modules/scheduler/`. One durable queue (`jobs`) for extraction, Buddy checks, turn recovery,
 photo purge and account deletion. Claimed with `FOR UPDATE SKIP LOCKED` and a lease token;
 finishing and retrying are compare-and-set on the token, so a worker whose lease expired cannot
-overwrite its successor. At most `max_attempts` (default 3), then parked as `failed`. A cancelled
+overwrite its successor. A Buddy check heartbeats its leases (the learner's check lease and
+its claimed jobs) before every model call, so a check that runs longer than one lease is never
+taken over while alive; it applies a decision (and its fallbacks) only while it still holds the
+learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed`. A cancelled
 job can be planned again with the same key (an exam moved away and back).
 
 `POST /internal/tick` runs everything due within a 45 s budget: recovery → reading photos →

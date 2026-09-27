@@ -72,11 +72,18 @@ export const requireLearner: MiddlewareHandler<AppEnv> = async (c, next) => {
   const now = deps.now();
   const tzHeader = c.req.header('x-timezone');
   const tz = tzHeader && isValidTimeZone(tzHeader) ? tzHeader : null;
+  // The zone decides what "today" and "Friday" mean for every decision, so it is part of the
+  // fenced context (CLAUDE.md rule 4): a change bumps context_version in the same statement,
+  // and a decision the model made in the old zone is stale instead of landing a day off
+  // (audit M-48 timezone-header-no-context-bump).
   const settings = await deps.db.one<{ timezone: string }>(
     `insert into buddy_settings (learner_id, timezone, last_seen_at)
        values ($1, coalesce($2, 'Europe/Berlin'), $3)
      on conflict (learner_id) do update
        set timezone = coalesce($2, buddy_settings.timezone),
+           context_version = buddy_settings.context_version
+             + case when coalesce($2, buddy_settings.timezone) <> buddy_settings.timezone
+                    then 1 else 0 end,
            last_seen_at = $3
      returning timezone`,
     [learner.id, tz, now],

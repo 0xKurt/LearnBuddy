@@ -202,3 +202,22 @@ function findSlot(
   }
   return null;
 }
+
+/** True when the change allows more contact than before (needs the account holder for minors). */
+export function loosens(before: ContactSettings, after: ContactSettings, now: Date): boolean {
+  if (!before.contact_enabled && after.contact_enabled) return true;
+  if (after.max_per_day > before.max_per_day || after.max_per_week > before.max_per_week)
+    return true;
+  if (before.avoid_weekdays.some((d) => !after.avoid_weekdays.includes(d))) return true;
+  const pausedBefore =
+    before.paused_until && before.paused_until > now ? before.paused_until.getTime() : 0;
+  const pausedAfter =
+    after.paused_until && after.paused_until > now ? after.paused_until.getTime() : 0;
+  if (pausedAfter < pausedBefore) return true;
+  for (let m = 0; m < 1440; m += 5) {
+    const wasQuiet = inWindow(m, before.quiet_start, before.quiet_end);
+    const isQuiet = inWindow(m, after.quiet_start, after.quiet_end);
+    if (wasQuiet && !isQuiet) return true;
+  }
+  return false;
+}

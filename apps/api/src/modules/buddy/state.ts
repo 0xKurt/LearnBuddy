@@ -23,6 +23,8 @@ export type SettingsRow = {
   context_version: number;
   last_seen_at: Date | null;
   version: number;
+  /** Which worker runs this learner's background checks (check.ts), if any. */
+  check_lease_token?: string | null;
 };
 
 export type GoalRow = {

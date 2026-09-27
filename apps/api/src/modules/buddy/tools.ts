@@ -40,6 +40,7 @@ import {
   scheduleStepReminder,
 } from './plan.js';
 import type { GoalRow, MemoryRow, SettingsRow, StepRow } from './state.js';
+import { loosens } from './policy.js';
 import { normalizeForMatch, quoteOccursIn } from './text.js';
 
 export class ToolRejection extends Error {
@@ -815,7 +816,20 @@ async function runScheduleCheck(
 ): Promise<ToolOutcome> {
   const a = action.args;
   const date = resolveFutureDay(ctx, a.day, 'the check');
-  const at = zonedToInstant(date, a.time ?? ctx.settings.preferred_start, ctx.settings.timezone);
+  // A time the model named is rejected on a clock change, never guessed (CLAUDE.md rule 2,
+  // audit schedule-check-compatible-dst); the preferred start is the system's own choice.
+  let at: Date;
+  if (a.time) {
+    const r = resolveLocalDateTime(date, a.time, ctx.settings.timezone, 'reject');
+    if (!r.ok) {
+      throw new ToolRejection(
+        `${date} ${a.time} ${r.error === 'nonexistent_time' ? 'does not exist' : 'exists twice'} (clock change) — pick another time`,
+      );
+    }
+    at = r.instant;
+  } else {
+    at = zonedToInstant(date, ctx.settings.preferred_start, ctx.settings.timezone);
+  }
   const minAt = ctx.now.getTime() + 3_600_000;
   const maxAt = ctx.now.getTime() + 21 * 86_400_000;
   if (at.getTime() < minAt || at.getTime() > maxAt) {
@@ -930,6 +944,32 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
         learnerId,
       ]);
   }
+}
+
+/**
+ * True when undoing this action would allow more contact than now (undoing "fewer", a pause,
+ * earlier quiet hours or avoided days). For a minor that needs the adult (rule 6).
+ */
+export async function undoLoosensContact(
+  db: Db,
+  learnerId: string,
+  undo: UndoSpec,
+  now: Date,
+): Promise<boolean> {
+  if (undo.type !== 'restore_settings') return false;
+  const current = await db.one<SettingsRow>(`select * from buddy_settings where learner_id = $1`, [
+    learnerId,
+  ]);
+  const restored: SettingsRow = {
+    ...current,
+    quiet_start: undo.quiet_start ?? current.quiet_start,
+    preferred_start: undo.preferred_start,
+    preferred_end: undo.preferred_end,
+    avoid_weekdays: undo.avoid_weekdays,
+    paused_until: undo.paused_until ? new Date(undo.paused_until) : null,
+    max_per_week: undo.max_per_week,
+  };
+  return loosens(current, restored, now);
 }
 
 export async function runUndo(

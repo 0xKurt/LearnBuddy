@@ -45,6 +45,8 @@ export type ApplyInput = {
   triggerMessageId: string | null;
   /** Turn processing claim: only the current owner of the message may publish. */
   messageClaim: { id: string; token: string } | null;
+  /** Background check: only the worker still holding the learner's check lease may apply. */
+  checkLease?: string;
   actions: AnyAction[];
   reply: { text: string; options: string[] | null } | null;
   outreach: Outreach | null;
@@ -66,6 +68,16 @@ export type ApplyResult =
 class StaleDecision extends Error {}
 class SupersededClaim extends Error {}
 
+/**
+ * Postgres gave up this transaction to break a lock cycle (40P01) or a serialization
+ * conflict (40001). Nothing was applied; for the decision that is the same as a stale
+ * context — rebuild and ask again — never a failed turn after its reply was streamed.
+ */
+function lostLockRace(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  return code === '40P01' || code === '40001';
+}
+
 export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyResult> {
   try {
     return await db.tx(async (tx) => {
@@ -81,6 +93,9 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         if (!msg || msg.status !== 'processing' || msg.claim_token !== input.messageClaim.token) {
           throw new SupersededClaim();
         }
+      }
+      if (input.checkLease !== undefined && settings.check_lease_token !== input.checkLease) {
+        throw new SupersededClaim();
       }
       if (settings.context_version !== input.contextVersion) throw new StaleDecision();
 
@@ -230,7 +245,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
     });
   } catch (err) {
     if (err instanceof SupersededClaim) return { status: 'superseded' };
-    if (err instanceof StaleDecision) {
+    if (err instanceof StaleDecision || lostLockRace(err)) {
       await recordUnapplied(db, input, 'stale', null);
       return { status: 'stale' };
     }

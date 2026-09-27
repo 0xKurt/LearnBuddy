@@ -19,7 +19,7 @@ import type {
 import type { Deps } from '../../deps.js';
 import { daysBetween, localParts } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
-import { undoApplies, type UndoSpec } from './tools.js';
+import { undoApplies, undoLoosensContact, type UndoSpec } from './tools.js';
 import { loadBuddyState } from './state.js';
 
 const THREAD_LIMIT = 30;
@@ -56,8 +56,8 @@ export async function buildHome(
   const [nowCard, decision, done, thread, system, working] = await Promise.all([
     nowCardOf(deps, learner.id, state, today, now),
     decisionOf(state, learner, today, now),
-    doneOf(deps, learner.id, now),
-    threadOf(deps, learner.id, beforeMessageId),
+    doneOf(deps, learner, now),
+    threadOf(deps, learner, beforeMessageId),
     systemOf(deps, learner.id, state),
     workingOf(deps, learner.id, now),
   ]);
@@ -262,7 +262,21 @@ function decisionOf(
   return null;
 }
 
-async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionView[]> {
+/**
+ * A minor cannot undo her way to more contact: that needs the adult's PIN (rule 6), so the
+ * button is not offered to her; the server refuses it anyway.
+ */
+async function needsAdult(
+  deps: Deps,
+  learner: LearnerLite,
+  undo: UndoSpec | null,
+  now: Date,
+): Promise<boolean> {
+  return learner.isMinor && undo !== null && undoLoosensContact(deps.db, learner.id, undo, now);
+}
+
+async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<ActionView[]> {
+  const learnerId = learner.id;
   const rows = await deps.db.query<{
     id: string;
     status: 'applied' | 'undone';
@@ -284,7 +298,8 @@ async function doneOf(deps: Deps, learnerId: string, now: Date): Promise<ActionV
         r.status === 'applied' &&
         r.undo !== null &&
         now.getTime() - r.created_at.getTime() < UNDO_WINDOW_MS &&
-        (await undoApplies(deps.db, learnerId, r.undo)),
+        (await undoApplies(deps.db, learnerId, r.undo)) &&
+        !(await needsAdult(deps, learner, r.undo, now)),
       summary: r.result,
       created_at: r.created_at.toISOString(),
     })),
@@ -349,9 +364,10 @@ function nextOf(state: BuddyState, today: string, now: Date): UpcomingItem[] {
 
 async function threadOf(
   deps: Deps,
-  learnerId: string,
+  learner: LearnerLite,
   beforeMessageId?: string,
 ): Promise<{ messages: MessageView[]; hasMore: boolean }> {
+  const learnerId = learner.id;
   const rows = await deps.db.query<{
     id: string;
     role: 'learner' | 'buddy';
@@ -386,7 +402,7 @@ async function threadOf(
         decision_id: string;
         status: 'applied' | 'undone';
         result: ActionSummary;
-        undo: unknown;
+        undo: UndoSpec | null;
         created_at: Date;
       }>(
         `select id, decision_id, status, result, undo, created_at from buddy_actions
@@ -414,6 +430,12 @@ async function threadOf(
       )
     : [];
 
+  // Undo that would need the adult is not offered to a minor (see needsAdult).
+  const adultOnly = new Set<string>();
+  for (const a of actions) {
+    if (a.status === 'applied' && (await needsAdult(deps, learner, a.undo, now)))
+      adultOnly.add(a.id);
+  }
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -448,6 +470,7 @@ async function threadOf(
           undoable:
             a.status === 'applied' &&
             a.undo !== null &&
+            !adultOnly.has(a.id) &&
             now.getTime() - a.created_at.getTime() < UNDO_WINDOW_MS,
           summary: a.result,
           created_at: a.created_at.toISOString(),

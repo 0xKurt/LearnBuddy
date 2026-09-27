@@ -7,6 +7,16 @@ import { cancelQueuedJobs, enqueueJob } from '../scheduler/jobs.js';
 import type { SettingsRow } from './state.js';
 
 /**
+ * The one lock order (audit M-45 apply-vs-tap-lock-order-deadlock): every transaction that
+ * bumps the context takes the learner's settings row FIRST, before any step, goal, memory or
+ * outreach row — as applying a decision does. Taps then wait for a running apply instead of
+ * deadlocking with it.
+ */
+export async function lockContext(db: Db, learnerId: string): Promise<void> {
+  await db.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learnerId]);
+}
+
+/**
  * Every change Buddy's decisions depend on must go through here (or the
  * decision apply, which bumps once for the whole decision). A decision made
  * on an older version is stale and is not applied.
