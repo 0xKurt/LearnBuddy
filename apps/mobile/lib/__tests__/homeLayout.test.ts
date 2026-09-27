@@ -1,7 +1,7 @@
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { followTarget, homeLayout } from '../homeLayout.js';
+import { followsEnd, homeLayout } from '../homeLayout.js';
 
 type Parts = Pick<BuddyHome, 'now' | 'decision' | 'working'>;
 
@@ -53,14 +53,26 @@ describe('home layout (user feedback #6)', () => {
 });
 
 describe('where the conversation stands', () => {
-  it('is at its end when everything fits or her message is still in view', () => {
-    expect(followTarget(300, 500, 20)).toBe(0);
-    expect(followTarget(900, 500, 450)).toBe(400);
-    expect(followTarget(900, 500, null)).toBe(400);
+  it('follows the newest message while she is at the end', () => {
+    // Buddy's newer replies ("Übungen vorbereitet …") and his question at the end come into
+    // view, not her older message (walkthrough 09-buddy-prepared, 05-buddy-planned-360).
+    expect(followsEnd(true, 0, 400, 500, 900)).toBe(true);
+    // A new reply made the thread longer: still following, though not at the end yet.
+    expect(followsEnd(true, 400, 400, 500, 1400)).toBe(true);
+    // Scrolling towards the new end keeps following.
+    expect(followsEnd(true, 400, 700, 500, 1400)).toBe(true);
   });
 
-  it('never pushes her own last message out at the top', () => {
-    // A long reply and two notices under her message: her message stays the first line.
-    expect(followTarget(1400, 500, 600)).toBe(592);
+  it('leaves her where she is when she scrolled up to read', () => {
+    expect(followsEnd(true, 400, 150, 500, 900)).toBe(false);
+    // A new message arrives meanwhile: she is not yanked down.
+    expect(followsEnd(false, 150, 150, 500, 1400)).toBe(false);
+    // Scrolling down, but not yet at the end: still not following.
+    expect(followsEnd(false, 150, 600, 500, 1400)).toBe(false);
+  });
+
+  it('follows again once she is back at the end', () => {
+    expect(followsEnd(false, 600, 890, 500, 1400)).toBe(true);
+    expect(followsEnd(false, 0, 0, 500, 300)).toBe(true);
   });
 });

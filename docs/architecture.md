@@ -892,7 +892,9 @@ around it ("Arbeit" — with a test planned it prepares her for it; homework; pr
 vocabulary; explain —
 `docs/UX-PRINCIPLES.md` §6). Once there is a conversation the ring becomes one row of the same
 five (`components/lb/StartRow.tsx`; each as wide as its label, so a word never breaks) and the conversation takes the rest of the screen, at
-its newest message but never so far that her own last message is pushed out at the top; a
+its newest message like any chat (a new message scrolls to it; when she scrolled up to read she
+is not pulled down until she is back at the end or sends something; `lib/homeLayout.ts`
+`followsEnd`) — the card on top has its own room above it, so it never covers her message; a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did stands under its message with "Rückgängig"; no tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,

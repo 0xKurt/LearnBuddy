@@ -7,8 +7,10 @@
 //   otherwise as a line at the end of the conversation.
 // The row of ways to start stays (a paused homework card can be there for days; starting
 // something else must not depend on it).
-// And where the conversation stands: at its newest message, but never so far that her own
-// last message is pushed out above it (followTarget).
+// And where the conversation stands: like any chat, at its newest message (bottom); a new
+// message scrolls to it — unless she scrolled up to read, then she stays where she is until
+// she scrolls back down or sends something (followsEnd). Her message is not hidden by the
+// card on top because the card takes its own room above the conversation.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 
@@ -33,17 +35,20 @@ export function homeLayout(h: Pick<BuddyHome, 'now' | 'decision' | 'working'>): 
 }
 
 /**
- * Where to scroll the conversation: its end (`contentHeight − viewHeight`), unless that
- * would push her own last message out at the top — then that message's top edge
- * (minus a small margin), and the rest is read by scrolling on.
+ * Whether the conversation keeps following its newest message after a scroll to `y`:
+ * yes when it is (about) at the end; no once she scrolled up away from it; otherwise as
+ * before (a programmatic scroll towards the end, or content growing under a followed
+ * thread, never stops following).
  */
-export function followTarget(
-  contentHeight: number,
+export function followsEnd(
+  wasFollowing: boolean,
+  prevY: number,
+  y: number,
   viewHeight: number,
-  lastMineTop: number | null,
-  margin = 8,
-): number {
-  const end = Math.max(0, contentHeight - viewHeight);
-  if (lastMineTop === null) return end;
-  return Math.max(0, Math.min(end, lastMineTop - margin));
+  contentHeight: number,
+  slack = 24,
+): boolean {
+  if (contentHeight - viewHeight - y <= slack) return true;
+  if (y < prevY) return false;
+  return wasFollowing;
 }

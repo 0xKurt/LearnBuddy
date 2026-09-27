@@ -105,10 +105,10 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByText('Schick mir ein Foto')).toBeVisible();
   await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeVisible();
   await expect(page.getByText(/Nie nach 20:00 Uhr\. Das erlauben deine Eltern/)).toBeVisible();
-  // Her own message stays in view under the card.
-  await expect(
-    page.getByText('Ich schreibe am Freitag eine Mathearbeit über Brüche.'),
-  ).toBeInViewport();
+  // The conversation stands at its newest message, like any chat: Buddy's question at the end
+  // is on screen, not below the fold (05-buddy-planned-360).
+  await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Eltern fragen' })).toBeInViewport();
   await shot(page, '05-buddy-planned');
 
   // ── Messages to the phone need a parent: the PIN, not the student — and the parent sees
