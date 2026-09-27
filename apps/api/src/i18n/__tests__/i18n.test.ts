@@ -44,4 +44,23 @@ describe('server texts', () => {
     expect(dayLabel('fr', 5, 3)).toBe('Vendredi');
     expect(dayLabel('en', 5, 1)).toBe('Tomorrow');
   });
+
+  it('says one question in a sentence of its own, and no "El Mañana" (p2-server-texts-no-grammar-or-plural)', () => {
+    expect(t('de', 'reminder.practice_ready', { title: 'Brüche', count: 1, minutes: 5 })).toBe(
+      'Wie verabredet: Brüche. Eine Aufgabe liegt bereit, ca. 5 Minuten.',
+    );
+    expect(t('en', 'exam.prepared', { day: 'Tomorrow', exam: 'Maths', count: 1, minutes: 5 })).toBe(
+      'Tomorrow is “Maths”. One question is ready, about 5 minutes.',
+    );
+    expect(t('de', 'reminder.practice_ready', { title: 'Brüche', count: 6, minutes: 5 })).toContain(
+      '6 Aufgaben',
+    );
+    const es = t('es', 'exam.prepared', {
+      day: dayLabel('es', 5, 1),
+      exam: 'Mates',
+      count: 6,
+      minutes: 5,
+    });
+    expect(es.startsWith('Mañana: «Mates».')).toBe(true);
+  });
 });

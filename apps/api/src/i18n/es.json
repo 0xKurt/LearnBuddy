@@ -24,12 +24,14 @@
     "late": "Quería recordártelo a las {{time}}; perdona, llega tarde. {{text}}",
     "checkin_unavailable": "Quería saber cómo estás, pero ahora mismo no lo consigo del todo. Escríbeme si quieres.",
     "practice_ready": "Como acordamos: {{title}}. Hay {{count}} ejercicios listos, unos {{minutes}} minutos.",
+    "practice_ready_one": "Como acordamos: {{title}}. Hay un ejercicio listo, unos {{minutes}} minutos.",
     "practice": "Como acordamos: {{title}}.",
     "capture": "Como acordamos: {{title}} – basta con una foto, yo me encargo del resto."
   },
   "exam": {
-    "prepared": "El {{day}} es «{{exam}}». Hay {{count}} ejercicios listos, unos {{minutes}} minutos.",
-    "need_material": "El {{day}} es «{{exam}}». ¿Tienes una hoja de ejercicios? Basta con una foto, yo me encargo del resto.",
+    "prepared": "{{day}}: «{{exam}}». Hay {{count}} ejercicios listos, unos {{minutes}} minutos.",
+    "prepared_one": "{{day}}: «{{exam}}». Hay un ejercicio listo, unos {{minutes}} minutos.",
+    "need_material": "{{day}}: «{{exam}}». ¿Tienes una hoja de ejercicios? Basta con una foto, yo me encargo del resto.",
     "followup": "¿Qué tal fue «{{exam}}»? Cuéntamelo en breve y planifico lo siguiente."
   },
   "material": {
@@ -49,7 +51,7 @@
     "missing_word": "Casi – todavía falta una palabra. Míralo otra vez.",
     "typo": "Casi – se escribe {{answer}}. Escríbelo otra vez.",
     "help_step": "Vamos paso a paso: ¿qué datos te da el ejercicio y qué hay que buscar?",
-    "help_solved": "¡Genial, lo has resuelto tú solo!",
+    "help_solved": "¡Genial, lo has resuelto por tu cuenta!",
     "heard_retry": "No te he oído bien. Inténtalo otra vez un poco más alto y más cerca del móvil.",
     "speak_good": "¡Suena genial!",
     "speak_almost": "¡Casi! Mira las palabras marcadas.",

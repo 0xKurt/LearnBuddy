@@ -49,4 +49,10 @@ describe('replyProgress', () => {
     const calm = JSON.stringify({ concern: false, actions: [], reply: 'Klar.', options: null });
     expect(replyProgress(calm)?.speakable).toBe(true);
   });
+
+  it('shows streamed LaTeX repaired, like the stored reply (p2-streamed-reply-unrepaired-latex-escapes)', () => {
+    // The model wrote "\\times" with one backslash: JSON turned it into TAB + "imes".
+    const raw = '{"concern":false,"lookups":[],"actions":[],"reply":"Rechne $7 \\times 4$';
+    expect(replyProgress(raw)?.text).toBe('Rechne $7 \\times 4$');
+  });
 });

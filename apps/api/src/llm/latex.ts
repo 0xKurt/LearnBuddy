@@ -8,8 +8,21 @@
 const ALWAYS: Record<string, string> = { '\t': 't', '\f': 'f', '\b': 'b' };
 const IN_MATH: Record<string, string> = { ...ALWAYS, '\n': 'n', '\r': 'r' };
 
+/**
+ * LaTeX commands that start with n or r. Inside $…$ a line break is taken back only when one
+ * of them follows: "$5 $\nund 3 $" (two amounts on two lines) keeps its line break
+ * (p2-latex-repair-currency-newline). LaTeX syntax, not language.
+ */
+const N_R_COMMAND =
+  /^(?:neq|ne|newline|nabla|neg|not|notin|nu|ni|nleq|ngeq|nless|ngtr|nmid|nexists|nsubseteq|nsupseteq|nearrow|nwarrow|right|rightarrow|rightleftharpoons|rho|rangle|rceil|rfloor|rbrace|rvert|rVert|rm)(?![a-zA-Z])/;
+
 function repair(s: string, map: Record<string, string>): string {
-  return s.replace(/[\t\f\b\n\r](?=[a-zA-Z])/g, (c) => (map[c] ? `\\${map[c]}` : c));
+  return s.replace(/[\t\f\b\n\r](?=[a-zA-Z])/g, (c, at: number) => {
+    const letter = map[c];
+    if (!letter) return c;
+    if ((c === '\n' || c === '\r') && !N_R_COMMAND.test(letter + s.slice(at + 1))) return c;
+    return `\\${letter}`;
+  });
 }
 
 /** One string: control characters from lost LaTeX backslashes become the backslash again. */

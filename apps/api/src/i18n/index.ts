@@ -38,7 +38,13 @@ export function t(
   vars: Record<string, string | number> = {},
 ): string {
   const messages = MESSAGES[(locale as Locale) in MESSAGES ? (locale as Locale) : 'de'];
-  const template = lookup(messages, key) ?? lookup(MESSAGES.de, key) ?? key;
+  // A count of one has its own sentence where a language needs it ("Eine Aufgabe liegt
+  // bereit", not "1 Aufgaben" — p2-server-texts-no-grammar-or-plural).
+  const one =
+    vars.count === 1
+      ? (lookup(messages, `${key}_one`) ?? lookup(MESSAGES.de, `${key}_one`))
+      : undefined;
+  const template = one ?? lookup(messages, key) ?? lookup(MESSAGES.de, key) ?? key;
   return template.replace(/\{\{(\w+)\}\}/g, (_, name: string) => String(vars[name] ?? ''));
 }
 
