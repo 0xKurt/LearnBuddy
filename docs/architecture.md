@@ -577,6 +577,30 @@ files dragged onto the page show a drop hint and land in the capture. A refusal 
 (the same files cannot pass); the draft remembers which entry is a PDF, and a sent set with a PDF
 has no page thumbnail (page numbers are not file positions there).
 
+_Teilen an LearnBuddy_ (`expo-share-intent` 5.1 for SDK 54, its config plugin in `app.json`):
+Android gets intent filters for `SEND` and `SEND_MULTIPLE` of `image/*` and `application/pdf`; iOS
+a share extension (target `LearnBuddyShare`, shown as "LearnBuddy" — `plugins/withShareDisplayName.js`;
+activation rule: images and PDFs; app group `group.com.learnbuddy.app`). `ShareIntake` (root
+layout) hands the shared files to the capture screen (`incoming.ts`: the open capture takes them at
+once, else it is opened with `shared=1`; files wait until a draft left from before is decided).
+Signed out: a toast, nothing kept. Text or links shared: a toast. The iOS extension opens
+`learnbuddy://dataUrl=learnbuddyShareKey`, which `app/+native-intent.tsx` keeps from the router.
+The plugin needs pnpm's patch of `xcode@3.0.1` (`patches/`, as the package documents) or iOS
+prebuild fails. Web and Expo Go: the native module is absent and nothing happens.
+
+**Not verified — must be checked on devices (EAS build), in this order:** (1) `expo prebuild` ran
+here for both platforms (the manifest has both filters, the Xcode project the `LearnBuddyShare`
+target with display name "LearnBuddy"), but nothing native was compiled or run. (2) The app group
+`group.com.learnbuddy.app` and the extension bundle id `com.learnbuddy.app.share-extension` must
+exist for the Apple team (EAS credentials; one extension target only — see the package's FAQ). (3)
+Android: share one photo, several photos, a PDF from WhatsApp, Files and Chrome — cold (app closed)
+and warm; the capture opens with the files; a `content://` URI from a messenger is copied and
+uploaded. (4) iOS: the same from Photos, Files, WhatsApp and Safari's PDF view; the share sheet
+shows "LearnBuddy"; after sharing the app opens on the capture, not on "not found". (5) Signed out,
+and during a running send: files are not lost silently. (6) "Aus Dateien" on both platforms: a PDF
+from iCloud/Google Drive (download on pick), a HEIC photo. (7) A real scanned school PDF read by
+the Vertex model: pages and page report right.
+
 **Deleting** ("Blatt löschen", D-7) takes the sheet and its merged pages out of the library,
 Buddy's picture, running sessions (open questions closed like "Frage passt nicht"), prepared
 practice (a step left without questions goes back to planned) and its homework help session

@@ -72,6 +72,22 @@
           "microphonePermission": "Damit du mit Buddy sprechen statt tippen und Sätze laut üben kannst.",
           "speechRecognitionPermission": "Damit dein iPhone selbst aufschreibt, was du sagst – direkt auf dem Gerät."
         }
+      ],
+      [
+        "./plugins/withShareDisplayName.js",
+        {
+          "target": "LearnBuddyShare",
+          "displayName": "LearnBuddy"
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": "SUBQUERY (extensionItems, $extensionItem, SUBQUERY ($extensionItem.attachments, $attachment, ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO \"public.image\" OR ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO \"com.adobe.pdf\").@count >= 1).@count >= 1",
+          "iosShareExtensionName": "LearnBuddy Share",
+          "androidIntentFilters": ["image/*", "application/pdf"],
+          "androidMultiIntentFilters": ["image/*", "application/pdf"]
+        }
       ]
     ]
   }

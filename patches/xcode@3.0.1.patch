@@ -1,0 +1,15 @@
+diff --git a/lib/pbxProject.js b/lib/pbxProject.js
+index 068548ab89dfd2d39f90d46d881c17dc86f90bf4..c3cff5f4880e84656f5fe902c30d4dfd3d46c5e9 100644
+--- a/lib/pbxProject.js
++++ b/lib/pbxProject.js
+@@ -1678,8 +1678,9 @@ function correctForFrameworksPath(file, project) {
+ 
+ function correctForPath(file, project, group) {
+     var r_group_dir = new RegExp('^' + group + '[\\\\/]');
++    var groupObj = project.pbxGroupByName(group);
+ 
+-    if (project.pbxGroupByName(group).path)
++    if (groupObj && groupObj.path)
+         file.path = file.path.replace(r_group_dir, '');
+ 
+     return file;
