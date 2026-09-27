@@ -2,6 +2,7 @@
 // stand-ins for Supabase Auth and storage, behind the same CORS as the API so
 // the web build gets through exactly what a browser would get through.
 // Test tooling only (src/testing is not part of the build). Never deploy it.
+// requires live verification in Claude Code session
 
 import { randomUUID } from 'node:crypto';
 

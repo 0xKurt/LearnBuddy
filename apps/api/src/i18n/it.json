@@ -24,11 +24,13 @@
     "late": "Volevo ricordartelo alle {{time}}: scusa, arriva in ritardo. {{text}}",
     "checkin_unavailable": "Volevo sapere come stai, ma adesso non ci riesco bene. Scrivimi se ti va.",
     "practice_ready": "Come d'accordo: {{title}}. Ci sono {{count}} esercizi pronti, circa {{minutes}} minuti.",
+    "practice_ready_one": "Come d'accordo: {{title}}. C'è un esercizio pronto, circa {{minutes}} minuti.",
     "practice": "Come d'accordo: {{title}}.",
     "capture": "Come d'accordo: {{title}} – basta una foto, al resto penso io."
   },
   "exam": {
     "prepared": "{{day}} c'è «{{exam}}». Ci sono {{count}} esercizi pronti, circa {{minutes}} minuti.",
+    "prepared_one": "{{day}} c'è «{{exam}}». C'è un esercizio pronto, circa {{minutes}} minuti.",
     "need_material": "{{day}} c'è «{{exam}}». Hai una scheda? Basta una foto, al resto penso io.",
     "followup": "Com'è andata «{{exam}}»? Dimmelo in breve e pianifico i prossimi passi."
   },
@@ -37,10 +39,10 @@
     "ready_untitled": "Le tue domande sono pronte ({{count}})."
   },
   "practice": {
-    "correct": "Esatto – bravissimo!",
+    "correct": "Esatto – ottimo lavoro!",
     "untitled": "Esercizio",
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
-    "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla da solo.",
+    "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla tu.",
     "accents": "Quasi – controlla di nuovo gli accenti.",
     "spelling": "Quasi giusto – guarda bene maiuscole e punteggiatura.",
     "hint_request": "Un suggerimento, per favore",
@@ -49,7 +51,7 @@
     "missing_word": "Quasi – manca ancora una parola. Guarda di nuovo.",
     "typo": "Quasi – si scrive {{answer}}. Scrivilo ancora una volta.",
     "help_step": "Andiamo passo per passo: cosa ti dà l'esercizio e cosa bisogna trovare?",
-    "help_solved": "Grande – l'hai risolto da solo!",
+    "help_solved": "Grande – l'hai risolto in autonomia!",
     "help_final_answer": "Sembra giusto! Adesso scrivimi il tuo risultato finale, come lo chiede l'esercizio.",
     "heard_retry": "Non ti ho sentito bene. Riprova un po' più forte e più vicino al telefono.",
     "speak_good": "Suona benissimo!",

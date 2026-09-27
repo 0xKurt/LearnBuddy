@@ -1,6 +1,7 @@
 # ADR 0001 — Store learner date of birth, not birth year
 
-- Status: accepted
+- Status: accepted; carried into the fresh start of [ADR 0004](0004-proactive-buddy.md)
+  (`learners.birth_date` in `0001_baseline.sql`). The document references are legacy.
 - Date: 2026-05-19
 - Supersedes: the `birth_year` modelling in docs/03-data-model.md §Identity and
   docs/04-api.md §`POST /learners`.

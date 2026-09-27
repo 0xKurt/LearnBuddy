@@ -4,6 +4,7 @@
 // is live. Used to pick the tutor model (docs/architecture.md §Model calls):
 //   VERTEX_ROUTES='{"tutor":"eu/gemini-3.1-flash-lite"}' npx tsx evals/tutor/run.ts
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 
@@ -251,3 +252,5 @@ console.log(
   `\n${CASES.length - failed}/${CASES.length} passed · model ${cost.model} · ${cost.n} tutor calls · $${(Number(cost.micros ?? 0) / 1e6).toFixed(4)} · wait median ${Math.round(sorted[Math.floor(sorted.length / 2)] ?? 0)}ms, max ${Math.round(sorted.at(-1) ?? 0)}ms`,
 );
 await env.close();
+// Machine-gradable: any failed case fails the run (audit evals-not-machine-gradable).
+process.exit(failed > 0 ? 1 : 0);

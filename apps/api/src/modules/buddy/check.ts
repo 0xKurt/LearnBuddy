@@ -17,6 +17,8 @@
 
 import { randomUUID } from 'node:crypto';
 
+import { z } from 'zod';
+
 import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
 import { addDays, daysBetween, localParts, weekdayOf, zonedToInstant } from '../../lib/time.js';
@@ -40,7 +42,11 @@ import { claimMessage, processTurn, pushAvailable, TURN_STALL_MS } from './turn.
 
 const CHECK_SCHEMA = toJsonSchema(CheckDecision);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
-const CHECK_STEP_SCHEMA = toJsonSchema(CheckDecision.extend({ lookups: lookupsField }));
+// Lookups first, as in a turn: the model chooses what to read before it writes a decision
+// (p2-check-step-schema-lookups-last).
+const CHECK_STEP_SCHEMA = toJsonSchema(
+  z.object({ lookups: lookupsField }).extend(CheckDecision.shape),
+);
 const LEASE_SECONDS = 150;
 const IN_APP_DEFER_MS = 20 * 60_000;
 const IN_APP_WINDOW_MS = 3 * 60_000;
@@ -290,7 +296,11 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
       origin: 'agreed',
       kind: 'reminder',
       topicKey: `step:${step.id}`,
-      dedupeKey: `step:${step.id}:v${step.version}`,
+      // Keyed by the reminder job (step and version when it was planned), not by the version
+      // this handler bumps itself: a re-run never sends it twice (agreed-reminder-duplicate-on-rerun).
+      dedupeKey: trig.job.dedupe_key.startsWith('step:')
+        ? trig.job.dedupe_key
+        : `step:${step.id}:v${step.version}`,
       title: t(learner.locale, 'title.buddy'),
       body,
       why: null,
@@ -894,6 +904,8 @@ async function ensureRoutine(deps: Deps, learnerId: string): Promise<void> {
 }
 
 /** Interrupted turns: queue a recovery job for messages stuck in "processing". */
+const MAX_TURN_RECOVERIES = 3;
+
 export async function queueStalledTurns(deps: Deps): Promise<number> {
   const now = deps.now();
   const stalled = await deps.db.query<{
@@ -907,6 +919,22 @@ export async function queueStalledTurns(deps: Deps): Promise<number> {
     [new Date(now.getTime() - TURN_STALL_MS)],
   );
   for (const m of stalled) {
+    // A turn that keeps dying (a crash, not a model error) is taken over at most
+    // MAX_TURN_RECOVERIES times, then it fails honestly instead of being re-billed every
+    // few minutes (p2-J-stall-recovery-loop-drains-budget).
+    const tried = await deps.db.one<{ n: number }>(
+      `select count(*)::int as n from jobs
+        where learner_id = $1 and kind = 'buddy_turn' and payload ->> 'message_id' = $2`,
+      [m.learner_id, m.id],
+    );
+    if (tried.n >= MAX_TURN_RECOVERIES) {
+      await deps.db.query(
+        `update buddy_messages set status = 'failed', failure_code = 'internal'
+          where id = $1 and status = 'processing' and claim_token is not distinct from $2`,
+        [m.id, m.claim_token],
+      );
+      continue;
+    }
     await enqueueJob(deps.db, {
       learnerId: m.learner_id,
       kind: 'buddy_turn',

@@ -21,6 +21,11 @@ export type PushMessage = {
   data: Record<string, string>;
   /** Replaces an earlier notification for the same topic on the device. */
   collapseId?: string;
+  /**
+   * Not delivered after this instant (a phone that was off does not get a stale message
+   * later; the thread has it anyway — p2-push-no-ttl-default-priority).
+   */
+  expiresAt?: Date;
 };
 
 export type PushTicket =
@@ -112,6 +117,7 @@ export class ExpoPush implements PushTransport {
             // The Android channel the app creates (lib/push.ts): its settings apply.
             channelId: PUSH_CHANNEL_ID,
             ...(m.collapseId ? { collapseId: m.collapseId } : {}),
+            ...(m.expiresAt ? { expiration: Math.floor(m.expiresAt.getTime() / 1000) } : {}),
           })),
         ),
         signal: AbortSignal.timeout(this.timeoutMs),

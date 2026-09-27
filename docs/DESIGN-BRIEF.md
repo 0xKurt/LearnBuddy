@@ -1,5 +1,14 @@
 # Design Brief — Learning Companion
 
+> **Still valid for how the product must feel** (§How it should feel, §What we are NOT, the
+> hard constraints on age, languages, math and voice). **Superseded where the build decided
+> otherwise** (ADR 0004, `docs/architecture.md`, `docs/UX-PRINCIPLES.md`): Buddy is the one
+> screen and the learner talks to it — no folders (sheets are filed by subject, tests are
+> goals Buddy plans with); the solution is shown when she asks for it, not automatically after
+> two hints; an adult learner has no PIN-gated admin surface (the parents' PIN guards a child's
+> profile); there is no subscription; the data export is one file. Where this brief and those
+> documents disagree, they win (audit design-brief-declared-valid-but-contradicted).
+
 A document for the designer. Engineering details live elsewhere; you don't need them. This brief tells you what the product is, who uses it, what it must do, and what it must feel like. **How** the interface looks and flows is up to you.
 
 ---

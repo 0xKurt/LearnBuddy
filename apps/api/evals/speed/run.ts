@@ -5,6 +5,7 @@
 // (docs/architecture.md §Speed).
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables, a local Postgres and espeak-ng.
 //   cd apps/api && npx tsx evals/speed/run.ts [rounds]
+// requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -194,3 +195,5 @@ for (const [step, rs] of by) {
 }
 console.log(`\n${over} step(s) over budget. Cost column: model cost in USD per 1000 such steps.`);
 await env.close();
+// Machine-gradable: a step over its budget fails the run (audit evals-not-machine-gradable).
+process.exit(over > 0 ? 1 : 0);

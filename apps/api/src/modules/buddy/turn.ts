@@ -33,7 +33,7 @@ import { bumpContext } from './plan.js';
 import { replyProgress, type ReplyProgress } from './stream.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
 import { lookupsField, withLookups } from './lookups.js';
-import { loadBuddyState, type MessageRow } from './state.js';
+import { loadBuddyState, type MessageRow, TURN_STALL_MS } from './state.js';
 
 const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
@@ -41,8 +41,7 @@ const TURN_STEP_SCHEMA = toJsonSchema(
   z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
 );
 const MAX_ROUNDS = 4;
-/** A turn still "processing" after this long is considered interrupted. */
-export const TURN_STALL_MS = 3 * 60_000;
+export { TURN_STALL_MS };
 
 export type TurnOutcome = { status: 'done' | 'processing' | 'failed'; errorCode: string | null };
 
@@ -83,7 +82,11 @@ export async function receiveLearnerMessage(
       const row = await tx.one<{ id: string; text: string; created_at: Date }>(
         `insert into buddy_messages (learner_id, role, text, client_message_id, status, reply_to_id,
                                      claim_token, claimed_at, created_at)
-         values ($1, 'learner', $2, $3, 'processing', $4, $5, $6, $6)
+         values ($1, 'learner', $2, $3, 'processing',
+                 -- Only one of her own messages; anything else is not stored (and no
+                 -- foreign-key error tells whether it exists — reply-to-id-not-scoped).
+                 (select id from buddy_messages where id = $4 and learner_id = $1),
+                 $5, $6, $6)
          returning id, text, created_at`,
         [learner.id, input.text, input.clientMessageId, input.replyToId, token, now],
       );
@@ -186,14 +189,31 @@ async function decideTurn(
     const now = deps.now();
     const state = await loadBuddyState(deps.db, learner.id, now);
 
-    // A newer learner message supersedes this one: its turn answers both.
+    // A newer learner message supersedes this one: its turn answers both. This one is
+    // released (no claim), not "done": it becomes done with that answer, or failed with
+    // it (superseded-message-done-without-reply).
     const latestLearner = [...state.messages].reverse().find((m) => m.role === 'learner');
     if (latestLearner && latestLearner.id !== message.id) {
-      await deps.db.query(
-        `update buddy_messages set status = 'done' where id = $1 and status = 'processing' and claim_token = $2`,
-        [message.id, message.claim_token],
-      );
-      return { status: 'done', errorCode: null };
+      // Under the newer message's row lock: its turn cannot finish in between.
+      const outcome = await deps.db.tx(async (tx) => {
+        const newer = await tx.one<{ status: string; failure_code: string | null }>(
+          `select status, failure_code from buddy_messages where id = $1 for update`,
+          [latestLearner.id],
+        );
+        const next =
+          newer.status === 'done'
+            ? { status: 'done' as const, claim: null, failure: null }
+            : newer.status === 'failed'
+              ? { status: 'failed' as const, claim: null, failure: newer.failure_code }
+              : { status: 'processing' as const, claim: null, failure: null };
+        await tx.query(
+          `update buddy_messages set status = $3, claim_token = $4, failure_code = $5
+            where id = $1 and status = 'processing' and claim_token = $2`,
+          [message.id, message.claim_token, next.status, next.claim, next.failure],
+        );
+        return next.status;
+      });
+      return { status: outcome, errorCode: null };
     }
 
     const tz = state.settings.timezone;
@@ -247,6 +267,13 @@ async function decideTurn(
         contents,
         call: async (messages, final) => {
           const thisRound = ++round;
+          // Still working: a turn of several model calls must not look stalled and be taken
+          // over while it runs (turn-cost-and-stall-window).
+          await deps.db.query(
+            `update buddy_messages set claimed_at = $3
+              where id = $1 and claim_token = $2 and status = 'processing'`,
+            [message.id, message.claim_token, deps.now()],
+          );
           let last = '';
           const result = await callModel(deps, learner.id, today, {
             purpose: 'buddy_turn',
@@ -468,12 +495,24 @@ async function answerWithSafeguarding(
 }
 
 async function failTurn(deps: Deps, message: ClaimedMessage, code: string): Promise<TurnOutcome> {
-  // Only the current owner may mark it failed.
-  const rows = await deps.db.query(
-    `update buddy_messages set status = 'failed', failure_code = $3
-      where id = $1 and status = 'processing' and claim_token = $2 returning id`,
-    [message.id, message.claim_token, FAILURE_CODE[code] ?? 'internal'],
-  );
+  // Only the current owner may mark it failed — together with the earlier messages it
+  // superseded (released, waiting for this answer).
+  const rows = await deps.db.tx(async (tx) => {
+    const mine = await tx.query(
+      `update buddy_messages set status = 'failed', failure_code = $3
+        where id = $1 and status = 'processing' and claim_token = $2 returning id`,
+      [message.id, message.claim_token, FAILURE_CODE[code] ?? 'internal'],
+    );
+    if (mine.length === 1)
+      await tx.query(
+        `update buddy_messages b set status = 'failed', failure_code = $2
+           from buddy_messages me
+          where me.id = $1 and b.learner_id = me.learner_id and b.role = 'learner'
+            and b.status = 'processing' and b.claim_token is null and b.seq < me.seq`,
+        [message.id, FAILURE_CODE[code] ?? 'internal'],
+      );
+    return mine;
+  });
   return rows.length === 1
     ? { status: 'failed', errorCode: code }
     : currentOutcome(deps, message.id);

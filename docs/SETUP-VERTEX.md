@@ -28,14 +28,14 @@ Google hat die ML-Produkte mehrfach umbenannt. Quick-Reference:
 - **Google AI Studio** unter `aistudio.google.com` — Consumer-Produkt, kostenlos, **NICHT GDPR-tauglich für Production**. Daten dürfen per Default für Modelltraining verwendet werden, keine EU-Region-Garantie, kein DPA. **Finger weg.**
 - **Vertex AI** unter `console.cloud.google.com` (mit GCP-Projekt) — Enterprise-Produkt, DPA + EU-Data-Residency, das ist hier gemeint.
 
-Wenn ein Tutorial oder Beispielcode `@google/generative-ai` oder `googleapis.com/v1beta/models/gemini-...:generateContent` verwendet ohne Projekt-ID im Pfad → **das ist AI Studio**, falsche Tür. Vertex AI Endpoints haben immer das Muster `{region}-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/...` und das SDK heisst `@google-cloud/vertexai`.
+Wenn ein Tutorial oder Beispielcode `@google/generative-ai` oder `googleapis.com/v1beta/models/gemini-...:generateContent` verwendet ohne Projekt-ID im Pfad → **das ist AI Studio**, falsche Tür. Vertex AI Endpoints haben immer das Muster `{region}-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/...` und LearnBuddy nutzt `@google/genai` im Vertex-Modus (das ältere `@google-cloud/vertexai` ist abgelöst).
 
 ---
 
 ## 0. Vorab — die Kosten-Realität
 
 - **$300 / 90 Tage Free Trial** beim ersten Sign-up. Reicht für Monate von D1-Entwicklung.
-- Danach: ~$0.0001 pro Credit (siehe `docs/legacy/08-cost-and-credits.md`, heute: `docs/architecture.md` §Limits). Heavy User = $0.076/Monat. Selbst 50 Testnutzer kosten dich <$4/Monat.
+- Danach: Kosten pro Aufruf nach Tokens; LearnBuddy begrenzt sie mit Tageslimits pro Lernendem (`docs/architecture.md` §Limits; das frühere Credit-Modell aus `docs/legacy/08-cost-and-credits.md` gibt es nicht mehr).
 - Setze **Budget Alerts** (Schritt 3 unten) — Google schaltet die API nicht automatisch ab, du bekommst nur Email. Das ist die einzige Achilles­ferse.
 
 ---
@@ -232,11 +232,10 @@ In LearnBuddys `docs/privacy.md` §Processors Vertex AI eintragen, wenn D1 live 
 
 ## 12. Kostenkontrolle nach Setup
 
-Drei Schichten, alle wichtig:
+Zwei Schichten:
 
 1. **Google-side Budget Alert** (Schritt 3) — Email-Warnung bei 50/90/100 %.
-2. **LearnBuddy-side Credit Bucket** (Doc 08) — pro Account harter Cap, refund bei Fehler. Bereits implementiert in Slice C2.
-3. **Per-Action Cap** (Doc 08 §estimates → "Cap"-Spalte) — server-side reject wenn ein einzelner Call > Cap-Credits kosten würde. Wird in D1 implementiert.
+2. **LearnBuddy-side Tageslimits** pro Lernendem und Zweck (`DAILY_LIMITS` in `apps/api/src/config.ts`, `docs/architecture.md` §Limits). Das frühere Credit-System (Doc 08, `lib/credits.ts`) gibt es seit dem Neustart (ADR 0004) nicht mehr.
 
 ---
 
@@ -260,12 +259,12 @@ Wenn LearnBuddys `POST /materials` einen Vision-Call macht:
 ```
 Mobile (Browser/App)
   → LearnBuddy API (Hono auf Vercel, EU-Region)
-    → @google-cloud/vertexai SDK
+    → @google/genai SDK (Vertex-Modus; früher @google-cloud/vertexai)
       → google-auth-library reads ~/.config/learnbuddy/vertex-sa.json
         → exchanges private key for short-lived OAuth token
           → POST https://europe-west4-aiplatform.googleapis.com/v1/projects/learnbuddy-prod-471823/locations/europe-west4/publishers/google/models/gemini-2.5-flash-lite:generateContent
             → Response: { candidates: [...] }
-              → tokens × price wird in apps/api/src/lib/credits.ts dem Account abgezogen
+              → Tokens, Kosten und Latenz landen in llm_calls (kein Prompt-Text); das Tageslimit zählt den Aufruf
 ```
 
 Daten verlassen die EU nicht, der private Key verlässt deinen Server nicht (nur kurzlebige Tokens), und LearnBuddys Logging schreibt nur Token-Counts + Latenz, keinen Prompt-Inhalt (Doc 09 §6 Sentry scrubbing).

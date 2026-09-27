@@ -24,11 +24,13 @@
     "late": "I meant to remind you at {{time}} – sorry, this comes late. {{text}}",
     "checkin_unavailable": "I wanted to check in with you, but I can't quite get to it right now. Just write to me if you like.",
     "practice_ready": "As agreed: {{title}}. {{count}} questions are ready, about {{minutes}} minutes.",
+    "practice_ready_one": "As agreed: {{title}}. One question is ready, about {{minutes}} minutes.",
     "practice": "As agreed: {{title}}.",
     "capture": "As agreed: {{title}} – a photo is enough, I'll do the rest."
   },
   "exam": {
     "prepared": "{{day}} is “{{exam}}”. {{count}} questions are ready, about {{minutes}} minutes.",
+    "prepared_one": "{{day}} is “{{exam}}”. One question is ready, about {{minutes}} minutes.",
     "need_material": "{{day}} is “{{exam}}”. Do you have a worksheet for it? A photo is enough, I'll do the rest.",
     "followup": "How did “{{exam}}” go? Tell me briefly and I'll plan the next steps."
   },

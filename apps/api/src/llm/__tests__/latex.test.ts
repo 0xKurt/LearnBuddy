@@ -26,4 +26,11 @@ describe('LaTeX escapes lost in model JSON', () => {
       n: 3,
     });
   });
+
+  it('keeps a line break between two dollar amounts (p2-latex-repair-currency-newline)', () => {
+    expect(repairLatexEscapes('Das Heft kostet 5 $\nund der Stift 3 $.')).toBe(
+      'Das Heft kostet 5 $\nund der Stift 3 $.',
+    );
+    expect(repairLatexEscapes('$a \neq b$')).toBe('$a \\neq b$');
+  });
 });

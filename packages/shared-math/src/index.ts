@@ -1,6 +1,5 @@
-// @learnbuddy/shared-math — MathLite parser, normalizer, and numeric input parser.
-// Canonical source: docs/07-content-types.md §4.
-export * from './mathlite.js';
+// @learnbuddy/shared-math — answer normalisation, numeric input, units, a bounded
+// expression parser and LaTeX helpers (docs/architecture.md §Practice). No evaluator.
 export * from './numeric-input.js';
 export * from './normalize.js';
 export * from './units.js';

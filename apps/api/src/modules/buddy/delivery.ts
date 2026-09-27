@@ -22,6 +22,7 @@
 //     overwrite (or send) a row another run already settled.
 
 import type { Deps } from '../../deps.js';
+import { consentCurrentSql } from '../scheduler/jobs.js';
 import type { Db } from '../../lib/db.js';
 import { daysBetween, localParts, weekdayOf } from '../../lib/time.js';
 import { dayLabel, t, type MessageKey } from '../../i18n/index.js';
@@ -106,7 +107,12 @@ export async function contactHistory(db: Db, learnerId: string, now: Date): Prom
     answered: boolean;
   }>(
     `select id, topic_key, origin, coalesce(sent_at, send_at, created_at) as at,
-            (opened_at is not null or responded_at is not null) as answered
+            (opened_at is not null or responded_at is not null
+             -- Doing what it was about answers it too, without tapping the push
+             -- (previous-unanswered-needs-push-tap).
+             or exists (select 1 from buddy_steps st
+                         where st.id = buddy_outreach.step_id
+                           and st.state in ('in_progress','done'))) as answered
        from buddy_outreach
       where learner_id = $1 and status = any($2::text[])
         -- Her own action's result is not an initiative (policy.ts).
@@ -379,7 +385,9 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
       `with due as (
          select id from buddy_outreach
           where status = 'scheduled' and send_at <= $1
-          order by send_at limit $2
+            -- No contact for an account that has not agreed to the current privacy text.
+            and ${consentCurrentSql('buddy_outreach.learner_id', 3)}
+          order by send_at, seq limit $2
           for update skip locked
        )
        update buddy_outreach o set status = 'sending', lease_until = $1 + interval '2 minutes'
@@ -387,7 +395,7 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
        returning o.id, o.learner_id, o.origin, o.kind, o.title, o.body, o.body_template, o.topic_key,
                  o.relevance, o.send_at, o.expires_at, o.step_id, o.goal_id, o.decision_id, o.lease_until,
                  (select locale from learners where id = o.learner_id) as locale`,
-      [now, limit],
+      [now, limit, deps.config.CONSENT_VERSION],
     );
   });
 
@@ -471,6 +479,7 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
       body: t(o.locale, `push.${o.kind}`),
       data: { type: 'buddy_outreach', outreach_id: o.id },
       collapseId: o.topic_key.slice(0, 64),
+      expiresAt: o.expires_at,
     };
     let ticket: PushTicket | undefined;
     try {

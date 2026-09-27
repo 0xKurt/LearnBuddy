@@ -16,14 +16,16 @@ application code enforces permissions, tenant isolation, time rules, version che
    Supabase Storage (photos, signed upload URLs)      ├─ buddy      turns, checks, tools, contact policy, delivery, home
                                                       ├─ materials  photos → questions (model, job)
                                                       ├─ practice   sessions, rule checks, tutor, FSRS
+                                                      ├─ voice      speech to text (recordings → model)
+                                                      ├─ devices    push device binding (install id)
                                                       └─ scheduler  durable jobs + tick
                                                       │
    Postgres (Supabase) ◀── direct connection (pg) ────┘      Vertex AI (Gemini, EU)   Expo push (off by default)
    pg_cron ── every minute ──▶ POST /internal/tick
 ```
 
-Code: `apps/api/src/`. Schema: `infra/supabase/migrations/0001_baseline.sql`,
-`0002_scheduler.sql`. Contracts shared with the app: `packages/shared-types/src/contracts/`.
+Code: `apps/api/src/`. Schema: `infra/supabase/migrations/` (`0001_baseline.sql` and the numbered
+migrations after it). Contracts shared with the app: `packages/shared-types/src/contracts/`.
 
 ## Core loop
 
@@ -64,7 +66,9 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   until 18 (D-8). Tightening (pause, quieter) is always allowed.
 - Consent: every route behind `requireAccount` answers 409 `consent_outdated` while the
   account's `consent_version` is not the current one; `/me`, `POST /account`, the PIN, export
-  and deletion (`requireAccountAnyConsent`) keep working.
+  and deletion (`requireAccountAnyConsent`) keep working, and so does unregistering a phone
+  (`DELETE /buddy/push-tokens`, it only reduces contact). The scheduler does the same: no
+  reading, Buddy check or outreach for such an account (they wait queued); erasure jobs run.
 - Errors: `{"error": {"code", "message", "details"?}}` with stable codes (`lib/errors.ts`); no
   provider bodies, SQL or user content in messages or logs.
 - Bodies are JSON ≤ 64 KB, validated with zod (`http/validate.ts`); photos go straight to storage.
@@ -75,7 +79,8 @@ less is refused at boot, and a database region outside the EU is logged as a boo
   aktualisieren"), and kept answers wait for the update instead of being dropped.
 - Indexes (migration `0017_fk_indexes.sql`): every foreign key has an index, so the account
   deletion cascade and the per-subject counts cost her data, not everybody's
-  (`scale.int.test.ts` keeps it so for future foreign keys).
+  (`scale.int.test.ts` keeps it so for future foreign keys). `0028_scan_indexes.sql` does the
+  same for the scheduler's per-minute lookups (jobs by material, turns still processing).
 
 | Route                                                                                                | Purpose                                                                                          |
 | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -132,10 +137,17 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 `TurnDecision` (JSON schema) — after up to two rounds of lookups (below) — validates and applies it.
 
 - Duplicate request → replay (done) or "processing" (202); never a second run.
-- A newer message during a turn supersedes it: the newer turn answers both.
+- A newer message during a turn supersedes it: the newer turn answers both. The older one is
+  released, not "done": it becomes done with the newer answer, or failed with the newer
+  failure. An answer closes earlier failed, superseded or crashed (stalled) messages only
+  within the 24-message dialogue the model saw.
+- `reply_to_id` is stored only when it names one of her own messages.
 - Stale context → rebuild and ask again (≤ 4 rounds); invalid output → one repair round.
-- Interrupted turn (process died, function frozen) → after 3 minutes the scheduler (or a client
+- Interrupted turn (process died, function frozen) → after 3 minutes without a model call (each
+  call refreshes the claim, so a long live turn is not mistaken for a dead one) the scheduler (or a client
   retry) takes over with a new claim token; the old runner can no longer publish or fail it.
+  After three takeovers that died too, the message fails (`internal`) instead of being run
+  (and billed) again every few minutes.
 - Failure → the message is marked `failed` with a stable code (`model_unavailable`,
   `model_invalid`, `budget_exhausted`, `stale`, `internal` for anything else — a database
   error or a bug never leaves it "processing"); nothing half-applied, no invented reply. The
@@ -192,9 +204,14 @@ summary plus undo data. Enforced here, not in the prompt:
   quiet hours may only start earlier ("nicht nach 19 Uhr" → 19:00), and the preferred window then
   ends there — a reply may only claim what the tool actually changed (found by the Lena run);
 - agreed times may not fall into quiet hours; checks lie between 1 hour and 21 days ahead;
-- temporary situations need an end (≤ 60 days); plans lie ≤ 1 year ahead;
+- temporary situations need an end (≤ 60 days); plans lie ≤ 1 year ahead; a known situation
+  said again with another end gets that end (`remember` replaces the row, undo restores it),
+  and `correct_memory` may move the end (`until`);
+- `update_step` either changes the state or moves the step, never both; `prepare_practice`
+  never replaces a step her agreed reminder prepared;
 - undo is refused when the object changed since (version check) — no blind overwrite of, e.g.,
-  an adult's later settings change.
+  an adult's later settings change; undoing `close_goal` opens the steps it cancelled again;
+  undoing `forget` never makes a second copy when the same is known again meanwhile.
 - `set_level`: the model names the school year the way her school system does (`SchoolYear`:
   de Klasse, fr CP…Tle, es primaria/ESO/bachillerato, it primaria/media/superiore, uk Year, us
   grade — a zod enum per system); code converts it into years of schooling, the German-Klasse
@@ -208,7 +225,8 @@ summary plus undo data. Enforced here, not in the prompt:
 ### Lookups (ADR 0005, stage 1)
 
 `modules/buddy/lookups.ts` + `connectors/`. Before answering, a turn or check may read:
-`search_material` (passages of her read worksheets, Postgres full text, prefix words),
+`search_material` (passages of her read worksheets, Postgres full text, prefix words; a
+homework sheet only by title, never its text — help with homework happens in the help session),
 `practice_history` (finished sessions: what sat, what was shaky) and `find_questions`
 (questions on a topic with the latest result — never the solutions). Registered once (name,
 schema, surfaces, connectors); the model-facing schema and prompt lines are generated from the
@@ -262,7 +280,8 @@ is not skipped for good.
 - Policy: opt-in; pause; quiet hours in the learner's zone; Buddy's own messages need relevance
   ≥ 0.6, go into the preferred window, at most 1/day and 4/week, no repeat of a topic within
   72 h (topic keys are stored with real ids), no second message while the last one is unanswered
-  (48 h; writing to Buddy counts as answering what is in the thread). **All contact counts,
+  (48 h; writing to Buddy counts as answering what is in the thread, and so does starting or
+  finishing the step a message was about). **All contact counts,
   in the app too** (D-12): with push off, "schreib mir weniger" means fewer messages in the
   thread. Agreed reminders go out at the agreed minute (quiet hours and pause apply, limits and
   avoided weekdays do not). Buddy's answer to her own action (origin `learner`: her photos were
@@ -270,13 +289,16 @@ is not skipped for good.
   contact is on and it is not night, never held back by limits.
 - The whole policy runs again at send time (tightened days, window, caps, pause, the unanswered
   gate); a message about something already done is cancelled. A message is linked to its goal
-  and step (`step: "new"` = the practice prepared in the same decision), so "practice is ready"
+  and step (`step: "new"` = the practice prepared in the same decision; a link that does not
+  resolve rejects the decision instead of being dropped), so "practice is ready"
   is dropped once that practice was done. Pausing or switching off cancels everything Buddy
   planned on its own — nothing is sent in bulk afterwards; agreed reminders stay and wait in the
   app. Planned messages are listed on the home under what comes next. Stopping contact hides
   the opt-in card for 14 days.
 - Every status write of a claimed row is conditioned on the claim (status `sending` and the
   lease it set): a slow run can never send or overwrite a row another run settled.
+- A push carries the message's expiry (`expiration`): a phone that was off does not get a stale
+  message later — the thread has it anyway.
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
@@ -355,8 +377,10 @@ conversations is used up.
 happened — `material_ready`, `homework_ready`, `session_finished` — is written once per (type,
 row), in the same transaction as the change, with the app clock. Its subscribers decide what
 follows: `material_ready` and `session_finished` wake Buddy for a check (the job carries the
-`event_id`, the check marks the event handled); `homework_ready` is only recorded (help starts in
-the app). Schedules — exam countdowns, agreed reminders, routine, `schedule_check` — stay jobs.
+`event_id`, the check marks the event handled — `handled_at` is an audit field for the export
+and for reading the log; nothing re-reads it to re-drive an event: a wake-up job that dies is
+handled by its job's terminal state, `scheduler/terminal.ts`); `homework_ready` is only recorded
+(help starts in the app). Schedules — exam countdowns, agreed reminders, routine, `schedule_check` — stay jobs.
 An event never bypasses the contact rules.
 
 ## Model calls
@@ -366,15 +390,19 @@ zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU loc
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens, cost, latency and outcome — never with prompt or answer text; a safety block keeps the
-provider's finish reason (`blocked:SAFETY`). A call that produced nothing usable — provider
-down, request refused, safety block — gives its reservation back.
+provider's finish reason (`blocked:SAFETY`). A call that the provider did not run for her — provider
+down, request refused, safety block — gives its reservation back; a timeout or unusable output
+keeps it (the provider may have done and billed the work).
 
 **One error classification at every external seam** (`lib/outcome.ts`, audit S-7): `ok`,
 `refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never
 retried automatically), `transient` (5xx, 429, network — retry later is fine), `unknown` (no
 answer: a model call may be retried because it changes nothing; a push is never repeated).
-`LlmError.outcome` and the push errors carry it; a provider 4xx is `refused`, no longer retried
-three times as an outage.
+`LlmError.outcome`, the push errors, `StorageError.outcome` and the auth verifier
+(`authOutcomeOf`) carry it; a provider 4xx is `refused`, no longer retried three times as an
+outage. Auth: `refused` makes a token invalid (401), everything else is 503; a refused password
+change is `invalid_input`, not "try again later". Storage: an absent object is `null`, never an
+error, and an error is never "absent".
 
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
 to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1
@@ -384,7 +412,9 @@ multi-region endpoint `eu`, not in `europe-west4` (probed 2026-09-26). A route c
 the task's eval passes on it (`evals/buddy`, `evals/tutor`, `evals/speak`, `evals/speed`).
 `evals/lena` plays whole journeys of a 12-year-old against the live model (child-like typing,
 photographed sheets, spoken answers, begging for the solution) and writes a transcript to read;
-report in `reports/Lena-Durchlauf.md`. A spoken or typed choice counts as the option it names —
+report in `reports/Lena-Durchlauf.md`. `evals/buddy`, `evals/tutor`, `evals/voice`, `evals/lena`
+and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/speak`,
+`evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
 ### Speed
@@ -433,20 +463,20 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                          |
-| ------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                       |
-| Turn                            | ≤ 4 model rounds, 30 s timeout each, 2048 output tokens, thinking 512                          |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                      |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                     |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos         |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s        |
-| Turn stall                      | taken over after 3 minutes                                                                     |
-| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                            |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                           |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, then 30 min, 1 h … ≤ 24 h; the right PIN resets (423 + `Retry-After`) |
-| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                      |
-| Requests per account            | practice answers (typed + spoken) 600/h, messages to Buddy 120/h (429 + `Retry-After`)         |
+| What                            | Limit                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12 (`config.ts`)                                           |
+| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512 |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                          |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                         |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos             |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s            |
+| Turn stall                      | taken over after 3 minutes                                                                         |
+| Contact                         | 1/day, 4/week (adjustable down), topic dedupe 72 h, unanswered 48 h                                |
+| Memory                          | 60 active items; temporary ≤ 60 days                                                               |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, then 30 min, 1 h … ≤ 24 h; the right PIN resets (423 + `Retry-After`)     |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
+| Requests per account            | practice answers (typed + spoken) 600/h, messages to Buddy 120/h (429 + `Retry-After`)             |
 
 Budgets are rows in `attempt_counters` (migration 0014) changed by one atomic upsert with the app
 clock (`lib/limits.ts` `consume`); answers and messages are counted by one middleware in front of
@@ -933,6 +963,11 @@ once (`abandonStaleUploads`, run by the scheduler).
   aliases in that order, and jobs due together run in it. Before, ties were broken by however the
   table happened to hold the rows — the most likely cause of one failed run of the core-loop test
   in about 40 (its log was lost and it did not come back in 36 further runs, so this is not proven).
+  A template is built under a temporary name and marked complete, so a killed build is never
+  copied; test databases and templates that interrupted runs left behind are dropped after a
+  day, never those a concurrent run may still use. Closing a test environment waits for the
+  background work it started. Every file under `src/testing` and `evals` carries the rule-8
+  banner (`testing/__tests__/banner.test.ts`).
 - Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
   hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain
   `pnpm test` outside them skips the database tests.

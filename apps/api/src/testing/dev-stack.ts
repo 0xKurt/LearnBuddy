@@ -8,6 +8,7 @@
 //
 //   pnpm --filter @learnbuddy/api dev:stack
 //   → API and auth on http://localhost:8787 (PORT to change)
+// requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import { serve } from '@hono/node-server';
 

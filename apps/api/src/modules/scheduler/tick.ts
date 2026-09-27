@@ -111,6 +111,9 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
         kinds: ['extract_material'],
         limit: 1,
         leaseSeconds: 180,
+        // Reading and Buddy wait for an account's consent to the current privacy text;
+        // erasure never does (p2-ml-consent-version-not-enforced-server-side).
+        consentVersion: deps.config.CONSENT_VERSION,
       });
       if (!job) break;
       await runJobSafely(deps, job, () => runExtraction(deps, job));
@@ -124,6 +127,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
       deps.now(),
       ['buddy_check', 'buddy_turn'],
       25,
+      deps.config.CONSENT_VERSION,
     );
     for (const learnerId of learners) {
       if (left() < 12_000) break;

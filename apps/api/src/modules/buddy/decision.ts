@@ -189,7 +189,14 @@ const remember = z.object({
 
 const correctMemory = z.object({
   tool: z.literal('correct_memory'),
-  args: z.object({ memory: MemoryRef, statement: z.string().trim().min(3).max(200), quote: Quote }),
+  args: z.object({
+    memory: MemoryRef,
+    statement: z.string().trim().min(3).max(200),
+    quote: Quote,
+    until: UntilSpecSchema.nullable()
+      .default(null)
+      .describe('Only for a temporary situation (constraint) whose end changed; null keeps it'),
+  }),
 });
 
 const forget = z.object({

@@ -452,18 +452,6 @@ async function threadOf(
         [learnerId, decisionIds],
       )
     : [];
-  // "Rückgängig" only where it would work now — the same gate as doneOf (audit M-56, repro-06):
-  // after the photo arrived, undoing the request for it would only answer 409.
-  const undoable = new Map<string, boolean>();
-  for (const a of actions) {
-    undoable.set(
-      a.id,
-      a.status === 'applied' &&
-        a.undo !== null &&
-        now.getTime() - a.created_at.getTime() < UNDO_WINDOW_MS &&
-        (await undoApplies(deps.db, learnerId, a.undo)),
-    );
-  }
   const outreach = outreachIds.length
     ? await deps.db.query<{
         id: string;
@@ -484,11 +472,15 @@ async function threadOf(
       )
     : [];
 
-  // Undo that would need the adult is not offered to a minor (see needsAdult).
+  // Undo that would need the adult is not offered to a minor (see needsAdult), and undo is
+  // offered only when it would work — the same check as the undo itself (audit M-56).
   const adultOnly = new Set<string>();
+  const undoWorks = new Set<string>();
   for (const a of actions) {
-    if (a.status === 'applied' && (await needsAdult(deps, learner, a.undo, now)))
-      adultOnly.add(a.id);
+    if (a.status !== 'applied' || a.undo === null) continue;
+    if (now.getTime() - a.created_at.getTime() >= UNDO_WINDOW_MS) continue;
+    if (await needsAdult(deps, learner, a.undo, now)) adultOnly.add(a.id);
+    if (await undoApplies(deps.db, learnerId, a.undo)) undoWorks.add(a.id);
   }
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
@@ -522,8 +514,7 @@ async function threadOf(
         .map((a) => ({
           id: a.id,
           status: a.status,
-          // Only where it would work now (audit M-56), and never one only an adult may undo.
-          undoable: !adultOnly.has(a.id) && (undoable.get(a.id) ?? false),
+          undoable: undoWorks.has(a.id) && !adultOnly.has(a.id),
           summary: a.result,
           created_at: a.created_at.toISOString(),
         })),

@@ -24,11 +24,13 @@
     "late": "Je voulais te le rappeler à {{time}} – désolé, ça arrive en retard. {{text}}",
     "checkin_unavailable": "Je voulais prendre de tes nouvelles, mais je n'y arrive pas bien en ce moment. Écris-moi si tu veux.",
     "practice_ready": "Comme convenu : {{title}}. {{count}} exercices sont prêts, environ {{minutes}} minutes.",
+    "practice_ready_one": "Comme convenu : {{title}}. Un exercice est prêt, environ {{minutes}} minutes.",
     "practice": "Comme convenu : {{title}}.",
     "capture": "Comme convenu : {{title}} – une photo suffit, je m'occupe du reste."
   },
   "exam": {
     "prepared": "{{day}}, c'est « {{exam}} ». {{count}} exercices sont prêts, environ {{minutes}} minutes.",
+    "prepared_one": "{{day}}, c'est « {{exam}} ». Un exercice est prêt, environ {{minutes}} minutes.",
     "need_material": "{{day}}, c'est « {{exam}} ». Tu as une fiche pour ça ? Une photo suffit, je m'occupe du reste.",
     "followup": "Comment s'est passé « {{exam}} » ? Dis-le-moi en deux mots et je prévois la suite."
   },
@@ -49,7 +51,7 @@
     "missing_word": "Presque – il manque encore un mot. Regarde encore une fois.",
     "typo": "Presque – ça s'écrit {{answer}}. Tape-le encore une fois.",
     "help_step": "Allons-y pas à pas : qu'est-ce qui est donné dans l'exercice, et qu'est-ce qu'on cherche ?",
-    "help_solved": "Bravo – tu l'as trouvé tout seul !",
+    "help_solved": "Bravo – tu as trouvé par toi-même !",
     "help_final_answer": "Ça a l'air bien ! Écris-moi maintenant ton résultat final, comme l'exercice le demande.",
     "heard_retry": "Je ne t'ai pas bien entendu. Réessaie un peu plus fort et plus près du téléphone.",
     "speak_good": "C'est super !",

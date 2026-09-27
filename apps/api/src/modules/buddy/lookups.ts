@@ -34,7 +34,7 @@ const Query = z.string().trim().min(2).max(120);
 const searchMaterial = defineLookup({
   name: 'search_material',
   description:
-    'Read the learner\'s own worksheets: passages matching the query (topic words, e.g. "Römer Kaiser"), with title, subject and the day it was read. Empty query = the newest sheets.',
+    'Read the learner\'s own worksheets: passages matching the query (topic words, e.g. "Römer Kaiser"), with title, subject and the day it was read. Empty query = the newest sheets. Homework comes without its text (homework: true): help with it happens in the help session, never here.',
   args: z.object({ query: z.string().trim().max(120) }),
   surfaces: ['turn', 'check'],
   connectors: ['material'],
