@@ -82,7 +82,7 @@
   },
   "decision": {
     "optin_title": "Posso scriverti sul telefono?",
-    "optin_body": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Al massimo una volta al giorno e mai di sera.",
+    "optin_body": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Mai di sera.",
     "optin_yes": "Sì, volentieri",
     "optin_no": "Meglio di no",
     "optin_minor_body": "Lo permettono i tuoi genitori con il loro PIN.",
@@ -91,15 +91,13 @@
     "outcome_good": "Bene",
     "outcome_ok": "Così così",
     "outcome_hard": "Difficile",
-    "optin_body_rules_one": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Al massimo una volta al giorno e mai dopo le {{time}}.",
-    "optin_body_rules_other": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Al massimo {{count}} volte al giorno e mai dopo le {{time}}.",
     "optin_parent": "Per i genitori: permettete a Buddy di scrivere a {{name}} sul telefono. {{rules}} Si può cambiare in qualsiasi momento nelle impostazioni.",
-    "rules_short_one": "al massimo una volta al giorno, mai dopo le {{time}}",
-    "rules_short_other": "al massimo {{count}} volte al giorno, mai dopo le {{time}}",
     "rules_settings": "come indicato nelle impostazioni",
     "optin_done": "Permesso: ora ti scrivo anche sul telefono – {{rules}}. Puoi cambiarlo nelle impostazioni.",
     "optin_done_minor": "Permesso: ora Buddy scrive anche a {{name}} sul telefono – {{rules}}. Si può cambiare nelle impostazioni.",
-    "optin_done_no_device": "Permesso. Però questo telefono non è stato registrato per le notifiche: i messaggi di Buddy saranno qui nell'app."
+    "optin_done_no_device": "Permesso. Però questo telefono non è stato registrato per le notifiche: i messaggi di Buddy saranno qui nell'app.",
+    "optin_body_rules": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Mai dopo le {{time}}.",
+    "rules_short": "mai dopo le {{time}}"
   },
   "done": {
     "undo": "Annulla",
@@ -173,13 +171,13 @@
     "update_step_cancelled": "Annullato: {{title}}",
     "mark_step_done": "Fatto: {{title}}",
     "request_material": "Aspetto la tua foto: {{title}}",
-    "set_contact_pause": "Nessun messaggio fino a {{date}} compreso",
-    "set_contact": "Messaggi solo dalle {{from}} alle {{to}}, al massimo {{count}} a settimana",
+    "set_contact_pause": "Niente sul telefono fino a {{date}} compreso",
+    "set_contact": "Sul telefono solo dalle {{from}} alle {{to}}",
     "schedule_check": "Torno a fare un salto {{when}}",
     "offer_learning": "Proposto: {{what}} – «{{text}}»",
     "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
     "open_area": "Mostrato: {{what}}",
-    "set_contact_quiet": "Messaggi solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}, al massimo {{count}} a settimana",
+    "set_contact_quiet": "Sul telefono solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}",
     "request_material_undone": "Nessuna foto necessaria: {{title}}"
   },
   "intro": {

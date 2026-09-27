@@ -253,7 +253,7 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
     expect((await admin.get('/account/export')).status).toBe(403);
   });
 
-  it("creates a child profile at 15, 16 and 17 behind the parents' gate, never a 500 (H-21, D-8)", async () => {
+  it("creates a child profile at 15, 16 and 17, never a 500; the parents' gate only under 16 (H-21, ADR 0006)", async () => {
     // Test clock: 2026-09-28.
     for (const [birth, age] of [
       ['2011-03-01', 15],
@@ -264,16 +264,37 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
       const l = await onboard(env, { relation: 'child', birthDate: birth, pin: '1357' });
       const me = await l.api.get<{ learner: { is_minor: boolean; birth_date: string } }>('/me');
       expect(me.body.learner.birth_date).toBe(birth);
-      // The PIN gate stays until 18.
-      expect(me.body.learner.is_minor).toBe(age < 18);
+      // DSGVO Art. 8 in Germany: from 16 she consents and decides herself.
+      expect(me.body.learner.is_minor).toBe(age < 16);
       const consent = await env.db.one<{ minor_consent_version: string | null }>(
         `select minor_consent_version from learners where id = $1`,
         [l.learnerId],
       );
       expect(consent.minor_consent_version).toBe(env.deps.config.CONSENT_VERSION);
-      expect((await l.api.get('/account/export')).status).toBe(age < 18 ? 403 : 200);
+      expect((await l.api.get('/account/export')).status).toBe(age < 16 ? 403 : 200);
     }
   }, 30_000);
+
+  it("a 16-year-old child profile needs neither the parents' consent box nor a PIN (ADR 0006)", async () => {
+    const { token } = await env.auth.createUser();
+    const api = apiClient(env, token);
+    await api.post('/account', {
+      locale: 'de',
+      consent_version: env.deps.config.CONSENT_VERSION,
+      accept_privacy: true,
+    });
+    const sixteen = await api.post<{ is_minor: boolean }>('/learner', {
+      relation: 'child',
+      display_name: 'Mia',
+      birth_date: '2010-03-01',
+      locale: 'de',
+      minor_consent: false,
+    });
+    expect(sixteen.status).toBe(201);
+    expect(sixteen.body.is_minor).toBe(false);
+    // She decides about contact to the phone herself.
+    expect((await api.post('/buddy/contact/opt-in', { enable: true })).status).toBe(200);
+  });
 
   it('turns a rule the schema refuses into a 422, not a 500', async () => {
     const l = await onboard(env);

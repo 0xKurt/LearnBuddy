@@ -293,15 +293,15 @@ function decisionOf(
     return {
       type: 'contact_opt_in',
       can_enable_here: !learner.isMinor,
-      rules: { max_per_day: s.max_per_day, quiet_start: s.quiet_start },
+      rules: { quiet_start: s.quiet_start },
     };
   }
   return null;
 }
 
 /**
- * A minor cannot undo her way to more contact: that needs the adult's PIN (rule 6), so the
- * button is not offered to her; the server refuses it anyway.
+ * Under 16 she cannot undo her way to more contact to the phone: that needs the adult's PIN
+ * (rule 6, ADR 0006), so the button is not offered to her; the server refuses it anyway.
  */
 async function needsAdult(
   deps: Deps,

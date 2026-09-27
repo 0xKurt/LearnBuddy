@@ -31,10 +31,12 @@ export type LearnerRow = {
   version: number;
 };
 
-/** Below this age nobody can hold the account (DSGVO Art. 8, docs/privacy.md). */
+/**
+ * Below this age nobody can hold the account, and a profile is behind the
+ * parents' consent and PIN (DSGVO Art. 8 with the German age of 16,
+ * docs/privacy.md, ADR 0006). From 16 she consents and decides herself.
+ */
 export const MINOR_AGE = 16;
-/** A child profile stays behind the parents' PIN gate until this age (D-8). */
-export const CHILD_GATE_AGE = 18;
 
 /** Whole years between a birth date (YYYY-MM-DD) and `on` (UTC date). */
 export function ageOn(birthDate: string, on: Date): number {
@@ -47,16 +49,12 @@ export function ageOn(birthDate: string, on: Date): number {
 }
 
 /**
- * Whether the profile is behind the parents' PIN gate: a child profile until
- * 18 (D-8: 16- and 17-year-olds may be child profiles, and their parents keep
- * the gate), a self profile never (only 16+ may hold the account).
+ * Whether the profile is behind the parents' gate (consent, PIN): under 16,
+ * whoever set it up (ADR 0006). A 16- or 17-year-old decides herself, also on
+ * a profile her parents created; a self profile is always 16+.
  */
-export function isMinor(
-  learner: { birth_date: string; relation: 'self' | 'child' },
-  on: Date,
-): boolean {
-  const age = ageOn(learner.birth_date, on);
-  return learner.relation === 'child' ? age < CHILD_GATE_AGE : age < MINOR_AGE;
+export function isMinor(learner: { birth_date: string }, on: Date): boolean {
+  return ageOn(learner.birth_date, on) < MINOR_AGE;
 }
 
 export async function findAccountByUser(db: Db, authUserId: string): Promise<AccountRow | null> {

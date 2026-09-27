@@ -21,8 +21,8 @@ export type OptInDecision = Extract<Decision, { type: 'contact_opt_in' }>;
 /** What turning messages on allows, in one or two sentences (from the stored rules). */
 export function optInRules(t: TFunction, decision: OptInDecision): string {
   const r = decision.rules;
-  if (!r || r.max_per_day < 1) return t('buddy:decision.optin_body');
-  return t('buddy:decision.optin_body_rules', { count: r.max_per_day, time: r.quiet_start });
+  if (!r) return t('buddy:decision.optin_body');
+  return t('buddy:decision.optin_body_rules', { time: r.quiet_start });
 }
 
 type Props = {

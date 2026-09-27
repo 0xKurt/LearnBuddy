@@ -104,9 +104,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // with what would be allowed — also for a minor (user feedback #4, #6).
   await expect(page.getByText('Schick mir ein Foto')).toBeVisible();
   await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeVisible();
-  await expect(
-    page.getByText(/Höchstens einmal am Tag und nie nach 20:00 Uhr\. Das erlauben deine Eltern/),
-  ).toBeVisible();
+  await expect(page.getByText(/Nie nach 20:00 Uhr\. Das erlauben deine Eltern/)).toBeVisible();
   // Her own message stays in view under the card.
   await expect(
     page.getByText('Ich schreibe am Freitag eine Mathearbeit über Brüche.'),

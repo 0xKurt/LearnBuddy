@@ -68,8 +68,10 @@ export default function Profile() {
   const pinOk = /^\d{4}$/.test(pin) && pin === pinRepeat;
   const learnerReady =
     relation !== null && name.trim().length > 0 && birthDate !== null && !tooYoungSelf;
-  const ready = learnerReady && (relation === 'self' || (consent && pinOk));
-  const parentStep = relation === 'child' && step === 'parent';
+  // Under 16 the parents consent and set the PIN; from 16 she decides herself (ADR 0006).
+  const needsParents = relation === 'child' && minor;
+  const ready = learnerReady && (!needsParents || (consent && pinOk));
+  const parentStep = needsParents && step === 'parent';
 
   async function submit() {
     if (!relation || !birthDate || busy) return;
@@ -82,12 +84,12 @@ export default function Profile() {
         display_name: name.trim(),
         birth_date: birthDate,
         locale,
-        minor_consent: relation === 'child' ? consent : false,
-        ...(relation === 'child' ? { pin } : {}),
+        minor_consent: needsParents ? consent : false,
+        ...(needsParents ? { pin } : {}),
       });
       applyLocale(locale);
       // The parents set it up: first what is set now, then the phone goes to the child.
-      if (relation === 'child') setStep('handover');
+      if (needsParents) setStep('handover');
       else await goOn();
     } catch (err) {
       // The profile exists already (e.g. the answer to the first tap got lost): go on.
@@ -337,7 +339,7 @@ export default function Profile() {
             gap: 4,
           }}
         >
-          {relation === 'child' && !parentStep ? (
+          {needsParents && !parentStep ? (
             <Btn size="lg" pill full disabled={!learnerReady} onPress={() => setStep('parent')}>
               {t('profile.next')}
             </Btn>

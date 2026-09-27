@@ -17,8 +17,6 @@ export type SettingsRow = {
   preferred_start: string;
   preferred_end: string;
   avoid_weekdays: number[];
-  max_per_day: number;
-  max_per_week: number;
   paused_until: Date | null;
   opt_in_prompt_hidden_until: Date | null;
   context_version: number;

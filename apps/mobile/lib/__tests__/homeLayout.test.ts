@@ -19,7 +19,7 @@ const reading: NonNullable<BuddyHome['now']> = {
 const optIn: NonNullable<BuddyHome['decision']> = {
   type: 'contact_opt_in',
   can_enable_here: false,
-  rules: { max_per_day: 1, quiet_start: '20:00' },
+  rules: { quiet_start: '20:00' },
 };
 
 describe('home layout (user feedback #6)', () => {

@@ -80,10 +80,10 @@ function checkBirthDate(relation: 'self' | 'child', birthDate: string, now: Date
 }
 
 /**
- * Checks the parents' PIN under the shared lockout (lib/limits.ts, D-14):
+ * Checks the parents' PIN under the shared lockout (lib/limits.ts, ADR 0006):
  * every attempt is counted atomically before the hash is compared, so a burst
  * of parallel guesses cannot get more than 5 checked; the 5th wrong one locks
- * for 15 minutes, escalating. The right PIN clears count and lock. Every route
+ * for 15 minutes, every time the same (no escalation). The right PIN clears count and lock. Every route
  * that takes the PIN goes through here (H-17, H-18).
  */
 async function checkPin(deps: Deps, account: AccountRow, pin: string): Promise<void> {
@@ -181,10 +181,12 @@ identityRoutes.post('/account', requireUser, async (c) => {
 });
 
 /**
- * Creates the one learner profile. A child profile (any age up to 18, D-8)
- * records the parents' consent, and may carry the parents' first PIN, set in
- * the same transaction: onboarding is one request, with nothing left half
- * done if the connection drops or the sign-in has aged (H-20, H-21).
+ * Creates the one learner profile. A child profile under 16 needs the parents'
+ * explicit consent (ADR 0006), and may carry the parents' first PIN, set in the
+ * same transaction: onboarding is one request, with nothing left half done if
+ * the connection drops or the sign-in has aged (H-20, H-21). Every child row
+ * records the privacy text its account holder agreed to (constraint
+ * learners_child_consent); from 16 she decides herself and no PIN is needed.
  */
 identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
   const deps = depsOf(c);
@@ -192,7 +194,7 @@ identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
   const now = deps.now();
   checkBirthDate(input.relation, input.birth_date, now);
   const child = input.relation === 'child';
-  if (child && !input.minor_consent) {
+  if (child && isMinor(input, now) && !input.minor_consent) {
     throw new AppError('invalid_input', 'Consent of the account holder is required', {
       reason: 'minor_consent_required',
     });

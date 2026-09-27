@@ -82,7 +82,7 @@
   },
   "decision": {
     "optin_title": "Darf ich dir aufs Handy schreiben?",
-    "optin_body": "Zum Beispiel kurz vor einer Arbeit oder wenn eine Übung bereitliegt. Höchstens einmal am Tag und nie abends.",
+    "optin_body": "Zum Beispiel kurz vor einer Arbeit oder wenn eine Übung bereitliegt. Nie abends.",
     "optin_yes": "Ja, gern",
     "optin_no": "Lieber nicht",
     "optin_minor_body": "Das erlauben deine Eltern mit ihrer PIN.",
@@ -91,15 +91,13 @@
     "outcome_good": "Gut",
     "outcome_ok": "Ging so",
     "outcome_hard": "Schwer",
-    "optin_body_rules_one": "Zum Beispiel kurz vor einer Arbeit oder wenn eine Übung bereitliegt. Höchstens einmal am Tag und nie nach {{time}} Uhr.",
-    "optin_body_rules_other": "Zum Beispiel kurz vor einer Arbeit oder wenn eine Übung bereitliegt. Höchstens {{count}}-mal am Tag und nie nach {{time}} Uhr.",
     "optin_parent": "Für die Eltern: Ihr erlaubt, dass Buddy {{name}} aufs Handy schreibt. {{rules}} Ändern geht jederzeit in den Einstellungen.",
-    "rules_short_one": "höchstens einmal am Tag, nie nach {{time}} Uhr",
-    "rules_short_other": "höchstens {{count}}-mal am Tag, nie nach {{time}} Uhr",
     "rules_settings": "so, wie es in den Einstellungen steht",
     "optin_done": "Erlaubt: Ich schreibe dir jetzt auch aufs Handy – {{rules}}. Ändern kannst du das in den Einstellungen.",
     "optin_done_minor": "Erlaubt: Buddy schreibt {{name}} jetzt auch aufs Handy – {{rules}}. Ändern geht in den Einstellungen.",
-    "optin_done_no_device": "Erlaubt. Dieses Handy konnte aber nicht für Mitteilungen angemeldet werden – Buddys Nachrichten stehen dann hier in der App."
+    "optin_done_no_device": "Erlaubt. Dieses Handy konnte aber nicht für Mitteilungen angemeldet werden – Buddys Nachrichten stehen dann hier in der App.",
+    "optin_body_rules": "Zum Beispiel kurz vor einer Arbeit oder wenn eine Übung bereitliegt. Nie nach {{time}} Uhr.",
+    "rules_short": "nie nach {{time}} Uhr"
   },
   "done": {
     "undo": "Rückgängig",
@@ -173,13 +171,13 @@
     "update_step_cancelled": "Abgesagt: {{title}}",
     "mark_step_done": "Erledigt: {{title}}",
     "request_material": "Ich warte auf dein Foto: {{title}}",
-    "set_contact_pause": "Keine Nachrichten bis einschließlich {{date}}",
-    "set_contact": "Nachrichten nur zwischen {{from}} und {{to}} Uhr, höchstens {{count}}× pro Woche",
+    "set_contact_pause": "Nichts aufs Handy bis einschließlich {{date}}",
+    "set_contact": "Aufs Handy nur zwischen {{from}} und {{to}} Uhr",
     "schedule_check": "Ich schaue {{when}} wieder vorbei",
     "offer_learning": "Angeboten: {{what}} – „{{text}}“",
     "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Nachrichten aufs Handy sind aus)",
     "open_area": "Gezeigt: {{what}}",
-    "set_contact_quiet": "Nachrichten nur zwischen {{from}} und {{to}} Uhr, nie nach {{quiet}} Uhr, höchstens {{count}}× pro Woche",
+    "set_contact_quiet": "Aufs Handy nur zwischen {{from}} und {{to}} Uhr, nie nach {{quiet}} Uhr",
     "request_material_undone": "Kein Foto nötig: {{title}}"
   },
   "intro": {

@@ -89,8 +89,7 @@ export async function receiveLearnerMessage(
       );
       await bumpContext(tx, learner.id);
       // She is here and writing: what Buddy posted to her thread so far has been seen and
-      // answered, so the "previous message unanswered" gate does not hold back the next idea
-      // because of an in-app message she simply chatted past (D-12 counts those).
+      // answered (recorded as a fact, not as a gate — nothing waits for an answer, ADR 0006).
       await tx.query(
         `update buddy_outreach o set responded_at = $2
           where o.learner_id = $1 and o.responded_at is null

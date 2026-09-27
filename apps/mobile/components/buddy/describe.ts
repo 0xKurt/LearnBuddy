@@ -102,12 +102,10 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
               from: a.preferred_start,
               to: a.preferred_end,
               quiet: a.quiet_start,
-              count: a.max_per_week,
             })
           : t('action.set_contact', {
               from: a.preferred_start,
               to: a.preferred_end,
-              count: a.max_per_week,
             });
     case 'offer_learning':
       return t('action.offer_learning', {

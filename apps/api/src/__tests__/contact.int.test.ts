@@ -1,5 +1,6 @@
-// Contact promises (CLAUDE.md rule 6; audit I-10, N-3): Buddy can only reduce contact, in-app
-// messages count, an agreed reminder never vanishes, and a reminder keeps its subject.
+// Contact promises (CLAUDE.md rule 6; audit I-10, N-3; ADR 0006): Buddy can only reduce contact
+// to the phone, messages in the app are never limited or counted, an agreed reminder never
+// vanishes, and a reminder keeps its subject.
 // docs/architecture.md §Proactivity, §Delivery.
 // requires live verification in Claude Code session (needs a running Postgres)
 
@@ -130,38 +131,35 @@ describe.skipIf(!dbReady)('contact promises', () => {
     expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
   });
 
-  it('a child cannot undo "fewer messages" without the adult (rule 6)', async () => {
+  const pauseAction = {
+    tool: 'set_contact',
+    args: {
+      preferred_start: null,
+      preferred_end: null,
+      quiet_start: null,
+      avoid_weekdays: null,
+      pause: { kind: 'end_of_week', weeks_ahead: 0 },
+      quote: 'bis Sonntag nichts aufs Handy',
+    },
+  };
+
+  it('under 16 she cannot undo a pause without the adult (rule 6, ADR 0006)', async () => {
     const l = await onboard(env, { relation: 'child', pin: '4711' });
-    await enableContact(env, l.learnerId, { max_per_week: 4 });
-    env.llm.script(
-      'buddy_turn',
-      reply('Okay, ich schreibe dir seltener.', [
-        {
-          tool: 'set_contact',
-          args: {
-            preferred_start: null,
-            preferred_end: null,
-            quiet_start: null,
-            avoid_weekdays: null,
-            pause: null,
-            fewer: true,
-            quote: 'schreib mir weniger',
-          },
-        },
-      ]),
-    );
-    const res = await send(l, 'Bitte schreib mir weniger');
+    await enableContact(env, l.learnerId);
+    env.llm.script('buddy_turn', reply('Okay, bis Sonntag Ruhe auf dem Handy.', [pauseAction]));
+    const res = await send(l, 'Bitte bis Sonntag nichts aufs Handy');
     expect(res.body.status).toBe('done');
     const card = res.body.home.thread.flatMap((m) => m.actions)[0]!;
-    expect(card.summary).toMatchObject({ tool: 'set_contact', max_per_week: 2 });
+    expect(card.summary).toMatchObject({ tool: 'set_contact' });
+    expect(card.summary).not.toHaveProperty('max_per_week');
     // Not offered to her …
     expect(card.undoable).toBe(false);
     // … and refused if she tries anyway.
     const denied = await l.api.post<{ error: { code: string } }>(`/buddy/actions/${card.id}/undo`);
     expect(denied.status).toBe(403);
     expect(denied.body.error.code).toBe('admin_required');
-    const settings = await l.api.get<{ max_per_week: number }>('/buddy/settings');
-    expect(settings.body.max_per_week).toBe(2);
+    const settings = await l.api.get<{ paused_until: string | null }>('/buddy/settings');
+    expect(settings.body.paused_until).not.toBeNull();
     // The adult can.
     const session = await l.api.post<{ admin_token: string }>('/account/admin-session', {
       pin: '4711',
@@ -169,12 +167,35 @@ describe.skipIf(!dbReady)('contact promises', () => {
     const parent = l.api.with({ 'x-admin-token': session.body.admin_token });
     const undone = await parent.post<BuddyHome>(`/buddy/actions/${card.id}/undo`);
     expect(undone.status).toBe(200);
-    expect((await l.api.get<{ max_per_week: number }>('/buddy/settings')).body.max_per_week).toBe(
-      4,
-    );
+    const after = await l.api.get<{ paused_until: string | null }>('/buddy/settings');
+    expect(after.body.paused_until).toBeNull();
   });
 
-  it('in-app messages count: with push off, a second idea the same day is held back (H-29, repro-02)', async () => {
+  it('a 16-year-old undoes her own pause and turns contact on herself, without a PIN (ADR 0006)', async () => {
+    // 16 since March; her parents set the profile up.
+    const l = await onboard(env, { relation: 'child', birthDate: '2010-03-10' });
+    await enableContact(env, l.learnerId);
+    env.llm.script('buddy_turn', reply('Okay, bis Sonntag Ruhe auf dem Handy.', [pauseAction]));
+    const res = await send(l, 'Bitte bis Sonntag nichts aufs Handy');
+    const card = res.body.home.thread.flatMap((m) => m.actions)[0]!;
+    expect(card.undoable).toBe(true);
+    expect((await l.api.post(`/buddy/actions/${card.id}/undo`)).status).toBe(200);
+    const s = await l.api.get<{ version: number; can_loosen: boolean }>('/buddy/settings');
+    expect(s.body.can_loosen).toBe(true);
+    const off = await l.api.patch<{ version: number }>('/buddy/settings', {
+      contact_enabled: false,
+      version: s.body.version,
+    });
+    expect(off.status).toBe(200);
+    const on = await l.api.patch<{ contact_enabled: boolean }>('/buddy/settings', {
+      contact_enabled: true,
+      version: off.body.version,
+    });
+    expect(on.status).toBe(200);
+    expect(on.body.contact_enabled).toBe(true);
+  });
+
+  it('Buddy may write several times a day in the app: nothing is counted (ADR 0006, repro-02)', async () => {
     await env.close();
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z', push: 'disabled' });
     const l = await onboard(env);
@@ -183,10 +204,14 @@ describe.skipIf(!dbReady)('contact promises', () => {
       `insert into buddy_goals (learner_id, kind, title, due_date) values ($1, 'exam', 'Mathearbeit', '2026-10-02')`,
       [l.learnerId],
     );
-    for (const [key, at] of [
-      ['check:a', '2026-09-28T13:00:00Z'],
-      ['check:b', '2026-09-28T14:00:00Z'],
-    ] as const) {
+    const checks = [
+      ['check:a', '2026-09-28T13:00:00Z', 'practice:a'],
+      ['check:b', '2026-09-28T14:00:00Z', 'practice:b'],
+      ['check:c', '2026-09-28T15:00:00Z', 'practice:c'],
+      // The same topic again the same day: said once is enough.
+      ['check:d', '2026-09-28T16:00:00Z', 'practice:a'],
+    ] as const;
+    for (const [key, at] of checks) {
       await enqueueJob(env.db, {
         learnerId: l.learnerId,
         kind: 'buddy_check',
@@ -195,15 +220,38 @@ describe.skipIf(!dbReady)('contact promises', () => {
         payload: { reason: 'checkin_requested', note: key },
       });
     }
+    for (const [, at, topic] of checks) {
+      env.clock.set(at);
+      env.llm.script('buddy_check', idea(topic));
+      await tick(env);
+    }
+    const rows = await outreach(env, l.learnerId);
+    expect(rows.map((r) => r.status)).toEqual(['in_app', 'in_app', 'in_app', 'suppressed']);
+    expect(rows[3]!.status_reason).toBe('duplicate_topic');
+    // Three unanswered messages in a row: no gate stops the next one.
+    expect(await thread(env, l.learnerId)).toHaveLength(3);
+  });
+
+  it('with contact to the phone off, Buddy still writes in the app (ADR 0006)', async () => {
+    const l = await onboard(env);
+    await env.db.query(
+      `insert into buddy_goals (learner_id, kind, title, due_date) values ($1, 'exam', 'Mathearbeit', '2026-10-02')`,
+      [l.learnerId],
+    );
+    await enqueueJob(env.db, {
+      learnerId: l.learnerId,
+      kind: 'buddy_check',
+      runAt: new Date('2026-09-28T13:00:00Z'),
+      dedupeKey: 'check:off',
+      payload: { reason: 'checkin_requested', note: 'x' },
+    });
     env.clock.set('2026-09-28T13:00:00Z');
-    env.llm.script('buddy_check', idea('practice:a'));
-    await tick(env);
-    env.clock.set('2026-09-28T14:00:00Z');
-    env.llm.script('buddy_check', idea('practice:b'));
+    env.llm.script('buddy_check', idea('practice:off'));
     await tick(env);
     const rows = await outreach(env, l.learnerId);
-    expect(rows.map((r) => r.status)).toEqual(['in_app', 'suppressed']);
-    expect(await thread(env, l.learnerId)).toHaveLength(1);
+    expect(rows).toMatchObject([{ status: 'in_app', status_reason: 'contact_disabled' }]);
+    expect(await thread(env, l.learnerId)).toEqual(['Ich hätte da eine kurze Übung für dich.']);
+    expect(env.push.attempts).toHaveLength(0);
   });
 
   describe('an agreed reminder never vanishes (H-37, repro-15)', () => {
@@ -374,8 +422,12 @@ describe.skipIf(!dbReady)('contact promises', () => {
     ).toBe(200);
     env.clock.set('2026-09-29T13:00:00Z');
     await tick(env);
-    expect((await outreach(env, l.learnerId)).map((r) => r.status)).toEqual(['suppressed']);
+    // Not to the phone on her day off — it waits in the app instead (ADR 0006).
+    expect(await outreach(env, l.learnerId)).toMatchObject([
+      { status: 'in_app', status_reason: 'no_slot' },
+    ]);
     expect(env.push.attempts).toHaveLength(0);
+    expect(await thread(env, l.learnerId)).toHaveLength(1);
   });
 
   it('a countdown delivered on the exam day says "Heute", not "Morgen" (M-60)', async () => {

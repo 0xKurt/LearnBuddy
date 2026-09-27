@@ -82,7 +82,7 @@
   },
   "decision": {
     "optin_title": "Je peux t'écrire sur ton téléphone?",
-    "optin_body": "Par exemple juste avant un contrôle ou quand des exercices t'attendent. Au maximum une fois par jour, et jamais le soir.",
+    "optin_body": "Par exemple juste avant un contrôle ou quand des exercices t'attendent. Jamais le soir.",
     "optin_yes": "Oui, volontiers",
     "optin_no": "Plutôt pas",
     "optin_minor_body": "Ce sont tes parents qui l'autorisent avec leur code PIN.",
@@ -91,15 +91,13 @@
     "outcome_good": "Bien",
     "outcome_ok": "Moyen",
     "outcome_hard": "Difficile",
-    "optin_body_rules_one": "Par exemple juste avant un contrôle ou quand des exercices t'attendent. Au maximum une fois par jour et jamais après {{time}}.",
-    "optin_body_rules_other": "Par exemple juste avant un contrôle ou quand des exercices t'attendent. Au maximum {{count}} fois par jour et jamais après {{time}}.",
     "optin_parent": "Pour les parents : vous autorisez Buddy à écrire à {{name}} sur son téléphone. {{rules}} Modifiable à tout moment dans les réglages.",
-    "rules_short_one": "au maximum une fois par jour, jamais après {{time}}",
-    "rules_short_other": "au maximum {{count}} fois par jour, jamais après {{time}}",
     "rules_settings": "comme indiqué dans les réglages",
     "optin_done": "C'est autorisé : je t'écris aussi sur ton téléphone – {{rules}}. Tu peux le modifier dans les réglages.",
     "optin_done_minor": "C'est autorisé : Buddy écrit maintenant aussi à {{name}} sur son téléphone – {{rules}}. Modifiable dans les réglages.",
-    "optin_done_no_device": "C'est autorisé. Mais ce téléphone n'a pas pu être inscrit pour les notifications – les messages de Buddy seront ici, dans l'appli."
+    "optin_done_no_device": "C'est autorisé. Mais ce téléphone n'a pas pu être inscrit pour les notifications – les messages de Buddy seront ici, dans l'appli.",
+    "optin_body_rules": "Par exemple juste avant un contrôle ou quand des exercices t'attendent. Jamais après {{time}}.",
+    "rules_short": "jamais après {{time}}"
   },
   "done": {
     "undo": "Annuler",
@@ -173,13 +171,13 @@
     "update_step_cancelled": "Annulé: {{title}}",
     "mark_step_done": "Fait: {{title}}",
     "request_material": "J'attends ta photo : {{title}}",
-    "set_contact_pause": "Pas de messages jusqu'au {{date}} inclus",
-    "set_contact": "Messages seulement entre {{from}} et {{to}}, au maximum {{count}} par semaine",
+    "set_contact_pause": "Rien sur le téléphone jusqu'au {{date}} inclus",
+    "set_contact": "Sur le téléphone seulement entre {{from}} et {{to}}",
     "schedule_check": "Je repasse {{when}}",
     "offer_learning": "Proposé : {{what}} – « {{text}} »",
     "plan_step_agreed_in_app": "Convenu : {{title}} {{when}} – ça s'affiche ici dans l'appli (les messages sur ton téléphone sont désactivés)",
     "open_area": "Affiché : {{what}}",
-    "set_contact_quiet": "Messages seulement entre {{from}} et {{to}}, jamais après {{quiet}}, au maximum {{count}} par semaine",
+    "set_contact_quiet": "Sur le téléphone seulement entre {{from}} et {{to}}, jamais après {{quiet}}",
     "request_material_undone": "Pas besoin de photo : {{title}}"
   },
   "intro": {

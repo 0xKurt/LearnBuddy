@@ -54,6 +54,9 @@ compare-and-set) need transactions. No new services.
   window 15:00–18:30 (learner's zone), topic dedupe 72 h, no follow-up while the last message is
   unanswered (48 h), relevance ≥ 0.6, nothing sent in bulk after a pause. Silence is a valid,
   logged outcome.
+- _Superseded in part by [ADR 0006](0006-contact-and-age-rules.md) (2026-09-27): no daily or
+  weekly caps and no unanswered gate — messages are not counted; the parents' gate applies
+  under 16._
 
 ### 4. Honest delivery evidence
 

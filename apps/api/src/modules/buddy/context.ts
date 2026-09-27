@@ -238,18 +238,15 @@ export function buildContext(
 
   const st = state.settings;
   lines.push('', '## Contact outside the app');
+  lines.push(
+    '- Messages in the app are not limited; a topic you raised in the last 72 hours is not sent again.',
+  );
   if (!st.contact_enabled) {
-    lines.push(
-      '- OFF: Buddy may not message the learner outside the app (reminders stay in the app).',
-    );
+    lines.push('- OFF: nothing goes to the phone; your messages and reminders wait in the app.');
   } else {
-    const sentThisWeek = state.outreach.filter(
-      (o) => o.sent_at && daysBetween(localParts(o.sent_at, tz).date, today) < 7,
-    ).length;
     lines.push(
       `- on · quiet ${st.quiet_start}–${st.quiet_end} · preferred ${st.preferred_start}–${st.preferred_end}` +
-        `${st.avoid_weekdays.length ? ` · never on weekdays ${st.avoid_weekdays.join(',')}` : ''}` +
-        ` · at most ${st.max_per_day}/day, ${st.max_per_week}/week (${sentThisWeek} in the last 7 days)`,
+        `${st.avoid_weekdays.length ? ` · never on weekdays ${st.avoid_weekdays.join(',')}` : ''}`,
     );
     if (st.paused_until && st.paused_until > now) {
       lines.push(`- paused through ${lastDayOf(st.paused_until, tz)}`);
