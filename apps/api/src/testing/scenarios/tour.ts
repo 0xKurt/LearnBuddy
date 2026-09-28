@@ -24,14 +24,19 @@ export function scriptTour(llm: ScriptedGateway): void {
     turn('Katzen, schön! Das merke ich mir.', [remember('Mag Katzen', 'ich mag Katzen')]),
     turn('Gern!'),
     turn('Bis später!'),
+    // "erklär mir Nomen": the explanation is the answer, practice on it is offered
+    // (owner decision 28.09.).
+    turn(
+      'Nomen sind Namen für Dinge, Lebewesen und Gefühle. Man schreibt sie groß: der Hund, die Freude. Magst du das gleich üben?',
+      [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Nomen', goal: null } }],
+    ),
   );
   llm.script('explain', {
     json: {
       usable: true,
       title: 'Nomen',
       subject: { name: 'Deutsch', kind: 'german' },
-      intro:
-        'Nomen sind Namen für Dinge, Lebewesen und Gefühle. Man schreibt sie groß: der Hund, die Freude.',
+      intro: null,
       items: [
         {
           kind: 'multiple_choice',

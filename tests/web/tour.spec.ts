@@ -307,20 +307,17 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toHaveCount(0);
 
-  // ── An explanation read again from the questions ──
+  // ── An explanation in the chat, then practice on it ──
+  // (owner decision 28.09.: explaining is the chat's answer, not a separate screen).
   // The paused homework lies on top, over the ways to start: swiped away first.
   await expect(page.getByText('Weiter mit deiner Hausaufgabe')).toBeVisible();
   await swipeCardAway(page);
-  await page.getByRole('button', { name: 'Erklär mir was', exact: true }).click();
-  await page.getByRole('textbox').last().fill('Nomen');
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await page.getByLabel('Schreib Buddy …').fill('erklär mir Nomen');
+  await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Nomen sind Namen für Dinge', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: 'Verstanden – frag mich!' }).click();
+  await shot(page, '47-explanation-in-chat');
+  await page.getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('Welches Wort ist ein Nomen?')).toBeVisible();
-  await page.getByRole('button', { name: 'Erklärung nochmal lesen' }).click();
-  await expect(page.getByText('Die Erklärung')).toBeVisible();
-  await shot(page, '47-explanation-again');
-  await page.getByRole('button', { name: 'Schließen' }).last().click();
   await page.getByRole('button', { name: 'Hund', exact: true }).click();
   await expect(page.getByText('Stimmt – gut gemacht!')).toBeVisible();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
