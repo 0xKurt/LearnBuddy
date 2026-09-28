@@ -169,7 +169,13 @@
     "send": "Envoyer",
     "photo": "Photographier une fiche",
     "keyboard": "Clavier",
-    "photo_short": "Photo"
+    "photo_short": "Photo",
+    "attach": {
+      "title": "Que veux-tu joindre ?",
+      "camera": "Prendre une photo",
+      "library": "Depuis la galerie",
+      "files": "Depuis les fichiers"
+    }
   },
   "action": {
     "remember": "Noté: {{statement}}",

@@ -123,7 +123,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
     page.getByText('Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten', { exact: false }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Arbeit', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Arbeitsblatt fotografieren' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Was möchtest du anhängen?' })).toBeVisible();
   await shot(page, '04-buddy-first-visit');
 
   // ── Get to know: the test, and what Buddy needs for it ──

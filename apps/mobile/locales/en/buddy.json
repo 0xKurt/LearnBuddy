@@ -169,7 +169,13 @@
     "send": "Send",
     "photo": "Photograph a worksheet",
     "keyboard": "Keyboard",
-    "photo_short": "Photo"
+    "photo_short": "Photo",
+    "attach": {
+      "title": "What do you want to attach?",
+      "camera": "Take a photo",
+      "library": "From the gallery",
+      "files": "From files"
+    }
   },
   "action": {
     "remember": "Noted: {{statement}}",

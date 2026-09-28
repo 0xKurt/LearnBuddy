@@ -29,6 +29,7 @@ import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { Sheet } from '../lb/Sheet.js';
 
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
@@ -49,7 +50,8 @@ export function Composer({
   /** Resolves false when the message never reached Buddy: her text comes back (audit M-76). */
   onSend: (text: string) => Promise<boolean>;
   /** The camera: a photo says more than typing a worksheet. */
-  onPhoto: () => void;
+  /** Attach something: the + menu picks where it comes from (issue #82). */
+  onPhoto: (source?: 'camera' | 'library' | 'files') => void;
   /** Conversation mode (talk screen): bottom right, next to the mic. */
   onTalk: () => void;
 }) {
@@ -60,6 +62,8 @@ export function Composer({
   // Kept on the device: a half-typed question survives Android killing the app.
   const { text, setText, clear } = useDraft('chat');
   const [focused, setFocused] = useState(false);
+  /** The little "where from" menu behind the + (issue #82). */
+  const [attach, setAttach] = useState(false);
   const latest = useRef({ text, disabled });
   latest.current = { text, disabled };
   const trimmed = text.trim();
@@ -127,11 +131,37 @@ export function Composer({
     </Animated.View>
   );
   const stoppable = writing && onStop !== undefined && voice.state === 'idle';
+  const attachSheet = (
+    <Sheet
+      visible={attach}
+      title={t('buddy:composer.attach.title')}
+      closeLabel={t('common:actions.close')}
+      onClose={() => setAttach(false)}
+    >
+      {(['camera', 'library', 'files'] as const).map((source) => (
+        <Btn
+          key={source}
+          full
+          pill
+          size="lg"
+          variant="soft"
+          icon={source === 'camera' ? 'camera' : source === 'library' ? 'book' : 'file'}
+          onPress={() => {
+            setAttach(false);
+            onPhoto(source);
+          }}
+        >
+          {t(`buddy:composer.attach.${source}`)}
+        </Btn>
+      ))}
+    </Sheet>
+  );
 
   if (voiceMode) {
     // Voice first: keyboard · big mic · camera.
     return (
       <View style={frame}>
+        {attachSheet}
         <MicStatus voice={voice} />
         {/* Heard while a message was still on its way: shown with its own "Senden", never
             hidden in a field voice mode does not show (composer-parked-transcript). */}
@@ -169,7 +199,9 @@ export function Composer({
           <View style={{ alignItems: 'center', gap: 4, width: 90 }}>
             <CircleBtn
               icon="camera"
-              onPress={onPhoto}
+              // Without the arrow the press event would land in `source` and build a
+              // nonsense route (issue #82).
+              onPress={() => onPhoto('camera')}
               accessibilityLabel={t('buddy:composer.photo')}
             />
             <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.photo_short')}</Text>
@@ -181,6 +213,7 @@ export function Composer({
 
   return (
     <View style={frame}>
+      {attachSheet}
       <MicStatus voice={voice} />
       <View
         style={[
@@ -206,11 +239,13 @@ export function Composer({
           SHADOW.float,
         ]}
       >
+        {/* Like the assistants she knows: one + that asks where it comes from, instead of a
+            page of its own (owner 29.09., issue #82). */}
         <CircleBtn
-          icon="camera"
+          icon="plus"
           plain
-          onPress={onPhoto}
-          accessibilityLabel={t('buddy:composer.photo')}
+          onPress={() => setAttach(true)}
+          accessibilityLabel={t('buddy:composer.attach.title')}
         />
         <TextInput
           value={text}

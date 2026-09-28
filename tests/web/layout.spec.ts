@@ -72,7 +72,7 @@ for (const viewport of [
         expect(overlaps(boxes[i]!, boxes[j]!), `${names[i]} overlaps ${names[j]}`).toBe(false);
     // The composer bar: camera, field and mic inside the screen, the field centred on the mic.
     const camera = await page
-      .getByRole('button', { name: 'Arbeitsblatt fotografieren' })
+      .getByRole('button', { name: 'Was möchtest du anhängen?' })
       .boundingBox();
     const mic = await page.getByRole('button', { name: 'Nachricht sprechen' }).boundingBox();
     const field = await page.getByLabel('Schreib Buddy …').boundingBox();

@@ -203,7 +203,8 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── A sheet Buddy could not read: read again ──
-  await page.getByRole('button', { name: 'Arbeitsblatt fotografieren' }).click();
+  await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
+  await page.getByRole('button', { name: 'Foto aufnehmen' }).click();
   let chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Aus Fotos wählen' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
@@ -280,7 +281,8 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Hausaufgabe Quadrat – noch 2 Aufgaben')).toBeVisible();
 
   // ── A hard-to-read photo kept anyway ──
-  await page.getByRole('button', { name: 'Arbeitsblatt fotografieren' }).click();
+  await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
+  await page.getByRole('button', { name: 'Foto aufnehmen' }).click();
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Foto machen' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'dark.jpg'));

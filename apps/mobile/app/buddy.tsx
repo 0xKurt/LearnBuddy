@@ -1015,7 +1015,7 @@ export default function BuddyScreen() {
           writing={pending !== null}
           onStop={() => void stopReply()}
           onSend={(text) => send(text)}
-          onPhoto={() => router.push('/capture')}
+          onPhoto={(source) => router.push(source ? `/capture?source=${source}` : '/capture')}
           onTalk={() => router.push('/talk')}
         />
       </KeyboardSafe>

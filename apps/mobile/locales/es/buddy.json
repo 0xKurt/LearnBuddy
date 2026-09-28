@@ -169,7 +169,13 @@
     "send": "Enviar",
     "photo": "Fotografiar una ficha",
     "keyboard": "Teclado",
-    "photo_short": "Foto"
+    "photo_short": "Foto",
+    "attach": {
+      "title": "¿Qué quieres adjuntar?",
+      "camera": "Hacer una foto",
+      "library": "De la galería",
+      "files": "De archivos"
+    }
   },
   "action": {
     "remember": "Anotado: {{statement}}",

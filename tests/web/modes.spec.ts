@@ -131,7 +131,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(
     page.getByText('ein paar Fragen zu Brüchen vorbereitet', { exact: false }),
   ).toBeVisible();
-  await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
+  // The offer card in the thread, not a sheet: its button is the newest one.
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
@@ -181,7 +182,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ein Probetest über die Römer', { exact: false })).toBeVisible();
-  await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(
     page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),
   ).toBeVisible();

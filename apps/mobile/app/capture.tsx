@@ -112,8 +112,17 @@ export default function CaptureScreen() {
     pending?: string | string[];
     /** Opened from talk mode: once sent, back to the conversation there. */
     from?: string | string[];
+    /**
+     * Opened from the composer's + menu (issue #82): the chosen picker opens at once, so
+     * she lands in the camera or the gallery instead of on a page that asks again.
+     */
+    source?: string | string[];
   }>();
   const fromTalk = params.from === 'talk';
+  const straightTo = ((): 'camera' | 'library' | 'files' | null => {
+    const value = Array.isArray(params.source) ? params.source[0] : params.source;
+    return value === 'camera' || value === 'library' || value === 'files' ? value : null;
+  })();
   const pending = params.pending === '1';
   const resume = params.resume === '1';
   /** What the photos are for; a resumed draft brings its own. */
@@ -217,6 +226,15 @@ export default function CaptureScreen() {
       mounted.current = false;
     };
   }, [resume, pending]);
+
+  // Came from the + menu: open that picker once, as if she had tapped it here (issue #82).
+  const opened = useRef(false);
+  useEffect(() => {
+    if (!loaded || !straightTo || opened.current || leftover) return;
+    opened.current = true;
+    if (straightTo === 'files') void pickFiles();
+    else void pick(straightTo);
+  }, [loaded, straightTo, leftover]);
 
   function continueLeftover() {
     if (!leftover) return;

@@ -169,7 +169,13 @@
     "send": "Invia",
     "photo": "Fotografa una scheda",
     "keyboard": "Tastiera",
-    "photo_short": "Foto"
+    "photo_short": "Foto",
+    "attach": {
+      "title": "Cosa vuoi allegare?",
+      "camera": "Scatta una foto",
+      "library": "Dalla galleria",
+      "files": "Dai file"
+    }
   },
   "action": {
     "remember": "Annotato: {{statement}}",

@@ -169,7 +169,13 @@
     "send": "Senden",
     "photo": "Arbeitsblatt fotografieren",
     "keyboard": "Tastatur",
-    "photo_short": "Foto"
+    "photo_short": "Foto",
+    "attach": {
+      "title": "Was möchtest du anhängen?",
+      "camera": "Foto aufnehmen",
+      "library": "Aus der Galerie",
+      "files": "Aus Dateien"
+    }
   },
   "action": {
     "remember": "Gemerkt: {{statement}}",
