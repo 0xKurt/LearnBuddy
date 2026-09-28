@@ -2,8 +2,8 @@
 // halo, both following the conversation's state — each a clearly different movement,
 // blended softly (never a jump; lib/buddy/moon.ts):
 //   idle       the moon circles slowly with a faint trail, the orb breathes;
-//   listening  the moon stops at the upper right and glows with her voice, sound bars
-//              in the orb follow it too;
+//   listening  the moon stops at the upper right and glows with her voice (the glass
+//              stays clear: no bars in the orb, owner feedback 2026-09-28);
 //   thinking   the moon races round, its trail becomes a ring of light;
 //   waiting    her turn: the moon hovers and bobs, a soft ping leaves it;
 //   speaking   the moon sways and pulses in a speech rhythm, the orb with it.
@@ -37,14 +37,7 @@ export function TalkOrb({
   const box = Math.round(size * 1.5);
   const orb = (
     <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
-      <BuddyOrb
-        size={size}
-        state={moonForTalk(mode)}
-        listening={mode === 'listening'}
-        level={level}
-        reactToTap={false}
-        halo
-      />
+      <BuddyOrb size={size} state={moonForTalk(mode)} level={level} reactToTap={false} halo />
     </View>
   );
   if (!onPress) return orb;

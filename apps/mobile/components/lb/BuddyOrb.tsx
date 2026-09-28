@@ -2,9 +2,9 @@
 // his signature, a small pearl moon on a tilted orbit that passes in front of and behind
 // the glass (owner decision 2026-09-27, docs/DESIGN-BRIEF.md §Buddy's moon). The moon
 // shows what Buddy is doing — idle, listen, think, wait, speak, happy — and blends softly
-// between those states (the maths: lib/buddy/moon.ts). With `listening`, sound bars
-// appear in the orb (the voice-first look). The same Buddy at every size; decorative for
-// screen readers.
+// between those states (the maths: lib/buddy/moon.ts). The glass stays clear in every
+// state — listening is the moon glowing with her voice, not bars in the orb (owner
+// feedback 2026-09-28). The same Buddy at every size; decorative for screen readers.
 //
 // How it moves: one frame callback on the UI thread steps the moon and writes a pose;
 // a few animated views (the moon in front, the moon behind, a trail of dots, the
@@ -32,7 +32,6 @@ import Svg, {
   LinearGradient,
   Path,
   RadialGradient,
-  Rect,
   Stop,
 } from 'react-native-svg';
 
@@ -53,16 +52,12 @@ import {
   type MoonState,
   type Sparkle,
 } from '../../lib/buddy/moon.js';
-import { barHeights } from '../../lib/speech/level.js';
 import { LB } from '../../lib/theme/colors.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 
 export type { MoonState } from '../../lib/buddy/moon.js';
 
-const BAR_X = [33, 41, 49, 57, 65];
-/** The tallest bar at full voice (in the 100-unit viewBox). */
-const BAR_MAX = 44;
 /** The orb's radius as a share of its box (a thin margin for the rim). */
 const FILL = 0.48;
 /** Half the glass's viewBox, in moon units. */
@@ -77,7 +72,6 @@ const SPARK_COLORS = ['#b9a4f5', '#f2a9cf', '#a9bfff', '#d4c2ff', '#f7bcdc'] as 
 export function BuddyOrb({
   size = 32,
   state = 'idle',
-  listening = false,
   level = 0.5,
   breathe = true,
   reactToTap = size >= 48,
@@ -86,8 +80,7 @@ export function BuddyOrb({
   size?: number;
   /** What Buddy is doing: the moon's state (lib/buddy/moon.ts). */
   state?: MoonState;
-  listening?: boolean;
-  /** How loud she is (0…1): the sound bars and the listening moon follow it. */
+  /** How loud she is (0…1): the listening moon follows it. */
   level?: number;
   /** Alive: breathing and the moon moving (off for older avatars, where many stand together). */
   breathe?: boolean;
@@ -112,7 +105,6 @@ export function BuddyOrb({
     return { opacity: 0.8 * h, transform: [{ scale: 0.92 + h * 0.1 }] };
   });
 
-  const heights = barHeights(level).map((h) => h * BAR_MAX);
   const haloSize = size * 2 * FILL * 1.36;
   const orb = (
     <View style={{ width: size, height: size }}>
@@ -128,26 +120,6 @@ export function BuddyOrb({
       <Animated.View style={[{ width: size, height: size }, bodyStyle]}>
         <Glass size={size} />
         {detail.reflection ? <Reflection pose={pose} fade={fade} u={u} size={size} /> : null}
-        {listening ? (
-          <Svg
-            width={size}
-            height={size}
-            viewBox="0 0 100 100"
-            style={{ position: 'absolute', left: 0, top: 0 }}
-          >
-            {BAR_X.map((x, i) => (
-              <Rect
-                key={x}
-                x={x - 1.8}
-                y={50 - (heights[i] ?? 0) / 2}
-                width={3.6}
-                height={heights[i] ?? 0}
-                rx={1.8}
-                fill={LB.primary}
-              />
-            ))}
-          </Svg>
-        ) : null}
       </Animated.View>
       {detail.moon ? (
         <MoonLayer side="front" pose={pose} fade={fade} u={u} size={size} detail={detail} />

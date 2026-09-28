@@ -34,7 +34,7 @@ const SPEECH_RECORDING: RecordingOptions = {
   sampleRate: 22_050,
   numberOfChannels: 1,
   bitRate: 48_000,
-  // The level drives the orb's sound bars in conversation mode.
+  // The level drives the listening moon's glow in conversation mode.
   isMeteringEnabled: true,
   android: { outputFormat: 'mpeg4', audioEncoder: 'aac' },
   ios: {

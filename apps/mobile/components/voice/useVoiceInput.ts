@@ -56,7 +56,7 @@ export type VoiceInput = {
   /** Milliseconds recorded so far and the most there can be (for "0:07 / 1:00"). */
   elapsedMs: number;
   maxMs: number;
-  /** How loud she is right now (0…1), for the orb's sound bars. */
+  /** How loud she is right now (0…1), for the listening moon's glow. */
   level: number;
   /** What she has said so far while the phone recognises on-device ('' otherwise). */
   live: string;
