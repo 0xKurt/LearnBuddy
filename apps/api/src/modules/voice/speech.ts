@@ -2,7 +2,8 @@
 //
 // The app sends the text exactly as it is read (math already in words) and the locale;
 // voice and speed come from her settings here, so "sprich langsamer" (tool set_voice) takes
-// effect with the next sentence. Only the text goes to the provider — never her name, id or
+// effect with the next sentence. Only the voice picker's preview names a voice to try (one of
+// the same curated set, validated by the contract); her settings stay as they are. Only the text goes to the provider — never her name, id or
 // anything else. The audio is cached per learner for 24 hours (the same question read again
 // costs nothing); the cache key is a hash, the text itself is not stored.
 //
@@ -43,16 +44,17 @@ export async function synthesizeSpeech(
     `select voice, voice_speed from buddy_settings where learner_id = $1`,
     [who.learnerId],
   );
+  const voice = input.voice ?? settings.voice;
   const rate = rateFor(settings.voice_speed, input.slow ?? false);
   const text = input.text.replace(/\s+/g, ' ').trim();
   const key = createHash('sha256')
-    .update(JSON.stringify([deps.speech.voiceId(settings.voice, locale), locale, rate, text]))
+    .update(JSON.stringify([deps.speech.voiceId(voice, locale), locale, rate, text]))
     .digest('hex');
   const now = deps.now();
   const answer = (mime: SpeechResponse['mime'], audio: Buffer): SpeechResponse => ({
     mime,
     audio_base64: audio.toString('base64'),
-    voice: settings.voice,
+    voice,
     speed: settings.voice_speed,
   });
 
@@ -71,7 +73,7 @@ export async function synthesizeSpeech(
     audio = await deps.speech.synthesize({
       text,
       locale,
-      voice: settings.voice,
+      voice,
       rate,
       timeoutMs: SPEECH_TIMEOUT_MS,
     });

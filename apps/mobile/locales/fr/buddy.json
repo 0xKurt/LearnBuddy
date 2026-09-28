@@ -279,5 +279,17 @@
     "speak": "Lire à voix haute",
     "copied": "Copié",
     "copy_failed": "La copie n'a pas marché"
+  },
+  "voice_pick": {
+    "label": "La voix de Buddy",
+    "sample": "Salut, je suis Buddy. Voilà comment je parle quand je te lis quelque chose.",
+    "phone_voice": "C'est la voix de ton téléphone qui lit en ce moment – c'est pour ça qu'elles se ressemblent toutes ici.",
+    "tap_hint": "Fait écouter un court extrait et choisit cette voix.",
+    "name": {
+      "warm": "Chaleureuse",
+      "friendly": "Amicale",
+      "bright": "Lumineuse",
+      "clear": "Nette"
+    }
   }
 }

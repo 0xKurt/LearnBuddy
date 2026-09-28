@@ -28,6 +28,8 @@ async function onboardChild(page: Page): Promise<void> {
   // The hand-over: what is set, then the phone goes to the child (user feedback #10).
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
+  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Hallo Lena')).toBeVisible();
 }
 

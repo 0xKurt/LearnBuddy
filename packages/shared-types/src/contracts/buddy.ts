@@ -389,7 +389,7 @@ export const UpdateMemoryRequest = z.union([
 ]);
 export type UpdateMemoryRequest = z.infer<typeof UpdateMemoryRequest>;
 
-// ─────────────── contact settings ───────────────
+// ─────────────── settings: contact and Buddy's voice ───────────────
 
 export const BuddySettingsView = z.object({
   contact_enabled: z.boolean(),
@@ -402,6 +402,8 @@ export const BuddySettingsView = z.object({
   /** "Seltener schreiben": only important messages from Buddy reach the phone. */
   only_important: z.boolean(),
   timezone: z.string(),
+  /** Buddy's voice when read aloud (ADR 0008): chosen in the setup, the settings or by asking. */
+  voice: VoiceName,
   version: z.number().int(),
   /** Whether this device may loosen the rules without the adult's PIN. */
   can_loosen: z.boolean(),
@@ -418,6 +420,8 @@ export const UpdateBuddySettingsRequest = z.object({
   paused_until: IsoDateTime.nullable().optional(),
   /** Off again allows more contact: under 16 with the parents' PIN. */
   only_important: z.boolean().optional(),
+  /** Buddy's voice, picked in the setup or the settings (ADR 0008 §Amendment). */
+  voice: VoiceName.optional(),
   version: z.number().int(),
 });
 export type UpdateBuddySettingsRequest = z.infer<typeof UpdateBuddySettingsRequest>;

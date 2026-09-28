@@ -373,8 +373,9 @@ export type TranscribeResponse = z.infer<typeof TranscribeResponse>;
 // ─────────────── Buddy's voice (text to speech, ADR 0008) ───────────────
 
 /**
- * The small curated set of Buddy's voices (ADR 0008): she changes it by asking Buddy
- * ("andere Stimme"), never in a settings list. The server maps each to a provider voice.
+ * The small curated set of Buddy's voices (ADR 0008): she picks one in the setup or the
+ * settings (tap to hear it), or asks Buddy ("andere Stimme"). The server maps each to a
+ * provider voice; the app shows only friendly names, never the provider's.
  */
 export const VOICE_NAMES = ['warm', 'friendly', 'bright', 'clear'] as const;
 export const VoiceName = z.enum(VOICE_NAMES);
@@ -388,7 +389,7 @@ export const VoiceSpeed = z.number().int().min(VOICE_SPEED_MIN).max(VOICE_SPEED_
 /**
  * One sentence (or a short word) to be read aloud in Buddy's natural voice. The app sends
  * only the text as it is spoken (math already in words, lib/speech/spoken.ts) — nothing else
- * about her. Voice and speed come from her settings on the server.
+ * about her. Voice and speed come from her settings on the server (a preview may name a voice).
  */
 export const SpeechRequest = z.object({
   text: z.string().trim().min(1).max(600),
@@ -396,6 +397,11 @@ export const SpeechRequest = z.object({
   locale: z.string().regex(/^[a-z]{2}-[A-Z]{2}$/),
   /** "Langsam": the slower speed for listening closely (vocabulary). */
   slow: z.boolean().optional(),
+  /**
+   * Read in this voice instead of hers — only the voice picker's "tap to hear" preview. Her
+   * settings stay as they are; choosing a voice is PATCH /buddy/settings.
+   */
+  voice: VoiceName.optional(),
 });
 export type SpeechRequest = z.infer<typeof SpeechRequest>;
 

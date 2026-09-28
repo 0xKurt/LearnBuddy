@@ -11,6 +11,7 @@
 // What is being read is published in voiceStore (lib/speech/voiceState.ts) for talk mode's
 // state and read-along highlighting (useBuddyVoice).
 
+import type { VoiceName } from '@learnbuddy/shared-types/contracts';
 import * as Speech from 'expo-speech';
 
 import { ApiError } from '../api/client.js';
@@ -70,6 +71,8 @@ type Utterance = {
   text: string;
   locale: string;
   slow: boolean;
+  /** A voice to try instead of hers (the voice picker's preview); null = her own. */
+  voice: VoiceName | null;
   /** What is spoken, in order; `at` is the sentence it belongs to (highlighting). */
   pieces: Array<{ at: number; spoken: string }>;
   onEnd: (why: ListenEnd) => void;
@@ -124,6 +127,7 @@ function fetchClip(u: Utterance, i: number): Promise<Clip> {
                 text: piece.spoken,
                 locale: u.locale,
                 ...(u.slow ? { slow: true } : {}),
+                ...(u.voice ? { voice: u.voice } : {}),
               }),
               FETCH_TIMEOUT_MS,
             );
@@ -225,6 +229,8 @@ export async function speak(
   lang: string,
   opts: {
     slow?: boolean;
+    /** Read in this voice instead of hers, without changing it (the voice picker's preview). */
+    voice?: VoiceName;
     onEnd?: (why: ListenEnd) => void;
     transform?: (sentence: string) => string;
   } = {},
@@ -240,6 +246,7 @@ export async function speak(
     text,
     locale: voiceLocale(lang),
     slow: opts.slow ?? false,
+    voice: opts.voice ?? null,
     pieces: readingParts(text, transform).flatMap((p) =>
       p.spoken.map((spoken) => ({ at: p.at, spoken })),
     ),

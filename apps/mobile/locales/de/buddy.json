@@ -279,5 +279,17 @@
     "speak": "Vorlesen",
     "copied": "Kopiert",
     "copy_failed": "Kopieren hat nicht geklappt"
+  },
+  "voice_pick": {
+    "label": "Buddys Stimme",
+    "sample": "Hallo, ich bin Buddy. So klinge ich, wenn ich dir etwas vorlese.",
+    "phone_voice": "Gerade liest die Stimme deines Handys vor – darum klingen hier alle gleich.",
+    "tap_hint": "Spielt eine kurze Hörprobe und wählt diese Stimme.",
+    "name": {
+      "warm": "Warm",
+      "friendly": "Freundlich",
+      "bright": "Hell",
+      "clear": "Klar"
+    }
   }
 }

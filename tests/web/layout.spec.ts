@@ -26,6 +26,8 @@ async function onboard(page: Page, name: string): Promise<void> {
   await page.getByLabel('PIN wiederholen').fill('4826');
   await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: `Los geht's, ${name}!` }).click();
+  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
 }
 
 type Box = { x: number; y: number; width: number; height: number };

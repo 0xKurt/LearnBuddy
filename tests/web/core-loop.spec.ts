@@ -98,6 +98,18 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '03b-handover');
   await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
 
+  // ── Mia picks how Buddy sounds: a voice is already chosen, a tap plays and picks one ──
+  await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
+  const picked = page.waitForResponse(
+    (r) => r.url().endsWith('/buddy/settings') && r.request().method() === 'PATCH' && r.ok(),
+  );
+  await page.getByRole('radio', { name: 'Hell' }).click();
+  await picked;
+  // The walkthrough runs without Buddy's own voice: the phone reads the sample, and says so.
+  await expect(page.getByText(/Gerade liest die Stimme deines Handys vor/)).toBeVisible();
+  await shot(page, '03c-voice');
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
   // ── The student's first look: who Buddy is and how to start ──
   await expect(page.getByText('Hallo Mia')).toBeVisible();
   await expect(
@@ -287,6 +299,17 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // Where the note about phone messages lives, calmly (instead of a toast on the home).
   await expect(page.getByText(/Alles kommt hier in der App\./)).toBeVisible();
   await shot(page, '15b-settings-contact', { opened: true });
+  // Buddy's voice: closed with the one she picked in the setup; opened, the same picker.
+  await expect(page.getByText('Hell', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Buddys Stimme' }).click();
+  const repicked = page.waitForResponse(
+    (r) => r.url().endsWith('/buddy/settings') && r.request().method() === 'PATCH' && r.ok(),
+  );
+  await page.getByRole('radio', { name: 'Klar' }).click();
+  await repicked;
+  await shot(page, '15c-settings-voice', { opened: true });
+  await page.getByRole('button', { name: 'Buddys Stimme' }).click();
+  await expect(page.getByText('Klar', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('Hallo Mia')).toBeVisible();
 

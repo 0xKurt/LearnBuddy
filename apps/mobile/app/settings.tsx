@@ -1,4 +1,5 @@
-// Settings. Sources: docs/architecture.md §API (GET/PATCH /buddy/settings,
+// Settings. Sources: docs/architecture.md §API (GET/PATCH /buddy/settings — contact and
+// Buddy's voice, ADR 0008 §Amendment,
 // PATCH /learner, PUT /account/pin, GET /account/export, POST/DELETE
 // /account/deletion), §Delivery (contact rules) and docs/privacy.md (PIN
 // gate, export, deletion); sign-in details go to Supabase Auth directly
@@ -22,6 +23,7 @@ import { ContactSection } from '../components/settings/ContactSection.js';
 import { FoldContext } from '../components/settings/Group.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
 import { useRevealInput } from '../components/settings/useRevealInput.js';
+import { VoiceSection } from '../components/settings/VoiceSection.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
@@ -104,6 +106,7 @@ export default function SettingsScreen() {
                 pinSet={account.pin_set}
                 push={home.data?.system.push ?? null}
               />
+              <VoiceSection settings={settings.data} />
               <AdultSection account={account} learner={learner} onInputFocus={reveal} />
               <ProfileSection learner={learner} />
               <AboutSection />
