@@ -3,11 +3,14 @@
 // The language follows the learner profile once known, else an explicit choice
 // made on this device (the welcome flags), else the device's system language.
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+// Through the app's small-value storage, which has a web variant: importing
+// AsyncStorage here crashed the whole web bundle (blank screen, found 28.09. in the
+// browser walkthrough — its web build evaluates `merge-options` at module level).
+import { readItem, writeItem } from '../api/outboxStorage.js';
 import { NAMESPACES, resources, SUPPORTED_LOCALES, type AppLocale } from './resources.js';
 
 /** A language chosen by tapping a flag, kept per device across restarts. */
@@ -42,12 +45,12 @@ export function applyLocale(locale: AppLocale): void {
  */
 export function chooseDeviceLocale(locale: AppLocale): void {
   applyLocale(locale);
-  void AsyncStorage.setItem(CHOSEN_KEY, locale).catch(() => undefined);
+  void writeItem(CHOSEN_KEY, locale).catch(() => undefined);
 }
 
 /** The language for signed-out screens: the device choice, else the system's. */
 export async function fallbackLocale(): Promise<AppLocale> {
-  const kept = (await AsyncStorage.getItem(CHOSEN_KEY).catch(() => null)) as AppLocale | null;
+  const kept = (await readItem(CHOSEN_KEY).catch(() => null)) as AppLocale | null;
   return kept && SUPPORTED_LOCALES.includes(kept) ? kept : deviceLocale();
 }
 

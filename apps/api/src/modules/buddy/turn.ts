@@ -28,6 +28,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext } from './context.js';
+import { prepareOffered } from '../practice/prepare.js';
 import { askedButActed, emptyReply, TurnDecision, TurnDecisionForModel } from './registry.js';
 import { bumpContext } from './plan.js';
 import { replyProgress, type ReplyProgress } from './stream.js';
@@ -378,7 +379,11 @@ async function decideTurn(
       outreach: null,
       meta,
     });
-    if (result.status === 'applied') return { status: 'done', errorCode: null };
+    if (result.status === 'applied') {
+      // What Buddy just offered is prepared while she reads his reply (issue #48).
+      prepareOffered(deps, learner.id, result.actions);
+      return { status: 'done', errorCode: null };
+    }
     // Another runner took this message over (e.g. recovery after a timeout): report where it stands.
     if (result.status === 'superseded') return currentOutcome(deps, message.id);
     if (result.status === 'rejected') {

@@ -32,7 +32,7 @@ export function TalkButton({ onPress }: { onPress: () => void }) {
             transform: [{ scale: pressed ? 0.96 : 1 }],
           }}
         >
-          <Icon name="voice" size={22} color={LB.paper} />
+          <Icon name="voice" size={24} color={LB.paper} />
         </View>
       )}
     </Pressable>

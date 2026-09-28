@@ -841,16 +841,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
         actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Mathearbeit Brüche' } }],
       },
     });
-    await l.api.post('/buddy/messages', {
-      client_message_id: randomUUID(),
-      text: 'Mach mir einen Probetest für „Mathearbeit Brüche“.',
-    });
-    const offer = await env.db.one<{ result: { goal_id: string | null } }>(
-      `select result from buddy_actions where learner_id = $1 and tool = 'offer_learning'`,
-      [l.learnerId],
-    );
-    expect(offer.result.goal_id).toBe(goal.id);
-
+    // Scripted before the message: Buddy starts preparing the offer at once (issue #48).
     env.llm.script('explain', (req) => {
       const text = ScriptedGateway.textOf(req);
       expect(text).toContain('TOPICS: Brüche erweitern | Brüche kürzen');
@@ -871,13 +862,32 @@ describe.skipIf(!dbReady)('learning modes', () => {
         ],
       };
     });
+    await l.api.post('/buddy/messages', {
+      client_message_id: randomUUID(),
+      text: 'Mach mir einen Probetest für „Mathearbeit Brüche“.',
+    });
+    const offer = await env.db.one<{ id: string; result: { goal_id: string | null } }>(
+      `select id, result from buddy_actions where learner_id = $1 and tool = 'offer_learning'`,
+      [l.learnerId],
+    );
+    expect(offer.result.goal_id).toBe(goal.id);
+
+    // Buddy prepares the offer while she reads his reply (issue #48); her tap sends the
+    // offer's action id, so it opens what was prepared instead of asking the model again.
+    await env.flushBackground();
+    const prepared = await env.db.query(
+      `select id, client_request_id from practice_sessions where learner_id = $1`,
+      [l.learnerId],
+    );
+    console.info('PREPARED', JSON.stringify(prepared), 'offer', offer.id);
     const res = await l.api.post<SessionView>('/practice/topic', {
-      client_request_id: randomUUID(),
+      client_request_id: offer.id,
       kind: 'test',
       text: 'Mathearbeit Brüche',
       goal_id: offer.result.goal_id,
     });
     expect(res.status).toBe(201);
+    expect(env.llm.callsFor('explain')).toHaveLength(1);
     expect(res.body.items.map((i) => i.item.topic)).toEqual(['Brüche kürzen', 'Brüche erweitern']);
     const session = await env.db.one<{ goal_id: string }>(
       `select goal_id from practice_sessions where id = $1`,

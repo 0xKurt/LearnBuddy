@@ -1,0 +1,50 @@
+// Buddy prepares what he just offered, while she still reads his reply (issue #48).
+//
+// Until now `offer_learning` only put a card in the chat; the questions were written when
+// she tapped it — a model call of 2.5–6 s she waited through (docs/architecture.md §Speed).
+// Now the same call starts right after the decision is applied, under the offer's action id.
+// That is the id the app sends as `client_request_id` when she taps, so:
+//   - finished by then  → her tap finds the session and opens it at once,
+//   - still running     → `startTopic` joins the running one (no second model call),
+//   - failed or skipped → her tap prepares it exactly as before. Nothing is lost.
+//
+// Nothing here tells her anything: a preparation that is not finished is not claimed
+// (CLAUDE.md rule 5); the offer card says what it always said until the session is there.
+
+import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
+
+import type { Deps } from '../../deps.js';
+import { startTopic } from './generate.js';
+import type { PracticeLearner } from './service.js';
+
+/** Offers that open a prepared session; `open_area` and the rest have nothing to prepare. */
+type Offer = Extract<ActionSummary, { tool: 'offer_learning' }>;
+
+export function prepareOffered(
+  deps: Deps,
+  learnerId: string,
+  actions: ReadonlyArray<{ id: string; summary: ActionSummary }>,
+): void {
+  for (const action of actions) {
+    if (action.summary.tool !== 'offer_learning') continue;
+    const offer: Offer = action.summary;
+    deps.background(async () => {
+      const learner = await deps.db.maybeOne<PracticeLearner>(
+        `select id, display_name, locale, level, grade, birth_date from learners where id = $1`,
+        [learnerId],
+      );
+      if (!learner) return;
+      try {
+        await startTopic(deps, learner, {
+          client_request_id: action.id,
+          kind: offer.kind,
+          text: offer.text,
+          goal_id: offer.goal_id,
+        });
+      } catch {
+        // Her tap prepares it then, and says what went wrong there. A failed preparation
+        // is never shown by itself: she did not ask for it yet.
+      }
+    });
+  }
+}

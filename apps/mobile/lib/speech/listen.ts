@@ -65,6 +65,13 @@ async function deviceVoiceFor(locale: string): Promise<string | null> {
 const gate = new NaturalGate();
 /** A sentence that takes longer than this to arrive is read by the phone instead. */
 const FETCH_TIMEOUT_MS = 7000;
+/**
+ * The first piece is the silence she actually feels (issue #41): after this the phone's
+ * voice starts instead. Only for the first piece, and it does not put the natural voice to
+ * rest — the next sentences are fetched while this one plays and usually arrive in time.
+ * Measured 28.09.: a normal sentence takes ~0.85 s to synthesise, a long one ~1.8 s.
+ */
+const FIRST_PIECE_TIMEOUT_MS = 2500;
 
 type Clip = { uri: string } | null;
 
@@ -122,6 +129,7 @@ function fetchClip(u: Utterance, i: number): Promise<Clip> {
     !piece || !/^[a-z]{2}-[A-Z]{2}$/.test(u.locale) || !gate.allows(u.locale)
       ? Promise.resolve(null)
       : (async () => {
+          const waiting = i === 0 ? FIRST_PIECE_TIMEOUT_MS : FETCH_TIMEOUT_MS;
           try {
             const res = await withTimeout(
               synthesizeSpeech({
@@ -130,12 +138,16 @@ function fetchClip(u: Utterance, i: number): Promise<Clip> {
                 ...(u.slow ? { slow: true } : {}),
                 ...(u.voice ? { voice: u.voice } : {}),
               }),
-              FETCH_TIMEOUT_MS,
+              waiting,
             );
             gate.speed = res.speed;
             return { uri: audioUri(res.audio_base64, res.mime) };
           } catch (err) {
-            gate.failed(u.locale, failureOf(err));
+            const failure = failureOf(err);
+            // A slow first piece is impatience, not a broken voice: the phone reads this one,
+            // the natural voice stays on for the rest of the reply.
+            const impatient = i === 0 && failure.code === 'timeout';
+            if (!impatient) gate.failed(u.locale, failure);
             return null;
           }
         })();

@@ -79,6 +79,19 @@ pnpm test        # API integration tests need a local Postgres 16 (LB_TEST_DATAB
 Browser walkthrough of the real app against the real API (scripted model):
 `scripts/web-walkthrough.sh` (see `docs/architecture.md` §Testing).
 
+## Kritik wird erst ein Issue, dann Arbeit (Owner-Regel 28.09.)
+
+Jede Kritik, jeder Fehlerbericht und jede Produktidee des Owners bekommt **zuerst ein
+GitHub-Issue** (`gh issue create`, Repo `0xKurt/LearnBuddy`) — mit Quelle (Zitat + Datum),
+geprüfter Ursache, Umsetzungsplan und Abnahmekriterien. Gearbeitet wird daran erst, wenn
+Kapazität da ist und die Priorität es hergibt. Kein stilles Wegarbeiten, kein Verlassen auf
+den Chatverlauf: der Owner liest den Stand in den Issues.
+
+Ausnahme: ein Einzeiler, der in derselben Minute erledigt und belegt ist, darf direkt gefixt
+werden — bekommt aber trotzdem ein Issue mit dem Beleg, damit die Spur bleibt.
+
+Erledigtes wird am Issue dokumentiert (`gh issue comment` mit Nachweis, dann schließen).
+
 ## Work pattern
 
 Build vertical and finish: contract (`packages/shared-types/src/contracts/`) → migration (if

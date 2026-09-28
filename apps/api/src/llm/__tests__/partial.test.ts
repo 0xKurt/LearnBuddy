@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { partialString } from '../partial.js';
+import { partialArray, partialString } from '../partial.js';
 
 describe('partialString', () => {
   const full =
@@ -35,5 +35,41 @@ describe('partialString', () => {
     });
     expect(partialString('{"actions": [{"reply": "nes', 'reply')).toBeNull();
     expect(partialString('{"reply": null}', 'reply')).toBeNull();
+  });
+});
+
+describe('partialArray', () => {
+  const judgement = (words: string) =>
+    `{"audible": true, "heard": "the cat", "overall": "almost", "words": [${words}`;
+
+  it('returns only the elements that are completely written', () => {
+    expect(partialArray(judgement('{"text": "the", "ok": true}, {"text": "ca'), 'words')).toEqual([
+      { text: 'the', ok: true },
+    ]);
+    expect(
+      partialArray(judgement('{"text": "the", "ok": true}, {"text": "cat", "ok": false'), 'words'),
+    ).toEqual([{ text: 'the', ok: true }]);
+  });
+
+  it('never guesses a value that is still being written', () => {
+    // "ok" is not written yet: the word must not appear as if it were fine.
+    expect(partialArray(judgement('{"text": "the", "ok": fal'), 'words')).toEqual([]);
+    // A tip containing a bracket does not close the element early.
+    expect(
+      partialArray(judgement('{"text": "the", "ok": false, "tip": "wie [ð]"}, {"text"'), 'words'),
+    ).toEqual([{ text: 'the', ok: false, tip: 'wie [ð]' }]);
+  });
+
+  it('is empty before the array starts, and complete once it is closed', () => {
+    expect(partialArray('{"audible": true, "heard": "the c', 'words')).toEqual([]);
+    expect(
+      partialArray('{"words": [{"text": "a", "ok": true}], "reply": "Gut!"}', 'words'),
+    ).toEqual([{ text: 'a', ok: true }]);
+  });
+
+  it('only looks at the first level', () => {
+    expect(partialArray('{"actions": [{"words": [{"text": "x", "ok": true}]}]}', 'words')).toEqual(
+      [],
+    );
   });
 });

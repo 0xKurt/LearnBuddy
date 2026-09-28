@@ -537,6 +537,19 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   1.76–1.86 s — about 0.3–0.5 s, more for long explanations. Most of the wait is before the model
   writes its first character; the order change kept 22/22 in `evals/buddy`. On a deployed API
   the host must pass streamed responses through (needs live verification).
+- **The pronunciation judgement streams** (`POST /practice/sessions/:id/speak` with
+  `Accept: text/event-stream`; `SpeakStreamEvent`, issue #8): the model writes `heard` before
+  the word list, so the words colour one by one instead of the card sitting still for seconds.
+  Only words it has finished writing are sent (`partialArray` in `llm/partial.ts` returns
+  complete elements only — a word must never flash green and turn amber two characters later),
+  and nothing counts as judged until the `done` event carries the stored `AnswerResponse`
+  (rule 5). Without the header the same call answers with plain JSON.
+- **The first spoken piece is kept short** (issue #41): synthesising takes ~0.85 s for a normal
+  sentence and ~1.8 s for a long one (measured 28.09., Chirp 3 HD), and the first piece is the
+  silence she feels. A long opening sentence is cut at its first clause boundary
+  (`shortOpening`, `lib/speech/readAloud.ts`) — never mid-clause, that sounds wrong — and if it
+  still takes longer than 2.5 s the phone's voice reads that piece while the natural voice
+  carries on with the rest.
 - The tutor's answers are not streamed: code checks the whole reply first (the solution-leak
   guard, verdict invariants), and streaming would save only ~0.3 s there (1.1 s → 1.4 s).
 
@@ -1281,7 +1294,10 @@ once (`abandonStaleUploads`, run by the scheduler).
   (`APP_REQUEST_HEADERS` in `shared-types`, which the client's header type is built from), so a
   header the app starts sending cannot be missing from a preflight (`cors.int.test.ts`; a missing
   `x-app-version` once made every browser call fail as "Keine Verbindung"). Test tooling only;
-  never deployed.
+  never deployed. When another local server already holds a port — Metro on 8081 while a phone is
+  connected, anything else on 8787 — `LB_WEB_PORT` / `LB_API_PORT` move the walkthrough out of the
+  way (`scripts/web-walkthrough.sh` exports the web build against the same API port). Without
+  that the run dies in the web-server timeout and the visual check is silently skipped (issue #42).
   `tests/web/layout.spec.ts` checks the home under stress (a long name on a 390 and a 320 px
   phone): nothing overlaps the ring's buttons, no two buttons share touch area, no sideways scroll.
   Every screenshot in the walkthroughs (`tests/web/fit.ts`) is taken at 390×844 and 360×740 and

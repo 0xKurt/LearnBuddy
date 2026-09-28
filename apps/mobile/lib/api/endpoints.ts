@@ -29,6 +29,7 @@ import {
   type CreateLearnerRequest,
   type CreateMaterialRequest,
   type ReexplainWay,
+  SpeakStreamEvent,
   type SpeakRequest,
   type StartPracticeRequest,
   type StartTopicRequest,
@@ -235,9 +236,37 @@ export const postAnswer = (id: string, body: AnswerRequest) =>
  * A recording for a speak question; retrying the same recording reuses its
  * client_turn_id. Waits while offline, like answerItem.
  */
-export const speakItem = (id: string, body: SpeakRequest, opts: { signal?: AbortSignal } = {}) =>
+export const speakItem = (
+  id: string,
+  body: SpeakRequest,
+  opts: {
+    signal?: AbortSignal;
+    /**
+     * The judgement while the model is still listening (issue #8): the words it has
+     * finished judging, in order. Nothing here is the result — that is what this call
+     * returns, and only it is stored.
+     */
+    onProgress?: (event: SpeakStreamEvent) => void;
+  } = {},
+) =>
   sendWhenOnline(
-    () => request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
+    () =>
+      opts.onProgress
+        ? streamRequest('POST', `/practice/sessions/${id}/speak`, {
+            body,
+            schema: AnswerResponse,
+            ...(opts.signal ? { signal: opts.signal } : {}),
+            onEvent: (e) => {
+              if (e.event !== 'progress') return;
+              try {
+                const parsed = SpeakStreamEvent.safeParse(JSON.parse(e.data));
+                if (parsed.success) opts.onProgress?.(parsed.data);
+              } catch {
+                // A half event is no reason to fail the recording.
+              }
+            },
+          })
+        : request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
     { isConnectionError: noConnection, signal: opts.signal },
   );
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */

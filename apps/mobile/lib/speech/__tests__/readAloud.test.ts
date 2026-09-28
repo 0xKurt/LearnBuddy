@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  chunkSpoken,
-  deviceRate,
   MAX_SPEECH_CHARS,
   NaturalGate,
+  chunkSpoken,
+  deviceRate,
   playbackProgress,
   readingParts,
   restAfter,
   sentenceSpans,
   sentencesOf,
+  shortOpening,
 } from '../readAloud.js';
 
 describe('reading a text sentence by sentence', () => {
@@ -92,5 +93,43 @@ describe('speed and progress', () => {
     expect(playbackProgress(5, 4)).toBe(1);
     expect(playbackProgress(1, 0)).toBeNull();
     expect(playbackProgress(1, Number.NaN)).toBeNull();
+  });
+});
+
+describe('shortOpening', () => {
+  const long =
+    'Der Urknall ist der Moment, in dem unser ganzes Universum angefangen hat, und das war vor etwa 13,8 Milliarden Jahren.';
+
+  it('cuts a long opening at its last clause boundary before the limit', () => {
+    expect(shortOpening(long)).toEqual([
+      'Der Urknall ist der Moment, in dem unser ganzes Universum angefangen hat,',
+      'und das war vor etwa 13,8 Milliarden Jahren.',
+    ]);
+  });
+
+  it('leaves a short sentence alone', () => {
+    expect(shortOpening('Klar, machen wir!')).toEqual(['Klar, machen wir!']);
+  });
+
+  it('rather waits than cuts mid-clause', () => {
+    const noBoundary = `Der Urknall ist der Moment in dem unser ganzes Universum ${'sehr '.repeat(20)}angefangen hat`;
+    expect(shortOpening(noBoundary)).toEqual([noBoundary]);
+  });
+
+  it('never cuts off a tiny first piece', () => {
+    // The comma after "Ja" is too early to be worth a separate request.
+    const s = `Ja, ${'das stimmt genau und '.repeat(8)}so ist es.`;
+    expect(shortOpening(s)[0]).not.toBe('Ja,');
+  });
+});
+
+describe('readingParts with a long opening', () => {
+  it('speaks the opening in two pieces, both in the first sentence', () => {
+    const text =
+      'Der Urknall ist der Moment, in dem unser ganzes Universum angefangen hat, und das war vor etwa 13,8 Milliarden Jahren. Danach wurde es kühler.';
+    const parts = readingParts(text, (s) => s);
+    expect(parts[0]?.at).toBe(0);
+    expect(parts[0]?.spoken).toHaveLength(2);
+    expect(parts[1]?.at).toBe(1);
   });
 });

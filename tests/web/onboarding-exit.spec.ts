@@ -9,6 +9,7 @@ test('sign up, decline at consent, sign in again, leave at the profile step', as
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(email);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
+  await page.getByLabel('Passwort wiederholen').fill('geheim-1234');
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
 
   // Not agreeing is a real choice: it signs out.

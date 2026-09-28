@@ -347,6 +347,21 @@ export const SpeakRequest = z.object({
 });
 export type SpeakRequest = z.infer<typeof SpeakRequest>;
 
+/**
+ * POST /practice/sessions/:id/speak with `Accept: text/event-stream`
+ * (docs/architecture.md §Speed): `progress` events while the model is still
+ * listening, then one `done` event carrying the AnswerResponse (or `error` with
+ * { code }). Progress is what the model has written so far — the judgement counts
+ * only once it is validated and stored, which is what `done` carries.
+ */
+export const SpeakStreamEvent = z.object({
+  /** What she said, as far as it is written down; '' before it starts. */
+  heard: z.string(),
+  /** Words judged so far, in the order of the target text. Only finished ones. */
+  words: z.array(z.object({ text: z.string(), ok: z.boolean() })),
+});
+export type SpeakStreamEvent = z.infer<typeof SpeakStreamEvent>;
+
 /** Speech to text: a spoken chat message or answer (≤ ~3 min). The recording is not stored. */
 export const TranscribeRequest = z.object({
   mime: z.enum(['audio/mp4', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/wav', 'audio/mpeg']),

@@ -15,6 +15,7 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(email);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
+  await page.getByLabel('Passwort wiederholen').fill('geheim-1234');
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -24,7 +25,7 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByLabel('Monat', { exact: true }).fill('07');
   await page.getByLabel('Jahr', { exact: true }).fill('2014');
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await page.getByRole('checkbox').click();
+  await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('2468');
   await page.getByLabel('PIN wiederholen').fill('2468');
   await page.getByRole('button', { name: "Los geht's" }).click();

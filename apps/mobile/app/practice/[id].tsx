@@ -27,6 +27,7 @@ import type {
   ReexplainWay,
   SessionItemView,
   SessionView,
+  SpeakStreamEvent,
 } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { TFunction } from 'i18next';
@@ -189,6 +190,8 @@ export default function PracticeScreen() {
   // Kept on the device: a half-typed answer survives Android killing the app.
   const { text, setText } = useDraft(`session.${id}`);
   const [pending, setPending] = useState<{ itemId: string; text: string } | null>(null);
+  /** The pronunciation judgement while the model is still listening (issue #8). */
+  const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
   const [finishFailed, setFinishFailed] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -803,7 +806,7 @@ export default function PracticeScreen() {
           {/* The next question comes in softly from the side (keyed by the question). */}
           <SlideIn key={item.id}>
             {speaking ? (
-              <SpeakCard item={item} turns={turns} />
+              <SpeakCard item={item} turns={turns} live={speakLive} />
             ) : (
               <QuestionCard
                 prompt={item.prompt}
@@ -925,6 +928,7 @@ export default function PracticeScreen() {
             hasFeedback={latestPronunciation(turns) !== null}
             disabled={locked}
             onResult={(res) => spoke(item.id, res)}
+            onProgress={setSpeakLive}
             onOutdated={() => void queryClient.invalidateQueries({ queryKey: keys.session(id) })}
             onSkip={canReveal ? () => void reveal(item.id) : undefined}
           />

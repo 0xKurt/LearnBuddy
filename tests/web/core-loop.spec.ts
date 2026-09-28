@@ -65,6 +65,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '01-welcome');
   await page.getByLabel('E-Mail').fill(email);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
+  await page.getByLabel('Passwort wiederholen').fill('geheim-1234');
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
 
   await expect(page.getByText('Kurz zum Datenschutz')).toBeVisible();
@@ -85,7 +86,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Weiter' }).click();
   const start = page.getByRole('button', { name: "Los geht's" });
   await expect(start).toBeDisabled(); // consent and PIN still missing
-  await page.getByRole('checkbox').click();
+  await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill(pin);
   await page.getByLabel('PIN wiederholen').fill(pin);
   await shot(page, '03-profile-child');

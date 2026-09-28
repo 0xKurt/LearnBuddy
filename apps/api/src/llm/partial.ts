@@ -82,3 +82,79 @@ function readString(raw: string, from: number): PartialString {
   }
   return { text, done: false };
 }
+
+/**
+ * The elements of `"key": [ … ]` in the object's first level that are **completely**
+ * written, as parsed values; `[]` while the array has not started or holds nothing
+ * finished yet. Half-written elements are never returned: a word judged "ok" that
+ * turns out to be `false` two characters later must not flash green on the phone.
+ */
+export function partialArray(raw: string, key: string): unknown[] {
+  const start = arrayStart(raw, key);
+  if (start < 0) return [];
+  const out: unknown[] = [];
+  let depth = 0;
+  let from = -1;
+  for (let i = start; i < raw.length; i++) {
+    const c = raw[i]!;
+    if (c === '"') {
+      const end = stringEnd(raw, i);
+      if (end < 0) break; // a string that is still being written: nothing after it is final
+      i = end;
+      continue;
+    }
+    if (c === '{' || c === '[') {
+      if (depth === 0) from = i;
+      depth++;
+      continue;
+    }
+    if (c === '}' || c === ']') {
+      depth--;
+      if (depth < 0) break; // the array itself is closed
+      if (depth === 0 && from >= 0) {
+        try {
+          out.push(JSON.parse(raw.slice(from, i + 1)));
+        } catch {
+          break;
+        }
+        from = -1;
+      }
+      continue;
+    }
+  }
+  return out;
+}
+
+/** Index just after `"key": [` at the first level, or -1 while it has not been written. */
+function arrayStart(raw: string, key: string): number {
+  let depth = 0;
+  let i = 0;
+  while (i < raw.length) {
+    const c = raw[i];
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    else if (c === '[') {
+      if (depth === 0) return -1;
+      depth++;
+    } else if (c === ']') depth--;
+    else if (c === '"') {
+      const end = stringEnd(raw, i);
+      if (end < 0) return -1;
+      if (depth === 1 && raw.slice(i + 1, end) === key) {
+        let j = end + 1;
+        while (j < raw.length && /\s/.test(raw[j]!)) j++;
+        if (raw[j] !== ':') {
+          i = end + 1;
+          continue;
+        }
+        j++;
+        while (j < raw.length && /\s/.test(raw[j]!)) j++;
+        return raw[j] === '[' ? j + 1 : -1;
+      }
+      i = end + 1;
+      continue;
+    }
+    i++;
+  }
+  return -1;
+}

@@ -239,7 +239,33 @@ async function briefIntro(
   return cutToWords(text, INTRO_MAX_WORDS);
 }
 
+/**
+ * Preparations running right now in this process, by learner and request id. Buddy starts
+ * preparing what he offers while she still reads his reply (issue #48); her tap must then
+ * wait for that one instead of asking the model a second time. Across two processes the
+ * database still decides (the unique `client_request_id`), so this is a cost saver, not the
+ * correctness rule.
+ */
+const inFlight = new Map<string, Promise<string>>();
+
 export async function startTopic(
+  deps: Deps,
+  learner: PracticeLearner,
+  input: StartTopicRequest,
+): Promise<string> {
+  const key = `${learner.id}:${input.client_request_id}`;
+  const running = inFlight.get(key);
+  if (running) return running;
+  const started = prepareTopic(deps, learner, input);
+  inFlight.set(key, started);
+  try {
+    return await started;
+  } finally {
+    inFlight.delete(key);
+  }
+}
+
+async function prepareTopic(
   deps: Deps,
   learner: PracticeLearner,
   input: StartTopicRequest,

@@ -12,6 +12,7 @@ async function onboard(page: Page, name: string): Promise<void> {
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(`layout-${Date.now()}-${Math.random()}@example.test`);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
+  await page.getByLabel('Passwort wiederholen').fill('geheim-1234');
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -21,13 +22,15 @@ async function onboard(page: Page, name: string): Promise<void> {
   await page.getByLabel('Monat', { exact: true }).fill('02');
   await page.getByLabel('Jahr', { exact: true }).fill('2014');
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await page.getByRole('checkbox').click();
+  await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill('4826');
   await page.getByLabel('PIN wiederholen').fill('4826');
   await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: `Los geht's, ${name}!` }).click();
   await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
+  // The three first-start cards (app/onboarding.tsx): this test is about the home.
+  await page.getByRole('button', { name: 'Überspringen' }).click();
 }
 
 type Box = { x: number; y: number; width: number; height: number };
@@ -51,7 +54,8 @@ for (const viewport of [
     expect(g).not.toBeNull();
     expect(g!.x).toBeGreaterThanOrEqual(0);
     expect(g!.x + g!.width).toBeLessThanOrEqual(viewport.width);
-    for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln', 'Erklär mir was']) {
+    // "Erklär mir was" is gone (owner decision 28.09.): explaining happens in the chat.
+    for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln']) {
       const b = await page.getByRole('button', { name, exact: true }).boundingBox();
       expect(b, name).not.toBeNull();
       expect(overlaps(g!, b!), `greeting overlaps ${name}`).toBe(false);
@@ -59,7 +63,7 @@ for (const viewport of [
       expect(b!.x + b!.width, name).toBeLessThanOrEqual(viewport.width);
     }
     // The ring's buttons (icon and label) never run into each other.
-    const names = ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln', 'Erklär mir was'];
+    const names = ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln'];
     const boxes = await Promise.all(
       names.map((name) => page.getByRole('button', { name, exact: true }).boundingBox()),
     );

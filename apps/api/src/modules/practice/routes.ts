@@ -10,6 +10,7 @@ import {
   Uuid,
 } from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 
 import {
@@ -20,6 +21,7 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { check, readBody } from '../../http/validate.js';
+import { isAppError } from '../../lib/errors.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { startTopic } from './generate.js';
 import { prepareHints } from './hints.js';
@@ -128,8 +130,30 @@ practiceRoutes.post('/topic', async (c) => {
   return c.json(await sessionView(deps.db, learner.id, id), 201);
 });
 
+// The judgement while the model is still listening (issue #8): `progress` events
+// colour the words one by one, the `done` event carries the stored result. Without
+// `Accept: text/event-stream` the same call answers with plain JSON.
 practiceRoutes.post('/sessions/:id/speak', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, SpeakRequest);
-  return c.json(await speakItem(depsOf(c), c.get('learner'), sessionId, input));
+  const learner = c.get('learner');
+  const deps = depsOf(c);
+  if (!(c.req.header('accept') ?? '').includes('text/event-stream'))
+    return c.json(await speakItem(deps, learner, sessionId, input));
+  return streamSSE(c, async (stream) => {
+    // Errors are answered here, as a code only: nothing internal reaches the app.
+    try {
+      let sent = Promise.resolve();
+      const answer = await speakItem(deps, learner, sessionId, input, (event) => {
+        sent = sent.then(() => stream.writeSSE({ event: 'progress', data: JSON.stringify(event) }));
+      });
+      await sent;
+      await stream.writeSSE({ event: 'done', data: JSON.stringify(answer) });
+    } catch (err) {
+      await stream.writeSSE({
+        event: 'error',
+        data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),
+      });
+    }
+  });
 });

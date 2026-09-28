@@ -14,6 +14,7 @@ test('answers given offline arrive once: app open, and after it was closed', asy
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(`offline-${Date.now()}@example.test`);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
+  await page.getByLabel('Passwort wiederholen').fill('geheim-1234');
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Weiter' }).click();

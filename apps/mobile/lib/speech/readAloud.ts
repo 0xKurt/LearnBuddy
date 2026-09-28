@@ -51,11 +51,38 @@ export function chunkSpoken(text: string, max = MAX_SPEECH_CHARS): string[] {
   return out;
 }
 
+/**
+ * A long opening sentence is cut at its first clause boundary, so the first audio is
+ * short (issue #41: ~0.85 s for a normal sentence, ~1.8 s for a long one). Only at a
+ * comma, dash, colon or semicolon — a cut mid-clause would sound wrong, and then it is
+ * better to wait. The piece stays in the same sentence, so read-along still highlights it.
+ */
+const OPENING_MAX = 110;
+const OPENING_MIN = 40;
+
+export function shortOpening(spoken: string): string[] {
+  if (spoken.length <= OPENING_MAX) return [spoken];
+  const window = spoken.slice(0, OPENING_MAX);
+  let cut = -1;
+  for (const m of window.matchAll(/[,;:—–]\s/g)) {
+    const at = (m.index ?? 0) + m[0].length;
+    if (at >= OPENING_MIN) cut = at;
+  }
+  if (cut < 0) return [spoken];
+  return [spoken.slice(0, cut).trim(), spoken.slice(cut).trim()];
+}
+
 /** The parts to read: every sentence with something to say, in order. */
 export function readingParts(text: string, transform: (s: string) => string): ReadingPart[] {
-  return sentencesOf(text)
+  const parts = sentencesOf(text)
     .map((s, at) => ({ at, spoken: chunkSpoken(transform(s)) }))
     .filter((p) => p.spoken.length > 0);
+  const first = parts[0];
+  const opening = first?.spoken[0];
+  if (!first || opening === undefined) return parts;
+  const split = shortOpening(opening);
+  if (split.length === 1) return parts;
+  return [{ at: first.at, spoken: [...split, ...first.spoken.slice(1)] }, ...parts.slice(1)];
 }
 
 /** A refused or failed /voice/speech call, as the app's ApiError carries it. */

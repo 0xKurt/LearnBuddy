@@ -8,6 +8,7 @@ import type {
   AnswerResponse,
   PronunciationFeedback,
   SpeakRequest,
+  SpeakStreamEvent,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
@@ -19,6 +20,7 @@ import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
 import type { AudioMime } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
+import { partialArray, partialString } from '../../llm/partial.js';
 import { ageOn } from '../identity/model.js';
 import { reviewItem } from './fsrs.js';
 import { finishIfComplete, sessionView, type PracticeLearner } from './service.js';
@@ -115,11 +117,31 @@ async function replay(
   return { session: view, verdict: turn.verdict, reply: r };
 }
 
+/**
+ * What the model has written so far, for the app to show while it still listens
+ * (issue #8). Only finished words: a judgement that flips two characters later must
+ * never have coloured a word green. Nothing here counts as judged — the stored
+ * verdict does (CLAUDE.md rule 5).
+ */
+function judgementProgress(raw: string): SpeakStreamEvent | null {
+  const heard = partialString(raw, 'heard');
+  const words = partialArray(raw, 'words').flatMap((w) => {
+    const word = w as { text?: unknown; ok?: unknown };
+    return typeof word.text === 'string' && typeof word.ok === 'boolean'
+      ? [{ text: word.text, ok: word.ok }]
+      : [];
+  });
+  if (!heard && words.length === 0) return null;
+  return { heard: heard?.text ?? '', words };
+}
+
 export async function speakItem(
   deps: Deps,
   learner: PracticeLearner,
   sessionId: string,
   input: SpeakRequest,
+  /** Called while the model writes its judgement (SSE); absent for the plain JSON call. */
+  onProgress?: (event: SpeakStreamEvent) => void,
 ): Promise<AnswerResponse> {
   const replayed = await replay(deps, learner.id, sessionId, input.client_turn_id);
   if (replayed) return replayed;
@@ -146,6 +168,7 @@ export async function speakItem(
     [learner.id],
   );
   let judged: z.infer<typeof Judgement>;
+  let lastProgress = '';
   try {
     const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
       purpose: 'pronounce',
@@ -169,6 +192,18 @@ export async function speakItem(
         },
       ],
       schema: JUDGEMENT_SCHEMA,
+      ...(onProgress
+        ? {
+            onPartial: (raw: string) => {
+              const p = judgementProgress(raw);
+              if (!p) return;
+              const key = `${p.heard}|${p.words.map((w) => `${w.text}:${w.ok}`).join(',')}`;
+              if (key === lastProgress) return;
+              lastProgress = key;
+              onProgress(p);
+            },
+          }
+        : {}),
       maxOutputTokens: 4096,
       temperature: 0.2,
       timeoutMs: 45_000,

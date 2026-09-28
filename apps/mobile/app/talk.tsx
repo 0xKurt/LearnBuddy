@@ -49,14 +49,6 @@ import { TYPE } from '../lib/theme/type.js';
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'paused';
 
-/** A button to tap in Buddy's answer: the loop waits for her. */
-function hasCard(m: MessageView | null): boolean {
-  return (
-    m?.actions.some((a) => a.summary.tool === 'offer_learning' || a.summary.tool === 'open_area') ??
-    false
-  );
-}
-
 export default function TalkScreen() {
   const { t } = useTranslation(['buddy', 'common']);
   const words = useSpokenWords();
@@ -113,10 +105,11 @@ export default function TalkScreen() {
     let final: MessageView | null = null;
     const goOn = () => {
       if (stale() || !final || !spokenEnd) return;
-      // Read to the end: listen again — unless there is something to tap first, or a screen
-      // reader is on (it would be recorded; she taps the mic or uses Magic Tap).
-      if (spokenEnd === 'done' && !hasCard(final) && talkListensByItself(screenReader.current))
-        listen();
+      // Read to the end: listen again. A card in the answer no longer stops the talk
+      // (owner 28.09.: "im grunde sollte sich zu 90% alles im chat fenster abspielen") —
+      // it stays on screen and tappable, and she can simply answer instead. Only a screen
+      // reader keeps the mic off (it would be recorded; she taps the mic or uses Magic Tap).
+      if (spokenEnd === 'done' && talkListensByItself(screenReader.current)) listen();
       else setPhase((p) => (p === 'speaking' ? 'paused' : p));
     };
     try {

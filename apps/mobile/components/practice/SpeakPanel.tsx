@@ -12,6 +12,7 @@ import type {
   ItemView,
   PracticeTurnView,
   PronunciationFeedback,
+  SpeakStreamEvent,
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -114,14 +115,60 @@ function MarkedWords({ feedback }: { feedback: PronunciationFeedback }) {
   );
 }
 
+/**
+ * The sentence she was asked to say, with the words the model has judged so far in
+ * the same colours as the finished feedback; the rest stays plain. Nothing counts as
+ * judged here — the stored feedback replaces it (issue #8).
+ */
+function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent['words'] }) {
+  const parts = prompt.split(/(\s+)/);
+  let at = 0;
+  return (
+    <Text
+      accessibilityRole="header"
+      style={[TYPE.title, { fontSize: 24, lineHeight: 32, fontWeight: '500' }]}
+    >
+      {parts.map((part, i) => {
+        if (/^\s+$/.test(part)) return <Text key={i}>{part}</Text>;
+        const judged = words[at];
+        at++;
+        if (!judged) return <Text key={i}>{part}</Text>;
+        return (
+          <Text
+            key={i}
+            style={
+              judged.ok
+                ? { color: LB.successText }
+                : {
+                    color: LB.warningText,
+                    fontWeight: '700',
+                    textDecorationLine: 'underline',
+                    textDecorationColor: LB.warning,
+                  }
+            }
+          >
+            {part}
+          </Text>
+        );
+      })}
+    </Text>
+  );
+}
+
 type CardProps = {
   item: ItemView;
   /** This question's turns, oldest first. */
   turns: PracticeTurnView[];
+  /**
+   * What the model has judged so far, while it is still listening (issue #8): the
+   * words colour one by one instead of the sentence sitting still for seconds. It is
+   * replaced by the stored feedback as soon as the recording is judged.
+   */
+  live?: SpeakStreamEvent | null;
 };
 
 /** The sentence to say, large; after listening, the word-by-word feedback. */
-export function SpeakCard({ item, turns }: CardProps) {
+export function SpeakCard({ item, turns, live }: CardProps) {
   const { t } = useTranslation('practice');
   const feedback = latestPronunciation(turns);
   const tips = feedback?.words.filter((w) => !w.ok && w.tip) ?? [];
@@ -138,6 +185,8 @@ export function SpeakCard({ item, turns }: CardProps) {
         <Text style={TYPE.label}>{t('speak.instruction')}</Text>
         {feedback && feedback.words.length > 0 ? (
           <MarkedWords feedback={feedback} />
+        ) : live && live.words.length > 0 ? (
+          <LiveWords prompt={item.prompt} words={live.words} />
         ) : (
           <Text
             accessibilityRole="header"
@@ -227,6 +276,8 @@ type PanelProps = {
   hasFeedback: boolean;
   disabled: boolean;
   onResult: (res: AnswerResponse) => void | Promise<void>;
+  /** The judgement while it is written, for the card above (issue #8); null when it ends. */
+  onProgress?: (event: SpeakStreamEvent | null) => void;
   /** The question closed or the session ended elsewhere: reload it. */
   onOutdated?: () => void;
   /** Move on without speaking (no microphone, not the moment); absent when not allowed. */
@@ -250,6 +301,7 @@ export function SpeakPanel({
   hasFeedback,
   disabled,
   onResult,
+  onProgress,
   onOutdated,
   onSkip,
 }: PanelProps) {
@@ -262,6 +314,9 @@ export function SpeakPanel({
   const waiting = useRef<AbortController | null>(null);
   const online = useOnline();
   const lang = item.lang ?? item.prompt_lang ?? 'en';
+  /** The newest callback, so resetting on a new question needs no dependency on it. */
+  const progressRef = useRef(onProgress);
+  progressRef.current = onProgress;
 
   useEffect(() => {
     mounted.current = true;
@@ -277,6 +332,7 @@ export function SpeakPanel({
     pending.current = null;
     setSending('idle');
     setProblem(null);
+    progressRef.current?.(null);
   }, [item.id]);
 
   async function send(): Promise<void> {
@@ -294,15 +350,26 @@ export function SpeakPanel({
           mime: p.mime,
           audio_base64: p.base64,
         },
-        { signal: controller.signal },
+        {
+          signal: controller.signal,
+          ...(onProgress
+            ? {
+                onProgress: (event: SpeakStreamEvent) => {
+                  if (mounted.current) onProgress(event);
+                },
+              }
+            : {}),
+        },
       );
       pending.current = null;
+      onProgress?.(null);
       // She left the question meanwhile: nothing is shown or read aloud for a screen she left.
       if (!mounted.current) return;
       setSending('idle');
       // The screen reads or announces the feedback (practice/[id].tsx readFeedback).
       await onResult(res);
     } catch (err) {
+      onProgress?.(null);
       if (err instanceof WaitAborted) return; // she recorded again or skipped while offline
       if (!mounted.current) return;
       if (outdated(err)) {

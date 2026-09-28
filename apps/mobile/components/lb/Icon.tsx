@@ -238,12 +238,13 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
         </Svg>
       );
     case 'voice':
-      // Three soft bars — the voice-mode mark users know from assistants.
+      // Three soft bars, symmetric around the middle — the voice-mode mark users know
+      // from assistants. Thicker than the outline icons: it sits on a filled button.
       return (
-        <Svg {...common}>
-          <Path d="M7 9.5v5" strokeLinecap="round" />
-          <Path d="M12 6.5v11" strokeLinecap="round" />
-          <Path d="M17 9.5v5" strokeLinecap="round" />
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M7.5 9v6" {...common} strokeWidth={2.2} />
+          <Path d="M12 5.25v13.5" {...common} strokeWidth={2.2} />
+          <Path d="M16.5 9v6" {...common} strokeWidth={2.2} />
         </Svg>
       );
     case 'stop':
