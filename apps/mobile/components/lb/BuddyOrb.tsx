@@ -6,13 +6,19 @@
 // state — listening is the moon glowing with her voice, not bars in the orb (owner
 // feedback 2026-09-28). The same Buddy at every size; decorative for screen readers.
 //
+// The reference is the approved prototype, variant 1 "Mond" (owner 2026-09-28: "alle
+// Animationen waren doch gut aus den Testfiles"): the same glass, white halo, shadow,
+// moon, white trail and ping, reflection and sparkle colours, drawn with the same blurs.
+// A large orb draws it exactly; a chat avatar draws the same moon at the same scale with
+// fewer trail dots and sparkles and no reflection, shadow or halo; the smallest none
+// (moonDetail).
+//
 // How it moves: one frame callback on the UI thread steps the moon and writes a pose;
 // a few animated views (the moon in front, the moon behind, a trail of dots, the
-// reflection on the glass, the waiting ping) read it — no JS re-render per frame. Small
-// avatars get a simpler moon (no reflection, a short trail); the smallest none
-// (moonDetail). `breathe={false}` (an older avatar in the chat) and reduce motion stand
-// still: the moon is parked in its state's still pose, and a change of state only
-// cross-fades. A tap on a large orb makes it bob gently — nothing happens because of it.
+// reflection on the glass, the waiting ping) read it — no JS re-render per frame.
+// `breathe={false}` (an older avatar in the chat) and reduce motion stand still: the moon
+// is parked in its state's still pose, and a change of state only cross-fades. A tap on a
+// large orb makes it bob gently — nothing happens because of it.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
@@ -27,8 +33,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, {
   Circle,
+  ClipPath,
   Defs,
   Ellipse,
+  FeGaussianBlur,
+  FeMerge,
+  FeMergeNode,
+  Filter,
+  G,
   LinearGradient,
   Path,
   RadialGradient,
@@ -40,6 +52,8 @@ import {
   ORB_R,
   moonDetail,
   moonPose,
+  newOrder,
+  placeOrder,
   sparklePose,
   sparkles,
   starPath,
@@ -47,6 +61,7 @@ import {
   stillMoon,
   stillSeconds,
   type MoonDetail,
+  type MoonOrder,
   type MoonPose,
   type MoonSim,
   type MoonState,
@@ -63,11 +78,11 @@ const FILL = 0.48;
 /** Half the glass's viewBox, in moon units. */
 const VIEW = ORB_R / (2 * FILL);
 
-// The moon's colours: a pearl lit from the upper left like Buddy, and lilac light around
-// it (white light would vanish on the page's near-white).
-const TRAIL = '#b9a4f5';
-const PING = '#a98cf0';
-const SPARK_COLORS = ['#b9a4f5', '#f2a9cf', '#a9bfff', '#d4c2ff', '#f7bcdc'] as const;
+// The prototype's colours: white light (trail, ping) — it reads on the pastel light behind
+// Buddy and on his white halo, as on the prototype's stage — and its sparkle shower.
+const TRAIL = '#ffffff';
+const PING = '#ffffff';
+const SPARK_COLORS = ['#ffffff', '#d4c2ff', '#ffc2e0', '#ffffff', '#c3d2ff'] as const;
 
 export function BuddyOrb({
   size = 32,
@@ -75,24 +90,24 @@ export function BuddyOrb({
   level = 0.5,
   breathe = true,
   reactToTap = size >= 48,
-  halo = false,
+  halo,
 }: {
   size?: number;
   /** What Buddy is doing: the moon's state (lib/buddy/moon.ts). */
   state?: MoonState;
-  /** How loud she is (0…1): the listening moon follows it. */
+  /** How loud she is (0…1): the listening orb, halo and moon follow it. */
   level?: number;
   /** Alive: breathing and the moon moving (off for older avatars, where many stand together). */
   breathe?: boolean;
   /** Bob gently when touched (decorative: the tap starts nothing); default for a large orb. */
   reactToTap?: boolean;
-  /** A soft halo of light around the orb that follows the state (talk mode). */
+  /** The soft white halo that follows the state (default: large orbs, as the prototype). */
   halo?: boolean;
 }) {
   const reduce = useReducedMotion();
   const detail = moonDetail(size);
   const live = breathe && !reduce;
-  const { pose, fade } = useMoon(state, level, live, detail.ghosts);
+  const { pose, fade, order } = useMoon(state, level, live, detail.ghosts);
   const bob = useSharedValue(1);
   const u = (size * FILL) / ORB_R;
   const burst = useBurst(state, live && detail.sparkles > 0);
@@ -102,27 +117,43 @@ export function BuddyOrb({
   }));
   const haloStyle = useAnimatedStyle(() => {
     const h = pose.value.halo;
-    return { opacity: 0.8 * h, transform: [{ scale: 0.92 + h * 0.1 }] };
+    return { opacity: Math.min(1, h), transform: [{ scale: 0.92 + h * 0.1 }] };
   });
 
-  const haloSize = size * 2 * FILL * 1.36;
+  const haloSize = ORB_R * 1.36 * 2 * u;
   const orb = (
     <View style={{ width: size, height: size }}>
-      {halo ? (
+      {(halo ?? detail.halo) ? (
         <Animated.View pointerEvents="none" style={[centered(size, haloSize), haloStyle]}>
           <Halo size={haloSize} />
         </Animated.View>
       ) : null}
-      {detail.shadow ? <Shadow size={size} /> : null}
+      {detail.shadow ? <Shadow size={size} u={u} /> : null}
       {detail.moon ? (
-        <MoonLayer side="back" pose={pose} fade={fade} u={u} size={size} detail={detail} />
+        <MoonLayer
+          side="back"
+          pose={pose}
+          fade={fade}
+          order={order}
+          u={u}
+          size={size}
+          detail={detail}
+        />
       ) : null}
       <Animated.View style={[{ width: size, height: size }, bodyStyle]}>
         <Glass size={size} />
         {detail.reflection ? <Reflection pose={pose} fade={fade} u={u} size={size} /> : null}
       </Animated.View>
       {detail.moon ? (
-        <MoonLayer side="front" pose={pose} fade={fade} u={u} size={size} detail={detail} />
+        <MoonLayer
+          side="front"
+          pose={pose}
+          fade={fade}
+          order={order}
+          u={u}
+          size={size}
+          detail={detail}
+        />
       ) : null}
       {burst ? <Burst pose={pose} u={u} size={size} count={detail.sparkles} /> : null}
     </View>
@@ -162,17 +193,23 @@ function useMoon(
   level: number,
   live: boolean,
   ghosts: number,
-): { pose: SharedValue<MoonPose>; fade: SharedValue<number> } {
-  const start = useRef<{ sim: MoonSim; pose: MoonPose } | null>(null);
+): {
+  pose: SharedValue<MoonPose>;
+  fade: SharedValue<number>;
+  order: SharedValue<MoonOrder>;
+} {
+  const start = useRef<{ sim: MoonSim; pose: MoonPose; order: MoonOrder } | null>(null);
   if (start.current === null) {
     // A live moon starts in its orbit (a "happy" flies from there); a still one in its pose.
     const sim = live
       ? stillMoon(state === 'happy' ? 'idle' : state, 1.5)
       : stillMoon(state, stillSeconds(state));
-    start.current = { sim, pose: moonPose(sim, level, ghosts) };
+    const pose = moonPose(sim, level, ghosts);
+    start.current = { sim, pose, order: placeOrder(newOrder(ghosts), pose) };
   }
   const sim = useSharedValue<MoonSim>(start.current.sim);
   const pose = useSharedValue<MoonPose>(start.current.pose);
+  const order = useSharedValue<MoonOrder>(start.current.order);
   const target = useSharedValue<MoonState>(state);
   const voice = useSharedValue(level);
   const fade = useSharedValue(1);
@@ -181,7 +218,9 @@ function useMoon(
     target.value = state;
   }, [state, target]);
   useEffect(() => {
-    voice.value = live ? withSpring(level, { damping: 16, stiffness: 220 }) : level;
+    // The microphone reports her level a few times a second: a quick, critically damped
+    // spring joins the dots without overshooting (the orb swells with her, not beyond).
+    voice.value = live ? withSpring(level, { damping: 30, stiffness: 220 }) : level;
   }, [level, live, voice]);
 
   const onFrame = useCallback(
@@ -190,9 +229,11 @@ function useMoon(
       const dt = Math.min(0.05, Math.max(0, (info.timeSincePreviousFrame ?? 16) / 1000));
       const next = stepMoon(sim.value, dt, target.value);
       sim.value = next;
-      pose.value = moonPose(next, voice.value, ghosts);
+      const p = moonPose(next, voice.value, ghosts);
+      pose.value = p;
+      order.value = placeOrder(order.value, p);
     },
-    [sim, pose, target, voice, ghosts],
+    [sim, pose, order, target, voice, ghosts],
   );
   const frame = useFrameCallback(onFrame, false);
   useEffect(() => {
@@ -210,12 +251,15 @@ function useMoon(
     }
     const place = (s: MoonState, first: boolean): void => {
       const still = moonPose(stillMoon(s, stillSeconds(s)), level, ghosts);
+      const stack = placeOrder(order.value, still);
       if (first) {
         pose.value = still;
+        order.value = stack;
         fade.value = 1;
       } else {
         fade.value = withTiming(0, { duration: DURATION.quick, easing: EASE.standard }, () => {
           pose.value = still;
+          order.value = stack;
           fade.value = withTiming(1, { duration: DURATION.base, easing: EASE.standard });
         });
       }
@@ -226,9 +270,9 @@ function useMoon(
     const settle = setTimeout(() => place('idle', false), HAPPY_SETTLE * 1000);
     return () => clearTimeout(settle);
     // `level` only matters for the listening pose, taken when the state changes.
-  }, [live, state, pose, fade, ghosts]);
+  }, [live, state, pose, fade, order, ghosts]);
 
-  return { pose, fade };
+  return { pose, fade, order };
 }
 
 /** The sparkle burst is on screen only while a "happy" plays. */
@@ -259,7 +303,16 @@ function centered(size: number, w: number, h: number = w) {
 
 const LAYER = { position: 'absolute' as const, left: 0, top: 0 };
 
-/** The glass sphere (drawn as scripts/brand/render-icons.mjs draws the app icon). */
+/** A Gaussian blur filter (stdDeviation in the drawing's units), as the prototype's. */
+function Blur({ id, sd }: { id: string; sd: number }) {
+  return (
+    <Filter id={id} x="-80%" y="-80%" width="260%" height="260%">
+      <FeGaussianBlur stdDeviation={sd} />
+    </Filter>
+  );
+}
+
+/** The glass sphere, as the prototype's Orb draws it. */
 function Glass({ size }: { size: number }) {
   const id = useSvgId('orb');
   const R = ORB_R;
@@ -276,8 +329,8 @@ function Glass({ size }: { size: number }) {
         </LinearGradient>
         <RadialGradient id={`${id}depth`} cx="0.42" cy="0.34" r="0.74">
           <Stop offset="0.6" stopColor={LB.primary} stopOpacity={0} />
-          <Stop offset="0.9" stopColor={LB.primary} stopOpacity={0.22} />
-          <Stop offset="1" stopColor={LB.primary} stopOpacity={0.36} />
+          <Stop offset="0.9" stopColor={LB.primary} stopOpacity={0.24} />
+          <Stop offset="1" stopColor={LB.primary} stopOpacity={0.4} />
         </RadialGradient>
         <RadialGradient id={`${id}shine`} cx="0.36" cy="0.28" r="0.52">
           <Stop offset="0" stopColor="#ffffff" stopOpacity={0.9} />
@@ -288,76 +341,83 @@ function Glass({ size }: { size: number }) {
           <Stop offset="0" stopColor="#fff4fb" stopOpacity={0.8} />
           <Stop offset="1" stopColor="#fff4fb" stopOpacity={0} />
         </RadialGradient>
-        {/* The soft white inner edge of the glass (a blurred stroke in the prototype). */}
-        <RadialGradient id={`${id}edge`} cx="0.5" cy="0.5" r="0.5">
-          <Stop offset="0.86" stopColor="#ffffff" stopOpacity={0} />
-          <Stop offset="0.96" stopColor="#ffffff" stopOpacity={0.5} />
-          <Stop offset="1" stopColor="#ffffff" stopOpacity={0.75} />
-        </RadialGradient>
         <LinearGradient id={`${id}rim`} x1="0.25" y1="0" x2="0.75" y2="1">
           <Stop offset="0" stopColor="#ffffff" stopOpacity={1} />
           <Stop offset="0.5" stopColor="#ffffff" stopOpacity={0.25} />
           <Stop offset="1" stopColor="#ffffff" stopOpacity={0.9} />
         </LinearGradient>
+        <ClipPath id={`${id}sphere`}>
+          <Circle r={R} />
+        </ClipPath>
+        <Blur id={`${id}b05`} sd={0.5} />
+        <Blur id={`${id}b15`} sd={1.5} />
       </Defs>
-      <Circle r={R} fill={`url(#${id}body)`} />
-      <Circle r={R} fill={`url(#${id}depth)`} />
-      <Circle r={R} fill={`url(#${id}shine)`} />
-      <Circle r={R} fill={`url(#${id}bounce)`} />
-      <Circle r={R} fill={`url(#${id}edge)`} />
-      <Ellipse
-        cx={hx}
-        cy={hy}
-        rx={R * 0.17}
-        ry={R * 0.085}
-        transform={`rotate(-36 ${hx} ${hy})`}
-        fill="#ffffff"
-        fillOpacity={0.92}
-      />
-      <Circle r={R - 0.4} fill="none" stroke={`url(#${id}rim)`} strokeWidth={1.2} />
+      <G clipPath={`url(#${id}sphere)`}>
+        <Circle r={R} fill={`url(#${id}body)`} />
+        <Circle r={R} fill={`url(#${id}depth)`} />
+        <Circle r={R} fill={`url(#${id}shine)`} />
+        <Circle r={R} fill={`url(#${id}bounce)`} />
+        {/* The soft white inner edge of the glass. */}
+        <Circle
+          r={R - 0.7}
+          fill="none"
+          stroke="#ffffff"
+          strokeOpacity={0.7}
+          strokeWidth={2.6}
+          filter={`url(#${id}b15)`}
+        />
+        <Ellipse
+          cx={hx}
+          cy={hy}
+          rx={R * 0.17}
+          ry={R * 0.085}
+          transform={`rotate(-36 ${hx} ${hy})`}
+          fill="#ffffff"
+          fillOpacity={0.92}
+          filter={`url(#${id}b05)`}
+        />
+      </G>
+      <Circle r={R - 0.4} fill="none" stroke={`url(#${id}rim)`} strokeWidth={0.9} />
     </Svg>
   );
 }
 
-/** A soft violet shadow under a large orb. */
-function Shadow({ size }: { size: number }) {
+/** The soft violet shadow under a large orb (it does not breathe with the glass). */
+function Shadow({ size, u }: { size: number; u: number }) {
   const id = useSvgId('sh');
-  const w = size * 0.9;
-  const h = size * 0.3;
+  // Room for the blurred ellipse (its lower edge plus three deviations is 73 units down).
+  const E = 76;
+  const R = ORB_R;
   return (
-    <View
-      pointerEvents="none"
-      style={{
-        position: 'absolute',
-        left: (size - w) / 2 + size * 0.02,
-        top: size * 0.83,
-        width: w,
-        height: h,
-      }}
-    >
-      <Svg width={w} height={h}>
+    <View pointerEvents="none" style={centered(size, E * 2 * u)}>
+      <Svg width={E * 2 * u} height={E * 2 * u} viewBox={`${-E} ${-E} ${E * 2} ${E * 2}`}>
         <Defs>
-          <RadialGradient id={id} cx="0.5" cy="0.5" r="0.5">
-            <Stop offset="0" stopColor={LB.primary} stopOpacity={0.2} />
-            <Stop offset="0.55" stopColor={LB.primary} stopOpacity={0.08} />
-            <Stop offset="1" stopColor={LB.primary} stopOpacity={0} />
-          </RadialGradient>
+          <Blur id={id} sd={4} />
         </Defs>
-        <Ellipse cx={w / 2} cy={h / 2} rx={w / 2} ry={h / 2} fill={`url(#${id})`} />
+        <Ellipse
+          cx={2}
+          cy={R * 0.98}
+          rx={R * 0.72}
+          ry={R * 0.15}
+          fill={LB.primary}
+          fillOpacity={0.2}
+          filter={`url(#${id})`}
+        />
       </Svg>
     </View>
   );
 }
 
+/** The white halo behind the glass (the prototype's, on its pastel stage). */
 function Halo({ size }: { size: number }) {
   const id = useSvgId('halo');
   return (
     <Svg width={size} height={size}>
       <Defs>
         <RadialGradient id={id} cx="0.5" cy="0.5" r="0.5">
-          <Stop offset="0.5" stopColor={LB.lavenderDeep} stopOpacity={0.85} />
-          <Stop offset="0.74" stopColor={LB.peachDeep} stopOpacity={0.3} />
-          <Stop offset="1" stopColor={LB.skyDeep} stopOpacity={0} />
+          <Stop offset="0.5" stopColor="#ffffff" stopOpacity={0.95} />
+          <Stop offset="0.76" stopColor="#ffffff" stopOpacity={0.4} />
+          <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
         </RadialGradient>
       </Defs>
       <Circle cx={size / 2} cy={size / 2} r={size / 2} fill={`url(#${id})`} />
@@ -369,34 +429,40 @@ type LayerProps = {
   side: 'front' | 'back';
   pose: SharedValue<MoonPose>;
   fade: SharedValue<number>;
+  /** Which part lies on top (the prototype's node order). */
+  order: SharedValue<MoonOrder>;
   /** Pixels per moon unit. */
   u: number;
   size: number;
 };
 
-/** Everything of the moon on one side of the glass: its trail, (in front) the ping, the moon. */
+/**
+ * Everything of the moon on one side of the glass; which part lies on top follows the
+ * prototype's node order (placeOrder).
+ */
 function MoonLayer({ detail, ...layer }: LayerProps & { detail: MoonDetail }) {
   const ghosts = Array.from({ length: detail.ghosts }, (_, i) => i);
   return (
     <View pointerEvents="none" style={[LAYER, { width: layer.size, height: layer.size }]}>
+      <Moon {...layer} />
+      {detail.ping ? <Ping {...layer} /> : null}
       {ghosts.map((i) => (
         <Ghost key={i} index={i} {...layer} />
       ))}
-      {layer.side === 'front' && detail.ping ? <Ping {...layer} /> : null}
-      <Moon {...layer} boost={detail.boost} />
     </View>
   );
 }
 
-function Moon({ side, pose, fade, u, size, boost }: LayerProps & { boost: number }) {
+function Moon({ side, pose, fade, order, u, size }: LayerProps) {
   const id = useSvgId('moon');
-  const m = 44 * u * boost;
+  const m = 44 * u;
   const front = side === 'front';
   const style = useAnimatedStyle(() => {
     const p = pose.value;
     const here = front ? p.z >= 0 : p.z < 0;
     return {
       opacity: here ? fade.value : 0,
+      zIndex: order.value.seq[0] ?? 0,
       transform: [{ translateX: p.x * u }, { translateY: p.y * u }, { scale: p.scale }],
     };
   });
@@ -414,9 +480,9 @@ function Moon({ side, pose, fade, u, size, boost }: LayerProps & { boost: number
           <Defs>
             <RadialGradient id={`${id}glow`} cx="0.5" cy="0.5" r="0.5">
               <Stop offset="0" stopColor="#ffffff" stopOpacity={1} />
-              <Stop offset="0.3" stopColor="#f6e6ff" stopOpacity={0.8} />
-              <Stop offset="0.62" stopColor="#d9c2ff" stopOpacity={0.4} />
-              <Stop offset="1" stopColor="#cdb6ff" stopOpacity={0} />
+              <Stop offset="0.3" stopColor="#fbeaff" stopOpacity={0.75} />
+              <Stop offset="0.62" stopColor="#e6c9ff" stopOpacity={0.32} />
+              <Stop offset="1" stopColor="#dcc4ff" stopOpacity={0} />
             </RadialGradient>
           </Defs>
           <Circle r={21} fill={`url(#${id}glow)`} />
@@ -429,23 +495,31 @@ function Moon({ side, pose, fade, u, size, boost }: LayerProps & { boost: number
             <Stop offset="0.55" stopColor="#fdf0fa" />
             <Stop offset="1" stopColor="#d9c3fa" />
           </RadialGradient>
-          {/* The soft terminator: the lower right lies in shade, so it reads as a moon. */}
-          <RadialGradient id={`${id}shade`} cx="0.8" cy="0.75" r="0.62">
-            <Stop offset="0" stopColor="#a98cf0" stopOpacity={0.55} />
-            <Stop offset="0.7" stopColor="#a98cf0" stopOpacity={0.4} />
-            <Stop offset="1" stopColor="#a98cf0" stopOpacity={0} />
-          </RadialGradient>
+          <ClipPath id={`${id}clip`}>
+            <Circle r={8.6} />
+          </ClipPath>
+          <Blur id={`${id}b1`} sd={1} />
         </Defs>
         <Circle r={8.6} fill={`url(#${id}pearl)`} />
-        <Circle r={8.6} fill={`url(#${id}shade)`} />
-        <Circle r={8.6} fill="none" stroke="#b89ff2" strokeOpacity={0.6} strokeWidth={0.8} />
+        {/* The soft terminator: lit from the upper left like Buddy, so it reads as a moon. */}
+        <G clipPath={`url(#${id}clip)`}>
+          <Circle
+            cx={5.2}
+            cy={4.2}
+            r={8.2}
+            fill="#a98cf0"
+            fillOpacity={0.5}
+            filter={`url(#${id}b1)`}
+          />
+        </G>
+        <Circle r={8.6} fill="none" stroke="#b89ff2" strokeOpacity={0.55} strokeWidth={0.8} />
         <Circle cx={-2.8} cy={-3} r={2.3} fill="#ffffff" fillOpacity={0.95} />
       </Svg>
     </Animated.View>
   );
 }
 
-function Ghost({ index, side, pose, fade, u, size }: LayerProps & { index: number }) {
+function Ghost({ index, side, pose, fade, order, u, size }: LayerProps & { index: number }) {
   const d = 8.4 * u;
   const front = side === 'front';
   const style = useAnimatedStyle(() => {
@@ -455,6 +529,7 @@ function Ghost({ index, side, pose, fade, u, size }: LayerProps & { index: numbe
     const here = front ? z >= 0 : z < 0;
     return {
       opacity: here ? (g[o + 4] ?? 0) * fade.value : 0,
+      zIndex: order.value.seq[index + 2] ?? 0,
       transform: [
         { translateX: (g[o] ?? 0) * u },
         { translateY: (g[o + 1] ?? 0) * u },
@@ -469,33 +544,38 @@ function Ghost({ index, side, pose, fade, u, size }: LayerProps & { index: numbe
   );
 }
 
-/** "Your turn": a soft ring that leaves the waiting moon. */
-function Ping({ pose, u, size }: LayerProps) {
-  const d = 28 * u;
+/** "Your turn": a thin white ring that leaves the waiting moon (a 1.6-unit line). */
+function Ping({ side, pose, order, u, size }: LayerProps) {
+  const line = 1.6;
+  const front = side === 'front';
   const style = useAnimatedStyle(() => {
     const p = pose.value;
+    const here = front ? p.z >= 0 : p.z < 0;
+    // The ring grows; its line stays thin (the box grows, not a scale).
+    const r = (p.pingR + line / 2) * u;
     return {
-      opacity: p.pingOp,
-      transform: [{ translateX: p.x * u }, { translateY: p.y * u }, { scale: p.pingR / 14 }],
+      opacity: here ? p.pingOp : 0,
+      zIndex: order.value.seq[1] ?? 0,
+      left: size / 2 + p.x * u - r,
+      top: size / 2 + p.y * u - r,
+      width: r * 2,
+      height: r * 2,
+      borderRadius: r,
     };
   });
   return (
     <Animated.View
-      style={[
-        centered(size, d),
-        { borderRadius: d / 2, borderWidth: Math.max(1, 1.5 * u), borderColor: PING },
-        style,
-      ]}
+      style={[{ position: 'absolute', borderWidth: line * u, borderColor: PING }, style]}
     />
   );
 }
 
 /** The moon's light on the glass when it passes close (large orbs). */
-function Reflection({ pose, fade, u, size }: Omit<LayerProps, 'side'>) {
+function Reflection({ pose, fade, u, size }: Omit<LayerProps, 'side' | 'order'>) {
   const id = useSvgId('refl');
   const r = ORB_R * u;
-  const w = 20 * u;
-  const h = 14 * u;
+  const E = 14;
+  const box = E * 2 * u;
   const style = useAnimatedStyle(() => {
     const p = pose.value;
     return {
@@ -520,16 +600,12 @@ function Reflection({ pose, fade, u, size }: Omit<LayerProps, 'side'>) {
         overflow: 'hidden',
       }}
     >
-      <Animated.View style={[centered(r * 2, w, h), style]}>
-        <Svg width={w} height={h}>
+      <Animated.View style={[centered(r * 2, box), style]}>
+        <Svg width={box} height={box} viewBox={`${-E} ${-E} ${E * 2} ${E * 2}`}>
           <Defs>
-            <RadialGradient id={id} cx="0.5" cy="0.5" r="0.5">
-              <Stop offset="0" stopColor="#ffffff" stopOpacity={1} />
-              <Stop offset="0.45" stopColor="#ffffff" stopOpacity={0.6} />
-              <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
-            </RadialGradient>
+            <Blur id={id} sd={2.2} />
           </Defs>
-          <Ellipse cx={w / 2} cy={h / 2} rx={w / 2} ry={h / 2} fill={`url(#${id})`} />
+          <Ellipse rx={6} ry={4} fill="#ffffff" filter={`url(#${id})`} />
         </Svg>
       </Animated.View>
     </View>
@@ -578,7 +654,9 @@ function SparkleView({
   u: number;
   size: number;
 }) {
-  const d = 14 * u;
+  const id = useSvgId('spk');
+  // viewBox -2…2 around a unit sparkle: one unit is 7 moon units at scale 1.
+  const d = 28 * u;
   const style = useAnimatedStyle(() => {
     const p = pose.value;
     const s = sparklePose(q, p.burstU);
@@ -594,8 +672,18 @@ function SparkleView({
   });
   return (
     <Animated.View style={[centered(size, d), style]}>
-      <Svg width={d} height={d} viewBox="-1 -1 2 2">
-        <Path d={starPath(1, 0.2)} fill={color} />
+      <Svg width={d} height={d} viewBox="-2 -2 4 4">
+        <Defs>
+          {/* The prototype's glow: a soft blur under the sharp sparkle. */}
+          <Filter id={id} x="-100%" y="-100%" width="300%" height="300%">
+            <FeGaussianBlur in="SourceGraphic" stdDeviation={0.35} result="b" />
+            <FeMerge>
+              <FeMergeNode in="b" />
+              <FeMergeNode in="SourceGraphic" />
+            </FeMerge>
+          </Filter>
+        </Defs>
+        <Path d={starPath(1, 0.2)} fill={color} filter={`url(#${id})`} />
       </Svg>
     </Animated.View>
   );

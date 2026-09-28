@@ -163,8 +163,9 @@ export function effectiveState(sim: MoonSim): number {
 export function stepMoon(prev: MoonSim, dt: number, state: MoonState): MoonSim {
   'worklet';
   const target = moonIndex(state);
+  // A new "happy" starts its flight in this very step (as the prototype: hT = 0, then + dt).
   let hT = prev.hT + dt;
-  if (target !== prev.target && target === 5) hT = 0;
+  if (target !== prev.target && target === 5) hT = dt;
   const next: MoonSim = { t: prev.t + dt, hT, a: prev.a, w: prev.w.slice(), target };
   const on = effectiveState(next);
   const k = 1 - Math.exp(-dt / 0.2);
@@ -312,6 +313,47 @@ export function moonPose(sim: MoonSim, voice: number, ghosts: number): MoonPose 
   };
 }
 
+/**
+ * Which of the moon's parts lies on top of which. The prototype keeps them as SVG nodes in two
+ * groups (behind and in front of the glass) and moves a node to the end of the other group
+ * when it crosses sides, so the part that crossed last is drawn on top. Nodes: 0 the moon,
+ * 1 the ping, 2… the trail dots. `seq` is a stacking number (higher is on top).
+ */
+export type MoonOrder = { front: boolean[]; seq: number[]; next: number };
+
+/** The prototype's first order: the trail behind the glass, the ping and then the moon in front. */
+export function newOrder(ghosts: number): MoonOrder {
+  'worklet';
+  const n = Math.max(0, Math.floor(ghosts));
+  const front: boolean[] = [true, true];
+  const seq: number[] = [n + 1, n];
+  for (let i = 0; i < n; i++) {
+    front.push(false);
+    seq.push(i);
+  }
+  return { front, seq, next: n + 2 };
+}
+
+/** The order after this frame's pose: each part that changed sides goes on top of its side. */
+export function placeOrder(order: MoonOrder, pose: MoonPose): MoonOrder {
+  'worklet';
+  const front = order.front.slice();
+  const seq = order.seq.slice();
+  let next = order.next;
+  const n = front.length - 2;
+  // The prototype places the moon, then the ping (both by the moon's side), then the dots.
+  for (let k = 0; k < n + 2; k++) {
+    const z = k < 2 ? pose.z : (pose.ghosts[(k - 2) * 5 + 2] ?? 0);
+    const here = z >= 0;
+    if (front[k] !== here) {
+      front[k] = here;
+      seq[k] = next;
+      next += 1;
+    }
+  }
+  return { front, seq, next };
+}
+
 /** One sparkle of the "happy" burst: direction, reach, size, spin. */
 export type Sparkle = { a: number; d: number; s: number; spin: number };
 
@@ -364,22 +406,24 @@ export function starPath(r: number, inner: number): string {
 /** How much of the moon an orb of a given size draws (small avatars stay calm). */
 export type MoonDetail = {
   moon: boolean;
-  /** Trail dots. */
+  /** Trail dots (the prototype's 12; fewer are spaced wider, the trail keeps its length). */
   ghosts: number;
   reflection: boolean;
   ping: boolean;
   /** Sparkles in the "happy" burst. */
   sparkles: number;
-  /** The moon drawn larger than scale, so it still reads on a small orb. */
-  boost: number;
-  /** A soft shadow under the orb. */
+  /** The soft shadow under the orb and the white halo around it (the prototype's stage). */
   shadow: boolean;
+  halo: boolean;
 };
 
 /** Below this size (px) the orb has no moon: it would be a speck. */
 export const MOON_MIN_SIZE = 22;
-/** From this size (px) on, the full moon: trail, reflection, burst, shadow. */
+/** From this size (px) on, the full moon exactly as the prototype draws it. */
 export const MOON_FULL_SIZE = 56;
+/** The prototype's trail and burst. */
+export const PROTO_GHOSTS = 12;
+export const PROTO_SPARKLES = 14;
 
 export function moonDetail(size: number): MoonDetail {
   if (size < MOON_MIN_SIZE)
@@ -389,27 +433,29 @@ export function moonDetail(size: number): MoonDetail {
       reflection: false,
       ping: false,
       sparkles: 0,
-      boost: 1,
       shadow: false,
+      halo: false,
     };
+  // A chat avatar (about 26 px): the same moon at the same scale, only fewer trail dots
+  // and sparkles (each would be under a pixel) and no reflection, shadow or halo.
   if (size < MOON_FULL_SIZE)
     return {
       moon: true,
-      ghosts: 4,
+      ghosts: 6,
       reflection: false,
       ping: true,
-      sparkles: 6,
-      boost: 1.5,
+      sparkles: 7,
       shadow: false,
+      halo: false,
     };
   return {
     moon: true,
-    ghosts: 8,
+    ghosts: PROTO_GHOSTS,
     reflection: true,
     ping: true,
-    sparkles: 12,
-    boost: 1,
+    sparkles: PROTO_SPARKLES,
     shadow: true,
+    halo: true,
   };
 }
 
