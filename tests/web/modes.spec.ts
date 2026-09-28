@@ -7,6 +7,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { shot } from './fit';
+import { recordPerf } from './perf';
 
 /** The card on top (a finished practice, a waiting photo) lies over the ways to start. */
 async function closeCardIfAny(page: Page): Promise<void> {
@@ -231,4 +232,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Hallo Lena')).toBeVisible();
   // The same conversation: what was said by voice is in the chat.
   await expect(page.getByText('Was steht diese Woche an?')).toBeVisible();
+
+  // What the app's own stopwatch measured on the way (issue #66): starting an offered
+  // practice and checking an answer are the two taps the owner called slow.
+  await recordPerf(page, 'modes');
 });

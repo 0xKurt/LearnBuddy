@@ -528,6 +528,13 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
   twice as fast, no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **The app measures its own taps** (`apps/mobile/lib/perf.ts`, issue #66): every number above
+  is server-side, but what she feels starts at her finger. One pair per action — `tapped()`
+  when the handler runs, `reacted()` when the screen shows the result — for sending a message,
+  starting an offered practice and checking an answer. In memory only, never sent anywhere; on
+  the web the walkthrough reads it into `test-results/web/perf.jsonl` (first measurement:
+  sending a message reacts in 0 ms, so the wait she called "hängt" is not in that render).
+  Budgets come after the numbers, not before.
 - **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
