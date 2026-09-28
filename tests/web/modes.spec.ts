@@ -8,6 +8,14 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { shot } from './fit';
 
+/** The card on top (a finished practice, a waiting photo) lies over the ways to start. */
+async function closeCardIfAny(page: Page): Promise<void> {
+  const card = page.getByTestId('home-card');
+  if ((await card.count()) === 0) return;
+  await page.getByRole('button', { name: 'Karte ausblenden' }).first().click();
+  await expect(card).toHaveCount(0);
+}
+
 async function onboardChild(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(`modes-${Date.now()}@example.test`);
@@ -71,6 +79,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 
   // ── Homework help: hints only, no "show solution", solved by herself ──
+  await closeCardIfAny(page);
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe eintippen' }).click();
   await expect(page.getByText('Welche Aufgabe? Schreib sie ab.')).toBeVisible();

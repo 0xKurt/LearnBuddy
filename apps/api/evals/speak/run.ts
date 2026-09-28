@@ -14,9 +14,13 @@ import { ScriptedGateway } from '../../src/testing/fakes.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
+// The Vertex variables live in apps/api/.env.local, like every other eval.
+const dotenv = await import('dotenv');
+dotenv.config({ path: '.env.local' });
+
 const config = loadConfig({
   ...process.env,
-  DATABASE_URL: 'x',
+  DATABASE_URL: 'postgres://unused/unused',
   SUPABASE_URL: 'http://x.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',

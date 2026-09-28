@@ -30,6 +30,10 @@ import { loadConfig } from '../../src/config.js';
 import { mentionsSolution } from '../../src/modules/practice/tutor.js';
 import type { LlmGateway } from '../../src/llm/gateway.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
+
+// The Vertex variables live in apps/api/.env.local, like every other eval.
+const dotenv = await import('dotenv');
+dotenv.config({ path: '.env.local' });
 import {
   TEST_TICK_SECRET,
   createTestEnv,
@@ -40,7 +44,7 @@ import {
 
 const config = loadConfig({
   ...process.env,
-  DATABASE_URL: 'unused',
+  DATABASE_URL: 'postgres://unused/unused',
   SUPABASE_URL: 'http://unused.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
