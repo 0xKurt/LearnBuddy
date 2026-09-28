@@ -25,13 +25,12 @@ import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Segmented } from '../components/lb/Segmented.js';
-import { Sheet } from '../components/lb/Sheet.js';
+import { LanguageFlags } from '../components/lb/LanguageFlags.js';
 import { useAnnounce } from '../lib/announce.js';
 import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
 import { AuthFailure, requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
-import { LANGUAGES } from '../lib/i18n/languages.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
@@ -45,9 +44,8 @@ export default function Welcome() {
   const [shownRepeat, setShownRepeat] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
-  // The screen follows the device language; whoever wants another picks it here,
+  // The screen follows the device language; a tap on a flag switches at once,
   // and the choice flows into the profile step (which saves it to the learner).
-  const [langOpen, setLangOpen] = useState(false);
   const lang = currentLocale();
   const [resetBusy, setResetBusy] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -62,7 +60,7 @@ export default function Welcome() {
   // A small phone (e.g. 360×740) gets a smaller orb and tighter spacing, so the
   // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16).
   const compact = useWindowDimensions().height < 780;
-  const gap = compact ? 10 : 14;
+  const gap = compact ? 8 : 14;
 
   const emailOk = looksLikeEmail(email.trim());
   // Sign-in never enforces the sign-up rule: older accounts may have shorter
@@ -153,42 +151,6 @@ export default function Welcome() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow height={420} />
-      {/* Absolute: the compact screens (360×740) keep fitting without scrolling. */}
-      <View style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
-        <Btn
-          variant="ghost"
-          size="sm"
-          pill
-          onPress={() => setLangOpen(true)}
-          accessibilityLabel={t('common:a11y.language')}
-        >
-          {LANGUAGES.find((l) => l.value === lang)?.label ?? lang}
-        </Btn>
-      </View>
-      <Sheet
-        visible={langOpen}
-        title={t('auth:profile.language')}
-        closeLabel={t('common:actions.close')}
-        onClose={() => setLangOpen(false)}
-      >
-        <View style={{ gap: 8 }}>
-          {LANGUAGES.map((l) => (
-            <Btn
-              key={l.value}
-              full
-              pill
-              variant={l.value === lang ? 'soft' : 'outline'}
-              selected={l.value === lang}
-              onPress={() => {
-                applyLocale(l.value);
-                setLangOpen(false);
-              }}
-            >
-              {l.label}
-            </Btn>
-          ))}
-        </View>
-      </Sheet>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -196,18 +158,29 @@ export default function Welcome() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: compact ? 8 : 16,
+            paddingTop: compact ? 4 : 16,
             paddingBottom: 24,
             gap,
           }}
           keyboardShouldPersistTaps="handled"
         >
+          {/* The very first thing: pick your language with one tap on a flag
+              (owner decision 2026-09-28). */}
+          <LanguageFlags value={lang} onChange={applyLocale} compact={compact} />
           <View style={{ alignItems: 'center', gap, marginBottom: 4 }}>
-            <BuddyOrb size={compact ? 64 : 88} />
-            <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+            <BuddyOrb size={compact ? 52 : 88} />
+            <Text
+              accessibilityRole="header"
+              style={[compact ? TYPE.displaySm : TYPE.display, { textAlign: 'center' }]}
+            >
               {t('welcome.title')}
             </Text>
-            <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 420 }]}>
+            <Text
+              style={[
+                compact ? TYPE.small : TYPE.body,
+                { color: LB.ink2, textAlign: 'center', maxWidth: 420 },
+              ]}
+            >
               {t('welcome.body')}
             </Text>
           </View>
@@ -334,7 +307,7 @@ export default function Welcome() {
               </Btn>
             )
           ) : (
-            <Card tone="lavender" padding={16}>
+            <Card tone="lavender" padding={compact ? 12 : 16}>
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                 <View
                   accessibilityElementsHidden

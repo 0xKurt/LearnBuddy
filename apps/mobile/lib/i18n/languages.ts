@@ -3,10 +3,10 @@
 // welcome screen's language picker and the profile step.
 import type { AppLocale } from '@learnbuddy/shared-types/contracts';
 
-export const LANGUAGES: Array<{ value: AppLocale; label: string }> = [
-  { value: 'de', label: 'Deutsch' },
-  { value: 'en', label: 'English' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-  { value: 'it', label: 'Italiano' },
+export const LANGUAGES: Array<{ value: AppLocale; label: string; flag: string }> = [
+  { value: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { value: 'en', label: 'English', flag: '🇬🇧' },
+  { value: 'fr', label: 'Français', flag: '🇫🇷' },
+  { value: 'es', label: 'Español', flag: '🇪🇸' },
+  { value: 'it', label: 'Italiano', flag: '🇮🇹' },
 ];
