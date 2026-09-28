@@ -295,6 +295,10 @@
       "soft": "Suave",
       "deep": "Grave"
     },
-    "loading": "Un momento: la voz ya llega."
+    "loading": "Un momento: la voz ya llega.",
+    "group": {
+      "higher": "Voces más agudas",
+      "lower": "Voces más graves"
+    }
   }
 }

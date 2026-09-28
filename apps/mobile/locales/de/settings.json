@@ -198,5 +198,17 @@
     "title": "Buddys Stimme",
     "question": "Wie soll Buddy klingen?",
     "speed_hint": "Tipp an und hör rein. Langsamer oder schneller? Sag es Buddy einfach."
+  },
+  "look": {
+    "title": "Aussehen",
+    "question": "Welche Farben magst du?",
+    "hint": "Gilt nur auf diesem Gerät. Du kannst jederzeit wechseln.",
+    "name": {
+      "pastellSoft": "Pastell",
+      "night": "Nacht",
+      "forest": "Wald",
+      "ocean": "Meer",
+      "sunset": "Abend"
+    }
   }
 }

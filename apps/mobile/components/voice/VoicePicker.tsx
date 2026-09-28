@@ -9,6 +9,7 @@
 
 import {
   VOICE_NAMES,
+  VOICE_PITCH,
   type BuddySettingsView,
   type VoiceName,
 } from '@learnbuddy/shared-types/contracts';
@@ -28,10 +29,21 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { toast } from '../lb/Toast.js';
 
-/** Rows of two: short enough for a 360 pt phone, big enough to tap. */
-const ROWS: VoiceName[][] = Array.from({ length: Math.ceil(VOICE_NAMES.length / 2) }, (_, r) =>
-  VOICE_NAMES.slice(r * 2, r * 2 + 2),
-);
+/**
+ * Two groups by pitch, each in rows of two: six names in one block are a guessing game
+ * (owner 28.09., issue #67). Short enough for a 360 pt phone, big enough to tap.
+ */
+const GROUPS: Array<{ pitch: 'higher' | 'lower'; rows: VoiceName[][] }> = (
+  ['higher', 'lower'] as const
+).map((pitch) => {
+  const names = VOICE_NAMES.filter((n) => VOICE_PITCH[n] === pitch);
+  return {
+    pitch,
+    rows: Array.from({ length: Math.ceil(names.length / 2) }, (_, r) =>
+      names.slice(r * 2, r * 2 + 2),
+    ),
+  };
+});
 
 export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   const { t, i18n } = useTranslation('buddy');
@@ -100,24 +112,31 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
         accessibilityLabel={t('voice_pick.label')}
         style={{ gap: 8, opacity: saving ? 0.85 : 1 }}
       >
-        {ROWS.map((row) => (
-          <View key={row.join()} style={{ flexDirection: 'row', gap: 8 }}>
-            {row.map((name) => (
-              <View key={name} style={{ flex: 1 }}>
-                <Btn
-                  full
-                  pill
-                  size="sm"
-                  icon="speak"
-                  variant={name === chosen ? 'primary' : 'outline'}
-                  selected={name === chosen}
-                  busy={previewing === name}
-                  disabled={saving && name !== chosen}
-                  accessibilityHint={t('voice_pick.tap_hint')}
-                  onPress={() => void choose(name)}
-                >
-                  {t(`voice_pick.name.${name}`)}
-                </Btn>
+        {GROUPS.map((group) => (
+          <View key={group.pitch} style={{ gap: 8 }}>
+            <Text style={[TYPE.label, { color: LB.ink2, paddingHorizontal: 4 }]}>
+              {t(`voice_pick.group.${group.pitch}`)}
+            </Text>
+            {group.rows.map((row) => (
+              <View key={row.join()} style={{ flexDirection: 'row', gap: 8 }}>
+                {row.map((name) => (
+                  <View key={name} style={{ flex: 1 }}>
+                    <Btn
+                      full
+                      pill
+                      size="sm"
+                      icon="speak"
+                      variant={name === chosen ? 'primary' : 'outline'}
+                      selected={name === chosen}
+                      busy={previewing === name}
+                      disabled={saving && name !== chosen}
+                      accessibilityHint={t('voice_pick.tap_hint')}
+                      onPress={() => void choose(name)}
+                    >
+                      {t(`voice_pick.name.${name}`)}
+                    </Btn>
+                  </View>
+                ))}
               </View>
             ))}
           </View>

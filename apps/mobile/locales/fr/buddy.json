@@ -295,6 +295,10 @@
       "soft": "Douce",
       "deep": "Grave"
     },
-    "loading": "Un instant – la voix arrive."
+    "loading": "Un instant – la voix arrive.",
+    "group": {
+      "higher": "Voix plus aiguës",
+      "lower": "Voix plus graves"
+    }
   }
 }

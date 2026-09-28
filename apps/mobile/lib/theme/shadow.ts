@@ -1,21 +1,36 @@
 // Soft, warm elevation (the design examples' floating cards and composer).
 // One definition for iOS (shadow*), Android (elevation) and the web (react-native-web
-// maps the shadow props to box-shadow).
+// maps the shadow props to box-shadow). The cast and strength come from the active
+// palette (issue #29): a dark room needs a deeper, less violet shadow.
 import type { ViewStyle } from 'react-native';
 
-export const SHADOW = {
-  soft: {
-    shadowColor: '#4b3a8f',
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-  float: {
-    shadowColor: '#4b3a8f',
-    shadowOpacity: 0.14,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-  },
-} satisfies Record<string, ViewStyle>;
+import { DEFAULT_THEME, paletteOf, type Palette } from './palettes.js';
+
+function shadows(p: Palette): Record<'soft' | 'float', ViewStyle> {
+  return {
+    soft: {
+      shadowColor: p.shadowColor,
+      shadowOpacity: p.shadowOpacity[0],
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 3,
+    },
+    float: {
+      shadowColor: p.shadowColor,
+      shadowOpacity: p.shadowOpacity[1],
+      shadowRadius: 22,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 8,
+    },
+  };
+}
+
+/** Read at render time like LB; refilled when the palette changes. */
+// From the palettes alone (no import back into colors.ts: that would be a cycle at module
+// init); colors.ts refills it whenever the palette changes.
+export const SHADOW: Record<'soft' | 'float', ViewStyle> = shadows(paletteOf(DEFAULT_THEME));
+
+/** Called by applyPalette only (lib/theme/colors.ts keeps the order). */
+export function applyShadows(p: Palette): void {
+  Object.assign(SHADOW, shadows(p));
+}

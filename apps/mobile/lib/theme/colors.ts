@@ -1,51 +1,25 @@
-// LB design tokens: light and friendly pastels (pink · lilac · blue) with a
-// violet accent — the "Pastell Soft" look the product owner chose (2026-09-25).
-// Kept as a literal palette object so non-styled paths (SVG fills, native
-// status bar, react-navigation themes) can pull from the same source as
-// nativewind classes.
+// LB design tokens — the colours of the palette that is active right now
+// (lib/theme/palettes.ts, issue #29).
+//
+// `LB` stays the one place every screen reads colours from, so nothing had to be rewritten
+// when themes arrived: it is a live object whose values are replaced when the palette
+// changes (`applyPalette`), and the provider re-renders the app in the same breath
+// (lib/theme/ThemeProvider.tsx). The derived maps below (tones, figures, shadows) are
+// rebuilt from the same palette, so a screen can never show half of the old theme.
+//
+// Layer 2 of the issue moves screens to `useTheme()` and drops this mutable object; until
+// then this is the bridge — deliberate, not an accident.
 
-export const LB = {
-  ink: '#1f1b2e',
-  ink2: '#5d5873',
-  ink3: '#8e89a3',
-  // Placeholder text (≥ 4.5:1 on paper and bg; ink3 is for hairlines, too light for text).
-  placeholder: '#6f6a85',
-  ink4: '#d4d0e2',
-  paper: '#ffffff',
-  bg: '#faf7fd',
-  canvas: '#f1edf8',
-  hairline: 'rgba(60,40,120,0.09)',
-  primary: '#6a48d7',
-  primaryDk: '#5335b5',
-  primaryLt: '#ebe5fc',
-  // The soft violet halo around a focused field (components/lb/LbTextInput.tsx).
-  ring: 'rgba(106,72,215,0.22)',
-  // A text field's resting border: ≥ 3:1 on white (WCAG 1.4.11), so the field
-  // boundary is visible without relying on the placeholder.
-  field: 'rgba(60,40,120,0.45)',
-  // The page seen through a hint laid over it (a file dragged over capture in the browser).
-  veil: 'rgba(250,247,253,0.96)',
-  success: '#6b8d6a',
-  warning: '#b58a3c',
-  danger: '#b1493c',
-  // Text on the pale success/warning tints (≥ 4.5:1).
-  successText: '#46663f',
-  warningText: '#7d5a16',
-  // Subject pastels
-  lavender: '#ece6fb',
-  lavenderDeep: '#c9b8f3',
-  peach: '#fbe3ee',
-  peachDeep: '#f2b8d2',
-  mint: '#dcf1ea',
-  mintDeep: '#b3e0cf',
-  blush: '#fae0ea',
-  blushDeep: '#efb3c8',
-  sky: '#e2ebfd',
-  skyDeep: '#b7cbf5',
-  butter: '#f6efdc',
-  butterDeep: '#ddc995',
-  rose: '#e6def6',
-} as const;
+import { DEFAULT_THEME, paletteOf, type Palette, type ThemeName } from './palettes.js';
+import { applyShadows } from './shadow.js';
+
+const active: { name: ThemeName; palette: Palette } = {
+  name: DEFAULT_THEME,
+  palette: paletteOf(DEFAULT_THEME),
+};
+
+/** The colours in use. Read at render time; never destructured into a module constant. */
+export const LB: Record<ColorToken, string> = colorsOf(active.palette);
 
 export const SUBJECT_TONES = [
   'lavender',
@@ -58,40 +32,96 @@ export const SUBJECT_TONES = [
 ] as const;
 export type SubjectTone = (typeof SUBJECT_TONES)[number];
 
-export const TONE_BG: Record<SubjectTone, string> = {
-  lavender: LB.lavender,
-  peach: LB.peach,
-  mint: LB.mint,
-  blush: LB.blush,
-  sky: LB.sky,
-  butter: LB.butter,
-  rose: LB.rose,
-};
-
-export const TONE_DEEP: Record<SubjectTone, string> = {
-  lavender: LB.lavenderDeep,
-  peach: LB.peachDeep,
-  mint: LB.mintDeep,
-  blush: LB.blushDeep,
-  sky: LB.skyDeep,
-  butter: LB.butterDeep,
-  rose: LB.lavenderDeep, // no rose-deep in source; reuse lavender-deep
-};
+export const TONE_BG: Record<SubjectTone, string> = toneBg(active.palette);
+export const TONE_DEEP: Record<SubjectTone, string> = toneDeep(active.palette);
 
 // Figures in questions (components/math/FigureView.tsx): calm, printed-schoolbook look.
 // Series colors stay distinguishable for common colour-vision deficiencies and are
 // never the only signal (each graph also has a label and its own dash pattern).
-export const FIGURE = {
-  paper: LB.paper,
-  axis: LB.ink2,
-  grid: 'rgba(20,15,30,0.09)',
-  gridStrong: 'rgba(20,15,30,0.18)',
-  stroke: LB.ink,
-  label: LB.ink2,
+export const FIGURE: {
+  paper: string;
+  axis: string;
+  grid: string;
+  gridStrong: string;
+  stroke: string;
+  label: string;
   /** Shaded parts of a fraction, bars, filled polygons. */
-  fill: '#b9a4f0',
-  fillSoft: 'rgba(106,72,215,0.14)',
-  empty: LB.paper,
-  point: LB.primaryDk,
-  series: ['#6a48d7', '#2f7fb8', '#3f8a5c'],
-} as const;
+  fill: string;
+  fillSoft: string;
+  empty: string;
+  point: string;
+  series: string[];
+} = figureOf(active.palette);
+
+/** The colour tokens of a palette (everything but the derived maps). */
+type ColorToken = Exclude<keyof Palette, 'figure' | 'shadowColor' | 'shadowOpacity'>;
+
+function colorsOf(p: Palette): Record<ColorToken, string> {
+  const { figure: _figure, shadowColor: _sc, shadowOpacity: _so, ...colors } = p;
+  return colors;
+}
+
+function toneBg(p: Palette): Record<SubjectTone, string> {
+  return {
+    lavender: p.lavender,
+    peach: p.peach,
+    mint: p.mint,
+    blush: p.blush,
+    sky: p.sky,
+    butter: p.butter,
+    rose: p.rose,
+  };
+}
+
+function toneDeep(p: Palette): Record<SubjectTone, string> {
+  return {
+    lavender: p.lavenderDeep,
+    peach: p.peachDeep,
+    mint: p.mintDeep,
+    blush: p.blushDeep,
+    sky: p.skyDeep,
+    butter: p.butterDeep,
+    rose: p.lavenderDeep, // no rose-deep in the palette; reuse lavender-deep
+  };
+}
+
+function figureOf(p: Palette): typeof FIGURE {
+  return {
+    paper: p.paper,
+    axis: p.ink2,
+    grid: p.figure.grid,
+    gridStrong: p.figure.gridStrong,
+    stroke: p.ink,
+    label: p.ink2,
+    fill: p.figure.fill,
+    fillSoft: p.figure.fillSoft,
+    empty: p.paper,
+    point: p.primaryDk,
+    series: [...p.figure.series],
+  };
+}
+
+/** Which palette is showing (the provider's state is the one the learner chose). */
+export function activeTheme(): ThemeName {
+  return active.name;
+}
+
+export function activePalette(): Palette {
+  return active.palette;
+}
+
+/**
+ * Switches the palette in place: every token object above is refilled, so a component
+ * that reads `LB.primary` in its next render gets the new colour. Only the provider calls
+ * this — it re-renders the tree right after.
+ */
+export function applyPalette(name: ThemeName): void {
+  const palette = paletteOf(name);
+  active.name = name;
+  active.palette = palette;
+  Object.assign(LB, colorsOf(palette));
+  Object.assign(TONE_BG, toneBg(palette));
+  Object.assign(TONE_DEEP, toneDeep(palette));
+  Object.assign(FIGURE, figureOf(palette));
+  applyShadows(palette);
+}

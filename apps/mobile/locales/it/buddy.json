@@ -295,6 +295,10 @@
       "soft": "Morbida",
       "deep": "Profonda"
     },
-    "loading": "Un attimo – la voce sta arrivando."
+    "loading": "Un attimo – la voce sta arrivando.",
+    "group": {
+      "higher": "Voci più acute",
+      "lower": "Voci più gravi"
+    }
   }
 }

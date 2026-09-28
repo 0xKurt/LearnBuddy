@@ -198,5 +198,17 @@
     "title": "La voz de Buddy",
     "question": "¿Cómo debe sonar Buddy?",
     "speed_hint": "Toca para escucharla. ¿Más lento o más rápido? Díselo a Buddy."
+  },
+  "look": {
+    "title": "Aspecto",
+    "question": "¿Qué colores te gustan?",
+    "hint": "Solo en este dispositivo. Puedes cambiarlo cuando quieras.",
+    "name": {
+      "pastellSoft": "Pastel",
+      "night": "Noche",
+      "forest": "Bosque",
+      "ocean": "Océano",
+      "sunset": "Atardecer"
+    }
   }
 }

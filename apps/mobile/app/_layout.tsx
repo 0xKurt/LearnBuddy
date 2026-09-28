@@ -24,6 +24,7 @@ import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
 import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i18n/index.js';
+import { restoreTheme, ThemeProvider } from '../lib/theme/ThemeProvider.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { ShareIntake } from '../components/capture/ShareIntake.js';
 import { clearIncoming, hasIncoming } from '../lib/capture/incoming.js';
@@ -98,8 +99,10 @@ export default function RootLayout() {
   useEffect(() => {
     void loadSession()
       .then(async (s) => {
-        // A language chosen with the welcome flags applies before the first screen.
+        // A language chosen with the welcome flags applies before the first screen —
+        // and so does the palette she picked (issue #29), so nothing flashes.
         await restoreChosenLocale().catch(() => undefined);
+        await restoreTheme().catch(() => undefined);
         userRef.current = s?.user_id ?? null;
         // Her last conversation at once; it refreshes in the background (gaps.md #2).
         if (s) await restoreCache(s.user_id);
@@ -244,31 +247,36 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: LB.bg }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <ErrorBoundary>
-            <StatusBar style="dark" />
-            <OfflineFrame>
-              {ready ? (
-                <>
-                  <Stack
-                    screenOptions={{ headerShown: false, contentStyle: { backgroundColor: LB.bg } }}
-                  >
-                    <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="talk" options={{ presentation: 'fullScreenModal' }} />
-                  </Stack>
-                  {/* Images and PDFs shared from other apps go to capture. */}
-                  <ShareIntake />
-                </>
-              ) : (
-                <LoadingState />
-              )}
-            </OfflineFrame>
-            <ToastHost />
-            <SplashHandoff ready={ready} />
-          </ErrorBoundary>
-        </QueryClientProvider>
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <ErrorBoundary>
+              <StatusBar style="dark" />
+              <OfflineFrame>
+                {ready ? (
+                  <>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                        contentStyle: { backgroundColor: LB.bg },
+                      }}
+                    >
+                      <Stack.Screen name="pin" options={{ presentation: 'modal' }} />
+                      <Stack.Screen name="talk" options={{ presentation: 'fullScreenModal' }} />
+                    </Stack>
+                    {/* Images and PDFs shared from other apps go to capture. */}
+                    <ShareIntake />
+                  </>
+                ) : (
+                  <LoadingState />
+                )}
+              </OfflineFrame>
+              <ToastHost />
+              <SplashHandoff ready={ready} />
+            </ErrorBoundary>
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

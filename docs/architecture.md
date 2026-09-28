@@ -1256,6 +1256,21 @@ once (`abandonStaleUploads`, run by the scheduler).
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set
   (`apps/mobile/.env.example`).
 
+### Look (themes, issue #29)
+
+The colours are a **palette**, not scattered literals: `apps/mobile/lib/theme/palettes.ts`
+holds the named ones — `pastellSoft` (the chosen look, default), `night`, and the accent
+variants `forest`, `ocean`, `sunset`. `lib/theme/colors.ts` exposes the active palette as
+the `LB` tokens every screen already reads, and refills them in place when the palette
+changes; `ThemeProvider` re-renders the tree in the same breath (and remounts it by key,
+so a style built once cannot keep old colours). The choice is per device, kept through
+`lib/api/outboxStorage` (never AsyncStorage directly — that breaks the web bundle, issue
+#43), and applied before the first screen. Curated on purpose: a learner picks a palette,
+never a colour, so "calm and friendly" survives (docs/DESIGN-BRIEF.md). Every palette must
+hold the same contrast pairs — text 4.5:1, meaningful shapes 3:1 — checked for all of them
+in `lib/theme/__tests__/contrast.test.ts`; a palette that fails there is not shipped.
+Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` bridge.
+
 ## Testing
 
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.

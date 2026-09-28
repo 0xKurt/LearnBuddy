@@ -295,6 +295,10 @@
       "soft": "Sanft",
       "deep": "Tief"
     },
-    "loading": "Einen Moment – die Stimme kommt gleich."
+    "loading": "Einen Moment – die Stimme kommt gleich.",
+    "group": {
+      "higher": "Höhere Stimmen",
+      "lower": "Tiefere Stimmen"
+    }
   }
 }

@@ -198,5 +198,17 @@
     "title": "Buddy's voice",
     "question": "How should Buddy sound?",
     "speed_hint": "Tap to hear it. Slower or faster? Just tell Buddy."
+  },
+  "look": {
+    "title": "Look",
+    "question": "Which colours do you like?",
+    "hint": "On this device only. You can change it any time.",
+    "name": {
+      "pastellSoft": "Pastel",
+      "night": "Night",
+      "forest": "Forest",
+      "ocean": "Ocean",
+      "sunset": "Sunset"
+    }
   }
 }

@@ -22,6 +22,7 @@ import { AboutSection } from '../components/settings/AboutSection.js';
 import { AdultSection } from '../components/settings/AdultSection.js';
 import { ContactSection } from '../components/settings/ContactSection.js';
 import { FoldContext } from '../components/settings/Group.js';
+import { LookSection } from '../components/settings/LookSection.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
 import { useRevealInput } from '../components/settings/useRevealInput.js';
 import { VoiceSection } from '../components/settings/VoiceSection.js';
@@ -109,6 +110,7 @@ export default function SettingsScreen() {
                 push={home.data?.system.push ?? null}
               />
               <VoiceSection settings={settings.data} />
+              <LookSection />
               <AdultSection account={account} learner={learner} onInputFocus={reveal} />
               <ProfileSection learner={learner} />
               <AboutSection />
