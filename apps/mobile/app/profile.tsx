@@ -41,6 +41,7 @@ import { keys, queryClient, useSettings } from '../lib/api/queries.js';
 import { ageOf, birthDateOf } from '../lib/birthDate.js';
 import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
+import { LANGUAGES } from '../lib/i18n/languages.js';
 import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
 import { LB } from '../lib/theme/colors.js';
@@ -48,14 +49,6 @@ import { TYPE } from '../lib/theme/type.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
 const onlyDigits = (value: string) => value.replace(/\D+/g, '');
-
-const LANGUAGES: Array<{ value: AppLocale; label: string }> = [
-  { value: 'de', label: 'Deutsch' },
-  { value: 'en', label: 'English' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-  { value: 'it', label: 'Italiano' },
-];
 
 export default function Profile() {
   const { t } = useTranslation('auth');

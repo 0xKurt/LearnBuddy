@@ -11,7 +11,8 @@
     "pin_progress": "{{count}} de 4 dígitos introducidos",
     "camera": "Hacer una foto",
     "keyboard": "Teclado",
-    "talk": "Hablar con Buddy"
+    "talk": "Hablar con Buddy",
+    "language": "Elegir idioma"
   },
   "actions": {
     "close": "Cerrar",

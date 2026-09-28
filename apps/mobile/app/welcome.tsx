@@ -25,21 +25,30 @@ import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Segmented } from '../components/lb/Segmented.js';
+import { Sheet } from '../components/lb/Sheet.js';
 import { useAnnounce } from '../lib/announce.js';
 import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
 import { AuthFailure, requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
+import { applyLocale, currentLocale } from '../lib/i18n/index.js';
+import { LANGUAGES } from '../lib/i18n/languages.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
 export default function Welcome() {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation(['auth', 'common']);
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [repeat, setRepeat] = useState('');
   const [shown, setShown] = useState(false);
+  const [shownRepeat, setShownRepeat] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
+  // The screen follows the device language; whoever wants another picks it here,
+  // and the choice flows into the profile step (which saves it to the learner).
+  const [langOpen, setLangOpen] = useState(false);
+  const lang = currentLocale();
   const [resetBusy, setResetBusy] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   // Validation appears once a field was left, never while first typing it.
@@ -48,6 +57,7 @@ export default function Welcome() {
   const [failure, setFailure] = useState<string | null>(null);
   const [failureSeq, setFailureSeq] = useState(0);
   const passwordRef = useRef<TextInput>(null);
+  const repeatRef = useRef<TextInput>(null);
   const inFlight = useRef(false);
   // A small phone (e.g. 360×740) gets a smaller orb and tighter spacing, so the
   // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16).
@@ -59,7 +69,10 @@ export default function Welcome() {
   // passwords (the server's minimum differs) — the server answers, not the button.
   const passwordOk =
     mode === 'signin' ? password.length > 0 : password.length >= MIN_PASSWORD_LENGTH;
-  const valid = emailOk && passwordOk;
+  // Owner decision (2026-09-28): the sign-up password is typed twice — a typo
+  // must be seen, not discovered at the first sign-in.
+  const repeatOk = mode === 'signin' || repeat === password;
+  const valid = emailOk && passwordOk && repeatOk;
 
   const emailError = touched.email && email.trim().length > 0 && !emailOk;
   const passwordError =
@@ -67,6 +80,8 @@ export default function Welcome() {
     touched.password &&
     password.length > 0 &&
     password.length < MIN_PASSWORD_LENGTH;
+  // Like NewPasswordFields: the repeat only complains once something is in it.
+  const repeatError = mode === 'signup' && repeat.length > 0 && repeat !== password;
 
   useAnnounce(confirmSent ? t('welcome.confirm_title') : null);
   useAnnounce(resetSent ? t('welcome.reset_sent') : null);
@@ -138,6 +153,42 @@ export default function Welcome() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow height={420} />
+      {/* Absolute: the compact screens (360×740) keep fitting without scrolling. */}
+      <View style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
+        <Btn
+          variant="ghost"
+          size="sm"
+          pill
+          onPress={() => setLangOpen(true)}
+          accessibilityLabel={t('common:a11y.language')}
+        >
+          {LANGUAGES.find((l) => l.value === lang)?.label ?? lang}
+        </Btn>
+      </View>
+      <Sheet
+        visible={langOpen}
+        title={t('auth:profile.language')}
+        closeLabel={t('common:actions.close')}
+        onClose={() => setLangOpen(false)}
+      >
+        <View style={{ gap: 8 }}>
+          {LANGUAGES.map((l) => (
+            <Btn
+              key={l.value}
+              full
+              pill
+              variant={l.value === lang ? 'soft' : 'outline'}
+              selected={l.value === lang}
+              onPress={() => {
+                applyLocale(l.value);
+                setLangOpen(false);
+              }}
+            >
+              {l.label}
+            </Btn>
+          ))}
+        </View>
+      </Sheet>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -222,8 +273,11 @@ export default function Welcome() {
               spellCheck={false}
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               textContentType={mode === 'signup' ? 'newPassword' : 'password'}
-              returnKeyType="go"
-              onSubmitEditing={() => void submit()}
+              returnKeyType={mode === 'signup' ? 'next' : 'go'}
+              {...(mode === 'signup' ? { submitBehavior: 'submit' as const } : {})}
+              onSubmitEditing={() =>
+                mode === 'signup' ? repeatRef.current?.focus() : void submit()
+              }
               editable={!busy}
               showToggle
               shown={shown}
@@ -234,7 +288,36 @@ export default function Welcome() {
               error={passwordError}
               errorMessage={passwordError ? t('welcome.password_hint') : undefined}
             />
-            {mode === 'signup' && !passwordError ? (
+            {mode === 'signup' ? (
+              <LbTextInput
+                ref={repeatRef}
+                value={repeat}
+                onChangeText={(v) => {
+                  setRepeat(v);
+                  clearFailure();
+                }}
+                placeholder={t('welcome.password_repeat')}
+                accessibilityLabel={t('welcome.password_repeat')}
+                secureTextEntry={!shownRepeat}
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="new-password"
+                textContentType="newPassword"
+                returnKeyType="go"
+                onSubmitEditing={() => void submit()}
+                editable={!busy}
+                showToggle
+                shown={shownRepeat}
+                onToggle={() => setShownRepeat((s) => !s)}
+                toggleAccessibilityLabel={
+                  shownRepeat ? t('welcome.hide_password') : t('welcome.show_password')
+                }
+                error={repeatError}
+                errorMessage={repeatError ? t('new_password.mismatch') : undefined}
+              />
+            ) : null}
+            {mode === 'signup' && !passwordError && !repeatError ? (
               <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>
                 {t('welcome.password_hint')}
               </Text>

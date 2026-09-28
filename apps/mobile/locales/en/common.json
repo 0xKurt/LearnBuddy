@@ -11,7 +11,8 @@
     "pin_progress": "{{count}} of 4 digits entered",
     "camera": "Take a photo",
     "keyboard": "Keyboard",
-    "talk": "Talk with Buddy"
+    "talk": "Talk with Buddy",
+    "language": "Choose language"
   },
   "actions": {
     "close": "Close",
