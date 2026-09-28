@@ -2,6 +2,7 @@
   "expo": {
     "name": "LearnBuddy",
     "slug": "learnbuddy",
+    "owner": "zeroxven",
     "scheme": "learnbuddy",
     "version": "0.0.1",
     "orientation": "portrait",
@@ -44,6 +45,11 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "99eabd54-178e-4433-b129-c5da859d12b8"
+      }
     },
     "plugins": [
       "expo-router",
