@@ -238,6 +238,50 @@ describe.skipIf(!dbReady)('account erasure', () => {
     expect(await gone(env, l)).toBe(true);
   });
 
+  it('forgets what the model wrote after 90 days, and the call log after 180 (#78)', async () => {
+    const l = await onboard(env);
+    const old = new Date(env.clock.now().getTime() - 100 * DAY);
+    const older = new Date(env.clock.now().getTime() - 200 * DAY);
+    const fresh = env.clock.now();
+    for (const [at, version] of [
+      [old, 'old'],
+      [fresh, 'fresh'],
+    ] as const) {
+      await env.db.query(
+        `insert into buddy_decisions (learner_id, mode, context_version, disposition, output, errors,
+                                      triggers, prompt_version, created_at)
+         values ($1, 'turn', 1, 'applied', '{"reply":"Das schaffst du"}'::jsonb, '[]'::jsonb,
+                 '["message"]'::jsonb, $2, $3)`,
+        [l.learnerId, version, at],
+      );
+    }
+    for (const [at, version] of [
+      [older, 'older'],
+      [fresh, 'fresh'],
+    ] as const) {
+      await env.db.query(
+        `insert into llm_calls (learner_id, purpose, model, prompt_version, outcome, created_at)
+         values ($1, 'buddy_turn', 'scripted', $2, 'ok', $3)`,
+        [l.learnerId, version, at],
+      );
+    }
+    await tick(env);
+    // The old decision keeps its shape, not her words; the young one is untouched.
+    const decisions = await env.db.query<{ prompt_version: string; output: unknown }>(
+      `select prompt_version, output from buddy_decisions where learner_id = $1 order by created_at`,
+      [l.learnerId],
+    );
+    expect(decisions.map((d) => [d.prompt_version, d.output === null])).toEqual([
+      ['old', true],
+      ['fresh', false],
+    ]);
+    const calls = await env.db.query<{ prompt_version: string }>(
+      `select prompt_version from llm_calls where learner_id = $1`,
+      [l.learnerId],
+    );
+    expect(calls.map((c) => c.prompt_version)).toEqual(['fresh']);
+  });
+
   it('the export contains model usage and background jobs, too', async () => {
     const l = await onboard(env);
     await env.db.query(

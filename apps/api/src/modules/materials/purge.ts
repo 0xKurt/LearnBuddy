@@ -265,3 +265,37 @@ export async function erasureBacklog(
   );
   return { overdue_deletions: row.accounts, overdue_photo_deletions: row.photos };
 }
+
+/**
+ * What the model wrote while deciding, and the bookkeeping of its calls (issue #78).
+ * A decision's `output` holds Buddy's reply and what he quoted from her — that is her
+ * content, and it has no reason to live longer than the conversation needs it for
+ * debugging. After DECISION_CONTENT_DAYS only the shape of the decision remains
+ * (disposition, model, prompt version, timing); after CALL_LOG_DAYS the pure
+ * bookkeeping rows go as well (they never held content: tokens, cost, latency).
+ * Both are in docs/privacy.md §What is stored.
+ */
+export const DECISION_CONTENT_DAYS = 90;
+export const CALL_LOG_DAYS = 180;
+
+/** Returns how many rows were changed; runs in small bites, like every other sweep. */
+export async function purgeDecisionContent(deps: Deps): Promise<number> {
+  const now = deps.now().getTime();
+  const contentCutoff = new Date(now - DECISION_CONTENT_DAYS * DAY);
+  const callCutoff = new Date(now - CALL_LOG_DAYS * DAY);
+  const cleared = await deps.db.query<{ id: string }>(
+    `update buddy_decisions set output = null, errors = null, triggers = '[]'::jsonb
+      where id in (select id from buddy_decisions
+                    where created_at < $1 and (output is not null or errors is not null)
+                    limit 500)
+      returning id`,
+    [contentCutoff],
+  );
+  const calls = await deps.db.query<{ id: string }>(
+    `delete from llm_calls
+      where id in (select id from llm_calls where created_at < $1 limit 1000)
+      returning id`,
+    [callCutoff],
+  );
+  return cleared.length + calls.length;
+}

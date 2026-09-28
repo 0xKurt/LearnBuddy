@@ -356,7 +356,9 @@ const JOURNEYS: Spec[] = [
     from: 'Lena #2 · alt 1.6',
     async run(j) {
       const r = await j.say('ich check den dativ nicht');
-      j.check(tools(r, 'offer_learning'), 'Buddy bietet eine Erklärung an');
+      // Since buddy.22 the explanation *is* the answer, not a button (owner decision
+      // 28.09.): what counts is that she can read it right there.
+      j.check(r.reply.length > 120, 'Buddy erklärt im Chat, ohne Knopf');
       const s = await j.start('explain', 'Dativ');
       if (!j.check(!!s?.intro && s.items.length > 0, 'Erklärung mit Verständnisfragen')) return;
       const first = j.open(s!)!;
