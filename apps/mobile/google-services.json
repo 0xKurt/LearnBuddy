@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1098724831660",
+    "project_id": "learnbuddy-66b7f",
+    "storage_bucket": "learnbuddy-66b7f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098724831660:android:af4cfb3ab6e6c816648a09",
+        "android_client_info": {
+          "package_name": "com.learnbuddy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFsMUm72fyYtCoHAZdhVbQZDyEEJSOsjU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -63,3 +63,7 @@ supabase/.branches/
 dist-web/
 test-results/
 *.tsbuildinfo
+
+# Firebase/Google service-account keys are secrets: upload them to Expo, never commit them
+*firebase-adminsdk*.json
+*service-account*.json
