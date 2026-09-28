@@ -53,7 +53,7 @@
     "record_stop": "Done",
     "record_label": "Start recording",
     "record_stop_label": "Stop recording and send it to Buddy",
-    "record_hint": "Tap, say the sentence, then tap Done. 15 seconds at most.",
+    "record_hint": "Tap, say the sentence, then tap Done. Thirty seconds at most.",
     "recording": "I'm listening … {{time}} / {{max}}",
     "recording_label": "Recording, {{time}} of {{max}}",
     "listening": "Buddy is listening …",
@@ -80,7 +80,8 @@
     "words_practise": "Practise again: {{words}}.",
     "legend": "Underlined = practise again",
     "tip": "“{{word}}” – {{tip}}",
-    "heard": "What I heard: “{{text}}”"
+    "heard": "What I heard: “{{text}}”",
+    "more_tips": "Show {{count}} more tips"
   },
   "help_note": "Homework – I'll give you hints, you'll find the answer yourself.",
   "origin_buddy": "Question from Buddy",

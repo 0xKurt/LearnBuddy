@@ -338,7 +338,7 @@ export const StartTopicRequest = z.object({
 });
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 
-/** A recording for a speak question (≤ 15 s; m4a/aac, webm or wav, base64). */
+/** A recording for a speak question (≤ 30 s; m4a/aac, webm or wav, base64). */
 export const SpeakRequest = z.object({
   client_turn_id: Uuid,
   item_id: Uuid,

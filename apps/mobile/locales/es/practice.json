@@ -53,7 +53,7 @@
     "record_stop": "Listo",
     "record_label": "Empezar a grabar",
     "record_stop_label": "Terminar la grabación y enviársela a Buddy",
-    "record_hint": "Toca, di la frase y luego toca Listo. Como máximo 15 segundos.",
+    "record_hint": "Toca, di la frase y vuelve a tocar en Listo. Treinta segundos como máximo.",
     "recording": "Te escucho … {{time}} / {{max}}",
     "recording_label": "Grabando, {{time}} de {{max}}",
     "listening": "Buddy está escuchando …",
@@ -80,7 +80,8 @@
     "words_practise": "Para practicar otra vez: {{words}}.",
     "legend": "Subrayado = practicar otra vez",
     "tip": "«{{word}}» – {{tip}}",
-    "heard": "He oído: «{{text}}»"
+    "heard": "He oído: «{{text}}»",
+    "more_tips": "Ver {{count}} consejos más"
   },
   "help_note": "Deberes – te doy pistas, la solución la encuentras tú.",
   "origin_buddy": "Pregunta de Buddy",

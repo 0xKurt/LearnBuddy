@@ -125,6 +125,11 @@ export function SpeakCard({ item, turns }: CardProps) {
   const { t } = useTranslation('practice');
   const feedback = latestPronunciation(turns);
   const tips = feedback?.words.filter((w) => !w.ok && w.tip) ?? [];
+  // A new attempt folds the list again; two tips are enough to start with —
+  // the full set made the card a text wall over the thread (user feedback).
+  const [allTips, setAllTips] = useState(false);
+  useEffect(() => setAllTips(false), [turns.length]);
+  const shownTips = allTips ? tips : tips.slice(0, 2);
 
   return (
     <Card tone="lavender" padding={20} radius={22}>
@@ -151,11 +156,16 @@ export function SpeakCard({ item, turns }: CardProps) {
             }}
           >
             <OverallLine feedback={feedback} />
-            {tips.map((w, i) => (
+            {shownTips.map((w, i) => (
               <Text key={`${i}-${w.text}`} style={TYPE.body}>
                 {t('speak.tip', { word: w.text, tip: w.tip ?? '' })}
               </Text>
             ))}
+            {tips.length > shownTips.length ? (
+              <Btn size="sm" variant="ghost" pill onPress={() => setAllTips(true)}>
+                {t('speak.more_tips', { count: tips.length - shownTips.length })}
+              </Btn>
+            ) : null}
             {feedback.heard.trim() ? (
               <Text style={TYPE.small}>{t('speak.heard', { text: feedback.heard.trim() })}</Text>
             ) : null}

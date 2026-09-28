@@ -111,8 +111,9 @@ export function speakMimeForFile(uri: string): SpeakMime | null {
   }
 }
 
-/** Longest pronunciation recording (SpeakRequest: ≤ 15 s). */
-export const MAX_RECORDING_MS = 15_000;
+/** Longest pronunciation recording (SpeakRequest allows far more; 30 s says any
+ * school sentence with room to breathe — 15 felt cramped, owner 2026-09-28). */
+export const MAX_RECORDING_MS = 30_000;
 /** Longest spoken message or answer (TranscribeRequest: ≤ ~3 min — a payload
  * bound for the base64 upload, not a recogniser limit). */
 export const MAX_DICTATION_MS = 180_000;

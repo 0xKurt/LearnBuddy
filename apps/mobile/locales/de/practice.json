@@ -53,7 +53,7 @@
     "record_stop": "Fertig",
     "record_label": "Aufnahme starten",
     "record_stop_label": "Aufnahme beenden und an Buddy schicken",
-    "record_hint": "Tipp, sag den Satz und tipp dann auf Fertig. Höchstens 15 Sekunden.",
+    "record_hint": "Tipp, sag den Satz und tipp dann auf Fertig. Höchstens 30 Sekunden.",
     "recording": "Ich höre mit … {{time}} / {{max}}",
     "recording_label": "Aufnahme läuft, {{time}} von {{max}}",
     "listening": "Buddy hört zu …",
@@ -80,7 +80,8 @@
     "words_practise": "Nochmal üben: {{words}}.",
     "legend": "Unterstrichen = nochmal üben",
     "tip": "„{{word}}“ – {{tip}}",
-    "heard": "Gehört habe ich: „{{text}}“"
+    "heard": "Gehört habe ich: „{{text}}“",
+    "more_tips": "Noch {{count}} Tipps zeigen"
   },
   "help_note": "Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.",
   "origin_buddy": "Frage von Buddy",

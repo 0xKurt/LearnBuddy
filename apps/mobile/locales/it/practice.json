@@ -53,7 +53,7 @@
     "record_stop": "Fatto",
     "record_label": "Inizia a registrare",
     "record_stop_label": "Termina la registrazione e mandala a Buddy",
-    "record_hint": "Tocca, di' la frase e poi tocca Fatto. Al massimo 15 secondi.",
+    "record_hint": "Tocca, di' la frase e poi tocca Fatto. Al massimo trenta secondi.",
     "recording": "Ti ascolto … {{time}} / {{max}}",
     "recording_label": "Registrazione in corso, {{time}} di {{max}}",
     "listening": "Buddy sta ascoltando …",
@@ -80,7 +80,8 @@
     "words_practise": "Da riprovare: {{words}}.",
     "legend": "Sottolineato = da riprovare",
     "tip": "«{{word}}» – {{tip}}",
-    "heard": "Ho sentito: «{{text}}»"
+    "heard": "Ho sentito: «{{text}}»",
+    "more_tips": "Mostra altri {{count}} consigli"
   },
   "help_note": "Compiti – ti do degli indizi, la soluzione la trovi tu.",
   "origin_buddy": "Domanda di Buddy",
