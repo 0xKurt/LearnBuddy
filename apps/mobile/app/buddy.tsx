@@ -17,14 +17,7 @@ import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts'
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Animated from 'react-native-reanimated';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -97,6 +90,7 @@ import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpe
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 const VISIBLE_MESSAGES = 6;
 /** Below the start row's round buttons: two lines of label and the room under the row. */
@@ -808,11 +802,7 @@ export default function BuddyScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        enabled={focusedScreen}
-      >
+      <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
         <View
           style={{
             flexDirection: 'row',
@@ -1024,7 +1014,7 @@ export default function BuddyScreen() {
           onPhoto={() => router.push('/capture')}
           onTalk={() => router.push('/talk')}
         />
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
 
       <Sheet
         visible={menuOpen}

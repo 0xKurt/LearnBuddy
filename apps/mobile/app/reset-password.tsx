@@ -8,7 +8,7 @@
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -37,6 +37,7 @@ import {
 import { messageFor } from '../lib/errors.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 // On the web the page address is the link; kept from load time in case the
 // router touches the address bar before this screen reads it.
@@ -171,10 +172,7 @@ export default function ResetPassword() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow height={420} />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
@@ -211,7 +209,7 @@ export default function ResetPassword() {
             {busy ? t('reset.saving') : t('reset.cta')}
           </Btn>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
     </SafeAreaView>
   );
 }

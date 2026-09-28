@@ -10,16 +10,7 @@
 // the 450 ms that callers wait for, adultGate.tsx). Reduce motion: it just fades.
 
 import { useEffect, useState, type ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -37,6 +28,7 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 import { dismissedBySwipe } from '../../lib/gestures.js';
+import { KeyboardSafe } from './KeyboardSafe.js';
 
 type Props = {
   visible: boolean;
@@ -103,10 +95,7 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
       {/* A modal is its own root: gestures inside it need their own handler root. */}
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+        <KeyboardSafe style={{ flex: 1 }}>
           <View style={{ flex: 1, justifyContent: 'flex-end' }}>
             <Animated.View
               style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, veil]}
@@ -174,7 +163,7 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
               </View>
             </Animated.View>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardSafe>
       </GestureHandlerRootView>
     </Modal>
   );

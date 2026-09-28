@@ -10,7 +10,7 @@
 
 import { Redirect, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -29,6 +29,7 @@ import { VoiceSection } from '../components/settings/VoiceSection.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
+import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 export default function SettingsScreen() {
   const { t } = useTranslation(['settings', 'common']);
@@ -87,10 +88,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen back title={title}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           ref={scroll}
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 48 }}
@@ -117,7 +115,7 @@ export default function SettingsScreen() {
             </View>
           </FoldContext.Provider>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
     </Screen>
   );
 }

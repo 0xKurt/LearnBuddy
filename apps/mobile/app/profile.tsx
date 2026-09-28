@@ -11,15 +11,7 @@
 import type { AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-  type TextInput,
-} from 'react-native';
+import { ScrollView, Text, View, useWindowDimensions, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -46,6 +38,7 @@ import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
 const onlyDigits = (value: string) => value.replace(/\D+/g, '');
@@ -171,10 +164,7 @@ export default function Profile() {
 
   return (
     <Screen>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
@@ -432,7 +422,7 @@ export default function Profile() {
             {t('profile.sign_out')}
           </Btn>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
     </Screen>
   );
 }

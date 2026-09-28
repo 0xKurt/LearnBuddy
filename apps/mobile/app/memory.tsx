@@ -8,7 +8,7 @@
 import type { MemoryView, UpdateMemoryRequest } from '@learnbuddy/shared-types/contracts';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, RefreshControl, Text, View } from 'react-native';
+import { RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -26,6 +26,7 @@ import { keys, queryClient, useMemory } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 /** Temporary situations always carry an end; they expire by themselves. */
 const isTemporary = (m: MemoryView) => m.kind === 'constraint' || m.valid_until !== null;
@@ -208,10 +209,7 @@ export default function MemoryScreen() {
 
   return (
     <Screen back title={title}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardSafe style={{ flex: 1 }}>
         {/* Only what is on screen is drawn (gaps.md #22). */}
         <FlashList
           ref={list}
@@ -227,7 +225,7 @@ export default function MemoryScreen() {
           }
           renderItem={({ item, index }) => renderRow(item, index)}
         />
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
 
       <Sheet
         visible={removeOpen}

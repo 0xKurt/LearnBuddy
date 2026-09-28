@@ -33,15 +33,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Keyboard, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/Btn.js';
@@ -95,6 +87,7 @@ import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 
 type AnswerInput = { text: string } | { choice: number };
 
@@ -787,10 +780,7 @@ export default function PracticeScreen() {
   // grows — like a chat, newest at the bottom.
   return (
     <Screen title={title} right={endButton}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           testID="scroll-question"
           style={{ flexGrow: 0, flexShrink: 1, maxHeight: '60%' }}
@@ -947,7 +937,7 @@ export default function PracticeScreen() {
             </Appear>
           </BottomBar>
         )}
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
       <Sheet
         visible={flagOpen}
         title={t('practice:flag.sheet_title')}

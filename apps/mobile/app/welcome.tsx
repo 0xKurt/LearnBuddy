@@ -6,15 +6,7 @@
 
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-  type TextInput,
-} from 'react-native';
+import { ScrollView, Text, View, useWindowDimensions, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,6 +25,7 @@ import { messageFor } from '../lib/errors.js';
 import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 export default function Welcome() {
   const { t } = useTranslation(['auth', 'common']);
@@ -151,10 +144,7 @@ export default function Welcome() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow height={420} />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
@@ -345,7 +335,7 @@ export default function Welcome() {
             {mode === 'signup' ? t('welcome.cta_signup') : t('welcome.cta_signin')}
           </Btn>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardSafe>
     </SafeAreaView>
   );
 }

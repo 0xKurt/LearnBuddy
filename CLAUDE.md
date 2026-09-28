@@ -55,8 +55,11 @@ If a change diverges from these docs, update the doc in the same change or write
 13. **CTAs are `<Btn>`** from `apps/mobile/components/lb/`; never a raw `<Pressable>` CTA and never
     `backgroundColor` on a `Pressable` (put it on an inner `View`).
 14. **Every modal is closable by an obvious in-sheet `<Btn>`** (see `components/lb/Sheet.tsx`).
-15. **Screens with a form pin the CTA outside the `ScrollView`, inside a `KeyboardAvoidingView`**
-    (`behavior="padding"` on iOS, `"height"` on Android) — `app/welcome.tsx` is the reference.
+15. **Screens with a form pin the CTA outside the `ScrollView`, inside `<KeyboardSafe>`**
+    (`components/lb/KeyboardSafe.tsx`) — `app/welcome.tsx` is the reference. Nie direkt eine
+    `KeyboardAvoidingView`: Android verkleinert das Fenster selbst (`resize`), ein zusätzliches
+    `behavior="height"` schrumpft ein zweites Mal und hinterlässt das leere Band unter der
+    Leiste (Issue #46). Die Plattformregel steht genau an dieser einen Stelle.
 
 16. **Simplicity is the first rule.** Buddy is the interface: the learner talks, taps a suggestion
     or takes a photo — no dashboards, tile grids, lists or forms to learn. Anything complex is
