@@ -29,6 +29,9 @@ export type LearnerRow = {
   grade: number | null;
   locale: 'de' | 'en' | 'fr' | 'es' | 'it';
   version: number;
+  /** When she confirmed the privacy text for herself (from 16, issue #31); null before that. */
+  self_consent_at: Date | null;
+  self_consent_version: string | null;
 };
 
 /**

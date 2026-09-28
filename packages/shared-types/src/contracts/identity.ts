@@ -18,6 +18,12 @@ export const LearnerView = z.object({
   grade: z.number().int().min(1).max(13).nullable(),
   locale: AppLocale,
   version: z.number().int(),
+  /**
+   * She has turned 16 and has not yet confirmed the privacy text for herself (issue #31,
+   * EDPB §147–149): the parents' consent carried her until now, from now on hers does.
+   * The app asks her once; nothing is taken away while she has not answered.
+   */
+  own_consent_due: z.boolean(),
 });
 export type LearnerView = z.infer<typeof LearnerView>;
 
@@ -38,6 +44,13 @@ export const MeResponse = z.object({
   capabilities: z.object({ model: z.boolean(), push: z.boolean() }),
 });
 export type MeResponse = z.infer<typeof MeResponse>;
+
+/** From 16 she confirms the privacy text herself (issue #31). */
+export const SelfConsentRequest = z.object({
+  consent_version: z.string().min(1),
+  accept_privacy: z.literal(true),
+});
+export type SelfConsentRequest = z.infer<typeof SelfConsentRequest>;
 
 export const CreateAccountRequest = z.object({
   locale: AppLocale,

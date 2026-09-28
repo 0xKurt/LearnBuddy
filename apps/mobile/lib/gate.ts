@@ -10,5 +10,7 @@ export function gateRoute(me: Pick<MeResponse, 'account' | 'learner'>): GateRout
   if (account?.deletion_running) return '/deleting';
   if (!account || !account.consent_current) return '/consent';
   if (!learner) return '/profile';
+  // She has turned 16: from now on she decides herself, and is asked once (issue #31).
+  if (learner.own_consent_due) return '/consent';
   return '/buddy';
 }

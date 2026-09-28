@@ -515,6 +515,20 @@ and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/spe
 `evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
+**Her 16th birthday** (issue #31, EDPB §147–149): `GET /me` marks a child profile whose
+learner has turned 16 and never agreed for herself (`learner.own_consent_due`); the gate
+(`lib/gate.ts`) sends her to the consent screen once, which then shows the same privacy text
+with the words that she decides now — no PIN, no adult (`POST /learner/consent`). The parents'
+record is not rewritten; it says what carried her until then. Time-travelled in
+`self-consent.int.test.ts`.
+
+**Whether the explanation is any good** is measured, not assumed (`evals/explain`, issue #77):
+Buddy explains five things a 12-year-old actually asks about, and a second model reads each
+answer against a fixed rubric — one thought at a time, something she can picture, an
+invitation to try it, every technical word explained where it stands, her level, short enough
+for a phone. The first run found a textbook definition of photosynthesis without a picture and
+with "Kohlenstoffdioxid" left unexplained; buddy.26 asks for both explicitly.
+
 **What the days before were about** (`modules/buddy/summarise.ts`, issue #22). The context
 carries the last 24 messages — a good conversation, and nothing three weeks later. When a
 conversation has come to rest (nothing said for four hours, the same gap the app draws its

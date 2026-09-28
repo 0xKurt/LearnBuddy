@@ -3,6 +3,7 @@
 import {
   AdminSessionRequest,
   CreateAccountRequest,
+  SelfConsentRequest,
   CreateLearnerRequest,
   SetPasswordRequest,
   SetPinRequest,
@@ -57,6 +58,8 @@ function learnerView(l: LearnerRow, now: Date): LearnerView {
     grade: l.grade,
     locale: l.locale,
     version: l.version,
+    // 16 and never asked for herself: the app asks once (issue #31).
+    own_consent_due: l.relation === 'child' && !isMinor(l, now) && l.self_consent_at === null,
   };
 }
 
@@ -188,6 +191,36 @@ identityRoutes.post('/account', requireUser, async (c) => {
  * records the privacy text its account holder agreed to (constraint
  * learners_child_consent); from 16 she decides herself and no PIN is needed.
  */
+/**
+ * From her 16th birthday the learner confirms the privacy text for herself (EDPB §147–149,
+ * issue #31). The parents' consent stays recorded as what carried her until then — nothing
+ * is rewritten; this adds what she agreed to, herself, and the app stops asking.
+ * Idempotent: agreeing again only refreshes the version she agreed to.
+ */
+identityRoutes.post('/learner/consent', requireUser, requireAccount, requireLearner, async (c) => {
+  const deps = depsOf(c);
+  const input = await readBody(c, SelfConsentRequest);
+  if (input.consent_version !== deps.config.CONSENT_VERSION) {
+    throw new AppError('conflict', 'The privacy text has changed; please review it again', {
+      reason: 'consent_outdated',
+      current: deps.config.CONSENT_VERSION,
+    });
+  }
+  const now = deps.now();
+  const learner = c.get('learner');
+  if (isMinor(learner, now)) {
+    // Under 16 it is not hers to give (ADR 0006): the adult's consent is what counts.
+    throw new AppError('forbidden', 'An adult decides this until 16', {
+      reason: 'minor_consent_required',
+    });
+  }
+  await deps.db.query(
+    `update learners set self_consent_version = $2, self_consent_at = $3 where id = $1`,
+    [learner.id, input.consent_version, now],
+  );
+  return c.json({ ok: true });
+});
+
 identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
   const deps = depsOf(c);
   const input = await readBody(c, CreateLearnerRequest);

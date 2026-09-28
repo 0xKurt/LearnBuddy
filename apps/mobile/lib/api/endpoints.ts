@@ -61,6 +61,13 @@ export const createAccount = (locale: AppLocale, consentVersion: string) =>
     schema: z.object({ account_id: z.string() }),
   });
 
+/** From 16 she agrees for herself — no PIN, no adult (issue #31). */
+export const selfConsent = (consentVersion: string) =>
+  request('POST', '/learner/consent', {
+    body: { consent_version: consentVersion, accept_privacy: true },
+    schema: z.object({ ok: z.boolean() }),
+  });
+
 export const createLearner = (input: CreateLearnerRequest) =>
   request('POST', '/learner', { body: input, schema: LearnerView });
 

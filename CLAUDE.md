@@ -18,6 +18,7 @@ Cite the relevant section in commit messages and PR bodies (e.g. `docs/architect
 - `docs/adr/0004-proactive-buddy.md` — the decision (modular monolith, fresh start)
 - `docs/architecture.md` — modules, API, decisions, tools, proactivity, delivery, limits, testing
 - `docs/privacy.md` — data, retention, minors, export/deletion, processors
+- `docs/dpia.md` — Datenschutz-Folgenabschätzung (Art. 35): Risiken, Maßnahmen, offene Punkte
 - `docs/DESIGN-BRIEF.md` — how the product must feel (still valid)
 - `docs/UX-PRINCIPLES.md` — hide system complexity, keep understanding and control (intent → result; examples, not feature catalogs; progressive disclosure; undo over confirmation)
 - `docs/SETUP-VERTEX.md` — model setup

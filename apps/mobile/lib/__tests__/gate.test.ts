@@ -13,7 +13,8 @@ const account = (patch: Partial<Account> = {}): Account => ({
   consent_current: true,
   ...patch,
 });
-const learner = {} as NonNullable<MeResponse['learner']>;
+type Learner = NonNullable<MeResponse['learner']>;
+const learner = { own_consent_due: false } as Learner;
 
 describe('the start gate', () => {
   it('shows the calm "being deleted" screen while a deletion runs (409 deletion_running)', () => {
@@ -29,5 +30,14 @@ describe('the start gate', () => {
     expect(gateRoute({ account: account({ consent_current: false }), learner })).toBe('/consent');
     expect(gateRoute({ account: account(), learner: null })).toBe('/profile');
     expect(gateRoute({ account: account(), learner })).toBe('/buddy');
+  });
+
+  it('asks her once when she has turned 16 — the parents carried it until then (issue #31)', () => {
+    const grown = { own_consent_due: true } as Learner;
+    expect(gateRoute({ account: account(), learner: grown })).toBe('/consent');
+    // A running deletion still comes first: nothing else can be decided any more.
+    expect(gateRoute({ account: account({ deletion_running: true }), learner: grown })).toBe(
+      '/deleting',
+    );
   });
 });

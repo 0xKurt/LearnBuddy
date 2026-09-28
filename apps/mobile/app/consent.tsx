@@ -18,7 +18,7 @@ import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
 import { AdultCancelled, asAdultIfNeeded } from '../components/settings/adultGate.js';
 import { ApiError } from '../lib/api/client.js';
-import { createAccount, getMe } from '../lib/api/endpoints.js';
+import { createAccount, getMe, selfConsent } from '../lib/api/endpoints.js';
 import { keys, queryClient, useMe } from '../lib/api/queries.js';
 import { ENV } from '../lib/env.js';
 import { messageFor } from '../lib/errors.js';
@@ -44,6 +44,9 @@ export default function Consent() {
   const [busy, setBusy] = useState(false);
 
   if (me.isPending) return <LoadingState />;
+  // She has turned 16: the parents' consent carried her until now, from here it is hers
+  // (issue #31). Same text, other words around it — and no adult in the way.
+  const forHerself = me.data?.learner?.own_consent_due === true;
 
   async function accept() {
     if (busy) return;
@@ -57,10 +60,15 @@ export default function Consent() {
     const version = me.data.consent_version;
     setBusy(true);
     try {
-      await asAdultIfNeeded(() => createAccount(currentLocale(), version), {
-        pinSet: me.data.account?.pin_set ?? false,
-        purpose: 'consent',
-      });
+      if (forHerself) {
+        // Hers to give: no PIN, no adult — that is the whole point of turning 16.
+        await selfConsent(version);
+      } else {
+        await asAdultIfNeeded(() => createAccount(currentLocale(), version), {
+          pinSet: me.data.account?.pin_set ?? false,
+          purpose: 'consent',
+        });
+      }
       // Load the fresh state before routing, so the gate never decides on stale data.
       await queryClient.fetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: 0 });
       router.replace('/');
@@ -99,9 +107,11 @@ export default function Consent() {
       >
         <View style={{ gap: 8 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
-            {t('consent.title')}
+            {t(forHerself ? 'consent.own_title' : 'consent.title')}
           </Text>
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('consent.intro')}</Text>
+          <Text style={[TYPE.body, { color: LB.ink2 }]}>
+            {t(forHerself ? 'consent.own_intro' : 'consent.intro')}
+          </Text>
         </View>
         {/* Six points; in German they fit a small phone (360×740) without scrolling. */}
         <Card padding={14}>
@@ -146,7 +156,11 @@ export default function Consent() {
         }}
       >
         <Card tone="lavender" padding={14}>
-          <Checkbox checked={accepted} onChange={setAccepted} label={t('consent.accept')} />
+          <Checkbox
+            checked={accepted}
+            onChange={setAccepted}
+            label={t(forHerself ? 'consent.own_accept' : 'consent.accept')}
+          />
         </Card>
         <Btn size="lg" pill full disabled={!accepted || busy} onPress={() => void accept()}>
           {t('consent.cta')}

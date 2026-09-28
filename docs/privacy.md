@@ -15,7 +15,12 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   only from 16 years) or a child (`relation = child`). **The age of consent is 16** (DSGVO
   Art. 8 with the German age, ADR 0006): under 16 the parents give explicit consent when they
   create the profile, and the profile is behind their PIN; from 16 she consents and decides
-  herself, also on a profile her parents created — no consent box, no PIN gate. Every child
+  herself, also on a profile her parents created — no consent box, no PIN gate. **On her 16th
+  birthday the app asks her once** (issue #31, EDPB §147–149): the same privacy text, with the
+  words that it is hers to decide now; agreeing is recorded as `self_consent_version` /
+  `self_consent_at` (POST `/learner/consent`, no PIN, no adult). Nothing is taken from her
+  while she has not answered — she is not locked out of her own learning — and the parents'
+  record stays as it was: it says what carried her until then. Every child
   profile records the privacy text its account holder agreed to (`minor_consent_version` /
   `minor_consent_at`), renewed when the account holder agrees to a new text. After a
   privacy-text change the API serves nothing learner-facing until the account holder agreed
@@ -49,6 +54,7 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
 | Conversation with Buddy                                                                                                  | `buddy_messages`                                                                   | until deletion                                                                                                                                                                                                                                                                                                                                 |
 | What Buddy knows, with the learner's own words as source                                                                 | `buddy_memories`                                                                   | until deletion; a removed or corrected item is erased (with its quote and its copies in Buddy's audit trail) 7 days after the removal — the undo window; temporary situations end by themselves (≤ 60 days) and are erased 7 days later                                                                                                        |
 | What was talked about on earlier days (two to four sentences the model wrote about a conversation that ended, issue #22) | `buddy_session_summaries`                                                          | until deletion (with the learner); an account deletion removes them with the cascade                                                                                                                                                                                                                                                           |
+| Her own consent from her 16th birthday (version and time; the parents' record stays as it was, issue #31)                | `learners.self_consent_version`, `self_consent_at`                                 | until deletion                                                                                                                                                                                                                                                                                                                                 |
 | Goals, steps, decisions, actions (audit of what Buddy did and why)                                                       | `buddy_goals`, `buddy_steps`, `buddy_decisions`, `buddy_actions`                   | until deletion — **what the model wrote while deciding** (`buddy_decisions.output`, `errors`, `triggers`: the reply, what it quoted from her) is erased after **90 days**; the shape of the decision (disposition, model, prompt version, time) stays for the audit (issue #78)                                                                |
 | Contact settings, push tokens, messages outside the app and their delivery status                                        | `buddy_settings`, `push_tokens`, `buddy_outreach`                                  | until deletion                                                                                                                                                                                                                                                                                                                                 |
 | A random install id (never derived from the hardware) binding push tokens to one learner per device                      | `push_tokens.device_id`; on the device `lb.install_id`                             | until deletion (server); on the device until the app is removed                                                                                                                                                                                                                                                                                |
@@ -117,6 +123,13 @@ Logs contain route names and error classes only — no request bodies, messages 
 - Deleting a sheet or a question in the app deletes its content (D-7), see the table above. The
   conversation with Buddy is not changed by it: what she wrote there stays until the account is
   deleted.
+
+## Folgenabschätzung
+
+Die Datenschutz-Folgenabschätzung (Art. 35) steht in `docs/dpia.md`: Systembeschreibung,
+Rechtsgrundlagen, zehn Risiken mit den Maßnahmen, die sie tragen, die Abwägung der
+Alterssicherung (EDPB Statement 1/2025 §13) und die offenen Punkte vor einem Start über den
+Familienkreis hinaus.
 
 ## Processors
 
