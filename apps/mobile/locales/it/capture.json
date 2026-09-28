@@ -93,5 +93,6 @@
   "share": {
     "nothing": "Mandami una foto o un PDF della tua scheda – qui non posso leggere testo o link.",
     "signed_out": "Prima accedi – poi condividi di nuovo la scheda con LearnBuddy."
-  }
+  },
+  "preview_failed": "Anteprima non disponibile"
 }

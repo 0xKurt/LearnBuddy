@@ -93,5 +93,6 @@
   "share": {
     "nothing": "Send me a photo or PDF of your sheet – I can't read text or links here.",
     "signed_out": "Please sign in first – then share the sheet with LearnBuddy again."
-  }
+  },
+  "preview_failed": "No preview"
 }

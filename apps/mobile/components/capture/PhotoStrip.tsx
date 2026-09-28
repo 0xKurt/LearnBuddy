@@ -1,6 +1,7 @@
 // The photos (and PDFs) picked so far, in page order, each with a way to take it out.
 
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -26,6 +27,9 @@ type Props = {
 
 export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
   const { t } = useTranslation('capture');
+  // A photo the phone cannot show (a file that is gone, a format the viewer refuses) says
+  // so instead of leaving an empty box — an empty tile looks like a broken app (issue #57).
+  const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
   return (
     <ScrollView
       horizontal
@@ -71,6 +75,17 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
                     {pdfs[uri]}
                   </Text>
                 </View>
+              ) : broken.has(uri) ? (
+                <View
+                  accessible
+                  accessibilityLabel={t('preview_failed')}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  <Icon name="eye-off" size={28} color={LB.ink3} />
+                  <Text style={[TYPE.small, { color: LB.ink2, textAlign: 'center' }]}>
+                    {t('preview_failed')}
+                  </Text>
+                </View>
               ) : (
                 // A tap shows the photo full screen, to zoom in (gaps.md #1).
                 <ZoomablePhoto
@@ -84,6 +99,9 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
                     accessibilityLabel={t('photo_label', { index: i + 1, total: uris.length })}
                     contentFit="cover"
                     transition={120}
+                    recyclingKey={uri}
+                    cachePolicy="memory-disk"
+                    onError={() => setBroken((was) => new Set(was).add(uri))}
                     style={{ flex: 1 }}
                   />
                 </ZoomablePhoto>

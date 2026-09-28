@@ -93,5 +93,6 @@
   "share": {
     "nothing": "Schick mir ein Foto oder PDF von deinem Blatt – Text und Links kann ich hier nicht lesen.",
     "signed_out": "Melde dich zuerst an – dann teil das Blatt nochmal mit LearnBuddy."
-  }
+  },
+  "preview_failed": "Vorschau nicht möglich"
 }

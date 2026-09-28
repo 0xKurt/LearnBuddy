@@ -93,5 +93,6 @@
   "share": {
     "nothing": "Envoie-moi une photo ou un PDF de ta fiche – je ne peux pas lire de texte ni de liens ici.",
     "signed_out": "Connecte-toi d'abord – puis partage à nouveau la fiche avec LearnBuddy."
-  }
+  },
+  "preview_failed": "Aperçu impossible"
 }
