@@ -528,11 +528,16 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   nothing (an offer button), no safeguarding `concern`, and no longer than validation allows
   (700 characters) — is shown while it is written; everything else appears once it is
   validated and applied, as before (rules 1 and 5: nothing is claimed before it is true). A
-  rejected or repaired answer starts a new `round` whose text replaces the last. **Shown is not
-  spoken**: the app reads a reply aloud only once it is stored — after the provider's final
-  safety verdict (the finish reason arrives with the last chunk) and zod validation — so a child
-  never hears words that are withdrawn (audit M-52, repro-28); `expo/fetch` streams on the
-  phone. Measured (live, 3.6 Flash,
+  rejected or repaired answer starts a new `round` whose text replaces the last. **Spoken as it is
+  written, where it is safe** (issue #65, owner decision 2026-09-28): a reply the server marked
+  `speakable` is read along from its first finished sentence (`lib/speech/streamSpeaker.ts`) — in
+  conversation mode and with voice mode on. Everything else waits for the stored answer as before
+  (audit M-52, repro-28): a safeguarding answer never streams speakable (`concern` is written
+  first), an answer that changes something is spoken once applied, and a repair round, a failure
+  or a provider block stops the voice mid-sentence so the stored text takes over. What was read
+  along is not read again from the thread. The residual risk — the provider's final verdict
+  arrives with the last chunk — was weighed against seconds of silence and accepted for
+  `speakable` answers only; `expo/fetch` streams on the phone. Measured (live, 3.6 Flash,
   `evals/stream/run.ts`, medians): first words after 1.35–1.6 s instead of the whole answer after
   1.76–1.86 s — about 0.3–0.5 s, more for long explanations. Most of the wait is before the model
   writes its first character; the order change kept 22/22 in `evals/buddy`. On a deployed API

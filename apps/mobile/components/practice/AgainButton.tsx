@@ -15,10 +15,13 @@ import { Btn } from '../lb/Btn.js';
 export function AgainButton({
   title,
   topics,
+  sessionId,
   kind = 'shaky',
 }: {
   title: string;
   topics: readonly string[];
+  /** The finished session: the new questions stay in its world (issue #58). */
+  sessionId: string;
   kind?: 'shaky' | 'harder';
 }) {
   const { t } = useTranslation(['practice', 'common']);
@@ -29,8 +32,16 @@ export function AgainButton({
   });
 
   async function go(): Promise<void> {
-    // The finished session's title tells the model which subject the topics belong to.
-    const session = await start('practice', title.trim() ? `${what} (${title.trim()})` : what);
+    // The finished session's title tells the model which subject the topics belong to;
+    // the session itself keeps the new questions within the sheets and the level she
+    // actually worked on (issue #58: "ähnliche Aufgaben" asked things she never had).
+    const session = await start(
+      'practice',
+      title.trim() ? `${what} (${title.trim()})` : what,
+      undefined,
+      null,
+      sessionId,
+    );
     if (session) router.replace(`/practice/${session.id}`);
   }
 

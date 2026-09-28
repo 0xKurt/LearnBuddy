@@ -576,12 +576,17 @@ export default function PracticeScreen() {
           <BottomBar>
             <Appear delay={sawActive.current ? 900 : 0} style={{ gap: 10 }}>
               {session.mode !== 'help' && session.summary.shaky_topics.length > 0 ? (
-                <AgainButton title={session.title} topics={session.summary.shaky_topics} />
+                <AgainButton
+                  title={session.title}
+                  topics={session.summary.shaky_topics}
+                  sessionId={session.id}
+                />
               ) : session.mode !== 'help' && session.summary.secure_topics.length > 0 ? (
                 <AgainButton
                   kind="harder"
                   title={session.title}
                   topics={session.summary.secure_topics}
+                  sessionId={session.id}
                 />
               ) : null}
               <Btn size="lg" pill full onPress={backToBuddy}>

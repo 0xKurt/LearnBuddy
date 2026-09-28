@@ -92,6 +92,7 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
+import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -292,10 +293,12 @@ export default function BuddyScreen() {
     const controller = new AbortController();
     sending.current = { id: clientMessageId, controller };
     // Buddy's reply appears while it is written when the answer changes nothing
-    // (docs/architecture.md §Speed). It is read aloud only once it is stored: after the
-    // provider's final safety verdict and validation, never text that is withdrawn later
-    // (audit M-52, repro-28) — the effect above reads it from the thread.
+    // (docs/architecture.md §Speed) — and with voice mode on it is read along from the
+    // first finished sentence (owner decision 28.09., issue #65). `speakable` is the
+    // server's word that this answer changes nothing and carries no safeguarding; anything
+    // else is read only once it is stored (audit M-52), by the effect above.
     let round = 0;
+    const along: { speaker: StreamSpeaker | null } = { speaker: null };
     try {
       const res = await sendMessageStreamed(
         text,
@@ -303,22 +306,41 @@ export default function BuddyScreen() {
         replyToId,
         (e) => {
           if (e.round !== round) {
+            // A new attempt replaces what was shown — and what was already said of it.
             round = e.round;
             setLive(null);
+            along.speaker?.cancel();
+            along.speaker = null;
           }
           if (!e.speakable) return;
           // Written at the end: seen there while she follows it; scrolled up to read, she
           // stays where she is and "↓ Neue Antwort" shows.
           setLive(e.text);
+          if (!voiceOn) return;
+          if (!along.speaker) {
+            along.speaker = createStreamSpeaker(
+              currentLocale(),
+              (sentence) => spokenText(sentence, words),
+              () => undefined,
+            );
+            // What is read along is not read again from the thread.
+            awaitingReply.current = null;
+          }
+          along.speaker.feed(e.text, e.done);
         },
         controller.signal,
       );
       setHome(res.home);
       // The failed message says why in the thread, with "Nochmal senden" right there; a toast
       // would sit on top of exactly that. Screen readers still hear it.
-      if (res.status === 'failed') announce(turnFailureText(res.error_code));
+      if (res.status === 'failed') {
+        // Whatever was said of a withdrawn answer stops mid-sentence.
+        along.speaker?.cancel();
+        announce(turnFailureText(res.error_code));
+      } else along.speaker?.feed(replyAfter(res.home.thread, clientMessageId)?.text ?? '', true);
       return true;
     } catch (err) {
+      along.speaker?.cancel();
       // Nothing to read when the reply comes after a failure she was told about.
       awaitingReply.current = null;
       // She stopped it: the home from the stop says where it stands.
@@ -720,50 +742,41 @@ export default function BuddyScreen() {
   // would leave it half hidden under its fade; the greeting steps back in place (nothing moves).
   // (A position measured with onLayout goes stale on the web: it only reports size changes.)
   const greetingCovered = top.length > 0;
-  // The one headline: her name gets the full width (long names wrap, never overlap).
-  const greeting = (
-    <View style={{ gap: talking ? 0 : 4 }}>
+  // Her name lives in the top bar (issue #45): the head was a quarter of the screen —
+  // a bar, not a stage. What is left here is the one line that carries information:
+  // the next test, else the open question, and quietly whether she practised today.
+  const headline = (
+    <Text
+      accessibilityRole="header"
+      numberOfLines={1}
+      style={[TYPE.title, { fontSize: 18, lineHeight: 24, flexShrink: 1 }]}
+    >
+      {t('buddy:greeting', { name: h.learner.name })}
+    </Text>
+  );
+  const statusLine = (
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'center',
+        columnGap: 8,
+        rowGap: 4,
+      }}
+    >
       <Text
-        accessibilityRole="header"
-        style={[
-          TYPE.display,
-          talking ? { fontSize: 20, lineHeight: 26 } : { fontSize: 24, lineHeight: 30 },
-          { textAlign: 'center' },
-        ]}
+        numberOfLines={talking ? 1 : 2}
+        style={[TYPE.body, { color: LB.ink2, textAlign: 'center', fontWeight: '500' }]}
       >
-        {t('buddy:greeting', { name: h.learner.name })}
+        {nextExam
+          ? t('buddy:next.line', {
+              title: nextExam.title,
+              when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
+            })
+          : t('buddy:greeting_ask')}
       </Text>
-      {/* Personal when something is coming up: the next test; otherwise the open question.
-          The same with or without a card on top, so nothing moves when it comes or goes.
-          Beside it, quietly, whether she practised today — never a count (rule 6). */}
-      <View
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          alignItems: 'center',
-          columnGap: 8,
-          rowGap: 4,
-        }}
-      >
-        <Text
-          numberOfLines={talking ? 1 : undefined}
-          style={[
-            talking ? TYPE.body : TYPE.title,
-            { color: LB.ink2, textAlign: 'center', fontWeight: '500' },
-          ]}
-        >
-          {nextExam
-            ? t('buddy:next.line', {
-                title: nextExam.title,
-                when: nextExam.date ? whenText(nextExam.date, nextExam.time) : '',
-              })
-            : t('buddy:greeting_ask')}
-        </Text>
-        {h.practiced_today && !talking ? (
-          <PracticedToday label={t('buddy:practiced_today')} />
-        ) : null}
-      </View>
+      {h.practiced_today && !talking ? <PracticedToday label={t('buddy:practiced_today')} /> : null}
     </View>
   );
 
@@ -784,10 +797,9 @@ export default function BuddyScreen() {
             paddingTop: 8,
           }}
         >
-          {/* Conversation mode moved into the composer (bottom right, next to the mic —
-              user feedback 2026-09-28); this spacer keeps BUDDY centred. */}
-          <View style={{ width: 96 }} />
-          <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
+          {/* Her name sits where the wordmark was (issue #45): one row for who this is
+              and the two ways out of it. A long name is cut, never wrapped. */}
+          {headline}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {/* Voice mode: Buddy reads replies aloud and the mic leads (audit M-77). */}
             <VoiceModeToggle />
@@ -835,7 +847,7 @@ export default function BuddyScreen() {
                 accessibilityElementsHidden={covered}
                 importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
               >
-                {greeting}
+                {statusLine}
                 {/* The ring, small: starting stays one tap away. */}
                 <StartRow items={orbitItems(h.next)} disabled={pending !== null} />
               </View>
@@ -954,13 +966,13 @@ export default function BuddyScreen() {
                 />
               }
             >
-              {/* Under a card on top the greeting steps back instead of peeking out half hidden. */}
+              {/* Under a card on top the status line steps back instead of peeking out half hidden. */}
               <View
                 style={{ opacity: greetingCovered ? 0 : 1 }}
                 accessibilityElementsHidden={greetingCovered}
                 importantForAccessibility={greetingCovered ? 'no-hide-descendants' : 'auto'}
               >
-                {greeting}
+                {statusLine}
               </View>
               {/* The ring: Buddy in the middle, ways to start around it. */}
               <OrbitMenu

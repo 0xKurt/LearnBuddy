@@ -335,6 +335,13 @@ export const StartTopicRequest = z.object({
    * topics of the sheets photographed for it, and the session belongs to it.
    */
   goal_id: Uuid.nullable().optional(),
+  /**
+   * More of the same after a practice ("Die wackligen nochmal", "Mehr davon, etwas
+   * schwerer"): the session it follows. The new questions stay in that session's world —
+   * its test and sheets when it had one, else the questions she just did as the pattern —
+   * instead of whatever the topic name suggests (issue #58).
+   */
+  from_session_id: Uuid.nullable().optional(),
 });
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 

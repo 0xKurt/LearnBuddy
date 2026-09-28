@@ -81,6 +81,50 @@ const GENERATED_SCHEMA = toJsonSchema(GeneratedSet);
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
+/** How many of the questions she just did are shown as the pattern for more of the same. */
+const PATTERN_ITEMS = 12;
+
+/** The test a finished session belongs to, when more of the same is asked for (issue #58). */
+async function goalOfSession(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string | null | undefined,
+): Promise<string | null> {
+  if (!sessionId) return null;
+  const row = await deps.db.maybeOne<{ goal_id: string | null }>(
+    `select goal_id from practice_sessions where id = $1 and learner_id = $2`,
+    [sessionId, learnerId],
+  );
+  return row?.goal_id ?? null;
+}
+
+/**
+ * The questions of the session the follow-up comes from: what she actually worked on.
+ * Without a test and its sheets they are the only ground truth for "more of the same" —
+ * otherwise the model invents from the topic name, and she is asked things she never had
+ * (owner 28.09., issue #58).
+ */
+async function patternOf(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string | null | undefined,
+): Promise<{ topics: string[]; prompts: string[] } | null> {
+  if (!sessionId) return null;
+  const rows = await deps.db.query<{ prompt: string; topic: string | null }>(
+    `select i.prompt, i.topic
+       from session_items si
+       join items i on i.id = si.item_id
+      where si.session_id = $1 and i.learner_id = $2
+      order by si.position
+      limit $3`,
+    [sessionId, learnerId, PATTERN_ITEMS],
+  );
+  if (rows.length === 0) return null;
+  return {
+    topics: [...new Set(rows.map((r) => r.topic?.trim()).filter((t): t is string => !!t))],
+    prompts: rows.map((r) => r.prompt),
+  };
+}
 
 /**
  * The sheets she photographed for the planned test a practice or test is for: their topics
@@ -92,10 +136,11 @@ async function sheetsOf(
   learnerId: string,
   input: StartTopicRequest,
 ): Promise<{ goalId: string; topics: [string, ...string[]]; text: string } | null> {
-  if (!input.goal_id) return null;
+  const goalId = input.goal_id ?? (await goalOfSession(deps, learnerId, input.from_session_id));
+  if (!goalId) return null;
   const goal = await deps.db.maybeOne<{ id: string }>(
     `select id from buddy_goals where id = $1 and learner_id = $2`,
-    [input.goal_id, learnerId],
+    [goalId, learnerId],
   );
   if (!goal) throw new AppError('not_found', 'Goal not found');
   if (input.kind !== 'test' && input.kind !== 'practice') return null;
@@ -284,6 +329,8 @@ async function prepareTopic(
   const level =
     learner.level === 'school' ? `school, grade ${learner.grade ?? 'unknown'}` : learner.level;
   const sheets = await sheetsOf(deps, learner.id, input);
+  // More of the same: what she just did grounds the new questions (issue #58).
+  const pattern = sheets ? null : await patternOf(deps, learner.id, input.from_session_id);
   // Built from her sheets: every question's topic is one of theirs — the schema offers only
   // those, and a question on anything else is dropped (live finding 6).
   const itemSchema = sheets
@@ -310,6 +357,9 @@ async function prepareTopic(
                 `TASK: ${TASK[input.kind]}`,
                 sheets
                   ? `SHEETS (she photographed them for this test; stay strictly within them — only their topics, tasks like theirs with other numbers or words, nothing the sheets do not cover):\nTOPICS: ${sheets.topics.join(' | ')}\nTEXT:\n${sheets.text}`
+                  : null,
+                pattern
+                  ? `SHE JUST WORKED ON THESE (write more of exactly this kind — same topics, same level, other numbers or words; never something her class has not had):${pattern.topics.length > 0 ? `\nTOPICS: ${pattern.topics.join(' | ')}` : ''}\nQUESTIONS:\n${pattern.prompts.map((p) => `- ${p}`).join('\n')}`
                   : null,
                 `LEARNER'S TEXT:\n${input.text}`,
               ]

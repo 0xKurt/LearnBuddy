@@ -48,6 +48,8 @@ export function useStartTopic() {
     requestId?: string,
     /** The planned test Buddy's offer is for: the questions stay within its sheets. */
     goalId?: string | null,
+    /** More of the same after a practice: the session it follows (issue #58). */
+    fromSessionId?: string | null,
   ): Promise<SessionView | null> {
     const text = rawText.trim();
     if (running.current || text.length < 2) return null;
@@ -62,6 +64,7 @@ export function useStartTopic() {
         kind,
         text,
         ...(goalId ? { goal_id: goalId } : {}),
+        ...(fromSessionId ? { from_session_id: fromSessionId } : {}),
       });
       last.current = null;
       // The home shows the new session (to resume it) from now on.

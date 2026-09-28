@@ -42,6 +42,7 @@ import { playCue } from '../lib/speech/cues.js';
 import { fadeIn } from '../lib/theme/enter.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
+import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { talkListensByItself } from '../lib/speech/handsFree.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { LB } from '../lib/theme/colors.js';
@@ -103,6 +104,21 @@ export default function TalkScreen() {
     let round = 0;
     let spokenEnd: ListenEnd | null = null;
     let final: MessageView | null = null;
+    /** Reads the reply while it is still being written (issue #65). */
+    const along: { speaker: StreamSpeaker | null } = { speaker: null };
+    const speakAlong = (): StreamSpeaker => {
+      if (along.speaker) return along.speaker;
+      setPhase('speaking');
+      along.speaker = createStreamSpeaker(
+        currentLocale(),
+        (sentence) => spokenText(sentence, words),
+        (why) => {
+          spokenEnd = why;
+          goOn();
+        },
+      );
+      return along.speaker;
+    };
     const goOn = () => {
       if (stale() || !final || !spokenEnd) return;
       // Read to the end: listen again. A card in the answer no longer stops the talk
@@ -116,17 +132,26 @@ export default function TalkScreen() {
       const res = await sendMessageStreamed(text, id, null, (e) => {
         if (stale()) return;
         if (e.round !== round) {
-          // A new attempt replaces what was shown of the last one.
+          // A new attempt replaces what was shown — and what was already said of it.
           round = e.round;
           setLive(null);
+          along.speaker?.cancel();
+          along.speaker = null;
+          spokenEnd = null;
         }
         if (!e.speakable) return;
         setLive(e.text);
+        // Speaking starts with the first finished sentence, not with the stored answer
+        // (owner decision 28.09., issue #65): `speakable` means this answer changes
+        // nothing and carries no safeguarding — the rest waits, as before (audit M-52).
+        speakAlong().feed(e.text, e.done);
       });
       setHome(res.home);
       if (stale()) return;
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
+        // Whatever was said of a withdrawn answer stops mid-sentence.
+        along.speaker?.cancel();
         setLive(null);
         tellProblem(
           res.status === 'failed' ? turnFailureText(res.error_code) : t('buddy:talk.slow'),
@@ -137,15 +162,23 @@ export default function TalkScreen() {
       setReply(r);
       setLive(null);
       setPhase('speaking');
-      // Read as shown, sentence by sentence (math in words), so the text reads along.
-      void speak(r.text, currentLocale(), {
-        transform: (sentence) => spokenText(sentence, words),
-        onEnd: (why) => {
-          spokenEnd = why;
-          goOn();
-        },
-      });
+      if (along.speaker) {
+        // Already speaking: the stored text is what was streamed, so this only closes it
+        // (and adds the last sentence if the stream ended early).
+        along.speaker.feed(r.text, true);
+      } else {
+        // Nothing was said yet (the answer changed something, or a safeguarding reply):
+        // read the stored text, sentence by sentence, so it reads along.
+        void speak(r.text, currentLocale(), {
+          transform: (sentence) => spokenText(sentence, words),
+          onEnd: (why) => {
+            spokenEnd = why;
+            goOn();
+          },
+        });
+      }
     } catch (err) {
+      along.speaker?.cancel();
       if (stale()) return;
       setLive(null);
       tellProblem(messageFor(err));
