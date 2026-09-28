@@ -1,12 +1,14 @@
 // Buddy's natural voice (ADR 0008, docs/architecture.md §Voice): one sentence → audio in
 // her voice and speed, cached per learner for a day, only the text leaves, honest failures
-// (the app then reads with the phone's voice), and "sprich langsamer" / "andere Stimme" as a
-// Buddy tool behind the context fence (CLAUDE.md rule 4), undoable.
+// (the app then reads with the phone's voice), "sprich langsamer" / "andere Stimme" as a
+// Buddy tool behind the context fence (CLAUDE.md rule 4), undoable, and the voice picked with
+// a tap in the setup or the settings (preview without changing anything; ADR 0008 §Amendment).
 // requires live verification in Claude Code session (needs a running Postgres; the speech
 // provider and the model are fakes — the real Google call is verified by hand, ADR 0008)
 
 import type {
   BuddyHome,
+  BuddySettingsView,
   SendMessageResponse,
   SpeechResponse,
 } from '@learnbuddy/shared-types/contracts';
@@ -275,5 +277,128 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
       [l.learnerId],
     );
     expect(decisions.map((d) => d.disposition).sort()).toEqual(['applied', 'stale']);
+  });
+  it('she picks a voice with a tap: the preview changes nothing, the choice is saved and fenced', async () => {
+    const text = 'Hallo! So klinge ich.';
+    // Tap to hear: this voice, this once; her settings stay as they are.
+    const preview = await speech({ text, locale: 'de-DE', voice: 'bright' });
+    expect(preview.status).toBe(200);
+    expect(preview.body).toMatchObject({ voice: 'bright', speed: 0 });
+    expect(env.speech.calls.at(-1)).toMatchObject({ text, voice: 'bright', rate: 1 });
+    // Another voice is another reading (never served from the other voice's cache).
+    await speech({ text, locale: 'de-DE', voice: 'clear' });
+    expect(env.speech.calls.at(-1)).toMatchObject({ voice: 'clear' });
+    expect(env.speech.calls).toHaveLength(2);
+    // Only the curated names — never a provider voice.
+    expect((await speech({ text, locale: 'de-DE', voice: 'Zephyr' })).status).toBe(422);
+    expect(env.speech.calls).toHaveLength(2);
+
+    const settings = await l.api.get<BuddySettingsView>('/buddy/settings');
+    expect(settings.body.voice).toBe('warm');
+    expect((await speech({ text: 'Und normal?', locale: 'de-DE' })).body.voice).toBe('warm');
+
+    // "Sprich langsamer" first, so there is an undo that a later tap must not be overridden by.
+    env.llm.script(
+      'buddy_turn',
+      reply('Klar, langsamer.', [setVoice('slower', null, 'bitte langsamer')]),
+    );
+    const slower = await send(l, 'Sprich bitte langsamer');
+    const card = slower.body.home.thread.flatMap((m) => m.actions)[0]!;
+    const before = await env.db.one<{ context_version: number; version: number }>(
+      `select context_version, version from buddy_settings where learner_id = $1`,
+      [l.learnerId],
+    );
+
+    // The choice: one PATCH with the version it was based on. A child needs no parents' PIN.
+    const invalid = await l.api.patch<ErrorBody>('/buddy/settings', {
+      voice: 'Sulafat',
+      version: before.version,
+    });
+    expect(invalid.status).toBe(422);
+    const picked = await l.api.patch<BuddySettingsView>('/buddy/settings', {
+      voice: 'clear',
+      version: before.version,
+    });
+    expect(picked.status).toBe(200);
+    expect(picked.body).toMatchObject({ voice: 'clear', contact_enabled: false });
+    const after = await env.db.one<{
+      context_version: number;
+      voice: string;
+      voice_speed: number;
+    }>(`select context_version, voice, voice_speed from buddy_settings where learner_id = $1`, [
+      l.learnerId,
+    ]);
+    // Buddy's context names the voice: a decision made before the tap is stale (rule 4).
+    expect(after.context_version).toBeGreaterThan(before.context_version);
+    expect(after).toMatchObject({ voice: 'clear', voice_speed: -1 });
+    expect((await speech({ text: 'Jetzt klar.', locale: 'de-DE' })).body).toMatchObject({
+      voice: 'clear',
+      speed: -1,
+    });
+
+    // A second tap based on the old version (another device) is refused, nothing changes.
+    const stale = await l.api.patch<ErrorBody>('/buddy/settings', {
+      voice: 'bright',
+      version: before.version,
+    });
+    expect(stale.status).toBe(409);
+    expect(stale.body.error.code).toBe('stale');
+    // The older "langsamer" cannot be undone blindly over her newer choice.
+    expect((await l.api.post<ErrorBody>(`/buddy/actions/${card.id}/undo`)).status).toBe(409);
+
+    // Another learner's choice is theirs alone.
+    const other = await onboard(env, { relation: 'self' });
+    const theirs = await other.api.get<BuddySettingsView>('/buddy/settings');
+    expect(theirs.body.voice).toBe('warm');
+    const otherPick = await other.api.patch<BuddySettingsView>('/buddy/settings', {
+      voice: 'friendly',
+      version: theirs.body.version,
+    });
+    expect(otherPick.body.voice).toBe('friendly');
+    const mine = await l.api.get<BuddySettingsView>('/buddy/settings');
+    expect(mine.body.voice).toBe('clear');
+
+    // Asking Buddy still works from the picked voice: "andere Stimme" is the next one.
+    env.llm.script('buddy_turn', (req) => {
+      expect(ScriptedGateway.textOf(req)).toContain('- clear · speed slower (-1 of -2)');
+      return reply('Okay, jetzt klinge ich anders.', [
+        setVoice(null, 'other', 'eine andere Stimme'),
+      ]).json;
+    });
+    const next = await send(l, 'Ich will eine andere Stimme');
+    expect(next.body.home.thread.flatMap((m) => m.actions).at(-1)?.summary).toEqual({
+      tool: 'set_voice',
+      voice: 'warm',
+      speed: -1,
+    });
+  });
+
+  it('a tap on a voice while Buddy is deciding makes that decision stale (fence, rule 4)', async () => {
+    env.llm.script(
+      'buddy_turn',
+      async () => {
+        // She taps "Klar" in the settings while Buddy is still thinking about "andere Stimme".
+        const s = await l.api.get<BuddySettingsView>('/buddy/settings');
+        const tap = await l.api.patch('/buddy/settings', {
+          voice: 'clear',
+          version: s.body.version,
+        });
+        expect(tap.status).toBe(200);
+        return reply('Okay, eine andere.', [setVoice(null, 'other', 'andere Stimme')]).json;
+      },
+      (req) => {
+        // Decided again on the fresh context, which knows the voice she just picked.
+        expect(ScriptedGateway.textOf(req)).toContain('- clear · speed normal');
+        return reply('Okay, eine andere.', [setVoice(null, 'other', 'andere Stimme')]).json;
+      },
+    );
+    const res = await send(l, 'Bitte eine andere Stimme');
+    expect(res.body.status).toBe('done');
+    const s = await env.db.one<{ voice: string }>(
+      `select voice from buddy_settings where learner_id = $1`,
+      [l.learnerId],
+    );
+    // "Other" from her new choice (clear → warm), not from the old one (warm → friendly).
+    expect(s.voice).toBe('warm');
   });
 });

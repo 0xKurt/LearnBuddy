@@ -94,7 +94,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /buddy/messages`                                                                               | a learner message (idempotent on `client_message_id`)                                            |
 | `POST /buddy/messages/:clientMessageId/stop`                                                         | "Stopp" while Buddy writes: the turn ends stopped, or says it was already answered (§Turns)      |
 | `POST /buddy/steps/:id/start\|skip`, `POST /buddy/actions/:id/undo`, `POST /buddy/goals/:id/outcome` | explicit taps, no model                                                                          |
-| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact                                                                                          |
+| `POST /buddy/contact/opt-in`, `GET/PATCH /buddy/settings`, `POST/DELETE /buddy/push-tokens`          | contact; Buddy's voice (picked with a tap, ADR 0008 §Amendment)                                  |
 | `POST /push-devices/claim`, `POST /push-devices/release` (no session)                                | one learner per install (push)                                                                   |
 | `POST /buddy/outreach/:id/opened`                                                                    | the only evidence a message was opened                                                           |
 | `GET/PATCH /buddy/memory`                                                                            | what Buddy knows, correctable                                                                    |
@@ -246,7 +246,9 @@ summary plus undo data. Enforced here, not in the prompt:
   model says only the direction (`slower`/`faster`/`normal`, `other` or a named voice of the
   curated four) with her quote; code takes one step within −2…+2 and picks the next voice. Past
   the limit, or a change that changes nothing, is rejected back to the model, which says so.
-  Undo (`restore_voice`) only while nothing changed the settings since.
+  Undo (`restore_voice`) only while nothing changed the settings since. She can also pick the
+  voice with a tap (setup, settings: `PATCH /buddy/settings {voice, version}`, which bumps the
+  context like every setting there), so a tap while Buddy decides makes that decision stale.
 - Thread action cards offer "Rückgängig" only where `undoApplies` holds, like `done` (audit
   M-56); history offers it too, for the same 7 days.
 
@@ -1014,7 +1016,11 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
 - **Buddy's natural voice** (ADR 0008): everything read aloud goes sentence by sentence through
   `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → Google Cloud TTS, Chirp 3:
   HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and
-  speed come from her settings (`buddy_settings.voice`, `voice_speed`, tool `set_voice`); audio is
+  speed come from her settings (`buddy_settings.voice`, `voice_speed`; tool `set_voice`, or the
+  voice picked with a tap — `components/voice/VoicePicker.tsx` in the setup's last step and in the
+  settings, closed until opened; ADR 0008 §Amendment). The picker's "tap to hear" sends the voice
+  to try with the sample (`SpeechRequest.voice`, one of the curated names) and changes nothing;
+  when the phone's voice reads the sample instead, it says so rather than pretend a difference. Audio is
   cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
   sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
@@ -1139,6 +1145,9 @@ then a hand-over: what is set (consent, PIN, messages to the phone off) and "Gib
 Handy". Someone under 16 choosing "Ich selbst" gets no dead end: "Eine erwachsene Person ist
 hier" keeps name and birth date and goes to the parents' step on the same phone, naming the
 account's e-mail (DESIGN-BRIEF §Onboarding); there is no age check beyond the birth date.
+Once the profile exists, one last short step for everyone (after the hand-over for a child, so
+she picks it herself): "Wie soll Buddy klingen?" — four voices, a tap plays a sample and picks
+it, "Warm" is already chosen so "Weiter" is always possible (ADR 0008 §Amendment).
 The practice screen pins the question (with its drawing scaled to fit) on top and the way to
 answer at the bottom; only the conversation about the question scrolls between them; short
 options sit two by two.

@@ -279,5 +279,17 @@
     "speak": "Leggi ad alta voce",
     "copied": "Copiato",
     "copy_failed": "Copia non riuscita"
+  },
+  "voice_pick": {
+    "label": "La voce di Buddy",
+    "sample": "Ciao, sono Buddy. Ecco come suono quando ti leggo qualcosa.",
+    "phone_voice": "Adesso legge la voce del tuo telefono, per questo qui suonano tutte uguali.",
+    "tap_hint": "Fa sentire un breve esempio e sceglie questa voce.",
+    "name": {
+      "warm": "Calda",
+      "friendly": "Gentile",
+      "bright": "Luminosa",
+      "clear": "Chiara"
+    }
   }
 }

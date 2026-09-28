@@ -193,5 +193,10 @@
     "support_cta": "E-Mail schreiben",
     "open_failed": "Der Link ließ sich nicht öffnen. Versuch es gleich nochmal.",
     "open_mail_failed": "Hier ist keine Mail-App eingerichtet. Du erreichst uns unter {{email}}."
+  },
+  "voice": {
+    "title": "Buddys Stimme",
+    "question": "Wie soll Buddy klingen?",
+    "speed_hint": "Tipp an und hör rein. Langsamer oder schneller? Sag es Buddy einfach."
   }
 }

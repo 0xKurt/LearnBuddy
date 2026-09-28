@@ -1,6 +1,8 @@
 // The learner profile: who learns, name, birth date, language; for a child
 // also the adult's consent (DSGVO Art. 8) and the adult PIN, and then a short
-// hand-over: what is set, and "give the phone to your child" (user feedback #10).
+// hand-over: what is set, and "give the phone to your child" (user feedback #10). Last, once
+// the profile exists, one short step: how Buddy should sound (tap to hear, a voice is already
+// chosen, so she can simply go on; ADR 0008 §Amendment).
 // Someone under 16 setting up alone is not stopped at a dead end: an adult who is
 // there does the parents' step on this phone (user feedback #5,
 // docs/DESIGN-BRIEF.md §Onboarding "Erwachsene Person ist hier"). No age checks
@@ -28,10 +30,12 @@ import { Icon } from '../components/lb/Icon.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
+import { Bone, SkeletonGroup } from '../components/lb/Skeleton.js';
 import { toast } from '../components/lb/Toast.js';
+import { VoicePicker } from '../components/voice/VoicePicker.js';
 import { ApiError } from '../lib/api/client.js';
 import { createLearner, getMe } from '../lib/api/endpoints.js';
-import { keys, queryClient } from '../lib/api/queries.js';
+import { keys, queryClient, useSettings } from '../lib/api/queries.js';
 import { ageOf, birthDateOf } from '../lib/birthDate.js';
 import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
@@ -65,8 +69,9 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
   // For a child two short steps, each fitting the screen: the child, then the parents —
-  // and once saved, the hand-over.
-  const [step, setStep] = useState<'learner' | 'parent' | 'handover'>('learner');
+  // and once saved, the hand-over. Then (for everyone) Buddy's voice: it needs the profile,
+  // because the sample is read and the choice saved for her.
+  const [step, setStep] = useState<'learner' | 'parent' | 'handover' | 'voice'>('learner');
   /** Came from "Ich selbst" under 16: an adult took over on this phone. */
   const [handedOver, setHandedOver] = useState(false);
 
@@ -98,8 +103,7 @@ export default function Profile() {
       });
       applyLocale(locale);
       // The parents set it up: first what is set now, then the phone goes to the child.
-      if (needsParents) setStep('handover');
-      else await goOn();
+      setStep(needsParents ? 'handover' : 'voice');
     } catch (err) {
       // The profile exists already (e.g. the answer to the first tap got lost): go on.
       if (err instanceof ApiError && err.reason === 'learner_exists') {
@@ -148,7 +152,10 @@ export default function Profile() {
   }
 
   if (step === 'handover') {
-    return <Handover name={name.trim()} busy={busy} onDone={() => void finish()} />;
+    return <Handover name={name.trim()} busy={busy} onDone={() => setStep('voice')} />;
+  }
+  if (step === 'voice') {
+    return <VoiceStep busy={busy} onDone={() => void finish()} />;
   }
 
   return (
@@ -458,6 +465,64 @@ function Handover({ name, busy, onDone }: { name: string; busy: boolean; onDone:
       >
         <Btn size="lg" pill full disabled={busy} onPress={onDone}>
           {t('profile.handover_cta', { name })}
+        </Btn>
+      </View>
+    </Screen>
+  );
+}
+
+/**
+ * How Buddy should sound: the picker with a voice already chosen (the server's default), so
+ * "Weiter" is always possible. Later in the settings, or by asking Buddy ("andere Stimme").
+ */
+function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
+  const { t } = useTranslation('auth');
+  const insets = useSafeAreaInsets();
+  const settings = useSettings();
+  const compact = useWindowDimensions().height < 780;
+  return (
+    <Screen>
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+          paddingVertical: compact ? 16 : 24,
+          gap: compact ? 14 : 18,
+        }}
+      >
+        <View style={{ alignItems: 'center' }}>
+          <BuddyOrb size={compact ? 64 : 72} />
+        </View>
+        <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
+          {t('profile.voice_title')}
+        </Text>
+        <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
+          {t('profile.voice_body')}
+        </Text>
+        {settings.data ? (
+          <VoicePicker settings={settings.data} />
+        ) : settings.isError ? (
+          // Not a dead end: the voice stays the default and can be changed later.
+          <Text style={[TYPE.small, { color: LB.ink2, textAlign: 'center' }]}>
+            {t('profile.voice_later')}
+          </Text>
+        ) : (
+          <SkeletonGroup label={t('profile.voice_loading')} style={{ gap: 8 }}>
+            <Bone height={44} radius={22} />
+            <Bone height={44} radius={22} />
+          </SkeletonGroup>
+        )}
+      </ScrollView>
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 16),
+        }}
+      >
+        <Btn size="lg" pill full disabled={busy} onPress={onDone}>
+          {t('profile.voice_cta')}
         </Btn>
       </View>
     </Screen>

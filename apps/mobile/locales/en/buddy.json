@@ -279,5 +279,17 @@
     "speak": "Read aloud",
     "copied": "Copied",
     "copy_failed": "Copying didn't work"
+  },
+  "voice_pick": {
+    "label": "Buddy's voice",
+    "sample": "Hi, I'm Buddy. This is how I sound when I read something to you.",
+    "phone_voice": "Your phone's own voice is reading right now – so they all sound the same here.",
+    "tap_hint": "Plays a short sample and picks this voice.",
+    "name": {
+      "warm": "Warm",
+      "friendly": "Friendly",
+      "bright": "Bright",
+      "clear": "Clear"
+    }
   }
 }

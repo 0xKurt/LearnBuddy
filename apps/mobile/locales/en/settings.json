@@ -193,5 +193,10 @@
     "support_cta": "Write an e-mail",
     "open_failed": "The link couldn't be opened. Try again in a moment.",
     "open_mail_failed": "No mail app is set up here. You can reach us at {{email}}."
+  },
+  "voice": {
+    "title": "Buddy's voice",
+    "question": "How should Buddy sound?",
+    "speed_hint": "Tap to hear it. Slower or faster? Just tell Buddy."
   }
 }

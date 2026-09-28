@@ -193,5 +193,10 @@
     "support_cta": "Scrivi un'email",
     "open_failed": "Non è stato possibile aprire il link. Riprova tra un attimo.",
     "open_mail_failed": "Qui non è configurata nessuna app di posta. Puoi scriverci a {{email}}."
+  },
+  "voice": {
+    "title": "La voce di Buddy",
+    "question": "Come deve suonare Buddy?",
+    "speed_hint": "Tocca per ascoltarla. Più lento o più veloce? Dillo a Buddy."
   }
 }

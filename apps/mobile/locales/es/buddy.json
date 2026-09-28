@@ -279,5 +279,17 @@
     "speak": "Leer en voz alta",
     "copied": "Copiado",
     "copy_failed": "No se ha podido copiar"
+  },
+  "voice_pick": {
+    "label": "La voz de Buddy",
+    "sample": "Hola, soy Buddy. Así sueno cuando te leo algo.",
+    "phone_voice": "Ahora lee la voz de tu móvil, por eso aquí todas suenan igual.",
+    "tap_hint": "Reproduce una muestra corta y elige esta voz.",
+    "name": {
+      "warm": "Cálida",
+      "friendly": "Amable",
+      "bright": "Luminosa",
+      "clear": "Clara"
+    }
   }
 }

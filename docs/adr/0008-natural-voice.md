@@ -1,7 +1,7 @@
 # ADR 0008 — Buddy's natural voice, and "sprich langsamer" by asking
 
-- Status: accepted (owner, 2026-09-27); the server path is built and tested against a fake
-  provider, **the real Google call is not yet verified live** (see §Live verification)
+- Status: accepted (owner, 2026-09-27), amended 2026-09-28 (§Amendment: a visible picker);
+  the server path is built and tested against a fake provider, **the real Google call is not yet verified live** (see §Live verification)
 - Date: 2026-09-27
 - Builds on: [ADR 0004](0004-proactive-buddy.md) (the model interprets, code enforces),
   [ADR 0005](0005-buddy-tool-platform.md) (act tools from one registry)
@@ -66,7 +66,8 @@ Constraints:
    voice) with her quote; code takes the step, enforces the limits (a request past the slowest
    speed or one that changes nothing goes back to the model, which says so), applies it behind
    the context fence (rule 4) and records an undo (`restore_voice`, only while nothing changed
-   the settings since). There is no settings screen for it.
+   the settings since). There is no settings screen for it. _(Amended 2026-09-28: she can also
+   pick the voice with a tap — see §Amendment.)_
 9. **Read along (gap 12)**: Chirp 3 HD gives no word timings, so the highlight is per sentence —
    the sentence being played, which is a real playback position, not an estimate. The app
    exposes `useBuddyVoice()` (`idle | loading | speaking`, the sentences, the current one and
@@ -96,3 +97,36 @@ Before switching `SPEECH_BACKEND=google` on:
 4. On a real iPhone and Android phone: playback through the speaker (also right after the mic
    was used in conversation mode), stop/interrupt, and the fallback in flight mode.
 5. Listen: numbers, fractions and units as the app sends them in words.
+
+## Amendment 2026-09-28 — pick the voice with a tap (setup and settings)
+
+- Status: accepted (owner request, 2026-09-28: "hauptsache man kann verschiedene Stimmen
+  wählen, ggfs. auch direkt im Setup").
+- Asking alone hid the choice: she does not know there are voices to choose from until she
+  hears them. So the curated set is now also **visible**, in one component
+  (`apps/mobile/components/voice/VoicePicker.tsx`) used in two places:
+  1. **Setup**: the last step once the profile exists (for a child after the hand-over, so she
+     picks it herself) — "Wie soll Buddy klingen?", the four voices as choices, `warm` already
+     chosen, so "Weiter" always works. It needs the profile because the sample is read and the
+     choice saved for her; if the app is closed before it, the default simply stays.
+  2. **Settings**: a group "Buddys Stimme", closed with the voice she has as its one line (rule 16,
+     progressive disclosure); opened, the same picker. The speed stays something she asks Buddy
+     for — no second control.
+- **Tap = hear and choose.** A tap reads a short sample in that voice: `POST /voice/speech` with
+  the optional `voice` (validated against the curated names; her settings stay untouched, the
+  audio is cached like any sentence, the same budget applies). The choice itself is
+  `PATCH /buddy/settings {voice, version}`: version-checked (a stale tap is refused), applied in
+  one transaction that also bumps `context_version` — Buddy's context names her voice, so a
+  decision made before the tap (e.g. a `set_voice` "other") is stale and made again (rule 4). An
+  older `set_voice` undo no longer applies over it (its expected version moved on). No parents'
+  PIN: the voice does not loosen contact.
+- **Honest preview**: when Buddy's own voice is not available (not configured, offline, a
+  language it lacks, the budget), the phone's voice reads the sample; all four would then sound
+  alike, and the picker says so ("Gerade liest die Stimme deines Handys vor …") instead of
+  pretending a difference. The choice is stored all the same.
+- The set stays **four voices** (`warm`, `friendly`, `bright`, `clear`): the database constraint
+  of migration `0040` allows exactly these, and the owner was fine with four. The app shows only
+  friendly localized names ("Warm", "Freundlich", "Hell", "Klar"), never the provider's.
+- `set_voice` keeps working unchanged ("andere Stimme", "sprich langsamer").
+- Not verified live: how the four previews actually sound (the provider call itself is still
+  unverified, §Live verification); the walkthrough runs with the phone voice.

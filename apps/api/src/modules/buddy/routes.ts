@@ -474,7 +474,7 @@ buddyRoutes.patch('/memory/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-// ─────────────── contact settings ───────────────
+// ─────────────── settings: contact and Buddy's voice ───────────────
 
 function settingsView(s: SettingsRow, canLoosen: boolean): BuddySettingsView {
   return {
@@ -487,6 +487,7 @@ function settingsView(s: SettingsRow, canLoosen: boolean): BuddySettingsView {
     paused_until: s.paused_until ? s.paused_until.toISOString() : null,
     only_important: s.phone_only_important,
     timezone: s.timezone,
+    voice: s.voice,
     version: s.version,
     can_loosen: canLoosen,
   };
@@ -526,6 +527,9 @@ buddyRoutes.patch('/settings', async (c) => {
             ? new Date(input.paused_until)
             : null,
       phone_only_important: input.only_important ?? before.phone_only_important,
+      // Buddy's voice, picked with a tap (ADR 0008 §Amendment). Buddy's context names it, so
+      // the change moves the context on like every setting here (rule 4).
+      voice: input.voice ?? before.voice,
     };
     if (after.preferred_start >= after.preferred_end) {
       throw new AppError('invalid_input', 'The preferred window must start before it ends');
@@ -534,7 +538,7 @@ buddyRoutes.patch('/settings', async (c) => {
     const row = await tx.one<SettingsRow>(
       `update buddy_settings
           set contact_enabled = $2, quiet_start = $3, quiet_end = $4, preferred_start = $5, preferred_end = $6,
-              avoid_weekdays = $7, paused_until = $8, phone_only_important = $11,
+              avoid_weekdays = $7, paused_until = $8, phone_only_important = $11, voice = $12,
               contact_changed_by = case when contact_enabled <> $2 then $9::text else contact_changed_by end,
               contact_changed_at = case when contact_enabled <> $2 then $10::timestamptz else contact_changed_at end,
               version = version + 1, context_version = context_version + 1
@@ -551,6 +555,7 @@ buddyRoutes.patch('/settings', async (c) => {
         by,
         now,
         after.phone_only_important,
+        after.voice,
       ],
     );
     if (!row.contact_enabled || (row.paused_until && row.paused_until > now)) {
