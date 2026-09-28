@@ -1344,7 +1344,9 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
   never deployed. Its **chat answers are chosen by what the learner wrote**, not by the order
   the specs run in (`src/testing/scenarios/turns.ts`, issue #81): one queue per purpose meant
   that a spec sending one message more shifted every spec after it, so one real fault caused
-  three false ones. A message nobody scripted fails loudly with the sentence it said.
+  three false ones. A message nobody scripted fails loudly with the sentence it said. The other
+  purposes (generation, tutor, hints) still come from a queue, so the walkthrough is run **as a
+  whole** — a single spec on its own gets the answers meant for the run (issue #81).
   When another local server already holds a port — Metro on 8081 while a phone is
   connected, anything else on 8787 — `LB_WEB_PORT` / `LB_API_PORT` move the walkthrough out of the
   way (`scripts/web-walkthrough.sh` exports the web build against the same API port). Without
