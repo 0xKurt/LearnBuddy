@@ -4,6 +4,7 @@
 
 import type { ReactNode } from 'react';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export function NoticeBubble({ text, detail = null, thumb = null, children }: Props) {
+  const { t } = useTranslation('common');
   return (
     <View style={{ alignItems: 'flex-start', gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
@@ -50,7 +52,11 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
             <ZoomablePhoto uri={thumb}>
               <Image
                 source={{ uri: thumb }}
-                accessible={false}
+                // The picture of her page is a thing on the screen, so it carries a name —
+                // an <img> without one is invisible to a screen reader and axe says so
+                // (image-alt, issue #73). expo-image maps this to `alt` on the web.
+                accessible
+                accessibilityLabel={t('common:zoom.photo')}
                 style={{ width: 32, height: 42, borderRadius: 6 }}
                 contentFit="cover"
               />

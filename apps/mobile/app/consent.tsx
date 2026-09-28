@@ -90,14 +90,20 @@ export default function Consent() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 12, gap: 12 }}>
+      {/* The points are read, the decision is pinned below: in German all six fit a
+          360×740 phone, in French and Spanish the longer sentences scroll a little
+          (issue #76 — measured, not guessed). What matters never moves out of sight. */}
+      <ScrollView
+        testID="scroll-list"
+        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 12, gap: 12 }}
+      >
         <View style={{ gap: 8 }}>
           <Text accessibilityRole="header" style={TYPE.display}>
             {t('consent.title')}
           </Text>
           <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('consent.intro')}</Text>
         </View>
-        {/* Six points and the agreement fit a small phone (360×740) without scrolling. */}
+        {/* Six points; in German they fit a small phone (360×740) without scrolling. */}
         <Card padding={14}>
           <View style={{ gap: 8 }}>
             {POINTS.map((p) => (

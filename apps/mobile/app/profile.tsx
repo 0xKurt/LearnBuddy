@@ -11,7 +11,14 @@
 import type { AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ScrollView, Text, View, useWindowDimensions, type TextInput } from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+  type TextInput,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -211,7 +218,9 @@ export default function Profile() {
                   autoCorrect={false}
                   spellCheck={false}
                   autoCapitalize="words"
-                  autoComplete="name-given"
+                  // The phones want RN's token, the browser the HTML one — "name-given" is
+                  // not a valid autocomplete value in HTML (axe: autocomplete-valid, #73).
+                  autoComplete={Platform.OS === 'web' ? 'given-name' : 'name-given'}
                   textContentType="givenName"
                   returnKeyType="done"
                   accessibilityLabel={

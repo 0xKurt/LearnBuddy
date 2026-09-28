@@ -7,6 +7,7 @@
 
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ScriptedGateway } from '../fakes.js';
+import { scriptGenerations } from './generations.js';
 import { says, scriptTurns } from './turns.js';
 
 const base = {
@@ -30,8 +31,9 @@ function lastText(req: LlmRequest): string {
 export function scriptLearningModes(llm: ScriptedGateway): void {
   // "Erklär mir den Dativ" — since buddy.22 the explanation is the chat answer itself
   // (owner decision 28.09.); what can be started afterwards is practice on it.
-  llm.script('explain', {
-    json: {
+  scriptGenerations({
+    when: /Dativ/i,
+    answer: () => ({
       usable: true,
       title: 'Der Dativ',
       subject: { name: 'Deutsch', kind: 'german' },
@@ -54,11 +56,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           topic: 'Dativ',
         },
       ],
-    },
+    }),
   });
   // Homework typed: 7 cm × 4 cm
-  llm.script('explain', {
-    json: {
+  scriptGenerations({
+    when: /Rechteck/i,
+    answer: () => ({
       usable: true,
       title: 'Flächeninhalt Rechteck',
       subject: { name: 'Mathe', kind: 'math' },
@@ -73,7 +76,7 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           topic: 'Flächeninhalt',
         },
       ],
-    },
+    }),
   });
   // "Anders erklären" under the Dativ explanation (tests/web/modes.spec.ts taps "Mit Beispiel").
   llm.byDefault('reexplain', (req) =>
@@ -103,8 +106,9 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       : { items: [] },
   );
   // Practice without a photo: fractions, with a figure.
-  llm.script('explain', {
-    json: {
+  scriptGenerations({
+    when: /Brüche|Bruch/i,
+    answer: () => ({
       usable: true,
       title: 'Brüche vergleichen',
       subject: { name: 'Mathe', kind: 'math' },
@@ -128,11 +132,35 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           },
         },
       ],
-    },
+    }),
+  });
+  // "Die wackligen nochmal üben" after the test.
+  scriptGenerations({
+    // Only the "again" request carries the block about what she just worked on — the
+    // test itself mentions the Romans too, and its rule stands below this one.
+    when: /SHE JUST WORKED ON THESE[\s\S]*R(ö|o)m/i,
+    answer: () => ({
+      usable: true,
+      title: 'Gründung Roms',
+      subject: { name: 'Geschichte', kind: 'history' },
+      intro: null,
+      items: [
+        {
+          ...base,
+          kind: 'multiple_choice',
+          prompt: 'Wer gründete Rom der Sage nach?',
+          answer: 'Romulus',
+          choices: ['Romulus', 'Hannibal'],
+          correct_choice: 0,
+          topic: 'Gründung Roms',
+        },
+      ],
+    }),
   });
   // Practice test: no hints, results at the end.
-  llm.script('explain', {
-    json: {
+  scriptGenerations({
+    when: /Römer/i,
+    answer: () => ({
       usable: true,
       title: 'Die Römer – Probetest',
       subject: { name: 'Geschichte', kind: 'history' },
@@ -155,27 +183,7 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           topic: 'Gründung Roms',
         },
       ],
-    },
-  });
-  // "Die wackligen nochmal üben" after the test.
-  llm.script('explain', {
-    json: {
-      usable: true,
-      title: 'Gründung Roms',
-      subject: { name: 'Geschichte', kind: 'history' },
-      intro: null,
-      items: [
-        {
-          ...base,
-          kind: 'multiple_choice',
-          prompt: 'Wer gründete Rom der Sage nach?',
-          answer: 'Romulus',
-          choices: ['Romulus', 'Hannibal'],
-          correct_choice: 0,
-          topic: 'Gründung Roms',
-        },
-      ],
-    },
+    }),
   });
   // Said in the chat instead of a tile: Buddy answers with a start button (offer_learning).
   // By what she wrote, never by order (issue #81).
@@ -218,7 +226,9 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       answer: says('Diese Woche steht noch nichts an – magst du etwas üben?'),
     },
   );
-  llm.script('transcribe', { json: { heard_speech: true, text: 'Was steht diese Woche an?' } });
+  llm.byDefault('transcribe', {
+    json: { heard_speech: true, text: 'Was steht diese Woche an?' },
+  });
   // Tutor: hints for homework (never the solution), and the explain question.
   const hint = (req: LlmRequest) => {
     const text = lastText(req).toLowerCase();
@@ -249,12 +259,15 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       revealed_answer: false,
     };
   };
-  llm.script('tutor', hint, hint, hint, hint);
+  // By rule, not by count: how many hints a run asks for depends on timing, and a queue
+  // that runs dry fails the *next* spec instead of this one (issue #81).
+  llm.byDefault('tutor', hint);
 
   // tests/web/offline.spec.ts: asked in the chat, then two short questions answered offline.
   // tests/web/offline.spec.ts: two short questions, both answered offline.
-  llm.script('explain', {
-    json: {
+  scriptGenerations({
+    when: /Hauptstädte/i,
+    answer: () => ({
       usable: true,
       title: 'Hauptstädte',
       subject: { name: 'Erdkunde', kind: 'geography' },
@@ -275,6 +288,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           topic: 'Hauptstädte',
         },
       ],
-    },
+    }),
   });
 }

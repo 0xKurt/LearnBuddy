@@ -37,6 +37,8 @@ export function LanguageFlags({
             accessibilityRole="radio"
             accessibilityLabel={l.label}
             accessibilityState={{ selected: on, checked: on }}
+            // The web needs the attribute itself (axe: aria-required-attr, issue #73).
+            aria-checked={on}
           >
             {({ pressed }) => (
               <View

@@ -19,6 +19,9 @@ export function Checkbox({
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
+      // An unticked box must say so, not stay silent: on the web `accessibilityState`
+      // alone leaves out `aria-checked` (axe: aria-required-attr, issue #73).
+      aria-checked={checked}
       accessibilityLabel={label}
       onPress={() => onChange(!checked)}
       hitSlop={6}

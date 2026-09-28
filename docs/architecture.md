@@ -504,7 +504,13 @@ multi-region endpoint `eu`, not in `europe-west4` (probed 2026-09-26). A route c
 the task's eval passes on it (`evals/buddy`, `evals/tutor`, `evals/speak`, `evals/speed`).
 `evals/lena` plays whole journeys of a 12-year-old against the live model (child-like typing,
 photographed sheets, spoken answers, begging for the solution) and writes a transcript to read;
-report in `reports/Lena-Durchlauf.md`. `evals/buddy`, `evals/tutor`, `evals/voice`, `evals/lena`
+report in `reports/Lena-Durchlauf.md`. **`evals/content` asks whether the questions fit the
+sheet** (issue #77, from the owner's complaint that his daughter was asked things she had never
+had): a worksheet is rendered and photographed as the app does it, then both halves are judged
+by a second model pass against a fixed rubric — the questions the app _read_ from the sheet, and
+the ones it _wrote_ from that session ("Mehr davon", where #58 lived). On the sheet's topics ·
+answerable from it · right for the class · one correct answer · clean German; every finding
+names the question and why. `evals/buddy`, `evals/tutor`, `evals/voice`, `evals/lena`
 and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/speak`,
 `evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
@@ -1388,9 +1394,23 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
   never deployed. Its **chat answers are chosen by what the learner wrote**, not by the order
   the specs run in (`src/testing/scenarios/turns.ts`, issue #81): one queue per purpose meant
   that a spec sending one message more shifted every spec after it, so one real fault caused
-  three false ones. A message nobody scripted fails loudly with the sentence it said. The other
-  purposes (generation, tutor, hints) still come from a queue, so the walkthrough is run **as a
-  whole** — a single spec on its own gets the answers meant for the run (issue #81).
+  three false ones. A message nobody scripted fails loudly with the sentence it said. **Prepared
+  practice is matched the same way** (`scenarios/generations.ts`): the generation request carries
+  what was asked for, so a spec asking for fractions can never get the set meant for another —
+  the queue drifted as soon as Buddy began preparing an offer in the background (#48), because
+  _when_ a generation happens then depends on timing. The remaining purposes (tutor, hints,
+  reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
+  **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
+  **Every language is measured, not only German** (`tests/web/languages.spec.ts`, issue #76):
+  registration — welcome, the privacy step, the profile step — is walked in French, Spanish and
+  Italian on both phone sizes, because that is where the text is longest ("Répète le mot de
+  passe", "¿Cómo se llama tu hijo o tu hija?"). It found the privacy step overflowing a 360×740
+  phone by 45–78 px in all three: the points are a list she reads now (`scroll-list`), while the
+  agreement and the button stay pinned — in German nothing scrolls at all.
+  Every stop that takes a screenshot also runs **axe** (`@axe-core/playwright`, issue #73):
+  roles, names, labels and contrast as a machine sees them; serious and critical findings fail
+  the walkthrough, everything is written to `test-results/web/a11y.jsonl`. Rules that do not
+  apply to a React-Native-web app (landmarks, a document heading, the meta viewport) are off.
   When another local server already holds a port — Metro on 8081 while a phone is
   connected, anything else on 8787 — `LB_WEB_PORT` / `LB_API_PORT` move the walkthrough out of the
   way (`scripts/web-walkthrough.sh` exports the web build against the same API port). Without

@@ -112,6 +112,9 @@ export function Btn({
         ...(selected === undefined ? {} : { selected, checked: selected }),
         ...(expanded === undefined ? {} : { expanded }),
       }}
+      // A radio must say whether it is chosen; on the web `accessibilityState.checked`
+      // alone does not become `aria-checked` (axe: aria-required-attr, issue #73).
+      {...(selected === undefined ? {} : { 'aria-checked': selected })}
       android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
       style={{
         alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',

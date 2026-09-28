@@ -181,6 +181,15 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
     expect(parked).toEqual([]);
   });
 
+  it("a practice of one sheet carries the sheet's name (found by evals/content, #77)", async () => {
+    const m = await send(env, lena, { photos: 2 });
+    expect(m.view.title).toBeTruthy();
+    const started = await lena.api.post<SessionView>('/practice/sessions', { material_id: m.id });
+    expect(started.status).toBe(201);
+    // Before this the screen stood over the first question with an empty headline.
+    expect(started.body.title).toBe(m.view.title);
+  });
+
   it('"Blatt löschen" deletes the transcript, the questions and her answers — also from the export (D-7)', async () => {
     const m = await send(env, lena, { photos: 2 });
     expect(m.view).toMatchObject({ status: 'ready', item_count: 2 });

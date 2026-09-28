@@ -66,8 +66,12 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
     <View style={{ alignItems: 'center', gap: 24 }}>
       <View
         accessible
+        // How far she is, as one thing with a name and a value — a bare label on a box is
+        // not allowed ARIA (axe: aria-prohibited-attr, issue #73).
+        accessibilityRole="progressbar"
         accessibilityLiveRegion="polite"
         accessibilityLabel={t('a11y.pin_progress', { count: entered.length })}
+        accessibilityValue={{ min: 0, max: 4, now: entered.length }}
         style={{ flexDirection: 'row', gap: 14 }}
       >
         {[0, 1, 2, 3].map((i) => (
@@ -93,41 +97,44 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
           rowGap: 14,
         }}
       >
-        {KEYS.map((k, i) => (
-          <Pressable
-            key={`${k.label}-${i}`}
-            onPress={() => press(k)}
-            disabled={disabled || k.value === 'none'}
-            accessibilityRole="button"
-            accessibilityLabel={k.value === 'back' ? t('a11y.pin_delete') : k.label}
-            accessibilityElementsHidden={k.value === 'none'}
-            importantForAccessibility={k.value === 'none' ? 'no-hide-descendants' : 'auto'}
-            style={{ opacity: disabled ? 0.4 : 1 }}
-          >
-            {({ pressed }) => (
-              <View
-                style={{
-                  width: 80,
-                  height: 60,
-                  borderRadius: 30,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor:
-                    k.value === 'none' ? 'transparent' : pressed ? LB.primaryLt : LB.paper,
-                  ...(k.value === 'digit' ? SHADOW.soft : null),
-                }}
-              >
-                {/* Fixed key boxes: the digit grows with the system text only this far (M-84). */}
-                <Text
-                  maxFontSizeMultiplier={MAX_FONT_SCALE}
-                  style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}
+        {KEYS.map((k, i) =>
+          // The empty place in the grid is a gap, not a button without a name
+          // (axe: button-name, issue #73).
+          k.value === 'none' ? (
+            <View key={`gap-${i}`} style={{ width: 80, height: 60 }} />
+          ) : (
+            <Pressable
+              key={`${k.label}-${i}`}
+              onPress={() => press(k)}
+              disabled={disabled}
+              accessibilityRole="button"
+              accessibilityLabel={k.value === 'back' ? t('a11y.pin_delete') : k.label}
+              style={{ opacity: disabled ? 0.4 : 1 }}
+            >
+              {({ pressed }) => (
+                <View
+                  style={{
+                    width: 80,
+                    height: 60,
+                    borderRadius: 30,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: pressed ? LB.primaryLt : LB.paper,
+                    ...(k.value === 'digit' ? SHADOW.soft : null),
+                  }}
                 >
-                  {k.label}
-                </Text>
-              </View>
-            )}
-          </Pressable>
-        ))}
+                  {/* Fixed key boxes: the digit grows with the system text only this far (M-84). */}
+                  <Text
+                    maxFontSizeMultiplier={MAX_FONT_SCALE}
+                    style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}
+                  >
+                    {k.label}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          ),
+        )}
       </View>
     </View>
   );

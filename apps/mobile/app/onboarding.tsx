@@ -96,7 +96,13 @@ export default function Onboarding() {
         }}
       >
         <View
+          // The dots say where she is; `accessible` makes them one thing with a name
+          // instead of a bare label on a box, which ARIA forbids (axe: aria-prohibited-attr,
+          // issue #73).
+          accessible
+          accessibilityRole="progressbar"
           accessibilityLabel={t('onboarding.step_label', { n: step + 1, count: STEPS.length })}
+          accessibilityValue={{ min: 1, max: STEPS.length, now: step + 1 }}
           style={{ flexDirection: 'row', gap: 8 }}
         >
           {STEPS.map((s, i) => (

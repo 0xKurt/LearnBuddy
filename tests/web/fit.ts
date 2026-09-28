@@ -10,10 +10,46 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
+import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
 export const SHOTS = join(__dirname, '../../test-results/web/shots');
 const REPORT = join(__dirname, '../../test-results/web/fit.jsonl');
+const A11Y = join(__dirname, '../../test-results/web/a11y.jsonl');
+
+/**
+ * Roles, names and colours as a machine sees them (issue #73): axe runs at every stop the
+ * walkthrough takes a picture of. Rules that do not apply to a React-Native-web app are off:
+ * the page is one view without landmarks or a document heading, and the viewport is a phone.
+ */
+const AXE_OFF = [
+  'region',
+  'landmark-one-main',
+  'page-has-heading-one',
+  'html-has-lang',
+  'document-title',
+  'meta-viewport',
+];
+
+/** Serious and critical findings at this stop; everything is written to a11y.jsonl. */
+export async function a11y(page: Page, name: string): Promise<string[]> {
+  const res = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .disableRules(AXE_OFF)
+    .analyze();
+  const found = res.violations.map((v) => ({
+    id: v.id,
+    impact: v.impact ?? 'minor',
+    nodes: v.nodes.length,
+    help: v.help,
+    where: v.nodes.slice(0, 3).map((n) => n.target.join(' ')),
+  }));
+  mkdirSync(SHOTS, { recursive: true });
+  appendFileSync(A11Y, `${JSON.stringify({ name, found })}\n`);
+  return found
+    .filter((f) => f.impact === 'serious' || f.impact === 'critical')
+    .map((f) => `${f.id} (${f.nodes}×): ${f.help}`);
+}
 
 export const PHONES = [
   { width: 390, height: 844 }, // iPhone 12–15
@@ -90,6 +126,14 @@ export async function shot(
   if (size) await page.setViewportSize(size);
   const tooLong = found.filter((o) => !o.allowed && !(opened && o.label !== 'page'));
   expect(tooLong, `${name}: must fit the screen without scrolling`).toEqual([]);
+  // What a screen reader would stumble over here (issue #73). `LB_A11Y_SOFT=1` collects
+  // every stop instead of stopping at the first one — for a triage round, never for CI.
+  const serious = await a11y(page, name);
+  if (process.env.LB_A11Y_SOFT === '1') {
+    if (serious.length > 0) console.log(`A11Y ${name}: ${serious.join(' · ')}`);
+  } else {
+    expect(serious, `${name}: accessibility`).toEqual([]);
+  }
   return found;
 }
 

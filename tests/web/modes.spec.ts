@@ -89,6 +89,13 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe eintippen' }).click();
   await expect(page.getByText('Welche Aufgabe? Schreib sie ab.')).toBeVisible();
+  // A sheet takes the keyboard with it (issue #73): the first Tab lands inside it, not
+  // somewhere on the screen behind it.
+  await page.keyboard.press('Tab');
+  expect(
+    await page.evaluate(() => !!document.activeElement?.closest('[aria-modal="true"]')),
+    'focus after opening a sheet',
+  ).toBe(true);
   await page
     .getByRole('textbox')
     .last()

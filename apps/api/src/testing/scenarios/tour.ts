@@ -5,6 +5,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import type { ScriptedGateway } from '../fakes.js';
+import { scriptGenerations } from './generations.js';
 import { says, scriptTurns } from './turns.js';
 
 const remember = (statement: string, quote: string) => ({
@@ -39,8 +40,9 @@ export function scriptTour(llm: ScriptedGateway): void {
       ),
     },
   );
-  llm.script('explain', {
-    json: {
+  scriptGenerations({
+    when: /Nomen/i,
+    answer: () => ({
       usable: true,
       title: 'Nomen',
       subject: { name: 'Deutsch', kind: 'german' },
@@ -62,11 +64,12 @@ export function scriptTour(llm: ScriptedGateway): void {
           source_excerpt: null,
         },
       ],
-    },
+    }),
   });
   // Pronunciation: one sentence, judged "almost" with a tip for one word.
-  llm.script('explain', {
-    json: {
+  scriptGenerations({
+    when: /weather|Englisch/i,
+    answer: () => ({
       usable: true,
       title: 'Englisch sprechen',
       subject: { name: 'Englisch', kind: 'english' },
@@ -88,7 +91,7 @@ export function scriptTour(llm: ScriptedGateway): void {
           source_excerpt: null,
         },
       ],
-    },
+    }),
   });
   llm.script('pronounce', {
     json: {

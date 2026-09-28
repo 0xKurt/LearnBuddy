@@ -153,6 +153,8 @@ export class MaterialUpload {
   private readonly link: MaterialLink;
   /** The API has been told she asked to send (so the home may say "unterwegs"). */
   private requested = false;
+  /** Pages go up one push at a time (they arrive while she keeps taking photos). */
+  private pushing: Promise<void> = Promise.resolve();
 
   constructor(files: readonly UploadFile[], link: MaterialLink, requestId: string = newId()) {
     this.files = files.map((f) => ({ ...f }));
@@ -200,18 +202,28 @@ export class MaterialUpload {
    * Pages that are ready go up now, while she takes the next one. Nothing is submitted
    * and nothing is claimed: until `send()` the API knows she has not asked for it yet.
    * Failures are not raised here — `send()` does the same work again and reports properly.
+   *
+   * One at a time: two pages ready in the same breath would otherwise reserve twice and
+   * upload the same position twice.
    */
-  async pushReady(): Promise<void> {
-    if (this.submitTried) return;
-    try {
-      await this.deliver(() => undefined);
-    } catch {
-      // A page that did not make it now simply goes with the send.
-    }
+  pushReady(): Promise<void> {
+    this.pushing = this.pushing
+      .then(async () => {
+        if (this.submitTried) return;
+        try {
+          await this.deliver(() => undefined);
+        } catch {
+          // A page that did not make it now simply goes with the send.
+        }
+      })
+      .catch(() => undefined);
+    return this.pushing;
   }
 
   /** Resolves once the API has accepted the photos for reading. */
   async send(onProgress: (p: SendProgress) => void): Promise<void> {
+    // A page still going up joins this send instead of racing it.
+    await this.pushing;
     const materialId = await this.deliver(onProgress, true);
     onProgress({ step: 'submitting' });
     this.submitTried = true;

@@ -245,12 +245,26 @@ export async function startManual(
   );
   if (itemIds.length === 0)
     throw new AppError('not_found', 'No questions available yet', { reason: 'no_questions' });
+  // Practising one sheet: the sheet's name is the session's name — the screen said nothing
+  // above the first question before (found by evals/content, issue #77).
+  const sheet = scope.materialId
+    ? await deps.db.maybeOne<{ title: string | null }>(
+        `select title from materials where id = $1 and learner_id = $2`,
+        [scope.materialId, learnerId],
+      )
+    : null;
   return deps.db.tx(async (tx) => {
     const id = await createSession(
       tx,
       learnerId,
       itemIds,
-      { stepId: null, goalId: scope.goalId, mode },
+      {
+        stepId: null,
+        goalId: scope.goalId,
+        mode,
+        ...(scope.materialId ? { materialId: scope.materialId } : {}),
+        ...(sheet?.title ? { title: sheet.title } : {}),
+      },
       now,
     );
     await bumpContext(tx, learnerId);
