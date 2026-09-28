@@ -458,7 +458,9 @@ export default function TalkScreen() {
           alignItems: 'center',
           justifyContent: 'space-around',
           paddingHorizontal: SPACE.lg,
-          paddingBottom: Math.max(insets.bottom, SPACE.sm),
+          // 12 like before on a phone without a gesture bar; with one, the device's inset
+          // replaces it instead of adding to it (the fit check is exact to the pixel).
+          paddingBottom: Math.max(insets.bottom, SPACE.md),
           paddingTop: SPACE.sm,
         }}
       >
