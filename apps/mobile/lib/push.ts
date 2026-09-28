@@ -56,9 +56,12 @@ import {
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
     // In the foreground the message is already in the Buddy thread.
+    // No banner over the app (the message lands in the Buddy thread) — but it
+    // stays in the tray: destroying it entirely made a message received on any
+    // other screen unrecoverable (audit: foreground notifications destroyed).
     handleNotification: async () => ({
       shouldShowBanner: false,
-      shouldShowList: false,
+      shouldShowList: true,
       shouldPlaySound: false,
       shouldSetBadge: false,
     }),
@@ -84,9 +87,25 @@ function within<T>(p: Promise<T>, ms = PUSH_TIMEOUT_MS): Promise<T> {
  */
 export async function registerPushCategories(): Promise<void> {
   if (Platform.OS === 'web') return;
+  // The channel exists from the first start (not only once a token is fetched);
+  // HIGH: a reminder she asked for may appear as a heads-up.
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(PUSH_CHANNEL_ID, {
+      name: 'Buddy',
+      description: i18n.t('common:push.channel_description'),
+      importance: Notifications.AndroidImportance.HIGH,
+    }).catch(() => undefined);
+  }
   for (const c of categorySpecs((key) => i18n.t(`common:${key}`))) {
     await Notifications.setNotificationCategoryAsync(c.id, c.actions).catch(() => undefined);
   }
+}
+
+/** The OS will not ask again (Android 13 asks once): only the settings help now. */
+export async function pushPermissionBlocked(): Promise<boolean> {
+  if (Platform.OS === 'web' || !Device.isDevice) return false;
+  const p = await Notifications.getPermissionsAsync().catch(() => null);
+  return p !== null && !p.granted && p.canAskAgain === false;
 }
 
 export async function clearLegacyLocalNotifications(): Promise<void> {
@@ -132,12 +151,7 @@ const readQueue = () => updateQueue((q) => q);
 async function expoToken(): Promise<string> {
   const id = projectId();
   if (!id) throw new Error('no project id');
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(PUSH_CHANNEL_ID, {
-      name: 'Buddy',
-      importance: Notifications.AndroidImportance.DEFAULT,
-    });
-  }
+  // The channel is created in registerPushCategories (on every start).
   // Offline on iOS this may never answer: always bounded.
   return (await within(Notifications.getExpoPushTokenAsync({ projectId: id }))).data;
 }

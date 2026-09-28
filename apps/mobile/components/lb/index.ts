@@ -5,6 +5,7 @@ export { Chip } from './Chip.js';
 export { CircleBtn } from './CircleBtn.js';
 export { EmptyState } from './EmptyState.js';
 export { ErrorBoundary } from './ErrorBoundary.js';
+export { ErrorNote } from './ErrorNote.js';
 export { Icon } from './Icon.js';
 export { LbTextInput } from './LbTextInput.js';
 export { LoadingState } from './LoadingState.js';

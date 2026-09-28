@@ -32,6 +32,11 @@ export function takeIncoming(next: Taker): () => void {
   };
 }
 
+/** Files wait for a capture screen (e.g. shared while signed out). */
+export function hasIncoming(): boolean {
+  return waiting.length > 0;
+}
+
 /** Signed out: nothing handed over stays behind for the next person. */
 export function clearIncoming(): void {
   waiting = [];

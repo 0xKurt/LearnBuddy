@@ -40,9 +40,14 @@ export function Section({
           ) : null}
           <Text
             accessibilityRole="header"
-            style={[TYPE.label, { flex: 1, color: LB.ink2, letterSpacing: 0.8 }]}
+            // textTransform, not toUpperCase(): some screen readers spell an
+            // all-caps string letter by letter.
+            style={[
+              TYPE.label,
+              { flex: 1, color: LB.ink2, letterSpacing: 0.8, textTransform: 'uppercase' },
+            ]}
           >
-            {title.toUpperCase()}
+            {title}
           </Text>
         </View>
         {right}

@@ -8,11 +8,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialItemCard } from '../../components/library/MaterialItemCard.js';
 import { Btn } from '../../components/lb/Btn.js';
 import { Card } from '../../components/lb/Card.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
+import { ErrorNote } from '../../components/lb/ErrorNote.js';
 import { LbTextInput } from '../../components/lb/LbTextInput.js';
 import { QuestionsSkeleton } from '../../components/lb/Skeletons.js';
 import { Screen } from '../../components/lb/Screen.js';
@@ -35,22 +37,12 @@ function refreshAround(id: string): void {
   void queryClient.invalidateQueries({ queryKey: keys.home });
 }
 
-function ErrorNote({ text }: { text: string | null }) {
-  if (!text) return null;
-  return (
-    <View accessibilityLiveRegion="polite">
-      <Card tone="blush" padding={14} radius={18}>
-        <Text style={TYPE.body}>{text}</Text>
-      </Card>
-    </View>
-  );
-}
-
 export default function MaterialScreen() {
   const { t } = useTranslation(['library', 'common']);
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
   const query = useMaterialItems(id);
+  const insets = useSafeAreaInsets();
   const [pulling, setPulling] = useState(false);
   // One change at a time, even on a double tap.
   const acting = useRef(false);
@@ -198,7 +190,13 @@ export default function MaterialScreen() {
     content = (
       <ScrollView
         testID="scroll-list"
-        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 14, flexGrow: 1 }}
+        contentContainerStyle={{
+          padding: 16,
+          // Edge-to-edge: the last card must clear the Android navigation bar.
+          paddingBottom: insets.bottom + 32,
+          gap: 14,
+          flexGrow: 1,
+        }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
       >
         <View style={{ gap: 6, marginBottom: 8, paddingHorizontal: 4 }}>
@@ -283,7 +281,7 @@ export default function MaterialScreen() {
         ) : null}
         <Text style={TYPE.body}>{t('library:item_delete_sheet.body')}</Text>
         <ErrorNote text={deleteError} />
-        <Btn variant="danger" pill full disabled={deleting} onPress={() => void confirmDelete()}>
+        <Btn variant="danger" pill full busy={deleting} onPress={() => void confirmDelete()}>
           {t('library:item_delete_sheet.confirm')}
         </Btn>
       </Sheet>
@@ -294,7 +292,7 @@ export default function MaterialScreen() {
         closeLabel={t('common:actions.cancel')}
         onClose={() => setRenameOpen(false)}
         footer={
-          <Btn pill full disabled={renaming || !draftOk} onPress={() => void saveRename()}>
+          <Btn pill full busy={renaming} disabled={!draftOk} onPress={() => void saveRename()}>
             {t('common:actions.save')}
           </Btn>
         }

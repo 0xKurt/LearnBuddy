@@ -4,6 +4,7 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
@@ -21,6 +22,7 @@ import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
 export default function Pin() {
+  const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation('auth');
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -69,7 +71,9 @@ export default function Pin() {
   }
 
   // VoiceOver hears the error too, again after each wrong attempt (audit M-80).
-  useAnnounce(error, { key: attempt, liveRegion: false });
+  // liveRegion: true — the assertive region below already speaks on Android;
+  // this call then only covers iOS, so TalkBack never hears it twice.
+  useAnnounce(error, { key: attempt, liveRegion: true });
 
   return (
     <Screen>
@@ -77,7 +81,9 @@ export default function Pin() {
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 20,
-          paddingVertical: 24,
+          paddingTop: 24,
+          // Edge-to-edge: "Abbrechen" must clear the Android navigation bar.
+          paddingBottom: insets.bottom + 24,
           gap: 18,
           alignItems: 'center',
           justifyContent: 'center',

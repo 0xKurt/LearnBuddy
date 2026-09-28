@@ -57,6 +57,7 @@ import {
   markCameraOpen,
   takePendingPhotos,
 } from '../lib/capture/pendingCamera.js';
+import { useAnnounce } from '../lib/announce.js';
 import { messageFor } from '../lib/errors.js';
 import type { PhotoProblem } from '../lib/photo/quality.js';
 import { LB } from '../lib/theme/colors.js';
@@ -142,6 +143,15 @@ export default function CaptureScreen() {
   /** The API refused these files (not a network problem): she changes them first. */
   const [refused, setRefused] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
+  // iOS has no live regions: preparation progress and a blocked camera say
+  // themselves (lib/announce.ts suppresses the Android live-region duplicate).
+  useAnnounce(
+    preparing
+      ? t('capture:preparing', { current: preparing.current, count: preparing.total })
+      : null,
+    { key: preparing?.current },
+  );
+  useAnnounce(cameraBlocked ? t('capture:permission.camera') : null);
   // One upload per photo set: a retry reuses it (same client_request_id); a changed set drops it.
   const upload = useRef<MaterialUpload | null>(null);
   const picking = useRef(false);

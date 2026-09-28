@@ -125,6 +125,8 @@
   },
   "thread": {
     "title": "Discussion avec Buddy",
+    "empty_title": "Pas encore de conversation",
+    "empty_body": "Ce dont tu parles avec Buddy se retrouvera ici plus tard.",
     "typing": "Buddy écrit…",
     "failed": "Pas arrivé",
     "resend": "Renvoyer",

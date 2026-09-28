@@ -8,6 +8,8 @@ export const LB = {
   ink: '#1f1b2e',
   ink2: '#5d5873',
   ink3: '#8e89a3',
+  // Placeholder text (≥ 4.5:1 on paper and bg; ink3 is for hairlines, too light for text).
+  placeholder: '#6f6a85',
   ink4: '#d4d0e2',
   paper: '#ffffff',
   bg: '#faf7fd',
@@ -18,8 +20,9 @@ export const LB = {
   primaryLt: '#ebe5fc',
   // The soft violet halo around a focused field (components/lb/LbTextInput.tsx).
   ring: 'rgba(106,72,215,0.22)',
-  // A text field's resting border: soft, but visible on white and on the page.
-  field: 'rgba(60,40,120,0.16)',
+  // A text field's resting border: ≥ 3:1 on white (WCAG 1.4.11), so the field
+  // boundary is visible without relying on the placeholder.
+  field: 'rgba(60,40,120,0.45)',
   // The page seen through a hint laid over it (a file dragged over capture in the browser).
   veil: 'rgba(250,247,253,0.96)',
   success: '#6b8d6a',

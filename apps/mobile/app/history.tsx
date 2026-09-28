@@ -6,11 +6,13 @@
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { FlashList } from '@shopify/flash-list';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { RefreshControl, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Conversation, DayLine } from '../components/buddy/Conversation.js';
 import { Btn } from '../components/lb/Btn.js';
+import { EmptyState } from '../components/lb/EmptyState.js';
 import { ChatSkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { toast } from '../components/lb/Toast.js';
@@ -23,25 +25,51 @@ import { mergeThread } from '../lib/threadMerge.js';
 
 export default function History() {
   const { t } = useTranslation('buddy');
+  const insets = useSafeAreaInsets();
   const home = useHome();
   /** Every message seen here: older pages and each live window, once each. */
   const [seen, setSeen] = useState<MessageView[]>([]);
   const [hasMore, setHasMore] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const live = home.data?.thread;
   useEffect(() => {
     if (live) setSeen((s) => mergeThread(s, live));
   }, [live]);
 
-  if (home.isPending || !home.data)
+  // A failed background refresh keeps what is on screen; the error state is only
+  // for a thread that never loaded (same shape as app/memory.tsx).
+  if (!home.data)
     return (
       <Screen back title={t('thread.title')}>
-        <ChatSkeleton label={t('common:loading')} rows={6} />
+        {home.error ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <EmptyState
+              title={messageFor(home.error)}
+              action={
+                <Btn pill center onPress={() => void home.refetch()}>
+                  {t('common:actions.retry')}
+                </Btn>
+              }
+            />
+          </View>
+        ) : (
+          <ChatSkeleton label={t('common:loading')} rows={6} />
+        )}
       </Screen>
     );
   const messages = mergeThread(seen, home.data.thread);
   const more = hasMore ?? home.data.thread_has_more;
+
+  async function refresh() {
+    setRefreshing(true);
+    try {
+      await home.refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   async function loadMore() {
     const first = messages[0];
@@ -102,7 +130,12 @@ export default function History() {
         extraData={{ undoing, loading, more }}
         // A chat: it opens at the newest message; older pages load above without a jump.
         maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
-        contentContainerStyle={{ padding: 16 }}
+        // Edge-to-edge: the newest message must clear the Android gesture/3-button bar.
+        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
+        ListEmptyComponent={
+          <EmptyState orb title={t('thread.empty_title')} body={t('thread.empty_body')} />
+        }
         ListHeaderComponent={
           more ? (
             <View style={{ alignItems: 'center', marginBottom: 16 }}>

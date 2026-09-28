@@ -13,8 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCard } from '../components/library/MaterialCard.js';
 import { Btn } from '../components/lb/Btn.js';
-import { Card } from '../components/lb/Card.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
+import { ErrorNote } from '../components/lb/ErrorNote.js';
 import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Section } from '../components/lb/Section.js';
@@ -313,14 +313,8 @@ export default function LibraryScreen() {
         onClose={() => setSheetOpen(false)}
       >
         <Text style={TYPE.body}>{t('library:delete_sheet.body', { title: deleteTitle })}</Text>
-        {deleteError ? (
-          <View accessibilityLiveRegion="polite">
-            <Card tone="blush" padding={14} radius={18}>
-              <Text style={TYPE.body}>{deleteError}</Text>
-            </Card>
-          </View>
-        ) : null}
-        <Btn variant="danger" pill full disabled={deleting} onPress={() => void confirmDelete()}>
+        <ErrorNote text={deleteError} />
+        <Btn variant="danger" pill full busy={deleting} onPress={() => void confirmDelete()}>
           {t('library:delete_sheet.confirm')}
         </Btn>
       </Sheet>

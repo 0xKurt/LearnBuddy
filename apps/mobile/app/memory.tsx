@@ -9,11 +9,10 @@ import type { MemoryView, UpdateMemoryRequest } from '@learnbuddy/shared-types/c
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, RefreshControl, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
-import { Card } from '../components/lb/Card.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { MemorySkeleton } from '../components/lb/Skeletons.js';
@@ -63,6 +62,7 @@ const AFTER_KEYBOARD_MS = 280;
 export default function MemoryScreen() {
   const { t } = useTranslation(['memory', 'common']);
   const memory = useMemory();
+  const insets = useSafeAreaInsets();
   const list = useRef<FlashListRef<Row>>(null);
   const entering = useListEntrance(memory.data !== undefined);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -160,19 +160,8 @@ export default function MemoryScreen() {
           </Text>
         );
       case 'empty':
-        return (
-          <Card padding={24}>
-            <View style={{ gap: 10, alignItems: 'center' }}>
-              <BuddyOrb size={56} />
-              <Text accessibilityRole="header" style={[TYPE.title, { textAlign: 'center' }]}>
-                {t('memory:empty_title')}
-              </Text>
-              <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
-                {t('memory:empty_body')}
-              </Text>
-            </View>
-          </Card>
-        );
+        // The one shared empty state, not a bespoke card (same action → same component).
+        return <EmptyState orb title={t('memory:empty_title')} body={t('memory:empty_body')} />;
       case 'lasting':
         return <View style={{ marginBottom: 12 }}>{heading(t('memory:lasting'))}</View>;
       case 'temporary':
@@ -231,7 +220,7 @@ export default function MemoryScreen() {
           keyExtractor={(row) => row.key}
           getItemType={(row) => row.type}
           extraData={{ editingId, draft, savingId }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 48 }}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />

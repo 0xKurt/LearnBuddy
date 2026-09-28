@@ -45,6 +45,9 @@ export function ShareIntake() {
       return;
     }
     if (!currentSession()) {
+      // The files stay queued (lib/capture/incoming.ts); after sign-in the
+      // layout opens capture with them (share-dropped-when-signed-out).
+      handIn(files);
       toast.show(t('share.signed_out'));
       return;
     }

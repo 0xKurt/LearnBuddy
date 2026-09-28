@@ -5,10 +5,9 @@
 // icon turns into a stop square and the timer runs; while the words are being
 // written down, a small spinner sits in the button.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  AccessibilityInfo,
   ActivityIndicator,
   Animated,
   Easing,
@@ -18,6 +17,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { formatClock } from '../../lib/speech/voice.js';
@@ -29,34 +29,22 @@ import type { VoiceInput } from './useVoiceInput.js';
 
 function PulseRing({ size }: { size: number }) {
   const progress = useRef(new Animated.Value(0)).current;
-  const [still, setStill] = useState(false);
+  // Reactive: toggling "reduce motion" while the app runs stops the pulse too.
+  const still = useReducedMotion();
 
   useEffect(() => {
-    let loop: Animated.CompositeAnimation | null = null;
-    let cancelled = false;
-    void AccessibilityInfo.isReduceMotionEnabled()
-      .catch(() => false)
-      .then((reduce) => {
-        if (cancelled) return;
-        if (reduce) {
-          setStill(true);
-          return;
-        }
-        loop = Animated.loop(
-          Animated.timing(progress, {
-            toValue: 1,
-            duration: 1200,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: Platform.OS !== 'web',
-          }),
-        );
-        loop.start();
-      });
-    return () => {
-      cancelled = true;
-      loop?.stop();
-    };
-  }, [progress]);
+    if (still) return;
+    const loop = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [progress, still]);
 
   const scale = still ? 1.18 : progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.45] });
   const opacity = still ? 0.6 : progress.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] });
@@ -106,8 +94,8 @@ export function MicButton({
   const off = recording ? false : disabled || working;
   const d = size === 'lg' ? 72 : size === 'sm' ? 48 : 56;
   const filled = size === 'lg' || recording || filledIdle;
-  const bg = recording ? LB.primaryDk : filled ? LB.primary : '#fff';
-  const fg = filled ? '#fff' : LB.primaryDk;
+  const bg = recording ? LB.primaryDk : filled ? LB.primary : LB.paper;
+  const fg = filled ? LB.paper : LB.primaryDk;
   const time = formatClock(voice.elapsedMs);
 
   return (

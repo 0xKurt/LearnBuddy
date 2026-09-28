@@ -60,15 +60,17 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
                 <Icon name={item.icon} size={21} color={LB.primary} />
               </View>
               <Text
-                numberOfLines={2}
+                numberOfLines={3}
                 style={{
                   marginTop: 4,
-                  // Room for the longest single word ("Hausaufgabe"); longer labels wrap
-                  // between words, so neighbours never run into each other.
-                  maxWidth: 76,
-                  // Readable at a glance (user feedback #17: 11 px was too small).
-                  fontSize: 12,
-                  lineHeight: 15,
+                  // flexShrink on the parent shares the width; no hard maxWidth, so a
+                  // scaled-up label wraps (up to three lines) instead of ellipsising
+                  // one of the five primary ways to start.
+                  alignSelf: 'stretch',
+                  // Readable at a glance (user feedback #17: 11 px was too small;
+                  // audit raised 12 → 13 for large-text users).
+                  fontSize: 13,
+                  lineHeight: 16,
                   letterSpacing: -0.2,
                   fontWeight: '600',
                   color: LB.ink,

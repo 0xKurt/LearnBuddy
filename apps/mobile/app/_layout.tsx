@@ -3,7 +3,7 @@
 import '../lib/i18n/index.js';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { router, Stack } from 'expo-router';
+import { router, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { onlineManager } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
@@ -26,7 +26,7 @@ import { currentSession, loadSession, onSessionChange } from '../lib/auth/sessio
 import { applyLocale, deviceLocale, i18n } from '../lib/i18n/index.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { ShareIntake } from '../components/capture/ShareIntake.js';
-import { clearIncoming } from '../lib/capture/incoming.js';
+import { clearIncoming, hasIncoming } from '../lib/capture/incoming.js';
 import { recoverCameraResult } from '../lib/capture/pendingCamera.js';
 import { adoptLocalWork } from '../lib/localWork.js';
 import {
@@ -78,11 +78,19 @@ async function afterSignedIn(userId: string): Promise<void> {
   void syncPushDevice().catch(() => undefined);
 }
 
+// Deep links land on top of the start screen, so Android's back gesture leads to
+// Buddy's home instead of closing the app (deep-link single-screen stack).
+export const unstable_settings = { initialRouteName: 'index' };
+
+/** Screens that exist before sign-in; every other route needs a session. */
+const OPEN_ROUTES = new Set(['/', '/welcome', '/reset-password']);
+
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const readyRef = useRef(false);
-  // Where a notification button asked to go before the app was ready.
+  // Where a notification button or a signed-out deep link asked to go.
   const pendingRoute = useRef<string | null>(null);
+  const pathname = usePathname();
   // Whose session the app runs with: token refreshes save the session again and must not
   // count as a new sign-in.
   const userRef = useRef<string | null>(null);
@@ -117,6 +125,15 @@ export default function RootLayout() {
         userRef.current = s.user_id;
         // Someone else's leftovers go; hers (after an expired session) are sent now.
         void afterSignedIn(s.user_id);
+        // A deep link that waited for the sign-in goes on now, on top of the gate.
+        const route = pendingRoute.current;
+        if (route && readyRef.current) {
+          pendingRoute.current = null;
+          router.push(route);
+        } else if (hasIncoming() && readyRef.current) {
+          // Files shared while signed out go on to capture now.
+          router.push({ pathname: '/capture', params: { shared: '1' } });
+        }
         return;
       }
       clearAdminToken();
@@ -150,6 +167,12 @@ export default function RootLayout() {
       if (err.reason === 'consent_outdated') {
         void queryClient.invalidateQueries({ queryKey: keys.me });
         router.replace('/consent');
+      }
+      // This build is too old for the API (426): a blocking screen with the store
+      // link — never a silent retry loop (audit: update_required unhandled).
+      if (err.code === 'update_required') {
+        if (router.canDismiss()) router.dismissAll();
+        router.replace('/update');
       }
       // The deletion started: the account takes no more changes (409 deletion_running).
       if (err.reason === 'deletion_running') {
@@ -195,6 +218,15 @@ export default function RootLayout() {
     pendingRoute.current = null;
     router.push(route);
   }, [ready]);
+
+  // A deep link while signed out: remember where it wanted to go, show the gate,
+  // and continue there after sign-in (deep-link-dies-on-401).
+  useEffect(() => {
+    if (!ready || currentSession() || OPEN_ROUTES.has(pathname)) return;
+    pendingRoute.current = pathname;
+    if (router.canDismiss()) router.dismissAll();
+    router.replace('/');
+  }, [ready, pathname]);
 
   // Android cut the app off while the camera was open: the photo goes on to capture (M-22).
   useEffect(() => {

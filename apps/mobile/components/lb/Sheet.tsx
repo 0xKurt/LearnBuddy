@@ -112,6 +112,11 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
               style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, veil]}
             >
               <Pressable
+                // Hidden from screen readers: TalkBack would sweep a screen-sized
+                // "close" button (accessibilityViewIsModal covers only iOS). The
+                // in-sheet close button below the footer is the guaranteed exit.
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
                 accessibilityRole="button"
                 accessibilityLabel={closeLabel}
                 onPress={onClose}

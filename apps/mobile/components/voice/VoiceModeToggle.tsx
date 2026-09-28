@@ -45,7 +45,7 @@ export function VoiceModeToggle() {
             width: 44,
             height: 44,
             borderRadius: 22,
-            backgroundColor: on ? LB.primary : '#fff',
+            backgroundColor: on ? LB.primary : LB.paper,
             borderColor: on ? LB.primary : LB.hairline,
             borderWidth: 1,
             alignItems: 'center',
@@ -53,7 +53,7 @@ export function VoiceModeToggle() {
             opacity: pressed ? 0.78 : 1,
           }}
         >
-          <Icon name="speak" size={21} color={on ? '#fff' : LB.ink} />
+          <Icon name="speak" size={21} color={on ? LB.paper : LB.ink} />
           {on ? (
             <View
               style={{
@@ -63,7 +63,7 @@ export function VoiceModeToggle() {
                 width: 18,
                 height: 18,
                 borderRadius: 9,
-                backgroundColor: '#fff',
+                backgroundColor: LB.paper,
                 borderWidth: 1,
                 borderColor: LB.primary,
                 alignItems: 'center',

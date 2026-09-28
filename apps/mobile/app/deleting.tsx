@@ -34,7 +34,7 @@ export default function Deleting() {
           title={t('deleting.title')}
           body={t('deleting.body')}
           action={
-            <Btn pill disabled={busy} onPress={() => void leave()}>
+            <Btn pill busy={busy} onPress={() => void leave()}>
               {t('deleting.sign_out')}
             </Btn>
           }

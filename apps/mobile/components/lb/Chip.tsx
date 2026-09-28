@@ -8,7 +8,7 @@ const TONES: Record<Tone, { bg: string; color: string; border?: string }> = {
   primary: { bg: LB.primaryLt, color: LB.primaryDk },
   success: { bg: 'rgba(107,141,106,0.13)', color: LB.successText },
   warning: { bg: 'rgba(181,138,60,0.13)', color: LB.warningText },
-  dark: { bg: LB.ink, color: '#fff' },
+  dark: { bg: LB.ink, color: LB.paper },
 };
 
 export function Chip({ children, tone = 'gray' }: { children: string; tone?: Tone }) {

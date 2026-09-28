@@ -36,6 +36,10 @@ export function Row({ question, answer, current, hint, locked = false, children 
       {hint ? <Text style={[TYPE.body, { color: LB.ink2 }]}>{hint}</Text> : null}
       {children ? (
         <View
+          // While locked the control is also hidden from screen readers: it would
+          // otherwise announce as enabled and swallow double-taps silently.
+          accessibilityElementsHidden={locked}
+          importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'}
           style={{
             gap: 10,
             marginTop: 6,

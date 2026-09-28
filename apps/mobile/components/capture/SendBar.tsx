@@ -11,7 +11,7 @@ import type { SendProgress } from '../../lib/capture/upload.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
+import { ErrorNote } from '../lb/ErrorNote.js';
 import { Progress } from '../lb/Progress.js';
 
 type Props = {
@@ -52,7 +52,8 @@ export function SendBar({
       return t('progress.uploading', { current: p.current, count: p.total });
     return t('progress.submitting');
   };
-  useAnnounce(progress ? progressText(progress) : failure);
+  // The failure card (ErrorNote) says itself; only progress is announced here.
+  useAnnounce(progress ? progressText(progress) : null);
 
   return (
     <View
@@ -74,11 +75,7 @@ export function SendBar({
           </View>
         </View>
       ) : failure ? (
-        <View accessibilityLiveRegion="polite">
-          <Card tone="blush" padding={14} radius={18}>
-            <Text style={TYPE.body}>{failure}</Text>
-          </Card>
-        </View>
+        <ErrorNote text={failure} />
       ) : !hasPhotos ? (
         <Text style={[TYPE.small, { textAlign: 'center' }]}>{t('send_hint')}</Text>
       ) : null}

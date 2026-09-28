@@ -153,7 +153,7 @@ function Bubble({
       <MathText
         text={text}
         accessible={false}
-        style={[TYPE.body, { color: mine ? '#fff' : LB.ink }]}
+        style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}
       />
     </View>
   );

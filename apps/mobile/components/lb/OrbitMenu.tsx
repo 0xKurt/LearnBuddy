@@ -110,7 +110,7 @@ export function OrbitMenu({
                           width: NODE,
                           height: NODE,
                           borderRadius: NODE / 2,
-                          backgroundColor: '#fff',
+                          backgroundColor: LB.paper,
                           alignItems: 'center',
                           justifyContent: 'center',
                           transform: [{ scale: pressed ? 0.94 : 1 }],

@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -22,6 +23,8 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 
 export function Thinking({ label }: { label: string }) {
+  // iOS has no live regions: the waiting state says itself (lib/announce.ts).
+  useAnnounce(label);
   return (
     <Rise delay={120} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <BuddyOrb size={26} state="think" />

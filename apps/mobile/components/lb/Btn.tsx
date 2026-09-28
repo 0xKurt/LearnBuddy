@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { LB, TONE_BG, type SubjectTone } from '../../lib/theme/colors.js';
 import { Icon, type IconName } from './Icon.js';
 
@@ -27,6 +27,12 @@ type Props = {
   /** Let a long label wrap onto several lines (answer choices, starters) instead of shrinking it. */
   wrap?: boolean;
   disabled?: boolean;
+  /**
+   * The button's work is in flight: a small spinner replaces the icon, the button
+   * is disabled and a screen reader hears "busy". Every submit that talks to the
+   * network passes this instead of only `disabled`.
+   */
+  busy?: boolean;
   /** A pastel tint instead of the variant's background (suggestions: one tint per kind). */
   tone?: SubjectTone;
   /** Fully rounded ends (chips). */
@@ -40,10 +46,10 @@ type Props = {
 };
 
 /**
- * How far a button label follows the system text size (iOS AX sizes go past 3×): large enough
- * to help, small enough that a CTA never clips or squeezes its neighbour to nothing.
+ * How far a button label follows the system text size (iOS AX sizes go past 3×): the WCAG
+ * 200% target — the button grows via minHeight, and md/lg labels may wrap onto a second line.
  */
-export const MAX_FONT_SCALE = 1.6;
+export const MAX_FONT_SCALE = 2;
 
 const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
   sm: { height: 44, paddingHorizontal: 16, fontSize: 15 },
@@ -55,9 +61,9 @@ const VARIANT_STYLE: Record<
   Variant,
   { bg: string; color: string; borderColor: string; borderWidth: number }
 > = {
-  primary: { bg: LB.primary, color: '#fff', borderColor: 'transparent', borderWidth: 0 },
+  primary: { bg: LB.primary, color: LB.paper, borderColor: 'transparent', borderWidth: 0 },
   soft: { bg: LB.primaryLt, color: LB.primaryDk, borderColor: 'transparent', borderWidth: 0 },
-  outline: { bg: '#fff', color: LB.ink, borderColor: LB.hairline, borderWidth: 1 },
+  outline: { bg: LB.paper, color: LB.ink, borderColor: LB.hairline, borderWidth: 1 },
   ghost: { bg: 'transparent', color: LB.ink2, borderColor: 'transparent', borderWidth: 0 },
   danger: {
     bg: 'transparent',
@@ -79,6 +85,7 @@ export function Btn({
   icon,
   grow = false,
   disabled = false,
+  busy = false,
   selected,
   expanded,
   tone,
@@ -90,16 +97,18 @@ export function Btn({
   const base = VARIANT_STYLE[variant];
   const v = tone ? { ...base, bg: TONE_BG[tone], color: LB.ink, borderWidth: 0 } : base;
   const radius = pill ? s.height / 2 : 14;
+  const off = disabled || busy;
 
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={off}
       accessibilityRole={selected === undefined ? 'button' : 'radio'}
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
       accessibilityState={{
-        disabled,
+        disabled: off,
+        busy,
         ...(selected === undefined ? {} : { selected, checked: selected }),
         ...(expanded === undefined ? {} : { expanded }),
       }}
@@ -107,7 +116,8 @@ export function Btn({
       style={{
         alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
         ...(grow ? { flexGrow: 1 } : {}),
-        opacity: disabled ? 0.6 : 1,
+        // 0.8, not lower: a child must still be able to read why the button waits.
+        opacity: off ? 0.8 : 1,
         borderRadius: radius,
         overflow: 'hidden',
       }}
@@ -119,7 +129,7 @@ export function Btn({
             // (audit M-84); the label's scaling is capped below so a row still fits.
             ...(wrap ? { minHeight: s.height, paddingVertical: 12 } : { minHeight: s.height }),
             ...(grow ? { flexGrow: 1 } : {}),
-            gap: icon ? 10 : 0,
+            gap: icon || busy ? 10 : 0,
             paddingHorizontal: s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: radius,
@@ -131,7 +141,14 @@ export function Btn({
             opacity: pressed ? 0.78 : 1,
           }}
         >
-          {icon ? (
+          {busy ? (
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <ActivityIndicator
+                size="small"
+                color={variant === 'outline' || tone ? LB.primaryDk : v.color}
+              />
+            </View>
+          ) : icon ? (
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Icon
                 name={icon}
@@ -151,9 +168,13 @@ export function Btn({
           ) : (
             <Text
               maxFontSizeMultiplier={MAX_FONT_SCALE}
+              // sm buttons sit in tight rows and may shrink a little; md/lg wrap onto a
+              // second line instead — minHeight lets the button grow (audit M-84).
               {...(wrap
                 ? {}
-                : { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.82 })}
+                : size === 'sm'
+                  ? { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.82 }
+                  : { numberOfLines: 2 })}
               style={{
                 flexShrink: 1,
                 color: v.color,

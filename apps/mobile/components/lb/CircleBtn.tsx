@@ -39,7 +39,9 @@ export function CircleBtn({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: plain ? 'transparent' : '#fff',
+        // A filled circle, not paper + hairline: the hairline sits at ~1.2:1 on the page
+        // and the button read as a floating icon without a boundary (WCAG 1.4.11).
+        backgroundColor: plain ? 'transparent' : LB.canvas,
         borderColor: LB.hairline,
         borderWidth: plain ? 0 : 1,
         alignItems: 'center',

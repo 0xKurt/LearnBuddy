@@ -17,6 +17,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { riseIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
@@ -28,6 +29,8 @@ const DOT_MS = 420;
 const DOT_GAP_MS = 160;
 
 export function TypingBubble({ label }: { label: string }) {
+  // iOS has no live regions: "Buddy schreibt" says itself (lib/announce.ts).
+  useAnnounce(label);
   const reduce = useReducedMotion();
   const a = useSharedValue(0);
   const b = useSharedValue(0);

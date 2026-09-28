@@ -46,6 +46,24 @@ export default tseslint.config(
     },
   },
   {
+    // EXPO_PUBLIC_* is inlined into the shipped JS bundle at build time: a service
+    // key read here once nearly shipped. Configuration flows through lib/env.ts
+    // only (the one file allowed to read process.env, plus the build-time config).
+    files: ['apps/mobile/**/*.ts', 'apps/mobile/**/*.tsx'],
+    ignores: ['apps/mobile/lib/env.ts', 'apps/mobile/app.config.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'process',
+          property: 'env',
+          message:
+            'EXPO_PUBLIC_* wird ins Bundle inline kompiliert — Konfiguration nur über lib/env.ts.',
+        },
+      ],
+    },
+  },
+  {
     // Plain Node scripts (tooling): Node's globals.
     files: ['**/*.mjs'],
     languageOptions: {

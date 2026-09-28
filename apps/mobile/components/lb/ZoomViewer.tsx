@@ -256,6 +256,8 @@ export function Zoomable({ label, children, large, fill = false }: ZoomableProps
         accessibilityLabel={label}
         accessibilityHint={t('zoom.open_hint')}
         onPress={() => setOpen(true)}
+        // Thumbnails in the chat are ~30×40; the slop lifts them to the 44 pt target.
+        hitSlop={10}
         style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, flex: fill ? 1 : undefined })}
       >
         {children}

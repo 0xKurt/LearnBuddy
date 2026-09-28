@@ -37,7 +37,7 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
               flexDirection: 'row',
               alignItems: 'center',
               gap: 10,
-              backgroundColor: '#fff',
+              backgroundColor: LB.paper,
               borderRadius: 22,
               borderBottomLeftRadius: 6,
               paddingHorizontal: 14,

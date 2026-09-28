@@ -15,16 +15,8 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AccessibilityInfo,
-  ActivityIndicator,
-  Animated,
-  Easing,
-  Linking,
-  Platform,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Animated, Easing, Linking, Platform, Text, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { ApiError, newId } from '../../lib/api/client.js';
 import { speakItem } from '../../lib/api/endpoints.js';
@@ -178,42 +170,30 @@ export function SpeakCard({ item, turns }: CardProps) {
 
 function RecordingDot() {
   const pulse = useRef(new Animated.Value(1)).current;
-  const [still, setStill] = useState(false);
+  // Reactive: toggling "reduce motion" while the app runs stops the dot too.
+  const still = useReducedMotion();
 
   useEffect(() => {
-    let loop: Animated.CompositeAnimation | null = null;
-    let cancelled = false;
-    void AccessibilityInfo.isReduceMotionEnabled()
-      .catch(() => false)
-      .then((reduce) => {
-        if (cancelled) return;
-        if (reduce) {
-          setStill(true);
-          return;
-        }
-        loop = Animated.loop(
-          Animated.sequence([
-            Animated.timing(pulse, {
-              toValue: 0.35,
-              duration: 700,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: Platform.OS !== 'web',
-            }),
-            Animated.timing(pulse, {
-              toValue: 1,
-              duration: 700,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: Platform.OS !== 'web',
-            }),
-          ]),
-        );
-        loop.start();
-      });
-    return () => {
-      cancelled = true;
-      loop?.stop();
-    };
-  }, [pulse]);
+    if (still) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 0.35,
+          duration: 700,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, still]);
 
   return (
     <Animated.View

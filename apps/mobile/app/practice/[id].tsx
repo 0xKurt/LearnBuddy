@@ -81,6 +81,7 @@ import {
   revealItem,
 } from '../../lib/api/endpoints.js';
 import { keys, queryClient, usePracticeSession } from '../../lib/api/queries.js';
+import { useDraft } from '../../lib/drafts.js';
 import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { announce } from '../../lib/announce.js';
@@ -185,7 +186,8 @@ export default function PracticeScreen() {
   const { height: windowHeight } = useWindowDimensions();
 
   const [pinnedId, setPinnedId] = useState<string | null>(null);
-  const [text, setText] = useState('');
+  // Kept on the device: a half-typed answer survives Android killing the app.
+  const { text, setText } = useDraft(`session.${id}`);
   const [pending, setPending] = useState<{ itemId: string; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [finishFailed, setFinishFailed] = useState(false);
@@ -944,7 +946,7 @@ export default function PracticeScreen() {
         onClose={() => setFlagOpen(false)}
       >
         <Text style={TYPE.body}>{t('practice:flag.sheet_body')}</Text>
-        <Btn full disabled={busy} onPress={() => void flag()}>
+        <Btn full busy={busy} onPress={() => void flag()}>
           {t('practice:flag.confirm')}
         </Btn>
       </Sheet>

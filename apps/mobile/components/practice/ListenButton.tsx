@@ -86,7 +86,7 @@ export function ListenButton({ text, lang, slow = false, disabled = false }: Pro
             borderRadius: 12,
             borderWidth: 1,
             borderColor: playing ? LB.primary : LB.hairline,
-            backgroundColor: playing ? LB.primaryLt : '#fff',
+            backgroundColor: playing ? LB.primaryLt : LB.paper,
             opacity: pressed ? 0.78 : 1,
           }}
         >

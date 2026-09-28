@@ -5,6 +5,7 @@
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Banner } from '../lb/Banner.js';
@@ -12,6 +13,16 @@ import type { StartState } from './useStartTopic.js';
 
 export function StartStatus({ state }: { state: StartState }) {
   const { t } = useTranslation('learn');
+  // iOS has no live regions: each status says itself (lib/announce.ts).
+  useAnnounce(
+    state.status === 'preparing'
+      ? t('topic.preparing')
+      : state.status === 'not_usable'
+        ? t('topic.not_usable')
+        : state.status === 'failed'
+          ? state.message
+          : null,
+  );
   switch (state.status) {
     case 'idle':
       return null;

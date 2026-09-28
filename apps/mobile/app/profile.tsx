@@ -10,7 +10,7 @@
 
 import type { AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -18,6 +18,7 @@ import {
   Text,
   View,
   useWindowDimensions,
+  type TextInput,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +34,7 @@ import { Segmented } from '../components/lb/Segmented.js';
 import { Bone, SkeletonGroup } from '../components/lb/Skeleton.js';
 import { toast } from '../components/lb/Toast.js';
 import { VoicePicker } from '../components/voice/VoicePicker.js';
+import { useAnnounce } from '../lib/announce.js';
 import { ApiError } from '../lib/api/client.js';
 import { createLearner, getMe } from '../lib/api/endpoints.js';
 import { keys, queryClient, useSettings } from '../lib/api/queries.js';
@@ -43,6 +45,9 @@ import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+
+/** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
+const onlyDigits = (value: string) => value.replace(/\D+/g, '');
 
 const LANGUAGES: Array<{ value: AppLocale; label: string }> = [
   { value: 'de', label: 'Deutsch' },
@@ -66,6 +71,10 @@ export default function Profile() {
   const [consent, setConsent] = useState(false);
   const [pin, setPinValue] = useState('');
   const [pinRepeat, setPinRepeat] = useState('');
+  // The number pad has no return key: a filled field hands focus to the next one.
+  const monthRef = useRef<TextInput>(null);
+  const yearRef = useRef<TextInput>(null);
+  const pinRepeatRef = useRef<TextInput>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
   // For a child two short steps, each fitting the screen: the child, then the parents —
@@ -86,6 +95,10 @@ export default function Profile() {
   const needsParents = relation === 'child' && minor;
   const ready = learnerReady && (!needsParents || (consent && pinOk));
   const parentStep = needsParents && step === 'parent';
+
+  // iOS has no live regions: the two inline problems say themselves (lib/announce.ts).
+  useAnnounce(dateComplete && !birthDate ? t('profile.birth_date_invalid') : null);
+  useAnnounce(pinRepeat.length === 4 && pin !== pinRepeat ? t('profile.pin_mismatch') : null);
 
   async function submit() {
     if (!relation || !birthDate || busy) return;
@@ -206,6 +219,13 @@ export default function Profile() {
                   value={name}
                   onChangeText={setName}
                   maxLength={40}
+                  // Autocorrect must never rewrite the name Buddy will call her by.
+                  autoCorrect={false}
+                  spellCheck={false}
+                  autoCapitalize="words"
+                  autoComplete="name-given"
+                  textContentType="givenName"
+                  returnKeyType="done"
                   accessibilityLabel={
                     relation === 'self' ? t('profile.name_self') : t('profile.name_child')
                   }
@@ -220,7 +240,11 @@ export default function Profile() {
                     <FieldLabel>{t('profile.day_label')}</FieldLabel>
                     <LbTextInput
                       value={day}
-                      onChangeText={setDay}
+                      onChangeText={(v) => {
+                        const d = onlyDigits(v);
+                        setDay(d);
+                        if (d.length === 2) monthRef.current?.focus();
+                      }}
                       placeholder={t('profile.day')}
                       accessibilityLabel={t('profile.day_label')}
                       keyboardType="number-pad"
@@ -230,8 +254,13 @@ export default function Profile() {
                   <View style={{ flex: 1, gap: 4 }}>
                     <FieldLabel>{t('profile.month_label')}</FieldLabel>
                     <LbTextInput
+                      ref={monthRef}
                       value={month}
-                      onChangeText={setMonth}
+                      onChangeText={(v) => {
+                        const m = onlyDigits(v);
+                        setMonth(m);
+                        if (m.length === 2) yearRef.current?.focus();
+                      }}
                       placeholder={t('profile.month')}
                       accessibilityLabel={t('profile.month_label')}
                       keyboardType="number-pad"
@@ -241,8 +270,9 @@ export default function Profile() {
                   <View style={{ flex: 1.6, gap: 4 }}>
                     <FieldLabel>{t('profile.year_label')}</FieldLabel>
                     <LbTextInput
+                      ref={yearRef}
                       value={year}
-                      onChangeText={setYear}
+                      onChangeText={(v) => setYear(onlyDigits(v))}
                       placeholder={t('profile.year')}
                       accessibilityLabel={t('profile.year_label')}
                       keyboardType="number-pad"
@@ -251,7 +281,10 @@ export default function Profile() {
                   </View>
                 </View>
                 {dateComplete && !birthDate ? (
-                  <Text style={[TYPE.small, { color: LB.danger, paddingHorizontal: 4 }]}>
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    style={[TYPE.small, { color: LB.danger, paddingHorizontal: 4 }]}
+                  >
                     {t('profile.birth_date_invalid')}
                   </Text>
                 ) : (
@@ -320,7 +353,11 @@ export default function Profile() {
                     <FieldLabel>{t('profile.pin_label')}</FieldLabel>
                     <LbTextInput
                       value={pin}
-                      onChangeText={setPinValue}
+                      onChangeText={(v) => {
+                        const p = onlyDigits(v);
+                        setPinValue(p);
+                        if (p.length === 4) pinRepeatRef.current?.focus();
+                      }}
                       placeholder="••••"
                       accessibilityLabel={t('profile.pin_title')}
                       keyboardType="number-pad"
@@ -331,8 +368,9 @@ export default function Profile() {
                   <View style={{ flex: 1, gap: 4 }}>
                     <FieldLabel>{t('profile.pin_repeat')}</FieldLabel>
                     <LbTextInput
+                      ref={pinRepeatRef}
                       value={pinRepeat}
-                      onChangeText={setPinRepeat}
+                      onChangeText={(v) => setPinRepeat(onlyDigits(v))}
                       placeholder="••••"
                       accessibilityLabel={t('profile.pin_repeat')}
                       keyboardType="number-pad"
@@ -343,7 +381,7 @@ export default function Profile() {
                 </View>
                 {/* While the two PINs differ, that is what matters; the reset hint returns after. */}
                 {pinRepeat.length === 4 && pin !== pinRepeat ? (
-                  <Text style={[TYPE.small, { color: LB.danger }]}>
+                  <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: LB.danger }]}>
                     {t('profile.pin_mismatch')}
                   </Text>
                 ) : (

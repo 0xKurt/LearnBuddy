@@ -64,11 +64,16 @@
   "push": {
     "practice_now": "Practise now",
     "not_today": "Not today",
-    "less_often": "Write less often"
+    "less_often": "Write less often",
+    "channel_description": "Buddy's messages and agreed reminders."
   },
   "zoom": {
     "hint": "Pinch with two fingers to zoom, double-tap to zoom in.",
     "open_hint": "Opens the picture full screen.",
     "photo": "Your photo"
+  },
+  "update": {
+    "title": "Time for an update",
+    "cta": "Open Google Play"
   }
 }

@@ -11,6 +11,7 @@
 import { Redirect, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Btn } from '../components/lb/Btn.js';
@@ -30,6 +31,7 @@ import { messageFor } from '../lib/errors.js';
 
 export default function SettingsScreen() {
   const { t } = useTranslation(['settings', 'common']);
+  const insets = useSafeAreaInsets();
   const settings = useSettings();
   const me = useMe();
   const home = useHome();
@@ -90,7 +92,7 @@ export default function SettingsScreen() {
       >
         <ScrollView
           ref={scroll}
-          contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 48 }}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />

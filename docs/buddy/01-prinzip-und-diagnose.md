@@ -218,7 +218,9 @@ Beim Lesen gefunden, **nicht** Teil dieser Umsetzung, als Folgeaufgaben notiert:
 - Offline-Outbox-Tabelle wird nie angelegt (`lib/db/index.ts`); Ordner-Archivieren tut nichts
   (`folder/[folderId].tsx:116-126`); RevenueCat-App-User-ID wird nie gesetzt; DSGVO-Export ohne
   `conversation_turns`.
-- `EXPO_PUBLIC_DEV_SUPABASE_SERVICE_KEY` (`lib/dev/reset.ts:41`) würde bei gesetzter Variable den
-  Service-Role-Key ins App-Bundle einbauen.
+- `EXPO_PUBLIC_DEV_SUPABASE_SERVICE_KEY` (`lib/dev/reset.ts:41`, inzwischen gelöscht) hätte bei
+  gesetzter Variable den Service-Role-Key ins App-Bundle eingebaut. Regel seitdem: Die App liest
+  `process.env` nur in `lib/env.ts` (ESLint erzwingt es); ein Service-Key gehört niemals in
+  Mobile-Code, auch nicht "nur für dev".
 
 Buddy-Tabellen werden von Anfang an in DSGVO-Export und -Löschung (Cascade) einbezogen.

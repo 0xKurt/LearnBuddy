@@ -5,6 +5,7 @@
 import { forwardRef, useState } from 'react';
 import { TextInput, View, Text, Pressable, type TextInputProps } from 'react-native';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { Icon } from './Icon.js';
 
@@ -34,12 +35,14 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
 ) {
   const [focused, setFocused] = useState(false);
   const borderColor = error ? LB.danger : focused ? LB.primary : LB.field;
+  // iOS has no live regions — the field says its error itself (lib/announcePlan.ts).
+  useAnnounce(errorMessage);
   return (
     <View>
       <View style={{ position: 'relative' }}>
         <TextInput
           ref={ref}
-          placeholderTextColor={LB.ink3}
+          placeholderTextColor={LB.placeholder}
           {...rest}
           onFocus={(e) => {
             setFocused(true);
@@ -58,7 +61,9 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
               // Keep the text still when the border gets thicker.
               paddingHorizontal: focused || error ? 15.5 : 16,
               paddingRight: showToggle ? 48 : focused || error ? 15.5 : 16,
-              height: 52,
+              // minHeight, not height: large system text grows the field instead of clipping.
+              minHeight: 52,
+              paddingVertical: 12,
               fontSize: 16,
               color: LB.ink,
               // The focus ring (iOS/Android new architecture and the web).
@@ -89,7 +94,10 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
         )}
       </View>
       {errorMessage && (
-        <Text style={{ color: LB.danger, fontSize: 15, lineHeight: 21, marginTop: 6 }}>
+        <Text
+          accessibilityLiveRegion="polite"
+          style={{ color: LB.danger, fontSize: 15, lineHeight: 21, marginTop: 6 }}
+        >
           {errorMessage}
         </Text>
       )}

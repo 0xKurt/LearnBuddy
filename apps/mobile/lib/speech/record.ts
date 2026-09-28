@@ -264,10 +264,12 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
     return finish(false);
   }, [finish]);
 
-  // Going to the background ends a recording without sending it.
+  // Leaving the foreground ends a recording without sending it — also 'inactive'
+  // (an incoming call interrupts the audio session without ever reaching
+  // 'background'; recognize.ts treats it the same way).
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'background') void finish(false);
+      if (next !== 'active') void finish(false);
     });
     return () => sub.remove();
   }, [finish]);

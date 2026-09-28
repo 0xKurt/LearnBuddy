@@ -17,14 +17,14 @@ import type {
   UpdateBuddySettingsRequest,
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '../../lib/api/client.js';
 import { updateSettings } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
-import { registerDeviceForPush, registeredHere } from '../../lib/push.js';
+import { pushPermissionBlocked, registerDeviceForPush, registeredHere } from '../../lib/push.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatLastDay, formatWeekday } from '../../lib/time.js';
@@ -76,6 +76,8 @@ type Props = {
 export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
   const { t, i18n } = useTranslation('settings');
   const [saving, setSaving] = useState(false);
+  // The notification permission is permanently denied: show the settings way out.
+  const [blocked, setBlocked] = useState(false);
   const inFlight = useRef(false);
 
   const lang = i18n.language;
@@ -165,8 +167,13 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
     setSaving(true);
     try {
       if (await registerDeviceForPush()) {
+        setBlocked(false);
         toast.show(t('contact.device_registered'));
         await queryClient.invalidateQueries({ queryKey: keys.home });
+      } else if (await pushPermissionBlocked()) {
+        // The OS dialog will not come back: only the system settings help now —
+        // re-tapping the same button forever was a dead end (audit).
+        setBlocked(true);
       } else {
         toast.show(t('contact.device_not_possible'));
       }
@@ -287,6 +294,16 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
             <Btn pill variant="outline" onPress={() => void registerDevice()} disabled={saving}>
               {t('contact.device_register')}
             </Btn>
+            {blocked ? (
+              <View style={{ gap: 8 }}>
+                <Text accessibilityLiveRegion="polite" style={TYPE.small}>
+                  {t('contact.device_not_possible')}
+                </Text>
+                <Btn pill variant="soft" onPress={() => void Linking.openSettings()}>
+                  {t('common:voice.open_settings')}
+                </Btn>
+              </View>
+            ) : null}
           </View>
         </Card>
       ) : null}

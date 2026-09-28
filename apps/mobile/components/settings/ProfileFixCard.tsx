@@ -5,10 +5,11 @@
 
 import type { LearnerView, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
-import { AccessibilityInfo, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { adminToken, clearAdminToken } from '../../lib/admin.js';
+import { useAnnounce } from '../../lib/announce.js';
 import { updateLearner } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { birthDateOf, formatBirthDate, partsOf } from '../../lib/birthDate.js';
@@ -40,10 +41,12 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
-
   const minor = learner.is_minor;
   const birthDate = birthDateOf(day, month, year);
   const dateComplete = day.length > 0 && month.length > 0 && year.length === 4;
+  // iOS has no live regions: problems in this sheet say themselves (lib/announce.ts).
+  useAnnounce(failure);
+  useAnnounce(dateComplete && !birthDate ? t('auth:profile.birth_date_invalid') : null);
   const changed =
     name.trim() !== learner.display_name ||
     (birthDate !== null && birthDate !== learner.birth_date);
@@ -110,9 +113,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
         if (err.reason === 'no_pin') setFailure(t('settings:pin_first'));
         return;
       }
-      const message = messageFor(err);
-      setFailure(message);
-      AccessibilityInfo.announceForAccessibility(message);
+      setFailure(messageFor(err));
       void queryClient.invalidateQueries({ queryKey: keys.me });
     } finally {
       setBusy(false);
@@ -145,7 +146,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
         closeLabel={t('common:actions.cancel')}
         onClose={close}
         footer={
-          <Btn pill full disabled={!valid || !changed || busy} onPress={() => void save()}>
+          <Btn pill full busy={busy} disabled={!valid || !changed} onPress={() => void save()}>
             {busy ? t('settings:adult.access.saving') : t('settings:adult.profile.save')}
           </Btn>
         }
@@ -156,6 +157,11 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
             value={name}
             onChangeText={setName}
             maxLength={40}
+            autoCorrect={false}
+            spellCheck={false}
+            autoCapitalize="words"
+            autoComplete="name-given"
+            textContentType="givenName"
             accessibilityLabel={t('settings:adult.profile.name')}
             editable={!busy}
           />
@@ -198,7 +204,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
             </View>
           </View>
           {dateComplete && !birthDate ? (
-            <Text style={[TYPE.body, { color: LB.danger }]}>
+            <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.danger }]}>
               {t('auth:profile.birth_date_invalid')}
             </Text>
           ) : null}

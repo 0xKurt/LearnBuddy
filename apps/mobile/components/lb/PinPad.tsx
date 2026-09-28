@@ -7,6 +7,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
+import { useAnnounce } from '../../lib/announce.js';
+import { haptic } from '../../lib/haptics.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { MAX_FONT_SCALE } from './Btn.js';
@@ -36,6 +38,10 @@ const KEYS: Array<{ label: string; value: 'digit' | 'back' | 'none'; digit?: str
 export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
   const { t } = useTranslation('common');
   const [entered, setEntered] = useState('');
+  // iOS has no live regions: the dots' progress says itself (lib/announce.ts).
+  useAnnounce(entered.length > 0 ? t('a11y.pin_progress', { count: entered.length }) : null, {
+    key: entered.length,
+  });
 
   useEffect(() => {
     setEntered('');
@@ -43,6 +49,7 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
 
   function press(k: (typeof KEYS)[number]) {
     if (disabled) return;
+    haptic.select();
     if (k.value === 'digit' && k.digit && entered.length < 4) {
       const next = entered + k.digit;
       setEntered(next);

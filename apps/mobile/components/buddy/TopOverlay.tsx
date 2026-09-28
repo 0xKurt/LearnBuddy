@@ -7,6 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, ScrollView, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { LB } from '../../lib/theme/colors.js';
@@ -45,6 +46,9 @@ export function TopOverlay({ id, children, closeLabel, onClose, onHeight, closeT
   fitsRef.current = fits;
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  // In a ref: the pan responder is memoised on [lift] and must see the live value.
+  const reduceRef = useRef(false);
+  reduceRef.current = useReducedMotion();
 
   useEffect(() => {
     lift.setValue(0);
@@ -61,15 +65,23 @@ export function TopOverlay({ id, children, closeLabel, onClose, onHeight, closeT
         onPanResponderTerminationRequest: () => false,
         onPanResponderRelease: (_e, g) => {
           if (g.dy < -SWIPE_DISTANCE || g.vy < -SWIPE_SPEED) {
-            Animated.timing(lift, { toValue: -400, duration: 160, useNativeDriver: false }).start(
-              () => closeRef.current(),
-            );
+            // Reduce motion: the card leaves without the slide (audit: the only
+            // animated component that ignored the setting).
+            Animated.timing(lift, {
+              toValue: -400,
+              duration: reduceRef.current ? 0 : 160,
+              useNativeDriver: false,
+            }).start(() => closeRef.current());
+          } else if (reduceRef.current) {
+            lift.setValue(0);
           } else {
             Animated.spring(lift, { toValue: 0, useNativeDriver: false }).start();
           }
         },
-        onPanResponderTerminate: () =>
-          Animated.spring(lift, { toValue: 0, useNativeDriver: false }).start(),
+        onPanResponderTerminate: () => {
+          if (reduceRef.current) lift.setValue(0);
+          else Animated.spring(lift, { toValue: 0, useNativeDriver: false }).start();
+        },
       }),
     [lift],
   );

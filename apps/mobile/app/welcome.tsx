@@ -1,10 +1,11 @@
 // Sign up or sign in. CLAUDE.md rule 15: the CTA is pinned outside the
 // ScrollView, inside a KeyboardAvoidingView, so the keyboard never hides it.
 // The first impression: Buddy's soft light and orb, one headline, two pills to
-// choose, soft white fields.
+// choose, soft white fields. Problems stay on the screen (a text above the CTA,
+// field errors below their field) — never only a vanishing toast.
 
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +13,7 @@ import {
   Text,
   View,
   useWindowDimensions,
+  type TextInput,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,8 +25,9 @@ import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Segmented } from '../components/lb/Segmented.js';
-import { toast } from '../components/lb/Toast.js';
-import { requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
+import { useAnnounce } from '../lib/announce.js';
+import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
+import { AuthFailure, requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -37,15 +40,49 @@ export default function Welcome() {
   const [shown, setShown] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  // Validation appears once a field was left, never while first typing it.
+  const [touched, setTouched] = useState({ email: false, password: false });
+  // A problem stays visible above the CTA until the next attempt or edit.
+  const [failure, setFailure] = useState<string | null>(null);
+  const [failureSeq, setFailureSeq] = useState(0);
+  const passwordRef = useRef<TextInput>(null);
+  const inFlight = useRef(false);
   // A small phone (e.g. 360×740) gets a smaller orb and tighter spacing, so the
   // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16).
   const compact = useWindowDimensions().height < 780;
   const gap = compact ? 10 : 14;
 
-  const valid = /\S+@\S+\.\S+/.test(email.trim()) && password.length >= 8;
+  const emailOk = looksLikeEmail(email.trim());
+  // Sign-in never enforces the sign-up rule: older accounts may have shorter
+  // passwords (the server's minimum differs) — the server answers, not the button.
+  const passwordOk =
+    mode === 'signin' ? password.length > 0 : password.length >= MIN_PASSWORD_LENGTH;
+  const valid = emailOk && passwordOk;
+
+  const emailError = touched.email && email.trim().length > 0 && !emailOk;
+  const passwordError =
+    mode === 'signup' &&
+    touched.password &&
+    password.length > 0 &&
+    password.length < MIN_PASSWORD_LENGTH;
+
+  useAnnounce(confirmSent ? t('welcome.confirm_title') : null);
+  useAnnounce(resetSent ? t('welcome.reset_sent') : null);
+  useAnnounce(failure, { key: failureSeq });
+
+  const fail = (text: string) => {
+    setFailure(text);
+    setFailureSeq((s) => s + 1);
+  };
+  const clearFailure = () => setFailure(null);
 
   async function submit() {
+    if (inFlight.current || !valid) return;
+    inFlight.current = true;
     setBusy(true);
+    setFailure(null);
     try {
       if (mode === 'signup') {
         const signedIn = await signUp(email.trim(), password);
@@ -59,23 +96,43 @@ export default function Welcome() {
       }
       router.replace('/');
     } catch (err) {
-      toast.show(messageFor(err), 'error');
+      if (err instanceof AuthFailure && err.reason === 'already_registered') {
+        // The message says "sign in" — take her there, values stay filled in.
+        setMode('signin');
+        passwordRef.current?.focus();
+      }
+      fail(messageFor(err));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
 
   async function forgot() {
-    if (!/\S+@\S+\.\S+/.test(email.trim())) {
-      toast.show(t('welcome.reset_needs_email'), 'error');
+    if (resetBusy || resetSent) return;
+    if (!looksLikeEmail(email.trim())) {
+      fail(t('welcome.reset_needs_email'));
       return;
     }
+    setResetBusy(true);
+    setFailure(null);
     try {
       await requestPasswordReset(email.trim());
-    } catch {
+      setResetSent(true);
+    } catch (err) {
+      if (
+        err instanceof AuthFailure &&
+        (err.reason === 'network' || err.reason === 'rate_limited')
+      ) {
+        // A request that never left the phone must not pretend a mail is coming.
+        fail(messageFor(err));
+        return;
+      }
       // Same answer either way: never reveal whether an address has an account.
+      setResetSent(true);
+    } finally {
+      setResetBusy(false);
     }
-    toast.show(t('welcome.reset_sent'));
   }
 
   return (
@@ -117,44 +174,82 @@ export default function Welcome() {
               { value: 'signin', label: t('welcome.mode_signin') },
             ]}
             value={mode}
-            onChange={setMode}
+            onChange={(m) => {
+              setMode(m);
+              clearFailure();
+            }}
           />
           <View style={{ gap: 10 }}>
             <LbTextInput
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(v) => {
+                setEmail(v);
+                clearFailure();
+              }}
+              onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
               placeholder={t('welcome.email')}
               accessibilityLabel={t('welcome.email')}
               autoCapitalize="none"
+              autoCorrect={false}
+              spellCheck={false}
               autoComplete="email"
               keyboardType="email-address"
-              textContentType="emailAddress"
+              // On sign-up, iOS AutoFill pairs a `username` field with `newPassword`
+              // to offer a strong password and save the credential.
+              textContentType={mode === 'signup' ? 'username' : 'emailAddress'}
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              editable={!busy}
+              error={emailError}
+              errorMessage={emailError ? t('error.invalid_email') : undefined}
             />
             <LbTextInput
+              ref={passwordRef}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(v) => {
+                setPassword(v);
+                clearFailure();
+              }}
+              onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
               placeholder={t('welcome.password')}
               accessibilityLabel={t('welcome.password')}
               secureTextEntry={!shown}
+              // Also while shown: capitalisation and autocorrect would rewrite the
+              // password the moment the eye is tapped.
+              autoCapitalize="none"
+              autoCorrect={false}
+              spellCheck={false}
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               textContentType={mode === 'signup' ? 'newPassword' : 'password'}
+              returnKeyType="go"
+              onSubmitEditing={() => void submit()}
+              editable={!busy}
               showToggle
               shown={shown}
               onToggle={() => setShown((s) => !s)}
               toggleAccessibilityLabel={
                 shown ? t('welcome.hide_password') : t('welcome.show_password')
               }
+              error={passwordError}
+              errorMessage={passwordError ? t('welcome.password_hint') : undefined}
             />
-            {mode === 'signup' ? (
+            {mode === 'signup' && !passwordError ? (
               <Text style={[TYPE.small, { paddingHorizontal: 4 }]}>
                 {t('welcome.password_hint')}
               </Text>
             ) : null}
           </View>
           {mode === 'signin' ? (
-            <Btn variant="ghost" pill onPress={() => void forgot()}>
-              {t('welcome.forgot')}
-            </Btn>
+            resetSent ? (
+              <Card tone="mint">
+                <Text style={TYPE.body}>{t('welcome.reset_sent')}</Text>
+              </Card>
+            ) : (
+              <Btn variant="ghost" pill busy={resetBusy} onPress={() => void forgot()}>
+                {t('welcome.forgot')}
+              </Btn>
+            )
           ) : (
             <Card tone="lavender" padding={16}>
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
@@ -179,8 +274,16 @@ export default function Welcome() {
             </Card>
           )}
         </ScrollView>
-        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
-          <Btn size="lg" pill full disabled={!valid || busy} onPress={() => void submit()}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 8 }}>
+          {failure ? (
+            <Text
+              accessibilityLiveRegion="polite"
+              style={[TYPE.small, { color: LB.danger, textAlign: 'center' }]}
+            >
+              {failure}
+            </Text>
+          ) : null}
+          <Btn size="lg" pill full busy={busy} disabled={!valid} onPress={() => void submit()}>
             {mode === 'signup' ? t('welcome.cta_signup') : t('welcome.cta_signin')}
           </Btn>
         </View>

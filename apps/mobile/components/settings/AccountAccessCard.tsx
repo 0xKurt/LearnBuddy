@@ -8,10 +8,11 @@
 // address counts only once confirmed, so that is what the sheet says.
 
 import { useState } from 'react';
-import { AccessibilityInfo, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { adminToken, clearAdminToken } from '../../lib/admin.js';
+import { useAnnounce } from '../../lib/announce.js';
 import { setPassword as savePasswordOnServer } from '../../lib/api/endpoints.js';
 import { looksLikeEmail, passwordProblem } from '../../lib/auth/recovery.js';
 import { changeEmail } from '../../lib/auth/supabase.js';
@@ -103,9 +104,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
         setPendingEmail(address);
       }
     } catch (err) {
-      const message = messageFor(err);
-      setFailure(message);
-      AccessibilityInfo.announceForAccessibility(message);
+      setFailure(messageFor(err));
     } finally {
       setBusy(false);
     }
@@ -124,9 +123,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
       toast.show(t('settings:adult.access.password_saved'));
       close();
     } catch (err) {
-      const message = messageFor(err);
-      setFailure(message);
-      AccessibilityInfo.announceForAccessibility(message);
+      setFailure(messageFor(err));
     } finally {
       setBusy(false);
     }
@@ -169,7 +166,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
         onClose={close}
         footer={
           pendingEmail ? undefined : (
-            <Btn pill full disabled={!emailValid || busy} onPress={() => void saveEmail()}>
+            <Btn pill full busy={busy} disabled={!emailValid} onPress={() => void saveEmail()}>
               {busy ? t('settings:adult.access.sending') : t('settings:adult.access.email_save')}
             </Btn>
           )
@@ -198,6 +195,8 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
               placeholder={t('settings:adult.access.email_new')}
               accessibilityLabel={t('settings:adult.access.email_new')}
               autoCapitalize="none"
+              autoCorrect={false}
+              spellCheck={false}
               autoComplete="email"
               keyboardType="email-address"
               textContentType="emailAddress"
@@ -215,7 +214,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
         closeLabel={t('common:actions.cancel')}
         onClose={close}
         footer={
-          <Btn pill full disabled={!passwordValid || busy} onPress={() => void savePassword()}>
+          <Btn pill full busy={busy} disabled={!passwordValid} onPress={() => void savePassword()}>
             {busy ? t('settings:adult.access.saving') : t('settings:adult.access.password_save')}
           </Btn>
         }
@@ -235,6 +234,8 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
 }
 
 function Failure({ text }: { text: string | null }) {
+  // iOS has no live regions: the failure says itself (lib/announce.ts).
+  useAnnounce(text);
   if (!text) return null;
   return (
     <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.danger }]}>

@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
+import { useDraft } from '../../lib/drafts.js';
 import { haptic } from '../../lib/haptics.js';
 import { fadeIn } from '../../lib/theme/enter.js';
 import { DURATION } from '../../lib/theme/motion.js';
@@ -51,7 +52,8 @@ export function Composer({
   const insets = useSafeAreaInsets();
   const voiceMode = useVoiceMode((s) => s.on);
   const setVoiceMode = useVoiceMode((s) => s.setOn);
-  const [text, setText] = useState('');
+  // Kept on the device: a half-typed question survives Android killing the app.
+  const { text, setText, clear } = useDraft('chat');
   const [focused, setFocused] = useState(false);
   const latest = useRef({ text, disabled });
   latest.current = { text, disabled };
@@ -59,7 +61,7 @@ export function Composer({
   /** Sends and empties the field; a message that never arrived comes back into it. */
   const deliver = (message: string) => {
     haptic.tap();
-    setText('');
+    clear();
     void onSend(message).then((delivered) =>
       setText((current) => composerAfterSend(current, message, delivered)),
     );
@@ -179,7 +181,7 @@ export function Composer({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 2,
-            backgroundColor: '#fff',
+            backgroundColor: LB.paper,
             borderRadius: 32,
             paddingVertical: 6,
             paddingLeft: 4,

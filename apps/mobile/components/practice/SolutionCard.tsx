@@ -5,6 +5,7 @@ import type { SessionItemView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -41,6 +42,8 @@ export function SolutionCard({ status, answer, numeric }: Props) {
 /** Homework help closes a task without a solution to show: she found it herself. */
 export function SelfSolvedCard() {
   const { t } = useTranslation('practice');
+  // iOS has no live regions: the card says itself when it appears (lib/announce.ts).
+  useAnnounce(t('self_solved.title'));
   return (
     <Card tone="mint" padding={20} radius={24}>
       <View accessibilityLiveRegion="polite">

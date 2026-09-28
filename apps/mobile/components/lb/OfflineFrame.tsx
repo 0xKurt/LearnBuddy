@@ -7,10 +7,11 @@
 
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
-import { AccessibilityInfo, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { announce } from '../../lib/announce.js';
 import { useOnline } from '../../lib/api/queries.js';
 import { LB } from '../../lib/theme/colors.js';
 import { Banner } from './Banner.js';
@@ -23,7 +24,9 @@ export function OfflineFrame({ children }: { children: ReactNode }) {
   const message = t('offline_banner');
 
   useEffect(() => {
-    if (wasOnline.current && !online) AccessibilityInfo.announceForAccessibility(message);
+    // liveRegion: true — the banner's own live region speaks on Android; this
+    // covers iOS without doubling TalkBack (lib/announcePlan.ts).
+    if (wasOnline.current && !online) announce(message, { liveRegion: true });
     wasOnline.current = online;
   }, [online, message]);
 

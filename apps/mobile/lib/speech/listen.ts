@@ -12,6 +12,7 @@
 // state and read-along highlighting (useBuddyVoice).
 
 import type { VoiceName } from '@learnbuddy/shared-types/contracts';
+import { AppState } from 'react-native';
 import * as Speech from 'expo-speech';
 
 import { ApiError } from '../api/client.js';
@@ -276,6 +277,13 @@ export function stop(): void {
   if (current) end(current, 'stopped');
   Speech.stop().catch(() => undefined);
 }
+
+// Home button or an incoming call: Buddy must not keep reading the learner's
+// content aloud over the lock screen ('inactive' counts too — recognize.ts does
+// the same for listening).
+AppState.addEventListener('change', (state) => {
+  if (state !== 'active') stop();
+});
 
 export type SpokenPart = { text: string; lang: string };
 

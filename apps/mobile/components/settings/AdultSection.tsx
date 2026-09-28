@@ -269,6 +269,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                   pill
                   variant="outline"
                   onPress={() => void exportData()}
+                  busy={busy === 'export'}
                   disabled={busy !== null}
                 >
                   {busy === 'export'
@@ -335,7 +336,13 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         onClose={closeDeletion}
       >
         <Text style={TYPE.body}>{t('settings:adult.delete.confirm_body')}</Text>
-        <Btn pill variant="danger" full onPress={() => void scheduleDeletion()}>
+        <Btn
+          pill
+          variant="danger"
+          full
+          disabled={busy !== null}
+          onPress={() => void scheduleDeletion()}
+        >
           {t('settings:adult.delete.confirm_cta')}
         </Btn>
       </Sheet>

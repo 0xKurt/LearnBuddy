@@ -21,7 +21,7 @@ type Props = {
 function backgroundFor(tone: Tone): { bg: string; color?: string } {
   if (tone === 'paper') return { bg: LB.paper };
   if (tone === 'bg') return { bg: LB.bg };
-  if (tone === 'primary') return { bg: LB.primary, color: '#fff' };
+  if (tone === 'primary') return { bg: LB.primary, color: LB.paper };
   if (tone === 'primaryLt') return { bg: LB.primaryLt };
   return { bg: TONE_BG[tone] };
 }

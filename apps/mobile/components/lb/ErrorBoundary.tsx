@@ -1,7 +1,8 @@
 // Last line of defence for render errors: a calm message and a way back.
 
 import { Component, type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { i18n } from '../../lib/i18n/index.js';
 import { LB } from '../../lib/theme/colors.js';
@@ -20,7 +21,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   override render(): ReactNode {
     if (!this.state.failed) return this.props.children;
     return (
-      <View
+      // SafeAreaView: under edge-to-edge a long body must not run under the bars.
+      <SafeAreaView
         style={{ flex: 1, backgroundColor: LB.bg, padding: 24, justifyContent: 'center', gap: 16 }}
       >
         <Text accessibilityRole="header" style={TYPE.display}>
@@ -30,7 +32,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
         <Btn onPress={() => this.setState({ failed: false })}>
           {i18n.t('errors:boundary_retry')}
         </Btn>
-      </View>
+      </SafeAreaView>
     );
   }
 }

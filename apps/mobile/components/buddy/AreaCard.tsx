@@ -40,7 +40,7 @@ export function AreaCard({ area }: { area: Area }) {
     <View
       style={[
         {
-          backgroundColor: '#fff',
+          backgroundColor: LB.paper,
           borderRadius: 20,
           padding: 14,
           flexDirection: 'row',

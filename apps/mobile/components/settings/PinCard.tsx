@@ -10,6 +10,7 @@ import { type ReactNode, useRef, useState } from 'react';
 import { Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { ApiError } from '../../lib/api/client.js';
 import { setPin } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
@@ -78,6 +79,12 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
         ? withPassword || current !== ''
         : true;
   const canSave = pinOk && currentOk && proofOk && !busy;
+
+  // iOS has no live regions: the mismatch, the re-auth prompt and a save error
+  // say themselves (lib/announce.ts suppresses the Android duplicate).
+  useAnnounce(repeat.length === 4 && pin !== repeat ? t('settings:adult.pin.mismatch') : null);
+  useAnnounce(reason ? t(`settings:adult.pin.reason_${reason}`) : null);
+  useAnnounce(error);
 
   function close() {
     setOpen(false);
@@ -157,7 +164,12 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
               <LbTextInput
                 ref={pinRef}
                 value={pin}
-                onChangeText={(v) => setPinText(onlyDigits(v, 4))}
+                onChangeText={(v) => {
+                  const next = onlyDigits(v, 4);
+                  setPinText(next);
+                  // The number pad has no return key: a filled PIN hands focus on.
+                  if (next.length === 4) repeatRef.current?.focus();
+                }}
                 onFocus={() => onInputFocus(pinRef.current)}
                 keyboardType="number-pad"
                 maxLength={4}
@@ -240,7 +252,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
             ) : null}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <Btn pill onPress={() => void save()} disabled={!canSave}>
+              <Btn pill onPress={() => void save()} busy={busy} disabled={!canSave}>
                 {t('settings:adult.pin.save')}
               </Btn>
               <Btn pill variant="ghost" onPress={close} disabled={busy}>

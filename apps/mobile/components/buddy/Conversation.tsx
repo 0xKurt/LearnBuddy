@@ -118,6 +118,7 @@ export function Conversation({
               {/* Only the newest Buddy moves (while he writes, the one writing does). */}
               {mine ? null : <BuddyOrb size={26} breathe={m === lastBuddy && !thinking} />}
               <Pressable
+                accessibilityRole="text"
                 accessibilityLabel={spoken}
                 accessibilityHint={t('thread.message_hint')}
                 accessibilityActions={[

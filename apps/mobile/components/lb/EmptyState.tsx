@@ -4,6 +4,7 @@
 
 import { Text, View } from 'react-native';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from './BuddyOrb.js';
@@ -22,6 +23,8 @@ export function EmptyState({
   body?: string;
   action?: React.ReactNode;
 }) {
+  // An empty or error state replaces the whole content: say so (iOS has no live regions).
+  useAnnounce(title);
   return (
     <View
       style={{
@@ -50,7 +53,10 @@ export function EmptyState({
           <Text style={{ fontSize: 36 }}>{glyph}</Text>
         </View>
       ) : null}
-      <Text style={[TYPE.title, { fontSize: 20, lineHeight: 26, textAlign: 'center' }]}>
+      <Text
+        accessibilityRole="header"
+        style={[TYPE.title, { fontSize: 20, lineHeight: 26, textAlign: 'center' }]}
+      >
         {title}
       </Text>
       {body ? (

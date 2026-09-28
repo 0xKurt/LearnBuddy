@@ -41,7 +41,7 @@ export function Screen({ title, back = false, right, children }: Props) {
             />
           )}
           {title ? (
-            <Text accessibilityRole="header" numberOfLines={1} style={[TYPE.title, { flex: 1 }]}>
+            <Text accessibilityRole="header" numberOfLines={2} style={[TYPE.title, { flex: 1 }]}>
               {title}
             </Text>
           ) : (

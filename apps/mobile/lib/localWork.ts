@@ -8,6 +8,7 @@ import { localDataOnSignIn } from './auth/localData.js';
 import { localOwner, setLocalOwner } from './auth/session.js';
 import { clearOutbox, hasKeptAnswers } from './api/outboxSync.js';
 import { drafts } from './capture/draftStorage.js';
+import { clearDrafts } from './drafts.js';
 
 /** Signed in (start or sign-in): another person's leftovers go, hers stay. */
 export async function adoptLocalWork(userId: string): Promise<void> {
@@ -22,10 +23,11 @@ export async function hasUnsentWork(): Promise<boolean> {
   return answers || draft !== null;
 }
 
-/** Deletes the outbox, the draft and every kept photo. */
+/** Deletes the outbox, the drafts (photos and text) and every kept photo. */
 export async function discardLocalWork(): Promise<void> {
   await clearOutbox();
   await drafts.clearAll();
+  await clearDrafts();
 }
 
 /** A deliberate sign-out: nothing of hers stays for the next person. */
