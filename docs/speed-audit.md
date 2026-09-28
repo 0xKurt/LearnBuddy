@@ -44,3 +44,19 @@ konfiguriert; bei Bedarf lokal setzen und erneut laufen lassen).
   (90 % auf den stabilen Präfix), zusätzlich zur TTFT-Politur.
 - SSE-TTFB 1,1–1,2 s ist eine gute Basis; Thinking-Caps (#10) sollten den
   Median weiter drücken — Nachmessung nach P1 hier ergänzen.
+
+## App-seitig gemessen (29.09., Browser-Walkthrough, gescriptetes Modell + lokale API)
+
+Die App misst selbst, wie lange ein Tipp bis zur sichtbaren Reaktion braucht
+(`apps/mobile/lib/perf.ts`, Issue #66); der Walkthrough schreibt es nach
+`test-results/web/perf.jsonl`.
+
+| Aktion                                       | gemessen     | was fehlt                                                                  |
+| -------------------------------------------- | ------------ | -------------------------------------------------------------------------- |
+| Senden einer Nachricht → ihre Blase steht    | **0 ms**     | —                                                                          |
+| „Los geht's" auf einem Angebot → erste Frage | **11–18 ms** | die Generierung, falls nicht vorbereitet (#48; in Produktion 5,2 s Median) |
+| „Prüfen" → Urteil                            | **22–36 ms** | die Modellzeit bei Freitext-Antworten (0,7–1,6 s)                          |
+
+**Was das ausschließt:** im Zeichnen der App hängt nichts. Was sich langsam anfühlt, kommt
+vom Netz, vom Modell oder vom Kaltstart (#75). Budgets werden daraus abgeleitet, nicht
+vorher gesetzt.
