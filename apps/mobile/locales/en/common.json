@@ -29,7 +29,7 @@
   "voice": {
     "message": "Speak a message",
     "answer": "Say your answer",
-    "hint": "Tap, speak and tap again. One minute at most.",
+    "hint": "Tap, speak, then tap again. Three minutes at most.",
     "stop": "Stop recording",
     "stop_hint": "Then I'll write down what you said.",
     "recording": "I'm listening … {{time}} / {{max}}",
@@ -76,5 +76,17 @@
   "update": {
     "title": "Time for an update",
     "cta": "Open Google Play"
+  },
+  "onboarding": {
+    "s1_title": "Just tell Buddy",
+    "s1_body": "Type, talk or show a photo – all three lead into the same conversation.",
+    "s2_title": "Your worksheet becomes practice",
+    "s2_body": "Take a photo of a worksheet and Buddy turns it into questions that match your work.",
+    "s3_title": "Buddy thinks ahead",
+    "s3_body": "Tests, topics, the right moment to practise: Buddy keeps track for you and only reaches out if you both want that.",
+    "next": "Next",
+    "start": "Let's go",
+    "skip": "Skip",
+    "step_label": "Step {{n}} of {{count}}"
   }
 }

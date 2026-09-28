@@ -29,7 +29,7 @@
   "voice": {
     "message": "Dictar un mensaje",
     "answer": "Decir tu respuesta",
-    "hint": "Toca, habla y vuelve a tocar. Como mucho un minuto.",
+    "hint": "Toca, habla y vuelve a tocar. Tres minutos como máximo.",
     "stop": "Parar la grabación",
     "stop_hint": "Después escribo lo que has dicho.",
     "recording": "Te escucho … {{time}} / {{max}}",
@@ -76,5 +76,17 @@
   "update": {
     "title": "Toca actualizar",
     "cta": "Abrir Google Play"
+  },
+  "onboarding": {
+    "s1_title": "Díselo a Buddy sin más",
+    "s1_body": "Escribir, hablar o enseñar una foto: los tres caminos llevan a la misma conversación.",
+    "s2_title": "Tu hoja se convierte en práctica",
+    "s2_body": "Fotografía una hoja de ejercicios y Buddy la convierte en preguntas que encajan con lo tuyo.",
+    "s3_title": "Buddy piensa contigo",
+    "s3_body": "Exámenes, temas, el momento justo para practicar: Buddy lo recuerda por ti y solo te avisa si así lo queréis.",
+    "next": "Siguiente",
+    "start": "¡Vamos!",
+    "skip": "Saltar",
+    "step_label": "Paso {{n}} de {{count}}"
   }
 }

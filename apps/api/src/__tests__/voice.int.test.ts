@@ -81,7 +81,7 @@ describe.skipIf(!dbReady)('voice', () => {
   it('refuses recordings that are too long, and unknown formats', async () => {
     const tooLong = await l.api.post('/voice/transcribe', {
       mime: 'audio/mp4',
-      audio_base64: 'A'.repeat(1_500_000),
+      audio_base64: 'A'.repeat(2_100_000),
       purpose: 'message',
     });
     expect(tooLong.status).toBe(422);

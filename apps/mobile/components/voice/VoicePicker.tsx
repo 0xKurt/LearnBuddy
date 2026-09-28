@@ -38,6 +38,10 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);
   const [phoneVoice, setPhoneVoice] = useState(false);
+  /** The tile whose sample is on its way: the natural voice synthesises on the
+      server, and seconds of silence read as "nothing is coming" (user feedback
+      2026-09-28) — so the tapped tile shows it is working. */
+  const [previewing, setPreviewing] = useState<VoiceName | null>(null);
   const sample = t('voice_pick.sample');
   const voice = useBuddyVoice();
 
@@ -52,9 +56,18 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   useEffect(() => {
     if (voice.text === sample && voice.source === 'device') setPhoneVoice(true);
     if (voice.text === sample && voice.source === 'natural') setPhoneVoice(false);
-  }, [voice.text, voice.source, sample]);
+    // The sample started (or reading ended another way): the tile stops waiting.
+    if (voice.text === sample && voice.phase !== 'loading') setPreviewing(null);
+  }, [voice.text, voice.source, voice.phase, sample]);
+  // Sound may never come at all (muted, refused): the wait must not stick forever.
+  useEffect(() => {
+    if (!previewing) return;
+    const give = setTimeout(() => setPreviewing(null), 8000);
+    return () => clearTimeout(give);
+  }, [previewing]);
 
   async function choose(name: VoiceName) {
+    setPreviewing(name);
     void speak(sample, i18n.language, { voice: name });
     if (name === chosen || inFlight.current) return;
     inFlight.current = true;
@@ -96,6 +109,7 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
                   icon="speak"
                   variant={name === chosen ? 'primary' : 'outline'}
                   selected={name === chosen}
+                  busy={previewing === name}
                   disabled={saving && name !== chosen}
                   accessibilityHint={t('voice_pick.tap_hint')}
                   onPress={() => void choose(name)}
@@ -107,7 +121,14 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
           </View>
         ))}
       </View>
-      {phoneVoice ? (
+      {previewing ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[TYPE.small, { color: LB.ink2, paddingHorizontal: 4 }]}
+        >
+          {t('voice_pick.loading')}
+        </Text>
+      ) : phoneVoice ? (
         <Text style={[TYPE.small, { color: LB.ink2, paddingHorizontal: 4 }]}>
           {t('voice_pick.phone_voice')}
         </Text>

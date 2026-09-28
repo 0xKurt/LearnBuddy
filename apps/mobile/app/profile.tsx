@@ -125,7 +125,8 @@ export default function Profile() {
   /** Loads the fresh state before routing, so the gate never decides on stale data. */
   async function goOn() {
     await queryClient.fetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: 0 });
-    router.replace('/');
+    // Three short cards on how to use Buddy, then the first conversation.
+    router.replace('/onboarding');
   }
 
   /** Under 16 alone: an adult is here and does the parents' step for this profile. */

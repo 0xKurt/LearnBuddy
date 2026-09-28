@@ -29,7 +29,7 @@
   "voice": {
     "message": "Nachricht sprechen",
     "answer": "Antwort sagen",
-    "hint": "Tipp, sprich und tipp nochmal. Höchstens eine Minute.",
+    "hint": "Tipp, sprich und tipp nochmal. Höchstens drei Minuten.",
     "stop": "Aufnahme stoppen",
     "stop_hint": "Danach schreibe ich auf, was du gesagt hast.",
     "recording": "Ich höre zu … {{time}} / {{max}}",
@@ -76,5 +76,17 @@
   "update": {
     "title": "Einmal aktualisieren, bitte",
     "cta": "Zu Google Play"
+  },
+  "onboarding": {
+    "s1_title": "Sag es Buddy einfach",
+    "s1_body": "Schreiben, sprechen oder ein Foto zeigen – alle drei Wege führen ins selbe Gespräch.",
+    "s2_title": "Aus deinem Blatt werden Übungen",
+    "s2_body": "Fotografiere ein Arbeitsblatt, und Buddy macht daraus Fragen zum Üben – passend zu deinem Stoff.",
+    "s3_title": "Buddy denkt mit",
+    "s3_body": "Tests, Themen, der richtige Moment zum Üben: Buddy behält das für dich im Kopf und meldet sich nur, wenn ihr das so wollt.",
+    "next": "Weiter",
+    "start": "Los geht's",
+    "skip": "Überspringen",
+    "step_label": "Schritt {{n}} von {{count}}"
   }
 }

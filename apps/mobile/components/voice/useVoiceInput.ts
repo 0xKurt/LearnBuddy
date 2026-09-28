@@ -159,6 +159,40 @@ export function useVoiceInput({
           ? 'starting'
           : 'idle';
 
+  // Hands-free on the recording path too: the on-device recogniser ends by itself
+  // on a pause, but where it is unavailable the recorder ran until she tapped
+  // "stop" after every turn (user feedback 2026-09-28). Once she has clearly
+  // spoken, a sustained pause ends the recording; the tap keeps working, and a
+  // room too loud to ever fall quiet simply behaves as before.
+  const heardMs = useRef(0);
+  const quietSince = useRef<number | null>(null);
+  const lastPoll = useRef(0);
+  useEffect(() => {
+    const active = untilPause && !onDevice && state === 'recording';
+    if (!active) {
+      heardMs.current = 0;
+      quietSince.current = null;
+      lastPoll.current = 0;
+      return;
+    }
+    const now = Date.now();
+    const dt = lastPoll.current ? Math.min(400, now - lastPoll.current) : 0;
+    lastPoll.current = now;
+    // levelFromDb: ~0.28 is clear speech, ~0.12 is room tone (lib/speech/level.ts).
+    if (rec.level >= 0.28) {
+      heardMs.current += dt;
+      quietSince.current = null;
+      return;
+    }
+    if (rec.level > 0.12) {
+      quietSince.current = null;
+      return;
+    }
+    if (heardMs.current < 500) return;
+    quietSince.current ??= now;
+    if (now - quietSince.current >= 1600) void rec.stop();
+  }, [untilPause, onDevice, state, rec.level, rec.elapsedMs, rec]);
+
   async function begin(): Promise<void> {
     guard.begin();
     const locale = voiceLocale(latest.current.lang ?? i18n.language);

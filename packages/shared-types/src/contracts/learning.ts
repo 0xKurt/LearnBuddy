@@ -347,10 +347,10 @@ export const SpeakRequest = z.object({
 });
 export type SpeakRequest = z.infer<typeof SpeakRequest>;
 
-/** Speech to text: a spoken chat message or answer (≤ 60 s). The recording is not stored. */
+/** Speech to text: a spoken chat message or answer (≤ ~3 min). The recording is not stored. */
 export const TranscribeRequest = z.object({
   mime: z.enum(['audio/mp4', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/wav', 'audio/mpeg']),
-  audio_base64: z.string().min(100).max(1_400_000),
+  audio_base64: z.string().min(100).max(2_000_000),
   /** message: talking to Buddy · answer: answering a question (numbers and math written as such). */
   purpose: z.enum(['message', 'answer']),
   /** The language she is expected to speak (e.g. 'fr' for a French answer); null = the app language. */
