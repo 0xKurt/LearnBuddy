@@ -255,6 +255,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   expect(await homePositions(page)).toEqual(homeAt);
   await page.getByRole('button', { name: 'Arbeit', exact: true }).click({ trial: true });
   await shot(page, '12b-buddy-card-closed');
+  // What the app's own stopwatch measured on the way here (issue #66) — read before the
+  // reload, which is what clears it (the spans live in memory, nothing is stored).
+  await recordPerf(page, 'core-loop');
   await page.reload();
   await expect(page.getByText('Hallo Mia')).toBeVisible();
   await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeVisible();
@@ -271,8 +274,6 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '13-memory');
   await page.getByRole('button', { name: 'Zurück' }).click();
 
-  // What the app's own stopwatch measured on the way here (issue #66).
-  await recordPerf(page, 'core-loop');
   await openMenu('Materialien');
   await expect(page.getByText('Brüche kürzen und vergleichen')).toBeVisible();
   await expect(page.getByText(/· 4 Aufgaben$/)).toBeVisible();

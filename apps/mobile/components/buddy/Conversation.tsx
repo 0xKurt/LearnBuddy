@@ -33,6 +33,7 @@ import { MessageMenu, type MenuMessage } from './MessageMenu.js';
 import { RichText } from './RichText.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
+import { SPACE } from '../../lib/theme/space.js';
 
 type Props = {
   messages: MessageView[];
@@ -180,7 +181,10 @@ export function Conversation({
                 <Animated.View
                   key={a.id}
                   entering={riseIn(1)}
-                  style={{ width: '86%', marginLeft: 34 }}
+                  // The block's own gap is 4; a card needs the same air as there is between
+                  // two bubbles, or it looks glued to the sentence above it (owner 28.09.,
+                  // issue #51).
+                  style={{ width: '86%', marginLeft: 34, marginTop: SPACE.sm }}
                 >
                   <OfferCard actionId={a.id} offer={a.summary} />
                 </Animated.View>
@@ -188,7 +192,7 @@ export function Conversation({
                 <Animated.View
                   key={a.id}
                   entering={riseIn(1)}
-                  style={{ width: '86%', marginLeft: 34 }}
+                  style={{ width: '86%', marginLeft: 34, marginTop: SPACE.sm }}
                 >
                   <AreaCard area={a.summary.area} />
                 </Animated.View>

@@ -37,6 +37,7 @@ import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { BottomBar } from './BottomBar.js';
+import { tapped } from '../../lib/perf.js';
 
 /** AnswerRequest.text allows at most 2000 characters. */
 const MAX_ANSWER_LENGTH = 2000;
@@ -266,7 +267,11 @@ export function AnswerComposer({
             full
             pill
             variant={voiceMode ? 'soft' : 'primary'}
-            onPress={() => onCheck(value.trim())}
+            onPress={() => {
+              // Tap → the verdict on screen (issue #66).
+              tapped('check');
+              onCheck(value.trim());
+            }}
             disabled={!canCheck}
           >
             {t('check')}

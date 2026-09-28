@@ -88,6 +88,7 @@ import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
+import { reacted } from '../../lib/perf.js';
 
 type AnswerInput = { text: string } | { choice: number };
 
@@ -365,6 +366,8 @@ export default function PracticeScreen() {
       const res = await answerItem(id, { client_turn_id: clientTurnId, item_id: itemId, ...input });
       lastSent.current = null;
       await store(res.session);
+      // Tap on "Prüfen" → the verdict on screen (issue #66).
+      reacted('check');
       if (answerText !== null) setText((current) => (current.trim() === answerText ? '' : current));
       if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
         Keyboard.dismiss();
