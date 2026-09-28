@@ -95,3 +95,21 @@ export function hearResult(prev: Heard, transcript: string, isFinal: boolean): H
 export function heardText(h: Heard): string {
   return join(h.committed, h.interim);
 }
+
+/**
+ * Which Android recognition service to bind (issue #13): OEM services are the
+ * documented failure class behind "recognition unavailable" on e.g. MIUI
+ * (expo-speech-recognition #138), so a Google service is preferred explicitly —
+ * on-device Android System Intelligence first, then Speech Services by Google
+ * (Android 13+), then the Google app (older). Null = leave the system default.
+ */
+export function pickRecognitionService(services: readonly string[]): string | null {
+  for (const wanted of [
+    'com.google.android.as',
+    'com.google.android.tts',
+    'com.google.android.googlequicksearchbox',
+  ]) {
+    if (services.includes(wanted)) return wanted;
+  }
+  return null;
+}

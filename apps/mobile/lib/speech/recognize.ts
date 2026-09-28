@@ -13,6 +13,7 @@ import { AppState, Platform } from 'react-native';
 
 import {
   chooseEngine,
+  pickRecognitionService,
   fallsBackToServer,
   hearResult,
   heardText,
@@ -22,6 +23,8 @@ import {
   type SpeechEngine,
 } from './engine.js';
 import { deviceEnd } from './deviceEnd.js';
+import NetInfo from '@react-native-community/netinfo';
+
 import { levelFromRecognizer } from './level.js';
 
 /** Locales that failed on the device during this app run: straight to the EU path next time. */
@@ -32,16 +35,65 @@ const failedLocales = new Set<string>();
  */
 let refused = false;
 let installed: Promise<readonly string[] | null> | null = null;
+let service: string | null | undefined;
+/** Locales whose offline pack download was already asked for in this run. */
+const packAsked = new Set<string>();
+
+/**
+ * The Android service recognition binds to — explicitly a Google one where
+ * present (issue #13): OEM services are the documented failure class behind
+ * "unavailable" (expo-speech-recognition #138). Cached for the app run.
+ */
+function recognitionService(): string | null {
+  if (Platform.OS !== 'android') return null;
+  if (service !== undefined) return service;
+  try {
+    service = pickRecognitionService(ExpoSpeechRecognitionModule.getSpeechRecognitionServices());
+  } catch {
+    service = null;
+  }
+  return service;
+}
 
 function installedLocales(): Promise<readonly string[] | null> {
   if (Platform.OS !== 'android') return Promise.resolve(null);
-  installed ??= ExpoSpeechRecognitionModule.getSupportedLocales({})
+  installed ??= ExpoSpeechRecognitionModule.getSupportedLocales({
+    ...(recognitionService() ? { androidRecognitionServicePackage: recognitionService()! } : {}),
+  })
     .then((r) => r.installedLocales)
     .catch(() => {
       installed = null;
       return null;
     });
   return installed;
+}
+
+/**
+ * The offline language pack, fetched once per locale when it is missing —
+ * only on an unmetered connection (a family's mobile data must not pay for a
+ * model download). Fire-and-forget: recognition falls back to the EU path
+ * until the pack is there, and the next tap simply finds it installed.
+ */
+function fetchOfflinePack(lang: string, installedList: readonly string[] | null): void {
+  if (Platform.OS !== 'android' || packAsked.has(lang)) return;
+  if (installedList && installedMatch(installedList, lang)) return;
+  packAsked.add(lang);
+  void NetInfo.fetch()
+    .then((net) => {
+      if (
+        net.details &&
+        'isConnectionExpensive' in net.details &&
+        net.details.isConnectionExpensive
+      )
+        return;
+      return ExpoSpeechRecognitionModule.androidTriggerOfflineModelDownload({ locale: lang }).then(
+        () => {
+          // The service knows a new locale now: ask again next time.
+          installed = null;
+        },
+      );
+    })
+    .catch(() => undefined);
 }
 
 /**
@@ -228,6 +280,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
         outcome.current = 'none';
         interrupted.current = false;
         mine.current = true;
+        fetchOfflinePack(lang, installedList);
         ExpoSpeechRecognitionModule.start({
           lang: (installedList && installedMatch(installedList, lang)) || lang,
           interimResults: true,
@@ -236,6 +289,11 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
           requiresOnDeviceRecognition: true,
           addsPunctuation: true,
           maxAlternatives: 1,
+          // A Google service where present (issue #13): OEM recognisers are the
+          // documented failure class on e.g. MIUI.
+          ...(recognitionService()
+            ? { androidRecognitionServicePackage: recognitionService()! }
+            : {}),
           volumeChangeEventOptions: { enabled: true, intervalMillis: 120 },
         });
       } catch {

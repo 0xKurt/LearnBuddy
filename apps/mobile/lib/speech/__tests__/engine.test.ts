@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   chooseEngine,
+  pickRecognitionService,
   fallsBackToServer,
   hearResult,
   heardText,
@@ -91,5 +92,28 @@ describe('hearResult', () => {
   it('does not double text when a final result repeats everything', () => {
     const h = hearResult({ committed: 'eins', interim: '' }, 'eins zwei', true);
     expect(heardText(h)).toBe('eins zwei');
+  });
+});
+
+describe('pickRecognitionService', () => {
+  it('prefers the on-device Google service, then Speech Services, then the Google app', () => {
+    expect(
+      pickRecognitionService([
+        'com.samsung.android.bixby.agent',
+        'com.google.android.tts',
+        'com.google.android.as',
+      ]),
+    ).toBe('com.google.android.as');
+    expect(pickRecognitionService(['com.miui.voiceassist', 'com.google.android.tts'])).toBe(
+      'com.google.android.tts',
+    );
+    expect(pickRecognitionService(['com.google.android.googlequicksearchbox'])).toBe(
+      'com.google.android.googlequicksearchbox',
+    );
+  });
+
+  it('leaves the system default when no Google service exists (the OEM may still work)', () => {
+    expect(pickRecognitionService(['com.miui.voiceassist'])).toBeNull();
+    expect(pickRecognitionService([])).toBeNull();
   });
 });
