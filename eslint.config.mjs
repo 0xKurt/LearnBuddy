@@ -19,6 +19,8 @@ export default tseslint.config(
       'playwright-report/**',
       'design-examples/**',
       'docs/**',
+      // Local work-in-progress parked outside the build (gitignored, may not exist).
+      'wip/**',
       // Tool config files loaded as CommonJS by their tools regardless of
       // package.json type — let them speak require/module without lint noise.
       '**/babel.config.js',

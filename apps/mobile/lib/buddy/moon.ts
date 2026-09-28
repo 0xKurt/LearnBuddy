@@ -119,16 +119,19 @@ function blend(w: number[], row: number[]): number {
 }
 
 /** A point on the tilted orbit seen from slightly above: z > 0 is in front of the orb. */
+// The tilt default lives in the body: the worklets Babel plugin captures outer
+// constants referenced in a worklet's body, but not ones in parameter defaults —
+// `= TILT` here crashed release builds on the UI thread ("Property 'TILT' doesn't exist").
 export function orbitPt(
   a: number,
   R: number,
   k: number,
-  tiltDeg: number = TILT,
+  tiltDeg?: number,
 ): { x: number; y: number; z: number } {
   'worklet';
   const x = R * Math.cos(a);
   const y = R * k * Math.sin(a);
-  const t = (tiltDeg * Math.PI) / 180;
+  const t = ((tiltDeg ?? TILT) * Math.PI) / 180;
   const c = Math.cos(t);
   const s = Math.sin(t);
   return { x: x * c - y * s, y: x * s + y * c, z: Math.sin(a) };

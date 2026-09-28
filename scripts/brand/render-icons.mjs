@@ -207,6 +207,10 @@ const BOOST = Number(process.env.LB_MOON_BOOST ?? 1.3);
 const ICON = [470, 540, 290];
 const ADAPTIVE = [495, 528, 190];
 const FAVICON = [440, 580, 300];
+// The splash shows the whole picture: small enough that the moon's glow (the widest part,
+// mx + 21·scale·glow ≈ cx + 633 at this size) fades out inside the 1024 canvas instead of
+// being cut off at the edge.
+const SPLASH = [386, 540, 285];
 
 const FILES = [
   // iOS / store icon: full bleed, opaque (iOS rounds the corners itself).
@@ -224,9 +228,17 @@ const FILES = [
   },
   { name: 'adaptive-background.png', size: 1024, body: backdrop(), opaque: true },
   { name: 'adaptive-monochrome.png', size: 1024, body: monochrome() },
-  // Splash: the orb and its moon on the page colour (drawn transparent, placed on BG), as
-  // the icon draws them — components/lb/SplashHandoff.tsx shows the same picture.
-  { name: 'splash-icon.png', size: 1024, body: orb(...ICON) + moon(...ICON, BOOST) },
+  // Splash: the orb and its moon baked opaque on the page colour. Opaque on purpose:
+  // Android's splash renderer (MIUI at least) composites straight-alpha PNGs wrongly and
+  // turns the soft glow into gray fringes — with the background baked in there is no alpha
+  // to get wrong, and the native window colour is the same #faf7fd, so the square is
+  // invisible. components/lb/SplashHandoff.tsx shows the same picture on the same colour.
+  {
+    name: 'splash-icon.png',
+    size: 1024,
+    body: orb(...SPLASH) + moon(...SPLASH, BOOST),
+    opaque: true,
+  },
   // Web: no halo, no glow (they would blur at 48 px); the moon a little larger to read.
   {
     name: 'favicon.png',

@@ -51,6 +51,9 @@ coverage/
 *.swp
 *~
 
+# Local work-in-progress parked outside the build (see eslint.config.mjs ignores)
+wip/
+
 # Misc
 *.log
 .cache/
@@ -67,3 +70,6 @@ test-results/
 # Firebase/Google service-account keys are secrets: upload them to Expo, never commit them
 *firebase-adminsdk*.json
 *service-account*.json
+vertex-sa.json
+# EAS local credentials (keystore passwords)
+apps/mobile/credentials.json
