@@ -233,6 +233,12 @@ export function buildContext(
     if (refresh.length) lines.push(`  time for a refresh: ${refresh.slice(0, 6).join(', ')}`);
     if (fresh.length) lines.push(`  not practised yet: ${fresh.slice(0, 6).join(', ')}`);
   }
+  // She has more sheets than fit here: say so, or Buddy answers "that's all you have"
+  // from a list that is only the newest ten (owner 28.09., issues #49 and #68).
+  if (state.totals.materials > state.materials.length)
+    lines.push(
+      `- ${state.materials.length} of ${state.totals.materials} sheets are listed here (the newest); search_material finds the others`,
+    );
   const reading = state.materials.filter((m) => m.status === 'queued' || m.status === 'processing');
   if (reading.length)
     lines.push(`- ${reading.length} sheet(s) are being read right now (no questions yet)`);

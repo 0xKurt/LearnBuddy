@@ -181,7 +181,14 @@ export type BuddyState = {
   sessions: SessionBrief[];
   outreach: OutreachRow[];
   /** Totals irrespective of the bounded lists (coverage signals). */
-  totals: { activeGoals: number; openSteps: number; memories: number; items: number };
+  totals: {
+    activeGoals: number;
+    openSteps: number;
+    memories: number;
+    items: number;
+    /** All her sheets, not only the newest ones in `materials` (issue #49). */
+    materials: number;
+  };
 };
 
 /** A turn still "processing" after this long is considered interrupted. */
@@ -347,14 +354,22 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     [learnerId, now, LIMITS.outreachDays],
   );
 
-  const totals = await db.one<{ goals: number; steps: number; memories: number; items: number }>(
+  const totals = await db.one<{
+    goals: number;
+    steps: number;
+    memories: number;
+    items: number;
+    materials: number;
+  }>(
     `select
        (select count(*) from buddy_goals where learner_id = $1 and status = 'active')::int as goals,
        (select count(*) from buddy_steps where learner_id = $1 and state in ('planned','prepared','in_progress'))::int as steps,
        (select count(*) from buddy_memories where learner_id = $1 and status = 'active'
           and (valid_until is null or valid_until > $2))::int as memories,
        (select count(*) from items where learner_id = $1 and archived_at is null
-                                           and origin <> 'homework')::int as items`,
+                                           and origin <> 'homework')::int as items,
+       (select count(*) from materials where learner_id = $1 and archived_at is null
+                                            and merged_into is null)::int as materials`,
     [learnerId, now],
   );
 
@@ -374,6 +389,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
       openSteps: totals.steps,
       memories: totals.memories,
       items: totals.items,
+      materials: totals.materials,
     },
   };
 }

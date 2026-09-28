@@ -183,3 +183,48 @@ describe.skipIf(!dbReady)('more of the same after a practice', () => {
     expect(again.status).toBe(201);
   });
 });
+
+// Her sheets outgrow the list Buddy carries in STATE (ten, `LIMITS.materials`): he must be
+// told that there are more, or he answers "that is all you have" from a partial list
+// (owner 28.09., issues #49, #68).
+describe.skipIf(!dbReady)('more sheets than fit in the context', () => {
+  let env: TestEnv;
+  let l: Learner;
+  beforeAll(async () => {
+    env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
+    l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
+    for (let i = 1; i <= 12; i++) {
+      await env.db.query(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title,
+                                extracted_text, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, $2, 'Inhalt', $3)`,
+        [l.learnerId, `Blatt ${i}`, env.clock.now()],
+      );
+    }
+  });
+  afterAll(async () => {
+    await env?.close();
+  });
+
+  it('says how many there are and where the rest is found', async () => {
+    let seen = '';
+    env.llm.script('buddy_turn', (req) => {
+      seen = ScriptedGateway.textOf(req);
+      return {
+        lookups: [],
+        concern: false,
+        actions: [],
+        reply: 'Du hast einige Blätter – soll ich in einem bestimmten nachsehen?',
+        options: null,
+        asks_permission: false,
+      };
+    });
+    const sent = await l.api.post('/buddy/messages', {
+      client_message_id: randomUUID(),
+      text: 'Welche Blätter habe ich eigentlich?',
+    });
+    expect(sent.status).toBe(200);
+    expect(seen).toContain('10 of 12 sheets are listed here');
+    expect(seen).toContain('search_material finds the others');
+  });
+});
