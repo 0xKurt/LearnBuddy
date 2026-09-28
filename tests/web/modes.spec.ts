@@ -9,6 +9,11 @@ import { expect, test, type Page } from '@playwright/test';
 import { shot } from './fit';
 import { recordPerf } from './perf';
 
+/** The button inside the sheet that is open (the thread behind it may show the same words). */
+function inSheet(page: Page) {
+  return page.locator('[aria-modal="true"]');
+}
+
 /** The card on top (a finished practice, a waiting photo) lies over the ways to start. */
 async function closeCardIfAny(page: Page): Promise<void> {
   const card = page.getByTestId('home-card');
@@ -88,7 +93,7 @@ test('learning modes: explain, homework help without the solution, practice with
     .getByRole('textbox')
     .last()
     .fill('Ein Rechteck ist 7 cm lang und 4 cm breit. Berechne den Flächeninhalt.');
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
   await expect(
     page.getByText('Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.'),
   ).toBeVisible();
@@ -126,7 +131,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(
     page.getByText('ein paar Fragen zu Brüchen vorbereitet', { exact: false }),
   ).toBeVisible();
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
@@ -176,7 +181,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ein Probetest über die Römer', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
   await expect(
     page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),
   ).toBeVisible();

@@ -9,6 +9,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { shot } from './fit';
 
+/** The button inside the sheet that is open (the thread behind it may show the same words). */
+function inSheet(page: Page) {
+  return page.locator('[aria-modal="true"]');
+}
+
 const FIXTURES = join(__dirname, '../../apps/mobile/lib/photo/__tests__/fixtures');
 
 async function onboardChild(page: Page, email: string): Promise<void> {
@@ -325,7 +330,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // ── Pronunciation: record (a fake microphone), sent, feedback per word ──
   await page.getByRole('button', { name: 'Aussprache', exact: true }).click();
   await page.getByRole('textbox').last().fill('Englisch: The weather is nice today.');
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('The weather is nice today.').first()).toBeVisible();
   await page.getByRole('button', { name: 'Aufnahme starten' }).click();
   await page.waitForTimeout(1200);
