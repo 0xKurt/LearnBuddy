@@ -74,3 +74,16 @@ Speicher. Was „Senden" danach noch tut, ist der Submit — die Ersparnis ist g
 Upload-Zeit der Seiten, die vor dem Tippen fertig waren. Im Browser-Walkthrough ist der
 Speicher lokal, die Zahl sagt dort also nichts; die ehrliche Messung braucht ein Handy im
 Mobilfunknetz (#37).
+
+## Live gegen das Modell (29.09., 19 Lena-Journeys, in-process)
+
+| Was                                  | Median                         | Maximum |
+| ------------------------------------ | ------------------------------ | ------- |
+| Chat-Antwort (ganze Antwort)         | 2,9–4,2 s                      | 6,5 s   |
+| Übung vorbereiten (`prepare`)        | 2,5–7,3 s                      | 7,3 s   |
+| Antwort prüfen (`answer`)            | 10 ms (Regel) – 1,4 s (Modell) | 1,5 s   |
+| Blatt lesen (1 Seite) → Übung bereit | 8,2–9,9 s                      | 11,2 s  |
+
+**Kaltstart der deployten API** (nach Ruhe, `/v1/health`): 15 min → 148 ms, 20 min → 165 ms
+(warm 95–105 ms). Der Minuten-Cron des Schedulers hält die Funktion wach; die 11 s beim
+Blattlesen sind Modellzeit, kein Kaltstart (#75).

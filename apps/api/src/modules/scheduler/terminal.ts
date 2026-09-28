@@ -14,6 +14,7 @@
 // Handling is recorded on the job (`result.terminal`), so each parked job is handled once.
 
 import type { Deps } from '../../deps.js';
+import { skipSession } from '../buddy/summarise.js';
 import { enqueueJob, type JobKind, type JobRow } from './jobs.js';
 
 type TerminalEffect = (deps: Deps, job: JobRow) => Promise<string>;
@@ -50,6 +51,12 @@ export const TERMINAL: { [K in JobKind]: TerminalEffect } = {
   purge_photos: operator,
   purge_content: operator,
   delete_account: operator,
+  // A conversation nobody could write down gets an empty row, so the next one is not
+  // stuck behind it — and the empty row says plainly that there are no sentences (#22).
+  summarise_session: async (deps, job) => {
+    await skipSession(deps, job);
+    return 'skipped';
+  },
 };
 
 /** Apply the terminal effect of every parked job not handled yet. */

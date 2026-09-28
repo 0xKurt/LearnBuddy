@@ -501,6 +501,39 @@ export const CASES: Case[] = [
     ],
   },
   {
+    // Issue #22: weeks later the message list is gone, the summaries are not. Buddy must
+    // connect to what she told him — without inventing anything around it.
+    id: 'de_remembers_earlier_days',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      const days = [
+        [
+          '2026-09-08',
+          'Sie hat erzählt, dass sie ein Referat über die Römer halten muss und Angst vor dem Vortragen hat. Sie hat sich Stichpunkte überlegt.',
+          ['Referat', 'Römer'],
+        ],
+        [
+          '2026-09-15',
+          'Sie hat das Referat gehalten und war stolz, dass sie nicht abgelesen hat. Danach ging es um Brüche kürzen, das klappte schon gut.',
+          ['Referat', 'Brüche'],
+        ],
+      ] as const;
+      for (const [day, summary, topics] of days) {
+        await env.db.query(
+          `insert into buddy_session_summaries (learner_id, day, started_at, ended_at, summary, topics)
+           values ($1, $2::date, $2::timestamptz, $2::timestamptz, $3, $4::jsonb)`,
+          [l.learnerId, day, summary, JSON.stringify(topics)],
+        );
+      }
+    },
+    message: 'weißt du noch was ich vor drei wochen gemacht hab?',
+    check: (o) => [
+      ...must(/referat|römer/i.test(o.reply ?? ''), 'names what she told him back then'),
+      ...must(!/\b(12|13|14|15|21)\s*(tage|tagen)\b/i.test(o.reply ?? ''), 'counts no days at her'),
+      ...must(o.tools.length === 0, 'changes nothing'),
+    ],
+  },
+  {
     id: 'de_test_nerves_not_concern',
     learner: { relation: 'child', birthDate: '2014-02-10' },
     message: 'Ich bin total nervös wegen der Mathearbeit am Freitag',

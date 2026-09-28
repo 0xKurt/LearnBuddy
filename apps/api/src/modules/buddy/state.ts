@@ -82,6 +82,13 @@ export type MemoryRow = {
   created_at: Date;
 };
 
+/** Two to four sentences about a conversation that ended (issue #22). */
+export type DaySummaryRow = {
+  day: string;
+  summary: string;
+  topics: string[];
+};
+
 export type MessageRow = {
   id: string;
   role: 'learner' | 'buddy';
@@ -175,6 +182,8 @@ export type BuddyState = {
   steps: StepRow[];
   memories: MemoryRow[];
   messages: MessageRow[];
+  /** What the days before were about, newest last (issue #22). */
+  summaries: DaySummaryRow[];
   subjects: SubjectRow[];
   topics: TopicProgress[];
   materials: MaterialBrief[];
@@ -198,6 +207,8 @@ export const TURN_STALL_MS = 3 * 60_000;
 // and are never counted as practice questions (p2-HW-06).
 export const LIMITS = {
   messages: 24,
+  /** Conversations of earlier days that travel in the context, newest first. */
+  summaries: 10,
   goals: 12,
   steps: 20,
   memories: 60,
@@ -263,6 +274,18 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
         order by seq desc
         limit $2`,
       [learnerId, LIMITS.messages],
+    )
+  ).reverse();
+
+  // What the days before were about: cheap tokens where a longer message list would be
+  // expensive and still lose the shape of a day (issue #22, modules/buddy/summarise.ts).
+  const summaries = (
+    await db.query<DaySummaryRow>(
+      `select to_char(day, 'YYYY-MM-DD') as day, summary, topics from buddy_session_summaries
+        where learner_id = $1 and summary <> '—'
+        order by ended_at desc
+        limit $2`,
+      [learnerId, LIMITS.summaries],
     )
   ).reverse();
 
@@ -383,6 +406,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     steps,
     memories,
     messages,
+    summaries,
     subjects,
     topics,
     materials,

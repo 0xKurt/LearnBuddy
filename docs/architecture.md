@@ -515,6 +515,18 @@ and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/spe
 `evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
+**What the days before were about** (`modules/buddy/summarise.ts`, issue #22). The context
+carries the last 24 messages — a good conversation, and nothing three weeks later. When a
+conversation has come to rest (nothing said for four hours, the same gap the app draws its
+session line at), the scheduler has the model write **two to four sentences** about it plus
+up to five topics, stored per stretch with `until_message_id`; the newest ten travel in the
+state block under "Earlier conversations". Cheap tokens (the fast model, `purpose: 'summary'`)
+instead of an ever longer message list. Rules that hold: a conversation still going is never
+written down; a stretch is written once; a conversation the model cannot summarise gets an
+**empty** row so the next one is not stuck behind it — and an empty row never reaches the
+context, because Buddy has nothing to say about that day (rule 5). Summaries go with the
+account (cascade) and are covered by `session-summaries.int.test.ts`.
+
 ### Speed
 
 Waiting kills practice. Budgets (end to end, measured in process by `apps/api/evals/speed/run.ts`

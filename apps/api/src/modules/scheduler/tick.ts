@@ -19,6 +19,7 @@ import {
   purgePhotos,
   sweepForgottenPhotos,
 } from '../materials/purge.js';
+import { planSummaries, runSummary } from '../buddy/summarise.js';
 import { purgeSpeechCache } from '../voice/speech.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
@@ -149,11 +150,19 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     if (left() > 5_000 && deps.push.enabled) stats.receipts = await checkReceipts(deps);
   });
 
+  // A conversation that has come to rest is written down in two to four sentences, so Buddy
+  // still knows weeks later what she was doing (issue #22, modules/buddy/summarise.ts).
+  // Planned before the maintenance loop, so the job also runs in this tick.
+  await guard('summaries', async () => {
+    if (left() < 10_000) return;
+    await planSummaries(deps);
+  });
+
   await guard('maintenance', async () => {
     while (left() > 5_000) {
       const [job] = await claimJobs(deps.db, {
         now: deps.now(),
-        kinds: ['purge_photos', 'purge_content', 'delete_account'],
+        kinds: ['purge_photos', 'purge_content', 'delete_account', 'summarise_session'],
         limit: 1,
         leaseSeconds: 120,
       });
@@ -163,11 +172,14 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
           ? purgePhotos(deps, job)
           : job.kind === 'purge_content'
             ? purgeContent(deps, job)
-            : executeAccountDeletion(deps, job),
+            : job.kind === 'summarise_session'
+              ? runSummary(deps, job)
+              : executeAccountDeletion(deps, job),
       );
       stats.maintenance++;
     }
   });
+
   // Retention that no job carries: photos Storage still owes after an account deletion,
   // photos no purge is planned for, memories past their undo window, Buddy's spoken audio
   // after a day, and what the model wrote while deciding (docs/privacy.md).

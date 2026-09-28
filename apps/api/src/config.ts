@@ -30,6 +30,7 @@ const VertexRoutes = z
     transcribe: ModelSpec,
     hints: ModelSpec,
     reexplain: ModelSpec,
+    summary: ModelSpec,
   })
   .partial()
   .strict();
@@ -232,4 +233,6 @@ export const DAILY_LIMITS = {
   hints: 60,
   /** "Anders erklären": a new explanation after an explanation or a solution. */
   reexplain: 60,
+  /** Two to four sentences about a conversation that ended (issue #22); a handful a day. */
+  summary: 12,
 } as const;

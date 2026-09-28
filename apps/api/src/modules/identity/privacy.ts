@@ -35,6 +35,8 @@ const LEARNER_TABLES = [
   'buddy_outreach',
   'buddy_events',
   'buddy_lookbacks',
+  // What was talked about on earlier days (issue #22): hers, so it is in her export.
+  'buddy_session_summaries',
   'subjects',
   'materials',
   'items',

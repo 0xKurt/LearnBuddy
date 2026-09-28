@@ -250,6 +250,17 @@ export function buildContext(
       `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,
     );
 
+  // What the days before were about (issue #22): the message list holds one conversation,
+  // these hold the weeks. They are what was said, not what he concluded — for connecting
+  // ("letzte Woche war das Referat"), never for claiming.
+  if (state.summaries.length > 0) {
+    lines.push('', '## Earlier conversations (oldest first)');
+    for (const s of state.summaries) {
+      const about = s.topics.length ? ` [${s.topics.slice(0, 5).join(', ')}]` : '';
+      lines.push(`- ${s.day}${about}: ${s.summary}`);
+    }
+  }
+
   lines.push('', '## Recent practice');
   if (state.sessions.length === 0) lines.push('- none yet');
   for (const s of state.sessions.slice(0, 3)) {

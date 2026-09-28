@@ -14,7 +14,8 @@ export type JobKind =
   | 'buddy_turn'
   | 'purge_photos'
   | 'purge_content'
-  | 'delete_account';
+  | 'delete_account'
+  | 'summarise_session';
 
 /**
  * Erasure jobs are never parked: a privacy promise does not expire after three tries.
