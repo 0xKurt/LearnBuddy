@@ -37,6 +37,7 @@ export function Composer({
   onStop,
   onSend,
   onPhoto,
+  onTalk,
 }: {
   disabled: boolean;
   /** Buddy is answering what she sent: the send button becomes "Stopp". */
@@ -47,6 +48,8 @@ export function Composer({
   onSend: (text: string) => Promise<boolean>;
   /** The camera: a photo says more than typing a worksheet. */
   onPhoto: () => void;
+  /** Conversation mode (talk screen): bottom right, next to the mic. */
+  onTalk: () => void;
 }) {
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
@@ -245,6 +248,14 @@ export function Composer({
             {t('buddy:composer.send')}
           </Btn>
         )}
+        {/* Conversation mode sits where she knows it from other chat apps:
+            bottom right, next to the mic (user feedback 2026-09-28). */}
+        <CircleBtn
+          icon="headphones"
+          plain
+          onPress={onTalk}
+          accessibilityLabel={t('buddy:talk.open')}
+        />
       </View>
     </View>
   );

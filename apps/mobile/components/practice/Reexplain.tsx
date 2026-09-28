@@ -8,7 +8,7 @@
 
 import type { PracticeTurnView, ReexplainWay } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Btn } from '../lb/Btn.js';
 import { Appear } from '../lb/Motion.js';
@@ -38,14 +38,11 @@ export function Reexplain({ turns, pending, disabled, onAsk, delay = 350 }: Prop
       />
       {pending ? null : (
         <Appear delay={turns.length > 0 ? 200 : delay}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+          {/* Wrapping, not a horizontal scroll: the half-visible chip read as a
+              rendering bug, not as an affordance (user feedback 2026-09-28). */}
+          <View
             accessibilityLabel={t('reexplain.label')}
-            // Bleeds to the screen edges, so a chip that does not fit peeks in from the side.
-            style={{ marginHorizontal: -16 }}
-            contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
+            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}
           >
             {WAYS.map((way) => (
               <Btn
@@ -60,7 +57,7 @@ export function Reexplain({ turns, pending, disabled, onAsk, delay = 350 }: Prop
                 {t(`reexplain.${way}`)}
               </Btn>
             ))}
-          </ScrollView>
+          </View>
         </Appear>
       )}
     </View>

@@ -224,6 +224,14 @@ export default function Profile() {
                   }
                 />
               </View>
+              {/* Language before the date: the date fields open the keyboard, and a
+                  section below them was simply never seen (user feedback 2026-09-28 —
+                  "Let's go" was tappable while fields still hid under the keyboard). */}
+              <View style={{ gap: 8 }}>
+                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
+                {/* Compact: five languages in two rows, so the step fits a small phone. */}
+                <Segmented size="sm" options={LANGUAGES} value={locale} onChange={setLocale} />
+              </View>
               <View style={{ gap: 8 }}>
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
                   {t('profile.birth_date')}
@@ -300,11 +308,6 @@ export default function Profile() {
                     </View>
                   </Card>
                 ) : null}
-              </View>
-              <View style={{ gap: 8 }}>
-                <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
-                {/* Compact: five languages in two rows, so the step fits a small phone. */}
-                <Segmented size="sm" options={LANGUAGES} value={locale} onChange={setLocale} />
               </View>
             </>
           ) : null}

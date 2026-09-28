@@ -1,6 +1,7 @@
-// The two soft tones of talk mode (gap 17): Buddy starts listening, Buddy stops
-// listening — so she knows without looking. Synthesised by
-// scripts/make-talk-tones.mjs (tiny, no licensed audio), quiet, never a fanfare.
+// The two soft cues of talk mode (gap 17): Buddy starts listening, Buddy stops
+// listening — so she knows without looking. Discrete soft taps, no pitch glide
+// (the old glissando read as a whimpering animal — user feedback 2026-09-28).
+// Synthesised by scripts/make-talk-tones.mjs (tiny, no licensed audio).
 // They follow the silent switch: on iOS the tone plays in a session that obeys it,
 // and afterwards the session is handed back as talk mode needs it (Buddy's voice is
 // heard, the next recording can start). Needs live verification on a phone.
@@ -17,8 +18,8 @@ export type Cue = 'listen' | 'done';
 const SOURCES: Record<Cue, number> = { listen: listenStart, done: listenEnd };
 /** Quiet: a hint, not a signal. */
 const VOLUME = 0.35;
-/** How long a tone lasts (the files are 220–240 ms). */
-export const CUE_MS = 260;
+/** How long a cue lasts (the files are 110–180 ms). */
+export const CUE_MS = 200;
 
 const players = new Map<Cue, AudioPlayer>();
 

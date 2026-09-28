@@ -116,6 +116,16 @@ export default function BuddyScreen() {
   const [pageThumb, setPageThumb] = useState<string | null>(null);
   const letGoRef = useRef<CaptureDraft | null>(null);
   letGoRef.current = letGo;
+  // The KAV adjusts only while this screen is focused: keyboard events fired on a
+  // screen pushed above (practice) otherwise leave a stale gap under the composer
+  // after coming back (user screenshot 2026-09-28: composer floating mid-screen).
+  const [focusedScreen, setFocusedScreen] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setFocusedScreen(true);
+      return () => setFocusedScreen(false);
+    }, []),
+  );
   useFocusEffect(
     useCallback(() => {
       let alive = true;
@@ -767,6 +777,7 @@ export default function BuddyScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        enabled={focusedScreen}
       >
         <View
           style={{
@@ -777,18 +788,9 @@ export default function BuddyScreen() {
             paddingTop: 8,
           }}
         >
-          {/* Talking with Buddy hands-free (conversation mode). */}
-          {/* With its word, so a 12-year-old reads it as "talk" (user feedback #18). */}
-          <Btn
-            size="sm"
-            pill
-            variant="outline"
-            icon="headphones"
-            onPress={() => router.push('/talk')}
-            accessibilityLabel={t('buddy:talk.open')}
-          >
-            {t('buddy:talk.short')}
-          </Btn>
+          {/* Conversation mode moved into the composer (bottom right, next to the mic —
+              user feedback 2026-09-28); this spacer keeps BUDDY centred. */}
+          <View style={{ width: 96 }} />
           <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>BUDDY</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {/* Voice mode: Buddy reads replies aloud and the mic leads (audit M-77). */}
@@ -986,6 +988,7 @@ export default function BuddyScreen() {
           onStop={() => void stopReply()}
           onSend={(text) => send(text)}
           onPhoto={() => router.push('/capture')}
+          onTalk={() => router.push('/talk')}
         />
       </KeyboardAvoidingView>
 

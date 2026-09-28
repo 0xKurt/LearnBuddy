@@ -60,6 +60,7 @@ function hasCard(m: MessageView | null): boolean {
 export default function TalkScreen() {
   const { t } = useTranslation(['buddy', 'common']);
   const words = useSpokenWords();
+  const scroll = useRef<ScrollView>(null);
   const [phase, setPhase] = useState<Phase>('paused');
   const [said, setSaid] = useState('');
   const [reply, setReply] = useState<MessageView | null>(null);
@@ -240,6 +241,14 @@ export default function TalkScreen() {
     stopSpeaking();
   }
 
+  // Once the conversation carries content, the orb makes room for it: full size it
+  // pushed Buddy's reply and its card half behind the bottom bar (user screenshot
+  // 2026-09-28 "der halbe content verschwindet").
+  const hasContent = !!(reply ?? live ?? (said || null));
+  useEffect(() => {
+    if (reply || live) scroll.current?.scrollToEnd({ animated: true });
+  }, [reply, live]);
+
   // Her photo is being read (she showed Buddy something): said here too.
   const home = useHome();
   const reading = home.data?.now?.type === 'material_processing';
@@ -304,6 +313,7 @@ export default function TalkScreen() {
       </View>
 
       <ScrollView
+        ref={scroll}
         contentContainerStyle={{ flexGrow: 1, alignItems: 'center', padding: 24, gap: 14 }}
       >
         <Text
@@ -326,9 +336,10 @@ export default function TalkScreen() {
           ) : null}
         </View>
 
-        <View style={{ marginVertical: -10 }}>
+        <View style={{ marginVertical: hasContent ? -26 : -10 }}>
           <TalkOrb
             mode={orbMode}
+            size={hasContent ? 132 : 200}
             level={voice.level}
             {...(phase === 'speaking'
               ? { onPress: interrupt, pressLabel: t('buddy:talk.stop_speaking') }
