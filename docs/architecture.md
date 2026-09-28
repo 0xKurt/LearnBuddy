@@ -1321,6 +1321,11 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
   devices, Supabase Auth/Storage themselves, pg_cron firing and pg_net sending on a hosted
   project.
+- Deploy checks (`apps/api/scripts/deploy-check.ts`): Vercel's own builder detection, the
+  database's TLS and region, that the app keys can execute nothing and every table has RLS —
+  and that **every migration on disk is applied** before new code goes live. The last one was
+  added after two missing migrations made a learner's voice choice fail with a bare error
+  (issues #67, #79): the schema a build expects is part of the build.
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's

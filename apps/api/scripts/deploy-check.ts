@@ -2,8 +2,9 @@
 // deploy. Each check prints one line; any FAIL exits non-zero. Run via scripts/deploy-check.sh.
 //
 //   always            vercel.json through Vercel's own builder detector (@vercel/fs-detectors)
-//   DATABASE_URL      TLS settings, region (warning only, D-4), and that the app keys (anon,
-//                     authenticated) can execute no function and every table has RLS
+//   DATABASE_URL      TLS settings, region (warning only, D-4), that the app keys (anon,
+//                     authenticated) can execute no function, that every table has RLS, and
+//                     that every migration on disk is applied (issue #67, #79)
 //   LB_DEPLOY_URL     GET <url>/v1/health answers 200 with ok: true
 //
 // LB_FS_DETECTORS_DIR points at a directory with @vercel/fs-detectors installed (the wrapper
@@ -137,9 +138,44 @@ async function checkDatabase(url: string): Promise<void> {
     );
     if (tables.rows.length === 0) ok('database: row level security on every public table');
     for (const row of tables.rows) fail(`database: no row level security on ${row.relname}`);
+    await checkMigrations(client);
   } finally {
     await client.end();
   }
+}
+
+/**
+ * Every migration in infra/supabase/migrations must be applied before the new code goes
+ * live: the code expects the schema it was written against. On 28.09. two migrations were
+ * missing and the app answered a plain error when a learner picked one of the new voices
+ * (issue #67) — that must be a FAIL here, not a surprise on a phone.
+ *
+ * Supabase records applied migrations in `supabase_migrations.schema_migrations` by version;
+ * our files are numbered `NNNN_name.sql`, so the name is what matches.
+ */
+async function checkMigrations(client: pg.Client): Promise<void> {
+  const dir = join(API_ROOT, '../../infra/supabase/migrations');
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .map((f) => f.replace(/\.sql$/, ''))
+    .sort();
+  if (files.length === 0) {
+    fail('migrations: none found on disk — is this the repository root?');
+    return;
+  }
+  const applied = await client
+    .query<{
+      name: string | null;
+    }>(`select name from supabase_migrations.schema_migrations order by version`)
+    .catch(() => null);
+  if (!applied) {
+    warn('migrations: no supabase_migrations.schema_migrations (not a Supabase project?)');
+    return;
+  }
+  const have = new Set(applied.rows.map((r) => (r.name ?? '').trim()).filter(Boolean));
+  const missing = files.filter((f) => !have.has(f));
+  if (missing.length === 0) ok(`migrations: all ${files.length} applied`);
+  else fail(`migrations: not applied yet — ${missing.join(', ')}`);
 }
 
 async function checkHealth(base: string): Promise<void> {
