@@ -175,7 +175,10 @@ function Gap({
   return (
     <View
       style={{
-        flexShrink: 1,
+        // Never squeezed: a long answer ("have lived") was cut inside the gap instead of
+        // making it wider or moving it to the next line (owner 28.09., issue #62).
+        flexShrink: 0,
+        maxWidth: '100%',
         minHeight: lineHeight,
         justifyContent: 'flex-end',
         marginHorizontal: 3,

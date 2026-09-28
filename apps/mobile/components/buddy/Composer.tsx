@@ -28,6 +28,7 @@ import { CircleBtn } from '../lb/CircleBtn.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
+import { SPACE } from '../../lib/theme/space.js';
 
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
@@ -102,11 +103,13 @@ export function Composer({
     ),
   );
 
+  // Slim (issue #64): the bar carries the field and three buttons, nothing more — every
+  // point it takes is one the conversation loses.
   const frame = {
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: Math.max(insets.bottom, 12),
+    gap: SPACE.sm,
+    paddingHorizontal: SPACE.md,
+    paddingTop: SPACE.xs,
+    paddingBottom: Math.max(insets.bottom, SPACE.sm),
   };
 
   const stopBtn = (size: 'sm' | 'lg') => (
@@ -188,11 +191,13 @@ export function Composer({
             alignItems: 'flex-end',
             gap: 2,
             backgroundColor: LB.paper,
-            borderRadius: 32,
-            paddingVertical: 6,
-            paddingLeft: 4,
+            borderRadius: 28,
+            paddingVertical: SPACE.xs,
+            paddingLeft: SPACE.xs,
             paddingRight: 6,
-            minHeight: 60,
+            // 52 + the bar's padding keeps the buttons at their 44 pt target while the
+            // pill stops looking like a drawer (was 60).
+            minHeight: 52,
             // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
             outlineStyle: 'solid',
             outlineWidth: focused ? 4 : 0,
@@ -226,9 +231,9 @@ export function Composer({
             minHeight: 44,
             maxHeight: 120,
             backgroundColor: 'transparent',
-            paddingHorizontal: 4,
-            paddingTop: 11,
-            paddingBottom: 11,
+            paddingHorizontal: SPACE.xs,
+            paddingTop: 9,
+            paddingBottom: 9,
             fontSize: 16,
             lineHeight: 22,
             color: LB.ink,

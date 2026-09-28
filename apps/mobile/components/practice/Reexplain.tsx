@@ -30,7 +30,7 @@ type Props = {
 export function Reexplain({ turns, pending, disabled, onAsk, delay = 350 }: Props) {
   const { t } = useTranslation('practice');
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: 8 }}>
       <ItemThread
         turns={turns}
         pending={pending ? t(`reexplain.${pending}`) : null}
@@ -45,10 +45,12 @@ export function Reexplain({ turns, pending, disabled, onAsk, delay = 350 }: Prop
             style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}
           >
             {WAYS.map((way) => (
+              // Ghost, not filled: a shortcut for something she could also type, not three
+              // more buttons competing with "Weiter" (issue #61).
               <Btn
                 key={way}
                 size="sm"
-                variant="soft"
+                variant="ghost"
                 pill
                 disabled={disabled}
                 accessibilityHint={t('reexplain.hint')}

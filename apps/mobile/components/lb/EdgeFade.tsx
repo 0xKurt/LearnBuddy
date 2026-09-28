@@ -11,8 +11,12 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { LB } from '../../lib/theme/colors.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 
-/** How tall the fade at a scroll view's top edge is. */
-export const EDGE_FADE = 18;
+/**
+ * How tall the fade at a scroll view's top edge is. 28, not 18: half a line of text still
+ * stood readable under the question card and looked like a rendering fault (owner 28.09.,
+ * issue #63) — a line of type is ~22 pt, so the fade has to cover one.
+ */
+export const EDGE_FADE = 28;
 
 /**
  * The web: the scroll view's own top edge fades out (a CSS mask). Spread into its style.

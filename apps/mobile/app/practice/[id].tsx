@@ -711,9 +711,14 @@ export default function PracticeScreen() {
   const turns = itemTurns.filter((turn) => turn.reexplain === null);
   const turnsAgain = itemTurns.filter((turn) => turn.reexplain !== null);
   // After a shown solution — in homework after a task she solved herself (never in a test).
+  // Not after a clean first try: there the three ways to re-explain were three chips of
+  // noise between the solution and "Weiter" (owner 28.09., issue #61). She can still ask
+  // Buddy in the chat, and after a wrong try or a hint they are right there.
+  const satFirstTry = shown.status === 'correct' && shown.attempts <= 1 && shown.hints_used === 0;
   const canExplainAgain =
     !open &&
     !testing &&
+    !satFirstTry &&
     (shown.answer !== null || (session.mode === 'help' && shown.status === 'correct'));
   const pendingText = pending?.itemId === item.id ? pending.text : null;
   const choices =
