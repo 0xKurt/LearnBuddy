@@ -421,7 +421,7 @@ export default function TalkScreen() {
             />
             {reply.actions.map((a) =>
               a.summary.tool === 'offer_learning' ? (
-                <OfferCard key={a.id} actionId={a.id} offer={a.summary} />
+                <OfferCard key={a.id} actionId={a.id} offer={a.summary} spoken />
               ) : a.summary.tool === 'open_area' ? (
                 <AreaCard key={a.id} area={a.summary.area} />
               ) : null,

@@ -1,9 +1,14 @@
-// Free text to Buddy, typed or spoken, plus the camera (a photo of a sheet or
-// of homework). One floating bar: camera, the field, the mic — "Senden" once
-// there is text. The mic writes what she said into the field so she can check
-// it. In voice mode the bar becomes voice-first: keyboard · big mic · camera,
-// and what she says is sent right away (the "Ich höre zu." look).
+// Free text to Buddy, typed or spoken, plus the pages she attaches. One floating
+// bar: +, the field, the mic — "Senden" once there is text. The mic writes what she
+// said into the field so she can check it. In voice mode the bar becomes voice-first:
+// keyboard · big mic · camera, and what she says is sent right away.
 // While Buddy writes his answer, the send button (or the big mic) is "Stopp".
+//
+// Pages are attached here, not on a screen of their own (issue #82): the + asks where
+// they come from, they stand as small squares above the field, and "Senden" sends them
+// with the message — the sheet first, so Buddy's answer already knows about it. What
+// happens to a page on the way (preparing, the draft that survives a crash, the upload
+// that resumes) is lib/capture/useAttachments.ts, the same as the capture screen uses.
 
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
@@ -23,13 +28,19 @@ import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { PhotoCheckCard } from '../capture/PhotoCheckCard.js';
 import { Btn } from '../lb/Btn.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
+import { ErrorNote } from '../lb/ErrorNote.js';
+import { Progress } from '../lb/Progress.js';
+import { AttachStrip } from './AttachStrip.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { Sheet } from '../lb/Sheet.js';
+import { useAttachments } from '../../lib/capture/useAttachments.js';
+import type { SendProgress } from '../../lib/capture/upload.js';
 
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
@@ -39,7 +50,6 @@ export function Composer({
   writing = false,
   onStop,
   onSend,
-  onPhoto,
   onTalk,
 }: {
   disabled: boolean;
@@ -49,9 +59,6 @@ export function Composer({
   onStop?: () => void;
   /** Resolves false when the message never reached Buddy: her text comes back (audit M-76). */
   onSend: (text: string) => Promise<boolean>;
-  /** The camera: a photo says more than typing a worksheet. */
-  /** Attach something: the + menu picks where it comes from (issue #82). */
-  onPhoto: (source?: 'camera' | 'library' | 'files') => void;
   /** Conversation mode (talk screen): bottom right, next to the mic. */
   onTalk: () => void;
 }) {
@@ -75,8 +82,39 @@ export function Composer({
       setText((current) => composerAfterSend(current, message, delivered)),
     );
   };
+
+  /** The text that goes out once the attached pages are through. */
+  const withPages = useRef('');
+  // The pages she attached to this message. The chat never takes over a draft left from
+  // an earlier capture (`intake` stays off): the home says when one is waiting.
+  const pages = useAttachments({
+    initialLink: {
+      stepId: null,
+      goalId: null,
+      purpose: 'study',
+      completes: null,
+      pages: null,
+      add: false,
+    },
+    onSent: () => {
+      // The sheet is with the API; her words follow, so Buddy answers about it.
+      const waiting = withPages.current;
+      withPages.current = '';
+      if (waiting) deliver(waiting);
+    },
+  });
+  const attached = pages.photos.length > 0;
+
   const send = () => {
-    if (!trimmed || disabled) return;
+    if (disabled || pages.busy) return;
+    if (attached) {
+      // Pages first, message after (onSent) — an upload that fails keeps both, so the
+      // same tap sends them again; nothing is lost and nothing is claimed.
+      withPages.current = trimmed;
+      void pages.send();
+      return;
+    }
+    if (!trimmed) return;
     deliver(trimmed);
   };
 
@@ -131,6 +169,60 @@ export function Composer({
     </Animated.View>
   );
   const stoppable = writing && onStop !== undefined && voice.state === 'idle';
+
+  const progressText = (p: SendProgress): string =>
+    p.step === 'reserving'
+      ? t('capture:progress.reserving')
+      : p.step === 'uploading'
+        ? t('capture:progress.uploading', { current: p.current, count: p.total })
+        : t('capture:progress.submitting');
+  /** Above the field: the attached pages, a page that is hard to read, how the sending goes. */
+  const attachments = (
+    <>
+      {pages.preparing ? (
+        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: LB.ink2 }]}>
+          {t('capture:preparing', {
+            current: pages.preparing.current,
+            count: pages.preparing.total,
+          })}
+        </Text>
+      ) : null}
+      <AttachStrip
+        uris={pages.photos}
+        pdfs={pages.pdfs}
+        flagged={new Set(pages.photos.filter((uri) => (pages.problems[uri]?.length ?? 0) > 0))}
+        disabled={pages.busy}
+        onRemove={pages.remove}
+      />
+      {pages.review ? (
+        <PhotoCheckCard
+          index={pages.photos.indexOf(pages.review) + 1}
+          problems={pages.problems[pages.review] ?? []}
+          disabled={pages.busy}
+          onRetake={() => pages.retake(pages.review!)}
+          onKeep={() => pages.keep(pages.review!)}
+        />
+      ) : null}
+      {pages.progress ? (
+        <View accessibilityLiveRegion="polite" style={{ gap: SPACE.xs }}>
+          <Text style={[TYPE.small, { color: LB.ink2 }]}>{progressText(pages.progress)}</Text>
+          <View style={{ flexDirection: 'row' }}>
+            <Progress
+              value={
+                pages.progress.step === 'reserving'
+                  ? 0
+                  : pages.progress.step === 'uploading'
+                    ? (pages.progress.current - 1) / pages.progress.total
+                    : 1
+              }
+            />
+          </View>
+        </View>
+      ) : pages.failure ? (
+        <ErrorNote text={pages.failure} />
+      ) : null}
+    </>
+  );
   const attachSheet = (
     <Sheet
       visible={attach}
@@ -148,7 +240,9 @@ export function Composer({
           icon={source === 'camera' ? 'camera' : source === 'library' ? 'book' : 'file'}
           onPress={() => {
             setAttach(false);
-            onPhoto(source);
+            // Straight into the camera or the picker; the page lands above the field.
+            if (source === 'files') void pages.pickFiles();
+            else void pages.pick(source);
           }}
         >
           {t(`buddy:composer.attach.${source}`)}
@@ -163,14 +257,15 @@ export function Composer({
       <View style={frame}>
         {attachSheet}
         <MicStatus voice={voice} />
+        {attachments}
         {/* Heard while a message was still on its way: shown with its own "Senden", never
             hidden in a field voice mode does not show (composer-parked-transcript). */}
-        {trimmed ? (
+        {trimmed || attached ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Text style={[TYPE.body, { flex: 1, color: LB.ink }]} numberOfLines={3}>
               {trimmed}
             </Text>
-            <Btn onPress={send} disabled={disabled} pill size="sm">
+            <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
               {t('buddy:composer.send')}
             </Btn>
           </View>
@@ -199,9 +294,8 @@ export function Composer({
           <View style={{ alignItems: 'center', gap: 4, width: 90 }}>
             <CircleBtn
               icon="camera"
-              // Without the arrow the press event would land in `source` and build a
-              // nonsense route (issue #82).
-              onPress={() => onPhoto('camera')}
+              // The page lands above the field, like in the typing bar (issue #82).
+              onPress={() => void pages.pick('camera')}
               accessibilityLabel={t('buddy:composer.photo')}
             />
             <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.photo_short')}</Text>
@@ -215,6 +309,7 @@ export function Composer({
     <View style={frame}>
       {attachSheet}
       <MicStatus voice={voice} />
+      {attachments}
       <View
         style={[
           {
@@ -278,7 +373,7 @@ export function Composer({
         {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
         {stoppable ? (
           stopBtn('sm')
-        ) : trimmed.length === 0 || voice.state !== 'idle' ? (
+        ) : (trimmed.length === 0 && !attached) || voice.state !== 'idle' ? (
           <MicButton
             voice={voice}
             size="sm"
@@ -286,7 +381,7 @@ export function Composer({
             disabled={disabled}
           />
         ) : (
-          <Btn onPress={send} disabled={disabled} pill size="sm">
+          <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
             {t('buddy:composer.send')}
           </Btn>
         )}

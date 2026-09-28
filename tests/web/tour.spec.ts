@@ -203,12 +203,14 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── A sheet Buddy could not read: read again ──
+  // Attached in the chat itself, like every messenger (issue #82): the + asks where it
+  // comes from, the page stands above the field, "Senden" sends it with the message.
   await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
-  await page.getByRole('button', { name: 'Foto aufnehmen' }).click();
   let chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Aus Fotos wählen' }).click();
+  await page.getByRole('button', { name: 'Aus der Galerie' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
+  await shot(page, '49-photo-attached');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Das Blatt konnte ich nicht lesen')).toBeVisible({ timeout: 30_000 });
   await shot(page, '50-sheet-unreadable');
@@ -282,19 +284,19 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
 
   // ── A hard-to-read photo kept anyway ──
   await page.getByRole('button', { name: 'Was möchtest du anhängen?' }).click();
-  await page.getByRole('button', { name: 'Foto aufnehmen' }).click();
   chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await page.getByRole('button', { name: 'Aus der Galerie' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'dark.jpg'));
   await expect(page.getByText('Foto 1 ist zu dunkel.')).toBeVisible();
   await page.getByRole('button', { name: 'Trotzdem behalten' }).click();
   await expect(page.getByText('Foto 1 ist zu dunkel.')).toHaveCount(0);
   await expect(page.getByText('Schwer lesbar')).toBeVisible();
   await shot(page, '46-photo-kept');
-  await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── Not sent, and the app is closed: the photo waits on home, survives a restart ──
-  await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toBeVisible();
+  // While it is attached in the chat it is on screen, so the home says nothing about it
+  // (issue #82); once the app is closed and opened again, it is what waits.
+  await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toHaveCount(0);
   await page.reload();
   await expect(page.getByText('Deine Fotos sind noch nicht gesendet')).toBeVisible({
     timeout: 15_000,

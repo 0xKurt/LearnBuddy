@@ -15,6 +15,9 @@ export function BottomBar({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
     <View
+      // The walkthrough measures this bar: what it takes is what the question loses
+      // on a small phone with the keyboard open (issue #16).
+      testID="bottom-bar"
       style={{
         gap: SPACE.sm,
         paddingHorizontal: SPACE.lg,

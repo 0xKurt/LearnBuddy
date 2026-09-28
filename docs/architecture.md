@@ -563,6 +563,12 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   complete elements only — a word must never flash green and turn amber two characters later),
   and nothing counts as judged until the `done` event carries the stored `AnswerResponse`
   (rule 5). Without the header the same call answers with plain JSON.
+- **Writing down what she said streams too** (`POST /voice/transcribe` with
+  `Accept: text/event-stream`; `TranscribeStreamEvent`, issue #9): on the dictation path — a
+  phone without on-device recognition, or a language it cannot do — the words appear while the
+  model is still writing them (`partialString`), instead of a "Ich schreibe mit …" line for the
+  whole call. What is put into the field is what the `done` event carries; progress is for
+  showing only. Without the header the same call answers with plain JSON.
 - **The first spoken piece is kept short** (issue #41): synthesising takes ~0.85 s for a normal
   sentence and ~1.8 s for a long one (measured 28.09., Chirp 3 HD), and the first piece is the
   silence she feels. A long opening sentence is cut at its first clause boundary
@@ -714,6 +720,23 @@ over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage 
 503 `storage_unavailable` as for photos. PDFs are not photo-checked on the phone (the check is for
 light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
 scanned school PDF (the tests script the model).
+
+**Pages are attached in the chat** (`components/buddy/Composer.tsx`, `AttachStrip.tsx`,
+`lib/capture/useAttachments.ts`; issue #82, owner 29.09.: "bei chat gpt … werden bilder einfach
+im chat angefügt"). The **+** in the composer asks where a page comes from (camera · gallery ·
+files), the chosen picker opens at once, and what she picked stands as small squares above the
+field — a tap shows one full screen, the ✕ takes it out. "Senden" sends the pages first and her
+words after, so Buddy's answer already knows about the sheet; while they are on their way the
+composer shows the same progress the capture screen does, and a failure keeps both the pages and
+the text for the same tap again. A page the check found hard to read gets its calm card right
+there ("Neu fotografieren" · "Trotzdem behalten"). Everything that happens to a page on the way —
+preparing, the quality check, the draft that survives the app being killed, the upload that
+resumes with the same `client_request_id` — is one hook (`useAttachments`), shared with the
+capture screen; neither owns it. Pages held in the composer are **live**, not "left behind":
+the home notice and a capture screen opened meanwhile skip them (`lib/capture/live.ts`), and only
+after the app is closed and opened again do they show up as what waits. `app/capture.tsx` stays
+for what has no place in the chat: a page added to an existing sheet (`completes`), a capture
+step Buddy asked for, files shared from other apps and a resumed draft.
 
 **Files and sharing in the app** (`app/capture.tsx`, `lib/capture/files.ts`, `incoming.ts`,
 `drop.web.ts`, `components/capture/ShareIntake.tsx`). One more quiet choice next to the camera:

@@ -392,6 +392,18 @@ export const TranscribeResponse = z.object({
 });
 export type TranscribeResponse = z.infer<typeof TranscribeResponse>;
 
+/**
+ * POST /voice/transcribe with `Accept: text/event-stream` (issue #9): `progress`
+ * events while the model is still writing down what it heard, then one `done` event
+ * with the TranscribeResponse (or `error` with { code }). Progress is only for showing
+ * the words as they arrive; what is sent off is what `done` carries.
+ */
+export const TranscribeStreamEvent = z.object({
+  /** What was said, as far as it is written down; '' before the first words. */
+  text: z.string(),
+});
+export type TranscribeStreamEvent = z.infer<typeof TranscribeStreamEvent>;
+
 // ─────────────── Buddy's voice (text to speech, ADR 0008) ───────────────
 
 /**

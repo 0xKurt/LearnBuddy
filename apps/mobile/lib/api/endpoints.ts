@@ -24,6 +24,7 @@ import {
   StartStepResponse,
   SpeechResponse,
   TranscribeResponse,
+  TranscribeStreamEvent,
   type AnswerRequest,
   type AppLocale,
   type CreateLearnerRequest,
@@ -316,8 +317,29 @@ export const finishSession = (id: string) =>
 // ─────────────── voice ───────────────
 
 /** Speech to text for a spoken message or answer (≤ ~60 s); '' when nothing was understood. */
-export const transcribe = (body: TranscribeRequest) =>
-  request('POST', '/voice/transcribe', { body, schema: TranscribeResponse });
+/**
+ * Speech to text. With `onProgress` the words arrive while the model is still writing
+ * them down (issue #9) — for showing only; what is used is what this call returns.
+ */
+export const transcribe = (
+  body: TranscribeRequest,
+  opts: { onProgress?: (event: TranscribeStreamEvent) => void } = {},
+) =>
+  opts.onProgress
+    ? streamRequest('POST', '/voice/transcribe', {
+        body,
+        schema: TranscribeResponse,
+        onEvent: (e) => {
+          if (e.event !== 'progress') return;
+          try {
+            const parsed = TranscribeStreamEvent.safeParse(JSON.parse(e.data));
+            if (parsed.success) opts.onProgress?.(parsed.data);
+          } catch {
+            // A half event is no reason to lose the recording.
+          }
+        },
+      })
+    : request('POST', '/voice/transcribe', { body, schema: TranscribeResponse });
 
 /** One sentence in Buddy's natural voice (ADR 0008); voice and speed are her settings. */
 export const synthesizeSpeech = (body: SpeechRequest) =>

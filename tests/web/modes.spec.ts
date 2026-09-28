@@ -6,7 +6,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { shot } from './fit';
+import { bottomStack, shot } from './fit';
 import { recordPerf } from './perf';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
@@ -111,6 +111,14 @@ test('learning modes: explain, homework help without the solution, practice with
   // Typed math is previewed as it will be read.
   await page.getByLabel('Deine Antwort').fill('3/4');
   await expect(page.getByLabel('Vorschau deiner Antwort: 3 durch 4')).toBeVisible();
+  // The worst case of the pinned bar: math keys (the field has focus), the preview under
+  // the pill, "Prüfen". What it takes, the question loses on a small phone with the
+  // keyboard open — help is a chip in the conversation, not a row down here (issue #16).
+  await page.setViewportSize({ width: 360, height: 740 });
+  const stack = await bottomStack(page, 'practice-typed-math');
+  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(200);
+  await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toHaveCount(0);
   await page.getByLabel('Deine Antwort').fill('28');
   await page.getByRole('button', { name: 'Prüfen' }).click();

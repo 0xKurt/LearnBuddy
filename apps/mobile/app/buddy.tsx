@@ -81,6 +81,7 @@ import type { CaptureDraft } from '../lib/capture/draft.js';
 import { inThread } from '../lib/buddy/unsent.js';
 import { dayPart, greetingVariant, startsNewSession } from '../lib/buddy/sessionAnchor.js';
 import { drafts } from '../lib/capture/draftStorage.js';
+import { attachedInChat, useLiveAttachments } from '../lib/capture/live.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { registerDeviceForPush } from '../lib/push.js';
@@ -108,6 +109,8 @@ export default function BuddyScreen() {
   const [busy, setBusy] = useState(false);
   /** Photos left from before, not sent yet (lib/capture/draft.ts), and one just let go. */
   const [draft, setDraft] = useState<CaptureDraft | null>(null);
+  /** Pages attached in the composer right now: they are not "left behind". */
+  const attachedCount = useLiveAttachments((st) => st.count);
   const [letGo, setLetGo] = useState<CaptureDraft | null>(null);
   /** The photo of the page Buddy could not read, while it is on the phone. */
   const [pageThumb, setPageThumb] = useState<string | null>(null);
@@ -126,8 +129,9 @@ export default function BuddyScreen() {
   useFocusEffect(
     useCallback(() => {
       let alive = true;
+      // Pages she has attached in the chat are on screen, not left behind (issue #82).
       void drafts.leftBehind().then((d) => {
-        if (alive) setDraft(d);
+        if (alive) setDraft(attachedInChat() ? null : d);
       });
       void drafts.prune();
       return () => {
@@ -537,7 +541,9 @@ export default function BuddyScreen() {
   // What Buddy tells at the end of the conversation, with its buttons: nothing on top moves.
   // The violet button belongs to the card on top when there is one.
   const quiet = layout.top ? 'soft' : 'primary';
-  const shownDraft = draft ?? letGo;
+  // Pages she is holding in the composer are on screen; the notice would say the
+  // opposite of what she sees (issue #82).
+  const shownDraft = attachedCount > 0 ? null : (draft ?? letGo);
   const missing = h.notice?.type === 'pages_missing' ? h.notice : null;
   const notices = [
     shownDraft ? (
@@ -1015,7 +1021,6 @@ export default function BuddyScreen() {
           writing={pending !== null}
           onStop={() => void stopReply()}
           onSend={(text) => send(text)}
-          onPhoto={(source) => router.push(source ? `/capture?source=${source}` : '/capture')}
           onTalk={() => router.push('/talk')}
         />
       </KeyboardSafe>

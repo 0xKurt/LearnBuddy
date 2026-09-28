@@ -204,7 +204,18 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
   }
 
   if (voice.state === 'transcribing') {
-    return (
+    // The words arrive while the model is still writing them down (issue #9); until the
+    // first one is there, it says what is happening.
+    return voice.live ? (
+      <Text
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={t('voice.live', { text: voice.live })}
+        style={[TYPE.body, { color: LB.ink2, fontStyle: 'italic', minHeight: 22 }]}
+        numberOfLines={4}
+      >
+        „{voice.live}“
+      </Text>
+    ) : (
       <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.ink2, minHeight: 22 }]}>
         {t('voice.transcribing')}
       </Text>

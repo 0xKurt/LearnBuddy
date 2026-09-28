@@ -55,22 +55,7 @@ type Props = {
   onChange: (text: string) => void;
   /** Checks this answer (the field's text, or what she just said in voice mode). */
   onCheck: (value: string) => void;
-  /**
-   * The quiet side option: "Lösung zeigen" once she tried or got a hint (never from the first
-   * second, user feedback #8), "Überspringen" in a test, "Später" in homework help (the task
-   * stays open). Absent when none applies.
-   */
-  onReveal?: () => void;
-  /** The quiet side option's words (default "Lösung zeigen"). */
-  revealLabel?: string;
-  /** What the side option does, for screen readers (e.g. "Später": it comes back). */
-  revealHint?: string;
-  /** "Tipp": the next prepared hint; absent when none is left. */
-  onHint?: () => void;
 };
-
-/** "Prüfen" is never narrower than this; below it, it takes its own line. */
-const CHECK_MIN_WIDTH = 132;
 
 export function AnswerComposer({
   kind,
@@ -81,21 +66,20 @@ export function AnswerComposer({
   disabled,
   onChange,
   onCheck,
-  onReveal,
-  revealLabel,
-  revealHint,
-  onHint,
 }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
   const long = kind === 'long';
   const exact = kind === 'numeric' || kind === 'formula';
-  const showKeys = exact || (kind === 'short' && hasMath(prompt));
   const inputRef = useRef<TextInput>(null);
   // Where the cursor is (reported by the field); set `forced` once after an insert to move it.
   const selection = useRef<Selection | null>(null);
   const [forced, setForced] = useState<Selection | undefined>(undefined);
   const [focused, setFocused] = useState(false);
+  // Keyboard accessory, not furniture (issue #16): the math row belongs above the keyboard
+  // while she types. Without focus it only takes the room the question needs — on a small
+  // phone with the keyboard open that is the difference between seeing the task and not.
+  const showKeys = (exact || (kind === 'short' && hasMath(prompt))) && focused;
 
   const insert = (insertion: Insertion) => {
     const next = insertAtCursor(value, selection.current, insertion);
@@ -136,13 +120,13 @@ export function AnswerComposer({
     <BottomBar>
       <MicStatus voice={voice} />
       {showKeys ? <MathKeys onInsert={insert} disabled={disabled} /> : null}
-      {/* One floating white pill, like the composer on Buddy's home: the field, the unit, the mic. */}
+      {/* One floating white pill, exactly like the composer on Buddy's home (issue #16): the
+          field, the unit, and at its end the mic while it is empty – "Prüfen" once there is an
+          answer. Nothing else is pinned down here. */}
       <View
         style={[
           {
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            gap: 4,
+            gap: 2,
             backgroundColor: LB.paper,
             borderRadius: long ? 26 : 30,
             paddingVertical: 6,
@@ -157,127 +141,104 @@ export function AnswerComposer({
           SHADOW.float,
         ]}
       >
-        <TextInput
-          ref={inputRef}
-          value={value}
-          onChangeText={(typed) => {
-            // Typing ends the hands-free loop: she answers with the keyboard now.
-            useHandsFree.getState().disarm();
-            // …and a recording still running would replace what she types (audit M-78).
-            if (voice.state === 'starting' || voice.state === 'recording') voice.cancel();
-            onChange(typed);
-          }}
-          selection={forced}
-          onSelectionChange={(e) => {
-            selection.current = e.nativeEvent.selection;
-            if (forced) setForced(undefined);
-          }}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={t('answer.placeholder')}
-          placeholderTextColor={LB.ink3}
-          accessibilityLabel={t('answer.label')}
-          accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
-          multiline
-          // The web's textarea starts two rows tall; one row, growing with the text.
-          {...(Platform.OS === 'web' && !long ? { numberOfLines: 1 } : {})}
-          maxLength={MAX_ANSWER_LENGTH}
-          autoCorrect={false}
-          spellCheck={false}
-          autoComplete="off"
-          autoCapitalize={exact ? 'none' : 'sentences'}
-          keyboardType={keyboardType}
-          // Short answers go out with the return key; long ones need new lines.
-          submitBehavior={long ? 'newline' : 'submit'}
-          returnKeyType={long ? 'default' : 'send'}
-          onSubmitEditing={() => {
-            if (!long && canCheck) onCheck(value.trim());
-          }}
-          textAlignVertical={long ? 'top' : 'center'}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            minHeight: long ? 88 : 48,
-            maxHeight: 150,
-            alignSelf: 'center',
-            backgroundColor: 'transparent',
-            paddingHorizontal: 0,
-            paddingTop: 13,
-            paddingBottom: 13,
-            fontSize: 16,
-            lineHeight: 22,
-            color: LB.ink,
-            outlineWidth: 0,
-          }}
-        />
-        {unit ? (
-          <Text
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-            style={[TYPE.body, { color: LB.ink2, alignSelf: 'center', paddingHorizontal: 4 }]}
-          >
-            {unit}
-          </Text>
-        ) : null}
-        {voiceMode ? null : (
-          <MicButton
-            voice={voice}
-            size="sm"
-            filled
-            label={t('common:voice.answer')}
-            disabled={disabled}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
+          <TextInput
+            ref={inputRef}
+            value={value}
+            onChangeText={(typed) => {
+              // Typing ends the hands-free loop: she answers with the keyboard now.
+              useHandsFree.getState().disarm();
+              // …and a recording still running would replace what she types (audit M-78).
+              if (voice.state === 'starting' || voice.state === 'recording') voice.cancel();
+              onChange(typed);
+            }}
+            selection={forced}
+            onSelectionChange={(e) => {
+              selection.current = e.nativeEvent.selection;
+              if (forced) setForced(undefined);
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder={t('answer.placeholder')}
+            placeholderTextColor={LB.ink3}
+            accessibilityLabel={t('answer.label')}
+            accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
+            multiline
+            // The web's textarea starts two rows tall; one row, growing with the text.
+            {...(Platform.OS === 'web' && !long ? { numberOfLines: 1 } : {})}
+            maxLength={MAX_ANSWER_LENGTH}
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="off"
+            autoCapitalize={exact ? 'none' : 'sentences'}
+            keyboardType={keyboardType}
+            // Short answers go out with the return key; long ones need new lines.
+            submitBehavior={long ? 'newline' : 'submit'}
+            returnKeyType={long ? 'default' : 'send'}
+            onSubmitEditing={() => {
+              if (!long && canCheck) onCheck(value.trim());
+            }}
+            textAlignVertical={long ? 'top' : 'center'}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              minHeight: long ? 88 : 48,
+              maxHeight: 150,
+              alignSelf: 'center',
+              backgroundColor: 'transparent',
+              paddingHorizontal: 0,
+              paddingTop: 13,
+              paddingBottom: 13,
+              fontSize: 16,
+              lineHeight: 22,
+              color: LB.ink,
+              outlineWidth: 0,
+            }}
           />
-        )}
+          {unit ? (
+            <Text
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+              style={[TYPE.body, { color: LB.ink2, alignSelf: 'center', paddingHorizontal: 4 }]}
+            >
+              {unit}
+            </Text>
+          ) : null}
+          {/* Like the chat: the mic while the field is empty (or she is speaking), "Prüfen"
+              once there is an answer to check. */}
+          {canCheck ? (
+            <Btn
+              pill
+              size="sm"
+              variant={voiceMode ? 'soft' : 'primary'}
+              onPress={() => {
+                // Tap → the verdict on screen (issue #66).
+                tapped('check');
+                onCheck(value.trim());
+              }}
+              disabled={disabled}
+            >
+              {t('check')}
+            </Btn>
+          ) : voiceMode ? null : (
+            <MicButton
+              voice={voice}
+              size="sm"
+              filled
+              label={t('common:voice.answer')}
+              disabled={disabled}
+            />
+          )}
+        </View>
+        {/* How her math will be read, on a thin line in the pill itself – not a row of its
+            own under it. Long answers are texts; the preview would only repeat them. */}
+        {long ? null : <TypedMathPreview value={value} compact />}
       </View>
-      {/* Long answers are texts; the preview would only repeat them. */}
-      {long ? null : <TypedMathPreview value={value} />}
       {voiceMode ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>
           <MicButton voice={voice} size="lg" label={t('common:voice.answer')} disabled={disabled} />
         </View>
       ) : null}
-      {/* One main action: "Prüfen" takes the room; "Lösung zeigen" stays a quiet side option.
-          When the side options leave "Prüfen" too little room (a small phone, large text), it
-          wraps onto its own full-width line instead of being squeezed away (audit M-83). */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-        {onHint ? (
-          <Btn
-            variant="ghost"
-            pill
-            onPress={onHint}
-            disabled={disabled}
-            accessibilityLabel={t('hint_label')}
-          >
-            {t('hint')}
-          </Btn>
-        ) : null}
-        {onReveal ? (
-          <Btn
-            variant="ghost"
-            pill
-            onPress={onReveal}
-            disabled={disabled}
-            accessibilityHint={revealHint}
-          >
-            {revealLabel ?? t('show_solution')}
-          </Btn>
-        ) : null}
-        <View style={{ flexGrow: 1, flexShrink: 0, flexBasis: CHECK_MIN_WIDTH }}>
-          <Btn
-            full
-            pill
-            variant={voiceMode ? 'soft' : 'primary'}
-            onPress={() => {
-              // Tap → the verdict on screen (issue #66).
-              tapped('check');
-              onCheck(value.trim());
-            }}
-            disabled={!canCheck}
-          >
-            {t('check')}
-          </Btn>
-        </View>
-      </View>
     </BottomBar>
   );
 }

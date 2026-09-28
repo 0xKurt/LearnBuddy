@@ -49,6 +49,7 @@ import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
 import { ExplainCard, ExplainText } from '../../components/practice/ExplainCard.js';
+import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
 import { TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
@@ -888,6 +889,15 @@ export default function PracticeScreen() {
                 onAsk={(way) => void explainAgain(item.id, way)}
               />
             ) : null}
+            {open ? (
+              <HelpChips
+                onHint={hint}
+                onReveal={skip}
+                revealLabel={skipLabel}
+                revealHint={skipHint}
+                disabled={locked}
+              />
+            ) : null}
           </ScrollView>
           {/* What scrolls up under the question fades out instead of peeking out (finding 8). */}
           <TopEdgeFade />
@@ -905,10 +915,6 @@ export default function PracticeScreen() {
               tried={tried}
               disabled={locked}
               onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
-              onReveal={skip}
-              revealLabel={skipLabel}
-              revealHint={skipHint}
-              onHint={hint}
             />
           </View>
         ) : null}
@@ -922,10 +928,6 @@ export default function PracticeScreen() {
             disabled={locked}
             onChange={setText}
             onCheck={check}
-            onReveal={skip}
-            revealLabel={skipLabel}
-            revealHint={skipHint}
-            onHint={hint}
           />
         ) : null}
         {open && choices && voiceOn ? (

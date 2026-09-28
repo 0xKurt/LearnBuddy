@@ -2,7 +2,7 @@
 // The model writes down what was said; the app puts it into the field (or
 // sends it in voice mode). The recording is only held for this one call.
 
-import type { TranscribeRequest } from '@learnbuddy/shared-types/contracts';
+import type { TranscribeRequest, TranscribeStreamEvent } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -11,6 +11,7 @@ import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
 import type { AudioMime } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
+import { partialString } from '../../llm/partial.js';
 
 export const TRANSCRIBE_PROMPT_VERSION = 'transcribe.v1.1';
 
@@ -30,16 +31,26 @@ const SYSTEM = `You write down what a school student says to the LearnBuddy app,
 
 Answer with the JSON object described by the schema.`;
 
+/** What is written down so far, while the model is still listening (issue #9). */
+function heardSoFar(raw: string): TranscribeStreamEvent | null {
+  const part = partialString(raw, 'text');
+  if (!part) return null;
+  return { text: part.text };
+}
+
 export async function transcribe(
   deps: Deps,
   learner: { id: string; locale: string },
   input: TranscribeRequest,
+  /** Called with the words as they arrive; only for showing, never for deciding. */
+  onProgress?: (event: TranscribeStreamEvent) => void,
 ): Promise<{ text: string }> {
   const now = deps.now();
   const tz = await deps.db.one<{ timezone: string }>(
     `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
     [learner.id],
   );
+  let lastText = '';
   try {
     const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
       purpose: 'transcribe',
@@ -72,6 +83,16 @@ export async function transcribe(
         },
       ],
       schema: SCHEMA,
+      ...(onProgress
+        ? {
+            onPartial: (raw: string) => {
+              const p = heardSoFar(raw);
+              if (!p || p.text === lastText) return;
+              lastText = p.text;
+              onProgress(p);
+            },
+          }
+        : {}),
       maxOutputTokens: 1024,
       temperature: 0,
       timeoutMs: 20_000,

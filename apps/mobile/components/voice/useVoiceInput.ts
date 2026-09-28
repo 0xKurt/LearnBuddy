@@ -58,7 +58,8 @@ export type VoiceInput = {
   maxMs: number;
   /** How loud she is right now (0…1), for the listening moon's glow. */
   level: number;
-  /** What she has said so far while the phone recognises on-device ('' otherwise). */
+  /** What she has said so far: the phone's recognition, or the words the model is
+   * writing down while it listens (issue #9); '' before the first ones. */
   live: string;
   hint: VoiceHint | null;
   /** Microphone access was refused; canAskAgain = false means only the settings can change it. */
@@ -81,6 +82,8 @@ export function useVoiceInput({
 }: Options): VoiceInput {
   const { i18n } = useTranslation();
   const [transcribing, setTranscribing] = useState(false);
+  /** What the model has written down so far while it is still listening (issue #9). */
+  const [heard, setHeard] = useState('');
   const [choosing, setChoosing] = useState(false);
   const [hint, setHint] = useState<VoiceHint | null>(null);
   const mounted = useRef(true);
@@ -107,14 +110,23 @@ export function useVoiceInput({
     const token = guard.begin();
     const opts = latest.current;
     setTranscribing(true);
+    setHeard('');
     try {
-      const res = await transcribe({
-        mime: r.mime,
-        audio_base64: r.base64,
-        purpose: opts.purpose,
-        lang: transcriptLang(opts.lang),
-        context: opts.purpose === 'answer' ? transcriptContext(opts.context) : null,
-      });
+      const res = await transcribe(
+        {
+          mime: r.mime,
+          audio_base64: r.base64,
+          purpose: opts.purpose,
+          lang: transcriptLang(opts.lang),
+          context: opts.purpose === 'answer' ? transcriptContext(opts.context) : null,
+        },
+        {
+          // The words as they arrive, so the wait is not a blank screen (issue #9).
+          onProgress: (event) => {
+            if (mounted.current && guard.holds(token)) setHeard(event.text);
+          },
+        },
+      );
       if (!mounted.current || !guard.holds(token)) return;
       const text = res.text.trim();
       if (text) deliver(text);
@@ -122,7 +134,10 @@ export function useVoiceInput({
     } catch (err) {
       if (mounted.current) toast.show(messageFor(err), 'error');
     } finally {
-      if (mounted.current) setTranscribing(false);
+      if (mounted.current) {
+        setTranscribing(false);
+        setHeard('');
+      }
     }
   }
 
@@ -229,6 +244,7 @@ export function useVoiceInput({
   function cancel(): void {
     guard.cancel();
     setChoosing(false);
+    setHeard('');
     if (onDevice) device.stop();
     else void rec.cancel();
   }
@@ -238,7 +254,7 @@ export function useVoiceInput({
     onDevice,
     elapsedMs: onDevice ? device.elapsedMs : rec.elapsedMs,
     maxMs: onDevice ? MAX_DICTATION_MS : rec.maxMs,
-    live: onDevice ? device.heard : '',
+    live: onDevice ? device.heard : heard,
     level: onDevice ? device.level : rec.level,
     hint,
     denied: rec.denied,

@@ -92,3 +92,27 @@ export async function shot(
   expect(tooLong, `${name}: must fit the screen without scrolling`).toEqual([]);
   return found;
 }
+
+/**
+ * How tall the pinned bar under a question is (issue #16). What it takes, the question,
+ * its figure and the conversation lose — on a small phone with the keyboard open that is
+ * the difference between seeing the task and not.
+ */
+export async function bottomStack(page: Page, name: string): Promise<number> {
+  const bar = page.getByTestId('bottom-bar');
+  if (!(await bar.isVisible())) return 0;
+  const box = await bar.boundingBox();
+  const size = page.viewportSize();
+  if (!box || !size) return 0;
+  const height = Math.round(box.height);
+  // What each part of it takes, so slimming it is measured and not guessed.
+  const parts = await bar.evaluate((el) =>
+    [...el.children].map((c) => Math.round(c.getBoundingClientRect().height)),
+  );
+  mkdirSync(SHOTS, { recursive: true });
+  appendFileSync(
+    REPORT,
+    `${JSON.stringify({ name, phone: size.width, bottomStack: height, parts })}\n`,
+  );
+  return height;
+}

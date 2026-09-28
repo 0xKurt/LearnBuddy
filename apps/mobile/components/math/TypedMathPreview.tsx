@@ -1,9 +1,10 @@
-// The live preview under the answer field: what she typed, with its math set
-// properly ("3/4" as a stacked fraction, "x^2" raised, "sqrt(16)" with a root
-// sign), so she sees how her answer is read. It appears only once there is
-// math worth drawing (lib/math/typed.ts); after that it keeps its place and
-// keeps mirroring the field until the field is empty, so the bar above the
-// keyboard doesn't jump with every key.
+// The live preview of what she typed, with its math set properly ("3/4" as a
+// stacked fraction, "x^2" raised, "sqrt(16)" with a root sign), so she sees how
+// her answer is read. It appears only once there is math worth drawing
+// (lib/math/typed.ts); after that it keeps its place and keeps mirroring the
+// field until the field is empty, so nothing jumps with every key.
+// `compact` is the one inside the answer pill (issue #16): a thin line without a
+// label of its own, so the pinned bar stays a bar.
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,8 +19,11 @@ import { useSpokenMath } from './useSpokenMath.js';
 /** Room for a simple stacked fraction at the preview's size, so it never jumps when one appears. */
 const MIN_HEIGHT = 50;
 const MATH_STYLE = { fontSize: 18, lineHeight: 26, color: LB.ink } as const;
+/** Inside the pill: one quiet line under the field – it may not make the pill grow much. */
+const COMPACT_MIN_HEIGHT = 26;
+const COMPACT_MATH_STYLE = { fontSize: 15, lineHeight: 21, color: LB.ink2 } as const;
 
-export function TypedMathPreview({ value }: { value: string }) {
+export function TypedMathPreview({ value, compact = false }: { value: string; compact?: boolean }) {
   const { t } = useTranslation('math');
   const { fontScale } = useWindowDimensions();
   const typed = useMemo(() => typedMath(value), [value]);
@@ -40,13 +44,17 @@ export function TypedMathPreview({ value }: { value: string }) {
         flexWrap: 'wrap',
         alignItems: 'center',
         columnGap: 10,
-        minHeight: Math.ceil(MIN_HEIGHT * fontScale),
+        minHeight: Math.ceil((compact ? COMPACT_MIN_HEIGHT : MIN_HEIGHT) * fontScale),
         paddingHorizontal: 4,
       }}
     >
-      <Text style={TYPE.label}>{t('preview.label')}</Text>
+      {compact ? null : <Text style={TYPE.label}>{t('preview.label')}</Text>}
       <View style={{ flexShrink: 1 }}>
-        <MathText text={typed.text} accessible={false} style={MATH_STYLE} />
+        <MathText
+          text={typed.text}
+          accessible={false}
+          style={compact ? COMPACT_MATH_STYLE : MATH_STYLE}
+        />
       </View>
     </View>
   );
