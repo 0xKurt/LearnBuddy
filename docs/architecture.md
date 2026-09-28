@@ -1296,6 +1296,10 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
 ## Testing
 
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.
+- Live evals need the Vertex variables from `apps/api/.env.local` and a local Postgres;
+  `evals/speak` and `evals/voice` additionally need `espeak-ng` on the machine (they speak the
+  test sentences themselves). Without it they stop with `spawnSync espeak-ng ENOENT` — that is
+  a missing tool, not a broken eval.
 - Integration against a real Postgres (`src/__tests__/*.int.test.ts`, harness in
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;
