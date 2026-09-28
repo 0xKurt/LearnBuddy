@@ -168,8 +168,8 @@ export default function Profile() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingVertical: compact ? 12 : 16,
-            gap: compact ? 12 : 18,
+            paddingVertical: compact ? 8 : 16,
+            gap: compact ? 10 : 18,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -320,8 +320,10 @@ export default function Profile() {
             </Text>
           ) : null}
           {parentStep ? (
-            <Card tone="lavender" padding={compact ? 16 : 20}>
-              <View style={{ gap: compact ? 10 : 12 }}>
+            // The parents' card carries consent, contact and the PIN: on a small phone it
+            // only fits when every step is the tighter one (tests/web/fit.ts).
+            <Card tone="lavender" padding={compact ? 12 : 20}>
+              <View style={{ gap: compact ? 8 : 12 }}>
                 <Checkbox
                   checked={consent}
                   onChange={setConsent}

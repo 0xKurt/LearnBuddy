@@ -7,13 +7,29 @@ cd "$(dirname "$0")/.."
 # already uses them: LB_WEB_PORT / LB_API_PORT (issue #42).
 API_PORT="${LB_API_PORT:-8787}"
 export LB_API_PORT="$API_PORT"
+# The export must see exactly these values:
+#   EXPO_NO_DOTENV — apps/mobile/.env.local points at the real project, and Expo's own
+#     dotenv loading wins over the shell (issue #71: the walkthrough signed up against
+#     production until this was set).
+#   --clear — Metro's transform cache hands out the EXPO_PUBLIC_* values it inlined last
+#     time, so without it the run silently talks to the previous port.
+# No comments inside the assignment block: a comment between the backslashes breaks the
+# continuation, and the command then runs with none of these set (that is how #71 slipped in).
 (
   cd apps/mobile
+  EXPO_NO_DOTENV=1 \
   EXPO_PUBLIC_API_URL=http://localhost:$API_PORT \
   EXPO_PUBLIC_SUPABASE_URL=http://localhost:$API_PORT \
   EXPO_PUBLIC_SUPABASE_ANON_KEY=dev-anon-key \
-  # --clear: Metro's transform cache keeps the EXPO_PUBLIC_* values it inlined the last
-  # time, so without it the walkthrough silently talks to the previous run's API port.
   npx expo export --platform web --output-dir dist-web --clear
 )
+# The exported bundle must talk to the local stack. Metro has handed out a cached bundle
+# with stale EXPO_PUBLIC_* values before, and the walkthrough then signed up against the
+# real Supabase project (28.09.) — that must fail loudly, not quietly.
+if ! grep -q "http://localhost:$API_PORT" apps/mobile/dist-web/_expo/static/js/web/*.js; then
+  echo "web-walkthrough: the exported bundle does not point at http://localhost:$API_PORT" >&2
+  echo "  (delete apps/mobile/dist-web and .expo, then run again)" >&2
+  exit 1
+fi
+
 npx playwright test "$@"
