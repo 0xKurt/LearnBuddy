@@ -306,7 +306,7 @@ export function Composer({
   }
 
   return (
-    <View style={frame}>
+    <View testID="composer" style={frame}>
       {attachSheet}
       <MicStatus voice={voice} />
       {attachments}

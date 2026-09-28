@@ -270,7 +270,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     `select s.id, s.name, s.kind,
             (select count(*) from items i where i.subject_id = s.id and i.archived_at is null
                 and i.origin <> 'homework')::int as item_count,
-            (select count(*) from materials m where m.subject_id = s.id and m.archived_at is null and m.merged_into is null)::int as material_count
+            (select count(*) from materials m where m.subject_id = s.id and m.archived_at is null and m.merged_into is null
+                and (m.status <> 'awaiting_upload' or m.send_requested_at is not null))::int as material_count
        from subjects s
       where s.learner_id = $1 and s.archived_at is null
       order by s.created_at, s.seq
@@ -305,6 +306,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
                 and i.origin <> 'homework')::int as item_count
        from materials m
       where m.learner_id = $1 and m.archived_at is null
+        -- Pages she is still attaching in the chat are not a sheet yet (issue #56).
+        and (m.status <> 'awaiting_upload' or m.send_requested_at is not null)
         -- A merged part only while its own missing pages are not answered.
         and (m.merged_into is null
              or (m.pages_resolved_at is null and m.page_problems <> '[]'::jsonb
@@ -369,7 +372,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
        (select count(*) from items where learner_id = $1 and archived_at is null
                                            and origin <> 'homework')::int as items,
        (select count(*) from materials where learner_id = $1 and archived_at is null
-                                            and merged_into is null)::int as materials`,
+                                            and merged_into is null
+                                            and (status <> 'awaiting_upload' or send_requested_at is not null))::int as materials`,
     [learnerId, now],
   );
 

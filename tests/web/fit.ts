@@ -98,6 +98,19 @@ export async function shot(
  * its figure and the conversation lose — on a small phone with the keyboard open that is
  * the difference between seeing the task and not.
  */
+/** How tall one tagged part of a screen is, recorded so slimming stays measured (#64). */
+export async function partHeight(page: Page, testId: string, name: string): Promise<number> {
+  const part = page.getByTestId(testId);
+  if (!(await part.isVisible())) return 0;
+  const box = await part.boundingBox();
+  const size = page.viewportSize();
+  if (!box || !size) return 0;
+  const height = Math.round(box.height);
+  mkdirSync(SHOTS, { recursive: true });
+  appendFileSync(REPORT, `${JSON.stringify({ name, phone: size.width, [testId]: height })}\n`);
+  return height;
+}
+
 export async function bottomStack(page: Page, name: string): Promise<number> {
   const bar = page.getByTestId('bottom-bar');
   if (!(await bar.isVisible())) return 0;

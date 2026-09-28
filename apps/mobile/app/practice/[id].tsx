@@ -862,7 +862,14 @@ export default function PracticeScreen() {
               if (followEnd) scroll.current?.scrollToEnd({ animated: false });
             }}
           >
-            <ItemThread turns={turns} pending={pendingText} hideVerdicts={testing} />
+            <ItemThread
+              turns={turns}
+              pending={pendingText}
+              hideVerdicts={testing}
+              // A spoken answer: the judgement's words belong here, the marked sentence
+              // stays in the card (issue #14).
+              pronunciation={item.kind === 'speak'}
+            />
             {session.mode === 'help' && shown.status === 'correct' ? (
               <Rise delay={180}>
                 <SelfSolvedCard />

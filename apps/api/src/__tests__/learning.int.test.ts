@@ -352,7 +352,12 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     const created = await l.api.post<{
       material: { id: string };
       uploads: Array<{ path: string }>;
-    }>('/materials', { client_request_id: uuid(), photo_mimes: ['image/jpeg', 'image/jpeg'] });
+      // She tapped "Senden" (issue #56): from here the pages are on their way.
+    }>('/materials', {
+      client_request_id: uuid(),
+      photo_mimes: ['image/jpeg', 'image/jpeg'],
+      sending: true,
+    });
     expect(created.status).toBe(201);
     // Only the first photo arrives; the app is closed before the rest is sent.
     const first = created.body.uploads[0]!.path;

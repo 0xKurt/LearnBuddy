@@ -59,6 +59,13 @@ export const CreateMaterialRequest = z.object({
    * ends, and the new photos keep its goal and purpose.
    */
   completes: Uuid.nullable().optional(),
+  /**
+   * She asked for these pages to be sent (issue #56). Pages go up as soon as they are ready,
+   * so a reservation exists while she is still attaching — until this is true it is not a
+   * sheet on its way: the home says nothing about it and Buddy counts no material.
+   * Default false; submit sets it too, so an older app never leaves it unset.
+   */
+  sending: z.boolean().default(false),
 });
 export type CreateMaterialRequest = z.infer<typeof CreateMaterialRequest>;
 

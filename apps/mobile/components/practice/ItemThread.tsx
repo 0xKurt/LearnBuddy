@@ -21,6 +21,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
+import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
 import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
 
@@ -33,6 +34,11 @@ function verdictKey(verdict: PracticeTurnView['verdict']): VerdictKey | null {
 type Props = {
   /** This question's turns, oldest first. */
   turns: PracticeTurnView[];
+  /**
+   * Speaking questions: what the judgement says hangs under Buddy's reply (issue #14) —
+   * the card above shows the marked sentence, the words about it stand here.
+   */
+  pronunciation?: boolean;
   /** The answer being sent right now, shown until the server has it. */
   pending: string | null;
   /** A running test: no verdicts until the end. */
@@ -41,7 +47,13 @@ type Props = {
   thinkingLabel?: string;
 };
 
-export function ItemThread({ turns, pending, hideVerdicts = false, thinkingLabel }: Props) {
+export function ItemThread({
+  turns,
+  pending,
+  hideVerdicts = false,
+  thinkingLabel,
+  pronunciation = false,
+}: Props) {
   const { t } = useTranslation('practice');
   // What was there when the screen opened stands still; what arrives now moves.
   const initial = useRef<ReadonlySet<string> | null>(null);
@@ -98,6 +110,9 @@ export function ItemThread({ turns, pending, hideVerdicts = false, thinkingLabel
             )}
             {verdict ? (
               <VerdictTag verdict={verdict} label={t(`verdict.${verdict}`)} fresh={fresh} />
+            ) : null}
+            {pronunciation && !mine && turn.pronunciation ? (
+              <PronunciationNote feedback={turn.pronunciation} />
             ) : null}
           </Rise>
         );

@@ -339,8 +339,10 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Aufnahme starten' }).click();
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' }).click();
-  await expect(page.getByText('Fast – achte auf: weather')).toBeVisible();
-  await expect(page.getByText(/Zunge zwischen den Zähnen/)).toBeVisible();
+  // The card keeps the marked sentence; what the judgement says stands once, in the
+  // thread under Buddy's reply (issue #14) — not a third time in the card.
+  await expect(page.getByText('Fast', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Zunge zwischen den Zähnen/)).toHaveCount(1);
   await shot(page, '49-speak-feedback');
   await page.getByRole('button', { name: 'Übung beenden' }).click();
 

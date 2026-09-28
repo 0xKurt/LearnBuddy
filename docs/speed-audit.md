@@ -60,3 +60,17 @@ Die App misst selbst, wie lange ein Tipp bis zur sichtbaren Reaktion braucht
 **Was das ausschließt:** im Zeichnen der App hängt nichts. Was sich langsam anfühlt, kommt
 vom Netz, vom Modell oder vom Kaltstart (#75). Budgets werden daraus abgeleitet, nicht
 vorher gesetzt.
+
+## Layout und Upload (29.09., gemessen)
+
+| Was                                                          | vorher      | nachher      | Messung                                         |
+| ------------------------------------------------------------ | ----------- | ------------ | ----------------------------------------------- |
+| gepinnte Leiste unter einer Mathefrage (360×740, Feld aktiv) | **254 pt**  | **185 pt**   | `tests/web/fit.ts` → `bottomStack`, `fit.jsonl` |
+| Seiten hochladen beim Senden                                 | alle Seiten | nur der Rest | noch nicht am Gerät gemessen (Mobilfunk fehlt)  |
+
+Der Upload läuft seit #56 mit, während sie weiter fotografiert: die Reservierung entsteht mit
+der ersten Seite, jede weitere hängt sich an, und jede fertige Seite geht sofort in den
+Speicher. Was „Senden" danach noch tut, ist der Submit — die Ersparnis ist genau die
+Upload-Zeit der Seiten, die vor dem Tippen fertig waren. Im Browser-Walkthrough ist der
+Speicher lokal, die Zahl sagt dort also nichts; die ehrliche Messung braucht ein Handy im
+Mobilfunknetz (#37).

@@ -721,6 +721,23 @@ over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage 
 light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
 scanned school PDF (the tests script the model).
 
+**Every page goes up while she is still taking them** (issue #56, owner 28.09.: "wenn ich
+mehrere hochlade, dann können die bereits angefangen werden zu verarbeiten"). The reservation
+is made with the **first** page (`createMaterial`) and grows with every further one: the same
+`client_request_id` with more mimes adds the missing positions as long as nothing was
+submitted; fewer or changed pages are never an extension — a retake or a removal gives that
+reservation up (`deleteMaterial`) and the pages start as a new one, so page order can never
+drift. Each prepared page is PUT to storage right away (`MaterialUpload.pushReady`), so
+"Senden" usually has only the submit left.
+
+A reservation nobody asked to send is **not a sheet**: `materials.send_requested_at` is null
+until she taps "Senden" (`sending: true` on create, and submit sets it too), and until then the
+home says nothing about it, Buddy's context and counts skip it and the library does not list it
+(rule 5 — pages lying in her composer are not "unterwegs"). Reservations she never sent are
+given up by `abandonStaleUploads` after a day, as before.
+`apps/api/src/__tests__/pages-while-capturing.int.test.ts` holds the three cases: growing,
+never shrinking, and nothing added once the sheet is being read.
+
 **Pages are attached in the chat** (`components/buddy/Composer.tsx`, `AttachStrip.tsx`,
 `lib/capture/useAttachments.ts`; issue #82, owner 29.09.: "bei chat gpt … werden bilder einfach
 im chat angefügt"). The **+** in the composer asks where a page comes from (camera · gallery ·

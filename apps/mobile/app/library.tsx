@@ -205,7 +205,7 @@ export default function LibraryScreen() {
         <EmptyState
           title={messageFor(library.error)}
           action={
-            <Btn pill center onPress={() => void library.refetch()}>
+            <Btn pill center busy={library.isFetching} onPress={() => void library.refetch()}>
               {t('common:actions.retry')}
             </Btn>
           }

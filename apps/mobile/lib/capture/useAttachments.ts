@@ -260,6 +260,25 @@ export function useAttachments({
     setRefused(false);
   }
 
+  /**
+   * One more page, in its place at the end: it joins the reservation and goes up right
+   * away (issue #56), so "Senden" has only what is left and the submit to do. The API
+   * knows nothing is on its way until she asks (`sending`), so the home stays quiet.
+   */
+  function pageReady(file: UploadFile) {
+    setFailure(null);
+    setRefused(false);
+    try {
+      if (upload.current) upload.current.grow(file);
+      else upload.current = new MaterialUpload([file], uploadLink(link));
+    } catch {
+      // Already sent: this page belongs to a new sheet, which the next send reserves.
+      upload.current = null;
+      return;
+    }
+    void upload.current.pushReady();
+  }
+
   /** `replace`: the photo a retake stands in for — same place, only once the new one is there. */
   async function addPhotos(sources: string[], replace: string | null = null) {
     await addEntries(
@@ -271,6 +290,9 @@ export function useAttachments({
   /** Photos are prepared and checked; a PDF gets its own copy and is taken as it is. */
   async function addEntries(entries: Entry[], replace: string | null = null) {
     let failed = 0;
+    // How many pages this sheet has while they are being added (the state in the closure
+    // is the one from this render): what is over the cap is not uploaded either.
+    let count = photos.length;
     await touch();
     for (const [i, entry] of entries.entries()) {
       const source = entry.uri;
@@ -298,7 +320,14 @@ export function useAttachments({
         if (pdfName) setPdfs((prev) => ({ ...prev, [photo.uri]: pdfName }));
         if (photo.problems.length > 0)
           setProblems((prev) => ({ ...prev, [photo.uri]: photo.problems }));
-        photosChanged();
+        // A retake changes what is already reserved: that reservation is given up and the
+        // pages start again. A new page only extends it.
+        if (replace) {
+          photosChanged();
+        } else if (count < MAX_PHOTOS) {
+          count += 1;
+          pageReady({ uri: photo.uri, mime: pdfName ? 'application/pdf' : 'image/jpeg' });
+        }
       } catch {
         failed += 1;
       }
@@ -457,6 +486,10 @@ export function useAttachments({
   async function send() {
     if (sending.current || busy || photos.length === 0) return;
     sending.current = true;
+    // The pages that went up along the way are this sheet; if anything drifted apart (a
+    // page taken out, a draft from before), that reservation is given up and these pages
+    // start as a new one — nothing half-known is sent.
+    if (upload.current && upload.current.pageCount !== photos.length) photosChanged();
     if (!upload.current)
       upload.current = new MaterialUpload(uploadFiles(photos, pdfs), uploadLink(link));
     const current = upload.current;

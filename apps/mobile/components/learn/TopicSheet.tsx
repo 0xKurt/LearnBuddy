@@ -86,8 +86,19 @@ export function TopicSheet({ kind, onClose }: Props) {
       closeLabel={t('common:actions.close')}
       onClose={onClose}
       footer={
-        <Btn size="lg" full disabled={!canSubmit} onPress={() => void submit()}>
-          {state.status === 'failed' ? t('common:actions.retry') : t('learn:topic.submit')}
+        <Btn
+          size="lg"
+          full
+          // Never a tap without an answer (issue #66): the button says it is working.
+          busy={state.status === 'preparing'}
+          disabled={!canSubmit}
+          onPress={() => void submit()}
+        >
+          {state.status === 'preparing'
+            ? t('learn:topic.preparing')
+            : state.status === 'failed'
+              ? t('common:actions.retry')
+              : t('learn:topic.submit')}
         </Btn>
       }
     >

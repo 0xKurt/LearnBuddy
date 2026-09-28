@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { SHOTS, shot } from './fit';
+import { partHeight, SHOTS, shot } from './fit';
 import { recordPerf } from './perf';
 
 mkdirSync(SHOTS, { recursive: true });
@@ -125,6 +125,15 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByRole('button', { name: 'Arbeit', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Was möchtest du anhängen?' })).toBeVisible();
   await shot(page, '04-buddy-first-visit');
+  // What the head and the bar take on the smallest phone: the rest is conversation (#64).
+  await page.setViewportSize({ width: 360, height: 740 });
+  const head = await partHeight(page, 'home-header', 'home');
+  const bar = await partHeight(page, 'composer', 'home');
+  console.log(`HOME 360x740: header ${head}pt, composer ${bar}pt`);
+  // Measured 29.09.: 52 pt head, 68 pt bar — 16 % of a 740 pt phone. The bound is what
+  // we keep, not what we hope for.
+  expect(head + bar, `head ${head}pt + composer ${bar}pt`).toBeLessThanOrEqual(160);
+  await page.setViewportSize({ width: 390, height: 844 });
 
   // ── Get to know: the test, and what Buddy needs for it ──
   await page
@@ -144,6 +153,12 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // is on screen, not below the fold (05-buddy-planned-360).
   await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Eltern fragen' })).toBeInViewport();
+  // With the keyboard open (a small phone keeps ~420 pt of window) the newest message must
+  // still be on screen — "wenn ich was schreibe, erkenne ich in der app gar nichts mehr"
+  // (owner 28.09., issue #51).
+  await page.setViewportSize({ width: 360, height: 420 });
+  await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeInViewport();
+  await page.setViewportSize({ width: 390, height: 844 });
   // The card lies over the greeting and the ways to start: they stand where they stand
   // without a card (owner: "Die Meldung sollte einfach über dem Menü liegen").
   const homeAt = await homePositions(page);

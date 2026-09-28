@@ -245,6 +245,38 @@ export async function createMaterial(
     }
     return row.id;
   });
+  // "Senden" (issue #56): from now on these pages are on their way, so the home may say so.
+  if (input.sending)
+    await deps.db.query(
+      `update materials set send_requested_at = coalesce(send_requested_at, $2) where id = $1`,
+      [material, deps.now()],
+    );
+
+  // Pages she took after the reservation (issue #56: every page goes up as soon as it is
+  // ready, so sending only has to finish). The same request id, more mimes: the missing
+  // positions are added as long as nothing has been submitted. Fewer or changed pages are
+  // not an extension — the app gives that reservation up and starts a new one.
+  await deps.db.tx(async (tx) => {
+    const m = await tx.one<{ status: string; photo_count: number }>(
+      `select status, photo_count from materials where id = $1 for update`,
+      [material],
+    );
+    if (m.status !== 'awaiting_upload' || input.photo_mimes.length <= m.photo_count) return;
+    for (const [position, mime] of input.photo_mimes.entries()) {
+      if (position < m.photo_count) continue;
+      const ext = mime === 'image/png' ? 'png' : mime === PDF_MIME ? 'pdf' : 'jpg';
+      await tx.query(
+        `insert into material_photos (material_id, position, storage_path, mime)
+         values ($1, $2, $3, $4) on conflict (material_id, position) do nothing`,
+        [material, position, `${learner.account_id}/${material}/${position}.${ext}`, mime],
+      );
+    }
+    await tx.query(`update materials set photo_count = $2 where id = $1`, [
+      material,
+      input.photo_mimes.length,
+    ]);
+  });
+
   const view = await materialView(deps.db, learner.id, material);
   // A repeated request after the photos went through has nothing left to upload.
   const photos =
@@ -312,6 +344,12 @@ export async function submitMaterial(
     throw new AppError('not_found', 'Material not found');
   }
   if (m.status !== 'awaiting_upload') return { jobId: null }; // idempotent
+  // She asked for these pages (issue #56). Before this, a reservation is only pages lying
+  // in her composer — the home says nothing about them and Buddy counts no sheet.
+  await deps.db.query(
+    `update materials set send_requested_at = coalesce(send_requested_at, $2) where id = $1`,
+    [materialId, deps.now()],
+  );
   const photos = await deps.db.query<{ position: number; storage_path: string }>(
     `select position, storage_path from material_photos where material_id = $1 order by position`,
     [materialId],
@@ -1087,6 +1125,8 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
               order by ps.started_at desc, ps.seq desc limit 1) as session_status
        from materials m left join subjects s on s.id = m.subject_id
       where m.learner_id = $1 and m.archived_at is null and m.merged_into is null
+        -- Pages she is still attaching are not in her library yet (issue #56).
+        and (m.status <> 'awaiting_upload' or m.send_requested_at is not null)
       order by m.created_at desc, m.seq desc
       limit 200`,
     [learnerId],

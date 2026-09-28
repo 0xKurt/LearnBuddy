@@ -61,7 +61,8 @@ function gate(): Gate {
 async function create(l: Learner, photos = 2) {
   const created = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(
     '/materials',
-    { client_request_id: uuid(), photo_mimes: Array(photos).fill('image/jpeg') },
+    // `sending`: she tapped "Senden" — only then are the pages on their way (issue #56).
+    { client_request_id: uuid(), photo_mimes: Array(photos).fill('image/jpeg'), sending: true },
   );
   expect(created.status).toBe(201);
   return created.body;
@@ -185,6 +186,7 @@ describe.skipIf(!dbReady)('reading stages on the home card', () => {
       client_request_id: uuid(),
       photo_mimes: ['image/jpeg'],
       purpose: 'homework',
+      sending: true,
     });
     expect(await nowOf(lena)).toMatchObject({ stage: 'sending', purpose: 'homework' });
     env.llm.script('extraction', { json: SHEET });

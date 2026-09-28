@@ -31,7 +31,6 @@ import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { Icon } from '../lb/Icon.js';
 import { toast } from '../lb/Toast.js';
 import { BottomBar } from './BottomBar.js';
 import { ListenButton } from './ListenButton.js';
@@ -46,33 +45,6 @@ export function latestPronunciation(turns: PracticeTurnView[]): PronunciationFee
 }
 
 // ─────────────── the sentence and the feedback ───────────────
-
-function OverallLine({ feedback }: { feedback: PronunciationFeedback }) {
-  const { t } = useTranslation('practice');
-  const practise = feedback.words.filter((w) => !w.ok).map((w) => w.text);
-  const text =
-    feedback.overall === 'good'
-      ? t('speak.overall.good')
-      : feedback.overall === 'almost'
-        ? practise.length > 0
-          ? t('speak.overall.almost', { words: practise.join(', ') })
-          : t('speak.overall.almost_plain')
-        : t('speak.overall.retry');
-  const good = feedback.overall === 'good';
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      {good ? <Icon name="check" size={20} color={LB.successText} /> : null}
-      <Text
-        style={[
-          TYPE.body,
-          { flexShrink: 1, fontWeight: '600', color: good ? LB.successText : LB.warningText },
-        ]}
-      >
-        {text}
-      </Text>
-    </View>
-  );
-}
 
 function MarkedWords({ feedback }: { feedback: PronunciationFeedback }) {
   const { t } = useTranslation('practice');
@@ -168,15 +140,16 @@ type CardProps = {
 };
 
 /** The sentence to say, large; after listening, the word-by-word feedback. */
+/**
+ * The sentence she is to say — and, once it was judged, the same sentence with its words
+ * marked. Nothing else (issue #14): the words, the tips and what was heard used to stand
+ * here *and* in the thread, and the card grew into a text wall above the conversation.
+ * The words now carry the judgement visually; the sentences about it belong to Buddy's
+ * reply in the thread (PronunciationNote, ItemThread).
+ */
 export function SpeakCard({ item, turns, live }: CardProps) {
   const { t } = useTranslation('practice');
   const feedback = latestPronunciation(turns);
-  const tips = feedback?.words.filter((w) => !w.ok && w.tip) ?? [];
-  // A new attempt folds the list again; two tips are enough to start with —
-  // the full set made the card a text wall over the thread (user feedback).
-  const [allTips, setAllTips] = useState(false);
-  useEffect(() => setAllTips(false), [turns.length]);
-  const shownTips = allTips ? tips : tips.slice(0, 2);
 
   return (
     <Card tone="lavender" padding={20} radius={22}>
@@ -195,33 +168,32 @@ export function SpeakCard({ item, turns, live }: CardProps) {
             {item.prompt}
           </Text>
         )}
-        {feedback ? (
-          <View
-            style={{
-              gap: 8,
-              paddingTop: 12,
-              borderTopWidth: 1,
-              borderTopColor: LB.hairline,
-            }}
-          >
-            <OverallLine feedback={feedback} />
-            {shownTips.map((w, i) => (
-              <Text key={`${i}-${w.text}`} style={TYPE.body}>
-                {t('speak.tip', { word: w.text, tip: w.tip ?? '' })}
-              </Text>
-            ))}
-            {tips.length > shownTips.length ? (
-              <Btn size="sm" variant="ghost" pill onPress={() => setAllTips(true)}>
-                {t('speak.more_tips', { count: tips.length - shownTips.length })}
-              </Btn>
-            ) : null}
-            {feedback.heard.trim() ? (
-              <Text style={TYPE.small}>{t('speak.heard', { text: feedback.heard.trim() })}</Text>
-            ) : null}
-          </View>
-        ) : null}
       </View>
     </Card>
+  );
+}
+
+/**
+ * What the judgement says, under Buddy's reply in the thread (issue #14): the verdict in
+ * one line, the words worth practising with their tip, and — quietly — what was heard.
+ * The thread may scroll; the card above it may not.
+ */
+export function PronunciationNote({ feedback }: { feedback: PronunciationFeedback }) {
+  const { t } = useTranslation('practice');
+  const tips = feedback.words.filter((w) => !w.ok && w.tip);
+  // No verdict line here: the words are marked in the card, the chip under her own turn
+  // says "Fast", and Buddy's bubble says it in his words. Three times was two too many.
+  return (
+    <View style={{ gap: 6, paddingLeft: 4, maxWidth: '86%' }}>
+      {tips.map((w, i) => (
+        <Text key={`${i}-${w.text}`} style={TYPE.body}>
+          {t('speak.tip', { word: w.text, tip: w.tip ?? '' })}
+        </Text>
+      ))}
+      {feedback.heard.trim() ? (
+        <Text style={TYPE.small}>{t('speak.heard', { text: feedback.heard.trim() })}</Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -432,91 +404,86 @@ export function SpeakPanel({
       ? t('speak.record_again')
       : t('speak.record');
 
+  // One status row, never a stack (issue #14): what is true right now replaces what was
+  // true before — a microphone that was refused, the running recording, Buddy listening,
+  // a recording waiting for a connection, a send that failed, or a quiet hint.
+  const status = rec.denied ? (
+    <View style={{ gap: 8 }}>
+      <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+        {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
+      </Text>
+      {Platform.OS !== 'web' ? (
+        <Btn variant="soft" onPress={() => void Linking.openSettings()}>
+          {t('speak.open_settings')}
+        </Btn>
+      ) : null}
+    </View>
+  ) : recording ? (
+    <View
+      accessible
+      accessibilityLabel={t('speak.recording_label', {
+        time: formatClock(rec.elapsedMs),
+        max: formatClock(MAX_RECORDING_MS),
+      })}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 24 }}
+    >
+      <RecordingDot />
+      <Text style={[TYPE.body, { fontWeight: '600' }]}>
+        {t('speak.recording', {
+          time: formatClock(rec.elapsedMs),
+          max: formatClock(MAX_RECORDING_MS),
+        })}
+      </Text>
+    </View>
+  ) : waitingOffline ? (
+    <View style={{ gap: 8 }}>
+      <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+        {t('speak.waiting_offline')}
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+        <Btn variant="ghost" onPress={discard} disabled={disabled}>
+          {t('speak.record_new')}
+        </Btn>
+        {onSkip ? (
+          <Btn variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
+            {t('speak.skip')}
+          </Btn>
+        ) : null}
+      </View>
+    </View>
+  ) : sending === 'sending' ? (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={t('speak.listening')}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 24 }}
+    >
+      <ActivityIndicator color={LB.primary} />
+      <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('speak.listening')}</Text>
+    </View>
+  ) : sending === 'failed' ? (
+    <View style={{ gap: 8 }}>
+      <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+        {t('speak.send_failed')}
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+        <Btn onPress={() => void send()} disabled={disabled}>
+          {t('speak.resend')}
+        </Btn>
+        <Btn variant="ghost" onPress={discard} disabled={disabled}>
+          {t('speak.record_new')}
+        </Btn>
+      </View>
+    </View>
+  ) : problem ? (
+    <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+      {t(`speak.problem.${problem}`)}
+    </Text>
+  ) : null;
+
   return (
     <BottomBar>
-      {rec.denied ? (
-        <View style={{ gap: 8 }}>
-          <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
-            {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
-          </Text>
-          {Platform.OS !== 'web' ? (
-            <Btn variant="soft" onPress={() => void Linking.openSettings()}>
-              {t('speak.open_settings')}
-            </Btn>
-          ) : null}
-        </View>
-      ) : null}
-
-      {problem && !recording ? (
-        <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
-          {t(`speak.problem.${problem}`)}
-        </Text>
-      ) : null}
-
-      {recording ? (
-        <View
-          accessible
-          accessibilityLabel={t('speak.recording_label', {
-            time: formatClock(rec.elapsedMs),
-            max: formatClock(MAX_RECORDING_MS),
-          })}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 24 }}
-        >
-          <RecordingDot />
-          <Text style={[TYPE.body, { fontWeight: '600' }]}>
-            {t('speak.recording', {
-              time: formatClock(rec.elapsedMs),
-              max: formatClock(MAX_RECORDING_MS),
-            })}
-          </Text>
-        </View>
-      ) : null}
-
-      {sending === 'sending' && !waitingOffline ? (
-        <View
-          accessible
-          accessibilityRole="progressbar"
-          accessibilityLabel={t('speak.listening')}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 24 }}
-        >
-          <ActivityIndicator color={LB.primary} />
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('speak.listening')}</Text>
-        </View>
-      ) : null}
-
-      {waitingOffline ? (
-        <View style={{ gap: 8 }}>
-          <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
-            {t('speak.waiting_offline')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-            <Btn variant="ghost" onPress={discard} disabled={disabled}>
-              {t('speak.record_new')}
-            </Btn>
-            {onSkip ? (
-              <Btn variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
-                {t('speak.skip')}
-              </Btn>
-            ) : null}
-          </View>
-        </View>
-      ) : null}
-
-      {sending === 'failed' ? (
-        <View style={{ gap: 8 }}>
-          <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
-            {t('speak.send_failed')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-            <Btn onPress={() => void send()} disabled={disabled}>
-              {t('speak.resend')}
-            </Btn>
-            <Btn variant="ghost" onPress={discard} disabled={disabled}>
-              {t('speak.record_new')}
-            </Btn>
-          </View>
-        </View>
-      ) : null}
+      {status}
 
       <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
         <ListenButton text={item.prompt} lang={lang} disabled={recording || busy} />

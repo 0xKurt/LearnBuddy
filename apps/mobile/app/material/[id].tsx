@@ -157,7 +157,7 @@ export default function MaterialScreen() {
           title={messageFor(query.error)}
           action={
             <View style={{ gap: 10, alignItems: 'center' }}>
-              <Btn pill center onPress={() => void query.refetch()}>
+              <Btn pill center busy={query.isFetching} onPress={() => void query.refetch()}>
                 {t('common:actions.retry')}
               </Btn>
               <Btn

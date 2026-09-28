@@ -90,6 +90,7 @@ import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
+import { SPACE } from '../lib/theme/space.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { reacted, tapped } from '../lib/perf.js';
@@ -814,12 +815,15 @@ export default function BuddyScreen() {
       <Glow />
       <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
         <View
+          // The walkthrough measures this row: every point the head takes is one the
+          // conversation loses (issue #64, tests/web/fit.ts).
+          testID="home-header"
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            paddingHorizontal: 16,
-            paddingTop: 8,
+            paddingHorizontal: SPACE.lg,
+            paddingTop: SPACE.sm,
           }}
         >
           {/* Her name sits where the wordmark was (issue #45): one row for who this is

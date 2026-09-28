@@ -128,10 +128,15 @@ export type MaterialLink = {
 };
 
 /**
- * Sending one fixed set of photos. Keep the instance for retries: it keeps
- * its client_request_id (the API then answers with the same material), skips
- * photos storage already confirmed, and asks for fresh upload URLs when
- * storage refused one. A changed photo set needs a new instance.
+ * Sending the pages of one sheet. Keep the instance for retries: it keeps its
+ * client_request_id (the API then answers with the same material), skips photos storage
+ * already confirmed, and asks for fresh upload URLs when storage refused one.
+ *
+ * Pages may be added while she is still taking them (`grow` + `pushReady`, issue #56):
+ * each one goes up as soon as it is ready, so "Senden" has only the rest and the submit
+ * left. Until `send()` the API knows the reservation is not on its way yet (`sending`).
+ * A page removed or retaken changes the order: that reservation is given up and a new
+ * instance starts (lib/capture/useAttachments.ts).
  */
 /** How many pages go up at once: enough to use the connection, not enough to choke it. */
 const PARALLEL_UPLOADS = 3;
@@ -144,8 +149,10 @@ export class MaterialUpload {
   private readonly uploaded = new Set<number>();
   /** Submit was asked for at least once: the material may be on its way to being read. */
   private submitTried = false;
-  private readonly files: readonly UploadFile[];
+  private files: UploadFile[];
   private readonly link: MaterialLink;
+  /** The API has been told she asked to send (so the home may say "unterwegs"). */
+  private requested = false;
 
   constructor(files: readonly UploadFile[], link: MaterialLink, requestId: string = newId()) {
     this.files = files.map((f) => ({ ...f }));
@@ -173,13 +180,60 @@ export class MaterialUpload {
     return this.materialId && !this.submitTried ? this.materialId : null;
   }
 
+  /** How many pages this sheet has right now (they may still be growing). */
+  get pageCount(): number {
+    return this.files.length;
+  }
+
+  /**
+   * A page she took after this upload started: it joins the same material (issue #56).
+   * Only before the send — afterwards the set is what the API has.
+   */
+  grow(file: UploadFile): void {
+    if (this.submitTried) throw new Error('This sheet was already sent');
+    this.files.push({ ...file });
+    // The reservation must learn about the page; the next reserve returns its slot too.
+    this.targets = null;
+  }
+
+  /**
+   * Pages that are ready go up now, while she takes the next one. Nothing is submitted
+   * and nothing is claimed: until `send()` the API knows she has not asked for it yet.
+   * Failures are not raised here — `send()` does the same work again and reports properly.
+   */
+  async pushReady(): Promise<void> {
+    if (this.submitTried) return;
+    try {
+      await this.deliver(() => undefined);
+    } catch {
+      // A page that did not make it now simply goes with the send.
+    }
+  }
+
   /** Resolves once the API has accepted the photos for reading. */
   async send(onProgress: (p: SendProgress) => void): Promise<void> {
+    const materialId = await this.deliver(onProgress, true);
+    onProgress({ step: 'submitting' });
+    this.submitTried = true;
+    try {
+      await submitMaterial(materialId);
+    } catch (err) {
+      if (err instanceof ApiError && err.reason === 'photos_missing')
+        this.forgetMissing(err.details);
+      throw err;
+    }
+  }
+
+  /** Reserves what is missing and uploads every page not stored yet; returns the material. */
+  private async deliver(
+    onProgress: (p: SendProgress) => void,
+    requesting = false,
+  ): Promise<string> {
     const total = this.files.length;
     let materialId = this.materialId;
     let targets = this.targets;
 
-    if (!materialId || !targets) {
+    if (!materialId || !targets || (requesting && !this.requested)) {
       onProgress({ step: 'reserving' });
       const res = await createMaterial({
         client_request_id: this.currentRequestId,
@@ -188,13 +242,15 @@ export class MaterialUpload {
         ...(this.link.goalId ? { goal_id: this.link.goalId } : {}),
         purpose: this.link.purpose ?? 'study',
         ...(this.link.completes ? { completes: this.link.completes } : {}),
+        sending: requesting,
       });
+      if (requesting) this.requested = true;
       materialId = res.material.id;
       this.materialId = materialId;
       // An earlier try already got through; only its answer was lost.
       if (res.material.status !== 'awaiting_upload') {
         this.submitTried = true;
-        return;
+        return materialId;
       }
       targets = this.targetsFrom(res.uploads);
       this.targets = targets;
@@ -229,16 +285,7 @@ export class MaterialUpload {
       // One failure fails the send, as before; the others finish or are dropped with it.
       await Promise.all(workers);
     }
-
-    onProgress({ step: 'submitting' });
-    this.submitTried = true;
-    try {
-      await submitMaterial(materialId);
-    } catch (err) {
-      if (err instanceof ApiError && err.reason === 'photos_missing')
-        this.forgetMissing(err.details);
-      throw err;
-    }
+    return materialId;
   }
 
   /** One URL per photo, by position. A mismatch starts a new material on the next try. */

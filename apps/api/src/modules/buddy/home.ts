@@ -307,6 +307,8 @@ async function nowCardOf(
   // "being sent" for hours (and Buddy then still asks for the photo).
   const processing = state.materials.find((m) => {
     const age = now.getTime() - m.created_at.getTime();
+    // Pages she is still attaching never get here: buddy/state.ts leaves a reservation
+    // nobody asked to send out of `materials` (issue #56).
     if (m.status === 'awaiting_upload') return age < UPLOAD_WINDOW_MS;
     return (m.status === 'queued' || m.status === 'processing') && age < 2 * 3_600_000;
   });
