@@ -1,11 +1,13 @@
-// Vercel install step (vercel.json installCommand): the workspace packages export their
+// Vercel install step (root package.json postinstall): the workspace packages export their
 // TypeScript sources, which the dev tools (tsx, vitest, Metro) load directly but plain Node on
-// Vercel cannot. This compiles each one to dist/ and points its package.json at the JavaScript.
-// It changes the checkout of the build only; never run it in a working copy.
+// Vercel cannot. On a Vercel build (VERCEL=1) this compiles each one to dist/ and points its
+// package.json at the JavaScript. Anywhere else it does nothing, so a working copy never changes.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+if (process.env.VERCEL !== '1') process.exit(0);
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -33,7 +35,7 @@ for (const name of ['shared-types', 'shared-math']) {
       '--outDir',
       join(dir, 'dist'),
     ],
-    { stdio: 'inherit' },
+    { stdio: 'inherit', cwd: join(root, 'apps', 'api') },
   );
   const pkgPath = join(dir, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));

@@ -17,6 +17,7 @@
     "test": "pnpm -r --parallel test",
     "build": "pnpm -r --parallel build",
     "prepare": "husky",
+    "postinstall": "node apps/api/scripts/vercel-shared.mjs",
     "db:start": "cd infra/supabase && supabase start",
     "db:stop": "cd infra/supabase && supabase stop",
     "db:reset": "cd infra/supabase && supabase db reset"
