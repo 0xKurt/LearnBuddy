@@ -300,5 +300,27 @@
       "higher": "Voci più acute",
       "lower": "Voci più gravi"
     }
+  },
+  "session": {
+    "morning": {
+      "0": "Buongiorno, {{name}}!",
+      "1": "Ciao, {{name}}!",
+      "2": "Buongiorno, {{name}} – dormito bene?"
+    },
+    "day": {
+      "0": "Ciao, {{name}}!",
+      "1": "Ehi, {{name}}!",
+      "2": "Che bello vederti, {{name}}!"
+    },
+    "evening": {
+      "0": "Buonasera, {{name}}!",
+      "1": "Ciao, {{name}} – com’è andata oggi?",
+      "2": "Buonasera, {{name}}!"
+    },
+    "night": {
+      "0": "Ciao, {{name}} – ancora sveglia?",
+      "1": "Ehi, {{name}}!",
+      "2": "Buonasera, {{name}}!"
+    }
   }
 }

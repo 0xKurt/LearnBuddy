@@ -86,6 +86,7 @@ import {
 } from '../lib/api/queries.js';
 import type { CaptureDraft } from '../lib/capture/draft.js';
 import { inThread } from '../lib/buddy/unsent.js';
+import { dayPart, greetingVariant, startsNewSession } from '../lib/buddy/sessionAnchor.js';
 import { drafts } from '../lib/capture/draftStorage.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
@@ -235,6 +236,15 @@ export default function BuddyScreen() {
   /** How tall the card is, and where the conversation starts under it. */
   const [cardHeight, setCardHeight] = useState(0);
   const [threadTop, setThreadTop] = useState(0);
+  /**
+   * Where this visit starts in the conversation (issue #34): decided once, when the screen
+   * first sees the thread — after a break of a few hours the greeting line goes under the
+   * last message she had, so the new turn starts on a fresh page with everything older
+   * right above. Kept in a ref: it must not move while she is in the app.
+   */
+  const sessionStart = useRef<{ afterMessageId: string; text: string } | null | undefined>(
+    undefined,
+  );
   useEffect(() => {
     const sent = awaitingReply.current;
     if (!sent || !thread || !focused.current) return;
@@ -653,6 +663,21 @@ export default function BuddyScreen() {
   // The next test in one line; everything else Buddy says in the conversation.
   const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
   const messages = h.thread.slice(-VISIBLE_MESSAGES);
+  // Decided once per visit (see the ref above); `undefined` means "not looked at yet".
+  if (sessionStart.current === undefined) {
+    const lastMessage = h.thread[h.thread.length - 1] ?? null;
+    const lastAt = lastMessage ? new Date(lastMessage.created_at) : null;
+    const now = new Date();
+    sessionStart.current =
+      lastMessage && startsNewSession(lastAt, now)
+        ? {
+            afterMessageId: lastMessage.id,
+            text: t(`buddy:session.${dayPart(now.getHours())}.${greetingVariant(now.getDate())}`, {
+              name: h.learner.name,
+            }),
+          }
+        : null;
+  }
   // Hide the optimistic bubble once the server has the message.
   const shownPending =
     pending && !h.thread.some((m) => m.client_message_id === pending.id)
@@ -836,9 +861,8 @@ export default function BuddyScreen() {
               <View
                 style={{
                   paddingHorizontal: 16,
-                  paddingTop: 12,
+                  paddingTop: 6,
                   paddingBottom: 4,
-                  gap: 12,
                   opacity: covered ? 0 : 1,
                 }}
                 // Where the conversation starts under the card.
@@ -847,8 +871,9 @@ export default function BuddyScreen() {
                 accessibilityElementsHidden={covered}
                 importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
               >
-                {statusLine}
-                {/* The ring, small: starting stays one tap away. */}
+                {/* One row above the conversation: the ways to start. The greeting sits in
+                    the bar, what is due is a card — nothing else takes height here
+                    (owner 28.09., issue #45: "eine zeile mit menu buttons, thats it"). */}
                 <StartRow items={orbitItems(h.next)} disabled={pending !== null} />
               </View>
               <ScrollView
@@ -905,6 +930,7 @@ export default function BuddyScreen() {
                   notices={notices}
                   live={live}
                   busy={busy || pending !== null}
+                  sessionStart={sessionStart.current}
                   showActions
                   onUndo={(id) => void act(() => undoAction(id))}
                   onOption={(messageId, option) => void send(option, newId(), messageId)}

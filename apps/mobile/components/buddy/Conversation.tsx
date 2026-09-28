@@ -52,6 +52,12 @@ type Props = {
   /** Quick answers and "Nochmal senden"; left out (History), they are not shown at all. */
   onOption?: (messageId: string, option: string) => void;
   onResend?: (message: MessageView) => void;
+  /**
+   * A fresh page when she comes back after a break (issue #34): the greeting line goes
+   * after this message, so everything older sits above it and the new turn starts below.
+   * Null = the conversation just goes on.
+   */
+  sessionStart?: { afterMessageId: string; text: string } | null;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
   /** Undo is locked while this is true (default: busy); history locks only while undoing. */
@@ -66,6 +72,7 @@ export function Conversation({
   live = null,
   busy,
   showActions = false,
+  sessionStart = null,
   onOption,
   onResend,
   onUndo,
@@ -104,6 +111,7 @@ export function Conversation({
         );
         const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(markdownPlain(m.text, { spoken: true }), words)}`;
         const stopped = mine && m.status === 'failed' && m.failure_code === 'stopped';
+        const opensHere = sessionStart?.afterMessageId === m.id;
         return (
           <Animated.View
             key={m.id}
@@ -291,6 +299,7 @@ export function Conversation({
                 ))}
               </View>
             ) : null}
+            {opensHere ? <SessionLine text={sessionStart!.text} /> : null}
           </Animated.View>
         );
       })}
@@ -360,6 +369,31 @@ export function Conversation({
 }
 
 /** The day a part of the conversation is from: "Heute", "Gestern", or "Montag, 28. September". */
+/**
+ * Where this visit starts (issue #34): a greeting for the time of day, quiet, with a hairline
+ * to each side. Everything older is right above it — nothing is hidden or cleared.
+ */
+function SessionLine({ text }: { text: string }) {
+  return (
+    <View
+      style={{
+        alignSelf: 'stretch',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginTop: 10,
+        marginBottom: 2,
+      }}
+    >
+      <View style={{ flex: 1, height: 1, backgroundColor: LB.hairline }} />
+      <Text accessibilityRole="header" style={[TYPE.small, { color: LB.ink2, fontSize: 12 }]}>
+        {text}
+      </Text>
+      <View style={{ flex: 1, height: 1, backgroundColor: LB.hairline }} />
+    </View>
+  );
+}
+
 export function DayLine({ day }: { day: string }) {
   const { t, i18n: i } = useTranslation('buddy');
   const now = new Date();

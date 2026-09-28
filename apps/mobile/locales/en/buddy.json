@@ -300,5 +300,27 @@
       "higher": "Higher voices",
       "lower": "Lower voices"
     }
+  },
+  "session": {
+    "morning": {
+      "0": "Good morning, {{name}}!",
+      "1": "Morning, {{name}}!",
+      "2": "Morning, {{name}} – sleep well?"
+    },
+    "day": {
+      "0": "Hello, {{name}}!",
+      "1": "Hi, {{name}}!",
+      "2": "Good to see you, {{name}}!"
+    },
+    "evening": {
+      "0": "Good evening, {{name}}!",
+      "1": "Hi, {{name}} – how was your day?",
+      "2": "Evening, {{name}}!"
+    },
+    "night": {
+      "0": "Hi, {{name}} – still up?",
+      "1": "Hey, {{name}}!",
+      "2": "Good evening, {{name}}!"
+    }
   }
 }

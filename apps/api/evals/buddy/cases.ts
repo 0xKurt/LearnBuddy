@@ -465,6 +465,42 @@ export const CASES: Case[] = [
     ],
   },
   {
+    // Owner 28.09.: Buddy answered "darauf habe ich keinen Zugriff" when asked which
+    // questions she already had — he can look exactly that up (find_questions,
+    // practice_history). Buddy is the one place that knows, or knows where it is.
+    id: 'de_knows_what_she_practised',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      const sheet = await env.db.one<{ id: string }>(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title,
+                                extracted_text, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'Englisch – Present Perfect',
+                 'Present Perfect: have/has + past participle. She has lived in Berlin since 2015.', $2)
+         returning id`,
+        [l.learnerId, env.clock.now()],
+      );
+      for (const [prompt, topic] of [
+        ['Vervollständige: They ___ (live) in Berlin since 2015.', 'Present Perfect'],
+        ['Vervollständige: She ___ (finish) her homework.', 'Present Perfect'],
+      ] as const) {
+        await env.db.query(
+          `insert into items (learner_id, material_id, kind, prompt, answer, topic, difficulty, origin)
+           values ($1, $2, 'short', $3, 'have lived', $4, 2, 'material')`,
+          [l.learnerId, sheet.id, prompt, topic],
+        );
+      }
+    },
+    message: 'Welche Übungsaufgaben hatte ich eigentlich schon?',
+    check: (o) => [
+      ...must(
+        o.lookups.includes('find_questions') || o.lookups.includes('practice_history'),
+        'looks it up instead of saying he cannot see it',
+      ),
+      ...must(/present perfect|berlin|homework/i.test(o.reply ?? ''), 'names what she had'),
+      ...must(o.tools.length === 0, 'changes nothing'),
+    ],
+  },
+  {
     id: 'de_test_nerves_not_concern',
     learner: { relation: 'child', birthDate: '2014-02-10' },
     message: 'Ich bin total nervös wegen der Mathearbeit am Freitag',

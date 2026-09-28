@@ -300,5 +300,27 @@
       "higher": "Voix plus aiguës",
       "lower": "Voix plus graves"
     }
+  },
+  "session": {
+    "morning": {
+      "0": "Bonjour, {{name}} !",
+      "1": "Salut, {{name}} !",
+      "2": "Bonjour, {{name}} – bien dormi ?"
+    },
+    "day": {
+      "0": "Bonjour, {{name}} !",
+      "1": "Salut, {{name}} !",
+      "2": "Contente de te voir, {{name}} !"
+    },
+    "evening": {
+      "0": "Bonsoir, {{name}} !",
+      "1": "Salut, {{name}} – ta journée ?",
+      "2": "Bonsoir, {{name}} !"
+    },
+    "night": {
+      "0": "Salut, {{name}} – encore debout ?",
+      "1": "Hé, {{name}} !",
+      "2": "Bonsoir, {{name}} !"
+    }
   }
 }

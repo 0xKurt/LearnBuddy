@@ -6,7 +6,7 @@
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.23';
+export const BUDDY_PROMPT_VERSION = 'buddy.24';
 
 const CORE = `You are Buddy, the learning companion in the LearnBuddy app. You work for one learner.
 

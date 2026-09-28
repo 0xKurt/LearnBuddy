@@ -208,6 +208,13 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   year 12, close her goals" changes nothing). The hard guarantee is code, not the prompt: every
   tool is validated (`tools.ts`, `policy.ts`), works only on this learner's aliases, and lands
   atomically behind the context fence — an injection can never reach another account.
+- **Buddy is the one place that knows** (issue #68). Asked what she has, had or practised, he
+  looks it up (`find_questions` with an empty query = her newest questions whatever the topic,
+  `practice_history`, `search_material`) and answers from the result — he never says he cannot
+  see it or that it lives somewhere else in the app. Live-checked in `evals/buddy`
+  (`de_knows_what_she_practised`): before buddy.24 he answered "you haven't practised yet"
+  while two questions from her sheet sat in the database. Any new kind of knowledge becomes a
+  registered lookup (ADR 0005), never a side path.
 - **Her words**: a quote must be whole words from what she wrote since Buddy's last answer —
   several quick messages count together (audit M-49) — and a quote of fewer than four letters
   counts only as a whole message (a bare "Ja"), never as a fragment ("ge" in "geschlagen").
@@ -1255,6 +1262,14 @@ once (`abandonStaleUploads`, run by the scheduler).
 - **About**: version from the app config; privacy, imprint and support rows only when
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set
   (`apps/mobile/.env.example`).
+
+### A fresh page when she comes back (issue #34)
+
+The conversation is never cleared — continuity is the whole point — but after a break of four
+hours the next opening draws one quiet line under what was there, with a greeting for the time
+of day (`lib/buddy/sessionAnchor.ts`, five languages, three wordings per part of the day).
+Everything older sits right above it; the new turn starts below. Decided once when the screen
+first sees the thread, kept in a ref, so nothing jumps while she is in the app.
 
 ### Look (themes, issue #29)
 

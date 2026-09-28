@@ -83,15 +83,20 @@ export type QuestionHit = {
   last: 'first_try' | 'with_help' | 'not_known' | 'never_asked';
 };
 
-/** Questions whose topic or text matches, with how she did the last time. Never the solutions. */
+/**
+ * Questions whose topic or text matches, with how she did the last time. Never the
+ * solutions. An empty query means "what do I have at all" — then the newest questions
+ * come back, whatever the topic (owner 28.09.: Buddy said he had no access to that,
+ * although it is his own material; issue #68).
+ */
 export async function findQuestions(
   db: Db,
   learnerId: string,
   query: string,
   limit: number,
 ): Promise<QuestionHit[]> {
-  const q = prefixQuery(query);
-  if (q === null) return [];
+  const q = query.trim() === '' ? null : prefixQuery(query);
+  if (q === null && query.trim() !== '') return [];
   const rows = await db.query<{
     prompt: string;
     topic: string | null;
@@ -108,7 +113,9 @@ export async function findQuestions(
           order by si.closed_at desc nulls last limit 1) last on true
        left join practice_sessions ps0 on ps0.id = last.session_id
       where i.learner_id = $1 and i.archived_at is null
-        and to_tsvector('simple', coalesce(i.topic, '') || ' ' || i.prompt) @@ to_tsquery('simple', $3)
+        and ($3::text is null
+             or to_tsvector('simple', coalesce(i.topic, '') || ' ' || i.prompt)
+                @@ to_tsquery('simple', $3))
       order by i.created_at desc limit $2`,
     [learnerId, limit, q],
   );
