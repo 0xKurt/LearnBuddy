@@ -45,6 +45,10 @@ export function useDraft(name: string): {
 
   useEffect(() => {
     let alive = true;
+    // A new key is a new field: the previous one's text must not stay on screen
+    // (a session's answer draft in the next session, review 28.09.).
+    latest.current = '';
+    setValue('');
     void readItem(key).then((kept) => {
       // Whatever she typed before the read finished wins over the old draft.
       if (alive && kept && latest.current.length === 0) {
@@ -54,9 +58,14 @@ export function useDraft(name: string): {
     });
     return () => {
       alive = false;
-      // The last keystrokes before unmount are kept too, not only the debounce.
+      // The last keystrokes before unmount are kept too, not only the debounce —
+      // and indexed, or the sign-out wipe would miss them (review 28.09.).
       if (timer.current) clearTimeout(timer.current);
-      void writeItem(key, latest.current.trim().length > 0 ? latest.current : null);
+      if (latest.current.trim().length > 0) {
+        void remember(key).then(() => writeItem(key, latest.current));
+      } else {
+        void writeItem(key, null);
+      }
     };
   }, [key]);
 

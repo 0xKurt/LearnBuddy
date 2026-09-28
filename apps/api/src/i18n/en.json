@@ -68,5 +68,8 @@
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."
+  },
+  "voice": {
+    "sample": "Hi, I'm Buddy. This is how I sound when I read something to you."
   }
 }

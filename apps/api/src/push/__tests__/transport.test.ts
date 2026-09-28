@@ -1,3 +1,4 @@
+import { PUSH_CHANNEL_ID } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { ExpoPush } from '../transport.js';
@@ -13,7 +14,7 @@ describe('ExpoPush payload', () => {
       });
     });
     await push.send([{ to: 'ExponentPushToken[x]', title: 'T', body: 'B', data: {} }]);
-    expect(sent).toEqual([expect.objectContaining({ channelId: 'buddy' })]);
+    expect(sent).toEqual([expect.objectContaining({ channelId: PUSH_CHANNEL_ID })]);
   });
 
   it('carries the message expiry, so a phone that was off gets no stale message (p2-push-no-ttl-default-priority)', async () => {

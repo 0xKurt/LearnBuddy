@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Linking, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { ApiError } from '../../lib/api/client.js';
 import { updateSettings } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
@@ -78,6 +79,8 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
   const [saving, setSaving] = useState(false);
   // The notification permission is permanently denied: show the settings way out.
   const [blocked, setBlocked] = useState(false);
+  // iOS has no live regions: the dead-end explanation says itself (review 28.09.).
+  useAnnounce(blocked ? t('contact.device_not_possible') : null);
   const inFlight = useRef(false);
 
   const lang = i18n.language;

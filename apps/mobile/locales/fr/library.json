@@ -33,13 +33,13 @@
   "delete": "Supprimer",
   "delete_label": "Supprimer «{{title}}»",
   "delete_sheet": {
-    "title": "Matériel",
+    "title": "Supprimer la fiche?",
     "body": "«{{title}}» et ses exercices seront supprimés, les photos aussi. Tu ne pourras pas revenir en arrière.",
     "confirm": "Supprimer"
   },
   "deleted": "Fiche supprimée.",
   "empty": {
-    "title": "Matériel",
+    "title": "Tes fiches arriveront ici",
     "body": "Prends en photo une fiche, une page de manuel ou ton cahier – j'en fais des exercices."
   },
   "open": "Voir les questions",
@@ -47,7 +47,7 @@
   "rename": "Renommer",
   "rename_label": "Renommer « {{title}} »",
   "rename_sheet": {
-    "title": "Matériel",
+    "title": "Renommer la feuille",
     "label": "Nom de la feuille",
     "placeholder": "p. ex. Fractions – contrôle vendredi",
     "empty": "Donne un nom à la feuille."
@@ -71,7 +71,7 @@
     }
   },
   "item_delete_sheet": {
-    "title": "Matériel",
+    "title": "Supprimer la question ?",
     "body": "Cette question ne reviendra plus.",
     "confirm": "Supprimer"
   },

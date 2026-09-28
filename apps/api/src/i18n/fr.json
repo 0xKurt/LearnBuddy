@@ -68,5 +68,8 @@
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."
+  },
+  "voice": {
+    "sample": "Salut, je suis Buddy. Voilà comment je parle quand je te lis quelque chose."
   }
 }

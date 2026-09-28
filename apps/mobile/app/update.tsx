@@ -12,11 +12,28 @@ import { Screen } from '../components/lb/Screen.js';
 
 const ANDROID_PACKAGE = 'com.learnbuddy.app';
 
+/** The App Store id, once there is a published iOS app (app.json extra). */
+function appStoreId(): string | null {
+  const id = (Constants.expoConfig?.extra as { appStoreId?: unknown } | undefined)?.appStoreId;
+  return typeof id === 'string' && /^\d+$/.test(id) ? id : null;
+}
+
+/** Where this build's update comes from — null while a store page is missing. */
+function storeUrls(): [string, string] | null {
+  if (Platform.OS === 'android') {
+    const id = Constants.expoConfig?.android?.package ?? ANDROID_PACKAGE;
+    return [`market://details?id=${id}`, `https://play.google.com/store/apps/details?id=${id}`];
+  }
+  const id = appStoreId();
+  return id
+    ? [`itms-apps://apps.apple.com/app/id${id}`, `https://apps.apple.com/app/id${id}`]
+    : null;
+}
+
 function openStore(): void {
-  const id = Constants.expoConfig?.android?.package ?? ANDROID_PACKAGE;
-  void Linking.openURL(`market://details?id=${id}`).catch(() =>
-    Linking.openURL(`https://play.google.com/store/apps/details?id=${id}`),
-  );
+  const urls = storeUrls();
+  if (!urls) return;
+  void Linking.openURL(urls[0]).catch(() => Linking.openURL(urls[1]));
 }
 
 export default function UpdateRequired() {
@@ -29,8 +46,9 @@ export default function UpdateRequired() {
           title={t('common:update.title')}
           body={t('errors:code.update_required')}
           action={
-            // iOS has no store page yet; the body names the App Store.
-            Platform.OS === 'android' ? (
+            // Only where an update can really be fetched: a button that opens
+            // nothing would be a stub (CLAUDE.md rule 12).
+            storeUrls() ? (
               <Btn pill center onPress={openStore}>
                 {t('common:update.cta')}
               </Btn>

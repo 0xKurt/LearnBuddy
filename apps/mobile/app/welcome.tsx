@@ -209,6 +209,8 @@ export default function Welcome() {
               onChangeText={(v) => {
                 setEmail(v);
                 clearFailure();
+                // A corrected address may ask for a fresh reset mail (review 28.09.).
+                setResetSent(false);
               }}
               onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
               placeholder={t('welcome.email')}

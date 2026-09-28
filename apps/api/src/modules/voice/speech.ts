@@ -15,6 +15,7 @@ import { createHash } from 'node:crypto';
 
 import type { SpeechRequest, SpeechResponse, VoiceName } from '@learnbuddy/shared-types/contracts';
 
+import { sampleTexts } from '../../i18n/index.js';
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
 import { consume, limitError } from '../../lib/limits.js';
@@ -30,6 +31,12 @@ export const SPEECH_CACHE_MS = 24 * 3_600_000;
  */
 export const SHARED_SPEECH_CACHE_MS = 90 * 24 * 3_600_000;
 const SPEECH_TIMEOUT_MS = 8_000;
+
+/** Whitespace-normalised comparison against the picker's sample sentences. */
+function isSampleText(text: string): boolean {
+  const norm = text.replace(/\s+/g, ' ').trim();
+  return sampleTexts().some((s) => s.replace(/\s+/g, ' ').trim() === norm);
+}
 
 export async function synthesizeSpeech(
   deps: Deps,
@@ -65,9 +72,11 @@ export async function synthesizeSpeech(
     speed: settings.voice_speed,
   });
 
-  // Only the voice picker names a voice (see header): its sample is a fixed app
-  // text, shared by everyone — never a learner's own sentence.
-  const shared = input.voice !== undefined && input.voice !== null;
+  // Shared caching only for the picker's fixed sample sentences, verified
+  // server-side against the app's own texts — never on a client-controlled
+  // field alone: a learner's sentence must not land in a cross-account cache
+  // with 90-day retention (review finding 28.09., hard rule 1).
+  const shared = input.voice !== undefined && input.voice !== null && isSampleText(text);
   const cached = shared
     ? await deps.db.maybeOne<{ mime: SpeechResponse['mime']; audio: Buffer }>(
         `select mime, audio from speech_cache_shared where key = $1 and expires_at > $2`,

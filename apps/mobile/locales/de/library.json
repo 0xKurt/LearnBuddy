@@ -33,13 +33,13 @@
   "delete": "Löschen",
   "delete_label": "„{{title}}“ löschen",
   "delete_sheet": {
-    "title": "Materialien",
+    "title": "Blatt löschen?",
     "body": "„{{title}}“ und die Aufgaben daraus werden gelöscht, die Fotos auch. Das lässt sich nicht rückgängig machen.",
     "confirm": "Löschen"
   },
   "deleted": "Gelöscht.",
   "empty": {
-    "title": "Materialien",
+    "title": "Hier landen deine Blätter",
     "body": "Fotografier ein Arbeitsblatt, eine Buchseite oder dein Heft – ich mache Übungen daraus."
   },
   "open": "Fragen ansehen",
@@ -47,7 +47,7 @@
   "rename": "Umbenennen",
   "rename_label": "„{{title}}“ umbenennen",
   "rename_sheet": {
-    "title": "Materialien",
+    "title": "Blatt umbenennen",
     "label": "Name des Blatts",
     "placeholder": "z. B. Brüche – Test am Freitag",
     "empty": "Gib dem Blatt einen Namen."
@@ -71,7 +71,7 @@
     }
   },
   "item_delete_sheet": {
-    "title": "Materialien",
+    "title": "Frage löschen?",
     "body": "Diese Frage kommt nicht mehr dran.",
     "confirm": "Löschen"
   },

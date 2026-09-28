@@ -427,7 +427,10 @@ export const UpdateBuddySettingsRequest = z.object({
 export type UpdateBuddySettingsRequest = z.infer<typeof UpdateBuddySettingsRequest>;
 
 /** Android notification channel the app creates and every push targets. */
-export const PUSH_CHANNEL_ID = 'buddy';
+// v2: Android never raises an existing channel's importance, so the HIGH
+// channel (heads-up for a reminder she asked for) needs a new id; the app
+// deletes the old 'buddy' channel on start (apps/mobile/lib/push.ts).
+export const PUSH_CHANNEL_ID = 'buddy-v2';
 
 /** A random id of this app install (not the hardware): push tokens are bound to it. */
 export const DeviceId = z.string().regex(/^[A-Za-z0-9-]{16,64}$/);

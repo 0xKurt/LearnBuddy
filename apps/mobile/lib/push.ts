@@ -26,6 +26,9 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { newId } from './api/client.js';
+
+/** The channel before the importance fix — deleted on start (review 28.09.). */
+const LEGACY_CHANNEL_ID = 'buddy';
 import type { OutreachActionResponse } from '@learnbuddy/shared-types/contracts';
 
 import {
@@ -88,13 +91,16 @@ function within<T>(p: Promise<T>, ms = PUSH_TIMEOUT_MS): Promise<T> {
 export async function registerPushCategories(): Promise<void> {
   if (Platform.OS === 'web') return;
   // The channel exists from the first start (not only once a token is fetched);
-  // HIGH: a reminder she asked for may appear as a heads-up.
+  // HIGH: a reminder she asked for may appear as a heads-up. Android never
+  // raises an existing channel's importance, so upgraded installs need this
+  // v2 id — the legacy channel is removed (review 28.09.).
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(PUSH_CHANNEL_ID, {
       name: 'Buddy',
       description: i18n.t('common:push.channel_description'),
       importance: Notifications.AndroidImportance.HIGH,
     }).catch(() => undefined);
+    await Notifications.deleteNotificationChannelAsync(LEGACY_CHANNEL_ID).catch(() => undefined);
   }
   for (const c of categorySpecs((key) => i18n.t(`common:${key}`))) {
     await Notifications.setNotificationCategoryAsync(c.id, c.actions).catch(() => undefined);

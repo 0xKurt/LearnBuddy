@@ -83,7 +83,7 @@ async function afterSignedIn(userId: string): Promise<void> {
 export const unstable_settings = { initialRouteName: 'index' };
 
 /** Screens that exist before sign-in; every other route needs a session. */
-const OPEN_ROUTES = new Set(['/', '/welcome', '/reset-password']);
+const OPEN_ROUTES = new Set(['/', '/welcome', '/reset-password', '/update']);
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -140,6 +140,9 @@ export default function RootLayout() {
       }
       clearAdminToken();
       clearIncoming();
+      // The next person must never be pushed into the previous user's route
+      // (review 28.09.: the guard can capture transient paths mid-sign-out).
+      pendingRoute.current = null;
       userRef.current = null;
       // The welcome screen speaks this device's language (an explicit flag choice
       // wins over the system language), not the previous learner's.

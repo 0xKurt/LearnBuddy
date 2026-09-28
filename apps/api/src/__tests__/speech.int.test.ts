@@ -102,9 +102,30 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
     expect(env.speech.calls).toHaveLength(3);
   });
 
+  it('never shares a learner sentence, voice named or not (review 28.09.)', async () => {
+    // A named voice alone must NOT route into the shared cache: only the
+    // app's own sample sentences are shareable.
+    const sneaky = { text: 'Ich heiße Lena Meyer.', locale: 'de-DE', voice: 'warm' as const };
+    const res = await speech(sneaky);
+    expect(res.status).toBe(200);
+    const shared = await env.db.one<{ n: string }>(
+      `select count(*)::text as n from speech_cache_shared`,
+    );
+    expect(Number(shared.n)).toBe(0);
+    const personal = await env.db.one<{ n: string }>(
+      `select count(*)::text as n from speech_cache where learner_id = $1`,
+      [l.learnerId],
+    );
+    expect(Number(personal.n)).toBe(1);
+  });
+
   it('shares voice-picker samples across learners, long-lived (issue #12)', async () => {
-    // A preview names a voice: fixed app text, cached for everyone.
-    const preview = { text: 'Hallo, ich bin Buddy!', locale: 'de-DE', voice: 'warm' as const };
+    // A preview names a voice: the app's fixed sample text, cached for everyone.
+    const preview = {
+      text: 'Hallo, ich bin Buddy. So klinge ich, wenn ich dir etwas vorlese.',
+      locale: 'de-DE',
+      voice: 'warm' as const,
+    };
     const first = await speech(preview);
     expect(first.status).toBe(200);
     expect(env.speech.calls).toHaveLength(1);

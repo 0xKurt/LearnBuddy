@@ -33,13 +33,13 @@
   "delete": "Eliminar",
   "delete_label": "Eliminar “{{title}}”",
   "delete_sheet": {
-    "title": "Materiales",
+    "title": "¿Eliminar la ficha?",
     "body": "Se eliminarán “{{title}}” y sus ejercicios, y también las fotos. No se puede deshacer.",
     "confirm": "Eliminar"
   },
   "deleted": "Ficha eliminada.",
   "empty": {
-    "title": "Materiales",
+    "title": "Aquí aparecerán tus fichas",
     "body": "Haz una foto de una ficha, una página del libro o tu cuaderno: lo convierto en ejercicios."
   },
   "open": "Ver preguntas",
@@ -47,7 +47,7 @@
   "rename": "Cambiar nombre",
   "rename_label": "Cambiar el nombre de «{{title}}»",
   "rename_sheet": {
-    "title": "Materiales",
+    "title": "Cambiar nombre de la hoja",
     "label": "Nombre de la hoja",
     "placeholder": "p. ej. Fracciones – examen del viernes",
     "empty": "Ponle un nombre a la hoja."
@@ -71,7 +71,7 @@
     }
   },
   "item_delete_sheet": {
-    "title": "Materiales",
+    "title": "¿Borrar la pregunta?",
     "body": "Esta pregunta ya no volverá a salir.",
     "confirm": "Borrar"
   },

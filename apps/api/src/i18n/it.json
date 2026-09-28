@@ -68,5 +68,8 @@
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."
+  },
+  "voice": {
+    "sample": "Ciao, sono Buddy. Ecco come suono quando ti leggo qualcosa."
   }
 }

@@ -70,10 +70,10 @@ export default function Pin() {
     }
   }
 
-  // VoiceOver hears the error too, again after each wrong attempt (audit M-80).
-  // liveRegion: true — the assertive region below already speaks on Android;
-  // this call then only covers iOS, so TalkBack never hears it twice.
-  useAnnounce(error, { key: attempt, liveRegion: true });
+  // Spoken once per attempt on both platforms, ALSO when the text repeats
+  // (audit M-80): the keyed announce carries it alone — the on-screen text is
+  // deliberately no live region (identical text never re-fires one; review 28.09.).
+  useAnnounce(error, { key: attempt, liveRegion: false });
 
   return (
     <Screen>
@@ -100,7 +100,6 @@ export default function Pin() {
         </View>
         {error ? (
           <View
-            accessibilityLiveRegion="assertive"
             style={{
               backgroundColor: LB.blush,
               borderRadius: 18,

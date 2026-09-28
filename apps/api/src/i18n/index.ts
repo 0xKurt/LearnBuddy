@@ -22,6 +22,11 @@ type Leaf<T, P extends string = ''> = {
 
 export type MessageKey = Leaf<Messages>;
 
+/** The voice picker's sample sentence in every language (shared-cache guard). */
+export function sampleTexts(): string[] {
+  return (Object.values(MESSAGES) as Messages[]).map((m) => m.voice.sample);
+}
+
 function lookup(messages: Messages, key: string): string | undefined {
   let node: unknown = messages;
   for (const part of key.split('.')) {
