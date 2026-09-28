@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
@@ -19,12 +19,14 @@ import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+import { SPACE } from '../lib/theme/space.js';
 
 const STEPS = ['s1', 's2', 's3'] as const;
 /** The three ways in, shown on the first card (decorative — the body names them). */
 const WAYS: IconName[] = ['keyboard', 'mic', 'camera'];
 
 export default function Onboarding() {
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation('common');
   const [step, setStep] = useState(0);
   const compact = useWindowDimensions().height < 780;
@@ -41,7 +43,8 @@ export default function Onboarding() {
   useAnnounce(`${t(`onboarding.${key}_title`)}. ${t(`onboarding.${key}_body`)}`, { key: step });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+    // The bottom inset belongs to the footer below, not to the frame as well (#64).
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow height={420} />
       <View
         style={{
@@ -84,7 +87,14 @@ export default function Onboarding() {
         ) : null}
       </View>
 
-      <View style={{ paddingHorizontal: 20, paddingBottom: 16, gap: 12, alignItems: 'center' }}>
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingBottom: Math.max(insets.bottom, SPACE.md),
+          gap: SPACE.md,
+          alignItems: 'center',
+        }}
+      >
         <View
           accessibilityLabel={t('onboarding.step_label', { n: step + 1, count: STEPS.length })}
           style={{ flexDirection: 'row', gap: 8 }}

@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Linking, Platform, ScrollView, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AreaCard } from '../components/buddy/AreaCard.js';
 import { OfferCard } from '../components/learn/OfferCard.js';
@@ -47,11 +47,13 @@ import { talkListensByItself } from '../lib/speech/handsFree.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
+import { SPACE } from '../lib/theme/space.js';
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'paused';
 
 export default function TalkScreen() {
   const { t } = useTranslation(['buddy', 'common']);
+  const insets = useSafeAreaInsets();
   const words = useSpokenWords();
   const scroll = useRef<ScrollView>(null);
   const [phase, setPhase] = useState<Phase>('paused');
@@ -317,6 +319,9 @@ export default function TalkScreen() {
 
   return (
     <SafeAreaView
+      // The bottom inset belongs to the button row below, not to the frame as well: both
+      // together left a hand's width of nothing under the microphone (owner 28.09., #64).
+      edges={['top', 'left', 'right']}
       style={{ flex: 1, backgroundColor: LB.bg }}
       // VoiceOver's Magic Tap (two-finger double tap) is the mic: speak, done, interrupt.
       onMagicTap={onMic}
@@ -452,9 +457,9 @@ export default function TalkScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-around',
-          paddingHorizontal: 16,
-          paddingBottom: 12,
-          paddingTop: 8,
+          paddingHorizontal: SPACE.lg,
+          paddingBottom: Math.max(insets.bottom, SPACE.sm),
+          paddingTop: SPACE.sm,
         }}
       >
         <View style={{ alignItems: 'center', gap: 4, width: 96 }}>
