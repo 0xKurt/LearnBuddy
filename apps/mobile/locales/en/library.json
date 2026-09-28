@@ -1,5 +1,5 @@
 {
-  "title": "My material",
+  "title": "Materials",
   "capture": "Photograph a new sheet",
   "unsorted": "No subject",
   "untitled": "Untitled",
@@ -33,13 +33,13 @@
   "delete": "Delete",
   "delete_label": "Delete “{{title}}”",
   "delete_sheet": {
-    "title": "Delete sheet?",
+    "title": "Materials",
     "body": "“{{title}}” and its questions will be deleted, and the photos too. This can't be undone.",
     "confirm": "Delete"
   },
   "deleted": "Deleted.",
   "empty": {
-    "title": "Your sheets end up here",
+    "title": "Materials",
     "body": "Photograph a worksheet, a textbook page or your exercise book – I'll turn it into practice."
   },
   "open": "See questions",
@@ -47,7 +47,7 @@
   "rename": "Rename",
   "rename_label": "Rename “{{title}}”",
   "rename_sheet": {
-    "title": "Rename sheet",
+    "title": "Materials",
     "label": "Name of the sheet",
     "placeholder": "e.g. Fractions – test on Friday",
     "empty": "Give the sheet a name."
@@ -71,7 +71,7 @@
     }
   },
   "item_delete_sheet": {
-    "title": "Delete question?",
+    "title": "Materials",
     "body": "This question won't come up again.",
     "confirm": "Delete"
   },

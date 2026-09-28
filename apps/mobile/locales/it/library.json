@@ -1,5 +1,5 @@
 {
-  "title": "Il mio materiale",
+  "title": "Materiali",
   "capture": "Fotografa una nuova scheda",
   "unsorted": "Senza materia",
   "untitled": "Senza titolo",
@@ -33,13 +33,13 @@
   "delete": "Elimina",
   "delete_label": "Elimina “{{title}}”",
   "delete_sheet": {
-    "title": "Eliminare la scheda?",
+    "title": "Materiali",
     "body": "“{{title}}” e i suoi esercizi verranno eliminati, insieme alle foto. Non si può annullare.",
     "confirm": "Elimina"
   },
   "deleted": "Scheda eliminata.",
   "empty": {
-    "title": "Qui arriveranno le tue schede",
+    "title": "Materiali",
     "body": "Fotografa una scheda, una pagina del libro o il tuo quaderno – lo trasformo in esercizi."
   },
   "open": "Vedi le domande",
@@ -47,7 +47,7 @@
   "rename": "Rinomina",
   "rename_label": "Rinomina «{{title}}»",
   "rename_sheet": {
-    "title": "Rinomina il foglio",
+    "title": "Materiali",
     "label": "Nome del foglio",
     "placeholder": "per es. Frazioni – verifica di venerdì",
     "empty": "Dai un nome al foglio."
@@ -71,7 +71,7 @@
     }
   },
   "item_delete_sheet": {
-    "title": "Cancellare la domanda?",
+    "title": "Materiali",
     "body": "Questa domanda non uscirà più.",
     "confirm": "Cancella"
   },

@@ -27,6 +27,7 @@ export type IconName =
   | 'book'
   | 'keyboard'
   | 'headphones'
+  | 'voice'
   | 'stop'
   | 'file';
 
@@ -234,6 +235,15 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" {...common} />
           <Path d="M14 3v5h5M9 13h6M9 17h4" {...common} />
+        </Svg>
+      );
+    case 'voice':
+      // Three soft bars — the voice-mode mark users know from assistants.
+      return (
+        <Svg {...common}>
+          <Path d="M7 9.5v5" strokeLinecap="round" />
+          <Path d="M12 6.5v11" strokeLinecap="round" />
+          <Path d="M17 9.5v5" strokeLinecap="round" />
         </Svg>
       );
     case 'stop':

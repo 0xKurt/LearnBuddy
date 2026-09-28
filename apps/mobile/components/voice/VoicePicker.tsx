@@ -28,8 +28,10 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { toast } from '../lb/Toast.js';
 
-/** Two rows of two: short enough for a 360 pt phone, big enough to tap. */
-const ROWS: VoiceName[][] = [VOICE_NAMES.slice(0, 2), VOICE_NAMES.slice(2, 4)];
+/** Rows of two: short enough for a 360 pt phone, big enough to tap. */
+const ROWS: VoiceName[][] = Array.from({ length: Math.ceil(VOICE_NAMES.length / 2) }, (_, r) =>
+  VOICE_NAMES.slice(r * 2, r * 2 + 2),
+);
 
 export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
   const { t, i18n } = useTranslation('buddy');

@@ -189,7 +189,9 @@ export function Conversation({
             {showActions && done.length > 0 ? (
               <Animated.View
                 entering={riseIn(1)}
-                style={{ gap: 6, maxWidth: '88%', marginLeft: 34 }}
+                // Same breathing room as between bubbles: the offer card sat glued
+                // to its bubble (owner feedback 2026-09-28).
+                style={{ gap: 8, maxWidth: '88%', marginLeft: 34, marginTop: 4 }}
               >
                 {done.map((a) => {
                   const what = describeAction(a.summary, { contactOn });
@@ -271,7 +273,7 @@ export function Conversation({
               </Animated.View>
             ) : null}
             {onOption && m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                 {m.options.map((o, i) => (
                   <Animated.View key={o} entering={riseIn(2 + i)}>
                     <Btn

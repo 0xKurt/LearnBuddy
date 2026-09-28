@@ -6,7 +6,7 @@
     "open": "Abrir menú",
     "title": "Más",
     "memory": "Lo que Buddy sabe de ti",
-    "library": "Mi material",
+    "library": "Materiales",
     "settings": "Ajustes"
   },
   "system": {
@@ -239,7 +239,7 @@
     "speak": "Pronunciación"
   },
   "area": {
-    "library": "Mi material",
+    "library": "Materiales",
     "memory": "Lo que Buddy sabe de ti",
     "settings": "Ajustes",
     "history": "Todos los mensajes",
@@ -291,7 +291,9 @@
       "warm": "Cálida",
       "friendly": "Amable",
       "bright": "Luminosa",
-      "clear": "Clara"
+      "clear": "Clara",
+      "soft": "Suave",
+      "deep": "Grave"
     },
     "loading": "Un momento: la voz ya llega."
   }

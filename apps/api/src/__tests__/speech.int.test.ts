@@ -395,7 +395,9 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
     const next = await send(l, 'Ich will eine andere Stimme');
     expect(next.body.home.thread.flatMap((m) => m.actions).at(-1)?.summary).toEqual({
       tool: 'set_voice',
-      voice: 'warm',
+      // "Other" = the next voice after hers in VOICE_NAMES (clear → soft since
+      // the set grew to six, migration 0045).
+      voice: 'soft',
       speed: -1,
     });
   });
@@ -425,7 +427,7 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
       `select voice from buddy_settings where learner_id = $1`,
       [l.learnerId],
     );
-    // "Other" from her new choice (clear → warm), not from the old one (warm → friendly).
-    expect(s.voice).toBe('warm');
+    // "Other" from her new choice (clear → soft), not from the old one (warm → friendly).
+    expect(s.voice).toBe('soft');
   });
 });

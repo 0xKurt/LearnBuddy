@@ -83,15 +83,15 @@ export default function TalkScreen() {
 
   function listen(): void {
     if (!open.current) return;
-    const me = ++turnSeq.current;
+    ++turnSeq.current;
     stopSpeaking();
     setProblem(null);
     setPhase('listening');
-    // A soft tone first, then the microphone (it would hear the tone otherwise).
-    void playCue('listen').then(() => {
-      if (!open.current || turnSeq.current !== me) return;
-      if (voiceRef.current.state === 'idle') voiceRef.current.toggle();
-    });
+    // Cue and microphone start together: the 150 ms tap is too quiet and short
+    // for the recogniser to write down, and waiting for it read as a stall
+    // between turns (owner feedback 2026-09-28).
+    void playCue('listen');
+    if (voiceRef.current.state === 'idle') voiceRef.current.toggle();
   }
 
   async function answer(text: string): Promise<void> {

@@ -6,7 +6,7 @@
     "open": "Apri il menu",
     "title": "Altro",
     "memory": "Cosa sa Buddy di te",
-    "library": "Il mio materiale",
+    "library": "Materiali",
     "settings": "Impostazioni"
   },
   "system": {
@@ -239,7 +239,7 @@
     "speak": "Pronuncia"
   },
   "area": {
-    "library": "Il mio materiale",
+    "library": "Materiali",
     "memory": "Cosa sa Buddy di te",
     "settings": "Impostazioni",
     "history": "Tutti i messaggi",
@@ -291,7 +291,9 @@
       "warm": "Calda",
       "friendly": "Gentile",
       "bright": "Luminosa",
-      "clear": "Chiara"
+      "clear": "Chiara",
+      "soft": "Morbida",
+      "deep": "Profonda"
     },
     "loading": "Un attimo – la voce sta arrivando."
   }

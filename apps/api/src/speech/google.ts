@@ -22,6 +22,8 @@ export const CHIRP3_VOICES: Record<VoiceName, string> = {
   friendly: 'Achird',
   bright: 'Zephyr',
   clear: 'Iapetus',
+  soft: 'Aoede',
+  deep: 'Charon',
 };
 
 /** Locales Chirp 3: HD reads that matter here (school languages first). */

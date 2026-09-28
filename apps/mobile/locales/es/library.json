@@ -1,5 +1,5 @@
 {
-  "title": "Mi material",
+  "title": "Materiales",
   "capture": "Hacer una foto de una ficha nueva",
   "unsorted": "Sin asignatura",
   "untitled": "Sin título",
@@ -33,13 +33,13 @@
   "delete": "Eliminar",
   "delete_label": "Eliminar “{{title}}”",
   "delete_sheet": {
-    "title": "¿Eliminar la ficha?",
+    "title": "Materiales",
     "body": "Se eliminarán “{{title}}” y sus ejercicios, y también las fotos. No se puede deshacer.",
     "confirm": "Eliminar"
   },
   "deleted": "Ficha eliminada.",
   "empty": {
-    "title": "Aquí aparecerán tus fichas",
+    "title": "Materiales",
     "body": "Haz una foto de una ficha, una página del libro o tu cuaderno: lo convierto en ejercicios."
   },
   "open": "Ver preguntas",
@@ -47,7 +47,7 @@
   "rename": "Cambiar nombre",
   "rename_label": "Cambiar el nombre de «{{title}}»",
   "rename_sheet": {
-    "title": "Cambiar nombre de la hoja",
+    "title": "Materiales",
     "label": "Nombre de la hoja",
     "placeholder": "p. ej. Fracciones – examen del viernes",
     "empty": "Ponle un nombre a la hoja."
@@ -71,7 +71,7 @@
     }
   },
   "item_delete_sheet": {
-    "title": "¿Borrar la pregunta?",
+    "title": "Materiales",
     "body": "Esta pregunta ya no volverá a salir.",
     "confirm": "Borrar"
   },

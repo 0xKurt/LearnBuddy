@@ -731,7 +731,7 @@ export default function BuddyScreen() {
         accessibilityRole="header"
         style={[
           TYPE.display,
-          talking ? { fontSize: 22, lineHeight: 28 } : { fontSize: 28, lineHeight: 34 },
+          talking ? { fontSize: 20, lineHeight: 26 } : { fontSize: 24, lineHeight: 30 },
           { textAlign: 'center' },
         ]}
       >

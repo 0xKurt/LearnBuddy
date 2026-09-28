@@ -377,7 +377,7 @@ export type TranscribeResponse = z.infer<typeof TranscribeResponse>;
  * settings (tap to hear it), or asks Buddy ("andere Stimme"). The server maps each to a
  * provider voice; the app shows only friendly names, never the provider's.
  */
-export const VOICE_NAMES = ['warm', 'friendly', 'bright', 'clear'] as const;
+export const VOICE_NAMES = ['warm', 'friendly', 'bright', 'clear', 'soft', 'deep'] as const;
 export const VoiceName = z.enum(VOICE_NAMES);
 export type VoiceName = z.infer<typeof VoiceName>;
 

@@ -179,82 +179,79 @@ export function Composer({
   return (
     <View style={frame}>
       <MicStatus voice={voice} />
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-        <View
-          style={[
-            {
-              flex: 1,
-              flexDirection: 'row',
-              // flex-end, not center: while the field grows over several lines the
-              // buttons stay on its last line, like every messenger (user feedback).
-              alignItems: 'flex-end',
-              gap: 2,
-              backgroundColor: LB.paper,
-              borderRadius: 32,
-              paddingVertical: 6,
-              paddingLeft: 4,
-              paddingRight: 6,
-              minHeight: 60,
-              // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
-              outlineStyle: 'solid',
-              outlineWidth: focused ? 4 : 0,
-              outlineColor: LB.ring,
-            },
-            SHADOW.float,
-          ]}
-        >
-          <CircleBtn
-            icon="camera"
-            plain
-            onPress={onPhoto}
-            accessibilityLabel={t('buddy:composer.photo')}
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            // flex-end, not center: while the field grows over several lines the
+            // buttons stay on its last line, like every messenger (user feedback).
+            alignItems: 'flex-end',
+            gap: 2,
+            backgroundColor: LB.paper,
+            borderRadius: 32,
+            paddingVertical: 6,
+            paddingLeft: 4,
+            paddingRight: 6,
+            minHeight: 60,
+            // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
+            outlineStyle: 'solid',
+            outlineWidth: focused ? 4 : 0,
+            outlineColor: LB.ring,
+          },
+          SHADOW.float,
+        ]}
+      >
+        <CircleBtn
+          icon="camera"
+          plain
+          onPress={onPhoto}
+          accessibilityLabel={t('buddy:composer.photo')}
+        />
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={t('buddy:composer.placeholder')}
+          placeholderTextColor={LB.ink3}
+          accessibilityLabel={t('buddy:composer.placeholder')}
+          multiline
+          // The web's textarea starts two rows tall; one row, growing with the text.
+          {...(Platform.OS === 'web' ? { numberOfLines: 1 } : {})}
+          maxLength={MAX_MESSAGE_LENGTH}
+          onSubmitEditing={send}
+          textAlignVertical="center"
+          style={{
+            flex: 1,
+            minHeight: 44,
+            maxHeight: 120,
+            backgroundColor: 'transparent',
+            paddingHorizontal: 4,
+            paddingTop: 11,
+            paddingBottom: 11,
+            fontSize: 16,
+            lineHeight: 22,
+            color: LB.ink,
+            outlineWidth: 0,
+          }}
+        />
+        {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
+        {stoppable ? (
+          stopBtn('sm')
+        ) : trimmed.length === 0 || voice.state !== 'idle' ? (
+          <MicButton
+            voice={voice}
+            size="sm"
+            label={t('common:voice.message')}
+            disabled={disabled}
           />
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            placeholder={t('buddy:composer.placeholder')}
-            placeholderTextColor={LB.ink3}
-            accessibilityLabel={t('buddy:composer.placeholder')}
-            multiline
-            // The web's textarea starts two rows tall; one row, growing with the text.
-            {...(Platform.OS === 'web' ? { numberOfLines: 1 } : {})}
-            maxLength={MAX_MESSAGE_LENGTH}
-            onSubmitEditing={send}
-            textAlignVertical="center"
-            style={{
-              flex: 1,
-              minHeight: 44,
-              maxHeight: 120,
-              backgroundColor: 'transparent',
-              paddingHorizontal: 4,
-              paddingTop: 11,
-              paddingBottom: 11,
-              fontSize: 16,
-              lineHeight: 22,
-              color: LB.ink,
-              outlineWidth: 0,
-            }}
-          />
-          {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
-          {stoppable ? (
-            stopBtn('sm')
-          ) : trimmed.length === 0 || voice.state !== 'idle' ? (
-            <MicButton
-              voice={voice}
-              size="sm"
-              label={t('common:voice.message')}
-              disabled={disabled}
-            />
-          ) : (
-            <Btn onPress={send} disabled={disabled} pill size="sm">
-              {t('buddy:composer.send')}
-            </Btn>
-          )}
-        </View>
-        {/* Conversation mode: the one filled round button at the right, outside the
-          pill — like the assistants she knows (user feedback 2026-09-28). */}
+        ) : (
+          <Btn onPress={send} disabled={disabled} pill size="sm">
+            {t('buddy:composer.send')}
+          </Btn>
+        )}
+        {/* Conversation mode: the waveform circle at the pill's end, same scale
+            as its neighbours (owner feedback 2026-09-28). */}
         <TalkButton onPress={onTalk} />
       </View>
     </View>

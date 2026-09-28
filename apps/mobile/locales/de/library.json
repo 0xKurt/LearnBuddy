@@ -1,5 +1,5 @@
 {
-  "title": "Mein Stoff",
+  "title": "Materialien",
   "capture": "Neues Blatt fotografieren",
   "unsorted": "Ohne Fach",
   "untitled": "Ohne Titel",
@@ -33,13 +33,13 @@
   "delete": "Löschen",
   "delete_label": "„{{title}}“ löschen",
   "delete_sheet": {
-    "title": "Blatt löschen?",
+    "title": "Materialien",
     "body": "„{{title}}“ und die Aufgaben daraus werden gelöscht, die Fotos auch. Das lässt sich nicht rückgängig machen.",
     "confirm": "Löschen"
   },
   "deleted": "Gelöscht.",
   "empty": {
-    "title": "Hier landen deine Blätter",
+    "title": "Materialien",
     "body": "Fotografier ein Arbeitsblatt, eine Buchseite oder dein Heft – ich mache Übungen daraus."
   },
   "open": "Fragen ansehen",
@@ -47,7 +47,7 @@
   "rename": "Umbenennen",
   "rename_label": "„{{title}}“ umbenennen",
   "rename_sheet": {
-    "title": "Blatt umbenennen",
+    "title": "Materialien",
     "label": "Name des Blatts",
     "placeholder": "z. B. Brüche – Test am Freitag",
     "empty": "Gib dem Blatt einen Namen."
@@ -71,7 +71,7 @@
     }
   },
   "item_delete_sheet": {
-    "title": "Frage löschen?",
+    "title": "Materialien",
     "body": "Diese Frage kommt nicht mehr dran.",
     "confirm": "Löschen"
   },

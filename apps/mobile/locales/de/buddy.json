@@ -6,7 +6,7 @@
     "open": "Menü öffnen",
     "title": "Mehr",
     "memory": "Was Buddy über dich weiß",
-    "library": "Mein Stoff",
+    "library": "Materialien",
     "settings": "Einstellungen"
   },
   "system": {
@@ -239,7 +239,7 @@
     "speak": "Aussprache"
   },
   "area": {
-    "library": "Mein Stoff",
+    "library": "Materialien",
     "memory": "Was Buddy über dich weiß",
     "settings": "Einstellungen",
     "history": "Alle Nachrichten",
@@ -291,7 +291,9 @@
       "warm": "Warm",
       "friendly": "Freundlich",
       "bright": "Hell",
-      "clear": "Klar"
+      "clear": "Klar",
+      "soft": "Sanft",
+      "deep": "Tief"
     },
     "loading": "Einen Moment – die Stimme kommt gleich."
   }

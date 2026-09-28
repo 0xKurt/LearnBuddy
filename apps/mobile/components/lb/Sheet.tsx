@@ -132,7 +132,7 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
                   backgroundColor: LB.paper,
                   borderTopLeftRadius: 32,
                   borderTopRightRadius: 32,
-                  paddingBottom: insets.bottom + 16,
+                  paddingBottom: insets.bottom + 8,
                   maxHeight: '92%',
                   ...SHADOW.float,
                 },

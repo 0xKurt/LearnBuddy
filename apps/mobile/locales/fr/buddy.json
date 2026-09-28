@@ -6,7 +6,7 @@
     "open": "Ouvrir le menu",
     "title": "Plus",
     "memory": "Ce que Buddy sait de toi",
-    "library": "Mes cours",
+    "library": "Matériel",
     "settings": "Réglages"
   },
   "system": {
@@ -239,7 +239,7 @@
     "speak": "Prononciation"
   },
   "area": {
-    "library": "Mes documents",
+    "library": "Matériel",
     "memory": "Ce que Buddy sait de toi",
     "settings": "Réglages",
     "history": "Tous les messages",
@@ -291,7 +291,9 @@
       "warm": "Chaleureuse",
       "friendly": "Amicale",
       "bright": "Lumineuse",
-      "clear": "Nette"
+      "clear": "Nette",
+      "soft": "Douce",
+      "deep": "Grave"
     },
     "loading": "Un instant – la voix arrive."
   }

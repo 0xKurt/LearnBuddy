@@ -1,8 +1,8 @@
-// Conversation mode's entry: the one prominent round button at the composer's
-// right, where she knows it from the assistants she has used (user feedback
-// 2026-09-28). Filled violet, so it — not the dictation mic — reads as "talk
-// with Buddy". Background on the inner View, never on the Pressable (RN drops
-// it silently there).
+// Conversation mode's entry: a filled round waveform button inside the
+// composer pill, right end — the size and mark she knows from the assistants
+// she uses (owner feedback 2026-09-28: waveform, not headphones; inside, not
+// bigger than the rest). Background on the inner View, never on the
+// Pressable (RN drops it silently there).
 
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -17,14 +17,14 @@ export function TalkButton({ onPress }: { onPress: () => void }) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={t('talk.open')}
-      hitSlop={4}
+      hitSlop={6}
     >
       {({ pressed }) => (
         <View
           style={{
-            width: 52,
-            height: 52,
-            borderRadius: 26,
+            width: 40,
+            height: 40,
+            borderRadius: 20,
             backgroundColor: LB.primary,
             alignItems: 'center',
             justifyContent: 'center',
@@ -32,7 +32,7 @@ export function TalkButton({ onPress }: { onPress: () => void }) {
             transform: [{ scale: pressed ? 0.96 : 1 }],
           }}
         >
-          <Icon name="headphones" size={24} color={LB.paper} />
+          <Icon name="voice" size={22} color={LB.paper} />
         </View>
       )}
     </Pressable>
