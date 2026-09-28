@@ -1413,6 +1413,9 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
   _when_ a generation happens then depends on timing. The remaining purposes (tutor, hints,
   reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
   **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
+  **`pnpm verify`** is the whole gate in one command (typecheck · lint · tests · walkthrough,
+  issue #74); the pre-commit hook deliberately stays without the walkthrough, which takes
+  minutes.
   **Every language is measured, not only German** (`tests/web/languages.spec.ts`, issue #76):
   registration — welcome, the privacy step, the profile step — is walked in French, Spanish and
   Italian on both phone sizes, because that is where the text is longest ("Répète le mot de

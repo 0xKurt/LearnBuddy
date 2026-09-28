@@ -289,6 +289,32 @@ export const CASES: Case[] = [
     ],
   },
   {
+    // Issue #21: she says the opposite of something Buddy knows. Two memories that
+    // contradict each other are worse than none — the old one has to go, not stay beside it.
+    id: 'de_memory_contradiction_replaces',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      await env.db.query(
+        // 'learner_edited': she set it herself in the app, so it needs no quote of a message
+        // (buddy_memories_stated_has_quote).
+        `insert into buddy_memories (learner_id, kind, statement, source, created_at)
+         values ($1, 'preference', 'Mag Brüche nicht', 'learner_edited', $2)`,
+        [l.learnerId, env.clock.now()],
+      );
+    },
+    message: 'brüche mag ich jetzt eigentlich ganz gerne',
+    check: (o) => [
+      ...must(
+        !o.memories.some((m) => /mag brüche nicht/i.test(m.statement)),
+        'the old, now wrong memory is not active any more',
+      ),
+      ...must(
+        o.memories.some((m) => /brüche/i.test(m.statement)),
+        'what she says now is what he knows',
+      ),
+    ],
+  },
+  {
     id: 'fr_exam',
     learner: { locale: 'fr', timezone: 'Europe/Paris' },
     message: "J'ai un contrôle de maths jeudi.",

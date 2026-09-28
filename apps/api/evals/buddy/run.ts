@@ -7,17 +7,32 @@
 //     npx tsx evals/buddy/run.ts [case-id …]
 //
 // Reads apps/api/.env.local like the dev server. Exit code 1 if a case fails.
+// BUDDY_EVAL_OUT=run.json writes every answer down, so two prompt versions can be read
+// side by side — a check that still passes can still have got worse (issue #80).
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
+
+import { writeFileSync } from 'node:fs';
 
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
+import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { CASES, type Outcome } from './cases.js';
 
 loadDotenv({ path: '.env.local' });
+
+/** Every case's answer, for comparing two runs (BUDDY_EVAL_OUT, issue #80). */
+const transcript: Array<{
+  id: string;
+  ok: boolean;
+  problems: string[];
+  reply: string | null;
+  options: string[] | null;
+  tools: string[];
+}> = [];
 
 async function main(): Promise<void> {
   const config = loadConfig({
@@ -118,6 +133,16 @@ async function main(): Promise<void> {
             ? `\n    - ${problems.join('\n    - ')}\n    reply: ${outcome.reply ?? '—'}\n    tools: ${outcome.tools.join(', ') || 'none'}\n    goals: ${JSON.stringify(outcome.goals)}`
             : ''),
       );
+      // What he actually answered, not only whether the check passed (issue #80): two runs
+      // side by side show an answer that got worse while still passing.
+      transcript.push({
+        id: c.id,
+        ok: problems.length === 0,
+        problems,
+        reply: outcome.reply,
+        options: outcome.options,
+        tools: outcome.tools,
+      });
     } finally {
       await env.close();
     }
@@ -125,6 +150,13 @@ async function main(): Promise<void> {
   console.info(
     `\n${cases.length - failed}/${cases.length} passed · total $${(costMicros / 1e6).toFixed(4)}`,
   );
+  if (process.env.BUDDY_EVAL_OUT) {
+    writeFileSync(
+      process.env.BUDDY_EVAL_OUT,
+      `${JSON.stringify({ promptVersion: BUDDY_PROMPT_VERSION, cases: transcript }, null, 2)}\n`,
+    );
+    console.info(`transcript → ${process.env.BUDDY_EVAL_OUT}`);
+  }
   process.exit(failed > 0 ? 1 : 0);
 }
 

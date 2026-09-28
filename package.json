@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm -r --parallel test",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && sh scripts/web-walkthrough.sh",
     "build": "pnpm -r --parallel build",
     "prepare": "husky",
     "postinstall": "node apps/api/scripts/vercel-shared.mjs",

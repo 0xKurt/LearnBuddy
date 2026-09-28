@@ -80,7 +80,9 @@ pnpm test        # API integration tests need a local Postgres 16 (LB_TEST_DATAB
 ```
 
 Browser walkthrough of the real app against the real API (scripted model):
-`scripts/web-walkthrough.sh` (see `docs/architecture.md` §Testing).
+`scripts/web-walkthrough.sh` (see `docs/architecture.md` §Testing). **`pnpm verify`** runs all
+four in order — the pre-commit hook stays fast (without the walkthrough), but nothing reaches
+the owner without one green run (issue #74).
 
 ## Kritik wird erst ein Issue, dann Arbeit (Owner-Regel 28.09.)
 

@@ -59,6 +59,11 @@ async function main(): Promise<void> {
     // after every scenario added its rules.
     installTurns(scripted);
     installGenerations(scripted);
+    // A conversation that came to rest is summarised by the scheduler (issue #22); in the
+    // walkthrough nobody asks for those sentences, so one answer for all of them is enough.
+    scripted.byDefault('summary', {
+      json: { summary: 'Sie hat mit Buddy geübt und Fragen gestellt.', topics: ['Üben'] },
+    });
   }
   const deps: Deps = {
     config,
