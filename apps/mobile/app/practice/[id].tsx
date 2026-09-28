@@ -552,6 +552,21 @@ export default function PracticeScreen() {
 
   if (!shown) {
     if (session.status === 'finished' && session.summary) {
+      // What more practice would be about: what did not sit, else what did, else the
+      // topics of the questions she just worked on.
+      const summary = session.summary;
+      const againTopics =
+        summary.shaky_topics.length > 0
+          ? summary.shaky_topics
+          : summary.secure_topics.length > 0
+            ? summary.secure_topics
+            : [
+                ...new Set(
+                  session.items
+                    .map((i) => i.item.topic?.trim())
+                    .filter((t): t is string => t !== undefined && t.length > 0),
+                ),
+              ];
       return (
         <Screen title={title}>
           <ScrollView
@@ -568,17 +583,14 @@ export default function PracticeScreen() {
           </ScrollView>
           <BottomBar>
             <Appear delay={sawActive.current ? 900 : 0} style={{ gap: 10 }}>
-              {session.mode !== 'help' && session.summary.shaky_topics.length > 0 ? (
+              {/* Weiterüben ist immer einen Tipp entfernt (issue #47): das Wacklige zuerst,
+                  sonst mehr vom Sitzenden — und wenn die Zusammenfassung keine Themen kennt,
+                  die der Fragen selbst. Eine Übung endet nie in einer Sackgasse. */}
+              {session.mode !== 'help' && againTopics.length > 0 ? (
                 <AgainButton
+                  {...(session.summary.shaky_topics.length > 0 ? {} : { kind: 'harder' as const })}
                   title={session.title}
-                  topics={session.summary.shaky_topics}
-                  sessionId={session.id}
-                />
-              ) : session.mode !== 'help' && session.summary.secure_topics.length > 0 ? (
-                <AgainButton
-                  kind="harder"
-                  title={session.title}
-                  topics={session.summary.secure_topics}
+                  topics={againTopics}
                   sessionId={session.id}
                 />
               ) : null}

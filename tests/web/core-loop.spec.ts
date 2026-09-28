@@ -111,6 +111,11 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '03c-voice');
   await page.getByRole('button', { name: 'Weiter' }).click();
 
+  // ── The three first-start cards, then the home ──
+  await expect(page.getByText('Sag es Buddy einfach')).toBeVisible();
+  await shot(page, '03d-onboarding');
+  await page.getByRole('button', { name: 'Überspringen' }).click();
+
   // ── The student's first look: who Buddy is and how to start ──
   await expect(page.getByText('Hallo Mia')).toBeVisible();
   await expect(
