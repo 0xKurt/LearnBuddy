@@ -28,9 +28,10 @@ test('answers given offline arrive once: app open, and after it was closed', asy
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Hallo Sam')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Erklär mir was', exact: true }).click();
-  await page.getByRole('textbox').last().fill('Hauptstädte');
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  // Started the way the app starts things now: asked in the chat, Buddy offers it.
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Hauptstädte üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await page.getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('Wie heißt die Hauptstadt von Frankreich?')).toBeVisible();
   const practiceUrl = page.url();
 

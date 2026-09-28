@@ -27,14 +27,14 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
-  // "Erklär mir den Dativ"
+  // "Erklär mir den Dativ" — since buddy.22 the explanation is the chat answer itself
+  // (owner decision 28.09.); what can be started afterwards is practice on it.
   llm.script('explain', {
     json: {
       usable: true,
       title: 'Der Dativ',
       subject: { name: 'Deutsch', kind: 'german' },
-      intro:
-        'Der Dativ ist der 3. Fall. Du findest ihn mit der Frage „Wem?“.\n\nBeispiel: „Ich gebe dem Hund einen Knochen.“ – Wem gebe ich den Knochen? Dem Hund. „dem Hund“ steht im Dativ.\n\nMerke: der → dem, die → der, das → dem.',
+      intro: null,
       items: [
         {
           ...base,
@@ -179,6 +179,21 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   // Said in the chat instead of a tile: Buddy answers with a start button (offer_learning).
   llm.script(
     'buddy_turn',
+    // "erklär mir den dativ": the explanation is the answer (buddy.22+), and practice on it
+    // is offered right after — no button to tap for the explanation itself.
+    {
+      json: {
+        lookups: [],
+        concern: false,
+        actions: [
+          { tool: 'offer_learning', args: { kind: 'practice', text: 'Dativ', goal: null } },
+        ],
+        reply:
+          'Der Dativ ist der 3. Fall – du findest ihn mit der Frage „Wem?“. Beispiel: „Ich gebe dem Hund einen Knochen.“ – Wem gebe ich den Knochen? Dem Hund. Magst du das gleich üben?',
+        options: null,
+        asks_permission: false,
+      },
+    },
     {
       json: {
         reply: 'Gute Idee – ich hab dir ein paar Fragen zu Brüchen vorbereitet.',
@@ -247,6 +262,19 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   };
   llm.script('tutor', hint, hint, hint, hint);
 
+  // tests/web/offline.spec.ts: asked in the chat, then two short questions answered offline.
+  llm.script('buddy_turn', {
+    json: {
+      lookups: [],
+      concern: false,
+      actions: [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Hauptstädte', goal: null } },
+      ],
+      reply: 'Klar – ich hab dir Fragen zu Hauptstädten vorbereitet.',
+      options: null,
+      asks_permission: false,
+    },
+  });
   // tests/web/offline.spec.ts: two short questions, both answered offline.
   llm.script('explain', {
     json: {

@@ -133,6 +133,9 @@ export type MaterialLink = {
  * photos storage already confirmed, and asks for fresh upload URLs when
  * storage refused one. A changed photo set needs a new instance.
  */
+/** How many pages go up at once: enough to use the connection, not enough to choke it. */
+const PARALLEL_UPLOADS = 3;
+
 export class MaterialUpload {
   private currentRequestId: string;
   private materialId: string | null = null;
@@ -197,19 +200,34 @@ export class MaterialUpload {
       this.targets = targets;
     }
 
-    for (const [position, { uri, mime }] of this.files.entries()) {
-      if (this.uploaded.has(position)) continue;
-      const url = targets[position];
-      if (url === undefined) throw new Error(`No upload URL for photo ${position + 1}`);
-      onProgress({ step: 'uploading', current: position + 1, total });
-      try {
-        await uploadPhoto(uri, url, position, mime);
-      } catch (err) {
-        // Refused (e.g. the URL expired): the next try gets fresh URLs for the same material.
-        if (err instanceof PhotoUploadError && err.kind === 'rejected') this.targets = null;
-        throw err;
-      }
-      this.uploaded.add(position);
+    // Three pages went up one after another, so she waited three times (issue #56).
+    // They go together now — at most PARALLEL_UPLOADS at a time, so a phone connection is
+    // used, not flooded. The count shown is what is done, not which one is in flight.
+    const open = [...this.files.entries()].filter(([position]) => !this.uploaded.has(position));
+    if (open.length > 0) {
+      onProgress({ step: 'uploading', current: this.uploaded.size, total });
+      const queue = [...open];
+      const worker = async (): Promise<void> => {
+        for (;;) {
+          const next = queue.shift();
+          if (!next) return;
+          const [position, { uri, mime }] = next;
+          const url = targets[position];
+          if (url === undefined) throw new Error(`No upload URL for photo ${position + 1}`);
+          try {
+            await uploadPhoto(uri, url, position, mime);
+          } catch (err) {
+            // Refused (e.g. the URL expired): the next try gets fresh URLs for the same material.
+            if (err instanceof PhotoUploadError && err.kind === 'rejected') this.targets = null;
+            throw err;
+          }
+          this.uploaded.add(position);
+          onProgress({ step: 'uploading', current: this.uploaded.size, total });
+        }
+      };
+      const workers = Array.from({ length: Math.min(PARALLEL_UPLOADS, queue.length) }, worker);
+      // One failure fails the send, as before; the others finish or are dropped with it.
+      await Promise.all(workers);
     }
 
     onProgress({ step: 'submitting' });

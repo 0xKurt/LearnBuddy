@@ -53,7 +53,6 @@ export default function Welcome() {
   // A small phone (e.g. 360×740) gets a smaller orb and tighter spacing, so the
   // under-16 hint and the pinned CTA fit without scrolling (CLAUDE.md rule 16).
   const compact = useWindowDimensions().height < 780;
-  const gap = compact ? 8 : 14;
 
   const emailOk = looksLikeEmail(email.trim());
   // Sign-in never enforces the sign-up rule: older accounts may have shorter
@@ -141,6 +140,15 @@ export default function Welcome() {
     }
   }
 
+  // Signing up carries two rows more than signing in (the repeated password and the note
+  // for under-16s): it gets the tighter layout on every phone, so nothing waits below the
+  // edge unseen (issue #55, caught by tests/web/fit.ts).
+  const dense = compact || mode === 'signup';
+  const gap = dense ? 8 : 14;
+  // A small phone signing up has no room for the orb: the headline carries the brand,
+  // and every field must be visible without scrolling (issue #55, tests/web/fit.ts).
+  const showOrb = !(compact && mode === 'signup');
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
       <Glow height={420} />
@@ -148,7 +156,7 @@ export default function Welcome() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: compact ? 4 : 16,
+            paddingTop: dense ? 4 : 16,
             paddingBottom: 24,
             gap,
           }}
@@ -156,18 +164,19 @@ export default function Welcome() {
         >
           {/* The very first thing: pick your language with one tap on a flag
               (owner decision 2026-09-28). */}
-          <LanguageFlags value={lang} onChange={chooseDeviceLocale} compact={compact} />
+          <LanguageFlags value={lang} onChange={chooseDeviceLocale} compact={dense} />
           <View style={{ alignItems: 'center', gap, marginBottom: 4 }}>
-            <BuddyOrb size={compact ? 52 : 88} />
+            {showOrb ? <BuddyOrb size={dense ? 52 : 88} /> : null}
             <Text
               accessibilityRole="header"
-              style={[compact ? TYPE.displaySm : TYPE.display, { textAlign: 'center' }]}
+              style={[dense ? TYPE.displaySm : TYPE.display, { textAlign: 'center' }]}
             >
               {t('welcome.title')}
             </Text>
             <Text
+              numberOfLines={compact && mode === 'signup' ? 2 : undefined}
               style={[
-                compact ? TYPE.small : TYPE.body,
+                dense ? TYPE.small : TYPE.body,
                 { color: LB.ink2, textAlign: 'center', maxWidth: 420 },
               ]}
             >
@@ -299,7 +308,7 @@ export default function Welcome() {
               </Btn>
             )
           ) : (
-            <Card tone="lavender" padding={compact ? 12 : 16}>
+            <Card tone="lavender" padding={dense ? 12 : 16}>
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                 <View
                   accessibilityElementsHidden

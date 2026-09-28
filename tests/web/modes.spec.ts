@@ -38,26 +38,18 @@ test('learning modes: explain, homework help without the solution, practice with
   page,
 }) => {
   await onboardChild(page);
-  // No tiles or lists: Buddy, and suggestions to tap above the field.
-  await expect(page.getByRole('button', { name: 'Erklär mir was' })).toBeVisible();
+  // No tiles or lists: Buddy, and the ways to start above the field.
+  await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeVisible();
   await expect(page.getByText('Was willst du machen?')).toHaveCount(0);
   await shot(page, '20-home-start-row');
 
-  // ── "Erklär mir was" → explanation, then questions ──
-  await page.getByRole('button', { name: 'Erklär mir was' }).click();
-  await expect(page.getByText('Was soll ich dir erklären?')).toBeVisible();
-  await page.getByRole('textbox').last().fill('den Dativ, ich check das nicht');
-  await shot(page, '21-explain-sheet');
-  await page.getByRole('button', { name: "Los geht's" }).last().click();
-  await expect(
-    page.getByText('Du findest ihn mit der Frage „Wem?“', { exact: false }),
-  ).toBeVisible();
-  await shot(page, '22-explain-intro');
-  // "Anders erklären": a new explanation, the way she tapped (gaps.md #3).
-  await page.getByRole('button', { name: 'Mit Beispiel' }).click();
-  await expect(page.getByText('schenkst deiner Oma Blumen', { exact: false })).toBeVisible();
-  await shot(page, '22a-explain-again');
-  await page.getByRole('button', { name: 'Verstanden – frag mich!' }).click();
+  // ── "Erklär mir den Dativ" → the explanation is the answer, practice is offered ──
+  // (owner decision 28.09.: explaining happens in the chat, never behind a button).
+  await page.getByLabel('Schreib Buddy …').fill('erklär mir den dativ');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Wem gebe ich den Knochen?', { exact: false })).toBeVisible();
+  await shot(page, '21-explain-in-chat');
+  await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
@@ -69,7 +61,7 @@ test('learning modes: explain, homework help without the solution, practice with
   expect(
     await page.getByLabel('Deine Antwort').evaluate((el) => getComputedStyle(el).outlineWidth),
   ).toBe('0px');
-  await shot(page, '22b-fill-blank');
+  await shot(page, '22-fill-blank');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
