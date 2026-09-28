@@ -57,6 +57,13 @@ export const CreateLearnerRequest = z.object({
    */
   minor_consent: z.boolean(),
   /**
+   * Contact opt-in decided during registration (owner 2026-09-28): for a child
+   * the adult giving Art.-8 consent decides it in this same request; from 16
+   * the learner does. Off unless explicitly true; later changes follow the
+   * contact rules (loosening needs the adult PIN for minors).
+   */
+  contact_enabled: z.boolean().optional(),
+  /**
    * The parents' PIN for a child profile, set in the same transaction as the
    * profile, so onboarding has no second call that could fail on its own.
    */

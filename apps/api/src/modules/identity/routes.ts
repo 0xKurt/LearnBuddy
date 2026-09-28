@@ -219,9 +219,12 @@ identityRoutes.post('/learner', requireUser, requireAccount, async (c) => {
           child ? now : null,
         ],
       );
+      // Contact starts as decided at registration: the person whose consent this
+      // request carries (the adult for a minor) is the one allowed to enable it.
       await tx.query(
-        `insert into buddy_settings (learner_id, timezone) values ($1, $2) on conflict (learner_id) do nothing`,
-        [l.id, timezone],
+        `insert into buddy_settings (learner_id, timezone, contact_enabled)
+         values ($1, $2, $3) on conflict (learner_id) do nothing`,
+        [l.id, timezone, input.contact_enabled === true],
       );
       // Only a first PIN: an existing one is changed with the current PIN (PUT /account/pin).
       if (pinHash) {

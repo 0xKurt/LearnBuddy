@@ -14,6 +14,8 @@ import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon, type IconName } from '../components/lb/Icon.js';
+import { useSettings } from '../lib/api/queries.js';
+import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -28,7 +30,13 @@ export default function Onboarding() {
   const compact = useWindowDimensions().height < 780;
   const key = STEPS[step] ?? 's1';
   const last = step === STEPS.length - 1;
-  const done = () => router.replace('/');
+  const settings = useSettings();
+  const done = () => {
+    // Contact was allowed at registration: ask the OS right after the card
+    // that explained why (permissions come with their context, never earlier).
+    if (settings.data?.contact_enabled) void registerDeviceForPush().catch(() => undefined);
+    router.replace('/');
+  };
 
   useAnnounce(`${t(`onboarding.${key}_title`)}. ${t(`onboarding.${key}_body`)}`, { key: step });
 

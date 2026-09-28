@@ -163,6 +163,7 @@ export async function onboard(
     name?: string;
     birthDate?: string;
     locale?: 'de' | 'en' | 'fr' | 'es' | 'it';
+    contactEnabled?: boolean;
     timezone?: string;
     /** Set up the adult PIN during onboarding, as the app does for a child profile. */
     pin?: string;
@@ -186,6 +187,7 @@ export async function onboard(
     birth_date: opts.birthDate ?? (relation === 'child' ? '2014-03-10' : '1995-06-01'),
     locale: opts.locale ?? 'de',
     minor_consent: relation === 'child',
+    ...(opts.contactEnabled !== undefined ? { contact_enabled: opts.contactEnabled } : {}),
     // The parents' first PIN goes with the profile, in one request (as the app sends it).
     ...(opts.pin ? { pin: opts.pin } : {}),
   });

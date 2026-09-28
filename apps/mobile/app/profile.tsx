@@ -62,6 +62,9 @@ export default function Profile() {
   const [year, setYear] = useState('');
   const [locale, setLocale] = useState<AppLocale>(currentLocale());
   const [consent, setConsent] = useState(false);
+  // Contact opt-in, decided at registration (owner 2026-09-28): for a child by
+  // the adult in the parents' step, from 16 by the learner. Off by default.
+  const [contactOk, setContactOk] = useState(false);
   const [pin, setPinValue] = useState('');
   const [pinRepeat, setPinRepeat] = useState('');
   // The number pad has no return key: a filled field hands focus to the next one.
@@ -105,6 +108,7 @@ export default function Profile() {
         birth_date: birthDate,
         locale,
         minor_consent: needsParents ? consent : false,
+        contact_enabled: contactOk,
         ...(needsParents ? { pin } : {}),
       });
       applyLocale(locale);
@@ -233,6 +237,13 @@ export default function Profile() {
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
                 <LanguageFlags value={locale} onChange={setLocale} compact />
               </View>
+              {relation === 'self' && !minor ? (
+                <Checkbox
+                  checked={contactOk}
+                  onChange={setContactOk}
+                  label={t('profile.contact_optin')}
+                />
+              ) : null}
               <View style={{ gap: 8 }}>
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
                   {t('profile.birth_date')}
@@ -325,6 +336,11 @@ export default function Profile() {
                   checked={consent}
                   onChange={setConsent}
                   label={t('profile.child_consent')}
+                />
+                <Checkbox
+                  checked={contactOk}
+                  onChange={setContactOk}
+                  label={t('profile.contact_optin')}
                 />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
                   <View
