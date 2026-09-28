@@ -1,7 +1,8 @@
 # ADR 0008 — Buddy's natural voice, and "sprich langsamer" by asking
 
 - Status: accepted (owner, 2026-09-27), amended 2026-09-28 (§Amendment: a visible picker);
-  the server path is built and tested against a fake provider, **the real Google call is not yet verified live** (see §Live verification)
+  the real Google call is verified live for German in all four voices (2026-09-28, §Live verification);
+  speed steps, the other languages and phone playback are still open
 - Date: 2026-09-27
 - Builds on: [ADR 0004](0004-proactive-buddy.md) (the model interprets, code enforces),
   [ADR 0005](0005-buddy-tool-platform.md) (act tools from one registry)
@@ -83,7 +84,12 @@ Constraints:
 - Word-level highlighting would need a provider with timings (Neural2 with SSML marks, less
   natural) — not chosen.
 
-## Live verification (not done: no Google credentials in the build environment)
+## Live verification
+
+Done 2026-09-28 with the production service account (`GoogleSpeech.synthesize`, EU endpoint):
+`de-DE` in `warm`, `friendly`, `bright` and `clear` returned MP3 audio in 1.5–2.2 s per sentence,
+so the API is enabled and the role suffices (step 1) and step 2 holds for German. Production runs
+with `SPEECH_BACKEND=google`. Steps 2 (other languages), 3, 4 and 5 are still open.
 
 Before switching `SPEECH_BACKEND=google` on:
 
