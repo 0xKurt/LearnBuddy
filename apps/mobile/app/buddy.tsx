@@ -454,12 +454,8 @@ export default function BuddyScreen() {
         label: t('buddy:suggest.vocab'),
         onPress: () => setChoice('vocab'),
       },
-      {
-        key: 'explain',
-        icon: 'bulb',
-        label: t('buddy:suggest.explain'),
-        onPress: () => setTopic('explain'),
-      },
+      // "Erklär mir was" lives in the chat itself (owner decision 2026-09-28):
+      // explanations are conversation, at whatever length the question needs.
     ];
   }
 
