@@ -4,32 +4,40 @@
 // explanation to read again. Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import { LlmError } from '../../llm/gateway.js';
 import type { ScriptedGateway } from '../fakes.js';
+import { says, scriptTurns } from './turns.js';
 
-const turn = (reply: string, actions: unknown[] = []) => ({
-  json: { lookups: [], actions, reply, options: null, asks_permission: false },
-});
 const remember = (statement: string, quote: string) => ({
   tool: 'remember',
   args: { kind: 'fact', statement, quote, until: null },
 });
 
 export function scriptTour(llm: ScriptedGateway): void {
-  llm.script(
-    'buddy_turn',
-    turn('Cool – Handball merke ich mir.', [remember('Spielt Handball', 'Ich spiele Handball')]),
-    // The next message fails once (model down) and is sent again.
-    { error: new LlmError('unavailable', 'provider down') },
-    turn('Katzen, schön! Das merke ich mir.', [remember('Mag Katzen', 'ich mag Katzen')]),
-    turn('Gern!'),
-    turn('Bis später!'),
-    // "erklär mir Nomen": the explanation is the answer, practice on it is offered
-    // (owner decision 28.09.).
-    turn(
-      'Nomen sind Namen für Dinge, Lebewesen und Gefühle. Man schreibt sie groß: der Hund, die Freude. Magst du das gleich üben?',
-      [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Nomen', goal: null } }],
-    ),
+  // By what she wrote, not by order (issue #81).
+  scriptTurns(
+    {
+      when: /ich spiele handball/i,
+      answer: says('Cool – Handball merke ich mir.', [
+        remember('Spielt Handball', 'Ich spiele Handball'),
+      ]),
+    },
+    {
+      // Fails once (model down) and works when she sends it again.
+      when: /ich mag katzen/i,
+      failFirst: true,
+      answer: says('Katzen, schön! Das merke ich mir.', [remember('Mag Katzen', 'ich mag Katzen')]),
+    },
+    { when: /^danke/i, answer: says('Gern!') },
+    { when: /^tschüss/i, answer: says('Bis später!') },
+    {
+      // "erklär mir Nomen": the explanation is the answer, practice on it is offered
+      // (owner decision 28.09.).
+      when: /erklär mir nomen/i,
+      answer: says(
+        'Nomen sind Namen für Dinge, Lebewesen und Gefühle. Man schreibt sie groß: der Hund, die Freude. Magst du das gleich üben?',
+        [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Nomen', goal: null } }],
+      ),
+    },
   );
   llm.script('explain', {
     json: {

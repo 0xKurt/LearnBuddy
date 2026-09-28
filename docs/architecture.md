@@ -1329,7 +1329,11 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
   (`APP_REQUEST_HEADERS` in `shared-types`, which the client's header type is built from), so a
   header the app starts sending cannot be missing from a preflight (`cors.int.test.ts`; a missing
   `x-app-version` once made every browser call fail as "Keine Verbindung"). Test tooling only;
-  never deployed. When another local server already holds a port — Metro on 8081 while a phone is
+  never deployed. Its **chat answers are chosen by what the learner wrote**, not by the order
+  the specs run in (`src/testing/scenarios/turns.ts`, issue #81): one queue per purpose meant
+  that a spec sending one message more shifted every spec after it, so one real fault caused
+  three false ones. A message nobody scripted fails loudly with the sentence it said.
+  When another local server already holds a port — Metro on 8081 while a phone is
   connected, anything else on 8787 — `LB_WEB_PORT` / `LB_API_PORT` move the walkthrough out of the
   way (`scripts/web-walkthrough.sh` exports the web build against the same API port). Without
   that the run dies in the web-server timeout and the visual check is silently skipped (issue #42).

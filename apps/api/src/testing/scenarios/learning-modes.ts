@@ -7,6 +7,7 @@
 
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ScriptedGateway } from '../fakes.js';
+import { says, scriptTurns } from './turns.js';
 
 const base = {
   accepted_answers: [],
@@ -177,56 +178,44 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
     },
   });
   // Said in the chat instead of a tile: Buddy answers with a start button (offer_learning).
-  llm.script(
-    'buddy_turn',
-    // "erklär mir den dativ": the explanation is the answer (buddy.22+), and practice on it
-    // is offered right after — no button to tap for the explanation itself.
+  // By what she wrote, never by order (issue #81).
+  scriptTurns(
     {
-      json: {
-        lookups: [],
-        concern: false,
-        actions: [
-          { tool: 'offer_learning', args: { kind: 'practice', text: 'Dativ', goal: null } },
-        ],
-        reply:
-          'Der Dativ ist der 3. Fall – du findest ihn mit der Frage „Wem?“. Beispiel: „Ich gebe dem Hund einen Knochen.“ – Wem gebe ich den Knochen? Dem Hund. Magst du das gleich üben?',
-        options: null,
-        asks_permission: false,
-      },
+      // The explanation is the answer (buddy.22+); practice on it is offered right after.
+      when: /erklär mir den dativ/i,
+      answer: says(
+        'Der Dativ ist der 3. Fall – du findest ihn mit der Frage „Wem?“. Beispiel: „Ich gebe dem Hund einen Knochen.“ – Wem gebe ich den Knochen? Dem Hund. Magst du das gleich üben?',
+        [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Dativ', goal: null } }],
+      ),
     },
     {
-      json: {
-        reply: 'Gute Idee – ich hab dir ein paar Fragen zu Brüchen vorbereitet.',
-        options: null,
-        actions: [
-          { tool: 'offer_learning', args: { kind: 'practice', text: 'Brüche vergleichen' } },
-        ],
-      },
+      when: /brüche vergleichen üben/i,
+      answer: says('Gute Idee – ich hab dir ein paar Fragen zu Brüchen vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Brüche vergleichen' } },
+      ]),
     },
     {
-      json: {
-        reply: 'Klar – ein Probetest über die Römer, wie in der Arbeit.',
-        options: null,
-        actions: [{ tool: 'offer_learning', args: { kind: 'test', text: 'Die Römer' } }],
-      },
+      when: /probetest|die römer/i,
+      answer: says('Klar – ein Probetest über die Römer, wie in der Arbeit.', [
+        { tool: 'offer_learning', args: { kind: 'test', text: 'Die Römer' } },
+      ]),
     },
     {
-      json: {
-        reply: 'Klar – hier ist dein Stoff.',
-        options: null,
-        actions: [{ tool: 'open_area', args: { area: 'library' } }],
-      },
+      when: /mein stoff|materialien|arbeitsblätter/i,
+      answer: says('Klar – hier ist dein Stoff.', [
+        { tool: 'open_area', args: { area: 'library' } },
+      ]),
     },
-    // Conversation mode: what she said (the fake microphone's tone, "heard" by the script).
-    // In the order the model writes it (actions before the reply): streamed and spoken at once.
     {
-      json: {
-        lookups: [],
-        actions: [],
-        reply: 'Diese Woche steht noch nichts an – magst du etwas üben?',
-        options: null,
-        asks_permission: false,
-      },
+      when: /hauptstädte/i,
+      answer: says('Klar – ich hab dir Fragen zu Hauptstädten vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Hauptstädte', goal: null } },
+      ]),
+    },
+    {
+      // Conversation mode: what she said (the fake microphone's tone, "heard" by the script).
+      when: /was steht diese woche an/i,
+      answer: says('Diese Woche steht noch nichts an – magst du etwas üben?'),
     },
   );
   llm.script('transcribe', { json: { heard_speech: true, text: 'Was steht diese Woche an?' } });
@@ -263,18 +252,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   llm.script('tutor', hint, hint, hint, hint);
 
   // tests/web/offline.spec.ts: asked in the chat, then two short questions answered offline.
-  llm.script('buddy_turn', {
-    json: {
-      lookups: [],
-      concern: false,
-      actions: [
-        { tool: 'offer_learning', args: { kind: 'practice', text: 'Hauptstädte', goal: null } },
-      ],
-      reply: 'Klar – ich hab dir Fragen zu Hauptstädten vorbereitet.',
-      options: null,
-      asks_permission: false,
-    },
-  });
   // tests/web/offline.spec.ts: two short questions, both answered offline.
   llm.script('explain', {
     json: {

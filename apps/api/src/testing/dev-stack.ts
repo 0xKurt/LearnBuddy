@@ -25,6 +25,7 @@ import { FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptTour } from './scenarios/tour.js';
+import { installTurns } from './scenarios/turns.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const BASE = `http://localhost:${PORT}`;
@@ -52,6 +53,9 @@ async function main(): Promise<void> {
     scriptCoreLoop(scripted);
     scriptLearningModes(scripted);
     scriptTour(scripted);
+    // Chat answers are matched by what the learner wrote, so one spec cannot shift the
+    // answers of the next (issue #81). Installed after every scenario added its rules.
+    installTurns(scripted);
   }
   const deps: Deps = {
     config,

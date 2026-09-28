@@ -4,25 +4,8 @@
 // Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import type { LlmRequest } from '../../llm/gateway.js';
 import type { ScriptedGateway } from '../fakes.js';
-
-/** The learner's latest message as the model would see it. */
-function latestLearnerText(req: LlmRequest): string {
-  for (let i = req.contents.length - 1; i >= 0; i--) {
-    const m = req.contents[i];
-    if (m?.role !== 'user') continue;
-    const texts = m.parts.flatMap((p) => ('text' in p ? [p.text] : []));
-    const last = texts[texts.length - 1];
-    if (last && !last.startsWith('STATE')) return last;
-  }
-  return '';
-}
-
-/** The quote if the learner really wrote it, else null (the server would reject it anyway). */
-function quoteFrom(req: LlmRequest, phrase: string): string | null {
-  return latestLearnerText(req).toLowerCase().includes(phrase.toLowerCase()) ? phrase : null;
-}
+import { latestLearnerText, quoteFrom, scriptTurns } from './turns.js';
 
 export const DEMO_WORKSHEET = {
   is_learning_material: true,
@@ -85,29 +68,30 @@ export const DEMO_WORKSHEET = {
 
 export function scriptCoreLoop(llm: ScriptedGateway): void {
   // 1 · "Ich schreibe am Freitag eine Mathearbeit über Brüche."
-  llm.script('buddy_turn', (req) => {
-    const quote = quoteFrom(req, 'am Freitag eine Mathearbeit über Brüche');
-    if (!quote)
-      return { reply: 'Erzähl mir gern, was bei dir ansteht.', options: null, actions: [] };
-    return {
-      reply:
-        'Super, dann bereiten wir uns bis Freitag zusammen vor. Hast du ein Arbeitsblatt dazu? Ein Foto reicht.',
-      options: null,
-      actions: [
-        {
-          tool: 'plan_exam',
-          args: {
-            title: 'Mathearbeit Brüche',
-            subject: 'Mathe',
-            subject_kind: 'math',
-            day: { kind: 'weekday', weekday: 5, weeks_ahead: 0 },
-            topics: ['Brüche'],
-            quote,
+  scriptTurns({
+    when: /mathearbeit über brüche/i,
+    answer: (req) => {
+      const quote = quoteFrom(req, 'am Freitag eine Mathearbeit über Brüche') ?? '';
+      return {
+        reply:
+          'Super, dann bereiten wir uns bis Freitag zusammen vor. Hast du ein Arbeitsblatt dazu? Ein Foto reicht.',
+        options: null,
+        actions: [
+          {
+            tool: 'plan_exam',
+            args: {
+              title: 'Mathearbeit Brüche',
+              subject: 'Mathe',
+              subject_kind: 'math',
+              day: { kind: 'weekday', weekday: 5, weeks_ahead: 0 },
+              topics: ['Brüche'],
+              quote,
+            },
           },
-        },
-        { tool: 'request_material', args: { goal: 'new', title: 'Arbeitsblatt Brüche' } },
-      ],
-    };
+          { tool: 'request_material', args: { goal: 'new', title: 'Arbeitsblatt Brüche' } },
+        ],
+      };
+    },
   });
   // 2 · the photographed worksheet
   llm.script('extraction', { json: DEMO_WORKSHEET });
@@ -165,19 +149,22 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
     },
   });
   // 6 · "Mach die Übungen bitte kürzer."
-  llm.script('buddy_turn', (req) => {
-    const quote = quoteFrom(req, 'bitte kürzer');
-    return quote
-      ? {
-          reply: 'Mach ich – ab jetzt kurze Runden.',
-          options: null,
-          actions: [
-            {
-              tool: 'remember',
-              args: { kind: 'preference', statement: 'Möchte kurze Übungen', quote, until: null },
-            },
-          ],
-        }
-      : { reply: 'Alles klar!', options: null, actions: [] };
+  scriptTurns({
+    when: /bitte kürzer/i,
+    answer: (req) => ({
+      reply: 'Mach ich – ab jetzt kurze Runden.',
+      options: null,
+      actions: [
+        {
+          tool: 'remember',
+          args: {
+            kind: 'preference',
+            statement: 'Möchte kurze Übungen',
+            quote: quoteFrom(req, 'bitte kürzer') ?? '',
+            until: null,
+          },
+        },
+      ],
+    }),
   });
 }
