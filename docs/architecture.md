@@ -50,7 +50,10 @@ Hono app composed in `src/app.ts`; the same routes are served under `/`, `/v1`, 
 `/api/v1` (the app calls `/v1/…`). On Vercel the single function `apps/api/api/index.ts` gets
 every `/v1/*` and `/api/*` request through two rewrites (nested paths included; the original
 path stays in the request URL); Node is pinned by `engines` in `apps/api/package.json`, and only
-`apps/api/public/` is served statically. The database connection uses TLS with certificate
+`apps/api/public/` is served statically. The workspace packages (`shared-types`, `shared-math`)
+export TypeScript sources, which plain Node on Vercel cannot load: the install step
+(`installCommand`, `scripts/vercel-shared.mjs`) compiles them to `dist/` in the build checkout
+and points their exports at the JavaScript. The database connection uses TLS with certificate
 verification for every non-local host (`lib/db.ts`, CA in `DATABASE_CA_CERT`); a URL asking for
 less is refused at boot, and a database region outside the EU is logged as a boot warning
 (`config.ts`; the region itself is an open decision, D-4).
