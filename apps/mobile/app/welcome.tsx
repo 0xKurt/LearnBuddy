@@ -30,7 +30,7 @@ import { useAnnounce } from '../lib/announce.js';
 import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
 import { AuthFailure, requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
-import { applyLocale, currentLocale } from '../lib/i18n/index.js';
+import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 
@@ -166,7 +166,7 @@ export default function Welcome() {
         >
           {/* The very first thing: pick your language with one tap on a flag
               (owner decision 2026-09-28). */}
-          <LanguageFlags value={lang} onChange={applyLocale} compact={compact} />
+          <LanguageFlags value={lang} onChange={chooseDeviceLocale} compact={compact} />
           <View style={{ alignItems: 'center', gap, marginBottom: 4 }}>
             <BuddyOrb size={compact ? 52 : 88} />
             <Text

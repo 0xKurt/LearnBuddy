@@ -22,6 +22,13 @@ import { rateFor, SpeechError } from '../../speech/gateway.js';
 
 /** How long synthesised audio is kept (docs/privacy.md). */
 export const SPEECH_CACHE_MS = 24 * 3_600_000;
+/**
+ * Fixed app texts (voice-picker samples name a voice explicitly) live in a
+ * shared cache: the same sentence in the same voice serves every learner, so
+ * the picker answers instantly after the first tap anywhere (issue #12).
+ * 90 days — a changed sample text changes the key and simply seeds anew.
+ */
+export const SHARED_SPEECH_CACHE_MS = 90 * 24 * 3_600_000;
 const SPEECH_TIMEOUT_MS = 8_000;
 
 export async function synthesizeSpeech(
@@ -58,11 +65,19 @@ export async function synthesizeSpeech(
     speed: settings.voice_speed,
   });
 
-  const cached = await deps.db.maybeOne<{ mime: SpeechResponse['mime']; audio: Buffer }>(
-    `select mime, audio from speech_cache
-      where learner_id = $1 and key = $2 and expires_at > $3`,
-    [who.learnerId, key, now],
-  );
+  // Only the voice picker names a voice (see header): its sample is a fixed app
+  // text, shared by everyone — never a learner's own sentence.
+  const shared = input.voice !== undefined && input.voice !== null;
+  const cached = shared
+    ? await deps.db.maybeOne<{ mime: SpeechResponse['mime']; audio: Buffer }>(
+        `select mime, audio from speech_cache_shared where key = $1 and expires_at > $2`,
+        [key, now],
+      )
+    : await deps.db.maybeOne<{ mime: SpeechResponse['mime']; audio: Buffer }>(
+        `select mime, audio from speech_cache
+          where learner_id = $1 and key = $2 and expires_at > $3`,
+        [who.learnerId, key, now],
+      );
   if (cached) return answer(cached.mime, cached.audio);
 
   const budget = await consume(deps.db, 'speech', who.accountId, now);
@@ -87,14 +102,25 @@ export async function synthesizeSpeech(
     }
     throw err;
   }
-  await deps.db.query(
-    `insert into speech_cache (learner_id, key, mime, audio, created_at, expires_at)
-     values ($1, $2, $3, $4, $5, $6)
-     on conflict (learner_id, key) do update
-       set mime = excluded.mime, audio = excluded.audio,
-           created_at = excluded.created_at, expires_at = excluded.expires_at`,
-    [who.learnerId, key, audio.mime, audio.audio, now, new Date(now.getTime() + SPEECH_CACHE_MS)],
-  );
+  if (shared) {
+    await deps.db.query(
+      `insert into speech_cache_shared (key, mime, audio, created_at, expires_at)
+       values ($1, $2, $3, $4, $5)
+       on conflict (key) do update
+         set mime = excluded.mime, audio = excluded.audio,
+             created_at = excluded.created_at, expires_at = excluded.expires_at`,
+      [key, audio.mime, audio.audio, now, new Date(now.getTime() + SHARED_SPEECH_CACHE_MS)],
+    );
+  } else {
+    await deps.db.query(
+      `insert into speech_cache (learner_id, key, mime, audio, created_at, expires_at)
+       values ($1, $2, $3, $4, $5, $6)
+       on conflict (learner_id, key) do update
+         set mime = excluded.mime, audio = excluded.audio,
+             created_at = excluded.created_at, expires_at = excluded.expires_at`,
+      [who.learnerId, key, audio.mime, audio.audio, now, new Date(now.getTime() + SPEECH_CACHE_MS)],
+    );
+  }
   return answer(audio.mime, audio.audio);
 }
 
@@ -106,5 +132,11 @@ export async function purgeSpeechCache(deps: Deps): Promise<number> {
       returning 1`,
     [deps.now()],
   );
-  return gone.length;
+  const goneShared = await deps.db.query(
+    `delete from speech_cache_shared
+      where ctid in (select ctid from speech_cache_shared where expires_at <= $1 limit 2000)
+      returning 1`,
+    [deps.now()],
+  );
+  return gone.length + goneShared.length;
 }

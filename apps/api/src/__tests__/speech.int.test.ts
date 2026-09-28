@@ -102,6 +102,33 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
     expect(env.speech.calls).toHaveLength(3);
   });
 
+  it('shares voice-picker samples across learners, long-lived (issue #12)', async () => {
+    // A preview names a voice: fixed app text, cached for everyone.
+    const preview = { text: 'Hallo, ich bin Buddy!', locale: 'de-DE', voice: 'warm' as const };
+    const first = await speech(preview);
+    expect(first.status).toBe(200);
+    expect(env.speech.calls).toHaveLength(1);
+
+    // A different learner taps the same sample: served from the shared cache.
+    const other = await onboard(env, { relation: 'self' });
+    const again = await other.api.post<SpeechResponse & ErrorBody>('/voice/speech', preview);
+    expect(again.status).toBe(200);
+    expect(env.speech.calls).toHaveLength(1);
+
+    // It outlives the personal 24-hour purge …
+    env.clock.hours(25);
+    expect((await runTick(env.deps)).errors).toEqual([]);
+    await other.api.post('/voice/speech', preview);
+    expect(env.speech.calls).toHaveLength(1);
+
+    // … and her own sentences still stay hers (no voice named → personal cache).
+    await speech({ text: 'Meine eigene Frage.', locale: 'de-DE' });
+    const shared = await env.db.one<{ n: string }>(
+      `select count(*)::text as n from speech_cache_shared`,
+    );
+    expect(Number(shared.n)).toBe(1);
+  });
+
   it('keeps the audio one day: the scheduler deletes it, then it is made again', async () => {
     await speech({ text: 'Hallo!', locale: 'de-DE' });
     expect(await cacheRows()).toBe(1);

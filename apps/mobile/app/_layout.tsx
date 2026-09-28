@@ -23,7 +23,7 @@ import { flushOutbox } from '../lib/api/outboxSync.js';
 import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
-import { applyLocale, deviceLocale, i18n } from '../lib/i18n/index.js';
+import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i18n/index.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { ShareIntake } from '../components/capture/ShareIntake.js';
 import { clearIncoming, hasIncoming } from '../lib/capture/incoming.js';
@@ -98,6 +98,8 @@ export default function RootLayout() {
   useEffect(() => {
     void loadSession()
       .then(async (s) => {
+        // A language chosen with the welcome flags applies before the first screen.
+        await restoreChosenLocale().catch(() => undefined);
         userRef.current = s?.user_id ?? null;
         // Her last conversation at once; it refreshes in the background (gaps.md #2).
         if (s) await restoreCache(s.user_id);
@@ -139,8 +141,9 @@ export default function RootLayout() {
       clearAdminToken();
       clearIncoming();
       userRef.current = null;
-      // The welcome screen speaks the phone's language, not the previous learner's.
-      applyLocale(deviceLocale());
+      // The welcome screen speaks this device's language (an explicit flag choice
+      // wins over the system language), not the previous learner's.
+      void fallbackLocale().then(applyLocale);
       // Nothing of the previous learner stays reachable: cache and whole stack reset
       // (audit M-72). Her unsent answers and photos stay on the device unless she
       // signed out on purpose (settings deletes them there, after a warning).

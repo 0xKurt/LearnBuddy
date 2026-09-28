@@ -28,6 +28,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
 import { Icon } from '../components/lb/Icon.js';
+import { LanguageFlags } from '../components/lb/LanguageFlags.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
@@ -41,7 +42,6 @@ import { keys, queryClient, useSettings } from '../lib/api/queries.js';
 import { ageOf, birthDateOf } from '../lib/birthDate.js';
 import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
-import { LANGUAGES } from '../lib/i18n/languages.js';
 import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
 import { LB } from '../lib/theme/colors.js';
@@ -227,11 +227,11 @@ export default function Profile() {
               </View>
               {/* Language before the date: the date fields open the keyboard, and a
                   section below them was simply never seen (user feedback 2026-09-28 —
-                  "Let's go" was tappable while fields still hid under the keyboard). */}
+                  "Let's go" was tappable while fields still hid under the keyboard).
+                  Same action, same component: the welcome screen's flags. */}
               <View style={{ gap: 8 }}>
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>{t('profile.language')}</Text>
-                {/* Compact: five languages in two rows, so the step fits a small phone. */}
-                <Segmented size="sm" options={LANGUAGES} value={locale} onChange={setLocale} />
+                <LanguageFlags value={locale} onChange={setLocale} compact />
               </View>
               <View style={{ gap: 8 }}>
                 <Text style={[TYPE.label, { paddingHorizontal: 4 }]}>
