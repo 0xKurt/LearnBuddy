@@ -184,10 +184,24 @@ eyes. The moon is Buddy's attention made visible, and each state is a clearly di
 | speak  | Buddy speaks or writes his answer live                                                    | sways and pulses in a speech rhythm               |
 | happy  | a right answer, a finished session ("Geschafft!")                                         | spirals up, a shower of sparkles, glides back     |
 
-States blend softly (0.2 s), never jump. On small avatars the moon is simpler (no reflection,
-a short trail) and drawn a little larger so it stays a moon, not a speck; below 22 px there is
-none. Only the newest avatar in a conversation moves. With reduce motion the moon stands still in
-each state's pose and a change only cross-fades. The maths lives in `lib/buddy/moon.ts`
+**The prototype is the reference** (owner 2026-09-28: "alle Animationen waren doch gut aus den
+Testfiles"): variant 1 "Mond" of the approved orb prototype (`orb-varianten.html`, its `Orb`
+class and `MOND`). The app draws and moves the moon exactly like it — the glass, the white halo
+(its strength and size follow the state: in listen the orb swells with her voice and the halo
+brightens), the violet shadow, the orb's own breathing and pulse per state, the moon's size, glow,
+colours, positions, speeds, lift, the white trail (12 dots) and white ping, the reflection on the
+glass, the happy spiral / sparkle burst (the prototype's white, lilac, pink and blue sparkles) /
+glide back, and the 0.2 s blending between states. Unit tests pin the maths to numbers read from
+the prototype. Behind the talk-mode orb lies the prototype's pastel stage, so the white light
+reads on the app's near-white page; nothing is recoloured for it.
+
+Justified differences only: a chat avatar (22–55 px) draws the same moon at the same scale with
+6 trail dots and 7 sparkles (each more would be under a pixel) and no reflection, shadow or halo;
+below 22 px there is no moon. Only the newest avatar in a conversation moves. "happy" plays once
+and settles back to idle after 2.4 s (in the app it marks a moment, not a lasting state). With
+reduce motion the moon stands still in each state's pose and a change only cross-fades. Her real
+voice level is smoothed by a critically damped spring (the microphone reports a few times a
+second). The maths lives in `lib/buddy/moon.ts`
 (unit-tested), the drawing in `components/lb/BuddyOrb.tsx`.
 
 ---

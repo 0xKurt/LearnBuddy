@@ -4,13 +4,17 @@ import {
   HAPPY_SETTLE,
   MOON_STATES,
   ORB_R,
+  PROTO_GHOSTS,
+  PROTO_SPARKLES,
   effectiveState,
   moonDetail,
   moonForReply,
   moonForTalk,
   moonPose,
   newMoon,
+  newOrder,
   orbitPt,
+  placeOrder,
   sparklePose,
   sparkles,
   speech,
@@ -76,9 +80,9 @@ describe('moon states', () => {
   });
 
   it('draws a trail while moving and none while parked', () => {
-    const think = moonPose(stillMoon('think', 2.6), 0, 8);
-    const listen = moonPose(stillMoon('listen', 2.6), 0, 8);
-    expect(think.ghosts).toHaveLength(8 * 5);
+    const think = moonPose(stillMoon('think', 2.6), 0, 12);
+    const listen = moonPose(stillMoon('listen', 2.6), 0, 12);
+    expect(think.ghosts).toHaveLength(12 * 5);
     const ops = (g: number[]) => g.filter((_, i) => i % 5 === 4);
     expect(Math.max(...ops(think.ghosts))).toBeGreaterThan(0.3);
     expect(Math.max(...ops(listen.ghosts))).toBeLessThan(0.01);
@@ -157,6 +161,89 @@ describe('moon detail by size', () => {
     expect(avatar.ghosts).toBeLessThan(moonDetail(200).ghosts);
     expect(moonDetail(72).reflection).toBe(true);
   });
+
+  it('a large orb draws the prototype: its 12 trail dots, 14 sparkles, shadow and halo', () => {
+    const full = moonDetail(200);
+    expect(full.ghosts).toBe(PROTO_GHOSTS);
+    expect(PROTO_GHOSTS).toBe(12);
+    expect(full.sparkles).toBe(PROTO_SPARKLES);
+    expect(PROTO_SPARKLES).toBe(14);
+    expect(full.shadow && full.halo && full.reflection && full.ping).toBe(true);
+    // Avatars keep the halo and shadow off (they sit in the chat, not on a stage).
+    expect(moonDetail(26).halo).toBe(false);
+  });
+});
+
+// The approved prototype (variant 1 "Mond", orb-varianten.html) is the reference
+// (docs/DESIGN-BRIEF.md §Buddy's moon). These numbers were read from its SVG after
+// jump('idle', 1.5), setState(state) and n steps of 16 ms: the orb's scale, the halo's
+// opacity, the moon's translate and scale, and the first trail dot (cx, cy, r, opacity).
+// The prototype writes two decimals (the orb's scale five).
+const PROTOTYPE: Record<string, { orb: number; halo: number; moon: number[]; g0: number[] }> = {
+  idle30: { orb: 1.00286, halo: 0.6, moon: [-44.79, 33.47, 1.09], g0: [-42.95, 33.36, 4.59, 0.16] },
+  idle62: { orb: 0.99115, halo: 0.6, moon: [-63.63, 32.56, 1.06], g0: [-62.36, 32.79, 4.45, 0.16] },
+  listen30: {
+    orb: 1.01432,
+    halo: 0.76,
+    moon: [-59.56, -16.41, 1.15],
+    g0: [-59.57, -16.4, 3.87, 0],
+  },
+  listen62: { orb: 1.02677, halo: 0.86, moon: [68.39, -49.93, 1.33], g0: [68.39, -49.93, 4.08, 0] },
+  think30: {
+    orb: 0.99402,
+    halo: 0.51,
+    moon: [-69.87, 10.08, 0.86],
+    g0: [-73.71, 16.33, 4.06, 0.7],
+  },
+  think62: {
+    orb: 0.99658,
+    halo: 0.5,
+    moon: [71.87, -27.89, 0.88],
+    g0: [66.09, -31.64, 4.02, 0.74],
+  },
+  wait30: { orb: 0.99285, halo: 0.51, moon: [-59.56, -13.36, 0.96], g0: [-59.57, -10.94, 3.87, 0] },
+  wait62: { orb: 0.98822, halo: 0.5, moon: [68.39, -46.94, 1.02], g0: [68.39, -43.97, 4.08, 0] },
+  speak30: { orb: 1.00432, halo: 0.68, moon: [-57.88, -14.59, 1], g0: [-59.57, -14.58, 3.87, 0] },
+  speak62: { orb: 0.99994, halo: 0.65, moon: [70.92, -47.94, 1.02], g0: [68.39, -47.94, 4.08, 0] },
+  happy30: {
+    orb: 0.98595,
+    halo: 0.92,
+    moon: [-21.89, -38.34, 1.3],
+    g0: [-62.89, 33.68, 4.46, 0.05],
+  },
+  happy62: { orb: 0.99776, halo: 0.95, moon: [-0.5, -83.34, 1.54], g0: [-73.74, 12.91, 3.98, 0] },
+};
+
+/** The prototype's stand-in for her voice while listening. */
+function protoVoice(t: number): number {
+  const a = Math.max(0, Math.sin(t * 3.1)) * (0.6 + 0.4 * Math.sin(t * 7.3 + 0.5));
+  return Math.min(1, Math.max(0, 0.18 + 0.62 * a + 0.12 * Math.sin(t * 13.1) * Math.sin(t * 2.2)));
+}
+
+describe('the moon moves exactly like the prototype', () => {
+  for (const s of MOON_STATES) {
+    for (const n of [30, 62]) {
+      it(`${s} after ${n} frames`, () => {
+        const ref = PROTOTYPE[`${s}${n}`];
+        if (!ref) throw new Error('no reference');
+        let sim = stillMoon('idle', 1.5);
+        // The prototype's jump() renders once more than it steps: one more idle turn.
+        sim = { ...sim, a: sim.a + (1 / 60) * ((Math.PI * 2) / 9) };
+        for (let i = 0; i < n; i++) sim = stepMoon(sim, 0.016, s);
+        const p = moonPose(sim, protoVoice(sim.t), 12);
+        expect(p.orb).toBeCloseTo(ref.orb, 4);
+        expect(p.halo).toBeCloseTo(ref.halo, 2);
+        expect(p.x).toBeCloseTo(ref.moon[0] ?? NaN, 1);
+        expect(p.y).toBeCloseTo(ref.moon[1] ?? NaN, 1);
+        expect(p.scale).toBeCloseTo(ref.moon[2] ?? NaN, 1);
+        const g = p.ghosts;
+        expect(g[0]).toBeCloseTo(ref.g0[0] ?? NaN, 1);
+        expect(g[1]).toBeCloseTo(ref.g0[1] ?? NaN, 1);
+        expect(g[3]).toBeCloseTo(ref.g0[2] ?? NaN, 1);
+        expect(g[4]).toBeCloseTo(ref.g0[3] ?? NaN, 1);
+      });
+    }
+  }
 });
 
 describe('app states → moon states', () => {
@@ -194,4 +281,44 @@ describe('app states → moon states', () => {
     expect(moonForReply({ fresh: false, afterCorrect: true })).toBe('idle');
     expect(moonForReply({ fresh: true, afterCorrect: false })).toBe('idle');
   });
+});
+
+// Which part lies on top: the prototype's SVG node order in its two groups (0 the moon,
+// 1 the ping, 2… the trail), read after jump('idle', 1.5), setState and n steps of 16 ms.
+const PROTOTYPE_ORDER: Record<string, { front: number[]; back: number[] }> = {
+  think19: { front: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], back: [] },
+  think70: { front: [0, 1, 2, 3], back: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13] },
+  think140: { front: [], back: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] },
+  happy19: { front: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], back: [] },
+  happy70: { front: [1, 0, 11, 12, 13], back: [2, 3, 4, 5, 6, 7, 8, 9, 10] },
+  happy140: { front: [], back: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0, 1] },
+  wait19: { front: [1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], back: [] },
+  wait70: { front: [], back: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] },
+  wait140: { front: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], back: [] },
+};
+
+describe("the moon's parts overlap as in the prototype", () => {
+  for (const [key, ref] of Object.entries(PROTOTYPE_ORDER)) {
+    it(key, () => {
+      const state = key.replace(/\d+$/, '') as MoonState;
+      const n = Number(key.slice(state.length));
+      let sim = stillMoon('idle', 1.5);
+      // jump() places twice (its last two renders), the second one step further on.
+      let order = placeOrder(newOrder(12), moonPose(sim, 0.5, 12));
+      sim = { ...sim, a: sim.a + (1 / 60) * ((Math.PI * 2) / 9) };
+      order = placeOrder(order, moonPose(sim, 0.5, 12));
+      for (let i = 0; i < n; i++) {
+        sim = stepMoon(sim, 0.016, state);
+        order = placeOrder(order, moonPose(sim, protoVoice(sim.t), 12));
+      }
+      const side = (front: boolean) =>
+        order.seq
+          .map((q, k) => ({ q, k }))
+          .filter(({ k }) => order.front[k] === front)
+          .sort((a, b) => a.q - b.q)
+          .map(({ k }) => k);
+      expect(side(true)).toEqual(ref.front);
+      expect(side(false)).toEqual(ref.back);
+    });
+  }
 });
