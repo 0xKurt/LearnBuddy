@@ -136,6 +136,38 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     expect(JSON.stringify(rejected)).toContain('concern');
   });
 
+  // The model has no reason to write a reply it knows is thrown away — and for a child
+  // in distress an empty text must never end as "model_invalid" (found live in evals/buddy:
+  // en/es/it answered concern with an empty reply and the turn failed).
+  it('a concern answer without any text still reaches the child', async () => {
+    const l = await onboard(env, { relation: 'child', birthDate: '2014-02-10' });
+    env.llm.script('buddy_turn', {
+      json: { concern: true, reply: '', options: null, actions: [] },
+    });
+    const res = await send(l, 'die in meiner klasse hauen mich jeden tag und ich hab angst');
+    expect(res.body.status).toBe('done');
+    const reply = res.body.home.thread[res.body.home.thread.length - 1]!;
+    expect(reply.text).toContain('116 111');
+  });
+
+  it('an empty reply without a concern is repaired, never shown', async () => {
+    const l = await onboard(env);
+    env.llm.script(
+      'buddy_turn',
+      { json: { concern: false, reply: '', options: null, actions: [] } },
+      { json: { concern: false, reply: 'Klar, worum geht es?', options: null, actions: [] } },
+    );
+    const res = await send(l, 'Hallo Buddy');
+    expect(res.body.status).toBe('done');
+    const reply = res.body.home.thread[res.body.home.thread.length - 1]!;
+    expect(reply.text).toBe('Klar, worum geht es?');
+    const rejected = await env.db.query<{ errors: string[] }>(
+      `select errors from buddy_decisions where learner_id = $1 and disposition = 'rejected'`,
+      [l.learnerId],
+    );
+    expect(JSON.stringify(rejected)).toContain('reply');
+  });
+
   it('adults get the variant without the children’s helpline', async () => {
     const l = await onboard(env);
     env.llm.script('buddy_turn', {

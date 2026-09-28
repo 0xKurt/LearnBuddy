@@ -28,7 +28,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 import { applyDecision, recordUnapplied } from './apply.js';
 import { buildContents, buildContext } from './context.js';
-import { askedButActed, TurnDecision, TurnDecisionForModel } from './registry.js';
+import { askedButActed, emptyReply, TurnDecision, TurnDecisionForModel } from './registry.js';
 import { bumpContext } from './plan.js';
 import { replyProgress, type ReplyProgress } from './stream.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
@@ -338,7 +338,7 @@ async function decideTurn(
       repairErrors = errors;
       continue;
     }
-    const contradictions = askedButActed(parsed.data);
+    const contradictions = [...askedButActed(parsed.data), ...emptyReply(parsed.data)];
     if (contradictions.length > 0) {
       await record('rejected', contradictions);
       if (repairErrors) return failTurn(deps, message, 'model_invalid');

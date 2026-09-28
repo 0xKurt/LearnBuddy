@@ -218,13 +218,16 @@ const Concern = z
 export const TurnDecision = z.object({
   // Lenient when parsing (older scripted answers have no such field); the model must write it.
   concern: z.boolean().default(false),
+  // No minimum length: a safeguarding answer is written by code, so the model rightly
+  // leaves the reply empty then (its own text would be thrown away). Everything else
+  // must carry a reply — enforced by emptyReply(), so an empty text is repaired with a
+  // clear reason instead of failing the turn (a child in distress would get an error).
   reply: z
     .string()
     .trim()
-    .min(1)
     .max(REPLY_MAX)
     .describe(
-      "Your answer to the learner, in their language. Never claim a change you don't make in actions.",
+      "Your answer to the learner, in their language. Never claim a change you don't make in actions. Leave it empty only when concern is true — the app then answers with its own fixed text.",
     ),
   options: z
     .array(z.string().trim().min(1).max(40))
@@ -262,6 +265,15 @@ export const TurnDecisionForModel = z.object({
       'true if your reply asks the learner whether you should do something ("Soll ich …?"). Then that thing must not be in actions — it happens in a later answer, after they said yes.',
     ),
 });
+
+/**
+ * Code-enforced: only a safeguarding answer may come without a reply (its text is
+ * fixed by code). Anything else with an empty reply is repaired, never shown.
+ */
+export function emptyReply(d: { concern: boolean; reply: string }): string[] {
+  if (d.concern || d.reply.trim().length > 0) return [];
+  return ['reply: write your answer to the learner (empty is only for a concern answer)'];
+}
 
 /** Actions that remove something she had (a test, something you knew, a planned step). */
 export function removesSomething(a: AnyAction): boolean {
