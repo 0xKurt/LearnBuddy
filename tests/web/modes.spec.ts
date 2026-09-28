@@ -31,6 +31,8 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
   await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
+  // The three first-start cards (app/onboarding.tsx) come before the home.
+  await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('Hallo Lena')).toBeVisible();
 }
 
@@ -194,8 +196,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Klar – hier ist dein Stoff.')).toBeVisible();
   await shot(page, '31-open-area');
-  await page.getByRole('button', { name: 'Mein Stoff öffnen' }).click();
-  await expect(page.getByRole('heading', { name: 'Mein Stoff' })).toBeVisible();
+  await page.getByRole('button', { name: 'Materialien öffnen' }).click();
+  await expect(page.getByRole('heading', { name: 'Materialien' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── Conversation mode: she speaks, Buddy answers aloud, in the same conversation ──

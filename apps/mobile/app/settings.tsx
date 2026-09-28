@@ -91,6 +91,9 @@ export default function SettingsScreen() {
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           ref={scroll}
+          // A list she browses on purpose (like her material): it may grow past the screen,
+          // its groups stay closed until she opens one (tests/web/fit.ts, CLAUDE.md §16).
+          testID="scroll-list"
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 48 }}
           keyboardShouldPersistTaps="handled"
           refreshControl={

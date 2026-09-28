@@ -34,6 +34,8 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByRole('button', { name: "Los geht's, Pia!" }).click();
   await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
+  // The three first-start cards (app/onboarding.tsx) come before the home.
+  await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('Hallo Pia')).toBeVisible();
 }
 
@@ -216,7 +218,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // "Heute nicht": the practice steps aside without a trace of pressure.
   await page.getByRole('button', { name: 'Heute nicht' }).click();
   await expect(page.getByRole('button', { name: /^Übung bereit: / })).toHaveCount(0);
-  await openMenu(page, 'Mein Stoff');
+  await openMenu(page, 'Materialien');
   await expect(page.getByText('Nomen und Verben').last()).toBeVisible();
   // A page she forgot can be added to the sheet.
   await page.getByRole('button', { name: /^Fragen .*Nomen und Verben/ }).click();

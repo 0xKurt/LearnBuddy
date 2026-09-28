@@ -270,7 +270,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '13-memory');
   await page.getByRole('button', { name: 'Zurück' }).click();
 
-  await openMenu('Mein Stoff');
+  await openMenu('Materialien');
   await expect(page.getByText('Brüche kürzen und vergleichen')).toBeVisible();
   await expect(page.getByText(/· 4 Aufgaben$/)).toBeVisible();
   await shot(page, '14-library');
