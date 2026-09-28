@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 import { SHOTS, shot } from './fit';
+import { recordPerf } from './perf';
 
 mkdirSync(SHOTS, { recursive: true });
 
@@ -270,6 +271,8 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '13-memory');
   await page.getByRole('button', { name: 'Zurück' }).click();
 
+  // What the app's own stopwatch measured on the way here (issue #66).
+  await recordPerf(page, 'core-loop');
   await openMenu('Materialien');
   await expect(page.getByText('Brüche kürzen und vergleichen')).toBeVisible();
   await expect(page.getByText(/· 4 Aufgaben$/)).toBeVisible();

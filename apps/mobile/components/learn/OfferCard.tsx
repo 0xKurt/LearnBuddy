@@ -16,6 +16,7 @@ import { Icon } from '../lb/Icon.js';
 import { KIND_ICON, KIND_LABEL } from './kinds.js';
 import { StartStatus } from './StartStatus.js';
 import { useStartTopic } from './useStartTopic.js';
+import { reacted, tapped } from '../../lib/perf.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_learning' }>;
 
@@ -26,8 +27,11 @@ export function OfferCard({ actionId, offer }: { actionId: string; offer: Offer 
   const label = t(`learn:${KIND_LABEL[offer.kind]}`);
 
   async function go(): Promise<void> {
+    // Tap → the first question on screen (issue #66): the wait she complained about.
+    tapped('start_offer');
     const session = await start(offer.kind, offer.text, actionId, offer.goal_id);
     if (session) router.push(`/practice/${session.id}`);
+    reacted('start_offer');
   }
 
   return (

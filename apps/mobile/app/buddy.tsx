@@ -91,6 +91,7 @@ import { useVoiceMode } from '../lib/speech/voiceMode.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { reacted, tapped } from '../lib/perf.js';
 
 const VISIBLE_MESSAGES = 6;
 /** Below the start row's round buttons: two lines of label and the room under the row. */
@@ -290,7 +291,10 @@ export default function BuddyScreen() {
     clientMessageId: string = newId(),
     replyToId: string | null = null,
   ): Promise<boolean> {
+    // Tap → her bubble on screen: the span she calls "hängt" (issue #66).
+    tapped('send');
     setPending({ id: clientMessageId, text });
+    reacted('send');
     setLive(null);
     followEnd.current = true;
     awaitingReply.current = clientMessageId;
