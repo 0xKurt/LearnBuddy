@@ -5,7 +5,7 @@ import { router, usePathname, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -30,6 +30,7 @@ const AREA_ICON: Record<Area, IconName> = {
 };
 
 export function AreaCard({ area }: { area: Area }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   const here = usePathname();
   const label = t(`area.${area}`);
@@ -40,7 +41,7 @@ export function AreaCard({ area }: { area: Area }) {
     <View
       style={[
         {
-          backgroundColor: LB.paper,
+          backgroundColor: palette.paper,
           borderRadius: 20,
           padding: 14,
           flexDirection: 'row',
@@ -55,12 +56,12 @@ export function AreaCard({ area }: { area: Area }) {
           width: 40,
           height: 40,
           borderRadius: 20,
-          backgroundColor: LB.lavender,
+          backgroundColor: palette.lavender,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Icon name={AREA_ICON[area]} size={20} color={LB.primary} />
+        <Icon name={AREA_ICON[area]} size={20} color={palette.primary} />
       </View>
       <Text style={[TYPE.body, { flex: 1, fontWeight: '600' }]}>{label}</Text>
       <Btn

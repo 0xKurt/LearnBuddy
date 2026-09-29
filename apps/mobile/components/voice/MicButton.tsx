@@ -21,13 +21,14 @@ import { useReducedMotion } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { formatClock } from '../../lib/speech/voice.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import type { VoiceInput } from './useVoiceInput.js';
 
 function PulseRing({ size }: { size: number }) {
+  const { palette } = useTheme();
   const progress = useRef(new Animated.Value(0)).current;
   // Reactive: toggling "reduce motion" while the app runs stops the pulse too.
   const still = useReducedMotion();
@@ -58,7 +59,7 @@ function PulseRing({ size }: { size: number }) {
         height: size,
         borderRadius: size / 2,
         borderWidth: 3,
-        borderColor: LB.primary,
+        borderColor: palette.primary,
         opacity,
         transform: [{ scale }],
       }}
@@ -87,6 +88,7 @@ export function MicButton({
   disabled = false,
   onPress,
 }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('common');
   const recording = voice.state === 'recording';
   const working = voice.state === 'starting' || voice.state === 'transcribing';
@@ -94,8 +96,8 @@ export function MicButton({
   const off = recording ? false : disabled || working;
   const d = size === 'lg' ? 72 : size === 'sm' ? 48 : 56;
   const filled = size === 'lg' || recording || filledIdle;
-  const bg = recording ? LB.primaryDk : filled ? LB.primary : LB.paper;
-  const fg = filled ? LB.paper : LB.primaryDk;
+  const bg = recording ? palette.primaryDk : filled ? palette.primary : palette.paper;
+  const fg = filled ? palette.paper : palette.primaryDk;
   const time = formatClock(voice.elapsedMs);
 
   return (
@@ -136,7 +138,7 @@ export function MicButton({
               borderRadius: d / 2,
               backgroundColor: bg,
               borderWidth: filled ? 0 : 1,
-              borderColor: LB.hairline,
+              borderColor: palette.hairline,
               alignItems: 'center',
               justifyContent: 'center',
               opacity: pressed ? 0.8 : 1,
@@ -163,6 +165,7 @@ export function MicButton({
  * afterwards, a calm hint when nothing came out, and what to do without a microphone.
  */
 export function MicStatus({ voice }: { voice: VoiceInput }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('common');
   // VoiceOver hears the same states (audit M-80): writing down, no mic, nothing understood.
   const status =
@@ -194,7 +197,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 22 }}
         >
           <View
-            style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: LB.primary }}
+            style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: palette.primary }}
             importantForAccessibility="no"
           />
           <Text style={[TYPE.body, { fontWeight: '600' }]}>
@@ -205,7 +208,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
           // On-device recognition: what she has said so far, as she says it.
           <Text
             accessibilityLabel={t('voice.live', { text: voice.live })}
-            style={[TYPE.body, { color: LB.ink2, fontStyle: 'italic' }]}
+            style={[TYPE.body, { color: palette.ink2, fontStyle: 'italic' }]}
             numberOfLines={4}
           >
             „{voice.live}“
@@ -222,13 +225,16 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
       <Text
         accessibilityLiveRegion="polite"
         accessibilityLabel={t('voice.live', { text: voice.live })}
-        style={[TYPE.body, { color: LB.ink2, fontStyle: 'italic', minHeight: 22 }]}
+        style={[TYPE.body, { color: palette.ink2, fontStyle: 'italic', minHeight: 22 }]}
         numberOfLines={4}
       >
         „{voice.live}“
       </Text>
     ) : (
-      <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.ink2, minHeight: 22 }]}>
+      <Text
+        accessibilityLiveRegion="polite"
+        style={[TYPE.body, { color: palette.ink2, minHeight: 22 }]}
+      >
         {t('voice.transcribing')}
       </Text>
     );
@@ -237,7 +243,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
   if (voice.denied) {
     return (
       <View style={{ gap: 8 }}>
-        <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+        <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
           {Platform.OS === 'web' ? t('voice.denied_web') : t('voice.denied')}
         </Text>
         {Platform.OS !== 'web' ? (
@@ -251,7 +257,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
 
   if (voice.hint && voice.state === 'idle') {
     return (
-      <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+      <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
         {t(`voice.problem.${voice.hint}`)}
       </Text>
     );

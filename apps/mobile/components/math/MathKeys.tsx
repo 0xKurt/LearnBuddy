@@ -12,7 +12,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { currentLocale } from '../../lib/i18n/index.js';
 import { insertAtCursor, type Insertion, type Selection } from '../../lib/math/insert.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 
 export { insertAtCursor, type Insertion, type Selection };
@@ -91,10 +91,11 @@ function MathKey({
   onPress: () => void;
   disabled: boolean;
 }) {
+  const { palette } = useTheme();
   return (
     <View
       style={[
-        { borderRadius: KEY / 2, backgroundColor: LB.paper, opacity: disabled ? 0.6 : 1 },
+        { borderRadius: KEY / 2, backgroundColor: palette.paper, opacity: disabled ? 0.6 : 1 },
         SHADOW.soft,
       ]}
     >
@@ -117,10 +118,12 @@ function MathKey({
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: KEY / 2,
-              backgroundColor: pressed ? LB.lavender : 'transparent',
+              backgroundColor: pressed ? palette.lavender : 'transparent',
             }}
           >
-            <Text style={{ color: LB.primaryDk, fontSize: 19, lineHeight: 24, fontWeight: '600' }}>
+            <Text
+              style={{ color: palette.primaryDk, fontSize: 19, lineHeight: 24, fontWeight: '600' }}
+            >
               {children}
             </Text>
           </View>

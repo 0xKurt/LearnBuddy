@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAnnounce } from '../../lib/announce.js';
 import type { SendProgress } from '../../lib/capture/upload.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { ErrorNote } from '../lb/ErrorNote.js';
@@ -44,6 +44,7 @@ export function SendBar({
   refused = false,
   onSend,
 }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('capture');
   const insets = useSafeAreaInsets();
 
@@ -71,7 +72,7 @@ export function SendBar({
       {progress ? (
         <View accessibilityLiveRegion="polite" style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <ActivityIndicator size="small" color={LB.primary} />
+            <ActivityIndicator size="small" color={palette.primary} />
             <Text style={[TYPE.body, { flex: 1 }]}>{progressText(progress)}</Text>
           </View>
           <View style={{ flexDirection: 'row' }}>

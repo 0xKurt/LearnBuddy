@@ -8,7 +8,7 @@
 import { Platform, View, type ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 
 /**
@@ -32,6 +32,7 @@ export const topEdgeMask: ViewStyle | null =
 
 /** Phones: lies over the top edge of the scroll view it is placed after (its parent is the frame). */
 export function TopEdgeFade({ top = 0 }: { top?: number }) {
+  const { palette } = useTheme();
   const id = useSvgId('edge');
   if (Platform.OS === 'web') return null;
   return (
@@ -44,9 +45,9 @@ export function TopEdgeFade({ top = 0 }: { top?: number }) {
       <Svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1 1">
         <Defs>
           <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={LB.bg} stopOpacity={0.9} />
-            <Stop offset="0.35" stopColor={LB.bg} stopOpacity={0.7} />
-            <Stop offset="1" stopColor={LB.bg} stopOpacity={0} />
+            <Stop offset="0" stopColor={palette.bg} stopOpacity={0.9} />
+            <Stop offset="0.35" stopColor={palette.bg} stopOpacity={0.7} />
+            <Stop offset="1" stopColor={palette.bg} stopOpacity={0} />
           </LinearGradient>
         </Defs>
         <Rect x="0" y="0" width="1" height="1" fill={`url(#${id})`} />

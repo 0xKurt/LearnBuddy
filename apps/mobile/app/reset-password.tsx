@@ -35,7 +35,7 @@ import {
   startRecovery,
 } from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
@@ -55,6 +55,7 @@ function pickLink(latest: string | null): { url: string | null; link: RecoveryLi
 }
 
 export default function ResetPassword() {
+  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   // The newest URL the app was opened with (also when it was already running).
   const latestUrl = Linking.useLinkingURL();
@@ -122,7 +123,7 @@ export default function ResetPassword() {
 
   if (phase === 'checking') {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
         <Glow height={320} />
         <LoadingState label={t('reset.checking')} />
       </SafeAreaView>
@@ -131,7 +132,7 @@ export default function ResetPassword() {
 
   if (phase === 'invalid' || phase === 'offline') {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
         <Glow height={420} />
         <ScrollView
           contentContainerStyle={{
@@ -171,7 +172,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow height={420} />
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
@@ -189,7 +190,7 @@ export default function ResetPassword() {
               {t('reset.title')}
             </Text>
           </View>
-          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
+          <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
             {t('reset.body')}
           </Text>
           <NewPasswordFields

@@ -1,16 +1,27 @@
-// LB design tokens — the colours of the palette that is active right now
+// Which palette is applied right now, and the live token objects that follow it
 // (lib/theme/palettes.ts, issue #29).
 //
-// `LB` stays the one place every screen reads colours from, so nothing had to be rewritten
-// when themes arrived: it is a live object whose values are replaced when the palette
-// changes (`applyPalette`), and the provider re-renders the app in the same breath
-// (lib/theme/ThemeProvider.tsx). The derived maps below (tones, figures, shadows) are
-// rebuilt from the same palette, so a screen can never show half of the old theme.
+// Screens and components do NOT read from here any more — they take their colours from
+// `useTheme()` (lib/theme/ThemeProvider.tsx), and the lint rule in eslint.config.mjs keeps
+// it that way (issue #29, layer 3). What is left here is the machinery behind that hook:
+// the applied palette, and the objects that must stay live because they are still imported
+// as modules (TYPE in type.ts, SHADOW in shadow.ts).
 //
-// Layer 2 of the issue moves screens to `useTheme()` and drops this mutable object; until
-// then this is the bridge — deliberate, not an accident.
+// `LB`, `TONE_BG`, `TONE_DEEP` and `FIGURE` are the last pieces of the old bridge. They are
+// refilled in place like TYPE and SHADOW, and the guard in __tests__/frozen-colors.test.ts
+// proves that contract; dropping the exports is the final step of the issue.
 
-import { DEFAULT_THEME, paletteOf, type Palette, type ThemeName } from './palettes.js';
+import {
+  DEFAULT_THEME,
+  figureOf,
+  paletteOf,
+  toneBgOf,
+  toneDeepOf,
+  type Figure,
+  type Palette,
+  type SubjectTone,
+  type ThemeName,
+} from './palettes.js';
 import { applyShadows } from './shadow.js';
 import { applyType } from './type.js';
 
@@ -22,37 +33,9 @@ const active: { name: ThemeName; palette: Palette } = {
 /** The colours in use. Read at render time; never destructured into a module constant. */
 export const LB: Record<ColorToken, string> = colorsOf(active.palette);
 
-export const SUBJECT_TONES = [
-  'lavender',
-  'peach',
-  'mint',
-  'blush',
-  'sky',
-  'butter',
-  'rose',
-] as const;
-export type SubjectTone = (typeof SUBJECT_TONES)[number];
-
-export const TONE_BG: Record<SubjectTone, string> = toneBg(active.palette);
-export const TONE_DEEP: Record<SubjectTone, string> = toneDeep(active.palette);
-
-// Figures in questions (components/math/FigureView.tsx): calm, printed-schoolbook look.
-// Series colors stay distinguishable for common colour-vision deficiencies and are
-// never the only signal (each graph also has a label and its own dash pattern).
-export const FIGURE: {
-  paper: string;
-  axis: string;
-  grid: string;
-  gridStrong: string;
-  stroke: string;
-  label: string;
-  /** Shaded parts of a fraction, bars, filled polygons. */
-  fill: string;
-  fillSoft: string;
-  empty: string;
-  point: string;
-  series: string[];
-} = figureOf(active.palette);
+export const TONE_BG: Record<SubjectTone, string> = toneBgOf(active.palette);
+export const TONE_DEEP: Record<SubjectTone, string> = toneDeepOf(active.palette);
+export const FIGURE: Figure = figureOf(active.palette);
 
 /** The colour tokens of a palette (everything but the derived maps). */
 type ColorToken = Exclude<keyof Palette, 'figure' | 'shadowColor' | 'shadowOpacity'>;
@@ -62,47 +45,7 @@ function colorsOf(p: Palette): Record<ColorToken, string> {
   return colors;
 }
 
-function toneBg(p: Palette): Record<SubjectTone, string> {
-  return {
-    lavender: p.lavender,
-    peach: p.peach,
-    mint: p.mint,
-    blush: p.blush,
-    sky: p.sky,
-    butter: p.butter,
-    rose: p.rose,
-  };
-}
-
-function toneDeep(p: Palette): Record<SubjectTone, string> {
-  return {
-    lavender: p.lavenderDeep,
-    peach: p.peachDeep,
-    mint: p.mintDeep,
-    blush: p.blushDeep,
-    sky: p.skyDeep,
-    butter: p.butterDeep,
-    rose: p.lavenderDeep, // no rose-deep in the palette; reuse lavender-deep
-  };
-}
-
-function figureOf(p: Palette): typeof FIGURE {
-  return {
-    paper: p.paper,
-    axis: p.ink2,
-    grid: p.figure.grid,
-    gridStrong: p.figure.gridStrong,
-    stroke: p.ink,
-    label: p.ink2,
-    fill: p.figure.fill,
-    fillSoft: p.figure.fillSoft,
-    empty: p.paper,
-    point: p.primaryDk,
-    series: [...p.figure.series],
-  };
-}
-
-/** Which palette is showing (the provider's state is the one the learner chose). */
+/** Which palette is showing. */
 export function activeTheme(): ThemeName {
   return active.name;
 }
@@ -111,19 +54,34 @@ export function activePalette(): Palette {
   return active.palette;
 }
 
+const watchers = new Set<() => void>();
+
 /**
- * Switches the palette in place: every token object above is refilled, so a component
- * that reads `LB.primary` in its next render gets the new colour. Only the provider calls
- * this — it re-renders the tree right after.
+ * Called whenever the applied palette changes — the provider follows this instead of
+ * keeping its own copy, so a palette restored from the device after the provider mounted
+ * (`restoreTheme`, app/_layout.tsx) still reaches the screens.
+ */
+export function onPaletteApplied(watch: () => void): () => void {
+  watchers.add(watch);
+  return () => {
+    watchers.delete(watch);
+  };
+}
+
+/**
+ * Switches the palette in place: every token object above is refilled, so a component that
+ * holds `TYPE.body` sees the new colour on its next render. Then the watchers hear of it and
+ * the provider re-renders the tree.
  */
 export function applyPalette(name: ThemeName): void {
   const palette = paletteOf(name);
   active.name = name;
   active.palette = palette;
   Object.assign(LB, colorsOf(palette));
-  Object.assign(TONE_BG, toneBg(palette));
-  Object.assign(TONE_DEEP, toneDeep(palette));
+  Object.assign(TONE_BG, toneBgOf(palette));
+  Object.assign(TONE_DEEP, toneDeepOf(palette));
   Object.assign(FIGURE, figureOf(palette));
   applyShadows(palette);
   applyType(palette);
+  for (const watch of watchers) watch();
 }

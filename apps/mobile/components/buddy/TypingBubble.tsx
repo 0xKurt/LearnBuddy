@@ -18,7 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { riseIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -30,6 +30,7 @@ const DOT_MS = 420;
 const DOT_GAP_MS = 160;
 
 export function TypingBubble({ label }: { label: string }) {
+  const { palette } = useTheme();
   // iOS has no live regions: "Buddy schreibt" says itself (lib/announce.ts).
   useAnnounce(label);
   const reduce = useReducedMotion();
@@ -72,7 +73,7 @@ export function TypingBubble({ label }: { label: string }) {
             // 6 and 18 are the dots' drawing, not layout: three 8-point dots spaced
             // and inset to sit where a short word would.
             gap: 6,
-            backgroundColor: LB.paper,
+            backgroundColor: palette.paper,
             borderRadius: 22,
             borderBottomLeftRadius: 6,
             paddingHorizontal: 18,
@@ -90,13 +91,14 @@ export function TypingBubble({ label }: { label: string }) {
 }
 
 function Dot({ v }: { v: SharedValue<number> }) {
+  const { palette } = useTheme();
   const style = useAnimatedStyle(() => ({
     opacity: 0.28 + v.value * 0.5,
     transform: [{ translateY: -v.value * 3 }, { scale: 0.9 + v.value * 0.15 }],
   }));
   return (
     <Animated.View
-      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: LB.primary }, style]}
+      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.primary }, style]}
     />
   );
 }

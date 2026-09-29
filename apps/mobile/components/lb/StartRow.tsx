@@ -3,7 +3,7 @@
 // away without scrolling (CLAUDE.md rule 16). Round icon, label under it.
 import { Pressable, Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 import { Icon } from './Icon.js';
@@ -12,6 +12,7 @@ import type { OrbitItem } from './OrbitMenu.js';
 const NODE = 44;
 
 export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disabled?: boolean }) {
+  const { palette } = useTheme();
   return (
     <View
       style={{
@@ -50,7 +51,7 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
                     width: NODE,
                     height: NODE,
                     borderRadius: NODE / 2,
-                    backgroundColor: LB.paper,
+                    backgroundColor: palette.paper,
                     alignItems: 'center',
                     justifyContent: 'center',
                     transform: [{ scale: pressed ? 0.94 : 1 }],
@@ -58,7 +59,7 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
                   SHADOW.soft,
                 ]}
               >
-                <Icon name={item.icon} size={21} color={LB.primary} />
+                <Icon name={item.icon} size={21} color={palette.primary} />
               </View>
               <Text
                 numberOfLines={3}
@@ -77,7 +78,7 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
                   lineHeight: 16,
                   letterSpacing: -0.2,
                   fontWeight: '600',
-                  color: LB.ink,
+                  color: palette.ink,
                   textAlign: 'center',
                 }}
               >

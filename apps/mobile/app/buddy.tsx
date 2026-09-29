@@ -89,7 +89,7 @@ import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { useVoiceMode } from '../lib/speech/voiceMode.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { SPACE } from '../lib/theme/space.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
@@ -101,6 +101,7 @@ const VISIBLE_MESSAGES = 6;
 const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
 
 export default function BuddyScreen() {
+  const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common', 'learn', 'practice']);
   const home = useHome();
   // A practice to go on with is loaded while its card is on screen (gaps.md #2).
@@ -499,7 +500,7 @@ export default function BuddyScreen() {
 
   if (home.isPending)
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
         <HomeSkeleton label={t('common:loading')} />
       </SafeAreaView>
     );
@@ -507,7 +508,7 @@ export default function BuddyScreen() {
   // only for a home that never loaded.
   if (home.isError && !home.data) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg, justifyContent: 'center' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg, justifyContent: 'center' }}>
         <EmptyState
           title={messageFor(home.error)}
           action={
@@ -917,7 +918,7 @@ export default function BuddyScreen() {
     >
       <Text
         numberOfLines={talking ? 1 : 2}
-        style={[TYPE.body, { color: LB.ink2, textAlign: 'center', fontWeight: '500' }]}
+        style={[TYPE.body, { color: palette.ink2, textAlign: 'center', fontWeight: '500' }]}
       >
         {nextExam
           ? t('buddy:next.line', {
@@ -931,7 +932,7 @@ export default function BuddyScreen() {
   );
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow />
       <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
         <View
@@ -1123,7 +1124,10 @@ export default function BuddyScreen() {
               />
               {/* First visit: one sentence about Buddy; the ring above shows how to start. */}
               <Text
-                style={[TYPE.body, { color: LB.ink2, textAlign: 'center', paddingHorizontal: 12 }]}
+                style={[
+                  TYPE.body,
+                  { color: palette.ink2, textAlign: 'center', paddingHorizontal: 12 },
+                ]}
               >
                 {t('buddy:intro.body')}
               </Text>
@@ -1209,6 +1213,7 @@ export default function BuddyScreen() {
 
 /** The quiet "Heute geübt ✓" beside the greeting: a mark of what she did, never a number. */
 function PracticedToday({ label }: { label: string }) {
+  const { palette } = useTheme();
   return (
     <View
       accessible
@@ -1220,11 +1225,11 @@ function PracticedToday({ label }: { label: string }) {
         paddingHorizontal: 9,
         paddingVertical: 3,
         borderRadius: 999,
-        backgroundColor: LB.mint,
+        backgroundColor: palette.mint,
       }}
     >
-      <Icon name="check" size={13} color={LB.successText} />
-      <Text style={[TYPE.label, { color: LB.successText }]}>{label}</Text>
+      <Icon name="check" size={13} color={palette.successText} />
+      <Text style={[TYPE.label, { color: palette.successText }]}>{label}</Text>
     </View>
   );
 }

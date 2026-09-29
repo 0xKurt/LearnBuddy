@@ -16,7 +16,7 @@ import { setPin } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -30,6 +30,7 @@ const onlyDigits = (text: string, max: number) => text.replace(/\D/g, '').slice(
 
 /** A visible label above an input (the input carries the same label for screen readers). */
 function Labeled({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  const { palette } = useTheme();
   return (
     <View style={{ gap: 6 }}>
       <Text
@@ -39,7 +40,7 @@ function Labeled({ label, hint, children }: { label: string; hint?: string; chil
       >
         {label}
       </Text>
-      {hint ? <Text style={[TYPE.body, { color: LB.ink2 }]}>{hint}</Text> : null}
+      {hint ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{hint}</Text> : null}
       {children}
     </View>
   );
@@ -53,6 +54,7 @@ type Props = {
 };
 
 export function PinCard({ pinSet, email, onInputFocus }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation(['settings', 'common']);
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState('');
@@ -199,7 +201,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
               />
             </Labeled>
             {repeat.length === 4 && pin !== repeat ? (
-              <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.danger }]}>
+              <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
                 {t('settings:adult.pin.mismatch')}
               </Text>
             ) : null}
@@ -238,7 +240,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
                     />
                   </Labeled>
                 ) : (
-                  <Text style={[TYPE.body, { color: LB.ink2 }]}>
+                  <Text style={[TYPE.body, { color: palette.ink2 }]}>
                     {t('settings:adult.pin.no_email')}
                   </Text>
                 )}
@@ -246,7 +248,7 @@ export function PinCard({ pinSet, email, onInputFocus }: Props) {
             ) : null}
 
             {error ? (
-              <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.danger }]}>
+              <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
                 {error}
               </Text>
             ) : null}

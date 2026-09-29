@@ -10,9 +10,10 @@ import { Text, type StyleProp, type TextStyle } from 'react-native';
 import { sentenceSpans } from '../../lib/speech/readAloud.js';
 import { useBuddyVoice } from '../../lib/speech/useBuddyVoice.js';
 import { highlightedSentence } from '../../lib/speech/voiceState.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function ReadAlongText({ text, style }: { text: string; style?: StyleProp<TextStyle> }) {
+  const { palette } = useTheme();
   const voice = useBuddyVoice();
   const spans = useMemo(() => sentenceSpans(text), [text]);
   const index = highlightedSentence(voice, text);
@@ -20,11 +21,11 @@ export function ReadAlongText({ text, style }: { text: string; style?: StyleProp
   if (!span) return <Text style={style}>{text}</Text>;
   return (
     <Text style={style}>
-      <Text style={{ color: LB.ink2 }}>{text.slice(0, span[0])}</Text>
-      <Text style={{ color: LB.ink, backgroundColor: LB.primaryLt, borderRadius: 6 }}>
+      <Text style={{ color: palette.ink2 }}>{text.slice(0, span[0])}</Text>
+      <Text style={{ color: palette.ink, backgroundColor: palette.primaryLt, borderRadius: 6 }}>
         {text.slice(span[0], span[1])}
       </Text>
-      <Text style={{ color: LB.ink2 }}>{text.slice(span[1])}</Text>
+      <Text style={{ color: palette.ink2 }}>{text.slice(span[1])}</Text>
     </Text>
   );
 }

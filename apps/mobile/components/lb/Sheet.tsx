@@ -22,7 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -41,6 +41,7 @@ type Props = {
 };
 
 export function Sheet({ visible, title, closeLabel, onClose, children, footer }: Props) {
+  const { palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screen } = useWindowDimensions();
   const reduced = useReducedMotion();
@@ -123,7 +124,7 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
               accessibilityViewIsModal
               style={[
                 {
-                  backgroundColor: LB.paper,
+                  backgroundColor: palette.paper,
                   borderTopLeftRadius: 32,
                   borderTopRightRadius: 32,
                   paddingBottom: insets.bottom + 8,
@@ -144,7 +145,7 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
                       width: 40,
                       height: 5,
                       borderRadius: 3,
-                      backgroundColor: LB.ink4,
+                      backgroundColor: palette.ink4,
                       marginBottom: 14,
                     }}
                   />

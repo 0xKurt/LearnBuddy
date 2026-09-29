@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from './Icon.js';
 
 const LABEL_KEY: Record<
@@ -32,6 +32,7 @@ export function CircleBtn({
   /** No ring or fill: an icon button inside another surface (the composer bar). */
   plain?: boolean;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('common');
   const inner = (
     <View
@@ -41,14 +42,14 @@ export function CircleBtn({
         borderRadius: 22,
         // A filled circle, not paper + hairline: the hairline sits at ~1.2:1 on the page
         // and the button read as a floating icon without a boundary (WCAG 1.4.11).
-        backgroundColor: plain ? 'transparent' : LB.canvas,
-        borderColor: LB.hairline,
+        backgroundColor: plain ? 'transparent' : palette.canvas,
+        borderColor: palette.hairline,
         borderWidth: plain ? 0 : 1,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Icon name={icon} size={plain ? 24 : 20} color={plain ? LB.ink2 : LB.ink} />
+      <Icon name={icon} size={plain ? 24 : 20} color={plain ? palette.ink2 : palette.ink} />
     </View>
   );
   if (!onPress) return inner;

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -27,6 +27,7 @@ type Props = {
 };
 
 export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('capture');
   // A photo the phone cannot show says so instead of leaving an empty box (issue #57).
   const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
@@ -50,7 +51,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                 height: THUMB,
                 borderRadius: 14,
                 overflow: 'hidden',
-                backgroundColor: LB.canvas,
+                backgroundColor: palette.canvas,
                 ...SHADOW.soft,
               }}
             >
@@ -65,13 +66,13 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                     justifyContent: 'center',
                     gap: 2,
                     padding: 4,
-                    backgroundColor: LB.lavender,
+                    backgroundColor: palette.lavender,
                   }}
                 >
-                  <Icon name="file" size={22} color={LB.primaryDk} />
+                  <Icon name="file" size={22} color={palette.primaryDk} />
                   <Text
                     numberOfLines={2}
-                    style={[TYPE.small, { color: LB.primaryDk, textAlign: 'center' }]}
+                    style={[TYPE.small, { color: palette.primaryDk, textAlign: 'center' }]}
                   >
                     {pdfs[uri]}
                   </Text>
@@ -82,7 +83,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                   accessibilityLabel={t('preview_failed')}
                   style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <Icon name="eye-off" size={22} color={LB.ink3} />
+                  <Icon name="eye-off" size={22} color={palette.ink3} />
                 </View>
               ) : (
                 <ZoomablePhoto uri={uri} label={label} fill>
@@ -110,11 +111,11 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                     right: 0,
                     bottom: 0,
                     paddingVertical: 1,
-                    backgroundColor: LB.butter,
+                    backgroundColor: palette.butter,
                     alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: LB.warningText, fontSize: 11, fontWeight: '700' }}>
+                  <Text style={{ color: palette.warningText, fontSize: 11, fontWeight: '700' }}>
                     {t('quality.flag')}
                   </Text>
                 </View>
@@ -141,13 +142,13 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) 
                   width: 24,
                   height: 24,
                   borderRadius: 12,
-                  backgroundColor: LB.ink,
+                  backgroundColor: palette.ink,
                   opacity: disabled ? 0.4 : 0.85,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icon name="close" size={14} color={LB.paper} />
+                <Icon name="close" size={14} color={palette.paper} />
               </View>
             </Pressable>
           </View>

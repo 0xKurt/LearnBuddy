@@ -28,7 +28,7 @@ import { currentLocale } from '../../lib/i18n/index.js';
 import { plotFrame, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { localDecimal } from '../../lib/numbers.js';
-import { FIGURE, LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { MathText } from './MathText.js';
 import { useSpokenWords } from './useSpokenMath.js';
@@ -64,6 +64,7 @@ export function formatNumber(n: number): string {
  * that comes out taller is drawn again, narrower (its height follows its width).
  */
 export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: number }) {
+  const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('math');
   const [width, setWidth] = useState(0);
   // The drawing's full height at this width, measured once; the scale is then DERIVED
@@ -96,10 +97,10 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
       }}
       style={{
         alignSelf: 'stretch',
-        backgroundColor: FIGURE.paper,
+        backgroundColor: ink.paper,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: LB.hairline,
+        borderColor: palette.hairline,
         padding: 12,
         minHeight: 60,
       }}
@@ -143,6 +144,7 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
 // ─────────────── fractions ───────────────
 
 function FractionPicture({ fig, width }: { fig: FractionFig; width: number }) {
+  const { figure: ink } = useTheme();
   const items = fig.fractions.map((f) => ({
     parts: Math.max(1, f.parts),
     filled: Math.min(Math.max(0, f.filled), Math.max(1, f.parts)),
@@ -166,8 +168,8 @@ function FractionPicture({ fig, width }: { fig: FractionFig; width: number }) {
                   y={y}
                   width={seg}
                   height={barH}
-                  fill={i < f.filled ? FIGURE.fill : FIGURE.empty}
-                  stroke={FIGURE.stroke}
+                  fill={i < f.filled ? ink.fill : ink.empty}
+                  stroke={ink.stroke}
                   strokeWidth={1.5}
                 />
               ))}
@@ -194,8 +196,8 @@ function FractionPicture({ fig, width }: { fig: FractionFig; width: number }) {
               cx={cx}
               cy={cy}
               r={r}
-              fill={f.filled > 0 ? FIGURE.fill : FIGURE.empty}
-              stroke={FIGURE.stroke}
+              fill={f.filled > 0 ? ink.fill : ink.empty}
+              stroke={ink.stroke}
               strokeWidth={1.5}
             />
           );
@@ -212,8 +214,8 @@ function FractionPicture({ fig, width }: { fig: FractionFig; width: number }) {
                 <Path
                   key={i}
                   d={d}
-                  fill={i < f.filled ? FIGURE.fill : FIGURE.empty}
-                  stroke={FIGURE.stroke}
+                  fill={i < f.filled ? ink.fill : ink.empty}
+                  stroke={ink.stroke}
                   strokeWidth={1.5}
                   strokeLinejoin="round"
                 />
@@ -229,6 +231,7 @@ function FractionPicture({ fig, width }: { fig: FractionFig; width: number }) {
 // ─────────────── number line ───────────────
 
 function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
+  const { figure: ink } = useTheme();
   const lo = Math.min(fig.min, fig.max);
   const hi = Math.max(fig.min, fig.max);
   const span = hi - lo || 1;
@@ -242,17 +245,10 @@ function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
   const h = axisY + 34;
   return (
     <Svg width={width} height={h}>
-      <Line
-        x1={pad - 8}
-        y1={axisY}
-        x2={width - 6}
-        y2={axisY}
-        stroke={FIGURE.axis}
-        strokeWidth={1.5}
-      />
+      <Line x1={pad - 8} y1={axisY} x2={width - 6} y2={axisY} stroke={ink.axis} strokeWidth={1.5} />
       <Path
         d={`M ${width - 12} ${axisY - 5} L ${width - 4} ${axisY} L ${width - 12} ${axisY + 5}`}
-        stroke={FIGURE.axis}
+        stroke={ink.axis}
         strokeWidth={1.5}
         fill="none"
       />
@@ -265,7 +261,7 @@ function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
               y1={axisY - (major ? 7 : 4)}
               x2={x(v)}
               y2={axisY + (major ? 7 : 4)}
-              stroke={FIGURE.axis}
+              stroke={ink.axis}
               strokeWidth={major ? 1.5 : 1}
             />
             {major ? (
@@ -274,7 +270,7 @@ function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
                 x={x(v)}
                 y={axisY + 24}
                 fontSize={FONT}
-                fill={FIGURE.label}
+                fill={ink.label}
                 textAnchor="middle"
               >
                 {formatNumber(v)}
@@ -291,8 +287,8 @@ function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
               cx={x(p.value)}
               cy={axisY}
               r={5.5}
-              fill={FIGURE.point}
-              stroke={FIGURE.paper}
+              fill={ink.point}
+              stroke={ink.paper}
               strokeWidth={1.5}
             />
             {p.label ? (
@@ -302,7 +298,7 @@ function NumberLine({ fig, width }: { fig: NumberLineFig; width: number }) {
                 y={axisY - 14}
                 fontSize={FONT + 1}
                 fontWeight="600"
-                fill={FIGURE.point}
+                fill={ink.point}
                 textAnchor="middle"
               >
                 {p.label}
@@ -336,6 +332,7 @@ function ticksFor(lo: number, hi: number, step: number): number[] {
 const DASHES: ReadonlyArray<string | undefined> = [undefined, '8 5', '2 4'];
 
 function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
+  const { palette, figure: ink } = useTheme();
   const x0 = Math.min(fig.x_min, fig.x_max);
   const x1 = Math.max(fig.x_min, fig.x_max);
   const y0 = Math.min(fig.y_min, fig.y_max);
@@ -392,7 +389,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
             y1={top}
             x2={X(v)}
             y2={top + ph}
-            stroke={FIGURE.grid}
+            stroke={ink.grid}
             strokeWidth={1}
           />
         ))}
@@ -403,7 +400,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
             y1={Y(v)}
             x2={left + pw}
             y2={Y(v)}
-            stroke={FIGURE.grid}
+            stroke={ink.grid}
             strokeWidth={1}
           />
         ))}
@@ -413,12 +410,12 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
           y1={axisX}
           x2={left + pw + 6}
           y2={axisX}
-          stroke={FIGURE.axis}
+          stroke={ink.axis}
           strokeWidth={1.5}
         />
         <Path
           d={`M ${left + pw} ${axisX - 4} L ${left + pw + 7} ${axisX} L ${left + pw} ${axisX + 4}`}
-          stroke={FIGURE.axis}
+          stroke={ink.axis}
           strokeWidth={1.5}
           fill="none"
         />
@@ -427,12 +424,12 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
           y1={top + ph}
           x2={axisY}
           y2={top - 6}
-          stroke={FIGURE.axis}
+          stroke={ink.axis}
           strokeWidth={1.5}
         />
         <Path
           d={`M ${axisY - 4} ${top} L ${axisY} ${top - 7} L ${axisY + 4} ${top}`}
-          stroke={FIGURE.axis}
+          stroke={ink.axis}
           strokeWidth={1.5}
           fill="none"
         />
@@ -442,7 +439,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
           y={axisX - 8}
           fontSize={FONT}
           fontStyle="italic"
-          fill={FIGURE.label}
+          fill={ink.label}
           textAnchor="end"
         >
           x
@@ -453,7 +450,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
           y={top + 6}
           fontSize={FONT}
           fontStyle="italic"
-          fill={FIGURE.label}
+          fill={ink.label}
         >
           y
         </SvgText>
@@ -466,7 +463,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                 y1={axisX - 3}
                 x2={X(v)}
                 y2={axisX + 3}
-                stroke={FIGURE.axis}
+                stroke={ink.axis}
                 strokeWidth={1}
               />
               <HaloText
@@ -474,7 +471,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                 y={Math.min(axisX + 15, top + ph - 2)}
                 size={SMALL}
                 weight="400"
-                color={FIGURE.label}
+                color={ink.label}
                 anchor="middle"
                 text={formatNumber(v)}
               />
@@ -489,7 +486,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                 y1={Y(v)}
                 x2={axisY + 3}
                 y2={Y(v)}
-                stroke={FIGURE.axis}
+                stroke={ink.axis}
                 strokeWidth={1}
               />
               <HaloText
@@ -497,7 +494,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                 y={Y(v) + 4}
                 size={SMALL}
                 weight="400"
-                color={FIGURE.label}
+                color={ink.label}
                 anchor="end"
                 text={formatNumber(v)}
               />
@@ -509,7 +506,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
             x={axisY - 6}
             y={axisX + 15}
             fontSize={SMALL}
-            fill={FIGURE.label}
+            fill={ink.label}
             textAnchor="end"
           >
             0
@@ -520,7 +517,7 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
             <Path
               key={g.i}
               d={g.d}
-              stroke={FIGURE.series[g.i % FIGURE.series.length]}
+              stroke={ink.series[g.i % ink.series.length]}
               strokeWidth={2.5}
               strokeDasharray={DASHES[g.i % DASHES.length]}
               strokeLinecap="round"
@@ -537,15 +534,15 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                 cx={X(p.x)}
                 cy={Y(p.y)}
                 r={4.5}
-                fill={FIGURE.point}
-                stroke={FIGURE.paper}
+                fill={ink.point}
+                stroke={ink.paper}
                 strokeWidth={1.5}
               />
               {p.label ? (
                 <HaloText
                   x={X(p.x) + (X(p.x) > left + pw - 40 ? -8 : 8)}
                   y={Y(p.y) - 8}
-                  color={FIGURE.point}
+                  color={ink.point}
                   anchor={X(p.x) > left + pw - 40 ? 'end' : 'start'}
                   text={p.label}
                 />
@@ -563,13 +560,13 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
                   y1={5}
                   x2={26}
                   y2={5}
-                  stroke={FIGURE.series[g.i % FIGURE.series.length]}
+                  stroke={ink.series[g.i % ink.series.length]}
                   strokeWidth={2.5}
                   strokeDasharray={DASHES[g.i % DASHES.length]}
                   strokeLinecap="round"
                 />
               </Svg>
-              <Text style={[TYPE.small, { color: LB.ink }]}>
+              <Text style={[TYPE.small, { color: palette.ink }]}>
                 {g.label ? `${g.label}: ` : ''}y = {prettyExpr(g.expr)}
               </Text>
             </View>
@@ -598,6 +595,7 @@ function HaloText({
   size?: number;
   weight?: '400' | '600';
 }) {
+  const { figure: ink } = useTheme();
   return (
     <G>
       <SvgText
@@ -606,8 +604,8 @@ function HaloText({
         y={y}
         fontSize={size}
         fontWeight={weight}
-        fill={FIGURE.paper}
-        stroke={FIGURE.paper}
+        fill={ink.paper}
+        stroke={ink.paper}
         strokeWidth={4}
         strokeLinejoin="round"
         textAnchor={anchor}
@@ -709,6 +707,7 @@ function tracePath(
 // ─────────────── bar chart ───────────────
 
 function BarChart({ fig, width }: { fig: BarFig; width: number }) {
+  const { palette, figure: ink } = useTheme();
   const unit = fig.unit ? ` ${fig.unit}` : '';
   const values = fig.bars.map((b) => b.value);
   const vmin = Math.min(0, ...values);
@@ -738,7 +737,7 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
                 x={labelW - 8}
                 y={y + rowH / 2 + 4}
                 fontSize={FONT}
-                fill={LB.ink}
+                fill={palette.ink}
                 textAnchor="end"
               >
                 {b.label.length > maxChars ? `${b.label.slice(0, maxChars - 1)}…` : b.label}
@@ -749,7 +748,7 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
                 width={Math.max(1, xb - xa)}
                 height={rowH - 10}
                 rx={4}
-                fill={FIGURE.fill}
+                fill={ink.fill}
               />
               <SvgText
                 fontFamily={FAMILY}
@@ -757,14 +756,14 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
                 y={y + rowH / 2 + 4}
                 fontSize={FONT}
                 fontWeight="600"
-                fill={LB.ink}
+                fill={palette.ink}
               >
                 {`${formatNumber(b.value)}${unit}`}
               </SvgText>
             </G>
           );
         })}
-        <Line x1={X(0)} y1={0} x2={X(0)} y2={h} stroke={FIGURE.axis} strokeWidth={1.5} />
+        <Line x1={X(0)} y1={0} x2={X(0)} y2={h} stroke={ink.axis} strokeWidth={1.5} />
       </Svg>
     );
   }
@@ -790,7 +789,7 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
               width={bw}
               height={Math.max(1, yb - ya)}
               rx={4}
-              fill={FIGURE.fill}
+              fill={ink.fill}
             />
             <SvgText
               fontFamily={FAMILY}
@@ -798,7 +797,7 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
               y={b.value >= 0 ? ya - 6 : yb + 14}
               fontSize={FONT}
               fontWeight="600"
-              fill={LB.ink}
+              fill={palette.ink}
               textAnchor="middle"
             >
               {`${formatNumber(b.value)}${unit}`}
@@ -808,7 +807,7 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
               x={cx}
               y={h - 8}
               fontSize={FONT}
-              fill={LB.ink2}
+              fill={palette.ink2}
               textAnchor="middle"
             >
               {b.label}
@@ -816,7 +815,7 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
           </G>
         );
       })}
-      <Line x1={0} y1={Y(0)} x2={width} y2={Y(0)} stroke={FIGURE.axis} strokeWidth={1.5} />
+      <Line x1={0} y1={Y(0)} x2={width} y2={Y(0)} stroke={ink.axis} strokeWidth={1.5} />
     </Svg>
   );
 }
@@ -824,6 +823,7 @@ function BarChart({ fig, width }: { fig: BarFig; width: number }) {
 // ─────────────── geometry ───────────────
 
 function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
+  const { palette, figure: ink } = useTheme();
   const byName = new Map(fig.points.map((p) => [p.name, p]));
   let minX = Infinity;
   let maxX = -Infinity;
@@ -862,8 +862,8 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
       <Polygon
         key={`poly${i}`}
         points={pts.map((p) => `${X(p.x)},${Y(p.y)}`).join(' ')}
-        fill={FIGURE.fillSoft}
-        stroke={FIGURE.stroke}
+        fill={ink.fillSoft}
+        stroke={ink.stroke}
         strokeWidth={1.75}
         strokeLinejoin="round"
       />,
@@ -879,7 +879,7 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
         cy={Y(p.y)}
         r={c.radius * scale}
         fill="none"
-        stroke={FIGURE.stroke}
+        stroke={ink.stroke}
         strokeWidth={1.75}
       />,
     );
@@ -895,7 +895,7 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
         y1={Y(p.y)}
         x2={X(q.x)}
         y2={Y(q.y)}
-        stroke={FIGURE.stroke}
+        stroke={ink.stroke}
         strokeWidth={1.75}
         strokeLinecap="round"
       />,
@@ -921,8 +921,15 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
         const ly = Y(p.y) - dy * 14 + 5;
         return (
           <G key={p.name}>
-            <Circle cx={X(p.x)} cy={Y(p.y)} r={3.5} fill={FIGURE.stroke} />
-            <HaloText x={lx} y={ly} size={FONT + 2} color={LB.ink} anchor="middle" text={p.name} />
+            <Circle cx={X(p.x)} cy={Y(p.y)} r={3.5} fill={ink.stroke} />
+            <HaloText
+              x={lx}
+              y={ly}
+              size={FONT + 2}
+              color={palette.ink}
+              anchor="middle"
+              text={p.name}
+            />
           </G>
         );
       })}
@@ -933,6 +940,7 @@ function Geometry({ fig, width }: { fig: GeometryFig; width: number }) {
 // ─────────────── table ───────────────
 
 function Table({ fig }: { fig: TableFig }) {
+  const { palette, figure: ink } = useTheme();
   const cols = Math.max(fig.header.length, ...fig.rows.map((r) => r.length));
   const cell = (text: string, key: number, header: boolean, last: boolean) => (
     <View
@@ -943,7 +951,7 @@ function Table({ fig }: { fig: TableFig }) {
         paddingHorizontal: 8,
         paddingVertical: 8,
         borderRightWidth: last ? 0 : 1,
-        borderColor: FIGURE.gridStrong,
+        borderColor: ink.gridStrong,
         justifyContent: 'center',
       }}
     >
@@ -959,9 +967,9 @@ function Table({ fig }: { fig: TableFig }) {
       key={key}
       style={{
         flexDirection: 'row',
-        backgroundColor: header ? LB.lavender : FIGURE.paper,
+        backgroundColor: header ? palette.lavender : ink.paper,
         borderTopWidth: header ? 0 : 1,
-        borderColor: FIGURE.gridStrong,
+        borderColor: ink.gridStrong,
       }}
     >
       {Array.from({ length: cols }, (_, i) => cell(cells[i] ?? '', i, header, i === cols - 1))}
@@ -971,7 +979,7 @@ function Table({ fig }: { fig: TableFig }) {
     <View
       style={{
         borderWidth: 1,
-        borderColor: FIGURE.gridStrong,
+        borderColor: ink.gridStrong,
         borderRadius: 10,
         overflow: 'hidden',
       }}

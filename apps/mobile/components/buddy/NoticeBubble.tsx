@@ -7,7 +7,7 @@ import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -26,6 +26,7 @@ type Props = {
 };
 
 export function NoticeBubble({ text, detail = null, thumb = null, children }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('common');
   return (
     // sm between the bubble and its buttons: the same air answer chips get under a
@@ -46,7 +47,7 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
               flexDirection: 'row',
               alignItems: 'center',
               gap: SPACE.sm,
-              backgroundColor: LB.paper,
+              backgroundColor: palette.paper,
               borderBottomLeftRadius: 6,
             },
             SHADOW.soft,
@@ -68,7 +69,7 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
           ) : null}
           {/* 2, off the scale: the line heights carry the air between text and detail. */}
           <View style={{ flexShrink: 1, gap: 2 }}>
-            <Text style={[TYPE.body, { color: LB.ink }]}>{text}</Text>
+            <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
             {detail ? <Text style={TYPE.small}>{detail}</Text> : null}
           </View>
         </View>

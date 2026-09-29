@@ -5,7 +5,7 @@
 import { Text, View } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from './BuddyOrb.js';
 
@@ -23,6 +23,7 @@ export function EmptyState({
   body?: string;
   action?: React.ReactNode;
 }) {
+  const { palette } = useTheme();
   // An empty or error state replaces the whole content: say so (iOS has no live regions).
   useAnnounce(title);
   return (
@@ -45,7 +46,7 @@ export function EmptyState({
             width: 76,
             height: 76,
             borderRadius: 38,
-            backgroundColor: LB.primaryLt,
+            backgroundColor: palette.primaryLt,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -64,7 +65,7 @@ export function EmptyState({
         {title}
       </Text>
       {body ? (
-        <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 320 }]}>
+        <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 320 }]}>
           {body}
         </Text>
       ) : null}

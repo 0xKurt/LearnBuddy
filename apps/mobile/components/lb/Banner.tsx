@@ -2,20 +2,23 @@
 // no hard box.
 
 import { Text, View } from 'react-native';
-import { LB } from '../../lib/theme/colors.js';
+import type { Palette } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Tone = 'gray' | 'warning' | 'info' | 'danger';
 
-// Read at render time: a module-scope map froze the start palette (issue #84).
-const tones = (): Record<Tone, { bg: string; color: string }> => ({
-  gray: { bg: LB.canvas, color: LB.ink },
-  warning: { bg: LB.butter, color: LB.warningText },
-  info: { bg: LB.lavender, color: LB.primaryDk },
-  danger: { bg: LB.blush, color: LB.ink },
+// Built from the palette the component is rendering with: a module-scope map froze the
+// start palette (issue #84).
+const tones = (p: Palette): Record<Tone, { bg: string; color: string }> => ({
+  gray: { bg: p.canvas, color: p.ink },
+  warning: { bg: p.butter, color: p.warningText },
+  info: { bg: p.lavender, color: p.primaryDk },
+  danger: { bg: p.blush, color: p.ink },
 });
 
 export function Banner({ children, tone = 'gray' }: { children: string; tone?: Tone }) {
-  const t = tones()[tone];
+  const { palette } = useTheme();
+  const t = tones(palette)[tone];
   return (
     <View
       style={{

@@ -16,7 +16,7 @@ import { Pressable, Text, View } from 'react-native';
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { OfferCard } from '../learn/OfferCard.js';
@@ -109,6 +109,7 @@ export function Conversation({
   spoken: spokenMode = false,
   showTyping = true,
 }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
   const words = useSpokenWords();
@@ -188,7 +189,7 @@ export function Conversation({
                     style={[
                       BUBBLE,
                       {
-                        backgroundColor: mine ? LB.primary : LB.paper,
+                        backgroundColor: mine ? palette.primary : palette.paper,
                         borderBottomRightRadius: mine ? 6 : BUBBLE.borderRadius,
                         borderBottomLeftRadius: mine ? BUBBLE.borderRadius : 6,
                         opacity: pressed ? 0.85 : 1,
@@ -201,11 +202,11 @@ export function Conversation({
                       <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
                     ) : null}
                     {!mine && spokenMode && m === lastBuddy ? (
-                      <ReadAlongBubble text={m.text} style={[TYPE.body, { color: LB.ink }]} />
+                      <ReadAlongBubble text={m.text} style={[TYPE.body, { color: palette.ink }]} />
                     ) : (
                       <RichText
                         text={m.text}
-                        style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}
+                        style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
                       />
                     )}
                   </View>
@@ -260,7 +261,7 @@ export function Conversation({
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 4,
-                        backgroundColor: a.status === 'undone' ? LB.canvas : LB.mint,
+                        backgroundColor: a.status === 'undone' ? palette.canvas : palette.mint,
                         borderRadius: 16,
                         paddingLeft: 12,
                       }}
@@ -271,7 +272,7 @@ export function Conversation({
                           {
                             fontSize: 13,
                             flex: 1,
-                            color: a.status === 'undone' ? LB.ink2 : LB.ink,
+                            color: a.status === 'undone' ? palette.ink2 : palette.ink,
                           },
                         ]}
                       >
@@ -310,7 +311,7 @@ export function Conversation({
               >
                 {/* It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by
                     her is no failure: said calmly, not in red. */}
-                <Text style={[TYPE.small, { color: stopped ? LB.ink2 : LB.danger }]}>
+                <Text style={[TYPE.small, { color: stopped ? palette.ink2 : palette.danger }]}>
                   {failedLabel(m.failure_code)}
                 </Text>
                 {/* Resending cannot help once today's allowance is used up. */}
@@ -376,13 +377,13 @@ export function Conversation({
               BUBBLE,
               {
                 maxWidth: '86%',
-                backgroundColor: LB.primary,
+                backgroundColor: palette.primary,
                 borderBottomRightRadius: 6,
                 opacity: 0.8,
               },
             ]}
           >
-            <Text style={[TYPE.body, { color: LB.paper }]}>{pending.text}</Text>
+            <Text style={[TYPE.body, { color: palette.paper }]}>{pending.text}</Text>
           </View>
         </Animated.View>
       ) : null}
@@ -400,13 +401,13 @@ export function Conversation({
               BUBBLE,
               {
                 flexShrink: 1,
-                backgroundColor: LB.paper,
+                backgroundColor: palette.paper,
                 borderBottomLeftRadius: 6,
               },
               SHADOW.soft,
             ]}
           >
-            <RichText text={shownLive} style={[TYPE.body, { color: LB.ink }]} />
+            <RichText text={shownLive} style={[TYPE.body, { color: palette.ink }]} />
           </View>
         </Animated.View>
       ) : thinking && showTyping ? (
@@ -429,6 +430,7 @@ export function Conversation({
  * to each side. Everything older is right above it — nothing is hidden or cleared.
  */
 function SessionLine({ text }: { text: string }) {
+  const { palette } = useTheme();
   return (
     <View
       style={{
@@ -440,16 +442,17 @@ function SessionLine({ text }: { text: string }) {
         marginTop: SPACE.xs,
       }}
     >
-      <View style={{ flex: 1, height: 1, backgroundColor: LB.hairline }} />
-      <Text accessibilityRole="header" style={[TYPE.small, { color: LB.ink2, fontSize: 12 }]}>
+      <View style={{ flex: 1, height: 1, backgroundColor: palette.hairline }} />
+      <Text accessibilityRole="header" style={[TYPE.small, { color: palette.ink2, fontSize: 12 }]}>
         {text}
       </Text>
-      <View style={{ flex: 1, height: 1, backgroundColor: LB.hairline }} />
+      <View style={{ flex: 1, height: 1, backgroundColor: palette.hairline }} />
     </View>
   );
 }
 
 export function DayLine({ day }: { day: string }) {
+  const { palette } = useTheme();
   const { t, i18n: i } = useTranslation('buddy');
   const now = new Date();
   const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
@@ -464,7 +467,7 @@ export function DayLine({ day }: { day: string }) {
       accessibilityRole="header"
       style={[
         TYPE.small,
-        { alignSelf: 'center', color: LB.ink2, fontSize: 12, marginVertical: SPACE.xs },
+        { alignSelf: 'center', color: palette.ink2, fontSize: 12, marginVertical: SPACE.xs },
       ]}
     >
       {label}

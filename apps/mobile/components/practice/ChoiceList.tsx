@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { speakMathText } from '../../lib/math/speak.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -72,6 +72,7 @@ type Props = {
 };
 
 export function ChoiceList({ choices, tried, disabled, onChoose }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
   // Short options (a number, a fraction, a word) sit two by two: all of them and the
@@ -87,7 +88,10 @@ export function ChoiceList({ choices, tried, disabled, onChoose }: Props) {
             <View
               key={`${index}:${choice}`}
               style={[
-                { borderRadius: CARD_RADIUS, backgroundColor: wasTried ? LB.canvas : LB.paper },
+                {
+                  borderRadius: CARD_RADIUS,
+                  backgroundColor: wasTried ? palette.canvas : palette.paper,
+                },
                 grid ? { flexBasis: '45%', flexGrow: 1 } : null,
                 wasTried ? null : SHADOW.soft,
               ]}
@@ -109,14 +113,14 @@ export function ChoiceList({ choices, tried, disabled, onChoose }: Props) {
                         text={choice}
                         accessible={false}
                         style={{
-                          color: wasTried ? LB.ink2 : LB.ink,
+                          color: wasTried ? palette.ink2 : palette.ink,
                           fontSize: 17,
                           lineHeight: 23,
                           fontWeight: '600',
                         }}
                       />
                       {wasTried ? (
-                        <Text style={[TYPE.label, { color: LB.ink2, fontWeight: '500' }]}>
+                        <Text style={[TYPE.label, { color: palette.ink2, fontWeight: '500' }]}>
                           {t('choice_tried')}
                         </Text>
                       ) : null}
@@ -151,6 +155,7 @@ function letterFor(index: number): string {
 
 /** The round letter in front of a choice; a tried one shows a dash instead (not only a paler colour). */
 function LetterBadge({ letter, tried }: { letter: string; tried: boolean }) {
+  const { palette } = useTheme();
   return (
     <View
       style={{
@@ -159,14 +164,14 @@ function LetterBadge({ letter, tried }: { letter: string; tried: boolean }) {
         borderRadius: BADGE / 2,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: tried ? LB.paper : LB.lavender,
+        backgroundColor: tried ? palette.paper : palette.lavender,
         borderWidth: tried ? 1 : 0,
-        borderColor: LB.ink4,
+        borderColor: palette.ink4,
       }}
     >
       <Text
         style={{
-          color: tried ? LB.ink3 : LB.primaryDk,
+          color: tried ? palette.ink3 : palette.primaryDk,
           fontSize: 15,
           lineHeight: 19,
           fontWeight: '700',

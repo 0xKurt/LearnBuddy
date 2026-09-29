@@ -66,6 +66,35 @@ export default tseslint.config(
     },
   },
   {
+    // Colours come from the palette in use, never from the module that applies it
+    // (issue #29, layer 3). `LB` and its derived maps in lib/theme/colors.ts are live
+    // objects: read into a screen at import time they can only be right for the palette
+    // that happened to start the app. Screens and components ask `useTheme()` instead —
+    // the tokens then arrive as props of a render, and React knows when they change.
+    // Palette data and types (lib/theme/palettes.ts) stay free to import: they are plain
+    // values, tied to no active theme.
+    files: [
+      'apps/mobile/app/**/*.ts',
+      'apps/mobile/app/**/*.tsx',
+      'apps/mobile/components/**/*.ts',
+      'apps/mobile/components/**/*.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/theme/colors', '**/theme/colors.js'],
+              message:
+                'Farben kommen aus useTheme() (lib/theme/ThemeProvider.tsx), nicht aus lib/theme/colors.ts — LB & Co. sind lebende Objekte und frieren sonst die Startpalette ein (Issue #29).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Plain Node scripts (tooling): Node's globals.
     files: ['**/*.mjs'],
     languageOptions: {

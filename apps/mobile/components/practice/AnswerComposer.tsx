@@ -27,7 +27,7 @@ import { hasMath } from '../../lib/math/parse.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -67,6 +67,7 @@ export function AnswerComposer({
   onChange,
   onCheck,
 }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
   const long = kind === 'long';
@@ -127,7 +128,7 @@ export function AnswerComposer({
         style={[
           {
             gap: 2,
-            backgroundColor: LB.paper,
+            backgroundColor: palette.paper,
             borderRadius: long ? 26 : 30,
             paddingVertical: 6,
             paddingLeft: 16,
@@ -136,7 +137,7 @@ export function AnswerComposer({
             // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
             outlineStyle: 'solid',
             outlineWidth: focused ? 4 : 0,
-            outlineColor: LB.ring,
+            outlineColor: palette.ring,
           },
           SHADOW.float,
         ]}
@@ -160,7 +161,7 @@ export function AnswerComposer({
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder={t('answer.placeholder')}
-            placeholderTextColor={LB.ink3}
+            placeholderTextColor={palette.ink3}
             accessibilityLabel={t('answer.label')}
             accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
             multiline
@@ -191,7 +192,7 @@ export function AnswerComposer({
               paddingBottom: 13,
               fontSize: 16,
               lineHeight: 22,
-              color: LB.ink,
+              color: palette.ink,
               outlineWidth: 0,
             }}
           />
@@ -199,7 +200,10 @@ export function AnswerComposer({
             <Text
               accessibilityElementsHidden
               importantForAccessibility="no"
-              style={[TYPE.body, { color: LB.ink2, alignSelf: 'center', paddingHorizontal: 4 }]}
+              style={[
+                TYPE.body,
+                { color: palette.ink2, alignSelf: 'center', paddingHorizontal: 4 },
+              ]}
             >
               {unit}
             </Text>

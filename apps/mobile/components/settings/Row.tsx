@@ -9,7 +9,7 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 type Props = {
@@ -23,6 +23,7 @@ type Props = {
 };
 
 export function Row({ question, answer, current, hint, locked = false, children }: Props) {
+  const { palette } = useTheme();
   return (
     <View style={{ gap: 6 }}>
       <Text
@@ -33,7 +34,7 @@ export function Row({ question, answer, current, hint, locked = false, children 
         {question}
       </Text>
       {answer ? <Text style={TYPE.body}>{answer}</Text> : null}
-      {hint ? <Text style={[TYPE.body, { color: LB.ink2 }]}>{hint}</Text> : null}
+      {hint ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{hint}</Text> : null}
       {children ? (
         <View
           // While locked the control is also hidden from screen readers: it would
@@ -55,5 +56,6 @@ export function Row({ question, answer, current, hint, locked = false, children 
 }
 
 export function Divider() {
-  return <View style={{ height: 1, backgroundColor: LB.hairline }} />;
+  const { palette } = useTheme();
+  return <View style={{ height: 1, backgroundColor: palette.hairline }} />;
 }

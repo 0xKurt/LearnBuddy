@@ -25,7 +25,7 @@ import { fadeIn } from '../../lib/theme/enter.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { PhotoCheckCard } from '../capture/PhotoCheckCard.js';
@@ -63,6 +63,7 @@ export function Composer({
   /** Conversation mode (talk screen): bottom right, next to the mic. */
   onTalk: () => void;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
   const voiceMode = useVoiceMode((s) => s.on);
@@ -184,7 +185,7 @@ export function Composer({
   const attachments = (
     <>
       {pages.preparing ? (
-        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: LB.ink2 }]}>
+        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
           {t('capture:preparing', {
             current: pages.preparing.current,
             count: pages.preparing.total,
@@ -209,7 +210,7 @@ export function Composer({
       ) : null}
       {pages.progress ? (
         <View accessibilityLiveRegion="polite" style={{ gap: SPACE.xs }}>
-          <Text style={[TYPE.small, { color: LB.ink2 }]}>{progressText(pages.progress)}</Text>
+          <Text style={[TYPE.small, { color: palette.ink2 }]}>{progressText(pages.progress)}</Text>
           <View style={{ flexDirection: 'row' }}>
             <Progress
               value={
@@ -266,7 +267,7 @@ export function Composer({
             hidden in a field voice mode does not show (composer-parked-transcript). */}
         {trimmed || attached ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-            <Text style={[TYPE.body, { flex: 1, color: LB.ink }]} numberOfLines={3}>
+            <Text style={[TYPE.body, { flex: 1, color: palette.ink }]} numberOfLines={3}>
               {trimmed}
             </Text>
             <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
@@ -283,7 +284,9 @@ export function Composer({
               onPress={() => setVoiceMode(false)}
               accessibilityLabel={t('buddy:composer.keyboard')}
             />
-            <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
+            <Text style={[TYPE.label, { color: palette.ink2 }]}>
+              {t('buddy:composer.keyboard')}
+            </Text>
           </View>
           {stoppable ? (
             stopBtn('lg')
@@ -302,7 +305,9 @@ export function Composer({
               onPress={() => void pages.pick('camera')}
               accessibilityLabel={t('buddy:composer.photo')}
             />
-            <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.photo_short')}</Text>
+            <Text style={[TYPE.label, { color: palette.ink2 }]}>
+              {t('buddy:composer.photo_short')}
+            </Text>
           </View>
         </View>
       </View>
@@ -324,7 +329,7 @@ export function Composer({
             // 2, off the scale: the field carries its own xs padding on each side —
             // a full step here would double the air inside the pill.
             gap: 2,
-            backgroundColor: LB.paper,
+            backgroundColor: palette.paper,
             borderRadius: 28,
             padding: SPACE.xs,
             // 52 + the bar's padding keeps the buttons at their 44 pt target while the
@@ -333,7 +338,7 @@ export function Composer({
             // The focus ring sits on the pill, not on the bare field inside (the web drew a black box).
             outlineStyle: 'solid',
             outlineWidth: focused ? 4 : 0,
-            outlineColor: LB.ring,
+            outlineColor: palette.ring,
           },
           SHADOW.float,
         ]}
@@ -352,7 +357,7 @@ export function Composer({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={t('buddy:composer.placeholder')}
-          placeholderTextColor={LB.ink3}
+          placeholderTextColor={palette.ink3}
           accessibilityLabel={t('buddy:composer.placeholder')}
           multiline
           // The web's textarea starts two rows tall; one row, growing with the text.
@@ -369,7 +374,7 @@ export function Composer({
             paddingVertical: SPACE.sm,
             fontSize: 16,
             lineHeight: 22,
-            color: LB.ink,
+            color: palette.ink,
             outlineWidth: 0,
           }}
         />

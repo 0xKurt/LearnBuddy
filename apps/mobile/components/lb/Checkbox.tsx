@@ -2,7 +2,7 @@
 
 import { Pressable, Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from './Icon.js';
 
@@ -15,6 +15,7 @@ export function Checkbox({
   onChange: (v: boolean) => void;
   label: string;
 }) {
+  const { palette } = useTheme();
   return (
     <Pressable
       accessibilityRole="checkbox"
@@ -33,14 +34,14 @@ export function Checkbox({
             height: 26,
             borderRadius: 9,
             borderWidth: 1.5,
-            borderColor: checked ? LB.primary : LB.ink3,
-            backgroundColor: checked ? LB.primary : LB.paper,
+            borderColor: checked ? palette.primary : palette.ink3,
+            backgroundColor: checked ? palette.primary : palette.paper,
             alignItems: 'center',
             justifyContent: 'center',
             marginTop: 1,
           }}
         >
-          {checked ? <Icon name="check" size={16} color={LB.paper} /> : null}
+          {checked ? <Icon name="check" size={16} color={palette.paper} /> : null}
         </View>
         <Text style={[TYPE.body, { flex: 1, fontSize: 15 }]}>{label}</Text>
       </View>

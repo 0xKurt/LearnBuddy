@@ -9,7 +9,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 
@@ -36,6 +36,7 @@ const KEYS: Array<{ label: string; value: 'digit' | 'back' | 'none'; digit?: str
 ];
 
 export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('common');
   const [entered, setEntered] = useState('');
   // iOS has no live regions: the dots' progress says itself (lib/announce.ts).
@@ -81,9 +82,9 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
               width: 16,
               height: 16,
               borderRadius: 8,
-              backgroundColor: i < entered.length ? LB.primary : LB.paper,
+              backgroundColor: i < entered.length ? palette.primary : palette.paper,
               borderWidth: 1.5,
-              borderColor: i < entered.length ? LB.primary : LB.ink3,
+              borderColor: i < entered.length ? palette.primary : palette.ink3,
             }}
           />
         ))}
@@ -119,14 +120,14 @@ export function PinPad({ onComplete, resetKey, disabled = false }: Props) {
                     borderRadius: 30,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: pressed ? LB.primaryLt : LB.paper,
+                    backgroundColor: pressed ? palette.primaryLt : palette.paper,
                     ...(k.value === 'digit' ? SHADOW.soft : null),
                   }}
                 >
                   {/* Fixed key boxes: the digit grows with the system text only this far (M-84). */}
                   <Text
                     maxFontSizeMultiplier={MAX_FONT_SCALE}
-                    style={{ fontSize: 22, color: LB.ink, fontWeight: '500' }}
+                    style={{ fontSize: 22, color: palette.ink, fontWeight: '500' }}
                   >
                     {k.label}
                   </Text>

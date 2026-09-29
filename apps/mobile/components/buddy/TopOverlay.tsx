@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Animated, PanResponder, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
@@ -39,6 +39,7 @@ type Props = {
 };
 
 export function TopOverlay({ id, children, closeLabel, onClose }: Props) {
+  const { palette } = useTheme();
   const lift = useRef(new Animated.Value(0)).current;
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -105,7 +106,7 @@ export function TopOverlay({ id, children, closeLabel, onClose }: Props) {
       <View
         accessibilityLiveRegion="polite"
         // The Pastell-Soft float: one soft shadow, the bar's own tint.
-        style={{ ...SHADOW.float, borderRadius: RADIUS, backgroundColor: LB.bg, gap: 8 }}
+        style={{ ...SHADOW.float, borderRadius: RADIUS, backgroundColor: palette.bg, gap: 8 }}
       >
         {children}
         <View style={{ position: 'absolute', top: CLOSE_TOP, right: 2 }}>
@@ -113,7 +114,7 @@ export function TopOverlay({ id, children, closeLabel, onClose }: Props) {
             variant="ghost"
             size="sm"
             pill
-            label={<Icon name="close" size={20} color={LB.ink2} />}
+            label={<Icon name="close" size={20} color={palette.ink2} />}
             accessibilityLabel={closeLabel}
             onPress={onClose}
           >

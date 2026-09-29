@@ -24,7 +24,7 @@ import { messageFor } from '../../lib/errors.js';
 import { speak, stop } from '../../lib/speech/listen.js';
 import { useBuddyVoice } from '../../lib/speech/useBuddyVoice.js';
 import { voiceStore } from '../../lib/speech/voiceState.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { toast } from '../lb/Toast.js';
@@ -46,6 +46,7 @@ const GROUPS: Array<{ pitch: 'higher' | 'lower'; rows: VoiceName[][] }> = (
 });
 
 export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
+  const { palette } = useTheme();
   const { t, i18n } = useTranslation('buddy');
   // Shown at once; back to what the server has when saving fails.
   const [chosen, setChosen] = useState<VoiceName>(settings.voice);
@@ -114,7 +115,7 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
       >
         {GROUPS.map((group) => (
           <View key={group.pitch} style={{ gap: 8 }}>
-            <Text style={[TYPE.label, { color: LB.ink2, paddingHorizontal: 4 }]}>
+            <Text style={[TYPE.label, { color: palette.ink2, paddingHorizontal: 4 }]}>
               {t(`voice_pick.group.${group.pitch}`)}
             </Text>
             {group.rows.map((row) => (
@@ -145,12 +146,12 @@ export function VoicePicker({ settings }: { settings: BuddySettingsView }) {
       {previewing ? (
         <Text
           accessibilityLiveRegion="polite"
-          style={[TYPE.small, { color: LB.ink2, paddingHorizontal: 4 }]}
+          style={[TYPE.small, { color: palette.ink2, paddingHorizontal: 4 }]}
         >
           {t('voice_pick.loading')}
         </Text>
       ) : phoneVoice ? (
-        <Text style={[TYPE.small, { color: LB.ink2, paddingHorizontal: 4 }]}>
+        <Text style={[TYPE.small, { color: palette.ink2, paddingHorizontal: 4 }]}>
           {t('voice_pick.phone_voice')}
         </Text>
       ) : null}

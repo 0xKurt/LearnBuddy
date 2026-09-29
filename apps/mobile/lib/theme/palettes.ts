@@ -213,3 +213,79 @@ export const DEFAULT_THEME: ThemeName = 'pastellSoft';
 export function paletteOf(name: ThemeName | null | undefined): Palette {
   return PALETTES[name ?? DEFAULT_THEME] ?? PALETTES[DEFAULT_THEME];
 }
+
+// ─────────────── what a palette derives into ───────────────
+// Pure functions of a palette: no live object, no module state. The provider builds them
+// once per palette and hands them out through useTheme() (issue #29, layer 3).
+
+/** The pastel tints a subject can wear (one per kind, never a free colour). */
+export const SUBJECT_TONES = [
+  'lavender',
+  'peach',
+  'mint',
+  'blush',
+  'sky',
+  'butter',
+  'rose',
+] as const;
+export type SubjectTone = (typeof SUBJECT_TONES)[number];
+
+/** Figures in questions (components/math/FigureView.tsx): calm, printed-schoolbook look. */
+export type Figure = {
+  paper: string;
+  axis: string;
+  grid: string;
+  gridStrong: string;
+  stroke: string;
+  label: string;
+  /** Shaded parts of a fraction, bars, filled polygons. */
+  fill: string;
+  fillSoft: string;
+  empty: string;
+  point: string;
+  /**
+   * Series colours stay distinguishable for common colour-vision deficiencies and are
+   * never the only signal (each graph also has a label and its own dash pattern).
+   */
+  series: string[];
+};
+
+export function toneBgOf(p: Palette): Record<SubjectTone, string> {
+  return {
+    lavender: p.lavender,
+    peach: p.peach,
+    mint: p.mint,
+    blush: p.blush,
+    sky: p.sky,
+    butter: p.butter,
+    rose: p.rose,
+  };
+}
+
+export function toneDeepOf(p: Palette): Record<SubjectTone, string> {
+  return {
+    lavender: p.lavenderDeep,
+    peach: p.peachDeep,
+    mint: p.mintDeep,
+    blush: p.blushDeep,
+    sky: p.skyDeep,
+    butter: p.butterDeep,
+    rose: p.lavenderDeep, // no rose-deep in the palette; reuse lavender-deep
+  };
+}
+
+export function figureOf(p: Palette): Figure {
+  return {
+    paper: p.paper,
+    axis: p.ink2,
+    grid: p.figure.grid,
+    gridStrong: p.figure.gridStrong,
+    stroke: p.ink,
+    label: p.ink2,
+    fill: p.figure.fill,
+    fillSoft: p.figure.fillSoft,
+    empty: p.paper,
+    point: p.primaryDk,
+    series: [...p.figure.series],
+  };
+}

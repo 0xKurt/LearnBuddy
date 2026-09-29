@@ -1,19 +1,22 @@
 import { Text, View } from 'react-native';
-import { LB } from '../../lib/theme/colors.js';
+import type { Palette } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Tone = 'gray' | 'primary' | 'success' | 'warning' | 'dark';
 
-// Read at render time: a module-scope map froze the start palette (issue #84).
-const tones = (): Record<Tone, { bg: string; color: string; border?: string }> => ({
-  gray: { bg: LB.canvas, color: LB.ink2 },
-  primary: { bg: LB.primaryLt, color: LB.primaryDk },
-  success: { bg: 'rgba(107,141,106,0.13)', color: LB.successText },
-  warning: { bg: 'rgba(181,138,60,0.13)', color: LB.warningText },
-  dark: { bg: LB.ink, color: LB.paper },
+// Built from the palette the component is rendering with: a module-scope map froze the
+// start palette (issue #84).
+const tones = (p: Palette): Record<Tone, { bg: string; color: string; border?: string }> => ({
+  gray: { bg: p.canvas, color: p.ink2 },
+  primary: { bg: p.primaryLt, color: p.primaryDk },
+  success: { bg: 'rgba(107,141,106,0.13)', color: p.successText },
+  warning: { bg: 'rgba(181,138,60,0.13)', color: p.warningText },
+  dark: { bg: p.ink, color: p.paper },
 });
 
 export function Chip({ children, tone = 'gray' }: { children: string; tone?: Tone }) {
-  const t = tones()[tone];
+  const { palette } = useTheme();
+  const t = tones(palette)[tone];
   return (
     <View
       accessibilityRole="text"

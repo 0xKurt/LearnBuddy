@@ -54,7 +54,7 @@ import { warmRecognition } from '../lib/speech/recognize.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
 import { voiceLocale } from '../lib/speech/voice.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { SPACE } from '../lib/theme/space.js';
 
@@ -64,6 +64,7 @@ type Phase = 'listening' | 'thinking' | 'speaking' | 'paused';
 const TAIL = 3;
 
 export default function TalkScreen() {
+  const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
   const words = useSpokenWords();
@@ -384,7 +385,7 @@ export default function TalkScreen() {
       // The bottom inset belongs to the button row below, not to the frame as well: both
       // together left a hand's width of nothing under the microphone (owner 28.09., #64).
       edges={['top', 'left', 'right']}
-      style={{ flex: 1, backgroundColor: LB.bg }}
+      style={{ flex: 1, backgroundColor: palette.bg }}
       // VoiceOver's Magic Tap (two-finger double tap) is the mic: speak, done, interrupt.
       onMagicTap={onMic}
     >
@@ -399,7 +400,7 @@ export default function TalkScreen() {
         }}
       >
         <CircleBtn icon="close" onPress={leave} accessibilityLabel={t('buddy:talk.end')} />
-        <Text style={[TYPE.label, { color: LB.ink2, letterSpacing: 2 }]}>
+        <Text style={[TYPE.label, { color: palette.ink2, letterSpacing: 2 }]}>
           {t('buddy:talk.title').toUpperCase()}
         </Text>
         <View style={{ width: 44 }} />
@@ -438,7 +439,7 @@ export default function TalkScreen() {
         <View style={{ alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingBottom: 4 }}>
           <Text
             accessibilityRole="alert"
-            style={[TYPE.small, { color: LB.ink2, textAlign: 'center' }]}
+            style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}
           >
             {problem ??
               (voice.denied
@@ -482,7 +483,7 @@ export default function TalkScreen() {
           <Text
             accessibilityRole="header"
             accessibilityLiveRegion="polite"
-            style={[TYPE.caption, { fontWeight: '600', color: LB.ink, textAlign: 'center' }]}
+            style={[TYPE.caption, { fontWeight: '600', color: palette.ink, textAlign: 'center' }]}
           >
             {headline}
           </Text>
@@ -518,7 +519,7 @@ export default function TalkScreen() {
             onPress={leave}
             accessibilityLabel={t('buddy:composer.keyboard')}
           />
-          <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
+          <Text style={[TYPE.label, { color: palette.ink2 }]}>{t('buddy:composer.keyboard')}</Text>
         </View>
         <MicButton
           voice={voice}
@@ -538,7 +539,7 @@ export default function TalkScreen() {
             }}
             accessibilityLabel={t('buddy:talk.photo_label')}
           />
-          <Text style={[TYPE.label, { color: LB.ink2 }]}>{t('buddy:talk.photo')}</Text>
+          <Text style={[TYPE.label, { color: palette.ink2 }]}>{t('buddy:talk.photo')}</Text>
         </View>
       </View>
     </SafeAreaView>

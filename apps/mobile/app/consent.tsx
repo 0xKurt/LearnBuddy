@@ -24,7 +24,7 @@ import { ENV } from '../lib/env.js';
 import { messageFor } from '../lib/errors.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { signOutHere } from '../lib/leave.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 
 const POINTS = [
@@ -37,6 +37,7 @@ const POINTS = [
 ] as const;
 
 export default function Consent() {
+  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const me = useMe();
   const insets = useSafeAreaInsets();
@@ -109,7 +110,7 @@ export default function Consent() {
           <Text accessibilityRole="header" style={TYPE.display}>
             {t(forHerself ? 'consent.own_title' : 'consent.title')}
           </Text>
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>
+          <Text style={[TYPE.body, { color: palette.ink2 }]}>
             {t(forHerself ? 'consent.own_intro' : 'consent.intro')}
           </Text>
         </View>
@@ -126,12 +127,12 @@ export default function Consent() {
                     height: 26,
                     borderRadius: 13,
                     marginTop: -1,
-                    backgroundColor: LB.lavender,
+                    backgroundColor: palette.lavender,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="check" size={15} color={LB.primaryDk} />
+                  <Icon name="check" size={15} color={palette.primaryDk} />
                 </View>
                 <Text style={[TYPE.body, { flex: 1, fontSize: 14, lineHeight: 20 }]}>
                   {t(`consent.${p}`)}

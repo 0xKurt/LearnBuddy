@@ -25,7 +25,8 @@ import { ApiError } from '../lib/api/client.js';
 import { deleteMaterial, retryMaterial, startPractice } from '../lib/api/endpoints.js';
 import { keys, queryClient, seedSession, useLibrary } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
-import { LB, TONE_DEEP, type SubjectTone } from '../lib/theme/colors.js';
+import type { SubjectTone } from '../lib/theme/palettes.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 
 /** Each kind of subject keeps its pastel, so a subject looks the same everywhere in the list. */
@@ -81,6 +82,7 @@ function refreshAll(): void {
 }
 
 export default function LibraryScreen() {
+  const { palette, tones } = useTheme();
   const { t } = useTranslation(['library', 'common']);
   const library = useLibrary();
   const insets = useSafeAreaInsets();
@@ -231,7 +233,10 @@ export default function LibraryScreen() {
                   // Body text sits here at 16 px (EmptyState's own body is smaller).
                   <View style={{ alignItems: 'center', gap: 16 }}>
                     <Text
-                      style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 320 }]}
+                      style={[
+                        TYPE.body,
+                        { color: palette.ink2, textAlign: 'center', maxWidth: 320 },
+                      ]}
                     >
                       {t('library:empty.body')}
                     </Text>
@@ -262,7 +267,7 @@ export default function LibraryScreen() {
                 >
                   <Section
                     title={row.title}
-                    dot={row.tone === 'paper' ? LB.ink4 : TONE_DEEP[row.tone]}
+                    dot={row.tone === 'paper' ? palette.ink4 : tones.deep[row.tone]}
                   >
                     {null}
                   </Section>

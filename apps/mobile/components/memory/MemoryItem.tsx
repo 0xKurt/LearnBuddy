@@ -7,7 +7,7 @@ import { useRef } from 'react';
 import { Text, View, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatLastDay } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
@@ -48,6 +48,7 @@ export function MemoryItem({
   onRemove,
   onInputFocus,
 }: Props) {
+  const { palette } = useTheme();
   const { t, i18n } = useTranslation('memory');
   const input = useRef<TextInput>(null);
 
@@ -83,7 +84,7 @@ export function MemoryItem({
               fontSize: 16,
               lineHeight: 22,
               textAlignVertical: 'top',
-              backgroundColor: LB.paper,
+              backgroundColor: palette.paper,
             }}
           />
         ) : (
@@ -94,7 +95,7 @@ export function MemoryItem({
             {t('until', { date: formatLastDay(memory.valid_until, i18n.language) })}
           </Text>
         ) : null}
-        <Text style={[TYPE.body, { color: LB.ink2 }]}>{source}</Text>
+        <Text style={[TYPE.body, { color: palette.ink2 }]}>{source}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
           {editing ? (
             <>

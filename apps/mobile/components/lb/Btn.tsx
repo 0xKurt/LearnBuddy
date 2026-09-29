@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { LB, TONE_BG, type SubjectTone } from '../../lib/theme/colors.js';
+import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon, type IconName } from './Icon.js';
 
 type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
@@ -65,17 +66,18 @@ const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; font
 
 type VariantSkin = { bg: string; color: string; borderColor: string; borderWidth: number };
 
-// Read at render time: as a module constant this froze the start palette into every
-// button — the ghost "Rückgängig" kept pastel ink on the night cards (issue #84, the one
-// capture the first scanner missed because the type annotation spans lines).
-const variantStyle = (): Record<Variant, VariantSkin> => ({
-  primary: { bg: LB.primary, color: LB.paper, borderColor: 'transparent', borderWidth: 0 },
-  soft: { bg: LB.primaryLt, color: LB.primaryDk, borderColor: 'transparent', borderWidth: 0 },
-  outline: { bg: LB.paper, color: LB.ink, borderColor: LB.hairline, borderWidth: 1 },
-  ghost: { bg: 'transparent', color: LB.ink2, borderColor: 'transparent', borderWidth: 0 },
+// Built from the palette the button is rendering with: as a module constant this froze the
+// start palette into every button — the ghost "Rückgängig" kept pastel ink on the night
+// cards (issue #84, the one capture the first scanner missed because the type annotation
+// spans lines).
+const variantStyle = (p: Palette): Record<Variant, VariantSkin> => ({
+  primary: { bg: p.primary, color: p.paper, borderColor: 'transparent', borderWidth: 0 },
+  soft: { bg: p.primaryLt, color: p.primaryDk, borderColor: 'transparent', borderWidth: 0 },
+  outline: { bg: p.paper, color: p.ink, borderColor: p.hairline, borderWidth: 1 },
+  ghost: { bg: 'transparent', color: p.ink2, borderColor: 'transparent', borderWidth: 0 },
   danger: {
     bg: 'transparent',
-    color: LB.danger,
+    color: p.danger,
     borderColor: 'rgba(177,73,60,0.25)',
     borderWidth: 1,
   },
@@ -86,13 +88,13 @@ const variantStyle = (): Record<Variant, VariantSkin> => ({
 // screenshot. The label stays readable (ink2 on canvas ≥ 4.5:1 in every palette, and the
 // ready primary stands out ≥ 3:1 against canvas — lib/theme/__tests__/contrast.test.ts).
 // Ghost and danger have no fill to mute: their text steps back to the placeholder tone
-// (also ≥ 4.5:1 on paper and bg). Read at render time, like variantStyle (issue #84).
-const mutedStyle = (variant: Variant): VariantSkin =>
+// (also ≥ 4.5:1 on paper and bg). Takes the palette, like variantStyle (issue #84).
+const mutedStyle = (variant: Variant, p: Palette): VariantSkin =>
   variant === 'ghost'
-    ? { bg: 'transparent', color: LB.placeholder, borderColor: 'transparent', borderWidth: 0 }
+    ? { bg: 'transparent', color: p.placeholder, borderColor: 'transparent', borderWidth: 0 }
     : variant === 'danger'
-      ? { bg: 'transparent', color: LB.placeholder, borderColor: LB.hairline, borderWidth: 1 }
-      : { bg: LB.canvas, color: LB.ink2, borderColor: LB.hairline, borderWidth: 1 };
+      ? { bg: 'transparent', color: p.placeholder, borderColor: p.hairline, borderWidth: 1 }
+      : { bg: p.canvas, color: p.ink2, borderColor: p.hairline, borderWidth: 1 };
 
 export function Btn({
   children,
@@ -115,14 +117,15 @@ export function Btn({
   accessibilityLabel,
   accessibilityHint,
 }: Props) {
+  const { palette, tones } = useTheme();
   const s = SIZE_STYLE[size];
   const off = disabled || busy;
   // Busy keeps the variant's colours — the spinner says why nothing happens. Only a
   // plainly disabled button wears the muted skin (issue #97).
   const muted = disabled && !busy;
-  const base = variantStyle()[variant];
-  const active = tone ? { ...base, bg: TONE_BG[tone], color: LB.ink, borderWidth: 0 } : base;
-  const v = muted ? mutedStyle(variant) : active;
+  const base = variantStyle(palette)[variant];
+  const active = tone ? { ...base, bg: tones.bg[tone], color: palette.ink, borderWidth: 0 } : base;
+  const v = muted ? mutedStyle(variant, palette) : active;
   const radius = pill ? s.height / 2 : 14;
   // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
   // The button itself STAYS truly disabled — un-disabling it made the web lose its
@@ -189,7 +192,7 @@ export function Btn({
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <ActivityIndicator
                 size="small"
-                color={variant === 'outline' || tone ? LB.primaryDk : v.color}
+                color={variant === 'outline' || tone ? palette.primaryDk : v.color}
               />
             </View>
           ) : icon ? (
@@ -198,7 +201,7 @@ export function Btn({
                 name={icon}
                 size={Math.round(s.fontSize * 1.4)}
                 // A muted button's icon steps back with its label (issue #97).
-                color={!muted && (variant === 'outline' || tone) ? LB.primaryDk : v.color}
+                color={!muted && (variant === 'outline' || tone) ? palette.primaryDk : v.color}
               />
             </View>
           ) : null}

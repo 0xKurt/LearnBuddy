@@ -21,24 +21,25 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
-import { LB } from '../../lib/theme/colors.js';
+import type { Palette } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 
 export type VerdictKey = 'correct' | 'partially_correct' | 'incorrect' | 'unchecked';
 
 // Soft pastel chips with dark text; the word carries the meaning (a small check for "right").
-// Read at render time: module-scope maps froze the start palette (issue #84).
-const verdictBg = (): Record<VerdictKey, string> => ({
-  correct: LB.mint,
-  partially_correct: LB.butter,
-  incorrect: LB.canvas,
-  unchecked: LB.canvas,
+// Built from the palette in use: module-scope maps froze the start palette (issue #84).
+const verdictBg = (p: Palette): Record<VerdictKey, string> => ({
+  correct: p.mint,
+  partially_correct: p.butter,
+  incorrect: p.canvas,
+  unchecked: p.canvas,
 });
-const verdictText = (): Record<VerdictKey, string> => ({
-  correct: LB.successText,
-  partially_correct: LB.warningText,
-  incorrect: LB.ink2,
-  unchecked: LB.ink2,
+const verdictText = (p: Palette): Record<VerdictKey, string> => ({
+  correct: p.successText,
+  partially_correct: p.warningText,
+  incorrect: p.ink2,
+  unchecked: p.ink2,
 });
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -49,14 +50,14 @@ const CHECK_LENGTH = 21;
 type Spark = { angle: number; distance: number; color: string; size: number };
 
 /** Tiny dots around a right answer: direction (degrees), distance, colour (render-time). */
-const sparks = (): readonly Spark[] => [
-  { angle: -168, distance: 58, color: LB.skyDeep, size: 6 },
-  { angle: -140, distance: 46, color: LB.peachDeep, size: 7 },
-  { angle: -110, distance: 30, color: LB.lavenderDeep, size: 6 },
-  { angle: -72, distance: 28, color: LB.mintDeep, size: 7 },
-  { angle: -40, distance: 40, color: LB.blushDeep, size: 5 },
-  { angle: 160, distance: 52, color: LB.lavenderDeep, size: 5 },
-  { angle: 120, distance: 26, color: LB.peachDeep, size: 5 },
+const sparks = (p: Palette): readonly Spark[] => [
+  { angle: -168, distance: 58, color: p.skyDeep, size: 6 },
+  { angle: -140, distance: 46, color: p.peachDeep, size: 7 },
+  { angle: -110, distance: 30, color: p.lavenderDeep, size: 6 },
+  { angle: -72, distance: 28, color: p.mintDeep, size: 7 },
+  { angle: -40, distance: 40, color: p.blushDeep, size: 5 },
+  { angle: 160, distance: 52, color: p.lavenderDeep, size: 5 },
+  { angle: 120, distance: 26, color: p.peachDeep, size: 5 },
 ];
 
 type Props = {
@@ -67,6 +68,7 @@ type Props = {
 };
 
 export function VerdictTag({ verdict, label, fresh }: Props) {
+  const { palette } = useTheme();
   const reduced = useReducedMotion();
   const animate = fresh && !reduced;
   const right = verdict === 'correct';
@@ -105,7 +107,7 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 4,
-            backgroundColor: verdictBg()[verdict],
+            backgroundColor: verdictBg(palette)[verdict],
             borderRadius: 999,
             paddingLeft: right ? 10 : 14,
             paddingRight: 14,
@@ -120,7 +122,7 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
               <AnimatedPath
                 d="M5 12l5 5 9-10"
                 fill="none"
-                stroke={verdictText().correct}
+                stroke={verdictText(palette).correct}
                 strokeWidth={2.2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -132,7 +134,7 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
         ) : null}
         <Text
           style={{
-            color: verdictText()[verdict],
+            color: verdictText(palette)[verdict],
             fontSize: 14,
             lineHeight: 19,
             fontWeight: '600',
@@ -148,6 +150,7 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
 
 /** The soft glow and the few drifting dots behind a right answer (decorative). */
 function Celebration() {
+  const { palette } = useTheme();
   const t = useSharedValue(0);
   useEffect(() => {
     t.value = withTiming(1, { duration: 820, easing: Easing.out(Easing.cubic) });
@@ -177,7 +180,7 @@ function Celebration() {
             left: -6,
             right: -6,
             borderRadius: 999,
-            backgroundColor: LB.mintDeep,
+            backgroundColor: palette.mintDeep,
           },
           glow,
         ]}
@@ -192,12 +195,12 @@ function Celebration() {
             right: 0,
             borderRadius: 999,
             borderWidth: 1.5,
-            borderColor: LB.success,
+            borderColor: palette.success,
           },
           ring,
         ]}
       />
-      {sparks().map((s, i) => (
+      {sparks(palette).map((s, i) => (
         <Spark key={i} {...s} progress={t} />
       ))}
     </View>

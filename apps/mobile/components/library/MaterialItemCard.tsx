@@ -7,7 +7,7 @@ import type { ItemResult, MaterialItemView } from '@learnbuddy/shared-types/cont
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -31,6 +31,7 @@ type Props = {
 };
 
 export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('library');
   const choices = item.kind === 'multiple_choice' && item.choices ? item.choices : null;
   return (
@@ -55,14 +56,14 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
                     minWidth: 24,
                     minHeight: 24,
                     borderRadius: 999,
-                    backgroundColor: LB.lavender,
+                    backgroundColor: palette.lavender,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
                   <Text
                     maxFontSizeMultiplier={MAX_FONT_SCALE}
-                    style={[TYPE.label, { color: LB.primaryDk }]}
+                    style={[TYPE.label, { color: palette.primaryDk }]}
                   >
                     {String.fromCharCode(65 + index)}
                   </Text>

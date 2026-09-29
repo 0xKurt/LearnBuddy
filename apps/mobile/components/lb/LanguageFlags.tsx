@@ -8,7 +8,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { LANGUAGES } from '../../lib/i18n/languages.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function LanguageFlags({
   value,
@@ -20,6 +20,7 @@ export function LanguageFlags({
   /** Small phones (360×740): the row must not push the under-16 card off. */
   compact?: boolean;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('common');
   const d = compact ? 44 : 52;
   return (
@@ -46,9 +47,9 @@ export function LanguageFlags({
                   width: d,
                   height: d,
                   borderRadius: d / 2,
-                  backgroundColor: on ? LB.primaryLt : LB.paper,
+                  backgroundColor: on ? palette.primaryLt : palette.paper,
                   borderWidth: on ? 2.5 : 1,
-                  borderColor: on ? LB.primary : LB.hairline,
+                  borderColor: on ? palette.primary : palette.hairline,
                   alignItems: 'center',
                   justifyContent: 'center',
                   transform: [{ scale: pressed ? 0.94 : on ? 1.06 : 1 }],

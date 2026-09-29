@@ -3,12 +3,13 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
 import { Icon } from '../lb/Icon.js';
 
 export function CaptureTips() {
+  const { palette } = useTheme();
   const { t } = useTranslation('capture');
   return (
     <Card tone="peach" padding={16}>
@@ -20,16 +21,16 @@ export function CaptureTips() {
             width: 36,
             height: 36,
             borderRadius: 18,
-            backgroundColor: LB.paper,
+            backgroundColor: palette.paper,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Icon name="bulb" size={20} color={LB.primaryDk} />
+          <Icon name="bulb" size={20} color={palette.primaryDk} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('tip')}</Text>
-          <Text style={[TYPE.small, { color: LB.ink2 }]}>{t('privacy')}</Text>
+          <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('privacy')}</Text>
         </View>
       </View>
     </Card>

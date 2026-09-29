@@ -24,7 +24,7 @@ import { ApiError } from '../lib/api/client.js';
 import { updateMemory } from '../lib/api/endpoints.js';
 import { keys, queryClient, useMemory } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
@@ -61,6 +61,7 @@ function rowsOf(memories: MemoryView[]): Row[] {
 const AFTER_KEYBOARD_MS = 280;
 
 export default function MemoryScreen() {
+  const { palette } = useTheme();
   const { t } = useTranslation(['memory', 'common']);
   const memory = useMemory();
   const insets = useSafeAreaInsets();
@@ -156,7 +157,9 @@ export default function MemoryScreen() {
     switch (row.type) {
       case 'intro':
         return (
-          <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4, marginBottom: 28 }]}>
+          <Text
+            style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4, marginBottom: 28 }]}
+          >
             {t('memory:intro')}
           </Text>
         );
@@ -171,7 +174,9 @@ export default function MemoryScreen() {
         );
       case 'temporary_hint':
         return (
-          <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4, marginBottom: 12 }]}>
+          <Text
+            style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4, marginBottom: 12 }]}
+          >
             {t('memory:temporary_hint')}
           </Text>
         );

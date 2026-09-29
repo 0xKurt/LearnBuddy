@@ -6,7 +6,7 @@ import { forwardRef, useState } from 'react';
 import { TextInput, View, Text, Pressable, type TextInputProps } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from './Icon.js';
 
 type Props = TextInputProps & {
@@ -33,8 +33,9 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
   },
   ref,
 ) {
+  const { palette } = useTheme();
   const [focused, setFocused] = useState(false);
-  const borderColor = error ? LB.danger : focused ? LB.primary : LB.field;
+  const borderColor = error ? palette.danger : focused ? palette.primary : palette.field;
   // iOS has no live regions — the field says its error itself (lib/announcePlan.ts).
   useAnnounce(errorMessage);
   return (
@@ -42,7 +43,7 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
       <View style={{ position: 'relative' }}>
         <TextInput
           ref={ref}
-          placeholderTextColor={LB.placeholder}
+          placeholderTextColor={palette.placeholder}
           {...rest}
           onFocus={(e) => {
             setFocused(true);
@@ -54,7 +55,7 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
           }}
           style={[
             {
-              backgroundColor: LB.paper,
+              backgroundColor: palette.paper,
               borderColor,
               borderWidth: focused || error ? 1.5 : 1,
               borderRadius: 16,
@@ -65,11 +66,11 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
               minHeight: 52,
               paddingVertical: 12,
               fontSize: 16,
-              color: LB.ink,
+              color: palette.ink,
               // The focus ring (iOS/Android new architecture and the web).
               outlineStyle: 'solid',
               outlineWidth: focused ? 4 : 0,
-              outlineColor: LB.ring,
+              outlineColor: palette.ring,
               outlineOffset: 0,
             },
             style,
@@ -89,14 +90,14 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
               justifyContent: 'center',
             }}
           >
-            <Icon name={shown ? 'eye-off' : 'eye'} size={20} color={LB.ink2} />
+            <Icon name={shown ? 'eye-off' : 'eye'} size={20} color={palette.ink2} />
           </Pressable>
         )}
       </View>
       {errorMessage && (
         <Text
           accessibilityLiveRegion="polite"
-          style={{ color: LB.danger, fontSize: 15, lineHeight: 21, marginTop: 6 }}
+          style={{ color: palette.danger, fontSize: 15, lineHeight: 21, marginTop: 6 }}
         >
           {errorMessage}
         </Text>

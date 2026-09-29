@@ -18,10 +18,11 @@ import { ApiError } from '../lib/api/client.js';
 import { openAdminSession } from '../lib/api/endpoints.js';
 import { messageFor } from '../lib/errors.js';
 import { formatTime } from '../lib/time.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 
 export default function Pin() {
+  const { palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation('auth');
   const [error, setError] = useState<string | null>(null);
@@ -94,21 +95,21 @@ export default function Pin() {
           <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
             {t('pin.title')}
           </Text>
-          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 360 }]}>
+          <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 360 }]}>
             {detail ?? (purpose ? t(`pin.purpose.${purpose}`) : t('pin.body'))}
           </Text>
         </View>
         {error ? (
           <View
             style={{
-              backgroundColor: LB.blush,
+              backgroundColor: palette.blush,
               borderRadius: 18,
               paddingHorizontal: 16,
               paddingVertical: 10,
               maxWidth: 360,
             }}
           >
-            <Text style={[TYPE.body, { color: LB.ink, textAlign: 'center' }]}>{error}</Text>
+            <Text style={[TYPE.body, { color: palette.ink, textAlign: 'center' }]}>{error}</Text>
           </View>
         ) : null}
         <View style={{ marginTop: 4 }}>

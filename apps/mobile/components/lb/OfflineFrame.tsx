@@ -13,10 +13,11 @@ import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area
 
 import { announce } from '../../lib/announce.js';
 import { useOnline } from '../../lib/api/queries.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Banner } from './Banner.js';
 
 export function OfflineFrame({ children }: { children: ReactNode }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('errors');
   const online = useOnline();
   const insets = useSafeAreaInsets();
@@ -31,7 +32,7 @@ export function OfflineFrame({ children }: { children: ReactNode }) {
   }, [online, message]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: LB.bg }}>
+    <View style={{ flex: 1, backgroundColor: palette.bg }}>
       {online ? null : (
         <View
           accessibilityLiveRegion="polite"
@@ -40,7 +41,7 @@ export function OfflineFrame({ children }: { children: ReactNode }) {
             paddingBottom: 8,
             paddingLeft: insets.left + 16,
             paddingRight: insets.right + 16,
-            backgroundColor: LB.bg,
+            backgroundColor: palette.bg,
           }}
         >
           <Banner tone="info">{message}</Banner>

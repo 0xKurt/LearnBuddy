@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
@@ -146,6 +146,7 @@ function Bubble({
   orb?: MoonState;
   alive?: boolean;
 }) {
+  const { palette } = useTheme();
   const spoken = useSpokenMath(text);
   const bubble = (
     <View
@@ -154,7 +155,7 @@ function Bubble({
       style={[
         {
           flexShrink: 1,
-          backgroundColor: mine ? LB.primary : LB.paper,
+          backgroundColor: mine ? palette.primary : palette.paper,
           borderRadius: 22,
           borderBottomRightRadius: mine ? 6 : 22,
           borderBottomLeftRadius: mine ? 22 : 6,
@@ -168,7 +169,7 @@ function Bubble({
       <MathText
         text={text}
         accessible={false}
-        style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}
+        style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
       />
     </View>
   );

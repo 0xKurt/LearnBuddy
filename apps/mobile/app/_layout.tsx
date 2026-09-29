@@ -41,7 +41,7 @@ import {
   syncPushDevice,
 } from '../lib/push.js';
 import { practiceRoute } from '../lib/pushActions.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 
 /** Answers kept on the device (closed app, lost connection): send them now. */
 async function sendKeptAnswers(): Promise<void> {
@@ -90,6 +90,7 @@ export const unstable_settings = { initialRouteName: 'index' };
 const OPEN_ROUTES = new Set(['/', '/welcome', '/reset-password', '/update']);
 
 export default function RootLayout() {
+  const { palette } = useTheme();
   const [ready, setReady] = useState(false);
   const readyRef = useRef(false);
   // Where a notification button or a signed-out deep link asked to go.
@@ -251,7 +252,7 @@ export default function RootLayout() {
   }, [ready]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: LB.bg }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
       <ThemeProvider>
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
@@ -263,7 +264,7 @@ export default function RootLayout() {
                     <Stack
                       screenOptions={{
                         headerShown: false,
-                        contentStyle: { backgroundColor: LB.bg },
+                        contentStyle: { backgroundColor: palette.bg },
                       }}
                     >
                       <Stack.Screen name="pin" options={{ presentation: 'modal' }} />

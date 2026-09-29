@@ -27,7 +27,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { haptic } from '../../lib/haptics.js';
-import { LB } from '../../lib/theme/colors.js';
+import type { Palette } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -52,6 +53,7 @@ type Props = {
 const AT = { title: 260, card: 460, line: 140, review: 900 } as const;
 
 export function SessionSummary({ summary, mode, review = null, celebrate = false }: Props) {
+  const { palette } = useTheme();
   useEffect(() => {
     if (celebrate) haptic.success();
   }, [celebrate]);
@@ -88,7 +90,7 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
         </Rise>
       </View>
       {sentences.length > 0 ? (
-        <Rise slow delay={AT.card} style={[softCard(), { gap: 8 }]}>
+        <Rise slow delay={AT.card} style={[softCard(palette), { gap: 8 }]}>
           {sentences.map((line, i) => (
             <Rise key={line.key} slow delay={AT.card + (i + 1) * AT.line}>
               <Text style={[TYPE.body, line.strong ? { fontWeight: '600' } : null]}>
@@ -123,6 +125,7 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
  * spirals up and bursts into sparkles (lib/buddy/moon.ts, happy).
  */
 function OrbArrival({ celebrate }: { celebrate: boolean }) {
+  const { palette } = useTheme();
   const reduced = useReducedMotion();
   const [moon, setMoon] = useState<MoonState>('idle');
   useEffect(() => {
@@ -161,7 +164,7 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
             width: 96,
             height: 96,
             borderRadius: 48,
-            backgroundColor: LB.lavenderDeep,
+            backgroundColor: palette.lavenderDeep,
           },
           haloStyle,
         ]}
@@ -174,6 +177,7 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
 }
 
 function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const right = row.status === 'correct';
   const status = right
@@ -191,17 +195,21 @@ function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
         : row.answer;
   return (
     <View
-      style={[softCard(), { padding: 16, gap: 6 }, right ? { backgroundColor: LB.mint } : null]}
+      style={[
+        softCard(palette),
+        { padding: 16, gap: 6 },
+        right ? { backgroundColor: palette.mint } : null,
+      ]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <Icon
             name={right ? 'check' : 'arrow'}
             size={18}
-            color={right ? LB.successText : LB.ink2}
+            color={right ? palette.successText : palette.ink2}
           />
         </View>
-        <Text style={[TYPE.label, { color: right ? LB.successText : LB.ink2 }]}>
+        <Text style={[TYPE.label, { color: right ? palette.successText : palette.ink2 }]}>
           {`${number} · ${status}`}
         </Text>
       </View>
@@ -216,10 +224,10 @@ function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
   );
 }
 
-/** A white card on a soft shadow (no hairline box). Render-time (issue #84). */
-const softCard = () =>
+/** A white card on a soft shadow (no hairline box). From the palette in use (issue #84). */
+const softCard = (p: Palette) =>
   ({
-    backgroundColor: LB.paper,
+    backgroundColor: p.paper,
     borderRadius: 22,
     padding: 18,
     ...SHADOW.soft,
