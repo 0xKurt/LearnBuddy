@@ -20,6 +20,10 @@ export const SIGNATURE_KEYS = [
   'mond',
   /** Round 1 "Ring": a tilted band of light round the orb, like a small planet. */
   'ring',
+  /** Round 1 "Lichtkern": a soft whirl of light in the glass, three arms round a core. */
+  'kern',
+  /** Round 1 "Drei Punkte": three small satellites that circle, gather, line up and speak. */
+  'punkte',
   /** Round 1 "Funkelstern": the glass's highlight is a twinkling four-pointed star. */
   'stern',
   /** Round 2 "Sternchen": a soft round star with a colourful tail and sparkles round Buddy. */
