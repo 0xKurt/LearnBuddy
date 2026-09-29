@@ -8,10 +8,18 @@
 // continuation. Pure logic (no React Native), unit-tested; the wiring lives in
 // record.ts and components/voice/useVoiceInput.ts.
 
+import { levelFromDb } from './level.js';
+
 /** When and where a long dictation is cut (record.ts). */
 export const DICTATION_CHUNK = {
-  /** From here the recording is cut at the next pause. */
-  softMs: 90_000,
+  /**
+   * From here the recording is cut at the next pause. Small on purpose (issue
+   * #28): whatever is still on the device when she taps stop is the wait she
+   * feels — everything cut earlier is already uploaded by then. Not smaller,
+   * because every cut spends a recorder restart (a brief gap the pause has to
+   * swallow) and one model call per piece.
+   */
+  softMs: 15_000,
   /**
    * A room that never falls quiet: cut anyway, invisibly. Well below the
    * transport bound per piece (~250 s of 48 kbit/s audio in 2 000 000 base64 chars).
@@ -46,6 +54,50 @@ export class ChunkCutter {
     if (elapsedInChunkMs < this.bounds.softMs) return false;
     if (elapsedInChunkMs >= this.bounds.hardMs) return true;
     return this.quietSince !== null && nowMs - this.quietSince >= this.bounds.quietMs;
+  }
+}
+
+/**
+ * Proof that a piece held no speech (issue #28). After a pause-cut the final
+ * piece is often just the silence between the cut and her tap on stop —
+ * uploading it would cost a model call and make the finished text wait behind
+ * it. A piece counts as provably silent only when the metering delivered real
+ * values for it, none of them reached above room tone, and an earlier piece of
+ * the same take demonstrably heard her — so a microphone whose metering cannot
+ * hear her (a browser without metering, a meter stuck at one value) can never
+ * throw her words away.
+ */
+export class SpeechMark {
+  private metered = false;
+  private heardInPiece = false;
+  private heardBefore = false;
+
+  constructor(private readonly quietLevel: number = DICTATION_CHUNK.quietLevel) {}
+
+  /** A new take begins. */
+  reset(): void {
+    this.metered = false;
+    this.heardInPiece = false;
+    this.heardBefore = false;
+  }
+
+  /** One metering sample of the running piece (dBFS; null/undefined = not measured). */
+  observe(meteringDb: number | null | undefined): void {
+    if (meteringDb === null || meteringDb === undefined || !Number.isFinite(meteringDb)) return;
+    this.metered = true;
+    if (levelFromDb(meteringDb) > this.quietLevel) this.heardInPiece = true;
+  }
+
+  /**
+   * The running piece ends (a cut, or her tap on stop): true when it provably
+   * held no speech. The next piece starts fresh within the same take.
+   */
+  endPiece(): boolean {
+    const silent = this.metered && !this.heardInPiece && this.heardBefore;
+    this.heardBefore = this.heardBefore || this.heardInPiece;
+    this.metered = false;
+    this.heardInPiece = false;
+    return silent;
   }
 }
 

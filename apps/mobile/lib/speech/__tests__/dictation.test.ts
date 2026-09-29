@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChunkCutter, DICTATION_CHUNK, prevTail, stitchTranscripts } from '../dictation.js';
+import {
+  ChunkCutter,
+  DICTATION_CHUNK,
+  prevTail,
+  SpeechMark,
+  stitchTranscripts,
+} from '../dictation.js';
 
 const { softMs, hardMs, quietMs, quietLevel } = DICTATION_CHUNK;
 const speech = quietLevel + 0.2;
@@ -64,6 +70,72 @@ describe('ChunkCutter', () => {
   it('the hard bound leaves room under the transport bound per piece', () => {
     // 48 kbit/s AAC ≈ 8 000 base64 chars per second; the contract allows 2 000 000.
     expect((hardMs / 1000) * 8_000).toBeLessThan(2_000_000 * 0.75);
+  });
+});
+
+describe('SpeechMark', () => {
+  // levelFromDb: speech is roughly -50…-5 dBFS; room tone ~0.12 ≈ -44.6 dB.
+  const speechDb = -30; // ≈ 0.44, clearly speech
+  const quietDb = -47; // ≈ 0.07, below room tone
+
+  it('the pause after a spoken piece is provably silent', () => {
+    const mark = new SpeechMark();
+    mark.observe(speechDb);
+    expect(mark.endPiece()).toBe(false);
+    mark.observe(quietDb);
+    expect(mark.endPiece()).toBe(true);
+  });
+
+  it('speech in the final piece keeps it, even after a long pause', () => {
+    const mark = new SpeechMark();
+    mark.observe(speechDb);
+    mark.endPiece();
+    mark.observe(quietDb);
+    mark.observe(speechDb); // she went on after all
+    mark.observe(quietDb);
+    expect(mark.endPiece()).toBe(false);
+  });
+
+  it('without metering there is no proof: nothing is ever silent', () => {
+    const mark = new SpeechMark();
+    mark.observe(undefined);
+    expect(mark.endPiece()).toBe(false);
+    mark.observe(null);
+    mark.observe(Number.NaN);
+    expect(mark.endPiece()).toBe(false);
+  });
+
+  it('a meter that never heard her in this take cannot drop a piece', () => {
+    // A meter stuck at one quiet value (a broken web implementation) looks
+    // exactly like this: every piece must be delivered rather than thrown away.
+    const mark = new SpeechMark();
+    mark.observe(quietDb);
+    expect(mark.endPiece()).toBe(false);
+    mark.observe(quietDb);
+    expect(mark.endPiece()).toBe(false);
+  });
+
+  it('the first piece of a take is never silent-skipped', () => {
+    const mark = new SpeechMark();
+    mark.observe(quietDb);
+    expect(mark.endPiece()).toBe(false);
+  });
+
+  it('metering must cover the piece itself, not only earlier ones', () => {
+    const mark = new SpeechMark();
+    mark.observe(speechDb);
+    mark.endPiece();
+    // The final piece delivered no metering at all (recorder already stopping).
+    expect(mark.endPiece()).toBe(false);
+  });
+
+  it('reset forgets the take', () => {
+    const mark = new SpeechMark();
+    mark.observe(speechDb);
+    mark.endPiece();
+    mark.reset();
+    mark.observe(quietDb);
+    expect(mark.endPiece()).toBe(false);
   });
 });
 

@@ -137,8 +137,10 @@ export function useVoiceInput({
       if (r === null) {
         // This piece broke on the device; the other pieces still count.
         d.lost = true;
-      } else if (r.base64.length < MIN_AUDIO_BASE64) {
-        // The moment of nothing after the last words of a long take.
+      } else if (chunk.silent || r.base64.length < MIN_AUDIO_BASE64) {
+        // The moment of nothing after the last words of a long take: provably
+        // silent (record.ts metering, issue #28) or too small to hold a word —
+        // not worth a model call, and nothing to wait for at her tap on stop.
         d.parts[chunk.index] = '';
       } else {
         const before = stitchTranscripts(d.parts);

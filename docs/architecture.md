@@ -782,8 +782,10 @@ A dictation has no time limit (issue #19): the app cuts a long recording into pi
 and sends each piece as its own `POST /voice/transcribe` (§Voice). Each piece takes one of the
 600/h and one of the daily `transcribe` calls — the budget protects cost per model call, and a
 piece is a model call; counting a whole dictation as one would let a single request stand for
-unbounded audio. Normal use never feels it: pieces are at least ~90 s of speech, so 600/h is
-more than 15 hours of nonstop talking per hour, and 400 pieces a day is over 10 hours of speech.
+unbounded audio. Normal use never feels it: pieces are at least ~15 s of recording (issue #28
+made them small so the last one uploads fast; silent tails are not sent), so 600/h is still
+more than 2½ hours of nonstop talking within one hour, and 400 pieces a day is over an hour
+and a half of nonstop dictation on the recording path alone — the device path counts nothing.
 
 Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
 gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
@@ -1313,9 +1315,15 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   recording is never stored. **A dictation has no time limit** (issue #19): the visible 3-minute
   cap is gone. The recording path cannot stream PCM without a native build round (the issue's
   full Silero-VAD design), so a long take rolls over into pieces instead
-  (`lib/speech/dictation.ts`, `record.ts`): from ~90 s the recorder is cut at the next real
+  (`lib/speech/dictation.ts`, `record.ts`): from ~15 s the recorder is cut at the next real
   pause (≥ 700 ms below room tone, the level the glow already measures) — never later than
   ~150 s, well under the 2 MB transport bound per piece — and starts again inside the silence.
+  The soft bound is small on purpose (issue #28,
+  `docs/decisions/upload-waehrend-aufnahme.md`): whatever is still on the device at her tap on
+  stop is the wait she feels, so the running piece is kept small and everything before it is
+  already uploaded; a final piece that provably held no speech (the metering measured it and an
+  earlier piece of the same take heard her — `SpeechMark`, so a meter that cannot hear her can
+  never drop her words) is the pause before her tap and is not uploaded at all.
   Each finished piece goes to `/voice/transcribe` while she keeps talking, with `prev_tail`
   (the tail of what was already understood) as a structured context field, so a piece starting
   mid-sentence is heard as its continuation; the prompt forbids repeating it. The endpoint
