@@ -25,7 +25,9 @@ import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
 import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i18n/index.js';
-import { restoreTheme, ThemeProvider } from '../lib/theme/ThemeProvider.js';
+import { startCrashReports } from '../lib/observability/sentry.js';
+import { barStyleFor } from '../lib/theme/luminance.js';
+import { restoreTheme, ThemeProvider, useTheme } from '../lib/theme/ThemeProvider.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { ShareIntake } from '../components/capture/ShareIntake.js';
 import { clearIncoming, hasIncoming } from '../lib/capture/incoming.js';
@@ -41,7 +43,10 @@ import {
   syncPushDevice,
 } from '../lib/push.js';
 import { practiceRoute } from '../lib/pushActions.js';
-import { useTheme } from '../lib/theme/ThemeProvider.js';
+
+// Before the first render, so a crash while the app is still starting is reported too.
+// Does nothing unless an EU DSN is configured (lib/observability/sentry.ts, issue #36).
+startCrashReports();
 
 /** Answers kept on the device (closed app, lost connection): send them now. */
 async function sendKeptAnswers(): Promise<void> {
@@ -80,6 +85,16 @@ async function afterSignedIn(userId: string): Promise<void> {
   void sendKeptAnswers();
   sendOpenedReports();
   void syncPushDevice().catch(() => undefined);
+}
+
+/**
+ * The clock and the battery follow the palette like the rest of the system chrome
+ * (lib/theme/systemChrome.ts): dark icons on the light palettes, light ones on the dark
+ * palette — never a hardcoded "dark" that disappears on it (issue #84).
+ */
+function ThemedStatusBar() {
+  const { palette } = useTheme();
+  return <StatusBar style={barStyleFor(palette.bg)} />;
 }
 
 // Deep links land on top of the start screen, so Android's back gesture leads to
@@ -257,7 +272,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
             <ErrorBoundary>
-              <StatusBar style="dark" />
+              <ThemedStatusBar />
               <OfflineFrame>
                 {ready ? (
                   <>

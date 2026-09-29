@@ -9,6 +9,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useSyncExternalStore,
   type ReactNode,
@@ -27,6 +28,7 @@ import {
   type SubjectTone,
   type ThemeName,
 } from './palettes.js';
+import { applySystemChrome } from './systemChrome.js';
 
 const KEY = 'lb.theme';
 
@@ -55,10 +57,17 @@ function contextOf(name: ThemeName, choose: (name: ThemeName) => void): ThemeCon
 
 const Ctx = createContext<ThemeContext | null>(null);
 
-/** At start-up, before the first screen: an earlier choice applies again. */
+/**
+ * At start-up, before the first screen: an earlier choice applies again. It runs from
+ * `app/_layout.tsx` while the loading screen is up — after this provider already mounted
+ * with the default. Applying is all it takes: the provider subscribes to the applied
+ * palette, so it follows instead of holding a stale name until she happens to open the
+ * look settings (and, since #36, instead of leaving the system chrome in the default).
+ */
 export async function restoreTheme(): Promise<void> {
   const kept = (await readItem(KEY).catch(() => null)) as ThemeName | null;
-  if (kept && THEME_NAMES.includes(kept)) applyPalette(kept);
+  if (!kept || !THEME_NAMES.includes(kept)) return;
+  applyPalette(kept);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -66,6 +75,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // a copy of its own: `restoreTheme()` runs from the root screen's effect, after this
   // provider has mounted, so a remembered choice would otherwise never reach the tree.
   const name = useSyncExternalStore(onPaletteApplied, activeTheme, activeTheme);
+
+  // The window behind the app and Android's navigation bar wear the palette too — on the
+  // first render and on every change (lib/theme/systemChrome.ts).
+  useEffect(() => {
+    applySystemChrome();
+  }, [name]);
 
   const choose = useCallback((next: ThemeName) => {
     // The tokens change first, the tree re-renders right after: no screen shows half of

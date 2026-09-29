@@ -78,6 +78,7 @@ import { messageFor } from '../../lib/errors.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
+import { useScreenGuard } from '../../lib/privacy/screenGuard.js';
 import type { SpokenWords } from '../../lib/math/speak.js';
 import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/speech/listen.js';
 import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
@@ -168,6 +169,9 @@ function questionOnScreen(session: SessionView, pinnedId: string | null): Sessio
 
 export default function PracticeScreen() {
   const { palette } = useTheme();
+  // Her answers and Buddy's feedback stand on this screen: no screenshot, no recording
+  // (lib/privacy/screenGuard.ts, issue #36).
+  useScreenGuard('practice');
   const { t } = useTranslation(['practice', 'common']);
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';

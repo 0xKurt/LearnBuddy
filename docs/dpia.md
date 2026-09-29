@@ -69,7 +69,13 @@ wenn eingeschaltet; nur `eu-texttospeech.googleapis.com` als einziger erlaubter 
 `config.ts`, `SPEECH_ENDPOINT`) · Vercel (API-Funktion, Frankfurt) · Apple/Google
 Spracherkennung **auf dem Gerät** · Expo Push (Standard: aus, `config.ts` `PUSH_BACKEND`
 default `disabled`; würde einen US-Unterauftragsverarbeiter hinzufügen — rechtliche Prüfung vor
-dem Einschalten, §7).
+dem Einschalten, §7) · Sentry (Absturzberichte; Standard: aus, ohne `EXPO_PUBLIC_SENTRY_DSN`
+wird das SDK nie gestartet. Eingeschaltet nur EU-Region: ein DSN außerhalb
+`*.ingest.de.sentry.io` bricht den Start ab — `apps/mobile/lib/env.ts`, dieselbe Haltung wie
+`EuLocation`. Gesendet werden Fehler, Stack, Build, Gerätemodell und der Bildschirmwechsel;
+Nutzerobjekt, laufender Request, Freitextanhänge, Konsolen- und Netz-Breadcrumbs und
+E-Mail-Adressen werden vorher entfernt — Screenshots und Session-Replay sind ausdrücklich aus
+(`lib/observability/scrub.ts`, unit-getestet). Rechtliche Prüfung vor dem Einschalten, §7).
 
 _Der Genauigkeit halber:_ die Datenbank-Region wird beim Start **geprüft, aber nur gewarnt**,
 nicht verweigert (`config.ts`, `databaseRegionWarning`; Entscheidung D-4) — anders als bei
@@ -258,7 +264,12 @@ Restrisiko wird als **vertretbar** eingestuft.
    denen sie stammen.
 10. **Expo Push:** vor dem Einschalten (`PUSH_BACKEND=expo`) rechtliche Prüfung des
     US-Unterauftragsverarbeiters (`docs/privacy.md` §Processors).
-11. **Owner-Review** dieser Fassung; danach Datum und Fassung erhöhen. **Überprüfung** bei jeder
+11. **Sentry (Issue #36):** vor dem Setzen von `EXPO_PUBLIC_SENTRY_DSN` der
+    Auftragsverarbeitungsvertrag mit Functional Software Inc. und die Bestätigung, dass die
+    EU-Region in EU-Mitgliedstaaten verarbeitet und speichert (`docs/privacy.md` §Processors).
+    Der Restrisiko-Punkt steht dort ebenfalls: eine Ausnahmemeldung wird von unserem Code
+    geschrieben, künftiger Code könnte darin etwas zitieren, das die Lernende getippt hat.
+12. **Owner-Review** dieser Fassung; danach Datum und Fassung erhöhen. **Überprüfung** bei jeder
     Änderung an Zweck, Modell, Region oder Aufbewahrung, sonst jährlich.
 
 ---
