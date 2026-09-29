@@ -36,6 +36,8 @@ export type LlmPurpose =
   | 'tutor'
   | 'explain'
   | 'extraction'
+  /** Boxes of the teaching figures on a photographed page (concept images, issue #50). */
+  | 'figures'
   | 'pronounce'
   | 'transcribe'
   | 'hints'

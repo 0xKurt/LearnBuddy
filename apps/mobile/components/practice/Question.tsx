@@ -4,7 +4,7 @@
 // ___ Mutter.") shows as a gap, read out as "Lücke"; while she types a short
 // answer it stands in the gap, so she sees the whole sentence.
 
-import type { Figure } from '@learnbuddy/shared-types/contracts';
+import type { Figure, ItemImage } from '@learnbuddy/shared-types/contracts';
 import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -23,6 +23,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
+import { StimulusImage } from './StimulusImage.js';
 
 type ProgressProps = {
   /** 1-based position of the question on screen. */
@@ -78,6 +79,10 @@ type QuestionProps = {
   topic: string | null;
   /** A drawing that goes with the question (fraction picture, graph, table …). */
   figure?: Figure | null;
+  /** A real crop from the photographed sheet that goes with the question (issue #50). */
+  image?: ItemImage | null;
+  /** Stable cache key for the crop (the question's id); required with `image`. */
+  imageKey?: string;
   /** Buddy wrote this question (origin 'buddy'), it is not from the learner's own material. */
   fromBuddy?: boolean;
   /**
@@ -88,15 +93,20 @@ type QuestionProps = {
   answer?: string;
   /** The tallest the drawing may be, so the answer stays on screen. */
   figureMaxHeight?: number;
+  /** The tallest the crop may be (≤ 180 pt; the 360×740 fit rule). */
+  imageMaxHeight?: number;
 };
 
 export function QuestionCard({
   prompt,
   topic,
   figure = null,
+  image = null,
+  imageKey,
   fromBuddy = false,
   answer,
   figureMaxHeight,
+  imageMaxHeight = 180,
 }: QuestionProps) {
   const { t } = useTranslation('practice');
   const filled = fillableAnswer(prompt, answer);
@@ -132,6 +142,9 @@ export function QuestionCard({
         <View style={{ marginTop: 12 }}>
           <ZoomableFigure figure={figure} maxHeight={figureMaxHeight} />
         </View>
+      ) : null}
+      {image && imageKey ? (
+        <StimulusImage image={image} cacheKey={imageKey} maxHeight={imageMaxHeight} />
       ) : null}
     </Card>
   );

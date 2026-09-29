@@ -81,6 +81,12 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
        join materials m on m.id = mp.material_id where m.learner_id = $1`,
     [learner.id],
   );
+  // Concept-image crops of her sheets (issue #50): what exists, not the pixels.
+  out.material_images = await db.query(
+    `select material_id, label, width, height, created_at from material_images
+      where learner_id = $1`,
+    [learner.id],
+  );
   out.push_tokens = await db.query(
     `select platform, status, registered_at from push_tokens where learner_id = $1`,
     [learner.id],
@@ -164,6 +170,7 @@ const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
   { table: 'practice_sessions', rows: `select ctid from practice_sessions where learner_id = $1` },
   { table: 'item_states', rows: `select ctid from item_states where learner_id = $1` },
   { table: 'items', rows: `select ctid from items where learner_id = $1` },
+  { table: 'material_images', rows: `select ctid from material_images where learner_id = $1` },
   {
     table: 'material_photos',
     rows: `select mp.ctid from material_photos mp join materials m on m.id = mp.material_id
@@ -257,6 +264,17 @@ export async function executeAccountDeletion(deps: Deps, job: JobRow): Promise<v
              select mp.storage_path, 'account_deleted', $2, $2
                from material_photos mp join materials m on m.id = mp.material_id
               where m.learner_id = $1 and m.photos_deleted_at is null
+             on conflict (path) do nothing
+             returning 1)
+           select count(*)::int as n from q`,
+          [state.learner_id ?? null, deps.now()],
+        );
+        // Concept-image crops (issue #50) live in the same bucket and go the same way.
+        await tx.query(
+          `with q as (
+             insert into storage_deletions (path, reason, next_attempt_at, created_at)
+             select mi.storage_path, 'account_deleted', $2, $2
+               from material_images mi where mi.learner_id = $1
              on conflict (path) do nothing
              returning 1)
            select count(*)::int as n from q`,

@@ -90,6 +90,7 @@
   },
   "help_note": "Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.",
   "origin_buddy": "Frage von Buddy",
+  "image_fallback": "Bild zur Aufgabe",
   "self_solved": {
     "title": "Selbst gelöst!",
     "body": "Das hast du allein herausgefunden."

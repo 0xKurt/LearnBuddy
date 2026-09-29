@@ -57,6 +57,17 @@ export async function purgePhotos(deps: Deps, job: JobRow): Promise<void> {
   await finishJob(deps.db, job, deps.now(), { status: 'done', result: { removed: photos.length } });
 }
 
+/** Crop paths owed to Storage go on the durable queue (drained by the tick; D-9 pattern). */
+async function queueImageDeletions(db: Db, paths: string[], now: Date): Promise<void> {
+  for (const path of paths) {
+    await db.query(
+      `insert into storage_deletions (path, reason, next_attempt_at, created_at)
+       values ($1, 'material', $2, $2) on conflict (path) do nothing`,
+      [path, now],
+    );
+  }
+}
+
 /** Plans the erasure of a deleted material's content (and of its merged pages). */
 export async function enqueueContentPurge(
   db: Db,
@@ -85,10 +96,25 @@ export async function purgeContent(deps: Deps, job: JobRow): Promise<void> {
   const now = deps.now();
   const result = await deps.db.tx(async (tx) => {
     if (typeof job.payload.item_id === 'string') {
-      const gone = await tx.query<{ learner_id: string }>(
-        `delete from items where id = $1 and archived_at is not null returning learner_id`,
+      const gone = await tx.query<{ learner_id: string; image_id: string | null }>(
+        `delete from items where id = $1 and archived_at is not null returning learner_id, image_id`,
         [job.payload.item_id],
       );
+      // The question's concept image goes with it — once no other question shows it
+      // (issue #50; the crop is derived content like the question's own text).
+      if (gone[0]?.image_id) {
+        const orphaned = await tx.query<{ storage_path: string }>(
+          `delete from material_images mi where mi.id = $1
+            and not exists (select 1 from items i where i.image_id = mi.id)
+            returning storage_path`,
+          [gone[0].image_id],
+        );
+        await queueImageDeletions(
+          tx,
+          orphaned.map((o) => o.storage_path),
+          now,
+        );
+      }
       if (gone[0]) await bumpContext(tx, gone[0].learner_id);
       return { items: gone.length };
     }
@@ -108,6 +134,18 @@ export async function purgeContent(deps: Deps, job: JobRow): Promise<void> {
     const items = await tx.query(
       `delete from items where material_id = any($1::uuid[]) returning id`,
       [ids],
+    );
+    // Concept images are derived content like the transcript: their crops leave
+    // Storage with it, through the durable deletion queue (a Storage outage only
+    // delays them; the tick drains the queue — issue #50, docs/privacy.md).
+    const images = await tx.query<{ storage_path: string }>(
+      `delete from material_images where material_id = any($1::uuid[]) returning storage_path`,
+      [ids],
+    );
+    await queueImageDeletions(
+      tx,
+      images.map((i) => i.storage_path),
+      now,
     );
     await tx.query(
       `update materials set extracted_text = null, title = null, page_problems = '[]'::jsonb,

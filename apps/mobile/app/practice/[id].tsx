@@ -829,6 +829,9 @@ export default function PracticeScreen() {
                 topic={item.topic}
                 figure={item.figure}
                 figureMaxHeight={Math.round(windowHeight * 0.14)}
+                image={item.image}
+                imageKey={item.id}
+                imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
                 fromBuddy={item.origin === 'buddy'}
                 // Her short answer appears in the gap of a fill-in sentence while she types.
                 answer={

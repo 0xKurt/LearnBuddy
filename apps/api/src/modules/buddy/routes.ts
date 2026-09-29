@@ -146,7 +146,7 @@ buddyRoutes.post('/steps/:id/start', async (c) => {
   // The session comes along: the app shows its first question at once (gaps.md #2).
   return c.json({
     session_id: sessionId,
-    session: await sessionView(deps.db, learnerId, sessionId),
+    session: await sessionView(deps.db, learnerId, sessionId, deps.storage),
   });
 });
 

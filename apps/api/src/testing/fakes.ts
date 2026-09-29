@@ -246,7 +246,7 @@ export class FakeAuth implements AuthVerifier {
   }
 }
 
-export type StorageOp = 'sign' | 'list' | 'download' | 'remove';
+export type StorageOp = 'sign' | 'list' | 'download' | 'upload' | 'remove';
 
 /**
  * Photo storage stand-in with the provider's limits (at most 1000 paths per delete) and
@@ -287,6 +287,14 @@ export class MemoryStorage implements StorageGateway {
   async download(path: string): Promise<Uint8Array | null> {
     this.maybeFail('download');
     return this.objects.get(path) ?? null;
+  }
+  async upload(path: string, bytes: Uint8Array): Promise<void> {
+    this.maybeFail('upload');
+    this.objects.set(path, bytes);
+  }
+  async createDownloadUrl(path: string, ttlSeconds: number): Promise<string> {
+    this.maybeFail('sign');
+    return `memory://${path}?signed&ttl=${ttlSeconds}`;
   }
   async remove(paths: string[]): Promise<void> {
     this.removeCalls.push([...paths]);
