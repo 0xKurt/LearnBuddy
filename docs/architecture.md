@@ -1572,6 +1572,15 @@ live `LB`), instead of five identical white buttons.
   and that **every migration on disk is applied** before new code goes live. The last one was
   added after two missing migrations made a learner's voice choice fail with a bare error
   (issues #67, #79): the schema a build expects is part of the build.
+- Rollback is asymmetric (issue #79): Vercel can roll a function back, the database cannot.
+  Migrations are therefore **additive only** — new tables, new columns with defaults, widened
+  constraints; never a drop or rename that yesterday's code would trip over. A column that must
+  go is stopped being written first and removed in a later release, when no deployed code reads
+  it. After applying migrations, the Supabase advisors are run once (security + performance —
+  issue #72); RLS-without-policy INFO lines are the deliberate design, anything new is triaged.
+- A dev build on a phone that talks to a real backend names its host on screen
+  (`components/lb/DevHostNote.tsx`, dev builds only — issue #79: a test run on real data must
+  be visible).
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's

@@ -11,6 +11,7 @@ import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { DevHostNote } from '../components/lb/DevHostNote.js';
 import { ErrorBoundary } from '../components/lb/ErrorBoundary.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { OfflineFrame } from '../components/lb/OfflineFrame.js';
@@ -276,6 +277,8 @@ export default function RootLayout() {
                 )}
               </OfflineFrame>
               <ToastHost />
+              {/* Dev build against a real backend: name the host on screen (issue #79). */}
+              <DevHostNote />
               <SplashHandoff ready={ready} />
             </ErrorBoundary>
           </QueryClientProvider>
