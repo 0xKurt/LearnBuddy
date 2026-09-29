@@ -87,6 +87,13 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
       where learner_id = $1`,
     [learner.id],
   );
+  // Search passages (issue #23): what exists per sheet. The text itself is a verbatim
+  // cut of materials.extracted_text, which the export already carries in full.
+  out.material_passages = await db.query(
+    `select material_id, position, length(text) as chars, created_at
+       from material_passages where learner_id = $1`,
+    [learner.id],
+  );
   out.push_tokens = await db.query(
     `select platform, status, registered_at from push_tokens where learner_id = $1`,
     [learner.id],
@@ -171,6 +178,10 @@ const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
   { table: 'item_states', rows: `select ctid from item_states where learner_id = $1` },
   { table: 'items', rows: `select ctid from items where learner_id = $1` },
   { table: 'material_images', rows: `select ctid from material_images where learner_id = $1` },
+  {
+    table: 'material_passages',
+    rows: `select ctid from material_passages where learner_id = $1`,
+  },
   {
     table: 'material_photos',
     rows: `select mp.ctid from material_photos mp join materials m on m.id = mp.material_id

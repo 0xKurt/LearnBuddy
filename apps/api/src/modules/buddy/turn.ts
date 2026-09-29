@@ -27,6 +27,7 @@ import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 import { applyDecision, recordUnapplied } from './apply.js';
+import { preInjectedPassages } from './connectors/material.js';
 import { buildContents, buildContext } from './context.js';
 import { prepareOffered } from '../practice/prepare.js';
 import { askedButActed, emptyReply, TurnDecision, TurnDecisionForModel } from './registry.js';
@@ -185,6 +186,8 @@ async function decideTurn(
 ): Promise<TurnOutcome> {
   let repairErrors: string[] | null = null;
   let round = 0;
+  // Computed once per turn (one embedding call), reused across repair/stale rounds.
+  let preInjected: string | null | undefined;
   for (let attempt = 1; attempt <= MAX_ROUNDS; attempt++) {
     const now = deps.now();
     const state = await loadBuddyState(deps.db, learner.id, now);
@@ -230,8 +233,17 @@ async function decideTurn(
         : {}),
     });
     const { dialogue, learnerWords } = turnDialogue(state.messages, message.id, learner.locale);
+    // Passages her words clearly point at go into the context up front, so the answer
+    // does not depend on the model calling search_material (issue #26). Appended after
+    // the volatile end of STATE — the cache order (context.ts) is untouched.
+    if (preInjected === undefined) {
+      preInjected =
+        learnerWords.length > 0
+          ? await preInjectedPassages(deps, learner.id, tz, learnerWords.join('\n'))
+          : null;
+    }
     const contents: LlmMessage[] = buildContents(
-      ctx.state,
+      preInjected ? `${ctx.state}\n\n${preInjected}` : ctx.state,
       dialogue,
       repairErrors ? repairMessage(repairErrors) : undefined,
     );

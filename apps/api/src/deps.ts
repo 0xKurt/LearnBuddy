@@ -5,6 +5,7 @@
 import type { AuthVerifier } from './auth/verifier.js';
 import type { Config } from './config.js';
 import type { Db } from './lib/db.js';
+import type { EmbeddingGateway } from './llm/embeddings.js';
 import type { LlmGateway } from './llm/gateway.js';
 import type { PushTransport } from './push/transport.js';
 import type { SpeechGateway } from './speech/gateway.js';
@@ -18,6 +19,8 @@ export type Deps = {
   auth: AuthVerifier;
   storage: StorageGateway;
   llm: LlmGateway;
+  /** Text embeddings for the hybrid material search (issue #23); may be disabled. */
+  embeddings: EmbeddingGateway;
   push: PushTransport;
   /** Text to speech for Buddy's natural voice (ADR 0008). */
   speech: SpeechGateway;

@@ -21,7 +21,7 @@ import { DisabledSpeech } from '../speech/gateway.js';
 import { runTick } from '../modules/scheduler/tick.js';
 import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
-import { FakeSpeech, ScriptedGateway } from './fakes.js';
+import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptTour } from './scenarios/tour.js';
@@ -72,6 +72,9 @@ async function main(): Promise<void> {
     auth,
     storage,
     llm: model,
+    // Deterministic vectors: the hybrid search's passage indexing and query path run
+    // in the walkthrough without a model account (semantic quality is the eval's job).
+    embeddings: new FakeEmbeddings(),
     push: new DisabledPush(),
     // LB_DEV_SPEECH=fake: Buddy's own voice as silent audio (exercises playback and read-along).
     speech: process.env.LB_DEV_SPEECH === 'fake' ? new FakeSpeech() : new DisabledSpeech(),

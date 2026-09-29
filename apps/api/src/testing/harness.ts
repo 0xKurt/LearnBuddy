@@ -8,11 +8,13 @@ import { loadConfig, type Config } from '../config.js';
 import type { Deps } from '../deps.js';
 import type { AppEnv } from '../http/context.js';
 import { createDb, type PgDb } from '../lib/db.js';
+import { DisabledEmbeddings, type EmbeddingGateway } from '../llm/embeddings.js';
 import { DisabledGateway, type LlmGateway } from '../llm/gateway.js';
 import { DisabledPush } from '../push/transport.js';
 import { createTestDatabase, type TestDatabase } from './database.js';
 import {
   FakeAuth,
+  FakeEmbeddings,
   FakePush,
   FakeSpeech,
   MemoryStorage,
@@ -26,6 +28,7 @@ export type TestEnv = {
   db: PgDb;
   clock: TestClock;
   llm: ScriptedGateway;
+  embeddings: FakeEmbeddings;
   push: FakePush;
   speech: FakeSpeech;
   auth: FakeAuth;
@@ -44,6 +47,8 @@ export async function createTestEnv(
     model?: 'scripted' | 'disabled';
     /** A real model for evaluations (evals/buddy); overrides `model`. */
     gateway?: LlmGateway;
+    /** 'disabled', or a real embedding gateway for evaluations (evals/lookup); default fake. */
+    embeddings?: EmbeddingGateway | 'disabled';
     push?: 'fake' | 'disabled';
     speech?: 'fake' | 'disabled';
     config?: Record<string, string>;
@@ -72,6 +77,7 @@ export async function createTestEnv(
   const speech = new FakeSpeech();
   const auth = new FakeAuth(db, clock.now);
   const storage = new MemoryStorage();
+  const embeddings = new FakeEmbeddings();
   const pending: Array<Promise<void>> = [];
   const deps: Deps = {
     config,
@@ -80,6 +86,8 @@ export async function createTestEnv(
     auth,
     storage,
     llm: opts.gateway ?? (opts.model === 'disabled' ? new DisabledGateway() : llm),
+    embeddings:
+      opts.embeddings === 'disabled' ? new DisabledEmbeddings() : (opts.embeddings ?? embeddings),
     push: opts.push === 'disabled' ? new DisabledPush() : push,
     speech: opts.speech === 'disabled' ? new DisabledSpeech() : speech,
     background: (task) => {
@@ -91,6 +99,7 @@ export async function createTestEnv(
     db,
     clock,
     llm,
+    embeddings,
     push,
     speech,
     auth,

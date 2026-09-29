@@ -309,11 +309,11 @@ describe.skipIf(!dbReady)('Buddy lookups', () => {
        values ($1, $2, 'ready', 1, 'Hausaufgabe Brüche', 'Aufgabe 1: Kürze 6/8. Ergebnis 3/4', $3, 'homework')`,
       [lena.learnerId, randomUUID(), env.clock.now()],
     );
-    const hits = await searchMaterials(env.db, lena.learnerId, 'Europe/Berlin', 'Kürze', 3);
+    const hits = await searchMaterials(env.deps, lena.learnerId, 'Europe/Berlin', 'Kürze', 3);
     expect(hits).toEqual([
       expect.objectContaining({ title: 'Hausaufgabe Brüche', excerpt: '', homework: true }),
     ]);
-    const newest = await searchMaterials(env.db, lena.learnerId, 'Europe/Berlin', '', 3);
+    const newest = await searchMaterials(env.deps, lena.learnerId, 'Europe/Berlin', '', 3);
     expect(JSON.stringify(newest)).not.toContain('6/8');
   });
 });

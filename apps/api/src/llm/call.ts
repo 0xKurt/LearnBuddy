@@ -7,6 +7,7 @@
 import { DAILY_LIMITS } from '../config.js';
 import type { Db } from '../lib/db.js';
 import { AppError } from '../lib/errors.js';
+import type { EmbeddingGateway, EmbedRequest, EmbedResult } from './embeddings.js';
 import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
 
 export type ModelDeps = { db: Db; llm: LlmGateway };
@@ -115,6 +116,72 @@ export async function callModel(
       // provider outage, a rejected request or a safety block (her words are not "spent").
       if (err.kind !== 'invalid_output' && err.kind !== 'timeout') {
         await releaseReservation(deps.db, learnerId, localDay, kind);
+      }
+    }
+    throw err;
+  }
+}
+
+/** Recorded as the prompt version of embedding calls (there is no prompt to version). */
+export const EMBED_VERSION = 'embed.v1';
+
+/**
+ * Embed texts on behalf of a learner, under the same reserve → call → record
+ * discipline as callModel (purpose 'embedding'). Throws AppError('budget_exhausted')
+ * when today's limit is used up, LlmError on provider problems — callers degrade
+ * to full text + trigram search, they never fail the feature.
+ */
+export async function callEmbedding(
+  deps: { db: Db; embeddings: EmbeddingGateway },
+  learnerId: string,
+  localDay: string,
+  req: EmbedRequest,
+): Promise<EmbedResult> {
+  if (!deps.embeddings.available) throw new LlmError('unavailable', 'no embedding model');
+  if (!(await reserveModelCall(deps.db, learnerId, localDay, 'embedding'))) {
+    throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
+  }
+  const recordEmbed = (
+    outcome: 'ok' | 'invalid_output' | 'error' | 'timeout',
+    usage: EmbedResult['usage'] | null,
+    errorCode: string | null,
+  ) =>
+    deps.db.query(
+      `insert into llm_calls (learner_id, purpose, model, prompt_version, input_tokens,
+                              cost_micros, latency_ms, outcome, error_code)
+       values ($1,'embedding',$2,$3,$4,$5,$6,$7,$8)`,
+      [
+        learnerId,
+        usage?.model ?? 'unknown',
+        EMBED_VERSION,
+        usage?.inputTokens ?? 0,
+        usage?.costMicros ?? 0,
+        usage?.latencyMs ?? 0,
+        outcome,
+        errorCode,
+      ],
+    );
+  try {
+    const result = await deps.embeddings.embed(req);
+    await recordEmbed('ok', result.usage, null);
+    await deps.db.query(
+      `update usage_daily set cost_micros = cost_micros + $4
+        where learner_id = $1 and day = $2 and kind = $3`,
+      [learnerId, localDay, 'embedding', result.usage.costMicros],
+    );
+    return result;
+  } catch (err) {
+    if (err instanceof LlmError) {
+      const outcome =
+        err.kind === 'timeout'
+          ? 'timeout'
+          : err.kind === 'invalid_output'
+            ? 'invalid_output'
+            : 'error';
+      await recordEmbed(outcome, null, err.kind);
+      // Same rule as callModel: an outage or refusal does not use up her allowance.
+      if (err.kind !== 'invalid_output' && err.kind !== 'timeout') {
+        await releaseReservation(deps.db, learnerId, localDay, 'embedding');
       }
     }
     throw err;

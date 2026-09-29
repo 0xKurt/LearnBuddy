@@ -285,7 +285,7 @@ summary plus undo data. Enforced here, not in the prompt:
 ### Lookups (ADR 0005, stage 1)
 
 `modules/buddy/lookups.ts` + `connectors/`. Before answering, a turn or check may read:
-`search_material` (passages of her read worksheets, Postgres full text, prefix words; a
+`search_material` (passages of her read worksheets, hybrid search below; a
 homework sheet only by title, never its text — help with homework happens in the help session),
 `practice_history` (finished sessions: what sat, what was shaky) and `find_questions`
 (questions on a topic with the latest result — never the solutions). Registered once (name,
@@ -301,6 +301,37 @@ registry. Enforced in code:
 Live eval (`evals/buddy/run.ts`, case `de_lookup_sheet`): the answer came from the sheet in every
 run (6/6). Act tools move to the same registry in stage 2; external connectors (stage 3) and
 the event log (stage 4) are planned.
+
+**Hybrid material search** (issue #23, migration 0054). Postgres full text alone cannot
+decompose German compounds ("Malaufgaben" never finds "Multiplikation") and children mistype.
+`connectors/material.ts` therefore fuses three candidate lists with Reciprocal Rank Fusion
+(rank-only, k = 60): the original full-text query over the whole sheet, pg_trgm word
+similarity over passages (typos; per-word floor 0.4, measured — the built-in 0.6 drops real
+typos like "Fotosyntese" at 0.47), and pgvector cosine over passage embeddings
+(gemini-embedding-001 @ 768d, normalised in code, `RETRIEVAL_DOCUMENT`/`RETRIEVAL_QUERY`;
+the model serves `europe-west4`, not the `eu` multi-region). Passages are chunked from
+`extracted_text` at paragraph boundaries (≤ 700 chars, `modules/materials/passages.ts`) when a
+sheet becomes ready, and caught up lazily at search time for older sheets; embeddings are
+budgeted model calls (purpose `embedding`). **Every list is optional**: without pgvector (the
+local PG14 test server), without a model or without budget the search degrades to full text +
+trigram — never a hard failure. Measured (`evals/lookup/retrieval.ts`, 14 child queries ×
+7 sheets, 2026-09-29): top-1 full text 8/14 → + trigram 11/14 → + vectors 12/14 (top-3 13/14);
+indexing all 7 sheets + 14 queries cost $0.00011. Cost of the pipeline (list price
+$0.20/1M embedding tokens, `pricing.ts`): a new material is one batched call over its
+passages — a full 12 000-character sheet is ≈ 3 500 tokens ≈ $0.0007, a typical one far less;
+each search query ≈ $0.000003; the one-time backfill of existing sheets is the same per-sheet
+price, paid lazily at search time (bounded per call, purpose `embedding`, 400/day).
+
+**Passage pre-injection** (issue #26). Just-in-time retrieval fails when the model does not
+call the tool. A turn therefore runs the learner's own words through the same search first and
+appends clearly matching passages to the end of STATE (after the volatile `Now` block, so the
+prefix-cache order of issue #25 is untouched), marked as pre-fetched data. The gate is code:
+trigram evidence or vector distance ≤ 0.35 (measured: right sheet 0.215–0.37, best wrong sheet
+≥ 0.315 — the cut leans open because a wrong sheet costs context, a missed one costs the
+answer); the raw full-text list never gates (a sentence's function words match every German
+sheet). Hard cap 1200 characters + header; homework passages are named, never quoted; one
+embedding call per turn, reused across repair rounds. The lookup stays available for
+everything the injection did not carry.
 
 ## Proactivity
 
@@ -719,21 +750,21 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                                                                                  |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8 (`config.ts`) |
-| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                     |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                              |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                             |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos                                                                 |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                |
-| Turn stall                      | taken over after 3 minutes                                                                                                                             |
-| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                              |
-| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                                                                     |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                                        |
-| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                                              |
-| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h, messages to Buddy 120/h (429 + `Retry-After`)                |
-| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                       |
+| What                            | Limit                                                                                                                                                                 |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`) |
+| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                    |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                             |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                            |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos                                                                                |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                               |
+| Turn stall                      | taken over after 3 minutes                                                                                                                                            |
+| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                                             |
+| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                                                                                    |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                                                       |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                                                             |
+| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h, messages to Buddy 120/h (429 + `Retry-After`)                               |
+| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                                      |
 
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
