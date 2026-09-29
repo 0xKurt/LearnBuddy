@@ -28,6 +28,12 @@ type Props = {
   wrap?: boolean;
   disabled?: boolean;
   /**
+   * Answers a tap on the waiting (disabled, not busy) button instead of swallowing it:
+   * the screen shows why the button waits (<WaitHint>, issue #97). The button still
+   * looks muted and a screen reader still hears "deaktiviert" (accessibilityState).
+   */
+  onDisabledPress?: () => void;
+  /**
    * The button's work is in flight: a small spinner replaces the icon, the button
    * is disabled and a screen reader hears "busy". Every submit that talks to the
    * network passes this instead of only `disabled`.
@@ -57,13 +63,12 @@ const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; font
   lg: { height: 54, paddingHorizontal: 26, fontSize: 17 },
 };
 
+type VariantSkin = { bg: string; color: string; borderColor: string; borderWidth: number };
+
 // Read at render time: as a module constant this froze the start palette into every
 // button — the ghost "Rückgängig" kept pastel ink on the night cards (issue #84, the one
 // capture the first scanner missed because the type annotation spans lines).
-const variantStyle = (): Record<
-  Variant,
-  { bg: string; color: string; borderColor: string; borderWidth: number }
-> => ({
+const variantStyle = (): Record<Variant, VariantSkin> => ({
   primary: { bg: LB.primary, color: LB.paper, borderColor: 'transparent', borderWidth: 0 },
   soft: { bg: LB.primaryLt, color: LB.primaryDk, borderColor: 'transparent', borderWidth: 0 },
   outline: { bg: LB.paper, color: LB.ink, borderColor: LB.hairline, borderWidth: 1 },
@@ -75,6 +80,19 @@ const variantStyle = (): Record<
     borderWidth: 1,
   },
 });
+
+// The waiting skin (issue #97): a disabled button in its own muted surface and muted
+// label from the tokens — 20 % opacity on the primary violet was invisible on a light
+// screenshot. The label stays readable (ink2 on canvas ≥ 4.5:1 in every palette, and the
+// ready primary stands out ≥ 3:1 against canvas — lib/theme/__tests__/contrast.test.ts).
+// Ghost and danger have no fill to mute: their text steps back to the placeholder tone
+// (also ≥ 4.5:1 on paper and bg). Read at render time, like variantStyle (issue #84).
+const mutedStyle = (variant: Variant): VariantSkin =>
+  variant === 'ghost'
+    ? { bg: 'transparent', color: LB.placeholder, borderColor: 'transparent', borderWidth: 0 }
+    : variant === 'danger'
+      ? { bg: 'transparent', color: LB.placeholder, borderColor: LB.hairline, borderWidth: 1 }
+      : { bg: LB.canvas, color: LB.ink2, borderColor: LB.hairline, borderWidth: 1 };
 
 export function Btn({
   children,
@@ -88,6 +106,7 @@ export function Btn({
   icon,
   grow = false,
   disabled = false,
+  onDisabledPress,
   busy = false,
   selected,
   expanded,
@@ -97,15 +116,22 @@ export function Btn({
   accessibilityHint,
 }: Props) {
   const s = SIZE_STYLE[size];
-  const base = variantStyle()[variant];
-  const v = tone ? { ...base, bg: TONE_BG[tone], color: LB.ink, borderWidth: 0 } : base;
-  const radius = pill ? s.height / 2 : 14;
   const off = disabled || busy;
+  // Busy keeps the variant's colours — the spinner says why nothing happens. Only a
+  // plainly disabled button wears the muted skin (issue #97).
+  const muted = disabled && !busy;
+  const base = variantStyle()[variant];
+  const active = tone ? { ...base, bg: TONE_BG[tone], color: LB.ink, borderWidth: 0 } : base;
+  const v = muted ? mutedStyle(variant) : active;
+  const radius = pill ? s.height / 2 : 14;
+  // With a handler, a tap on the waiting button answers ("what is missing?") instead of
+  // being swallowed; the accessibilityState below still says disabled either way.
+  const reveal = muted && onDisabledPress ? onDisabledPress : undefined;
 
   return (
     <Pressable
-      onPress={onPress}
-      disabled={off}
+      onPress={reveal ?? onPress}
+      disabled={off && !reveal}
       accessibilityRole={selected === undefined ? 'button' : 'radio'}
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
@@ -122,8 +148,9 @@ export function Btn({
       style={{
         alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
         ...(grow ? { flexGrow: 1 } : {}),
-        // 0.8, not lower: a child must still be able to read why the button waits.
-        opacity: off ? 0.8 : 1,
+        // Only busy dims: the muted skin carries full opacity so its label keeps ≥ 4.5:1
+        // (at 0.8 it fell to ~3.7 on the light palettes, issue #97).
+        opacity: busy ? 0.8 : 1,
         borderRadius: radius,
         overflow: 'hidden',
       }}
@@ -159,7 +186,8 @@ export function Btn({
               <Icon
                 name={icon}
                 size={Math.round(s.fontSize * 1.4)}
-                color={variant === 'outline' || tone ? LB.primaryDk : v.color}
+                // A muted button's icon steps back with its label (issue #97).
+                color={!muted && (variant === 'outline' || tone) ? LB.primaryDk : v.color}
               />
             </View>
           ) : null}

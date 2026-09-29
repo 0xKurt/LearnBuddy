@@ -15,3 +15,4 @@ export { Screen } from './Screen.js';
 export { Section } from './Section.js';
 export { Sheet } from './Sheet.js';
 export { toast, ToastHost } from './Toast.js';
+export { WaitHint } from './WaitHint.js';
