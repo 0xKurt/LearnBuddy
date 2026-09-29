@@ -14,6 +14,9 @@ describe('signatures', () => {
       'stern',
       'sternchen',
       'nurstern',
+      'mondfunken',
+      'nurfunken',
+      'prisma',
     ]);
   });
 });

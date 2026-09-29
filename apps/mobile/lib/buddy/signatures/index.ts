@@ -30,6 +30,12 @@ export const SIGNATURE_KEYS = [
   'sternchen',
   /** Round 3 "Nur der große Stern": the soft round star alone. */
   'nurstern',
+  /** Round 2 "Mond mit Funken": the moon with a colourful trail and pastel sparkles round Buddy. */
+  'mondfunken',
+  /** Round 3 "Nur die bunten Sternchen": only the colourful sparkles round Buddy. */
+  'nurfunken',
+  /** Round 2 "Prisma": a beam of light goes in, a fan of pastel rainbow comes out. */
+  'prisma',
 ] as const;
 export type SignatureKey = (typeof SIGNATURE_KEYS)[number];
 

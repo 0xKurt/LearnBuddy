@@ -4,7 +4,10 @@ import type { ComponentType } from 'react';
 
 import type { SignatureKey } from '../../../lib/buddy/signatures/index.js';
 import { KernSignature } from './KernSignature.js';
+import { MondfunkenSignature } from './MondfunkenSignature.js';
 import { MondSignature } from './MondSignature.js';
+import { NurfunkenSignature } from './NurfunkenSignature.js';
+import { PrismaSignature } from './PrismaSignature.js';
 import { PunkteSignature } from './PunkteSignature.js';
 import { RingSignature } from './RingSignature.js';
 import { NursternSignature, SternchenSignature } from './SternchenSignature.js';
@@ -19,4 +22,7 @@ export const SIGNATURES: Record<SignatureKey, ComponentType<SignatureProps>> = {
   stern: SternSignature,
   sternchen: SternchenSignature,
   nurstern: NursternSignature,
+  mondfunken: MondfunkenSignature,
+  nurfunken: NurfunkenSignature,
+  prisma: PrismaSignature,
 };
