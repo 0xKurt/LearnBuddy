@@ -40,6 +40,10 @@ export function prepareOffered(
           kind: offer.kind,
           text: offer.text,
           goal_id: offer.goal_id,
+          // Prepared exactly as her tap would ask for it (issue #113) — otherwise the
+          // prepared session and the tapped one would be two different things.
+          difficulty: offer.difficulty,
+          direction: offer.direction,
         });
       } catch {
         // Her tap prepares it then, and says what went wrong there. A failed preparation
