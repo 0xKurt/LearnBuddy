@@ -112,12 +112,45 @@ Gerät ist **weiterhin ungemessen** (`docs/architecture.md` §Voice, #19-Abschlu
 Messvorbehalt gilt jetzt für mehr Nähte. Auch die Rollover-Lücke (Recorder-Neustart in der
 Pause) ist nur am Gerät bezifferbar.
 
-## 5. Wann neu bewerten
+## 5. Wann neu bewerten — und wo der PCM-Stream andockt
 
-Erst mit **#36** (native Runde: PCM-Stream + Silero-VAD, das volle #19-Design): dann existieren
+Erst mit **#19/#28 auf PCM-Basis** (PCM-Stream + VAD, das volle #19-Design): dann existieren
 Bytes während der Aufnahme, und der Transport dafür (WebSocket oder chunked POST) ist eine
 Folgeentscheidung mit echtem Gewinn — dem Wegfall auch des letzten kleinen Uploads. Vorher ist
 jede WebSocket-Arbeit auf Vercel Aufwand ohne einlösbaren Speed.
+
+### Vorbereitet in der nativen Runde (#36), bewusst nicht mehr
+
+Damit der Dev-Client dafür nicht noch einmal neu muss, liegt das Modul seit #36 in der App —
+**nur die Abhängigkeit und das Konfig-Plugin, keine Zeile VAD.** Ein halb verdrahteter
+Sprachpfad wäre genau der Stub, den CLAUDE.md Regel 12 verbietet; heute importiert kein
+App-Code `react-native-audio-api`, und am Aufnahmeweg (`record.ts`, `dictation.ts`) ist nichts
+geändert.
+
+**Gewählt: `react-native-audio-api` (Software Mansion), gepinnt auf `~0.12.2`.**
+
+| Achse             | Befund (29.09.2026, geprüft an npm + Doku, **nicht am Gerät**)                                                                                                                                                                                                        |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Anwendungsfall    | `AudioRecorder.onAudioReady({ sampleRate, bufferLength, channelCount }, ({ buffer, numFrames, when }) => …)` liefert rohes PCM (Float −1…1) **während** der Aufnahme — genau die Bytes, die expo-audio auf diesem Build nicht herausgibt (§3)                         |
+| Qualität / Pflege | Software Mansion (Reanimated, Gesture Handler), aktiv gepflegt, offizielles Expo-Config-Plugin; die Alternativen sind tot oder schmal: `react-native-live-audio-stream` zuletzt 2022, `expo-audio-stream` 2024, `@siteed/expo-audio-studio` Einzelmaintainer, 06/2026 |
+| Kompatibilität    | Die Versionstabelle der Doku führt **0.12.x für RN 0.76–0.85** (New Architecture) — RN 0.81.5 dieses Builds liegt darin. 0.13.x ist dort **nicht** geführt, baut gegen RN 0.87 und fordert `react-native-worklets ≥ 0.7`, während Expo SDK 54 auf 0.5.1 pinnt         |
+| Kosten            | 0 € Verbrauch; Preis ist Build-Größe (das Paket bringt FFmpeg mit — `disableFFmpeg: true` im Plugin wäre der Hebel, bewusst **nicht** gesetzt, weil hier kein Build verifiziert werden kann) und ein Dev-Client-Rebuild, der in #36 ohnehin ansteht                   |
+
+Der Worklets-Peer (`≥ 0.6`) ist beim Paket als _optional_ deklariert und betrifft nur
+`WorkletNode`; für `AudioRecorder` wird er nicht gebraucht. Expos 0.5.1 ist deshalb in
+`pnpm-workspace.yaml` ausdrücklich erlaubt, statt Expos Pin anzufassen.
+
+**Anschlusspunkt, wenn #19/#28 weitergeht:** `apps/mobile/lib/speech/record.ts` ist die einzige
+Stelle, die heute einen Recorder startet, stoppt und die fertige Datei als Base64 an
+`/voice/transcribe` gibt; `dictation.ts` entscheidet (rein und unit-getestet) über Schnitte an
+Sprechpausen und über beweisbar stumme Endstücke. Ein PCM-Pfad ersetzt in `record.ts` die
+Datei-Quelle durch `onAudioReady` und füttert dieselbe Pausenlogik mit echten Pegeln statt
+Metering-Stichproben — die Entscheidungen in `dictation.ts` bleiben, nur ihre Eingabe wird
+feiner. Erst wenn dort Bytes fließen, wird der Transport (WebSocket vs. chunked POST) wieder
+eine offene Frage; vorher nicht (§3).
+
+**Ungeprüft:** Weder Recorder noch Plugin sind je auf einem Gerät gelaufen — die Wahl stützt
+sich auf die Kompatibilitätstabelle und die API-Doku, nicht auf eine Messung.
 
 ### Abnahmekriterien aus Issue #28
 
@@ -135,3 +168,10 @@ Repo (Stand 29.09.2026): `apps/mobile/lib/speech/dictation.ts` · `record.ts` ·
 `docs/speed-audit.md` (Baseline 28.09.2026) · `docs/architecture.md` §Voice, §Limits ·
 Issue #19 (Abschlusskommentar) · Issue #28 (Research-Notiz zu Vercel-WebSockets, 28.09.2026 —
 nicht neu verifiziert, für die Entscheidung unerheblich).
+
+Zu §5 (29.09.2026): `docs.swmansion.com/react-native-audio-api` — Kompatibilitätstabelle
+(0.12.x ↔ RN 0.76–0.85), `AudioRecorder`/`onAudioReady`, Seite „Audio API Expo plugin" ·
+npm-Manifeste `react-native-audio-api@0.12.2` / `@0.13.6` (Peers, devDependency RN 0.85 bzw.
+0.87) · `expo/bundledNativeModules.json` des installierten SDK 54 · Issue
+software-mansion/react-native-audio-api#809 (Expo 54 / RN 0.81.5; vom Melder als
+Emulator-Problem geschlossen, kein Bibliotheksfehler).

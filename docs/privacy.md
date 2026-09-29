@@ -103,6 +103,13 @@ sweep records when it ran and how many rows it removed — counts only, never co
   private.
   PDFs of worksheets are handled exactly like photos (same bucket, same 7-day retention and
   deletion); a PDF refused at submit (too many pages, too large, not readable) is deleted at once.
+- The screens that carry the conversation — Buddy's home, the talk screen, the history and a
+  practice — ask the phone not to copy them out: on Android `FLAG_SECURE` (no screenshot, no
+  screen recording, and a blank card in the app switcher), on iOS the window is blanked while
+  the screen is recorded and screenshots are blocked (iOS 13+). Older iOS versions cannot do it
+  and then nothing happens; in the browser no page can ask for this at all, so there it is
+  honestly not done (`apps/mobile/lib/privacy/screenGuard.ts`, issue #36). **Not yet verified on
+  a device.**
 
 ## Distress and sensitive disclosures
 
@@ -178,6 +185,26 @@ Familienkreis hinaus.
   kept nor used for training, and that the `eu` endpoint processes in EU member states (not yet
   verified live). Without it (off, offline, error), the phone's own voice reads on the device as
   before.
+- **Sentry** (crash reports, optional): off unless the app is built with
+  `EXPO_PUBLIC_SENTRY_DSN`; without it the SDK is never started and nothing is sent
+  (`apps/mobile/lib/observability/sentry.ts`, issue #36). **EU only:** the DSN must belong to a
+  Sentry organisation in the EU region — its host ends in `.ingest.de.sentry.io`, and any other
+  host stops the app while it starts (`apps/mobile/lib/env.ts`), the same stance the API takes on
+  a non-EU model region. An EU organisation cannot ingest via `sentry.io` at all, and source maps
+  are uploaded to `de.sentry.io` (`app.config.ts`, only when `SENTRY_ORG`/`SENTRY_PROJECT` are set
+  at build time). **What is sent:** only what a crash is — the error and its stack, the app
+  version and build, the device model and OS version, and breadcrumbs reduced to which screen she
+  came from and went to. **What is removed before sending**
+  (`apps/mobile/lib/observability/scrub.ts`, unit-tested): user object (id, e-mail, IP address),
+  the running request with its URL, headers and body, all free-form extra data and framework
+  state, console and network breadcrumbs — the ones that would carry message text — and any
+  e-mail address left in an error message. Screenshots, view hierarchies, session replay and
+  performance tracing are switched off explicitly, not left to a default: a screenshot of this
+  app _is_ the conversation. No learner id is set, so a report cannot be tied to an account.
+  **Residual risk, named:** an exception message is written by our own code, so a future message
+  could quote something the learner typed; the scrubber cannot see the difference. **Legal
+  review before enabling:** the data processing agreement with Functional Software Inc. (Sentry)
+  and confirmation that the EU region keeps processing and storage in EU member states.
 - **Expo push service** (optional): off unless `PUSH_BACKEND=expo`. It adds a US subprocessor and
   sends notification titles and bodies via Apple/Google. Texts are written without scores or
   personal details, but they are about the learner's tests. **legal review required before

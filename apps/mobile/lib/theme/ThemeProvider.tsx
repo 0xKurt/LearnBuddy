@@ -5,13 +5,25 @@
 // Storage goes through lib/api/outboxStorage (which has a .web.ts twin) — importing
 // AsyncStorage directly here would break the web bundle (issue #43).
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import { readItem, writeItem } from '../api/outboxStorage.js';
 import { activeTheme, applyPalette } from './colors.js';
 import { DEFAULT_THEME, paletteOf, THEME_NAMES, type Palette, type ThemeName } from './palettes.js';
+import { applySystemChrome } from './systemChrome.js';
 
 const KEY = 'lb.theme';
+
+/** Providers waiting for the palette the device kept (see `restoreTheme` below). */
+const restored = new Set<(name: ThemeName) => void>();
 
 type ThemeContext = {
   name: ThemeName;
@@ -22,14 +34,35 @@ type ThemeContext = {
 
 const Ctx = createContext<ThemeContext | null>(null);
 
-/** At start-up, before the first screen: an earlier choice applies again. */
+/**
+ * At start-up, before the first screen: an earlier choice applies again. It runs from
+ * `app/_layout.tsx` while the loading screen is up — after this provider already mounted
+ * with the default — so the provider is told, instead of holding a stale name until she
+ * happens to open the look settings (and, since #36, instead of leaving the system chrome
+ * in the default palette).
+ */
 export async function restoreTheme(): Promise<void> {
   const kept = (await readItem(KEY).catch(() => null)) as ThemeName | null;
-  if (kept && THEME_NAMES.includes(kept)) applyPalette(kept);
+  if (!kept || !THEME_NAMES.includes(kept)) return;
+  applyPalette(kept);
+  for (const tell of restored) tell(kept);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [name, setName] = useState<ThemeName>(activeTheme());
+
+  useEffect(() => {
+    restored.add(setName);
+    return () => {
+      restored.delete(setName);
+    };
+  }, []);
+
+  // The window behind the app and Android's navigation bar wear the palette too — on the
+  // first render and on every change (lib/theme/systemChrome.ts).
+  useEffect(() => {
+    applySystemChrome();
+  }, [name]);
 
   const choose = useCallback((next: ThemeName) => {
     // The tokens change first, the tree re-renders right after: no screen shows half of

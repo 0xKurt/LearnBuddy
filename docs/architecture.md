@@ -1614,6 +1614,41 @@ the dark home (`15f`–`15h`). **The picker previews every palette in its own co
 (`LookSection`: bg, card, ink sample, primary chip — drawn from `PALETTES`, never from the
 live `LB`), instead of five identical white buttons.
 
+**The parts the OS paints follow too** (issue #36): the root view behind the app — what shows
+through between screens and while a modal is pushed — and, on Android, the navigation bar's
+icons. They cannot read `LB`, so `lib/theme/systemChrome.ts` pushes the active palette into
+`expo-system-ui` and `expo-navigation-bar` from a `ThemeProvider` effect, on the first render
+and on every change; the colour is read at the moment of the call, never captured at import
+(the same rule as above). Light or dark icons come from the background's WCAG relative
+luminance (`lib/theme/luminance.ts`, unit-tested over every shipped palette), and the status
+bar uses the same decision instead of a hardcoded `"dark"` that vanished on `night`. The
+browser twin `systemChrome.web.ts` is a no-op — a page has no window behind it. The palette
+kept on the device is restored while the loading screen is up, _after_ the provider mounted,
+so `restoreTheme` now tells the provider (which also fixed the look settings showing the
+default as selected after a restart). **Android's navigation bar is not verified on a
+device:** with edge-to-edge (SDK 54's default) the style reaches the three-button bar, while a
+gesture bar draws its own handle and ignores it.
+
+### Crash reports (issue #36)
+
+Off unless the app is built with `EXPO_PUBLIC_SENTRY_DSN` — the same shape as
+`PUSH_BACKEND=disabled` on the API side: without it `Sentry.init` is never called and nothing
+leaves the phone. Where it is on, two things are enforced in code, not in a setting.
+**EU ingest:** a DSN whose host is not `*.ingest.de.sentry.io` throws while `lib/env.ts`
+loads, so the app refuses to start rather than report to another region — deliberately not
+limited to release builds, exactly like `EuLocation` in `apps/api/src/config.ts`.
+**Scrubbing:** `lib/observability/scrub.ts` is pure and unit-tested, and strips the user
+object, the running request, all free-form extra data and framework state, console and network
+breadcrumbs, and e-mail addresses in messages; screenshots, view hierarchy, replay and
+performance tracing are switched off explicitly. What arrives is the error, its stack, the
+build, the device model and which screen she came from. The render boundary
+(`components/lb/ErrorBoundary.tsx`) reports through `componentDidCatch` — otherwise the one
+error the learner _does_ see leaves no trace at all. The web twin is a no-op. Readable stack
+traces need the Sentry build plugin, which `app.config.ts` adds only when `SENTRY_ORG` and
+`SENTRY_PROJECT` are set at build time; the native SDK is linked either way, so the dev client
+does not need rebuilding when the DSN arrives. Metro stamps the debug ids
+(`getSentryExpoConfig` in `metro.config.js`) whether or not anything is uploaded.
+
 ## Testing
 
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.

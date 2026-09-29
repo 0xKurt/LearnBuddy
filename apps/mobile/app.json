@@ -8,6 +8,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
+    "backgroundColor": "#faf7fd",
     "ios": {
       "bundleIdentifier": "com.learnbuddy.app",
       "supportsTablet": false,
@@ -111,6 +112,14 @@
         {
           "microphonePermission": "Damit du mit Buddy sprechen statt tippen und Sätze laut üben kannst.",
           "speechRecognitionPermission": "Damit dein iPhone selbst aufschreibt, was du sagst – direkt auf dem Gerät."
+        }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "androidForegroundService": false,
+          "androidPermissions": ["android.permission.RECORD_AUDIO"]
         }
       ],
       [

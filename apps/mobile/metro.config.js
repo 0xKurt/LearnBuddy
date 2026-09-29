@@ -1,11 +1,17 @@
-const { getDefaultConfig } = require('expo/metro-config');
+// `getSentryExpoConfig` is Expo's own default config plus one thing: a debug id stamped
+// into every bundle and its source map, so a crash report can be read as real file names
+// instead of minified noise (issue #36). It needs no account and no token — without the
+// Sentry build plugin (app.config.ts, only with SENTRY_ORG/SENTRY_PROJECT set) nothing is
+// uploaded and the id is simply unused. NativeWind wraps it below; it touches the
+// transformer, not the serializer, so the two do not collide.
+const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
 
-const config = getDefaultConfig(projectRoot);
+const config = getSentryExpoConfig(projectRoot);
 
 // Workspace support: let Metro look up packages in the monorepo root.
 config.watchFolders = [workspaceRoot];

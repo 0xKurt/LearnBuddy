@@ -3,3 +3,11 @@ packages:
   - packages/*
 patchedDependencies:
   xcode@3.0.1: patches/xcode@3.0.1.patch
+peerDependencyRules:
+  allowedVersions:
+    # react-native-audio-api asks for react-native-worklets >= 0.6 for its optional
+    # WorkletNode; Expo SDK 54 pins 0.5.1 (via Reanimated 4.1) and the peer is declared
+    # optional. We use the AudioRecorder's PCM callbacks only, never a WorkletNode
+    # (issue #36, docs/decisions/upload-waehrend-aufnahme.md §5), so 0.5.1 is accepted
+    # deliberately instead of dragging Expo's pin along.
+    react-native-audio-api>react-native-worklets: '0.5.1'

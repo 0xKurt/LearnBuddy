@@ -5,6 +5,7 @@ import { Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { i18n } from '../../lib/i18n/index.js';
+import { reportCrash } from '../../lib/observability/sentry.js';
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
@@ -16,6 +17,15 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
 
   static getDerivedStateFromError(): State {
     return { failed: true };
+  }
+
+  /**
+   * The render error that got us here is the one nobody sees otherwise: the learner gets a
+   * calm screen and a way back, so without a report it leaves no trace. Silent unless
+   * crash reports are configured (lib/observability/sentry.ts, issue #36).
+   */
+  override componentDidCatch(error: Error): void {
+    reportCrash(error, 'render');
   }
 
   override render(): ReactNode {

@@ -43,6 +43,7 @@ import { setHome, useHome } from '../lib/api/queries.js';
 import { useAnnounce } from '../lib/announce.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { haptic } from '../lib/haptics.js';
+import { useScreenGuard } from '../lib/privacy/screenGuard.js';
 import { playCue } from '../lib/speech/cues.js';
 import { fadeIn } from '../lib/theme/enter.js';
 import { currentLocale } from '../lib/i18n/index.js';
@@ -64,6 +65,10 @@ type Phase = 'listening' | 'thinking' | 'speaking' | 'paused';
 const TAIL = 3;
 
 export default function TalkScreen() {
+  // Spoken and written turns stand on this screen: no screenshot, no recording
+  // (lib/privacy/screenGuard.ts, issue #36). Its own key — Buddy's home holds the guard
+  // underneath and must keep it when this screen closes.
+  useScreenGuard('talk');
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
   const words = useSpokenWords();
