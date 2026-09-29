@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { pressOf } from '../pushActions.js';
 import {
+  afterPress,
   EMPTY_QUEUE,
   OPENED_MAX,
   outreachIdOf,
@@ -63,6 +65,25 @@ describe('push queue (M-64, M-65)', () => {
     expect(withoutAction(back, id(1), 'not_today').actions.map((e) => e.action)).toEqual([
       'less_often',
     ]);
+  });
+
+  it('reports "geöffnet" only where the app really came to the front (rule 5)', () => {
+    // The notification itself: she opened Buddy.
+    const tapped = afterPress(EMPTY_QUEUE, id(1), pressOf('default'), now);
+    expect(tapped.opened.map((e) => e.id)).toEqual([id(1)]);
+    expect(tapped.actions).toEqual([]);
+
+    // "Jetzt üben" opens the app — the press and the opening are both true.
+    const practice = afterPress(EMPTY_QUEUE, id(2), pressOf('lb.practice_now'), now);
+    expect(practice.actions.map((e) => e.action)).toEqual(['practice_now']);
+    expect(practice.opened.map((e) => e.id)).toEqual([id(2)]);
+
+    // From the lock screen: the press is reported, "geöffnet" is not claimed.
+    for (const identifier of ['lb.not_today', 'lb.less_often']) {
+      const q = afterPress(EMPTY_QUEUE, id(3), pressOf(identifier), now);
+      expect(q.actions).toHaveLength(1);
+      expect(q.opened).toEqual([]);
+    }
   });
 
   it('reads a queue from an older version (no buttons yet), and drops presses a week old', () => {

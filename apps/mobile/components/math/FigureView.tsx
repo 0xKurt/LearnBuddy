@@ -25,6 +25,12 @@ import Svg, {
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
 import { currentLocale } from '../../lib/i18n/index.js';
+import {
+  figureBodyWidth,
+  figureScale,
+  naturalFigureHeight,
+  newFigureWidth,
+} from '../../lib/math/figureScale.js';
 import { plotFrame, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { localDecimal } from '../../lib/numbers.js';
@@ -68,15 +74,10 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
   const { t } = useTranslation('math');
   const [width, setWidth] = useState(0);
   // The drawing's full height at this width, measured once; the scale is then DERIVED
-  // from whatever `maxHeight` is right now. Deriving instead of resetting matters
-  // (issue #96): the room comes out of a measuring loop (card ↔ conversation), and a
-  // reset-to-full on every change made the loop oscillate — the figure stood at full
-  // size while the card had long been granted less (39 px overflow in voice mode).
+  // from whatever `maxHeight` is right now (the rules and why they matter for issue #96
+  // are in lib/math/figureScale.ts, where they are tested).
   const [fullHeight, setFullHeight] = useState(0);
-  const scale =
-    fullHeight > 0 && maxHeight && fullHeight > maxHeight + 2
-      ? Math.max(0.4, maxHeight / fullHeight)
-      : 1;
+  const scale = figureScale(fullHeight, maxHeight);
   const words = useSpokenWords();
   const description = useMemo(
     () => describeFigure(figure, t, (s) => speakMathText(s, words)),
@@ -89,8 +90,8 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
       accessibilityRole="image"
       accessibilityLabel={`${t('figure.label')}: ${description}`}
       onLayout={(e) => {
-        const w = Math.floor(e.nativeEvent.layout.width);
-        if (w > 0 && Math.abs(w - width) > 1) {
+        const w = newFigureWidth(width, e.nativeEvent.layout.width);
+        if (w !== null) {
           setWidth(w);
           setFullHeight(0); // a new width means a new natural height: measure again
         }
@@ -111,13 +112,13 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
           importantForAccessibility="no-hide-descendants"
           style={{ alignItems: 'center' }}
           onLayout={(e) => {
-            const h = Math.round(e.nativeEvent.layout.height);
             // The first layout after a width change renders at scale 1: that is the
             // drawing's natural height, the one number the derived scale needs.
-            if (fullHeight === 0 && h > 0) setFullHeight(h);
+            const h = naturalFigureHeight(fullHeight, e.nativeEvent.layout.height);
+            if (h !== null) setFullHeight(h);
           }}
         >
-          <FigureBody figure={figure} width={Math.floor((width - 26) * scale)} />
+          <FigureBody figure={figure} width={figureBodyWidth(width, scale)} />
         </View>
       ) : null}
     </View>

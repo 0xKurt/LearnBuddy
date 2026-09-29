@@ -44,11 +44,11 @@ import { resultOf } from './api/outboxSync.js';
 import { currentSession } from './auth/session.js';
 import { i18n } from './i18n/index.js';
 import { categorySpecs, pressOf, type Press } from './pushActions.js';
+import { sendKept, within } from './pushFlush.js';
 import {
+  afterPress,
   outreachIdOf,
   parsePushQueue,
-  withAction,
-  withOpened,
   withoutAction,
   withoutOpened,
   withRelease,
@@ -74,15 +74,6 @@ if (Platform.OS !== 'web') {
 const INSTALL_KEY = 'lb.install_id';
 const QUEUE_KEY = 'lb.push.queue.v1';
 const HERE_KEY = 'lb.push.registered_for';
-/** Nothing about push may keep sign-out or start waiting longer than this. */
-const PUSH_TIMEOUT_MS = 4000;
-
-function within<T>(p: Promise<T>, ms = PUSH_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-  ]);
-}
 
 /**
  * The buttons under Buddy's notifications, titled in the app's language (registered on start
@@ -247,14 +238,12 @@ let flushingOpened: Promise<void> | null = null;
 export function flushOpened(onHome: (home: BuddyHome) => void): Promise<void> {
   flushingOpened ??= (async () => {
     if (!currentSession()) return;
-    for (const e of (await readQueue()).opened) {
-      try {
-        onHome(await outreachOpened(e.id, null));
-      } catch (err) {
-        if (resultOf(err) !== 'refused') break;
-      }
-      await updateQueue((q) => withoutOpened(q, e.id));
-    }
+    await sendKept(
+      (await readQueue()).opened,
+      async (e) => onHome(await outreachOpened(e.id, null)),
+      async (e) => void (await updateQueue((q) => withoutOpened(q, e.id))),
+      (err) => resultOf(err) === 'refused',
+    );
   })().finally(() => {
     flushingOpened = null;
   });
@@ -272,14 +261,12 @@ export function flushActions(
 ): Promise<void> {
   flushingActions ??= (async () => {
     if (!currentSession()) return;
-    for (const e of (await readQueue()).actions) {
-      try {
-        onDone(e, await outreachAct(e.id, e.action));
-      } catch (err) {
-        if (resultOf(err) !== 'refused') break;
-      }
-      await updateQueue((q) => withoutAction(q, e.id, e.action));
-    }
+    await sendKept(
+      (await readQueue()).actions,
+      async (e) => onDone(e, await outreachAct(e.id, e.action)),
+      async (e) => void (await updateQueue((q) => withoutAction(q, e.id, e.action))),
+      (err) => resultOf(err) === 'refused',
+    );
   })().finally(() => {
     flushingActions = null;
   });
@@ -295,12 +282,7 @@ export async function keepPress(
   if (!id) return null;
   const press = pressOf(actionIdentifier);
   const at = new Date();
-  await updateQueue((q) => {
-    if (press.kind === 'open') return withOpened(q, id, at);
-    const kept = withAction(q, id, press.action, at);
-    // "Jetzt üben" opened the app; the lock-screen buttons did not.
-    return press.opens ? withOpened(kept, id, at) : kept;
-  });
+  await updateQueue((q) => afterPress(q, id, press, at));
   return { id, press };
 }
 

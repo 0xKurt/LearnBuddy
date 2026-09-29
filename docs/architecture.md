@@ -1781,3 +1781,18 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   reload, an expired password link). `apps/mobile/lib/__tests__/wiring.test.ts` checks from the source that every
   app call has a server route and every route is used, every endpoint function is used, every
   screen is reachable and every German text exists.
+- **Coverage is measured, not guessed** (issue #102): `pnpm test:coverage` (or per workspace,
+  e.g. `pnpm --filter @learnbuddy/mobile test:coverage`) runs the same suites through
+  `@vitest/coverage-v8`. **No threshold gates anything** — the number is a look at where the
+  tests are, not a rule to satisfy; a percentage says nothing about whether the failure paths
+  are covered, and a gate would invite tests written for the number. Counted is what these
+  tests can reach: `src/**` in the API and the packages, `lib/**` in the app. Screens,
+  components and the seams to Expo (camera, notifications, file system) are deliberately out —
+  they are a device test (issue #37), and having them in the total would only make the figure
+  look worse without saying anything about the logic. First measurement (29.09.2026):
+  `src/**` in the API 86.6 % of statements, `lib/**` in the app 56.8 % — up from 52.4 %
+  before the tests of issue #102.
+  The pattern the gaps were closed with: the decision is lifted out of the React hook or the
+  component into a pure module (`lib/capture/attachments.ts`, `lib/capture/materialUpload.ts`,
+  `lib/math/figureScale.ts`, `lib/pushFlush.ts`) and proven there; the part that only talks to
+  the device stays uncovered and is named as such.

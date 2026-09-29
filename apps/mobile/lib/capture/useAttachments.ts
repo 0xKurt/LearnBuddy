@@ -15,46 +15,47 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { toast } from '../../components/lb/Toast.js';
 import { useAnnounce } from '../announce.js';
-import { ApiError } from '../api/client.js';
 import { deleteMaterial } from '../api/endpoints.js';
 import { keys, queryClient } from '../api/queries.js';
 import { messageFor } from '../errors.js';
-import type { PhotoProblem } from '../photo/quality.js';
+import {
+  classifySend,
+  draftPages,
+  filesToTake,
+  firstToReview,
+  hasPdf,
+  NO_PAGES,
+  pagesFromDraft,
+  roomFor,
+  uploadFiles,
+  withPageAdded,
+  withPageKept,
+  withPageRemoved,
+  type Entry,
+  type PageSet,
+} from './attachments.js';
 import type { CaptureDraft, DraftLink } from './draft.js';
 import { drafts } from './draftStorage.js';
 import { useFileDrop } from './drop.js';
 import { ownCopy, sizeOf } from './fileCopy.js';
-import { displayName, MAX_PDF_MB, sortIncoming, type IncomingFile } from './files.js';
+import { MAX_PDF_MB, sortIncoming, type IncomingFile } from './files.js';
 import { attachedInChat, useLiveAttachments } from './live.js';
 import { takeIncoming } from './incoming.js';
 import { clearCameraOpen, markCameraOpen, takePendingPhotos } from './pendingCamera.js';
 import {
   MAX_PHOTOS,
-  MaterialUpload,
-  PhotoUploadError,
+  newMaterialUpload,
   preparePhoto,
   type MaterialLink,
+  type MaterialUpload,
   type SendProgress,
   type UploadFile,
 } from './upload.js';
-
-/** The API refused the files themselves: that material is gone, other files start anew. */
-const FILE_REFUSALS = new Set(['too_many_pages', 'file_unreadable', 'file_too_large']);
 
 /** What was left behind — never the pages the chat composer is holding right now. */
 async function leftBehind(): Promise<CaptureDraft | null> {
   if (attachedInChat()) return null;
   return drafts.leftBehind();
-}
-
-/** One picked thing in page order: a photo, or a PDF (its name). */
-type Entry = { uri: string; pdf: string | null };
-
-function uploadFiles(
-  uris: readonly string[],
-  pdfs: Readonly<Record<string, string>>,
-): UploadFile[] {
-  return uris.map((uri) => ({ uri, mime: pdfs[uri] ? 'application/pdf' : 'image/jpeg' }));
 }
 
 function uploadLink(l: DraftLink): MaterialLink {
@@ -89,14 +90,9 @@ export function useAttachments({
   /** What the pages are for; a resumed draft brings its own. */
   const [link, setLink] = useState<DraftLink>(initialLink);
 
-  /** Local URIs of the prepared JPEGs, in page order. */
-  const [photos, setPhotos] = useState<string[]>([]);
-  /** What the check on the device found per photo (lib/photo/quality.ts). */
-  const [problems, setProblems] = useState<Record<string, PhotoProblem[]>>({});
-  /** Photos she chose to keep despite a problem. */
-  const [kept, setKept] = useState<ReadonlySet<string>>(new Set());
-  /** The files among them that are PDFs, with their names (uri → name). */
-  const [pdfs, setPdfs] = useState<Readonly<Record<string, string>>>({});
+  /** The pages of this sheet, in page order (lib/capture/attachments.ts). */
+  const [pages, setPages] = useState<PageSet>(NO_PAGES);
+  const { uris: photos, problems, kept, pdfs } = pages;
   const [preparing, setPreparing] = useState<{ current: number; total: number } | null>(null);
   const [progress, setProgress] = useState<SendProgress | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -130,21 +126,13 @@ export function useAttachments({
   const deferred = useRef<IncomingFile[]>([]);
 
   function applyDraft(d: CaptureDraft) {
-    const uris = d.photos.map((p) => p.uri);
+    const restored = pagesFromDraft(d);
     setLink(d.link);
-    setPhotos(uris);
-    setProblems(
-      Object.fromEntries(d.photos.filter((p) => p.problems.length).map((p) => [p.uri, p.problems])),
-    );
-    setKept(new Set(d.photos.filter((p) => p.kept).map((p) => p.uri)));
-    const pdfNames = Object.fromEntries(
-      d.photos.flatMap((p) => (p.pdf ? [[p.uri, p.pdf] as const] : [])),
-    );
-    setPdfs(pdfNames);
+    setPages(restored);
     // Already on its way before: the same material, nothing sent twice.
     if (d.requestId)
-      upload.current = new MaterialUpload(
-        uploadFiles(uris, pdfNames),
+      upload.current = newMaterialUpload(
+        uploadFiles(restored.uris, restored.pdfs),
         uploadLink(d.link),
         d.requestId,
       );
@@ -152,12 +140,7 @@ export function useAttachments({
 
   /** What the draft keeps of the photos on the screen. */
   function draftPhotos() {
-    return photos.map((uri) => ({
-      uri,
-      problems: problems[uri] ?? [],
-      kept: kept.has(uri),
-      pdf: pdfs[uri] ?? null,
-    }));
+    return draftPages(pages);
   }
 
   // The chat's pages are on screen while they are attached: the home notice and a capture
@@ -215,7 +198,7 @@ export function useAttachments({
       photos: draftPhotos(),
       link,
     });
-  }, [photos, problems, kept, pdfs, link]);
+  }, [pages, link]);
 
   /**
    * The first change here: from now on the draft follows this screen. A draft
@@ -228,7 +211,7 @@ export function useAttachments({
   }
 
   const busy = preparing !== null || progress !== null;
-  const room = MAX_PHOTOS - photos.length;
+  const room = roomFor(pages);
 
   // Files shared from another app, now or while this screen is open (ShareIntake) — once
   // the draft from before is loaded and, if there is one, she has decided about it.
@@ -268,7 +251,7 @@ export function useAttachments({
     setRefused(false);
     try {
       if (upload.current) upload.current.grow(file);
-      else upload.current = new MaterialUpload([file], uploadLink(link));
+      else upload.current = newMaterialUpload([file], uploadLink(link));
     } catch {
       // Already sent: this page belongs to a new sheet, which the next send reserves.
       upload.current = null;
@@ -307,17 +290,12 @@ export function useAttachments({
           void drafts.drop([photo.uri]);
           return;
         }
-        if (replace && i === 0) {
-          setPhotos((prev) => prev.map((p) => (p === replace ? photo.uri : p)));
-          setProblems(({ [replace]: _gone, ...rest }) => rest);
-          void drafts.drop([replace]);
-        } else {
-          setPhotos((prev) => (prev.length < MAX_PHOTOS ? [...prev, photo.uri] : prev));
-        }
         const pdfName = entry.pdf;
-        if (pdfName) setPdfs((prev) => ({ ...prev, [photo.uri]: pdfName }));
-        if (photo.problems.length > 0)
-          setProblems((prev) => ({ ...prev, [photo.uri]: photo.problems }));
+        const standsIn = replace && i === 0 ? replace : null;
+        setPages((prev) =>
+          withPageAdded(prev, { uri: photo.uri, problems: photo.problems, pdf: pdfName }, standsIn),
+        );
+        if (standsIn) void drafts.drop([standsIn]);
         // A retake changes what is already reserved: that reservation is given up and the
         // pages start again. A new page only extends it.
         if (replace) {
@@ -349,10 +327,8 @@ export function useAttachments({
     const { take, unsupported, tooLarge } = sortIncoming(sized);
     if (unsupported > 0) toast.show(t('capture:files.unsupported', { count: unsupported }));
     if (tooLarge > 0) toast.show(t('capture:files.too_large', { max: MAX_PDF_MB }), 'error');
-    if (take.length > room) toast.show(t('capture:limit', { max: MAX_PHOTOS }));
-    const entries = take
-      .slice(0, Math.max(0, room))
-      .map((f) => ({ uri: f.uri, pdf: f.kind === 'pdf' ? displayName(f) : null }));
+    const { entries, overLimit } = filesToTake(take, room);
+    if (overLimit) toast.show(t('capture:limit', { max: MAX_PHOTOS }));
     if (entries.length > 0) await addEntries(entries);
   }
 
@@ -434,14 +410,13 @@ export function useAttachments({
   function remove(uri: string) {
     if (busy) return;
     dirty.current = true;
-    setPhotos((prev) => prev.filter((p) => p !== uri));
-    setPdfs(({ [uri]: _gone, ...rest }) => rest);
+    setPages((prev) => withPageRemoved(prev, uri));
     void drafts.drop([uri]);
     photosChanged();
   }
 
   /** The first photo with a problem she has not decided about yet. */
-  const review = photos.find((uri) => (problems[uri]?.length ?? 0) > 0 && !kept.has(uri)) ?? null;
+  const review = firstToReview(pages);
 
   function retake(uri: string) {
     // The old photo stays until a new one is taken (cancelling keeps it), in its place.
@@ -451,26 +426,20 @@ export function useAttachments({
   /** "Passt schon": this photo goes along despite what the check found. */
   function keep(uri: string) {
     dirty.current = true;
-    setKept((prev) => new Set(prev).add(uri));
+    setPages((prev) => withPageKept(prev, uri));
   }
 
+  /**
+   * What a failed send says. "Deine Fotos sind noch da" only where it is true —
+   * refused files are gone, and so is a page whose local file vanished
+   * (lib/capture/attachments.ts).
+   */
   function failureText(err: unknown): string {
-    if (err instanceof PhotoUploadError) {
-      const index = err.position + 1;
-      if (err.kind === 'file') return t('capture:error.upload_file', { index });
-      const what = t(
-        err.kind === 'network' ? 'capture:error.upload_network' : 'capture:error.upload_rejected',
-        {
-          index,
-        },
-      );
-      return `${what} ${t('capture:error.kept')}`;
-    }
-    // Refused files: the message says what to change; "your photos are still here" would
-    // invite sending the same again.
-    if (err instanceof ApiError && err.reason && FILE_REFUSALS.has(err.reason))
-      return messageFor(err);
-    return `${messageFor(err)} ${t('capture:error.kept')}`;
+    const failure = classifySend(err);
+    const what = failure.page
+      ? t(failure.page.key, { index: failure.page.index })
+      : messageFor(err);
+    return failure.kept ? `${what} ${t('capture:error.kept')}` : what;
   }
 
   /** Keeps these photos as the draft if the slot is free; true when they are kept. */
@@ -489,7 +458,7 @@ export function useAttachments({
     // start as a new one — nothing half-known is sent.
     if (upload.current && upload.current.pageCount !== photos.length) photosChanged();
     if (!upload.current)
-      upload.current = new MaterialUpload(uploadFiles(photos, pdfs), uploadLink(link));
+      upload.current = newMaterialUpload(uploadFiles(photos, pdfs), uploadLink(link));
     const current = upload.current;
     setFailure(null);
     setProgress({ step: 'reserving' });
@@ -505,26 +474,18 @@ export function useAttachments({
       delivered = true;
       // With a PDF among them, page numbers are not photo positions (no page thumbnail).
       if (current.material)
-        await drafts.sent(
-          current.material,
-          photos,
-          current.requestId,
-          !photos.some((uri) => pdfs[uri]),
-        );
+        await drafts.sent(current.material, photos, current.requestId, !hasPdf(pages));
       void queryClient.invalidateQueries({ queryKey: keys.home });
       void queryClient.invalidateQueries({ queryKey: keys.library });
       if (mounted.current) {
-        setPhotos([]);
-        setProblems({});
-        setKept(new Set());
-        setPdfs({});
+        setPages(NO_PAGES);
         upload.current = null;
         sent.current?.(current.material, link);
       }
     } catch (err) {
       // The files were refused (too many pages, not a PDF, too large): that material is
       // gone; with other files she starts a new one.
-      const refusedFiles = err instanceof ApiError && !!err.reason && FILE_REFUSALS.has(err.reason);
+      const refusedFiles = classifySend(err).refused;
       if (refusedFiles && upload.current === current) upload.current = null;
       if (refusedFiles && mounted.current) setRefused(true);
       if (mounted.current) setFailure(failureText(err));
