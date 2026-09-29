@@ -1,4 +1,5 @@
-// The photos (and PDFs) picked so far, in page order, each with a way to take it out.
+// The photos (and PDFs) picked so far, in page order — each one openable large
+// (ZoomViewer), retakeable and removable before anything is sent (issue #57).
 
 import { Image } from 'expo-image';
 import { useState } from 'react';
@@ -23,9 +24,11 @@ type Props = {
   flagged?: ReadonlySet<string>;
   disabled: boolean;
   onRemove: (uri: string) => void;
+  /** Take this photo again with the camera, same place in the order (not for PDFs). */
+  onRetake: (uri: string) => void;
 };
 
-export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
+export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }: Props) {
   const { t } = useTranslation('capture');
   // A photo the phone cannot show (a file that is gone, a format the viewer refuses) says
   // so instead of leaving an empty box — an empty tile looks like a broken app (issue #57).
@@ -145,6 +148,20 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove }: Props) {
               ) : null}
             </View>
           </View>
+          {/* Schief, unscharf, halbe Seite: this page again, in its place (issue #57). */}
+          {pdfs?.[uri] ? null : (
+            <Btn
+              size="sm"
+              variant="ghost"
+              pill
+              full
+              disabled={disabled}
+              onPress={() => onRetake(uri)}
+              accessibilityLabel={t('retake_label', { index: i + 1 })}
+            >
+              {t('retake')}
+            </Btn>
+          )}
           <Btn
             size="sm"
             variant="ghost"

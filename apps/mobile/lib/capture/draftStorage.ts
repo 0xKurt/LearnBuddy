@@ -4,7 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 
-import { createDraftStore, type DraftStorage } from './draft.js';
+import { createDraftStore, rebasedUri, type DraftStorage } from './draft.js';
 
 const DIR = 'lb-capture';
 
@@ -45,6 +45,15 @@ const storage: DraftStorage = {
       } catch {
         // Already gone.
       }
+    }
+  },
+  resolve(uri) {
+    // iOS moves the app's container with every update: a URI kept in the draft
+    // then names the old path while the photo itself came along (issue #57).
+    try {
+      return rebasedUri(uri, new Directory(Paths.document, DIR).uri);
+    } catch {
+      return uri;
     }
   },
 };

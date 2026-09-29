@@ -12,6 +12,8 @@
   "photo_label": "Photo {{index}} sur {{total}}",
   "remove": "Retirer",
   "remove_label": "Retirer la photo {{index}}",
+  "retake": "Refaire",
+  "retake_label": "Refaire la photo {{index}}",
   "limit": "Une fiche peut avoir au maximum {{max}} photos.",
   "preparing_one": "Préparation de la photo…",
   "preparing_other": "Préparation de la photo {{current}} sur {{count}}…",
