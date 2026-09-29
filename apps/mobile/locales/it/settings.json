@@ -156,11 +156,11 @@
     "open": "Apri",
     "close": "Chiudi",
     "profile": {
-      "title": "Correggere il profilo",
+      "title": "Correggi il profilo",
       "current": "{{name}}, nato/a il {{date}}",
       "body": "Il nome o la data di nascita sono sbagliati? Qui si possono correggere.",
       "cta": "Correggi",
-      "sheet_title": "Correggere il profilo",
+      "sheet_title": "Correggi il profilo",
       "name": "Nome",
       "save": "Salva",
       "saved": "Profilo salvato."

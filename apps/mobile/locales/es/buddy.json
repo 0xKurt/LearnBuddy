@@ -1,7 +1,7 @@
 {
   "greeting": "Hola, {{name}}",
   "greeting_ask": "¿Qué tienes pendiente?",
-  "practiced_today": "Hoy has practicado",
+  "practiced_today": "Práctica hecha",
   "menu": {
     "open": "Abrir menú",
     "title": "Más",
@@ -48,9 +48,9 @@
     "resume_body_untitled_other": "Quedan {{count}} preguntas",
     "resume_title_help": "Sigue con tus deberes",
     "resume_title_test": "Sigue con tu examen de prueba",
-    "pages_title_one": "No pude leer una página entera",
-    "pages_title_other": "No pude leer {{count}} páginas enteras",
-    "pages_title_single": "No pude leer tu foto entera",
+    "pages_title_one": "No he podido leer una página entera",
+    "pages_title_other": "No he podido leer {{count}} páginas enteras",
+    "pages_title_single": "No he podido leer tu foto entera",
     "pages_line": "Página {{page}}: {{problem}}",
     "pages_problem": {
       "cut_off": "falta un trozo",
@@ -66,7 +66,7 @@
     "pages_retake_one": "Hacer otra foto",
     "pages_retake_other": "Fotografiar de nuevo estas páginas",
     "pages_ok": "Así está bien",
-    "failed_title_named": "No pude leer «{{title}}»",
+    "failed_title_named": "No he podido leer «{{title}}»",
     "processing_body_practice": "Después hago ejercicios con ella enseguida. Mientras tanto puedes cerrar la app.",
     "waiting_title": "Enseguida leo tu hoja …",
     "reading_title_one": "Estoy leyendo tu hoja …",
@@ -302,7 +302,7 @@
     "morning": {
       "0": "¡Buenos días, {{name}}!",
       "1": "¡Hola, {{name}}!",
-      "2": "¡Buenos días, {{name}}! ¿Dormiste bien?"
+      "2": "¡Buenos días, {{name}}! ¿Has dormido bien?"
     },
     "day": {
       "0": "¡Hola, {{name}}!",
@@ -315,7 +315,7 @@
       "2": "¡Buenas, {{name}}!"
     },
     "night": {
-      "0": "¡Hola, {{name}}! ¿Todavía despierta?",
+      "0": "¡Hola, {{name}}! ¿Todavía sin dormir?",
       "1": "¡Ey, {{name}}!",
       "2": "¡Buenas noches, {{name}}!"
     }

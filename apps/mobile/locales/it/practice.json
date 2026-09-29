@@ -24,7 +24,7 @@
   "verdict": {
     "correct": "Giusto",
     "partially_correct": "Quasi",
-    "incorrect": "Non ancora del tutto",
+    "incorrect": "Non ancora",
     "unchecked": "Non controllato"
   },
   "solution": {
@@ -84,7 +84,7 @@
     "more_tips": "Mostra altri {{count}} consigli",
     "word_open": "Esercita la parola: {{word}}",
     "word_hint": "Solo questa parola: non conta per l'esercizio.",
-    "word_say": "Di questa parola",
+    "word_say": "Di' questa parola",
     "word_good": "Perfetto!",
     "word_again": "Quasi: riascoltala e riprova."
   },
@@ -93,7 +93,7 @@
   "image_fallback": "Immagine per questo esercizio",
   "self_solved": {
     "title": "Risolto da te!",
-    "body": "Ci sei arrivato da solo."
+    "body": "L'hai scoperto da te."
   },
   "summary_help": {
     "title": "Compiti fatti"
@@ -124,8 +124,8 @@
     "done": "Va bene – la domanda è tolta."
   },
   "summary_line": {
-    "help_one": "Hai risolto {{count}} esercizio da solo.",
-    "help_other": "Hai risolto {{count}} esercizi da solo.",
+    "help_one": "Hai risolto {{count}} esercizio da te.",
+    "help_other": "Hai risolto {{count}} esercizi da te.",
     "answered_one": "Hai risposto a {{count}} domanda.",
     "answered_other": "Hai risposto a {{count}} domande.",
     "all_first": "Tutto giusto al primo colpo.",

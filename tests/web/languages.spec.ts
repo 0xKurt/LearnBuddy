@@ -4,7 +4,8 @@
 //
 // For each language: the welcome screen, the privacy step and the profile step, each
 // measured on 390×844 and 360×740 (tests/web/fit.ts) and scanned by axe. What the
-// German walkthrough proves for German, this proves for the rest.
+// German walkthrough proves for German, this proves for the rest — English included,
+// so all five promised languages are measured.
 
 import { expect, test } from '@playwright/test';
 
@@ -28,6 +29,19 @@ type Lang = {
 
 const LANGS: Lang[] = [
   {
+    code: 'en',
+    flag: 'English',
+    title: 'Your study buddy for tests and exams.',
+    create: 'Create account',
+    email: 'E-mail',
+    password: 'Password',
+    repeat: 'Repeat password',
+    consent: 'A quick word on privacy',
+    accept: /I have read this and agree/,
+    next: 'Continue',
+    profile: 'Who is learning with LearnBuddy?',
+  },
+  {
     code: 'fr',
     flag: 'Français',
     title: 'Ton allié pour les contrôles et les interros.',
@@ -38,7 +52,7 @@ const LANGS: Lang[] = [
     consent: 'Protection des données, en bref',
     accept: /J'ai lu ces informations/,
     next: 'Continuer',
-    profile: 'Qui apprend avec LearnBuddy?',
+    profile: 'Qui apprend avec LearnBuddy ?',
   },
   {
     code: 'es',
