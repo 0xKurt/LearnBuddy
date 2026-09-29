@@ -169,6 +169,21 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
   await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
+  // What scrolls up out of the conversation fades away instead of being cut hard under the
+  // question card, where half a line stood readable and looked like a rendering fault
+  // (owner 28.09., issue #63). On the web the scroll view itself is masked (EdgeFade.tsx);
+  // on phones the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
+  const faded = await page.getByTestId('scroll-thread').evaluate((el) => {
+    let node: Element | null = el;
+    while (node) {
+      const s = getComputedStyle(node);
+      const mask = `${s.getPropertyValue('mask-image')} ${s.getPropertyValue('-webkit-mask-image')}`;
+      if (mask.includes('gradient')) return true;
+      node = node.parentElement;
+    }
+    return false;
+  });
+  expect(faded, 'the conversation fades out at its top edge').toBe(true);
   await shot(page, '25-practice-fractions');
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
