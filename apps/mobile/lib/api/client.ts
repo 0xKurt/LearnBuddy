@@ -12,26 +12,13 @@ import { currentSession, type Session } from '../auth/session.js';
 import { refreshSession } from '../auth/supabase.js';
 import { ENV } from '../env.js';
 import { deviceTimeZone } from '../time.js';
+import { ApiError } from './apiError.js';
 import { SseReader, type SseEvent } from './sse.js';
 import { streamingFetch } from './streamingFetch.js';
 
-export class ApiError extends Error {
-  constructor(
-    readonly code: string,
-    message: string,
-    readonly status: number,
-    readonly details: Record<string, unknown> | null = null,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-
-  /** The more specific reason the API gives (e.g. "photos_missing"), if any. */
-  get reason(): string | null {
-    const r = this.details?.reason;
-    return typeof r === 'string' ? r : null;
-  }
-}
+// Lives in lib/api/apiError.ts (free of Expo modules, so the code that decides
+// what a failure means is testable under Node); this stays its usual address.
+export { ApiError } from './apiError.js';
 
 let refreshing: Promise<Session | null> | null = null;
 

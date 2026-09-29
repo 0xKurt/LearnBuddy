@@ -9,5 +9,15 @@ export default defineConfig({
     environment: 'node',
     include: ['lib/**/*.test.ts'],
     globals: false,
+    // `pnpm test:coverage` measures the number instead of guessing it (issue #102).
+    // Only what these tests can reach is counted: `lib/**` without the files that are
+    // a seam to Expo or React (they are a device test, issue #37) — a screen or a
+    // component in the total would only make the figure look worse than it is and say
+    // nothing about the logic. No threshold: this is a look, not a gate.
+    coverage: {
+      provider: 'v8',
+      include: ['lib/**/*.ts'],
+      exclude: ['lib/**/*.test.ts', 'lib/**/__tests__/**', 'lib/**/*.web.ts'],
+    },
   },
 });

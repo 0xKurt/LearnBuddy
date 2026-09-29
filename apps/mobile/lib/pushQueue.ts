@@ -7,6 +7,8 @@
 
 import { z } from 'zod';
 
+import type { Press } from './pushActions.js';
+
 /** Reports older than this are pointless (the message has long expired). */
 const OPENED_MAX_AGE_MS = 7 * 86_400_000;
 export const OPENED_MAX = 20;
@@ -70,6 +72,19 @@ export function withoutAction(q: PushQueue, id: string, action: QueuedAction): P
 
 export function withRelease(q: PushQueue, pending: boolean): PushQueue {
   return { ...q, release: pending };
+}
+
+/**
+ * The queue after a press on one of Buddy's notifications. "Opened" is a claim about
+ * the learner (rule 5: only the app may report it), so a button that answers from the
+ * lock screen — "Heute nicht", "Seltener schreiben" — is kept as what it is and
+ * nothing more; only the notification itself and "Jetzt üben" bring the app to the
+ * front and with it the proof that she saw the message.
+ */
+export function afterPress(q: PushQueue, id: string, press: Press, at: Date): PushQueue {
+  if (press.kind === 'open') return withOpened(q, id, at);
+  const kept = withAction(q, id, press.action, at);
+  return press.opens ? withOpened(kept, id, at) : kept;
 }
 
 const Payload = z.object({ type: z.literal('buddy_outreach'), outreach_id: z.string().uuid() });
