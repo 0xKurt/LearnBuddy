@@ -18,6 +18,7 @@ import { Icon } from '../components/lb/Icon.js';
 import { LbTextInput } from '../components/lb/LbTextInput.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { LanguageFlags } from '../components/lb/LanguageFlags.js';
+import { WaitHint } from '../components/lb/WaitHint.js';
 import { useAnnounce } from '../lib/announce.js';
 import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
 import { AuthFailure, requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
@@ -47,6 +48,9 @@ export default function Welcome() {
   // A problem stays visible above the CTA until the next attempt or edit.
   const [failure, setFailure] = useState<string | null>(null);
   const [failureSeq, setFailureSeq] = useState(0);
+  // She tapped the waiting CTA: from then on the line above it says what is still
+  // missing (issue #97). Counted, so every further tap announces it again.
+  const [whyWait, setWhyWait] = useState(0);
   const passwordRef = useRef<TextInput>(null);
   const repeatRef = useRef<TextInput>(null);
   const inFlight = useRef(false);
@@ -73,9 +77,20 @@ export default function Welcome() {
   // Like NewPasswordFields: the repeat only complains once something is in it.
   const repeatError = mode === 'signup' && repeat.length > 0 && repeat !== password;
 
+  // The first thing still missing, in form order — shown once she asked (tap on the
+  // waiting CTA) and gone with the button's muted skin when everything is filled.
+  const waitHint = !emailOk
+    ? t('welcome.cta_hint_email')
+    : !passwordOk
+      ? t('welcome.cta_hint_password')
+      : !repeatOk
+        ? t('welcome.cta_hint_repeat')
+        : null;
+
   useAnnounce(confirmSent ? t('welcome.confirm_title') : null);
   useAnnounce(resetSent ? t('welcome.reset_sent') : null);
   useAnnounce(failure, { key: failureSeq });
+  useAnnounce(whyWait > 0 ? waitHint : null, { key: whyWait });
 
   const fail = (text: string) => {
     setFailure(text);
@@ -339,8 +354,18 @@ export default function Welcome() {
             >
               {failure}
             </Text>
+          ) : whyWait > 0 ? (
+            <WaitHint>{waitHint}</WaitHint>
           ) : null}
-          <Btn size="lg" pill full busy={busy} disabled={!valid} onPress={() => void submit()}>
+          <Btn
+            size="lg"
+            pill
+            full
+            busy={busy}
+            disabled={!valid}
+            onDisabledPress={() => setWhyWait((n) => n + 1)}
+            onPress={() => void submit()}
+          >
             {mode === 'signup' ? t('welcome.cta_signup') : t('welcome.cta_signin')}
           </Btn>
         </View>

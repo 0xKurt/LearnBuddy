@@ -34,6 +34,7 @@ import { Screen } from '../components/lb/Screen.js';
 import { Segmented } from '../components/lb/Segmented.js';
 import { Bone, SkeletonGroup } from '../components/lb/Skeleton.js';
 import { toast } from '../components/lb/Toast.js';
+import { WaitHint } from '../components/lb/WaitHint.js';
 import { VoicePicker } from '../components/voice/VoicePicker.js';
 import { useAnnounce } from '../lib/announce.js';
 import { ApiError } from '../lib/api/client.js';
@@ -80,6 +81,9 @@ export default function Profile() {
   const [step, setStep] = useState<'learner' | 'parent' | 'handover' | 'voice'>('learner');
   /** Came from "Ich selbst" under 16: an adult took over on this phone. */
   const [handedOver, setHandedOver] = useState(false);
+  // She tapped the waiting CTA: from then on the line above it says what is still
+  // missing (issue #97). Counted, so every further tap announces it again.
+  const [whyWait, setWhyWait] = useState(0);
 
   const birthDate = birthDateOf(day, month, year);
   const dateComplete = day.length > 0 && month.length > 0 && year.length === 4;
@@ -93,9 +97,29 @@ export default function Profile() {
   const ready = learnerReady && (!needsParents || (consent && pinOk));
   const parentStep = needsParents && step === 'parent';
 
+  // The first thing this step still needs, in screen order — shown once she asked (tap
+  // on the waiting CTA, issue #97). Under 16 with "Ich selbst" everything is filled and
+  // the lavender card explains; the hint points there instead of repeating the fields.
+  const waitHint = parentStep
+    ? !consent
+      ? t('profile.cta_hint_consent')
+      : !pinOk
+        ? t('profile.cta_hint_pin')
+        : null
+    : relation === null
+      ? t('profile.cta_hint_who')
+      : name.trim().length === 0
+        ? t('profile.cta_hint_name')
+        : birthDate === null
+          ? t('profile.cta_hint_birth')
+          : tooYoungSelf
+            ? t('profile.cta_hint_adult')
+            : null;
+
   // iOS has no live regions: the two inline problems say themselves (lib/announce.ts).
   useAnnounce(dateComplete && !birthDate ? t('profile.birth_date_invalid') : null);
   useAnnounce(pinRepeat.length === 4 && pin !== pinRepeat ? t('profile.pin_mismatch') : null);
+  useAnnounce(whyWait > 0 ? waitHint : null, { key: whyWait });
 
   async function submit() {
     if (!relation || !birthDate || busy) return;
@@ -418,12 +442,28 @@ export default function Profile() {
             gap: 4,
           }}
         >
+          {whyWait > 0 ? <WaitHint>{waitHint}</WaitHint> : null}
           {needsParents && !parentStep ? (
-            <Btn size="lg" pill full disabled={!learnerReady} onPress={() => setStep('parent')}>
+            <Btn
+              size="lg"
+              pill
+              full
+              disabled={!learnerReady}
+              onDisabledPress={() => setWhyWait((n) => n + 1)}
+              onPress={() => setStep('parent')}
+            >
               {t('profile.next')}
             </Btn>
           ) : (
-            <Btn size="lg" pill full disabled={!ready || busy} onPress={() => void submit()}>
+            <Btn
+              size="lg"
+              pill
+              full
+              busy={busy}
+              disabled={!ready}
+              onDisabledPress={() => setWhyWait((n) => n + 1)}
+              onPress={() => void submit()}
+            >
               {t('profile.cta')}
             </Btn>
           )}
@@ -432,7 +472,8 @@ export default function Profile() {
             size="sm"
             pill
             center
-            disabled={busy || leaving}
+            busy={leaving}
+            disabled={busy}
             onPress={() => void leave()}
           >
             {t('profile.sign_out')}
@@ -520,7 +561,7 @@ function Handover({ name, busy, onDone }: { name: string; busy: boolean; onDone:
           paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
-        <Btn size="lg" pill full disabled={busy} onPress={onDone}>
+        <Btn size="lg" pill full busy={busy} onPress={onDone}>
           {t('profile.handover_cta', { name })}
         </Btn>
       </View>
@@ -578,7 +619,7 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
           paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
-        <Btn size="lg" pill full disabled={busy} onPress={onDone}>
+        <Btn size="lg" pill full busy={busy} onPress={onDone}>
           {t('profile.voice_cta')}
         </Btn>
       </View>

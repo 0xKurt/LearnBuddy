@@ -39,10 +39,16 @@ const TEXT: Array<[keyof Palette, keyof Palette]> = [
   ['ink', 'lavender'],
   ['ink', 'primaryLt'],
   ['paper', 'primary'],
+  // A waiting <Btn>'s muted skin (issue #97): the label must stay readable on the muted
+  // fill. (The stepped-back ghost/danger label is `placeholder` on paper/bg — above.)
+  ['ink2', 'canvas'],
 ];
 const SHAPES: Array<[keyof Palette, keyof Palette]> = [
   ['primary', 'paper'],
   ['primary', 'bg'],
+  // The ready button against the waiting skin (issue #97): two states no one can mix up
+  // on a screenshot, in every palette including night.
+  ['primary', 'canvas'],
 ];
 
 for (const [name, palette] of Object.entries(PALETTES)) {
