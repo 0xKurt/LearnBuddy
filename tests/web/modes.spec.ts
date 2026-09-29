@@ -14,11 +14,20 @@ function inSheet(page: Page) {
   return page.locator('[aria-modal="true"]');
 }
 
-/** The card on top (a finished practice, a waiting photo) lies over the ways to start. */
+/**
+ * The bar on top (a paused practice, a waiting photo) floats over the ways to start.
+ * Right after leaving a practice the home may still show the stale bar until the fresh
+ * state arrives, and a result never has one (issue #17) — the bar leaving on its own is
+ * as good as closing it, so a missed click is not a failure; the empty check below is.
+ */
 async function closeCardIfAny(page: Page): Promise<void> {
   const card = page.getByTestId('home-card');
   if ((await card.count()) === 0) return;
-  await page.getByRole('button', { name: 'Karte ausblenden' }).first().click();
+  await page
+    .getByRole('button', { name: 'Karte ausblenden' })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => undefined);
   await expect(card).toHaveCount(0);
 }
 
@@ -177,16 +186,20 @@ test('learning modes: explain, homework help without the solution, practice with
   // question card, where half a line stood readable and looked like a rendering fault
   // (owner 28.09., issue #63). On the web the scroll view itself is masked (EdgeFade.tsx);
   // on phones the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
-  const faded = await page.getByTestId('scroll-thread').evaluate((el) => {
-    let node: Element | null = el;
-    while (node) {
-      const s = getComputedStyle(node);
-      const mask = `${s.getPropertyValue('mask-image')} ${s.getPropertyValue('-webkit-mask-image')}`;
-      if (mask.includes('gradient')) return true;
-      node = node.parentElement;
-    }
-    return false;
-  });
+  // .last(): the home under this screen keeps its own thread mounted (expo-router).
+  const faded = await page
+    .getByTestId('scroll-thread')
+    .last()
+    .evaluate((el) => {
+      let node: Element | null = el;
+      while (node) {
+        const s = getComputedStyle(node);
+        const mask = `${s.getPropertyValue('mask-image')} ${s.getPropertyValue('-webkit-mask-image')}`;
+        if (mask.includes('gradient')) return true;
+        node = node.parentElement;
+      }
+      return false;
+    });
   expect(faded, 'the conversation fades out at its top edge').toBe(true);
   await shot(page, '25-practice-fractions');
 

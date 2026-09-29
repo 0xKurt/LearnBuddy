@@ -359,9 +359,11 @@ export default function TalkScreen() {
 
       {/* The conversation's tail, bottom-anchored and following its end: the same bubbles,
           cards and streaming as the chat (issue #18) — no second rendering of the thread. */}
+      {/* Own name, not "scroll-thread": the home stays mounted under this modal, and two
+          identical testIDs make every thread locator ambiguous (Playwright strict mode). */}
       <ScrollView
         ref={scroll}
-        testID="scroll-thread"
+        testID="scroll-talk"
         style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,

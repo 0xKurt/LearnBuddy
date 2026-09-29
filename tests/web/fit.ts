@@ -76,7 +76,7 @@ export async function overflows(page: Page): Promise<Overflow[]> {
       out.push({
         label: id || (el.innerText ?? '').replace(/\s+/g, ' ').slice(0, 40),
         overflow,
-        allowed: id === 'scroll-thread' || id === 'scroll-list',
+        allowed: id === 'scroll-thread' || id === 'scroll-talk' || id === 'scroll-list',
       });
     }
     return out;
