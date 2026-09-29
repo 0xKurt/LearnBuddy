@@ -1,9 +1,10 @@
-// How a text is read aloud in Buddy's natural voice (ADR 0008). Pure (no React Native),
-// unit-tested; lib/speech/listen.ts plays it.
+// How a text is cut up to be read aloud in Buddy's natural voice (ADR 0008). Pure (no React
+// Native), unit-tested; lib/speech/pipeline.ts orders it and lib/speech/listen.ts plays it.
 //
 // - A text is read sentence by sentence (lib/speech/sentences.ts): each sentence is one
 //   request to POST /voice/speech, the next is fetched while one plays, and the sentence being
-//   played is what read-along highlights.
+//   played is what read-along highlights. A reply that is still being written is cut the same
+//   way, sentence by sentence as it arrives (`nextReadingParts`, issue #24).
 // - When the server says no, or cannot be reached, the phone's own voice reads instead — for
 //   a while, so a reply does not wait on a failing request for every sentence.
 
@@ -72,17 +73,47 @@ export function shortOpening(spoken: string): string[] {
   return [spoken.slice(0, cut).trim(), spoken.slice(cut).trim()];
 }
 
+/**
+ * How far a text has been cut into pieces: up to which character, which sentence number comes
+ * next, and whether anything was read yet (the opening is shortened only once).
+ */
+export type ReadingCursor = { upTo: number; at: number; started: boolean };
+export const READING_START: ReadingCursor = { upTo: 0, at: 0, started: false };
+
+/**
+ * The parts that became readable since the cursor: the sentences of `text` that are complete
+ * now (with `done`, whatever is left too). Sentence numbers keep counting, so a reply read
+ * while it is still being written is cut exactly as the finished text would be — and its
+ * sentences carry the same numbers, which is what read-along highlights.
+ */
+export function nextReadingParts(
+  text: string,
+  done: boolean,
+  cursor: ReadingCursor,
+  transform: (s: string) => string,
+): { parts: ReadingPart[]; sentences: string[]; cursor: ReadingCursor } {
+  const r = nextSentences(text, cursor.upTo, done);
+  const parts: ReadingPart[] = [];
+  let at = cursor.at;
+  let started = cursor.started;
+  for (const sentence of r.parts) {
+    const spoken = chunkSpoken(transform(sentence));
+    const index = at++;
+    const opening = spoken[0];
+    if (opening === undefined) continue; // A sentence with nothing to say keeps its number.
+    if (started) {
+      parts.push({ at: index, spoken });
+      continue;
+    }
+    started = true;
+    parts.push({ at: index, spoken: [...shortOpening(opening), ...spoken.slice(1)] });
+  }
+  return { parts, sentences: r.parts, cursor: { upTo: r.upTo, at, started } };
+}
+
 /** The parts to read: every sentence with something to say, in order. */
 export function readingParts(text: string, transform: (s: string) => string): ReadingPart[] {
-  const parts = sentencesOf(text)
-    .map((s, at) => ({ at, spoken: chunkSpoken(transform(s)) }))
-    .filter((p) => p.spoken.length > 0);
-  const first = parts[0];
-  const opening = first?.spoken[0];
-  if (!first || opening === undefined) return parts;
-  const split = shortOpening(opening);
-  if (split.length === 1) return parts;
-  return [{ at: first.at, spoken: [...split, ...first.spoken.slice(1)] }, ...parts.slice(1)];
+  return nextReadingParts(text, true, READING_START, transform).parts;
 }
 
 /** A refused or failed /voice/speech call, as the app's ApiError carries it. */

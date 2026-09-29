@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_SPEECH_CHARS,
   NaturalGate,
+  READING_START,
   chunkSpoken,
   deviceRate,
+  nextReadingParts,
   playbackProgress,
   readingParts,
   restAfter,
@@ -131,5 +133,57 @@ describe('readingParts with a long opening', () => {
     expect(parts[0]?.at).toBe(0);
     expect(parts[0]?.spoken).toHaveLength(2);
     expect(parts[1]?.at).toBe(1);
+  });
+});
+
+describe('cutting a reply that is still being written (nextReadingParts)', () => {
+  const plain = (s: string) => s;
+
+  it('gives out every finished sentence once, with the numbers of the finished text', () => {
+    let cursor = READING_START;
+    const said: Array<{ at: number; spoken: string[] }> = [];
+    const step = (text: string, done: boolean) => {
+      const r = nextReadingParts(text, done, cursor, plain);
+      cursor = r.cursor;
+      said.push(...r.parts);
+      return r;
+    };
+    expect(step('Klar! Das', false).parts).toEqual([{ at: 0, spoken: ['Klar!'] }]);
+    expect(step('Klar! Das schaffen wir.', false).parts).toEqual([]);
+    expect(step('Klar! Das schaffen wir. Probier', false).parts).toEqual([
+      { at: 1, spoken: ['Das schaffen wir.'] },
+    ]);
+    expect(step('Klar! Das schaffen wir. Probier mal', true).parts).toEqual([
+      { at: 2, spoken: ['Probier mal'] },
+    ]);
+    expect(said.map((p) => p.at)).toEqual([0, 1, 2]);
+  });
+
+  it('cuts exactly as the finished text would be cut', () => {
+    const text =
+      'Der Urknall ist der Moment, in dem unser ganzes Universum angefangen hat, und das war vor etwa 13,8 Milliarden Jahren. Danach wurde es kühler.';
+    let cursor = READING_START;
+    const parts = [];
+    for (const upTo of [40, 90, 130, text.length]) {
+      const r = nextReadingParts(text.slice(0, upTo), upTo === text.length, cursor, plain);
+      cursor = r.cursor;
+      parts.push(...r.parts);
+    }
+    expect(parts).toEqual(readingParts(text, plain));
+  });
+
+  it('a sentence with nothing to say keeps its number, and only the first is shortened', () => {
+    let cursor = READING_START;
+    const first = nextReadingParts('$$\nWirklich gut!', false, cursor, (s) =>
+      s.replace(/\$\$/g, ''),
+    );
+    cursor = first.cursor;
+    expect(first.parts).toEqual([]);
+    expect(first.sentences).toEqual(['$$']);
+    const second = nextReadingParts('$$\nWirklich gut! Weiter.', true, cursor, plain);
+    expect(second.parts).toEqual([
+      { at: 1, spoken: ['Wirklich gut!'] },
+      { at: 2, spoken: ['Weiter.'] },
+    ]);
   });
 });

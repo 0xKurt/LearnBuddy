@@ -528,7 +528,9 @@ the ones it _wrote_ from that session ("Mehr davon", where #58 lived). On the sh
 answerable from it · right for the class · one correct answer · clean German; every finding
 names the question and why. `evals/buddy`, `evals/tutor`, `evals/voice`, `evals/lena`
 and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/speak`,
-`evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
+`evals/stream`, `evals/tts`, `evals/modes/show` and `evals/lena/day` only print for a person to
+read (`evals/tts` also needs `SPEECH_BACKEND=google`: it measures a whole voice-mode turn —
+when each sentence is written, what it costs to synthesise and how long it plays). A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
 **One word on its own** (`POST /practice/sessions/:id/speak-word`, issue #83): in the
@@ -668,6 +670,18 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   (`shortOpening`, `lib/speech/readAloud.ts`) — never mid-clause, that sounds wrong — and if it
   still takes longer than 2.5 s the phone's voice reads that piece while the natural voice
   carries on with the rest.
+- **The sentences after the first are synthesised while the one before plays** (issue #24,
+  `lib/speech/pipeline.ts`): a reply is **one** reading, also when it is read along while Buddy
+  writes it — until 29.09. the stream speaker started a new `speak()` per sentence, so the next
+  sentence's synthesis only began after the current one had finished playing. Measured live
+  (`apps/api/evals/tts`, 6 turns / 16 sentences, docs/speed-audit.md): synthesis 0.95 s median,
+  playback 4.70 s median, so **one** sentence of lead closes every gap — 2.41 s of silence per
+  turn became 0.00 s, and a turn ends 2.4 s earlier. Fetching every sentence at once gains
+  nothing further (0.00 s) and makes the first audio 0.2 s later, so there is no batch
+  endpoint. The first audio itself cannot be pipelined — it is model time to the first finished
+  sentence plus one synthesis; `shortOpening` and the phone-voice fallback are what shorten it.
+  A sentence that is written late is waited for with the short patience (2.5 s), a sentence
+  fetched ahead with the long one (7 s): only the first kind is silence she feels.
 - The tutor's answers are not streamed: code checks the whole reply first (the solution-leak
   guard, verdict invariants), and streaming would save only ~0.3 s there (1.1 s → 1.4 s).
 
