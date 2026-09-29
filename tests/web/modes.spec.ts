@@ -68,6 +68,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  // Nothing stands between the solution and "Weiter" after a clean first try: the three ways
+  // to re-explain cost half a screen there and nobody needs them (owner 28.09., issue #61).
+  // She can still ask Buddy in the chat, and after a wrong try they are right there.
+  await expect(page.getByRole('button', { name: 'Einfacher bitte' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Weiter' }).click();
   // A fill-in sentence: the gap is drawn, and her answer appears in it while she types.
   await expect(page.getByLabel(/Ich helfe Lücke Mutter/)).toBeVisible();
