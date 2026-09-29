@@ -33,6 +33,7 @@ import { Btn } from '../lb/Btn.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
 import { ErrorNote } from '../lb/ErrorNote.js';
 import { Progress } from '../lb/Progress.js';
+import { useToastBar } from '../lb/Toast.js';
 import { AttachStrip } from './AttachStrip.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
@@ -145,6 +146,9 @@ export function Composer({
     ),
   );
 
+  // A toast stands above this bar, not on the conversation (issue #91).
+  const onToastBar = useToastBar();
+
   // Slim (issue #64): the bar carries the field and three buttons, nothing more — every
   // point it takes is one the conversation loses.
   const frame = {
@@ -254,7 +258,7 @@ export function Composer({
   if (voiceMode) {
     // Voice first: keyboard · big mic · camera.
     return (
-      <View style={frame}>
+      <View style={frame} onLayout={onToastBar}>
         {attachSheet}
         <MicStatus voice={voice} />
         {attachments}
@@ -306,7 +310,7 @@ export function Composer({
   }
 
   return (
-    <View testID="composer" style={frame}>
+    <View testID="composer" style={frame} onLayout={onToastBar}>
       {attachSheet}
       <MicStatus voice={voice} />
       {attachments}

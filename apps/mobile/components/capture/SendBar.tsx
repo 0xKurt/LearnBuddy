@@ -13,6 +13,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { ErrorNote } from '../lb/ErrorNote.js';
 import { Progress } from '../lb/Progress.js';
+import { useToastBar } from '../lb/Toast.js';
 
 type Props = {
   progress: SendProgress | null;
@@ -54,9 +55,12 @@ export function SendBar({
   };
   // The failure card (ErrorNote) says itself; only progress is announced here.
   useAnnounce(progress ? progressText(progress) : null);
+  // A toast stands above this bar, not on the photos (issue #91).
+  const onToastBar = useToastBar();
 
   return (
     <View
+      onLayout={onToastBar}
       style={{
         paddingHorizontal: 16,
         paddingTop: 8,

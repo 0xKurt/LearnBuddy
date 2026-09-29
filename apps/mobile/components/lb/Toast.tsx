@@ -1,40 +1,43 @@
-// One short message at the bottom (errors, confirmations). Screen readers
-// hear it (a live region on Android and the web, an announcement on iOS), and it
-// sits above the keyboard on iOS, where it used to hide behind it (audit M-76, M-80). Looks: a dark pill floating on a soft shadow; an
-// error also carries a round warning mark (never colour alone).
+// One short message at the bottom (errors, confirmations). Screen readers hear it
+// (a live region on Android and the web, an announcement on iOS), and it sits above
+// the keyboard on iOS, where it used to hide behind it (audit M-76, M-80). It belongs
+// to the screen it appeared on: a route change clears it, unless the caller said
+// survivesNavigation — the rules live in lib/toast.ts (issue #91). It stands above
+// the screen's real bottom bar; bars report their height through useToastBar. Looks:
+// a dark pill floating on a soft shadow; an error also carries a round warning mark
+// (never colour alone).
 
-import { useEffect, useState } from 'react';
-import { Keyboard, Platform, Text, View } from 'react-native';
+import { usePathname } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Keyboard, type LayoutChangeEvent, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { create } from 'zustand';
 
 import { announce } from '../../lib/announce.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import {
+  barHeight,
+  registerToastBar,
+  toast,
+  toastBottom,
+  useToastState,
+  type ToastBarHandle,
+} from '../../lib/toast.js';
 
-export type ToastTone = 'info' | 'error';
-
-type ToastState = { message: string | null; tone: ToastTone; seq: number };
-
-const useToastStore = create<ToastState>(() => ({ message: null, tone: 'info', seq: 0 }));
-
-export const toast = {
-  show(message: string, tone: ToastTone = 'info'): void {
-    useToastStore.setState((s) => ({ message, tone, seq: s.seq + 1 }));
-  },
-  hide(): void {
-    useToastStore.setState({ message: null });
-  },
-  /** Hides this message if it is the one showing (it no longer holds), leaves any other. */
-  dismiss(message: string): void {
-    useToastStore.setState((s) => (s.message === message ? { message: null } : s));
-  },
-};
+export { toast, type ToastOptions, type ToastTone } from '../../lib/toast.js';
 
 export function ToastHost() {
-  const { message, tone, seq } = useToastStore();
+  const { message, tone, seq, bars } = useToastState();
   const insets = useSafeAreaInsets();
   const keyboard = useIosKeyboardHeight();
+  const pathname = usePathname();
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    // The screen changed: a message that belonged to the one before goes with it (issue #91).
+    toast.routeChanged();
+  }, [pathname]);
   useEffect(() => {
     if (!message) return;
     announce(message, { liveRegion: true });
@@ -51,7 +54,7 @@ export function ToastHost() {
         position: 'absolute',
         left: 16,
         right: 16,
-        bottom: Math.max(insets.bottom + 90, keyboard + 16),
+        bottom: toastBottom(insets.bottom, barHeight(bars), keyboard),
         alignItems: 'center',
       }}
     >
@@ -92,6 +95,25 @@ export function ToastHost() {
       </View>
     </View>
   );
+}
+
+/**
+ * A screen's pinned bottom bar (Composer, BottomBar, SendBar) hands its measured
+ * height to the toast so the pill stands above the bar, not on the content
+ * (issue #91). Put the result on the bar's outermost view: onLayout={onBarLayout}.
+ */
+export function useToastBar(): (e: LayoutChangeEvent) => void {
+  const handle = useRef<ToastBarHandle | null>(null);
+  useEffect(
+    () => () => {
+      handle.current?.remove();
+      handle.current = null;
+    },
+    [],
+  );
+  return useCallback((e: LayoutChangeEvent) => {
+    (handle.current ??= registerToastBar()).set(e.nativeEvent.layout.height);
+  }, []);
 }
 
 /**
