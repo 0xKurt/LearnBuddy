@@ -52,7 +52,10 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
     case 'correct_memory':
       return t('action.correct_memory', { statement: a.statement });
     case 'forget':
-      return t('action.forget', { statement: a.statement });
+      // Everything at once has no single statement to name — it has a number (issue #114).
+      return a.statement === null
+        ? t('action.forget_all', { count: a.forgotten ?? 0 })
+        : t('action.forget', { statement: a.statement });
     case 'set_level':
       if (a.level === 'school') {
         return a.grade

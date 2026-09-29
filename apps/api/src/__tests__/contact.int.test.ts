@@ -12,6 +12,7 @@ import {
   scheduleExamWakeups,
   scheduleStepReminder,
 } from '../modules/buddy/plan.js';
+import { minutesOf } from '../lib/time.js';
 import { loadSettings } from '../modules/buddy/state.js';
 import { enqueueJob } from '../modules/scheduler/jobs.js';
 import { runTick } from '../modules/scheduler/tick.js';
@@ -138,6 +139,7 @@ describe.skipIf(!dbReady)('contact promises', () => {
       preferred_start: null,
       preferred_end: null,
       quiet_start: null,
+      quiet_end: null,
       avoid_weekdays: null,
       pause: { kind: 'end_of_week', weeks_ahead: 0 },
       quote: 'bis Sonntag nichts aufs Handy',
@@ -253,6 +255,59 @@ describe.skipIf(!dbReady)('contact promises', () => {
     expect(rows).toMatchObject([{ status: 'in_app', status_reason: 'contact_disabled' }]);
     expect(await thread(env, l.learnerId)).toEqual(['Ich hätte da eine kurze Übung für dich.']);
     expect(env.push.attempts).toHaveLength(0);
+  });
+
+  // "Morgens vor neun bitte nichts" is LESS contact, and ADR 0006 lets Buddy do that — but
+  // until issue #114 the tool only carried the evening start, so the one end a child actually
+  // asks about went through the settings form or not at all.
+  it('she can push the morning end later, and never pull it earlier (issue #114)', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    await enableContact(env, l.learnerId, { quiet_start: '20:00', quiet_end: '07:00' });
+    const setQuietEnd = (end: string | null, quote: string) => ({
+      tool: 'set_contact',
+      args: {
+        preferred_start: null,
+        preferred_end: null,
+        quiet_start: null,
+        quiet_end: end,
+        avoid_weekdays: null,
+        pause: null,
+        quote,
+      },
+    });
+
+    // Later end = quieter morning: allowed, and undoable by her.
+    env.llm.script(
+      'buddy_turn',
+      reply('Alles klar, morgens ist bis 9 Uhr Ruhe.', [
+        setQuietEnd('09:00', 'morgens erst ab 9 bitte'),
+      ]),
+    );
+    const ok = await send(l, 'morgens erst ab 9 bitte');
+    expect(ok.body.status).toBe('done');
+    const settings = await l.api.get<{ quiet_end: string; preferred_start: string }>(
+      '/buddy/settings',
+    );
+    expect(settings.body.quiet_end).toBe('09:00');
+    // The preferred window cannot start inside the quiet hours any more.
+    expect(minutesOf(settings.body.preferred_start)).toBeGreaterThanOrEqual(minutesOf('09:00'));
+    const card = ok.body.home.thread.flatMap((m) => m.actions).at(-1)!;
+    expect(card.summary).toMatchObject({ tool: 'set_contact', quiet_end: '09:00' });
+    // Not offered as undoable to a child: taking the quieter morning back is MORE contact,
+    // and that needs the adult (ADR 0006) — the same rule that let her set it in the first place.
+    expect(card.undoable).toBe(false);
+
+    // Earlier end = more contact: refused in code, whatever the wording.
+    env.llm.script(
+      'buddy_turn',
+      reply('Ich schaue mal.', [setQuietEnd('06:00', 'schreib mir schon ab 6')]),
+      reply('Das kann ich nicht — frag bitte deine Eltern in den Einstellungen.', []),
+    );
+    const denied = await send(l, 'schreib mir schon ab 6');
+    expect(denied.body.status).toBe('done');
+    expect((await l.api.get<{ quiet_end: string }>('/buddy/settings')).body.quiet_end).toBe(
+      '09:00',
+    );
   });
 
   describe('an agreed reminder never vanishes (H-37, repro-15)', () => {

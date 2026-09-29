@@ -201,7 +201,8 @@
     "set_contact_quiet": "Al móvil solo de {{from}} a {{to}}, nunca después de las {{quiet}}",
     "set_contact_days": "nunca estos días: {{days}}",
     "request_material_undone": "No hace falta foto: {{title}}",
-    "set_voice": "Mi voz: {{voice}}, {{speed}}"
+    "set_voice": "Mi voz: {{voice}}, {{speed}}",
+    "forget_all": "He olvidado todo lo que sabía de ti ({{count}})"
   },
   "voice": {
     "name": {

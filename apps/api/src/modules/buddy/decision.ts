@@ -238,7 +238,19 @@ const correctMemory = z.object({
 
 const forget = z.object({
   tool: z.literal('forget'),
-  args: z.object({ memory: MemoryRef, quote: Quote }),
+  args: z.object({
+    // "forget everything" is one wish, not sixty (issue #114): with an action cap of six per
+    // answer, alias-by-alias ran out and the rest stayed silently. Forgetting is always a
+    // reduction, so Buddy may do it (ADR 0006); each note keeps its own undo window.
+    memory: MemoryRef.nullable().describe('the note to forget; null only together with all=true'),
+    all: z
+      .boolean()
+      .default(false)
+      .describe(
+        'true only when she asks for everything you know about her to go, not a part of it',
+      ),
+    quote: Quote,
+  }),
 });
 
 const year = (lo: number, hi: number) => z.number().int().min(lo).max(hi);
@@ -461,7 +473,10 @@ const setContact = z.object({
     preferred_start: LocalTimeSchema.nullable(),
     preferred_end: LocalTimeSchema.nullable(),
     quiet_start: LocalTimeSchema.nullable().describe(
-      'No messages at all from this time until the morning ("nicht nach 19 Uhr" → 19:00); only earlier than now',
+      'Evening start of the quiet hours: no messages at all from this time until the morning; only earlier than it is now',
+    ),
+    quiet_end: LocalTimeSchema.nullable().describe(
+      'Morning end of the quiet hours: nothing before this time. Only later than it is now — asking for quiet until later is less contact, and you may do that (issue #114)',
     ),
     avoid_weekdays: z
       .array(z.number().int().min(1).max(7))

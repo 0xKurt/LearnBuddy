@@ -201,7 +201,8 @@
     "set_contact_quiet": "Aufs Handy nur zwischen {{from}} und {{to}} Uhr, nie nach {{quiet}} Uhr",
     "set_contact_days": "nie an diesen Tagen: {{days}}",
     "request_material_undone": "Kein Foto nötig: {{title}}",
-    "set_voice": "Meine Stimme: {{voice}}, {{speed}}"
+    "set_voice": "Meine Stimme: {{voice}}, {{speed}}",
+    "forget_all": "Alles vergessen, was ich über dich wusste ({{count}})"
   },
   "voice": {
     "name": {

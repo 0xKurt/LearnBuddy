@@ -316,6 +316,54 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     expect(active).toHaveLength(1);
   });
 
+  // "vergiss alles" is one wish, not sixty. Alias by alias it ran into the six-action cap
+  // and the rest stayed silently — the worst possible answer to that request (issue #114).
+  it('forgets everything at once, past the action cap, and takes it back as one (issue #114)', async () => {
+    const note = (statement: string, quote: string) => ({
+      tool: 'remember',
+      args: { about: 'everyday', kind: 'fact', statement, quote, until: null },
+    });
+    // Eight notes: more than one answer could ever retract one by one.
+    for (let i = 1; i <= 8; i++) {
+      env.llm.script('buddy_turn', {
+        json: say('Gemerkt.', [note(`Mag Sache ${i}`, `Sache ${i}`)]),
+      });
+      await send(l, `Ich mag Sache ${i}`);
+    }
+    expect(
+      await env.db.query(
+        `select 1 from buddy_memories where learner_id = $1 and status = 'active'`,
+        [l.learnerId],
+      ),
+    ).toHaveLength(8);
+
+    env.llm.script('buddy_turn', {
+      json: say('Alles weg.', [
+        { tool: 'forget', args: { memory: null, all: true, quote: 'vergiss alles über mich' } },
+      ]),
+    });
+    const res = await send(l, 'vergiss alles über mich');
+    expect(res.body.status).toBe('done');
+    expect(
+      await env.db.query(
+        `select 1 from buddy_memories where learner_id = $1 and status = 'active'`,
+        [l.learnerId],
+      ),
+    ).toHaveLength(0);
+
+    const card = res.body.home.thread.flatMap((m) => m.actions).at(-1)!;
+    expect(card.summary).toMatchObject({ tool: 'forget', memory_id: null, forgotten: 8 });
+    // One card, one undo — and everything comes back.
+    expect(card.undoable).toBe(true);
+    expect((await l.api.post(`/buddy/actions/${card.id}/undo`)).status).toBe(200);
+    expect(
+      await env.db.query(
+        `select 1 from buddy_memories where learner_id = $1 and status = 'active'`,
+        [l.learnerId],
+      ),
+    ).toHaveLength(8);
+  });
+
   it("homework tasks are not counted as practice questions in Buddy's picture (p2-HW-06)", async () => {
     await env.db.tx(async (tx) => {
       const subject = await findOrCreateSubject(tx, l.learnerId, 'Mathe', 'math');

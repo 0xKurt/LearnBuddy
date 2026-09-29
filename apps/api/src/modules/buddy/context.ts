@@ -173,11 +173,21 @@ export function buildContext(
   const permanent = state.memories.filter((m) => m.kind !== 'constraint');
   const temporary = state.memories.filter((m) => m.kind === 'constraint');
   let mi = 0;
+  // Where a note came from, so "how do you know that?" can be answered instead of guessed
+  // (issue #114). Only when it was not her saying it herself — that is the default and would
+  // cost a word on every line for nothing. The verbatim quote stays out of STATE on purpose:
+  // up to 300 characters per note, times up to 60 notes, on every single turn.
+  const SOURCE_NOTE: Record<MemoryRow['source'], string> = {
+    learner_stated: '',
+    learner_edited: ' (she corrected this herself)',
+    account_holder: ' (set by the adult who holds the account)',
+    consolidated: ' (you summarised this from several things she said)',
+  };
   const memLine = (m: MemoryRow): string => {
     const alias = `m${++mi}`;
     aliases.memories.set(alias, m);
     const until = m.valid_until ? ` (through ${lastDayOf(m.valid_until, tz)})` : '';
-    return `- ${alias} [${m.kind}] ${m.statement}${until}`;
+    return `- ${alias} [${m.kind}] ${m.statement}${until}${SOURCE_NOTE[m.source]}`;
   };
   knowledgeBlock.push('## What Buddy knows (said by the learner; correctable)');
   if (permanent.length === 0) knowledgeBlock.push('- nothing yet');

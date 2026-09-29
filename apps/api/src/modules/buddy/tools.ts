@@ -80,6 +80,8 @@ export type UndoSpec =
   | { type: 'retract_memory'; memory_id: string }
   | { type: 'restore_memory'; old_id: string; new_id: string }
   | { type: 'unretract_memory'; memory_id: string }
+  /** Undo of "forget everything" (issue #114): exactly the notes that call retracted. */
+  | { type: 'unretract_memories'; memory_ids: string[] }
   | {
       type: 'restore_level';
       level: string;
@@ -118,6 +120,8 @@ export type UndoSpec =
       type: 'restore_settings';
       /** Absent in undo records written before quiet hours could be changed. */
       quiet_start?: string;
+      /** Absent in undo records written before the morning end could be changed (#114). */
+      quiet_end?: string;
       preferred_start: string;
       preferred_end: string;
       avoid_weekdays: number[];
@@ -429,6 +433,21 @@ async function runCorrectMemory(
 async function runForget(action: ActionOf<'forget'>, ctx: ToolContext): Promise<ToolOutcome> {
   const a = action.args;
   requireQuote(ctx, a.quote);
+  if (a.all) {
+    // Everything at once (issue #114). Not the aliases in STATE — those are only what fit
+    // there; the database decides what "everything" is, so nothing survives unseen.
+    const gone = await ctx.db.query<{ id: string }>(
+      `update buddy_memories set status = 'retracted', closed_at = $2, version = version + 1
+        where learner_id = $1 and status = 'active' returning id`,
+      [ctx.learnerId, ctx.now],
+    );
+    if (gone.length === 0) throw new ToolRejection('there is nothing you know about her to forget');
+    return {
+      summary: { tool: 'forget', memory_id: null, statement: null, forgotten: gone.length },
+      undo: { type: 'unretract_memories', memory_ids: gone.map((r) => r.id) },
+    };
+  }
+  if (a.memory === null) throw new ToolRejection('forget needs a memory alias, or all=true');
   const m = memoryOf(ctx, a.memory);
   const updated = await ctx.db.query(
     `update buddy_memories set status = 'retracted', closed_at = $3, version = version + 1
@@ -943,19 +962,24 @@ async function runSetContact(
   requireQuote(ctx, a.quote);
   const s = ctx.settings;
   const quietStart = a.quiet_start ?? s.quiet_start;
-  // Quiet hours may only grow: every minute that was quiet stays quiet.
+  // The morning end moves too (issue #114): "mornings not before nine" is LESS contact, and
+  // ADR 0006 lets Buddy do that. Which end moved does not matter — the rule is the same for
+  // both: every minute that was quiet stays quiet.
+  const quietEnd = a.quiet_end ?? s.quiet_end;
   for (let m = 0; m < 1440; m++) {
-    if (inWindow(m, s.quiet_start, s.quiet_end) && !inWindow(m, quietStart, s.quiet_end)) {
+    if (inWindow(m, s.quiet_start, s.quiet_end) && !inWindow(m, quietStart, quietEnd)) {
       throw new ToolRejection(
-        `quiet hours can only start earlier than ${s.quiet_start} — later means more contact`,
+        `quiet hours can only grow (now ${s.quiet_start}–${s.quiet_end}): a later start or an earlier end means more contact`,
       );
     }
   }
-  const preferredStart = a.preferred_start ?? s.preferred_start;
+  let preferredStart = a.preferred_start ?? s.preferred_start;
   let preferredEnd = a.preferred_end ?? s.preferred_end;
+  // The preferred window starts where the quiet hours end.
+  if (minutesOf(preferredStart) < minutesOf(quietEnd)) preferredStart = quietEnd;
   // The preferred window ends where the quiet hours begin.
   if (
-    minutesOf(quietStart) > minutesOf(s.quiet_end) &&
+    minutesOf(quietStart) > minutesOf(quietEnd) &&
     minutesOf(preferredEnd) > minutesOf(quietStart)
   ) {
     preferredEnd = quietStart;
@@ -977,9 +1001,9 @@ async function runSetContact(
   await ctx.db.query(
     `update buddy_settings
         set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4, paused_until = $5,
-            quiet_start = $6, version = version + 1
+            quiet_start = $6, quiet_end = $7, version = version + 1
       where learner_id = $1`,
-    [ctx.learnerId, preferredStart, preferredEnd, avoid, pausedUntil, quietStart],
+    [ctx.learnerId, preferredStart, preferredEnd, avoid, pausedUntil, quietStart, quietEnd],
   );
   if (pausedUntil && pausedUntil.getTime() > ctx.now.getTime()) {
     // Nothing Buddy queued on its own during a pause is sent afterwards (no backlog); an
@@ -998,10 +1022,12 @@ async function runSetContact(
       avoid_weekdays: avoid,
       paused_until: pausedUntil ? pausedUntil.toISOString() : null,
       quiet_start: quietStart,
+      quiet_end: quietEnd,
     },
     undo: {
       type: 'restore_settings',
       quiet_start: s.quiet_start,
+      quiet_end: s.quiet_end,
       preferred_start: s.preferred_start,
       preferred_end: s.preferred_end,
       avoid_weekdays: s.avoid_weekdays,
@@ -1190,6 +1216,14 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
       );
     case 'unretract_memory':
       return (await unretractPlan(db, learnerId, undo.memory_id)) !== 'no';
+    case 'unretract_memories': {
+      // Offered while at least one of them can still come back; the ones whose undo window
+      // has passed are gone for good and are not counted against it.
+      const plans = await Promise.all(
+        undo.memory_ids.map((id) => unretractPlan(db, learnerId, id)),
+      );
+      return plans.some((p) => p !== 'no');
+    }
     case 'restore_level':
       return exists(
         `select 1 from learners where id = $1 and level = $2 and grade is not distinct from $3`,
@@ -1275,6 +1309,7 @@ export async function undoLoosensContact(
   const restored: SettingsRow = {
     ...current,
     quiet_start: undo.quiet_start ?? current.quiet_start,
+    quiet_end: undo.quiet_end ?? current.quiet_end,
     preferred_start: undo.preferred_start,
     preferred_end: undo.preferred_end,
     avoid_weekdays: undo.avoid_weekdays,
@@ -1321,6 +1356,22 @@ export async function runUndo(
         [undo.memory_id, learnerId],
       );
       return r.length === 1;
+    }
+    case 'unretract_memories': {
+      let back = 0;
+      for (const id of undo.memory_ids) {
+        const plan = await unretractPlan(db, learnerId, id);
+        if (plan === 'known') back++;
+        if (plan !== 'restore') continue;
+        const r = await db.query(
+          `update buddy_memories set status = 'active', closed_at = null, version = version + 1
+            where id = $1 and learner_id = $2 and status = 'retracted' returning id`,
+          [id, learnerId],
+        );
+        back += r.length;
+      }
+      // Nothing came back only when every one of them is past its undo window.
+      return back > 0;
     }
     case 'restore_level': {
       const r = await db.query(
@@ -1451,7 +1502,8 @@ export async function runUndo(
       const r = await db.query(
         `update buddy_settings set preferred_start = $2, preferred_end = $3, avoid_weekdays = $4,
                                    paused_until = $5,
-                                   quiet_start = coalesce($7, quiet_start), version = version + 1
+                                   quiet_start = coalesce($7, quiet_start),
+                                   quiet_end = coalesce($8, quiet_end), version = version + 1
           where learner_id = $1 and version = $6 returning learner_id`,
         [
           learnerId,
@@ -1461,6 +1513,7 @@ export async function runUndo(
           undo.paused_until,
           undo.expect_version,
           undo.quiet_start ?? null,
+          undo.quiet_end ?? null,
         ],
       );
       return r.length === 1;

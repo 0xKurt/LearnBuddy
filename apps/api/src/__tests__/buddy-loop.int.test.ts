@@ -672,6 +672,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
               preferred_start: null,
               preferred_end: null,
               quiet_start: null,
+              quiet_end: null,
               avoid_weekdays: null,
               pause: { kind: 'end_of_week', weeks_ahead: 0 },
               quote: 'diese Woche keine Nachrichten mehr',

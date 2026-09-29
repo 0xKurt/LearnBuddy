@@ -21,7 +21,13 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     valid_until: IsoDateTime.nullable(),
   }),
   z.object({ tool: z.literal('correct_memory'), memory_id: Uuid, statement: z.string() }),
-  z.object({ tool: z.literal('forget'), memory_id: Uuid, statement: z.string() }),
+  z.object({
+    tool: z.literal('forget'),
+    /** Null when everything was forgotten at once (issue #114); then `forgotten` counts it. */
+    memory_id: Uuid.nullable(),
+    statement: z.string().nullable(),
+    forgotten: z.number().int().optional(),
+  }),
   z.object({
     tool: z.literal('set_level'),
     level: z.enum(['unknown', 'school', 'university', 'adult']),
@@ -80,6 +86,8 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     paused_until: IsoDateTime.nullable(),
     /** No messages from then until the morning (absent in older records). */
     quiet_start: LocalTime.optional(),
+    /** Nothing before this time in the morning (absent in records before issue #114). */
+    quiet_end: LocalTime.optional(),
   }),
   z.object({ tool: z.literal('schedule_check'), at: IsoDateTime }),
   /** Buddy's voice as she asked for it ("sprich langsamer", "andere Stimme"), ADR 0008. */
