@@ -9,7 +9,7 @@ import { Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
+import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
@@ -50,15 +50,20 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
               <View key={index} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
                 <View
                   style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
+                    // min sizes: large system text grows the letter's circle instead of
+                    // clipping it in a fixed box (audit M-84, issue #73).
+                    minWidth: 24,
+                    minHeight: 24,
+                    borderRadius: 999,
                     backgroundColor: LB.lavender,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Text style={[TYPE.label, { color: LB.primaryDk }]}>
+                  <Text
+                    maxFontSizeMultiplier={MAX_FONT_SCALE}
+                    style={[TYPE.label, { color: LB.primaryDk }]}
+                  >
                     {String.fromCharCode(65 + index)}
                   </Text>
                 </View>

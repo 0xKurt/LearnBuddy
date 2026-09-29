@@ -134,7 +134,8 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
   await page.getByRole('button', { name: 'Eltern fragen' }).click();
   for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
-  await expect(page.getByText('Ja. Buddy darf dir auch aufs Handy schreiben.')).toBeVisible();
+  // The card answers the heading once with the state, never the question again (issue #95).
+  await expect(page.getByText('Ja – nie nach 20:00 Uhr.')).toBeVisible();
   await page.getByRole('button', { name: 'Zeiten anpassen' }).click();
   await expect(page.getByText('Wann nicht?')).toBeVisible();
   await shot(page, '44-settings-times', { opened: true });
@@ -246,6 +247,17 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // The sample sheet (800 × 1080) reads well: no "sehr klein" warning (user feedback #16).
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
   await expect(page.getByText('Schwer lesbar')).toHaveCount(0);
+  // The full-screen photo is a dialog like a sheet (issue #73): the keyboard goes with
+  // it — the first Tab lands inside the viewer, and "Schließen" brings her back.
+  await page.getByRole('button', { name: 'Foto 1 von 1' }).click();
+  await expect(inSheet(page).getByRole('button', { name: 'Schließen' })).toBeVisible();
+  await page.keyboard.press('Tab');
+  expect(
+    await page.evaluate(() => !!document.activeElement?.closest('[aria-modal="true"]')),
+    'focus after opening the photo viewer',
+  ).toBe(true);
+  await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
+  await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Noch ein Foto' }).click();
   await (await chooser).setFiles(join(FIXTURES, 'sharp.jpg'));

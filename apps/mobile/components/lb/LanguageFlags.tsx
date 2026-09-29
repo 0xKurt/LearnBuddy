@@ -54,7 +54,13 @@ export function LanguageFlags({
                   transform: [{ scale: pressed ? 0.94 : on ? 1.06 : 1 }],
                 }}
               >
-                <Text style={{ fontSize: compact ? 22 : 26, lineHeight: compact ? 30 : 34 }}>
+                {/* The flag is a picture, not text: it stays inside its fixed circle at any
+                    system text size — the language's name is what a screen reader speaks
+                    (audit M-84, issue #73). */}
+                <Text
+                  allowFontScaling={false}
+                  style={{ fontSize: compact ? 22 : 26, lineHeight: compact ? 30 : 34 }}
+                >
                   {l.flag}
                 </Text>
               </View>

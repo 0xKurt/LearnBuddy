@@ -3,19 +3,20 @@
 // under it; the first sits at the top, the rest follow clockwise. Sized from
 // the available width so it fits a small phone and large text.
 import { useState, type ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { PixelRatio, Pressable, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { MAX_FONT_SCALE } from './Btn.js';
 import { Icon, type IconName } from './Icon.js';
 
 export type OrbitItem = { key: string; label: string; icon: IconName; onPress: () => void };
 
 const NODE = 62;
 const LABEL_W = 108;
-/** Room for a one-line label above the top node. */
-const LABEL_ABOVE = 26;
+/** One label line at system scale 1 (NodeLabel's lineHeight). */
+const LABEL_LINE = 18;
 
 export function OrbitMenu({
   items,
@@ -27,6 +28,12 @@ export function OrbitMenu({
   disabled?: boolean;
 }) {
   const [width, setWidth] = useState(0);
+  // The labels follow the system text size to the same 200 % cap as every control label
+  // (Btn); the ring's fixed bands above and below the nodes grow with them, so a large
+  // setting never lets a label run into the middle (audit M-84, issue #73).
+  const fontScale = Math.min(PixelRatio.getFontScale(), MAX_FONT_SCALE);
+  const labelAboveRoom = Math.ceil(LABEL_LINE * fontScale) + 8;
+  const labelBelowRoom = Math.ceil(2 * LABEL_LINE * fontScale) + 8;
   // The ring leaves room for the labels under the nodes.
   const size = Math.min(width, 360);
   const r = size / 2 - LABEL_W / 2;
@@ -39,7 +46,7 @@ export function OrbitMenu({
     ...items.map((_, i) => cy + r * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / items.length)),
     cy + r,
   );
-  const height = Math.min(size, lowest + NODE / 2 + 44);
+  const height = Math.min(size, lowest + NODE / 2 + 44) + (labelBelowRoom - 44);
 
   return (
     <View
@@ -47,7 +54,7 @@ export function OrbitMenu({
       style={{ width: '100%', alignItems: 'center' }}
     >
       {size > 0 ? (
-        <View style={{ width: size, height, marginTop: LABEL_ABOVE }}>
+        <View style={{ width: size, height, marginTop: labelAboveRoom }}>
           <View
             pointerEvents="none"
             accessibilityElementsHidden
@@ -95,7 +102,7 @@ export function OrbitMenu({
                 style={{
                   position: 'absolute',
                   left: x - labelW / 2,
-                  top: labelAbove ? y - NODE / 2 - LABEL_ABOVE : y - NODE / 2,
+                  top: labelAbove ? y - NODE / 2 - labelAboveRoom : y - NODE / 2,
                   width: labelW,
                   alignItems: 'center',
                   opacity: disabled ? 0.6 : 1,
@@ -136,6 +143,9 @@ function NodeLabel({ text, above = false }: { text: string; above?: boolean }) {
   return (
     <Text
       numberOfLines={above ? 1 : 2}
+      // The ring's geometry is fixed: the label grows with the system text only as far
+      // as the bands above and below the nodes do (audit M-84, issue #73).
+      maxFontSizeMultiplier={MAX_FONT_SCALE}
       style={{
         marginTop: above ? 0 : 6,
         marginBottom: above ? 6 : 0,

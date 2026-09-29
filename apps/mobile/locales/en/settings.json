@@ -6,7 +6,8 @@
   "pin_first": "This needs your parents' PIN. There isn't one yet. It's set below under “For parents”.",
   "contact": {
     "question": "May Buddy text your phone?",
-    "answer_on": "Yes. Buddy may also text your phone.",
+    "state_on": "Yes – never after {{quiet}}.",
+    "state_off": "No – only here in the app.",
     "answer_off": "No. Buddy only writes to you here in the app.",
     "answer_paused": "Taking a break – up to and including {{date}}.",
     "explain_off": "For example when a test is coming up. Never at night.",

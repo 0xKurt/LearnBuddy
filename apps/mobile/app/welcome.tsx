@@ -188,8 +188,10 @@ export default function Welcome() {
             >
               {t('welcome.title')}
             </Text>
+            {/* Never clamped: the two-line cap from issue #55 outlived the tall layout it
+                was for and cut the sentence mid-word on 360×740 while ~70 pt sat free
+                below (issue #95). The page still fits both phones — tests/web/fit.ts. */}
             <Text
-              numberOfLines={compact && mode === 'signup' ? 2 : undefined}
               style={[
                 dense ? TYPE.small : TYPE.body,
                 { color: LB.ink2, textAlign: 'center', maxWidth: 420 },
