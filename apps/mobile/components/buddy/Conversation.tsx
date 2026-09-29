@@ -30,6 +30,7 @@ import { closedStream, markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
 import { glide, riseIn } from '../../lib/theme/enter.js';
 import { MessageMenu, type MenuMessage } from './MessageMenu.js';
+import { ReadAlongBubble } from './ReadAlongBubble.js';
 import { RichText } from './RichText.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
@@ -63,6 +64,17 @@ type Props = {
   onUndo?: (actionId: string) => void;
   /** Undo is locked while this is true (default: busy); history locks only while undoing. */
   undoBusy?: boolean;
+  /**
+   * The conversation is being spoken (app/talk.tsx, issue #18): Buddy's newest bubble
+   * follows his voice — the sentence being read stands out (ReadAlongBubble) — and a
+   * tapped offer keeps the voice on (OfferCard `spoken`, issue #40).
+   */
+  spoken?: boolean;
+  /**
+   * Whether Buddy's typing bubble may show while a turn is underway (default yes). Talk
+   * hides it while she is still speaking: her forming words are no writing of Buddy's.
+   */
+  showTyping?: boolean;
 };
 
 export function Conversation({
@@ -78,6 +90,9 @@ export function Conversation({
   onResend,
   onUndo,
   undoBusy,
+  // The screen labels of each message use `spoken` inside the map: bind the prop apart.
+  spoken: spokenMode = false,
+  showTyping = true,
 }: Props) {
   const { t } = useTranslation('buddy');
   // Screen readers hear formulas in words, not raw LaTeX (p2-buddy-bubble-a11y-reads-raw-latex).
@@ -164,10 +179,14 @@ export function Conversation({
                     {m.outreach ? (
                       <Text style={[TYPE.label, { marginBottom: 2 }]}>{m.outreach.title}</Text>
                     ) : null}
-                    <RichText
-                      text={m.text}
-                      style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}
-                    />
+                    {!mine && spokenMode && m === lastBuddy ? (
+                      <ReadAlongBubble text={m.text} style={[TYPE.body, { color: LB.ink }]} />
+                    ) : (
+                      <RichText
+                        text={m.text}
+                        style={[TYPE.body, { color: mine ? LB.paper : LB.ink }]}
+                      />
+                    )}
                   </View>
                 )}
               </Pressable>
@@ -186,7 +205,7 @@ export function Conversation({
                   // issue #51).
                   style={{ width: '86%', marginLeft: 34, marginTop: SPACE.sm }}
                 >
-                  <OfferCard actionId={a.id} offer={a.summary} />
+                  <OfferCard actionId={a.id} offer={a.summary} spoken={spokenMode} />
                 </Animated.View>
               ) : a.summary.tool === 'open_area' ? (
                 <Animated.View
@@ -358,7 +377,7 @@ export function Conversation({
             <RichText text={shownLive} style={[TYPE.body, { color: LB.ink }]} />
           </View>
         </Animated.View>
-      ) : thinking ? (
+      ) : thinking && showTyping ? (
         // Buddy is thinking: his bubble with soft dots (the text is for screen readers).
         <TypingBubble key="typing" label={t('thread.typing')} />
       ) : null}

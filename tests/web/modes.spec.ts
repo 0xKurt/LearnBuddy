@@ -243,7 +243,9 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
   // Buddy's reply comes as a stream (shown while it is written, read aloud once stored).
   expect((await streamed).headers()['content-type']).toContain('text/event-stream');
-  await expect(page.getByText('„Was steht diese Woche an?“')).toBeVisible();
+  // Her words stand as her own bubble in the one thread (issue #18) — the chat
+  // underneath carries it too, so the last one is the talk screen's.
+  await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
   // The answer on the conversation screen (the chat underneath has it too).
   await expect(
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),

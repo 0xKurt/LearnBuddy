@@ -1174,10 +1174,19 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
-  is read aloud → Buddy listens again. On the phone listening ends by itself when she pauses
+  is read aloud → Buddy listens again. The screen is a camera angle on that one thread, not a
+  second rendering of it (issue #18): the newest messages stand as the chat's own bubbles
+  (`components/buddy/Conversation.tsx`), bottom-anchored and following their end — her words form
+  as her own bubble while she speaks, Buddy's reply streams into his, and while he reads it aloud
+  the sentence being read stands out in it (`components/buddy/ReadAlongBubble.tsx`); his offers
+  and open-area buttons are the chat's cards, and a tapped offer keeps the voice on (issue #40).
+  Buddy himself sits small over the button row (`TalkOrb`, 96 pt with halo); his state is the
+  moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
+  by itself when she pauses
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
-  Tapping the mic while Buddy speaks interrupts it. When the answer carries a button
-  (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
+  Tapping the mic while Buddy speaks interrupts it. An answer that carries a button
+  (`offer_learning`, `open_area`) stays on screen and tappable while the loop simply listens
+  again: she can tap it or just answer (owner 28.09.). The mic is only on while this
   screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
   the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
   every phase is announced. Buddy's orb shows the phase (`components/voice/TalkOrb.tsx`)
