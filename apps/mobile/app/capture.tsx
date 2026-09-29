@@ -103,7 +103,8 @@ export default function CaptureScreen() {
         // A page added to a sheet: back to that sheet, with a word that it is on its way
         // there (p2-J-06). Its questions join the sheet once read.
         void queryClient.invalidateQueries({ queryKey: keys.material(link.completes) });
-        toast.show(t('capture:again.added'));
+        // The word is for the sheet she goes back to, so it holds across the back() (issue #91).
+        toast.show(t('capture:again.added'), 'info', { survivesNavigation: true });
         router.back();
       } else if (fromTalk && router.canGoBack()) {
         // Shown to Buddy while talking: back to talk mode, which says it is being read.

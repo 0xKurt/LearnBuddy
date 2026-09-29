@@ -49,8 +49,10 @@ async function sendKeptAnswers(): Promise<void> {
     void queryClient.invalidateQueries({ queryKey: keys.home });
   }).catch(() => null);
   // An answer that arrived too late (question closed, session over) is not dropped
-  // silently (refused-offline-answers-dropped-silently).
-  if (done && done.refused > 0) toast.show(i18n.t('common:outbox_refused'));
+  // silently (refused-offline-answers-dropped-silently). It can land while the app is
+  // still settling its start route, so it holds across that change (issue #91).
+  if (done && done.refused > 0)
+    toast.show(i18n.t('common:outbox_refused'), 'info', { survivesNavigation: true });
 }
 
 /** "Jetzt üben" pressed in this run of the app: where its answer should lead. */
@@ -157,7 +159,9 @@ export default function RootLayout() {
       void forgetCache();
       if (router.canDismiss()) router.dismissAll();
       router.replace('/');
-      if (ended === 'expired') toast.show(i18n.t('common:session.expired'));
+      // The word is for the start screen the replace() is taking her to (issue #91).
+      if (ended === 'expired')
+        toast.show(i18n.t('common:session.expired'), 'info', { survivesNavigation: true });
     });
     const offQueries = queryClient.getQueryCache().subscribe((event) => {
       if (event.type !== 'updated') return;

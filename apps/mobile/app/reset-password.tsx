@@ -102,7 +102,8 @@ export default function ResetPassword() {
         clearAdminToken();
         queryClient.clear();
       }
-      toast.show(t('reset.saved'));
+      // The confirmation is for the start screen the replace() leads to (issue #91).
+      toast.show(t('reset.saved'), 'info', { survivesNavigation: true });
       router.replace('/');
     } catch (err) {
       if (err instanceof AuthFailure && err.reason === 'link_invalid') setPhase('invalid');

@@ -10,14 +10,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LB } from '../../lib/theme/colors.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { useToastBar } from '../lb/Toast.js';
 
 export function BottomBar({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  // A toast stands above this bar, not on the question (issue #91).
+  const onToastBar = useToastBar();
   return (
     <View
       // The walkthrough measures this bar: what it takes is what the question loses
       // on a small phone with the keyboard open (issue #16).
       testID="bottom-bar"
+      onLayout={onToastBar}
       style={{
         gap: SPACE.sm,
         paddingHorizontal: SPACE.lg,
