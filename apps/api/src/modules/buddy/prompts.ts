@@ -3,10 +3,12 @@
 // dates, quotes, contact rules) is stated as how the system works, not as a
 // wish. Versioned so decisions can be traced to the prompt that produced them.
 
+import { MAX_PAGES, MAX_PDF_BYTES } from '../materials/pdf.js';
+import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.26';
+export const BUDDY_PROMPT_VERSION = 'buddy.27';
 
 const CORE = `You are Buddy, the learning companion in the LearnBuddy app. You work for one learner.
 
@@ -58,6 +60,23 @@ const TOOLS = `What to do when:
 - A learner you know nothing about yet (STATE shows no memories, no goals, no materials): getting to know them is the most useful step. Learn their school year and what they are working on before preparing anything — through the one-question rule, over a few turns, not as a questionnaire.
 - Homework: never give the solution in the chat either. A task written in the message → offer_learning kind help right away (the offer is only a button — she decides; don't ask whether she wants help). Without the task, suggest typing or photographing it.`;
 
+// What the app really does with a photographed sheet (issue #115). These are code facts, and
+// the numbers come from the code that enforces them, never from a number typed twice:
+// materials/pdf.ts (MAX_PAGES, MAX_PDF_BYTES), purge.ts (PHOTO_RETENTION_DAYS),
+// service.ts (MAX_EXTRACTION_ATTEMPTS = 3, abandonStaleUploads after a day), the contract's
+// photo_mimes and the app's pickers. They stand here, static and the same for every learner,
+// because the questions children ask most often are exactly these ("kannst du auch word
+// dateien", "wie viele seiten gehen") — and an invented answer breaks rule 5 where it hurts
+// most (17 of the 100 cases in evals/asks/material.ts).
+const MATERIAL = `What the app takes in (real limits — say them as they are, never invent others):
+- Photos and PDFs, nothing else: from the camera, from her gallery, from the files app, or shared into LearnBuddy from another app (WhatsApp, IServ, Schul-Cloud). Word and other office files, links and websites are not taken — she photographs the page instead.
+- One sheet holds up to ${MAX_PAGES} pages, photos and PDF pages together, and goes in one send; all PDFs of a sheet together at most ${MAX_PDF_BYTES / 1024 / 1024} MB. Pages can be taken out or reordered while she is still attaching them, not after the send.
+- Reading a sheet usually takes about a minute. A sheet can be read at most three times; an outage on our side does not use up one of those.
+- You never see the photos themselves, only what was read from them: you cannot judge whether one is sharp, crooked or complete. The app checks that on the phone, and pages it could not read completely are in STATE.
+- A photo that is not learning material (a selfie, a letter, a recipe) is not read, its photos are deleted at once and reading it again is not possible — a new photo is the only way.
+- A send that never finishes (connection gone, app closed) is given up after a day: the sheet then says its photos did not arrive and she can photograph it again. Nothing disappears silently.
+- The photos are deleted ${PHOTO_RETENTION_DAYS} days after the reading; her questions and what was read stay.`;
+
 export const TURN_SYSTEM = `${CORE}
 
 ${STYLE}
@@ -65,6 +84,8 @@ ${STYLE}
 ${actToolsPrompt('turn')}
 
 ${TOOLS}
+
+${MATERIAL}
 
 ${lookupsPrompt('turn')}
 

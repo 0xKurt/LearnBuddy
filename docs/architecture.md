@@ -845,7 +845,26 @@ when they are not learning material (a letter, a recipe: they cannot be read aga
 immediately when the learner deletes the material — and once more 2 hours later, when no signed
 upload URL can deliver a late photo any more (a submit for a deleted material also purges at once).
 A material becomes failed in one place (`markMaterialFailed`), from the job and from the tick's
-recovery alike: status, the purge and a context bump in one transaction.
+recovery alike: status, `failed_at` (migration 0056), the purge and a context bump in one
+transaction. **A sheet never fails invisibly** (issue #115): the home shows the failed card for a
+day after `failed_at` — the moment it failed, not the moment its photos were reserved, which is a
+full day earlier for a send that was given up — and "Nochmal lesen" is offered only where a second
+reading can work: not after `not_learning_material` or `blocked`, not when the photos never all
+arrived (`photos_missing`) and not when they are already deleted, all three of which `retryMaterial`
+refuses (409 `photos_never_arrived` for the missing ones). What Buddy says about it comes from the
+same facts: STATE names each failed sheet with what its reason means for her next step, and names a
+send that is still on its way with the time it started (`context.ts`).
+
+**Buddy knows what the app takes in** (issue #115, `prompts.ts` `MATERIAL`, turn prompt only —
+the background check never answers these questions, so it does not pay for them). The children's
+ask corpus found 17 cases where he could only invent the answer ("kannst du auch word dateien",
+"wie viele seiten gehen"): the prompt now carries the real limits as code facts — photos and PDFs
+only and where they may come from (camera, gallery, files, shared from another app), 20 pages per
+sheet and 15 MB of PDF, about a minute to read, at most three readings, what happens to something
+that is not learning material, that a send given up after a day says so, that the photos go a week
+after the reading, and that he never sees the photos themselves. They are static and the same for
+every learner, so they sit in the prompt and not in the per-learner STATE; anything that differs
+per learner or per sheet (a send on its way, a failure and what it means) is in STATE.
 
 **Reading stages** (gap 5, migration 0035): the run holding the reading job's lease reports where
 it is — `read_stage` `opening` (photos being loaded) then `reading` (the model reads them), each
@@ -947,8 +966,16 @@ drift. Each prepared page is PUT to storage right away (`MaterialUpload.pushRead
 A reservation nobody asked to send is **not a sheet**: `materials.send_requested_at` is null
 until she taps "Senden" (`sending: true` on create, and submit sets it too), and until then the
 home says nothing about it, Buddy's context and counts skip it and the library does not list it
-(rule 5 — pages lying in her composer are not "unterwegs"). Reservations she never sent are
-given up by `abandonStaleUploads` after a day, as before.
+(rule 5 — pages lying in her composer are not "unterwegs").
+
+`abandonStaleUploads` gives an unfinished send up after a day, and what it leaves behind follows
+exactly that line (issue #115): pages **she asked to send** become a sheet that is `failed` /
+`photos_missing` and stays — in her library, on the home as the failed card ("Neues Foto", never
+"Nochmal lesen") and in Buddy's STATE — with its partial photos deleted at once, because there is
+nothing left to read; pages **nobody asked to send** are set aside silently, as before. Until this,
+both were set to `failed` **and** archived in the same statement, so the card could never appear and
+a sheet a child had photographed simply was not there any more (`material-093` … `-097`, `-100` of
+the ask corpus).
 `apps/api/src/__tests__/pages-while-capturing.int.test.ts` holds the three cases: growing,
 never shrinking, and nothing added once the sheet is being read.
 

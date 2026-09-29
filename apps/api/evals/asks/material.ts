@@ -385,10 +385,10 @@ export const MATERIAL = asks('material', [
   {
     id: 'material-056',
     says: 'wieso sagst du das is kein lernmaterial, das IS mathe!!',
+    // Ein zweites Lesen ist weiterhin gesperrt — aber der Prompt sagt Buddy das jetzt
+    // (prompts.ts MATERIAL, Issue #115), statt dass er "versuch es nochmal" erfindet.
     wants: 'Dass ihr geglaubt wird und es nochmal gelesen wird.',
     expect: { kind: 'answers' },
-    hunch:
-      'Nach not_learning_material ist retry gesperrt und die Fotos sind sofort gelöscht — ein zweiter Versuch ist unmöglich.',
   },
   {
     id: 'material-057',

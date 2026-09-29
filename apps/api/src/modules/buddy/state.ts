@@ -136,6 +136,11 @@ export type MaterialBrief = {
   /** Pages not read completely that Lena has not answered yet (resolved: empty). */
   page_problems: PageProblem[];
   created_at: Date;
+  /**
+   * When the reading failed (migration 0056). A send given up after a day fails a full day
+   * after `created_at`, so "failed recently" can only be read from this (issue #115).
+   */
+  failed_at: Date | null;
 };
 
 export type SessionBrief = {
@@ -320,7 +325,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
   );
 
   const materials = await db.query<MaterialBrief>(
-    `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at, m.photo_count,
+    `select m.id, m.title, m.status, m.failure_reason, m.subject_id, m.goal_id, m.created_at,
+            m.failed_at, m.photo_count,
             -- Pages not read: while unanswered, and for a day after the reading (the sheet is
             -- still at hand) — the home notice and Buddy's context see the same window.
             case when m.pages_resolved_at is null and m.ready_at > $3::timestamptz - interval '24 hours'

@@ -81,6 +81,29 @@ export function spokenDay(date: string, today: string, locale: string): string {
   }).format(new Date(Date.UTC(y!, m! - 1, day!)));
 }
 
+/**
+ * What a failed sheet means for her next step (modules/materials/service.ts): a second
+ * reading is possible after an unreadable photo, a failed run and an exhausted daily budget,
+ * and `retryMaterial` refuses it for the other three — so Buddy must not offer it there
+ * (issue #115). A counted line ("N sheet(s) could not be read") could say none of this.
+ */
+function failureNote(reason: string | null): string {
+  switch (reason) {
+    case 'photos_missing':
+      return 'never arrived completely (the send was given up): there was nothing to read, and a new photo is the only way — reading it again is not possible';
+    case 'not_learning_material':
+      return 'was not learning material, so it was not read; its photos are deleted and reading it again is not possible';
+    case 'blocked':
+      return 'was refused by the safety filter; reading it again is not possible';
+    case 'budget_exhausted':
+      return 'could not be read: no more sheets could be read today (tomorrow it works again)';
+    case 'unreadable':
+      return 'could not be read: the photos were hard to read (she can have it read again, or photograph it better)';
+    default:
+      return 'could not be read: something went wrong while reading (she can have it read again)';
+  }
+}
+
 function fmtDay(date: string, today: string, locale: string): string {
   const d = daysBetween(today, date);
   const rel =
@@ -213,7 +236,7 @@ export function buildContext(
       const pending = mats.filter((m) => m.status !== 'ready' && m.status !== 'failed');
       const questions = ready.reduce((n, m) => n + m.item_count, 0);
       goalsBlock.push(
-        `  material: ${ready.length} ready (${questions} questions)${pending.length ? `, ${pending.length} still being read` : ''}`,
+        `  material: ${ready.length} ready (${questions} questions)${pending.length ? `, ${pending.length} still on the way or being read` : ''}`,
       );
     }
     for (const st of state.steps.filter((s) => s.goal_id === g.id)) goalsBlock.push(stepLine(st));
@@ -264,9 +287,17 @@ export function buildContext(
   const reading = state.materials.filter((m) => m.status === 'queued' || m.status === 'processing');
   if (reading.length)
     materialBlock.push(`- ${reading.length} sheet(s) are being read right now (no questions yet)`);
-  const failed = state.materials.filter((m) => m.status === 'failed');
-  if (failed.length)
-    materialBlock.push(`- ${failed.length} sheet(s) could not be read (learner can retry)`);
+  // Photos still on their way (issue #115): without this the state said nothing at all about
+  // a send that hangs, and Buddy asked for the photo she had already sent.
+  for (const m of state.materials.filter((x) => x.status === 'awaiting_upload')) {
+    const at = localParts(m.created_at, tz);
+    materialBlock.push(
+      `- a sheet of ${m.photo_count} page(s) is still being sent (since ${at.date} ${at.time}): not all photos have arrived, nothing was read from it yet`,
+    );
+  }
+  // Why a sheet did not work decides what she can do next, so it is named, not counted.
+  for (const m of state.materials.filter((x) => x.status === 'failed'))
+    materialBlock.push(`- "${m.title ?? 'a sheet'}" ${failureNote(m.failure_reason)}`);
   for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
     materialBlock.push(
       `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,
