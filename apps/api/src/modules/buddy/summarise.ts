@@ -18,7 +18,7 @@ import type { Db } from '../../lib/db.js';
 import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
-import { enqueueJob, type JobRow } from '../scheduler/jobs.js';
+import { enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
 
 export const SUMMARY_PROMPT_VERSION = 'summary.v1';
 
@@ -135,13 +135,25 @@ export async function planSummaries(deps: Deps): Promise<number> {
 /**
  * The job: the model writes the sentences, the row is stored. A conversation too short for
  * a model call is recorded without one, so the next conversation is not blocked by it.
+ * Every path ends the job with `finishJob` and an honest result (issue #99) — a job left
+ * `running` would be pulled again after its lease and parked as failed for nothing.
  */
 export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
   const learnerId = job.learner_id;
-  if (!learnerId) return;
+  if (!learnerId) {
+    await finishJob(deps.db, job, deps.now(), {
+      status: 'done',
+      result: { outcome: 'no_learner' },
+    });
+    return;
+  }
   const now = deps.now();
   const due = await pendingSession(deps.db, learnerId, now);
-  if (!due || due.rows.length === 0) return;
+  if (!due || due.rows.length === 0) {
+    // Summarised by another run already, or the messages are gone: nothing left to write.
+    await finishJob(deps.db, job, now, { status: 'done', result: { outcome: 'nothing_due' } });
+    return;
+  }
   const first = due.rows[0]!;
   const last = due.rows[due.rows.length - 1]!;
   const learner = await deps.db.maybeOne<{ locale: string; timezone: string }>(
@@ -150,7 +162,10 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
        from learners l where l.id = $1`,
     [learnerId],
   );
-  if (!learner) return;
+  if (!learner) {
+    await finishJob(deps.db, job, now, { status: 'done', result: { outcome: 'no_learner' } });
+    return;
+  }
   const day = localParts(first.created_at, learner.timezone).date;
 
   let summary = '';
@@ -186,19 +201,31 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
     topics = parsed.data.topics;
   }
 
-  await deps.db.query(
-    `insert into buddy_session_summaries (learner_id, day, started_at, ended_at, summary, topics, until_message_id)
-     values ($1, $2, $3, $4, $5, $6::jsonb, $7)`,
-    [
-      learnerId,
-      day,
-      first.created_at,
-      last.created_at,
-      summary || '—',
-      JSON.stringify(topics),
-      last.id,
-    ],
-  );
+  // Row and job end in one transaction, fenced on the lease (like the extraction jobs):
+  // a run whose lease was taken over writes nothing — its successor writes the one row.
+  await deps.db.tx(async (tx) => {
+    const finished = await finishJob(tx, job, deps.now(), {
+      status: 'done',
+      result: {
+        outcome: summary ? 'summarised' : 'recorded_empty',
+        messages: due.rows.length,
+      },
+    });
+    if (!finished) return;
+    await tx.query(
+      `insert into buddy_session_summaries (learner_id, day, started_at, ended_at, summary, topics, until_message_id)
+       values ($1, $2, $3, $4, $5, $6::jsonb, $7)`,
+      [
+        learnerId,
+        day,
+        first.created_at,
+        last.created_at,
+        summary || '—',
+        JSON.stringify(topics),
+        last.id,
+      ],
+    );
+  });
 }
 
 /**

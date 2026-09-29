@@ -171,6 +171,62 @@ describe.skipIf(!dbReady)('summaries of earlier conversations', () => {
     expect(rows.map((r) => r.summary)).toEqual(['—']);
   });
 
+  it('finishes its job: done with a result, later ticks pull nothing, /health stays ok (#99)', async () => {
+    const solo = await onboard(env, { relation: 'child', name: 'Nora', birthDate: '2014-06-06' });
+    await said(env, solo, new Date(env.clock.now().getTime() - 26 * HOUR), [
+      ['learner', 'ich muss englischvokabeln lernen'],
+      ['buddy', 'Magst du mir die Liste fotografieren?'],
+      ['learner', 'ja moment'],
+      ['buddy', 'Ich warte hier.'],
+    ]);
+    env.llm.byDefault('summary', {
+      json: {
+        summary: 'Sie wollte Englischvokabeln lernen und die Liste fotografieren.',
+        topics: ['Englisch', 'Vokabeln'],
+      },
+    });
+    await tick(env);
+
+    // The job ended itself, honestly: done, with what it did as the result.
+    const jobs = await env.db.query<{ status: string; result: { outcome?: string } | null }>(
+      `select status, result from jobs where learner_id = $1 and kind = 'summarise_session'`,
+      [solo.learnerId],
+    );
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]!.status).toBe('done');
+    expect(jobs[0]!.result).toMatchObject({ outcome: 'summarised' });
+
+    // Leases expire, ticks keep coming: nothing is pulled again (one attempt stays one),
+    // nothing written twice, and no job ends as failed just because nobody closed it.
+    for (let i = 0; i < 4; i++) {
+      env.clock.minutes(3);
+      await tick(env);
+    }
+    const after = await env.db.query<{ status: string; attempts: number }>(
+      `select status, attempts from jobs where learner_id = $1 and kind = 'summarise_session'`,
+      [solo.learnerId],
+    );
+    expect(after).toEqual([{ status: 'done', attempts: 1 }]);
+    const rows = await env.db.query(`select 1 from buddy_session_summaries where learner_id = $1`, [
+      solo.learnerId,
+    ]);
+    expect(rows).toHaveLength(1);
+    const failed = await env.db.query(
+      `select 1 from jobs where kind = 'summarise_session' and status in ('running','failed')`,
+    );
+    expect(failed).toEqual([]);
+
+    // The operator sees a healthy system, not parked summary jobs.
+    const res = await env.app.request('/v1/health');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      ok: boolean;
+      scheduler: { parked: Record<string, unknown> };
+    };
+    expect(body.ok).toBe(true);
+    expect(body.scheduler.parked).not.toHaveProperty('summarise_session');
+  });
+
   it('writes nothing for an account whose consent is outdated (#85)', async () => {
     const stale = await onboard(env, { relation: 'child', name: 'Pia', birthDate: '2013-03-03' });
     await said(env, stale, new Date(env.clock.now().getTime() - 30 * HOUR), [
