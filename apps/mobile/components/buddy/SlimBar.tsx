@@ -2,8 +2,8 @@
 // Riesenbrett"; issue #17 made the pattern the rule): one line of what is happening, at most
 // ~60 pt tall — a small photo or mark, a short status, the reading's stage dots inline, and
 // the one action as a compact button. A bar with more to say (the stage names, "du kannst die
-// App schließen", which test, "Heute nicht") opens it on a tap; a bar whose line says it all
-// (resume, capture) has no expanded state. Screen readers hear it all in one label. Closing
+// App schließen", which test, "Heute nicht", "Kein Foto nötig") opens it on a tap; a bar whose
+// line says it all (resume) has no expanded state. Screen readers hear it all in one label. Closing
 // and swiping it away stay with the layer on top (TopOverlay). docs/architecture.md §Home.
 
 import type { NowCard } from '@learnbuddy/shared-types/contracts';
@@ -302,27 +302,35 @@ export function ResumeBar({
   );
 }
 
-/** Buddy waits for a photo of a sheet: which one, and the camera one tap away. */
+/**
+ * Buddy waits for a photo of a sheet: which one, and the camera one tap away. The ask is
+ * said once (issue #94): the sheet's own name leads (like ReadyBar), the line asks, and
+ * the way out — "Kein Foto nötig", the undo of the request — opens on a tap, so the
+ * word-for-word receipt in the conversation is not needed while this bar stands.
+ */
 export function CaptureBar({
   card,
   busy,
   titleInset,
   onPress,
+  onNoPhoto,
 }: {
   card: Capture;
   busy: boolean;
   titleInset: number;
   onPress: () => void;
+  /** Takes the request back ("Kein Foto nötig") — absent when nothing undoable is known. */
+  onNoPhoto?: (() => void) | null;
 }) {
   const { t } = useTranslation('buddy');
-  const title = t('now.capture_title');
-  const line = t('now.capture_body', { title: card.title });
+  const title = card.title;
+  const line = t('now.capture_body');
   return (
     <Bar
       tone="peach"
       titleInset={titleInset}
       title={title}
-      label={[title, line].join(' ')}
+      label={[title, line].join('. ')}
       leading={<Mark icon="camera" />}
       line={
         <Text numberOfLines={1} style={lineStyle()}>
@@ -335,6 +343,15 @@ export function CaptureBar({
             {t('now.capture_cta')}
           </Btn>
         </View>
+      }
+      details={
+        onNoPhoto ? (
+          <View style={{ flexDirection: 'row' }}>
+            <Btn variant="ghost" size="sm" onPress={onNoPhoto} disabled={busy}>
+              {t('done.undo_request_material')}
+            </Btn>
+          </View>
+        ) : undefined
       }
     />
   );

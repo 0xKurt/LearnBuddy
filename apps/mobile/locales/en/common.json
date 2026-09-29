@@ -48,6 +48,7 @@
     "mode": "Voice mode",
     "mode_hint": "Buddy reads aloud to you, and you answer with the mic.",
     "mode_on": "I'll read aloud to you. Tap the mic once – then I'll listen again by myself.",
+    "mode_off": "I'll stop reading aloud.",
     "read_again": "Read it again",
     "say_it": "Tap the mic and just say it.",
     "or_say": "Or say your answer.",

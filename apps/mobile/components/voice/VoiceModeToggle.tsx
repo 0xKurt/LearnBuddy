@@ -1,7 +1,8 @@
 // "Sprachmodus an/aus" in a screen header (Buddy's home and practice): a round 44 pt
 // switch with the speaker icon (the headphones stand for conversation mode). On, it is filled and carries a small check badge (not only
-// a colour change); switching it on explains in one line what changes.
-// Switching it off stops whatever is being read aloud.
+// a colour change); switching it names the new state in one line both ways — the icon
+// alone left its purpose unclear (issue #52, docs/UX-PRINCIPLES.md §37: the user should
+// understand what is happening). Switching it off stops whatever is being read aloud.
 
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -24,6 +25,8 @@ export function VoiceModeToggle() {
     else {
       // "Ich lese dir vor …" is no longer true once it is off.
       toast.dismiss(t('voice.mode_on'));
+      // Off is told in words too, not only by the icon losing its badge (issue #52).
+      toast.show(t('voice.mode_off'), 'info');
       stopListening();
     }
   }

@@ -1394,7 +1394,11 @@ card next to "nothing working" — the app polls closely only while something is
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
 on top at most **one slim bar** (issue #17, `components/buddy/SlimBar.tsx`) — the thing to act
 on now: a practice to go on with (ResumeBar), one that is ready (ReadyBar — after a result it
-shows what is prepared next), the photo Buddy waits for (CaptureBar), the sheet being read
+shows what is prepared next), the photo Buddy waits for (CaptureBar — the ask is said once,
+issue #94: while this bar stands, the word-for-word `request_material` receipt is left out of
+the conversation and "Kein Foto nötig", the request's undo, opens from the bar; bar closed or
+gone, the receipt with its undo is the place for both — `lib/homeLayout.ts` `photoAsk`), the
+sheet being read
 (ReadingBar, the real stages inline) — under a hard size contract: one line, the one action as
 a compact button, **≤ ~64 pt collapsed**; a bar with more to say (the stage names, which test,
 "Heute nicht") opens on a tap, and the walkthrough measures the bound

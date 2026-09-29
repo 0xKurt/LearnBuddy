@@ -57,6 +57,7 @@ describe('home layout (user feedback #6, issue #17)', () => {
       result: false,
       decisionInline: true,
       working: null,
+      photoAsk: 'bar',
     });
   });
 
@@ -101,6 +102,15 @@ describe('home layout (user feedback #6, issue #17)', () => {
       working: null,
     });
     expect(withNext).toMatchObject({ bar: 'next', result: true });
+  });
+
+  it('asks for the photo once: the bar carries it, else the receipt in the chat (issue #94)', () => {
+    // 05-buddy-planned: "Schick mir ein Foto" stood three times — the card, Buddy's
+    // sentence, and the word-for-word "✓ Ich warte auf dein Foto" receipt below it.
+    expect(homeLayout({ now: capture, decision: null, working: null }).photoAsk).toBe('bar');
+    // No capture bar (nothing, or another bar): the receipt stays the place for ask and undo.
+    expect(homeLayout({ now: null, decision: null, working: null }).photoAsk).toBe('thread');
+    expect(homeLayout({ now: reading, decision: null, working: null }).photoAsk).toBe('thread');
   });
 
   it('says "working" once: inside "Ich lese dein Blatt", else at the end of the chat', () => {
@@ -148,6 +158,14 @@ describe('the bar on top, closed on this phone (it lies over the menu)', () => {
     expect(topKey({ now: null })).toBeNull();
     const l = homeLayout({ now: null, decision: optIn, working: null }, null);
     expect(l.decisionInline).toBe(true);
+  });
+
+  it('hands the photo ask back to the receipt when the capture bar is closed (issue #94)', () => {
+    const closed = topKey({ now: capture });
+    expect(closed).not.toBeNull();
+    const l = homeLayout({ now: capture, decision: null, working: null }, closed);
+    expect(l.bar).toBeNull();
+    expect(l.photoAsk).toBe('thread');
   });
 
   it('says "working" in the conversation when "Ich lese dein Blatt" is closed', () => {

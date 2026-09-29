@@ -8,7 +8,10 @@
 //   the open decision (messages to the phone, how the test went), "Buddy is working";
 // - one violet button: the bar on top has it, everything in the conversation is quieter;
 // - "Buddy is working" is said once: inside the reading bar when it says the same thing,
-//   otherwise as a line at the end of the conversation.
+//   otherwise as a line at the end of the conversation;
+// - the photo Buddy waits for is asked once (issue #94): the capture bar on top carries
+//   ask and way out, and only with the bar closed or gone does the receipt in the
+//   conversation carry them instead.
 // The row of ways to start stays (a paused homework bar can be there for days; starting
 // something else must not depend on it).
 // And where the conversation stands: like any chat, at its newest message (bottom); a new
@@ -34,6 +37,13 @@ export type HomeLayout = {
   decisionInline: boolean;
   /** Where "Buddy is working" is said: in the bar on top, in the conversation, or nowhere. */
   working: 'bar' | 'thread' | null;
+  /**
+   * Where the photo Buddy waits for is asked — once, not three times on one screen
+   * (issue #94): while the capture bar stands on top it carries the ask (and "Kein Foto
+   * nötig" as its quiet way out; the word-for-word receipt leaves the conversation);
+   * closed or absent, the receipt in the conversation stays the place for ask and undo.
+   */
+  photoAsk: 'bar' | 'thread';
 };
 
 type TopParts = Pick<BuddyHome, 'now'> & {
@@ -94,6 +104,7 @@ export function homeLayout(
     result: now?.type === 'practice_result',
     decisionInline: h.decision !== null,
     working: h.working === null ? null : inBar ? 'bar' : 'thread',
+    photoAsk: bar === 'capture' ? 'bar' : 'thread',
   };
 }
 
