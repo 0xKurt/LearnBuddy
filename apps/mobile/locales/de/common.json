@@ -29,11 +29,13 @@
   "voice": {
     "message": "Nachricht sprechen",
     "answer": "Antwort sagen",
-    "hint": "Tipp, sprich und tipp nochmal. Höchstens drei Minuten.",
+    "hint": "Tipp, sprich und tipp nochmal – so lange du willst.",
     "stop": "Aufnahme stoppen",
     "stop_hint": "Danach schreibe ich auf, was du gesagt hast.",
     "recording": "Ich höre zu … {{time}} / {{max}}",
     "recording_value": "Aufnahme läuft, {{time}} von {{max}}",
+    "recording_open": "Ich höre zu … {{time}}",
+    "recording_open_value": "Aufnahme läuft, {{time}}",
     "live": "Bisher verstanden: {{text}}",
     "transcribing": "Ich schreibe auf, was du gesagt hast …",
     "denied": "Ohne Mikrofon kann ich dich nicht hören. Du kannst es in den Einstellungen erlauben.",
@@ -43,7 +45,8 @@
       "empty": "Ich hab dich nicht verstanden – nochmal?",
       "too_short": "Das war ganz kurz. Tipp aufs Mikro, sprich in Ruhe und tipp dann nochmal.",
       "unsupported": "Diese Aufnahme kann ich leider nicht lesen. Versuch es bitte nochmal.",
-      "failed": "Die Aufnahme hat nicht geklappt. Versuch es bitte nochmal."
+      "failed": "Die Aufnahme hat nicht geklappt. Versuch es bitte nochmal.",
+      "part_lost": "Ein Stück deiner Aufnahme ist verloren gegangen – der Rest steht schon da."
     },
     "mode": "Sprachmodus",
     "mode_hint": "Buddy liest dir vor, und du antwortest mit dem Mikro.",

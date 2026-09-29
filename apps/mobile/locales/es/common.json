@@ -29,11 +29,13 @@
   "voice": {
     "message": "Dictar un mensaje",
     "answer": "Decir tu respuesta",
-    "hint": "Toca, habla y vuelve a tocar. Tres minutos como máximo.",
+    "hint": "Toca, habla y vuelve a tocar, todo el tiempo que quieras.",
     "stop": "Parar la grabación",
     "stop_hint": "Después escribo lo que has dicho.",
     "recording": "Te escucho … {{time}} / {{max}}",
     "recording_value": "Grabando, {{time}} de {{max}}",
+    "recording_open": "Te escucho … {{time}}",
+    "recording_open_value": "Grabando, {{time}}",
     "live": "Entendido hasta ahora: {{text}}",
     "transcribing": "Estoy escribiendo lo que has dicho …",
     "denied": "Sin micrófono no puedo oírte. Puedes permitirlo en los Ajustes.",
@@ -43,7 +45,8 @@
       "empty": "No te he entendido – ¿otra vez?",
       "too_short": "Ha sido muy corto. Toca el micro, habla con calma y vuelve a tocar.",
       "unsupported": "No puedo leer esta grabación. Inténtalo otra vez, por favor.",
-      "failed": "La grabación no ha funcionado. Inténtalo otra vez, por favor."
+      "failed": "La grabación no ha funcionado. Inténtalo otra vez, por favor.",
+      "part_lost": "Un trocito de tu grabación se ha perdido; el resto ya está."
     },
     "mode": "Modo voz",
     "mode_hint": "Buddy te lee en voz alta y tú respondes con el micro.",

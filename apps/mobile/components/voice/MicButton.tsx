@@ -110,7 +110,13 @@ export function MicButton({
         accessibilityState={{ disabled: off, busy: working }}
         accessibilityValue={
           recording
-            ? { text: t('voice.recording_value', { time, max: formatClock(voice.maxMs) }) }
+            ? {
+                // A dictation has no time limit (issue #19): the timer stands alone.
+                text:
+                  voice.maxMs === null
+                    ? t('voice.recording_open_value', { time })
+                    : t('voice.recording_value', { time, max: formatClock(voice.maxMs) }),
+              }
             : voice.state === 'transcribing'
               ? { text: t('voice.transcribing') }
               : undefined
@@ -173,12 +179,18 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
 
   if (voice.state === 'recording') {
     const time = formatClock(voice.elapsedMs);
-    const max = formatClock(voice.maxMs);
+    // A dictation has no time limit (issue #19): only the running timer is shown.
+    const open = voice.maxMs === null;
+    const max = open ? '' : formatClock(voice.maxMs ?? 0);
     return (
       <View style={{ gap: 6 }}>
         <View
           accessible
-          accessibilityLabel={t('voice.recording_value', { time, max })}
+          accessibilityLabel={
+            open
+              ? t('voice.recording_open_value', { time })
+              : t('voice.recording_value', { time, max })
+          }
           style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 22 }}
         >
           <View
@@ -186,7 +198,7 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
             importantForAccessibility="no"
           />
           <Text style={[TYPE.body, { fontWeight: '600' }]}>
-            {t('voice.recording', { time, max })}
+            {open ? t('voice.recording_open', { time }) : t('voice.recording', { time, max })}
           </Text>
         </View>
         {voice.live ? (

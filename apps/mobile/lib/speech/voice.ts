@@ -114,12 +114,16 @@ export function speakMimeForFile(uri: string): SpeakMime | null {
 /** Longest pronunciation recording (SpeakRequest allows far more; 30 s says any
  * school sentence with room to breathe — 15 felt cramped, owner 2026-09-28). */
 export const MAX_RECORDING_MS = 30_000;
-/** Longest spoken message or answer (TranscribeRequest: ≤ ~3 min — a payload
- * bound for the base64 upload, not a recogniser limit). */
-export const MAX_DICTATION_MS = 180_000;
+/** The on-device recogniser's session bound (the platforms end long sessions
+ * themselves; what was said is delivered, never refused). Dictation on the
+ * recording path has no time limit any more — a long take rolls over into
+ * pieces at pauses (lib/speech/dictation.ts, issue #19). */
+export const DEVICE_DICTATION_MS = 180_000;
 /** Shorter than this is a tap, not a sentence. */
 export const MIN_RECORDING_MS = 600;
-/** SpeakRequest/TranscribeRequest.audio_base64 limits (180 s at 48 kbit/s is ~1 440 000). */
+/** SpeakRequest/TranscribeRequest.audio_base64 bound per upload — transport,
+ * not a time limit: one dictation piece stays well below it (~250 s of
+ * 48 kbit/s audio would reach it; pieces are cut at ~150 s at the latest). */
 export const MAX_AUDIO_BASE64 = 2_000_000;
 export const MIN_AUDIO_BASE64 = 100;
 

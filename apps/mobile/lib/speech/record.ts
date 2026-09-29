@@ -1,7 +1,9 @@
 // Recording one spoken sentence (expo-audio): the microphone is asked for
-// only when the learner taps record, the recording stops by itself after
-// maxMs (15 s for pronunciation, 60 s for a spoken message or answer), and it
-// is handed over as base64 for SpeakRequest / TranscribeRequest. The file itself is
+// only when the learner taps record, and the recording is handed over as
+// base64 for SpeakRequest / TranscribeRequest. Pronunciation stops by itself
+// after maxMs; a dictation (onChunk) has no time limit — a long recording
+// rolls over into pieces at pauses (lib/speech/dictation.ts, issue #19), the
+// recorder restarting inside the silence so she never notices. Every file is
 // deleted from the device right after reading it; nothing is kept.
 
 import {
@@ -17,6 +19,7 @@ import { File } from 'expo-file-system';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { ChunkCutter } from './dictation.js';
 import {
   MAX_AUDIO_BASE64,
   MAX_RECORDING_MS,
@@ -54,9 +57,21 @@ export type RecordFailure = 'denied' | 'too_short' | 'unsupported' | 'failed';
 
 export type RecordPhase = 'idle' | 'starting' | 'recording' | 'stopping';
 
+/** Which piece of a dictation this is (0-based) and whether it ended the recording. */
+export type DictationChunk = { index: number; last: boolean };
+
 type Handlers = {
-  onRecorded: (recording: Recording) => void;
+  /** The whole recording in one piece; not called when `onChunk` is given. */
+  onRecorded?: (recording: Recording) => void;
   onFailed: (why: RecordFailure) => void;
+  /**
+   * Dictation without a time limit (issue #19): a long recording rolls over
+   * into pieces at pauses (lib/speech/dictation.ts) and every piece — the last
+   * one included — arrives here; null is a piece that broke on the device (the
+   * other pieces still count). With `onChunk`, nothing but her tap ends the
+   * recording and `maxMs` is ignored.
+   */
+  onChunk?: (recording: Recording | null, chunk: DictationChunk) => void;
 };
 
 type Options = Handlers & {
@@ -121,26 +136,9 @@ async function allowRecording(allowed: boolean): Promise<void> {
   }
 }
 
-export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }: Options) {
+export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORDING_MS }: Options) {
   const recorder = useAudioRecorder(SPEECH_RECORDING);
   const [phase, setPhaseState] = useState<RecordPhase>('idle');
-  // Timer and sound level, asked from the recorder only while it records — an idle mic on
-  // screen polls nothing (p2-idle-recorders-polled-every-120ms).
-  const [state, setState] = useState<{ durationMillis: number; metering?: number }>({
-    durationMillis: 0,
-  });
-  useEffect(() => {
-    if (phase !== 'recording') return;
-    const poll = setInterval(() => {
-      try {
-        const s = recorder.getStatus();
-        setState({ durationMillis: s.durationMillis, metering: s.metering });
-      } catch {
-        // Released meanwhile: the phase follows.
-      }
-    }, 120);
-    return () => clearInterval(poll);
-  }, [phase, recorder]);
   /** Microphone access was refused; canAskAgain = false means only the settings can change it. */
   const [denied, setDenied] = useState<{ canAskAgain: boolean } | null>(null);
   const phaseRef = useRef<RecordPhase>('idle');
@@ -151,10 +149,29 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
   const cancelled = useRef(false);
   const limit = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useRef(true);
-  const handlers = useRef<Handlers>({ onRecorded, onFailed });
-  handlers.current = { onRecorded, onFailed };
+  const handlers = useRef<Handlers>({ onRecorded, onFailed, onChunk });
+  handlers.current = { onRecorded, onFailed, onChunk };
   const maxRef = useRef(maxMs);
   maxRef.current = maxMs;
+  /** Which piece of a dictation is being recorded, and how long the finished ones were. */
+  const chunkIndex = useRef(0);
+  const chunkBaseMs = useRef(0);
+  const cutter = useRef(new ChunkCutter());
+  /** A rollover already on its way (the poll must not start a second one). */
+  const rolling = useRef(false);
+  /**
+   * Recorder operations run strictly one after another: a rollover mid-flight
+   * and the tap on stop must not interleave on the same recorder.
+   */
+  const ops = useRef<Promise<void>>(Promise.resolve());
+  const enqueue = useCallback((op: () => Promise<void>): Promise<void> => {
+    const run = ops.current.then(op);
+    ops.current = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }, []);
 
   const setPhase = useCallback((p: RecordPhase) => {
     phaseRef.current = p;
@@ -166,60 +183,201 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
     limit.current = null;
   };
 
-  /** Ends the recording; deliver = false throws it away (leaving the screen, the app going away). */
-  const finish = useCallback(
-    async (deliver: boolean): Promise<void> => {
-      if (phaseRef.current !== 'recording') return;
-      clearLimit();
-      setPhase('stopping');
-      let uri: string | null = null;
-      let durationMs = Date.now() - startedAt.current;
-      try {
-        const status = recorder.getStatus();
-        if (status.durationMillis > 0) durationMs = status.durationMillis;
-        await recorder.stop();
-        uri = recorder.uri;
-      } catch {
-        uri = null;
+  /** Reads a finished dictation piece and hands it out; a broken one is honest (null). */
+  const deliverPiece = useCallback(
+    async (uri: string | null, index: number, pieceMs: number, last: boolean): Promise<void> => {
+      const give = handlers.current.onChunk;
+      if (!give || !mounted.current) {
+        discardFile(uri);
+        return;
       }
-      await allowRecording(false);
-      const known = fileUri.current;
-      fileUri.current = null;
+      if (!uri) {
+        give(null, { index, last });
+        return;
+      }
       try {
-        if (!deliver) {
-          // Thrown away (left the screen, answered another way): delete it, unread. A
-          // recorder already released on unmount has no uri any more — the one noted at the
-          // start is used (p2-recording-file-left-on-unmount).
-          discardFile(uri ?? known);
-          return;
-        }
-        if (!uri) {
-          discardFile(known);
-          handlers.current.onFailed('failed');
-          return;
-        }
-        const tooShort = durationMs < MIN_RECORDING_MS;
         const read = await readRecording(uri);
         if (!mounted.current) return;
-        if (tooShort || read.base64.length < MIN_AUDIO_BASE64) {
-          handlers.current.onFailed('too_short');
-        } else if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64) {
-          handlers.current.onFailed('unsupported');
-        } else {
-          handlers.current.onRecorded({
-            uri,
-            mime: read.mime,
-            durationMs: Math.min(durationMs, maxRef.current),
-            base64: read.base64,
-          });
-        }
+        if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64)
+          give(null, { index, last });
+        else
+          give({ uri, mime: read.mime, durationMs: pieceMs, base64: read.base64 }, { index, last });
       } catch {
-        if (deliver) handlers.current.onFailed('failed');
-      } finally {
-        setPhase('idle');
+        if (mounted.current) give(null, { index, last });
       }
     },
-    [recorder, setPhase],
+    [],
+  );
+
+  /**
+   * Cuts the running dictation inside a pause: the recorder stops, starts
+   * again right away, and the finished piece is read and handed out while she
+   * keeps talking. When the recorder cannot start again, the dictation ends
+   * with this piece as the last — with everything said so far intact.
+   */
+  const rollover = useCallback((): void => {
+    if (rolling.current) return;
+    rolling.current = true;
+    void enqueue(async () => {
+      try {
+        if (phaseRef.current !== 'recording' || !handlers.current.onChunk) return;
+        const index = chunkIndex.current;
+        let uri: string | null = null;
+        let pieceMs = 0;
+        try {
+          pieceMs = recorder.getStatus().durationMillis;
+          await recorder.stop();
+          uri = recorder.uri;
+        } catch {
+          uri = null;
+        }
+        chunkIndex.current = index + 1;
+        chunkBaseMs.current += pieceMs;
+        cutter.current.reset();
+        let restarted = false;
+        try {
+          await recorder.prepareToRecordAsync();
+          if (phaseRef.current === 'recording') {
+            recorder.record();
+            fileUri.current = recorder.uri;
+            restarted = true;
+          }
+        } catch {
+          restarted = false;
+        }
+        if (!restarted) {
+          fileUri.current = null;
+          await allowRecording(false);
+          setPhase('idle');
+        }
+        // Reading the piece runs beside the next one being recorded.
+        void deliverPiece(uri, index, pieceMs, !restarted);
+      } finally {
+        rolling.current = false;
+      }
+    });
+  }, [deliverPiece, enqueue, recorder, setPhase]);
+
+  // Timer and sound level, asked from the recorder only while it records — an idle mic on
+  // screen polls nothing (p2-idle-recorders-polled-every-120ms). The same poll
+  // watches a dictation for the pause at which the next piece begins.
+  const [state, setState] = useState<{ durationMillis: number; metering?: number }>({
+    durationMillis: 0,
+  });
+  useEffect(() => {
+    if (phase !== 'recording') return;
+    const poll = setInterval(() => {
+      try {
+        const s = recorder.getStatus();
+        setState({ durationMillis: s.durationMillis, metering: s.metering });
+        if (
+          handlers.current.onChunk &&
+          !rolling.current &&
+          cutter.current.shouldCut(s.durationMillis, levelFromDb(s.metering), Date.now())
+        )
+          rollover();
+      } catch {
+        // Released meanwhile: the phase follows.
+      }
+    }, 120);
+    return () => clearInterval(poll);
+  }, [phase, recorder, rollover]);
+
+  /** Ends the recording; deliver = false throws it away (leaving the screen, the app going away). */
+  const finish = useCallback(
+    (deliver: boolean): Promise<void> =>
+      enqueue(async () => {
+        if (phaseRef.current !== 'recording') return;
+        clearLimit();
+        setPhase('stopping');
+        let uri: string | null = null;
+        let durationMs = Date.now() - startedAt.current;
+        let pieceMs = 0;
+        try {
+          const status = recorder.getStatus();
+          pieceMs = status.durationMillis;
+          if (status.durationMillis > 0) durationMs = status.durationMillis;
+          await recorder.stop();
+          uri = recorder.uri;
+        } catch {
+          uri = null;
+        }
+        await allowRecording(false);
+        const known = fileUri.current;
+        fileUri.current = null;
+        try {
+          if (!deliver) {
+            // Thrown away (left the screen, answered another way): delete it, unread. A
+            // recorder already released on unmount has no uri any more — the one noted at the
+            // start is used (p2-recording-file-left-on-unmount).
+            discardFile(uri ?? known);
+            return;
+          }
+          const give = handlers.current.onChunk;
+          if (give) {
+            // The end of a dictation: this piece is the last. Only a dictation
+            // that never rolled over can be a tap by mistake; with earlier
+            // pieces, whatever was said is delivered.
+            const index = chunkIndex.current;
+            if (!uri) {
+              discardFile(known);
+              if (index === 0) handlers.current.onFailed('failed');
+              else give(null, { index, last: true });
+              return;
+            }
+            const totalMs = chunkBaseMs.current + (pieceMs > 0 ? pieceMs : durationMs);
+            const read = await readRecording(uri);
+            if (!mounted.current) return;
+            if (
+              index === 0 &&
+              (totalMs < MIN_RECORDING_MS || read.base64.length < MIN_AUDIO_BASE64)
+            ) {
+              handlers.current.onFailed('too_short');
+            } else if (index === 0 && read.mime === null) {
+              handlers.current.onFailed('unsupported');
+            } else if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64) {
+              // Only this piece is unreadable; the earlier ones still count.
+              give(null, { index, last: true });
+            } else {
+              give(
+                { uri, mime: read.mime, durationMs: pieceMs, base64: read.base64 },
+                { index, last: true },
+              );
+            }
+            return;
+          }
+          if (!uri) {
+            discardFile(known);
+            handlers.current.onFailed('failed');
+            return;
+          }
+          const tooShort = durationMs < MIN_RECORDING_MS;
+          const read = await readRecording(uri);
+          if (!mounted.current) return;
+          if (tooShort || read.base64.length < MIN_AUDIO_BASE64) {
+            handlers.current.onFailed('too_short');
+          } else if (read.mime === null || read.base64.length > MAX_AUDIO_BASE64) {
+            handlers.current.onFailed('unsupported');
+          } else {
+            handlers.current.onRecorded?.({
+              uri,
+              mime: read.mime,
+              durationMs: Math.min(durationMs, maxRef.current),
+              base64: read.base64,
+            });
+          }
+        } catch {
+          if (deliver) {
+            const give = handlers.current.onChunk;
+            if (give && chunkIndex.current > 0)
+              give(null, { index: chunkIndex.current, last: true });
+            else handlers.current.onFailed('failed');
+          }
+        } finally {
+          setPhase('idle');
+        }
+      }),
+    [enqueue, recorder, setPhase],
   );
 
   const start = useCallback(async (): Promise<void> => {
@@ -248,8 +406,13 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
       recorder.record();
       fileUri.current = recorder.uri;
       startedAt.current = Date.now();
+      chunkIndex.current = 0;
+      chunkBaseMs.current = 0;
+      cutter.current.reset();
       setPhase('recording');
-      limit.current = setTimeout(() => void finish(true), maxRef.current);
+      // A dictation (onChunk) has no time limit: only her tap ends it.
+      if (!handlers.current.onChunk)
+        limit.current = setTimeout(() => void finish(true), maxRef.current);
     } catch {
       await allowRecording(false);
       handlers.current.onFailed('failed');
@@ -285,10 +448,15 @@ export function useRecording({ onRecorded, onFailed, maxMs = MAX_RECORDING_MS }:
 
   return {
     phase,
-    /** Milliseconds recorded so far (for the timer). */
-    elapsedMs: phase === 'recording' ? Math.min(state.durationMillis, maxMs) : 0,
-    /** The longest this recording can get (for "0:07 / 1:00"). */
-    maxMs,
+    /** Milliseconds recorded so far (for the timer); a dictation counts across its pieces. */
+    elapsedMs:
+      phase === 'recording'
+        ? onChunk
+          ? chunkBaseMs.current + state.durationMillis
+          : Math.min(state.durationMillis, maxMs)
+        : 0,
+    /** The longest this recording can get (for "0:07 / 1:00"); a dictation has no bound. */
+    maxMs: onChunk ? null : maxMs,
     /** How loud she is right now (0…1; 0 when not recording or not measured). */
     level: phase === 'recording' ? levelFromDb(state.metering) : 0,
     denied,
