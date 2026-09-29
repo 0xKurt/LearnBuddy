@@ -7,8 +7,9 @@
 //     npx tsx evals/buddy/run.ts [case-id …]
 //
 // Reads apps/api/.env.local like the dev server. Exit code 1 if a case fails.
-// BUDDY_EVAL_OUT=run.json writes every answer down, so two prompt versions can be read
-// side by side — a check that still passes can still have got worse (issue #80).
+// BUDDY_EVAL_OUT=run.json writes every answer down with its cost, so two prompt
+// versions can be compared case by case — a check that still passes can still have
+// got worse (issue #80). Read two such files with evals/buddy/compare.ts.
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { writeFileSync } from 'node:fs';
@@ -24,7 +25,7 @@ import { CASES, type Outcome } from './cases.js';
 
 loadDotenv({ path: '.env.local' });
 
-/** Every case's answer, for comparing two runs (BUDDY_EVAL_OUT, issue #80). */
+/** Every case's answer and cost, for comparing two runs (BUDDY_EVAL_OUT, issue #80). */
 const transcript: Array<{
   id: string;
   ok: boolean;
@@ -32,12 +33,18 @@ const transcript: Array<{
   reply: string | null;
   options: string[] | null;
   tools: string[];
+  calls: number;
+  costMicros: number;
+  inputTokens: number;
+  cachedTokens: number;
 }> = [];
 
 async function main(): Promise<void> {
   const config = loadConfig({
     ...process.env,
-    DATABASE_URL: process.env.DATABASE_URL ?? 'unused',
+    // Never connected to (every case gets a throwaway database), but validated
+    // by loadConfig — the same placeholder every other eval passes.
+    DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://unused/unused',
     SUPABASE_URL: process.env.SUPABASE_URL ?? 'http://unused.local',
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
@@ -53,6 +60,8 @@ async function main(): Promise<void> {
   let costMicros = 0;
   let inputTokens = 0;
   let cachedTokens = 0;
+  const models = new Set<string>();
+  const ranAt = new Date().toISOString();
   for (const c of cases) {
     const env = await createTestEnv({ start: c.at ?? '2026-09-28T08:00:00Z', gateway });
     try {
@@ -134,15 +143,18 @@ async function main(): Promise<void> {
         calls: number;
         input: number;
         cached: number;
+        models: string[];
       }>(
         `select coalesce(sum(cost_micros), 0)::bigint as micros, count(*)::int as calls,
                 coalesce(sum(input_tokens), 0)::int as input,
-                coalesce(sum(cached_tokens), 0)::int as cached
+                coalesce(sum(cached_tokens), 0)::int as cached,
+                coalesce(array_agg(distinct model), '{}') as models
            from llm_calls`,
       );
       costMicros += cost.micros;
       inputTokens += cost.input;
       cachedTokens += cost.cached;
+      for (const m of cost.models) models.add(m);
       if (problems.length) failed++;
       console.info(
         `${problems.length ? '✗' : '✓'} ${c.id}  (${cost.calls} call(s), $${(cost.micros / 1e6).toFixed(4)}` +
@@ -160,6 +172,10 @@ async function main(): Promise<void> {
         reply: outcome.reply,
         options: outcome.options,
         tools: outcome.tools,
+        calls: cost.calls,
+        costMicros: cost.micros,
+        inputTokens: cost.input,
+        cachedTokens: cost.cached,
       });
     } finally {
       await env.close();
@@ -172,7 +188,19 @@ async function main(): Promise<void> {
   if (process.env.BUDDY_EVAL_OUT) {
     writeFileSync(
       process.env.BUDDY_EVAL_OUT,
-      `${JSON.stringify({ promptVersion: BUDDY_PROMPT_VERSION, cases: transcript }, null, 2)}\n`,
+      `${JSON.stringify(
+        {
+          promptVersion: BUDDY_PROMPT_VERSION,
+          ranAt,
+          models: [...models].sort(),
+          costMicros,
+          inputTokens,
+          cachedTokens,
+          cases: transcript,
+        },
+        null,
+        2,
+      )}\n`,
     );
     console.info(`transcript → ${process.env.BUDDY_EVAL_OUT}`);
   }

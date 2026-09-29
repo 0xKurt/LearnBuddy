@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:db": "LB_REQUIRE_TEST_DB=1 vitest run",
     "dev:stack": "tsx src/testing/dev-stack.ts",
-    "eval:buddy": "tsx evals/buddy/run.ts"
+    "eval:buddy": "tsx evals/buddy/run.ts",
+    "eval:buddy:compare": "tsx evals/buddy/compare.ts"
   },
   "dependencies": {
     "@google/genai": "^2.3.0",

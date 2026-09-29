@@ -1535,6 +1535,16 @@ live `LB`), instead of five identical white buttons.
   `evals/speak` and `evals/voice` additionally need `espeak-ng` on the machine (they speak the
   test sentences themselves). Without it they stop with `spawnSync espeak-ng ENOENT` — that is
   a missing tool, not a broken eval.
+- **Regression comparison between prompt versions** (issue #80): "36/36" alone cannot show an
+  answer that got worse while still passing. `BUDDY_EVAL_OUT=a.json npx tsx evals/buddy/run.ts`
+  writes a transcript of the run — prompt version, model, time, every case's answer, options,
+  tools and cost — and `npx tsx evals/buddy/compare.ts a.json b.json` reads two such transcripts
+  side by side: regressions (passed → fails) first with the new problems, then fixed cases,
+  changed behaviour (tools/options), and rewordings with both answers to read; cost is shown
+  per run and per changed case. Exit 1 on a regression, so it can gate a prompt bump; cases
+  present in only one file are listed, not guessed about, so partial runs (`run.ts case-id …`)
+  compare too. The comparison itself is pure and unit-tested
+  (`evals/buddy/__tests__/compare.test.ts`); only producing the transcripts costs money.
 - Integration against a real Postgres (`src/__tests__/*.int.test.ts`, harness in
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;
