@@ -371,7 +371,7 @@ async function decideTurn(
     }
     // Distress: the words she gets are fixed by code, not improvised (D-10, audit H-31).
     const reply = parsed.data.concern
-      ? { text: safeguardingText(learner, 'concern'), options: null }
+      ? { text: concernText(learner, parsed.data.also_asked), options: null }
       : { text: parsed.data.reply, options: parsed.data.options };
 
     const result = await applyDecision(deps.db, {
@@ -477,8 +477,29 @@ async function homeworkLeak(
     : [];
 }
 
-function safeguardingText(learner: TurnLearner, kind: 'blocked' | 'concern'): string {
+function safeguardingText(
+  learner: TurnLearner,
+  kind: 'blocked' | 'concern' | 'also_asked',
+): string {
   return t(learner.locale, learner.isMinor ? `safeguarding.${kind}` : `safeguarding.${kind}_adult`);
+}
+
+/**
+ * The fixed answer to a disclosure — and, when that same message also carried a question
+ * about learning (`also_asked`), one further fixed sentence saying it is not forgotten
+ * (issue #110). A child rarely says only one thing: in `life-090` the abuse is the *reason*
+ * why she wants to pass the test, and replacing her whole message with the helpline alone
+ * lets her question disappear without a sign that Buddy even read it.
+ *
+ * Both sentences are code's own words, per language and age (i18n `safeguarding.*`): the
+ * model's text is never shown. The added sentence promises nothing beyond "not forgotten" —
+ * the request is not carried out here, and nothing of the message is remembered (the memory
+ * tools are refused in this turn, `refuseDuringConcern` in tools.ts). The helpline text
+ * itself is untouched; it is the reason this path holds.
+ */
+function concernText(learner: TurnLearner, alsoAsked: boolean): string {
+  const fixed = safeguardingText(learner, 'concern');
+  return alsoAsked ? `${fixed} ${safeguardingText(learner, 'also_asked')}` : fixed;
 }
 
 /**

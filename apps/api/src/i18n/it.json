@@ -12,6 +12,8 @@
     "concern": "Grazie per avermelo detto: è importante e non sei solo/a. Parlane con un adulto di cui ti fidi. Puoi anche chiamare Telefono Azzurro al 19696 (gratuito, non devi dire il tuo nome). Io sono sempre qui per te.",
     "blocked_adult": "Qui non posso rispondere a questo. Se qualcosa ti pesa, parlane con qualcuno di cui ti fidi. Se sei in pericolo, chiama il 112.",
     "concern_adult": "Grazie per avermelo detto: è importante. Parlane con qualcuno di cui ti fidi. Se sei in pericolo, chiama il 112. Io sono sempre qui per te.",
+    "also_asked": "Non ho dimenticato la tua domanda sullo studio – dimmelo quando vuoi e la guardiamo insieme.",
+    "also_asked_adult": "Non ho dimenticato la tua domanda sullo studio – dimmelo quando vuoi e la guardiamo.",
     "held_back": "(Un messaggio trattenuto dal filtro di sicurezza.)"
   },
   "push": {

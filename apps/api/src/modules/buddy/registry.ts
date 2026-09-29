@@ -214,9 +214,22 @@ const Concern = z
     'true if the learner tells of distress: being hurt, bullied, abused or threatened, thinking of hurting themselves, or feeling unsafe or hopeless. Then the app answers with a fixed caring message and nothing about it is remembered.',
   );
 
+/**
+ * A child rarely says only one thing (issue #110): the same message can carry the
+ * disclosure and a question about learning. Code reads this bit only when `concern`
+ * is true, and answers with one further fixed sentence — it never carries the request
+ * out and nothing of the message is remembered.
+ */
+const AlsoAsked = z
+  .boolean()
+  .describe(
+    'Only read when concern is true: true if the same message also asks for something about learning (help with a task, practice, a test). The app then adds one fixed sentence saying that question is not forgotten. It is not answered and nothing is prepared for it in this answer.',
+  );
+
 export const TurnDecision = z.object({
   // Lenient when parsing (older scripted answers have no such field); the model must write it.
   concern: z.boolean().default(false),
+  also_asked: z.boolean().default(false),
   // No minimum length: a safeguarding answer is written by code, so the model rightly
   // leaves the reply empty then (its own text would be thrown away). Everything else
   // must carry a reply — enforced by emptyReply(), so an empty text is repaired with a
@@ -240,6 +253,7 @@ export const TurnDecision = z.object({
 });
 export type TurnDecision = {
   concern: boolean;
+  also_asked: boolean;
   reply: string;
   options: string[] | null;
   actions: TurnAction[];
@@ -255,6 +269,8 @@ export type TurnDecision = {
 export const TurnDecisionForModel = z.object({
   // First, so code knows before any reply text arrives whether this is a safeguarding answer.
   concern: Concern,
+  // Right behind it: whether that same message also carried a question about learning.
+  also_asked: AlsoAsked,
   actions: TurnDecision.shape.actions,
   reply: TurnDecision.shape.reply,
   options: TurnDecision.shape.options,

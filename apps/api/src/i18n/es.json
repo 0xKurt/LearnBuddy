@@ -12,6 +12,8 @@
     "concern": "Gracias por contármelo: es importante y no estás solo/a con esto. Habla con un adulto de confianza. También puedes llamar a la Fundación ANAR: 900 20 20 10 (gratis y confidencial, no hace falta que digas tu nombre). Sigo aquí para ti.",
     "blocked_adult": "Aquí no puedo responder a eso. Si algo te preocupa, habla con alguien de confianza. Si estás en peligro, llama al 112.",
     "concern_adult": "Gracias por contármelo: es importante. Habla con alguien de confianza. Si estás en peligro, llama al 112. Sigo aquí para ti.",
+    "also_asked": "No he olvidado tu pregunta sobre lo que estás aprendiendo: dímelo cuando quieras y la vemos juntos/as.",
+    "also_asked_adult": "No he olvidado tu pregunta sobre lo que estás aprendiendo: dímelo cuando quieras y la vemos.",
     "held_back": "(Un mensaje que el filtro de seguridad retuvo.)"
   },
   "push": {

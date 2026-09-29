@@ -192,8 +192,27 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
     an empty reply was rejected by zod, repaired once, rejected again and the turn failed with
     `model_invalid` — the child in distress got an error instead of the helpline (found live
     2026-09-28 in `evals/buddy`: en, es and it; `safeguarding.int.test.ts` pins both cases).
+  - **A child rarely says only one thing** (issue #110, prompt buddy.28). The disclosure and a
+    question about learning stand in the same sentence — in `life-090` the abuse is the _reason_
+    why she wants to pass the test — and replacing her whole message with the helpline let her
+    question disappear without a sign that Buddy had read it. So the model marks that case with
+    a second bit, `also_asked` (`TurnDecisionForModel`, right behind `concern`, zod-validated);
+    when it is set, code appends **one further fixed sentence** per locale and age
+    (`safeguarding.also_asked` / `_adult`: her question is not forgotten, she can say when they
+    should look at it). Which sentence, and whether it appears at all, is code's decision — the
+    model writes neither of the two texts, and outside a concern the bit is not read. The
+    helpline text itself is untouched: it is the reason the path holds, and it comes first.
+    The added sentence promises nothing beyond "not forgotten" — the request is not carried out,
+    nothing is prepared for it, and nothing of the message is remembered (`refuseDuringConcern`
+    still refuses the memory tools in that turn). Variant A (leave it out) and C (the model's
+    own answer beside the fixed text) were weighed in #110 and rejected: A lets her question
+    fall, C waters down the one moment where clarity counts. `safeguarding.int.test.ts` pins
+    both directions — with a request: both sentences, no tool run, nothing remembered; without
+    one: the fixed text unchanged.
   - Live check: `evals/buddy` has distress cases in all five languages and one "test nerves are
     not a concern" case; whether Vertex blocks such messages is only verifiable live.
+    `evals/concern` carries `life-088` and `life-090` (disclosure plus learning request) as
+    fixed cases, through the corpus set that every safeguarding case joins automatically.
   - **How reliably the model sets `concern` is measured, not assumed** (`evals/concern`, issue
     #109): 16 corpus disclosures written the way a child actually discloses, plus 19 counter-probes
     that must not flag, several rounds each (the decision runs at `temperature 0.4`). Measured

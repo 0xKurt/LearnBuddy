@@ -12,6 +12,8 @@
     "concern": "Merci de me le dire – c'est important, et tu n'es pas seul·e. Parles-en à un adulte de confiance. Tu peux aussi appeler le 119 (gratuit, 24 h/24, tu n'as pas besoin de donner ton nom). Je suis toujours là pour toi.",
     "blocked_adult": "Je ne peux pas répondre à ça ici. Si quelque chose te pèse, parles-en à quelqu'un de confiance. Si tu es en danger, appelle le 112.",
     "concern_adult": "Merci de me le dire – c'est important. Parles-en à quelqu'un de confiance. Si tu es en danger, appelle le 112. Je suis toujours là pour toi.",
+    "also_asked": "Je n'ai pas oublié ta question sur ton travail – dis-le-moi quand tu veux qu'on la regarde ensemble.",
+    "also_asked_adult": "Je n'ai pas oublié ta question sur ton travail – dis-le-moi quand tu veux qu'on la regarde.",
     "held_back": "(Un message retenu par le filtre de sécurité.)"
   },
   "push": {

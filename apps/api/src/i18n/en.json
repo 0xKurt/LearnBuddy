@@ -12,6 +12,8 @@
     "concern": "Thank you for telling me – that matters, and you're not alone with it. Please talk to an adult you trust. You can also call Childline on 0800 1111 (free and confidential, you don't have to give your name). I'm still here for you.",
     "blocked_adult": "I can't answer that here. If something is weighing on you, please talk to someone you trust. If you are in danger, call the emergency number 112.",
     "concern_adult": "Thank you for telling me – that matters. Please talk to someone you trust. If you are in danger, call the emergency number 112. I'm still here for you.",
+    "also_asked": "I haven't forgotten what you asked about your learning – just tell me when you want us to look at it together.",
+    "also_asked_adult": "I haven't forgotten what you asked about your learning – tell me when you want to look at it.",
     "held_back": "(A message the safety filter held back.)"
   },
   "push": {

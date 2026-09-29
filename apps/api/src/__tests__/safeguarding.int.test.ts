@@ -6,6 +6,7 @@
 import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { t } from '../i18n/index.js';
 import { LlmError, type LlmRequest } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
@@ -135,6 +136,76 @@ describe.skipIf(!dbReady)('safeguarding', () => {
       [l.learnerId],
     );
     expect(JSON.stringify(rejected)).toContain('concern');
+  });
+
+  // A child rarely says only one thing (issue #110, corpus life-088 and life-090): the
+  // disclosure and the learning question stand in the same sentence, and the fixed text
+  // replaced both. Now a second fixed sentence says the question is not forgotten — while
+  // the request itself is neither carried out nor remembered.
+  it('a disclosure that also asks for help keeps her question in sight — and still remembers nothing', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    env.llm.script(
+      'buddy_turn',
+      // The model flags the concern, marks the learning request — and still tries to
+      // remember the disclosure: refused by code, exactly as without a request.
+      {
+        json: {
+          concern: true,
+          also_asked: true,
+          reply: '',
+          options: null,
+          actions: [
+            {
+              tool: 'remember',
+              args: {
+                kind: 'fact',
+                statement: 'Wird zu Hause geschlagen',
+                quote: 'schlägt mein vater mich',
+                until: null,
+              },
+            },
+          ],
+        },
+      },
+      { json: { concern: true, also_asked: true, reply: '', options: null, actions: [] } },
+    );
+    const res = await send(
+      l,
+      'wenn ich schlechte noten hab schlägt mein vater mich, deswegen muss ich die arbeit schaffen',
+    );
+    expect(res.body.status).toBe('done');
+    const reply = res.body.home.thread[res.body.home.thread.length - 1]!;
+    // Both sentences, word for word from the language files: the helpline first, unchanged.
+    expect(reply.text).toBe(
+      `${t('de', 'safeguarding.concern')} ${t('de', 'safeguarding.also_asked')}`,
+    );
+    expect(reply.text).toContain('116 111');
+    expect(reply.options).toBeNull();
+    // Nothing of it was remembered, and no tool ran at all.
+    const memories = await env.db.query(`select 1 from buddy_memories where learner_id = $1`, [
+      l.learnerId,
+    ]);
+    expect(memories).toHaveLength(0);
+    const actions = await env.db.query(`select tool from buddy_actions where learner_id = $1`, [
+      l.learnerId,
+    ]);
+    expect(actions).toHaveLength(0);
+    const goals = await env.db.query(`select 1 from buddy_goals where learner_id = $1`, [
+      l.learnerId,
+    ]);
+    expect(goals).toHaveLength(0);
+  });
+
+  it('a disclosure without a question gets the fixed text and nothing else', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    env.llm.script('buddy_turn', {
+      json: { concern: true, also_asked: false, reply: '', options: null, actions: [] },
+    });
+    const res = await send(l, 'ich wär manchmal lieber einfach nicht mehr da');
+    expect(res.body.status).toBe('done');
+    const reply = res.body.home.thread[res.body.home.thread.length - 1]!;
+    expect(reply.text).toBe(t('de', 'safeguarding.concern'));
+    expect(reply.text).not.toContain(t('de', 'safeguarding.also_asked'));
   });
 
   // The model has no reason to write a reply it knows is thrown away — and for a child
