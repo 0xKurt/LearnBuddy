@@ -57,10 +57,13 @@ const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; font
   lg: { height: 54, paddingHorizontal: 26, fontSize: 17 },
 };
 
-const VARIANT_STYLE: Record<
+// Read at render time: as a module constant this froze the start palette into every
+// button — the ghost "Rückgängig" kept pastel ink on the night cards (issue #84, the one
+// capture the first scanner missed because the type annotation spans lines).
+const variantStyle = (): Record<
   Variant,
   { bg: string; color: string; borderColor: string; borderWidth: number }
-> = {
+> => ({
   primary: { bg: LB.primary, color: LB.paper, borderColor: 'transparent', borderWidth: 0 },
   soft: { bg: LB.primaryLt, color: LB.primaryDk, borderColor: 'transparent', borderWidth: 0 },
   outline: { bg: LB.paper, color: LB.ink, borderColor: LB.hairline, borderWidth: 1 },
@@ -71,7 +74,7 @@ const VARIANT_STYLE: Record<
     borderColor: 'rgba(177,73,60,0.25)',
     borderWidth: 1,
   },
-};
+});
 
 export function Btn({
   children,
@@ -94,7 +97,7 @@ export function Btn({
   accessibilityHint,
 }: Props) {
   const s = SIZE_STYLE[size];
-  const base = VARIANT_STYLE[variant];
+  const base = variantStyle()[variant];
   const v = tone ? { ...base, bg: TONE_BG[tone], color: LB.ink, borderWidth: 0 } : base;
   const radius = pill ? s.height / 2 : 14;
   const off = disabled || busy;

@@ -104,8 +104,13 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
                 // Hidden from screen readers: TalkBack would sweep a screen-sized
                 // "close" button (accessibilityViewIsModal covers only iOS). The
                 // in-sheet close button below the footer is the guaranteed exit.
+                // `aria-hidden` + tabIndex: accessibilityElementsHidden does not reach
+                // the web, where the veil showed up as a second giant "Schließen"
+                // (found by the walkthrough's strict locator, issue #84 run).
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
+                aria-hidden
+                tabIndex={-1}
                 accessibilityRole="button"
                 accessibilityLabel={closeLabel}
                 onPress={onClose}

@@ -335,6 +335,23 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '15c-settings-voice', { opened: true });
   await page.getByRole('button', { name: 'Buddys Stimme' }).click();
   await expect(page.getByText('Klar', { exact: true })).toBeVisible();
+
+  // ── The look: every option previews in ITS OWN colours, and night stays readable ──
+  // (issue #84: module-scope styles froze the start palette's ink, which was invisible on
+  // the night background — the axe pass at every shot is what catches that class now.)
+  await page.getByRole('button', { name: 'Aussehen' }).click();
+  await expect(page.getByRole('radio', { name: 'Nacht' })).toBeVisible();
+  await shot(page, '15f-settings-look', { opened: true });
+  await page.getByRole('radio', { name: 'Nacht' }).click();
+  await expect(page.getByRole('radio', { name: 'Nacht' })).toHaveAttribute('aria-checked', 'true');
+  await shot(page, '15g-settings-night', { opened: true });
+  await page.getByRole('button', { name: 'Zurück' }).click();
+  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  // The whole home in the night palette: fit and contrast, like every other stop.
+  await shot(page, '15h-home-night');
+  await openMenu('Einstellungen');
+  await page.getByRole('button', { name: 'Aussehen' }).click();
+  await page.getByRole('radio', { name: 'Pastell' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('Hallo Mia')).toBeVisible();
 

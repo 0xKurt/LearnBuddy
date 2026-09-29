@@ -27,26 +27,29 @@ import { DURATION, EASE } from '../../lib/theme/motion.js';
 export type VerdictKey = 'correct' | 'partially_correct' | 'incorrect' | 'unchecked';
 
 // Soft pastel chips with dark text; the word carries the meaning (a small check for "right").
-const VERDICT_BG: Record<VerdictKey, string> = {
+// Read at render time: module-scope maps froze the start palette (issue #84).
+const verdictBg = (): Record<VerdictKey, string> => ({
   correct: LB.mint,
   partially_correct: LB.butter,
   incorrect: LB.canvas,
   unchecked: LB.canvas,
-};
-const VERDICT_TEXT: Record<VerdictKey, string> = {
+});
+const verdictText = (): Record<VerdictKey, string> => ({
   correct: LB.successText,
   partially_correct: LB.warningText,
   incorrect: LB.ink2,
   unchecked: LB.ink2,
-};
+});
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 /** The check's path ("M5 12l5 5 9-10") is about 20.5 units long. */
 const CHECK_LENGTH = 21;
 
-/** Tiny dots around a right answer: direction (degrees), distance, colour. */
-const SPARKS: readonly { angle: number; distance: number; color: string; size: number }[] = [
+type Spark = { angle: number; distance: number; color: string; size: number };
+
+/** Tiny dots around a right answer: direction (degrees), distance, colour (render-time). */
+const sparks = (): readonly Spark[] => [
   { angle: -168, distance: 58, color: LB.skyDeep, size: 6 },
   { angle: -140, distance: 46, color: LB.peachDeep, size: 7 },
   { angle: -110, distance: 30, color: LB.lavenderDeep, size: 6 },
@@ -102,7 +105,7 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 4,
-            backgroundColor: VERDICT_BG[verdict],
+            backgroundColor: verdictBg()[verdict],
             borderRadius: 999,
             paddingLeft: right ? 10 : 14,
             paddingRight: 14,
@@ -117,7 +120,7 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
               <AnimatedPath
                 d="M5 12l5 5 9-10"
                 fill="none"
-                stroke={VERDICT_TEXT.correct}
+                stroke={verdictText().correct}
                 strokeWidth={2.2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -129,7 +132,7 @@ export function VerdictTag({ verdict, label, fresh }: Props) {
         ) : null}
         <Text
           style={{
-            color: VERDICT_TEXT[verdict],
+            color: verdictText()[verdict],
             fontSize: 14,
             lineHeight: 19,
             fontWeight: '600',
@@ -194,7 +197,7 @@ function Celebration() {
           ring,
         ]}
       />
-      {SPARKS.map((s, i) => (
+      {sparks().map((s, i) => (
         <Spark key={i} {...s} progress={t} />
       ))}
     </View>
@@ -207,7 +210,7 @@ function Spark({
   color,
   size,
   progress,
-}: (typeof SPARKS)[number] & { progress: { value: number } }) {
+}: Spark & { progress: { value: number } }) {
   const rad = (angle * Math.PI) / 180;
   const style = useAnimatedStyle(() => {
     const p = progress.value;

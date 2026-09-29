@@ -51,7 +51,13 @@ export function SplashHandoff({ ready }: { ready: boolean }) {
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[StyleSheet.absoluteFill, styles.veil, veil]}
+      // Inline, not StyleSheet.create at module scope: that froze the start palette's
+      // background into the veil (issue #84).
+      style={[
+        StyleSheet.absoluteFill,
+        { backgroundColor: LB.bg, alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+        veil,
+      ]}
       // The same picture as the native splash is on screen: that one can go.
       onLayout={() => {
         if (Platform.OS !== 'web') SplashScreen.hide();
@@ -67,12 +73,3 @@ export function SplashHandoff({ ready }: { ready: boolean }) {
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  veil: {
-    backgroundColor: LB.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-});

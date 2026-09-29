@@ -203,6 +203,7 @@
     "title": "Look",
     "question": "Which colours do you like?",
     "hint": "On this device only. You can change it any time.",
+    "sample": "Hello! This is what text looks like.",
     "name": {
       "pastellSoft": "Pastel",
       "night": "Night",

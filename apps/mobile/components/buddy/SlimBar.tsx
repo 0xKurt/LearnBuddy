@@ -37,8 +37,14 @@ type Ready = Extract<NowCard, { type: 'practice_ready' }>;
 /** Where the close button of the card on top sits on a slim bar (vertically centred). */
 export const SLIM_CLOSE_TOP = 8;
 
-const TITLE = { fontSize: 15, lineHeight: 20, fontWeight: '700' as const, color: LB.ink };
-const LINE = { fontSize: 13, lineHeight: 18, color: LB.ink2 };
+// Read at render time: module-scope styles froze the start palette (issue #84).
+const titleStyle = () => ({
+  fontSize: 15,
+  lineHeight: 20,
+  fontWeight: '700' as const,
+  color: LB.ink,
+});
+const lineStyle = () => ({ fontSize: 13, lineHeight: 18, color: LB.ink2 });
 
 function Bar({
   tone,
@@ -83,7 +89,7 @@ function Bar({
           accessibilityState={{ expanded: open }}
           style={{ flex: 1, minHeight: 44, justifyContent: 'center', paddingVertical: 8 }}
         >
-          <Animated.Text key={title} entering={fadeIn()} numberOfLines={1} style={TITLE}>
+          <Animated.Text key={title} entering={fadeIn()} numberOfLines={1} style={titleStyle()}>
             {title}
           </Animated.Text>
           <View style={{ marginTop: 1 }}>{line}</View>
@@ -204,7 +210,7 @@ export function ReadyBar({
         .filter(Boolean)
         .join('. ')}
       line={
-        <Text numberOfLines={1} style={LINE}>
+        <Text numberOfLines={1} style={lineStyle()}>
           {line}
         </Text>
       }
@@ -277,7 +283,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
         ) : null,
       ])}
       {label ? (
-        <Text numberOfLines={1} style={[LINE, { marginLeft: 6, flexShrink: 1 }]}>
+        <Text numberOfLines={1} style={[lineStyle(), { marginLeft: 6, flexShrink: 1 }]}>
           {label}
         </Text>
       ) : null}

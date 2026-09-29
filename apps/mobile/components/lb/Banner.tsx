@@ -6,15 +6,16 @@ import { LB } from '../../lib/theme/colors.js';
 
 type Tone = 'gray' | 'warning' | 'info' | 'danger';
 
-const TONES: Record<Tone, { bg: string; color: string }> = {
+// Read at render time: a module-scope map froze the start palette (issue #84).
+const tones = (): Record<Tone, { bg: string; color: string }> => ({
   gray: { bg: LB.canvas, color: LB.ink },
   warning: { bg: LB.butter, color: LB.warningText },
   info: { bg: LB.lavender, color: LB.primaryDk },
   danger: { bg: LB.blush, color: LB.ink },
-};
+});
 
 export function Banner({ children, tone = 'gray' }: { children: string; tone?: Tone }) {
-  const t = TONES[tone];
+  const t = tones()[tone];
   return (
     <View
       style={{

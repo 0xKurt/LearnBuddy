@@ -203,6 +203,7 @@
     "title": "Apparence",
     "question": "Quelles couleurs préfères-tu ?",
     "hint": "Seulement sur cet appareil. Tu peux changer quand tu veux.",
+    "sample": "Salut ! Voilà à quoi ressemble un texte.",
     "name": {
       "pastellSoft": "Pastel",
       "night": "Nuit",
