@@ -12,6 +12,8 @@
   "photo_label": "Foto {{index}} di {{total}}",
   "remove": "Rimuovi",
   "remove_label": "Rimuovi la foto {{index}}",
+  "retake": "Ripeti",
+  "retake_label": "Ripeti la foto {{index}}",
   "limit": "Una scheda può avere al massimo {{max}} foto.",
   "preparing_one": "Preparazione della foto…",
   "preparing_other": "Preparazione della foto {{current}} di {{count}}…",

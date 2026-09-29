@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { cameraOpenOf, createDraftStore, type DraftLink, type DraftStorage } from '../draft.js';
+import {
+  cameraOpenOf,
+  createDraftStore,
+  rebasedUri,
+  type DraftLink,
+  type DraftStorage,
+} from '../draft.js';
 
 function memory() {
   const kv = new Map<string, string>();
@@ -144,6 +150,63 @@ describe('photo drafts', () => {
     expect(cameraOpenOf(noted, new Date('2026-09-28T15:00:00Z'))).toBeNull();
     expect(cameraOpenOf('{"link":{}}', now)).toBeNull();
     expect(cameraOpenOf(null, now)).toBeNull();
+  });
+});
+
+describe('URIs after the app moved (issue #57)', () => {
+  const NEW = 'file:///data/NEW-UUID/Documents/lb-capture/';
+  const OLD = 'file:///data/OLD-UUID/Documents/lb-capture/';
+
+  it('rebases a URI from the old container onto the directory as it is now', () => {
+    expect(rebasedUri(`${OLD}p.jpg`, NEW)).toBe(`${NEW}p.jpg`);
+  });
+
+  it('leaves URIs alone that are current, foreign or not directly in the directory', () => {
+    expect(rebasedUri(`${NEW}p.jpg`, NEW)).toBe(`${NEW}p.jpg`);
+    const other = 'file:///data/OLD-UUID/Documents/other/p.jpg';
+    expect(rebasedUri(other, NEW)).toBe(other);
+    const nested = 'file:///x/lb-capture/sub/p.jpg';
+    expect(rebasedUri(nested, NEW)).toBe(nested);
+    expect(rebasedUri('file:///x/lb-capture/', NEW)).toBe('file:///x/lb-capture/');
+    const data = 'data:image/jpeg;base64,abc';
+    expect(rebasedUri(data, NEW)).toBe(data);
+  });
+
+  it('accepts the directory with or without a trailing slash', () => {
+    expect(rebasedUri(`${OLD}p.jpg`, 'file:///data/NEW-UUID/Documents/lb-capture')).toBe(
+      `${NEW}p.jpg`,
+    );
+  });
+
+  it('hands out draft and sent-page URIs resolved, and deletes at the resolved place', async () => {
+    const m = memory();
+    const dropped: string[] = [];
+    const s = createDraftStore({
+      ...m.storage,
+      drop: async (uris) => {
+        dropped.push(...uris);
+      },
+      resolve: (uri) => rebasedUri(uri, NEW),
+    });
+    // Saved before an app update: the URIs name the old container.
+    await s.save({
+      requestId: null,
+      photos: [{ uri: `${OLD}a.jpg`, problems: [], kept: false }],
+      link: LINK,
+    });
+    expect((await s.load())?.photos.map((p) => p.uri)).toEqual([`${NEW}a.jpg`]);
+    // The chat's material card finds the sent page too.
+    await s.sent('mat', [`${OLD}a.jpg`], 'r1');
+    expect(await s.sentPage('mat', 1)).toBe(`${NEW}a.jpg`);
+    // "Verwerfen" deletes the file where it is now, not at the old path.
+    await s.save({
+      requestId: null,
+      photos: [{ uri: `${OLD}b.jpg`, problems: [], kept: false }],
+      link: LINK,
+    });
+    await s.discard();
+    expect(dropped).toContain(`${NEW}b.jpg`);
+    expect(dropped).not.toContain(`${OLD}b.jpg`);
   });
 });
 

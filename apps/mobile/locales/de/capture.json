@@ -12,6 +12,8 @@
   "photo_label": "Foto {{index}} von {{total}}",
   "remove": "Entfernen",
   "remove_label": "Foto {{index}} entfernen",
+  "retake": "Nochmal",
+  "retake_label": "Foto {{index}} nochmal fotografieren",
   "limit": "Für ein Blatt gehen höchstens {{max}} Fotos.",
   "preparing_one": "Foto wird vorbereitet …",
   "preparing_other": "Foto {{current}} von {{count}} wird vorbereitet …",

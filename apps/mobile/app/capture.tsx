@@ -175,6 +175,7 @@ export default function CaptureScreen() {
               flagged={new Set(photos.filter((uri) => (problems[uri]?.length ?? 0) > 0))}
               disabled={busy}
               onRemove={a.remove}
+              onRetake={a.retake}
             />
           </Section>
         ) : null}
