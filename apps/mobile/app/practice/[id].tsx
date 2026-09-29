@@ -52,7 +52,7 @@ import { ExplainCard, ExplainText } from '../../components/practice/ExplainCard.
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
-import { TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
+import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
 import { AgainButton } from '../../components/practice/AgainButton.js';
@@ -198,6 +198,13 @@ export default function PracticeScreen() {
   const [flagOpen, setFlagOpen] = useState(false);
   /** "Anders erklären": the way she tapped, while Buddy writes (itemId null: the explanation). */
   const [again, setAgain] = useState<{ itemId: string | null; way: ReexplainWay } | null>(null);
+  // Measured, so free space goes to the question instead of an empty conversation
+  // (issue #96): the middle of the screen, what the conversation's content really
+  // needs, and what stands around the question card (progress row, tools).
+  const [middleHeight, setMiddleHeight] = useState(0);
+  const [threadNeed, setThreadNeed] = useState(0);
+  const [questionContentHeight, setQuestionContentHeight] = useState(0);
+  const [cardHeight, setCardHeight] = useState(0);
   const working = useRef(false);
   const lastSent = useRef<SentAnswer | null>(null);
   const finishStarted = useRef(false);
@@ -796,121 +803,151 @@ export default function PracticeScreen() {
     </Btn>
   ) : null;
 
+  // The middle of the screen belongs to the question and the conversation. What the
+  // conversation's content does not need goes to the question card, not to an empty
+  // gap (issue #96): the card grows into `cardMin`, its figure sizes itself from that
+  // measured room. The cap keeps a third of the middle for the conversation once
+  // there is one — past it only the conversation scrolls (CLAUDE.md rule 16).
+  const questionCap = Math.round(middleHeight * 0.7);
+  // The conversation keeps its content plus the fade at its top edge, so a fully
+  // visible first bubble never dissolves into the mask (EdgeFade.tsx).
+  const spare = Math.min(Math.max(0, middleHeight - threadNeed - EDGE_FADE), questionCap);
+  const aroundCard = Math.max(0, questionContentHeight - cardHeight);
+  const cardMin = middleHeight > 0 && cardHeight > 0 ? Math.max(0, spare - aroundCard) : 0;
+
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
   // grows — like a chat, newest at the bottom.
   return (
     <Screen title={title} right={endButton}>
       <KeyboardSafe style={{ flex: 1 }}>
-        <ScrollView
-          testID="scroll-question"
-          style={{ flexGrow: 0, flexShrink: 1, maxHeight: '60%' }}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
+        <View
+          style={{ flex: 1 }}
+          onLayout={(e) => setMiddleHeight(Math.round(e.nativeEvent.layout.height))}
         >
-          <ProgressRow
-            position={session.items.indexOf(shown) + 1}
-            total={session.items.length}
-            closed={session.items.filter((i) => i.status !== 'open').length}
-            right={flagButton}
-          />
-          {session.mode === 'help' || testing ? (
-            <Text style={[TYPE.small, { color: LB.primaryDk, fontWeight: '500' }]}>
-              {t(testing ? 'practice:test_note' : 'practice:help_note')}
-            </Text>
-          ) : null}
-          {/* The next question comes in softly from the side (keyed by the question). */}
-          <SlideIn key={item.id}>
-            {speaking ? (
-              <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
-            ) : (
-              <QuestionCard
-                prompt={item.prompt}
-                topic={item.topic}
-                figure={item.figure}
-                figureMaxHeight={Math.round(windowHeight * 0.14)}
-                image={item.image}
-                imageKey={item.id}
-                imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
-                fromBuddy={item.origin === 'buddy'}
-                // Her short answer appears in the gap of a fill-in sentence while she types.
-                answer={
-                  typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
-                }
-              />
-            )}
-          </SlideIn>
-          {tools.length > 0 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
-          ) : null}
-        </ScrollView>
-        <View style={{ flex: 1 }}>
           <ScrollView
-            ref={scroll}
-            testID="scroll-thread"
-            style={[{ flex: 1 }, topEdgeMask]}
+            testID="scroll-question"
+            style={{
+              flexGrow: 0,
+              flexShrink: 1,
+              maxHeight: middleHeight > 0 ? questionCap : '60%',
+            }}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: 'flex-end',
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              gap: 12,
-            }}
-            onContentSizeChange={() => {
-              if (followEnd) scroll.current?.scrollToEnd({ animated: true });
-            }}
-            onLayout={() => {
-              // The keyboard shrinks this view; keep the latest reply visible above it.
-              if (followEnd) scroll.current?.scrollToEnd({ animated: false });
-            }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
+            onContentSizeChange={(_, h) => setQuestionContentHeight(Math.round(h))}
           >
-            <ItemThread
-              turns={turns}
-              pending={pendingText}
-              hideVerdicts={testing}
-              // A spoken answer: the judgement's words belong here, the marked sentence
-              // stays in the card (issue #14).
-              pronunciation={item.kind === 'speak'}
+            <ProgressRow
+              position={session.items.indexOf(shown) + 1}
+              total={session.items.length}
+              closed={session.items.filter((i) => i.status !== 'open').length}
+              right={flagButton}
             />
-            {session.mode === 'help' && shown.status === 'correct' ? (
-              <Rise delay={180}>
-                <SelfSolvedCard />
-              </Rise>
+            {session.mode === 'help' || testing ? (
+              <Text style={[TYPE.small, { color: LB.primaryDk, fontWeight: '500' }]}>
+                {t(testing ? 'practice:test_note' : 'practice:help_note')}
+              </Text>
             ) : null}
-            {shown.status !== 'open' && shown.answer !== null ? (
-              <Rise delay={180}>
-                <SolutionCard
-                  status={shown.status}
-                  answer={shown.answer}
-                  numeric={item.kind === 'numeric'}
+            {/* The next question comes in softly from the side (keyed by the question). */}
+            <SlideIn
+              key={item.id}
+              onLayout={(e) => setCardHeight(Math.round(e.nativeEvent.layout.height))}
+            >
+              {speaking ? (
+                <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
+              ) : (
+                <QuestionCard
+                  prompt={item.prompt}
+                  topic={item.topic}
+                  figure={item.figure}
+                  figureMaxHeight={Math.round(windowHeight * 0.14)}
+                  image={item.image}
+                  imageKey={item.id}
+                  imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
+                  fromBuddy={item.origin === 'buddy'}
+                  minHeight={cardMin}
+                  // Her short answer appears in the gap of a fill-in sentence while she types.
+                  answer={
+                    typed && (item.kind === 'short' || item.kind === 'vocab') ? text : undefined
+                  }
                 />
-              </Rise>
-            ) : null}
-            {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
-              <ListenButton text={shown.answer} lang={item.lang} />
-            ) : null}
-            {canExplainAgain ? (
-              <Reexplain
-                turns={turnsAgain}
-                pending={again?.itemId === item.id ? again.way : null}
-                disabled={locked}
-                delay={1000}
-                onAsk={(way) => void explainAgain(item.id, way)}
-              />
-            ) : null}
-            {open ? (
-              <HelpChips
-                onHint={hint}
-                onReveal={skip}
-                revealLabel={skipLabel}
-                revealHint={skipHint}
-                disabled={locked}
-              />
+              )}
+            </SlideIn>
+            {tools.length > 0 ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
             ) : null}
           </ScrollView>
-          {/* What scrolls up under the question fades out instead of peeking out (finding 8). */}
-          <TopEdgeFade />
+          <View style={{ flex: 1 }}>
+            <ScrollView
+              ref={scroll}
+              testID="scroll-thread"
+              style={[{ flex: 1 }, topEdgeMask]}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{
+                flexGrow: 1,
+                justifyContent: 'flex-end',
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+              }}
+              onContentSizeChange={() => {
+                if (followEnd) scroll.current?.scrollToEnd({ animated: true });
+              }}
+              onLayout={() => {
+                // The keyboard shrinks this view; keep the latest reply visible above it.
+                if (followEnd) scroll.current?.scrollToEnd({ animated: false });
+              }}
+            >
+              {/* One measured column: what the conversation truly holds (plus the 12 pt
+                  of padding above and below), so the question knows what is spare. */}
+              <View
+                style={{ gap: 12 }}
+                onLayout={(e) => setThreadNeed(Math.round(e.nativeEvent.layout.height) + 24)}
+              >
+                <ItemThread
+                  turns={turns}
+                  pending={pendingText}
+                  hideVerdicts={testing}
+                  // A spoken answer: the judgement's words belong here, the marked sentence
+                  // stays in the card (issue #14).
+                  pronunciation={item.kind === 'speak'}
+                />
+                {session.mode === 'help' && shown.status === 'correct' ? (
+                  <Rise delay={180}>
+                    <SelfSolvedCard />
+                  </Rise>
+                ) : null}
+                {/* The solution only where it says something new (issue #93): after an
+                    answer she got right herself, the chip and Buddy's reply carry it. */}
+                {shown.status !== 'open' && shown.status !== 'correct' && shown.answer !== null ? (
+                  <Rise delay={180}>
+                    <SolutionCard answer={shown.answer} numeric={item.kind === 'numeric'} />
+                  </Rise>
+                ) : null}
+                {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
+                  <ListenButton text={shown.answer} lang={item.lang} />
+                ) : null}
+                {canExplainAgain ? (
+                  <Reexplain
+                    turns={turnsAgain}
+                    pending={again?.itemId === item.id ? again.way : null}
+                    disabled={locked}
+                    delay={1000}
+                    onAsk={(way) => void explainAgain(item.id, way)}
+                  />
+                ) : null}
+                {open ? (
+                  <HelpChips
+                    onHint={hint}
+                    onReveal={skip}
+                    revealLabel={skipLabel}
+                    revealHint={skipHint}
+                    disabled={locked}
+                  />
+                ) : null}
+              </View>
+            </ScrollView>
+            {/* What scrolls up under the question fades out instead of peeking out (finding 8). */}
+            <TopEdgeFade />
+          </View>
         </View>
         {open && choices ? (
           <View

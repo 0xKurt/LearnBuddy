@@ -5,7 +5,7 @@
 // answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure, ItemImage } from '@learnbuddy/shared-types/contracts';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import Animated, {
@@ -91,10 +91,16 @@ type QuestionProps = {
    * choices, long answers and once the question is closed.
    */
   answer?: string;
-  /** The tallest the drawing may be, so the answer stays on screen. */
+  /** The least the drawing may have, even in a full conversation (the old fixed cap). */
   figureMaxHeight?: number;
   /** The tallest the crop may be (≤ 180 pt; the 360×740 fit rule). */
   imageMaxHeight?: number;
+  /**
+   * The card grows to this height when the screen has room the conversation does not
+   * need (issue #96): the figure takes the measured rest of the card, a plain question
+   * stands centred like a flash card. Smaller than the natural height, it does nothing.
+   */
+  minHeight?: number;
 };
 
 export function QuestionCard({
@@ -107,45 +113,73 @@ export function QuestionCard({
   answer,
   figureMaxHeight,
   imageMaxHeight = 180,
+  minHeight,
 }: QuestionProps) {
   const { t } = useTranslation('practice');
+  // What the header row and the prompt keep for themselves; the rest is the figure's.
+  const [headHeight, setHeadHeight] = useState(0);
   const filled = fillableAnswer(prompt, answer);
+  const grown = minHeight !== undefined && minHeight > 0;
+  const hasVisual = figure !== null || (image !== null && imageKey !== undefined);
+  // The room the drawing really has inside the grown card, measured instead of guessed
+  // from the window (issue #96): the card's padding (18 pt twice), the 12 pt gap under
+  // the prompt and the drawing's own frame (FigureView: 12 pt padding twice, 1 pt border
+  // twice) all come off first, so the card never outgrows what the screen granted it.
+  // Never below the old fixed cap.
+  const figureRoom = grown && headHeight > 0 ? minHeight - 36 - headHeight - 12 - 26 : 0;
+  const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
   return (
-    <Card tone="lavender" padding={18} radius={24}>
-      {fromBuddy || topic ? (
-        // Where it comes from and what it is about share one line.
+    <Card tone="lavender" padding={18} radius={24} style={grown ? { minHeight } : null}>
+      <View style={grown ? { flexGrow: 1 } : null}>
         <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            columnGap: 10,
-            rowGap: 4,
-            marginBottom: 8,
-          }}
+          onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}
+          style={grown && !hasVisual ? { flexGrow: 1, justifyContent: 'center' } : null}
         >
-          {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
-          {topic ? (
-            <Text style={[TYPE.small, { color: LB.ink2, fontWeight: '600', flexShrink: 1 }]}>
-              {topic}
-            </Text>
+          {fromBuddy || topic ? (
+            // Where it comes from and what it is about share one line.
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                columnGap: 10,
+                rowGap: 4,
+                marginBottom: 8,
+              }}
+            >
+              {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
+              {topic ? (
+                <Text style={[TYPE.small, { color: LB.ink2, fontWeight: '600', flexShrink: 1 }]}>
+                  {topic}
+                </Text>
+              ) : null}
+            </View>
           ) : null}
+          <MathText
+            text={prompt}
+            blanks={{ filled }}
+            accessibilityRole="header"
+            style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
+          />
         </View>
-      ) : null}
-      <MathText
-        text={prompt}
-        blanks={{ filled }}
-        accessibilityRole="header"
-        style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
-      />
-      {figure ? (
-        <View style={{ marginTop: 12 }}>
-          <ZoomableFigure figure={figure} maxHeight={figureMaxHeight} />
-        </View>
-      ) : null}
-      {image && imageKey ? (
-        <StimulusImage image={image} cacheKey={imageKey} maxHeight={imageMaxHeight} />
-      ) : null}
+        {figure ? (
+          <View
+            style={
+              grown ? { marginTop: 12, flexGrow: 1, justifyContent: 'center' } : { marginTop: 12 }
+            }
+          >
+            {/* The tight box around the drawing itself: the walkthrough records its height. */}
+            <View testID="question-figure">
+              <ZoomableFigure figure={figure} maxHeight={figureMax} />
+            </View>
+          </View>
+        ) : null}
+        {image && imageKey ? (
+          <View style={grown ? { flexGrow: 1, justifyContent: 'center' } : null}>
+            <StimulusImage image={image} cacheKey={imageKey} maxHeight={imageMaxHeight} />
+          </View>
+        ) : null}
+      </View>
     </Card>
   );
 }
