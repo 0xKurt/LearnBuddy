@@ -463,6 +463,21 @@ when there never was a heartbeat but her own work is waiting (a misconfigured cr
 "unknown"), and `system.model` is false when no model is configured or today's allowance for
 conversations is used up.
 
+**Someone has to look** (`.github/workflows/health.yml`, issue #75 gap 2). An endpoint nobody
+calls is not monitoring: until now a dead scheduler reached the owner only if the learner
+mentioned it. A GitHub Action calls production's `GET /v1/health` every 30 minutes and checks
+five things with `jq` — `ok == true`, `scheduler.state == "ok"`, `scheduler.last_run_at`
+younger than 5 minutes (stricter than the server's own 10, because the tick runs every minute),
+`erasure.overdue_deletions == 0` and `erasure.overdue_photo_deletions == 0`. Three attempts 20 s
+apart so a cold start wakes nobody; if the complaint holds, the job fails and GitHub mails the
+owner about the failed run on the default branch — that is the whole notification channel. No
+secret: the endpoint is unauthenticated and returns only booleans, counts, job kinds and
+timestamps. Its only free-text fields (`scheduler.last_error`, `parked[*].last_error` —
+truncated `Error.message` from the tick) are neither checked nor written to the public action
+log. This replaces **no** crash reporting on the device (#36, Sentry EU, stays open) and sees
+nothing the server does not report about itself. GitHub disables scheduled workflows after
+60 days without repository activity.
+
 ### Events (ADR 0005 stage 4)
 
 `modules/buddy/events.ts`, table `buddy_events` (`0007_events.sql`). Something that just
