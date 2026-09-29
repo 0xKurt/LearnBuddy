@@ -122,6 +122,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
           {
             tool: 'remember',
             args: {
+              about: 'everyday',
               kind: 'fact',
               statement: 'Spielt Handball',
               quote: 'Ich spiele Handball',
@@ -136,6 +137,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
           {
             tool: 'remember',
             args: {
+              about: 'everyday',
               kind: 'fact',
               statement: 'Spielt Handball im Verein',
               quote: 'Ich spiele Handball',
@@ -282,6 +284,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
         {
           tool: 'remember',
           args: {
+            about: 'everyday',
             kind: 'preference',
             statement: 'Mag Fußball',
             quote: 'ich liebe Fußball',
@@ -297,6 +300,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
           {
             tool: 'remember',
             args: {
+              about: 'everyday',
               kind: 'fact',
               statement: 'Spielt am Wochenende Fußball',
               quote: 'am Wochenende Fußball',
@@ -428,7 +432,13 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
       say('Klar, sehr gern!', [
         {
           tool: 'remember',
-          args: { kind: 'fact', statement: 'Braucht Hilfe', quote: 'helfen', until: null },
+          args: {
+            about: 'learning',
+            kind: 'fact',
+            statement: 'Braucht Hilfe',
+            quote: 'helfen',
+            until: null,
+          },
         },
       ]),
     );
@@ -570,7 +580,13 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
         },
         {
           tool: 'remember',
-          args: { kind: 'fact', statement: 'Mag Englisch', quote: 'mag Englisch', until: null },
+          args: {
+            about: 'learning',
+            kind: 'fact',
+            statement: 'Mag Englisch',
+            quote: 'mag Englisch',
+            until: null,
+          },
         },
         { tool: 'request_material', args: { goal: 'new', title: 'Vokabelliste' } },
       ]),

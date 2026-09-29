@@ -173,9 +173,35 @@ const Title = z.string().trim().min(1).max(80);
 
 // ─────────────── tools ───────────────
 
+/**
+ * What a memory is about — the model's own label for the note AND for the words it quotes.
+ * Four of these are never kept: Art. 9 categories and what a learning companion has no
+ * business holding about a child. `tools.ts` refuses them whether or not the turn was
+ * marked as distress (issue #108: a live run stored a child's eating and a death in the
+ * family in turns where `concern` was false). The model interprets (rule 1), code enforces;
+ * no word list decides it (rule 3).
+ */
+export const MEMORY_ABOUT = [
+  'learning',
+  'availability',
+  'everyday',
+  'health',
+  'family',
+  'harm',
+  'identity',
+] as const;
+export type MemoryAbout = (typeof MEMORY_ABOUT)[number];
+
+const About = z
+  .enum(MEMORY_ABOUT)
+  .describe(
+    'What this note and the words you quote are about, labelled honestly: learning = school, subjects, level, topics, learning goals, how they like to learn · availability = when they can or cannot practise, and until when, without the reason · everyday = ordinary life that is none of the others · health = their body or mind, illness, symptoms, eating, sleeping, an injury, a disability, treatment · family = trouble at home · harm = being hurt, bullied, threatened, or hurting themselves · identity = their religion, origin, politics or sexuality (the school subject is learning). The app keeps the first three and refuses the rest.',
+  );
+
 const remember = z.object({
   tool: z.literal('remember'),
   args: z.object({
+    about: About,
     kind: z
       .enum(['fact', 'preference', 'goal', 'constraint'])
       .describe('constraint = temporary situation that ends (requires until)'),
@@ -195,6 +221,7 @@ const remember = z.object({
 const correctMemory = z.object({
   tool: z.literal('correct_memory'),
   args: z.object({
+    about: About,
     memory: MemoryRef,
     statement: z
       .string()

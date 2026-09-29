@@ -46,7 +46,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     touches: ['memory'],
     needsQuote: true,
     undoable: true,
-    does: 'keep something lasting or temporary about the learner (never health, family trouble, being hurt, abuse or self-harm)',
+    does: 'keep something lasting or temporary about the learner; "about" says what it is — health, trouble at home, being hurt and who they are are refused by the app',
     run: ACT_HANDLERS.remember,
   },
   correct_memory: {
@@ -54,7 +54,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     touches: ['memory'],
     needsQuote: true,
     undoable: true,
-    does: 'correct something you know (mN)',
+    does: 'correct something you know (mN); "about" as in remember',
     run: ACT_HANDLERS.correct_memory,
   },
   forget: {

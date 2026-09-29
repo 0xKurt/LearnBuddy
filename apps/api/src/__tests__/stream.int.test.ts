@@ -155,6 +155,7 @@ describe.skipIf(!dbReady)('streamed replies', () => {
         {
           tool: 'remember',
           args: {
+            about: 'everyday',
             kind: 'fact',
             statement: 'Spielt Handball',
             quote: 'Ich spiele Handball',

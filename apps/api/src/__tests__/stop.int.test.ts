@@ -17,7 +17,9 @@ const uuid = () => `00000000-0000-4000-8000-${(++seq).toString(16).padStart(12, 
 
 const remember = (statement: string, quote: string) => ({
   lookups: [],
-  actions: [{ tool: 'remember', args: { kind: 'fact', statement, quote, until: null } }],
+  actions: [
+    { tool: 'remember', args: { about: 'everyday', kind: 'fact', statement, quote, until: null } },
+  ],
   reply: `Cool – ${statement} merke ich mir.`,
   options: null,
   asks_permission: false,

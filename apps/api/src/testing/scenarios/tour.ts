@@ -10,7 +10,7 @@ import { says, scriptTurns } from './turns.js';
 
 const remember = (statement: string, quote: string) => ({
   tool: 'remember',
-  args: { kind: 'fact', statement, quote, until: null },
+  args: { about: 'everyday', kind: 'fact', statement, quote, until: null },
 });
 
 export function scriptTour(llm: ScriptedGateway): void {

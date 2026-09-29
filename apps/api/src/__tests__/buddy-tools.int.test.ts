@@ -109,26 +109,30 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
   });
 
   it('a temporary situation said again with a new end gets that end (remember-dedupe-misreports, M-54)', async () => {
-    const broken = (quote: string, days: number) => ({
+    // Availability, never its cause (issue #108): what it means for learning is kept.
+    const away = (quote: string, days: number) => ({
       tool: 'remember',
       args: {
+        about: 'availability',
         kind: 'constraint',
-        statement: 'Hat den Arm gebrochen',
+        statement: 'Kann gerade nicht üben',
         quote,
         until: { kind: 'end_of_day', days },
       },
     });
-    env.llm.script('buddy_turn', { json: say('Gute Besserung!', [broken('Arm gebrochen', 7)]) });
-    expect((await send(l, 'Ich hab mir den Arm gebrochen')).status).toBe(200);
+    env.llm.script('buddy_turn', {
+      json: say('Dann pausieren wir.', [away('kann gerade nicht üben', 7)]),
+    });
+    expect((await send(l, 'Ich kann gerade nicht üben')).status).toBe(200);
     const first = await env.db.one<{ valid_until: Date }>(
       `select valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
       [l.learnerId],
     );
     // The same again with a longer end: kept, not silently dropped.
     env.llm.script('buddy_turn', {
-      json: say('Okay, drei Wochen.', [broken('noch drei Wochen', 21)]),
+      json: say('Okay, drei Wochen.', [away('noch drei Wochen', 21)]),
     });
-    expect((await send(l, 'Der Gips bleibt noch drei Wochen')).status).toBe(200);
+    expect((await send(l, 'Das geht noch drei Wochen so')).status).toBe(200);
     const longer = await env.db.query<{ valid_until: Date }>(
       `select valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
       [l.learnerId],
@@ -143,8 +147,9 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
         {
           tool: 'correct_memory',
           args: {
+            about: 'availability',
             memory: 'm1',
-            statement: 'Hat den Arm gebrochen',
+            statement: 'Kann gerade nicht üben',
             quote: 'nur noch zwei Wochen',
             until: { kind: 'end_of_day', days: 14 },
           },
@@ -205,6 +210,7 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     const t = tryAction(env, {
       tool: 'remember',
       args: {
+        about: 'everyday',
         kind: 'preference',
         statement: 'Spielt Handball und hat sonntags Nachmittag Handballtraining',
         quote: 'hab gleich Handballtraining',
@@ -224,6 +230,7 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
         {
           tool: 'remember',
           args: {
+            about: 'everyday',
             kind: 'fact',
             statement: 'Hat sonntags Handballtraining',
             quote: 'sonntags hab ich Handballtraining',
@@ -243,6 +250,7 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     const fix = tryAction(env, {
       tool: 'correct_memory',
       args: {
+        about: 'everyday',
         memory: 'm1',
         statement: 'Hat sonntags um 15 Uhr Handballtraining',
         quote: 'Handballtraining ist jetzt länger',
@@ -277,7 +285,13 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
   it('undoing a forget never makes a second copy (p2-J-memory-F7)', async () => {
     const remember = {
       tool: 'remember',
-      args: { kind: 'fact', statement: 'Spielt Geige', quote: 'Geige', until: null },
+      args: {
+        about: 'everyday',
+        kind: 'fact',
+        statement: 'Spielt Geige',
+        quote: 'Geige',
+        until: null,
+      },
     };
     env.llm.script('buddy_turn', { json: say('Schön!', [remember]) });
     await send(l, 'Ich spiele Geige');

@@ -537,6 +537,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
           {
             tool: 'remember',
             args: {
+              about: 'learning',
               kind: 'preference',
               statement: 'Möchte kürzere Übungen',
               quote: 'mach die Übungen bitte kürzer',
@@ -655,11 +656,13 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
         options: null,
         actions: [
           {
+            // She names the cause; only what it means for learning is kept (issue #108).
             tool: 'remember',
             args: {
+              about: 'availability',
               kind: 'constraint',
-              statement: 'Ist diese Woche krank',
-              quote: 'ich bin krank',
+              statement: 'Schafft diese Woche nichts',
+              quote: 'schaffe diese Woche nichts',
               until: { kind: 'end_of_week', weeks_ahead: 0 },
             },
           },
@@ -679,7 +682,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     });
     const res = await lina.api.post<SendMessageResponse>('/buddy/messages', {
       client_message_id: ids.msg3,
-      text: 'Bitte diese Woche keine Nachrichten mehr, ich bin krank.',
+      text: 'Bitte diese Woche keine Nachrichten mehr, ich bin krank und schaffe diese Woche nichts.',
     });
     expect(res.body.status).toBe('done');
     const s = await env.db.one<{ paused_until: Date }>(
@@ -693,7 +696,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     env.clock.set('2026-10-03T13:00:00Z');
     env.llm.script('buddy_check', (req) => {
       const text = ScriptedGateway.textOf(req);
-      expect(text).toContain('[constraint] Ist diese Woche krank (through 2026-10-04)');
+      expect(text).toContain('[constraint] Schafft diese Woche nichts (through 2026-10-04)');
       expect(text).toContain('paused through 2026-10-04');
       return {
         disposition: 'act',

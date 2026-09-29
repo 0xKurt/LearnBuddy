@@ -105,6 +105,7 @@ describe.skipIf(!dbReady)('safeguarding', () => {
             {
               tool: 'remember',
               args: {
+                about: 'harm',
                 kind: 'fact',
                 statement: 'Wird zu Hause geschlagen',
                 quote: 'geschlagen',
@@ -166,6 +167,175 @@ describe.skipIf(!dbReady)('safeguarding', () => {
       [l.learnerId],
     );
     expect(JSON.stringify(rejected)).toContain('reply');
+  });
+
+  // Issue #108: until now the ban on keeping health, trouble at home, being hurt and who a
+  // child is lived only in the prompt, and the only code-side guard needed `concern = true`.
+  // The live run of 29.09. (issue #109) stored "Isst seit drei Tagen fast nichts und möchte
+  // dünner werden" and a death in the family in turns the model had NOT flagged. The model
+  // now labels every memory with "about"; code refuses these four labels on their own.
+  const FORBIDDEN = [
+    {
+      about: 'health',
+      says: 'ich esse seit drei tagen fast nichts und will dünner werden',
+      statement: 'Isst fast nichts und möchte dünner werden',
+      quote: 'esse seit drei tagen fast nichts und will dünner werden',
+    },
+    {
+      about: 'family',
+      says: 'meine eltern streiten jeden abend, ich kann zuhause nicht lernen',
+      statement: 'Eltern streiten zuhause',
+      quote: 'meine eltern streiten',
+    },
+    {
+      about: 'harm',
+      says: 'einer aus der parallelklasse droht mir dass er mich abpasst',
+      statement: 'Wird von einem Mitschüler bedroht',
+      quote: 'droht mir dass er mich abpasst',
+    },
+    {
+      about: 'identity',
+      says: 'ich bete immer vor dem lernen, das gehört zu meinem glauben',
+      statement: 'Betet vor dem Lernen',
+      quote: 'ich bete immer vor dem lernen',
+    },
+  ] as const;
+
+  for (const c of FORBIDDEN) {
+    it(`never keeps ${c.about}, even when the turn is not a concern (issue #108)`, async () => {
+      const l = await onboard(env, { relation: 'child', pin: '4711' });
+      let refusal: string | null = null;
+      env.llm.script(
+        'buddy_turn',
+        {
+          json: {
+            concern: false,
+            reply: 'Das merke ich mir.',
+            options: null,
+            actions: [
+              {
+                tool: 'remember',
+                args: {
+                  about: c.about,
+                  kind: 'fact',
+                  statement: c.statement,
+                  quote: c.quote,
+                  until: null,
+                },
+              },
+            ],
+          },
+        },
+        (req: LlmRequest) => {
+          const text = ScriptedGateway.textOf(req);
+          refusal = /action 1 \(remember\): ([^\n]+)/.exec(text)?.[1] ?? null;
+          return {
+            concern: false,
+            reply: 'Das klingt anstrengend. Magst du mir sagen, was gerade ansteht?',
+            options: null,
+            actions: [],
+          };
+        },
+      );
+      const res = await send(l, c.says);
+      // The turn itself succeeds: she still gets a warm answer, only the keeping is refused.
+      expect(res.body.status).toBe('done');
+      expect(res.body.home.thread[res.body.home.thread.length - 1]!.text).toContain('anstrengend');
+      expect(refusal).toContain(`about "${c.about}"`);
+      // Nothing about it anywhere: no memory row, and no words of hers in a stored statement.
+      const memories = await env.db.query(`select 1 from buddy_memories where learner_id = $1`, [
+        l.learnerId,
+      ]);
+      expect(memories).toHaveLength(0);
+      const actions = await env.db.query(`select 1 from buddy_actions where learner_id = $1`, [
+        l.learnerId,
+      ]);
+      expect(actions).toHaveLength(0);
+    });
+  }
+
+  it('correcting something you know is refused on the same categories (issue #108)', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    await env.db.query(
+      `insert into buddy_memories (learner_id, kind, statement, source, created_at)
+       values ($1, 'fact', 'Übt am liebsten nachmittags', 'learner_edited', $2)`,
+      [l.learnerId, env.clock.now()],
+    );
+    let refusal: string | null = null;
+    env.llm.script(
+      'buddy_turn',
+      {
+        json: {
+          concern: false,
+          reply: 'Ich schreibe das um.',
+          options: null,
+          actions: [
+            {
+              tool: 'correct_memory',
+              args: {
+                about: 'health',
+                memory: 'm1',
+                statement: 'Übt nicht mehr, weil die Migräne kommt',
+                quote: 'die migräne kommt immer nachmittags',
+              },
+            },
+          ],
+        },
+      },
+      (req: LlmRequest) => {
+        const text = ScriptedGateway.textOf(req);
+        refusal = /action 1 \(correct_memory\): ([^\n]+)/.exec(text)?.[1] ?? null;
+        return {
+          concern: false,
+          reply: 'Alles klar, ich lasse es so.',
+          options: null,
+          actions: [],
+        };
+      },
+    );
+    expect((await send(l, 'die migräne kommt immer nachmittags')).status).toBe(200);
+    expect(refusal).toContain('about "health"');
+    const kept = await env.db.one<{ statement: string }>(
+      `select statement from buddy_memories where learner_id = $1 and status = 'active'`,
+      [l.learnerId],
+    );
+    expect(kept.statement).toBe('Übt am liebsten nachmittags');
+  });
+
+  it('what a situation means for learning is still kept — availability without its cause (issue #108)', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    env.llm.script('buddy_turn', {
+      json: {
+        concern: false,
+        reply: 'Alles klar, diese Woche machen wir Pause.',
+        options: null,
+        actions: [
+          {
+            tool: 'remember',
+            args: {
+              about: 'availability',
+              kind: 'constraint',
+              statement: 'Kann diese Woche nicht üben',
+              quote: 'diese woche kann ich nicht üben',
+              until: { kind: 'end_of_week', weeks_ahead: 0 },
+            },
+          },
+        ],
+      },
+    });
+    expect((await send(l, 'ich hab magen darm, diese woche kann ich nicht üben')).status).toBe(200);
+    const kept = await env.db.one<{ kind: string; statement: string; valid_until: Date }>(
+      `select kind, statement, valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
+      [l.learnerId],
+    );
+    expect(kept).toMatchObject({ kind: 'constraint', statement: 'Kann diese Woche nicht üben' });
+    expect(kept.valid_until).not.toBeNull();
+    // The cause she named is nowhere in what Buddy keeps — not in the statement, not in the quote.
+    const stored = await env.db.query<{ statement: string; quote: string | null }>(
+      `select statement, quote from buddy_memories where learner_id = $1`,
+      [l.learnerId],
+    );
+    expect(JSON.stringify(stored)).not.toContain('magen darm');
   });
 
   it('adults get the variant without the children’s helpline', async () => {

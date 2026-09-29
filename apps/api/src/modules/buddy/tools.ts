@@ -38,7 +38,7 @@ import { t } from '../../i18n/index.js';
 import { questionCountFor, selectPracticeItems, type PracticeWish } from '../practice/selection.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
-import { schoolYearsOf, type ActionOf, type ToolName } from './decision.js';
+import { schoolYearsOf, type ActionOf, type MemoryAbout, type ToolName } from './decision.js';
 import {
   cancelGoalWakeups,
   findOrCreateSubject,
@@ -184,6 +184,26 @@ function refuseDuringConcern(ctx: ToolContext): void {
     );
 }
 
+/**
+ * What a memory may never be about — Art. 9 categories and what a learning companion has no
+ * business holding about a child (`docs/dpia.md` §1).
+ *
+ * Until issue #108 this ban lived only in the prompt, and the only code-side guard was
+ * `refuseDuringConcern`, which needs `concern === true`. Illness, an argument at home or a
+ * threat without a deed are no emergency — so the live run of 29.09. stored "isst seit drei
+ * Tagen fast nichts und möchte dünner werden" and a death in the family in turns the model
+ * had not flagged. The model names the category in its structured answer (`about`), code
+ * refuses on it: interpretation with the model, enforcement in code (rules 1 and 3).
+ */
+const NEVER_KEPT: readonly MemoryAbout[] = ['health', 'family', 'harm', 'identity'];
+
+function refuseForbiddenAbout(about: MemoryAbout): void {
+  if (!NEVER_KEPT.includes(about)) return;
+  throw new ToolRejection(
+    `about "${about}": a learner's health, trouble at home, being hurt, and who they are are never kept — in no wording and under no other label. Answer again without a memory action. What it means for learning (that they cannot practise, and until when) may be kept as a temporary situation, without the reason.`,
+  );
+}
+
 function today(ctx: ToolContext): string {
   return localParts(ctx.now, ctx.settings.timezone).date;
 }
@@ -281,6 +301,7 @@ async function currentStep(ctx: ToolContext, alias: string): Promise<StepRow> {
 async function runRemember(action: ActionOf<'remember'>, ctx: ToolContext): Promise<ToolOutcome> {
   const a = action.args;
   refuseDuringConcern(ctx);
+  refuseForbiddenAbout(a.about);
   requireQuote(ctx, a.quote);
   requireSupported(ctx, a.statement, a.quote);
   let validUntil: Date | null = null;
@@ -370,6 +391,7 @@ async function runCorrectMemory(
 ): Promise<ToolOutcome> {
   const a = action.args;
   refuseDuringConcern(ctx);
+  refuseForbiddenAbout(a.about);
   requireQuote(ctx, a.quote);
   const old = memoryOf(ctx, a.memory);
   requireSupported(ctx, a.statement, a.quote, old.statement);

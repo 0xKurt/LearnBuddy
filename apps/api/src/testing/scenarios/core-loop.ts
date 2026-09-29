@@ -158,6 +158,7 @@ export function scriptCoreLoop(llm: ScriptedGateway): void {
         {
           tool: 'remember',
           args: {
+            about: 'learning',
             kind: 'preference',
             statement: 'Möchte kurze Übungen',
             quote: quoteFrom(req, 'bitte kürzer') ?? '',

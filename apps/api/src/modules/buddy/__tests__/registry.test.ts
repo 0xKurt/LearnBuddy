@@ -29,7 +29,13 @@ describe('act tool registry', () => {
   it('builds the schemas from the registry', () => {
     const remember = {
       tool: 'remember',
-      args: { kind: 'fact', statement: 'Mag Mathe', quote: 'Mathe', until: null },
+      args: {
+        about: 'learning',
+        kind: 'fact',
+        statement: 'Mag Mathe',
+        quote: 'Mathe',
+        until: null,
+      },
     };
     expect(TurnActionSchema.safeParse(remember).success).toBe(true);
     // The check schema has no remember at all.
