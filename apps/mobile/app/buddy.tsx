@@ -735,7 +735,29 @@ export default function BuddyScreen() {
   ].filter((node) => node !== null);
   // The next test in one line; everything else Buddy says in the conversation.
   const nextExam = h.next.find((i) => i.kind === 'exam') ?? null;
-  const messages = h.thread.slice(-VISIBLE_MESSAGES);
+  // "Schick mir ein Foto" is said once (issue #94, lib/homeLayout.ts photoAsk): while the
+  // bar on top asks for this photo, its word-for-word "Ich warte auf dein Foto" receipt
+  // leaves the conversation and "Kein Foto nötig" is the bar's quiet way out. Bar closed
+  // or gone, the receipt with its undo stays the place for both (History always keeps it).
+  const captureNow = layout.photoAsk === 'bar' && h.now?.type === 'capture_needed' ? h.now : null;
+  const asksInBar = (a: MessageView['actions'][number]): boolean =>
+    captureNow !== null &&
+    a.summary.tool === 'request_material' &&
+    a.status === 'applied' &&
+    (captureNow.step_id !== null
+      ? a.summary.step_id === captureNow.step_id
+      : a.summary.title === captureNow.title);
+  const captureUndo = captureNow
+    ? ([...h.thread]
+        .reverse()
+        .flatMap((m) => m.actions)
+        .find((a) => asksInBar(a) && a.undoable) ?? null)
+    : null;
+  const messages = h.thread
+    .slice(-VISIBLE_MESSAGES)
+    .map((m) =>
+      m.actions.some(asksInBar) ? { ...m, actions: m.actions.filter((a) => !asksInBar(a)) } : m,
+    );
   // Decided once per visit (see the ref above); `undefined` means "not looked at yet".
   if (sessionStart.current === undefined) {
     const lastMessage = h.thread[h.thread.length - 1] ?? null;
@@ -822,6 +844,7 @@ export default function BuddyScreen() {
           busy={busy}
           titleInset={CLOSE_INSET}
           onPress={() => router.push({ pathname: '/capture', params })}
+          onNoPhoto={captureUndo ? () => void act(() => undoAction(captureUndo.id)) : null}
         />
       );
     }

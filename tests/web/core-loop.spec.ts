@@ -167,6 +167,14 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   const captureBar = await partHeight(page, 'home-card', 'home-top');
   expect(captureBar, `top layer ${captureBar}pt`).toBeLessThanOrEqual(72);
   await shot(page, '05-buddy-planned');
+  // The ask for the photo stands once, with its button (issue #94): while the bar on top
+  // asks, no word-for-word "Ich warte auf dein Foto" receipt doubles it in the
+  // conversation, and the way out — "Kein Foto nötig" — opens from the bar itself.
+  await expect(page.getByText(/Ich warte auf dein Foto/)).toHaveCount(0);
+  await page.getByRole('button', { name: /Arbeitsblatt Brüche\. Schick mir ein Foto/ }).click();
+  await expect(page.getByRole('button', { name: 'Kein Foto nötig' })).toBeVisible();
+  await page.getByRole('button', { name: /Arbeitsblatt Brüche\. Schick mir ein Foto/ }).click();
+  await expect(page.getByRole('button', { name: 'Kein Foto nötig' })).toBeHidden();
 
   // ── Messages to the phone need a parent: the PIN, not the student — and the parent sees
   // what they allow, and that it was allowed ──
