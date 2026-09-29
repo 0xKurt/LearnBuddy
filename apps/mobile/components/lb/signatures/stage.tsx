@@ -7,10 +7,17 @@
 //   inside     in the glass, under its shine (clipped to the sphere, breathes with it);
 //   overGlass  on the glass (breathes with it), e.g. a reflection;
 //   front      in front of the glass, and the sparkle shower on top.
+// A signature can also deform the glass itself (`shape`, the prototype's Tropfen): its
+// outline, squash and lift per frame. Without `shape` the glass is the round sphere, drawn
+// exactly as before.
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { View } from 'react-native';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedProps,
+  useAnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated';
 import Svg, {
   Circle,
   ClipPath,
@@ -99,8 +106,29 @@ export function GlowFilter({ id, sd = 0.35 }: { id: string; sd?: number }) {
 }
 
 /**
+ * A glass that is not a rigid sphere (the prototype's Tropfen: `bodyXf`, the clip path and
+ * the three body circles ×1.35, no depth, edge and rim on the outline).
+ */
+export type GlassShape = {
+  /** Its outline (SVG path, signature units round the orb's centre). */
+  outline: string;
+  /** Squash: horizontal and vertical scale round the orb's centre. */
+  sx: number;
+  sy: number;
+  /** How far it is moved down (units; up is negative), before the squash. */
+  y: number;
+  /** The shadow's horizontal scale (it narrows while the glass is in the air). */
+  shadowX: number;
+};
+
+/** A signature's own parts inside the round glass, or a glass of its own shape (not both). */
+type GlassLayers =
+  | { shape?: undefined; inside?: ReactNode }
+  | { shape: SharedValue<GlassShape>; inside?: undefined };
+
+/**
  * The shared orb: halo, shadow, the signature's back layer, the breathing glass (with the
- * signature's inside and on-glass layers), the front layer.
+ * signature's inside and on-glass layers, or deformed by `shape`), the front layer.
  */
 export function OrbStage<P extends BasePose>({
   size,
@@ -114,7 +142,8 @@ export function OrbStage<P extends BasePose>({
   inside,
   overGlass,
   front,
-}: {
+  shape,
+}: GlassLayers & {
   size: number;
   u: number;
   base: SharedValue<P>;
@@ -124,12 +153,20 @@ export function OrbStage<P extends BasePose>({
   /** The glass's white highlight at the upper left (a signature can take its place). */
   highlight?: boolean;
   back?: ReactNode;
-  inside?: ReactNode;
   overGlass?: ReactNode;
   front?: ReactNode;
 }) {
-  const bodyStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: base.value.orb * bob.value }],
+  const bodyStyle = useAnimatedStyle(() => {
+    const scale = base.value.orb * bob.value;
+    const g = shape?.value;
+    if (!g) return { transform: [{ scale }] };
+    // The prototype's `translate(0 y) scale(sx sy) scale(orb)` round the orb's centre.
+    return {
+      transform: [{ translateY: g.y * u }, { scaleX: g.sx }, { scaleY: g.sy }, { scale }],
+    };
+  });
+  const shadowStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: shape?.value.shadowX ?? 1 }],
   }));
   const haloStyle = useAnimatedStyle(() => {
     const h = base.value.halo;
@@ -143,10 +180,23 @@ export function OrbStage<P extends BasePose>({
           <Halo size={haloSize} />
         </Animated.View>
       ) : null}
-      {shadow ? <Shadow size={size} u={u} /> : null}
+      {shadow && shape ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[LAYER, { width: size, height: size }, shadowStyle]}
+        >
+          <Shadow size={size} u={u} />
+        </Animated.View>
+      ) : shadow ? (
+        <Shadow size={size} u={u} />
+      ) : null}
       {back}
       <Animated.View style={[{ width: size, height: size }, bodyStyle]}>
-        <Glass size={size} u={u} inside={inside} highlight={highlight} />
+        {shape ? (
+          <ShapedGlass size={size} u={u} shape={shape} highlight={highlight} />
+        ) : (
+          <Glass size={size} u={u} inside={inside} highlight={highlight} />
+        )}
         {overGlass}
       </Animated.View>
       {front}
@@ -288,6 +338,109 @@ function Glass({
         {defs}
         <G clipPath={`url(#${id}sphere)`}>{light}</G>
         {rim}
+      </Svg>
+    </View>
+  );
+}
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+/** Half the shaped glass's box (units): room for an outline up to 1.33 × the orb's radius. */
+const SHAPED = 72;
+
+/**
+ * The glass in the shape a signature gives it (the prototype's Tropfen): the same body,
+ * shine and bounce (circles of 1.35 × the radius, so their gradients are that much wider),
+ * clipped to the outline; instead of the round glass's depth, a soft violet vignette along
+ * the outline; the soft white edge and the rim follow the outline too.
+ */
+function ShapedGlass({
+  size,
+  u,
+  shape,
+  highlight,
+}: {
+  size: number;
+  u: number;
+  shape: SharedValue<GlassShape>;
+  highlight: boolean;
+}) {
+  const id = useSvgId('orb');
+  const R = ORB_R;
+  const hx = -R * 0.36;
+  const hy = -R * 0.46;
+  const box = SHAPED * 2 * u;
+  // One set of animated props per path (reanimated binds each to one view).
+  const clip = useAnimatedProps(() => ({ d: shape.value.outline }));
+  const vignette = useAnimatedProps(() => ({ d: shape.value.outline }));
+  const edge = useAnimatedProps(() => ({ d: shape.value.outline }));
+  const rim = useAnimatedProps(() => ({ d: shape.value.outline }));
+  return (
+    <View pointerEvents="none" style={centered(size, box)}>
+      <Svg width={box} height={box} viewBox={`${-SHAPED} ${-SHAPED} ${SHAPED * 2} ${SHAPED * 2}`}>
+        <Defs>
+          <LinearGradient id={`${id}body`} x1="0.12" y1="0.08" x2="0.9" y2="0.95">
+            <Stop offset="0" stopColor="#a9bfff" />
+            <Stop offset="0.42" stopColor="#bba6fb" />
+            <Stop offset="0.78" stopColor="#eaa6d6" />
+            <Stop offset="1" stopColor="#f7bcdc" />
+          </LinearGradient>
+          <RadialGradient id={`${id}shine`} cx="0.36" cy="0.28" r="0.52">
+            <Stop offset="0" stopColor="#ffffff" stopOpacity={0.9} />
+            <Stop offset="0.45" stopColor="#ffffff" stopOpacity={0.34} />
+            <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id={`${id}bounce`} cx="0.66" cy="0.86" r="0.34">
+            <Stop offset="0" stopColor="#fff4fb" stopOpacity={0.8} />
+            <Stop offset="1" stopColor="#fff4fb" stopOpacity={0} />
+          </RadialGradient>
+          <ClipPath id={`${id}shape`}>
+            <AnimatedPath animatedProps={clip} />
+          </ClipPath>
+          <Blur id={`${id}b05`} sd={0.5} />
+          <Blur id={`${id}b15`} sd={1.5} />
+          <Blur id={`${id}b4`} sd={4} />
+        </Defs>
+        <G clipPath={`url(#${id}shape)`}>
+          <Circle r={R * 1.35} fill={`url(#${id}body)`} />
+          <AnimatedPath
+            fill="none"
+            stroke={LB.primary}
+            strokeOpacity={0.3}
+            strokeWidth={14}
+            filter={`url(#${id}b4)`}
+            animatedProps={vignette}
+          />
+          <Circle r={R * 1.35} fill={`url(#${id}shine)`} />
+          <Circle r={R * 1.35} fill={`url(#${id}bounce)`} />
+          {highlight ? (
+            <Ellipse
+              cx={hx}
+              cy={hy}
+              rx={R * 0.17}
+              ry={R * 0.085}
+              transform={`rotate(-36 ${hx} ${hy})`}
+              fill="#ffffff"
+              fillOpacity={0.92}
+              filter={`url(#${id}b05)`}
+            />
+          ) : null}
+          <AnimatedPath
+            fill="none"
+            stroke="#ffffff"
+            strokeOpacity={0.7}
+            strokeWidth={2.6}
+            filter={`url(#${id}b15)`}
+            animatedProps={edge}
+          />
+        </G>
+        <AnimatedPath
+          fill="none"
+          stroke="#ffffff"
+          strokeOpacity={0.85}
+          strokeWidth={0.9}
+          animatedProps={rim}
+        />
       </Svg>
     </View>
   );

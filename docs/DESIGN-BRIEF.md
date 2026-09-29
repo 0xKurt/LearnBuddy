@@ -217,6 +217,9 @@ chosen default and the only one the app shows.** Prepared, not offered anywhere 
 "Funkelstern"), `sternchen` (round 2 "Sternchen") and `nurstern` (round 3 "Nur der große Stern").
 Letting someone choose is a separate product decision (UX-PRINCIPLES: a rare setting, closed
 until opened). How to port another variant: the checklist in `lib/buddy/signatures/index.ts`.
+Also prepared: `tropfen` (round 2 "Tropfen" — it deforms the glass itself, through the stage's
+`shape` option; without it the glass is drawn exactly as before) and `polarlicht` (round 2
+"Polarlicht").
 
 ---
 

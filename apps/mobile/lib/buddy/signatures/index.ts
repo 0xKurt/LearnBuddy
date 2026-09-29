@@ -26,6 +26,10 @@ export const SIGNATURE_KEYS = [
   'sternchen',
   /** Round 3 "Nur der große Stern": the soft round star alone. */
   'nurstern',
+  /** Round 2 "Tropfen": the glass itself is a soft drop of jelly that shows what he does. */
+  'tropfen',
+  /** Round 2 "Polarlicht": a curtain of northern lights flows round the orb. */
+  'polarlicht',
 ] as const;
 export type SignatureKey = (typeof SIGNATURE_KEYS)[number];
 
