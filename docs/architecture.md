@@ -522,6 +522,16 @@ with the words that she decides now — no PIN, no adult (`POST /learner/consent
 record is not rewritten; it says what carried her until then. Time-travelled in
 `self-consent.int.test.ts`.
 
+**The e-mail loop as a recorded consent step** (issue #30, EDPB Guidelines 05/2020 Example 23):
+Supabase Auth enforces the click on the confirmation link anyway — there is no session before
+it — and the mail says in as many words that the click confirms the consent
+(`docs/consent-email-templates.md`, the owner pastes it into the Supabase console). The
+verifier carries `email_confirmed_at` of the user record (no such token claim exists) as
+`AuthUser.emailConfirmedAt`, and `GET /me` — the one request every app start makes, and one no
+consent, PIN or deletion gate can hold up — writes it once to `accounts.consent_confirmed_at`
+(`recordConsentConfirmation`, idempotent). It is a record, never a gate: a mail that was slow
+or lost locks nobody out. `consent-confirmation.int.test.ts`.
+
 **Whether the explanation is any good** is measured, not assumed (`evals/explain`, issue #77):
 Buddy explains five things a 12-year-old actually asks about, and a second model reads each
 answer against a fixed rubric — one thought at a time, something she can picture, an

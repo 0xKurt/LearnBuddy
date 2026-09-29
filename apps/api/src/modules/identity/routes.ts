@@ -39,6 +39,7 @@ import {
   isMinor,
   issueAdminToken,
   MINOR_AGE,
+  recordConsentConfirmation,
   verifyPin,
   type AccountRow,
   type LearnerRow,
@@ -113,6 +114,13 @@ identityRoutes.get('/me', requireUser, async (c) => {
   const deps = depsOf(c);
   const now = deps.now();
   const account = await findAccountByUser(deps.db, c.get('user').userId);
+  // The click on the confirmation link is the account holder's confirmed consent (issue #30).
+  // It is recorded here because /me is the one request every app start makes (the home
+  // screen's useMe, apps/mobile/app/index.tsx) and the only account route no gate can hold
+  // up: an outdated privacy text, a missing PIN or a pending deletion all still answer /me,
+  // so the record is never lost to one of them. It is a record, never a gate — nothing here
+  // waits for it.
+  if (account) await recordConsentConfirmation(deps.db, account, c.get('user').emailConfirmedAt);
   const learner = account ? await findLearner(deps.db, account.id) : null;
   const body: MeResponse = {
     account: account

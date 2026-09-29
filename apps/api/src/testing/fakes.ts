@@ -181,16 +181,33 @@ export class FakeAuth implements AuthVerifier {
     return this;
   }
 
-  constructor(private readonly db: Db) {}
+  constructor(
+    private readonly db: Db,
+    private readonly now: () => Date = () => new Date(),
+  ) {}
 
-  /** A signed-up Supabase user (row in auth.users) and a bearer token for it. */
-  async createUser(email?: string): Promise<{ userId: string; token: string }> {
+  /**
+   * A signed-up Supabase user (row in auth.users) and a bearer token for it. Its e-mail counts
+   * as confirmed, as on the hosted project: confirmations are on there, so there is no session
+   * before the link in the mail was clicked. `emailConfirmed: false` is the account that never
+   * clicked — it could not sign in on the hosted project, and here it shows that nothing is
+   * recorded as confirmed consent without the click (issue #30).
+   */
+  async createUser(
+    email?: string,
+    opts: { emailConfirmed?: boolean } = {},
+  ): Promise<{ userId: string; token: string }> {
     const row = await this.db.one<{ id: string }>(
       `insert into auth.users (email) values ($1) returning id`,
       [email ?? `user${++this.seq}@example.test`],
     );
     const token = `test-token-${row.id}`;
-    this.tokens.set(token, { userId: row.id, email: email ?? null, authenticatedAt: null });
+    this.tokens.set(token, {
+      userId: row.id,
+      email: email ?? null,
+      authenticatedAt: null,
+      emailConfirmedAt: opts.emailConfirmed === false ? null : this.now(),
+    });
     return { userId: row.id, token };
   }
 
@@ -198,6 +215,12 @@ export class FakeAuth implements AuthVerifier {
   signedInAt(token: string, epochSeconds: number): void {
     const u = this.tokens.get(token);
     if (u) this.tokens.set(token, { ...u, authenticatedAt: epochSeconds });
+  }
+
+  /** The click on the confirmation link, as Supabase records it (email_confirmed_at). */
+  confirmedEmailAt(token: string, at: Date | null): void {
+    const u = this.tokens.get(token);
+    if (u) this.tokens.set(token, { ...u, emailConfirmedAt: at });
   }
 
   revoke(token: string): void {

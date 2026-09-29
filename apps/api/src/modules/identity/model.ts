@@ -14,6 +14,8 @@ export type AccountRow = {
   locale: string;
   consent_version: string;
   consent_at: Date;
+  /** When the account holder confirmed that consent by e-mail (issue #30); null until then. */
+  consent_confirmed_at: Date | null;
   pin_hash: string | null;
   deletion_due_at: Date | null;
   deletion_started_at: Date | null;
@@ -66,6 +68,31 @@ export async function findAccountByUser(db: Db, authUserId: string): Promise<Acc
 
 export async function findLearner(db: Db, accountId: string): Promise<LearnerRow | null> {
   return db.maybeOne<LearnerRow>(`select * from learners where account_id = $1`, [accountId]);
+}
+
+/**
+ * Records that the account holder confirmed their consent by clicking the link in the
+ * confirmation e-mail (issue #30, EDPB Guidelines 05/2020 Example 23). Supabase Auth enforces
+ * that click anyway — nobody gets a session without it — and the mail now says in as many words
+ * that it confirms the consent (docs/consent-email-templates.md); this is what keeps the proof.
+ *
+ * The instant is Supabase's own (`email_confirmed_at`, when the link was clicked), not the app
+ * clock: it is an external receipt, like a delivery ticket, and is recorded, never guessed
+ * (CLAUDE.md rule 5). Idempotent — the first request carrying a confirmed e-mail writes it,
+ * every later one leaves it alone (the `coalesce` and the `where` hold for parallel requests
+ * too). Nothing waits for it, so a slow or lost mail never locks the learner out.
+ */
+export async function recordConsentConfirmation(
+  db: Db,
+  account: AccountRow,
+  emailConfirmedAt: Date | null,
+): Promise<void> {
+  if (!emailConfirmedAt || account.consent_confirmed_at !== null) return;
+  await db.query(
+    `update accounts set consent_confirmed_at = coalesce(consent_confirmed_at, $2)
+      where id = $1 and consent_confirmed_at is null and deletion_started_at is null`,
+    [account.id, emailConfirmedAt],
+  );
 }
 
 // ─────────────── PIN (admin gate for minor profiles) ───────────────
