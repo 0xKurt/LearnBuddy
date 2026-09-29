@@ -12,6 +12,10 @@
 // below it moves when it comes or goes.
 // While Buddy writes, the send button is "Stopp" (the turn ends stopped, §Turns); scrolled up to
 // read, "↓ Neue Antwort" brings her to a reply that came meanwhile (lib/buddy/newReply.ts).
+// A visit that begins a session — the app was started, or the break was long enough
+// (lib/buddy/sessionAnchor.ts, lib/buddy/appStart.ts, issue #104) — ends the conversation with
+// a greeting of Buddy's and opens on it: the greeting stands on top, everything earlier one
+// swipe above. Client-side only; no model is asked and nothing is stored for it.
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
@@ -79,7 +83,13 @@ import {
 } from '../lib/api/queries.js';
 import type { CaptureDraft } from '../lib/capture/draft.js';
 import { inThread } from '../lib/buddy/unsent.js';
-import { dayPart, greetingVariant, startsNewSession } from '../lib/buddy/sessionAnchor.js';
+import { takeColdStart } from '../lib/buddy/appStart.js';
+import {
+  dayPart,
+  greetingRoom,
+  greetingVariant,
+  startsNewSession,
+} from '../lib/buddy/sessionAnchor.js';
 import { drafts } from '../lib/capture/draftStorage.js';
 import { attachedInChat, useLiveAttachments } from '../lib/capture/live.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
@@ -239,14 +249,17 @@ export default function BuddyScreen() {
   /** Where the conversation starts (the row of ways to start ends): for its fade-out. */
   const [threadTop, setThreadTop] = useState(0);
   /**
-   * Where this visit starts in the conversation (issue #34): decided once, when the screen
-   * first sees the thread — after a break of a few hours the greeting line goes under the
-   * last message she had, so the new turn starts on a fresh page with everything older
-   * right above. Kept in a ref: it must not move while she is in the app.
+   * Where this visit starts in the conversation (issues #34, #104): decided once, when the
+   * screen first sees the thread — on the app's own start, or after a break of a few hours,
+   * Buddy's greeting goes under the last message she had, so the new turn starts on a fresh
+   * page with everything older right above. Kept in a ref: it must not move while she is in
+   * the app.
    */
   const sessionStart = useRef<{ afterMessageId: string; text: string } | null | undefined>(
     undefined,
   );
+  /** How tall the conversation's view is: the room the greeting needs to stand on top. */
+  const [threadView, setThreadView] = useState(0);
   useEffect(() => {
     const sent = awaitingReply.current;
     if (!sent || !thread || !focused.current) return;
@@ -766,10 +779,14 @@ export default function BuddyScreen() {
   // Decided once per visit (see the ref above); `undefined` means "not looked at yet".
   if (sessionStart.current === undefined) {
     const lastMessage = h.thread[h.thread.length - 1] ?? null;
-    const lastAt = lastMessage ? new Date(lastMessage.created_at) : null;
     const now = new Date();
+    // The app's own start begins a session whatever the clock says (issue #104). Taken here
+    // and not below the `&&`: it is claimed once per process either way, so a home that
+    // opened on an empty conversation does not leave the start lying around for later.
+    const coldStart = takeColdStart();
     sessionStart.current =
-      lastMessage && startsNewSession(lastAt, now)
+      lastMessage &&
+      startsNewSession({ lastMessageAt: new Date(lastMessage.created_at), now, coldStart })
         ? {
             afterMessageId: lastMessage.id,
             text: t(`buddy:session.${dayPart(now.getHours())}.${greetingVariant(now.getDate())}`, {
@@ -783,6 +800,21 @@ export default function BuddyScreen() {
     pending && !h.thread.some((m) => m.client_message_id === pending.id)
       ? { text: pending.text }
       : null;
+  /**
+   * The empty page she opens on (issue #104): while nothing has happened since the greeting,
+   * its block is given the height of the view, so the conversation standing at its end puts
+   * the greeting on top with the rest free — everything earlier is one swipe above, deleted
+   * and hidden from nothing. The room goes the moment something stands after the greeting:
+   * she sent a message, or Buddy has something to tell (a notice) — what is said last has to
+   * be what she sees, so then the conversation ends as it always did.
+   */
+  const greetingOpens =
+    sessionStart.current != null &&
+    sessionStart.current.afterMessageId === h.thread[h.thread.length - 1]?.id &&
+    shownPending === null &&
+    live === null &&
+    notices.length === 0;
+  const sessionRoom = greetingOpens ? greetingRoom(threadView, SPACE.sm) : 0;
 
   // "↓ Neue Antwort": she scrolled up and Buddy answered (or is writing) meanwhile.
   const newest = newestBuddyId(h.thread);
@@ -1034,7 +1066,12 @@ export default function BuddyScreen() {
                   if (was !== b.following) setAtEnd(b.following);
                 }}
                 scrollEventThrottle={64}
-                onLayout={follow}
+                onLayout={(e) => {
+                  // How much view the greeting can have (issue #104); a phone that turns or
+                  // a keyboard that opens changes it, and the room follows.
+                  setThreadView(e.nativeEvent.layout.height);
+                  follow();
+                }}
                 onContentSizeChange={follow}
                 refreshControl={
                   <RefreshControl
@@ -1056,6 +1093,7 @@ export default function BuddyScreen() {
                   live={live}
                   busy={busy || pending !== null}
                   sessionStart={sessionStart.current}
+                  sessionRoom={sessionRoom}
                   showActions
                   onUndo={(id) => void act(() => undoAction(id))}
                   onOption={(messageId, option) => void send(option, newId(), messageId)}

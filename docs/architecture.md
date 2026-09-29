@@ -1576,13 +1576,32 @@ once (`abandonStaleUploads`, run by the scheduler).
   `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_IMPRINT_URL`, `EXPO_PUBLIC_SUPPORT_EMAIL` are set
   (`apps/mobile/.env.example`).
 
-### A fresh page when she comes back (issue #34)
+### A fresh page when she comes back (issues #34, #104)
 
-The conversation is never cleared — continuity is the whole point — but after a break of four
-hours the next opening draws one quiet line under what was there, with a greeting for the time
-of day (`lib/buddy/sessionAnchor.ts`, five languages, three wordings per part of the day).
-Everything older sits right above it; the new turn starts below. Decided once when the screen
-first sees the thread, kept in a ref, so nothing jumps while she is in the app.
+The conversation is never cleared — continuity is the whole point — but a visit that begins a
+new session ends it with a **greeting from Buddy**: his own bubble, looking like everything
+else he says, with a wording for the time of day (`lib/buddy/sessionAnchor.ts`, five
+languages, three wordings per part of the day). Purely on the phone — nothing is stored for
+it and **no model is asked**, so an opening costs nothing (variant B of issue #104, a greeting
+the model writes from the last topic, is still an open owner decision).
+
+**What begins a session** (`startsNewSession`, either one on its own):
+
+- **the app's own start** — she closed it and opened it again (`lib/buddy/appStart.ts` holds
+  the one process-scoped flag and hands it out once, so a second mount of the home in the same
+  process is not a second start);
+- **a break of four hours** since the last message, on a screen that stayed open.
+
+Coming back from the background is neither: the greeting would otherwise come with every glance
+at the phone. Decided once when the screen first sees the thread, kept in a ref, so nothing
+jumps while she is in the app.
+
+**Where the eye lands.** While nothing stands after the greeting, its block is given the height
+of the conversation's view (`greetingRoom`, `Conversation` prop `sessionRoom`): the thread sits
+at its end as always, so the greeting rises to the top and the rest of the view is free — an
+empty, quiet page, with everything earlier **one swipe above**, hidden from neither eye nor
+screen reader. The room goes as soon as something follows the greeting (she sent a message, or
+Buddy has something to tell), because what is said last has to be what she sees.
 
 ### Look (themes, issue #29)
 
