@@ -5,7 +5,8 @@
   "pin_first": "Per questo serve il PIN dei genitori. Non c'è ancora. Si imposta più sotto, in “Per i genitori”.",
   "contact": {
     "question": "Buddy può scriverti sul telefono?",
-    "answer_on": "Sì. Buddy può scriverti anche sul telefono.",
+    "state_on": "Sì – mai dopo le {{quiet}}.",
+    "state_off": "No – solo qui nell'app.",
     "answer_off": "No. Buddy ti scrive solo qui nell'app.",
     "answer_paused": "Al momento c'è una pausa – fino a {{date}} compreso.",
     "explain_off": "Per esempio quando si avvicina una verifica. Mai di notte.",

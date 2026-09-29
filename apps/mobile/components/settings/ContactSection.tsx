@@ -188,11 +188,20 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
     }
   }
 
+  // The first line of the opened card: the answer, said once — never the heading's
+  // question again ("Ja. Buddy darf dir auch aufs Handy schreiben." repeated it, #95).
   const answer = !settings.contact_enabled
     ? t('contact.answer_off')
     : pausedUntil
       ? t('contact.answer_paused', { date: formatLastDay(pausedUntil, lang) })
-      : t('contact.answer_on');
+      : t('contact.state_on', { quiet: settings.quiet_start });
+  // Closed, one line says the state — permission and quiet time, or how long the
+  // pause runs — not the question a third time (issue #95; Group clamps it to one line).
+  const stateLine = !settings.contact_enabled
+    ? t('contact.state_off')
+    : pausedUntil
+      ? t('contact.pause_until', { date: formatLastDay(pausedUntil, lang) })
+      : t('contact.state_on', { quiet: settings.quiet_start });
   const preferred =
     WINDOWS.find((w) => w.start === settings.preferred_start && w.end === settings.preferred_end) ??
     null;
@@ -220,7 +229,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
   const [showTimes, setShowTimes] = useState(false);
 
   return (
-    <Group title={t('contact.question')} fold="contact" summary={answer}>
+    <Group title={t('contact.question')} fold="contact" summary={stateLine}>
       <Card tone="lavender" padding={20}>
         <View style={{ gap: 10 }}>
           <Text style={[TYPE.body, { fontWeight: '600' }]}>{answer}</Text>

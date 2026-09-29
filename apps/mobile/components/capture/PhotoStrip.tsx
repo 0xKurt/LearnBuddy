@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
+import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
@@ -117,16 +117,23 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                   position: 'absolute',
                   top: 8,
                   left: 8,
+                  // min sizes: large system text grows the badge over the thumbnail
+                  // instead of clipping the number in a fixed box (audit M-84, issue #73).
                   minWidth: 24,
-                  height: 24,
-                  borderRadius: 12,
+                  minHeight: 24,
+                  borderRadius: 999,
                   paddingHorizontal: 6,
                   backgroundColor: LB.primary,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ color: LB.paper, fontSize: 12, fontWeight: '700' }}>{i + 1}</Text>
+                <Text
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
+                  style={{ color: LB.paper, fontSize: 12, fontWeight: '700' }}
+                >
+                  {i + 1}
+                </Text>
               </View>
               {flagged?.has(uri) ? (
                 <View

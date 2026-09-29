@@ -5,7 +5,8 @@
   "pin_first": "Pour ça, il faut le code PIN des parents. Il n'y en a pas encore. Il se définit plus bas, dans « Pour les parents ».",
   "contact": {
     "question": "Buddy peut t'écrire sur ton téléphone ?",
-    "answer_on": "Oui. Buddy peut aussi t'écrire sur ton téléphone.",
+    "state_on": "Oui – jamais après {{quiet}}.",
+    "state_off": "Non – seulement ici, dans l'appli.",
     "answer_off": "Non. Buddy t'écrit seulement ici, dans l'appli.",
     "answer_paused": "En pause pour le moment – jusqu'au {{date}} inclus.",
     "explain_off": "Par exemple quand un contrôle approche. Jamais la nuit.",

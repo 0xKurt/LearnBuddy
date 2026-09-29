@@ -13,6 +13,7 @@ import { Keyboard, type LayoutChangeEvent, Platform, Text, View } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { announce } from '../../lib/announce.js';
+import { MAX_FONT_SCALE } from './Btn.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import {
@@ -76,15 +77,20 @@ export function ToastHost() {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
             style={{
-              width: 22,
-              height: 22,
-              borderRadius: 11,
+              // min sizes: large system text grows the mark into a bigger circle
+              // instead of clipping the "!" in a fixed box (audit M-84, issue #73).
+              minWidth: 22,
+              minHeight: 22,
+              borderRadius: 999,
               backgroundColor: LB.peachDeep,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: LB.ink, fontSize: 14, lineHeight: 18, fontWeight: '700' }}>
+            <Text
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
+              style={{ color: LB.ink, fontSize: 14, lineHeight: 18, fontWeight: '700' }}
+            >
               !
             </Text>
           </View>

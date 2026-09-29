@@ -50,7 +50,11 @@ export function EmptyState({
             justifyContent: 'center',
           }}
         >
-          <Text style={{ fontSize: 36 }}>{glyph}</Text>
+          {/* The glyph is a picture in a fixed circle: it does not follow the system text
+              size — the title below it does (audit M-84, issue #73). */}
+          <Text allowFontScaling={false} style={{ fontSize: 36 }}>
+            {glyph}
+          </Text>
         </View>
       ) : null}
       <Text

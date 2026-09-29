@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { MAX_FONT_SCALE } from './Btn.js';
 import { Icon } from './Icon.js';
 import type { OrbitItem } from './OrbitMenu.js';
 
@@ -61,6 +62,9 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
               </View>
               <Text
                 numberOfLines={3}
+                // Five labels share one row: they follow the system size to the same
+                // 200 % as every control label (Btn), not past it (audit M-84, issue #73).
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
                 style={{
                   marginTop: 4,
                   // flexShrink on the parent shares the width; no hard maxWidth, so a

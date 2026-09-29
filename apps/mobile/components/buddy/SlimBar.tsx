@@ -26,7 +26,7 @@ import { fadeIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
+import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Icon } from '../lb/Icon.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
@@ -70,7 +70,15 @@ function Bar({
   const [open, setOpen] = useState(false);
   const text = (
     <>
-      <Animated.Text key={title} entering={fadeIn()} numberOfLines={1} style={titleStyle()}>
+      {/* The bar carries a size contract (≤ ~64 pt collapsed, issue #17): its one-line
+          texts follow the system size to the control cap, not past it (M-84, issue #73). */}
+      <Animated.Text
+        key={title}
+        entering={fadeIn()}
+        numberOfLines={1}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
+        style={titleStyle()}
+      >
         {title}
       </Animated.Text>
       <View style={{ marginTop: 1 }}>{line}</View>
@@ -225,7 +233,7 @@ export function ReadyBar({
         .filter(Boolean)
         .join('. ')}
       line={
-        <Text numberOfLines={1} style={lineStyle()}>
+        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle()}>
           {line}
         </Text>
       }
@@ -285,7 +293,7 @@ export function ResumeBar({
       title={title}
       label={[title, line].join('. ')}
       line={
-        <Text numberOfLines={1} style={lineStyle()}>
+        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle()}>
           {line}
         </Text>
       }
@@ -331,7 +339,7 @@ export function CaptureBar({
       label={[title, line].join('. ')}
       leading={<Mark icon="camera" />}
       line={
-        <Text numberOfLines={1} style={lineStyle()}>
+        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle()}>
           {line}
         </Text>
       }
@@ -399,7 +407,11 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
         ) : null,
       ])}
       {label ? (
-        <Text numberOfLines={1} style={[lineStyle(), { marginLeft: 6, flexShrink: 1 }]}>
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
+          style={[lineStyle(), { marginLeft: 6, flexShrink: 1 }]}
+        >
           {label}
         </Text>
       ) : null}
