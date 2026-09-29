@@ -192,7 +192,6 @@ type KeysFor<S extends Surface> = {
 // Surfaces are declared as readonly Surface[] (not literal tuples), so the static
 // types stay the full union; the runtime schema below is what limits a surface.
 export type TurnAction = ActionOf<KeysFor<'turn'>>;
-export type CheckAction = ActionOf<'prepare_practice' | 'request_material' | 'schedule_check'>;
 
 type Option = (typeof ACT_SCHEMAS)[ToolName];
 

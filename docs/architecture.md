@@ -1,6 +1,6 @@
 # LearnBuddy architecture (Buddy rebuild)
 
-Status: current for the rebuild on branch `claude/exciting-galileo-nl25uq` (2026-09-25).
+Status: current on `main` (2026-09-29).
 Decision record: [ADR 0004](adr/0004-proactive-buddy.md). Why the rebuild: [Buddy: Prinzip und
 Diagnose](buddy/01-prinzip-und-diagnose.md). Privacy: [privacy.md](privacy.md).
 The numbered docs `01`–`10` describe the previous app and are kept for history.

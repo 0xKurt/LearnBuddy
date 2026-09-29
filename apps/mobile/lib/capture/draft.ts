@@ -46,7 +46,6 @@ const Draft = z.object({
   savedAt: z.string(),
 });
 export type CaptureDraft = z.output<typeof Draft>;
-export type DraftPhoto = CaptureDraft['photos'][number];
 
 const Sent = z.array(
   z.object({
@@ -233,5 +232,3 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
     },
   };
 }
-
-export type DraftStore = ReturnType<typeof createDraftStore>;

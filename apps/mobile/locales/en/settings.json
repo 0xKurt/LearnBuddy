@@ -1,7 +1,6 @@
 {
   "title": "Settings",
   "saved": "Saved.",
-  "selected": "{{label}}, selected",
   "clock": "{{time}}",
   "pin_first": "This needs your parents' PIN. There isn't one yet. It's set below under “For parents”.",
   "contact": {
@@ -166,21 +165,6 @@
       "saved": "Profile saved."
     },
     "forgot_intro": "You set a new PIN with the account's password. Everything else here stays closed until then."
-  },
-  "status": {
-    "title": "Is everything working?",
-    "model_question": "Can Buddy answer?",
-    "model_true": "Yes.",
-    "model_false": "Not right now. Practising still works.",
-    "push_question": "Can messages reach a phone?",
-    "push_active": "Yes. A phone is registered.",
-    "push_no_token": "No. No phone is registered. Everything arrives here in the app.",
-    "push_disabled": "No. This is switched off at LearnBuddy right now. Everything arrives here in the app.",
-    "push_invalid": "No. The registered phone can no longer be reached. Everything arrives here in the app.",
-    "scheduler_question": "Is Buddy working in the background?",
-    "scheduler_ok": "Yes. Even when the app is closed.",
-    "scheduler_stale": "Not right now. Reminders may be late.",
-    "scheduler_unknown": "Unclear. There's no report yet."
   },
   "about": {
     "title": "About LearnBuddy",

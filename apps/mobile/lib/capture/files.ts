@@ -3,8 +3,6 @@
 // into the browser. Photos go through the same preparation and check as camera photos; a
 // PDF is sent as it is (the API counts its pages and the model reads it).
 
-import { z } from 'zod';
-
 export const PDF_MIME = 'application/pdf';
 /** All PDFs of one sheet together, as the API takes them (modules/materials/pdf.ts). */
 export const MAX_PDF_BYTES = 15 * 1024 * 1024;
@@ -72,11 +70,3 @@ export function sortIncoming(
   }
   return { take, unsupported, tooLarge };
 }
-
-/** Files handed over by another app (lib/capture/share.ts), as validated data. */
-export const IncomingFileSchema = z.object({
-  uri: z.string().min(1),
-  name: z.string().nullable(),
-  mimeType: z.string().nullable(),
-  size: z.number().nullable(),
-});

@@ -61,8 +61,6 @@ function uploadLink(l: DraftLink): MaterialLink {
   return { stepId: l.stepId, goalId: l.goalId, purpose: l.purpose, completes: l.completes };
 }
 
-export type Attachments = ReturnType<typeof useAttachments>;
-
 type Options = {
   /** What the pages are for; a resumed draft brings its own. */
   initialLink: DraftLink;

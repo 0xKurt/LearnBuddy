@@ -30,11 +30,6 @@ export function scriptGenerations(...added: GenerationRule[]): void {
   rules.push(...added);
 }
 
-/** Forgets every rule (a new dev stack starts clean). */
-export function resetGenerations(): void {
-  rules.length = 0;
-}
-
 /** Installs the dispatcher; call it once, after every scenario has added its rules. */
 export function installGenerations(llm: ScriptedGateway): void {
   llm.byDefault('explain', (req: LlmRequest) => {

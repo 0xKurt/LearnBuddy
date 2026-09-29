@@ -70,12 +70,6 @@
       "unsupported": "Non riesco a leggere questa registrazione. Riprova, per favore.",
       "failed": "La registrazione non è riuscita. Riprova, per favore."
     },
-    "overall": {
-      "good": "Suona benissimo!",
-      "almost": "Quasi – fai attenzione a: {{words}}",
-      "almost_plain": "Quasi – solo un po' più chiaro.",
-      "retry": "Riprova – prima ascoltalo con calma."
-    },
     "words_ok": "Suona bene: {{words}}.",
     "words_practise": "Da riprovare: {{words}}.",
     "legend": "Sottolineato = da riprovare",

@@ -122,10 +122,6 @@ export function isLocalDate(value: string): boolean {
   return t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d;
 }
 
-export function isLocalTime(value: string): boolean {
-  return TIME_RE.test(value);
-}
-
 function parseDate(date: string): [number, number, number] {
   if (!isLocalDate(date)) throw new Error(`invalid local date: ${date}`);
   const m = DATE_RE.exec(date)!;

@@ -1,7 +1,6 @@
 {
   "title": "Impostazioni",
   "saved": "Salvato.",
-  "selected": "{{label}}, selezionato",
   "clock": "{{time}}",
   "pin_first": "Per questo serve il PIN dei genitori. Non c'è ancora. Si imposta più sotto, in “Per i genitori”.",
   "contact": {
@@ -166,21 +165,6 @@
       "saved": "Profilo salvato."
     },
     "forgot_intro": "Un nuovo PIN si imposta con la password dell'account. Tutto il resto qui rimane chiuso fino ad allora."
-  },
-  "status": {
-    "title": "Funziona tutto?",
-    "model_question": "Buddy può rispondere?",
-    "model_true": "Sì.",
-    "model_false": "Al momento no. Puoi comunque esercitarti.",
-    "push_question": "I messaggi possono arrivare sul telefono?",
-    "push_active": "Sì. Un telefono è registrato.",
-    "push_no_token": "No. Nessun telefono è registrato. Tutto arriva qui nell'app.",
-    "push_disabled": "No. Al momento è disattivato su LearnBuddy. Tutto arriva qui nell'app.",
-    "push_invalid": "No. Il telefono registrato non è più raggiungibile. Tutto arriva qui nell'app.",
-    "scheduler_question": "Buddy lavora in background?",
-    "scheduler_ok": "Sì. Anche quando l'app è chiusa.",
-    "scheduler_stale": "Al momento no. I promemoria potrebbero arrivare in ritardo.",
-    "scheduler_unknown": "Non è chiaro. Non c'è ancora nessun riscontro."
   },
   "about": {
     "title": "Informazioni su LearnBuddy",

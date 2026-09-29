@@ -49,11 +49,6 @@ export function scriptTurns(...added: TurnRule[]): void {
   rules.push(...added);
 }
 
-/** Forgets every rule (a new dev stack starts clean). */
-export function resetTurns(): void {
-  rules.length = 0;
-}
-
 /** Installs the dispatcher; call it once, after every scenario has added its rules. */
 export function installTurns(llm: ScriptedGateway): void {
   const failedOnce = new Set<string>();

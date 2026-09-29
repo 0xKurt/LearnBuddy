@@ -18,7 +18,6 @@ import { followResumeCard } from './sessionCache.js';
 import {
   getHome,
   getLibrary,
-  getMaterial,
   getMaterialItems,
   getMe,
   getMemory,
@@ -113,18 +112,6 @@ export const useLibrary = () =>
     queryFn: getLibrary,
     refetchInterval: (q) => libraryPollMs(q.state.data),
     refetchOnMount: (q) => (libraryPollMs(q.state.data) === false ? true : 'always'),
-  });
-
-export const useMaterial = (id: string) =>
-  useQuery({
-    queryKey: keys.material(id),
-    queryFn: async () => {
-      const m = await getMaterial(id);
-      followMaterial(queryClient, m);
-      return m;
-    },
-    refetchInterval: (q) =>
-      q.state.data && ['queued', 'processing'].includes(q.state.data.status) ? 3000 : false,
   });
 
 /** The questions of one material; follows it while its photos are being read. */

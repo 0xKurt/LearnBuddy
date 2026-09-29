@@ -27,9 +27,6 @@ import { practiceRoutes } from './modules/practice/routes.js';
 import { schedulerHealth, type SchedulerHealth } from './modules/scheduler/health.js';
 import { runTick } from './modules/scheduler/tick.js';
 
-/** The scheduler counts as stalled after this long without a finished run. */
-export { SCHEDULER_STALE_MS } from './modules/scheduler/health.js';
-
 function sameSecret(given: string, expected: string): boolean {
   const a = createHash('sha256').update(given).digest();
   const b = createHash('sha256').update(expected).digest();

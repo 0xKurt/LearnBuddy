@@ -56,6 +56,8 @@ for (const m of read(join(API, 'app.ts')).matchAll(/api\.(get|post)\('([^']*)'/g
 /** Routes the app does not call, and why. */
 const SERVER_ONLY: Record<string, string> = {
   'GET /health': 'monitoring',
+  'GET /materials/:p':
+    'the app reads a sheet through GET /materials/:p/items; the plain resource read stays as the API surface the integration tests check tenancy and the 404 after erasure on',
   'POST /internal/tick': 'the scheduler (pg_cron) calls it every minute',
   'DELETE /buddy/push-tokens':
     'older app builds sign out with it; this build releases the install (POST /push-devices/release)',

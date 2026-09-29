@@ -70,12 +70,6 @@
       "unsupported": "Diese Aufnahme kann ich leider nicht lesen. Versuch es bitte nochmal.",
       "failed": "Die Aufnahme hat nicht geklappt. Versuch es bitte nochmal."
     },
-    "overall": {
-      "good": "Klingt super!",
-      "almost": "Fast – achte auf: {{words}}",
-      "almost_plain": "Fast – noch ein kleines bisschen deutlicher.",
-      "retry": "Versuch's nochmal – hör es dir vorher in Ruhe an."
-    },
     "words_ok": "Klingt gut: {{words}}.",
     "words_practise": "Nochmal üben: {{words}}.",
     "legend": "Unterstrichen = nochmal üben",
