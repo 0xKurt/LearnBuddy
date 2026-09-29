@@ -7,6 +7,11 @@
 // does not start — the phone's own voice (expo-speech) reads the sentence instead, as before.
 // She never waits in silence.
 //
+// This file is the wiring: the network, the file cache, the player and the phone's voice. What
+// happens in which order is lib/speech/pipeline.ts (pure, unit-tested) — including reading a
+// reply while it is still being written, in one utterance, so the next sentence is fetched
+// while the current one plays (issue #24).
+//
 // Only one text plays at a time; starting another ends the first (its onEnd fires 'stopped').
 // What is being read is published in voiceStore (lib/speech/voiceState.ts) for talk mode's
 // state and read-along highlighting (useBuddyVoice).
@@ -18,18 +23,19 @@ import * as Speech from 'expo-speech';
 import { ApiError } from '../api/client.js';
 import { synthesizeSpeech } from '../api/endpoints.js';
 import { audioUri, releaseAudio } from './naturalAudio.js';
-import { playAudio, type PlayHandle } from './naturalPlayer.js';
+import { playAudio } from './naturalPlayer.js';
 import {
-  deviceRate,
-  NaturalGate,
-  readingParts,
-  sentencesOf,
-  type SpeechFailure,
-} from './readAloud.js';
+  readText,
+  type Clip,
+  type ListenEnd,
+  type Reading,
+  type ReadingEffects,
+} from './pipeline.js';
+import { deviceRate, NaturalGate, type SpeechFailure } from './readAloud.js';
 import { pickVoice, SPEECH_RATE, voiceLocale } from './voice.js';
 import { voiceStore } from './voiceState.js';
 
-export type ListenEnd = 'done' | 'stopped' | 'error';
+export type { ListenEnd } from './pipeline.js';
 
 const startListeners = new Set<() => void>();
 
@@ -63,33 +69,17 @@ async function deviceVoiceFor(locale: string): Promise<string | null> {
 // ─────────────── Buddy's natural voice ───────────────
 
 const gate = new NaturalGate();
-/** A sentence that takes longer than this to arrive is read by the phone instead. */
+/** A sentence fetched while another one plays may take this long before the phone reads it. */
 const FETCH_TIMEOUT_MS = 7000;
 /**
- * The first piece is the silence she actually feels (issue #41): after this the phone's
- * voice starts instead. Only for the first piece, and it does not put the natural voice to
- * rest — the next sentences are fetched while this one plays and usually arrive in time.
- * Measured 28.09.: a normal sentence takes ~0.85 s to synthesise, a long one ~1.8 s.
+ * A piece she is waiting for in silence — the first one, or one written late — is given only
+ * this long (issue #41): after it the phone's voice reads that piece instead. It does not put
+ * the natural voice to rest; the sentences fetched ahead usually arrive in time. Measured
+ * 29.09. (apps/api/evals/tts): synthesising a sentence takes 0.74–1.6 s.
  */
 const FIRST_PIECE_TIMEOUT_MS = 2500;
 
-type Clip = { uri: string } | null;
-
-type Utterance = {
-  text: string;
-  locale: string;
-  slow: boolean;
-  /** A voice to try instead of hers (the voice picker's preview); null = her own. */
-  voice: VoiceName | null;
-  /** What is spoken, in order; `at` is the sentence it belongs to (highlighting). */
-  pieces: Array<{ at: number; spoken: string }>;
-  onEnd: (why: ListenEnd) => void;
-  fetches: Map<number, Promise<Clip>>;
-  ready: Set<number>;
-  playing: PlayHandle | null;
-};
-
-let current: Utterance | null = null;
+let current: Reading | null = null;
 
 function failureOf(err: unknown): SpeechFailure {
   if (err instanceof ApiError) {
@@ -120,116 +110,93 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-/** The audio of piece i (fetched once per utterance); null = the phone reads it. */
-function fetchClip(u: Utterance, i: number): Promise<Clip> {
-  const known = u.fetches.get(i);
-  if (known) return known;
-  const piece = u.pieces[i];
-  const p: Promise<Clip> =
-    !piece || !/^[a-z]{2}-[A-Z]{2}$/.test(u.locale) || !gate.allows(u.locale)
-      ? Promise.resolve(null)
-      : (async () => {
-          const waiting = i === 0 ? FIRST_PIECE_TIMEOUT_MS : FETCH_TIMEOUT_MS;
-          try {
-            const res = await withTimeout(
-              synthesizeSpeech({
-                text: piece.spoken,
-                locale: u.locale,
-                ...(u.slow ? { slow: true } : {}),
-                ...(u.voice ? { voice: u.voice } : {}),
-              }),
-              waiting,
-            );
-            gate.speed = res.speed;
-            return { uri: audioUri(res.audio_base64, res.mime) };
-          } catch (err) {
-            const failure = failureOf(err);
-            // A slow first piece is impatience, not a broken voice: the phone reads this one,
-            // the natural voice stays on for the rest of the reply.
-            const impatient = i === 0 && failure.code === 'timeout';
-            if (!impatient) gate.failed(u.locale, failure);
-            return null;
-          }
-        })();
-  const tracked = p.then((clip) => {
-    u.ready.add(i);
-    return clip;
-  });
-  u.fetches.set(i, tracked);
-  return tracked;
-}
+export type SpeakOptions = {
+  slow?: boolean;
+  /** Read in this voice instead of hers, without changing it (the voice picker's preview). */
+  voice?: VoiceName;
+  onEnd?: (why: ListenEnd) => void;
+  /** What each sentence says (math in words, lib/speech/spoken.ts). */
+  transform?: (sentence: string) => string;
+};
 
-function end(u: Utterance, why: ListenEnd): void {
-  if (current !== u) return;
-  current = null;
-  const playing = u.playing;
-  u.playing = null;
-  playing?.stop();
-  // Audio fetched ahead and never played is thrown away.
-  for (const f of u.fetches.values()) void f.then((clip) => clip && releaseAudio(clip.uri));
-  voiceStore.reset();
-  u.onEnd(why);
-}
-
-function playNext(u: Utterance, i: number): void {
-  if (current !== u) return;
-  const piece = u.pieces[i];
-  if (!piece) {
-    end(u, 'done');
-    return;
+/** Ends whatever is being read and starts a new reading of `lang`. */
+function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
+  for (const listener of [...startListeners]) listener();
+  const previous = current;
+  if (previous) {
+    previous.stop('stopped');
+    Speech.stop().catch(() => undefined);
   }
-  // "Loading" only while the audio is really still on its way.
-  if (!u.ready.has(i)) voiceStore.set({ phase: 'loading', index: piece.at, progress: null });
-  void fetchClip(u, i).then((clip) => {
-    if (current !== u) return;
-    void fetchClip(u, i + 1); // The next sentence arrives while this one plays.
-    if (!clip) {
-      playOnDevice(u, i);
-      return;
-    }
-    voiceStore.set({ index: piece.at, progress: null });
-    u.playing = playAudio(clip.uri, {
-      onStart: () => {
-        if (current === u) voiceStore.set({ phase: 'speaking', source: 'natural', progress: 0 });
-      },
-      onProgress: (progress) => {
-        if (current === u) voiceStore.set({ progress });
-      },
-      onEnd: (why) => {
-        releaseAudio(clip.uri);
-        if (current !== u || why === 'stopped') return;
-        u.playing = null;
-        if (why === 'done') {
-          playNext(u, i + 1);
-          return;
+  const locale = voiceLocale(lang);
+  const slow = opts.slow ?? false;
+  const self: { reading: Reading | null } = { reading: null };
+  const effects: ReadingEffects = {
+    async fetch(spoken, ahead): Promise<Clip> {
+      if (!/^[a-z]{2}-[A-Z]{2}$/.test(locale) || !gate.allows(locale)) return null;
+      try {
+        const res = await withTimeout(
+          synthesizeSpeech({
+            text: spoken,
+            locale,
+            ...(slow ? { slow: true } : {}),
+            ...(opts.voice ? { voice: opts.voice } : {}),
+          }),
+          ahead ? FETCH_TIMEOUT_MS : FIRST_PIECE_TIMEOUT_MS,
+        );
+        gate.speed = res.speed;
+        return { uri: audioUri(res.audio_base64, res.mime) };
+      } catch (err) {
+        const failure = failureOf(err);
+        // Giving up on a piece she waits for in silence is impatience, not a broken voice:
+        // the phone reads this one, the natural voice stays on for the rest of the reply.
+        const impatient = !ahead && failure.code === 'timeout';
+        if (!impatient) gate.failed(locale, failure);
+        return null;
+      }
+    },
+    release: releaseAudio,
+    play: (uri, on) =>
+      playAudio(uri, {
+        onStart: on.start,
+        onProgress: on.progress,
+        onEnd: (why) => {
+          // The player failed: the phone reads this sentence, and the next ones for a minute.
+          if (why === 'error')
+            gate.failed(locale, { status: 0, code: 'playback', reason: null, retryAfterS: null });
+          on.end(why);
+        },
+      }),
+    device: (spoken, on) => {
+      void deviceVoiceFor(locale).then((voice) => {
+        if (current !== self.reading) return; // Replaced or stopped while looking for a voice.
+        try {
+          Speech.speak(spoken, {
+            language: locale,
+            ...(voice ? { voice } : {}),
+            rate: deviceRate(slow ? SPEECH_RATE.slow : SPEECH_RATE.normal, gate.speed),
+            onDone: on.done,
+            onStopped: on.stopped,
+            onError: on.error,
+          });
+        } catch {
+          on.error();
         }
-        // The player failed: the phone reads this sentence, and the next ones for a minute.
-        gate.failed(u.locale, { status: 0, code: 'playback', reason: null, retryAfterS: null });
-        playOnDevice(u, i);
-      },
-    });
-  });
-}
-
-function playOnDevice(u: Utterance, i: number): void {
-  const piece = u.pieces[i];
-  if (!piece) return;
-  voiceStore.set({ phase: 'speaking', source: 'device', index: piece.at, progress: null });
-  void deviceVoiceFor(u.locale).then((voice) => {
-    if (current !== u) return; // Replaced or stopped while looking for a voice.
-    try {
-      Speech.speak(piece.spoken, {
-        language: u.locale,
-        ...(voice ? { voice } : {}),
-        rate: deviceRate(u.slow ? SPEECH_RATE.slow : SPEECH_RATE.normal, gate.speed),
-        onDone: () => playNext(u, i + 1),
-        onStopped: () => end(u, 'stopped'),
-        onError: () => end(u, 'error'),
       });
-    } catch {
-      end(u, 'error');
-    }
+    },
+  };
+  const reading = readText({
+    effects,
+    store: voiceStore,
+    transform: opts.transform ?? ((s: string) => s),
+    growing,
+    onEnd: (why) => {
+      if (current === self.reading) current = null;
+      opts.onEnd?.(why);
+    },
   });
+  self.reading = reading;
+  current = reading;
+  return reading;
 }
 
 /**
@@ -237,56 +204,38 @@ function playOnDevice(u: Utterance, i: number): void {
  * `transform` turns each sentence into what is said (math in words, lib/speech/spoken.ts);
  * the text itself stays what is shown, so read-along can highlight its sentences.
  */
-export async function speak(
-  text: string,
-  lang: string,
-  opts: {
-    slow?: boolean;
-    /** Read in this voice instead of hers, without changing it (the voice picker's preview). */
-    voice?: VoiceName;
-    onEnd?: (why: ListenEnd) => void;
-    transform?: (sentence: string) => string;
-  } = {},
-): Promise<void> {
-  for (const listener of [...startListeners]) listener();
-  const previous = current;
-  if (previous) {
-    end(previous, 'stopped');
-    Speech.stop().catch(() => undefined);
-  }
-  const transform = opts.transform ?? ((s: string) => s);
-  const u: Utterance = {
-    text,
-    locale: voiceLocale(lang),
-    slow: opts.slow ?? false,
-    voice: opts.voice ?? null,
-    pieces: readingParts(text, transform).flatMap((p) =>
-      p.spoken.map((spoken) => ({ at: p.at, spoken })),
-    ),
-    onEnd: opts.onEnd ?? (() => undefined),
-    fetches: new Map(),
-    ready: new Set(),
-    playing: null,
+export async function speak(text: string, lang: string, opts: SpeakOptions = {}): Promise<void> {
+  begin(lang, false, opts).feed(text, true);
+}
+
+/** A text read aloud while it is still being written (lib/speech/streamSpeaker.ts). */
+export type SpeechStream = {
+  /** The text as far as it is written; `done` once it is complete. */
+  feed: (text: string, done: boolean) => void;
+  /** Stops it; `onEnd` fires with 'stopped'. */
+  cancel: () => void;
+};
+
+/**
+ * Reads a text that is still being written: every finished sentence is said in turn, all in
+ * one utterance — so the audio of the next sentence is fetched while the current one plays
+ * instead of after it (issue #24). Running out of sentences waits; `feed(…, true)` ends it.
+ */
+export function speakStream(lang: string, opts: SpeakOptions = {}): SpeechStream {
+  const reading = begin(lang, true, opts);
+  return {
+    feed: (text, done) => reading.feed(text, done),
+    cancel: () => {
+      if (current !== reading) return;
+      reading.stop('stopped');
+      Speech.stop().catch(() => undefined);
+    },
   };
-  current = u;
-  if (u.pieces.length === 0) {
-    end(u, 'done');
-    return;
-  }
-  voiceStore.set({
-    phase: 'loading',
-    text,
-    sentences: sentencesOf(text),
-    index: u.pieces[0]!.at,
-    progress: null,
-    source: null,
-  });
-  playNext(u, 0);
 }
 
 /** Stops whatever is being read aloud. */
 export function stop(): void {
-  if (current) end(current, 'stopped');
+  current?.stop('stopped');
   Speech.stop().catch(() => undefined);
 }
 

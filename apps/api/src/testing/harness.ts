@@ -63,11 +63,14 @@ export async function createTestEnv(
   });
   const db = createDb(database.url, { max: 8 });
   const clock = new TestClock(opts.start ?? '2026-09-28T08:00:00Z');
-  // Background hints for new questions are answered with "none" unless a test scripts them.
-  const llm = new ScriptedGateway().byDefault('hints', { json: { items: [] } });
+  // Background hints for new questions are answered with "none" unless a test scripts
+  // them; the concept-image pass finds no figures unless a test scripts boxes (issue #50).
+  const llm = new ScriptedGateway()
+    .byDefault('hints', { json: { items: [] } })
+    .byDefault('figures', { json: { assets: [] } });
   const push = new FakePush();
   const speech = new FakeSpeech();
-  const auth = new FakeAuth(db);
+  const auth = new FakeAuth(db, clock.now);
   const storage = new MemoryStorage();
   const pending: Array<Promise<void>> = [];
   const deps: Deps = {
@@ -167,9 +170,16 @@ export async function onboard(
     timezone?: string;
     /** Set up the adult PIN during onboarding, as the app does for a child profile. */
     pin?: string;
+    /**
+     * Whether the account holder clicked the link in the confirmation mail (issue #30).
+     * Default true: on the hosted project nobody gets a session before that click.
+     */
+    emailConfirmed?: boolean;
   } = {},
 ): Promise<Learner> {
-  const { userId, token } = await env.auth.createUser();
+  const { userId, token } = await env.auth.createUser(undefined, {
+    emailConfirmed: opts.emailConfirmed !== false,
+  });
   // Just signed up with e-mail and password.
   env.auth.signedInAt(token, Math.floor(env.clock.now().getTime() / 1000));
   const api = apiClient(env, token, { 'x-timezone': opts.timezone ?? 'Europe/Berlin' });

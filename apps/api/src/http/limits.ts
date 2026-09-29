@@ -12,8 +12,16 @@ import { findAccountByUser } from '../modules/identity/model.js';
 import { authenticate, depsOf, type AppEnv } from './context.js';
 
 const BUDGETED: Array<{ scope: LimitScope; method: string; path: RegExp }> = [
-  { scope: 'answers', method: 'POST', path: /\/practice\/sessions\/[^/]+\/(answer|speak)$/ },
+  // speak-word joined the spoken answers (issue #83); it carries the same budget (issue #86).
+  {
+    scope: 'answers',
+    method: 'POST',
+    path: /\/practice\/sessions\/[^/]+\/(answer|speak|speak-word)$/,
+  },
   { scope: 'messages', method: 'POST', path: /\/buddy\/messages$/ },
+  // Dictation parses up to 2 MB per request before the daily model cap answers 429 —
+  // without an hourly budget those rounds were unbounded per account (issue #86).
+  { scope: 'voice', method: 'POST', path: /\/voice\/transcribe$/ },
 ];
 
 export function scopeFor(method: string, path: string): LimitScope | null {

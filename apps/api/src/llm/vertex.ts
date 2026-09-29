@@ -61,7 +61,8 @@ export function ensureCredentialsFile(config: Config): void {
   process.env.GOOGLE_APPLICATION_CREDENTIALS = path;
 }
 
-function usageOf(
+/** What one call cost, read from the provider's own numbers. Exported for unit tests. */
+export function usageOf(
   model: string,
   response: GenerateContentResponse | null,
   latencyMs: number,
@@ -70,11 +71,17 @@ function usageOf(
   const inputTokens = meta?.promptTokenCount ?? 0;
   const outputTokens = meta?.candidatesTokenCount ?? 0;
   const thoughtTokens = meta?.thoughtsTokenCount ?? 0;
+  // Implicit caching: how much of the prompt Gemini recognised from an earlier request
+  // (issue #25). Part of promptTokenCount, and only reported when it happened — so
+  // cost_micros stays the full price and this is the number that shows the saving, not
+  // a discount we assume (rule 5, docs/architecture.md §Speed).
+  const cachedTokens = meta?.cachedContentTokenCount ?? 0;
   return {
     model,
     inputTokens,
     outputTokens,
     thoughtTokens,
+    cachedTokens,
     costMicros: costMicros(model, inputTokens, outputTokens, thoughtTokens),
     latencyMs,
   };

@@ -9,7 +9,8 @@
     "learner_stated": "Hai detto: “{{quote}}”",
     "learner_stated_plain": "L'hai raccontato tu a Buddy.",
     "learner_edited": "Modificato da te.",
-    "account_holder": "Aggiunto da una persona adulta."
+    "account_holder": "Aggiunto da una persona adulta.",
+    "consolidated": "Più cose che hai raccontato, riunite in una."
   },
   "edit": "Modifica",
   "edit_a11y": "Modifica: {{statement}}",

@@ -32,4 +32,31 @@ if ! grep -q "http://localhost:$API_PORT" apps/mobile/dist-web/_expo/static/js/w
   exit 1
 fi
 
+# A killed run leaves its servers listening, and the next run then reuses them against a
+# stale bundle — a white screen that looks like a product bug. On the DEFAULT ports we only
+# wait (8081 may be the owner's Metro, 8787 another local server — never kill those); on
+# explicitly set LB_* ports they are the walkthrough's own, and a listener there can only be
+# a leftover: it is removed.
+WEB_PORT="${LB_WEB_PORT:-8081}"
+if command -v lsof >/dev/null 2>&1; then
+  for port in "$API_PORT" "$WEB_PORT"; do
+    holders="$(lsof -ti "tcp:$port" 2>/dev/null || true)"
+    [ -z "$holders" ] && continue
+    if [ -n "$LB_WEB_PORT$LB_API_PORT" ]; then
+      echo "web-walkthrough: clearing leftover server on port $port"
+      kill $holders 2>/dev/null || true
+      sleep 1
+      leftover="$(lsof -ti "tcp:$port" 2>/dev/null || true)"
+      [ -n "$leftover" ] && kill -9 $leftover 2>/dev/null || true
+    else
+      waited=0
+      while [ -n "$(lsof -ti "tcp:$port" 2>/dev/null)" ] && [ "$waited" -lt 30 ]; do
+        [ "$waited" -eq 0 ] && echo "web-walkthrough: waiting for port $port to be free …"
+        sleep 1
+        waited=$((waited + 1))
+      done
+    fi
+  done
+fi
+
 npx playwright test "$@"

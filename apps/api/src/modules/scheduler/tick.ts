@@ -20,6 +20,7 @@ import {
   sweepForgottenPhotos,
 } from '../materials/purge.js';
 import { planSummaries, runSummary } from '../buddy/summarise.js';
+import { planConsolidations, runConsolidation } from '../buddy/consolidate.js';
 import { purgeSpeechCache } from '../voice/speech.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
@@ -152,30 +153,56 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
 
   // A conversation that has come to rest is written down in two to four sentences, so Buddy
   // still knows weeks later what she was doing (issue #22, modules/buddy/summarise.ts).
-  // Planned before the maintenance loop, so the job also runs in this tick.
+  // A model call on her conversation, so it stands behind the SAME consent gate as every
+  // other model work — never in the erasure batch, which skips that gate on purpose
+  // (issue #85: it inherited the exemption meant for deletions).
   await guard('summaries', async () => {
     if (left() < 10_000) return;
     await planSummaries(deps);
+    while (left() > 10_000) {
+      const [job] = await claimJobs(deps.db, {
+        now: deps.now(),
+        kinds: ['summarise_session'],
+        limit: 1,
+        leaseSeconds: 120,
+        consentVersion: deps.config.CONSENT_VERSION,
+      });
+      if (!job) break;
+      await runJobSafely(deps, job, () => runSummary(deps, job));
+    }
+  });
+
+  // From ~45 things Buddy knows about her, the model is asked once per kind what says the
+  // same thing twice and what a newer item contradicts, so there is room for something new
+  // (issue #20, modules/buddy/consolidate.ts). A model call on what she told Buddy, so it
+  // is claimed behind the SAME consent gate as the summaries above — never in the
+  // maintenance batch, which skips that gate for deletions on purpose (issue #85).
+  await guard('consolidate', async () => {
+    if (left() < 10_000) return;
+    await planConsolidations(deps);
+    while (left() > 10_000) {
+      const [job] = await claimJobs(deps.db, {
+        now: deps.now(),
+        kinds: ['consolidate_memories'],
+        limit: 1,
+        leaseSeconds: 120,
+        consentVersion: deps.config.CONSENT_VERSION,
+      });
+      if (!job) break;
+      await runJobSafely(deps, job, () => runConsolidation(deps, job));
+    }
   });
 
   await guard('maintenance', async () => {
     while (left() > 5_000) {
       const [job] = await claimJobs(deps.db, {
         now: deps.now(),
-        kinds: ['purge_photos', 'purge_content', 'delete_account', 'summarise_session'],
+        kinds: ['purge_photos', 'purge_content', 'delete_account'],
         limit: 1,
         leaseSeconds: 120,
       });
       if (!job) break;
-      await runJobSafely(deps, job, () =>
-        job.kind === 'purge_photos'
-          ? purgePhotos(deps, job)
-          : job.kind === 'purge_content'
-            ? purgeContent(deps, job)
-            : job.kind === 'summarise_session'
-              ? runSummary(deps, job)
-              : executeAccountDeletion(deps, job),
-      );
+      await runJobSafely(deps, job, () => runMaintenanceJob(deps, job));
       stats.maintenance++;
     }
   });
@@ -197,6 +224,21 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     [deps.now(), stats.errors[0] ?? null, JSON.stringify(stats)],
   );
   return stats;
+}
+
+/** The handler of a claimed maintenance job (the kinds claimed above, and only those). */
+// Only work that must run during a deletion or with consent long gone — model work
+// (summarise_session, consolidate_memories) is claimed behind the consent gate above
+// and never lands here (issue #85).
+function runMaintenanceJob(deps: Deps, job: JobRow): Promise<void> {
+  switch (job.kind) {
+    case 'purge_photos':
+      return purgePhotos(deps, job);
+    case 'purge_content':
+      return purgeContent(deps, job);
+    default:
+      return executeAccountDeletion(deps, job);
+  }
 }
 
 /**

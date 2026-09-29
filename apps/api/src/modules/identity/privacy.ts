@@ -49,12 +49,17 @@ const LEARNER_TABLES = [
 
 export async function exportAccount(db: Db, accountId: string): Promise<Record<string, unknown>> {
   const account = await db.one(
-    `select id, locale, consent_version, consent_at, deletion_due_at, created_at from accounts where id = $1`,
+    // consent_confirmed_at: when the account holder confirmed the consent by e-mail (issue #30) —
+    // part of what was recorded about them, so it belongs in their export.
+    `select id, locale, consent_version, consent_at, consent_confirmed_at, deletion_due_at,
+            created_at
+       from accounts where id = $1`,
     [accountId],
   );
   const learner = await db.maybeOne<{ id: string } & Record<string, unknown>>(
     `select id, relation, display_name, birth_date, level, grade, locale, minor_consent_version,
-            minor_consent_at, created_at from learners where account_id = $1`,
+            minor_consent_at, self_consent_version, self_consent_at, created_at
+       from learners where account_id = $1`,
     [accountId],
   );
   const out: Record<string, unknown> = {
@@ -74,6 +79,12 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
   out.material_photos = await db.query(
     `select mp.material_id, mp.position, mp.mime, mp.created_at from material_photos mp
        join materials m on m.id = mp.material_id where m.learner_id = $1`,
+    [learner.id],
+  );
+  // Concept-image crops of her sheets (issue #50): what exists, not the pixels.
+  out.material_images = await db.query(
+    `select material_id, label, width, height, created_at from material_images
+      where learner_id = $1`,
     [learner.id],
   );
   out.push_tokens = await db.query(
@@ -159,6 +170,7 @@ const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
   { table: 'practice_sessions', rows: `select ctid from practice_sessions where learner_id = $1` },
   { table: 'item_states', rows: `select ctid from item_states where learner_id = $1` },
   { table: 'items', rows: `select ctid from items where learner_id = $1` },
+  { table: 'material_images', rows: `select ctid from material_images where learner_id = $1` },
   {
     table: 'material_photos',
     rows: `select mp.ctid from material_photos mp join materials m on m.id = mp.material_id
@@ -252,6 +264,17 @@ export async function executeAccountDeletion(deps: Deps, job: JobRow): Promise<v
              select mp.storage_path, 'account_deleted', $2, $2
                from material_photos mp join materials m on m.id = mp.material_id
               where m.learner_id = $1 and m.photos_deleted_at is null
+             on conflict (path) do nothing
+             returning 1)
+           select count(*)::int as n from q`,
+          [state.learner_id ?? null, deps.now()],
+        );
+        // Concept-image crops (issue #50) live in the same bucket and go the same way.
+        await tx.query(
+          `with q as (
+             insert into storage_deletions (path, reason, next_attempt_at, created_at)
+             select mi.storage_path, 'account_deleted', $2, $2
+               from material_images mi where mi.learner_id = $1
              on conflict (path) do nothing
              returning 1)
            select count(*)::int as n from q`,

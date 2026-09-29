@@ -138,6 +138,21 @@ export const ItemOrigin = z.enum(['material', 'buddy', 'typed', 'homework']);
 export type ItemOrigin = z.infer<typeof ItemOrigin>;
 
 /**
+ * A real crop from the photographed sheet that goes with the question (issue #50):
+ * a labelled diagram, a reference chart — never a generated picture. The URL is a
+ * short-lived signed Storage URL made when the view is built; width/height give the
+ * app a fixed ratio so the card never jumps while it loads.
+ */
+export const ItemImage = z.object({
+  url: z.string(),
+  width: z.number().int().min(1),
+  height: z.number().int().min(1),
+  /** What the crop shows, for a screen reader ("Zifferblatt mit Zeigern"). */
+  label: z.string(),
+});
+export type ItemImage = z.infer<typeof ItemImage>;
+
+/**
  * A question as shown while it is open: never includes the answer.
  * Texts may contain math between dollar signs in a small LaTeX subset
  * (\frac{a}{b}, x^{2}, x_{1}, \sqrt{x}, \cdot, \times, \div, \pi, \le, \ge, \ne, \approx, \degree;
@@ -157,6 +172,11 @@ export const ItemView = z.object({
   /** vocab: the language of the prompt. */
   prompt_lang: z.string().nullable(),
   figure: Figure.nullable(),
+  /**
+   * The sheet's own figure for this question, where the question is shown full size
+   * (sessions); null in the material list and when the sheet has none (issue #50).
+   */
+  image: ItemImage.nullable().default(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 
@@ -360,6 +380,31 @@ export const SpeakRequest = z.object({
   audio_base64: z.string().min(100).max(1_400_000),
 });
 export type SpeakRequest = z.infer<typeof SpeakRequest>;
+
+/**
+ * One word of the sentence, said on its own (issue #83): she taps a word she got wrong and
+ * practises just that. Nothing is stored and nothing counts — it is practice, not an attempt;
+ * the question keeps its state until she says the whole sentence again.
+ */
+export const SpeakWordRequest = z.object({
+  item_id: Uuid,
+  /** The word as it stands in the sentence. */
+  word: z.string().trim().min(1).max(40),
+  mime: z.enum(['audio/mp4', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/wav', 'audio/mpeg']),
+  audio_base64: z.string().min(100).max(1_400_000),
+});
+export type SpeakWordRequest = z.infer<typeof SpeakWordRequest>;
+
+export const SpeakWordResponse = z.object({
+  /** false when nothing understandable was heard — then `ok` says nothing. */
+  audible: z.boolean(),
+  ok: z.boolean(),
+  /** What was heard, written down; '' when nothing was. */
+  heard: z.string(),
+  /** One short tip in her app language, when it was not right yet. */
+  tip: z.string().nullable(),
+});
+export type SpeakWordResponse = z.infer<typeof SpeakWordResponse>;
 
 /**
  * POST /practice/sessions/:id/speak with `Accept: text/event-stream`

@@ -1,48 +1,67 @@
 // What goes where on Buddy's home (docs/architecture.md §Home, user feedback #6,
-// CLAUDE.md rule 16, docs/UX-PRINCIPLES.md §31–32). Pure, so the rules are tested:
-// - at most one card on top — the thing that matters now; with it, the open question
-//   (messages to the phone, how the test went) is asked at the end of the conversation;
-// - one violet button: the card on top has it, everything in the conversation is quieter;
-// - "Buddy is working" is said once: inside the card when the card says the same thing,
+// CLAUDE.md rule 16, docs/UX-PRINCIPLES.md §31–32, issue #17). Pure, so the rules are tested:
+// - on top at most one slim bar (SlimBar.tsx, hard size contract: ≤ ~64 pt collapsed) —
+//   the thing to act on now: a practice to go on with, one that is ready, the photo Buddy
+//   waits for, the sheet being read — or, after a result, the practice prepared next;
+// - everything that is told rather than acted on stands at the end of the conversation:
+//   the sheet that could not be read, the finished practice (its full view one tap away),
+//   the open decision (messages to the phone, how the test went), "Buddy is working";
+// - one violet button: the bar on top has it, everything in the conversation is quieter;
+// - "Buddy is working" is said once: inside the reading bar when it says the same thing,
 //   otherwise as a line at the end of the conversation.
-// The row of ways to start stays (a paused homework card can be there for days; starting
+// The row of ways to start stays (a paused homework bar can be there for days; starting
 // something else must not depend on it).
 // And where the conversation stands: like any chat, at its newest message (bottom); a new
 // message scrolls to it — unless she scrolled up to read, then she stays where she is until
 // she scrolls back down or sends something (followsEnd).
-// The card on top floats over the greeting and the row of ways to start (it never pushes
-// them, the menu or the conversation down: the layout does not jump when a card comes or
-// goes). She can close it on this phone; it stays closed until what it says changes
-// (topKey). A closed decision is then asked at the end of the conversation.
+// The bar floats over the greeting and the row of ways to start (it never pushes them, the
+// menu or the conversation down: the layout does not jump when it comes or goes). She can
+// close it on this phone; it stays closed until what it says changes (topKey).
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 
 export type HomeLayout = {
-  /** The one card on top: the "now" card, else the open decision, else none. */
-  top: 'now' | 'decision' | null;
-  /** The open decision is asked in the conversation (another card is on top). */
+  /**
+   * The slim bar on top, or none. 'next': the practice prepared after a result
+   * (the result itself stands in the conversation — never both as cards).
+   */
+  bar: 'resume' | 'ready' | 'capture' | 'reading' | 'next' | null;
+  /** A sheet could not be read: told at the end of the conversation, never on top. */
+  failed: boolean;
+  /** A practice just finished: its result stands at the end of the conversation. */
+  result: boolean;
+  /** The open decision is asked at the end of the conversation (never a card on top). */
   decisionInline: boolean;
-  /** Where "Buddy is working" is said: in the card on top, in the conversation, or nowhere. */
-  working: 'card' | 'thread' | null;
+  /** Where "Buddy is working" is said: in the bar on top, in the conversation, or nowhere. */
+  working: 'bar' | 'thread' | null;
 };
 
-type TopParts = Pick<BuddyHome, 'now' | 'decision'> & {
+type TopParts = Pick<BuddyHome, 'now'> & {
   system?: Pick<BuddyHome['system'], 'model' | 'scheduler'>;
 };
 
 /**
- * What the card on top says, as one string (with the system notes above it), or null when
- * nothing is on top. Closing the card on this phone remembers this; a different card, or the
- * same card saying something new, is shown again.
+ * What the layer on top says, as one string (the bar, with the system notes), or null when
+ * nothing is on top. Closing it on this phone remembers this; a different bar, or the same
+ * bar saying something new, is shown again. Decisions and thread notices are conversation,
+ * not part of this key.
  */
 export function topKey(h: TopParts): string | null {
-  const card = h.now ? { now: h.now } : h.decision ? { decision: h.decision } : null;
+  const now = h.now;
+  const bar =
+    now === null || now.type === 'material_failed'
+      ? null
+      : now.type === 'practice_result'
+        ? now.next
+          ? { next: now.next }
+          : null
+        : { now };
   const notes = [
     h.system && !h.system.model ? 'model' : null,
     h.system?.scheduler === 'stale' ? 'scheduler' : null,
   ].filter((n) => n !== null);
-  if (!card && notes.length === 0) return null;
-  return JSON.stringify({ card, notes });
+  if (!bar && notes.length === 0) return null;
+  return JSON.stringify({ bar, notes });
 }
 
 export function homeLayout(
@@ -52,14 +71,29 @@ export function homeLayout(
 ): HomeLayout {
   const key = topKey(h);
   const hidden = key !== null && key === closed;
-  const top = hidden ? null : h.now ? 'now' : h.decision ? 'decision' : null;
-  // "Ich lese dein Blatt …" already says Buddy is on the photos (one card, not two).
-  const inCard = top === 'now' && h.working === 'material' && h.now?.type === 'material_processing';
+  const now = h.now;
+  const bar =
+    hidden || now === null
+      ? null
+      : now.type === 'resume_practice'
+        ? 'resume'
+        : now.type === 'practice_ready'
+          ? 'ready'
+          : now.type === 'capture_needed'
+            ? 'capture'
+            : now.type === 'material_processing'
+              ? 'reading'
+              : now.type === 'practice_result' && now.next
+                ? 'next'
+                : null;
+  // "Ich lese dein Blatt …" already says Buddy is on the photos (one bar, not two notes).
+  const inBar = bar === 'reading' && h.working === 'material';
   return {
-    top,
-    // Asked in the conversation while another card is on top, or when she closed it.
-    decisionInline: h.decision !== null && top !== 'decision',
-    working: h.working === null ? null : inCard ? 'card' : 'thread',
+    bar,
+    failed: now?.type === 'material_failed',
+    result: now?.type === 'practice_result',
+    decisionInline: h.decision !== null,
+    working: h.working === null ? null : inBar ? 'bar' : 'thread',
   };
 }
 

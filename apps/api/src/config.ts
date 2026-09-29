@@ -26,11 +26,13 @@ const VertexRoutes = z
     tutor: ModelSpec,
     explain: ModelSpec,
     extraction: ModelSpec,
+    figures: ModelSpec,
     pronounce: ModelSpec,
     transcribe: ModelSpec,
     hints: ModelSpec,
     reexplain: ModelSpec,
     summary: ModelSpec,
+    consolidate: ModelSpec,
   })
   .partial()
   .strict();
@@ -228,6 +230,8 @@ export const DAILY_LIMITS = {
   tutor: 300,
   explain: 60,
   extraction: 12,
+  /** Concept images (issue #50): one vision pass per reading, bounded like extraction. */
+  figures: 12,
   pronounce: 200,
   transcribe: 400,
   hints: 60,
@@ -235,4 +239,6 @@ export const DAILY_LIMITS = {
   reexplain: 60,
   /** Two to four sentences about a conversation that ended (issue #22); a handful a day. */
   summary: 12,
+  /** Tidying up what Buddy knows (issue #20): one call per kind, once a day. */
+  consolidate: 8,
 } as const;

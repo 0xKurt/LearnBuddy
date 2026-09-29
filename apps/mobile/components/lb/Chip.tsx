@@ -3,16 +3,17 @@ import { LB } from '../../lib/theme/colors.js';
 
 type Tone = 'gray' | 'primary' | 'success' | 'warning' | 'dark';
 
-const TONES: Record<Tone, { bg: string; color: string; border?: string }> = {
+// Read at render time: a module-scope map froze the start palette (issue #84).
+const tones = (): Record<Tone, { bg: string; color: string; border?: string }> => ({
   gray: { bg: LB.canvas, color: LB.ink2 },
   primary: { bg: LB.primaryLt, color: LB.primaryDk },
   success: { bg: 'rgba(107,141,106,0.13)', color: LB.successText },
   warning: { bg: 'rgba(181,138,60,0.13)', color: LB.warningText },
   dark: { bg: LB.ink, color: LB.paper },
-};
+});
 
 export function Chip({ children, tone = 'gray' }: { children: string; tone?: Tone }) {
-  const t = TONES[tone];
+  const t = tones()[tone];
   return (
     <View
       accessibilityRole="text"

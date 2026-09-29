@@ -43,6 +43,8 @@ export const POLICIES = {
    * whole hour of conversation. Beyond it the app reads with the phone's voice — never silence.
    */
   speech: { limit: 1000, windowMs: HOUR },
+  /** Dictation (speech to text): like answers — a script, not a learner (issue #86). */
+  voice: { limit: 600, windowMs: HOUR },
 } as const satisfies Record<string, LimitPolicy>;
 
 export type LimitScope = keyof typeof POLICIES;

@@ -450,7 +450,9 @@ effect, enforced by the type of the registry, applied once per parked job by the
 Buddy check comes back once as a model-free fallback (the countdown before a test still
 prepares practice; an agreed reminder is still sent by its template); a parked turn recovery
 marks her message failed (`internal`); a parked extraction is reported to the operator (parked
-counts and the last error per kind in `GET /health`); erasure kinds are never parked (above).
+counts and the last error per kind in `GET /health`); a parked memory consolidation is reported
+too — it writes all or nothing, so what Buddy knows is exactly as it was and the next day's run
+tries again; erasure kinds are never parked (above).
 
 `POST /internal/tick` runs everything due within a 45 s budget: recovery → reading photos →
 Buddy per learner (one learner's failure does not stop the others) → delivery → receipts →
@@ -462,6 +464,21 @@ errors **and** no due work has waited over 10 minutes (`scheduler/health.ts`: st
 when there never was a heartbeat but her own work is waiting (a misconfigured cron is not
 "unknown"), and `system.model` is false when no model is configured or today's allowance for
 conversations is used up.
+
+**Someone has to look** (`.github/workflows/health.yml`, issue #75 gap 2). An endpoint nobody
+calls is not monitoring: until now a dead scheduler reached the owner only if the learner
+mentioned it. A GitHub Action calls production's `GET /v1/health` every 30 minutes and checks
+five things with `jq` — `ok == true`, `scheduler.state == "ok"`, `scheduler.last_run_at`
+younger than 5 minutes (stricter than the server's own 10, because the tick runs every minute),
+`erasure.overdue_deletions == 0` and `erasure.overdue_photo_deletions == 0`. Three attempts 20 s
+apart so a cold start wakes nobody; if the complaint holds, the job fails and GitHub mails the
+owner about the failed run on the default branch — that is the whole notification channel. No
+secret: the endpoint is unauthenticated and returns only booleans, counts, job kinds and
+timestamps. Its only free-text fields (`scheduler.last_error`, `parked[*].last_error` —
+truncated `Error.message` from the tick) are neither checked nor written to the public action
+log. This replaces **no** crash reporting on the device (#36, Sentry EU, stays open) and sees
+nothing the server does not report about itself. GitHub disables scheduled workflows after
+60 days without repository activity.
 
 ### Events (ADR 0005 stage 4)
 
@@ -481,8 +498,9 @@ An event never bypasses the contact rules.
 zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) with explicit output-token cap, thinking budget and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
-tokens, cost, latency and outcome — never with prompt or answer text; a safety block keeps the
-provider's finish reason (`blocked:SAFETY`). A call that the provider did not run for her — provider
+tokens (input, output, thinking, and what the provider served from its prefix cache —
+`cached_tokens`, §Speed), cost, latency and outcome — never with prompt or answer text; a safety
+block keeps the provider's finish reason (`blocked:SAFETY`). A call that the provider did not run for her — provider
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
 
@@ -512,8 +530,18 @@ the ones it _wrote_ from that session ("Mehr davon", where #58 lived). On the sh
 answerable from it · right for the class · one correct answer · clean German; every finding
 names the question and why. `evals/buddy`, `evals/tutor`, `evals/voice`, `evals/lena`
 and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/speak`,
-`evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
+`evals/stream`, `evals/tts`, `evals/modes/show` and `evals/lena/day` only print for a person to
+read (`evals/tts` also needs `SPEECH_BACKEND=google`: it measures a whole voice-mode turn —
+when each sentence is written, what it costs to synthesise and how long it plays). A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
+
+**One word on its own** (`POST /practice/sessions/:id/speak-word`, issue #83): in the
+pronunciation card every word of the judged sentence is tappable. The sheet reads it aloud
+(normal and slow), shows the tip the model wrote for it, and takes a recording of just that
+word — judged against the word, with the sentence as context. **Nothing is stored and nothing
+counts**: no turn, no attempt, the question keeps its state; this is practice, and the sentence
+is what is answered. Only a word of _that_ sentence is accepted (`word_not_in_sentence`), and
+the model call is counted like any other.
 
 **Her 16th birthday** (issue #31, EDPB §147–149): `GET /me` marks a child profile whose
 learner has turned 16 and never agreed for herself (`learner.own_consent_due`); the gate
@@ -521,6 +549,16 @@ learner has turned 16 and never agreed for herself (`learner.own_consent_due`); 
 with the words that she decides now — no PIN, no adult (`POST /learner/consent`). The parents'
 record is not rewritten; it says what carried her until then. Time-travelled in
 `self-consent.int.test.ts`.
+
+**The e-mail loop as a recorded consent step** (issue #30, EDPB Guidelines 05/2020 Example 23):
+Supabase Auth enforces the click on the confirmation link anyway — there is no session before
+it — and the mail says in as many words that the click confirms the consent
+(`docs/consent-email-templates.md`, the owner pastes it into the Supabase console). The
+verifier carries `email_confirmed_at` of the user record (no such token claim exists) as
+`AuthUser.emailConfirmedAt`, and `GET /me` — the one request every app start makes, and one no
+consent, PIN or deletion gate can hold up — writes it once to `accounts.consent_confirmed_at`
+(`recordConsentConfirmation`, idempotent). It is a record, never a gate: a mail that was slow
+or lost locks nobody out. `consent-confirmation.int.test.ts`.
 
 **Whether the explanation is any good** is measured, not assumed (`evals/explain`, issue #77):
 Buddy explains five things a 12-year-old actually asks about, and a second model reads each
@@ -541,6 +579,30 @@ written down; a stretch is written once; a conversation the model cannot summari
 context, because Buddy has nothing to say about that day (rule 5). Summaries go with the
 account (cascade) and are covered by `session-summaries.int.test.ts`.
 
+**Memory that stays usable** (`modules/buddy/consolidate.ts`, issue #20, migration
+`0053_memory_consolidation.sql`). The cap of 60 never throws anything away silently: at 60
+`remember` refuses and Buddy asks her what he may forget. The pain is the other end of that
+rule — at 60 he can remember nothing new. So from **45** active items the scheduler plans one
+`consolidate_memories` job per learner and local day (only with the account's current consent),
+and asks the model once per kind (`purpose: 'consolidate'`, the careful model, at most three
+calls) which items say the same thing (**merge**) and which one a newer item contradicts
+(**invalidate**). Everything it does not name stays; keeping is the default. Code decides the
+rest, not the prompt: the model sees aliases (`m1`, `m2` …) and never an id (rule 2); a merged
+sentence may not name a day, time of day, month or number that the items it replaces do not
+(`unsupportedSpecifics`, the guard `remember` uses); an item may be named once, and what
+replaces a contradicted item must be newer and must survive the run; temporary situations
+(`constraint`) are never consolidated, because a merged row would need an end date the model
+must not write. A group is applied in **one transaction** that holds the context fence
+(`context_version` read before the model call) **and** the version of every item the model saw,
+and bumps the context once — a correction she made while the model was thinking is never
+overwritten, the whole group is discarded instead and looked at again the next day. Provenance
+survives: a merged original is `superseded` and points at its successor (`merged_into`), a
+contradicted one is `superseded` without one; the new row carries `source = 'consolidated'` and
+the memory screen says so. Erasure is untouched — both are deleted by `purgeClosedMemories`
+after the 7-day undo window (`on delete set null` on the chain). Covered by
+`memory-consolidation.int.test.ts` (below the threshold nothing happens, merge and invalidate,
+the fence, an unusable answer, a merged sentence that invents a day, purge and cascade).
+
 ### Speed
 
 Waiting kills practice. Budgets (end to end, measured in process by `apps/api/evals/speed/run.ts`
@@ -560,6 +622,33 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
   twice as fast, no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **The prompt is layered for the provider's prefix cache, and what that is worth is measured,
+  not assumed** (issue #25). Gemini discounts the stable _beginning_ of consecutive requests
+  (implicit caching, from 4 096 tokens up) and reports what it reused; that number is now stored
+  per call in **`llm_calls.cached_tokens`** (migration 0052, the provider's
+  `cachedContentTokenCount`, part of `input_tokens`, 0 when nothing was reported). `cost_micros`
+  stays the undiscounted price — the saving is shown as tokens the provider confirmed, never as a
+  discount we computed (rule 5). Measured live on `eu/gemini-3.6-flash` (2026-09-29, `evals/buddy`,
+  36 cases, two runs): **243 525 and 389 469 of 627 985 input tokens came from the cache** — 20
+  and 31 of the 36 cases hit. Implicit caching is best-effort: a miss simply costs the full price,
+  and how often it fires swings a lot between runs. What is cached is the part of the request that
+  comes _before_ `contents`: the system instruction (`TURN_SYSTEM`, 3 442 tokens — under the
+  minimum on its own) plus the response JSON schema (~6 100 tokens as compact JSON). The evidence
+  that it stops there: every single hit landed between 12 013 and 12 177 tokens, on 36 learners
+  whose state blocks differ by far more than that — the number never grew with the state. So the
+  state block itself is not what is being cached today.
+- Layering it anyway costs nothing and is the only shape a prefix cache can ever use: STATE runs
+  most-stable first — learner, what Buddy knows, temporary situations, voice, contact, earlier
+  conversations, material and progress, goals and plan, recent practice — and ends with "## Now"
+  (the local time, different in almost every turn) and the day note. Every section keeps its exact
+  text, only its place changed, so the prompt version stays the same and the content is provably
+  identical; `modules/buddy/context.ts` gives the reason per section. Before this, STATE _opened_
+  with "## Now", so two turns of the same learner diverged in the first line of `contents`. The
+  dialogue behind STATE can never be a stable prefix — the 24-message window slides with every
+  turn — which is why it stays behind the volatile end. An A/B over six consecutive turns of one
+  learner with a moving clock showed no difference between the two orders (12 176 vs 24 339 cached
+  tokens over 7 calls each): whether the cache fires at all dominates everything else. Re-read
+  `cached_tokens` in production before spending more on this.
 - **The app measures its own taps** (`apps/mobile/lib/perf.ts`, issue #66): every number above
   is server-side, but what she feels starts at her finger. One pair per action — `tapped()`
   when the handler runs, `reacted()` when the screen shows the result — for sending a message,
@@ -607,6 +696,18 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   (`shortOpening`, `lib/speech/readAloud.ts`) — never mid-clause, that sounds wrong — and if it
   still takes longer than 2.5 s the phone's voice reads that piece while the natural voice
   carries on with the rest.
+- **The sentences after the first are synthesised while the one before plays** (issue #24,
+  `lib/speech/pipeline.ts`): a reply is **one** reading, also when it is read along while Buddy
+  writes it — until 29.09. the stream speaker started a new `speak()` per sentence, so the next
+  sentence's synthesis only began after the current one had finished playing. Measured live
+  (`apps/api/evals/tts`, 6 turns / 16 sentences, docs/speed-audit.md): synthesis 0.95 s median,
+  playback 4.70 s median, so **one** sentence of lead closes every gap — 2.41 s of silence per
+  turn became 0.00 s, and a turn ends 2.4 s earlier. Fetching every sentence at once gains
+  nothing further (0.00 s) and makes the first audio 0.2 s later, so there is no batch
+  endpoint. The first audio itself cannot be pipelined — it is model time to the first finished
+  sentence plus one synthesis; `shortOpening` and the phone-voice fallback are what shorten it.
+  A sentence that is written late is waited for with the short patience (2.5 s), a sentence
+  fetched ahead with the long one (7 s): only the first kind is silence she feels.
 - The tutor's answers are not streamed: code checks the whole reply first (the solution-leak
   guard, verdict invariants), and streaming would save only ~0.3 s there (1.1 s → 1.4 s).
 
@@ -618,21 +719,21 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12, new explanations 60 (`config.ts`)                      |
-| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512 |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                          |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                         |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos             |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s            |
-| Turn stall                      | taken over after 3 minutes                                                                         |
-| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h          |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                               |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)    |
-| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
-| Requests per account            | abuse protection only: practice answers 600/h, messages to Buddy 120/h (429 + `Retry-After`)       |
-| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always   |
+| What                            | Limit                                                                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8 (`config.ts`) |
+| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                     |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                              |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                             |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos                                                                 |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                |
+| Turn stall                      | taken over after 3 minutes                                                                                                                             |
+| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                              |
+| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                                                                     |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                                        |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                                              |
+| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h, messages to Buddy 120/h (429 + `Retry-After`)                |
+| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                       |
 
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
@@ -752,6 +853,29 @@ over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage 
 503 `storage_unavailable` as for photos. PDFs are not photo-checked on the phone (the check is for
 light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
 scanned school PDF (the tests script the model).
+
+**Concept images** (issue #50, `modules/materials/images.ts`): the questions of a sheet may show
+the sheet's own teaching figure — a REAL crop from the photographed page, never a generated
+picture (the only possible failure is a slightly loose frame, never an invented shape). After a
+sheet became ready, one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
+migration 0050) looks at the page photos and the questions read from them and returns one tight
+box per WHOLE figure (a labelled diagram; a reference chart kept whole, never split into cells) —
+omitting comics, scenes and pure text. sharp crops exactly those pixels and lightly cleans them
+(greyscale + contrast stretch, no hard binarize that would shred faint strokes). Crops live in the
+same private bucket next to the photos (`material_images` rows, at most 6 per sheet; pages added
+later fill up to the cap) and hang on the questions they help answer (`items.image_id`, the first
+figure a question got stays). The session view carries a short-lived signed URL with size and
+label; the question card shows the crop at a fixed ratio (≤ 180 pt, no layout jump, tap to zoom;
+`components/practice/StimulusImage.tsx`). **Images are a bonus:** whatever fails — the vision
+pass, sharp, Storage, an exhausted budget — the sheet stays `ready` without images
+(`attachConceptImages` never throws, it logs); a Storage that cannot sign costs the image in that
+view, never the session. PDFs get no concept images (nothing renders PDF pages, see above).
+Retention: crops are derived learning content like `extracted_text` — they live until the material
+(or the last question showing them) is deleted, **not** 7 days like the raw photos; deleting
+queues their Storage paths durably (`storage_deletions`, drained by the tick) and an account
+deletion removes them the same way (docs/privacy.md §What is stored;
+`concept-images.int.test.ts`). The parked owner-side crop editor (adjusting a frame by hand) is
+deliberately not ported.
 
 **Every page goes up while she is still taking them** (issue #56, owner 28.09.: "wenn ich
 mehrere hochlade, dann können die bereits angefangen werden zu verarbeiten"). The reservation
@@ -1106,8 +1230,11 @@ word list, so it stays a prompt rule.
   by word (`practice/speak.ts`). good → right, almost → right with help, retry → stays open.
   The recording is never stored. Live checks (`evals/speak/run.ts`, espeak-ng recordings): wrong
   words are recognised reliably, a strong German accent in 2 of 3 runs; it is an AI assessment,
-  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores)
-  would replace `speakItem`'s model call behind the same contract.
+  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores) would
+  replace the measuring half of `speakItem`'s model call — not the whole call: the per-word `tip`
+  and the spoken `reply` are not something a scoring API returns. Weighed against today's numbers
+  in [decisions/azure-pronunciation.md](decisions/azure-pronunciation.md) (issue #27, the owner
+  decides; nothing is connected).
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
@@ -1174,10 +1301,19 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (§Speed). A realtime audio API (speech in, speech out) is not built.
 - **Conversation mode** (`app/talk.tsx`, headphones on the home): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
-  is read aloud → Buddy listens again. On the phone listening ends by itself when she pauses
+  is read aloud → Buddy listens again. The screen is a camera angle on that one thread, not a
+  second rendering of it (issue #18): the newest messages stand as the chat's own bubbles
+  (`components/buddy/Conversation.tsx`), bottom-anchored and following their end — her words form
+  as her own bubble while she speaks, Buddy's reply streams into his, and while he reads it aloud
+  the sentence being read stands out in it (`components/buddy/ReadAlongBubble.tsx`); his offers
+  and open-area buttons are the chat's cards, and a tapped offer keeps the voice on (issue #40).
+  Buddy himself sits small over the button row (`TalkOrb`, 96 pt with halo); his state is the
+  moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
+  by itself when she pauses
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
-  Tapping the mic while Buddy speaks interrupts it. When the answer carries a button
-  (`offer_learning`, `open_area`) the loop pauses so she can tap it. The mic is only on while this
+  Tapping the mic while Buddy speaks interrupts it. An answer that carries a button
+  (`offer_learning`, `open_area`) stays on screen and tappable while the loop simply listens
+  again: she can tap it or just answer (owner 28.09.). The mic is only on while this
   screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
   the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
   every phase is announced. Buddy's orb shows the phase (`components/voice/TalkOrb.tsx`)
@@ -1218,7 +1354,8 @@ the learner's own photos or just-finished practice: her photos still being read 
 also behind another card, so the app keeps following the home — or a due or running check they
 caused),
 A result carries the prepared practice that is next (`next`), so a short round never hides
-the practice for a test (user feedback #2).
+the practice for a test (user feedback #2; the app shows `next` as the bar on top and the
+result in the conversation).
 **decision** (how did the test go › enable contact — with the stored rules it would allow,
 `rules`: at most n a day, never after the quiet hour, so the card and the parents' PIN screen
 say exactly that), **done** (Buddy's actions of the last 72 h
@@ -1232,22 +1369,32 @@ card next to "nothing working" — the app polls closely only while something is
 (`home-snapshot.int.test.ts`).
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
-**one** card on top: the **now** card, else the **decision** (with the system notes — no
-model, background work stale — under it); with a now card the decision
-is asked at the end of the conversation with quieter buttons, so there is one violet button
-(`lib/homeLayout.ts`). The card **lies over** the greeting and the row of ways to start, directly
-under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the header, the
-greeting, the row and the conversation stand in exactly the same place with or without it, so
-nothing jumps when a card comes or goes (owner feedback: "Die Meldung sollte einfach über dem
-Menü liegen. Kann man dann ja wegklicken."). Its close button (`<Btn>`, 44 pt, "Karte
-ausblenden") or a swipe up hides it **on this phone only** (`lib/homeCard.ts`, kept in
-AsyncStorage / localStorage) until what it says changes (`topKey`: a different card, or the same
-card with new content, shows again); nothing is answered on the server — "Heute nicht" stays the
-card's own button. A closed decision is asked at the end of the conversation instead. While the
-card covers the row's buttons, the greeting and the row are left out in place (no edge peeking
-out, nothing a screen reader finds behind it); the conversation keeps the room the card covers
-at its top free (so its oldest shown message can be scrolled into view) and still stands at its
-newest message. VoiceOver hears that a card came; Android and the web read its live region; "Buddy is working" is said once (inside "Ich lese dein Blatt …", with
+on top at most **one slim bar** (issue #17, `components/buddy/SlimBar.tsx`) — the thing to act
+on now: a practice to go on with (ResumeBar), one that is ready (ReadyBar — after a result it
+shows what is prepared next), the photo Buddy waits for (CaptureBar), the sheet being read
+(ReadingBar, the real stages inline) — under a hard size contract: one line, the one action as
+a compact button, **≤ ~64 pt collapsed**; a bar with more to say (the stage names, which test,
+"Heute nicht") opens on a tap, and the walkthrough measures the bound
+(`tests/web/core-loop.spec.ts`, `partHeight`). Everything told rather than acted on stands at
+the end of the conversation as a notice with its buttons (`components/buddy/NoticeBubble.tsx`):
+a sheet that could not be read ("Nochmal lesen" right there), a finished practice (the same
+kind words as the summary — never a hit rate; the full summary one tap away), the open
+**decision** (messages to the phone, how the test went — quieter buttons, so there is one
+violet button, the bar's), photos not sent yet, and "Buddy is working"
+(`lib/homeLayout.ts` keeps these rules pure and tested). The system notes (no model, background
+work stale) join the layer on top. The bar **lies over** the greeting and the row of ways to
+start, directly under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the
+header, the greeting, the row and the conversation stand in exactly the same place with or
+without it, so nothing jumps when it comes or goes (owner feedback: "Die Meldung sollte einfach
+über dem Menü liegen. Kann man dann ja wegklicken."); the size contract keeps it within the
+row's room, so nothing below measures or compensates for its height. Its close button (`<Btn>`,
+44 pt, "Karte ausblenden") or a swipe up hides it **on this phone only** (`lib/homeCard.ts`,
+kept in AsyncStorage / localStorage) until what it says changes (`topKey`: a different bar, or
+the same bar with new content, shows again); nothing is answered on the server — "Heute nicht"
+stays the bar's own button. While a bar is on top, the row of ways to start is left out in
+place (no label ends peeking out, nothing a screen reader finds behind it). VoiceOver hears
+that it came; Android and the web read its live region; "Buddy is working" is said once (inside
+"Ich lese dein Blatt …", with
 the photo, or as a line at the end of the conversation); the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
 the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, five ways to start
 around it ("Arbeit" — with a test planned it prepares her for it; homework; pronunciation;
@@ -1257,7 +1404,8 @@ five (`components/lb/StartRow.tsx`; each as wide as its label, so a word never b
 its newest message like any chat (a new message scrolls to it; when she scrolled up to read she
 is not pulled down until she is back at the end or sends something; `lib/homeLayout.ts`
 `followsEnd`; a jump of the offset because the content or the view changed size is not her
-scrolling up) — the card on top covers only the top of the conversation, never its newest message; a
+scrolling up) — the bar on top never covers the conversation (only its opened details float
+over the conversation's top, and only while she reads them); a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did stands under its message with "Rückgängig"; no tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
@@ -1365,6 +1513,21 @@ hold the same contrast pairs — text 4.5:1, meaningful shapes 3:1 — checked f
 in `lib/theme/__tests__/contrast.test.ts`; a palette that fails there is not shipped.
 Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` bridge.
 
+**Colours are read at render time, never captured at module scope** (issue #84, owner:
+"manchmal sieht man die schrift nicht richtig, im dark mode"). The remount-by-key covers
+components — but a module-scope constant (`const S = { color: LB.ink }`, a `StyleSheet.create`
+at module level, the old `TYPE`) is evaluated once at import and keeps the start palette
+forever: pastel-dark ink stayed on the night background, invisible. `TYPE` and `SHADOW` are
+now built from the palettes and refilled **in place** by `applyPalette` (held references see
+the new colours); every other capture became a small function read at render. Two guards keep
+it that way (`lib/theme/__tests__/frozen-colors.test.ts`): a live-refill check after
+`applyPalette('night')`, and a source scanner that fails on any module-scope const whose
+initializer reads `LB`/`TYPE`/`SHADOW`/`TONE_*`/`FIGURE`. The walkthrough switches to the
+night palette at Mia's settings stop and runs the axe contrast pass on the dark settings and
+the dark home (`15f`–`15h`). **The picker previews every palette in its own colours**
+(`LookSection`: bg, card, ink sample, primary chip — drawn from `PALETTES`, never from the
+live `LB`), instead of five identical white buttons.
+
 ## Testing
 
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.
@@ -1427,6 +1590,10 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
   _when_ a generation happens then depends on timing. The remaining purposes (tutor, hints,
   reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
   **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
+  A run started right after another waits for the previous run's ports to be free
+  (`scripts/web-walkthrough.sh`): Playwright reuses whatever already listens, and the dying
+  servers of the run before gave a white screen after a reload — a failure that looks like a
+  product bug and is not one.
   **`pnpm verify`** is the whole gate in one command (typecheck · lint · tests · walkthrough,
   issue #74); the pre-commit hook deliberately stays without the walkthrough, which takes
   minutes.

@@ -22,6 +22,7 @@ import { AboutSection } from '../components/settings/AboutSection.js';
 import { AdultSection } from '../components/settings/AdultSection.js';
 import { ContactSection } from '../components/settings/ContactSection.js';
 import { FoldContext } from '../components/settings/Group.js';
+import { useFolds } from '../components/settings/folds.js';
 import { LookSection } from '../components/settings/LookSection.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
 import { useRevealInput } from '../components/settings/useRevealInput.js';
@@ -40,11 +41,23 @@ export default function SettingsScreen() {
   const { scroll, content, reveal } = useRevealInput();
   const [refreshing, setRefreshing] = useState(false);
   // One group open at a time; all closed at first (components/settings/Group.tsx).
-  const [open, setOpen] = useState<string | null>(null);
+  // Outside the tree (components/settings/folds.ts): a theme change remounts the app by
+  // key, and a useState here closed the group under her finger (issue #84).
+  const open = useFolds((f) => f.open);
+  const toggleFold = useFolds((f) => f.toggle);
   // The parents' PIN counts while they are here: leaving the settings (also for the
   // PIN pad, which sets a fresh one) ends it, so the child holding the phone
   // afterwards cannot use it (docs/privacy.md §PIN gate).
-  useFocusEffect(useCallback(() => () => clearAdminToken(), []));
+  useFocusEffect(
+    useCallback(() => {
+      // A fresh visit starts with every group closed; a remount (theme change) keeps hers.
+      useFolds.getState().arrive();
+      return () => {
+        useFolds.getState().markBlurred();
+        clearAdminToken();
+      };
+    }, []),
+  );
 
   async function refresh() {
     setRefreshing(true);
@@ -100,9 +113,7 @@ export default function SettingsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />
           }
         >
-          <FoldContext.Provider
-            value={{ open, toggle: (key) => setOpen((now) => (now === key ? null : key)) }}
-          >
+          <FoldContext.Provider value={{ open, toggle: toggleFold }}>
             <View ref={content} style={{ gap: 16 }}>
               <ContactSection
                 settings={settings.data}

@@ -14,11 +14,20 @@ function inSheet(page: Page) {
   return page.locator('[aria-modal="true"]');
 }
 
-/** The card on top (a finished practice, a waiting photo) lies over the ways to start. */
+/**
+ * The bar on top (a paused practice, a waiting photo) floats over the ways to start.
+ * Right after leaving a practice the home may still show the stale bar until the fresh
+ * state arrives, and a result never has one (issue #17) — the bar leaving on its own is
+ * as good as closing it, so a missed click is not a failure; the empty check below is.
+ */
 async function closeCardIfAny(page: Page): Promise<void> {
   const card = page.getByTestId('home-card');
   if ((await card.count()) === 0) return;
-  await page.getByRole('button', { name: 'Karte ausblenden' }).first().click();
+  await page
+    .getByRole('button', { name: 'Karte ausblenden' })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => undefined);
   await expect(card).toHaveCount(0);
 }
 
@@ -68,9 +77,23 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  // Nothing stands between the solution and "Weiter" after a clean first try: the three ways
+  // to re-explain cost half a screen there and nobody needs them (owner 28.09., issue #61).
+  // She can still ask Buddy in the chat, and after a wrong try they are right there.
+  await expect(page.getByRole('button', { name: 'Einfacher bitte' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Weiter' }).click();
   // A fill-in sentence: the gap is drawn, and her answer appears in it while she types.
   await expect(page.getByLabel(/Ich helfe Lücke Mutter/)).toBeVisible();
+  await page.getByLabel('Deine Antwort').fill('der');
+  await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
+  // A longer answer makes the gap grow instead of being cut inside it: "die lösung passt gar
+  // nicht voll ins feld oben. in den fällen muss das feld mitwachsen" (owner 28.09., #62).
+  const blank = page.getByTestId('blank').first();
+  const narrow = (await blank.boundingBox())?.width ?? 0;
+  await page.getByLabel('Deine Antwort').fill('meiner lieben');
+  await expect(page.getByLabel(/Lücke, darin: meiner lieben/)).toBeVisible();
+  const grown = (await blank.boundingBox())?.width ?? 0;
+  expect(grown, `the gap grows with the answer (${narrow} → ${grown}pt)`).toBeGreaterThan(narrow);
   await page.getByLabel('Deine Antwort').fill('der');
   await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
   // The focus ring is the answer pill's, not the browser's black box around the bare field.
@@ -134,11 +157,11 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '24-homework-solved');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Hausaufgabe geschafft')).toBeVisible();
-  // What she solved herself — no hit rate, no zero (user feedback #1). The home screen stays
-  // mounted (hidden) under the practice and may already carry the same line in its result
-  // card once it has refetched: what counts is the line she sees, exactly once.
+  // What she solved herself — no hit rate, no zero (user feedback #1).
+  // On the screen she is looking at: the home lies behind it in the DOM and carries the same
+  // sentence on its result card (that duplication is #17, not this test's subject).
   await expect(
-    page.getByText('Du hast 1 Aufgabe selbst gelöst.').filter({ visible: true }),
+    page.getByTestId('scroll-list').getByText('Du hast 1 Aufgabe selbst gelöst.'),
   ).toBeVisible();
   await expect(page.getByText('Auf Anhieb richtig')).toHaveCount(0);
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
@@ -159,6 +182,25 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
   await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
+  // What scrolls up out of the conversation fades away instead of being cut hard under the
+  // question card, where half a line stood readable and looked like a rendering fault
+  // (owner 28.09., issue #63). On the web the scroll view itself is masked (EdgeFade.tsx);
+  // on phones the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
+  // .last(): the home under this screen keeps its own thread mounted (expo-router).
+  const faded = await page
+    .getByTestId('scroll-thread')
+    .last()
+    .evaluate((el) => {
+      let node: Element | null = el;
+      while (node) {
+        const s = getComputedStyle(node);
+        const mask = `${s.getPropertyValue('mask-image')} ${s.getPropertyValue('-webkit-mask-image')}`;
+        if (mask.includes('gradient')) return true;
+        node = node.parentElement;
+      }
+      return false;
+    });
+  expect(faded, 'the conversation fades out at its top edge').toBe(true);
   await shot(page, '25-practice-fractions');
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
@@ -247,7 +289,9 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
   // Buddy's reply comes as a stream (shown while it is written, read aloud once stored).
   expect((await streamed).headers()['content-type']).toContain('text/event-stream');
-  await expect(page.getByText('„Was steht diese Woche an?“')).toBeVisible();
+  // Her words stand as her own bubble in the one thread (issue #18) — the chat
+  // underneath carries it too, so the last one is the talk screen's.
+  await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
   // The answer on the conversation screen (the chat underneath has it too).
   await expect(
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),

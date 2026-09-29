@@ -40,15 +40,18 @@ export function ShareIntake() {
     // Only the hand-over is reset here; the files are copied by the capture screen.
     resetShareIntent();
     if (files.length === 0) {
-      // Text or a link: nothing to read as a sheet.
-      toast.show(t('share.nothing'));
+      // Text or a link: nothing to read as a sheet. A share can cold-start the app,
+      // whose start route still settles — the word holds across that (issue #91).
+      toast.show(t('share.nothing'), 'info', { survivesNavigation: true });
       return;
     }
     if (!currentSession()) {
       // The files stay queued (lib/capture/incoming.ts); after sign-in the
-      // layout opens capture with them (share-dropped-when-signed-out).
+      // layout opens capture with them (share-dropped-when-signed-out). The
+      // sign-in screen is exactly where she reads this, so it survives the
+      // routing there (issue #91).
       handIn(files);
-      toast.show(t('share.signed_out'));
+      toast.show(t('share.signed_out'), 'info', { survivesNavigation: true });
       return;
     }
     if (!handIn(files)) router.push({ pathname: '/capture', params: { shared: '1' } });

@@ -9,6 +9,15 @@
 // Aliases map to rows of THIS learner only; the model cannot address anything
 // else. Lists are bounded, and totals are shown so the model knows when it
 // sees only part of something (no silent truncation).
+//
+// STATE is layered for the model's prefix cache (issue #25): Gemini reuses the
+// stable *beginning* of consecutive requests, so the sections that stay
+// byte-identical between two turns of the same learner come first and the ones
+// that change every turn come last (the order is spelled out at the end of
+// buildContext, with the reason per section). Every section keeps its own text
+// exactly — only where it sits in the block changed. What the cache actually
+// pays for today is measured, and it is not this block: see docs/architecture.md
+// §Speed and `llm_calls.cached_tokens`.
 
 import { dayLabel } from '../../i18n/index.js';
 import { addDays, daysBetween, localParts, weekdayName, weekdayOf } from '../../lib/time.js';
@@ -102,28 +111,40 @@ export function buildContext(
     memories: new Map(),
     subjects: new Map(),
   };
-  const lines: string[] = [];
+  // Sections are filled in the order the aliases are numbered (memories m1…, subjects f1…,
+  // goals g1…, steps st1…) and emitted in the cache order at the end of this function.
+  const nowBlock: string[] = [];
+  const learnerBlock: string[] = [];
+  const knowledgeBlock: string[] = [];
+  const temporaryBlock: string[] = [];
+  const goalsBlock: string[] = [];
+  const materialBlock: string[] = [];
+  const summariesBlock: string[] = [];
+  const practiceBlock: string[] = [];
+  const voiceBlock: string[] = [];
+  const contactBlock: string[] = [];
+  const noteBlock: string[] = [];
 
-  lines.push('## Now');
-  lines.push(`${weekdayName(today)} ${today}, ${nowLocal.time} (${tz})`);
+  nowBlock.push('## Now');
+  nowBlock.push(`${weekdayName(today)} ${today}, ${nowLocal.time} (${tz})`);
   // Each day with its offset: the model copies the number (in_days) of the day it means
   // instead of computing weekday arithmetic.
   const days = Array.from({ length: 22 }, (_, i) => addDays(today, i))
     .map((d, i) => `+${i} ${weekdayName(d).slice(0, 3)} ${d}`)
     .join(', ');
-  lines.push(`Next days (in_days offset, weekday, date): ${days}`);
+  nowBlock.push(`Next days (in_days offset, weekday, date): ${days}`);
 
-  lines.push('', '## Learner');
+  learnerBlock.push('## Learner');
   const level =
     learner.level === 'school'
       ? `school, grade ${learner.grade ?? 'unknown'}`
       : learner.level === 'unknown'
         ? 'unknown (ask when it matters for the next step)'
         : learner.level;
-  lines.push(
+  learnerBlock.push(
     `Name: ${learner.display_name} · age: ${ageGroup(learner.birth_date, today)}${learner.isMinor ? ' (minor)' : ''} · level: ${level}`,
   );
-  lines.push(`Language: ${LANGUAGE_NAMES[learner.locale] ?? learner.locale}`);
+  learnerBlock.push(`Language: ${LANGUAGE_NAMES[learner.locale] ?? learner.locale}`);
 
   // Knowledge, split by what it is.
   const permanent = state.memories.filter((m) => m.kind !== 'constraint');
@@ -135,14 +156,14 @@ export function buildContext(
     const until = m.valid_until ? ` (through ${lastDayOf(m.valid_until, tz)})` : '';
     return `- ${alias} [${m.kind}] ${m.statement}${until}`;
   };
-  lines.push('', '## What Buddy knows (said by the learner; correctable)');
-  if (permanent.length === 0) lines.push('- nothing yet');
-  for (const m of permanent) lines.push(memLine(m));
-  lines.push('', '## Temporary situations (they end)');
-  if (temporary.length === 0) lines.push('- none');
-  for (const m of temporary) lines.push(memLine(m));
+  knowledgeBlock.push('## What Buddy knows (said by the learner; correctable)');
+  if (permanent.length === 0) knowledgeBlock.push('- nothing yet');
+  for (const m of permanent) knowledgeBlock.push(memLine(m));
+  temporaryBlock.push('## Temporary situations (they end)');
+  if (temporary.length === 0) temporaryBlock.push('- none');
+  for (const m of temporary) temporaryBlock.push(memLine(m));
   if (state.totals.memories > state.memories.length) {
-    lines.push(`(showing ${state.memories.length} of ${state.totals.memories})`);
+    temporaryBlock.push(`(showing ${state.memories.length} of ${state.totals.memories})`);
   }
 
   // Subjects with material.
@@ -172,9 +193,9 @@ export function buildContext(
     return `  - ${alias} ${st.kind} "${st.title}": ${st.state}${done}${when}${agreed}${extra}`;
   };
 
-  lines.push('', '## Goals and plan');
+  goalsBlock.push('## Goals and plan');
   const activeGoals = state.goals.filter((g) => g.status === 'active');
-  if (activeGoals.length === 0) lines.push('- no active goals');
+  if (activeGoals.length === 0) goalsBlock.push('- no active goals');
   for (const g of state.goals) {
     const alias = `g${++gi}`;
     aliases.goals.set(alias, g);
@@ -184,39 +205,39 @@ export function buildContext(
       : '';
     const status =
       g.status === 'active' ? '' : ` [${g.status}${g.outcome ? `, went ${g.outcome}` : ''}]`;
-    lines.push(`- ${alias} ${g.kind} "${g.title}"${date}${subj}${status}`);
-    if (g.topics.length > 0) lines.push(`  topics: ${g.topics.join(', ')}`);
+    goalsBlock.push(`- ${alias} ${g.kind} "${g.title}"${date}${subj}${status}`);
+    if (g.topics.length > 0) goalsBlock.push(`  topics: ${g.topics.join(', ')}`);
     const mats = state.materials.filter((m) => m.goal_id === g.id);
     if (g.status === 'active') {
       const ready = mats.filter((m) => m.status === 'ready');
       const pending = mats.filter((m) => m.status !== 'ready' && m.status !== 'failed');
       const questions = ready.reduce((n, m) => n + m.item_count, 0);
-      lines.push(
+      goalsBlock.push(
         `  material: ${ready.length} ready (${questions} questions)${pending.length ? `, ${pending.length} still being read` : ''}`,
       );
     }
-    for (const st of state.steps.filter((s) => s.goal_id === g.id)) lines.push(stepLine(st));
+    for (const st of state.steps.filter((s) => s.goal_id === g.id)) goalsBlock.push(stepLine(st));
   }
   const looseSteps = state.steps.filter((s) => !s.goal_id);
   if (looseSteps.length > 0) {
-    lines.push('- steps without goal:');
-    for (const st of looseSteps) lines.push(stepLine(st));
+    goalsBlock.push('- steps without goal:');
+    for (const st of looseSteps) goalsBlock.push(stepLine(st));
   }
   if (
     state.totals.activeGoals > activeGoals.length ||
     state.totals.openSteps > state.steps.length
   ) {
-    lines.push(
+    goalsBlock.push(
       `(open in total: ${state.totals.activeGoals} goals, ${state.totals.openSteps} steps)`,
     );
   }
 
   // Subjects and progress (topic-level, from spaced-repetition state).
-  lines.push('', '## Material and progress');
-  if (state.subjects.length === 0) lines.push('- no material yet');
+  materialBlock.push('## Material and progress');
+  if (state.subjects.length === 0) materialBlock.push('- no material yet');
   for (const s of state.subjects) {
     const alias = subjectAlias.get(s.id)!;
-    lines.push(
+    materialBlock.push(
       `- ${alias} ${s.name} (${s.kind}): ${s.material_count} sheets, ${s.item_count} questions`,
     );
     const ts = state.topics.filter((t) => t.subject_id === s.id && t.topic);
@@ -228,25 +249,26 @@ export function buildContext(
       .filter((t) => t.shaky === 0 && t.due > 0 && t.secure * 2 < t.seen)
       .map((t) => t.topic);
     const fresh = ts.filter((t) => t.seen === 0).map((t) => t.topic);
-    if (secure.length) lines.push(`  secure: ${secure.slice(0, 6).join(', ')}`);
-    if (shaky.length) lines.push(`  shaky: ${shaky.slice(0, 6).join(', ')}`);
-    if (refresh.length) lines.push(`  time for a refresh: ${refresh.slice(0, 6).join(', ')}`);
-    if (fresh.length) lines.push(`  not practised yet: ${fresh.slice(0, 6).join(', ')}`);
+    if (secure.length) materialBlock.push(`  secure: ${secure.slice(0, 6).join(', ')}`);
+    if (shaky.length) materialBlock.push(`  shaky: ${shaky.slice(0, 6).join(', ')}`);
+    if (refresh.length)
+      materialBlock.push(`  time for a refresh: ${refresh.slice(0, 6).join(', ')}`);
+    if (fresh.length) materialBlock.push(`  not practised yet: ${fresh.slice(0, 6).join(', ')}`);
   }
   // She has more sheets than fit here: say so, or Buddy answers "that's all you have"
   // from a list that is only the newest ten (owner 28.09., issues #49 and #68).
   if (state.totals.materials > state.materials.length)
-    lines.push(
+    materialBlock.push(
       `- ${state.materials.length} of ${state.totals.materials} sheets are listed here (the newest); search_material finds the others`,
     );
   const reading = state.materials.filter((m) => m.status === 'queued' || m.status === 'processing');
   if (reading.length)
-    lines.push(`- ${reading.length} sheet(s) are being read right now (no questions yet)`);
+    materialBlock.push(`- ${reading.length} sheet(s) are being read right now (no questions yet)`);
   const failed = state.materials.filter((m) => m.status === 'failed');
   if (failed.length)
-    lines.push(`- ${failed.length} sheet(s) could not be read (learner can retry)`);
+    materialBlock.push(`- ${failed.length} sheet(s) could not be read (learner can retry)`);
   for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
-    lines.push(
+    materialBlock.push(
       `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,
     );
 
@@ -254,51 +276,52 @@ export function buildContext(
   // these hold the weeks. They are what was said, not what he concluded — for connecting
   // ("letzte Woche war das Referat"), never for claiming.
   if (state.summaries.length > 0) {
-    lines.push('', '## Earlier conversations (oldest first)');
+    summariesBlock.push('## Earlier conversations (oldest first)');
     for (const s of state.summaries) {
       const about = s.topics.length ? ` [${s.topics.slice(0, 5).join(', ')}]` : '';
-      lines.push(`- ${s.day}${about}: ${s.summary}`);
+      summariesBlock.push(`- ${s.day}${about}: ${s.summary}`);
     }
   }
 
-  lines.push('', '## Recent practice');
-  if (state.sessions.length === 0) lines.push('- none yet');
+  practiceBlock.push('## Recent practice');
+  if (state.sessions.length === 0) practiceBlock.push('- none yet');
   for (const s of state.sessions.slice(0, 3)) {
     const when = localParts(s.started_at, tz);
     const shaky = s.shaky_topics.length ? `; shaky: ${s.shaky_topics.slice(0, 4).join(', ')}` : '';
-    lines.push(
+    practiceBlock.push(
       `- ${when.date} ${when.time} ${s.status}: ${s.answered}/${s.total} answered, ${s.first_try} right first try${shaky}`,
     );
   }
 
   const st = state.settings;
   // How her replies sound when read aloud (set_voice changes it, ADR 0008).
-  lines.push(
-    '',
+  voiceBlock.push(
     '## Your voice when read aloud',
     `- ${st.voice} · speed ${st.voice_speed === 0 ? 'normal' : st.voice_speed > 0 ? `faster (+${st.voice_speed} of +2)` : `slower (${st.voice_speed} of -2)`} · voices: warm, friendly, bright, clear`,
   );
-  lines.push('', '## Contact outside the app');
-  lines.push(
+  contactBlock.push('## Contact outside the app');
+  contactBlock.push(
     '- Messages in the app are not limited; a topic you raised in the last 72 hours is not sent again.',
   );
   if (!st.contact_enabled) {
-    lines.push('- OFF: nothing goes to the phone; your messages and reminders wait in the app.');
+    contactBlock.push(
+      '- OFF: nothing goes to the phone; your messages and reminders wait in the app.',
+    );
   } else {
-    lines.push(
+    contactBlock.push(
       `- on · quiet ${st.quiet_start}–${st.quiet_end} · preferred ${st.preferred_start}–${st.preferred_end}` +
         `${st.avoid_weekdays.length ? ` · never on weekdays ${st.avoid_weekdays.join(',')}` : ''}`,
     );
     if (st.paused_until && st.paused_until > now) {
-      lines.push(`- paused through ${lastDayOf(st.paused_until, tz)}`);
+      contactBlock.push(`- paused through ${lastDayOf(st.paused_until, tz)}`);
     }
     if (st.phone_only_important) {
-      lines.push(
+      contactBlock.push(
         '- she asked for fewer messages: only important ones (relevance ≥ 0.85) reach the phone; the rest waits in the app',
       );
     }
     if (!opts.pushAvailable)
-      lines.push('- no working push channel on the device: messages only appear in the app');
+      contactBlock.push('- no working push channel on the device: messages only appear in the app');
   }
   // The message sent last (not the one planned last).
   const lastOut = state.outreach
@@ -309,11 +332,46 @@ export function buildContext(
   if (lastOut?.sent_at) {
     const at = localParts(lastOut.sent_at, tz);
     const answer = lastOut.opened_at ? 'opened' : 'not opened yet';
-    lines.push(`- last message ${at.date} ${at.time}: "${lastOut.title}" (${answer})`);
+    contactBlock.push(`- last message ${at.date} ${at.time}: "${lastOut.title}" (${answer})`);
   }
-  if (opts.modelNote) lines.push('', opts.modelNote);
+  if (opts.modelNote) noteBlock.push(opts.modelNote);
 
-  return { state: lines.join('\n'), aliases, contextVersion: st.context_version };
+  // Cache order (issue #25), most stable first. What "stable" means here: byte-identical
+  // between two turns of the same learner, so the model's prefix cache still matches.
+  //   Learner      — name, age, level, language: only set_level or a birthday change it.
+  //   knows/temp   — only remember/correct_memory write here; a temporary situation
+  //                  carries a fixed end date, so its line does not tick with the clock.
+  //   voice        — only set_voice.
+  //   contact      — only set_contact (and a message actually sent, at its end).
+  //   earlier      — one line is added per finished conversation, at most once a day.
+  //   material     — new sheets and practice results; the topic buckets turn over when
+  //                  spaced repetition makes something due, not every turn.
+  //   goals        — goal and step tools; its day labels ("in 4 days") turn over at local
+  //                  midnight, so it is stable within a day but not across one.
+  //   practice     — a finished practice rewrites it; volatile in an active session.
+  //   Now          — the local time to the minute: different in almost every turn, so it
+  //                  ends the block. Everything after it (the dialogue) is uncacheable
+  //                  anyway — the 24-message window slides with every turn.
+  //   note         — only when her message is older than today (a resend, a recovery).
+  const blocks = [
+    learnerBlock,
+    knowledgeBlock,
+    temporaryBlock,
+    voiceBlock,
+    contactBlock,
+    summariesBlock,
+    materialBlock,
+    goalsBlock,
+    practiceBlock,
+    nowBlock,
+    noteBlock,
+  ];
+  const text = blocks
+    .filter((b) => b.length > 0)
+    .map((b) => b.join('\n'))
+    .join('\n\n');
+
+  return { state: text, aliases, contextVersion: st.context_version };
 }
 
 const ALIAS_SEGMENT = /^(g|st|m|f)\d{1,3}$/;

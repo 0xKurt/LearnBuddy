@@ -203,6 +203,7 @@
     "title": "Aspecto",
     "question": "¿Qué colores te gustan?",
     "hint": "Solo en este dispositivo. Puedes cambiarlo cuando quieras.",
+    "sample": "¡Hola! Así se ve un texto.",
     "name": {
       "pastellSoft": "Pastel",
       "night": "Noche",

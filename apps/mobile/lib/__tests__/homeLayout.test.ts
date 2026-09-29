@@ -16,93 +16,154 @@ const reading: NonNullable<BuddyHome['now']> = {
   material_id: '00000000-0000-4000-8000-000000000002',
   status: 'processing',
 };
+const failed: NonNullable<BuddyHome['now']> = {
+  type: 'material_failed',
+  material_id: '00000000-0000-4000-8000-000000000005',
+  reason: 'unreadable',
+  retryable: true,
+  purpose: 'study',
+  completes: null,
+  title: null,
+};
+const prepared = {
+  step_id: '00000000-0000-4000-8000-000000000003',
+  title: 'Mathearbeit Brüche',
+  question_count: 4,
+  est_minutes: 5,
+  focus_topics: [],
+  goal: null,
+};
+const result: NonNullable<BuddyHome['now']> = {
+  type: 'practice_result',
+  session_id: '00000000-0000-4000-8000-000000000006',
+  mode: 'practice',
+  result: { answered: 4, first_try: 4, secure_topics: [], shaky_topics: [] },
+  next: null,
+};
 const optIn: NonNullable<BuddyHome['decision']> = {
   type: 'contact_opt_in',
   can_enable_here: false,
   rules: { quiet_start: '20:00' },
 };
 
-describe('home layout (user feedback #6)', () => {
-  it('has at most one card on top: the photo request, and the opt-in asked in the chat', () => {
+describe('home layout (user feedback #6, issue #17)', () => {
+  it('has at most one slim bar on top; the opt-in is asked in the chat', () => {
     // Lena's crowded home (p2-04): "Schick mir ein Foto" and "Darf ich dir aufs Handy
     // schreiben?" both on top, each with a violet button.
     const l = homeLayout({ now: capture, decision: optIn, working: null } satisfies Parts);
-    expect(l).toEqual({ top: 'now', decisionInline: true, working: null });
-  });
-
-  it('shows the decision as the card when nothing else is on top', () => {
-    expect(homeLayout({ now: null, decision: optIn, working: null })).toEqual({
-      top: 'decision',
-      decisionInline: false,
-      working: null,
-    });
-    expect(homeLayout({ now: null, decision: null, working: null }).top).toBeNull();
-  });
-
-  it('says "working" once: inside "Ich lese dein Blatt", else at the end of the chat', () => {
-    // p2-08: "Ich lese dein Blatt …" and "Ich mache aus deinem Blatt gerade Übungen …" stacked.
-    expect(homeLayout({ now: reading, decision: null, working: 'material' }).working).toBe('card');
-    expect(homeLayout({ now: capture, decision: null, working: 'material' }).working).toBe(
-      'thread',
-    );
-    expect(homeLayout({ now: null, decision: null, working: 'session' })).toMatchObject({
-      top: null,
-      working: 'thread',
-    });
-  });
-});
-
-describe('the card on top, closed on this phone (it lies over the menu)', () => {
-  const ready: NonNullable<BuddyHome['now']> = {
-    type: 'practice_ready',
-    step_id: '00000000-0000-4000-8000-000000000003',
-    title: 'Mathearbeit Brüche',
-    question_count: 4,
-    est_minutes: 5,
-    focus_topics: [],
-    goal: null,
-  };
-  const ok = { model: true, scheduler: 'ok' } as const;
-
-  it('stays closed while the card says the same, and comes back when it says something new', () => {
-    const closed = topKey({ now: ready, decision: null, system: ok });
-    expect(closed).not.toBeNull();
-    expect(homeLayout({ now: ready, decision: null, working: null }, closed).top).toBeNull();
-    // Another practice is ready: shown again.
-    const other = { ...ready, step_id: '00000000-0000-4000-8000-000000000004' };
-    expect(homeLayout({ now: other, decision: null, working: null }, closed).top).toBe('now');
-    // The same practice, now with fewer questions: something new, shown again.
-    expect(
-      homeLayout({ now: { ...ready, question_count: 3 }, decision: null, working: null }, closed)
-        .top,
-    ).toBe('now');
-  });
-
-  it('asks a closed decision at the end of the conversation instead', () => {
-    const closed = topKey({ now: null, decision: optIn });
-    expect(homeLayout({ now: null, decision: optIn, working: null }, closed)).toEqual({
-      top: null,
+    expect(l).toEqual({
+      bar: 'capture',
+      failed: false,
+      result: false,
       decisionInline: true,
       working: null,
     });
   });
 
+  it('never puts the decision on top: alone it is still asked in the conversation', () => {
+    const l = homeLayout({ now: null, decision: optIn, working: null });
+    expect(l.bar).toBeNull();
+    expect(l.decisionInline).toBe(true);
+    expect(homeLayout({ now: null, decision: null, working: null }).bar).toBeNull();
+  });
+
+  it('gives each acting card its bar: resume, ready, capture, reading', () => {
+    const resume: NonNullable<BuddyHome['now']> = {
+      type: 'resume_practice',
+      session_id: '00000000-0000-4000-8000-000000000007',
+      mode: 'help',
+      title: 'Hausaufgabe Quadrat',
+      remaining: 2,
+    };
+    expect(homeLayout({ now: resume, decision: null, working: null }).bar).toBe('resume');
+    expect(
+      homeLayout({ now: { type: 'practice_ready', ...prepared }, decision: null, working: null })
+        .bar,
+    ).toBe('ready');
+    expect(homeLayout({ now: capture, decision: null, working: null }).bar).toBe('capture');
+    expect(homeLayout({ now: reading, decision: null, working: null }).bar).toBe('reading');
+  });
+
+  it('tells a failed sheet in the conversation, never on top', () => {
+    const l = homeLayout({ now: failed, decision: null, working: null });
+    expect(l.bar).toBeNull();
+    expect(l.failed).toBe(true);
+    // Nothing on top means nothing to close.
+    expect(topKey({ now: failed })).toBeNull();
+  });
+
+  it('tells a result in the conversation; what is prepared next is the bar (no sub-card)', () => {
+    const alone = homeLayout({ now: result, decision: null, working: null });
+    expect(alone).toMatchObject({ bar: null, result: true });
+    const withNext = homeLayout({
+      now: { ...result, next: prepared },
+      decision: null,
+      working: null,
+    });
+    expect(withNext).toMatchObject({ bar: 'next', result: true });
+  });
+
+  it('says "working" once: inside "Ich lese dein Blatt", else at the end of the chat', () => {
+    // p2-08: "Ich lese dein Blatt …" and "Ich mache aus deinem Blatt gerade Übungen …" stacked.
+    expect(homeLayout({ now: reading, decision: null, working: 'material' }).working).toBe('bar');
+    expect(homeLayout({ now: capture, decision: null, working: 'material' }).working).toBe(
+      'thread',
+    );
+    expect(homeLayout({ now: null, decision: null, working: 'session' })).toMatchObject({
+      bar: null,
+      working: 'thread',
+    });
+  });
+});
+
+describe('the bar on top, closed on this phone (it lies over the menu)', () => {
+  const ready: NonNullable<BuddyHome['now']> = { type: 'practice_ready', ...prepared };
+  const ok = { model: true, scheduler: 'ok' } as const;
+
+  it('stays closed while the bar says the same, and comes back when it says something new', () => {
+    const closed = topKey({ now: ready, system: ok });
+    expect(closed).not.toBeNull();
+    expect(homeLayout({ now: ready, decision: null, working: null }, closed).bar).toBeNull();
+    // Another practice is ready: shown again.
+    const other = { ...ready, step_id: '00000000-0000-4000-8000-000000000004' };
+    expect(homeLayout({ now: other, decision: null, working: null }, closed).bar).toBe('ready');
+    // The same practice, now with fewer questions: something new, shown again.
+    expect(
+      homeLayout({ now: { ...ready, question_count: 3 }, decision: null, working: null }, closed)
+        .bar,
+    ).toBe('ready');
+  });
+
+  it('closing the bar of what is next leaves the result in the conversation', () => {
+    const withNext: NonNullable<BuddyHome['now']> = { ...result, next: prepared };
+    const closed = topKey({ now: withNext });
+    expect(closed).not.toBeNull();
+    expect(homeLayout({ now: withNext, decision: null, working: null }, closed)).toMatchObject({
+      bar: null,
+      result: true,
+    });
+  });
+
+  it('decisions have no key on top: they are conversation, not a card to close', () => {
+    expect(topKey({ now: null })).toBeNull();
+    const l = homeLayout({ now: null, decision: optIn, working: null }, null);
+    expect(l.decisionInline).toBe(true);
+  });
+
   it('says "working" in the conversation when "Ich lese dein Blatt" is closed', () => {
-    const closed = topKey({ now: reading, decision: null });
+    const closed = topKey({ now: reading });
     expect(homeLayout({ now: reading, decision: null, working: 'material' }, closed).working).toBe(
       'thread',
     );
   });
 
   it('has a key for the system notes alone, and none when nothing is on top', () => {
-    expect(topKey({ now: null, decision: null, system: ok })).toBeNull();
-    expect(
-      topKey({ now: null, decision: null, system: { model: false, scheduler: 'ok' } }),
-    ).not.toBeNull();
+    expect(topKey({ now: null, system: ok })).toBeNull();
+    expect(topKey({ now: null, system: { model: false, scheduler: 'ok' } })).not.toBeNull();
     // A note that comes up changes what is on top: shown again.
-    expect(
-      topKey({ now: ready, decision: null, system: { model: true, scheduler: 'stale' } }),
-    ).not.toBe(topKey({ now: ready, decision: null, system: ok }));
+    expect(topKey({ now: ready, system: { model: true, scheduler: 'stale' } })).not.toBe(
+      topKey({ now: ready, system: ok }),
+    );
   });
 });
 
@@ -126,8 +187,8 @@ describe('where the conversation stands', () => {
   });
 
   it('keeps following when the content shrank under it (not her scrolling up)', () => {
-    // The card on top got shorter: less room kept free above the thread, the browser pulls
-    // the offset back (walkthrough 09-buddy-prepared).
+    // The view grew or the content shrank: the browser pulls the offset back
+    // (walkthrough 09-buddy-prepared).
     expect(followsEnd(true, 400, 250, 500, 800, 24, true)).toBe(true);
     // Without a change of size the same jump is her scrolling up.
     expect(followsEnd(true, 400, 250, 500, 800)).toBe(false);

@@ -81,10 +81,16 @@
     "legend": "Sottolineato = da riprovare",
     "tip": "«{{word}}» – {{tip}}",
     "heard": "Ho sentito: «{{text}}»",
-    "more_tips": "Mostra altri {{count}} consigli"
+    "more_tips": "Mostra altri {{count}} consigli",
+    "word_open": "Esercita la parola: {{word}}",
+    "word_hint": "Solo questa parola: non conta per l'esercizio.",
+    "word_say": "Di questa parola",
+    "word_good": "Perfetto!",
+    "word_again": "Quasi: riascoltala e riprova."
   },
   "help_note": "Compiti – ti do degli indizi, la soluzione la trovi tu.",
   "origin_buddy": "Domanda di Buddy",
+  "image_fallback": "Immagine per questo esercizio",
   "self_solved": {
     "title": "Risolto da te!",
     "body": "Ci sei arrivato da solo."

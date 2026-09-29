@@ -81,10 +81,16 @@
     "legend": "Underlined = practise again",
     "tip": "“{{word}}” – {{tip}}",
     "heard": "What I heard: “{{text}}”",
-    "more_tips": "Show {{count}} more tips"
+    "more_tips": "Show {{count}} more tips",
+    "word_open": "Practise the word: {{word}}",
+    "word_hint": "Just this word – it does not count towards the question.",
+    "word_say": "Say this word",
+    "word_good": "That sits!",
+    "word_again": "Almost – listen again and try it."
   },
   "help_note": "Homework – I'll give you hints, you'll find the answer yourself.",
   "origin_buddy": "Question from Buddy",
+  "image_fallback": "Picture for this task",
   "self_solved": {
     "title": "Solved it yourself!",
     "body": "You worked that out on your own."

@@ -17,6 +17,15 @@ export type AuthUser = {
    * refreshes. Not `iat`: a refreshed token is not a fresh sign-in.
    */
   authenticatedAt: number | null;
+  /**
+   * When Supabase Auth recorded the click on the confirmation link
+   * (`email_confirmed_at` of the user record that `auth.getUser(token)`
+   * returns — the access token itself carries no such claim). The mail says
+   * in as many words that the click confirms the consent
+   * (docs/consent-email-templates.md), so this is the instant the account
+   * holder confirmed it (issue #30). Null while nobody clicked.
+   */
+  emailConfirmedAt: Date | null;
 };
 
 export interface AuthVerifier {
@@ -54,6 +63,13 @@ export function authenticatedAtOf(token: string): number | null {
   } catch {
     return null;
   }
+}
+
+/** A timestamp of the Supabase user record; null when unset or not a date. */
+export function instantOf(value: string | undefined): Date | null {
+  if (!value) return null;
+  const at = new Date(value);
+  return Number.isNaN(at.getTime()) ? null : at;
 }
 
 /**
@@ -105,6 +121,9 @@ export class SupabaseAuthVerifier implements AuthVerifier {
       userId: data.user.id,
       email: data.user.email ?? null,
       authenticatedAt: authenticatedAtOf(token),
+      // From the user record (GET /auth/v1/user), which this call already fetched — the
+      // access token has no confirmation claim (issue #30).
+      emailConfirmedAt: instantOf(data.user.email_confirmed_at),
     };
   }
 

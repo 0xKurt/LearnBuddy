@@ -97,16 +97,24 @@ export async function pendingSession(
   return { rows: session };
 }
 
-/** Plans the summary of a conversation that has ended; at most one job per learner. */
+/**
+ * Plans the summary of a conversation that has ended; at most one job per learner. Only for
+ * accounts whose consent covers the current privacy text and whose deletion is not being
+ * carried out (issue #85): this is a model call on her conversation, and the privacy promise
+ * is that after a text change — and once a deletion runs — nothing of hers goes to the model.
+ */
 export async function planSummaries(deps: Deps): Promise<number> {
   const now = deps.now();
   const learners = await deps.db.query<{ id: string }>(
-    `select l.id from learners l
-      where exists (select 1 from buddy_messages m where m.learner_id = l.id and m.status = 'done')
+    `select l.id from learners l join accounts ca on ca.id = l.account_id
+      where ca.consent_version = $1
+        and ca.deletion_started_at is null
+        and (ca.deletion_due_at is null or ca.deletion_due_at > $2)
+        and exists (select 1 from buddy_messages m where m.learner_id = l.id and m.status = 'done')
         and not exists (select 1 from jobs j where j.learner_id = l.id and j.kind = 'summarise_session'
                           and j.status in ('queued','running'))
       limit 50`,
-    [],
+    [deps.config.CONSENT_VERSION, now],
   );
   let planned = 0;
   for (const l of learners) {

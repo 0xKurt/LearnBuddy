@@ -9,7 +9,8 @@
     "learner_stated": "You said: “{{quote}}”",
     "learner_stated_plain": "You told Buddy this.",
     "learner_edited": "Changed by you.",
-    "account_holder": "Entered by an adult."
+    "account_holder": "Entered by an adult.",
+    "consolidated": "Several things you told Buddy, put into one."
   },
   "edit": "Change",
   "edit_a11y": "Change: {{statement}}",

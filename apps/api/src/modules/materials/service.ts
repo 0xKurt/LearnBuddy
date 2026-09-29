@@ -51,6 +51,7 @@ import {
   pageRanges,
   pdfPageCount,
 } from './pdf.js';
+import { attachConceptImages } from './images.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
@@ -780,6 +781,9 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   if (items.length === 0)
     return fail(deps, job, materialId, x.items.length > 0 ? 'model_error' : 'unreadable');
 
+  // The sheet this run's questions went onto (the merge target, else this material);
+  // null when another run finished first or the sheet was deleted meanwhile.
+  let sheetForImages: string | null = null;
   await deps.db.tx(async (tx) => {
     // A run past its lease writes nothing: the run that took over owns the sheet now.
     if (!(await holdsLease(tx, job))) return;
@@ -789,6 +793,18 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       result: outcome === 'ready' ? { outcome, items: items.length } : { outcome: 'nothing_to_do' },
     });
   });
+  // Concept images are a bonus on top of a sheet that is already ready (issue #50):
+  // attachConceptImages never throws — a vision pass or Storage that fails leaves the
+  // sheet ready without images, it never becomes a failure path of the reading.
+  if (sheetForImages) {
+    await attachConceptImages(deps, {
+      materialId,
+      sheetId: sheetForImages,
+      learnerId: learner.id,
+      locale: learner.locale,
+      timezone: tz.timezone,
+    });
+  }
 
   async function readyTx(tx: Db): Promise<'ready' | 'deleted'> {
     const current = await tx.one<MaterialRow>(`select * from materials where id = $1 for update`, [
@@ -967,6 +983,7 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       });
     }
     await bumpContext(tx, current.learner_id);
+    sheetForImages = home.id;
     return 'ready';
   }
 }
@@ -1206,6 +1223,9 @@ export async function materialItems(
       lang: r.lang,
       prompt_lang: r.prompt_lang,
       figure: r.figure,
+      // The concept image is shown where the question is shown full size (sessions);
+      // the material list stays a list (issue #50).
+      image: null,
       result: resultOf(r),
     })),
   };

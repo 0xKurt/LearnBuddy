@@ -34,6 +34,7 @@ import { Card } from '../lb/Card.js';
 import { toast } from '../lb/Toast.js';
 import { BottomBar } from './BottomBar.js';
 import { ListenButton } from './ListenButton.js';
+import { WordSheet, type SpokenWord } from './WordSheet.js';
 
 /** The newest pronunciation feedback among this question's turns, if any. */
 export function latestPronunciation(turns: PracticeTurnView[]): PronunciationFeedback | null {
@@ -46,7 +47,14 @@ export function latestPronunciation(turns: PracticeTurnView[]): PronunciationFee
 
 // ─────────────── the sentence and the feedback ───────────────
 
-function MarkedWords({ feedback }: { feedback: PronunciationFeedback }) {
+function MarkedWords({
+  feedback,
+  onWord,
+}: {
+  feedback: PronunciationFeedback;
+  /** A word she taps: it opens on its own to listen to and to try again (issue #83). */
+  onWord?: (word: PronunciationFeedback['words'][number]) => void;
+}) {
   const { t } = useTranslation('practice');
   const ok = feedback.words.filter((w) => w.ok).map((w) => w.text);
   const practise = feedback.words.filter((w) => !w.ok).map((w) => w.text);
@@ -57,13 +65,20 @@ function MarkedWords({ feedback }: { feedback: PronunciationFeedback }) {
     .filter((s): s is string => s !== null)
     .join(' ');
   return (
-    <View accessible accessibilityLabel={summary} style={{ gap: 6 }}>
+    <View accessible={!onWord} accessibilityLabel={onWord ? undefined : summary} style={{ gap: 6 }}>
       <Text style={[TYPE.title, { fontSize: 24, lineHeight: 36, fontWeight: '500' }]}>
         {feedback.words.map((w, i) => (
           // The space before a word stays outside it: the underline marks only the word.
           <Text key={`${i}-${w.text}`}>
             {i > 0 ? ' ' : ''}
             <Text
+              {...(onWord
+                ? {
+                    accessibilityRole: 'button' as const,
+                    accessibilityLabel: t('speak.word_open', { word: w.text }),
+                    onPress: () => onWord(w),
+                  }
+                : {})}
               style={
                 w.ok
                   ? { color: LB.successText }
@@ -137,6 +152,8 @@ type CardProps = {
    * replaced by the stored feedback as soon as the recording is judged.
    */
   live?: SpeakStreamEvent | null;
+  /** The running session: only with it can one word be practised on its own (issue #83). */
+  sessionId?: string;
 };
 
 /** The sentence to say, large; after listening, the word-by-word feedback. */
@@ -147,17 +164,31 @@ type CardProps = {
  * The words now carry the judgement visually; the sentences about it belong to Buddy's
  * reply in the thread (PronunciationNote, ItemThread).
  */
-export function SpeakCard({ item, turns, live }: CardProps) {
+export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
   const { t } = useTranslation('practice');
   const feedback = latestPronunciation(turns);
+  /** The word she tapped, to hear and try on its own (issue #83). */
+  const [word, setWord] = useState<SpokenWord | null>(null);
 
   return (
     <Card tone="lavender" padding={20} radius={22}>
       <View style={{ gap: 12 }}>
         {item.topic ? <Text style={[TYPE.body, { color: LB.ink2 }]}>{item.topic}</Text> : null}
         <Text style={TYPE.label}>{t('speak.instruction')}</Text>
+        {sessionId && item.lang ? (
+          <WordSheet
+            word={word}
+            sessionId={sessionId}
+            itemId={item.id}
+            lang={item.lang}
+            onClose={() => setWord(null)}
+          />
+        ) : null}
         {feedback && feedback.words.length > 0 ? (
-          <MarkedWords feedback={feedback} />
+          <MarkedWords
+            feedback={feedback}
+            {...(sessionId && item.lang ? { onWord: setWord } : {})}
+          />
         ) : live && live.words.length > 0 ? (
           <LiveWords prompt={item.prompt} words={live.words} />
         ) : (

@@ -12,6 +12,7 @@
 
 import { DEFAULT_THEME, paletteOf, type Palette, type ThemeName } from './palettes.js';
 import { applyShadows } from './shadow.js';
+import { applyType } from './type.js';
 
 const active: { name: ThemeName; palette: Palette } = {
   name: DEFAULT_THEME,
@@ -124,4 +125,5 @@ export function applyPalette(name: ThemeName): void {
   Object.assign(TONE_DEEP, toneDeep(palette));
   Object.assign(FIGURE, figureOf(palette));
   applyShadows(palette);
+  applyType(palette);
 }

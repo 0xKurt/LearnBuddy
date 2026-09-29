@@ -10,6 +10,7 @@
 import type {
   AnswerRequest,
   Figure,
+  ItemView,
   SessionMode,
   AnswerResponse,
   HintRequest,
@@ -18,6 +19,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
+import type { StorageGateway } from '../../storage/gateway.js';
 import { isUniqueViolation, type Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
@@ -448,20 +450,61 @@ export async function loadSession(
   return s;
 }
 
+/** How long a signed concept-image URL lives; every session fetch signs afresh (issue #50). */
+const IMAGE_URL_TTL_SECONDS = 1800;
+
+type ItemImageRow = {
+  image_path: string | null;
+  image_width: number | null;
+  image_height: number | null;
+  image_label: string | null;
+};
+
+/**
+ * Signed URLs for the concept images of a view, one sign per distinct crop. A Storage
+ * outage never breaks loading the session: the image is simply left out (null).
+ */
+async function signImageUrls(
+  storage: StorageGateway,
+  rows: ItemImageRow[],
+): Promise<Map<string, string>> {
+  const urls = new Map<string, string>();
+  for (const path of new Set(rows.map((r) => r.image_path).filter((p): p is string => !!p))) {
+    try {
+      urls.set(path, await storage.createDownloadUrl(path, IMAGE_URL_TTL_SECONDS));
+    } catch {
+      // Left out; the next fetch tries again.
+    }
+  }
+  return urls;
+}
+
+/** The crop that goes with the question, or null (contract: ItemImage). */
+function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
+  const url = row.image_path ? urls.get(row.image_path) : undefined;
+  if (!url || !row.image_width || !row.image_height) return null;
+  return { url, width: row.image_width, height: row.image_height, label: row.image_label ?? '' };
+}
+
 export async function sessionView(
   db: Db,
   learnerId: string,
   sessionId: string,
+  storage: StorageGateway,
 ): Promise<SessionView> {
   const s = await loadSession(db, learnerId, sessionId);
-  const items = await db.query<SessionItemRow & ItemRow>(
+  const items = await db.query<SessionItemRow & ItemRow & ItemImageRow>(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.prepared_hints_used,
             si.first_try_correct, si.flagged_at, si.deferred_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
-            i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution
+            i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
+            mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
+            mi.label as image_label
        from session_items si join items i on i.id = si.item_id
+       left join material_images mi on mi.id = i.image_id
       where si.session_id = $1 order by si.position`,
     [sessionId],
   );
+  const imageUrls = await signImageUrls(storage, items);
   const turns = await db.query<{
     id: string;
     item_id: string | null;
@@ -507,6 +550,7 @@ export async function sessionView(
         lang: i.lang,
         prompt_lang: i.prompt_lang,
         figure: i.figure,
+        image: imageOf(i, imageUrls),
       },
       status: i.status,
       attempts: i.attempts,
@@ -562,13 +606,14 @@ export async function replay(
   learnerId: string,
   sessionId: string,
   clientTurnId: string,
+  storage: StorageGateway,
 ): Promise<AnswerResponse | null> {
   const learnerTurn = await db.maybeOne<{ seq: number; verdict: AnswerResponse['verdict'] }>(
     `select seq, verdict from practice_turns where session_id = $1 and client_turn_id = $2`,
     [sessionId, clientTurnId],
   );
   if (!learnerTurn) return null;
-  const view = await sessionView(db, learnerId, sessionId);
+  const view = await sessionView(db, learnerId, sessionId, storage);
   const reply = await db.maybeOne<{ id: string }>(
     `select id from practice_turns where session_id = $1 and seq = $2 and role = 'tutor'`,
     [sessionId, learnerTurn.seq + 1],
@@ -612,7 +657,7 @@ export async function answerItem(
 ): Promise<AnswerResponse> {
   const hintRequest = opts.hintRequest === true;
   const now = deps.now();
-  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
   if (replayed) return replayed;
 
   const session = await loadSession(deps.db, learner.id, sessionId);
@@ -1050,12 +1095,12 @@ export async function answerItem(
   } catch (err) {
     // A concurrent duplicate of the same answer won: return its result.
     if (isUniqueViolation(err)) {
-      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
       if (r) return r;
     }
     throw err;
   }
-  const view = await sessionView(deps.db, learner.id, sessionId);
+  const view = await sessionView(deps.db, learner.id, sessionId, deps.storage);
   const reply = [...view.turns]
     .reverse()
     .find((tr) => tr.item_id === item.id && tr.role === 'tutor');
@@ -1080,7 +1125,7 @@ export async function hintItem(
   input: HintRequest,
 ): Promise<AnswerResponse> {
   const now = deps.now();
-  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
   if (replayed) return replayed;
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
@@ -1163,12 +1208,18 @@ export async function hintItem(
       );
     }
     if (isUniqueViolation(err)) {
-      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
       if (r) return r;
     }
     throw err;
   }
-  const replayedNow = await replay(deps.db, learner.id, sessionId, input.client_turn_id);
+  const replayedNow = await replay(
+    deps.db,
+    learner.id,
+    sessionId,
+    input.client_turn_id,
+    deps.storage,
+  );
   if (!replayedNow) throw new AppError('internal', 'hint missing');
   return replayedNow;
 }
@@ -1218,7 +1269,7 @@ export async function revealItem(
     ]);
     await finishIfComplete(tx, learnerId, sessionId, now);
   });
-  return sessionView(deps.db, learnerId, sessionId);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage);
 }
 
 /**
@@ -1255,7 +1306,7 @@ export async function deferItem(
       now,
     ]);
   });
-  return sessionView(deps.db, learnerId, sessionId);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage);
 }
 
 /**
@@ -1324,7 +1375,7 @@ export async function flagItem(
     // Buddy's prepared practice and picture of her questions may include it.
     await bumpContext(tx, learnerId);
   });
-  return sessionView(deps.db, learnerId, sessionId);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage);
 }
 
 // ─────────────── lifecycle ───────────────
@@ -1445,5 +1496,5 @@ export async function finishSession(
     }
     await finishLocked(tx, learnerId, s, now);
   });
-  return sessionView(deps.db, learnerId, sessionId);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage);
 }

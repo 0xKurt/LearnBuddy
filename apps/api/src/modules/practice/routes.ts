@@ -5,6 +5,7 @@ import {
   HintRequest,
   ReexplainRequest,
   SpeakRequest,
+  SpeakWordRequest,
   StartPracticeRequest,
   StartTopicRequest,
   Uuid,
@@ -36,7 +37,7 @@ import {
   sessionView,
   startManual,
 } from './service.js';
-import { speakItem } from './speak.js';
+import { speakItem, speakWord } from './speak.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
 practiceRoutes.use('*', requireUser, requireAccount, requireLearner);
@@ -55,12 +56,13 @@ practiceRoutes.post('/sessions', async (c) => {
     },
     input.mode,
   );
-  return c.json(await sessionView(deps.db, learnerId, id), 201);
+  return c.json(await sessionView(deps.db, learnerId, id, deps.storage), 201);
 });
 
 practiceRoutes.get('/sessions/:id', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
-  return c.json(await sessionView(depsOf(c).db, c.get('learner').id, sessionId));
+  const deps = depsOf(c);
+  return c.json(await sessionView(deps.db, c.get('learner').id, sessionId, deps.storage));
 });
 
 practiceRoutes.post('/sessions/:id/answer', async (c) => {
@@ -127,7 +129,17 @@ practiceRoutes.post('/topic', async (c) => {
       await prepareHints(deps, learner, id).catch(() => 0);
     });
   }
-  return c.json(await sessionView(deps.db, learner.id, id), 201);
+  return c.json(await sessionView(deps.db, learner.id, id, deps.storage), 201);
+});
+
+/**
+ * One word of the sentence, said on its own (issue #83): she taps a word she got wrong and
+ * practises just that. Nothing is stored, nothing counts — the question keeps its state.
+ */
+practiceRoutes.post('/sessions/:id/speak-word', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, SpeakWordRequest);
+  return c.json(await speakWord(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 // The judgement while the model is still listening (issue #8): `progress` events

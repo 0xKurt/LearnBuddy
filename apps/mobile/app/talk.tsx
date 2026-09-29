@@ -7,10 +7,15 @@
 // something to tap (start learning, open a part of the app), the loop pauses
 // so she can tap it. The mic is only on while this screen is open, which she
 // opened herself; "Beenden" or the keyboard ends it.
-// Buddy's orb shows the state (components/voice/TalkOrb.tsx) — listening,
-// thinking, speaking, idle — and tapping it while he speaks interrupts him. Two
-// soft tones mark listening starting and ending (lib/speech/cues.ts). The camera
-// shows Buddy a photo: it goes into the same conversation, and she comes back here.
+// The screen is a camera angle on that one thread (issue #18): the last few
+// messages stand as the chat's own bubbles (components/buddy/Conversation.tsx),
+// bottom-anchored and following the newest — her words form as her own bubble
+// while she speaks, Buddy's reply streams into his, and the sentence he is
+// reading aloud stands out in it (ReadAlongBubble). Buddy himself sits small
+// above the button row; his state is the moon's movement plus a one-line
+// caption (components/voice/TalkOrb.tsx, lib/buddy/moon.ts). Two soft tones
+// mark listening starting and ending (lib/speech/cues.ts). The camera shows
+// Buddy a photo: it goes into the same conversation, and she comes back here.
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
@@ -20,14 +25,12 @@ import { AccessibilityInfo, Linking, Platform, ScrollView, Text, View } from 're
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AreaCard } from '../components/buddy/AreaCard.js';
-import { OfferCard } from '../components/learn/OfferCard.js';
+import { Conversation } from '../components/buddy/Conversation.js';
 import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { MicButton } from '../components/voice/MicButton.js';
-import { ReadAlongText } from '../components/voice/ReadAlongText.js';
 import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
 import { talkMode } from '../lib/buddy/moon.js';
 import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
@@ -51,14 +54,17 @@ import { SPACE } from '../lib/theme/space.js';
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'paused';
 
+/** How many of the newest messages the talk screen shows (a tail, not the history). */
+const TAIL = 3;
+
 export default function TalkScreen() {
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
   const words = useSpokenWords();
   const scroll = useRef<ScrollView>(null);
   const [phase, setPhase] = useState<Phase>('paused');
-  const [said, setSaid] = useState('');
-  const [reply, setReply] = useState<MessageView | null>(null);
+  /** Her turn on its way: her bubble until the server's thread carries the message. */
+  const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   /** Buddy's reply while it is still being written (only an answer that changes nothing). */
   const [live, setLive] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -81,6 +87,7 @@ export default function TalkScreen() {
     ++turnSeq.current;
     stopSpeaking();
     setProblem(null);
+    setLive(null);
     setPhase('listening');
     // Cue and microphone start together: the 150 ms tap is too quiet and short
     // for the recogniser to write down, and waiting for it read as a stall
@@ -91,11 +98,10 @@ export default function TalkScreen() {
 
   async function answer(text: string): Promise<void> {
     void playCue('done');
-    setSaid(text);
-    setReply(null);
+    const id = newId();
+    setPending({ id, text });
     setLive(null);
     setPhase('thinking');
-    const id = newId();
     const me = ++turnSeq.current;
     // She spoke again (or left): this answer no longer drives the screen or the voice.
     const stale = () => turnSeq.current !== me || !open.current;
@@ -161,7 +167,7 @@ export default function TalkScreen() {
         return;
       }
       final = r;
-      setReply(r);
+      // The stored reply stands in the thread now; the live bubble made room for it.
       setLive(null);
       setPhase('speaking');
       if (along.speaker) {
@@ -170,7 +176,7 @@ export default function TalkScreen() {
         along.speaker.feed(r.text, true);
       } else {
         // Nothing was said yet (the answer changed something, or a safeguarding reply):
-        // read the stored text, sentence by sentence, so it reads along.
+        // read the stored text, sentence by sentence, so it reads along in his bubble.
         void speak(r.text, currentLocale(), {
           transform: (sentence) => spokenText(sentence, words),
           onEnd: (why) => {
@@ -236,8 +242,10 @@ export default function TalkScreen() {
         stopSpeaking();
         // What she was saying is dropped, not sent: a turn started now would be ignored and
         // leave the screen stuck in "thinking" (talk-stuck-thinking-on-blur). A turn already
-        // on its way is ignored as well (stale), so the screen is paused when she comes back.
+        // on its way is ignored as well (stale), so the screen is paused when she comes back
+        // — and its optimistic bubble belongs to this visit, the thread carries the rest.
         voiceRef.current.cancel();
+        setPending(null);
         setPhase('paused');
       };
     }, []),
@@ -269,19 +277,25 @@ export default function TalkScreen() {
     stopSpeaking();
   }
 
-  // Once the conversation carries content, the orb makes room for it: full size it
-  // pushed Buddy's reply and its card half behind the bottom bar (user screenshot
-  // 2026-09-28 "der halbe content verschwindet").
-  const hasContent = !!(reply ?? live ?? (said || null));
-  useEffect(() => {
-    if (reply || live) scroll.current?.scrollToEnd({ animated: true });
-  }, [reply, live]);
-
   // Her photo is being read (she showed Buddy something): said here too.
   const home = useHome();
   const reading = home.data?.now?.type === 'material_processing';
 
   const listening = phase === 'listening' && voice.state === 'recording';
+  // The same thread as the chat, seen from here: its newest messages as the chat's
+  // own bubbles (issue #18).
+  const thread = home.data?.thread ?? [];
+  const tail = thread.slice(-TAIL);
+  // Her words as her own bubble: the live transcript while she speaks, then what she
+  // said until the server's thread carries the message.
+  const confirmed = pending !== null && thread.some((m) => m.client_message_id === pending.id);
+  const bubble =
+    listening && voice.live
+      ? { text: voice.live }
+      : pending && !confirmed
+        ? { text: pending.text }
+        : null;
+
   const headline =
     phase === 'thinking' || voice.state === 'transcribing'
       ? t('buddy:talk.thinking')
@@ -343,96 +357,40 @@ export default function TalkScreen() {
         <View style={{ width: 44 }} />
       </View>
 
+      {/* The conversation's tail, bottom-anchored and following its end: the same bubbles,
+          cards and streaming as the chat (issue #18) — no second rendering of the thread. */}
+      {/* Own name, not "scroll-thread": the home stays mounted under this modal, and two
+          identical testIDs make every thread locator ambiguous (Playwright strict mode). */}
       <ScrollView
         ref={scroll}
-        contentContainerStyle={{ flexGrow: 1, alignItems: 'center', padding: 24, gap: 14 }}
+        testID="scroll-talk"
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'flex-end',
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: 8,
+        }}
+        onLayout={() => scroll.current?.scrollToEnd({ animated: false })}
+        onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
       >
-        <Text
-          accessibilityRole="header"
-          accessibilityLiveRegion="polite"
-          style={[TYPE.display, { textAlign: 'center', marginTop: 12 }]}
-        >
-          {headline}
-        </Text>
-        {/* The line under the headline keeps its room, so Buddy never jumps between states. */}
-        <View style={{ minHeight: TYPE.title.lineHeight, alignSelf: 'stretch' }}>
-          {sub ? (
-            <Animated.Text
-              key={sub}
-              entering={fadeIn()}
-              style={[TYPE.title, { color: LB.ink2, fontWeight: '500', textAlign: 'center' }]}
-            >
-              {sub}
-            </Animated.Text>
-          ) : null}
-        </View>
+        <Conversation
+          messages={tail}
+          pending={bubble}
+          live={live}
+          busy={phase === 'thinking'}
+          spoken
+          // While she is still speaking, her forming words are no writing of Buddy's.
+          showTyping={phase !== 'listening'}
+        />
+      </ScrollView>
 
-        <View style={{ marginVertical: hasContent ? -26 : -10 }}>
-          <TalkOrb
-            mode={orbMode}
-            size={hasContent ? 132 : 200}
-            level={voice.level}
-            {...(phase === 'speaking'
-              ? { onPress: interrupt, pressLabel: t('buddy:talk.stop_speaking') }
-              : {})}
-          />
-        </View>
-
-        {listening && voice.live ? (
-          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', fontStyle: 'italic' }]}>
-            „{voice.live}“
-          </Text>
-        ) : said && !listening ? (
-          <Animated.Text
-            key={`said-${said}`}
-            entering={fadeIn()}
-            style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}
-          >
-            „{said}“
-          </Animated.Text>
-        ) : null}
-
-        {live && !reply && phase !== 'listening' ? (
-          <Animated.Text
-            entering={fadeIn()}
-            style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}
-          >
-            {live}
-          </Animated.Text>
-        ) : null}
-        {reading ? (
-          <Animated.Text
-            entering={fadeIn()}
-            style={[TYPE.small, { textAlign: 'center' }]}
-            accessibilityLiveRegion="polite"
-          >
-            {t('buddy:now.processing_title')}
-          </Animated.Text>
-        ) : null}
-        {reply && phase !== 'listening' ? (
-          <Animated.View
-            key={reply.id}
-            entering={fadeIn()}
-            style={{ alignSelf: 'stretch', gap: 10 }}
-          >
-            <ReadAlongText
-              text={reply.text}
-              style={[TYPE.title, { textAlign: 'center', fontWeight: '500' }]}
-            />
-            {reply.actions.map((a) =>
-              a.summary.tool === 'offer_learning' ? (
-                <OfferCard key={a.id} actionId={a.id} offer={a.summary} spoken />
-              ) : a.summary.tool === 'open_area' ? (
-                <AreaCard key={a.id} area={a.summary.area} />
-              ) : null,
-            )}
-          </Animated.View>
-        ) : null}
-
-        {problem || voice.hint || voice.denied ? (
+      {problem || voice.hint || voice.denied ? (
+        <View style={{ alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingBottom: 4 }}>
           <Text
             accessibilityRole="alert"
-            style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}
+            style={[TYPE.small, { color: LB.ink2, textAlign: 'center' }]}
           >
             {problem ??
               (voice.denied
@@ -441,14 +399,55 @@ export default function TalkScreen() {
                   ? t(`common:voice.problem.${voice.hint}`)
                   : '')}
           </Text>
-        ) : null}
-        {/* The same way out as everywhere else the mic is refused (talk-denied-no-settings-action). */}
-        {!problem && voice.denied && Platform.OS !== 'web' ? (
-          <Btn variant="soft" pill center onPress={() => void Linking.openSettings()}>
-            {t('common:voice.open_settings')}
-          </Btn>
-        ) : null}
-      </ScrollView>
+          {/* The same way out as everywhere else the mic is refused (talk-denied-no-settings-action). */}
+          {!problem && voice.denied && Platform.OS !== 'web' ? (
+            <Btn variant="soft" pill center onPress={() => void Linking.openSettings()}>
+              {t('common:voice.open_settings')}
+            </Btn>
+          ) : null}
+        </View>
+      ) : null}
+      {reading ? (
+        <Animated.Text
+          entering={fadeIn()}
+          style={[TYPE.small, { textAlign: 'center', paddingHorizontal: 24, paddingBottom: 4 }]}
+          accessibilityLiveRegion="polite"
+        >
+          {t('buddy:now.processing_title')}
+        </Animated.Text>
+      ) : null}
+
+      {/* Buddy, small and docked over the button row (issue #18): the moon's movement is the
+          state, the caption names it, one quiet line under it says what she can do. The
+          caption block keeps its two lines of room, so Buddy never jumps between states. */}
+      <View style={{ alignItems: 'center' }}>
+        <TalkOrb
+          mode={orbMode}
+          size={64}
+          level={voice.level}
+          {...(phase === 'speaking'
+            ? { onPress: interrupt, pressLabel: t('buddy:talk.stop_speaking') }
+            : {})}
+        />
+        <View style={{ minHeight: 40, alignItems: 'center', marginTop: -8 }}>
+          <Text
+            accessibilityRole="header"
+            accessibilityLiveRegion="polite"
+            style={[TYPE.caption, { fontWeight: '600', color: LB.ink, textAlign: 'center' }]}
+          >
+            {headline}
+          </Text>
+          {sub ? (
+            <Animated.Text
+              key={sub}
+              entering={fadeIn()}
+              style={[TYPE.caption, { textAlign: 'center', marginTop: 1 }]}
+            >
+              {sub}
+            </Animated.Text>
+          ) : null}
+        </View>
+      </View>
 
       {/* Voice first: keyboard · big mic · camera, like the chat's voice bar ("Beenden" is the
           close button on top). */}

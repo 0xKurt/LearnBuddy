@@ -372,7 +372,8 @@ export const MemoryView = z.object({
   id: Uuid,
   kind: z.enum(['fact', 'preference', 'goal', 'constraint']),
   statement: z.string(),
-  source: z.enum(['learner_stated', 'learner_edited', 'account_holder']),
+  /** 'consolidated': several of her items said once, by the nightly tidy-up (issue #20). */
+  source: z.enum(['learner_stated', 'learner_edited', 'account_holder', 'consolidated']),
   quote: z.string().nullable(),
   valid_until: IsoDateTime.nullable(),
   created_at: IsoDateTime,

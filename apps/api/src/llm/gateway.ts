@@ -36,11 +36,14 @@ export type LlmPurpose =
   | 'tutor'
   | 'explain'
   | 'extraction'
+  /** Boxes of the teaching figures on a photographed page (concept images, issue #50). */
+  | 'figures'
   | 'pronounce'
   | 'transcribe'
   | 'hints'
   | 'reexplain'
-  | 'summary';
+  | 'summary'
+  | 'consolidate';
 
 export type LlmRequest = {
   purpose: LlmPurpose;
@@ -67,6 +70,12 @@ export type LlmUsage = {
   inputTokens: number;
   outputTokens: number;
   thoughtTokens: number;
+  /**
+   * The part of `inputTokens` the provider served from its prefix cache (issue #25).
+   * Provider-reported, never computed here: 0 means "not reported", which is also what
+   * a provider without caching gives — so it is a floor, never a claim (rule 5).
+   */
+  cachedTokens: number;
   costMicros: number;
   latencyMs: number;
 };

@@ -77,7 +77,10 @@ export class DevAuth implements AuthVerifier {
   async verify(token: string): Promise<AuthUser | null> {
     const a = this.access.get(token);
     if (!a || a.expiresAt < Math.floor(Date.now() / 1000)) return null;
-    return { userId: a.userId, email: a.email, authenticatedAt: a.authAt };
+    // The dev stack sends no mail, so nothing was ever confirmed here (issue #30): it stays
+    // null instead of claiming a confirmation that never happened (CLAUDE.md rule 5). On the
+    // hosted project Supabase requires the click before it issues a session at all.
+    return { userId: a.userId, email: a.email, authenticatedAt: a.authAt, emailConfirmedAt: null };
   }
 
   async deleteUser(userId: string): Promise<void> {

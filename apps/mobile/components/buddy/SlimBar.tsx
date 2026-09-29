@@ -1,9 +1,10 @@
-// The slim bar on top of Buddy's home (owner request: the reading / ready card was "ein
-// Riesenbrett"): one line of what is happening, at most ~60 pt tall — a small photo or mark,
-// a short status, the reading's stage dots inline, and the one action as a compact button.
-// Everything else (the stage names, "du kannst die App schließen", which test, "Heute nicht")
-// opens on a tap on the bar. Screen readers hear it all in one label. Closing and swiping it
-// away stay with the card on top (TopOverlay). docs/architecture.md §Home.
+// The slim bars on top of Buddy's home (owner request: the reading / ready card was "ein
+// Riesenbrett"; issue #17 made the pattern the rule): one line of what is happening, at most
+// ~60 pt tall — a small photo or mark, a short status, the reading's stage dots inline, and
+// the one action as a compact button. A bar with more to say (the stage names, "du kannst die
+// App schließen", which test, "Heute nicht") opens it on a tap; a bar whose line says it all
+// (resume, capture) has no expanded state. Screen readers hear it all in one label. Closing
+// and swiping it away stay with the layer on top (TopOverlay). docs/architecture.md §Home.
 
 import type { NowCard } from '@learnbuddy/shared-types/contracts';
 import { Image } from 'expo-image';
@@ -33,12 +34,16 @@ import { whenText } from './describe.js';
 
 type Processing = Extract<NowCard, { type: 'material_processing' }>;
 type Ready = Extract<NowCard, { type: 'practice_ready' }>;
+type Resume = Extract<NowCard, { type: 'resume_practice' }>;
+type Capture = Extract<NowCard, { type: 'capture_needed' }>;
 
-/** Where the close button of the card on top sits on a slim bar (vertically centred). */
-export const SLIM_CLOSE_TOP = 8;
-
-const TITLE = { fontSize: 15, lineHeight: 20, fontWeight: '700' as const, color: LB.ink };
-const LINE = { fontSize: 13, lineHeight: 18, color: LB.ink2 };
+// Theme values are read per render, never frozen in module constants.
+function titleStyle() {
+  return { fontSize: 15, lineHeight: 20, fontWeight: '700' as const, color: LB.ink };
+}
+function lineStyle() {
+  return { fontSize: 13, lineHeight: 18, color: LB.ink2 };
+}
 
 function Bar({
   tone,
@@ -50,18 +55,27 @@ function Bar({
   label,
   titleInset,
 }: {
-  tone: 'sky' | 'primaryLt';
+  tone: 'sky' | 'primaryLt' | 'peach';
   leading?: ReactNode;
   title: string;
   line: ReactNode;
   action?: ReactNode;
-  details: ReactNode;
+  /** More the bar has to say, opened on a tap; a bar whose line says it all has none. */
+  details?: ReactNode;
   /** Everything the bar says, for a screen reader (details included). */
   label: string;
   titleInset: number;
 }) {
   const { t } = useTranslation('buddy');
   const [open, setOpen] = useState(false);
+  const text = (
+    <>
+      <Animated.Text key={title} entering={fadeIn()} numberOfLines={1} style={titleStyle()}>
+        {title}
+      </Animated.Text>
+      <View style={{ marginTop: 1 }}>{line}</View>
+    </>
+  );
   return (
     <Card tone={tone} padding={0} radius={20}>
       <View
@@ -75,22 +89,29 @@ function Bar({
         }}
       >
         {leading ?? null}
-        <Pressable
-          onPress={() => setOpen((o) => !o)}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          accessibilityHint={open ? t('now.less') : t('now.more')}
-          accessibilityState={{ expanded: open }}
-          style={{ flex: 1, minHeight: 44, justifyContent: 'center', paddingVertical: 8 }}
-        >
-          <Animated.Text key={title} entering={fadeIn()} numberOfLines={1} style={TITLE}>
-            {title}
-          </Animated.Text>
-          <View style={{ marginTop: 1 }}>{line}</View>
-        </Pressable>
+        {details ? (
+          <Pressable
+            onPress={() => setOpen((o) => !o)}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityHint={open ? t('now.less') : t('now.more')}
+            accessibilityState={{ expanded: open }}
+            style={{ flex: 1, minHeight: 44, justifyContent: 'center', paddingVertical: 8 }}
+          >
+            {text}
+          </Pressable>
+        ) : (
+          <View
+            accessible
+            accessibilityLabel={label}
+            style={{ flex: 1, minHeight: 44, justifyContent: 'center', paddingVertical: 8 }}
+          >
+            {text}
+          </View>
+        )}
         {action}
       </View>
-      {open ? (
+      {open && details ? (
         <Animated.View
           entering={fadeIn()}
           style={{
@@ -204,7 +225,7 @@ export function ReadyBar({
         .filter(Boolean)
         .join('. ')}
       line={
-        <Text numberOfLines={1} style={LINE}>
+        <Text numberOfLines={1} style={lineStyle()}>
           {line}
         </Text>
       }
@@ -233,7 +254,93 @@ export function ReadyBar({
   );
 }
 
-function Mark({ icon }: { icon: 'file' }) {
+/** A practice to go on with: what it is, how much is left, "Weitermachen". */
+export function ResumeBar({
+  card,
+  busy,
+  titleInset,
+  onResume,
+}: {
+  card: Resume;
+  busy: boolean;
+  titleInset: number;
+  onResume: (sessionId: string) => void;
+}) {
+  const { t } = useTranslation('buddy');
+  const title = t(
+    card.mode === 'help'
+      ? 'now.resume_title_help'
+      : card.mode === 'explain'
+        ? 'now.resume_title_explain'
+        : card.mode === 'test'
+          ? 'now.resume_title_test'
+          : 'now.resume_title',
+  );
+  // Sessions started from a topic or homework have no goal or step title.
+  const line = card.title.trim()
+    ? t('now.resume_body', { title: card.title, count: card.remaining })
+    : t('now.resume_body_untitled', { count: card.remaining });
+  return (
+    <Bar
+      tone="primaryLt"
+      titleInset={titleInset}
+      title={title}
+      label={[title, line].join('. ')}
+      line={
+        <Text numberOfLines={1} style={lineStyle()}>
+          {line}
+        </Text>
+      }
+      action={
+        <View>
+          <Btn size="sm" pill onPress={() => onResume(card.session_id)} disabled={busy}>
+            {t('now.resume_cta')}
+          </Btn>
+        </View>
+      }
+    />
+  );
+}
+
+/** Buddy waits for a photo of a sheet: which one, and the camera one tap away. */
+export function CaptureBar({
+  card,
+  busy,
+  titleInset,
+  onPress,
+}: {
+  card: Capture;
+  busy: boolean;
+  titleInset: number;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation('buddy');
+  const title = t('now.capture_title');
+  const line = t('now.capture_body', { title: card.title });
+  return (
+    <Bar
+      tone="peach"
+      titleInset={titleInset}
+      title={title}
+      label={[title, line].join(' ')}
+      leading={<Mark icon="camera" />}
+      line={
+        <Text numberOfLines={1} style={lineStyle()}>
+          {line}
+        </Text>
+      }
+      action={
+        <View>
+          <Btn size="sm" pill onPress={onPress} disabled={busy}>
+            {t('now.capture_cta')}
+          </Btn>
+        </View>
+      }
+    />
+  );
+}
+
+function Mark({ icon }: { icon: 'file' | 'camera' }) {
   return (
     <View
       accessibilityElementsHidden
@@ -277,7 +384,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
         ) : null,
       ])}
       {label ? (
-        <Text numberOfLines={1} style={[LINE, { marginLeft: 6, flexShrink: 1 }]}>
+        <Text numberOfLines={1} style={[lineStyle(), { marginLeft: 6, flexShrink: 1 }]}>
           {label}
         </Text>
       ) : null}

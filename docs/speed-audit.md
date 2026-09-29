@@ -42,6 +42,19 @@ konfiguriert; bei Bedarf lokal setzen und erneut laufen lassen).
 - **buddy_turn trägt ~15k Input-Tokens** → deutlich über dem 4.096er-Minimum
   für Vertex Implicit Caching. #25 (Cache-Schichtung) hat reales Sparpotenzial
   (90 % auf den stabilen Präfix), zusätzlich zur TTFT-Politur.
+  **Nachgemessen 29.09. (#25):** Der Cache greift bereits — `evals/buddy`, 36 Fälle,
+  zwei Läufe: **243 525 bzw. 389 469 von 627 985 Input-Tokens aus dem Cache** (20 bzw.
+  31 von 36 Fällen trafen; Implicit Caching ist best-effort, und wie oft es greift,
+  schwankt stark zwischen Läufen). Gecacht wird aber der Teil _vor_ `contents`:
+  Systemprompt (3 442 Tokens — allein unter dem Minimum) plus das Response-JSON-Schema
+  (~6 100 Tokens). Beleg, dass es dort endet: jeder Treffer lag zwischen 12 013 und
+  12 177 Tokens, bei 36 Lernenden, deren Zustandsblöcke sich um weit mehr
+  unterscheiden — der Wert wuchs nie mit dem Zustand mit.
+  Der STATE-Block wird heute also nicht mitgecacht; die Schichtung
+  (stabil vorn, „## Now" hinten) ist trotzdem drin — sie kostet nichts und ist die
+  einzige Form, mit der ein Präfix-Cache je weiter greifen kann. Ablesbar in
+  `llm_calls.cached_tokens` (Migration 0052); `cost_micros` bleibt der ungerabattierte
+  Preis. Siehe `docs/architecture.md` §Speed.
 - SSE-TTFB 1,1–1,2 s ist eine gute Basis; Thinking-Caps (#10) sollten den
   Median weiter drücken — Nachmessung nach P1 hier ergänzen.
 
@@ -87,3 +100,59 @@ Mobilfunknetz (#37).
 **Kaltstart der deployten API** (nach Ruhe, `/v1/health`): 15 min → 148 ms, 20 min → 165 ms
 (warm 95–105 ms). Der Minuten-Cron des Schedulers hält die Funktion wach; die 11 s beim
 Blattlesen sind Modellzeit, kein Kaltstart (#75).
+
+## Vorlesen im Voice-Mode: wo die Stille steckt (29.09., Issue #24)
+
+Gemessen mit `apps/api/evals/tts/run.ts` (2 Runden × 3 Prompts = 6 Turns, 16 Sätze) gegen das
+echte Modell **und** die echte Google-TTS (Chirp 3 HD, EU-Endpunkt). Pro Satz einer echten
+Buddy-Antwort wird gemessen: wann sein Text fertig geschrieben ist (aus dem Modell-Stream),
+wie lange die Synthese dauert (seriell und alle Sätze parallel) und wie lange das Audio spielt
+(MP3-Framelänge, nicht geschätzt). Der Turn-Verlauf wird aus diesen drei gemessenen Größen
+gerechnet; die Abspielzeit selbst wird nicht abgewartet.
+
+| Pro Satz (Median von 16)  | Wert   |
+| ------------------------- | ------ |
+| Synthese, seriell         | 0,95 s |
+| Synthese, alle 3 parallel | 0,94 s |
+| Abspieldauer              | 4,70 s |
+
+Die Synthese ist also **fünfmal schneller als das Abspielen** — und der Provider cacht nicht
+(derselbe Satz zweimal: 0,66 s dann 0,69 s), die Zahlen sind echt.
+
+| Zeitplan der App                                     | erstes Audio | Stille zwischen den Sätzen | Turn fertig |
+| ---------------------------------------------------- | ------------ | -------------------------- | ----------- |
+| **vorher**: ein `speak()` pro Satz (`streamSpeaker`) | 2,44 s       | **2,41 s** (0,88–2,97 s)   | 23,94 s     |
+| **nachher**: ein Vorlesen, nächster Satz vorgeholt   | 2,44 s       | **0,00 s** (in allen 6)    | 21,57 s     |
+| alle Sätze sofort parallel                           | 2,66 s       | 0,00 s                     | 21,51 s     |
+
+**Befund.** Die Lücke lag nicht an der Synthese, sondern am Zeitplan: `createStreamSpeaker`
+rief pro Satz `speak()` auf, also begann die Synthese von Satz n+1 erst, **nachdem** Satz n
+fertig gespielt war — 0,65–1,87 s Stille nach jedem Satz. Seit #24 ist eine Antwort **ein**
+Vorlesen (`lib/speech/pipeline.ts`): der nächste Satz wird geholt, während der aktuelle läuft.
+Weil Abspielen (4,7 s) ≫ Synthese (0,95 s), reicht **ein** Satz Vorlauf — er schließt in allen
+sechs gemessenen Turns jede Lücke.
+
+**Was bewusst nicht gebaut wurde.**
+
+- **Kein Batch-Endpunkt** (`/voice/speech-batch`): Die Messzeile „alle Sätze sofort parallel"
+  bringt gegenüber einem Satz Vorlauf **0,00 s** weniger Stille und macht das erste Audio
+  sogar minimal später (2,66 s statt 2,44 s, parallele Requests sind einzeln nicht schneller).
+  Eine zusätzliche Serverfläche ohne Gewinn.
+- **Das erste Audio wird durch Pipelining nicht früher** — es besteht aus Modellzeit bis zum
+  ersten fertigen Satz (1,27–3,75 s) plus einer Synthese (0,65–1,10 s), beides unvermeidbar
+  pro Satz-MP3. Das Akzeptanzkriterium „erstes Audio ≥ 1 s früher" aus #24 ist so **nicht**
+  erreichbar; dafür gibt es bereits `shortOpening` (#41, kurzer erster Teilsatz) und den
+  Handy-Stimmen-Fallback nach 2,5 s. Echt früher ginge nur mit einem Streaming-Player
+  (Chirp 3 HD liefert in der EU nur OGG/PCM — großer Mobile-Umbau, in #24 verworfen).
+- **Kein Vor-Synthetisieren auf dem Server** (der „waitUntil"-Teil von #24): Die App fragt den
+  Satz, sobald sie ihn im SSE-Stream sieht — der Server wüsste ihn nur einen Roundtrip früher.
+  Gespart wäre also die Netzstrecke, nicht die 0,95 s Synthese; dafür brauchte es Hintergrund-
+  arbeit pro Turn. Der Hash-Cache, auf den #24 aufbaut, existiert bereits (`speech_cache`,
+  `speech_cache_shared`, per sha256 über Stimme/Locale/Rate/Text; Treffer sind in
+  `speech.int.test.ts` festgenagelt), der Provider selbst cacht nicht.
+
+Preis des Vorlaufs: unterbricht sie mitten in der Antwort, ist höchstens **ein** Satz umsonst
+synthetisiert (das Audio wird verworfen, `release`). Gegen das Kostenlimit von 1 000 neuen
+Sätzen pro Konto und Stunde (ADR 0008) fällt das nicht ins Gewicht.
+
+Nachmessen: `cd apps/api && SPEECH_BACKEND=google npx tsx evals/tts/run.ts 2`.

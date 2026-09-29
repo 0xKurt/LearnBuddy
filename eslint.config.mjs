@@ -7,6 +7,8 @@ export default tseslint.config(
   {
     ignores: [
       '**/node_modules/**',
+      // Subagent worktrees (each lints itself from its own root).
+      '.claude/**',
       '**/dist/**',
       '**/build/**',
       '**/.expo/**',

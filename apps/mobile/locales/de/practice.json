@@ -81,10 +81,16 @@
     "legend": "Unterstrichen = nochmal üben",
     "tip": "„{{word}}“ – {{tip}}",
     "heard": "Gehört habe ich: „{{text}}“",
-    "more_tips": "Noch {{count}} Tipps zeigen"
+    "more_tips": "Noch {{count}} Tipps zeigen",
+    "word_open": "Wort üben: {{word}}",
+    "word_hint": "Nur dieses Wort – das zählt nicht für die Aufgabe.",
+    "word_say": "Dieses Wort sagen",
+    "word_good": "Das sitzt!",
+    "word_again": "Fast – hör es dir nochmal an und probier es."
   },
   "help_note": "Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.",
   "origin_buddy": "Frage von Buddy",
+  "image_fallback": "Bild zur Aufgabe",
   "self_solved": {
     "title": "Selbst gelöst!",
     "body": "Das hast du allein herausgefunden."

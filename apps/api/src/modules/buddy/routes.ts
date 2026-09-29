@@ -146,7 +146,7 @@ buddyRoutes.post('/steps/:id/start', async (c) => {
   // The session comes along: the app shows its first question at once (gaps.md #2).
   return c.json({
     session_id: sessionId,
-    session: await sessionView(deps.db, learnerId, sessionId),
+    session: await sessionView(deps.db, learnerId, sessionId, deps.storage),
   });
 });
 
@@ -407,7 +407,7 @@ buddyRoutes.get('/memory', async (c) => {
     id: string;
     kind: 'fact' | 'preference' | 'goal' | 'constraint';
     statement: string;
-    source: 'learner_stated' | 'learner_edited' | 'account_holder';
+    source: 'learner_stated' | 'learner_edited' | 'account_holder' | 'consolidated';
     quote: string | null;
     valid_until: Date | null;
     created_at: Date;

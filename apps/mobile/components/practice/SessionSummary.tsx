@@ -88,7 +88,7 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
         </Rise>
       </View>
       {sentences.length > 0 ? (
-        <Rise slow delay={AT.card} style={[SOFT_CARD, { gap: 8 }]}>
+        <Rise slow delay={AT.card} style={[softCard(), { gap: 8 }]}>
           {sentences.map((line, i) => (
             <Rise key={line.key} slow delay={AT.card + (i + 1) * AT.line}>
               <Text style={[TYPE.body, line.strong ? { fontWeight: '600' } : null]}>
@@ -190,7 +190,9 @@ function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
         ? localDecimal(row.answer, currentLocale())
         : row.answer;
   return (
-    <View style={[SOFT_CARD, { padding: 16, gap: 6 }, right ? { backgroundColor: LB.mint } : null]}>
+    <View
+      style={[softCard(), { padding: 16, gap: 6 }, right ? { backgroundColor: LB.mint } : null]}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <Icon
@@ -214,10 +216,11 @@ function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
   );
 }
 
-/** A white card on a soft shadow (no hairline box). */
-const SOFT_CARD = {
-  backgroundColor: LB.paper,
-  borderRadius: 22,
-  padding: 18,
-  ...SHADOW.soft,
-} as const;
+/** A white card on a soft shadow (no hairline box). Render-time (issue #84). */
+const softCard = () =>
+  ({
+    backgroundColor: LB.paper,
+    borderRadius: 22,
+    padding: 18,
+    ...SHADOW.soft,
+  }) as const;

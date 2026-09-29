@@ -822,7 +822,7 @@ export default function PracticeScreen() {
           {/* The next question comes in softly from the side (keyed by the question). */}
           <SlideIn key={item.id}>
             {speaking ? (
-              <SpeakCard item={item} turns={turns} live={speakLive} />
+              <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
             ) : (
               <QuestionCard
                 prompt={item.prompt}
@@ -832,6 +832,9 @@ export default function PracticeScreen() {
                 // two-line prompt with fractions and a figure only fits with a smaller
                 // figure — a tap still opens it large (ZoomableFigure).
                 figureMaxHeight={Math.round(windowHeight * (windowHeight < 780 ? 0.12 : 0.14))}
+                image={item.image}
+                imageKey={item.id}
+                imageMaxHeight={Math.min(180, Math.round(windowHeight * 0.2))}
                 fromBuddy={item.origin === 'buddy'}
                 // Her short answer appears in the gap of a fill-in sentence while she types.
                 answer={

@@ -22,6 +22,7 @@ import {
   SendMessageResponse,
   SessionView,
   StartStepResponse,
+  SpeakWordResponse,
   SpeechResponse,
   TranscribeResponse,
   TranscribeStreamEvent,
@@ -30,6 +31,7 @@ import {
   type CreateLearnerRequest,
   type CreateMaterialRequest,
   type ReexplainWay,
+  type SpeakWordRequest,
   SpeakStreamEvent,
   type SpeakRequest,
   type StartPracticeRequest,
@@ -277,6 +279,16 @@ export const speakItem = (
         : request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
     { isConnectionError: noConnection, signal: opts.signal },
   );
+/**
+ * One word of a speaking question, said on its own (issue #83). Nothing is stored and
+ * nothing counts — the question keeps its attempts and its state.
+ */
+export const speakWord = (sessionId: string, body: SpeakWordRequest) =>
+  request('POST', `/practice/sessions/${sessionId}/speak-word`, {
+    body,
+    schema: SpeakWordResponse,
+  });
+
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */
 export const startTopic = (body: StartTopicRequest) =>
   request('POST', '/practice/topic', { body, schema: SessionView });
