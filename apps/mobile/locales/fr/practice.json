@@ -70,12 +70,6 @@
       "unsupported": "Je n'arrive pas à lire cet enregistrement. Réessaie, s'il te plaît.",
       "failed": "L'enregistrement n'a pas marché. Réessaie, s'il te plaît."
     },
-    "overall": {
-      "good": "Ça sonne super !",
-      "almost": "Presque – fais attention à : {{words}}",
-      "almost_plain": "Presque – juste un peu plus clairement.",
-      "retry": "Réessaie – écoute-le d'abord tranquillement."
-    },
     "words_ok": "Ça sonne bien : {{words}}.",
     "words_practise": "À refaire : {{words}}.",
     "legend": "Souligné = à refaire",

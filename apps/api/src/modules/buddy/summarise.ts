@@ -24,8 +24,7 @@ export const SUMMARY_PROMPT_VERSION = 'summary.v1';
 
 /** Nothing said for this long ends a conversation (the app draws its session line here too). */
 export const SESSION_GAP_MS = 4 * 3_600_000;
-/** How many summaries Buddy's context carries (state.ts LIMITS.summaries). */
-export const SUMMARY_LIMIT = 10;
+// How many summaries Buddy's context carries is decided in one place: state.ts LIMITS.summaries.
 /** A conversation shorter than this is not worth a model call. */
 const MIN_MESSAGES = 4;
 

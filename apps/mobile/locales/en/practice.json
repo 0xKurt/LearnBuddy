@@ -70,12 +70,6 @@
       "unsupported": "I can't read this recording, sorry. Please try again.",
       "failed": "The recording didn't work. Please try again."
     },
-    "overall": {
-      "good": "Sounds great!",
-      "almost": "Almost – watch out for: {{words}}",
-      "almost_plain": "Almost – just a little clearer.",
-      "retry": "Try again – listen to it calmly first."
-    },
     "words_ok": "Sounds good: {{words}}.",
     "words_practise": "Practise again: {{words}}.",
     "legend": "Underlined = practise again",

@@ -70,12 +70,6 @@
       "unsupported": "No puedo leer esta grabación. Inténtalo otra vez, por favor.",
       "failed": "La grabación no ha funcionado. Inténtalo otra vez, por favor."
     },
-    "overall": {
-      "good": "¡Suena genial!",
-      "almost": "Casi – fíjate en: {{words}}",
-      "almost_plain": "Casi – solo un poco más claro.",
-      "retry": "Inténtalo otra vez – escúchalo antes con calma."
-    },
     "words_ok": "Suena bien: {{words}}.",
     "words_practise": "Para practicar otra vez: {{words}}.",
     "legend": "Subrayado = practicar otra vez",

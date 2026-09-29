@@ -24,7 +24,7 @@ import {
   type ToastBarHandle,
 } from '../../lib/toast.js';
 
-export { toast, type ToastOptions, type ToastTone } from '../../lib/toast.js';
+export { toast } from '../../lib/toast.js';
 
 export function ToastHost() {
   const { message, tone, seq, bars } = useToastState();

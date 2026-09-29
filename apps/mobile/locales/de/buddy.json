@@ -84,8 +84,6 @@
   "when": {
     "today": "heute",
     "tomorrow": "morgen",
-    "in_days_one": "in {{count}} Tag",
-    "in_days_other": "in {{count}} Tagen",
     "on": "am {{day}}",
     "on_at": "am {{day}} um {{time}}"
   },
