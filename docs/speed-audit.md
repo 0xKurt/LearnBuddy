@@ -101,6 +101,30 @@ Mobilfunknetz (#37).
 (warm 95–105 ms). Der Minuten-Cron des Schedulers hält die Funktion wach; die 11 s beim
 Blattlesen sind Modellzeit, kein Kaltstart (#75).
 
+## Abnahme-Messlauf nach der zweiten Welle (29.09. nachmittags, Issue #59)
+
+`scripts/speed-audit.ts` auf dem Stand nach den Merges (TTS übersprungen — `SPEECH_BACKEND`
+lokal nicht gesetzt; wenige Läufe, in-process ohne Funknetz):
+
+| Pfad                         | Läufe | min    | median | max    |
+| ---------------------------- | ----- | ------ | ------ | ------ |
+| Buddy-Turn gesamt (JSON)     | 2     | 2,25 s | 2,43 s | 2,43 s |
+| Buddy-Turn erstes SSE-Event  | 2     | 1,14 s | 1,42 s | 1,42 s |
+| Transkription t15 (73 KB)    | 3     | 1,88 s | 2,01 s | 2,14 s |
+| Transkription t60 (295 KB)   | 2     | 2,35 s | 2,66 s | 2,66 s |
+| Transkription t180 (852 KB)  | 1     | 2,48 s | 2,48 s | 2,48 s |
+| Aussprache-Urteil (5-s-Clip) | 2     | 2,75 s | 3,58 s | 3,58 s |
+
+Gegen die Abnahme aus Issue #59:
+
+- **Erste Worte im Chat < 1,5 s:** erstes SSE-Event median **1,42 s** — API-seitig erfüllt;
+  am Gerät kommt das Funknetz dazu (Gerätemessung offen).
+- **Übung starten < 1 s / nächste Frage < 0,5 s:** app-seitig (Session-Cache, Prefetch) —
+  der Browser-Walkthrough misst diese Spannen (`test-results/web/perf.jsonl`); Gerätewerte offen.
+- **Erstes Audio < 1 s nach der Antwort:** mit Per-Satz-MP3 **nicht erreichbar** (Modellzeit
+  bis zum ersten fertigen Satz + eine Synthese, §Vorlesen unten) — das Kriterium braucht
+  entweder Streaming-TTS oder eine ehrliche Korrektur; die Stille ZWISCHEN Sätzen ist 0,00 s.
+
 ## Vorlesen im Voice-Mode: wo die Stille steckt (29.09., Issue #24)
 
 Gemessen mit `apps/api/evals/tts/run.ts` (2 Runden × 3 Prompts = 6 Turns, 16 Sätze) gegen das
