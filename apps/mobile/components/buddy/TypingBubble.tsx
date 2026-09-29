@@ -22,6 +22,7 @@ import { LB } from '../../lib/theme/colors.js';
 import { riseIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 
 /** One dot's rise and fall; the three follow each other like a soft wave. */
@@ -60,7 +61,7 @@ export function TypingBubble({ label }: { label: string }) {
       accessible
       accessibilityLabel={label}
       accessibilityLiveRegion="polite"
-      style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}
+      style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}
     >
       <BuddyOrb size={26} state="think" />
       <View
@@ -68,6 +69,8 @@ export function TypingBubble({ label }: { label: string }) {
           {
             flexDirection: 'row',
             alignItems: 'center',
+            // 6 and 18 are the dots' drawing, not layout: three 8-point dots spaced
+            // and inset to sit where a short word would.
             gap: 6,
             backgroundColor: LB.paper,
             borderRadius: 22,

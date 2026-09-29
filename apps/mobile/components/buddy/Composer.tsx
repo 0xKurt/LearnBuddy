@@ -265,7 +265,7 @@ export function Composer({
         {/* Heard while a message was still on its way: shown with its own "Senden", never
             hidden in a field voice mode does not show (composer-parked-transcript). */}
         {trimmed || attached ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
             <Text style={[TYPE.body, { flex: 1, color: LB.ink }]} numberOfLines={3}>
               {trimmed}
             </Text>
@@ -277,7 +277,7 @@ export function Composer({
         <View
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}
         >
-          <View style={{ alignItems: 'center', gap: 4, width: 90 }}>
+          <View style={{ alignItems: 'center', gap: SPACE.xs, width: 90 }}>
             <CircleBtn
               icon="keyboard"
               onPress={() => setVoiceMode(false)}
@@ -295,7 +295,7 @@ export function Composer({
               disabled={disabled}
             />
           )}
-          <View style={{ alignItems: 'center', gap: 4, width: 90 }}>
+          <View style={{ alignItems: 'center', gap: SPACE.xs, width: 90 }}>
             <CircleBtn
               icon="camera"
               // The page lands above the field, like in the typing bar (issue #82).
@@ -321,12 +321,12 @@ export function Composer({
             // flex-end, not center: while the field grows over several lines the
             // buttons stay on its last line, like every messenger (user feedback).
             alignItems: 'flex-end',
+            // 2, off the scale: the field carries its own xs padding on each side —
+            // a full step here would double the air inside the pill.
             gap: 2,
             backgroundColor: LB.paper,
             borderRadius: 28,
-            paddingVertical: SPACE.xs,
-            paddingLeft: SPACE.xs,
-            paddingRight: 6,
+            padding: SPACE.xs,
             // 52 + the bar's padding keeps the buttons at their 44 pt target while the
             // pill stops looking like a drawer (was 60).
             minHeight: 52,
@@ -366,8 +366,7 @@ export function Composer({
             maxHeight: 120,
             backgroundColor: 'transparent',
             paddingHorizontal: SPACE.xs,
-            paddingTop: 9,
-            paddingBottom: 9,
+            paddingVertical: SPACE.sm,
             fontSize: 16,
             lineHeight: 22,
             color: LB.ink,

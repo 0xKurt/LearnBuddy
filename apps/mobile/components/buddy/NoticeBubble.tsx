@@ -9,9 +9,11 @@ import { Text, View } from 'react-native';
 
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
+import { BUBBLE, ORB } from './Conversation.js';
 
 type Props = {
   text: string;
@@ -26,24 +28,26 @@ type Props = {
 export function NoticeBubble({ text, detail = null, thumb = null, children }: Props) {
   const { t } = useTranslation('common');
   return (
-    <View style={{ alignItems: 'flex-start', gap: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}>
-        <BuddyOrb size={26} />
+    // sm between the bubble and its buttons: the same air answer chips get under a
+    // message (Conversation, issue #51).
+    <View style={{ alignItems: 'flex-start', gap: SPACE.sm }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}
+      >
+        <BuddyOrb size={ORB} />
         <View
           accessible
           accessibilityLiveRegion="polite"
           accessibilityLabel={[text, detail].filter(Boolean).join(' ')}
           style={[
+            BUBBLE,
             {
               flexShrink: 1,
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 10,
+              gap: SPACE.sm,
               backgroundColor: LB.paper,
-              borderRadius: 22,
               borderBottomLeftRadius: 6,
-              paddingHorizontal: 14,
-              paddingVertical: 10,
             },
             SHADOW.soft,
           ]}
@@ -62,6 +66,7 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
               />
             </ZoomablePhoto>
           ) : null}
+          {/* 2, off the scale: the line heights carry the air between text and detail. */}
           <View style={{ flexShrink: 1, gap: 2 }}>
             <Text style={[TYPE.body, { color: LB.ink }]}>{text}</Text>
             {detail ? <Text style={TYPE.small}>{detail}</Text> : null}
@@ -69,7 +74,15 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
         </View>
       </View>
       {children ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingLeft: 34 }}>
+        // Flush with the bubble's left edge, past the orb — like cards under a message.
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: SPACE.sm,
+            paddingLeft: ORB + SPACE.sm,
+          }}
+        >
           {children}
         </View>
       ) : null}
