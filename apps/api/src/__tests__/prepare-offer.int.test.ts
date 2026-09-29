@@ -29,7 +29,6 @@ const generated = (title: string) => ({
     usable: true,
     title,
     subject: { name: 'Mathe', kind: 'math' },
-    intro: null,
     items: [
       {
         kind: 'short',

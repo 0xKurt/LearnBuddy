@@ -48,7 +48,6 @@
     "resume_body_untitled_one": "Encore {{count}} question",
     "resume_body_untitled_other": "Encore {{count}} questions",
     "resume_title_help": "Reprends tes devoirs",
-    "resume_title_explain": "Reprends ton explication",
     "resume_title_test": "Reprends ton test d'entraînement",
     "pages_title_one": "Je n'ai pas pu lire une page en entier",
     "pages_title_other": "Je n'ai pas pu lire {{count}} pages en entier",
@@ -233,7 +232,6 @@
   "suggest": {
     "exam": "J'ai bientôt un contrôle",
     "homework": "Devoirs",
-    "explain": "Explique-moi",
     "vocab": "Vocabulaire",
     "test_message": "Fais-moi un test blanc pour « {{title}} ».",
     "exam_short": "Contrôle",

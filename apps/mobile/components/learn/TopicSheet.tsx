@@ -36,7 +36,7 @@ export function TopicSheet({ kind, onClose }: Props) {
   const { state, start, reset } = useStartTopic();
   const [text, setText] = useState('');
   // The kind shown while the sheet slides away (kind is already null then).
-  const [shownKind, setShownKind] = useState<TopicKind>('explain');
+  const [shownKind, setShownKind] = useState<TopicKind>('practice');
   const openKind = useRef<TopicKind | null>(kind);
   openKind.current = kind;
 

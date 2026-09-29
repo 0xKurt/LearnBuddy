@@ -16,7 +16,7 @@ export const HELP_IDLE_MS = 14 * 86_400_000;
 export const PRACTICE_IDLE_MS = 3 * 86_400_000;
 
 /** How long a session may rest before it is closed (and until then offered to resume). */
-export function idleLimitMs(mode: 'practice' | 'test' | 'help' | 'explain'): number {
+export function idleLimitMs(mode: 'practice' | 'test' | 'help'): number {
   return mode === 'help' ? HELP_IDLE_MS : PRACTICE_IDLE_MS;
 }
 
@@ -24,7 +24,7 @@ export function idleLimitMs(mode: 'practice' | 'test' | 'help' | 'explain'): num
 export function resumable(
   s: {
     status: string;
-    mode: 'practice' | 'test' | 'help' | 'explain';
+    mode: 'practice' | 'test' | 'help';
     last_activity_at: Date;
     answered: number;
     total: number;
@@ -57,11 +57,13 @@ export async function closeIdleSessions(deps: Deps, limit = 200): Promise<number
     await deps.db.tx(async (tx) => {
       const row = await tx.maybeOne<{
         status: string;
-        mode: 'practice' | 'test' | 'help' | 'explain';
+        mode: 'practice' | 'test' | 'help';
         step_id: string | null;
         last_activity_at: Date;
       }>(
-        `select status, mode, step_id, last_activity_at from practice_sessions
+        // Sessions of the removed explain mode (issue #70) age like practice.
+        `select status, case when mode = 'explain' then 'practice' else mode end as mode,
+                step_id, last_activity_at from practice_sessions
           where id = $1 for update`,
         [s.id],
       );

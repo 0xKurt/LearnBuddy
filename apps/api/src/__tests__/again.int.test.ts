@@ -83,7 +83,6 @@ describe.skipIf(!dbReady)('more of the same after a practice', () => {
         usable: true,
         title: 'Brüche, nochmal',
         subject: null,
-        intro: null,
         items: [
           draft({ prompt: 'Kürze 9/12.', answer: '3/4', topic: 'Brüche kürzen' }),
           // Not on the sheet: dropped by the schema rule.
@@ -140,7 +139,6 @@ describe.skipIf(!dbReady)('more of the same after a practice', () => {
         usable: true,
         title: 'Simple Present, mehr davon',
         subject: null,
-        intro: null,
         items: [draft({ prompt: 'Setze ein: He ___ (to read) a book.', answer: 'reads' })],
       };
     });
@@ -170,7 +168,6 @@ describe.skipIf(!dbReady)('more of the same after a practice', () => {
         usable: true,
         title: 'Nochmal',
         subject: null,
-        intro: null,
         items: [draft({})],
       };
     });

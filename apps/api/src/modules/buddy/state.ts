@@ -140,7 +140,7 @@ export type MaterialBrief = {
 
 export type SessionBrief = {
   id: string;
-  mode: 'practice' | 'test' | 'help' | 'explain';
+  mode: 'practice' | 'test' | 'help';
   /** Topic and homework sessions carry their own title. */
   title: string | null;
   status: 'active' | 'finished' | 'abandoned';
@@ -347,7 +347,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     Omit<SessionBrief, 'secure_topics' | 'shaky_topics'> & { topic_rows: SummaryRow[] }
   >(
     `select ps.id, ps.status, ps.goal_id, ps.step_id, ps.started_at, ps.last_activity_at,
-            ps.finished_at, ps.mode, ps.title,
+            ps.finished_at, case when ps.mode = 'explain' then 'practice' else ps.mode end as mode,
+            ps.title,
             count(si.item_id)::int as total,
             count(*) filter (where si.status <> 'open')::int as answered,
             count(*) filter (where si.status = 'correct' and si.first_try_correct)::int as first_try,

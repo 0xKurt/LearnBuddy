@@ -270,11 +270,9 @@ export function ResumeBar({
   const title = t(
     card.mode === 'help'
       ? 'now.resume_title_help'
-      : card.mode === 'explain'
-        ? 'now.resume_title_explain'
-        : card.mode === 'test'
-          ? 'now.resume_title_test'
-          : 'now.resume_title',
+      : card.mode === 'test'
+        ? 'now.resume_title_test'
+        : 'now.resume_title',
   );
   // Sessions started from a topic or homework have no goal or step title.
   const line = card.title.trim()

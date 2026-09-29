@@ -131,9 +131,7 @@ class Journey {
       return null;
     }
     const s = (await this.l.api.get<SessionView>(`/practice/sessions/${res.body.id}`)).body;
-    this.log.push(
-      `  → ${s.items.length} Fragen (${this.waits.at(-1)?.ms} ms)${s.intro ? `\n  - *Erklärung:* ${s.intro.replace(/\n+/g, ' ')}` : ''}`,
-    );
+    this.log.push(`  → ${s.items.length} Fragen (${this.waits.at(-1)?.ms} ms)`);
     return s;
   }
 
@@ -357,10 +355,11 @@ const JOURNEYS: Spec[] = [
     async run(j) {
       const r = await j.say('ich check den dativ nicht');
       // Since buddy.22 the explanation *is* the answer, not a button (owner decision
-      // 28.09.): what counts is that she can read it right there.
+      // 28.09.; the explain mode is gone, issue #70): what counts is that she can read
+      // it right there — and practise it right after.
       j.check(r.reply.length > 120, 'Buddy erklärt im Chat, ohne Knopf');
-      const s = await j.start('explain', 'Dativ');
-      if (!j.check(!!s?.intro && s.items.length > 0, 'Erklärung mit Verständnisfragen')) return;
+      const s = await j.start('practice', 'Dativ');
+      if (!j.check(!!s && s.items.length > 0, 'danach Fragen zum Üben')) return;
       const first = j.open(s!)!;
       const a = await j.answer(s!, 'hä was heißt dativ nochmal');
       j.check(a?.verdict === 'not_an_attempt', 'Rückfrage zählt nicht als Fehler');

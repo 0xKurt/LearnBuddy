@@ -1,7 +1,6 @@
 {
   "start": {
     "homework": "Homework help",
-    "explain": "Explain something",
     "practice": "Practise",
     "test": "Practice test",
     "vocab": "Test my vocab",
@@ -20,14 +19,6 @@
     "type": "Type in vocab"
   },
   "topic": {
-    "explain": {
-      "title": "What should I explain?",
-      "hint": "I'll explain it briefly, then check that it sticks.",
-      "placeholder": "e.g. the dative, photosynthesis, simplifying fractions",
-      "ex_1": "Photosynthesis",
-      "ex_2": "Simplifying fractions",
-      "ex_3": "Simple past"
-    },
     "practice": {
       "title": "What do you want to practise?",
       "hint": "I'll ask you a few questions about it.",

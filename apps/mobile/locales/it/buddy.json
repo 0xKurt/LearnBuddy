@@ -48,7 +48,6 @@
     "resume_body_untitled_one": "Ancora {{count}} domanda",
     "resume_body_untitled_other": "Ancora {{count}} domande",
     "resume_title_help": "Continua i compiti",
-    "resume_title_explain": "Continua la spiegazione",
     "resume_title_test": "Continua la verifica di prova",
     "pages_title_one": "Non sono riuscito a leggere tutta una pagina",
     "pages_title_other": "{{count}} pagine non sono riuscito a leggerle tutte",
@@ -233,7 +232,6 @@
   "suggest": {
     "exam": "Ho presto una verifica",
     "homework": "Compiti",
-    "explain": "Spiegami qualcosa",
     "vocab": "Vocaboli",
     "test_message": "Fammi una verifica di prova per «{{title}}».",
     "exam_short": "Verifica",

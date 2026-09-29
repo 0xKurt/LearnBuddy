@@ -1,7 +1,6 @@
 {
   "start": {
     "homework": "Ayuda con los deberes",
-    "explain": "Explícame algo",
     "practice": "Practicar",
     "test": "Examen de prueba",
     "vocab": "Repasar vocabulario",
@@ -20,14 +19,6 @@
     "type": "Escribir el vocabulario"
   },
   "topic": {
-    "explain": {
-      "title": "¿Qué te explico?",
-      "hint": "Te lo explico en breve y luego compruebo si lo tienes claro.",
-      "placeholder": "p. ej. el dativo, la fotosíntesis, simplificar fracciones",
-      "ex_1": "La fotosíntesis",
-      "ex_2": "Simplificar fracciones",
-      "ex_3": "El pretérito indefinido"
-    },
     "practice": {
       "title": "¿Qué quieres practicar?",
       "hint": "Te hago unas cuantas preguntas sobre ello.",

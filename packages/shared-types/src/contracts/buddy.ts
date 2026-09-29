@@ -80,7 +80,7 @@ export const ActionSummary = z.discriminatedUnion('tool', [
   /** Buddy offers to start learning; the app shows a button that starts it (POST /practice/topic). */
   z.object({
     tool: z.literal('offer_learning'),
-    kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help', 'test']),
+    kind: z.enum(['practice', 'vocab', 'speak', 'help', 'test']),
     text: z.string(),
     /** A planned test it is for: its questions stay within that test's sheets. */
     goal_id: Uuid.nullable().default(null),
@@ -198,8 +198,8 @@ export const NowCard = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('resume_practice'),
     session_id: Uuid,
-    /** help: homework help, explain: an explanation with questions. */
-    mode: z.enum(['practice', 'test', 'help', 'explain']),
+    /** help: homework help. */
+    mode: z.enum(['practice', 'test', 'help']),
     title: z.string(),
     remaining: z.number().int(),
   }),
@@ -244,7 +244,7 @@ export const NowCard = z.discriminatedUnion('type', [
     type: z.literal('practice_result'),
     session_id: Uuid,
     /** help: homework — solved by herself, no hit rate (docs/UX-PRINCIPLES.md). */
-    mode: z.enum(['practice', 'test', 'help', 'explain']).default('practice'),
+    mode: z.enum(['practice', 'test', 'help']).default('practice'),
     result: PracticeResultBrief,
     /**
      * What is ready next, so the result never hides prepared practice (user feedback #2).

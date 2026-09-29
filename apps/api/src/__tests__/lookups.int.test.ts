@@ -171,7 +171,6 @@ describe.skipIf(!dbReady)('Buddy lookups', () => {
         usable: true,
         title: 'Brüche',
         subject: { name: 'Mathe', kind: 'math' },
-        intro: null,
         items: [
           {
             kind: 'multiple_choice',

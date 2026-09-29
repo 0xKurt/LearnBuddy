@@ -1,7 +1,6 @@
 {
   "start": {
     "homework": "Aide aux devoirs",
-    "explain": "Explique-moi",
     "practice": "S'entraîner",
     "test": "Test d'entraînement",
     "vocab": "Réviser le vocabulaire",
@@ -20,14 +19,6 @@
     "type": "Taper le vocabulaire"
   },
   "topic": {
-    "explain": {
-      "title": "Qu'est-ce que je dois t'expliquer ?",
-      "hint": "Je t'explique en bref, puis je vérifie que c'est acquis.",
-      "placeholder": "p. ex. le datif, la photosynthèse, simplifier des fractions",
-      "ex_1": "La photosynthèse",
-      "ex_2": "Simplifier des fractions",
-      "ex_3": "Le passé composé"
-    },
     "practice": {
       "title": "Qu'est-ce que tu veux travailler ?",
       "hint": "Je te pose quelques questions là-dessus.",

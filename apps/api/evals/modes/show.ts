@@ -1,8 +1,8 @@
-// Live walk through the learning modes (Vertex) for a person to read: explain,
-// practice on a topic, typed vocabulary, speaking sentences, homework help (typed
-// and photographed), a worksheet photo. Prints what the model produced.
+// Live walk through the learning modes (Vertex) for a person to read: practice
+// on a topic, typed vocabulary, speaking sentences, homework help (typed and
+// photographed), a worksheet photo. Prints what the model produced.
 // Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
-//   cd apps/api && npx tsx evals/modes/show.ts [explain|practice|vocab|speak|help|photo]
+//   cd apps/api && npx tsx evals/modes/show.ts [practice|vocab|speak|help|photo]
 // (the photo steps use test-results/web/worksheet.jpg from scripts/web-walkthrough.sh)
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 import { existsSync, readFileSync } from 'node:fs';
@@ -47,7 +47,6 @@ const only = process.argv.slice(2);
 const want = (k: string) => only.length === 0 || only.includes(k);
 const show = (s: SessionView) => {
   console.log(`  == ${s.mode} "${s.title}" reveal=${s.reveal_allowed}`);
-  if (s.intro) console.log(`  intro: ${s.intro}`);
   for (const i of s.items)
     console.log(
       `   - [${i.item.kind}${i.item.prompt_lang ? ` ${i.item.prompt_lang}→${i.item.lang}` : i.item.lang ? ` ${i.item.lang}` : ''}] ${i.item.prompt}${i.item.choices ? ` {${i.item.choices.join(' | ')}}` : ''}${i.item.figure ? ` FIGURE ${JSON.stringify(i.item.figure)}` : ''}`,
@@ -88,11 +87,6 @@ function haveWorksheet(step: string): boolean {
   return false;
 }
 
-if (want('explain')) {
-  console.log('\n# Erklär mir den Dativ');
-  const s = await topic('explain', 'Erklär mir den Dativ, ich versteh das nicht');
-  if (s) await say(s, s.items[0]!.item.id, 'weiß nicht');
-}
 if (want('practice')) {
   console.log('\n# Brüche addieren üben');
   await topic('practice', 'Brüche addieren und kürzen, 6. Klasse');

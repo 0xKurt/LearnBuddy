@@ -71,7 +71,6 @@ describe.skipIf(!dbReady)('Looking back', () => {
         usable: true,
         title: 'Brüche erweitern',
         subject: null,
-        intro: null,
         items: [question('Erweitere 1/2 mit 2.'), question('Erweitere 1/2 zu Vierteln.')],
       },
     });

@@ -19,7 +19,6 @@ function scriptSentence(env: TestEnv, sentence: string): void {
       usable: true,
       title: 'Englisch sprechen',
       subject: { name: 'Englisch', kind: 'english' },
-      intro: null,
       items: [
         {
           kind: 'speak',

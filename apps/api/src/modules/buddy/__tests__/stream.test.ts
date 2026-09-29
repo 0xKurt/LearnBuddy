@@ -20,7 +20,7 @@ describe('replyProgress', () => {
   });
 
   it('counts a button to tap as changing nothing', () => {
-    const raw = answer([{ tool: 'offer_learning', args: { kind: 'explain', text: 'Brüche' } }]);
+    const raw = answer([{ tool: 'offer_learning', args: { kind: 'practice', text: 'Brüche' } }]);
     expect(replyProgress(raw)?.speakable).toBe(true);
   });
 

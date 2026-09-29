@@ -17,7 +17,6 @@ const topicItems = {
     usable: true,
     title: 'Brüche',
     subject: null,
-    intro: null,
     items: [
       {
         kind: 'numeric',

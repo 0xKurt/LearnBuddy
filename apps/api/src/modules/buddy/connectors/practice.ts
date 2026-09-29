@@ -31,7 +31,8 @@ export async function recentResults(
     title: string | null;
     mode: string;
   }>(
-    `select ps.id, ps.finished_at, coalesce(ps.title, g.title, st.title) as title, ps.mode
+    `select ps.id, ps.finished_at, coalesce(ps.title, g.title, st.title) as title,
+            case when ps.mode = 'explain' then 'practice' else ps.mode end as mode
        from practice_sessions ps
        left join buddy_goals g on g.id = ps.goal_id left join buddy_steps st on st.id = ps.step_id
       where ps.learner_id = $1 and ps.status = 'finished' and ps.finished_at is not null

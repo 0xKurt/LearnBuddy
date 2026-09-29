@@ -384,7 +384,6 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
         usable: true,
         title: 'Brüche – Probetest',
         subject: { name: 'Mathe', kind: 'math' },
-        intro: null,
         items: [
           item({ prompt: 'Kürze 4/8.', answer: '1/2', topic: 'Kürzen' }),
           item({ prompt: 'Kürze 2/6.', answer: '1/3', topic: 'Kürzen' }),
@@ -600,7 +599,6 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
         usable: true,
         title: 'Fehler 1. und 2. Art',
         subject: { name: 'Statistik', kind: 'math' },
-        intro: null,
         items: [
           item({
             kind: 'multiple_choice',

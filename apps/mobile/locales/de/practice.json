@@ -95,12 +95,6 @@
     "title": "Selbst gelöst!",
     "body": "Das hast du allein herausgefunden."
   },
-  "explain": {
-    "title": "Kurz erklärt",
-    "ready": "Verstanden – frag mich!",
-    "again": "Erklärung nochmal lesen",
-    "sheet_title": "Die Erklärung"
-  },
   "summary_help": {
     "title": "Hausaufgabe geschafft"
   },

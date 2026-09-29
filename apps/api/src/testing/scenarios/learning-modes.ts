@@ -37,7 +37,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       usable: true,
       title: 'Der Dativ',
       subject: { name: 'Deutsch', kind: 'german' },
-      intro: null,
       items: [
         {
           ...base,
@@ -65,7 +64,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       usable: true,
       title: 'Flächeninhalt Rechteck',
       subject: { name: 'Mathe', kind: 'math' },
-      intro: null,
       items: [
         {
           ...base,
@@ -78,7 +76,7 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
-  // "Anders erklären" under the Dativ explanation (tests/web/modes.spec.ts taps "Mit Beispiel").
+  // "Anders erklären" under a shown solution (the chips after a wrong try or a hint).
   llm.byDefault('reexplain', (req) =>
     ScriptedGateway.textOf(req).includes('WAY: example')
       ? {
@@ -112,7 +110,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       usable: true,
       title: 'Brüche vergleichen',
       subject: { name: 'Mathe', kind: 'math' },
-      intro: null,
       items: [
         {
           ...base,
@@ -143,7 +140,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       usable: true,
       title: 'Gründung Roms',
       subject: { name: 'Geschichte', kind: 'history' },
-      intro: null,
       items: [
         {
           ...base,
@@ -164,7 +160,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       usable: true,
       title: 'Die Römer – Probetest',
       subject: { name: 'Geschichte', kind: 'history' },
-      intro: null,
       items: [
         {
           ...base,
@@ -229,7 +224,7 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
   llm.byDefault('transcribe', {
     json: { heard_speech: true, text: 'Was steht diese Woche an?' },
   });
-  // Tutor: hints for homework (never the solution), and the explain question.
+  // Tutor: hints for homework (never the solution).
   const hint = (req: LlmRequest) => {
     const text = lastText(req).toLowerCase();
     if (text.includes('28')) {
@@ -271,7 +266,6 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       usable: true,
       title: 'Hauptstädte',
       subject: { name: 'Erdkunde', kind: 'geography' },
-      intro: null,
       items: [
         {
           ...base,

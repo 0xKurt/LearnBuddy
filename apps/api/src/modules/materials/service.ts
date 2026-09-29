@@ -922,7 +922,6 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
             goalId: home.goal_id,
             materialId: home.id,
             title: target?.title ?? x.title,
-            intro: null,
             clientRequestId: null,
           },
           now,

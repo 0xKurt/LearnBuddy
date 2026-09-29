@@ -48,7 +48,6 @@
     "resume_body_untitled_one": "{{count}} question left",
     "resume_body_untitled_other": "{{count}} questions left",
     "resume_title_help": "Continue your homework",
-    "resume_title_explain": "Continue your explanation",
     "resume_title_test": "Continue your practice test",
     "pages_title_one": "I couldn't read one page completely",
     "pages_title_other": "I couldn't read {{count}} pages completely",
@@ -233,7 +232,6 @@
   "suggest": {
     "exam": "I've got a test soon",
     "homework": "Homework",
-    "explain": "Explain something",
     "vocab": "Vocabulary",
     "test_message": "Give me a practice test for \"{{title}}\".",
     "exam_short": "Test",

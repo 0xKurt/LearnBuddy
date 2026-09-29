@@ -48,7 +48,6 @@
     "resume_body_untitled_one": "Queda {{count}} pregunta",
     "resume_body_untitled_other": "Quedan {{count}} preguntas",
     "resume_title_help": "Sigue con tus deberes",
-    "resume_title_explain": "Sigue con tu explicación",
     "resume_title_test": "Sigue con tu examen de prueba",
     "pages_title_one": "No pude leer una página entera",
     "pages_title_other": "No pude leer {{count}} páginas enteras",
@@ -233,7 +232,6 @@
   "suggest": {
     "exam": "Pronto tengo un examen",
     "homework": "Deberes",
-    "explain": "Explícame algo",
     "vocab": "Vocabulario",
     "test_message": "Hazme un examen de prueba para «{{title}}».",
     "exam_short": "Examen",

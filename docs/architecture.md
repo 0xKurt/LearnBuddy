@@ -1154,13 +1154,14 @@ questions from a photo or from Buddy in an active session; homework help and a r
 409 `flag_not_allowed`. Idempotent; bumps the context version.
 
 **"Anders erklären"** (gaps.md #3; `POST /practice/sessions/:id/reexplain`, `practice/reexplain.ts`,
-purpose `reexplain`, migration `0036_reexplain.sql`). After the session's explanation (explain
-mode, `item_id` null) and after a closed question's solution, three chips ("Einfacher bitte",
-"Mit Beispiel", "Warum ist das so?") ask the model for a NEW explanation that way — the way is an
-explicit tap (`ReexplainWay`), the model decides how to explain, the output is validated with
-zod. It sees what she already read, so it does not repeat it. Her request and the explanation are
-stored as turns (`verdict = not_an_attempt`, no attempts or hints counted; a turn about the intro
-has no `item_id`), idempotent per `client_turn_id`. Code decides where it is allowed: never in a
+purpose `reexplain`, migration `0036_reexplain.sql`). After a closed question's solution, three
+chips ("Einfacher bitte", "Mit Beispiel", "Warum ist das so?") ask the model for a NEW explanation
+that way — the way is an explicit tap (`ReexplainWay`), the model decides how to explain, the
+output is validated with zod. It sees what she already read, so it does not repeat it. Her request
+and the explanation are stored as turns (`verdict = not_an_attempt`, no attempts or hints
+counted), idempotent per `client_turn_id`. Code (`practice/brief.ts`) keeps it short: doubled
+punctuation removed ("?." → "?"), and over `REEXPLAIN_MAX_WORDS` cut after the last whole sentence
+(prompt: 2–4 sentences, at most 60 words). Code decides where it is allowed: never in a
 running test (409 `reexplain_not_allowed`), a question only once closed (409 `try_first`), in
 homework only for a task she solved herself (409 `reveal_not_allowed`), and a homework explanation
 that states an open task's answer (`mentionsSolution`, any notation) gets one repair, then nothing
@@ -1204,14 +1205,13 @@ word list, so it stays a prompt rule.
   "Tipp" works here too (a prepared hint only if it does not state the solution, else the tutor
   under the same check); "Später" (`POST …/items/:itemId/defer`, `session_items.deferred_at`)
   sets a task aside — still open, it comes back after the others. No FSRS for homework.
-- **explain** — `POST /practice/topic` kind `explain`: a short explanation (`session.intro`) at
-  the learner's grade, then 3–5 check questions; the tutor sees the explanation. "Kurz erklärt"
-  means short (live finding 7: ~200 words, bare example sentences, "Wem?."): the prompt asks for
-  at most 70 words in 1–2 paragraphs with example sentences in quotation marks; code
-  (`practice/brief.ts`) removes doubled punctuation ("?." → "?") and, over `INTRO_MAX_WORDS`
-  (80), asks the model once to shorten it (a small call, purpose `explain`), then cuts after the
-  last whole sentence within the limit. "Anders erklären" gets the same clean-up and limit
-  (`REEXPLAIN_MAX_WORDS`, prompt: 2–4 sentences, at most 60 words).
+- **explaining is the chat, never a mode** (owner decision 28.09., issue #70): asked to explain,
+  Buddy explains right in the conversation and may offer `practice` on it afterwards. The former
+  `explain` mode (an intro before check questions) is removed — kind `explain` on
+  `POST /practice/topic` is refused (422), the tool schema no longer accepts explain offers, and
+  stored sessions or offers of that mode are served as plain `practice` (the `practice_sessions`
+  columns `mode = 'explain'` and `intro` stay in the database untouched; migrations are
+  immutable). The LLM purpose named `explain` remains the topic-generation task for every kind.
 - **practice on a topic** — kind `practice`: Buddy's own questions, marked as such.
 - **test** (migration `0005_test_mode.sql`) — kind `test` (start tile "Probetest", or Buddy's
   `offer_learning` shortly before an exam): 8–12 questions like a class test. Code enforces:
@@ -1396,11 +1396,11 @@ place (no label ends peeking out, nothing a screen reader finds behind it). Voic
 that it came; Android and the web read its live region; "Buddy is working" is said once (inside
 "Ich lese dein Blatt …", with
 the photo, or as a line at the end of the conversation); the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
-the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, five ways to start
+the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, four ways to start
 around it ("Arbeit" — with a test planned it prepares her for it; homework; pronunciation;
-vocabulary; explain —
+vocabulary — explaining lives in the chat itself, issue #70;
 `docs/UX-PRINCIPLES.md` §6). Once there is a conversation the ring becomes one row of the same
-five (`components/lb/StartRow.tsx`; each as wide as its label, so a word never breaks) and the conversation takes the rest of the screen, at
+four (`components/lb/StartRow.tsx`; each as wide as its label, so a word never breaks) and the conversation takes the rest of the screen, at
 its newest message like any chat (a new message scrolls to it; when she scrolled up to read she
 is not pulled down until she is back at the end or sends something; `lib/homeLayout.ts`
 `followsEnd`; a jump of the offset because the content or the view changed size is not her

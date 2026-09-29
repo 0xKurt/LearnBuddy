@@ -1,9 +1,7 @@
-// "Kurz erklärt" means short (live finding 7: ~200 words in 5 paragraphs, "Wem?."):
+// Explanations mean short (live finding 7: ~200 words in 5 paragraphs, "Wem?."):
 // a word limit code can count and a clean-up of doubled punctuation. Structure only
 // (words, sentence ends, punctuation marks) — no language understanding.
 
-/** The most words of the explanation before questions (explain mode). The prompt asks for 70. */
-export const INTRO_MAX_WORDS = 80;
 /** The most words of an explanation written again ("Anders erklären"). The prompt asks for 60. */
 export const REEXPLAIN_MAX_WORDS = 80;
 

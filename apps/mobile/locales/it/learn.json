@@ -1,7 +1,6 @@
 {
   "start": {
     "homework": "Aiuto con i compiti",
-    "explain": "Spiegami qualcosa",
     "practice": "Esercitarsi",
     "test": "Verifica di prova",
     "vocab": "Ripassare i vocaboli",
@@ -20,14 +19,6 @@
     "type": "Scrivere i vocaboli"
   },
   "topic": {
-    "explain": {
-      "title": "Cosa ti devo spiegare?",
-      "hint": "Te lo spiego in breve e poi controllo se è chiaro.",
-      "placeholder": "es. il dativo, la fotosintesi, semplificare le frazioni",
-      "ex_1": "La fotosintesi",
-      "ex_2": "Semplificare le frazioni",
-      "ex_3": "Il passato prossimo"
-    },
     "practice": {
       "title": "Cosa vuoi esercitare?",
       "hint": "Ti faccio qualche domanda su questo.",

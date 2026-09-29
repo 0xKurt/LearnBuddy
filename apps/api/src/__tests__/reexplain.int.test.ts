@@ -1,8 +1,8 @@
 // "Anders erklären" (gaps.md #3, docs/architecture.md §Practice): a new explanation after
-// the session's explanation or a closed question's solution, written by the model the way
-// she tapped (simpler / with an example / why), stored as turns, idempotent, and never where
-// it would give something away: not in a running test, not before a question is closed,
-// in homework only for a task she solved herself — and never with an open task's answer.
+// a closed question's solution, written by the model the way she tapped (simpler / with an
+// example / why), stored as turns, idempotent, and never where it would give something away:
+// not in a running test, not before a question is closed, in homework only for a task she
+// solved herself — and never with an open task's answer.
 // requires live verification in Claude Code session (needs a running Postgres; scripted model)
 
 import { randomUUID } from 'node:crypto';
@@ -34,20 +34,16 @@ const item = (over: Record<string, unknown>) => ({
   ...over,
 });
 
-const INTRO =
-  'Ein Bruch hat einen Zähler und einen Nenner. Der Nenner sagt, in wie viele Teile geteilt wird.';
-
 async function start(
   env: TestEnv,
   l: Learner,
   items: Record<string, unknown>[],
-  kind: 'explain' | 'practice' | 'help' | 'test' = 'practice',
-  intro: string | null = null,
+  kind: 'practice' | 'help' | 'test' = 'practice',
   /** What she typed (homework: the tasks themselves). */
   text = 'Brüche',
 ): Promise<SessionView> {
   env.llm.script('explain', {
-    json: { usable: true, title: 'Brüche', subject: null, intro, items },
+    json: { usable: true, title: 'Brüche', subject: null, items },
   });
   const res = await l.api.post<SessionView>('/practice/topic', {
     client_request_id: randomUUID(),
@@ -62,7 +58,7 @@ async function start(
 const reexplain = (
   l: Learner,
   s: SessionView,
-  itemId: string | null,
+  itemId: string,
   way: 'simpler' | 'example' | 'why',
   clientTurnId = randomUUID(),
 ) =>
@@ -96,43 +92,41 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
     expect(report).toEqual({ scriptErrors: [], unexpected: [], pending: 0 });
   });
 
-  it('explains the session’s explanation again, the way she asked, once per tap', async () => {
-    const s = await start(
-      env,
-      l,
-      [item({ prompt: 'Was steht unten?', answer: 'Nenner' })],
-      'explain',
-      INTRO,
-    );
+  it('explains a solution again, the way she asked, once per tap', async () => {
+    const s = await start(env, l, [item({ prompt: 'Was steht unten?', answer: 'Nenner' })]);
+    const first = s.items[0]!.item.id;
+    const solved = await answer(l, s, first, 'Nenner');
+    const worked = solved.body.reply.text;
     env.llm.script('reexplain', (req) => {
       const text = ScriptedGateway.textOf(req);
       // The way she tapped, what to explain, and what she already read (so it is new).
       expect(text).toContain('WAY: example');
-      expect(text).toContain('THE EXPLANATION TO EXPLAIN AGAIN');
+      expect(text).toContain('THE QUESTION (topic Brüche): Was steht unten?');
+      expect(text).toContain('ITS SOLUTION: Nenner');
       expect(text).toContain('EARLIER EXPLANATIONS');
-      expect(text).toContain(INTRO);
+      expect(text).toContain(worked);
       return { explanation: 'Stell dir eine Pizza mit 4 Stücken vor: 4 ist der Nenner.' };
     });
     const tap = randomUUID();
-    const r = await reexplain(l, s, null, 'example', tap);
+    const r = await reexplain(l, s, first, 'example', tap);
     expect(r.status).toBe(200);
     expect(r.body.verdict).toBe('not_an_attempt');
     expect(r.body.reply).toMatchObject({
       role: 'tutor',
-      item_id: null,
+      item_id: first,
       reexplain: 'example',
       text: 'Stell dir eine Pizza mit 4 Stücken vor: 4 ist der Nenner.',
     });
-    // Her request is in her words, the explanation after it; no question is touched.
-    const turns = r.body.session.turns;
-    expect(turns.map((x) => [x.role, x.item_id, x.text])).toEqual([
-      ['learner', null, 'Mit Beispiel, bitte'],
-      ['tutor', null, 'Stell dir eine Pizza mit 4 Stücken vor: 4 ist der Nenner.'],
+    // Her request is in her words; nothing about her progress changes.
+    const asked = r.body.session.turns.filter((x) => x.reexplain !== null);
+    expect(asked.map((x) => [x.role, x.text])).toEqual([
+      ['learner', 'Mit Beispiel, bitte'],
+      ['tutor', 'Stell dir eine Pizza mit 4 Stücken vor: 4 ist der Nenner.'],
     ]);
-    expect(r.body.session.items[0]).toMatchObject({ status: 'open', attempts: 0, hints_used: 0 });
+    expect(r.body.session.items[0]).toMatchObject({ status: 'correct', attempts: 1 });
 
     // The same tap again (a retry after a lost answer): no second model call, the same turns.
-    const again = await reexplain(l, s, null, 'example', tap);
+    const again = await reexplain(l, s, first, 'example', tap);
     expect(again.status).toBe(200);
     expect(again.body.reply.id).toBe(r.body.reply.id);
     expect(env.llm.callsFor('reexplain')).toHaveLength(1);
@@ -144,8 +138,8 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
       expect(text).toContain('Pizza');
       return { explanation: 'Unten steht, in wie viele Stücke du teilst.' };
     });
-    const simpler = await reexplain(l, s, null, 'simpler');
-    expect(simpler.body.session.turns).toHaveLength(4);
+    const simpler = await reexplain(l, s, first, 'simpler');
+    expect(simpler.body.session.turns.filter((x) => x.reexplain !== null)).toHaveLength(4);
   });
 
   it('explains a closed question’s solution — not an open one, not in a running test', async () => {
@@ -195,9 +189,13 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
     const blocked = await reexplain(l, test, test.items[0]!.item.id, 'simpler');
     expect(blocked.status).toBe(409);
     expect(blocked.body).toMatchObject({ error: { details: { reason: 'reexplain_not_allowed' } } });
-    // No explanation of the session's own explanation where there is none.
-    const none = await reexplain(l, test, null, 'simpler');
-    expect(none.status).toBe(409);
+    // Without a question there is nothing to explain (the explain mode is gone, issue #70).
+    const none = await l.api.post(`/practice/sessions/${s.id}/reexplain`, {
+      client_turn_id: randomUUID(),
+      item_id: null,
+      way: 'simpler',
+    });
+    expect(none.status).toBe(422);
   });
 
   it('homework: only a task she solved herself, never with another task’s answer', async () => {
@@ -209,7 +207,6 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
         item({ kind: 'numeric', prompt: 'Berechne 6 · 9.', answer: '54' }),
       ],
       'help',
-      null,
       'Berechne 7 · 4. Berechne 6 · 9.',
     );
     const [solved, open] = s.items.map((i) => i.item.id);
@@ -254,48 +251,43 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
   });
 
   it('says so honestly when the model is out, stores nothing, and works on the next tap', async () => {
-    const s = await start(
-      env,
-      l,
-      [item({ prompt: 'Was steht unten?', answer: 'Nenner' })],
-      'explain',
-      INTRO,
-    );
+    const s = await start(env, l, [item({ prompt: 'Was steht unten?', answer: 'Nenner' })]);
+    const first = s.items[0]!.item.id;
+    const solved = await answer(l, s, first, 'Nenner');
+    const turns = solved.body.session.turns.length;
     env.llm.script('reexplain', { error: new LlmError('unavailable', 'down') });
-    const down = await reexplain(l, s, null, 'simpler');
+    const down = await reexplain(l, s, first, 'simpler');
     expect(down.status).toBe(503);
     expect(down.body).toMatchObject({ error: { code: 'model_unavailable' } });
-    expect((await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body.turns).toEqual([]);
+    expect((await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body.turns).toHaveLength(
+      turns,
+    );
 
     env.llm.script('reexplain', {
       json: { explanation: 'Unten steht, in wie viele Teile du teilst.' },
     });
-    expect((await reexplain(l, s, null, 'simpler')).status).toBe(200);
+    expect((await reexplain(l, s, first, 'simpler')).status).toBe(200);
 
     // Invalid model output is not shown either.
     env.llm.script('reexplain', { json: { explanation: '' } });
-    expect((await reexplain(l, s, null, 'why')).status).toBe(503);
+    expect((await reexplain(l, s, first, 'why')).status).toBe(503);
   });
 
   it('another learner’s session or question is not found', async () => {
-    const s = await start(
-      env,
-      l,
-      [item({ prompt: 'Was steht unten?', answer: 'Nenner' })],
-      'explain',
-      INTRO,
-    );
+    const s = await start(env, l, [item({ prompt: 'Was steht unten?', answer: 'Nenner' })]);
+    const first = s.items[0]!.item.id;
+    await answer(l, s, first, 'Nenner');
     const other = await onboard(env, { relation: 'self' });
-    const theirs = await reexplain(other, s, null, 'simpler');
+    const theirs = await reexplain(other, s, first, 'simpler');
     expect(theirs.status).toBe(404);
     // Her own session, but a question that is not in it.
     const mine = await start(env, l, [item({ prompt: 'Was steht oben?', answer: 'Zähler' })]);
-    const foreign = await reexplain(l, mine, s.items[0]!.item.id, 'simpler');
+    const foreign = await reexplain(l, mine, first, 'simpler');
     expect(foreign.status).toBe(404);
     // A way that is not one of the chips is refused before anything happens.
     const odd = await l.api.post(`/practice/sessions/${s.id}/reexplain`, {
       client_turn_id: randomUUID(),
-      item_id: null,
+      item_id: first,
       way: 'louder',
     });
     expect(odd.status).toBe(422);

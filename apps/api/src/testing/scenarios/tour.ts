@@ -46,7 +46,6 @@ export function scriptTour(llm: ScriptedGateway): void {
       usable: true,
       title: 'Nomen',
       subject: { name: 'Deutsch', kind: 'german' },
-      intro: null,
       items: [
         {
           kind: 'multiple_choice',
@@ -73,7 +72,6 @@ export function scriptTour(llm: ScriptedGateway): void {
       usable: true,
       title: 'Englisch sprechen',
       subject: { name: 'Englisch', kind: 'english' },
-      intro: null,
       items: [
         {
           kind: 'speak',
