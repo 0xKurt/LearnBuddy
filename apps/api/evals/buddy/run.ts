@@ -105,6 +105,12 @@ async function main(): Promise<void> {
              from buddy_goals g left join subjects s on s.id = g.subject_id where g.learner_id = $1`,
           [l.learnerId],
         ),
+        materials: (
+          await env.db.query<{ title: string | null; archived_at: Date | null }>(
+            `select title, archived_at from materials where learner_id = $1`,
+            [l.learnerId],
+          )
+        ).map((m) => ({ title: m.title, archived: m.archived_at !== null })),
         memories: await env.db.query(
           `select kind, statement, valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
           [l.learnerId],

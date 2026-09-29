@@ -38,6 +38,9 @@ import { t } from '../../i18n/index.js';
 import { questionCountFor, selectPracticeItems, type PracticeWish } from '../practice/selection.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
+import { AppError } from '../../lib/errors.js';
+import { bumpContext } from './plan.js';
+import { archiveMaterial } from '../materials/service.js';
 import { schoolYearsOf, type ActionOf, type MemoryAbout, type ToolName } from './decision.js';
 import {
   cancelGoalWakeups,
@@ -80,6 +83,7 @@ export type UndoSpec =
   | { type: 'retract_memory'; memory_id: string }
   | { type: 'restore_memory'; old_id: string; new_id: string }
   | { type: 'unretract_memory'; memory_id: string }
+  | { type: 'rename_material_back'; material_id: string; title: string | null }
   /** Undo of "forget everything" (issue #114): exactly the notes that call retracted. */
   | { type: 'unretract_memories'; memory_ids: string[] }
   | {
@@ -970,6 +974,62 @@ async function runRequestMaterial(
   };
 }
 
+/** The sheet she named, from this learner's aliases only. */
+function materialOf(ctx: ToolContext, alias: string) {
+  const m = ctx.aliases.materials.get(alias);
+  if (!m) throw new ToolRejection(`unknown sheet ${alias}`);
+  return m;
+}
+
+/**
+ * She asked for a sheet to go (issue #111). This is the library's own delete — the same
+ * service the button calls, so merged pages, questions, running sessions and the photo and
+ * content purge are handled in one place and cannot drift apart.
+ *
+ * No undo: `archiveMaterial` schedules the photos and the transcript for erasure right away,
+ * which is the point when she deletes a private photo. Offering "rückgängig" on a card whose
+ * content is already on its way out would be a promise we cannot keep (CLAUDE.md rule 5).
+ * The card names the sheet instead, so a wrong one is visible at once.
+ */
+async function runDeleteMaterial(
+  action: ActionOf<'delete_material'>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const a = action.args;
+  requireQuote(ctx, a.quote);
+  const m = materialOf(ctx, a.material);
+  try {
+    await archiveMaterial({ db: ctx.db, now: () => ctx.now }, ctx.learnerId, m.id);
+  } catch (e) {
+    if (e instanceof AppError && e.code === 'not_found') {
+      throw new ToolRejection(`sheet ${a.material} is already gone`);
+    }
+    throw e;
+  }
+  return { summary: { tool: 'delete_material', material_id: m.id, title: m.title }, undo: null };
+}
+
+async function runRenameMaterial(
+  action: ActionOf<'rename_material'>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const a = action.args;
+  requireQuote(ctx, a.quote);
+  const m = materialOf(ctx, a.material);
+  if (m.title === a.title) throw new ToolRejection(`sheet ${a.material} is already called that`);
+  const r = await ctx.db.query(
+    `update materials set title = $3
+      where id = $1 and learner_id = $2 and archived_at is null returning id`,
+    [m.id, ctx.learnerId, a.title],
+  );
+  if (r.length === 0) throw new ToolRejection(`sheet ${a.material} is gone`);
+  await bumpContext(ctx.db, ctx.learnerId);
+  return {
+    summary: { tool: 'rename_material', material_id: m.id, title: a.title },
+    undo: { type: 'rename_material_back', material_id: m.id, title: m.title },
+  };
+}
+
 async function runSetContact(
   action: ActionOf<'set_contact'>,
   ctx: ToolContext,
@@ -1203,6 +1263,8 @@ export const ACT_HANDLERS: {
   update_step: runUpdateStep,
   mark_step_done: runMarkStepDone,
   request_material: runRequestMaterial,
+  delete_material: runDeleteMaterial,
+  rename_material: runRenameMaterial,
   set_contact: runSetContact,
   set_voice: runSetVoice,
   offer_learning: runOfferLearning,
@@ -1232,6 +1294,11 @@ export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Pr
       );
     case 'unretract_memory':
       return (await unretractPlan(db, learnerId, undo.memory_id)) !== 'no';
+    case 'rename_material_back':
+      return exists(
+        `select 1 from materials where id = $1 and learner_id = $2 and archived_at is null`,
+        [undo.material_id, learnerId],
+      );
     case 'unretract_memories': {
       // Offered while at least one of them can still come back; the ones whose undo window
       // has passed are gone for good and are not counted against it.
@@ -1388,6 +1455,15 @@ export async function runUndo(
       }
       // Nothing came back only when every one of them is past its undo window.
       return back > 0;
+    }
+    case 'rename_material_back': {
+      const r = await db.query(
+        `update materials set title = $3
+          where id = $1 and learner_id = $2 and archived_at is null returning id`,
+        [undo.material_id, learnerId, undo.title],
+      );
+      await bumpContext(db, learnerId);
+      return r.length === 1;
     }
     case 'restore_level': {
       const r = await db.query(

@@ -132,6 +132,13 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
         voice: t(`voice.name.${a.voice}`),
         speed: t(`voice.speed.${SPEED_KEY[a.speed + 2] ?? 'normal'}`),
       });
+    case 'delete_material':
+      // A sheet she never named has no title to show her (issue #111).
+      return a.title
+        ? t('action.delete_material', { title: a.title })
+        : t('action.delete_material_untitled');
+    case 'rename_material':
+      return t('action.rename_material', { title: a.title });
     case 'schedule_check':
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),

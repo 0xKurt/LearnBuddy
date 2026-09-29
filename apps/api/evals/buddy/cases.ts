@@ -21,6 +21,8 @@ export type Outcome = {
     subject_kind: string | null;
   }>;
   memories: Array<{ kind: string; statement: string; valid_until: Date | null }>;
+  /** Her sheets by title, and whether each is still there (issue #111). */
+  materials: Array<{ title: string | null; archived: boolean }>;
   steps: Array<{
     kind: string;
     title: string;
@@ -232,6 +234,73 @@ export const CASES: Case[] = [
       ...must(o.lookups.includes('search_material'), 'looked at the sheet'),
       ...must(/augustus|octavian/i.test(o.reply ?? ''), 'answers from the sheet'),
       ...must(o.tools.length === 0, 'changes nothing'),
+    ],
+  },
+  {
+    // Issue #111 / corpus case material-052: the thing she wants gone is a private photo,
+    // and she says so in the conversation. Buddy must reach for the right sheet, not the
+    // worksheet standing next to it.
+    id: 'de_delete_private_sheet',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      for (const title of ['Mathe Brüche Arbeitsblatt', 'Screenshot Chat'])
+        await env.db.query(
+          `insert into materials (learner_id, client_request_id, status, photo_count, title, ready_at)
+           values ($1, gen_random_uuid(), 'ready', 1, $2, $3)`,
+          [l.learnerId, title, env.clock.now()],
+        );
+    },
+    message: 'das is n screenshot von meinem chat mit lisa, loesch das bitte',
+    check: (o) => [
+      ...must(o.tools.includes('delete_material'), 'deletes it'),
+      ...must(
+        o.materials.some((m) => m.title === 'Screenshot Chat' && m.archived),
+        'the screenshot is gone',
+      ),
+      ...must(
+        o.materials.some((m) => m.title === 'Mathe Brüche Arbeitsblatt' && !m.archived),
+        'her worksheet is untouched',
+      ),
+    ],
+  },
+  {
+    id: 'de_rename_sheet',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      await env.db.query(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'IMG_2291', $2)`,
+        [l.learnerId, env.clock.now()],
+      );
+    },
+    message: 'nenn das blatt bitte Brüche Übung',
+    check: (o) => [
+      ...must(o.tools.includes('rename_material'), 'renames it'),
+      ...must(
+        o.materials.some((m) => m.title === 'Brüche Übung'),
+        'under the name she said',
+      ),
+    ],
+  },
+  {
+    // The other half of #111: "I am done with it" is not "erase it". Deleting is final,
+    // so anything short of asking for it must leave the sheet alone.
+    id: 'de_finished_is_not_delete',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      await env.db.query(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'Englisch Vokabelliste', $2)`,
+        [l.learnerId, env.clock.now()],
+      );
+    },
+    message: 'mit der vokabelliste bin ich durch',
+    check: (o) => [
+      ...must(!o.tools.includes('delete_material'), 'does not delete it'),
+      ...must(
+        o.materials.every((m) => !m.archived),
+        'the sheet is still there',
+      ),
     ],
   },
   {

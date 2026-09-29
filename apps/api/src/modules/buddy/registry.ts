@@ -22,6 +22,8 @@ export type Touches =
   | 'goals'
   | 'steps'
   | 'practice'
+  /** Her sheets themselves — renaming, deleting (issue #111). */
+  | 'material'
   | 'settings'
   | 'checks'
   | 'nothing';
@@ -136,6 +138,25 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     undoable: true,
     does: 'ask for a photo of a worksheet',
     run: ACT_HANDLERS.request_material,
+  },
+  delete_material: {
+    // Only in the conversation: requireQuote does not apply to a check, and Buddy must never
+    // reach for one of her sheets on his own initiative (issue #111).
+    surfaces: TURN,
+    touches: ['material'],
+    needsQuote: true,
+    // archiveMaterial erases the photos and the transcript right away — nothing to put back.
+    undoable: false,
+    does: 'delete one of her sheets with its questions (she asked for it to go)',
+    run: ACT_HANDLERS.delete_material,
+  },
+  rename_material: {
+    surfaces: TURN,
+    touches: ['material'],
+    needsQuote: true,
+    undoable: true,
+    does: 'give one of her sheets the name she asked for',
+    run: ACT_HANDLERS.rename_material,
   },
   set_contact: {
     surfaces: TURN,

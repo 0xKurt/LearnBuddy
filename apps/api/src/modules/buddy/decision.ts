@@ -63,6 +63,7 @@ export const StepTarget = z
     'step alias from STATE (st1), or "new" for the practice (prepare_practice) or step (plan_step) created earlier in this same answer',
   );
 export const MemoryRef = alias('m', 'memory');
+export const MaterialRef = alias('sh', 'sheet');
 export const SubjectRef = alias('f', 'subject');
 
 export const Quote = z
@@ -504,6 +505,29 @@ const setContact = z.object({
   }),
 });
 
+/**
+ * What she says about one of her own sheets, instead of a button in a list (issue #111): of
+ * seventeen act tools, not one ever touched a sheet, so "delete that screenshot" was answered
+ * with a link to the library. Deleting is a reduction and undoable for a week, like every
+ * other memory-ish thing Buddy does.
+ */
+const deleteMaterial = z.object({
+  tool: z.literal('delete_material'),
+  args: z.object({
+    material: MaterialRef,
+    quote: Quote.describe('her words asking for it to go'),
+  }),
+});
+
+const renameMaterialTool = z.object({
+  tool: z.literal('rename_material'),
+  args: z.object({
+    material: MaterialRef,
+    title: Title.describe('the name she gave it, in her words'),
+    quote: Quote,
+  }),
+});
+
 const setVoice = z.object({
   tool: z.literal('set_voice'),
   args: z.object({
@@ -592,6 +616,8 @@ export const ACT_SCHEMAS = {
   update_step: updateStep,
   mark_step_done: markStepDone,
   request_material: requestMaterial,
+  delete_material: deleteMaterial,
+  rename_material: renameMaterialTool,
   set_contact: setContact,
   set_voice: setVoice,
   schedule_check: scheduleCheck,

@@ -1073,7 +1073,9 @@ export async function abandonStaleUploads(deps: Deps): Promise<number> {
  * running for it ends without a result (runExtraction re-checks under the row lock).
  */
 export async function archiveMaterial(
-  deps: Deps,
+  // Narrower than Deps on purpose: the conversation calls this too (issue #111), where only
+  // the connection and the clock exist — and those are all this needs.
+  deps: Pick<Deps, 'db' | 'now'>,
   learnerId: string,
   materialId: string,
 ): Promise<void> {

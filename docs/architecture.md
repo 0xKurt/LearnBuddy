@@ -284,6 +284,12 @@ current rows (inside the decision's transaction), makes a bounded change and ret
 summary plus undo data. Enforced here, not in the prompt:
 
 - background checks may only `prepare_practice`, `request_material`, `schedule_check`;
+- her own sheets are reachable from the conversation (`delete_material`, `rename_material`,
+  issue #111): turn-only and quote-bound, because Buddy must never reach for a sheet on his own
+  initiative. `delete_material` is the library's own `archiveMaterial` — merged pages, questions,
+  running sessions and the photo and content purge stay in one place — and therefore carries **no
+  undo**: the photos and the transcript are erased at once, which is the point when she deletes a
+  private photo, and a card offering "rückgängig" would promise what nothing can keep;
 - contact can only be reduced or shifted by Buddy (`set_contact`), never enabled or increased;
   quiet hours may only start earlier ("nicht nach 19 Uhr" → 19:00), and the preferred window then
   ends there — a reply may only claim what the tool actually changed (found by the Lena run);

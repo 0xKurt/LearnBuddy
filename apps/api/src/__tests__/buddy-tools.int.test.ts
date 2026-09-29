@@ -406,4 +406,128 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     );
     expect(await undoable()).toEqual([false]);
   });
+
+  // Issue #111: until now every sheet ended in a button. She says it in the conversation,
+  // where she is anyway — the screenshot of a private chat above all (corpus case material-052).
+  describe('her sheets, from the conversation', () => {
+    async function sheet(title: string | null, questions = 2) {
+      return env.db.tx(async (tx) => {
+        const subject = await findOrCreateSubject(tx, l.learnerId, 'Mathe', 'math');
+        const m = await tx.one<{ id: string }>(
+          `insert into materials (learner_id, client_request_id, subject_id, status, photo_count, title, created_at)
+           values ($1, gen_random_uuid(), $2, 'ready', 1, $3, $4) returning id`,
+          [l.learnerId, subject.id, title, env.clock.now()],
+        );
+        for (let i = 0; i < questions; i++)
+          await tx.query(
+            `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, topic)
+             values ($1, $2, $3, 'short', $4, 'x', 'Brüche')`,
+            [l.learnerId, m.id, subject.id, `Frage ${i}`],
+          );
+        return m.id;
+      });
+    }
+
+    it('deletes the sheet she means, with its questions and its photos', async () => {
+      const keep = await sheet('Mathe Brüche');
+      const gone = await sheet('Screenshot');
+      env.llm.script('buddy_turn', {
+        json: say('Ist weg.', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'loesch das bitte' } },
+        ]),
+      });
+      await send(l, 'das is n screenshot von meinem chat mit lisa, loesch das bitte');
+
+      // sh1 is the newest sheet — the screenshot, not the one she is learning from.
+      const rows = await env.db.query<{ id: string; archived_at: Date | null }>(
+        `select id, archived_at from materials where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(rows.find((r) => r.id === gone)?.archived_at).not.toBeNull();
+      expect(rows.find((r) => r.id === keep)?.archived_at).toBeNull();
+      const items = await env.db.query<{ archived_at: Date | null }>(
+        `select archived_at from items where material_id = $1`,
+        [gone],
+      );
+      expect(items.map((i) => i.archived_at === null)).toEqual([false, false]);
+      // The same erasure the library button plans, not a second half-done path.
+      const jobs = await env.db.query<{ kind: string }>(
+        `select kind from jobs where learner_id = $1 and payload->>'material_id' = $2`,
+        [l.learnerId, gone],
+      );
+      expect(jobs.filter((j) => j.kind === 'purge_photos').length).toBe(2);
+    });
+
+    it('the card names the sheet and offers no undo — nothing comes back', async () => {
+      await sheet('Chat mit Lisa');
+      env.llm.script('buddy_turn', {
+        json: say('Ist weg.', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'loesch das bitte' } },
+        ]),
+      });
+      await send(l, 'loesch das bitte');
+      const home = (await l.api.get<BuddyHome>('/buddy')).body;
+      const acts = home.thread.flatMap((m) => m.actions);
+      expect(acts.map((a) => a.undoable)).toEqual([false]);
+      expect(acts[0]!.summary).toEqual({
+        tool: 'delete_material',
+        material_id: expect.any(String),
+        title: 'Chat mit Lisa',
+      });
+    });
+
+    it('renames a sheet, and undo puts the old name back', async () => {
+      const id = await sheet('IMG_2291');
+      env.llm.script('buddy_turn', {
+        json: say('Heißt jetzt so.', [
+          {
+            tool: 'rename_material',
+            args: { material: 'sh1', title: 'Brüche Übung', quote: 'nenn das Brüche Übung' },
+          },
+        ]),
+      });
+      await send(l, 'nenn das Brüche Übung');
+      const named = async () =>
+        (await env.db.one<{ title: string }>(`select title from materials where id = $1`, [id]))
+          .title;
+      expect(await named()).toBe('Brüche Übung');
+
+      const home = (await l.api.get<BuddyHome>('/buddy')).body;
+      const act = home.thread.flatMap((m) => m.actions).find((a) => a.undoable)!;
+      await l.api.post(`/buddy/actions/${act.id}/undo`, {});
+      expect(await named()).toBe('IMG_2291');
+    });
+
+    it('a sheet that is not hers is not a sheet Buddy can touch', async () => {
+      await sheet('Meins');
+      const other = await onboard(env);
+      const t = tryAction(env, {
+        tool: 'delete_material',
+        args: { material: 'sh1', quote: 'weg damit' },
+      });
+      await send(other, 'weg damit');
+      // sh1 does not exist in the other learner's own state — there is nothing to reach for.
+      expect(t.refusal()).toMatch(/unknown sheet sh1/);
+      const mine = await env.db.one<{ archived_at: Date | null }>(
+        `select archived_at from materials where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(mine.archived_at).toBeNull();
+    });
+
+    it('deleting needs her own words, not a quote she never said', async () => {
+      await sheet('Blatt');
+      const t = tryAction(env, {
+        tool: 'delete_material',
+        args: { material: 'sh1', quote: 'mach alles weg' },
+      });
+      await send(l, 'was steht auf dem blatt?');
+      expect(t.refusal()).toMatch(/quote/i);
+      const mine = await env.db.one<{ archived_at: Date | null }>(
+        `select archived_at from materials where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(mine.archived_at).toBeNull();
+    });
+  });
 });

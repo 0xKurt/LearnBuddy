@@ -23,13 +23,22 @@ import { dayLabel } from '../../i18n/index.js';
 import { addDays, daysBetween, localParts, weekdayName, weekdayOf } from '../../lib/time.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import type { LearnerContext } from '../../http/context.js';
-import type { BuddyState, GoalRow, MemoryRow, StepRow, SubjectRow } from './state.js';
+import type {
+  BuddyState,
+  GoalRow,
+  MaterialBrief,
+  MemoryRow,
+  StepRow,
+  SubjectRow,
+} from './state.js';
 
 export type Aliases = {
   goals: Map<string, GoalRow>;
   steps: Map<string, StepRow>;
   memories: Map<string, MemoryRow>;
   subjects: Map<string, SubjectRow>;
+  /** Her sheets, so Buddy can name one to rename or delete it (issue #111). */
+  materials: Map<string, MaterialBrief>;
 };
 
 export type BuiltContext = {
@@ -132,6 +141,7 @@ export function buildContext(
     goals: new Map(),
     steps: new Map(),
     memories: new Map(),
+    materials: new Map(),
     subjects: new Map(),
   };
   // Sections are filled in the order the aliases are numbered (memories m1…, subjects f1…,
@@ -290,6 +300,21 @@ export function buildContext(
   }
   // She has more sheets than fit here: say so, or Buddy answers "that's all you have"
   // from a list that is only the newest ten (owner 28.09., issues #49 and #68).
+  // Every sheet by name, so she can say "delete that one" and Buddy has something to point
+  // at (issue #111): until now sheets appeared only as counts and titles, and everything she
+  // said about one ended in a button.
+  let sh = 0;
+  for (const m of state.materials) {
+    const alias = `sh${++sh}`;
+    aliases.materials.set(alias, m);
+    const what =
+      m.status === 'ready'
+        ? `${m.item_count} questions`
+        : m.status === 'failed'
+          ? 'could not be read'
+          : 'being read';
+    materialBlock.push(`- ${alias} "${m.title ?? 'untitled sheet'}" (${what})`);
+  }
   if (state.totals.materials > state.materials.length)
     materialBlock.push(
       `- ${state.materials.length} of ${state.totals.materials} sheets are listed here (the newest); search_material finds the others`,
