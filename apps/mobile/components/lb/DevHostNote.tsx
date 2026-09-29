@@ -4,30 +4,52 @@
 // a release build never renders this (`__DEV__` is false there, and the walkthrough
 // exports production bundles). The colour is deliberately outside the calm design
 // tokens — this is a diagnostic warning marker, not product UI.
+//
+// It sits at the TOP and leaves again by itself (issue #103): pinned to the bottom it
+// landed exactly on the composer and covered the input field — the owner read it as a
+// cut-off text box. A start-up notice has to be seen once, not forever, so it fades after
+// a few seconds and the screen belongs to the learner again.
 
-import { Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Text } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ENV } from '../../lib/env.js';
+import { fadeIn, fadeOut } from '../../lib/theme/enter.js';
 
 declare const __DEV__: boolean;
 
 /** localhost, 127.0.0.1 and the Android emulator's host loopback are this machine. */
 const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?$/;
 
+/** Long enough to read the host while the app settles, short enough to stay out of the way. */
+const SHOWN_MS = 6000;
+
 export function DevHostNote() {
   const insets = useSafeAreaInsets();
-  if (typeof __DEV__ === 'undefined' || !__DEV__) return null;
-  if (LOCAL.test(ENV.API_URL)) return null;
+  const [gone, setGone] = useState(false);
+  const dev = typeof __DEV__ !== 'undefined' && __DEV__;
+  const remote = dev && !LOCAL.test(ENV.API_URL);
+  useEffect(() => {
+    if (!remote) return;
+    const t = setTimeout(() => setGone(true), SHOWN_MS);
+    return () => clearTimeout(t);
+  }, [remote]);
+  if (!remote || gone) return null;
   const host = ENV.API_URL.replace(/^https?:\/\//, '');
   return (
-    <View
+    <Animated.View
+      entering={fadeIn()}
+      exiting={fadeOut()}
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={{
         position: 'absolute',
-        bottom: insets.bottom + 2,
+        // The header's middle is free (greeting left, buttons right), so nothing here
+        // covers a control — unlike the bottom, where the composer lives.
+        top: insets.top + 2,
         alignSelf: 'center',
         backgroundColor: 'rgba(178,58,58,0.92)',
         borderRadius: 999,
@@ -38,6 +60,6 @@ export function DevHostNote() {
       <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>
         {`Dev-Build → ${host}`}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
