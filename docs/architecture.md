@@ -1181,7 +1181,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
   the mic never opens by itself (it would record VoiceOver): she taps it or uses Magic Tap, and
   every phase is announced. Buddy's orb shows the phase (`components/voice/TalkOrb.tsx`)
-  through his moon (docs/DESIGN-BRIEF.md §Buddy's moon, `lib/buddy/moon.ts` `talkMode`): idle it
+  through his moon (docs/DESIGN-BRIEF.md §Buddy's moon, `lib/buddy/orbStates.ts` `talkMode`): idle it
   circles, listening it parks at the upper right and glows with her voice level (the glass stays
   clear), thinking it races round with a trail, paused without trouble it waits (bobs with a
   ping: her turn), speaking it sways in a speech rhythm (there is no level of Buddy's voice to

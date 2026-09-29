@@ -31,7 +31,7 @@ import { LB } from '../../lib/theme/colors.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
+import { BuddyOrb, type OrbState } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
@@ -120,11 +120,11 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
 /**
  * Buddy's orb arrives: it grows in softly while a pastel halo breathes out behind it. A
  * session that just ended here is a "Geschafft" moment: once the orb is there, his moon
- * spirals up and bursts into sparkles (lib/buddy/moon.ts, happy).
+ * spirals up and bursts into sparkles (lib/buddy/signatures/mond.ts, happy).
  */
 function OrbArrival({ celebrate }: { celebrate: boolean }) {
   const reduced = useReducedMotion();
-  const [moon, setMoon] = useState<MoonState>('idle');
+  const [moon, setMoon] = useState<OrbState>('idle');
   useEffect(() => {
     if (!celebrate) return;
     const go = setTimeout(() => setMoon('happy'), reduced ? 0 : DURATION.gentle);

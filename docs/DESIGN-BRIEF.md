@@ -201,8 +201,8 @@ below 22 px there is no moon. Only the newest avatar in a conversation moves. "h
 and settles back to idle after 2.4 s (in the app it marks a moment, not a lasting state). With
 reduce motion the moon stands still in each state's pose and a change only cross-fades. Her real
 voice level is smoothed by a critically damped spring (the microphone reports a few times a
-second). The maths lives in `lib/buddy/moon.ts`
-(unit-tested), the drawing in `components/lb/BuddyOrb.tsx`.
+second). The maths lives in `lib/buddy/signatures/mond.ts` (unit-tested), the drawing in
+`components/lb/signatures/MondSignature.tsx` on the shared orb of `components/lb/BuddyOrb.tsx`.
 
 ---
 

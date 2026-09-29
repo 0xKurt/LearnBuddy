@@ -1,7 +1,8 @@
 // Buddy in talk mode: the large orb with its moon (components/lb/BuddyOrb.tsx), exactly as
 // the approved prototype (variant 1 "Mond") draws and moves it — its white halo, and its
 // pastel stage behind him — each state a clearly different movement, blended softly
-// (never a jump; lib/buddy/moon.ts):
+// (never a jump; lib/buddy/signatures/mond.ts). Another prepared signature can be passed
+// (`signature`); the stage and the states stay the same:
 //   idle       the moon circles slowly with a faint white trail, the orb breathes;
 //   listening  the moon stops at the upper right and glows with her voice, the orb swells
 //              with her and the halo brightens (no bars in the glass, owner 2026-09-28);
@@ -15,7 +16,8 @@
 import { Pressable, View } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
-import { moonForTalk, type TalkMode } from '../../lib/buddy/moon.js';
+import { orbForTalk, type TalkMode } from '../../lib/buddy/orbStates.js';
+import type { SignatureKey } from '../../lib/buddy/signatures/index.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 
@@ -27,6 +29,7 @@ export function TalkOrb({
   size = 200,
   onPress,
   pressLabel,
+  signature,
 }: {
   mode: OrbMode;
   /** Her voice (0…1) while listening. */
@@ -35,13 +38,22 @@ export function TalkOrb({
   /** Tapping Buddy (interrupts him while he speaks). */
   onPress?: () => void;
   pressLabel?: string;
+  /** Which signature Buddy wears (default: the moon, BuddyOrb). */
+  signature?: SignatureKey;
 }) {
   // Room around the orb for the halo and the moon's orbit.
   const box = Math.round(size * 1.5);
   const orb = (
     <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
       <Stage size={size * 2} box={box} />
-      <BuddyOrb size={size} state={moonForTalk(mode)} level={level} reactToTap={false} halo />
+      <BuddyOrb
+        size={size}
+        state={orbForTalk(mode)}
+        level={level}
+        reactToTap={false}
+        halo
+        signature={signature}
+      />
     </View>
   );
   if (!onPress) return orb;

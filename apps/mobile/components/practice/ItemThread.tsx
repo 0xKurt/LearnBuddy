@@ -13,7 +13,8 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
+import { orbForReply } from '../../lib/buddy/orbStates.js';
+import type { OrbState } from '../../lib/buddy/signatures/core.js';
 import { LB } from '../../lib/theme/colors.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -87,7 +88,7 @@ export function ItemThread({
             mine={mine}
             text={turn.text}
             speaker={mine ? t('thread.you') : t('thread.buddy')}
-            orb={moonForReply({ fresh, afterCorrect })}
+            orb={orbForReply({ fresh, afterCorrect })}
             // Only the newest reply's orb moves, and none while Buddy is looking again.
             alive={turn.id === latestReplyId && pending === null}
           />
@@ -143,7 +144,7 @@ function Bubble({
   text: string;
   speaker: string;
   faded?: boolean;
-  orb?: MoonState;
+  orb?: OrbState;
   alive?: boolean;
 }) {
   const spoken = useSpokenMath(text);

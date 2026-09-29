@@ -1,31 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
+import { ORB_R, ORB_STATES, orbitPt, sparkles, speech, type OrbState } from '../core.js';
 import {
   HAPPY_SETTLE,
-  MOON_STATES,
-  ORB_R,
   PROTO_GHOSTS,
   PROTO_SPARKLES,
   effectiveState,
   moonDetail,
-  moonForReply,
-  moonForTalk,
   moonPose,
   newMoon,
   newOrder,
-  orbitPt,
   placeOrder,
   sparklePose,
-  sparkles,
-  speech,
   stepMoon,
   stillMoon,
-  talkMode,
   type MoonSim,
-  type MoonState,
-} from '../moon.js';
+} from '../mond.js';
 
-const run = (sim: MoonSim, state: MoonState, secs: number): MoonSim => {
+const run = (sim: MoonSim, state: OrbState, secs: number): MoonSim => {
   let s = sim;
   for (let i = 0; i < Math.round(secs * 60); i++) s = stepMoon(s, 1 / 60, state);
   return s;
@@ -116,13 +108,13 @@ describe('moon states', () => {
   });
 
   it('a still pose is the same every time (reduce motion, icons)', () => {
-    for (const s of MOON_STATES) {
+    for (const s of ORB_STATES) {
       expect(moonPose(stillMoon(s, 2.6), 0.3, 4)).toEqual(moonPose(stillMoon(s, 2.6), 0.3, 4));
     }
   });
 
   it('stays within reach of the orb in every state', () => {
-    for (const s of MOON_STATES) {
+    for (const s of ORB_STATES) {
       let sim = newMoon('idle');
       for (let i = 0; i < 240; i++) {
         sim = stepMoon(sim, 1 / 60, s);
@@ -221,7 +213,7 @@ function protoVoice(t: number): number {
 }
 
 describe('the moon moves exactly like the prototype', () => {
-  for (const s of MOON_STATES) {
+  for (const s of ORB_STATES) {
     for (const n of [30, 62]) {
       it(`${s} after ${n} frames`, () => {
         const ref = PROTOTYPE[`${s}${n}`];
@@ -246,43 +238,6 @@ describe('the moon moves exactly like the prototype', () => {
   }
 });
 
-describe('app states → moon states', () => {
-  it('talk mode', () => {
-    expect(moonForTalk('idle')).toBe('idle');
-    expect(moonForTalk('listening')).toBe('listen');
-    expect(moonForTalk('thinking')).toBe('think');
-    expect(moonForTalk('waiting')).toBe('wait');
-    expect(moonForTalk('speaking')).toBe('speak');
-  });
-
-  const base = {
-    phase: 'paused' as const,
-    hearing: false,
-    transcribing: false,
-    voiceLoading: false,
-    trouble: false,
-  };
-  it('talk phases', () => {
-    expect(talkMode({ ...base, phase: 'thinking' })).toBe('thinking');
-    expect(talkMode({ ...base, phase: 'listening', transcribing: true })).toBe('thinking');
-    // Buddy's voice for the sentence is still on its way: he is still thinking.
-    expect(talkMode({ ...base, phase: 'speaking', voiceLoading: true })).toBe('thinking');
-    expect(talkMode({ ...base, phase: 'speaking' })).toBe('speaking');
-    expect(talkMode({ ...base, phase: 'listening', hearing: true })).toBe('listening');
-    // Her turn: Buddy waits for her.
-    expect(talkMode(base)).toBe('waiting');
-    // Something went wrong: Buddy just rests (no "your turn" ping over an error).
-    expect(talkMode({ ...base, trouble: true })).toBe('idle');
-    expect(talkMode({ ...base, phase: 'listening' })).toBe('idle');
-  });
-
-  it('a reply celebrates only a right answer that arrives now', () => {
-    expect(moonForReply({ fresh: true, afterCorrect: true })).toBe('happy');
-    expect(moonForReply({ fresh: false, afterCorrect: true })).toBe('idle');
-    expect(moonForReply({ fresh: true, afterCorrect: false })).toBe('idle');
-  });
-});
-
 // Which part lies on top: the prototype's SVG node order in its two groups (0 the moon,
 // 1 the ping, 2… the trail), read after jump('idle', 1.5), setState and n steps of 16 ms.
 const PROTOTYPE_ORDER: Record<string, { front: number[]; back: number[] }> = {
@@ -300,7 +255,7 @@ const PROTOTYPE_ORDER: Record<string, { front: number[]; back: number[] }> = {
 describe("the moon's parts overlap as in the prototype", () => {
   for (const [key, ref] of Object.entries(PROTOTYPE_ORDER)) {
     it(key, () => {
-      const state = key.replace(/\d+$/, '') as MoonState;
+      const state = key.replace(/\d+$/, '') as OrbState;
       const n = Number(key.slice(state.length));
       let sim = stillMoon('idle', 1.5);
       // jump() places twice (its last two renders), the second one step further on.

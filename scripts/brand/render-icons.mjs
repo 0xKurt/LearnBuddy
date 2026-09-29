@@ -115,7 +115,7 @@ function orb(cx, cy, r, { halo = true, shadow = true } = {}) {
 }
 
 /**
- * Buddy's moon (lib/buddy/moon.ts): the still pose of "listen" as the prototype's icons
+ * Buddy's moon (apps/mobile/lib/buddy/signatures/mond.ts): the still pose of "listen" as the prototype's icons
  * use it — parked at the upper right of the orb, in front, glowing. Orb units (radius 54).
  * The icon draws it `boost` × its size (the prototype used 2.1; the owner asked for a
  * clearly smaller moon, docs/DESIGN-BRIEF.md §Buddy's moon).
