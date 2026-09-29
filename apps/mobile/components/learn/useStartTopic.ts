@@ -9,7 +9,12 @@
 // own (an offer's action id) passes it: then the same offer always opens the
 // same session.
 
-import type { SessionView, StartTopicRequest } from '@learnbuddy/shared-types/contracts';
+import type {
+  DifficultyWish,
+  SessionView,
+  StartTopicRequest,
+  VocabDirection,
+} from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 
 import { ApiError, newId } from '../../lib/api/client.js';
@@ -27,6 +32,17 @@ export type StartState =
   | { status: 'failed'; message: string };
 
 type Attempt = { kind: TopicKind; text: string; id: string };
+
+/** What was asked for beyond the topic; the server decides what it means (issue #113). */
+export type StartOptions = {
+  /** The planned test Buddy's offer is for: the questions stay within its sheets. */
+  goalId?: string | null;
+  /** More of the same after a practice: the session it follows (issue #58). */
+  fromSessionId?: string | null;
+  difficulty?: DifficultyWish | null;
+  /** vocab: which direction of each pair this session asks. */
+  direction?: VocabDirection | null;
+};
 
 export function useStartTopic() {
   const [state, setState] = useState<StartState>({ status: 'idle' });
@@ -46,10 +62,7 @@ export function useStartTopic() {
     kind: TopicKind,
     rawText: string,
     requestId?: string,
-    /** The planned test Buddy's offer is for: the questions stay within its sheets. */
-    goalId?: string | null,
-    /** More of the same after a practice: the session it follows (issue #58). */
-    fromSessionId?: string | null,
+    opts: StartOptions = {},
   ): Promise<SessionView | null> {
     const text = rawText.trim();
     if (running.current || text.length < 2) return null;
@@ -63,8 +76,10 @@ export function useStartTopic() {
         client_request_id: id,
         kind,
         text,
-        ...(goalId ? { goal_id: goalId } : {}),
-        ...(fromSessionId ? { from_session_id: fromSessionId } : {}),
+        ...(opts.goalId ? { goal_id: opts.goalId } : {}),
+        ...(opts.fromSessionId ? { from_session_id: opts.fromSessionId } : {}),
+        ...(opts.difficulty ? { difficulty: opts.difficulty } : {}),
+        ...(opts.direction ? { direction: opts.direction } : {}),
       });
       last.current = null;
       // The home shows the new session (to resume it) from now on.

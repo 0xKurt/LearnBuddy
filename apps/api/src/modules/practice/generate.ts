@@ -8,7 +8,7 @@
 // One structured model call; items are validated like extracted ones.
 // Idempotent per client_request_id.
 
-import type { StartTopicRequest } from '@learnbuddy/shared-types/contracts';
+import type { DifficultyWish, StartTopicRequest } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -33,7 +33,7 @@ import {
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.8';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.9';
 
 const SUBJECT_KINDS = [
   'math',
@@ -154,6 +154,29 @@ async function sheetsOf(
     .join('\n\n')
     .slice(0, SHEET_CHARS);
   return { goalId: goal.id, topics: topics as [string, ...string[]], text };
+}
+
+/**
+ * She asked for something harder or easier (issue #113). The generator is told in one line;
+ * what it writes is then held to its own marks — see `atLevel`.
+ */
+const LEVEL: Record<DifficultyWish, string> = {
+  easier: `DIFFICULTY: a step below their grade — the learner said this is too hard for them. Smaller steps, one idea per question, plainer wording; the same topic, never an easier one, and never announced as the easy version. Mark each question's difficulty 1–3.`,
+  harder: `DIFFICULTY: a step above their grade — the learner said this is too easy for them. More steps per question, less given away, the wording of a harder book; the same topic, still answerable in the app. Mark each question's difficulty 3–5.`,
+};
+
+/** The fewest questions a set may shrink to when only some carry the level she asked for. */
+const LEVEL_MIN = 3;
+
+/**
+ * Kept at the level she asked for, by the model's own difficulty marks. They are its
+ * self-report, not a measurement — so a set that would shrink below a session stays whole
+ * rather than costing her the practice she asked for.
+ */
+function atLevel(items: ItemDraft[], level: DifficultyWish | null | undefined): ItemDraft[] {
+  if (!level) return items;
+  const fits = items.filter((i) => (level === 'easier' ? i.difficulty <= 3 : i.difficulty >= 3));
+  return fits.length >= LEVEL_MIN ? fits : items;
 }
 
 const TASK: Record<StartTopicRequest['kind'], string> = {
@@ -293,6 +316,7 @@ async function prepareTopic(
                 `LEARNER: ${learner.display_name}, ${ageOn(learner.birth_date, now)} years, level ${level}, app language ${learner.locale}`,
                 input.subject ? `SUBJECT (as the learner said): ${input.subject}` : null,
                 `TASK: ${TASK[input.kind]}`,
+                input.difficulty ? LEVEL[input.difficulty] : null,
                 sheets
                   ? `SHEETS (she photographed them for this test; stay strictly within them — only their topics, tasks like theirs with other numbers or words, nothing the sheets do not cover):\nTOPICS: ${sheets.topics.join(' | ')}\nTEXT:\n${sheets.text}`
                   : null,
@@ -328,10 +352,13 @@ async function prepareTopic(
   }
 
   const allowed = KINDS[input.kind];
-  let items = usableItems(
-    set.items
-      .filter((i) => allowed.has(i.kind))
-      .map((i) => ({ ...i, hints: [], worked_solution: null })),
+  let items = atLevel(
+    usableItems(
+      set.items
+        .filter((i) => allowed.has(i.kind))
+        .map((i) => ({ ...i, hints: [], worked_solution: null })),
+    ),
+    input.difficulty,
   );
   if (input.kind === 'help') {
     // Homework is what the learner typed — tasks the model added are dropped.
@@ -349,6 +376,8 @@ async function prepareTopic(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
         items,
+        // Both directions are stored either way; this asks the one she wanted (issue #113).
+        input.direction ?? null,
       );
       const id = await createSession(
         tx,

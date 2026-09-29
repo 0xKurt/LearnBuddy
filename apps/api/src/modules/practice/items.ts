@@ -4,9 +4,10 @@
 // One shape for every source, so practice, the tutor and FSRS treat them the
 // same. The model writes data; the server checks every item on its own and
 // drops broken ones instead of "repairing" them. A vocabulary pair becomes two
-// questions (both directions), each with its own FSRS state.
+// questions (both directions), each with its own FSRS state — the session may
+// ask just one of them when the learner asked for that direction (issue #113).
 
-import { Figure } from '@learnbuddy/shared-types/contracts';
+import { Figure, type VocabDirection } from '@learnbuddy/shared-types/contracts';
 import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
@@ -294,10 +295,24 @@ export type ItemSource = {
   origin: 'material' | 'buddy' | 'typed' | 'homework';
 };
 
-/** Stores the items (a vocabulary pair in both directions) and returns their ids in order. */
-export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): Promise<string[]> {
+/**
+ * Stores the items (a vocabulary pair in both directions) and returns the ids the session
+ * asks, in order.
+ *
+ * Both directions are always stored, each with its own FSRS state, so the other one can be
+ * practised later without writing the pair again. `direction` only says which of the two this
+ * session asks (issue #113): `recognise` the foreign word → its meaning, `produce` her own
+ * language → the foreign word (what a class test asks for), null both, as before. Questions
+ * that are not a vocabulary pair are never affected by it.
+ */
+export async function insertItems(
+  db: Db,
+  src: ItemSource,
+  items: ItemDraft[],
+  direction: VocabDirection | null = null,
+): Promise<string[]> {
   const ids: string[] = [];
-  const insert = async (it: ItemDraft) => {
+  const insert = async (it: ItemDraft, asked = true) => {
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
@@ -327,15 +342,17 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
         it.spelling,
       ],
     );
-    ids.push(row.id);
+    if (asked) ids.push(row.id);
   };
-  for (const it of items) await insert(it);
+  const pair = (it: ItemDraft) => it.kind === 'vocab' && !!it.lang && !!it.prompt_lang;
+  for (const it of items) await insert(it, !(pair(it) && direction === 'produce'));
   // The other direction of each pair comes after all first directions — asked right after
   // its twin, the answer would still be on screen. Its alternatives are unknown; the tutor
   // judges variants.
   for (const it of items) {
-    if (it.kind === 'vocab' && it.lang && it.prompt_lang) {
-      await insert({
+    if (!pair(it)) continue;
+    await insert(
+      {
         ...it,
         prompt: it.answer,
         answer: it.prompt,
@@ -345,8 +362,9 @@ export async function insertItems(db: Db, src: ItemSource, items: ItemDraft[]): 
         // Hints were written for the first direction.
         hints: [],
         worked_solution: null,
-      });
-    }
+      },
+      direction !== 'recognise',
+    );
   }
   return ids;
 }

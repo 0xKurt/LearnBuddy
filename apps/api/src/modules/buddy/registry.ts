@@ -102,7 +102,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     touches: ['practice', 'steps'],
     needsQuote: false,
     undoable: true,
-    does: 'prepare practice from her questions, for a test or topic',
+    does: 'prepare practice from her questions, for a test or topic — only the ones that went wrong, easier or harder ones, or one direction of her vocabulary, when she asks for that',
     run: ACT_HANDLERS.prepare_practice,
   },
   plan_step: {
@@ -166,7 +166,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'offer a button that starts learning now (practice, test, vocab, speak, help)',
+    does: 'offer a button that starts learning now (practice, test, vocab, speak, help) — easier or harder, or one vocabulary direction, when she asks for that',
     run: ACT_HANDLERS.offer_learning,
   },
   open_area: {

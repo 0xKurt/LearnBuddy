@@ -3,6 +3,22 @@
 //
 // Order: questions due for review (FSRS) → never practised → the rest by due
 // date. Focus topics narrow the pool when they match enough questions.
+//
+// Three things the learner can ask for narrow it further (issue #113). The model sets them
+// as tool arguments, the code decides what they mean — never a word list:
+//   only wrong  — only questions whose last try needed help or was not known, never one that
+//                 has not been asked yet. Read off the last attempt (`session_items`), the
+//                 same place `find_questions` reports from, so what Buddy says about a
+//                 question and what he selects agree — and so a practice test counts, which
+//                 feeds no FSRS state at all;
+//   difficulty  — the easier or the harder half of her own material for this scope,
+//                 measured against the median of `items.difficulty` in that very pool;
+//   direction   — one direction of a vocabulary pair, read off her own app language.
+// A wish that matches only three questions gives three; one that matches none gives none. The
+// set is never quietly filled up with questions she did not ask for (CLAUDE.md rule 5 — the
+// card would then claim to be what it is not), and the caller says plainly when nothing fits.
+
+import type { DifficultyWish, VocabDirection } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
 
@@ -10,6 +26,16 @@ export type PracticeScope = {
   goalId?: string | null;
   subjectId?: string | null;
   materialId?: string | null;
+};
+
+export type PracticeWish = {
+  /** Only what did not sit the last time it was asked. */
+  onlyWrong?: boolean;
+  difficulty?: DifficultyWish | null;
+  /** Vocabulary only; needs `ownLanguage` to tell the two sides apart. */
+  direction?: VocabDirection | null;
+  /** The learner's app language (ISO 639-1), for the direction. */
+  ownLanguage?: string | null;
 };
 
 export const QUESTIONS_PER_MINUTE = 1.2;
@@ -27,6 +53,7 @@ export async function selectPracticeItems(
   focusTopics: string[],
   count: number,
   now: Date,
+  wish: PracticeWish = {},
 ): Promise<string[]> {
   // For a goal: its own material first; if it has none yet, its subject.
   let goalMaterialsOnly = false;
@@ -45,22 +72,49 @@ export async function selectPracticeItems(
   }
 
   const candidates = await db.query<Candidate>(
-    `select i.id, i.topic, st.due
-       from items i
-       left join materials m on m.id = i.material_id
-       left join item_states st on st.item_id = i.id
-      where i.learner_id = $1 and i.archived_at is null and (m.id is null or m.archived_at is null)
-        -- Homework is helped with, not drilled; speaking needs a quiet moment the learner chooses.
-        and i.origin <> 'homework' and i.kind <> 'speak'
-        and ($2::uuid is null or m.goal_id = $2)
-        and ($3::uuid is null or i.subject_id = $3)
-        and ($4::uuid is null or i.material_id = $4)
+    // The wishes narrow the pool before the limit, so nothing she asked for is cut off by
+    // 200 rows of something else; the difficulty is measured on what is left (its median).
+    `with pool as (
+       select i.id, i.topic, i.difficulty, i.created_at, st.due, st.item_id as reviewed
+         from items i
+         left join materials m on m.id = i.material_id
+         left join item_states st on st.item_id = i.id
+         left join lateral (
+           select si.status, si.first_try_correct from session_items si
+            where $6::boolean and si.item_id = i.id and si.status <> 'open' and si.flagged_at is null
+            order by si.closed_at desc nulls last limit 1) last on true
+        where i.learner_id = $1 and i.archived_at is null and (m.id is null or m.archived_at is null)
+          -- Homework is helped with, not drilled; speaking needs a quiet moment the learner chooses.
+          and i.origin <> 'homework' and i.kind <> 'speak'
+          and ($2::uuid is null or m.goal_id = $2)
+          and ($3::uuid is null or i.subject_id = $3)
+          and ($4::uuid is null or i.material_id = $4)
+          -- Only what did not sit the last time it was asked: right on the first try is not it,
+          -- and one never asked is not one she got wrong. The wish stands in the lateral itself,
+          -- so the last attempt is only looked up when she asked for this.
+          and (not $6::boolean
+               or (last.status is not null
+                   and not (last.status = 'correct' and coalesce(last.first_try_correct, false))))
+          -- One direction of a vocabulary pair; her own language says which side is foreign.
+          and ($7::text is null
+               or (i.kind = 'vocab'
+                   and (($7 = 'produce' and i.lang is distinct from $8::text)
+                        or ($7 = 'recognise' and i.prompt_lang is distinct from $8::text))))
+     ), middle as (
+       select percentile_cont(0.5) within group (order by difficulty::double precision) as mid
+         from pool
+     )
+     select p.id, p.topic, p.due
+       from pool p, middle
+      where $9::text is null
+         or ($9 = 'easier' and p.difficulty < middle.mid)
+         or ($9 = 'harder' and p.difficulty > middle.mid)
       order by
-        case when st.due is not null and st.due <= $5 then 0
-             when st.item_id is null then 1
+        case when p.due is not null and p.due <= $5 then 0
+             when p.reviewed is null then 1
              else 2 end,
-        st.due nulls last,
-        i.created_at, i.id
+        p.due nulls last,
+        p.created_at, p.id
       limit 200`,
     [
       learnerId,
@@ -68,6 +122,10 @@ export async function selectPracticeItems(
       goalMaterialsOnly ? null : subjectId,
       scope.materialId ?? null,
       now,
+      wish.onlyWrong === true,
+      wish.direction ?? null,
+      wish.ownLanguage ?? null,
+      wish.difficulty ?? null,
     ],
   );
   if (candidates.length === 0) return [];

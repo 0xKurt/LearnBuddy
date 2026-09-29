@@ -12,7 +12,11 @@
 // The same zod schemas generate the JSON schema sent to the model and
 // validate its answer.
 
-import { VOICE_NAMES } from '@learnbuddy/shared-types/contracts';
+import {
+  DifficultyWish as DifficultyWishSchema,
+  VocabDirection as VocabDirectionSchema,
+  VOICE_NAMES,
+} from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 const SUBJECT_KINDS = [
@@ -353,6 +357,24 @@ const preparePractice = z.object({
     subject: SubjectRef.nullable(),
     minutes: z.number().int().min(5).max(30),
     focus_topics: z.array(z.string().trim().min(1).max(60)).max(5),
+    // The three below are optional in parsing (older scripted answers have none of them);
+    // the model sees all of them. Issue #113.
+    only_wrong: z
+      .boolean()
+      .optional()
+      .describe(
+        'true only when the learner asks for the questions that did not sit the last time they were asked. Then only those are chosen — never one that has not been asked yet — and there may be fewer of them than the minutes suggest.',
+      ),
+    difficulty: DifficultyWishSchema.nullable()
+      .optional()
+      .describe(
+        'When the learner asks for something harder or something easier: "harder" takes the harder half of her own questions for this, "easier" the easier half. null when she said nothing about it.',
+      ),
+    direction: VocabDirectionSchema.nullable()
+      .optional()
+      .describe(
+        'Vocabulary only, and only what she asked for: "recognise" shows the foreign word and asks what it means, "produce" shows it in her own language and asks for the foreign word. Either way only vocabulary is chosen; null for everything else.',
+      ),
   }),
 });
 
@@ -472,6 +494,17 @@ const offerLearning = z.object({
       .default(null)
       .describe(
         'practice or test for a planned test in STATE: its alias (g1) — the questions then stay within the sheets she photographed for it; otherwise null',
+      ),
+    // Optional in parsing (older scripted answers have neither); the model sees both. Issue #113.
+    difficulty: DifficultyWishSchema.nullable()
+      .optional()
+      .describe(
+        'Only when she asks for something harder or something easier than she is getting: the new questions are written above or below her grade. null when she said nothing about it.',
+      ),
+    direction: VocabDirectionSchema.nullable()
+      .optional()
+      .describe(
+        'vocab only, and only what she asked for: "recognise" asks what the foreign word means, "produce" shows it in her own language and asks for the foreign word. null asks both directions, as usual.',
       ),
   }),
 });

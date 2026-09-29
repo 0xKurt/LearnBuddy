@@ -35,7 +35,7 @@ import {
   type UntilSpec,
 } from '../../lib/time.js';
 import { t } from '../../i18n/index.js';
-import { questionCountFor, selectPracticeItems } from '../practice/selection.js';
+import { questionCountFor, selectPracticeItems, type PracticeWish } from '../practice/selection.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
 import { schoolYearsOf, type ActionOf, type ToolName } from './decision.js';
@@ -561,6 +561,21 @@ async function runCloseGoal(
   };
 }
 
+/**
+ * She has questions for this, but none that fit what she asked for (issue #113). The reason
+ * says which wish found nothing, so Buddy can say it plainly instead of quietly practising
+ * something else — and name the way out (new questions are written, not selected).
+ */
+function noneFit(wish: PracticeWish): string {
+  if (wish.onlyWrong) {
+    return 'none of her questions for this went wrong the last time — say so plainly (it is good news) and offer ordinary practice instead (prepare_practice without only_wrong)';
+  }
+  if (wish.difficulty) {
+    return `her own questions for this have no ${wish.difficulty} half — say so and offer to write new ones at that level (offer_learning with difficulty)`;
+  }
+  return 'she has no vocabulary for this in that direction — say so and offer to write it (offer_learning) or ask for a photo of the list (request_material)';
+}
+
 async function runPreparePractice(
   action: ActionOf<'prepare_practice'>,
   ctx: ToolContext,
@@ -575,15 +590,42 @@ async function runPreparePractice(
       })())
     : null;
   const count = questionCountFor(a.minutes);
+  const scope = { goalId: goal?.id ?? null, subjectId };
+  // What she asked for beyond the topic (issue #113). Code decides what it means; the set is
+  // never filled up with questions she did not ask for.
+  const wish: PracticeWish = {
+    onlyWrong: a.only_wrong === true,
+    difficulty: a.difficulty ?? null,
+    direction: a.direction ?? null,
+    ownLanguage: ctx.locale,
+  };
+  const narrowed = wish.onlyWrong === true || wish.difficulty !== null || wish.direction !== null;
   const itemIds = await selectPracticeItems(
     ctx.db,
     ctx.learnerId,
-    { goalId: goal?.id ?? null, subjectId },
+    scope,
     a.focus_topics,
     count,
     ctx.now,
+    wish,
   );
+  // One rule for all three wishes: what fits is prepared, however few — a short set she asked
+  // for beats a full one she did not (the selection already hands back fewer than `count` when
+  // she simply has fewer questions). Only when nothing at all fits does Buddy have to say so.
   if (itemIds.length === 0) {
+    if (narrowed) {
+      // Is there anything at all here, or only nothing that fits what she asked for? The
+      // answer decides what Buddy can honestly offer instead.
+      const anything = await selectPracticeItems(
+        ctx.db,
+        ctx.learnerId,
+        scope,
+        a.focus_topics,
+        count,
+        ctx.now,
+      );
+      if (anything.length > 0) throw new ToolRejection(noneFit(wish));
+    }
     throw new ToolRejection(
       'there are no questions for this yet — ask for a photo of the material (request_material) instead',
     );
@@ -633,6 +675,10 @@ async function runPreparePractice(
         est_minutes: minutes,
         focus_topics: a.focus_topics,
         subject_id: subjectId,
+        // What she asked for, kept with the set it produced (issue #113).
+        only_wrong: wish.onlyWrong,
+        difficulty: wish.difficulty,
+        direction: wish.direction,
       },
       ctx.now,
     ],
@@ -1013,7 +1059,16 @@ async function runOfferLearning(
   }
   // Changes nothing: the learner starts it with a tap (the model never starts sessions).
   return {
-    summary: { tool: 'offer_learning', kind: a.kind, text: a.text, goal_id: goal?.id ?? null },
+    summary: {
+      tool: 'offer_learning',
+      kind: a.kind,
+      text: a.text,
+      goal_id: goal?.id ?? null,
+      // What she asked for beyond the topic; the tap hands it to the generator (issue #113).
+      // A direction only ever reaches vocabulary pairs — other questions have none.
+      difficulty: a.difficulty ?? null,
+      direction: a.direction ?? null,
+    },
     undo: null,
   };
 }

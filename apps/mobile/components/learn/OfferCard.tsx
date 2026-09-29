@@ -54,7 +54,12 @@ export function OfferCard({
   async function go(): Promise<void> {
     // Tap → the first question on screen (issue #66): the wait she complained about.
     tapped('start_offer');
-    const session = await start(offer.kind, offer.text, actionId, offer.goal_id);
+    const session = await start(offer.kind, offer.text, actionId, {
+      goalId: offer.goal_id,
+      // What she asked for beyond the topic travels with the offer (issue #113).
+      difficulty: offer.difficulty,
+      direction: offer.direction,
+    });
     if (session) {
       if (spoken) useVoiceMode.getState().setOn(true);
       router.push(`/practice/${session.id}`);

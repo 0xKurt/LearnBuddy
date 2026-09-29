@@ -168,24 +168,18 @@ export const LEARNING = asks('learning', [
     wants:
       'Buddy to pick the weak spots himself — the whole reason they have a Buddy and not a textbook.',
     expect: { kind: 'acts', tools: ['prepare_practice'] },
-    hunch:
-      'selectPracticeItems orders by FSRS due date, never practised, then the rest. There is no "the ones I got wrong" filter and no argument to ask for one — prepare_practice takes only minutes and focus_topics. The due-date order approximates it by accident; the child cannot request it.',
   },
   {
     id: 'learning-024',
     says: 'mach die aufgaben schwerer das war babykram',
     wants: 'The same topic one level up, and to be seen as someone who is past the basics.',
     expect: { kind: 'acts', tools: ['offer_learning'] },
-    hunch:
-      'Neither prepare_practice nor offer_learning has a difficulty argument. generate.ts fixes "at their grade, easy to harder"; selection from their own sheets has no difficulty dimension at all. The wish can only leak through as free text in offer_learning.text, and not at all for their own material.',
   },
   {
     id: 'learning-025',
     says: 'kannst du leichtere machen ich schaff das nicht',
     wants: 'To be let down a step without it being announced as being let down a step.',
     expect: { kind: 'acts', tools: ['offer_learning'] },
-    hunch:
-      'Same missing difficulty knob as learning-024, in the direction that matters more: a child who is drowning cannot ask for shallower water.',
   },
   {
     id: 'learning-026',
@@ -338,8 +332,6 @@ export const LEARNING = asks('learning', [
     wants:
       'The harder direction — producing the foreign word instead of recognising it, which is what the test will ask.',
     expect: { kind: 'acts', tools: ['offer_learning'] },
-    hunch:
-      'Direction is fixed when the items are written: generate.ts pins prompt = the foreign word, answer = the translation, and the stored item carries prompt_lang/lang. Nothing in offer_learning, prepare_practice or the session routes flips a vocab pair, so the direction the test actually uses cannot be practised.',
   },
   {
     id: 'learning-046',
@@ -347,8 +339,6 @@ export const LEARNING = asks('learning', [
     wants:
       'The failures, isolated — the single most obvious thing to want after a round of vocabulary.',
     expect: { kind: 'acts', tools: ['prepare_practice'] },
-    hunch:
-      'Same missing filter as learning-023, and here it is unmistakable: item_states knows how the last try went (first_try, with_help, not_known) and find_questions can even report it, but selectPracticeItems cannot filter on it and no tool argument asks for it.',
   },
   {
     id: 'learning-047',
@@ -454,8 +444,6 @@ export const LEARNING = asks('learning', [
     says: 'mach den test leichter das schaff ich nie',
     wants: 'The rehearsal to stop confirming their fear.',
     expect: { kind: 'acts', tools: ['offer_learning'] },
-    hunch:
-      'Same absent difficulty argument as learning-024 and learning-025, on the path where being crushed matters most.',
   },
   {
     id: 'learning-061',

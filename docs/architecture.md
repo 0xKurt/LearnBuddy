@@ -274,6 +274,18 @@ summary plus undo data. Enforced here, not in the prompt:
   and `correct_memory` may move the end (`until`);
 - `update_step` either changes the state or moves the step, never both; `prepare_practice`
   never replaces a step her agreed reminder prepared;
+- `prepare_practice` carries three things she can ask for beyond the topic (issue #113), and
+  code — not the prompt — decides what each means: `only_wrong` keeps only questions whose last
+  attempt needed help or was not known — read from `session_items`, the same place
+  `find_questions` reports from, so what Buddy says about a question and what he selects agree,
+  and so a practice test counts too (it feeds no FSRS state at all); one never asked is not one
+  she got wrong. `difficulty` (`easier`/`harder`) keeps the half of her own questions below or
+  above the median of `items.difficulty` **in that very pool**, and `direction`
+  (`recognise`/`produce`) keeps one direction of her vocabulary pairs, read off her app
+  language. A wish that matches three questions prepares three: the set is never filled up with
+  questions she did not ask for. A wish that matches none is rejected back to the model with
+  the reason (nothing went wrong / no such half / no vocabulary that way) and what to offer
+  instead — Buddy says it plainly rather than practising something else (rule 5);
 - undo is refused when the object changed since (version check) — no blind overwrite of, e.g.,
   an adult's later settings change; undoing `close_goal` opens the steps it cancelled again;
   undoing `forget` never makes a second copy when the same is known again meanwhile.
@@ -1297,7 +1309,13 @@ word list, so it stays a prompt rule.
   stored sessions or offers of that mode are served as plain `practice` (the `practice_sessions`
   columns `mode = 'explain'` and `intro` stay in the database untouched; migrations are
   immutable). The LLM purpose named `explain` remains the topic-generation task for every kind.
-- **practice on a topic** — kind `practice`: Buddy's own questions, marked as such.
+- **practice on a topic** — kind `practice`: Buddy's own questions, marked as such. Too easy or
+  too hard is something she may say (issue #113): `difficulty` (`easier`/`harder`) on
+  `POST /practice/topic` and on `offer_learning` writes them below or above her grade, and the
+  set is then held to the model's own `difficulty` marks (1–3 / 3–5). Those marks are a
+  self-report, not a measurement: a set that would shrink under three questions stays whole
+  rather than costing her the practice. "Mehr davon, etwas schwerer" after a session
+  (`AgainButton`) sends the same argument instead of hiding the wish in the topic text.
 - **test** (migration `0005_test_mode.sql`) — kind `test` (start tile "Probetest", or Buddy's
   `offer_learning` shortly before an exam): 8–12 questions like a class test. Code enforces:
   one try per question (a wrong answer closes it as `missed`), every reply is a fixed neutral
@@ -1308,7 +1326,11 @@ word list, so it stays a prompt rule.
 - **vocab** — pairs (`prompt_lang` → `lang`) from a photographed list or typed (kind `vocab`);
   each pair becomes two questions (both directions, own FSRS state). Rule check: exact after
   normalisation = right; only accents differ = `close` → partially right, the tutor names the
-  letter.
+  letter. Which direction a session asks is hers to choose (issue #113): `direction` on
+  `POST /practice/topic` and on Buddy's `offer_learning` (`recognise` = read the foreign word,
+  `produce` = write it — what a class test asks for), `direction` on `prepare_practice` for the
+  pairs she already has. Both directions are always stored either way, so the other one is
+  there to practise later; null asks both, as before.
 - **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak` with a
   ≤ 15 s recording, bodies up to 2 MB only on this route). The model listens to the audio itself:
   it writes the expected pronunciation and the sounds actually produced (IPA), then judges word

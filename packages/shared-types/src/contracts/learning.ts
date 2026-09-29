@@ -343,6 +343,26 @@ export const AnswerVerdict = z.enum([
 ]);
 export type AnswerVerdict = z.infer<typeof AnswerVerdict>;
 
+/**
+ * What the learner asked for beyond the topic (issue #113). The model sets them, the server
+ * decides what they mean — for her own questions in the selection, for new ones in the
+ * generator.
+ *
+ * Difficulty is relative, never a level she has to name: "easier" and "harder" mean easier
+ * or harder than the middle of what she already has for this (`items.difficulty`).
+ */
+export const DifficultyWish = z.enum(['easier', 'harder']);
+export type DifficultyWish = z.infer<typeof DifficultyWish>;
+
+/**
+ * Which way round a vocabulary pair is asked: `recognise` shows the foreign word and asks
+ * what it means; `produce` shows it in her own language and asks for the foreign word — the
+ * direction a class test asks for. Both directions are always stored; this says which one
+ * she practises now.
+ */
+export const VocabDirection = z.enum(['recognise', 'produce']);
+export type VocabDirection = z.infer<typeof VocabDirection>;
+
 /** Start from something the learner named instead of a photo. */
 export const StartTopicRequest = z.object({
   client_request_id: Uuid,
@@ -367,6 +387,13 @@ export const StartTopicRequest = z.object({
    * instead of whatever the topic name suggests (issue #58).
    */
   from_session_id: Uuid.nullable().optional(),
+  /** Easier or harder than her grade would give her by itself (issue #113). */
+  difficulty: DifficultyWish.nullable().optional(),
+  /**
+   * vocab: which direction of each pair this session asks (issue #113). Both are stored
+   * either way, so the other one can be practised later; null asks both, as before.
+   */
+  direction: VocabDirection.nullable().optional(),
 });
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 

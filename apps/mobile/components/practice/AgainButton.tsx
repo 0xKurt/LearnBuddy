@@ -39,8 +39,8 @@ export function AgainButton({
       'practice',
       title.trim() ? `${what} (${title.trim()})` : what,
       undefined,
-      null,
-      sessionId,
+      // "Etwas schwerer" is an argument now, not a wish inside the text (issue #113).
+      { fromSessionId: sessionId, difficulty: kind === 'harder' ? 'harder' : null },
     );
     if (session) router.replace(`/practice/${session.id}`);
   }
