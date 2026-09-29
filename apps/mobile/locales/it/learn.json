@@ -20,7 +20,7 @@
   },
   "topic": {
     "practice": {
-      "title": "Cosa vuoi esercitare?",
+      "title": "Su cosa vuoi esercitarti?",
       "hint": "Ti faccio qualche domanda su questo.",
       "placeholder": "es. sommare frazioni, il simple past",
       "ex_1": "Sommare frazioni",

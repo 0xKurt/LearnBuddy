@@ -1,7 +1,7 @@
 {
   "greeting": "Ciao {{name}}",
   "greeting_ask": "Cosa c'è in arrivo?",
-  "practiced_today": "Esercizio fatto oggi",
+  "practiced_today": "Esercizi fatti",
   "menu": {
     "open": "Apri il menu",
     "title": "Altro",
@@ -315,7 +315,7 @@
       "2": "Buonasera, {{name}}!"
     },
     "night": {
-      "0": "Ciao, {{name}} – ancora sveglia?",
+      "0": "Ciao, {{name}} – ancora in piedi?",
       "1": "Ehi, {{name}}!",
       "2": "Buonasera, {{name}}!"
     }

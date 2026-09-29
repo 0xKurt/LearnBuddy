@@ -24,7 +24,7 @@
   "verdict": {
     "correct": "Juste",
     "partially_correct": "Presque",
-    "incorrect": "Pas encore tout à fait",
+    "incorrect": "Pas tout à fait",
     "unchecked": "Non vérifié"
   },
   "solution": {
@@ -35,9 +35,9 @@
   "finishing": "Un instant – ton résultat arrive.",
   "finish_failed": "Je n'ai pas pu charger ton résultat pour le moment.",
   "summary": {
-    "title": "C'est fait!",
-    "secure": "Tu maîtrises: {{topics}}",
-    "shaky": "On revoit ça ensemble: {{topics}}"
+    "title": "C'est fait !",
+    "secure": "Tu maîtrises : {{topics}}",
+    "shaky": "On revoit ça ensemble : {{topics}}"
   },
   "ended": "Cet entraînement est déjà terminé.",
   "back_to_buddy": "Retour à Buddy",
@@ -53,7 +53,7 @@
     "record_stop": "Terminé",
     "record_label": "Démarrer l'enregistrement",
     "record_stop_label": "Arrêter l'enregistrement et l'envoyer à Buddy",
-    "record_hint": "Tape, dis la phrase, puis tape sur Terminé. Trente secondes maximum.",
+    "record_hint": "Touche, dis la phrase, puis touche Terminé. Trente secondes maximum.",
     "recording": "J'écoute … {{time}} / {{max}}",
     "recording_label": "Enregistrement en cours, {{time}} sur {{max}}",
     "listening": "Buddy écoute …",
@@ -92,7 +92,7 @@
   "origin_buddy": "Question de Buddy",
   "image_fallback": "Image pour cet exercice",
   "self_solved": {
-    "title": "Trouvé tout seul !",
+    "title": "Trouvé sans aide !",
     "body": "Tu l'as trouvé par toi-même."
   },
   "summary_help": {
@@ -107,7 +107,7 @@
     "missed": "Pas encore juste",
     "skipped": "Passée",
     "solution": "Solution : {{answer}}",
-    "untouched": "Pas traité"
+    "untouched": "Pas traitée"
   },
   "again": {
     "shaky": "Revoir ce qui n'est pas encore sûr",

@@ -93,7 +93,7 @@
   "image_fallback": "Imagen para esta tarea",
   "self_solved": {
     "title": "¡Resuelto por ti!",
-    "body": "Lo has descubierto tú solo."
+    "body": "Lo has descubierto por tu cuenta."
   },
   "summary_help": {
     "title": "Deberes hechos"
@@ -124,8 +124,8 @@
     "done": "Vale – la pregunta está fuera."
   },
   "summary_line": {
-    "help_one": "Has resuelto {{count}} ejercicio tú solo.",
-    "help_other": "Has resuelto {{count}} ejercicios tú solo.",
+    "help_one": "Has resuelto {{count}} ejercicio por tu cuenta.",
+    "help_other": "Has resuelto {{count}} ejercicios por tu cuenta.",
     "answered_one": "Has respondido {{count}} pregunta.",
     "answered_other": "Has respondido {{count}} preguntas.",
     "all_first": "Todo bien a la primera.",
