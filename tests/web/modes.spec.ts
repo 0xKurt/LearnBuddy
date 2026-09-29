@@ -68,9 +68,23 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: "Los geht's" }).click();
   await page.getByRole('button', { name: 'Wem?', exact: true }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  // Nothing stands between the solution and "Weiter" after a clean first try: the three ways
+  // to re-explain cost half a screen there and nobody needs them (owner 28.09., issue #61).
+  // She can still ask Buddy in the chat, and after a wrong try they are right there.
+  await expect(page.getByRole('button', { name: 'Einfacher bitte' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Weiter' }).click();
   // A fill-in sentence: the gap is drawn, and her answer appears in it while she types.
   await expect(page.getByLabel(/Ich helfe Lücke Mutter/)).toBeVisible();
+  await page.getByLabel('Deine Antwort').fill('der');
+  await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
+  // A longer answer makes the gap grow instead of being cut inside it: "die lösung passt gar
+  // nicht voll ins feld oben. in den fällen muss das feld mitwachsen" (owner 28.09., #62).
+  const blank = page.getByTestId('blank').first();
+  const narrow = (await blank.boundingBox())?.width ?? 0;
+  await page.getByLabel('Deine Antwort').fill('meiner lieben');
+  await expect(page.getByLabel(/Lücke, darin: meiner lieben/)).toBeVisible();
+  const grown = (await blank.boundingBox())?.width ?? 0;
+  expect(grown, `the gap grows with the answer (${narrow} → ${grown}pt)`).toBeGreaterThan(narrow);
   await page.getByLabel('Deine Antwort').fill('der');
   await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
   // The focus ring is the answer pill's, not the browser's black box around the bare field.
@@ -159,6 +173,21 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Einen Tipp bekommen' }).click();
   await expect(page.getByText('Schau auf die Kreise: Welcher ist mehr gefüllt?')).toBeVisible();
+  // What scrolls up out of the conversation fades away instead of being cut hard under the
+  // question card, where half a line stood readable and looked like a rendering fault
+  // (owner 28.09., issue #63). On the web the scroll view itself is masked (EdgeFade.tsx);
+  // on phones the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
+  const faded = await page.getByTestId('scroll-thread').evaluate((el) => {
+    let node: Element | null = el;
+    while (node) {
+      const s = getComputedStyle(node);
+      const mask = `${s.getPropertyValue('mask-image')} ${s.getPropertyValue('-webkit-mask-image')}`;
+      if (mask.includes('gradient')) return true;
+      node = node.parentElement;
+    }
+    return false;
+  });
+  expect(faded, 'the conversation fades out at its top edge').toBe(true);
   await shot(page, '25-practice-fractions');
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
