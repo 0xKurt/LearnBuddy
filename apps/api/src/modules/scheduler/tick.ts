@@ -152,17 +152,30 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
 
   // A conversation that has come to rest is written down in two to four sentences, so Buddy
   // still knows weeks later what she was doing (issue #22, modules/buddy/summarise.ts).
-  // Planned before the maintenance loop, so the job also runs in this tick.
+  // A model call on her conversation, so it stands behind the SAME consent gate as every
+  // other model work — never in the erasure batch, which skips that gate on purpose
+  // (issue #85: it inherited the exemption meant for deletions).
   await guard('summaries', async () => {
     if (left() < 10_000) return;
     await planSummaries(deps);
+    while (left() > 10_000) {
+      const [job] = await claimJobs(deps.db, {
+        now: deps.now(),
+        kinds: ['summarise_session'],
+        limit: 1,
+        leaseSeconds: 120,
+        consentVersion: deps.config.CONSENT_VERSION,
+      });
+      if (!job) break;
+      await runJobSafely(deps, job, () => runSummary(deps, job));
+    }
   });
 
   await guard('maintenance', async () => {
     while (left() > 5_000) {
       const [job] = await claimJobs(deps.db, {
         now: deps.now(),
-        kinds: ['purge_photos', 'purge_content', 'delete_account', 'summarise_session'],
+        kinds: ['purge_photos', 'purge_content', 'delete_account'],
         limit: 1,
         leaseSeconds: 120,
       });
@@ -172,9 +185,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
           ? purgePhotos(deps, job)
           : job.kind === 'purge_content'
             ? purgeContent(deps, job)
-            : job.kind === 'summarise_session'
-              ? runSummary(deps, job)
-              : executeAccountDeletion(deps, job),
+            : executeAccountDeletion(deps, job),
       );
       stats.maintenance++;
     }

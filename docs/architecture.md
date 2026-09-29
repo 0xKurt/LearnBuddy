@@ -515,6 +515,14 @@ and `evals/speed` exit 1 when a case, a check or a time budget fails; `evals/spe
 `evals/stream`, `evals/modes/show` and `evals/lena/day` only print for a person to read. A spoken or typed choice counts as the option it names —
 exactly, by its letter, or said first and explained (`choiceNamed`).
 
+**One word on its own** (`POST /practice/sessions/:id/speak-word`, issue #83): in the
+pronunciation card every word of the judged sentence is tappable. The sheet reads it aloud
+(normal and slow), shows the tip the model wrote for it, and takes a recording of just that
+word — judged against the word, with the sentence as context. **Nothing is stored and nothing
+counts**: no turn, no attempt, the question keeps its state; this is practice, and the sentence
+is what is answered. Only a word of _that_ sentence is accepted (`word_not_in_sentence`), and
+the model call is counted like any other.
+
 **Her 16th birthday** (issue #31, EDPB §147–149): `GET /me` marks a child profile whose
 learner has turned 16 and never agreed for herself (`learner.own_consent_due`); the gate
 (`lib/gate.ts`) sends her to the consent screen once, which then shows the same privacy text
@@ -618,21 +626,21 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, extraction 12, new explanations 60 (`config.ts`)                      |
-| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512 |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                          |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                         |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos             |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s            |
-| Turn stall                      | taken over after 3 minutes                                                                         |
-| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h          |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                               |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)    |
-| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
-| Requests per account            | abuse protection only: practice answers 600/h, messages to Buddy 120/h (429 + `Retry-After`)       |
-| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always   |
+| What                            | Limit                                                                                                                                   |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12 (`config.ts`) |
+| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                      |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                               |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                              |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos                                                  |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                 |
+| Turn stall                      | taken over after 3 minutes                                                                                                              |
+| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                               |
+| Memory                          | 60 active items; temporary ≤ 60 days                                                                                                    |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                         |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                               |
+| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h, messages to Buddy 120/h (429 + `Retry-After`) |
+| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                        |
 
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
@@ -1365,6 +1373,21 @@ hold the same contrast pairs — text 4.5:1, meaningful shapes 3:1 — checked f
 in `lib/theme/__tests__/contrast.test.ts`; a palette that fails there is not shipped.
 Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` bridge.
 
+**Colours are read at render time, never captured at module scope** (issue #84, owner:
+"manchmal sieht man die schrift nicht richtig, im dark mode"). The remount-by-key covers
+components — but a module-scope constant (`const S = { color: LB.ink }`, a `StyleSheet.create`
+at module level, the old `TYPE`) is evaluated once at import and keeps the start palette
+forever: pastel-dark ink stayed on the night background, invisible. `TYPE` and `SHADOW` are
+now built from the palettes and refilled **in place** by `applyPalette` (held references see
+the new colours); every other capture became a small function read at render. Two guards keep
+it that way (`lib/theme/__tests__/frozen-colors.test.ts`): a live-refill check after
+`applyPalette('night')`, and a source scanner that fails on any module-scope const whose
+initializer reads `LB`/`TYPE`/`SHADOW`/`TONE_*`/`FIGURE`. The walkthrough switches to the
+night palette at Mia's settings stop and runs the axe contrast pass on the dark settings and
+the dark home (`15f`–`15h`). **The picker previews every palette in its own colours**
+(`LookSection`: bg, card, ink sample, primary chip — drawn from `PALETTES`, never from the
+live `LB`), instead of five identical white buttons.
+
 ## Testing
 
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.
@@ -1427,6 +1450,10 @@ Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` br
   _when_ a generation happens then depends on timing. The remaining purposes (tutor, hints,
   reading a photographed sheet) answer by rule or from a queue, so the walkthrough is still run
   **as a whole** — a single spec on its own gets the answers meant for the run (issue #81).
+  A run started right after another waits for the previous run's ports to be free
+  (`scripts/web-walkthrough.sh`): Playwright reuses whatever already listens, and the dying
+  servers of the run before gave a white screen after a reload — a failure that looks like a
+  product bug and is not one.
   **`pnpm verify`** is the whole gate in one command (typecheck · lint · tests · walkthrough,
   issue #74); the pre-commit hook deliberately stays without the walkthrough, which takes
   minutes.

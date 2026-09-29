@@ -24,7 +24,7 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   profile records the privacy text its account holder agreed to (`minor_consent_version` /
   `minor_consent_at`), renewed when the account holder agrees to a new text. After a
   privacy-text change the API serves nothing learner-facing until the account holder agreed
-  again, and the scheduler reads no photos, runs no Buddy check and sends no message for it
+  again, and the scheduler reads no photos, runs no Buddy check, writes no conversation summary and sends no message for it
   meanwhile; for a profile under 16 that needs the PIN. Export and
   deletion keep working, also for an account that never finished its profile.
 - Name and birth date can be corrected (GDPR Art. 16) in the parents' area; for a profile under

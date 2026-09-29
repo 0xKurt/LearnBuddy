@@ -171,6 +171,53 @@ describe.skipIf(!dbReady)('summaries of earlier conversations', () => {
     expect(rows.map((r) => r.summary)).toEqual(['—']);
   });
 
+  it('writes nothing for an account whose consent is outdated (#85)', async () => {
+    const stale = await onboard(env, { relation: 'child', name: 'Pia', birthDate: '2013-03-03' });
+    await said(env, stale, new Date(env.clock.now().getTime() - 30 * HOUR), [
+      ['learner', 'ich hab morgen einen vokabeltest'],
+      ['buddy', 'Dann üben wir!'],
+      ['learner', 'ja gerne'],
+      ['buddy', 'Los geht’s.'],
+    ]);
+    // The privacy text changed and this account has not agreed again: nothing of hers
+    // goes to the model — the summary waits like the photo reading and the Buddy check.
+    await env.db.query(
+      `update accounts set consent_version = 'older-text'
+        where id = (select account_id from learners where id = $1)`,
+      [stale.learnerId],
+    );
+    env.llm.byDefault('summary', { json: { summary: 'darf nicht passieren', topics: [] } });
+    const before = env.llm.callsFor('summary').length;
+    await tick(env);
+    expect(env.llm.callsFor('summary').length).toBe(before);
+    const rows = await env.db.query(`select 1 from buddy_session_summaries where learner_id = $1`, [
+      stale.learnerId,
+    ]);
+    expect(rows).toEqual([]);
+  });
+
+  it('writes nothing once the account’s deletion is being carried out (#85)', async () => {
+    const leaving = await onboard(env, { relation: 'child', name: 'Jo', birthDate: '2013-07-07' });
+    await said(env, leaving, new Date(env.clock.now().getTime() - 30 * HOUR), [
+      ['learner', 'hi'],
+      ['buddy', 'Hallo!'],
+      ['learner', 'was üben wir'],
+      ['buddy', 'Vokabeln?'],
+    ]);
+    await env.db.query(
+      `update accounts set deletion_started_at = $2
+        where id = (select account_id from learners where id = $1)`,
+      [leaving.learnerId, env.clock.now()],
+    );
+    const before = env.llm.callsFor('summary').length;
+    await tick(env);
+    expect(env.llm.callsFor('summary').length).toBe(before);
+    const rows = await env.db.query(`select 1 from buddy_session_summaries where learner_id = $1`, [
+      leaving.learnerId,
+    ]);
+    expect(rows).toEqual([]);
+  });
+
   it('is gone with the account (the cascade, not a job)', async () => {
     const rows = await env.db.query(`select 1 from buddy_session_summaries where learner_id = $1`, [
       l.learnerId,

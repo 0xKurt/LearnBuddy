@@ -54,7 +54,8 @@ export async function exportAccount(db: Db, accountId: string): Promise<Record<s
   );
   const learner = await db.maybeOne<{ id: string } & Record<string, unknown>>(
     `select id, relation, display_name, birth_date, level, grade, locale, minor_consent_version,
-            minor_consent_at, created_at from learners where account_id = $1`,
+            minor_consent_at, self_consent_version, self_consent_at, created_at
+       from learners where account_id = $1`,
     [accountId],
   );
   const out: Record<string, unknown> = {

@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
+import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
 import { Icon } from '../components/lb/Icon.js';
@@ -181,14 +182,18 @@ export default function Profile() {
           keyboardShouldPersistTaps="handled"
         >
           {parentStep ? (
-            <>
-              <Btn variant="ghost" size="sm" pill icon="back" onPress={() => setStep('learner')}>
-                {t('profile.back')}
-              </Btn>
-              <Text accessibilityRole="header" style={TYPE.display}>
+            // One row for the way back and the headline: the stacked pair overflowed a
+            // 360×740 phone by 28 px with the wider Linux fonts CI renders with (#98).
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <CircleBtn
+                icon="back"
+                onPress={() => setStep('learner')}
+                accessibilityLabel={t('profile.back')}
+              />
+              <Text accessibilityRole="header" style={[TYPE.displaySm, { flexShrink: 1 }]}>
                 {t('profile.parent_title')}
               </Text>
-            </>
+            </View>
           ) : (
             <Text accessibilityRole="header" style={TYPE.display}>
               {t('profile.title')}

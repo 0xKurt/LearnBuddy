@@ -101,11 +101,14 @@ export async function recoverExpiredLeases(db: Db, now: Date): Promise<number> {
  * SQL: the job's learner belongs to an account whose consent covers the privacy text in
  * force (`$n` = CONSENT_VERSION), or `$n` is null. After a version bump the scheduler
  * processes nothing for an account until it agreed again — like the API (docs/privacy.md).
+ * The same gate stops model work once the account's deletion is being carried out
+ * (issue #85): erasure jobs pass no version and are never held up.
  */
 export function consentCurrentSql(learnerCol: string, param: number): string {
   return `($${param}::text is null or exists (
             select 1 from learners cl join accounts ca on ca.id = cl.account_id
-             where cl.id = ${learnerCol} and ca.consent_version = $${param}))`;
+             where cl.id = ${learnerCol} and ca.consent_version = $${param}
+               and ca.deletion_started_at is null))`;
 }
 
 /**
