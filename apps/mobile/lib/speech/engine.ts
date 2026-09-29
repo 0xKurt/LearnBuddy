@@ -57,6 +57,32 @@ export function chooseEngine(f: EngineFacts): SpeechEngine {
 }
 
 /**
+ * Remembers a granted speech permission while the app stays in the foreground, so the mic
+ * does not ask the system again between every two turns of a conversation (issue #41: that
+ * round-trip sat between Buddy's last word and listening again). Leaving the foreground
+ * drops the memory: Android can take a one-time permission ("Nur dieses Mal") back while
+ * the app is away, and iOS restarts the app on a settings change — one fresh check after
+ * coming back is cheap, one per turn was not.
+ */
+export class GrantMemory {
+  private granted = false;
+
+  /** The system said yes, and the app has stayed in the foreground since. */
+  get held(): boolean {
+    return this.granted;
+  }
+
+  note(granted: boolean): void {
+    this.granted = granted;
+  }
+
+  /** React Native's AppState: anything but 'active' forgets the grant. */
+  appState(state: string): void {
+    if (state !== 'active') this.granted = false;
+  }
+}
+
+/**
  * Recogniser errors after which the same tap simply continues with a
  * recording for our EU path (the device can't do it here), as opposed to
  * "didn't hear anything" or "no permission", which she sees.

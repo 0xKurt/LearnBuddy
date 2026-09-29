@@ -13,6 +13,7 @@ import { AppState, Platform } from 'react-native';
 
 import {
   chooseEngine,
+  GrantMemory,
   pickRecognitionService,
   fallsBackToServer,
   hearResult,
@@ -38,6 +39,39 @@ let installed: Promise<readonly string[] | null> | null = null;
 let service: string | null | undefined;
 /** Locales whose offline pack download was already asked for in this run. */
 const packAsked = new Set<string>();
+
+/**
+ * A granted permission holds while the app stays in the foreground (engine.ts): listening
+ * again between two turns of a conversation then skips the system's permission round-trip
+ * (issue #41 — it sat between Buddy's last word and the mic).
+ */
+const grant = new GrantMemory();
+AppState.addEventListener('change', (s) => grant.appState(s));
+
+/** Whether she allows listening — asked of the system once, then remembered (see `grant`). */
+async function permissionGranted(): Promise<boolean> {
+  if (grant.held) return true;
+  let perm = await ExpoSpeechRecognitionModule.getPermissionsAsync();
+  if (!perm.granted && perm.canAskAgain)
+    perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+  grant.note(perm.granted);
+  return perm.granted;
+}
+
+/**
+ * Fills, before the first listen, everything a listen would otherwise wait on (issue #41):
+ * the Android service choice with its installed languages, the engine decision, and the
+ * permission answer (asked quietly — never a dialog). The talk screen calls it on opening;
+ * every listen and re-listen then goes straight to the recogniser. What remains is the
+ * recogniser's own start (Android binds a service), measured per turn as `relisten`
+ * (lib/perf.ts) — a number only a real phone can give.
+ */
+export function warmRecognition(locale: string): void {
+  void engineFor(locale);
+  void ExpoSpeechRecognitionModule.getPermissionsAsync()
+    .then((p) => grant.note(p.granted))
+    .catch(() => undefined);
+}
 
 /**
  * The Android service recognition binds to — explicitly a Google one where
@@ -260,10 +294,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
       if (phaseRef.current !== 'idle') return;
       setPhase('starting');
       try {
-        let perm = await ExpoSpeechRecognitionModule.getPermissionsAsync();
-        if (!perm.granted && perm.canAskAgain)
-          perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-        if (!perm.granted) {
+        if (!(await permissionGranted())) {
           refused = true;
           setPhase('idle');
           if (mounted.current) h.current.onFallback();

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   chooseEngine,
+  GrantMemory,
   pickRecognitionService,
   fallsBackToServer,
   hearResult,
@@ -115,5 +116,30 @@ describe('pickRecognitionService', () => {
   it('leaves the system default when no Google service exists (the OEM may still work)', () => {
     expect(pickRecognitionService(['com.miui.voiceassist'])).toBeNull();
     expect(pickRecognitionService([])).toBeNull();
+  });
+});
+
+describe('GrantMemory', () => {
+  it('remembers a grant, so listening again skips the permission round-trip (issue #41)', () => {
+    const grant = new GrantMemory();
+    expect(grant.held).toBe(false);
+    grant.note(true);
+    expect(grant.held).toBe(true);
+  });
+
+  it('never remembers a refusal as a grant', () => {
+    const grant = new GrantMemory();
+    grant.note(true);
+    grant.note(false);
+    expect(grant.held).toBe(false);
+  });
+
+  it('forgets the grant when the app leaves the foreground (one-time permissions)', () => {
+    const grant = new GrantMemory();
+    grant.note(true);
+    grant.appState('background');
+    expect(grant.held).toBe(false);
+    grant.appState('active');
+    expect(grant.held).toBe(false); // Coming back asks the system once — not never again.
   });
 });

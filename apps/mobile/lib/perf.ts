@@ -28,6 +28,15 @@ export function reacted(action: string): void {
   publish();
 }
 
+/**
+ * The action led nowhere she could see (the talk loop paused instead of listening again,
+ * the turn failed): the mark is forgotten, so a later unrelated `reacted` never counts
+ * her thinking time as the app's.
+ */
+export function dropped(action: string): void {
+  open.delete(action);
+}
+
 /** What was measured in this app run (newest last). */
 export function measured(): readonly PerfSpan[] {
   return spans;

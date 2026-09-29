@@ -156,3 +156,43 @@ synthetisiert (das Audio wird verworfen, `release`). Gegen das Kostenlimit von 1
 Sätzen pro Konto und Stunde (ADR 0008) fällt das nicht ins Gewicht.
 
 Nachmessen: `cd apps/api && SPEECH_BACKEND=google npx tsx evals/tts/run.ts 2`.
+
+## Wieder-Zuhören und erster Ton im Gesprächsmodus (29.09., Issues #41/#35)
+
+Zwischen Buddys letztem Wort und dem Mikrofon lagen App-seitig drei Wartezeiten, die kein
+Gerät braucht — sie sind entfernt, nicht verkürzt:
+
+- **Berechtigungs-Roundtrip pro Turn:** `getPermissionsAsync` wurde vor jedem Zuhören neu
+  gefragt. Eine erteilte Berechtigung gilt jetzt, solange die App im Vordergrund bleibt
+  (`GrantMemory`, `apps/mobile/lib/speech/engine.ts`): Android kann eine
+  „Nur dieses Mal"-Berechtigung zurücknehmen, während die App weg ist, iOS startet die App
+  bei einer Änderung neu — nach dem Zurückkommen wird einmal neu gefragt, nicht pro Turn.
+- **Engine-Wahl und Android-Service-Liste beim ersten Zuhören:** beim Öffnen des
+  Talk-Screens vorgewärmt (`warmRecognition`, `lib/speech/recognize.ts`) statt beim ersten
+  Start abgewartet.
+- **Hängengebliebenes „Buddy spricht":** War eine kurze Antwort fertig vorgelesen, bevor
+  der Server sie gespeichert hatte, wartete die Schleife für immer — die Entscheidung fiel
+  nur am Ende des Vorlesens. Jetzt entscheidet `afterReply` (`lib/speech/talkTurn.ts`,
+  unit-getestet) an beiden Enden, wer auch immer zuletzt kommt.
+
+Ton („listen"-Cue) und Mikrofonstart liefen schon parallel (28.09.). Was bleibt, ist der
+Start des Erkenners selbst (Android bindet einen Systemservice) — eine Zahl, die nur ein
+echtes Gerät liefern kann. Deshalb misst die App jetzt selbst (`lib/perf.ts`):
+
+- `relisten` — Buddys letztes Wort → der Erkenner läuft wieder (Abnahme #41: < 0,5 s);
+- `first_audio` — Buddys Worte erscheinen (bzw. die gespeicherte Antwort steht) → der
+  erste hörbare Ton, natürliche oder Handy-Stimme (Abnahme #41: < 1 s).
+
+Im Browser-Walkthrough landen beide in `test-results/web/perf.jsonl`; die Gerätemessung
+steht aus — **hier stehen bewusst keine Zahlen, bis eine Messung existiert** (Regel 5).
+Die Synthese-Seite ist oben gemessen (0,74–1,6 s pro Satz); gegen ein langes erstes Stück
+stehen `shortOpening` (#41) und die 2,5-s-Grenze, ab der die Handy-Stimme das erste Stück
+liest.
+
+**Barge-in (#35).** Während Buddy spricht, bleibt das Mikrofon aus: weder expo-audio noch
+expo-speech-recognition sichern Geräte-Echo-Cancellation zu, ein offenes Mikrofon schriebe
+Buddys eigene Stimme mit (Aufnahmen, die währenddessen starten, werden schon verworfen —
+Audit M-78). Ehrlich geht: der Tipp auf Buddy **oder** das Mikro unterbricht und hört
+sofort zu — ein Tipp statt zwei. `iosCategory: playAndRecord` existiert in
+expo-speech-recognition 3.1.3, ist aber ohne Gerätetest kein Versprechen; echtes Reinreden
+bräuchte einen Duplex-Audio-Stack (nicht gebaut, `docs/architecture.md` §Voice).
