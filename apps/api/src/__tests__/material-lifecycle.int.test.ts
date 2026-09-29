@@ -7,11 +7,17 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { BuddyHome, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
+import type {
+  BuddyHome,
+  LibraryView,
+  MaterialView,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
+import { ScriptedGateway } from '../testing/fakes.js';
 import {
   createTestEnv,
   onboard,
@@ -63,13 +69,20 @@ async function tick(env: TestEnv): Promise<void> {
 async function create(
   env: TestEnv,
   l: Learner,
-  opts: { photos?: number; purpose?: 'study' | 'homework'; completes?: string } = {},
+  opts: {
+    photos?: number;
+    purpose?: 'study' | 'homework';
+    completes?: string;
+    /** She tapped "Senden" (issue #56): from here the pages are on their way. */
+    sending?: boolean;
+  } = {},
 ) {
   const created = await l.api.post<{ material: MaterialView; uploads: Array<{ path: string }> }>(
     '/materials',
     {
       client_request_id: randomUUID(),
       photo_mimes: Array.from({ length: opts.photos ?? 1 }, () => 'image/jpeg'),
+      ...(opts.sending ? { sending: true } : {}),
       ...(opts.completes ? { completes: opts.completes } : { purpose: opts.purpose ?? 'study' }),
     },
   );
@@ -94,6 +107,17 @@ async function send(
   await env.flushBackground();
   const view = (await l.api.get<MaterialView>(`/materials/${m.id}`)).body;
   return { ...m, view };
+}
+
+/** What Buddy really sees this turn: the STATE block as it reached the model. */
+async function stateBlock(env: TestEnv, l: Learner, text = 'wo is mein blatt'): Promise<string> {
+  env.llm.script('buddy_turn', { json: { reply: 'Schau ich nach.', options: null, actions: [] } });
+  const res = await l.api.post('/buddy/messages', {
+    client_message_id: randomUUID(),
+    text,
+  });
+  expect(res.status).toBe(200);
+  return ScriptedGateway.textOf(env.llm.callsFor('buddy_turn').at(-1)!);
 }
 
 async function contextVersion(env: TestEnv, learnerId: string): Promise<number> {
@@ -151,6 +175,98 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
     env.clock.advance(7 * DAY + 60_000);
     await tick(env);
     expect(m.paths.some((p) => env.storage.objects.has(p))).toBe(false);
+  });
+
+  it('a send that never finished is named while it hangs and leaves a card when it is given up (issue #115)', async () => {
+    // She tapped "Senden" for two pages; the connection breaks after the first.
+    const m = await create(env, lena, { photos: 2, sending: true });
+    env.storage.put(m.paths[0]!);
+    const status = async () =>
+      env.db.one<{
+        status: string;
+        failure_reason: string | null;
+        archived: boolean;
+        failed: boolean;
+      }>(
+        `select status, failure_reason, archived_at is not null as archived,
+                failed_at is not null as failed from materials where id = $1`,
+        [m.id],
+      );
+
+    // The first minutes: the home says the photos are on their way.
+    let home = (await lena.api.get<BuddyHome>('/buddy')).body;
+    expect(home.now).toMatchObject({
+      type: 'material_processing',
+      status: 'awaiting_upload',
+      stage: 'sending',
+    });
+
+    // Hours later that card is gone — but Buddy can still say what is happening, so he never
+    // asks for a photo she already sent.
+    env.clock.hours(6);
+    await tick(env);
+    expect(await status()).toMatchObject({ status: 'awaiting_upload', archived: false });
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.now).toBeNull();
+    expect(await stateBlock(env, lena)).toContain('is still being sent');
+
+    // Just under the day: nothing is given up yet.
+    env.clock.hours(17);
+    await tick(env);
+    expect(await status()).toMatchObject({ status: 'awaiting_upload' });
+
+    // Over the 24-hour line: the sheet fails — and stays where she can see it.
+    env.clock.hours(1);
+    env.clock.minutes(1);
+    const before = await contextVersion(env, lena.learnerId);
+    await tick(env);
+    expect(await status()).toEqual({
+      status: 'failed',
+      failure_reason: 'photos_missing',
+      archived: false,
+      failed: true,
+    });
+    expect(await contextVersion(env, lena.learnerId)).toBeGreaterThan(before);
+    // The half-sent photo is deleted: there is nothing left to read.
+    expect(env.storage.objects.has(m.paths[0]!)).toBe(false);
+
+    // The card the child actually sees, with only the way on that works.
+    home = (await lena.api.get<BuddyHome>('/buddy')).body;
+    expect(home.now).toMatchObject({
+      type: 'material_failed',
+      material_id: m.id,
+      reason: 'photos_missing',
+      retryable: false,
+    });
+    // "Nochmal lesen" is refused by the API too, so no card may ever offer it.
+    const retry = await lena.api.post(`/materials/${m.id}/retry`);
+    expect(retry.status).toBe(409);
+    expect(retry.body).toMatchObject({ error: { details: { reason: 'photos_never_arrived' } } });
+
+    // Her library keeps the sheet, and Buddy can explain where it went.
+    const library = (await lena.api.get<LibraryView>('/materials')).body;
+    expect(
+      [...library.unsorted, ...library.subjects.flatMap((s) => s.materials)].map((x) => x.id),
+    ).toEqual([m.id]);
+    const state = await stateBlock(env, lena);
+    expect(state).toContain('never arrived completely');
+    expect(state).toContain('reading it again is not possible');
+  });
+
+  it('pages nobody asked to send are still given up quietly after a day (issue #56)', async () => {
+    // A reservation from the composer: she never tapped "Senden".
+    const m = await create(env, lena, { photos: 2 });
+    env.storage.put(m.paths[0]!);
+    env.clock.advance(DAY + 60_000);
+    await tick(env);
+    const row = await env.db.one<{ status: string; archived: boolean }>(
+      `select status, archived_at is not null as archived from materials where id = $1`,
+      [m.id],
+    );
+    expect(row).toEqual({ status: 'failed', archived: true });
+    expect(env.storage.objects.has(m.paths[0]!)).toBe(false);
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.now).toBeNull();
+    const library = (await lena.api.get<LibraryView>('/materials')).body;
+    expect([...library.unsorted, ...library.subjects.flatMap((s) => s.materials)]).toEqual([]);
   });
 
   it('photos no job will purge any more are found by the safety net', async () => {

@@ -456,7 +456,8 @@ async function countPdfPages(
   if (!refusal) return { total, pdfs };
   await deps.db.tx(async (tx) => {
     const set = await tx.query(
-      `update materials set status = 'failed', failure_reason = 'unreadable', archived_at = $2
+      `update materials set status = 'failed', failure_reason = 'unreadable', failed_at = $2,
+              archived_at = $2
         where id = $1 and status = 'awaiting_upload' and archived_at is null returning id`,
       [materialId, deps.now()],
     );
@@ -492,6 +493,13 @@ export async function retryMaterial(
     if (m.failure_reason === 'not_learning_material' || m.failure_reason === 'blocked') {
       throw new AppError('conflict', 'Reading this again would give the same answer', {
         reason: m.failure_reason,
+      });
+    }
+    if (m.failure_reason === 'photos_missing') {
+      // The photos never all arrived (a send given up, a file gone from Storage): reading
+      // again has nothing to read. Photographing it again is the only way on (issue #115).
+      throw new AppError('conflict', 'The photos of this material never arrived', {
+        reason: 'photos_never_arrived',
       });
     }
     if (m.photos_deleted_at) {
@@ -540,9 +548,9 @@ export async function markMaterialFailed(
   now: Date,
 ): Promise<void> {
   const m = await tx.maybeOne<{ learner_id: string; completes_material_id: string | null }>(
-    `update materials set status = 'failed', failure_reason = $2 where id = $1
+    `update materials set status = 'failed', failure_reason = $2, failed_at = $3 where id = $1
      returning learner_id, completes_material_id`,
-    [materialId, reason],
+    [materialId, reason, now],
   );
   if (!m) return;
   if (m.completes_material_id) {
@@ -1011,19 +1019,38 @@ export function pageProblemsOf(pages: PageReport[], photoCount: number): PagePro
 }
 
 /**
- * Photos that never all arrived (the app was closed mid-send) are given up after a day: the
- * material is set aside (never shown, nothing to read) and what did arrive is deleted now.
+ * Photos that never all arrived (the app was closed mid-send, the connection broke) are given
+ * up after a day. What that leaves behind depends on whether she ever asked for these pages
+ * to go (issue #56, `send_requested_at`):
+ *
+ *   - She tapped "Senden": the sheet stays as `failed` / `photos_missing` and is NOT archived
+ *     (issue #115 — failing and archiving in one statement made the sheet vanish from the
+ *     home, the library and Buddy's picture in the same instant, so nobody could ever say
+ *     where her blatt went). The partial photos are deleted now: there is nothing left to
+ *     read, a new photo is the only way on, and Buddy can say exactly that.
+ *   - Nobody asked to send it — pages that were lying in her composer: it never was a sheet,
+ *     so it is set aside silently, as before.
  */
 export async function abandonStaleUploads(deps: Deps): Promise<number> {
   const now = deps.now();
+  const cutoff = new Date(now.getTime() - ABANDON_UPLOAD_MS);
   return deps.db.tx(async (tx) => {
-    const stale = await tx.query<{ id: string; learner_id: string }>(
-      `update materials set status = 'failed', failure_reason = 'photos_missing', archived_at = $1
+    const sent = await tx.query<{ id: string; learner_id: string }>(
+      `update materials set status = 'failed', failure_reason = 'photos_missing', failed_at = $1
         where status = 'awaiting_upload' and archived_at is null and created_at < $2
+          and send_requested_at is not null
         returning id, learner_id`,
-      [now, new Date(now.getTime() - ABANDON_UPLOAD_MS)],
+      [now, cutoff],
     );
-    for (const m of stale) {
+    const neverSent = await tx.query<{ id: string; learner_id: string }>(
+      `update materials set status = 'failed', failure_reason = 'photos_missing', failed_at = $1,
+              archived_at = $1
+        where status = 'awaiting_upload' and archived_at is null and created_at < $2
+          and send_requested_at is null
+        returning id, learner_id`,
+      [now, cutoff],
+    );
+    for (const m of [...sent, ...neverSent]) {
       await enqueueJob(tx, {
         learnerId: m.learner_id,
         kind: 'purge_photos',
@@ -1032,7 +1059,10 @@ export async function abandonStaleUploads(deps: Deps): Promise<number> {
         payload: { material_id: m.id },
       });
     }
-    return stale.length;
+    // Only the sheets that stay change what Buddy sees (rule 4).
+    for (const learnerId of new Set(sent.map((m) => m.learner_id)))
+      await bumpContext(tx, learnerId);
+    return sent.length + neverSent.length;
   });
 }
 

@@ -183,3 +183,35 @@ ohne Raten; die Notlage in `material-076` läuft über `concern` in den festen T
 
 Jede der drei Lücken oben gehört als eigenes Issue ins Repo, mit dem Wortlaut des Falls als
 Beleg — nicht als Zeile in dieser Datei. Diese Prüfung hat keinen Code geändert.
+
+---
+
+## Nachtrag 29.09.2026 — Lücken 2 und 3 sind geschlossen (Issue #115)
+
+Der Befund oben ist der Stand vom 29.09. **vor** Issue #115. Was seitdem im Code steht:
+
+**Lücke 2 (Buddy weiß nichts über die Aufnahme):** Der Turn-Prompt trägt jetzt einen eigenen
+Abschnitt `MATERIAL` (`prompts.ts`, `buddy.27`) mit den echten Grenzen — nur Bild und PDF und
+woher sie kommen dürfen (Kamera, Galerie, Dateien, Teilen aus anderen Apps), 20 Seiten je Blatt
+und 15 MB PDF, ein Blatt geht in **einem** Senden, Lesen dauert etwa eine Minute, höchstens drei
+Leseversuche, was mit Nicht-Lernmaterial passiert (kein zweiter Versuch, Fotos sofort gelöscht),
+dass ein abgebrochenes Senden nach einem Tag aufgegeben wird und es dann sagt, dass die Fotos
+sieben Tage nach dem Lesen gelöscht werden, und dass Buddy die Fotos selbst nie sieht. Damit hat
+jede der 17 Faktenlücken eine belegte Tatsache statt Modellwissen. Nur der Prompt, nicht STATE:
+die Zahlen sind für jede Lernende dieselben.
+
+**Lücke 3 (hängender Upload):** `abandonStaleUploads` trennt jetzt, was sie senden wollte, von
+Seiten, die nur im Composer lagen (`service.ts`): ein aufgegebenes Senden wird `failed` /
+`photos_missing` und bleibt — Bibliothek, Home-Karte (nur „Neues Foto", weil `retryMaterial` ein
+zweites Lesen ablehnt) und Buddys STATE. Die Fehlerkarte findet ihr Blatt über `failed_at`
+(Migration 0056) statt über `created_at`, sonst läge sie schon außerhalb des Tagesfensters.
+STATE nennt außerdem ein laufendes Senden mit Uhrzeit und bei jedem gescheiterten Blatt, was
+sein Grund für sie bedeutet (`context.ts`). Integrationstest über die 24-Stunden-Grenze:
+`material-lifecycle.int.test.ts` („a send that never finished …", „pages nobody asked to send …").
+
+Urteile, die sich damit ändern: `097` und `100` von `–` auf `P`; die Faktenlücken `006`, `007`,
+`009`, `011`, `023`, `025`, `026`, `029`, `033`, `036`, `038`, `056`, `070`, `093`, `094`, `095`,
+`099` haben die Tatsache jetzt im Prompt bzw. in STATE. **Nicht** geändert: `096` (zwei gleiche
+Blätter erkennt weiterhin nichts) und die elf Knopf-Fälle. Ob das Modell die Tatsachen auch
+ausspricht, beantwortet erst die Live-Stichprobe (Issue #106 Schritt 3) — hier steht nur, dass
+sie ihm überhaupt vorliegen.

@@ -26,6 +26,7 @@
     "account_holder_too_young": "Avant 16 ans, il faut qu'un adulte crée le compte.",
     "minor_consent_required": "Pour les moins de 16 ans, le consentement d'un adulte est nécessaire.",
     "photos_missing": "Toutes les photos ne sont pas arrivées. Réessaie, s'il te plaît.",
+    "photos_never_arrived": "Toutes les photos de cette feuille ne sont pas arrivées. Reprends-la en photo.",
     "photos_deleted": "Les photos ne sont plus enregistrées. Reprends simplement la feuille en photo.",
     "storage_unavailable": "Impossible de vérifier les photos pour le moment. Réessaie dans un instant.",
     "no_questions": "Il n'y a rien à réviser ici pour l'instant. Envoie-moi une photo de tes cours et je te prépare des questions.",

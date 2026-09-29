@@ -348,7 +348,7 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect(job).toMatchObject({ status: 'done', result: { outcome: 'fallback_act' } });
   });
 
-  it('does not claim to read photos that never all arrived, and deletes a half-sent upload after a day', async () => {
+  it('does not claim to read photos that never all arrived, and says so after a day (issue #115)', async () => {
     const created = await l.api.post<{
       material: { id: string };
       uploads: Array<{ path: string }>;
@@ -368,16 +368,27 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     home = (await l.api.get<BuddyHome>('/buddy')).body;
     expect(home.now).toBeNull();
 
-    env.clock.minutes(24 * 60);
+    env.clock.minutes(24 * 60 + 1);
     await tick(env);
     expect(env.storage.objects.has(first)).toBe(false);
+    // Given up — but not hidden: the sheet she sent stays in her library and on the home
+    // with what happened to it, and a second reading is not offered (there is nothing left).
     const library = (await l.api.get<LibraryView>('/materials')).body;
-    expect([...library.unsorted, ...library.subjects.flatMap((s) => s.materials)]).toEqual([]);
-    const row = await env.db.one<{ status: string; failure_reason: string }>(
-      `select status, failure_reason from materials where id = $1`,
+    expect(
+      [...library.unsorted, ...library.subjects.flatMap((s) => s.materials)].map((m) => m.id),
+    ).toEqual([created.body.material.id]);
+    home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.now).toMatchObject({
+      type: 'material_failed',
+      reason: 'photos_missing',
+      retryable: false,
+    });
+    const row = await env.db.one<{ status: string; failure_reason: string; archived: boolean }>(
+      `select status, failure_reason, archived_at is not null as archived
+         from materials where id = $1`,
       [created.body.material.id],
     );
-    expect(row).toEqual({ status: 'failed', failure_reason: 'photos_missing' });
+    expect(row).toEqual({ status: 'failed', failure_reason: 'photos_missing', archived: false });
   });
 
   it('asks for no further upload when the same send is repeated after the photos went through', async () => {

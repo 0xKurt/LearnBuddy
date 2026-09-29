@@ -26,6 +26,7 @@
     "account_holder_too_young": "Wer jünger als 16 ist, braucht einen Erwachsenen, der das Konto einrichtet.",
     "minor_consent_required": "Für Lernende unter 16 braucht es die Einwilligung eines Erwachsenen.",
     "photos_missing": "Nicht alle Fotos sind angekommen. Bitte versuch es nochmal.",
+    "photos_never_arrived": "Von diesem Blatt sind nicht alle Fotos angekommen. Fotografier es am besten neu.",
     "photos_deleted": "Die Fotos sind nicht mehr gespeichert. Fotografier das Blatt einfach neu.",
     "storage_unavailable": "Die Fotos lassen sich gerade nicht prüfen. Versuch es gleich nochmal.",
     "no_questions": "Hier gibt es gerade nichts zu üben. Schick mir ein Foto von deinem Stoff, dann mache ich dir Fragen.",

@@ -208,11 +208,13 @@ async function failedCard(
     purpose: 'study' | 'homework';
     completes: string | null;
     title: string | null;
+    photos_deleted: boolean;
   }>(
     `select (select count(*)::int from jobs where learner_id = $1 and kind = 'extract_material'
                and payload ->> 'material_id' = $2::text) as n,
             m.purpose, m.completes_material_id as completes,
-            coalesce(root.title, m.title) as title
+            coalesce(root.title, m.title) as title,
+            m.photos_deleted_at is not null as photos_deleted
        from materials m
        left join materials root on root.id = m.completes_material_id and root.learner_id = $1
       where m.id = $2::uuid and m.learner_id = $1`,
@@ -222,9 +224,14 @@ async function failedCard(
     type: 'material_failed',
     material_id: failed.id,
     reason: failed.failure_reason,
+    // "Nochmal lesen" is only offered where a second reading can actually work: not for a
+    // verdict that would repeat, not when the photos never arrived or are already gone
+    // (retryMaterial refuses all three — the card must not promise what the API declines).
     retryable:
       failed.failure_reason !== 'not_learning_material' &&
       failed.failure_reason !== 'blocked' &&
+      failed.failure_reason !== 'photos_missing' &&
+      !(row?.photos_deleted ?? false) &&
       (row?.n ?? 0) < 3,
     purpose: row?.purpose ?? 'study',
     completes: row?.completes ?? null,
@@ -365,8 +372,13 @@ async function nowCardOf(
       purpose: 'study',
     };
   }
+  // A failure from the last day, counted from when it failed — not from when the photos were
+  // reserved: a send given up after a day fails a day after that (issue #115), and its card
+  // would never have come up at all.
   const failed = state.materials.find(
-    (m) => m.status === 'failed' && now.getTime() - m.created_at.getTime() < 24 * 3_600_000,
+    (m) =>
+      m.status === 'failed' &&
+      now.getTime() - (m.failed_at ?? m.created_at).getTime() < 24 * 3_600_000,
   );
   if (failed) return failedCard(deps, learnerId, failed);
   const capture = state.steps.find((s) => s.kind === 'capture' && s.state === 'planned');

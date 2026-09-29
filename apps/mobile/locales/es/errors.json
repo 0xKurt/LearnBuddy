@@ -26,6 +26,7 @@
     "account_holder_too_young": "Con menos de 16 años, la cuenta tiene que configurarla una persona adulta.",
     "minor_consent_required": "Para aprender con menos de 16 años, hace falta el consentimiento de una persona adulta.",
     "photos_missing": "No han llegado todas las fotos. Inténtalo de nuevo, por favor.",
+    "photos_never_arrived": "No llegaron todas las fotos de esta hoja. Lo mejor es volver a fotografiarla.",
     "photos_deleted": "Las fotos ya no están guardadas. Simplemente vuelve a fotografiar la hoja.",
     "storage_unavailable": "Ahora mismo no se pueden comprobar las fotos. Inténtalo de nuevo en un momento.",
     "no_questions": "Ahora mismo no hay nada que practicar aquí. Mándame una foto de tus apuntes y te preparo preguntas.",
