@@ -6,8 +6,7 @@
 // still open goes back to Buddy and keeps the session to go on with (home card, the sheet);
 // in a test it hands the test in and shows the review (decision D-5, audit H-8, M-36).
 //
-// Modes: explain shows Buddy's explanation first (and keeps it one tap away);
-// help (homework) never offers the solution – a solved task says she found it
+// Modes: help (homework) never offers the solution – a solved task says she found it
 // herself; "Tipp" asks for a hint and "Später" sets a task aside (it stays open and comes
 // back after the others). "Lösung zeigen" appears only after a try or a hint.
 // Questions Buddy wrote (origin 'buddy') carry a small tag.
@@ -48,7 +47,6 @@ import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
-import { ExplainCard, ExplainText } from '../../components/practice/ExplainCard.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
@@ -139,11 +137,6 @@ function verdictWordKey(verdict: PracticeTurnView['verdict']): string | null {
   return `practice:verdict.${verdict ?? 'unchecked'}`;
 }
 
-/** A turn about a question (not an "Anders erklären" of the session's explanation). */
-function aboutQuestion(turn: PracticeTurnView): boolean {
-  return turn.item_id !== null;
-}
-
 function backToBuddy(): void {
   // Pops back to Buddy when it is below in the stack, otherwise replaces this
   // screen with it (router.replace would leave a second Buddy on the stack).
@@ -190,14 +183,11 @@ export default function PracticeScreen() {
   const [busy, setBusy] = useState(false);
   const [finishFailed, setFinishFailed] = useState(false);
   const [closing, setClosing] = useState(false);
-  /** Explain mode: the explanation was read ("Verstanden – frag mich!"). */
-  const [introRead, setIntroRead] = useState(false);
-  const [introOpen, setIntroOpen] = useState(false);
   /** "Frage passt nicht": the confirm sheet, and the question it is about. */
   const [flagFor, setFlagFor] = useState<string | null>(null);
   const [flagOpen, setFlagOpen] = useState(false);
-  /** "Anders erklären": the way she tapped, while Buddy writes (itemId null: the explanation). */
-  const [again, setAgain] = useState<{ itemId: string | null; way: ReexplainWay } | null>(null);
+  /** "Anders erklären": the way she tapped, while Buddy writes. */
+  const [again, setAgain] = useState<{ itemId: string; way: ReexplainWay } | null>(null);
   const working = useRef(false);
   const lastSent = useRef<SentAnswer | null>(null);
   const finishStarted = useRef(false);
@@ -212,25 +202,13 @@ export default function PracticeScreen() {
 
   // Voice mode: a question is read aloud once when it appears (or when voice mode is switched on).
   const onScreen = session ? questionOnScreen(session, pinnedId) : null;
-  const introWaiting =
-    session !== undefined &&
-    session.mode === 'explain' &&
-    (session.intro?.trim() ?? '') !== '' &&
-    !introRead &&
-    !(session.items.some((i) => i.status !== 'open') || session.turns.some(aboutQuestion));
-  const toRead = onScreen && onScreen.status === 'open' && !introWaiting ? onScreen.item : null;
+  const toRead = onScreen && onScreen.status === 'open' ? onScreen.item : null;
   // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
   // to the end lets the mic listen again, and a closed question moves on by itself.
   const readQuestion = (item: ItemView) =>
     speakInOrder(questionParts(item, words, t), (why) => {
       if (why === 'done') useHandsFree.getState().listenNow();
     });
-  // Voice mode: the explanation is read aloud first (then "Verstanden – frag mich!").
-  const introText = introWaiting ? (session?.intro?.trim() ?? '') : '';
-  useEffect(() => {
-    if (voiceOn && introText)
-      speakInOrder([{ text: spokenText(introText, words), lang: currentLocale() }]);
-  }, [voiceOn, introText]);
   useEffect(() => {
     if (voiceOn && toRead) readQuestion(toRead);
     // Only a new question (or switching voice mode on) reads again; "Nochmal vorlesen" repeats it.
@@ -437,8 +415,8 @@ export default function PracticeScreen() {
     }
   }
 
-  /** "Anders erklären": a new explanation of the explanation (itemId null) or of a solution. */
-  async function explainAgain(itemId: string | null, way: ReexplainWay): Promise<void> {
+  /** "Anders erklären": a new explanation of a shown solution. */
+  async function explainAgain(itemId: string, way: ReexplainWay): Promise<void> {
     if (working.current) return;
     working.current = true;
     haptic.tap();
@@ -638,7 +616,6 @@ export default function PracticeScreen() {
     );
   }
 
-  const intro = session.mode === 'explain' ? (session.intro?.trim() ?? '') : '';
   const canReveal = session.reveal_allowed;
   // A running test: no verdicts, no solutions, but a question can be skipped.
   const testing = session.mode === 'test' && session.status === 'active';
@@ -679,43 +656,6 @@ export default function PracticeScreen() {
       </Btn>
     </View>
   );
-
-  // ─────────────── explain: the explanation first ───────────────
-
-  const started =
-    session.items.some((i) => i.status !== 'open') || session.turns.some(aboutQuestion);
-  // "Anders erklären" about the explanation itself (no question).
-  const introAgain = session.turns.filter((turn) => turn.item_id === null);
-  if (intro && !introRead && !started) {
-    return (
-      <Screen title={title} right={endButton}>
-        <ScrollView
-          ref={scroll}
-          // The explanation and what she asked about it: a short conversation, shown at its end.
-          testID="scroll-thread"
-          contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 16 }}
-          keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => {
-            if (introAgain.length > 0 || again !== null)
-              scroll.current?.scrollToEnd({ animated: true });
-          }}
-        >
-          <ExplainCard text={intro} />
-          <Reexplain
-            turns={introAgain}
-            pending={again?.itemId === null ? again.way : null}
-            disabled={busy || closing}
-            onAsk={(way) => void explainAgain(null, way)}
-          />
-        </ScrollView>
-        <BottomBar>
-          <Btn size="lg" pill full onPress={() => setIntroRead(true)}>
-            {t('practice:explain.ready')}
-          </Btn>
-        </BottomBar>
-      </Screen>
-    );
-  }
 
   // ─────────────── one question ───────────────
 
@@ -764,11 +704,6 @@ export default function PracticeScreen() {
 
   // A small row of quiet tools under the question (never a second headline).
   const tools = [
-    intro ? (
-      <Btn key="intro" size="sm" variant="soft" pill icon="book" onPress={() => setIntroOpen(true)}>
-        {t('practice:explain.again')}
-      </Btn>
-    ) : null,
     // With options the voice bar carries it (SpokenChoiceBar).
     voiceOn && open && !choices ? (
       <Btn key="read" size="sm" variant="soft" pill icon="speak" onPress={() => readQuestion(item)}>
@@ -981,24 +916,6 @@ export default function PracticeScreen() {
           {t('practice:flag.confirm')}
         </Btn>
       </Sheet>
-      {intro ? (
-        <Sheet
-          visible={introOpen}
-          title={t('practice:explain.sheet_title')}
-          closeLabel={t('common:actions.close')}
-          onClose={() => setIntroOpen(false)}
-        >
-          <ExplainText text={intro} />
-          {introAgain
-            .filter((turn) => turn.role === 'tutor')
-            .map((turn) => (
-              <View key={turn.id} style={{ gap: 8 }}>
-                <Text style={TYPE.label}>{t('practice:reexplain.title')}</Text>
-                <ExplainText text={turn.text} />
-              </View>
-            ))}
-        </Sheet>
-      ) : null}
     </Screen>
   );
 }

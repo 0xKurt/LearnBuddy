@@ -1,7 +1,7 @@
 // Learning modes beyond practice from photos: homework help that never gives
-// the solution, explanations with check questions, typed vocabulary in both
-// directions, speaking practice judged from the recording, and figures.
-// docs/architecture.md §Practice.
+// the solution, typed vocabulary in both directions, speaking practice judged
+// from the recording, and figures. Explaining is the chat's answer, never a
+// mode (issue #70). docs/architecture.md §Practice.
 // requires live verification in Claude Code session (needs a running Postgres)
 
 import { randomUUID } from 'node:crypto';
@@ -164,67 +164,15 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(session.items[0]).toMatchObject({ status: 'correct', answer: null });
   });
 
-  it('explains a topic, then checks it — idempotent per request', async () => {
-    const request = {
+  it('refuses the removed explain kind: explaining is the chat, never a mode (issue #70)', async () => {
+    const res = await l.api.post('/practice/topic', {
       client_request_id: randomUUID(),
       kind: 'explain',
       text: 'Erklär mir den Dativ',
-    };
-    env.llm.script('explain', (req) => {
-      const text = ScriptedGateway.textOf(req);
-      expect(text).toContain('EXPLAIN the topic');
-      expect(text).toContain('Erklär mir den Dativ');
-      return {
-        usable: true,
-        title: 'Dativ',
-        subject: { name: 'Deutsch', kind: 'german' },
-        intro: 'Der Dativ ist der 3. Fall. Du fragst: Wem?',
-        items: [
-          item({
-            prompt: 'Mit welcher Frage findest du den Dativ?',
-            answer: 'Wem?',
-            topic: 'Dativ',
-          }),
-          item({
-            kind: 'multiple_choice',
-            prompt: 'Welcher Satz hat einen Dativ?',
-            answer: 'Ich helfe dem Mann.',
-            choices: ['Ich sehe den Mann.', 'Ich helfe dem Mann.'],
-            correct_choice: 1,
-            topic: 'Dativ',
-          }),
-          item({ kind: 'speak', prompt: 'nicht erlaubt hier', answer: 'x', lang: 'de' }),
-        ],
-      };
     });
-    const res = await l.api.post<SessionView>('/practice/topic', request);
-    expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({
-      mode: 'explain',
-      intro: 'Der Dativ ist der 3. Fall. Du fragst: Wem?',
-      title: 'Dativ',
-    });
-    // Only kinds that fit an explanation; Buddy's own questions are marked as such.
-    expect(res.body.items.map((i) => i.item.kind)).toEqual(['short', 'multiple_choice']);
-    expect(res.body.items.every((i) => i.item.origin === 'buddy')).toBe(true);
-
-    const again = await l.api.post<SessionView>('/practice/topic', request);
-    expect(again.body.id).toBe(res.body.id);
-    expect(env.llm.callsFor('explain')).toHaveLength(1);
-
-    // The tutor sees the explanation it refers to.
-    env.llm.script('tutor', (req) => {
-      expect(ScriptedGateway.textOf(req)).toContain('EXPLANATION:\nDer Dativ ist der 3. Fall.');
-      return {
-        intent: 'answer',
-        verdict: 'correct',
-        reply: 'Genau!',
-        gave_hint: false,
-        revealed_answer: false,
-      };
-    });
-    const ok = await answer(l, res.body, res.body.items[0]!.item.id, 'Mit wem');
-    expect(ok.body.verdict).toBe('correct');
+    expect(res.status).toBe(422);
+    // Rejected by the contract, before any model call.
+    expect(env.llm.callsFor('explain')).toHaveLength(0);
   });
 
   it('runs a practice test: one try, no hints, no answers until the end', async () => {
@@ -234,7 +182,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Brüche – Probetest',
         subject: { name: 'Mathe', kind: 'math' },
-        intro: null,
         items: [
           item({
             kind: 'numeric',
@@ -346,7 +293,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Zahlen – Probetest',
         subject: { name: 'Mathe', kind: 'math' },
-        intro: null,
         items: [
           item({
             kind: 'numeric',
@@ -467,7 +413,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Rechtschreibung',
         subject: { name: 'Deutsch', kind: 'german' },
-        intro: 'Nach langem Vokal schreibt man ß.',
         items: [
           item({ prompt: 'Setze ein: Stra_e', answer: 'Straße', topic: 's-Laute' }),
           item({
@@ -481,7 +426,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
     const s = (
       await l.api.post<SessionView>('/practice/topic', {
         client_request_id: randomUUID(),
-        kind: 'explain',
+        kind: 'practice',
         text: 'ß und Kommas',
       })
     ).body;
@@ -510,7 +455,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Brüche',
         subject: null,
-        intro: null,
         items: [item({ prompt: 'Kürze 2/4', answer: '1/2' })],
       },
     });
@@ -528,7 +472,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
 
   it('says honestly when a request is nothing to learn from', async () => {
     env.llm.script('explain', {
-      json: { usable: false, title: '—', subject: null, intro: null, items: [] },
+      json: { usable: false, title: '—', subject: null, items: [] },
     });
     const res = await l.api.post('/practice/topic', {
       client_request_id: randomUUID(),
@@ -545,7 +489,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Unité 3',
         subject: { name: 'Französisch', kind: 'french' },
-        intro: null,
         items: [
           item({
             kind: 'vocab',
@@ -608,7 +551,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Aussprache',
         subject: { name: 'Französisch', kind: 'french' },
-        intro: null,
         items: [
           item({
             kind: 'speak',
@@ -716,7 +658,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Aussprache',
         subject: { name: 'Französisch', kind: 'french' },
-        intro: null,
         items: [
           item({
             kind: 'speak',
@@ -770,7 +711,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Funktionen',
         subject: { name: 'Mathe', kind: 'math' },
-        intro: null,
         items: [
           item({
             prompt: 'Wo schneidet der Graph die x-Achse?',
@@ -852,7 +792,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
         usable: true,
         title: 'Probetest Brüche',
         subject: null,
-        intro: null,
         items: [
           item({ prompt: 'Kürze 9/12.', answer: '3/4', topic: 'Brüche kürzen' }),
           item({ prompt: 'Erweitere 2/5 mit 3.', answer: '6/15', topic: 'Brüche erweitern' }),
@@ -909,50 +848,5 @@ describe.skipIf(!dbReady)('learning modes', () => {
       goal_id: goal.id,
     });
     expect(foreign.status).toBe(404);
-  });
-  it('"Kurz erklärt" is short: a long explanation gets one repair round, then a cut (live finding 7)', async () => {
-    // The explanation as written live: ~150 words in three paragraphs.
-    const LONG =
-      'Der Dativ ist einer der vier Fälle im Deutschen. Du nutzt ihn, um das Indirekte Objekt in einem Satz zu bestimmen. Das ist meistens die Person oder Sache, die etwas empfängt oder der etwas passiert. Du kannst nach dem Dativ ganz einfach mit dem Fragezeichen Wem? fragen.\n\nSchauen wir uns zwei Beispiele an. Im Satz Ich schenke meiner Schwester ein Buch fragst du: Wem schenke ich ein Buch? Die Antwort lautet meiner Schwester. Dieser Teil steht also im Dativ. Ein weiteres Beispiel: Das Essen schmeckt dem Hund. Wem schmeckt das Essen? Dem Hund.\n\nDas Wichtigste beim Dativ ist, dass sich die Begleiter und Endungen verändern. Aus der Vater wird im Dativ dem Vater, aus die Mutter wird der Mutter, aus das Kind wird dem Kind und im Plural wird aus die Kinder den Kindern.';
-    const explained = (intro: string) => ({
-      json: {
-        usable: true,
-        title: 'Der Dativ',
-        subject: { name: 'Deutsch', kind: 'german' },
-        intro,
-        items: [item({ prompt: 'Mit welcher Frage findest du den Dativ?', answer: 'Wem?' })],
-      },
-    });
-    env.llm.script('explain', explained(LONG), (req) => {
-      expect(req.system).toContain('You shorten an explanation');
-      expect(ScriptedGateway.textOf(req)).toContain('Das Wichtigste beim Dativ');
-      return {
-        intro:
-          'Den Dativ findest du mit der Frage „Wem?“. Beispiel: „Das Essen schmeckt dem Hund.“ – Wem? Dem Hund!.',
-      };
-    });
-    const res = await l.api.post<SessionView>('/practice/topic', {
-      client_request_id: randomUUID(),
-      kind: 'explain',
-      text: 'Erklär mir den Dativ',
-    });
-    expect(res.status).toBe(201);
-    // Short, and the doubled punctuation is gone.
-    expect(res.body.intro).toBe(
-      'Den Dativ findest du mit der Frage „Wem?“ Beispiel: „Das Essen schmeckt dem Hund.“ – Wem? Dem Hund!',
-    );
-
-    // The repair is still too long (or fails): cut after the last whole sentence within 80 words.
-    env.llm.script('explain', explained(LONG), { json: { intro: LONG } });
-    const cut = await l.api.post<SessionView>('/practice/topic', {
-      client_request_id: randomUUID(),
-      kind: 'explain',
-      text: 'Erklär mir den Dativ nochmal',
-    });
-    const words = (cut.body.intro ?? '').split(/\s+/).filter(Boolean).length;
-    expect(words).toBeLessThanOrEqual(80);
-    expect(words).toBeGreaterThan(20);
-    expect(cut.body.intro).toMatch(/\.$/);
-    expect(cut.body.intro).not.toContain('Wem?.');
   });
 });

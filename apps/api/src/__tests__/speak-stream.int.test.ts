@@ -64,7 +64,6 @@ function scriptGeneration(env: TestEnv, sentence: string): void {
       usable: true,
       title: 'Französisch sprechen',
       subject: { name: 'Französisch', kind: 'french' },
-      intro: null,
       items: [
         {
           kind: 'speak',

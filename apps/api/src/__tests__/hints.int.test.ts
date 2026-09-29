@@ -45,7 +45,7 @@ async function start(
   help: { n: number; hints: string[]; worked_solution: string | null }[] = [],
 ) {
   env.llm.script('explain', {
-    json: { usable: true, title: 'Brüche', subject: null, intro: null, items },
+    json: { usable: true, title: 'Brüche', subject: null, items },
   });
   // Hints are written in the background right after the start (hints.ts).
   if (help.length) env.llm.script('hints', { json: { items: help } });

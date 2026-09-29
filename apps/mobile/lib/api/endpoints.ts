@@ -309,12 +309,9 @@ export const hintItem = (id: string, itemId: string) =>
   );
 /** An "Anders erklären" tap whose answer was lost is sent again as the same turn. */
 const reexplainTurns = turnIds(newId, noConnection);
-/**
- * "Anders erklären": a new explanation, the way she tapped — of the session's explanation
- * (itemId null) or of a closed question's solution.
- */
-export const reexplainItem = (id: string, itemId: string | null, way: ReexplainWay) =>
-  reexplainTurns.run(`${id}:${itemId ?? 'intro'}:${way}`, (clientTurnId) =>
+/** "Anders erklären": a new explanation, the way she tapped, of a closed question's solution. */
+export const reexplainItem = (id: string, itemId: string, way: ReexplainWay) =>
+  reexplainTurns.run(`${id}:${itemId}:${way}`, (clientTurnId) =>
     request('POST', `/practice/sessions/${id}/reexplain`, {
       body: { client_turn_id: clientTurnId, item_id: itemId, way },
       schema: AnswerResponse,

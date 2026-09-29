@@ -10,7 +10,7 @@ describe('summaryLines (user feedback #1)', () => {
   });
 
   it('never shows a zero or an "x of y"', () => {
-    for (const mode of ['practice', 'explain', 'test', 'help'] as const) {
+    for (const mode of ['practice', 'test', 'help'] as const) {
       for (const [answered, firstTry] of [
         [1, 0],
         [4, 1],
@@ -28,7 +28,7 @@ describe('summaryLines (user feedback #1)', () => {
       { key: 'summary_line.answered', count: 3 },
       { key: 'summary_line.all_first' },
     ]);
-    expect(summaryLines({ answered: 1, first_try: 1 }, 'explain')).toEqual([
+    expect(summaryLines({ answered: 1, first_try: 1 }, 'practice')).toEqual([
       { key: 'summary_line.answered', count: 1 },
       { key: 'summary_line.first_one' },
     ]);

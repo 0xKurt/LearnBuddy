@@ -87,8 +87,15 @@ export type SessionRow = {
   mode: SessionMode;
   status: 'active' | 'finished' | 'abandoned';
   title: string | null;
-  intro: string | null;
 };
+
+/**
+ * The session columns as code reads them. Sessions of the removed explain mode (issue #70)
+ * are served as plain practice — their stored `mode` and `intro` stay in the database
+ * untouched (migrations are immutable), but nothing shows or writes them any more.
+ */
+export const SESSION_COLS = `id, learner_id, step_id, goal_id,
+       case when mode = 'explain' then 'practice' else mode end as mode, status, title`;
 
 type SessionItemRow = {
   item_id: string;
@@ -113,7 +120,6 @@ export type SessionOptions = {
   mode: SessionMode;
   materialId?: string | null;
   title?: string | null;
-  intro?: string | null;
   clientRequestId?: string | null;
 };
 
@@ -126,8 +132,8 @@ export async function createSession(
 ): Promise<string> {
   const s = await db.one<{ id: string }>(
     `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
-                                    material_id, title, intro, client_request_id)
-     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) returning id`,
+                                    material_id, title, client_request_id)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8) returning id`,
     [
       learnerId,
       opts.stepId,
@@ -136,7 +142,6 @@ export async function createSession(
       now,
       opts.materialId ?? null,
       opts.title ?? null,
-      opts.intro ?? null,
       opts.clientRequestId ?? null,
     ],
   );
@@ -326,7 +331,6 @@ async function helpSessionFor(
         goalId: m.goal_id,
         materialId,
         title: m.title,
-        intro: null,
         clientRequestId: null,
       },
       now,
@@ -336,14 +340,14 @@ async function helpSessionFor(
   });
 }
 
-/** Practice and explanations feed spaced repetition; tests and homework do not. */
+/** Practice feeds spaced repetition; tests and homework do not. */
 function learnsFsrs(mode: SessionMode): boolean {
-  return mode === 'practice' || mode === 'explain';
+  return mode === 'practice';
 }
 
-/** The hint ladder runs in practice and explanations (tests give none; homework has its own rules). */
+/** The hint ladder runs in practice (tests give none; homework has its own rules). */
 function givesHints(mode: SessionMode): boolean {
-  return mode === 'practice' || mode === 'explain';
+  return mode === 'practice';
 }
 
 /**
@@ -351,7 +355,7 @@ function givesHints(mode: SessionMode): boolean {
  * where a hint never carries the solution (checked like every homework reply).
  */
 function offersHintButton(mode: SessionMode): boolean {
-  return mode === 'practice' || mode === 'explain' || mode === 'help';
+  return mode === 'practice' || mode === 'help';
 }
 
 /**
@@ -442,7 +446,7 @@ export async function loadSession(
   sessionId: string,
 ): Promise<SessionRow> {
   const s = await db.maybeOne<SessionRow>(
-    `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+    `select ${SESSION_COLS} from practice_sessions
       where id = $1 and learner_id = $2`,
     [sessionId, learnerId],
   );
@@ -534,7 +538,6 @@ export async function sessionView(
   return {
     id: s.id,
     mode: s.mode,
-    intro: s.intro,
     reveal_allowed: revealAllowed,
     status: s.status,
     title: title?.title ?? '',
@@ -826,7 +829,6 @@ export async function answerItem(
                 attempts: item.attempts,
                 ruleVerdict: rule,
                 mode: session.mode,
-                explanation: session.intro,
                 learnerLevel:
                   learner.level === 'school'
                     ? `school grade ${learner.grade ?? '?'}`
@@ -1324,7 +1326,7 @@ export async function flagItem(
   const now = deps.now();
   await deps.db.tx(async (tx) => {
     const s = await tx.maybeOne<SessionRow>(
-      `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+      `select ${SESSION_COLS} from practice_sessions
         where id = $1 and learner_id = $2 for update`,
       [sessionId, learnerId],
     );
@@ -1387,7 +1389,7 @@ async function lockActiveSession(
   sessionId: string,
 ): Promise<SessionRow> {
   const s = await db.maybeOne<SessionRow>(
-    `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+    `select ${SESSION_COLS} from practice_sessions
       where id = $1 and learner_id = $2 for update`,
     [sessionId, learnerId],
   );
@@ -1447,7 +1449,7 @@ export async function finishIfComplete(
   now: Date,
 ): Promise<boolean> {
   const s = await db.maybeOne<SessionRow>(
-    `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+    `select ${SESSION_COLS} from practice_sessions
       where id = $1 and learner_id = $2 for update`,
     [sessionId, learnerId],
   );
@@ -1475,7 +1477,7 @@ export async function finishSession(
   const now = deps.now();
   await deps.db.tx(async (tx) => {
     const s = await tx.maybeOne<SessionRow>(
-      `select id, learner_id, step_id, goal_id, mode, status, title, intro from practice_sessions
+      `select ${SESSION_COLS} from practice_sessions
         where id = $1 and learner_id = $2 for update`,
       [sessionId, learnerId],
     );

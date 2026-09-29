@@ -49,7 +49,7 @@ describe.skipIf(!dbReady)('Buddy events', () => {
 
   async function session(items: unknown[]): Promise<SessionView> {
     env.llm.script('explain', {
-      json: { usable: true, title: 'Brüche', subject: null, intro: null, items },
+      json: { usable: true, title: 'Brüche', subject: null, items },
     });
     return (
       await l.api.post<SessionView>('/practice/topic', {

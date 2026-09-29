@@ -60,7 +60,7 @@ const shown = (r: Row) =>
     ? (r.choices[r.correct_choice] ?? r.answer)
     : `${r.answer}${r.unit ? ` ${r.unit}` : ''}`;
 
-/** Writes hints for the session's questions that have none (practice and explanations). */
+/** Writes hints for the session's questions that have none (practice). */
 export async function prepareHints(
   deps: Deps,
   learner: PracticeLearner,
@@ -71,7 +71,7 @@ export async function prepareHints(
        from session_items si
        join items i on i.id = si.item_id
        join practice_sessions ps on ps.id = si.session_id
-      where si.session_id = $1 and ps.learner_id = $2 and ps.mode in ('practice', 'explain')
+      where si.session_id = $1 and ps.learner_id = $2 and ps.mode = 'practice'
         and i.hints = '{}' and i.kind not in ('vocab', 'speak')
       order by si.position`,
     [sessionId, learner.id],

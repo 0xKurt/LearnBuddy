@@ -95,12 +95,6 @@
     "title": "Solved it yourself!",
     "body": "You worked that out on your own."
   },
-  "explain": {
-    "title": "In short",
-    "ready": "Got it – ask me!",
-    "again": "Read the explanation again",
-    "sheet_title": "The explanation"
-  },
   "summary_help": {
     "title": "Homework done"
   },

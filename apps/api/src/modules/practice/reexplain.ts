@@ -1,8 +1,7 @@
-// "Anders erklären" (gaps.md #3, docs/architecture.md §Practice): after the session's
-// explanation (explain mode) or after a closed question's solution, the learner taps
-// "Einfacher bitte", "Mit Beispiel" or "Warum ist das so?" and the model writes a NEW
-// explanation that way. The chips are shortcuts for sentences she could type; the way is an
-// explicit tap (an enum), never guessed from words (CLAUDE.md rule 3).
+// "Anders erklären" (gaps.md #3, docs/architecture.md §Practice): after a closed question's
+// solution, the learner taps "Einfacher bitte", "Mit Beispiel" or "Warum ist das so?" and the
+// model writes a NEW explanation that way. The chips are shortcuts for sentences she could
+// type; the way is an explicit tap (an enum), never guessed from words (CLAUDE.md rule 3).
 //
 // Code enforces what may be explained (rule 1):
 // - never during a running test (no help until the results);
@@ -41,7 +40,7 @@ import {
 import { cleanPunctuation, cutToWords, REEXPLAIN_MAX_WORDS } from './brief.js';
 import { mentionsSolution } from './tutor.js';
 
-export const REEXPLAIN_PROMPT_VERSION = 'reexplain.v2';
+export const REEXPLAIN_PROMPT_VERSION = 'reexplain.v3';
 
 export const Reexplanation = z.object({
   explanation: z
@@ -63,10 +62,10 @@ const WAY_TEXT: Record<ReexplainWay, string> = {
   why: 'WHY: explain the reason behind it — why the rule or the solution is what it is — not only what it is.',
 };
 
-export const REEXPLAIN_SYSTEM = `You are Buddy, a calm, kind tutor in the LearnBuddy app. The learner read an explanation (or saw the solution of a question) and asked you to explain it again in another way (see WAY).
+export const REEXPLAIN_SYSTEM = `You are Buddy, a calm, kind tutor in the LearnBuddy app. The learner saw the solution of a question and asked you to explain it again in another way (see WAY).
 
 - Write a NEW explanation: do not repeat the earlier wording (EARLIER EXPLANATIONS); explain the same thing the way asked.
-- Stay within what is given (the explanation, the question, its solution, the study material); do not introduce new facts or new topics.
+- Stay within what is given (the question, its solution, the study material); do not introduce new facts or new topics.
 - Warm and short: 2–4 short sentences, at most 60 words, like a kind older sibling. Adapt to the learner's age and level. Use the learner's language.
 - Example sentences or words in quotation marks („Ich gebe dem Hund einen Knochen.“ / "…"). Correct spelling and punctuation, one mark at a time (never "?." or "!.").
 - Math between dollar signs in the LaTeX subset (\\frac{a}{b}, x^{2}, \\sqrt{x}, \\cdot).
@@ -89,11 +88,9 @@ type TargetItem = Pick<
   | 'worked_solution'
 > & { extracted_text: string | null };
 
-type Target = { kind: 'intro'; intro: string } | { kind: 'item'; item: TargetItem };
-
 export function reexplainContext(input: {
   way: ReexplainWay;
-  target: Target;
+  item: TargetItem;
   homework: boolean;
   earlier: string[];
   openTasks: string[];
@@ -106,19 +103,15 @@ export function reexplainContext(input: {
     `LEARNER: ${input.learnerAge} years, level ${input.learnerLevel}, language ${input.language}`,
     `WAY: ${input.way} — ${WAY_TEXT[input.way]}`,
   ];
-  if (input.target.kind === 'intro') {
-    lines.push('', `THE EXPLANATION TO EXPLAIN AGAIN:\n${input.target.intro}`);
-  } else {
-    const i = input.target.item;
-    lines.push(
-      '',
-      `THE QUESTION${i.topic ? ` (topic ${i.topic})` : ''}: ${i.prompt}`,
-      ...(i.choices ? [`CHOICES: ${i.choices.join(' | ')}`] : []),
-      `ITS SOLUTION: ${shownSolution(i)}`,
-      ...(i.worked_solution ? [`WORKED SOLUTION: ${i.worked_solution}`] : []),
-    );
-    if (i.extracted_text) lines.push('', `STUDY MATERIAL:\n${i.extracted_text.slice(0, 3000)}`);
-  }
+  const i = input.item;
+  lines.push(
+    '',
+    `THE QUESTION${i.topic ? ` (topic ${i.topic})` : ''}: ${i.prompt}`,
+    ...(i.choices ? [`CHOICES: ${i.choices.join(' | ')}`] : []),
+    `ITS SOLUTION: ${shownSolution(i)}`,
+    ...(i.worked_solution ? [`WORKED SOLUTION: ${i.worked_solution}`] : []),
+  );
+  if (i.extracted_text) lines.push('', `STUDY MATERIAL:\n${i.extracted_text.slice(0, 3000)}`);
   if (input.earlier.length)
     lines.push('', 'EARLIER EXPLANATIONS:', ...input.earlier.map((e, n) => `${n + 1}. ${e}`));
   if (input.openTasks.length)
@@ -145,42 +138,30 @@ export async function reexplain(
   }
   const homework = session.mode === 'help';
 
-  let target: Target;
-  if (input.item_id === null) {
-    const intro = session.intro?.trim() ?? '';
-    if (!intro) {
-      throw new AppError('conflict', 'This session has no explanation', {
-        reason: 'nothing_to_explain',
-      });
-    }
-    target = { kind: 'intro', intro };
-  } else {
-    const row = await deps.db.maybeOne<TargetItem & { status: string }>(
-      `select i.id, i.kind, i.prompt, i.answer, i.choices, i.correct_choice, i.unit, i.topic,
-              i.accepted_answers, i.worked_solution, m.extracted_text, si.status
-         from session_items si join items i on i.id = si.item_id
-         left join materials m on m.id = i.material_id
-        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3`,
-      [sessionId, input.item_id, learner.id],
-    );
-    if (!row) throw new AppError('not_found', 'Question not in this session');
-    const { status, ...item } = row;
-    if (status === 'open') {
-      throw new AppError('conflict', 'Its solution is not shown yet', { reason: 'try_first' });
-    }
-    // Homework: only what she solved herself (every other task stays hers to solve).
-    if (homework && status !== 'correct') {
-      throw new AppError('conflict', 'Homework help never shows the solution', {
-        reason: 'reveal_not_allowed',
-      });
-    }
-    target = { kind: 'item', item };
+  const row = await deps.db.maybeOne<TargetItem & { status: string }>(
+    `select i.id, i.kind, i.prompt, i.answer, i.choices, i.correct_choice, i.unit, i.topic,
+            i.accepted_answers, i.worked_solution, m.extracted_text, si.status
+       from session_items si join items i on i.id = si.item_id
+       left join materials m on m.id = i.material_id
+      where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3`,
+    [sessionId, input.item_id, learner.id],
+  );
+  if (!row) throw new AppError('not_found', 'Question not in this session');
+  const { status, ...item } = row;
+  if (status === 'open') {
+    throw new AppError('conflict', 'Its solution is not shown yet', { reason: 'try_first' });
+  }
+  // Homework: only what she solved herself (every other task stays hers to solve).
+  if (homework && status !== 'correct') {
+    throw new AppError('conflict', 'Homework help never shows the solution', {
+      reason: 'reveal_not_allowed',
+    });
   }
 
   // What she already read, so the new one is really new.
   const earlier = await deps.db.query<{ text: string }>(
     `select text from practice_turns
-      where session_id = $1 and role = 'tutor' and item_id is not distinct from $2
+      where session_id = $1 and role = 'tutor' and item_id = $2
       order by seq`,
     [sessionId, input.item_id],
   );
@@ -213,12 +194,9 @@ export async function reexplain(
         {
           text: reexplainContext({
             way: input.way,
-            target,
+            item,
             homework,
-            earlier: [
-              ...(target.kind === 'intro' ? [target.intro] : []),
-              ...earlier.map((e) => e.text),
-            ],
+            earlier: earlier.map((e) => e.text),
             openTasks: open.map((o) => o.prompt),
             learnerAge: ageOn(learner.birth_date, now),
             learnerLevel:

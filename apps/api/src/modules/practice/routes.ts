@@ -124,7 +124,7 @@ practiceRoutes.post('/topic', async (c) => {
   const id = await startTopic(deps, learner, input);
   // Hints for the new questions, while she reads the first one. Best effort: if this
   // never runs, the tutor model helps as before (hints.ts).
-  if (input.kind === 'practice' || input.kind === 'explain') {
+  if (input.kind === 'practice') {
     deps.background(async () => {
       await prepareHints(deps, learner, id).catch(() => 0);
     });

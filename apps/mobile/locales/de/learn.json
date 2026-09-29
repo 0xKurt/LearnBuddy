@@ -1,7 +1,6 @@
 {
   "start": {
     "homework": "Hilfe bei Hausaufgaben",
-    "explain": "Erklär mir was",
     "practice": "Üben",
     "test": "Probetest",
     "vocab": "Vokabeln abfragen",
@@ -20,14 +19,6 @@
     "type": "Vokabeln eintippen"
   },
   "topic": {
-    "explain": {
-      "title": "Was soll ich dir erklären?",
-      "hint": "Ich erkläre es dir kurz und frag dann nach, ob's sitzt.",
-      "placeholder": "z. B. Dativ, Photosynthese, Brüche kürzen",
-      "ex_1": "Dativ",
-      "ex_2": "Photosynthese",
-      "ex_3": "Brüche kürzen"
-    },
     "practice": {
       "title": "Was willst du üben?",
       "hint": "Ich stelle dir ein paar Fragen dazu.",

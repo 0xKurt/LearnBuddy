@@ -422,6 +422,17 @@ async function needsAdult(
   return learner.isMinor && undo !== null && undoLoosensContact(deps.db, learner.id, undo, now);
 }
 
+/**
+ * Stored offers of the removed explain mode (issue #70) are shown — and started — as
+ * practice on the same topic: the check questions always were practice, and the
+ * explanation itself lives in the chat now.
+ */
+function servedSummary(s: ActionSummary): ActionSummary {
+  return s.tool === 'offer_learning' && (s.kind as string) === 'explain'
+    ? { ...s, kind: 'practice' }
+    : s;
+}
+
 async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<ActionView[]> {
   const learnerId = learner.id;
   const rows = await deps.db.query<{
@@ -637,7 +648,7 @@ async function threadOf(
           id: a.id,
           status: a.status,
           undoable: undoWorks.has(a.id) && !adultOnly.has(a.id),
-          summary: a.result,
+          summary: servedSummary(a.result),
           created_at: a.created_at.toISOString(),
         })),
       created_at: m.created_at.toISOString(),

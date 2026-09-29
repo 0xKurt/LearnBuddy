@@ -79,7 +79,7 @@ for (const m of (await l.api.get<BuddyHome>('/buddy')).body.thread) {
   }
 }
 const lenaAnswers: Record<string, string[]> = {
-  explain: ['keine ahnung', 'der nenner ist unten', 'der zähler zählt die teile die man hat'],
+  practice: ['keine ahnung', 'der nenner ist unten', 'der zähler zählt die teile die man hat'],
   vocab: ['haus', 'gardn', 'küche', 'schlafzimer', 'house'],
   help: ['weiß nicht', '3/7', 'hä wieso', 'ok also gleicher nenner 12', '8/12 + 3/12 = 11/12'],
 };
@@ -94,9 +94,7 @@ for (const o of offers) {
     continue;
   }
   const v = s.body;
-  console.log(
-    `\n### ${o.kind} "${v.title}" (${v.mode})${v.intro ? `\n  Erklärung: ${v.intro}` : ''}`,
-  );
+  console.log(`\n### ${o.kind} "${v.title}" (${v.mode})`);
   const answers = [...(lenaAnswers[o.kind] ?? [])];
   let view = v;
   while (answers.length > 0) {

@@ -47,7 +47,6 @@
     "resume_body_untitled_one": "Noch {{count}} Aufgabe",
     "resume_body_untitled_other": "Noch {{count}} Aufgaben",
     "resume_title_help": "Weiter mit deiner Hausaufgabe",
-    "resume_title_explain": "Weiter mit deiner Erklärung",
     "resume_title_test": "Weiter mit deinem Probetest",
     "pages_title_one": "Eine Seite konnte ich nicht ganz lesen",
     "pages_title_other": "{{count}} Seiten konnte ich nicht ganz lesen",
@@ -232,7 +231,6 @@
   "suggest": {
     "exam": "Ich schreibe bald eine Arbeit",
     "homework": "Hausaufgabe",
-    "explain": "Erklär mir was",
     "vocab": "Vokabeln",
     "test_message": "Mach mir einen Probetest für „{{title}}“.",
     "exam_short": "Arbeit",

@@ -95,12 +95,6 @@
     "title": "Trouvé tout seul !",
     "body": "Tu l'as trouvé par toi-même."
   },
-  "explain": {
-    "title": "En bref",
-    "ready": "Compris – interroge-moi !",
-    "again": "Relire l'explication",
-    "sheet_title": "L'explication"
-  },
   "summary_help": {
     "title": "Devoirs terminés"
   },

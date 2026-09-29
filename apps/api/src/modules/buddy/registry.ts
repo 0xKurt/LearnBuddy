@@ -166,7 +166,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'offer a button that starts learning now (explain, practice, test, vocab, speak, help)',
+    does: 'offer a button that starts learning now (practice, test, vocab, speak, help)',
     run: ACT_HANDLERS.offer_learning,
   },
   open_area: {

@@ -254,7 +254,7 @@ export type ReexplainWay = z.infer<typeof ReexplainWay>;
 
 export const PracticeTurnView = z.object({
   id: Uuid,
-  /** The question it is about; null for a new explanation of the session's own explanation. */
+  /** The question it is about; null only in stored turns of the removed explain mode (issue #70). */
   item_id: Uuid.nullable(),
   role: z.enum(['learner', 'tutor']),
   text: z.string(),
@@ -277,15 +277,13 @@ export const PracticeSummary = z.object({
 });
 export type PracticeSummary = z.infer<typeof PracticeSummary>;
 
-export const SessionMode = z.enum(['practice', 'test', 'help', 'explain']);
+export const SessionMode = z.enum(['practice', 'test', 'help']);
 export type SessionMode = z.infer<typeof SessionMode>;
 
 export const SessionView = z.object({
   id: Uuid,
-  /** help: homework, hints only and the solution is never shown; explain: an explanation, then questions. */
+  /** help: homework, hints only and the solution is never shown. */
   mode: SessionMode,
-  /** explain: the explanation shown before the questions. */
-  intro: z.string().nullable(),
   /**
    * false in help mode (no "show solution", closed questions show no answer) and
    * while a test runs (answers only once it is finished).
@@ -325,14 +323,14 @@ export const HintRequest = z.object({ client_turn_id: Uuid, item_id: Uuid });
 export type HintRequest = z.infer<typeof HintRequest>;
 
 /**
- * "Anders erklären": a new explanation, written by the model, after the session's explanation
- * (item_id null, explain mode) or after a closed question's solution. Answered like an answer
- * (AnswerResponse, verdict not_an_attempt): her request and the explanation become turns.
- * Never in a running test; in homework help only for a task she solved herself.
+ * "Anders erklären": a new explanation, written by the model, after a closed question's
+ * solution. Answered like an answer (AnswerResponse, verdict not_an_attempt): her request and
+ * the explanation become turns. Never in a running test; in homework help only for a task she
+ * solved herself.
  */
 export const ReexplainRequest = z.object({
   client_turn_id: Uuid,
-  item_id: Uuid.nullable(),
+  item_id: Uuid,
   way: ReexplainWay,
 });
 export type ReexplainRequest = z.infer<typeof ReexplainRequest>;
@@ -349,12 +347,12 @@ export type AnswerVerdict = z.infer<typeof AnswerVerdict>;
 export const StartTopicRequest = z.object({
   client_request_id: Uuid,
   /**
-   * explain: explain a topic, then check it · practice: questions on a topic ·
-   * vocab: a typed vocabulary list · speak: sentences/words to say aloud ·
-   * help: a homework task the learner typed · test: a practice test on a topic
-   * (one try per question, no hints, results at the end).
+   * practice: questions on a topic · vocab: a typed vocabulary list ·
+   * speak: sentences/words to say aloud · help: a homework task the learner typed ·
+   * test: a practice test on a topic (one try per question, no hints, results at the
+   * end). Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
    */
-  kind: z.enum(['explain', 'practice', 'vocab', 'speak', 'help', 'test']),
+  kind: z.enum(['practice', 'vocab', 'speak', 'help', 'test']),
   text: z.string().trim().min(2).max(3000),
   subject: z.string().trim().max(60).nullable().optional(),
   /**
