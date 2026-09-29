@@ -463,6 +463,21 @@ when there never was a heartbeat but her own work is waiting (a misconfigured cr
 "unknown"), and `system.model` is false when no model is configured or today's allowance for
 conversations is used up.
 
+**Someone has to look** (`.github/workflows/health.yml`, issue #75 gap 2). An endpoint nobody
+calls is not monitoring: until now a dead scheduler reached the owner only if the learner
+mentioned it. A GitHub Action calls production's `GET /v1/health` every 30 minutes and checks
+five things with `jq` — `ok == true`, `scheduler.state == "ok"`, `scheduler.last_run_at`
+younger than 5 minutes (stricter than the server's own 10, because the tick runs every minute),
+`erasure.overdue_deletions == 0` and `erasure.overdue_photo_deletions == 0`. Three attempts 20 s
+apart so a cold start wakes nobody; if the complaint holds, the job fails and GitHub mails the
+owner about the failed run on the default branch — that is the whole notification channel. No
+secret: the endpoint is unauthenticated and returns only booleans, counts, job kinds and
+timestamps. Its only free-text fields (`scheduler.last_error`, `parked[*].last_error` —
+truncated `Error.message` from the tick) are neither checked nor written to the public action
+log. This replaces **no** crash reporting on the device (#36, Sentry EU, stays open) and sees
+nothing the server does not report about itself. GitHub disables scheduled workflows after
+60 days without repository activity.
+
 ### Events (ADR 0005 stage 4)
 
 `modules/buddy/events.ts`, table `buddy_events` (`0007_events.sql`). Something that just
@@ -1175,8 +1190,11 @@ word list, so it stays a prompt rule.
   by word (`practice/speak.ts`). good → right, almost → right with help, retry → stays open.
   The recording is never stored. Live checks (`evals/speak/run.ts`, espeak-ng recordings): wrong
   words are recognised reliably, a strong German accent in 2 of 3 runs; it is an AI assessment,
-  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores)
-  would replace `speakItem`'s model call behind the same contract.
+  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores) would
+  replace the measuring half of `speakItem`'s model call — not the whole call: the per-word `tip`
+  and the spoken `reply` are not something a scoring API returns. Weighed against today's numbers
+  in [decisions/azure-pronunciation.md](decisions/azure-pronunciation.md) (issue #27, the owner
+  decides; nothing is connected).
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in

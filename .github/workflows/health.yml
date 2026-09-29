@@ -1,0 +1,124 @@
+# Monitoring without Sentry (issue #75, gap 2: "an error on the daughter's phone reaches us
+# today only if she tells us"). Every 30 minutes, look once at production's public health
+# endpoint. This replaces no crash reporting in the client, but it makes a stalled scheduler
+# and an overdue erasure visible without anyone going looking.
+# docs/architecture.md §Background work.
+#
+# How the owner is notified: not by this file at all. GitHub mails a repository owner by
+# itself when a scheduled workflow fails on the default branch (Notifications → Actions,
+# default "Send notifications for failed workflows only"). So the job only has to go honestly
+# red — no extra channel needed.
+#
+# No secret needed: GET /v1/health is unauthenticated and returns only booleans, counts, job
+# kinds and timestamps (apps/api/src/app.ts, modules/scheduler/health.ts) — no learner,
+# account or content data. Its only free-text fields are `scheduler.last_error` and
+# `parked[*].last_error`: an Error.message from the tick, truncated to 200 characters. They
+# are deliberately NOT checked and NOT printed here, so that an unexpected message cannot end
+# up in the public action log either.
+#
+# GitHub quirk worth knowing: scheduled workflows are disabled automatically after 60 days
+# without repository activity. While work continues here this runs; a two-month pause turns
+# the watch off silently.
+name: Health
+
+on:
+  schedule:
+    # Every 30 minutes. GitHub does not guarantee the start time (delayed under load).
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: health
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: /v1/health (production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HEALTH_URL: https://learn-buddy-api.vercel.app/v1/health
+      # The tick runs every minute (pg_cron). The server calls itself stale only after 10
+      # minutes (SCHEDULER_STALE_MS); this check is stricter, so a hanging scheduler does not
+      # pass as "ok" for half an hour.
+      MAX_TICK_AGE_S: '300'
+    steps:
+      - name: Probe
+        run: |
+          set -uo pipefail
+
+          body="$RUNNER_TEMP/health.json"
+
+          # The five rules, in one place. Each emits a line when it is violated, nothing when
+          # it holds — so "no output" means healthy.
+          rules='
+            [
+              (if .ok == true then empty
+               else "ok is \(.ok | tojson), expected true" end),
+              (if .scheduler.state == "ok" then empty
+               else "scheduler.state is \(.scheduler.state | tojson), expected \"ok\"" end),
+              ((.scheduler.last_run_at // null) as $ts
+               | if $ts == null then "scheduler.last_run_at is missing — the tick never ran"
+                 else (try ($ts | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) catch null) as $t
+                   | if $t == null then "scheduler.last_run_at is not an ISO instant: \($ts)"
+                     else ((now - $t) | floor) as $age
+                       | if $age > ($max_age | tonumber)
+                         then "last tick \($age) s ago (limit \($max_age) s)"
+                         else empty end
+                     end
+                 end),
+              (if .erasure.overdue_deletions == 0 then empty
+               else "erasure.overdue_deletions = \(.erasure.overdue_deletions | tojson)" end),
+              (if .erasure.overdue_photo_deletions == 0 then empty
+               else "erasure.overdue_photo_deletions = \(.erasure.overdue_photo_deletions | tojson)" end)
+            ] | .[]'
+
+          # Three attempts 20 s apart: a cold start or an edge hiccup must not wake the owner,
+          # while a real outage still stands a minute later (the tick runs every minute).
+          problems=''
+          for attempt in 1 2 3; do
+            rm -f "$body"
+            code="$(curl -sS -m 20 -o "$body" -w '%{http_code}' "$HEALTH_URL" || true)"
+            [ -n "$code" ] || code='000'
+
+            if ! jq -e 'type == "object"' "$body" >/dev/null 2>&1; then
+              problems="HTTP $code, and the answer is not a JSON object"
+            elif [ "$code" != '200' ]; then
+              # 503 is the endpoint's own way of saying it found something; report both.
+              problems="$(printf 'HTTP %s instead of 200\n%s' "$code" \
+                "$(jq -r --arg max_age "$MAX_TICK_AGE_S" "$rules" "$body")")"
+            else
+              problems="$(jq -r --arg max_age "$MAX_TICK_AGE_S" "$rules" "$body")"
+            fi
+
+            if [ -z "$problems" ]; then
+              echo "Attempt $attempt: healthy (HTTP $code)."
+              break
+            fi
+            echo "Attempt $attempt: HTTP $code, complaints:"
+            echo "$problems"
+            [ "$attempt" = '3' ] || sleep 20
+          done
+
+          # The state for the record — without the free-text errors (see the head of this file).
+          jq -c 'del(.scheduler.last_error) | .scheduler.parked |= with_entries(.value |= del(.last_error))' \
+            "$body" 2>/dev/null || true
+
+          if [ -n "$problems" ]; then
+            {
+              echo '## /v1/health is not healthy'
+              echo
+              echo "Checked: $HEALTH_URL"
+              echo
+              echo "$problems" | sed 's/^/- /'
+            } >> "$GITHUB_STEP_SUMMARY"
+            while IFS= read -r line; do
+              [ -n "$line" ] && echo "::error title=/v1/health::$line"
+            done <<< "$problems"
+            exit 1
+          fi
+
+          echo '/v1/health is healthy.' >> "$GITHUB_STEP_SUMMARY"
