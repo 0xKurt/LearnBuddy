@@ -26,7 +26,7 @@ import { updateSettings } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { pushPermissionBlocked, registerDeviceForPush, registeredHere } from '../../lib/push.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatLastDay, formatWeekday } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
@@ -75,6 +75,7 @@ type Props = {
 };
 
 export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
+  const { palette } = useTheme();
   const { t, i18n } = useTranslation('settings');
   const [saving, setSaving] = useState(false);
   // The notification permission is permanently denied: show the settings way out.
@@ -223,7 +224,7 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
   const elsewhere = push === 'active' && here === false;
   const deviceMissing =
     settings.contact_enabled && (push === 'no_token' || push === 'invalid' || elsewhere);
-  const secondary = [TYPE.body, { color: LB.ink2 }];
+  const secondary = [TYPE.body, { color: palette.ink2 }];
   // The details are sensible defaults; she tells Buddy in the chat when she wants less.
   // Only loosening (more, later, other days) needs this place — for a minor with the PIN.
   const [showTimes, setShowTimes] = useState(false);

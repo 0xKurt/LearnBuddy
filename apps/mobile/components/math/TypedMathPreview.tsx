@@ -11,20 +11,22 @@ import { useTranslation } from 'react-i18next';
 import { Text, View, useWindowDimensions } from 'react-native';
 
 import { typedMath } from '../../lib/math/typed.js';
-import { LB } from '../../lib/theme/colors.js';
+import type { Palette } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { MathText } from './MathText.js';
 import { useSpokenMath } from './useSpokenMath.js';
 
 /** Room for a simple stacked fraction at the preview's size, so it never jumps when one appears. */
 const MIN_HEIGHT = 50;
-// Read at render time: module-scope styles froze the start palette (issue #84).
-const mathStyle = () => ({ fontSize: 18, lineHeight: 26, color: LB.ink }) as const;
+// Built from the palette in use: module-scope styles froze the start palette (issue #84).
+const mathStyle = (p: Palette) => ({ fontSize: 18, lineHeight: 26, color: p.ink }) as const;
 /** Inside the pill: one quiet line under the field – it may not make the pill grow much. */
 const COMPACT_MIN_HEIGHT = 26;
-const compactMathStyle = () => ({ fontSize: 15, lineHeight: 21, color: LB.ink2 }) as const;
+const compactMathStyle = (p: Palette) => ({ fontSize: 15, lineHeight: 21, color: p.ink2 }) as const;
 
 export function TypedMathPreview({ value, compact = false }: { value: string; compact?: boolean }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('math');
   const { fontScale } = useWindowDimensions();
   const typed = useMemo(() => typedMath(value), [value]);
@@ -54,7 +56,7 @@ export function TypedMathPreview({ value, compact = false }: { value: string; co
         <MathText
           text={typed.text}
           accessible={false}
-          style={compact ? compactMathStyle() : mathStyle()}
+          style={compact ? compactMathStyle(palette) : mathStyle(palette)}
         />
       </View>
     </View>

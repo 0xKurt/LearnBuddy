@@ -17,7 +17,7 @@ import { Icon, type IconName } from '../components/lb/Icon.js';
 import { useSettings } from '../lib/api/queries.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { SPACE } from '../lib/theme/space.js';
 
@@ -26,6 +26,7 @@ const STEPS = ['s1', 's2', 's3'] as const;
 const WAYS: IconName[] = ['keyboard', 'mic', 'camera'];
 
 export default function Onboarding() {
+  const { palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('common');
   const [step, setStep] = useState(0);
@@ -44,7 +45,7 @@ export default function Onboarding() {
 
   return (
     // The bottom inset belongs to the footer below, not to the frame as well (#64).
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow height={420} />
       <View
         style={{
@@ -59,7 +60,7 @@ export default function Onboarding() {
         <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
           {t(`onboarding.${key}_title`)}
         </Text>
-        <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center', maxWidth: 340 }]}>
+        <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 340 }]}>
           {t(`onboarding.${key}_body`)}
         </Text>
         {step === 0 ? (
@@ -75,12 +76,12 @@ export default function Onboarding() {
                   width: 52,
                   height: 52,
                   borderRadius: 26,
-                  backgroundColor: LB.paper,
+                  backgroundColor: palette.paper,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icon name={way} size={24} color={LB.primaryDk} />
+                <Icon name={way} size={24} color={palette.primaryDk} />
               </View>
             ))}
           </View>
@@ -112,7 +113,7 @@ export default function Onboarding() {
                 width: 8,
                 height: 8,
                 borderRadius: 4,
-                backgroundColor: i === step ? LB.primary : LB.ink4,
+                backgroundColor: i === step ? palette.primary : palette.ink4,
               }}
             />
           ))}

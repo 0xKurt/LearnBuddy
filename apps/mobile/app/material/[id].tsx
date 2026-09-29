@@ -25,7 +25,7 @@ import { ApiError } from '../../lib/api/client.js';
 import { deleteMaterialItem, renameMaterial } from '../../lib/api/endpoints.js';
 import { keys, queryClient, useMaterialItems } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 const TITLE_MAX = 120;
@@ -38,6 +38,7 @@ function refreshAround(id: string): void {
 }
 
 export default function MaterialScreen() {
+  const { palette } = useTheme();
   const { t } = useTranslation(['library', 'common']);
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
@@ -203,7 +204,7 @@ export default function MaterialScreen() {
           <Text accessibilityRole="header" style={[TYPE.display, { fontSize: 28, lineHeight: 34 }]}>
             {title}
           </Text>
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>
+          <Text style={[TYPE.body, { color: palette.ink2 }]}>
             {[material.subject_name, t('library:questions', { count: data.items.length })]
               .filter(Boolean)
               .join(' · ')}

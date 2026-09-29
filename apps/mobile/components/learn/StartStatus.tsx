@@ -6,12 +6,13 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Banner } from '../lb/Banner.js';
 import type { StartState } from './useStartTopic.js';
 
 export function StartStatus({ state }: { state: StartState }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('learn');
   // iOS has no live regions: each status says itself (lib/announce.ts).
   useAnnounce(
@@ -32,7 +33,7 @@ export function StartStatus({ state }: { state: StartState }) {
           accessibilityLiveRegion="polite"
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 }}
         >
-          <ActivityIndicator color={LB.primaryDk} />
+          <ActivityIndicator color={palette.primaryDk} />
           <View style={{ flex: 1 }}>
             <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('topic.preparing')}</Text>
             <Text style={TYPE.small}>{t('topic.preparing_hint')}</Text>

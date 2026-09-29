@@ -8,11 +8,12 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useToastBar } from '../lb/Toast.js';
 
 export function BottomBar({ children }: { children: ReactNode }) {
+  const { palette } = useTheme();
   const insets = useSafeAreaInsets();
   // A toast stands above this bar, not on the question (issue #91).
   const onToastBar = useToastBar();
@@ -27,7 +28,7 @@ export function BottomBar({ children }: { children: ReactNode }) {
         paddingHorizontal: SPACE.lg,
         paddingTop: SPACE.sm,
         paddingBottom: Math.max(insets.bottom, SPACE.sm),
-        backgroundColor: LB.bg,
+        backgroundColor: palette.bg,
       }}
     >
       {children}

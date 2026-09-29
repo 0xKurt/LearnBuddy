@@ -9,7 +9,8 @@ import type { MaterialView } from '@learnbuddy/shared-types/contracts';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { LB, TONE_BG, TONE_DEEP, type SubjectTone } from '../../lib/theme/colors.js';
+import type { SubjectTone } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatDate } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
@@ -65,6 +66,7 @@ export function MaterialCard({
   onRetry,
   onDelete,
 }: Props) {
+  const { palette, tones } = useTheme();
   const { t, i18n } = useTranslation('library');
   const title = m.title ?? t('untitled');
   const date = formatDate(m.created_at, i18n.language);
@@ -106,14 +108,14 @@ export function MaterialCard({
               width: 44,
               height: 44,
               borderRadius: 22,
-              backgroundColor: tone === 'paper' ? LB.canvas : TONE_BG[tone],
+              backgroundColor: tone === 'paper' ? palette.canvas : tones.bg[tone],
               borderWidth: 1,
-              borderColor: tone === 'paper' ? LB.hairline : TONE_DEEP[tone],
+              borderColor: tone === 'paper' ? palette.hairline : tones.deep[tone],
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Icon name="book" size={20} color={LB.primaryDk} />
+            <Icon name="book" size={20} color={palette.primaryDk} />
           </View>
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={[TYPE.body, { fontWeight: '600' }]}>{title}</Text>
@@ -125,7 +127,7 @@ export function MaterialCard({
             ) : null}
           </View>
         </View>
-        {note ? <Text style={[TYPE.body, { color: LB.ink2 }]}>{note}</Text> : null}
+        {note ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{note}</Text> : null}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
           {m.status === 'ready' ? (
             <Btn
@@ -171,7 +173,7 @@ export function MaterialCard({
           >
             {t('delete')}
           </Btn>
-          {busy ? <ActivityIndicator size="small" color={LB.primary} /> : null}
+          {busy ? <ActivityIndicator size="small" color={palette.primary} /> : null}
         </View>
       </View>
     </Card>

@@ -84,7 +84,7 @@ import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech
 import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { reacted } from '../../lib/perf.js';
@@ -167,6 +167,7 @@ function questionOnScreen(session: SessionView, pinnedId: string | null): Sessio
 }
 
 export default function PracticeScreen() {
+  const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
@@ -779,7 +780,7 @@ export default function PracticeScreen() {
               right={flagButton}
             />
             {session.mode === 'help' || testing ? (
-              <Text style={[TYPE.small, { color: LB.primaryDk, fontWeight: '500' }]}>
+              <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
                 {t(testing ? 'practice:test_note' : 'practice:help_note')}
               </Text>
             ) : null}

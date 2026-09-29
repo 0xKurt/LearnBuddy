@@ -14,7 +14,7 @@ import { updateLearner } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { birthDateOf, formatBirthDate, partsOf } from '../../lib/birthDate.js';
 import { messageFor } from '../../lib/errors.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -32,6 +32,7 @@ type Props = {
 };
 
 export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
+  const { palette } = useTheme();
   const { t, i18n } = useTranslation(['settings', 'auth', 'common']);
   const [open, setOpen] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -132,7 +133,9 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
           hint={t('settings:adult.profile.body')}
         >
           {minor ? (
-            <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
+            <Text style={[TYPE.body, { color: palette.ink2 }]}>
+              {t('settings:adult.needs_pin')}
+            </Text>
           ) : null}
           <Btn pill variant="outline" onPress={() => void start()} disabled={!enabled || opening}>
             {t('settings:adult.profile.cta')}
@@ -204,13 +207,13 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
             </View>
           </View>
           {dateComplete && !birthDate ? (
-            <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.danger }]}>
+            <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
               {t('auth:profile.birth_date_invalid')}
             </Text>
           ) : null}
         </View>
         {failure ? (
-          <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.danger }]}>
+          <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
             {failure}
           </Text>
         ) : null}

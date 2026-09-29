@@ -16,13 +16,14 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 
 export function Thinking({ label }: { label: string }) {
+  const { palette } = useTheme();
   // iOS has no live regions: the waiting state says itself (lib/announce.ts).
   useAnnounce(label);
   return (
@@ -35,7 +36,7 @@ export function Thinking({ label }: { label: string }) {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 5,
-          backgroundColor: LB.paper,
+          backgroundColor: palette.paper,
           borderRadius: 16,
           borderBottomLeftRadius: 6,
           paddingHorizontal: 12,
@@ -48,7 +49,7 @@ export function Thinking({ label }: { label: string }) {
       </View>
       <Text
         accessibilityLiveRegion="polite"
-        style={[TYPE.small, { color: LB.ink2, flexShrink: 1 }]}
+        style={[TYPE.small, { color: palette.ink2, flexShrink: 1 }]}
       >
         {label}
       </Text>
@@ -59,6 +60,7 @@ export function Thinking({ label }: { label: string }) {
 const STEP_MS = 300;
 
 function Dot({ index }: { index: number }) {
+  const { palette } = useTheme();
   const reduced = useReducedMotion();
   const v = useSharedValue(0);
   useEffect(() => {
@@ -83,7 +85,7 @@ function Dot({ index }: { index: number }) {
   }));
   return (
     <Animated.View
-      style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: LB.ink3 }, style]}
+      style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.ink3 }, style]}
     />
   );
 }

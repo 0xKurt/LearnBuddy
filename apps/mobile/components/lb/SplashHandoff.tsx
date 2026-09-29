@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import SPLASH_IMAGE from '../../assets/splash-icon.png';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 
 // Must be called at start-up, before the first render (expo-splash-screen).
@@ -26,6 +26,7 @@ if (Platform.OS !== 'web') void SplashScreen.preventAutoHideAsync().catch(() => 
 export const SPLASH_IMAGE_WIDTH = 200;
 
 export function SplashHandoff({ ready }: { ready: boolean }) {
+  const { palette } = useTheme();
   const reduce = useReducedMotion();
   const [gone, setGone] = useState(false);
   const fade = useSharedValue(1);
@@ -55,7 +56,12 @@ export function SplashHandoff({ ready }: { ready: boolean }) {
       // background into the veil (issue #84).
       style={[
         StyleSheet.absoluteFill,
-        { backgroundColor: LB.bg, alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+        {
+          backgroundColor: palette.bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        },
         veil,
       ]}
       // The same picture as the native splash is on screen: that one can go.

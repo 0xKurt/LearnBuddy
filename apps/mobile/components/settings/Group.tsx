@@ -9,7 +9,7 @@
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
@@ -31,6 +31,7 @@ type Props = {
 };
 
 export function Group({ title, intro, icon, fold, summary, children }: Props) {
+  const { palette } = useTheme();
   const folds = useContext(FoldContext);
   const foldable = folds !== null && fold !== undefined;
   const open = !foldable || folds.open === fold;
@@ -45,12 +46,12 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
             width: 36,
             height: 36,
             borderRadius: 18,
-            backgroundColor: LB.paper,
+            backgroundColor: palette.paper,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Icon name={icon} size={19} color={LB.primaryDk} />
+          <Icon name={icon} size={19} color={palette.primaryDk} />
         </View>
       ) : null}
       <View style={{ flex: 1, gap: 2 }}>
@@ -58,7 +59,7 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
           {title}
         </Text>
         {foldable && !open && summary ? (
-          <Text numberOfLines={1} style={[TYPE.small, { color: LB.ink2 }]}>
+          <Text numberOfLines={1} style={[TYPE.small, { color: palette.ink2 }]}>
             {summary}
           </Text>
         ) : null}
@@ -69,7 +70,7 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
           importantForAccessibility="no-hide-descendants"
           style={{ transform: [{ rotate: open ? '-90deg' : '90deg' }] }}
         >
-          <Icon name="chevron" size={20} color={LB.ink2} />
+          <Icon name="chevron" size={20} color={palette.ink2} />
         </View>
       ) : null}
     </View>
@@ -78,7 +79,7 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
   return (
     <View style={{ gap: 12 }}>
       {foldable ? (
-        <View style={{ borderRadius: 20, backgroundColor: open ? 'transparent' : LB.paper }}>
+        <View style={{ borderRadius: 20, backgroundColor: open ? 'transparent' : palette.paper }}>
           <Btn
             variant="ghost"
             full
@@ -98,7 +99,7 @@ export function Group({ title, intro, icon, fold, summary, children }: Props) {
       {open ? (
         <>
           {intro ? (
-            <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>{intro}</Text>
+            <Text style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4 }]}>{intro}</Text>
           ) : null}
           {children}
         </>

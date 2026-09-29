@@ -1,7 +1,8 @@
 import { View } from 'react-native';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function Progress({ value }: { value: number }) {
+  const { palette } = useTheme();
   const clamped = Math.max(0, Math.min(1, value));
   return (
     <View
@@ -9,7 +10,7 @@ export function Progress({ value }: { value: number }) {
         flex: 1,
         height: 6,
         borderRadius: 3,
-        backgroundColor: LB.primaryLt,
+        backgroundColor: palette.primaryLt,
         overflow: 'hidden',
       }}
     >
@@ -17,7 +18,7 @@ export function Progress({ value }: { value: number }) {
         style={{
           width: `${clamped * 100}%`,
           height: '100%',
-          backgroundColor: LB.primary,
+          backgroundColor: palette.primary,
           borderRadius: 3,
         }}
       />

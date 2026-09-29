@@ -4,11 +4,12 @@
 
 import { View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Bone, BoneCard, BoneLines, SkeletonGroup } from './Skeleton.js';
 
 /** The practice screen: where she is, the question card, the answer at the bottom. */
 export function PracticeSkeleton({ label }: { label: string }) {
+  const { palette } = useTheme();
   return (
     <SkeletonGroup label={label} style={{ flex: 1, paddingHorizontal: 16 }}>
       {/* The header: the session's title and "Beenden". */}
@@ -22,7 +23,7 @@ export function PracticeSkeleton({ label }: { label: string }) {
         <Bone width={84} height={14} radius={7} />
         <Bone width="auto" height={8} radius={4} style={{ flex: 1 }} />
       </View>
-      <View style={{ backgroundColor: LB.lavender, borderRadius: 24, padding: 18, gap: 14 }}>
+      <View style={{ backgroundColor: palette.lavender, borderRadius: 24, padding: 18, gap: 14 }}>
         <Bone width={120} height={12} radius={6} tone="white" />
         <BoneLines lines={2} height={18} gap={10} last="70%" tone="white" />
       </View>
@@ -63,6 +64,7 @@ export function LibrarySkeleton({ label }: { label: string }) {
 
 /** "Was Buddy über dich weiß": the intro, a heading and the entries. */
 export function MemorySkeleton({ label }: { label: string }) {
+  const { palette } = useTheme();
   return (
     <SkeletonGroup label={label} style={{ padding: 16, gap: 22 }}>
       <View style={{ paddingHorizontal: 4 }}>
@@ -73,7 +75,7 @@ export function MemorySkeleton({ label }: { label: string }) {
         {[0, 1].map((i) => (
           <View
             key={i}
-            style={{ backgroundColor: LB.lavender, borderRadius: 22, padding: 18, gap: 12 }}
+            style={{ backgroundColor: palette.lavender, borderRadius: 22, padding: 18, gap: 12 }}
           >
             <Bone width={i === 0 ? '58%' : '72%'} height={15} radius={7} tone="white" />
             <Bone width="44%" height={12} radius={6} tone="white" />
@@ -129,6 +131,7 @@ export function SettingsSkeleton({ label }: { label: string }) {
 
 /** The questions of one sheet: the sheet's card, then a few question cards. */
 export function QuestionsSkeleton({ label }: { label: string }) {
+  const { palette } = useTheme();
   return (
     <SkeletonGroup label={label} style={{ padding: 16, gap: 12 }}>
       <BoneCard>
@@ -138,7 +141,7 @@ export function QuestionsSkeleton({ label }: { label: string }) {
       {[0, 1, 2].map((i) => (
         <View
           key={i}
-          style={{ backgroundColor: LB.lavender, borderRadius: 22, padding: 18, gap: 10 }}
+          style={{ backgroundColor: palette.lavender, borderRadius: 22, padding: 18, gap: 10 }}
         >
           <Bone width={90} height={11} radius={6} tone="white" />
           <BoneLines lines={2} height={14} last={i === 2 ? '44%' : '72%'} tone="white" />

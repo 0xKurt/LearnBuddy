@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { speak, stop, type ListenEnd } from '../../lib/speech/listen.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from '../lb/Icon.js';
 import { toast } from '../lb/Toast.js';
 
@@ -21,6 +21,7 @@ type Props = {
 };
 
 export function ListenButton({ text, lang, slow = false, disabled = false }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const [playing, setPlaying] = useState(false);
   const mounted = useRef(true);
@@ -85,18 +86,18 @@ export function ListenButton({ text, lang, slow = false, disabled = false }: Pro
             gap: 8,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: playing ? LB.primary : LB.hairline,
-            backgroundColor: playing ? LB.primaryLt : LB.paper,
+            borderColor: playing ? palette.primary : palette.hairline,
+            backgroundColor: playing ? palette.primaryLt : palette.paper,
             opacity: pressed ? 0.78 : 1,
           }}
         >
-          <Icon name="speak" size={20} color={playing ? LB.primaryDk : LB.ink} />
+          <Icon name="speak" size={20} color={playing ? palette.primaryDk : palette.ink} />
           <Text
             style={{
               fontSize: 15,
               lineHeight: 20,
               fontWeight: '600',
-              color: playing ? LB.primaryDk : LB.ink,
+              color: playing ? palette.primaryDk : palette.ink,
             }}
           >
             {label}

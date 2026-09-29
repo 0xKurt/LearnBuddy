@@ -24,11 +24,12 @@ import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
 import { AuthFailure, requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
 import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 export default function Welcome() {
+  const { palette } = useTheme();
   const { t } = useTranslation(['auth', 'common']);
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
   const [email, setEmail] = useState('');
@@ -165,7 +166,7 @@ export default function Welcome() {
   const showOrb = !(compact && mode === 'signup');
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: LB.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow height={420} />
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
@@ -194,7 +195,7 @@ export default function Welcome() {
             <Text
               style={[
                 dense ? TYPE.small : TYPE.body,
-                { color: LB.ink2, textAlign: 'center', maxWidth: 420 },
+                { color: palette.ink2, textAlign: 'center', maxWidth: 420 },
               ]}
             >
               {t('welcome.body')}
@@ -334,14 +335,14 @@ export default function Welcome() {
                     width: 32,
                     height: 32,
                     borderRadius: 16,
-                    backgroundColor: LB.paper,
+                    backgroundColor: palette.paper,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="shield" size={18} color={LB.primaryDk} />
+                  <Icon name="shield" size={18} color={palette.primaryDk} />
                 </View>
-                <Text style={[TYPE.small, { flex: 1, color: LB.ink }]}>
+                <Text style={[TYPE.small, { flex: 1, color: palette.ink }]}>
                   {t('welcome.minor_hint')}
                 </Text>
               </View>
@@ -352,7 +353,7 @@ export default function Welcome() {
           {failure ? (
             <Text
               accessibilityLiveRegion="polite"
-              style={[TYPE.small, { color: LB.danger, textAlign: 'center' }]}
+              style={[TYPE.small, { color: palette.danger, textAlign: 'center' }]}
             >
               {failure}
             </Text>

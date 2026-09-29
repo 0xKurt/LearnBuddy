@@ -19,7 +19,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { MathAtom } from '../../lib/math/parse.js';
 import { parsePrompt, promptForSpeech, type PromptRun } from '../../lib/math/prompt.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSpokenMath } from './useSpokenMath.js';
 
 type Props = {
@@ -66,6 +66,7 @@ export function MathText({
   accessible = true,
   blanks,
 }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('math');
   const withBlanks = blanks !== undefined;
   const filled = blanks?.filled ?? null;
@@ -103,7 +104,7 @@ export function MathText({
 
   const m: Metrics = {
     size: flat.fontSize ?? 16,
-    color: typeof flat.color === 'string' ? flat.color : LB.ink,
+    color: typeof flat.color === 'string' ? flat.color : palette.ink,
     weight: flat.fontWeight,
     family: flat.fontFamily,
   };
@@ -172,6 +173,7 @@ function Gap({
   lineHeight: number;
   filled: string | null;
 }) {
+  const { palette } = useTheme();
   return (
     <View
       // The walkthrough measures the gap here: it has to grow with the answer (issue #62).
@@ -185,14 +187,16 @@ function Gap({
         justifyContent: 'flex-end',
         marginHorizontal: 3,
         paddingHorizontal: 6,
-        backgroundColor: LB.paper,
+        backgroundColor: palette.paper,
         borderBottomWidth: 2,
-        borderBottomColor: LB.ink2,
+        borderBottomColor: palette.ink2,
         borderTopLeftRadius: 6,
         borderTopRightRadius: 6,
       }}
     >
-      <Text style={[style, filled ? { color: LB.primaryDk } : null]}>{filled ?? EMPTY_GAP}</Text>
+      <Text style={[style, filled ? { color: palette.primaryDk } : null]}>
+        {filled ?? EMPTY_GAP}
+      </Text>
     </View>
   );
 }
@@ -345,6 +349,7 @@ function AtomView({ atom, m, size = m.size }: { atom: MathAtom; m: Metrics; size
 
 /** A blank inside math: the same light box as in the text, sized to the math around it. */
 function MathGap({ m, size }: { m: Metrics; size: number }) {
+  const { palette } = useTheme();
   const filled = useContext(FilledBlank);
   return (
     <View
@@ -352,14 +357,14 @@ function MathGap({ m, size }: { m: Metrics; size: number }) {
         justifyContent: 'flex-end',
         marginHorizontal: 2,
         paddingHorizontal: 4,
-        backgroundColor: LB.paper,
+        backgroundColor: palette.paper,
         borderBottomWidth: 2,
-        borderBottomColor: LB.ink2,
+        borderBottomColor: palette.ink2,
         borderTopLeftRadius: 5,
         borderTopRightRadius: 5,
       }}
     >
-      <Text style={[textStyle(m, size), filled ? { color: LB.primaryDk } : null]}>
+      <Text style={[textStyle(m, size), filled ? { color: palette.primaryDk } : null]}>
         {filled ?? '\u00A0'.repeat(4)}
       </Text>
     </View>

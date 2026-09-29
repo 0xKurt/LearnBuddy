@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { Appear } from './Motion.js';
 
@@ -153,16 +153,17 @@ export function BoneLines({
 
 /** A white card on the page (the shape of a library or memory row). */
 export function BoneCard({ children, style }: { children: ReactNode; style?: ViewStyle }) {
+  const { palette } = useTheme();
   return (
     <View
       style={[
         {
-          backgroundColor: LB.paper,
+          backgroundColor: palette.paper,
           borderRadius: 22,
           padding: 18,
           gap: 12,
           borderWidth: 1,
-          borderColor: LB.hairline,
+          borderColor: palette.hairline,
         },
         style,
       ]}

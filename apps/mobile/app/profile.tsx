@@ -45,7 +45,7 @@ import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
 import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
@@ -53,6 +53,7 @@ import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 const onlyDigits = (value: string) => value.replace(/\D+/g, '');
 
 export default function Profile() {
+  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
   // A small phone (360×740) gets tighter spacing so each step fits (CLAUDE.md rule 16).
@@ -324,7 +325,7 @@ export default function Profile() {
                 {dateComplete && !birthDate ? (
                   <Text
                     accessibilityLiveRegion="polite"
-                    style={[TYPE.small, { color: LB.danger, paddingHorizontal: 4 }]}
+                    style={[TYPE.small, { color: palette.danger, paddingHorizontal: 4 }]}
                   >
                     {t('profile.birth_date_invalid')}
                   </Text>
@@ -339,7 +340,7 @@ export default function Profile() {
                   // Not a dead end: what applies, and the real next step (user feedback #5).
                   <Card tone="lavender" padding={16}>
                     <View style={{ gap: 10 }}>
-                      <Text style={[TYPE.body, { color: LB.ink }]}>
+                      <Text style={[TYPE.body, { color: palette.ink }]}>
                         {t('profile.too_young_self')}
                       </Text>
                       <Btn pill variant="outline" icon="shield" onPress={adultIsHere}>
@@ -353,7 +354,7 @@ export default function Profile() {
           ) : null}
           {parentStep && handedOver ? (
             // The account was made by the teenager: say whose e-mail it runs on.
-            <Text style={[TYPE.small, { color: LB.ink, paddingHorizontal: 4 }]}>
+            <Text style={[TYPE.small, { color: palette.ink, paddingHorizontal: 4 }]}>
               {t('profile.handover_email', { email: currentSession()?.email ?? '' })}
             </Text>
           ) : null}
@@ -380,16 +381,16 @@ export default function Profile() {
                       width: 32,
                       height: 32,
                       borderRadius: 16,
-                      backgroundColor: LB.paper,
+                      backgroundColor: palette.paper,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="shield" size={18} color={LB.primaryDk} />
+                    <Icon name="shield" size={18} color={palette.primaryDk} />
                   </View>
                   <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
                 </View>
-                <Text style={[TYPE.small, { color: LB.ink }]}>{t('profile.pin_body')}</Text>
+                <Text style={[TYPE.small, { color: palette.ink }]}>{t('profile.pin_body')}</Text>
                 {/* Visible labels: the second field is the repetition (user feedback #20). */}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <View style={{ flex: 1, gap: 4 }}>
@@ -424,11 +425,16 @@ export default function Profile() {
                 </View>
                 {/* While the two PINs differ, that is what matters; the reset hint returns after. */}
                 {pinRepeat.length === 4 && pin !== pinRepeat ? (
-                  <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: LB.danger }]}>
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    style={[TYPE.small, { color: palette.danger }]}
+                  >
                     {t('profile.pin_mismatch')}
                   </Text>
                 ) : (
-                  <Text style={[TYPE.small, { color: LB.ink2 }]}>{t('profile.pin_forgot')}</Text>
+                  <Text style={[TYPE.small, { color: palette.ink2 }]}>
+                    {t('profile.pin_forgot')}
+                  </Text>
                 )}
               </View>
             </Card>
@@ -486,11 +492,12 @@ export default function Profile() {
 
 /** A visible label above a field (the field carries it for screen readers too). */
 function FieldLabel({ children }: { children: string }) {
+  const { palette } = useTheme();
   return (
     <Text
       accessibilityElementsHidden
       importantForAccessibility="no"
-      style={[TYPE.small, { color: LB.ink2, paddingHorizontal: 4 }]}
+      style={[TYPE.small, { color: palette.ink2, paddingHorizontal: 4 }]}
     >
       {children}
     </Text>
@@ -503,6 +510,7 @@ function FieldLabel({ children }: { children: string }) {
  * same request, and messages to the phone start off (contact is opt-in, CLAUDE.md rule 6).
  */
 function Handover({ name, busy, onDone }: { name: string; busy: boolean; onDone: () => void }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
   const points = [
@@ -538,12 +546,12 @@ function Handover({ name, busy, onDone }: { name: string; busy: boolean; onDone:
                     width: 26,
                     height: 26,
                     borderRadius: 13,
-                    backgroundColor: LB.lavender,
+                    backgroundColor: palette.lavender,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="check" size={15} color={LB.primaryDk} />
+                  <Icon name="check" size={15} color={palette.primaryDk} />
                 </View>
                 <Text style={[TYPE.body, { flex: 1 }]}>{p}</Text>
               </View>
@@ -574,6 +582,7 @@ function Handover({ name, busy, onDone }: { name: string; busy: boolean; onDone:
  * "Weiter" is always possible. Later in the settings, or by asking Buddy ("andere Stimme").
  */
 function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
   const settings = useSettings();
@@ -595,14 +604,14 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
         <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
           {t('profile.voice_title')}
         </Text>
-        <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
+        <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
           {t('profile.voice_body')}
         </Text>
         {settings.data ? (
           <VoicePicker settings={settings.data} />
         ) : settings.isError ? (
           // Not a dead end: the voice stays the default and can be changed later.
-          <Text style={[TYPE.small, { color: LB.ink2, textAlign: 'center' }]}>
+          <Text style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}>
             {t('profile.voice_later')}
           </Text>
         ) : (

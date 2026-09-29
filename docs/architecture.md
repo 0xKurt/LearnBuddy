@@ -1588,16 +1588,28 @@ first sees the thread, kept in a ref, so nothing jumps while she is in the app.
 
 The colours are a **palette**, not scattered literals: `apps/mobile/lib/theme/palettes.ts`
 holds the named ones — `pastellSoft` (the chosen look, default), `night`, and the accent
-variants `forest`, `ocean`, `sunset`. `lib/theme/colors.ts` exposes the active palette as
-the `LB` tokens every screen already reads, and refills them in place when the palette
-changes; `ThemeProvider` re-renders the tree in the same breath (and remounts it by key,
-so a style built once cannot keep old colours). The choice is per device, kept through
+variants `forest`, `ocean`, `sunset`. **A screen asks `useTheme()` for its colours**
+(`lib/theme/ThemeProvider.tsx`): the hook hands out the whole `palette`, the subject tints
+(`tones.bg`, `tones.deep`) and the figure ink — derived from the palette by pure functions in
+`palettes.ts`, so nothing a screen holds can belong to another theme. The provider re-renders
+the tree when the choice changes (and remounts it by key, so a style built once cannot keep
+old colours). It **mirrors** the applied palette rather than keeping a copy
+(`useSyncExternalStore(onPaletteApplied, activeTheme)`): the provider mounts with the app,
+but `restoreTheme()` reads the device from the root screen's effect afterwards — a remembered
+choice would never reach the tree otherwise. The choice is per device, kept through
 `lib/api/outboxStorage` (never AsyncStorage directly — that breaks the web bundle, issue
-#43), and applied before the first screen. Curated on purpose: a learner picks a palette,
-never a colour, so "calm and friendly" survives (docs/DESIGN-BRIEF.md). Every palette must
-hold the same contrast pairs — text 4.5:1, meaningful shapes 3:1 — checked for all of them
-in `lib/theme/__tests__/contrast.test.ts`; a palette that fails there is not shipped.
-Layer 2 of the issue moves screens to `useTheme()` and drops the mutable `LB` bridge.
+#43), and applied before the first screen. Curated on purpose: a learner picks a palette, never a colour, so "calm and friendly"
+survives (docs/DESIGN-BRIEF.md). Every palette must hold the same contrast pairs — text
+4.5:1, meaningful shapes 3:1 — checked for all of them in
+`lib/theme/__tests__/contrast.test.ts`; a palette that fails there is not shipped.
+
+`lib/theme/colors.ts` is the machinery behind the hook: it keeps which palette is applied and
+refills the live token objects in place (`applyPalette`). **No file under `app/` or
+`components/` imports it** — an ESLint rule (`no-restricted-imports` in `eslint.config.mjs`)
+fails the build if one does, because those objects are live and a screen that captures them at
+import time freezes the palette the app happened to start with (issue #29, layer 3). The
+remaining `LB`/`TONE_*`/`FIGURE` exports are the last of the old bridge; dropping them is the
+final step of the issue.
 
 **Colours are read at render time, never captured at module scope** (issue #84, owner:
 "manchmal sieht man die schrift nicht richtig, im dark mode"). The remount-by-key covers
@@ -1612,7 +1624,7 @@ initializer reads `LB`/`TYPE`/`SHADOW`/`TONE_*`/`FIGURE`. The walkthrough switch
 night palette at Mia's settings stop and runs the axe contrast pass on the dark settings and
 the dark home (`15f`–`15h`). **The picker previews every palette in its own colours**
 (`LookSection`: bg, card, ink sample, primary chip — drawn from `PALETTES`, never from the
-live `LB`), instead of five identical white buttons.
+palette in use), instead of five identical white buttons.
 
 ## Testing
 

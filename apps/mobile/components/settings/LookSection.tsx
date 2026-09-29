@@ -4,12 +4,11 @@
 //
 // Each option shows what it would look like (issue #84, owner: "man sollte vorher schon
 // sehen wie es aussehen könnte"): a small card drawn in THAT palette's own colours — read
-// from PALETTES, never from the live LB, so the previews stay true whichever theme is on.
+// from PALETTES, never from the palette in use, so the previews stay true whichever theme is on.
 
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
 import { paletteOf, THEME_NAMES, type ThemeName } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Card } from '../lb/Card.js';
@@ -30,6 +29,7 @@ function Swatch({
   sample: string;
   onPress: () => void;
 }) {
+  const { palette } = useTheme();
   const p = paletteOf(name);
   return (
     <Pressable
@@ -47,7 +47,7 @@ function Swatch({
             overflow: 'hidden',
             borderWidth: on ? 2.5 : 1,
             // The ring reads in the ACTIVE palette (it frames the control, not the preview).
-            borderColor: on ? LB.primary : LB.hairline,
+            borderColor: on ? palette.primary : palette.hairline,
             opacity: pressed ? 0.85 : 1,
           }}
         >

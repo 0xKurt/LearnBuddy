@@ -9,11 +9,12 @@ import { Pressable, View } from 'react-native';
 
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from '../lb/Icon.js';
 import { toast } from '../lb/Toast.js';
 
 export function VoiceModeToggle() {
+  const { palette } = useTheme();
   const { t } = useTranslation('common');
   const on = useVoiceMode((s) => s.on);
   const setOn = useVoiceMode((s) => s.setOn);
@@ -48,15 +49,15 @@ export function VoiceModeToggle() {
             width: 44,
             height: 44,
             borderRadius: 22,
-            backgroundColor: on ? LB.primary : LB.paper,
-            borderColor: on ? LB.primary : LB.hairline,
+            backgroundColor: on ? palette.primary : palette.paper,
+            borderColor: on ? palette.primary : palette.hairline,
             borderWidth: 1,
             alignItems: 'center',
             justifyContent: 'center',
             opacity: pressed ? 0.78 : 1,
           }}
         >
-          <Icon name="speak" size={21} color={on ? LB.paper : LB.ink} />
+          <Icon name="speak" size={21} color={on ? palette.paper : palette.ink} />
           {on ? (
             <View
               style={{
@@ -66,14 +67,14 @@ export function VoiceModeToggle() {
                 width: 18,
                 height: 18,
                 borderRadius: 9,
-                backgroundColor: LB.paper,
+                backgroundColor: palette.paper,
                 borderWidth: 1,
-                borderColor: LB.primary,
+                borderColor: palette.primary,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Icon name="check" size={12} color={LB.primaryDk} />
+              <Icon name="check" size={12} color={palette.primaryDk} />
             </View>
           ) : null}
         </View>

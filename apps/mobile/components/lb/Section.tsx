@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 export function Section({
@@ -19,6 +19,7 @@ export function Section({
   /** A colour for the round mark before the title. */
   dot?: string;
 }) {
+  const { palette } = useTheme();
   return (
     <View style={{ gap: 10 }}>
       <View
@@ -44,7 +45,7 @@ export function Section({
             // all-caps string letter by letter.
             style={[
               TYPE.label,
-              { flex: 1, color: LB.ink2, letterSpacing: 0.8, textTransform: 'uppercase' },
+              { flex: 1, color: palette.ink2, letterSpacing: 0.8, textTransform: 'uppercase' },
             ]}
           >
             {title}

@@ -37,7 +37,7 @@ import { toast } from '../components/lb/Toast.js';
 import { keys, queryClient } from '../lib/api/queries.js';
 import { MAX_PHOTOS, type MaterialPurpose } from '../lib/capture/upload.js';
 import { useAttachments } from '../lib/capture/useAttachments.js';
-import { LB } from '../lib/theme/colors.js';
+import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 
 /** The purpose param; anything else is study material. */
@@ -59,6 +59,7 @@ function idParam(value: string | string[] | undefined): string | null {
 }
 
 export default function CaptureScreen() {
+  const { palette } = useTheme();
   const { t } = useTranslation(['capture', 'common']);
   const params = useLocalSearchParams<{
     stepId?: string | string[];
@@ -146,7 +147,7 @@ export default function CaptureScreen() {
                 : t('capture:title')}
           </Text>
           {photos.length === 0 ? (
-            <Text style={[TYPE.body, { color: LB.ink2 }]}>
+            <Text style={[TYPE.body, { color: palette.ink2 }]}>
               {completes
                 ? link.add
                   ? t('capture:again.intro_add')
@@ -195,7 +196,7 @@ export default function CaptureScreen() {
             accessibilityLiveRegion="polite"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
           >
-            <ActivityIndicator size="small" color={LB.primary} />
+            <ActivityIndicator size="small" color={palette.primary} />
             <Text style={[TYPE.body, { flex: 1 }]}>
               {t('capture:preparing', { current: preparing.current, count: preparing.total })}
             </Text>
@@ -246,12 +247,12 @@ export default function CaptureScreen() {
                     height: 72,
                     borderRadius: 36,
                     marginBottom: 8,
-                    backgroundColor: LB.lavender,
+                    backgroundColor: palette.lavender,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="camera" size={32} color={LB.primaryDk} />
+                  <Icon name="camera" size={32} color={palette.primaryDk} />
                 </View>
               ) : null}
               <Btn
@@ -295,7 +296,7 @@ export default function CaptureScreen() {
             </View>
           </Card>
         ) : (
-          <Text style={[TYPE.body, { color: LB.ink2, textAlign: 'center' }]}>
+          <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center' }]}>
             {t('capture:limit', { max: MAX_PHOTOS })}
           </Text>
         )}
@@ -324,8 +325,8 @@ export default function CaptureScreen() {
             borderRadius: 28,
             borderWidth: 2,
             borderStyle: 'dashed',
-            borderColor: LB.primary,
-            backgroundColor: LB.veil,
+            borderColor: palette.primary,
+            backgroundColor: palette.veil,
             alignItems: 'center',
             justifyContent: 'center',
             gap: 12,
@@ -337,12 +338,12 @@ export default function CaptureScreen() {
               width: 72,
               height: 72,
               borderRadius: 36,
-              backgroundColor: LB.lavender,
+              backgroundColor: palette.lavender,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Icon name="file" size={32} color={LB.primaryDk} />
+            <Icon name="file" size={32} color={palette.primaryDk} />
           </View>
           <Text style={[TYPE.title, { textAlign: 'center', maxWidth: 260 }]}>
             {t('capture:files.drop')}

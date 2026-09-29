@@ -67,7 +67,7 @@ import {
   type MoonState,
   type Sparkle,
 } from '../../lib/buddy/moon.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 
@@ -314,6 +314,7 @@ function Blur({ id, sd }: { id: string; sd: number }) {
 
 /** The glass sphere, as the prototype's Orb draws it. */
 function Glass({ size }: { size: number }) {
+  const { palette } = useTheme();
   const id = useSvgId('orb');
   const R = ORB_R;
   const hx = -R * 0.36;
@@ -328,9 +329,9 @@ function Glass({ size }: { size: number }) {
           <Stop offset="1" stopColor="#f7bcdc" />
         </LinearGradient>
         <RadialGradient id={`${id}depth`} cx="0.42" cy="0.34" r="0.74">
-          <Stop offset="0.6" stopColor={LB.primary} stopOpacity={0} />
-          <Stop offset="0.9" stopColor={LB.primary} stopOpacity={0.24} />
-          <Stop offset="1" stopColor={LB.primary} stopOpacity={0.4} />
+          <Stop offset="0.6" stopColor={palette.primary} stopOpacity={0} />
+          <Stop offset="0.9" stopColor={palette.primary} stopOpacity={0.24} />
+          <Stop offset="1" stopColor={palette.primary} stopOpacity={0.4} />
         </RadialGradient>
         <RadialGradient id={`${id}shine`} cx="0.36" cy="0.28" r="0.52">
           <Stop offset="0" stopColor="#ffffff" stopOpacity={0.9} />
@@ -384,6 +385,7 @@ function Glass({ size }: { size: number }) {
 
 /** The soft violet shadow under a large orb (it does not breathe with the glass). */
 function Shadow({ size, u }: { size: number; u: number }) {
+  const { palette } = useTheme();
   const id = useSvgId('sh');
   // Room for the blurred ellipse (its lower edge plus three deviations is 73 units down).
   const E = 76;
@@ -399,7 +401,7 @@ function Shadow({ size, u }: { size: number; u: number }) {
           cy={R * 0.98}
           rx={R * 0.72}
           ry={R * 0.15}
-          fill={LB.primary}
+          fill={palette.primary}
           fillOpacity={0.2}
           filter={`url(#${id})`}
         />

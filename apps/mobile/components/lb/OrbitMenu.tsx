@@ -6,7 +6,7 @@ import { useState, type ReactNode } from 'react';
 import { PixelRatio, Pressable, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 import { Icon, type IconName } from './Icon.js';
@@ -27,6 +27,7 @@ export function OrbitMenu({
   center: ReactNode;
   disabled?: boolean;
 }) {
+  const { palette } = useTheme();
   const [width, setWidth] = useState(0);
   // The labels follow the system text size to the same 200 % cap as every control label
   // (Btn); the ring's fixed bands above and below the nodes grow with them, so a large
@@ -67,7 +68,7 @@ export function OrbitMenu({
                 cy={cy}
                 r={r}
                 fill="none"
-                stroke={LB.lavenderDeep}
+                stroke={palette.lavenderDeep}
                 strokeWidth={1.2}
               />
             </Svg>
@@ -117,7 +118,7 @@ export function OrbitMenu({
                           width: NODE,
                           height: NODE,
                           borderRadius: NODE / 2,
-                          backgroundColor: LB.paper,
+                          backgroundColor: palette.paper,
                           alignItems: 'center',
                           justifyContent: 'center',
                           transform: [{ scale: pressed ? 0.94 : 1 }],
@@ -125,7 +126,7 @@ export function OrbitMenu({
                         SHADOW.soft,
                       ]}
                     >
-                      <Icon name={item.icon} size={26} color={LB.primary} />
+                      <Icon name={item.icon} size={26} color={palette.primary} />
                     </View>
                     {labelAbove ? null : <NodeLabel text={item.label} />}
                   </>
@@ -140,6 +141,7 @@ export function OrbitMenu({
 }
 
 function NodeLabel({ text, above = false }: { text: string; above?: boolean }) {
+  const { palette } = useTheme();
   return (
     <Text
       numberOfLines={above ? 1 : 2}
@@ -152,11 +154,11 @@ function NodeLabel({ text, above = false }: { text: string; above?: boolean }) {
         fontSize: 14,
         lineHeight: 18,
         fontWeight: '600',
-        color: LB.ink,
+        color: palette.ink,
         textAlign: 'center',
         // The ring runs behind the labels beside and under the nodes: a soft veil keeps the
         // line from crossing the words.
-        backgroundColor: LB.veil,
+        backgroundColor: palette.veil,
         borderRadius: 6,
         overflow: 'hidden',
       }}

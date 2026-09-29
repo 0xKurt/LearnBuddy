@@ -17,7 +17,7 @@ import { setPassword as savePasswordOnServer } from '../../lib/api/endpoints.js'
 import { looksLikeEmail, passwordProblem } from '../../lib/auth/recovery.js';
 import { changeEmail } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { NewPasswordFields } from '../auth/NewPasswordFields.js';
 import { Btn } from '../lb/Btn.js';
@@ -40,6 +40,7 @@ type Props = {
 type Open = 'email' | 'password' | null;
 
 export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation(['settings', 'common']);
   const [open, setOpen] = useState<Open>(null);
   const [opening, setOpening] = useState(false);
@@ -141,7 +142,9 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
             hint={email ? undefined : t('settings:adult.access.email_unknown')}
           >
             {minor ? (
-              <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
+              <Text style={[TYPE.body, { color: palette.ink2 }]}>
+                {t('settings:adult.needs_pin')}
+              </Text>
             ) : null}
             <Btn pill variant="outline" onPress={() => void start('email')} disabled={locked}>
               {t('settings:adult.access.email_cta')}
@@ -150,7 +153,9 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
           <Divider />
           <Row question={t('settings:adult.access.password_title')}>
             {minor ? (
-              <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('settings:adult.needs_pin')}</Text>
+              <Text style={[TYPE.body, { color: palette.ink2 }]}>
+                {t('settings:adult.needs_pin')}
+              </Text>
             ) : null}
             <Btn pill variant="outline" onPress={() => void start('password')} disabled={locked}>
               {t('settings:adult.access.password_cta')}
@@ -234,11 +239,12 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
 }
 
 function Failure({ text }: { text: string | null }) {
+  const { palette } = useTheme();
   // iOS has no live regions: the failure says itself (lib/announce.ts).
   useAnnounce(text);
   if (!text) return null;
   return (
-    <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: LB.danger }]}>
+    <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
       {text}
     </Text>
   );

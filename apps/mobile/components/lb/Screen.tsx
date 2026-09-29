@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { CircleBtn } from './CircleBtn.js';
 import { Glow } from './Glow.js';
@@ -19,8 +19,9 @@ type Props = {
 };
 
 export function Screen({ title, back = false, right, children }: Props) {
+  const { palette } = useTheme();
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: LB.bg }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       {/* The same soft light as on Buddy's home, a little lower so content stays calm. */}
       <Glow height={260} />
       {(title || back || right) && (

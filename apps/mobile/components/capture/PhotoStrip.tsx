@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
@@ -29,6 +29,7 @@ type Props = {
 };
 
 export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation('capture');
   // A photo the phone cannot show (a file that is gone, a format the viewer refuses) says
   // so instead of leaving an empty box — an empty tile looks like a broken app (issue #57).
@@ -42,14 +43,14 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
     >
       {uris.map((uri, i) => (
         <View key={uri} style={{ width: THUMB_WIDTH, gap: 6 }}>
-          <View style={{ borderRadius: 18, backgroundColor: LB.paper, ...SHADOW.soft }}>
+          <View style={{ borderRadius: 18, backgroundColor: palette.paper, ...SHADOW.soft }}>
             <View
               style={{
                 width: THUMB_WIDTH,
                 height: THUMB_HEIGHT,
                 borderRadius: 18,
                 overflow: 'hidden',
-                backgroundColor: LB.canvas,
+                backgroundColor: palette.canvas,
               }}
             >
               {pdfs?.[uri] ? (
@@ -67,13 +68,13 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                     justifyContent: 'center',
                     gap: 8,
                     padding: 10,
-                    backgroundColor: LB.lavender,
+                    backgroundColor: palette.lavender,
                   }}
                 >
-                  <Icon name="file" size={36} color={LB.primaryDk} />
+                  <Icon name="file" size={36} color={palette.primaryDk} />
                   <Text
                     numberOfLines={3}
-                    style={[TYPE.label, { color: LB.primaryDk, textAlign: 'center' }]}
+                    style={[TYPE.label, { color: palette.primaryDk, textAlign: 'center' }]}
                   >
                     {pdfs[uri]}
                   </Text>
@@ -84,8 +85,8 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                   accessibilityLabel={t('preview_failed')}
                   style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
-                  <Icon name="eye-off" size={28} color={LB.ink3} />
-                  <Text style={[TYPE.small, { color: LB.ink2, textAlign: 'center' }]}>
+                  <Icon name="eye-off" size={28} color={palette.ink3} />
+                  <Text style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}>
                     {t('preview_failed')}
                   </Text>
                 </View>
@@ -123,14 +124,14 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                   minHeight: 24,
                   borderRadius: 999,
                   paddingHorizontal: 6,
-                  backgroundColor: LB.primary,
+                  backgroundColor: palette.primary,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
                 <Text
                   maxFontSizeMultiplier={MAX_FONT_SCALE}
-                  style={{ color: LB.paper, fontSize: 12, fontWeight: '700' }}
+                  style={{ color: palette.paper, fontSize: 12, fontWeight: '700' }}
                 >
                   {i + 1}
                 </Text>
@@ -144,11 +145,11 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
                     bottom: 6,
                     borderRadius: 10,
                     paddingVertical: 3,
-                    backgroundColor: LB.butter,
+                    backgroundColor: palette.butter,
                     alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: LB.warningText, fontSize: 12, fontWeight: '700' }}>
+                  <Text style={{ color: palette.warningText, fontSize: 12, fontWeight: '700' }}>
                     {t('quality.flag')}
                   </Text>
                 </View>

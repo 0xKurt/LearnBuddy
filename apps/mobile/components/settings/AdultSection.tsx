@@ -33,7 +33,7 @@ import { deliverExport } from '../../lib/exportFile.js';
 import { signOutHere } from '../../lib/leave.js';
 import { hasUnsentWork } from '../../lib/localWork.js';
 import { messageFor } from '../../lib/errors.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatDate, formatTime } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
@@ -68,6 +68,7 @@ function setDeletionDue(due: string | null): void {
 }
 
 export function AdultSection({ account, learner, onInputFocus }: Props) {
+  const { palette } = useTheme();
   const [open, setOpen] = useState<ParentsView | null>(null);
   const [opening, setOpening] = useState(false);
   // The phone may go back to the child: the area closes with the app (like the PIN).
@@ -218,7 +219,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
   return (
     <View
       style={{
-        backgroundColor: LB.rose,
+        backgroundColor: palette.rose,
         borderRadius: 28,
         padding: 16,
       }}
@@ -234,7 +235,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
         </Btn>
         {open === 'pin_only' ? (
           <>
-            <Text style={[TYPE.body, { color: LB.ink2, paddingHorizontal: 4 }]}>
+            <Text style={[TYPE.body, { color: palette.ink2, paddingHorizontal: 4 }]}>
               {t('settings:adult.forgot_intro')}
             </Text>
             <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
@@ -261,7 +262,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
                 hint={t('settings:adult.export.body')}
               >
                 {minor ? (
-                  <Text style={[TYPE.body, { color: LB.ink2 }]}>
+                  <Text style={[TYPE.body, { color: palette.ink2 }]}>
                     {t('settings:adult.needs_pin')}
                   </Text>
                 ) : null}
@@ -355,7 +356,7 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
       >
         <Text style={TYPE.body}>{t('settings:adult.signout.confirm_body')}</Text>
         {unsent ? (
-          <Text style={[TYPE.body, { color: LB.ink2 }]}>
+          <Text style={[TYPE.body, { color: palette.ink2 }]}>
             {t('settings:adult.signout.confirm_unsent')}
           </Text>
         ) : null}

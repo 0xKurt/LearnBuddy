@@ -9,7 +9,7 @@ import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -35,6 +35,7 @@ export function OfferCard({
    */
   spoken?: boolean;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation(['learn', 'common']);
   const { state, start } = useStartTopic();
   const preparing = state.status === 'preparing';
@@ -69,16 +70,16 @@ export function OfferCard({
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Icon name={KIND_ICON[offer.kind]} size={20} color={LB.primaryDk} />
+            <Icon name={KIND_ICON[offer.kind]} size={20} color={palette.primaryDk} />
           </View>
-          <Text style={[TYPE.label, { color: LB.primaryDk }]}>{label.toUpperCase()}</Text>
+          <Text style={[TYPE.label, { color: palette.primaryDk }]}>{label.toUpperCase()}</Text>
         </View>
         <Text style={TYPE.body} numberOfLines={2}>
           {offer.text}
         </Text>
         {state.status === 'not_usable' ? (
           // Nothing to learn from this text: one quiet line where the button was.
-          <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: LB.ink2 }]}>
+          <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
             {t('learn:topic.not_usable')}
           </Text>
         ) : (
@@ -96,7 +97,7 @@ export function OfferCard({
         )}
         {/* A failure says why — under the button, where nothing can push it away. */}
         {state.status === 'failed' ? (
-          <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: LB.ink2 }]}>
+          <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
             {state.message}
           </Text>
         ) : null}

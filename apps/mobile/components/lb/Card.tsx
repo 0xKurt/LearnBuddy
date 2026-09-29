@@ -2,8 +2,9 @@
 // box); tinted cards (a subject pastel, the accent tint) sit flat on the page.
 
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
-import { LB, TONE_BG, type SubjectTone } from '../../lib/theme/colors.js';
+import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Tone = 'paper' | 'bg' | 'primary' | 'primaryLt' | SubjectTone;
 
@@ -18,12 +19,16 @@ type Props = {
   accessibilityHint?: string;
 };
 
-function backgroundFor(tone: Tone): { bg: string; color?: string } {
-  if (tone === 'paper') return { bg: LB.paper };
-  if (tone === 'bg') return { bg: LB.bg };
-  if (tone === 'primary') return { bg: LB.primary, color: LB.paper };
-  if (tone === 'primaryLt') return { bg: LB.primaryLt };
-  return { bg: TONE_BG[tone] };
+function backgroundFor(
+  tone: Tone,
+  p: Palette,
+  toneBg: Record<SubjectTone, string>,
+): { bg: string; color?: string } {
+  if (tone === 'paper') return { bg: p.paper };
+  if (tone === 'bg') return { bg: p.bg };
+  if (tone === 'primary') return { bg: p.primary, color: p.paper };
+  if (tone === 'primaryLt') return { bg: p.primaryLt };
+  return { bg: toneBg[tone] };
 }
 
 export function Card({
@@ -36,7 +41,8 @@ export function Card({
   accessibilityLabel,
   accessibilityHint,
 }: Props) {
-  const { bg } = backgroundFor(tone);
+  const { palette, tones } = useTheme();
+  const { bg } = backgroundFor(tone, palette, tones.bg);
   const isPaper = tone === 'paper';
   const baseStyle: ViewStyle = {
     backgroundColor: bg,

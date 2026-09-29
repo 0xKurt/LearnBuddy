@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { fillableAnswer } from '../../lib/math/prompt.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
@@ -36,6 +36,7 @@ type ProgressProps = {
 };
 
 export function ProgressRow({ position, total, closed, right }: ProgressProps) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const share = total > 0 ? Math.max(0, Math.min(1, closed / total)) : 0;
   // The bar grows softly to where she is now (at once with reduce motion).
@@ -49,7 +50,7 @@ export function ProgressRow({ position, total, closed, right }: ProgressProps) {
   const fill = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <Text style={[TYPE.label, { color: LB.ink2, fontSize: 14 }]}>
+      <Text style={[TYPE.label, { color: palette.ink2, fontSize: 14 }]}>
         {t('progress', { current: position, total })}
       </Text>
       {/* The text above already says where we are; the bar is decoration. */}
@@ -60,12 +61,12 @@ export function ProgressRow({ position, total, closed, right }: ProgressProps) {
           flex: 1,
           height: 8,
           borderRadius: 4,
-          backgroundColor: LB.lavender,
+          backgroundColor: palette.lavender,
           overflow: 'hidden',
         }}
       >
         <Animated.View
-          style={[{ height: '100%', borderRadius: 4, backgroundColor: LB.primary }, fill]}
+          style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
         />
       </View>
       {right}
@@ -115,6 +116,7 @@ export function QuestionCard({
   imageMaxHeight = 180,
   minHeight,
 }: QuestionProps) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
@@ -149,7 +151,9 @@ export function QuestionCard({
             >
               {fromBuddy ? <FromBuddyTag label={t('origin_buddy')} /> : null}
               {topic ? (
-                <Text style={[TYPE.small, { color: LB.ink2, fontWeight: '600', flexShrink: 1 }]}>
+                <Text
+                  style={[TYPE.small, { color: palette.ink2, fontWeight: '600', flexShrink: 1 }]}
+                >
                   {topic}
                 </Text>
               ) : null}
@@ -186,6 +190,7 @@ export function QuestionCard({
 
 /** "Frage von Buddy": a small white pill with Buddy's orb, so it reads as his at a glance. */
 function FromBuddyTag({ label }: { label: string }) {
+  const { palette } = useTheme();
   return (
     <View
       accessibilityRole="text"
@@ -195,7 +200,7 @@ function FromBuddyTag({ label }: { label: string }) {
         alignItems: 'center',
         alignSelf: 'flex-start',
         gap: 6,
-        backgroundColor: LB.paper,
+        backgroundColor: palette.paper,
         borderRadius: 999,
         paddingLeft: 4,
         paddingRight: 12,
@@ -203,7 +208,7 @@ function FromBuddyTag({ label }: { label: string }) {
       }}
     >
       <BuddyOrb size={18} />
-      <Text style={{ color: LB.ink, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>
+      <Text style={{ color: palette.ink, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>
         {label}
       </Text>
     </View>

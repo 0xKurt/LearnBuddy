@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { announce } from '../../lib/announce.js';
 import { MAX_FONT_SCALE } from './Btn.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import {
   barHeight,
@@ -28,6 +28,7 @@ import {
 export { toast } from '../../lib/toast.js';
 
 export function ToastHost() {
+  const { palette } = useTheme();
   const { message, tone, seq, bars } = useToastState();
   const insets = useSafeAreaInsets();
   const keyboard = useIosKeyboardHeight();
@@ -64,7 +65,7 @@ export function ToastHost() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
-          backgroundColor: LB.ink,
+          backgroundColor: palette.ink,
           borderRadius: 26,
           paddingHorizontal: 20,
           paddingVertical: 13,
@@ -82,20 +83,20 @@ export function ToastHost() {
               minWidth: 22,
               minHeight: 22,
               borderRadius: 999,
-              backgroundColor: LB.peachDeep,
+              backgroundColor: palette.peachDeep,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
             <Text
               maxFontSizeMultiplier={MAX_FONT_SCALE}
-              style={{ color: LB.ink, fontSize: 14, lineHeight: 18, fontWeight: '700' }}
+              style={{ color: palette.ink, fontSize: 14, lineHeight: 18, fontWeight: '700' }}
             >
               !
             </Text>
           </View>
         ) : null}
-        <Text style={{ flexShrink: 1, color: LB.paper, fontSize: 15, lineHeight: 21 }}>
+        <Text style={{ flexShrink: 1, color: palette.paper, fontSize: 15, lineHeight: 21 }}>
           {message}
         </Text>
       </View>

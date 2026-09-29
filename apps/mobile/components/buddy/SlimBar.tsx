@@ -21,7 +21,8 @@ import Animated, {
 import { useTranslation } from 'react-i18next';
 
 import { readingView, type ReadingView, type StepState } from '../../lib/buddy/readingStages.js';
-import { LB } from '../../lib/theme/colors.js';
+import type { Palette } from '../../lib/theme/palettes.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { fadeIn } from '../../lib/theme/enter.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -37,12 +38,12 @@ type Ready = Extract<NowCard, { type: 'practice_ready' }>;
 type Resume = Extract<NowCard, { type: 'resume_practice' }>;
 type Capture = Extract<NowCard, { type: 'capture_needed' }>;
 
-// Theme values are read per render, never frozen in module constants.
-function titleStyle() {
-  return { fontSize: 15, lineHeight: 20, fontWeight: '700' as const, color: LB.ink };
+// Theme values come from the palette the bar renders with, never frozen in module constants.
+function titleStyle(p: Palette) {
+  return { fontSize: 15, lineHeight: 20, fontWeight: '700' as const, color: p.ink };
 }
-function lineStyle() {
-  return { fontSize: 13, lineHeight: 18, color: LB.ink2 };
+function lineStyle(p: Palette) {
+  return { fontSize: 13, lineHeight: 18, color: p.ink2 };
 }
 
 function Bar({
@@ -66,6 +67,7 @@ function Bar({
   label: string;
   titleInset: number;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   const [open, setOpen] = useState(false);
   const text = (
@@ -77,7 +79,7 @@ function Bar({
         entering={fadeIn()}
         numberOfLines={1}
         maxFontSizeMultiplier={MAX_FONT_SCALE}
-        style={titleStyle()}
+        style={titleStyle(palette)}
       >
         {title}
       </Animated.Text>
@@ -128,7 +130,7 @@ function Bar({
             paddingTop: 10,
             gap: 8,
             borderTopWidth: 1,
-            borderTopColor: LB.hairline,
+            borderTopColor: palette.hairline,
           }}
         >
           {details}
@@ -150,6 +152,7 @@ export function ReadingBar({
   preparing: boolean;
   titleInset: number;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   const view = readingView(card, preparing);
   const title = t(
@@ -175,7 +178,9 @@ export function ReadingBar({
       leading={
         thumb ? (
           <ZoomablePhoto uri={thumb}>
-            <View style={[{ borderRadius: 7, backgroundColor: LB.paper, padding: 2 }, SHADOW.soft]}>
+            <View
+              style={[{ borderRadius: 7, backgroundColor: palette.paper, padding: 2 }, SHADOW.soft]}
+            >
               <Image
                 source={{ uri: thumb }}
                 accessible={false}
@@ -213,6 +218,7 @@ export function ReadyBar({
   onStart: (stepId: string) => void;
   onSkip: (stepId: string) => void;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   // The practice's own name leads; "ready" is said by "Jetzt üben" (and to screen readers).
   const title = card.title;
@@ -233,7 +239,7 @@ export function ReadyBar({
         .filter(Boolean)
         .join('. ')}
       line={
-        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle()}>
+        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
           {line}
         </Text>
       }
@@ -274,6 +280,7 @@ export function ResumeBar({
   titleInset: number;
   onResume: (sessionId: string) => void;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   const title = t(
     card.mode === 'help'
@@ -293,7 +300,7 @@ export function ResumeBar({
       title={title}
       label={[title, line].join('. ')}
       line={
-        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle()}>
+        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
           {line}
         </Text>
       }
@@ -328,6 +335,7 @@ export function CaptureBar({
   /** Takes the request back ("Kein Foto nötig") — absent when nothing undoable is known. */
   onNoPhoto?: (() => void) | null;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   const title = card.title;
   const line = t('now.capture_body');
@@ -339,7 +347,7 @@ export function CaptureBar({
       label={[title, line].join('. ')}
       leading={<Mark icon="camera" />}
       line={
-        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle()}>
+        <Text numberOfLines={1} maxFontSizeMultiplier={MAX_FONT_SCALE} style={lineStyle(palette)}>
           {line}
         </Text>
       }
@@ -364,6 +372,7 @@ export function CaptureBar({
 }
 
 function Mark({ icon }: { icon: 'file' | 'camera' }) {
+  const { palette } = useTheme();
   return (
     <View
       accessibilityElementsHidden
@@ -372,19 +381,20 @@ function Mark({ icon }: { icon: 'file' | 'camera' }) {
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: LB.paper,
+        backgroundColor: palette.paper,
         alignItems: 'center',
         justifyContent: 'center',
         ...SHADOW.soft,
       }}
     >
-      <Icon name={icon} size={18} color={LB.primaryDk} />
+      <Icon name={icon} size={18} color={palette.primaryDk} />
     </View>
   );
 }
 
 /** The stages as dots in one line, and the one being worked on by name. */
 function Dots({ view, label }: { view: ReadingView; label: string }) {
+  const { palette } = useTheme();
   return (
     <View
       accessibilityElementsHidden
@@ -400,7 +410,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
               width: 12,
               height: 2,
               borderRadius: 1,
-              backgroundColor: s.state === 'done' ? LB.primary : LB.ink4,
+              backgroundColor: s.state === 'done' ? palette.primary : palette.ink4,
               opacity: s.state === 'done' ? 0.5 : 0.8,
             }}
           />
@@ -410,7 +420,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX_FONT_SCALE}
-          style={[lineStyle(), { marginLeft: 6, flexShrink: 1 }]}
+          style={[lineStyle(palette), { marginLeft: 6, flexShrink: 1 }]}
         >
           {label}
         </Text>
@@ -420,6 +430,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
 }
 
 function Dot({ state }: { state: StepState }) {
+  const { palette } = useTheme();
   const reduce = useReducedMotion();
   const pulse = useSharedValue(0);
   useEffect(() => {
@@ -445,7 +456,7 @@ function Dot({ state }: { state: StepState }) {
               width: 12,
               height: 12,
               borderRadius: 6,
-              backgroundColor: LB.primary,
+              backgroundColor: palette.primary,
             },
             halo,
           ]}
@@ -456,9 +467,9 @@ function Dot({ state }: { state: StepState }) {
           width: state === 'active' ? 7 : 9,
           height: state === 'active' ? 7 : 9,
           borderRadius: 5,
-          backgroundColor: state === 'todo' ? LB.paper : LB.primary,
+          backgroundColor: state === 'todo' ? palette.paper : palette.primary,
           borderWidth: state === 'todo' ? 1.5 : 0,
-          borderColor: LB.ink4,
+          borderColor: palette.ink4,
         }}
       />
     </View>
@@ -467,6 +478,7 @@ function Dot({ state }: { state: StepState }) {
 
 /** Expanded: every stage by name, the one done and the one now marked. */
 function StepNames({ view }: { view: ReadingView }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   return (
     <View
@@ -481,7 +493,7 @@ function StepNames({ view }: { view: ReadingView }) {
             style={[
               TYPE.label,
               {
-                color: s.state === 'todo' ? LB.ink2 : LB.ink,
+                color: s.state === 'todo' ? palette.ink2 : palette.ink,
                 fontWeight: s.state === 'active' ? '700' : '600',
               },
             ]}

@@ -7,10 +7,11 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from '../lb/Icon.js';
 
 export function TalkButton({ onPress }: { onPress: () => void }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   return (
     <Pressable
@@ -25,14 +26,14 @@ export function TalkButton({ onPress }: { onPress: () => void }) {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: LB.primary,
+            backgroundColor: palette.primary,
             alignItems: 'center',
             justifyContent: 'center',
             opacity: pressed ? 0.85 : 1,
             transform: [{ scale: pressed ? 0.96 : 1 }],
           }}
         >
-          <Icon name="voice" size={24} color={LB.paper} />
+          <Icon name="voice" size={24} color={palette.paper} />
         </View>
       )}
     </Pressable>

@@ -12,7 +12,7 @@ import { speakWord } from '../../lib/api/endpoints.js';
 import { messageFor } from '../../lib/errors.js';
 import { useRecording, type Recording } from '../../lib/speech/record.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -32,6 +32,7 @@ type Props = {
 };
 
 export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
+  const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
   /** What came back for the try she just made; null before the first one. */
   const [tried, setTried] = useState<{ ok: boolean; heard: string; tip: string | null } | null>(
@@ -95,12 +96,14 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
             accessibilityLabel={t('practice:speak.listening')}
             style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
           >
-            <ActivityIndicator color={LB.primary} />
-            <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('practice:speak.listening')}</Text>
+            <ActivityIndicator color={palette.primary} />
+            <Text style={[TYPE.body, { color: palette.ink2 }]}>
+              {t('practice:speak.listening')}
+            </Text>
           </View>
         ) : null}
         {problem ? (
-          <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+          <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
             {problem}
           </Text>
         ) : null}
@@ -109,7 +112,7 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
             <Text
               style={[
                 TYPE.body,
-                { fontWeight: '700', color: tried.ok ? LB.successText : LB.warningText },
+                { fontWeight: '700', color: tried.ok ? palette.successText : palette.warningText },
               ]}
             >
               {t(tried.ok ? 'practice:speak.word_good' : 'practice:speak.word_again')}

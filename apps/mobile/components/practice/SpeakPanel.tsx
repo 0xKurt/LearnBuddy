@@ -27,7 +27,7 @@ import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
 import { formatClock, MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/voice.js';
-import { LB } from '../../lib/theme/colors.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -55,6 +55,7 @@ function MarkedWords({
   /** A word she taps: it opens on its own to listen to and to try again (issue #83). */
   onWord?: (word: PronunciationFeedback['words'][number]) => void;
 }) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const ok = feedback.words.filter((w) => w.ok).map((w) => w.text);
   const practise = feedback.words.filter((w) => !w.ok).map((w) => w.text);
@@ -81,12 +82,12 @@ function MarkedWords({
                 : {})}
               style={
                 w.ok
-                  ? { color: LB.successText }
+                  ? { color: palette.successText }
                   : {
-                      color: LB.warningText,
+                      color: palette.warningText,
                       fontWeight: '700',
                       textDecorationLine: 'underline',
-                      textDecorationColor: LB.warning,
+                      textDecorationColor: palette.warning,
                     }
               }
             >
@@ -108,6 +109,7 @@ function MarkedWords({
  * judged here — the stored feedback replaces it (issue #8).
  */
 function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent['words'] }) {
+  const { palette } = useTheme();
   const parts = prompt.split(/(\s+)/);
   let at = 0;
   return (
@@ -125,12 +127,12 @@ function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent[
             key={i}
             style={
               judged.ok
-                ? { color: LB.successText }
+                ? { color: palette.successText }
                 : {
-                    color: LB.warningText,
+                    color: palette.warningText,
                     fontWeight: '700',
                     textDecorationLine: 'underline',
-                    textDecorationColor: LB.warning,
+                    textDecorationColor: palette.warning,
                   }
             }
           >
@@ -165,6 +167,7 @@ type CardProps = {
  * reply in the thread (PronunciationNote, ItemThread).
  */
 export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const feedback = latestPronunciation(turns);
   /** The word she tapped, to hear and try on its own (issue #83). */
@@ -173,7 +176,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
   return (
     <Card tone="lavender" padding={20} radius={22}>
       <View style={{ gap: 12 }}>
-        {item.topic ? <Text style={[TYPE.body, { color: LB.ink2 }]}>{item.topic}</Text> : null}
+        {item.topic ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{item.topic}</Text> : null}
         <Text style={TYPE.label}>{t('speak.instruction')}</Text>
         {sessionId && item.lang ? (
           <WordSheet
@@ -231,6 +234,7 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
 // ─────────────── the pinned controls ───────────────
 
 function RecordingDot() {
+  const { palette } = useTheme();
   const pulse = useRef(new Animated.Value(1)).current;
   // Reactive: toggling "reduce motion" while the app runs stops the dot too.
   const still = useReducedMotion();
@@ -263,7 +267,7 @@ function RecordingDot() {
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: LB.primary,
+        backgroundColor: palette.primary,
         opacity: still ? 1 : pulse,
       }}
     />
@@ -308,6 +312,7 @@ export function SpeakPanel({
   onOutdated,
   onSkip,
 }: PanelProps) {
+  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const [sending, setSending] = useState<'idle' | 'sending' | 'failed'>('idle');
   const [problem, setProblem] = useState<Exclude<RecordFailure, 'denied'> | null>(null);
@@ -440,7 +445,7 @@ export function SpeakPanel({
   // a recording waiting for a connection, a send that failed, or a quiet hint.
   const status = rec.denied ? (
     <View style={{ gap: 8 }}>
-      <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+      <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
         {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
       </Text>
       {Platform.OS !== 'web' ? (
@@ -468,7 +473,7 @@ export function SpeakPanel({
     </View>
   ) : waitingOffline ? (
     <View style={{ gap: 8 }}>
-      <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+      <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
         {t('speak.waiting_offline')}
       </Text>
       <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
@@ -489,12 +494,12 @@ export function SpeakPanel({
       accessibilityLabel={t('speak.listening')}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 24 }}
     >
-      <ActivityIndicator color={LB.primary} />
-      <Text style={[TYPE.body, { color: LB.ink2 }]}>{t('speak.listening')}</Text>
+      <ActivityIndicator color={palette.primary} />
+      <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('speak.listening')}</Text>
     </View>
   ) : sending === 'failed' ? (
     <View style={{ gap: 8 }}>
-      <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+      <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
         {t('speak.send_failed')}
       </Text>
       <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
@@ -507,7 +512,7 @@ export function SpeakPanel({
       </View>
     </View>
   ) : problem ? (
-    <Text accessibilityRole="alert" style={[TYPE.body, { color: LB.ink2 }]}>
+    <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
       {t(`speak.problem.${problem}`)}
     </Text>
   ) : null;
