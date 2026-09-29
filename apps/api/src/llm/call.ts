@@ -50,8 +50,8 @@ async function record(
 ): Promise<void> {
   await db.query(
     `insert into llm_calls (learner_id, purpose, model, prompt_version, input_tokens, output_tokens,
-                            thought_tokens, cost_micros, latency_ms, outcome, error_code)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                            thought_tokens, cached_tokens, cost_micros, latency_ms, outcome, error_code)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
     [
       learnerId,
       req.purpose,
@@ -60,6 +60,9 @@ async function record(
       usage?.inputTokens ?? 0,
       usage?.outputTokens ?? 0,
       usage?.thoughtTokens ?? 0,
+      // How much of the prompt the provider served from its cache (issue #25): the only
+      // place the effect of the prompt layering is visible after the fact.
+      usage?.cachedTokens ?? 0,
       usage?.costMicros ?? 0,
       usage?.latencyMs ?? 0,
       outcome,

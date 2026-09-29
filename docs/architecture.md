@@ -481,8 +481,9 @@ An event never bypasses the contact rules.
 zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) with explicit output-token cap, thinking budget and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
-tokens, cost, latency and outcome — never with prompt or answer text; a safety block keeps the
-provider's finish reason (`blocked:SAFETY`). A call that the provider did not run for her — provider
+tokens (input, output, thinking, and what the provider served from its prefix cache —
+`cached_tokens`, §Speed), cost, latency and outcome — never with prompt or answer text; a safety
+block keeps the provider's finish reason (`blocked:SAFETY`). A call that the provider did not run for her — provider
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
 
@@ -578,6 +579,33 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
   twice as fast, no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **The prompt is layered for the provider's prefix cache, and what that is worth is measured,
+  not assumed** (issue #25). Gemini discounts the stable _beginning_ of consecutive requests
+  (implicit caching, from 4 096 tokens up) and reports what it reused; that number is now stored
+  per call in **`llm_calls.cached_tokens`** (migration 0052, the provider's
+  `cachedContentTokenCount`, part of `input_tokens`, 0 when nothing was reported). `cost_micros`
+  stays the undiscounted price — the saving is shown as tokens the provider confirmed, never as a
+  discount we computed (rule 5). Measured live on `eu/gemini-3.6-flash` (2026-09-29, `evals/buddy`,
+  36 cases, two runs): **243 525 and 389 469 of 627 985 input tokens came from the cache** — 20
+  and 31 of the 36 cases hit. Implicit caching is best-effort: a miss simply costs the full price,
+  and how often it fires swings a lot between runs. What is cached is the part of the request that
+  comes _before_ `contents`: the system instruction (`TURN_SYSTEM`, 3 442 tokens — under the
+  minimum on its own) plus the response JSON schema (~6 100 tokens as compact JSON). The evidence
+  that it stops there: every single hit landed between 12 013 and 12 177 tokens, on 36 learners
+  whose state blocks differ by far more than that — the number never grew with the state. So the
+  state block itself is not what is being cached today.
+- Layering it anyway costs nothing and is the only shape a prefix cache can ever use: STATE runs
+  most-stable first — learner, what Buddy knows, temporary situations, voice, contact, earlier
+  conversations, material and progress, goals and plan, recent practice — and ends with "## Now"
+  (the local time, different in almost every turn) and the day note. Every section keeps its exact
+  text, only its place changed, so the prompt version stays the same and the content is provably
+  identical; `modules/buddy/context.ts` gives the reason per section. Before this, STATE _opened_
+  with "## Now", so two turns of the same learner diverged in the first line of `contents`. The
+  dialogue behind STATE can never be a stable prefix — the 24-message window slides with every
+  turn — which is why it stays behind the volatile end. An A/B over six consecutive turns of one
+  learner with a moving clock showed no difference between the two orders (12 176 vs 24 339 cached
+  tokens over 7 calls each): whether the cache fires at all dominates everything else. Re-read
+  `cached_tokens` in production before spending more on this.
 - **The app measures its own taps** (`apps/mobile/lib/perf.ts`, issue #66): every number above
   is server-side, but what she feels starts at her finger. One pair per action — `tapped()`
   when the handler runs, `reacted()` when the screen shows the result — for sending a message,

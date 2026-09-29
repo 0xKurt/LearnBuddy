@@ -51,6 +51,8 @@ async function main(): Promise<void> {
 
   let failed = 0;
   let costMicros = 0;
+  let inputTokens = 0;
+  let cachedTokens = 0;
   for (const c of cases) {
     const env = await createTestEnv({ start: c.at ?? '2026-09-28T08:00:00Z', gateway });
     try {
@@ -122,13 +124,29 @@ async function main(): Promise<void> {
         outcome.status === 'done'
           ? c.check(outcome)
           : [`turn ${outcome.status} (${outcome.errorCode ?? 'no code'})`];
-      const cost = await env.db.one<{ micros: number; calls: number }>(
-        `select coalesce(sum(cost_micros), 0)::bigint as micros, count(*)::int as calls from llm_calls`,
+      // cached: what the provider served from its prefix cache (issue #25). Every case is a
+      // different learner on its own throwaway database, so what can be cached between them
+      // is only the part before `contents` — system prompt plus response schema. Measured
+      // 2026-09-29: every hit 12 013–12 177 tokens, on 20 of 36 cases in one run and 31 of 36
+      // in the next — implicit caching is best-effort, so the hit rate swings between runs.
+      const cost = await env.db.one<{
+        micros: number;
+        calls: number;
+        input: number;
+        cached: number;
+      }>(
+        `select coalesce(sum(cost_micros), 0)::bigint as micros, count(*)::int as calls,
+                coalesce(sum(input_tokens), 0)::int as input,
+                coalesce(sum(cached_tokens), 0)::int as cached
+           from llm_calls`,
       );
       costMicros += cost.micros;
+      inputTokens += cost.input;
+      cachedTokens += cost.cached;
       if (problems.length) failed++;
       console.info(
-        `${problems.length ? '✗' : '✓'} ${c.id}  (${cost.calls} call(s), $${(cost.micros / 1e6).toFixed(4)})` +
+        `${problems.length ? '✗' : '✓'} ${c.id}  (${cost.calls} call(s), $${(cost.micros / 1e6).toFixed(4)}` +
+          `, ${cost.input} in, ${cost.cached} cached)` +
           (problems.length
             ? `\n    - ${problems.join('\n    - ')}\n    reply: ${outcome.reply ?? '—'}\n    tools: ${outcome.tools.join(', ') || 'none'}\n    goals: ${JSON.stringify(outcome.goals)}`
             : ''),
@@ -148,7 +166,8 @@ async function main(): Promise<void> {
     }
   }
   console.info(
-    `\n${cases.length - failed}/${cases.length} passed · total $${(costMicros / 1e6).toFixed(4)}`,
+    `\n${cases.length - failed}/${cases.length} passed · total $${(costMicros / 1e6).toFixed(4)}` +
+      ` · ${inputTokens} input tokens, ${cachedTokens} of them from the provider's prefix cache`,
   );
   if (process.env.BUDDY_EVAL_OUT) {
     writeFileSync(

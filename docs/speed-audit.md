@@ -42,6 +42,19 @@ konfiguriert; bei Bedarf lokal setzen und erneut laufen lassen).
 - **buddy_turn trägt ~15k Input-Tokens** → deutlich über dem 4.096er-Minimum
   für Vertex Implicit Caching. #25 (Cache-Schichtung) hat reales Sparpotenzial
   (90 % auf den stabilen Präfix), zusätzlich zur TTFT-Politur.
+  **Nachgemessen 29.09. (#25):** Der Cache greift bereits — `evals/buddy`, 36 Fälle,
+  zwei Läufe: **243 525 bzw. 389 469 von 627 985 Input-Tokens aus dem Cache** (20 bzw.
+  31 von 36 Fällen trafen; Implicit Caching ist best-effort, und wie oft es greift,
+  schwankt stark zwischen Läufen). Gecacht wird aber der Teil _vor_ `contents`:
+  Systemprompt (3 442 Tokens — allein unter dem Minimum) plus das Response-JSON-Schema
+  (~6 100 Tokens). Beleg, dass es dort endet: jeder Treffer lag zwischen 12 013 und
+  12 177 Tokens, bei 36 Lernenden, deren Zustandsblöcke sich um weit mehr
+  unterscheiden — der Wert wuchs nie mit dem Zustand mit.
+  Der STATE-Block wird heute also nicht mitgecacht; die Schichtung
+  (stabil vorn, „## Now" hinten) ist trotzdem drin — sie kostet nichts und ist die
+  einzige Form, mit der ein Präfix-Cache je weiter greifen kann. Ablesbar in
+  `llm_calls.cached_tokens` (Migration 0052); `cost_micros` bleibt der ungerabattierte
+  Preis. Siehe `docs/architecture.md` §Speed.
 - SSE-TTFB 1,1–1,2 s ist eine gute Basis; Thinking-Caps (#10) sollten den
   Median weiter drücken — Nachmessung nach P1 hier ergänzen.
 
