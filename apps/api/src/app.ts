@@ -159,7 +159,13 @@ export function createApp(deps: Deps): Hono<AppEnv> {
       {
         ok,
         database: dbOk,
-        scheduler: scheduler ?? { ok: false, state: 'stale', last_run_at: null, parked: {} },
+        scheduler: scheduler ?? {
+          ok: false,
+          state: 'stale',
+          last_run_at: null,
+          parked: {},
+          retention: { last_run_at: null, counts: null },
+        },
         erasure: { ok: erasureOk, ...erasure },
         model: deps.llm.available,
         push: deps.push.enabled,
