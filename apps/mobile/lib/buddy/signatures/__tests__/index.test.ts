@@ -6,6 +6,15 @@ describe('signatures', () => {
   it('the moon is the default; every prepared signature has one key', () => {
     expect(DEFAULT_SIGNATURE).toBe('mond');
     expect(new Set(SIGNATURE_KEYS).size).toBe(SIGNATURE_KEYS.length);
-    expect(SIGNATURE_KEYS).toEqual(['mond', 'ring', 'stern', 'sternchen', 'nurstern']);
+    expect(SIGNATURE_KEYS).toEqual([
+      'mond',
+      'ring',
+      'stern',
+      'sternchen',
+      'nurstern',
+      'mondfunken',
+      'nurfunken',
+      'prisma',
+    ]);
   });
 });

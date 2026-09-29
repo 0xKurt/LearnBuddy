@@ -62,9 +62,9 @@ export function MondSignature({ state, level, live, size, u, bob, halo }: Signat
   );
 }
 
-type LayerProps = {
+export type LayerProps<P extends MoonPose = MoonPose> = {
   side: 'front' | 'back';
-  pose: SharedValue<MoonPose>;
+  pose: SharedValue<P>;
   fade: SharedValue<number>;
   /** Which part lies on top (the prototype's node order). */
   order: SharedValue<NodeOrder>;
@@ -90,7 +90,7 @@ function MoonLayer({ detail, ...layer }: LayerProps & { detail: MoonDetail }) {
   );
 }
 
-function Moon({ side, pose, fade, order, u, size }: LayerProps) {
+export function Moon<P extends MoonPose>({ side, pose, fade, order, u, size }: LayerProps<P>) {
   const id = useSvgId('moon');
   const m = 44 * u;
   const front = side === 'front';
@@ -182,7 +182,7 @@ function Ghost({ index, side, pose, fade, order, u, size }: LayerProps & { index
 }
 
 /** "Your turn": a thin white ring that leaves the waiting moon (a 1.6-unit line). */
-function Ping({ side, pose, order, u, size }: LayerProps) {
+export function Ping<P extends MoonPose>({ side, pose, order, u, size }: LayerProps<P>) {
   const line = 1.6;
   const front = side === 'front';
   const style = useAnimatedStyle(() => {
@@ -208,7 +208,12 @@ function Ping({ side, pose, order, u, size }: LayerProps) {
 }
 
 /** The moon's light on the glass when it passes close (large orbs). */
-function Reflection({ pose, fade, u, size }: Omit<LayerProps, 'side' | 'order'>) {
+export function Reflection<P extends MoonPose>({
+  pose,
+  fade,
+  u,
+  size,
+}: Omit<LayerProps<P>, 'side' | 'order'>) {
   const id = useSvgId('refl');
   const r = 54 * u;
   const E = 14;
