@@ -742,8 +742,21 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
   if (a.agreed) requireQuote(ctx, a.quote);
   if (a.agreed && ctx.mode !== 'turn') throw new ToolRejection('agreed reminders need the learner');
   const goal = a.goal ? await targetGoal(ctx, a.goal) : null;
-  const date = resolveFutureDay(ctx, a.day, 'this step');
-  let at: Date | null = null;
+  // "In an hour": the server does the arithmetic against its own clock, so a miscounted
+  // HH:MM can no longer reach the learner as an agreed time (issue #112, rule 2). The day
+  // comes out of the same calculation — an hour before midnight lands tomorrow.
+  const relative = a.in_minutes ? new Date(ctx.now.getTime() + a.in_minutes * 60_000) : null;
+  if (relative && a.time) {
+    throw new ToolRejection('use either in_minutes or a time, not both');
+  }
+  const local = relative ? localParts(relative, ctx.settings.timezone) : null;
+  const date = local ? local.date : resolveFutureDay(ctx, a.day, 'this step');
+  let at: Date | null = relative;
+  if (local && inWindow(minutesOf(local.time), ctx.settings.quiet_start, ctx.settings.quiet_end)) {
+    throw new ToolRejection(
+      `in ${a.in_minutes} minutes falls into the quiet hours (${ctx.settings.quiet_start}–${ctx.settings.quiet_end}); suggest another time`,
+    );
+  }
   if (a.time) {
     const r = resolveLocalDateTime(date, a.time, ctx.settings.timezone, 'reject');
     if (!r.ok) {
@@ -788,7 +801,8 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
       a.kind,
       a.title,
       date,
-      a.time,
+      // A relative wish has its clock time too — the server just worked it out (#112).
+      a.time ?? local?.time ?? null,
       a.agreed,
       { subject_id: subjectId, focus_topics: a.focus_topics ?? [] },
     ],
@@ -801,7 +815,9 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
       step_id: step.id,
       title: a.title,
       date,
-      time: a.time,
+      // The resolved time, so the card shows what was really agreed — not null because
+      // she said it relative (issue #112).
+      time: a.time ?? local?.time ?? null,
       agreed: a.agreed,
     },
     undo: { type: 'cancel_step', step_id: step.id },

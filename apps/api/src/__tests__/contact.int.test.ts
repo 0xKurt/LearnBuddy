@@ -310,6 +310,67 @@ describe.skipIf(!dbReady)('contact promises', () => {
     );
   });
 
+  // The question this whole corpus started from (#106 → #112): "erinner mich in einer Stunde".
+  // The model used to have to read the clock out of STATE, add, decide the midnight roll-over
+  // and write HH:MM — and code could not check the result against the wish.
+  it('resolves "in an hour" on the server, and refuses it inside the quiet hours (issue #112)', async () => {
+    const l = await onboard(env);
+    await enableContact(env, l.learnerId, { quiet_start: '20:00', quiet_end: '07:00' });
+    const inMinutes = (n: number, quote: string) => ({
+      tool: 'plan_step',
+      args: {
+        goal: null,
+        kind: 'practice',
+        title: 'Vokabeln üben',
+        day: { kind: 'unknown' },
+        time: null,
+        in_minutes: n,
+        agreed: true,
+        quote,
+        subject: null,
+        focus_topics: [],
+      },
+    });
+
+    env.clock.set('2026-09-28T14:00:00Z'); // 16:00 local
+    env.llm.script(
+      'buddy_turn',
+      reply('Mach ich — in einer Stunde.', [inMinutes(60, 'erinner mich in einer stunde')]),
+    );
+    const ok = await send(l, 'erinner mich in einer stunde');
+    expect(ok.body.status).toBe('done');
+    const step = await env.db.one<{ planned_date: string; planned_time: string }>(
+      `select planned_date, to_char(planned_time, 'HH24:MI') as planned_time
+         from buddy_steps where learner_id = $1 order by created_at desc limit 1`,
+      [l.learnerId],
+    );
+    // 16:00 + 60 min, computed by the server against its own clock — not by the model.
+    expect(step.planned_time).toBe('17:00');
+    expect(step.planned_date).toBe('2026-09-28');
+    // And the reminder really stands at that minute: the scheduler finds it there, not before.
+    await tick(env);
+    expect(await outreach(env, l.learnerId)).toEqual([]);
+    env.clock.set('2026-09-28T15:00:00Z'); // 17:00 local — the minute she asked for
+    await tick(env);
+    // No phone registered here, so it waits in the app — the point is that it is due NOW.
+    expect((await outreach(env, l.learnerId)).map((r) => r.status)).toEqual(['in_app']);
+
+    // 19:30 + 60 min lands at 20:30, inside the quiet hours: refused, with the reason.
+    env.clock.set('2026-09-28T17:30:00Z'); // 19:30 local
+    env.llm.script(
+      'buddy_turn',
+      reply('Ich schaue mal.', [inMinutes(60, 'in einer stunde nochmal')]),
+      reply('Um die Zeit ist Ruhe — morgen früh?', []),
+    );
+    const late = await send(l, 'in einer stunde nochmal');
+    expect(late.body.status).toBe('done');
+    // Refused in code, so no second step exists — and she is told, not left guessing.
+    expect(
+      await env.db.query(`select 1 from buddy_steps where learner_id = $1`, [l.learnerId]),
+    ).toHaveLength(1);
+    expect(late.body.home.thread.at(-1)!.text).toBe('Um die Zeit ist Ruhe — morgen früh?');
+  });
+
   describe('an agreed reminder never vanishes (H-37, repro-15)', () => {
     it('1B: deferred by quiet hours, then paused → it waits in the app, saying it is late', async () => {
       const l = await onboard(env);
@@ -518,6 +579,7 @@ describe.skipIf(!dbReady)('contact promises', () => {
         title: 'Brüche üben',
         day: { kind: 'in_days', days },
         time,
+        in_minutes: null,
         agreed: true,
         quote: 'erinner mich ans Brüche üben',
         subject: 'f1',

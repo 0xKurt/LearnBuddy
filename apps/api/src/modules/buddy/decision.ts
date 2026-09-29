@@ -425,6 +425,22 @@ const planStep = z.object({
     title: Title,
     day: DaySpecSchema,
     time: LocalTimeSchema.nullable(),
+    /**
+     * "in an hour", "in 20 minutes", "gleich": the SERVER turns this into a day and a time
+     * against its own clock (issue #112). Until now the model had to read the clock out of
+     * STATE, add, decide the midnight roll-over and write HH:MM — the one piece of time
+     * arithmetic left to it, and code could not check the result against the wish.
+     */
+    in_minutes: z
+      .number()
+      .int()
+      .min(1)
+      .max(1440)
+      .nullable()
+      .describe(
+        'minutes from now, when she said it relative to now ("in einer Stunde" → 60). The server computes day and time; leave day unknown and time null then',
+      ),
+
     agreed: z
       .boolean()
       .describe('true only if the learner asked for / agreed to this time (a reminder)'),
