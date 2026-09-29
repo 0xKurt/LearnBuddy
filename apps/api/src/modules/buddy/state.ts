@@ -75,7 +75,7 @@ export type MemoryRow = {
   id: string;
   kind: 'fact' | 'preference' | 'goal' | 'constraint';
   statement: string;
-  source: 'learner_stated' | 'learner_edited' | 'account_holder';
+  source: 'learner_stated' | 'learner_edited' | 'account_holder' | 'consolidated';
   quote: string | null;
   valid_until: Date | null;
   version: number;

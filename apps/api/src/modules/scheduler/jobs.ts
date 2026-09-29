@@ -15,7 +15,8 @@ export type JobKind =
   | 'purge_photos'
   | 'purge_content'
   | 'delete_account'
-  | 'summarise_session';
+  | 'summarise_session'
+  | 'consolidate_memories';
 
 /**
  * Erasure jobs are never parked: a privacy promise does not expire after three tries.

@@ -9,7 +9,8 @@
     "learner_stated": "Du hast gesagt: „{{quote}}“",
     "learner_stated_plain": "Das hast du Buddy erzählt.",
     "learner_edited": "Von dir geändert.",
-    "account_holder": "Von einem Erwachsenen eingetragen."
+    "account_holder": "Von einem Erwachsenen eingetragen.",
+    "consolidated": "Aus mehreren Dingen zusammengefasst, die du erzählt hast."
   },
   "edit": "Ändern",
   "edit_a11y": "Ändern: {{statement}}",

@@ -450,7 +450,9 @@ effect, enforced by the type of the registry, applied once per parked job by the
 Buddy check comes back once as a model-free fallback (the countdown before a test still
 prepares practice; an agreed reminder is still sent by its template); a parked turn recovery
 marks her message failed (`internal`); a parked extraction is reported to the operator (parked
-counts and the last error per kind in `GET /health`); erasure kinds are never parked (above).
+counts and the last error per kind in `GET /health`); a parked memory consolidation is reported
+too — it writes all or nothing, so what Buddy knows is exactly as it was and the next day's run
+tries again; erasure kinds are never parked (above).
 
 `POST /internal/tick` runs everything due within a 45 s budget: recovery → reading photos →
 Buddy per learner (one learner's failure does not stop the others) → delivery → receipts →
@@ -541,6 +543,30 @@ written down; a stretch is written once; a conversation the model cannot summari
 context, because Buddy has nothing to say about that day (rule 5). Summaries go with the
 account (cascade) and are covered by `session-summaries.int.test.ts`.
 
+**Memory that stays usable** (`modules/buddy/consolidate.ts`, issue #20, migration
+`0053_memory_consolidation.sql`). The cap of 60 never throws anything away silently: at 60
+`remember` refuses and Buddy asks her what he may forget. The pain is the other end of that
+rule — at 60 he can remember nothing new. So from **45** active items the scheduler plans one
+`consolidate_memories` job per learner and local day (only with the account's current consent),
+and asks the model once per kind (`purpose: 'consolidate'`, the careful model, at most three
+calls) which items say the same thing (**merge**) and which one a newer item contradicts
+(**invalidate**). Everything it does not name stays; keeping is the default. Code decides the
+rest, not the prompt: the model sees aliases (`m1`, `m2` …) and never an id (rule 2); a merged
+sentence may not name a day, time of day, month or number that the items it replaces do not
+(`unsupportedSpecifics`, the guard `remember` uses); an item may be named once, and what
+replaces a contradicted item must be newer and must survive the run; temporary situations
+(`constraint`) are never consolidated, because a merged row would need an end date the model
+must not write. A group is applied in **one transaction** that holds the context fence
+(`context_version` read before the model call) **and** the version of every item the model saw,
+and bumps the context once — a correction she made while the model was thinking is never
+overwritten, the whole group is discarded instead and looked at again the next day. Provenance
+survives: a merged original is `superseded` and points at its successor (`merged_into`), a
+contradicted one is `superseded` without one; the new row carries `source = 'consolidated'` and
+the memory screen says so. Erasure is untouched — both are deleted by `purgeClosedMemories`
+after the 7-day undo window (`on delete set null` on the chain). Covered by
+`memory-consolidation.int.test.ts` (below the threshold nothing happens, merge and invalidate,
+the fence, an unusable answer, a merged sentence that invents a day, purge and cascade).
+
 ### Speed
 
 Waiting kills practice. Budgets (end to end, measured in process by `apps/api/evals/speed/run.ts`
@@ -628,7 +654,7 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 | Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s            |
 | Turn stall                      | taken over after 3 minutes                                                                         |
 | Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h          |
-| Memory                          | 60 active items; temporary ≤ 60 days                                                               |
+| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                 |
 | PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)    |
 | Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                          |
 | Requests per account            | abuse protection only: practice answers 600/h, messages to Buddy 120/h (429 + `Retry-After`)       |

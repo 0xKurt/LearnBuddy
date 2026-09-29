@@ -40,7 +40,8 @@ export type LlmPurpose =
   | 'transcribe'
   | 'hints'
   | 'reexplain'
-  | 'summary';
+  | 'summary'
+  | 'consolidate';
 
 export type LlmRequest = {
   purpose: LlmPurpose;

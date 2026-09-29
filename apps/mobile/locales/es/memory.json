@@ -9,7 +9,8 @@
     "learner_stated": "Dijiste: “{{quote}}”",
     "learner_stated_plain": "Se lo contaste a Buddy.",
     "learner_edited": "Cambiado por ti.",
-    "account_holder": "Lo añadió una persona adulta."
+    "account_holder": "Lo añadió una persona adulta.",
+    "consolidated": "Varias cosas que contaste, reunidas en una."
   },
   "edit": "Cambiar",
   "edit_a11y": "Cambiar: {{statement}}",

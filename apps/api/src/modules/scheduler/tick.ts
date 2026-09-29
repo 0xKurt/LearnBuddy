@@ -20,6 +20,7 @@ import {
   sweepForgottenPhotos,
 } from '../materials/purge.js';
 import { planSummaries, runSummary } from '../buddy/summarise.js';
+import { planConsolidations, runConsolidation } from '../buddy/consolidate.js';
 import { purgeSpeechCache } from '../voice/speech.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
@@ -158,24 +159,30 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     await planSummaries(deps);
   });
 
+  // From ~45 things Buddy knows about her, the model is asked once per kind what says the
+  // same thing twice and what a newer item contradicts, so there is room for something new
+  // (issue #20, modules/buddy/consolidate.ts). Planned before the maintenance loop below.
+  await guard('consolidate', async () => {
+    if (left() < 10_000) return;
+    await planConsolidations(deps);
+  });
+
   await guard('maintenance', async () => {
     while (left() > 5_000) {
       const [job] = await claimJobs(deps.db, {
         now: deps.now(),
-        kinds: ['purge_photos', 'purge_content', 'delete_account', 'summarise_session'],
+        kinds: [
+          'purge_photos',
+          'purge_content',
+          'delete_account',
+          'summarise_session',
+          'consolidate_memories',
+        ],
         limit: 1,
         leaseSeconds: 120,
       });
       if (!job) break;
-      await runJobSafely(deps, job, () =>
-        job.kind === 'purge_photos'
-          ? purgePhotos(deps, job)
-          : job.kind === 'purge_content'
-            ? purgeContent(deps, job)
-            : job.kind === 'summarise_session'
-              ? runSummary(deps, job)
-              : executeAccountDeletion(deps, job),
-      );
+      await runJobSafely(deps, job, () => runMaintenanceJob(deps, job));
       stats.maintenance++;
     }
   });
@@ -197,6 +204,22 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     [deps.now(), stats.errors[0] ?? null, JSON.stringify(stats)],
   );
   return stats;
+}
+
+/** The handler of a claimed maintenance job (the kinds claimed above, and only those). */
+function runMaintenanceJob(deps: Deps, job: JobRow): Promise<void> {
+  switch (job.kind) {
+    case 'purge_photos':
+      return purgePhotos(deps, job);
+    case 'purge_content':
+      return purgeContent(deps, job);
+    case 'summarise_session':
+      return runSummary(deps, job);
+    case 'consolidate_memories':
+      return runConsolidation(deps, job);
+    default:
+      return executeAccountDeletion(deps, job);
+  }
 }
 
 /**

@@ -137,7 +137,8 @@ export type UndoSpec =
 
 export type ToolOutcome = { summary: ActionSummary; undo: UndoSpec | null };
 
-const MAX_ACTIVE_MEMORIES = 60;
+/** What Buddy may know at once; at the cap he asks her what he may forget (never evicts). */
+export const MAX_ACTIVE_MEMORIES = 60;
 const MAX_CONSTRAINT_DAYS = 60;
 const MAX_PLAN_DAYS = 366;
 
