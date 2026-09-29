@@ -2,7 +2,9 @@
 // sent outside the app show what really happened to them. What Buddy did
 // with a message stands right under it, with "Rückgängig" while that still
 // applies — there is no separate list of it on the home. Where a new day starts
-// a quiet line names it (never how many days passed).
+// a quiet line names it (never how many days passed). Where a new session starts
+// Buddy greets her in a bubble of his own (issue #104) and, with the room the screen
+// gives it, that greeting is what the view opens on.
 // Motion: what arrives fades in with a small rise (the bubble first, then its
 // cards and chips, subtly staggered); what was already there when the screen
 // opened stands still, and the list glides when something is added. A long
@@ -70,11 +72,18 @@ type Props = {
   onOption?: (messageId: string, option: string) => void;
   onResend?: (message: MessageView) => void;
   /**
-   * A fresh page when she comes back after a break (issue #34): the greeting line goes
-   * after this message, so everything older sits above it and the new turn starts below.
+   * A fresh page when she comes back (issues #34, #104): Buddy's greeting goes after this
+   * message, so everything older sits above it and the new turn starts below.
    * Null = the conversation just goes on.
    */
   sessionStart?: { afterMessageId: string; text: string } | null;
+  /**
+   * How much room the greeting's block gets (issue #104): the thread stands at its end, so a
+   * block as tall as the view puts the greeting at the top and leaves the rest free — the
+   * empty page she opens on (lib/buddy/sessionAnchor.ts `greetingRoom`). 0 or absent: the
+   * greeting simply closes the conversation, as the line did.
+   */
+  sessionRoom?: number;
   /** Undo one of Buddy's actions (only offered where the API says it still applies). */
   onUndo?: (actionId: string) => void;
   /** Undo is locked while this is true (default: busy); history locks only while undoing. */
@@ -101,6 +110,7 @@ export function Conversation({
   busy,
   showActions = false,
   sessionStart = null,
+  sessionRoom = 0,
   onOption,
   onResend,
   onUndo,
@@ -116,6 +126,10 @@ export function Conversation({
   const [menu, setMenu] = useState<MenuMessage | null>(null);
   const last = messages[messages.length - 1];
   const lastBuddy = [...messages].reverse().find((m) => m.role === 'buddy');
+  // Whether Buddy's greeting stands in what is shown here (its message may have scrolled out
+  // of the last few): then the orb that moves is his, the one that just woke up.
+  const greetsHere =
+    sessionStart !== null && messages.some((m) => m.id === sessionStart.afterMessageId);
   const breaks = dayBreaks(messages.map((m) => m.created_at));
   const thinking =
     pending !== null || messages.some((m) => m.role === 'learner' && m.status === 'processing');
@@ -163,8 +177,11 @@ export function Conversation({
                 maxWidth: '92%',
               }}
             >
-              {/* Only the newest Buddy moves (while he writes, the one writing does). */}
-              {mine ? null : <BuddyOrb size={ORB} breathe={m === lastBuddy && !thinking} />}
+              {/* Only the newest Buddy moves (while he writes, the one writing does) — and
+                  with a greeting standing under the thread, that is the one who just woke up. */}
+              {mine ? null : (
+                <BuddyOrb size={ORB} breathe={m === lastBuddy && !thinking && !greetsHere} />
+              )}
               <Pressable
                 accessibilityRole="text"
                 accessibilityLabel={spoken}
@@ -357,7 +374,9 @@ export function Conversation({
                 ))}
               </View>
             ) : null}
-            {opensHere ? <SessionLine text={sessionStart!.text} /> : null}
+            {opensHere ? (
+              <SessionGreeting text={sessionStart!.text} room={sessionRoom} breathe={!thinking} />
+            ) : null}
           </Animated.View>
         );
       })}
@@ -424,33 +443,63 @@ export function Conversation({
   return <LayoutAnimationConfig skipEntering>{view}</LayoutAnimationConfig>;
 }
 
-/** The day a part of the conversation is from: "Heute", "Gestern", or "Montag, 28. September". */
 /**
- * Where this visit starts (issue #34): a greeting for the time of day, quiet, with a hairline
- * to each side. Everything older is right above it — nothing is hidden or cleared.
+ * Where this visit starts (issues #34, #104): Buddy wakes up and says hello — his own bubble,
+ * looking like everything else he says, so it reads as being greeted and not as a divider.
+ * It lives on this phone only: nothing is stored, nothing was asked of the model.
+ * `room`: the height the block takes so the greeting stands at the top of the view and the
+ * rest of it is free (the screen passes it while nothing follows the greeting). Everything
+ * older is then one swipe above — hidden from neither eye nor screen reader.
  */
-function SessionLine({ text }: { text: string }) {
+function SessionGreeting({
+  text,
+  room = 0,
+  breathe,
+}: {
+  text: string;
+  room?: number;
+  breathe: boolean;
+}) {
   const { palette } = useTheme();
+  const { t } = useTranslation('buddy');
   return (
     <View
-      style={{
-        alignSelf: 'stretch',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACE.sm,
-        // Block gap xs + xs above, the list's sm below: the same sm to both sides.
-        marginTop: SPACE.xs,
-      }}
+      // Stretch: the block above aligns to her side when she spoke last; the greeting is
+      // Buddy's and starts at the left whatever came before it.
+      // Block gap xs + this xs = sm, the same air as between two turns.
+      style={{ alignSelf: 'stretch', marginTop: SPACE.xs, minHeight: room }}
     >
-      <View style={{ flex: 1, height: 1, backgroundColor: palette.hairline }} />
-      <Text accessibilityRole="header" style={[TYPE.small, { color: palette.ink2, fontSize: 12 }]}>
-        {text}
-      </Text>
-      <View style={{ flex: 1, height: 1, backgroundColor: palette.hairline }} />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          alignSelf: 'flex-start',
+          gap: SPACE.sm,
+          maxWidth: '92%',
+        }}
+      >
+        <BuddyOrb size={ORB} breathe={breathe} />
+        <View
+          accessibilityRole="text"
+          accessibilityLabel={`${t('thread.buddy')}: ${text}`}
+          style={[
+            BUBBLE,
+            {
+              flexShrink: 1,
+              backgroundColor: palette.paper,
+              borderBottomLeftRadius: 6,
+            },
+            SHADOW.soft,
+          ]}
+        >
+          <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
+        </View>
+      </View>
     </View>
   );
 }
 
+/** The day a part of the conversation is from: "Heute", "Gestern", or "Montag, 28. September". */
 export function DayLine({ day }: { day: string }) {
   const { palette } = useTheme();
   const { t, i18n: i } = useTranslation('buddy');
