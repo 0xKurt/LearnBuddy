@@ -67,10 +67,17 @@ async function permissionGranted(): Promise<boolean> {
  * (lib/perf.ts) — a number only a real phone can give.
  */
 export function warmRecognition(locale: string): void {
-  void engineFor(locale);
-  void ExpoSpeechRecognitionModule.getPermissionsAsync()
-    .then((p) => grant.note(p.granted))
-    .catch(() => undefined);
+  // The browser records and uploads — there is nothing to warm, and the native module
+  // is absent there: touching it crashed the talk screen into the error boundary.
+  if (Platform.OS === 'web') return;
+  try {
+    void engineFor(locale);
+    void ExpoSpeechRecognitionModule.getPermissionsAsync()
+      .then((p) => grant.note(p.granted))
+      .catch(() => undefined);
+  } catch {
+    // Warming is an optimisation: a device without the module simply warms nothing.
+  }
 }
 
 /**

@@ -148,31 +148,35 @@ export function PhotoStrip({ uris, pdfs, flagged, disabled, onRemove, onRetake }
               ) : null}
             </View>
           </View>
-          {/* Schief, unscharf, halbe Seite: this page again, in its place (issue #57). */}
-          {pdfs?.[uri] ? null : (
+          {/* One row, icons with spoken names: two stacked worded buttons pushed the
+              screen 32 px past 360×740 (fit rule; the walkthrough caught it). Retake:
+              schief, unscharf, halbe Seite — this page again, in its place (issue #57). */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
+            {pdfs?.[uri] ? null : (
+              <Btn
+                size="sm"
+                variant="ghost"
+                pill
+                icon="camera"
+                disabled={disabled}
+                onPress={() => onRetake(uri)}
+                accessibilityLabel={t('retake_label', { index: i + 1 })}
+              >
+                {''}
+              </Btn>
+            )}
             <Btn
               size="sm"
               variant="ghost"
               pill
-              full
+              icon="trash"
               disabled={disabled}
-              onPress={() => onRetake(uri)}
-              accessibilityLabel={t('retake_label', { index: i + 1 })}
+              onPress={() => onRemove(uri)}
+              accessibilityLabel={t('remove_label', { index: i + 1 })}
             >
-              {t('retake')}
+              {''}
             </Btn>
-          )}
-          <Btn
-            size="sm"
-            variant="ghost"
-            pill
-            full
-            disabled={disabled}
-            onPress={() => onRemove(uri)}
-            accessibilityLabel={t('remove_label', { index: i + 1 })}
-          >
-            {t('remove')}
-          </Btn>
+          </View>
         </View>
       ))}
     </ScrollView>

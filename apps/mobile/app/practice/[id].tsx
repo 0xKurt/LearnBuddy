@@ -762,11 +762,12 @@ export default function PracticeScreen() {
         >
           <ScrollView
             testID="scroll-question"
-            style={{
-              flexGrow: 0,
-              flexShrink: 1,
-              maxHeight: middleHeight > 0 ? questionCap : '60%',
-            }}
+            // No clamp and no shrinking: the question must NEVER scroll (rule 16), so
+            // nothing may cut it below its content — an irreducible question (three-line
+            // fraction prompt + the figure's legible minimum) beat every cap by a few px
+            // on 360×740. When space runs out the conversation yields: it scrolls.
+            // The cap still bounds how far the card GROWS (cardMin below).
+            style={{ flexGrow: 0, flexShrink: 0 }}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, gap: 10 }}
             onContentSizeChange={(_, h) => setQuestionContentHeight(Math.round(h))}
@@ -811,7 +812,11 @@ export default function PracticeScreen() {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{tools}</View>
             ) : null}
           </ScrollView>
-          <View style={{ flex: 1 }}>
+          {/* minHeight 0: on the web a flex child's min-height is its content, and the
+              conversation then SQUEEZES the question below its own content instead of
+              scrolling itself (issue #96 — 39 px overflow in voice mode; Yoga on the
+              phones already defaults to 0). The conversation is the one that scrolls. */}
+          <View style={{ flex: 1, minHeight: 0 }}>
             <ScrollView
               ref={scroll}
               testID="scroll-thread"

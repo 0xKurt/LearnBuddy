@@ -124,14 +124,17 @@ export function Btn({
   const active = tone ? { ...base, bg: TONE_BG[tone], color: LB.ink, borderWidth: 0 } : base;
   const v = muted ? mutedStyle(variant) : active;
   const radius = pill ? s.height / 2 : 14;
-  // With a handler, a tap on the waiting button answers ("what is missing?") instead of
-  // being swallowed; the accessibilityState below still says disabled either way.
+  // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
+  // The button itself STAYS truly disabled — un-disabling it made the web lose its
+  // `disabled` attribute and read as ready (RN Web's Pressable overwrites any passed
+  // `aria-disabled` with its own; the walkthrough's toBeDisabled caught it, issue #97).
+  // The tap lands on an invisible catcher laid over the disabled button instead.
   const reveal = muted && onDisabledPress ? onDisabledPress : undefined;
 
-  return (
+  const button = (
     <Pressable
-      onPress={reveal ?? onPress}
-      disabled={off && !reveal}
+      onPress={onPress}
+      disabled={off}
       accessibilityRole={selected === undefined ? 'button' : 'radio'}
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
@@ -146,8 +149,16 @@ export function Btn({
       {...(selected === undefined ? {} : { 'aria-checked': selected })}
       android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
       style={{
-        alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
-        ...(grow ? { flexGrow: 1 } : {}),
+        ...(reveal
+          ? { alignSelf: 'stretch' as const }
+          : {
+              alignSelf: full
+                ? ('stretch' as const)
+                : center
+                  ? ('center' as const)
+                  : ('flex-start' as const),
+              ...(grow ? { flexGrow: 1 } : {}),
+            }),
         // Only busy dims: the muted skin carries full opacity so its label keeps ≥ 4.5:1
         // (at 0.8 it fell to ~3.7 on the light palettes, issue #97).
         opacity: busy ? 0.8 : 1,
@@ -225,5 +236,28 @@ export function Btn({
         </View>
       )}
     </Pressable>
+  );
+
+  if (!reveal) return button;
+  return (
+    <View
+      style={{
+        alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
+        ...(grow ? { flexGrow: 1 } : {}),
+      }}
+    >
+      {button}
+      {/* Sighted pointer users tap here and hear what is missing; assistive tech talks
+          to the real disabled button underneath, so this stays invisible to it. */}
+      <Pressable
+        onPress={reveal}
+        accessible={false}
+        focusable={false}
+        tabIndex={-1}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+    </View>
   );
 }

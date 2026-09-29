@@ -26,3 +26,11 @@ export function useDeviceRecognition(_: {
     stop: (): void => {},
   };
 }
+
+/**
+ * Warming exists for the phones (service binding, permission answer — issue #41);
+ * the browser records and uploads, so there is nothing to warm. The export must
+ * still exist: the talk screen calls it on opening, and a missing function crashed
+ * the whole screen into the error boundary on the web.
+ */
+export function warmRecognition(_locale: string): void {}
