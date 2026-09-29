@@ -83,6 +83,12 @@ const Config = z
     /** Cheaper model for short low-stakes tasks (no feature uses it: the Lite models failed the tutor eval). */
     VERTEX_MODEL_FAST: ModelSpec.default('eu/gemini-3.1-flash-lite'),
     /**
+     * Text embeddings for the hybrid material search (issue #23). gemini-embedding-001
+     * does not serve the EU multi-region "eu" (checked live 2026-09-29), so the default
+     * rides on GOOGLE_VERTEX_LOCATION (europe-west4, where it is served).
+     */
+    VERTEX_MODEL_EMBEDDING: ModelSpec.default('gemini-embedding-001'),
+    /**
      * Per-task models, overriding the tier: JSON like {"tutor":"eu/gemini-3.1-flash-lite"}.
      * A model may carry its location ("eu/…"; default GOOGLE_VERTEX_LOCATION). Chosen per
      * task by measurement (docs/architecture.md §Model calls); unknown keys are rejected.
@@ -241,4 +247,11 @@ export const DAILY_LIMITS = {
   summary: 12,
   /** Tidying up what Buddy knows (issue #20): one call per kind, once a day. */
   consolidate: 8,
+  /**
+   * Text embeddings for the hybrid material search (issue #23): indexing a sheet's
+   * passages (one batched call per sheet) and embedding search queries (one per
+   * search_material lookup or pre-injection). Cents per day even at the cap; when
+   * it is reached the search runs as full text + trigram, never refuses.
+   */
+  embedding: 400,
 } as const;

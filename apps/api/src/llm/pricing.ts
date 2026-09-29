@@ -17,6 +17,11 @@ const PRICES: Record<string, Price> = {
   'gemini-3.6-flash': { inputPerM: 0.825, outputPerM: 4.125 },
   'gemini-3.7-flash': { inputPerM: 0.825, outputPerM: 4.125 },
   'gemini-3.8-flash': { inputPerM: 0.825, outputPerM: 4.125 },
+  // Embeddings (hybrid search, issue #23) have no billed output. Priced at the
+  // embedding family's highest published figure (gemini-embedding-2, Gemini API
+  // pricing read 2026-09-29: $0.20/1M input tokens; -001 was $0.15/1M at GA) so
+  // the record is a ceiling, never an undercount.
+  'gemini-embedding-001': { inputPerM: 0.2, outputPerM: 0 },
 };
 
 /** Unknown models are priced like the most expensive known one (never under-count). */

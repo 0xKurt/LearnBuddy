@@ -52,6 +52,7 @@ import {
   pdfPageCount,
 } from './pdf.js';
 import { attachConceptImages } from './images.js';
+import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
@@ -797,6 +798,15 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   // attachConceptImages never throws — a vision pass or Storage that fails leaves the
   // sheet ready without images, it never becomes a failure path of the reading.
   if (sheetForImages) {
+    // Search passages for the sheet that carries the text (the merge target when pages
+    // joined an earlier sheet): rewritten from scratch so they follow the grown text.
+    // Like the images below, a bonus on a sheet that is already ready — indexMaterialPassages
+    // never throws, and a sheet without its index is still found by full text (issue #23).
+    await indexMaterialPassages(deps, {
+      materialId: sheetForImages,
+      learnerId: learner.id,
+      timezone: tz.timezone,
+    });
     await attachConceptImages(deps, {
       materialId,
       sheetId: sheetForImages,

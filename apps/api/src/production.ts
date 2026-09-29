@@ -4,7 +4,9 @@ import { SupabaseAuthVerifier } from './auth/verifier.js';
 import { bootWarnings, type Config } from './config.js';
 import type { Deps } from './deps.js';
 import { createDb } from './lib/db.js';
+import { DisabledEmbeddings } from './llm/embeddings.js';
 import { DisabledGateway } from './llm/gateway.js';
+import { VertexEmbeddings } from './llm/vertex-embeddings.js';
 import { VertexGateway } from './llm/vertex.js';
 import { DisabledPush, ExpoPush } from './push/transport.js';
 import { DisabledSpeech } from './speech/gateway.js';
@@ -20,6 +22,8 @@ export function productionDeps(config: Config, background: Deps['background']): 
     auth: new SupabaseAuthVerifier(config),
     storage: new SupabaseStorage(config),
     llm: config.LLM_BACKEND === 'vertex' ? new VertexGateway(config) : new DisabledGateway(),
+    embeddings:
+      config.LLM_BACKEND === 'vertex' ? new VertexEmbeddings(config) : new DisabledEmbeddings(),
     push:
       config.PUSH_BACKEND === 'expo' ? new ExpoPush(config.EXPO_ACCESS_TOKEN) : new DisabledPush(),
     speech: config.SPEECH_BACKEND === 'google' ? new GoogleSpeech(config) : new DisabledSpeech(),

@@ -38,7 +38,7 @@ const searchMaterial = defineLookup({
   args: z.object({ query: z.string().trim().max(120) }),
   surfaces: ['turn', 'check'],
   connectors: ['material'],
-  run: (c, a) => searchMaterials(c.deps.db, c.learnerId, c.timezone, a.query, 3),
+  run: (c, a) => searchMaterials(c.deps, c.learnerId, c.timezone, a.query, 3),
 });
 
 const practiceHistory = defineLookup({
