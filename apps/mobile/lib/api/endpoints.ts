@@ -335,10 +335,11 @@ export const finishSession = (id: string) =>
 
 // ─────────────── voice ───────────────
 
-/** Speech to text for a spoken message or answer (≤ ~60 s); '' when nothing was understood. */
 /**
- * Speech to text. With `onProgress` the words arrive while the model is still writing
- * them down (issue #9) — for showing only; what is used is what this call returns.
+ * Speech to text for a spoken message or answer; '' when nothing was understood.
+ * A long dictation calls this once per piece (issue #19, lib/speech/dictation.ts).
+ * With `onProgress` the words arrive while the model is still writing them
+ * down (issue #9) — for showing only; what is used is what this call returns.
  */
 export const transcribe = (
   body: TranscribeRequest,

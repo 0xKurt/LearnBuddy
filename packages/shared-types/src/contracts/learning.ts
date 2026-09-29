@@ -421,9 +421,14 @@ export const SpeakStreamEvent = z.object({
 });
 export type SpeakStreamEvent = z.infer<typeof SpeakStreamEvent>;
 
-/** Speech to text: a spoken chat message or answer (≤ ~3 min). The recording is not stored. */
+/**
+ * Speech to text: a spoken chat message or answer. A dictation has no time limit
+ * (issue #19): the app cuts a long recording into pieces at pauses and sends them
+ * one after another, each as its own request. No recording is stored.
+ */
 export const TranscribeRequest = z.object({
   mime: z.enum(['audio/mp4', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/wav', 'audio/mpeg']),
+  /** One piece. The bound is transport, not a time limit: the app cuts well below it. */
   audio_base64: z.string().min(100).max(2_000_000),
   /** message: talking to Buddy · answer: answering a question (numbers and math written as such). */
   purpose: z.enum(['message', 'answer']),
@@ -435,6 +440,12 @@ export const TranscribeRequest = z.object({
     .optional(),
   /** answer: the question being answered, so short answers ("drei Viertel") are heard in context. */
   context: z.string().max(600).nullable().optional(),
+  /**
+   * The tail of what the same dictation's earlier pieces already said, so a piece
+   * that starts mid-sentence is heard as its continuation. Context only: the model
+   * never repeats it. Absent on the first (or only) piece.
+   */
+  prev_tail: z.string().max(400).nullable().optional(),
 });
 export type TranscribeRequest = z.infer<typeof TranscribeRequest>;
 

@@ -1,11 +1,15 @@
 // Speaking instead of typing (a message to Buddy or an answer): tap to start,
-// tap to stop (60 s at most), and the written text comes back via onText.
+// tap to stop, and the written text comes back via onText.
 // Two ways, chosen per tap (lib/speech/engine.ts, docs/privacy.md §Processors):
 // - device: the phone recognises on-device, the words appear while she speaks
 //   (`live`), nothing leaves the phone;
-// - server: a recording goes once to POST /voice/transcribe (our EU path) and is
+// - server: the recording goes to POST /voice/transcribe (our EU path) and is
 //   not kept on the device or the server — in the browser, and wherever the
-//   phone could only recognise on Apple's/Google's servers.
+//   phone could only recognise on Apple's/Google's servers. This path has no
+//   time limit (issue #19): a long dictation rolls over into pieces at pauses
+//   (lib/speech/record.ts), each piece is written down while she keeps
+//   talking (`live` grows), and the stitched text is delivered at her tap on
+//   stop. A piece that breaks costs only itself, never the whole take.
 // Screens only see { state, toggle, … }, so the way can change without touching them.
 //
 // The microphone is only ever started by a tap (toggle); nothing here starts
@@ -18,12 +22,13 @@ import { useTranslation } from 'react-i18next';
 import { announce } from '../../lib/announce.js';
 import { transcribe } from '../../lib/api/endpoints.js';
 import { messageFor } from '../../lib/errors.js';
+import { prevTail, stitchTranscripts } from '../../lib/speech/dictation.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
-import { useRecording, type Recording } from '../../lib/speech/record.js';
+import { useRecording, type DictationChunk, type Recording } from '../../lib/speech/record.js';
 import { engineFor, useDeviceRecognition } from '../../lib/speech/recognize.js';
 import { TurnGuard } from '../../lib/speech/turnGuard.js';
 import { transcriptContext, transcriptLang } from '../../lib/speech/spoken.js';
-import { MAX_DICTATION_MS, voiceLocale } from '../../lib/speech/voice.js';
+import { DEVICE_DICTATION_MS, MIN_AUDIO_BASE64, voiceLocale } from '../../lib/speech/voice.js';
 import { toast } from '../lb/Toast.js';
 
 export type VoicePurpose = TranscribeRequest['purpose'];
@@ -31,8 +36,11 @@ export type VoicePurpose = TranscribeRequest['purpose'];
 /** idle → starting (asking for the mic) → recording → transcribing → idle. */
 export type VoiceInputState = 'idle' | 'starting' | 'recording' | 'transcribing';
 
-/** Why no text came out: nothing understood, only a tap, an unreadable or broken recording. */
-export type VoiceHint = 'empty' | 'too_short' | 'unsupported' | 'failed';
+/**
+ * Why no text came out (nothing understood, only a tap, an unreadable or broken
+ * recording) — or, part_lost, why a delivered long dictation may have a gap.
+ */
+export type VoiceHint = 'empty' | 'too_short' | 'unsupported' | 'failed' | 'part_lost';
 
 type Options = {
   purpose: VoicePurpose;
@@ -53,9 +61,9 @@ export type VoiceInput = {
   state: VoiceInputState;
   /** Listening on the device (ends by itself with untilPause) rather than recording. */
   onDevice: boolean;
-  /** Milliseconds recorded so far and the most there can be (for "0:07 / 1:00"). */
+  /** Milliseconds recorded so far and the most there can be; null = no limit (issue #19). */
   elapsedMs: number;
-  maxMs: number;
+  maxMs: number | null;
   /** How loud she is right now (0…1), for the listening moon's glow. */
   level: number;
   /** What she has said so far: the phone's recognition, or the words the model is
@@ -105,52 +113,115 @@ export function useVoiceInput({
     latest.current.onText(text);
   }
 
-  async function send(r: Recording): Promise<void> {
-    if (!guard.current()) return;
-    const token = guard.begin();
+  /**
+   * One running dictation on the recording path: the texts of its pieces in
+   * spoken order (undefined = still being written down, null = lost), whether
+   * a piece was lost, and the chain that transcribes them one after another
+   * while she keeps talking.
+   */
+  const dictation = useRef<{
+    token: number;
+    parts: (string | null | undefined)[];
+    lost: boolean;
+    failure: unknown;
+    chain: Promise<void>;
+  } | null>(null);
+
+  async function transcribePiece(
+    d: NonNullable<typeof dictation.current>,
+    r: Recording | null,
+    chunk: DictationChunk,
+  ): Promise<void> {
     const opts = latest.current;
-    setTranscribing(true);
-    setHeard('');
-    try {
-      const res = await transcribe(
-        {
+    if (guard.holds(d.token)) {
+      if (r === null) {
+        // This piece broke on the device; the other pieces still count.
+        d.lost = true;
+      } else if (r.base64.length < MIN_AUDIO_BASE64) {
+        // The moment of nothing after the last words of a long take.
+        d.parts[chunk.index] = '';
+      } else {
+        const before = stitchTranscripts(d.parts);
+        const body = {
           mime: r.mime,
           audio_base64: r.base64,
           purpose: opts.purpose,
           lang: transcriptLang(opts.lang),
           context: opts.purpose === 'answer' ? transcriptContext(opts.context) : null,
-        },
-        {
-          // The words as they arrive, so the wait is not a blank screen (issue #9).
-          onProgress: (event) => {
-            if (mounted.current && guard.holds(token)) setHeard(event.text);
-          },
-        },
-      );
-      if (!mounted.current || !guard.holds(token)) return;
-      const text = res.text.trim();
-      if (text) deliver(text);
-      else setHint('empty');
-    } catch (err) {
-      if (mounted.current) toast.show(messageFor(err), 'error');
-    } finally {
-      if (mounted.current) {
-        setTranscribing(false);
-        setHeard('');
+          // The tail of what was already understood, so the model hears a piece
+          // that starts mid-sentence as its continuation.
+          prev_tail: chunk.index > 0 ? prevTail(before) : null,
+        };
+        const attempt = async () => {
+          const res = await transcribe(body, {
+            // The words as they arrive, so the wait is not a blank screen (issue #9);
+            // during a long take the earlier pieces stay on screen in front of them.
+            onProgress: (event) => {
+              if (mounted.current && guard.holds(d.token))
+                setHeard([before, event.text].filter(Boolean).join(' '));
+            },
+          });
+          return res.text.trim();
+        };
+        try {
+          d.parts[chunk.index] = await attempt();
+        } catch {
+          // One more try; then the piece is honestly lost and the rest goes on.
+          try {
+            d.parts[chunk.index] = await attempt();
+          } catch (err) {
+            d.lost = true;
+            d.failure = err;
+          }
+        }
+        if (mounted.current && guard.holds(d.token)) setHeard(stitchTranscripts(d.parts));
       }
+    }
+    if (!chunk.last) return;
+    // The dictation is complete: hand over what was understood, honestly.
+    if (mounted.current) {
+      setTranscribing(false);
+      setHeard('');
+    }
+    if (!mounted.current || !guard.holds(d.token)) return;
+    const text = stitchTranscripts(d.parts);
+    if (text) {
+      deliver(text);
+      if (d.lost) setHint('part_lost');
+    } else if (d.lost) {
+      toast.show(messageFor(d.failure), 'error');
+    } else {
+      setHint('empty');
     }
   }
 
+  /** A finished piece of the recording path; pieces are transcribed one after another. */
+  function onPiece(r: Recording | null, chunk: DictationChunk): void {
+    if (!guard.current()) return;
+    if (chunk.index === 0 || dictation.current === null) {
+      dictation.current = {
+        token: guard.begin(),
+        parts: [],
+        lost: false,
+        failure: null,
+        chain: Promise.resolve(),
+      };
+      setHeard('');
+    }
+    const d = dictation.current;
+    if (chunk.last) setTranscribing(true);
+    d.chain = d.chain.then(() => transcribePiece(d, r, chunk));
+  }
+
   const rec = useRecording({
-    maxMs: MAX_DICTATION_MS,
-    onRecorded: (r) => void send(r),
+    onChunk: onPiece,
     onFailed: (why) => {
       if (why !== 'denied') setHint(why);
     },
   });
 
   const device = useDeviceRecognition({
-    maxMs: MAX_DICTATION_MS,
+    maxMs: DEVICE_DICTATION_MS,
     onText: (text) => {
       if (guard.current()) deliver(text);
     },
@@ -253,7 +324,8 @@ export function useVoiceInput({
     state,
     onDevice,
     elapsedMs: onDevice ? device.elapsedMs : rec.elapsedMs,
-    maxMs: onDevice ? MAX_DICTATION_MS : rec.maxMs,
+    // The device recogniser's session has a bound; the recording path has none (issue #19).
+    maxMs: onDevice ? DEVICE_DICTATION_MS : rec.maxMs,
     live: onDevice ? device.heard : heard,
     level: onDevice ? device.level : rec.level,
     hint,

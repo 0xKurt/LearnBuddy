@@ -29,11 +29,13 @@
   "voice": {
     "message": "Detta un messaggio",
     "answer": "Di' la tua risposta",
-    "hint": "Tocca, parla e tocca di nuovo. Al massimo tre minuti.",
+    "hint": "Tocca, parla e tocca di nuovo – per tutto il tempo che vuoi.",
     "stop": "Ferma la registrazione",
     "stop_hint": "Poi scrivo quello che hai detto.",
     "recording": "Ti ascolto … {{time}} / {{max}}",
     "recording_value": "Registrazione in corso, {{time}} di {{max}}",
+    "recording_open": "Ti ascolto … {{time}}",
+    "recording_open_value": "Registrazione in corso, {{time}}",
     "live": "Capito finora: {{text}}",
     "transcribing": "Sto scrivendo quello che hai detto …",
     "denied": "Senza microfono non posso sentirti. Puoi consentirlo nelle Impostazioni.",
@@ -43,7 +45,8 @@
       "empty": "Non ti ho capito – di nuovo?",
       "too_short": "È stato molto breve. Tocca il microfono, parla con calma e poi tocca di nuovo.",
       "unsupported": "Non riesco a leggere questa registrazione. Riprova, per favore.",
-      "failed": "La registrazione non è riuscita. Riprova, per favore."
+      "failed": "La registrazione non è riuscita. Riprova, per favore.",
+      "part_lost": "Un pezzetto della tua registrazione è andato perso – il resto c'è già."
     },
     "mode": "Modalità voce",
     "mode_hint": "Buddy ti legge ad alta voce e tu rispondi con il microfono.",

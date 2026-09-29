@@ -725,27 +725,34 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
 ## Limits
 
-| What                            | Limit                                                                                                                                                  |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8 (`config.ts`) |
-| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                     |
-| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                              |
-| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                             |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos                                                                 |
-| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                |
-| Turn stall                      | taken over after 3 minutes                                                                                                                             |
-| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                              |
-| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                                                                     |
-| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                                        |
-| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                                              |
-| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h, messages to Buddy 120/h (429 + `Retry-After`)                |
-| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                       |
+| What                            | Limit                                                                                                                                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8 (`config.ts`)                              |
+| Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                  |
+| Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                           |
+| Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                          |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos                                                                                              |
+| Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                                             |
+| Turn stall                      | taken over after 3 minutes                                                                                                                                                          |
+| Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                                                           |
+| Memory                          | 60 active items; temporary ≤ 60 days; consolidation from 45 (1 run/day, ≤ 3 calls)                                                                                                  |
+| PIN (all PIN routes, shared)    | 5 wrong → locked 15 min, every time (no escalation); the right PIN resets (423 + `Retry-After`)                                                                                     |
+| Forgotten PIN (fresh sign-in)   | 5 per hour, never while the PIN is locked                                                                                                                                           |
+| Requests per account            | abuse protection only: practice answers (typed, spoken, one word) 600/h, dictation 600/h (each piece of a long dictation counts one), messages to Buddy 120/h (429 + `Retry-After`) |
+| Natural voice (ADR 0008)        | cost protection only: 1 000 newly synthesised sentences per account and hour; cached ones always                                                                                    |
 
 Budgets are rows in `attempt_counters` (migration 0014; `lock_level` dropped in 0033) changed by
 one atomic upsert with the app clock (`lib/limits.ts` `consume`); answers and messages are counted
 by one middleware in front of the routes (`http/limits.ts`). A request budget exists only against
 scripts and must never limit normal use — 10 answers or 2 messages a minute for a whole hour;
 the owner's rule is to add no constraint that is not strictly needed (ADR 0006). Password-reset e-mails are Supabase Auth's own rate limit.
+
+A dictation has no time limit (issue #19): the app cuts a long recording into pieces at pauses
+and sends each piece as its own `POST /voice/transcribe` (§Voice). Each piece takes one of the
+600/h and one of the daily `transcribe` calls — the budget protects cost per model call, and a
+piece is a model call; counting a whole dictation as one would let a single request stand for
+unbounded audio. Normal use never feels it: pieces are at least ~90 s of speech, so 600/h is
+more than 15 hours of nonstop talking per hour, and 400 pieces a day is over 10 hours of speech.
 
 Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
 gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
@@ -1272,7 +1279,20 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (answer mode writes numbers and fractions as such, and gets the question as context so short
   answers like "drei Viertel" are heard as 3/4). Live checks with espeak-ng recordings
   (`evals/voice/run.ts`): 5/6 with context; the lite model invented words and is not used. The
-  recording is never stored.
+  recording is never stored. **A dictation has no time limit** (issue #19): the visible 3-minute
+  cap is gone. The recording path cannot stream PCM without a native build round (the issue's
+  full Silero-VAD design), so a long take rolls over into pieces instead
+  (`lib/speech/dictation.ts`, `record.ts`): from ~90 s the recorder is cut at the next real
+  pause (≥ 700 ms below room tone, the level the glow already measures) — never later than
+  ~150 s, well under the 2 MB transport bound per piece — and starts again inside the silence.
+  Each finished piece goes to `/voice/transcribe` while she keeps talking, with `prev_tail`
+  (the tail of what was already understood) as a structured context field, so a piece starting
+  mid-sentence is heard as its continuation; the prompt forbids repeating it. The endpoint
+  stays stateless — a piece can be retried safely; the app retries a failed piece once and
+  then delivers the other pieces' text with an honest "part lost" hint, so one broken piece
+  never costs a long take. Each piece counts against the budgets on its own (§Limits). Cut
+  quality on real recordings (stitched vs. whole clip) is not yet measured — that comparison
+  belongs to the walkthrough scenario before the pieces path replaces anything further.
 - **Buddy's natural voice** (ADR 0008): everything read aloud goes sentence by sentence through
   `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → Google Cloud TTS, Chirp 3:
   HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and

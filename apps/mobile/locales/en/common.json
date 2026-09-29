@@ -29,11 +29,13 @@
   "voice": {
     "message": "Speak a message",
     "answer": "Say your answer",
-    "hint": "Tap, speak, then tap again. Three minutes at most.",
+    "hint": "Tap, speak, then tap again – for as long as you like.",
     "stop": "Stop recording",
     "stop_hint": "Then I'll write down what you said.",
     "recording": "I'm listening … {{time}} / {{max}}",
     "recording_value": "Recording, {{time}} of {{max}}",
+    "recording_open": "I'm listening … {{time}}",
+    "recording_open_value": "Recording, {{time}}",
     "live": "Heard so far: {{text}}",
     "transcribing": "I'm writing down what you said …",
     "denied": "I can't hear you without the microphone. You can allow it in Settings.",
@@ -43,7 +45,8 @@
       "empty": "I didn't catch that – try again?",
       "too_short": "That was very short. Tap the mic, take your time speaking, then tap again.",
       "unsupported": "I can't read this recording, sorry. Please try again.",
-      "failed": "The recording didn't work. Please try again."
+      "failed": "The recording didn't work. Please try again.",
+      "part_lost": "A bit of your recording got lost – the rest is already there."
     },
     "mode": "Voice mode",
     "mode_hint": "Buddy reads aloud to you, and you answer with the mic.",
