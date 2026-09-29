@@ -344,6 +344,15 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Fast', { exact: true })).toBeVisible();
   await expect(page.getByText(/Zunge zwischen den Zähnen/)).toHaveCount(1);
   await shot(page, '49-speak-feedback');
+  // A word she got wrong opens on its own: hear it, read the tip, say just that word
+  // (issue #83). It is practice — the question keeps its state.
+  await page.getByRole('button', { name: 'Wort üben: weather' }).click();
+  await expect(page.getByText('Nur dieses Wort – das zählt nicht für die Aufgabe.')).toBeVisible();
+  await expect(inSheet(page).getByRole('button', { name: 'Anhören', exact: true })).toBeVisible();
+  await expect(inSheet(page).getByRole('button', { name: 'Langsam anhören' })).toBeVisible();
+  await expect(inSheet(page).getByRole('button', { name: 'Dieses Wort sagen' })).toBeVisible();
+  await shot(page, '49b-speak-word', { opened: true });
+  await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
 
   // ── Signing out, and the password link that no longer works ──

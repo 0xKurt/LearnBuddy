@@ -135,7 +135,11 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Hausaufgabe geschafft')).toBeVisible();
   // What she solved herself — no hit rate, no zero (user feedback #1).
-  await expect(page.getByText('Du hast 1 Aufgabe selbst gelöst.')).toBeVisible();
+  // On the screen she is looking at: the home lies behind it in the DOM and carries the same
+  // sentence on its result card (that duplication is #17, not this test's subject).
+  await expect(
+    page.getByTestId('scroll-list').getByText('Du hast 1 Aufgabe selbst gelöst.'),
+  ).toBeVisible();
   await expect(page.getByText('Auf Anhieb richtig')).toHaveCount(0);
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 

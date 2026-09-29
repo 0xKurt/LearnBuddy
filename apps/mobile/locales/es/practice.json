@@ -81,7 +81,12 @@
     "legend": "Subrayado = practicar otra vez",
     "tip": "«{{word}}» – {{tip}}",
     "heard": "He oído: «{{text}}»",
-    "more_tips": "Ver {{count}} consejos más"
+    "more_tips": "Ver {{count}} consejos más",
+    "word_open": "Practicar la palabra: {{word}}",
+    "word_hint": "Solo esta palabra: no cuenta para el ejercicio.",
+    "word_say": "Decir esta palabra",
+    "word_good": "¡Ya lo tienes!",
+    "word_again": "Casi: escúchala otra vez y prueba."
   },
   "help_note": "Deberes – te doy pistas, la solución la encuentras tú.",
   "origin_buddy": "Pregunta de Buddy",

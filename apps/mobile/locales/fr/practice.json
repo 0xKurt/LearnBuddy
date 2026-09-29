@@ -81,7 +81,12 @@
     "legend": "Souligné = à refaire",
     "tip": "« {{word}} » – {{tip}}",
     "heard": "J'ai entendu : « {{text}} »",
-    "more_tips": "Voir {{count}} conseils de plus"
+    "more_tips": "Voir {{count}} conseils de plus",
+    "word_open": "Travailler le mot : {{word}}",
+    "word_hint": "Seulement ce mot – ça ne compte pas pour l'exercice.",
+    "word_say": "Dire ce mot",
+    "word_good": "C'est ça !",
+    "word_again": "Presque – réécoute-le et réessaie."
   },
   "help_note": "Devoirs – je te donne des indices, tu trouves la solution toi-même.",
   "origin_buddy": "Question de Buddy",

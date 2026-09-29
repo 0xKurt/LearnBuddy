@@ -822,7 +822,7 @@ export default function PracticeScreen() {
           {/* The next question comes in softly from the side (keyed by the question). */}
           <SlideIn key={item.id}>
             {speaking ? (
-              <SpeakCard item={item} turns={turns} live={speakLive} />
+              <SpeakCard item={item} turns={turns} live={speakLive} sessionId={session.id} />
             ) : (
               <QuestionCard
                 prompt={item.prompt}

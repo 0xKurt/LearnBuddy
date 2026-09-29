@@ -362,6 +362,31 @@ export const SpeakRequest = z.object({
 export type SpeakRequest = z.infer<typeof SpeakRequest>;
 
 /**
+ * One word of the sentence, said on its own (issue #83): she taps a word she got wrong and
+ * practises just that. Nothing is stored and nothing counts — it is practice, not an attempt;
+ * the question keeps its state until she says the whole sentence again.
+ */
+export const SpeakWordRequest = z.object({
+  item_id: Uuid,
+  /** The word as it stands in the sentence. */
+  word: z.string().trim().min(1).max(40),
+  mime: z.enum(['audio/mp4', 'audio/aac', 'audio/m4a', 'audio/webm', 'audio/wav', 'audio/mpeg']),
+  audio_base64: z.string().min(100).max(1_400_000),
+});
+export type SpeakWordRequest = z.infer<typeof SpeakWordRequest>;
+
+export const SpeakWordResponse = z.object({
+  /** false when nothing understandable was heard — then `ok` says nothing. */
+  audible: z.boolean(),
+  ok: z.boolean(),
+  /** What was heard, written down; '' when nothing was. */
+  heard: z.string(),
+  /** One short tip in her app language, when it was not right yet. */
+  tip: z.string().nullable(),
+});
+export type SpeakWordResponse = z.infer<typeof SpeakWordResponse>;
+
+/**
  * POST /practice/sessions/:id/speak with `Accept: text/event-stream`
  * (docs/architecture.md §Speed): `progress` events while the model is still
  * listening, then one `done` event carrying the AnswerResponse (or `error` with
