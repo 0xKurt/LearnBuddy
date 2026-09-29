@@ -343,20 +343,28 @@ export default function Profile() {
                   onChange={setContactOk}
                   label={t('profile.contact_optin')}
                 />
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                {/* On a small phone the badge stays within the title's line height. */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    marginTop: compact ? 0 : 6,
+                  }}
+                >
                   <View
                     accessibilityElementsHidden
                     importantForAccessibility="no-hide-descendants"
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
+                      width: compact ? 24 : 32,
+                      height: compact ? 24 : 32,
+                      borderRadius: compact ? 12 : 16,
                       backgroundColor: LB.paper,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="shield" size={18} color={LB.primaryDk} />
+                    <Icon name="shield" size={compact ? 15 : 18} color={LB.primaryDk} />
                   </View>
                   <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
                 </View>

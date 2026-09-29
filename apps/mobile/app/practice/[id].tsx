@@ -828,7 +828,10 @@ export default function PracticeScreen() {
                 prompt={item.prompt}
                 topic={item.topic}
                 figure={item.figure}
-                figureMaxHeight={Math.round(windowHeight * 0.14)}
+                // The question block may take at most 60 %: on a small phone (360×740) a
+                // two-line prompt with fractions and a figure only fits with a smaller
+                // figure — a tap still opens it large (ZoomableFigure).
+                figureMaxHeight={Math.round(windowHeight * (windowHeight < 780 ? 0.12 : 0.14))}
                 fromBuddy={item.origin === 'buddy'}
                 // Her short answer appears in the gap of a fill-in sentence while she types.
                 answer={

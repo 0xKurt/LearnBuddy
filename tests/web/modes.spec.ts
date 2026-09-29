@@ -134,8 +134,12 @@ test('learning modes: explain, homework help without the solution, practice with
   await shot(page, '24-homework-solved');
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Hausaufgabe geschafft')).toBeVisible();
-  // What she solved herself — no hit rate, no zero (user feedback #1).
-  await expect(page.getByText('Du hast 1 Aufgabe selbst gelöst.')).toBeVisible();
+  // What she solved herself — no hit rate, no zero (user feedback #1). The home screen stays
+  // mounted (hidden) under the practice and may already carry the same line in its result
+  // card once it has refetched: what counts is the line she sees, exactly once.
+  await expect(
+    page.getByText('Du hast 1 Aufgabe selbst gelöst.').filter({ visible: true }),
+  ).toBeVisible();
   await expect(page.getByText('Auf Anhieb richtig')).toHaveCount(0);
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 

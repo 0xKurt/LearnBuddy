@@ -337,8 +337,12 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('The weather is nice today.').first()).toBeVisible();
   await page.getByRole('button', { name: 'Aufnahme starten' }).click();
+  // She speaks once the microphone is on: the 1.2 s count from there, not from the tap —
+  // asking for the mic can take longer than the 600 ms a recording needs at least.
+  const stop = page.getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' });
+  await expect(stop).toBeVisible();
   await page.waitForTimeout(1200);
-  await page.getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' }).click();
+  await stop.click();
   // The card keeps the marked sentence; what the judgement says stands once, in the
   // thread under Buddy's reply (issue #14) — not a third time in the card.
   await expect(page.getByText('Fast', { exact: true })).toBeVisible();
