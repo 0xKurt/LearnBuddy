@@ -85,6 +85,7 @@
   },
   "help_note": "Homework – I'll give you hints, you'll find the answer yourself.",
   "origin_buddy": "Question from Buddy",
+  "image_fallback": "Picture for this task",
   "self_solved": {
     "title": "Solved it yourself!",
     "body": "You worked that out on your own."

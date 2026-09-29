@@ -18,7 +18,10 @@ export type UploadTarget = { path: string; url: string; token: string };
 export class StorageError extends Error {
   /** The shared classification (lib/outcome.ts, audit S-7); never "absent". */
   readonly outcome: Exclude<Outcome, 'ok'>;
-  constructor(op: 'sign' | 'list' | 'download' | 'remove', outcome: Exclude<Outcome, 'ok'>) {
+  constructor(
+    op: 'sign' | 'list' | 'download' | 'upload' | 'remove',
+    outcome: Exclude<Outcome, 'ok'>,
+  ) {
     super(`storage ${op} failed (${outcome})`);
     this.name = 'StorageError';
     this.outcome = outcome;
@@ -52,6 +55,16 @@ export interface StorageGateway {
   existing(paths: string[]): Promise<Set<string>>;
   /** The object, or null when it is absent. Throws StorageError when the provider fails. */
   download(path: string): Promise<Uint8Array | null>;
+  /**
+   * The API writes an object itself (server-made concept-image crops, issue #50; the app's
+   * photos go up with signed URLs instead). Throws StorageError when the provider fails.
+   */
+  upload(path: string, bytes: Uint8Array, contentType: string): Promise<void>;
+  /**
+   * A short-lived signed URL to read one object (a concept image in a session view).
+   * Throws StorageError when the provider fails.
+   */
+  createDownloadUrl(path: string, ttlSeconds: number): Promise<string>;
   /**
    * Deletes at most STORAGE_REMOVE_LIMIT paths; a path that is already gone counts as
    * deleted. Throws StorageError when the provider fails.
@@ -112,6 +125,23 @@ export class SupabaseStorage implements StorageGateway {
     }
     if (!data) return null;
     return new Uint8Array(await data.arrayBuffer());
+  }
+
+  async upload(path: string, bytes: Uint8Array, contentType: string): Promise<void> {
+    // upsert: a repeated attach after a crash overwrites its own object, never a learner's
+    // photo (crop names never collide with the app's numbered photo paths).
+    const { error } = await this.client.storage
+      .from(PHOTO_BUCKET)
+      .upload(path, bytes, { contentType, upsert: true });
+    if (error) throw new StorageError('upload', storageOutcomeOf(error));
+  }
+
+  async createDownloadUrl(path: string, ttlSeconds: number): Promise<string> {
+    const { data, error } = await this.client.storage
+      .from(PHOTO_BUCKET)
+      .createSignedUrl(path, ttlSeconds);
+    if (error || !data) throw new StorageError('sign', storageOutcomeOf(error));
+    return data.signedUrl;
   }
 
   async remove(paths: string[]): Promise<void> {

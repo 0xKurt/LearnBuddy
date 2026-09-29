@@ -85,6 +85,7 @@
   },
   "help_note": "Devoirs – je te donne des indices, tu trouves la solution toi-même.",
   "origin_buddy": "Question de Buddy",
+  "image_fallback": "Image pour cet exercice",
   "self_solved": {
     "title": "Trouvé tout seul !",
     "body": "Tu l'as trouvé par toi-même."

@@ -85,6 +85,7 @@
   },
   "help_note": "Deberes – te doy pistas, la solución la encuentras tú.",
   "origin_buddy": "Pregunta de Buddy",
+  "image_fallback": "Imagen para esta tarea",
   "self_solved": {
     "title": "¡Resuelto por ti!",
     "body": "Lo has descubierto tú solo."

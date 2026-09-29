@@ -753,6 +753,29 @@ over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage 
 light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
 scanned school PDF (the tests script the model).
 
+**Concept images** (issue #50, `modules/materials/images.ts`): the questions of a sheet may show
+the sheet's own teaching figure — a REAL crop from the photographed page, never a generated
+picture (the only possible failure is a slightly loose frame, never an invented shape). After a
+sheet became ready, one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
+migration 0050) looks at the page photos and the questions read from them and returns one tight
+box per WHOLE figure (a labelled diagram; a reference chart kept whole, never split into cells) —
+omitting comics, scenes and pure text. sharp crops exactly those pixels and lightly cleans them
+(greyscale + contrast stretch, no hard binarize that would shred faint strokes). Crops live in the
+same private bucket next to the photos (`material_images` rows, at most 6 per sheet; pages added
+later fill up to the cap) and hang on the questions they help answer (`items.image_id`, the first
+figure a question got stays). The session view carries a short-lived signed URL with size and
+label; the question card shows the crop at a fixed ratio (≤ 180 pt, no layout jump, tap to zoom;
+`components/practice/StimulusImage.tsx`). **Images are a bonus:** whatever fails — the vision
+pass, sharp, Storage, an exhausted budget — the sheet stays `ready` without images
+(`attachConceptImages` never throws, it logs); a Storage that cannot sign costs the image in that
+view, never the session. PDFs get no concept images (nothing renders PDF pages, see above).
+Retention: crops are derived learning content like `extracted_text` — they live until the material
+(or the last question showing them) is deleted, **not** 7 days like the raw photos; deleting
+queues their Storage paths durably (`storage_deletions`, drained by the tick) and an account
+deletion removes them the same way (docs/privacy.md §What is stored;
+`concept-images.int.test.ts`). The parked owner-side crop editor (adjusting a frame by hand) is
+deliberately not ported.
+
 **Every page goes up while she is still taking them** (issue #56, owner 28.09.: "wenn ich
 mehrere hochlade, dann können die bereits angefangen werden zu verarbeiten"). The reservation
 is made with the **first** page (`createMaterial`) and grows with every further one: the same

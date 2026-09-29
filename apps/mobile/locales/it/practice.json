@@ -85,6 +85,7 @@
   },
   "help_note": "Compiti – ti do degli indizi, la soluzione la trovi tu.",
   "origin_buddy": "Domanda di Buddy",
+  "image_fallback": "Immagine per questo esercizio",
   "self_solved": {
     "title": "Risolto da te!",
     "body": "Ci sei arrivato da solo."

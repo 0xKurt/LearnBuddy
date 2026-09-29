@@ -63,8 +63,11 @@ export async function createTestEnv(
   });
   const db = createDb(database.url, { max: 8 });
   const clock = new TestClock(opts.start ?? '2026-09-28T08:00:00Z');
-  // Background hints for new questions are answered with "none" unless a test scripts them.
-  const llm = new ScriptedGateway().byDefault('hints', { json: { items: [] } });
+  // Background hints for new questions are answered with "none" unless a test scripts
+  // them; the concept-image pass finds no figures unless a test scripts boxes (issue #50).
+  const llm = new ScriptedGateway()
+    .byDefault('hints', { json: { items: [] } })
+    .byDefault('figures', { json: { assets: [] } });
   const push = new FakePush();
   const speech = new FakeSpeech();
   const auth = new FakeAuth(db);

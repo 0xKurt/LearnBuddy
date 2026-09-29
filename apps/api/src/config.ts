@@ -26,6 +26,7 @@ const VertexRoutes = z
     tutor: ModelSpec,
     explain: ModelSpec,
     extraction: ModelSpec,
+    figures: ModelSpec,
     pronounce: ModelSpec,
     transcribe: ModelSpec,
     hints: ModelSpec,
@@ -228,6 +229,8 @@ export const DAILY_LIMITS = {
   tutor: 300,
   explain: 60,
   extraction: 12,
+  /** Concept images (issue #50): one vision pass per reading, bounded like extraction. */
+  figures: 12,
   pronounce: 200,
   transcribe: 400,
   hints: 60,
