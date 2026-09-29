@@ -9,10 +9,12 @@ import { MondSignature } from './MondSignature.js';
 import { NurfunkenSignature } from './NurfunkenSignature.js';
 import { PrismaSignature } from './PrismaSignature.js';
 import { PunkteSignature } from './PunkteSignature.js';
+import { PolarlichtSignature } from './PolarlichtSignature.js';
 import { RingSignature } from './RingSignature.js';
 import { NursternSignature, SternchenSignature } from './SternchenSignature.js';
 import { SternSignature } from './SternSignature.js';
 import type { SignatureProps } from './stage.js';
+import { TropfenSignature } from './TropfenSignature.js';
 
 export const SIGNATURES: Record<SignatureKey, ComponentType<SignatureProps>> = {
   mond: MondSignature,
@@ -25,4 +27,6 @@ export const SIGNATURES: Record<SignatureKey, ComponentType<SignatureProps>> = {
   mondfunken: MondfunkenSignature,
   nurfunken: NurfunkenSignature,
   prisma: PrismaSignature,
+  tropfen: TropfenSignature,
+  polarlicht: PolarlichtSignature,
 };

@@ -212,11 +212,16 @@ six states and their blending, reduce motion and the size levels are shared
 (`lib/buddy/signatures/core.ts`, `components/lb/signatures/stage.tsx`), and each signature adds
 only its own parts, reproduced exactly from its prototype variant and pinned by unit tests.
 `BuddyOrb` and `TalkOrb` take a `signature` prop that defaults to `'mond'` — **the moon is the
-chosen default and the only one the app shows.** Prepared, not offered anywhere in the UI yet:
-`ring` (round 1 "Ring", with its colour seam fixed — owner 2026-09-29), `stern` (round 1
-"Funkelstern"), `sternchen` (round 2 "Sternchen") and `nurstern` (round 3 "Nur der große Stern").
-Letting someone choose is a separate product decision (UX-PRINCIPLES: a rare setting, closed
-until opened). How to port another variant: the checklist in `lib/buddy/signatures/index.ts`.
+chosen default and the only one the app shows.** Prepared, not offered anywhere in the UI yet
+(prototype round and name in brackets):
+`ring` (1 "Ring", with its colour seam fixed — owner 2026-09-29), `kern` (1 "Lichtkern"),
+`punkte` (1 "Drei Punkte"), `stern` (1 "Funkelstern"), `sternchen` (2 "Sternchen"), `nurstern`
+(3 "Nur der große Stern"), `mondfunken` (2 "Mond mit Funken"), `nurfunken` (3 "Nur die bunten
+Sternchen"), `prisma` (2 "Prisma"), `tropfen` (2 "Tropfen" — it deforms the glass itself, through
+the stage's `shape` option; without it the glass is drawn exactly as before) and `polarlicht`
+(2 "Polarlicht"). Letting someone choose is a separate product decision (UX-PRINCIPLES: a rare
+setting, closed until opened). How to port another variant: the checklist in
+`lib/buddy/signatures/index.ts`.
 
 ---
 

@@ -17,6 +17,8 @@ describe('signatures', () => {
       'mondfunken',
       'nurfunken',
       'prisma',
+      'tropfen',
+      'polarlicht',
     ]);
   });
 });

@@ -36,6 +36,10 @@ export const SIGNATURE_KEYS = [
   'nurfunken',
   /** Round 2 "Prisma": a beam of light goes in, a fan of pastel rainbow comes out. */
   'prisma',
+  /** Round 2 "Tropfen": the glass itself is a soft drop of jelly that shows what he does. */
+  'tropfen',
+  /** Round 2 "Polarlicht": a curtain of northern lights flows round the orb. */
+  'polarlicht',
 ] as const;
 export type SignatureKey = (typeof SIGNATURE_KEYS)[number];
 
