@@ -32,6 +32,7 @@ const VertexRoutes = z
     hints: ModelSpec,
     reexplain: ModelSpec,
     summary: ModelSpec,
+    consolidate: ModelSpec,
   })
   .partial()
   .strict();
@@ -238,4 +239,6 @@ export const DAILY_LIMITS = {
   reexplain: 60,
   /** Two to four sentences about a conversation that ended (issue #22); a handful a day. */
   summary: 12,
+  /** Tidying up what Buddy knows (issue #20): one call per kind, once a day. */
+  consolidate: 8,
 } as const;

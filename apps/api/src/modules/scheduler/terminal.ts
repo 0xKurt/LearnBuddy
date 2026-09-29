@@ -57,6 +57,10 @@ export const TERMINAL: { [K in JobKind]: TerminalEffect } = {
     await skipSession(deps, job);
     return 'skipped';
   },
+  // Tidying up memory changes nothing when it fails: every group is applied in one
+  // transaction or not at all (buddy/consolidate.ts), so what Buddy knows is exactly as it
+  // was, and the next day's run tries again. Nobody waited for it — the operator sees it.
+  consolidate_memories: operator,
 };
 
 /** Apply the terminal effect of every parked job not handled yet. */
