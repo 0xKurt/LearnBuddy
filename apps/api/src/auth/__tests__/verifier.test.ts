@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   authenticatedAtOf,
   authOutcomeOf,
+  instantOf,
   SupabaseAuthVerifier,
   verifyFailureOf,
 } from '../verifier.js';
@@ -63,6 +64,32 @@ describe('SupabaseAuthVerifier failure classes', () => {
   it('returns the user for a valid token', async () => {
     answer = { status: 200, body: { id: 'u1', email: 'a@example.test', aud: 'authenticated' } };
     expect(await verifier(base).verify('tok')).toMatchObject({ userId: 'u1' });
+  });
+
+  // The confirmation is not a token claim: it comes from the user record this call already
+  // fetches (issue #30). An unconfirmed user has no instant, not a wrong one.
+  it('carries the e-mail confirmation of the user record', async () => {
+    answer = {
+      status: 200,
+      body: {
+        id: 'u1',
+        email: 'a@example.test',
+        aud: 'authenticated',
+        email_confirmed_at: '2026-09-28T10:15:00Z',
+      },
+    };
+    expect(await verifier(base).verify('tok')).toMatchObject({
+      emailConfirmedAt: new Date('2026-09-28T10:15:00Z'),
+    });
+    answer = { status: 200, body: { id: 'u1', email: 'a@example.test', aud: 'authenticated' } };
+    expect(await verifier(base).verify('tok')).toMatchObject({ emailConfirmedAt: null });
+  });
+
+  it('never turns an unusable timestamp into a confirmation', () => {
+    expect(instantOf(undefined)).toBeNull();
+    expect(instantOf('')).toBeNull();
+    expect(instantOf('whenever')).toBeNull();
+    expect(instantOf('2026-09-28T10:15:00Z')).toEqual(new Date('2026-09-28T10:15:00Z'));
   });
 
   it('returns null only for a token the service rejects', async () => {

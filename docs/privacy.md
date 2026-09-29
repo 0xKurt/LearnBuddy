@@ -10,7 +10,15 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   passwords) and accepts the current privacy text: `accounts.consent_version` must equal the
   API's `CONSENT_VERSION`, otherwise the account is not created. The text lives in the app
   (`auth:consent.*`); any change to it ships together with a new `CONSENT_VERSION`, so every
-  account agrees again (2026-09-27: the consent points were reworded).
+  account agrees again (2026-09-27: the consent points were reworded). Signing up is only
+  complete once the account holder clicked the link in the confirmation e-mail — Supabase Auth
+  enforces that, there is no session before it — and the mail says in as many words that the
+  click confirms the consent just given (`docs/consent-email-templates.md`), so the e-mail loop
+  is the verifiable step the EDPB describes for a parent's consent (Guidelines 05/2020 on
+  consent, Example 23; issue #30). It is recorded as `accounts.consent_confirmed_at` — the
+  instant Supabase recorded for the click, written by the first request that carries it and
+  never overwritten — and nothing is gated on it: a mail that was slow, filtered or lost never
+  locks the learner out of her own learning.
 - Each account has exactly one **learner profile**: the adult themselves (`relation = self`,
   only from 16 years) or a child (`relation = child`). **The age of consent is 16** (DSGVO
   Art. 8 with the German age, ADR 0006): under 16 the parents give explicit consent when they

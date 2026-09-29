@@ -49,7 +49,11 @@ const LEARNER_TABLES = [
 
 export async function exportAccount(db: Db, accountId: string): Promise<Record<string, unknown>> {
   const account = await db.one(
-    `select id, locale, consent_version, consent_at, deletion_due_at, created_at from accounts where id = $1`,
+    // consent_confirmed_at: when the account holder confirmed the consent by e-mail (issue #30) —
+    // part of what was recorded about them, so it belongs in their export.
+    `select id, locale, consent_version, consent_at, consent_confirmed_at, deletion_due_at,
+            created_at
+       from accounts where id = $1`,
     [accountId],
   );
   const learner = await db.maybeOne<{ id: string } & Record<string, unknown>>(
