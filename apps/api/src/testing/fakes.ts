@@ -134,6 +134,8 @@ export class ScriptedGateway implements LlmGateway {
         inputTokens: 1000,
         outputTokens: 200,
         thoughtTokens: 0,
+        // No provider, no prefix cache: the fake never claims a cache hit (issue #25).
+        cachedTokens: 0,
         costMicros: 800,
         latencyMs: 1,
       },

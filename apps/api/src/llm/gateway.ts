@@ -67,6 +67,12 @@ export type LlmUsage = {
   inputTokens: number;
   outputTokens: number;
   thoughtTokens: number;
+  /**
+   * The part of `inputTokens` the provider served from its prefix cache (issue #25).
+   * Provider-reported, never computed here: 0 means "not reported", which is also what
+   * a provider without caching gives — so it is a floor, never a claim (rule 5).
+   */
+  cachedTokens: number;
   costMicros: number;
   latencyMs: number;
 };
