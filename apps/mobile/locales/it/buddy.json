@@ -265,8 +265,7 @@
     "short": "Parla",
     "photo": "Foto",
     "photo_label": "Mostra una foto",
-    "stop_speaking": "Interrompi Buddy",
-    "tap_orb": "Tocca Buddy per interromperlo."
+    "tap_orb": "Tocca Buddy e ti ascolta."
   },
   "a11y": {
     "reply": "Buddy: {{text}}"

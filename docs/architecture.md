@@ -1317,7 +1317,24 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
   by itself when she pauses
   (on-device recogniser, `untilPause`); on the recording path (browser) she taps the mic when done.
-  Tapping the mic while Buddy speaks interrupts it. An answer that carries a button
+  Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once
+  (issue #35). That tap is the honest part of barge-in: while Buddy speaks the mic stays off,
+  because neither expo-audio playback nor expo-speech-recognition promises device echo
+  cancellation, and an open mic would write down Buddy's own voice (a recording that starts
+  while he speaks is already dropped, audit M-78). expo-speech-recognition 3.1.3 does expose
+  `iosCategory: playAndRecord`, but without a device test that is no promise (rule 5); real
+  talking-over needs the duplex realtime audio stack that is deliberately not built (above).
+  Opening the screen warms the recogniser (issue #41, `warmRecognition` in
+  `lib/speech/recognize.ts`): the Android service choice with its installed languages, the
+  engine decision and the permission answer — the latter remembered while the app stays in
+  the foreground (`GrantMemory`, `lib/speech/engine.ts`) — so listening and every re-listen
+  skip those round-trips. What she feels is measured in the app itself (`lib/perf.ts`):
+  `relisten` spans Buddy's last word to the recogniser running again, `first_audio` spans his
+  words first showing to the first audible sound; the walkthrough writes both to
+  `test-results/web/perf.jsonl`, the device numbers are still owed. The loop listens again
+  once the reading ended _and_ the reply is stored, in either order
+  (`lib/speech/talkTurn.ts` — a short reply can be read out before the store returns).
+  An answer that carries a button
   (`offer_learning`, `open_area`) stays on screen and tappable while the loop simply listens
   again: she can tap it or just answer (owner 28.09.). The mic is only on while this
   screen — opened by her — is open; "Beenden" or the keyboard ends it. With a screen reader on
@@ -1331,7 +1348,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   The moon runs on the UI thread: one Reanimated frame callback per moving orb writes a pose that
   a few animated views read (moon in front and behind the glass, trail dots, ping, reflection) —
   no JS re-render per frame. Tapping Buddy while he
-  speaks stops him ("Tipp auf Buddy, um ihn zu unterbrechen."). Two quiet synthesised tones
+  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35). Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored
   (needs live verification on a phone); the web plays none. The camera next to "Tastatur"

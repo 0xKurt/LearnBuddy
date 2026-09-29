@@ -3,10 +3,12 @@
 // She speaks → it is written down → Buddy answers → the answer is read aloud →
 // Buddy listens again. On the phone, listening ends by itself when she pauses;
 // on the recording path (the browser) she taps the mic when she is done.
-// Tapping the mic while Buddy speaks interrupts it. When Buddy offers
-// something to tap (start learning, open a part of the app), the loop pauses
-// so she can tap it. The mic is only on while this screen is open, which she
-// opened herself; "Beenden" or the keyboard ends it.
+// Tapping the mic or Buddy himself while he speaks interrupts him and listens at
+// once (issue #35: the honest part of barge-in — the mic stays off while he
+// speaks, it would hear his own voice). When Buddy offers something to tap
+// (start learning, open a part of the app), the card stays tappable while the
+// loop simply listens again (issue #40). The mic is only on while this screen
+// is open, which she opened herself; "Beenden" or the keyboard ends it.
 // The screen is a camera angle on that one thread (issue #18): the last few
 // messages stand as the chat's own bubbles (components/buddy/Conversation.tsx),
 // bottom-anchored and following the newest — her words form as her own bubble
@@ -44,9 +46,13 @@ import { haptic } from '../lib/haptics.js';
 import { playCue } from '../lib/speech/cues.js';
 import { fadeIn } from '../lib/theme/enter.js';
 import { currentLocale } from '../lib/i18n/index.js';
+import { dropped, reacted, tapped } from '../lib/perf.js';
 import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
 import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { talkListensByItself } from '../lib/speech/handsFree.js';
+import { warmRecognition } from '../lib/speech/recognize.js';
+import { afterReply } from '../lib/speech/talkTurn.js';
+import { voiceLocale } from '../lib/speech/voice.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { LB } from '../lib/theme/colors.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -116,6 +122,9 @@ export default function TalkScreen() {
     const along: { speaker: StreamSpeaker | null } = { speaker: null };
     const speakAlong = (): StreamSpeaker => {
       if (along.speaker) return along.speaker;
+      // The owner's felt pause (issue #41): his words start to show — when is the first
+      // sound heard? `reacted` fires when the voice really speaks (natural or the phone's).
+      tapped('first_audio');
       setPhase('speaking');
       along.speaker = createStreamSpeaker(
         currentLocale(),
@@ -128,13 +137,21 @@ export default function TalkScreen() {
       return along.speaker;
     };
     const goOn = () => {
-      if (stale() || !final || !spokenEnd) return;
-      // Read to the end: listen again. A card in the answer no longer stops the talk
-      // (owner 28.09.: "im grunde sollte sich zu 90% alles im chat fenster abspielen") —
-      // it stays on screen and tappable, and she can simply answer instead. Only a screen
-      // reader keeps the mic off (it would be recorded; she taps the mic or uses Magic Tap).
-      if (spokenEnd === 'done' && talkListensByItself(screenReader.current)) listen();
-      else setPhase((p) => (p === 'speaking' ? 'paused' : p));
+      if (stale()) return;
+      // Read to the end AND stored: listen again — the two endings race (a short reply can
+      // be read out before the server has stored it; lib/speech/talkTurn.ts). A card in the
+      // answer no longer stops the talk (owner 28.09.: "im grunde sollte sich zu 90% alles
+      // im chat fenster abspielen") — it stays on screen and tappable, and she can simply
+      // answer instead. Only a screen reader keeps the mic off (it would be recorded; she
+      // taps the mic or uses Magic Tap).
+      const next = afterReply(spokenEnd, final !== null, talkListensByItself(screenReader.current));
+      if (next === 'wait') return;
+      if (next === 'listen') {
+        // From Buddy's last word to the mic listening again (issue #41): `reacted` fires
+        // when the recogniser really runs, `dropped` when the loop pauses instead.
+        tapped('relisten');
+        listen();
+      } else setPhase((p) => (p === 'speaking' ? 'paused' : p));
     };
     try {
       const res = await sendMessageStreamed(text, id, null, (e) => {
@@ -158,7 +175,9 @@ export default function TalkScreen() {
       if (stale()) return;
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
-        // Whatever was said of a withdrawn answer stops mid-sentence.
+        // Whatever was said of a withdrawn answer stops mid-sentence. The spoken problem
+        // is no first audio of a reply: the open mark would count her reading time.
+        dropped('first_audio');
         along.speaker?.cancel();
         setLive(null);
         tellProblem(
@@ -172,11 +191,15 @@ export default function TalkScreen() {
       setPhase('speaking');
       if (along.speaker) {
         // Already speaking: the stored text is what was streamed, so this only closes it
-        // (and adds the last sentence if the stream ended early).
+        // (and adds the last sentence if the stream ended early). When the reading already
+        // ended — a short reply read out before the store returned — goOn ran too early
+        // and waited for `final`: decide again now (lib/speech/talkTurn.ts).
         along.speaker.feed(r.text, true);
+        goOn();
       } else {
         // Nothing was said yet (the answer changed something, or a safeguarding reply):
         // read the stored text, sentence by sentence, so it reads along in his bubble.
+        tapped('first_audio');
         void speak(r.text, currentLocale(), {
           transform: (sentence) => spokenText(sentence, words),
           onEnd: (why) => {
@@ -186,6 +209,7 @@ export default function TalkScreen() {
         });
       }
     } catch (err) {
+      dropped('first_audio');
       along.speaker?.cancel();
       if (stale()) return;
       setLive(null);
@@ -232,6 +256,13 @@ export default function TalkScreen() {
     };
   }, []);
 
+  // The first listen must not wait on the system (issue #41): the recogniser's answers
+  // (Android service, installed languages, the permission) are fetched once now, while
+  // the screen still opens — listening then starts without those round-trips, every turn.
+  useEffect(() => {
+    warmRecognition(voiceLocale(currentLocale()));
+  }, []);
+
   // Leaving (or opening a card on top) ends everything: no reading aloud, no
   // microphone. Coming back makes the mic work again; she taps it to go on.
   useFocusEffect(
@@ -239,6 +270,9 @@ export default function TalkScreen() {
       open.current = true;
       return () => {
         open.current = false;
+        // Open measurements die with the visit; nothing later may complete them.
+        dropped('relisten');
+        dropped('first_audio');
         stopSpeaking();
         // What she was saying is dropped, not sent: a turn started now would be ignored and
         // leave the screen stuck in "thinking" (talk-stuck-thinking-on-blur). A turn already
@@ -257,9 +291,21 @@ export default function TalkScreen() {
   useEffect(() => {
     const was = lastVoiceState.current;
     lastVoiceState.current = voice.state;
+    // The mic really listens again: the `relisten` span ends here (issue #41).
+    if (voice.state === 'recording') reacted('relisten');
     if (phase !== 'listening' || voice.state !== 'idle') return;
-    if (voice.hint || voice.denied || was === 'transcribing') setPhase('paused');
+    if (voice.hint || voice.denied || was === 'transcribing') {
+      dropped('relisten'); // It never listened: her tap from here on is her own time.
+      setPhase('paused');
+    }
   }, [phase, voice.state, voice.hint, voice.denied]);
+
+  // While Buddy's natural voice for a sentence is still on its way, he is thinking
+  // (ADR 0008); the moment a voice really speaks ends the `first_audio` span (issue #41).
+  const buddyVoice = useBuddyVoice();
+  useEffect(() => {
+    if (buddyVoice.phase === 'speaking') reacted('first_audio');
+  }, [buddyVoice.phase]);
 
   function onMic(): void {
     haptic.tap();
@@ -271,10 +317,14 @@ export default function TalkScreen() {
     listen(); // Paused, or interrupting Buddy.
   }
 
-  /** A tap on Buddy while he speaks: he stops (and waits for the mic). */
+  /**
+   * A tap on Buddy while he speaks: he stops and listens at once (issue #35). The honest
+   * part of barge-in: while he speaks the mic stays off — it would hear his own voice
+   * (no echo cancellation to trust, audit M-78) — so her tap is the "I want to talk now".
+   */
   function interrupt(): void {
     haptic.tap();
-    stopSpeaking();
+    listen();
   }
 
   // Her photo is being read (she showed Buddy something): said here too.
@@ -313,8 +363,6 @@ export default function TalkScreen() {
       : phase === 'paused' && !problem && !voice.hint && !voice.denied
         ? t('buddy:talk.paused_sub')
         : null;
-  // While Buddy's natural voice for a sentence is still on its way, he is thinking (ADR 0008).
-  const buddyVoice = useBuddyVoice();
   // Paused without trouble is her turn: the moon waits (lib/buddy/moon.ts).
   const orbMode: OrbMode = talkMode({
     phase,
@@ -426,7 +474,8 @@ export default function TalkScreen() {
           size={64}
           level={voice.level}
           {...(phase === 'speaking'
-            ? { onPress: interrupt, pressLabel: t('buddy:talk.stop_speaking') }
+            ? // Same action as the mic while Buddy speaks, so the same words name it.
+              { onPress: interrupt, pressLabel: t('buddy:talk.interrupt') }
             : {})}
         />
         <View style={{ minHeight: 40, alignItems: 'center', marginTop: -8 }}>
