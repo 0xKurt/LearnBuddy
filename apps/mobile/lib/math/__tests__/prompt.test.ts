@@ -110,6 +110,24 @@ describe('fillableAnswer', () => {
     expect(fillableAnswer('Wie heißt du?', 'Mia')).toBeNull();
     expect(fillableAnswer('___ und ___', 'a')).toBeNull();
   });
+  it('fills a blank with an answer far wider than the gap (issue #62)', () => {
+    // The owner's sentence, 28.09.: "have lived" is several times the width of an empty gap
+    // and still belongs in it whole — the gap grows, the answer is never shortened to fit.
+    const text = 'They ___ (live) in Berlin since 2015.';
+    expect(fillableAnswer(text, 'have lived')).toBe('have lived');
+    expect(
+      promptForSpeech(text, {
+        blanks: true,
+        blankWord: 'Lücke',
+        filledWord: 'Lücke, darin: have lived',
+      }),
+    ).toBe('They Lücke, darin: have lived (live) in Berlin since 2015.');
+    // Right up to the limit the whole answer stands there; only past it the sentence
+    // would break apart, and then nothing is filled in at all (next test).
+    expect(fillableAnswer('a ___ b', 'x'.repeat(MAX_FILLED_LENGTH))).toHaveLength(
+      MAX_FILLED_LENGTH,
+    );
+  });
   it('fills nothing for long or multi-line answers', () => {
     expect(fillableAnswer('a ___ b', 'x'.repeat(MAX_FILLED_LENGTH + 1))).toBeNull();
     expect(fillableAnswer('a ___ b', 'x\ny')).toBeNull();

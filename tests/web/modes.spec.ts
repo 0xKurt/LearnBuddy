@@ -77,6 +77,16 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByLabel(/Ich helfe Lücke Mutter/)).toBeVisible();
   await page.getByLabel('Deine Antwort').fill('der');
   await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
+  // A longer answer makes the gap grow instead of being cut inside it: "die lösung passt gar
+  // nicht voll ins feld oben. in den fällen muss das feld mitwachsen" (owner 28.09., #62).
+  const blank = page.getByTestId('blank').first();
+  const narrow = (await blank.boundingBox())?.width ?? 0;
+  await page.getByLabel('Deine Antwort').fill('meiner lieben');
+  await expect(page.getByLabel(/Lücke, darin: meiner lieben/)).toBeVisible();
+  const grown = (await blank.boundingBox())?.width ?? 0;
+  expect(grown, `the gap grows with the answer (${narrow} → ${grown}pt)`).toBeGreaterThan(narrow);
+  await page.getByLabel('Deine Antwort').fill('der');
+  await expect(page.getByLabel(/Lücke, darin: der/)).toBeVisible();
   // The focus ring is the answer pill's, not the browser's black box around the bare field.
   expect(
     await page.getByLabel('Deine Antwort').evaluate((el) => getComputedStyle(el).outlineWidth),

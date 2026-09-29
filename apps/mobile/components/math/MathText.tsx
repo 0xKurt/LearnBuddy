@@ -174,6 +174,8 @@ function Gap({
 }) {
   return (
     <View
+      // The walkthrough measures the gap here: it has to grow with the answer (issue #62).
+      testID="blank"
       style={{
         // Never squeezed: a long answer ("have lived") was cut inside the gap instead of
         // making it wider or moving it to the next line (owner 28.09., issue #62).
