@@ -1121,8 +1121,11 @@ word list, so it stays a prompt rule.
   by word (`practice/speak.ts`). good → right, almost → right with help, retry → stays open.
   The recording is never stored. Live checks (`evals/speak/run.ts`, espeak-ng recordings): wrong
   words are recognised reliably, a strong German accent in 2 of 3 runs; it is an AI assessment,
-  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores)
-  would replace `speakItem`'s model call behind the same contract.
+  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores) would
+  replace the measuring half of `speakItem`'s model call — not the whole call: the per-word `tip`
+  and the spoken `reply` are not something a scoring API returns. Weighed against today's numbers
+  in [decisions/azure-pronunciation.md](decisions/azure-pronunciation.md) (issue #27, the owner
+  decides; nothing is connected).
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
