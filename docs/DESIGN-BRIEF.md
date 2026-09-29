@@ -204,6 +204,20 @@ voice level is smoothed by a critically damped spring (the microphone reports a 
 second). The maths lives in `lib/buddy/signatures/mond.ts` (unit-tested), the drawing in
 `components/lb/signatures/MondSignature.tsx` on the shared orb of `components/lb/BuddyOrb.tsx`.
 
+### Buddy's signature is swappable (the moon is the default)
+
+The moon is one of several approved prototype signatures; the owner's daughter prefers a star,
+others may prefer another. So the signature is a swappable part: the glass, halo, shadow, the
+six states and their blending, reduce motion and the size levels are shared
+(`lib/buddy/signatures/core.ts`, `components/lb/signatures/stage.tsx`), and each signature adds
+only its own parts, reproduced exactly from its prototype variant and pinned by unit tests.
+`BuddyOrb` and `TalkOrb` take a `signature` prop that defaults to `'mond'` — **the moon is the
+chosen default and the only one the app shows.** Prepared, not offered anywhere in the UI yet:
+`ring` (round 1 "Ring", with its colour seam fixed — owner 2026-09-29), `stern` (round 1
+"Funkelstern"), `sternchen` (round 2 "Sternchen") and `nurstern` (round 3 "Nur der große Stern").
+Letting someone choose is a separate product decision (UX-PRINCIPLES: a rare setting, closed
+until opened). How to port another variant: the checklist in `lib/buddy/signatures/index.ts`.
+
 ---
 
 ## Hard constraints that affect design

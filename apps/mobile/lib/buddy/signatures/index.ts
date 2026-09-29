@@ -18,6 +18,14 @@
 export const SIGNATURE_KEYS = [
   /** Round 1 "Mond": a pearl moon on a tilted orbit — the default. */
   'mond',
+  /** Round 1 "Ring": a tilted band of light round the orb, like a small planet. */
+  'ring',
+  /** Round 1 "Funkelstern": the glass's highlight is a twinkling four-pointed star. */
+  'stern',
+  /** Round 2 "Sternchen": a soft round star with a colourful tail and sparkles round Buddy. */
+  'sternchen',
+  /** Round 3 "Nur der große Stern": the soft round star alone. */
+  'nurstern',
 ] as const;
 export type SignatureKey = (typeof SIGNATURE_KEYS)[number];
 
