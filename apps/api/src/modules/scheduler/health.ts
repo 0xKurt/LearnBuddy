@@ -7,6 +7,7 @@
 
 import type { Db } from '../../lib/db.js';
 import type { JobKind } from './jobs.js';
+import type { RetentionStats } from './tick.js';
 
 /** A tick runs every minute; ten minutes without one means the scheduler is not running. */
 export const SCHEDULER_STALE_MS = 10 * 60_000;
@@ -19,6 +20,12 @@ export type SchedulerHealth = {
   last_error: string | null;
   /** Jobs parked as failed in the last 24 hours, per kind, with the latest error. */
   parked: Partial<Record<JobKind, { count: number; last_error: string | null }>>;
+  /**
+   * The retention sweeps (photo safety net, undo windows, speech cache, decision content,
+   * Storage queue): when they last ran to the end and what that pass removed — counts only,
+   * never content (issue #78). Null fields until the first pass after deployment.
+   */
+  retention: { last_run_at: string | null; counts: RetentionStats | null };
 };
 
 export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealth> {
@@ -43,6 +50,12 @@ export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealt
   );
   const parked: SchedulerHealth['parked'] = {};
   for (const r of parkedRows) parked[r.kind] = { count: r.count, last_error: r.last_error };
+  // The retention pass writes its heartbeat only when it ran to the end (tick.ts), so
+  // "last_run_at" is a completed pass, never a half one.
+  const retention = await db.maybeOne<{
+    last_finished_at: Date | null;
+    stats: RetentionStats | null;
+  }>(`select last_finished_at, stats from system_heartbeats where name = 'retention'`);
   const state: SchedulerHealth['state'] =
     !recent || waiting ? 'stale' : hb?.last_error ? 'failing' : 'ok';
   return {
@@ -51,5 +64,9 @@ export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealt
     last_run_at: lastRun ? lastRun.toISOString() : null,
     last_error: hb?.last_error ?? null,
     parked,
+    retention: {
+      last_run_at: retention?.last_finished_at ? retention.last_finished_at.toISOString() : null,
+      counts: retention?.stats ?? null,
+    },
   };
 }

@@ -21,6 +21,7 @@ type Health = {
     state: string;
     last_error: string | null;
     parked: Record<string, { count: number }>;
+    retention: { last_run_at: string | null; counts: Record<string, number> | null };
   };
 };
 
@@ -168,6 +169,29 @@ describe.skipIf(!dbReady)('terminal states and honest outages', () => {
     const fine = await health(env);
     expect(fine.status).toBe(200);
     expect((await l.api.get<BuddyHome>('/buddy')).body.system.scheduler).toBe('ok');
+  });
+
+  it('the retention sweeps are observable: /health says when they ran and what they removed (#78)', async () => {
+    const l = await onboard(env);
+    // Before any run the answer is honest: never ran, no counts to show.
+    expect((await health(env)).body.scheduler.retention).toEqual({
+      last_run_at: null,
+      counts: null,
+    });
+    // A call-log row past its 180 days: the sweep must count what it removed.
+    await env.db.query(
+      `insert into llm_calls (learner_id, purpose, model, prompt_version, outcome, created_at)
+       values ($1, 'buddy_turn', 'scripted', 'v1', 'ok', $2)`,
+      [l.learnerId, new Date(env.clock.now().getTime() - 200 * 86_400_000)],
+    );
+    const stats = await runTick(env.deps);
+    expect(stats.errors).toEqual([]);
+    expect(stats.retention).toMatchObject({ decision_content: 1, storage_waiting: 0 });
+
+    const h = await health(env);
+    expect(h.status).toBe(200);
+    expect(h.body.scheduler.retention.last_run_at).toBe(env.clock.now().toISOString());
+    expect(h.body.scheduler.retention.counts).toEqual(stats.retention);
   });
 
   it('the home says Buddy cannot answer once today’s allowance is used up', async () => {

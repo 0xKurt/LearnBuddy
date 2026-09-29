@@ -440,7 +440,11 @@ wait for Storage: queued paths are removed in requests of ≤ 1 000 (the Storage
 enforced by the test fake) and retried with backoff until gone. Maintenance after the job loop
 works that queue, re-plans a purge for photos no job will delete any more (failed or read more
 than 7 days ago, deleted), and erases removed/replaced memories after their 7-day undo window
-(below). `GET /health` fails (503, `erasure`) when an account is more than a day past its
+(below). This retention pass is observable (issue #78): when it ran to the end it records what
+it removed — counts per rule, never content — on its own heartbeat (`system_heartbeats`
+`'retention'`, written only after a complete pass, so a half-run never poses as a clean one),
+and `GET /health` reports `scheduler.retention` (`last_run_at`, `counts`). `GET /health` fails
+(503, `erasure`) when an account is more than a day past its
 deletion date or a queued path is more than a day old. `/me` says `deletion_running` once the
 hold is over. Every foreign-key column is indexed (`0017_fk_indexes.sql`), so the cascades follow
 the learner's own rows, not the table size.
@@ -468,9 +472,11 @@ conversations is used up.
 **Someone has to look** (`.github/workflows/health.yml`, issue #75 gap 2). An endpoint nobody
 calls is not monitoring: until now a dead scheduler reached the owner only if the learner
 mentioned it. A GitHub Action calls production's `GET /v1/health` every 30 minutes and checks
-five things with `jq` — `ok == true`, `scheduler.state == "ok"`, `scheduler.last_run_at`
+six things with `jq` — `ok == true`, `scheduler.state == "ok"`, `scheduler.last_run_at`
 younger than 5 minutes (stricter than the server's own 10, because the tick runs every minute),
-`erasure.overdue_deletions == 0` and `erasure.overdue_photo_deletions == 0`. Three attempts 20 s
+`erasure.overdue_deletions == 0`, `erasure.overdue_photo_deletions == 0`, and
+`scheduler.retention.last_run_at` younger than 24 hours — retention sweeps that quietly
+stopped running go red instead of unnoticed (issue #78). Three attempts 20 s
 apart so a cold start wakes nobody; if the complaint holds, the job fails and GitHub mails the
 owner about the failed run on the default branch — that is the whole notification channel. No
 secret: the endpoint is unauthenticated and returns only booleans, counts, job kinds and

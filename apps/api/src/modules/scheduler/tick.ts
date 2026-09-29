@@ -35,6 +35,25 @@ import {
   type JobRow,
 } from './jobs.js';
 
+/**
+ * What one retention pass removed, per rule (issue #78: the sweeps must be observable —
+ * counts and rows touched, never content). Stored on the 'retention' heartbeat and
+ * reported by GET /health, so "do the cleanup jobs run?" has an answer.
+ */
+export type RetentionStats = {
+  /** Storage paths removed from / still waiting on the durable deletion queue. */
+  storage_removed: number;
+  storage_waiting: number;
+  /** Materials whose forgotten photos got a purge job planned (safety net). */
+  swept_photos: number;
+  /** Closed memories erased after their 7-day undo window. */
+  closed_memories: number;
+  /** Expired cached speech rows deleted. */
+  speech_cache: number;
+  /** Old decision contents blanked plus old call-log rows deleted (90/180 days). */
+  decision_content: number;
+};
+
 export type TickStats = {
   recovered: number;
   stalledTurns: number;
@@ -45,6 +64,8 @@ export type TickStats = {
   idleSessions: number;
   delivery: DeliveryStats | null;
   receipts: { checked: number; rejected: number } | null;
+  /** Null when the budget left no room for the retention pass this run. */
+  retention: RetentionStats | null;
   errors: string[];
 };
 
@@ -61,6 +82,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     idleSessions: 0,
     delivery: null,
     receipts: null,
+    retention: null,
     errors: [],
   };
   await deps.db.query(
@@ -209,14 +231,32 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
 
   // Retention that no job carries: photos Storage still owes after an account deletion,
   // photos no purge is planned for, memories past their undo window, Buddy's spoken audio
-  // after a day, and what the model wrote while deciding (docs/privacy.md).
+  // after a day, and what the model wrote while deciding (docs/privacy.md). The pass
+  // records what it removed on its own heartbeat — only when it ran to the end, so a
+  // half-run never poses as a clean one (issue #78; GET /health reports it).
   await guard('retention', async () => {
     if (left() < 5_000) return;
-    await drainStorageDeletions(deps);
-    await sweepForgottenPhotos(deps);
-    await purgeClosedMemories(deps);
-    await purgeSpeechCache(deps);
-    await purgeDecisionContent(deps);
+    const startedAt = deps.now();
+    const storage = await drainStorageDeletions(deps);
+    const sweptPhotos = await sweepForgottenPhotos(deps);
+    const closedMemories = await purgeClosedMemories(deps);
+    const speechCache = await purgeSpeechCache(deps);
+    const decisionContent = await purgeDecisionContent(deps);
+    stats.retention = {
+      storage_removed: storage.removed,
+      storage_waiting: storage.waiting,
+      swept_photos: sweptPhotos,
+      closed_memories: closedMemories,
+      speech_cache: speechCache,
+      decision_content: decisionContent,
+    };
+    await deps.db.query(
+      `insert into system_heartbeats (name, last_started_at, last_finished_at, stats)
+       values ('retention', $1, $2, $3)
+       on conflict (name) do update
+         set last_started_at = $1, last_finished_at = $2, stats = $3`,
+      [startedAt, deps.now(), JSON.stringify(stats.retention)],
+    );
   });
 
   await deps.db.query(

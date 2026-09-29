@@ -1,7 +1,8 @@
 # Monitoring without Sentry (issue #75, gap 2: "an error on the daughter's phone reaches us
 # today only if she tells us"). Every 30 minutes, look once at production's public health
-# endpoint. This replaces no crash reporting in the client, but it makes a stalled scheduler
-# and an overdue erasure visible without anyone going looking.
+# endpoint. This replaces no crash reporting in the client, but it makes a stalled scheduler,
+# an overdue erasure and retention sweeps that quietly stopped running (issue #78) visible
+# without anyone going looking.
 # docs/architecture.md §Background work.
 #
 # How the owner is notified: not by this file at all. GitHub mails a repository owner by
@@ -52,7 +53,7 @@ jobs:
 
           body="$RUNNER_TEMP/health.json"
 
-          # The five rules, in one place. Each emits a line when it is violated, nothing when
+          # The six rules, in one place. Each emits a line when it is violated, nothing when
           # it holds — so "no output" means healthy.
           rules='
             [
@@ -73,7 +74,17 @@ jobs:
               (if .erasure.overdue_deletions == 0 then empty
                else "erasure.overdue_deletions = \(.erasure.overdue_deletions | tojson)" end),
               (if .erasure.overdue_photo_deletions == 0 then empty
-               else "erasure.overdue_photo_deletions = \(.erasure.overdue_photo_deletions | tojson)" end)
+               else "erasure.overdue_photo_deletions = \(.erasure.overdue_photo_deletions | tojson)" end),
+              ((.scheduler.retention.last_run_at // null) as $rts
+               | if $rts == null then "scheduler.retention.last_run_at is missing — the retention sweeps never ran"
+                 else (try ($rts | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) catch null) as $rt
+                   | if $rt == null then "scheduler.retention.last_run_at is not an ISO instant: \($rts)"
+                     else ((now - $rt) | floor) as $rage
+                       | if $rage > 86400
+                         then "last retention sweep \($rage) s ago (limit 86400 s = 24 h)"
+                         else empty end
+                     end
+                 end)
             ] | .[]'
 
           # Three attempts 20 s apart: a cold start or an edge hiccup must not wake the owner,

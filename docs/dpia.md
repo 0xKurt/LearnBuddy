@@ -247,9 +247,12 @@ Restrisiko wird als **vertretbar** eingestuft.
    iOS-Versprechen ausdrücklich als unbewiesen, bis es am Gerät geprüft ist).
 7. **Leaked-Password-Schutz** in der Supabase-Konsole einschalten (Issue #72); ebenda offen:
    ein Rate-Limit auf Kontoerstellung in unserer API und die regelmäßige Advisor-Prüfung.
-8. **Aufräumjobs beobachten und Backup-Wiederherstellung testen** (Issue #78): die Löschjobs
-   laufen und sind getestet, aber niemand liest regelmäßig, ob sie liefen; ein Restore wurde
-   nie geprobt.
+8. **Backup-Wiederherstellung testen** (Issue #78): ein Restore wurde nie geprobt — in der
+   Supabase-Konsole ein Backup auf ein Wegwerf-Projekt zurückspielen und stichprobenhaft
+   prüfen, dass Konten, Materialien und Gespräche vollständig sind. Der erste Teil des
+   Issues ist erledigt: die Aufräumjobs melden jeden vollständigen Lauf mit Zählern an
+   `GET /health` (`scheduler.retention`), und die Health-Action wird rot, wenn sie
+   24 Stunden nicht liefen (`docs/privacy.md` §What is stored).
 9. **Konzeptbilder (Issue #50):** bevor sie gebaut werden, gehört die Aufbewahrung der
    Blatt-Ausschnitte ausdrücklich in `docs/privacy.md` — sie lebten länger als die Fotos, aus
    denen sie stammen.

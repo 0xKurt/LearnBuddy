@@ -83,6 +83,11 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
 
 Logs contain route names and error classes only — no request bodies, messages or answers.
 
+These retention rules are not just promised, they are watched (issue #78): every completed
+sweep records when it ran and how many rows it removed — counts only, never content — and
+`GET /health` reports it (`scheduler.retention`). A monitoring check
+(`.github/workflows/health.yml`) turns red when the sweeps have not completed for 24 hours.
+
 ## Access control
 
 - The app only talks to the API. The API connects to Postgres with a privileged role and scopes
