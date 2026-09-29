@@ -6,7 +6,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { bottomStack, shot } from './fit';
+import { bottomStack, partHeight, shot } from './fit';
 import { recordPerf } from './perf';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
@@ -202,6 +202,10 @@ test('learning modes: explain, homework help without the solution, practice with
     });
   expect(faded, 'the conversation fades out at its top edge').toBe(true);
   await shot(page, '25-practice-fractions');
+  // The drawing takes the measured room of the grown question card (issue #96) — more
+  // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
+  const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
+  expect(fig, `figure ${fig}pt`).toBeGreaterThan(150);
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
   // (Recording can't run in headless Chromium; this checks the controls and the layout.)
@@ -255,6 +259,8 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   // The last question stays until "Weiter" (the test is finished by then, so its solution shows).
+  // Skipped: here the solution says something new, so its card stays (issue #93).
+  await expect(page.getByText('Lösung', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Probetest geschafft!')).toBeVisible();
   await expect(page.getByText('1 · Richtig')).toBeVisible();

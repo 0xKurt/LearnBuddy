@@ -6,7 +6,7 @@
 // left out — the figure never crashes the question.
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 import Svg, {
@@ -67,6 +67,12 @@ export function FigureView({ figure, maxHeight }: { figure: Figure; maxHeight?: 
   const { t } = useTranslation('math');
   const [width, setWidth] = useState(0);
   const [scale, setScale] = useState(1);
+  // The room is measured, not fixed (issue #96): when the question card grows into
+  // space the conversation does not need, a drawing scaled down for the old, smaller
+  // cap gets measured again from its full size.
+  useEffect(() => {
+    setScale(1);
+  }, [maxHeight]);
   const words = useSpokenWords();
   const description = useMemo(
     () => describeFigure(figure, t, (s) => speakMathText(s, words)),
@@ -169,7 +175,9 @@ function FractionPicture({ fig, width }: { fig: FractionFig; width: number }) {
     );
   }
   const cell = width / items.length;
-  const r = Math.min(cell * 0.4, 72);
+  // Drawn generously — the circles are what the question is about (issue #96); where the
+  // screen is tight, FigureView scales the whole drawing down to its `maxHeight` anyway.
+  const r = Math.min(cell * 0.45, 84);
   const h = 2 * r + 8;
   return (
     <Svg width={width} height={h}>

@@ -259,6 +259,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
       await page.getByRole('button', { name: 'Prüfen' }).click();
     }
     await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+    // Her right answer stands once — as her own bubble; no "Lösung" card repeats
+    // the word she just wrote herself (issue #93).
+    await expect(page.getByText('Lösung', { exact: true })).toHaveCount(0);
     if (n === 1 || current.choice) await shot(page, `10-practice-q${n}`);
     await page.getByRole('button', { name: 'Weiter' }).click();
   }

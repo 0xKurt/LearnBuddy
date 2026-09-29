@@ -1,7 +1,9 @@
-// The solution of a closed question (the API only sends it once the
-// question is closed). It stays on screen until the learner taps "Weiter".
+// The solution of a closed question (the API only sends it once the question is
+// closed) — shown only where it says something new: wrong, skipped, missed or
+// "Lösung zeigen". After an answer she got right herself the chip and Buddy's
+// reply already carry the result; a card repeating her own word taught nothing
+// (issue #93). It stays on screen until the learner taps "Weiter".
 
-import type { SessionItemView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -14,17 +16,15 @@ import { Card } from '../lb/Card.js';
 import { MathText } from '../math/MathText.js';
 
 type Props = {
-  status: Exclude<SessionItemView['status'], 'open'>;
   answer: string;
   /** Numbers are shown the way the learner writes them (0,75 in German). */
   numeric: boolean;
 };
 
-export function SolutionCard({ status, answer, numeric }: Props) {
+export function SolutionCard({ answer, numeric }: Props) {
   const { t } = useTranslation('practice');
-  const solved = status === 'correct';
   return (
-    <Card tone={solved ? 'mint' : 'sky'} padding={20} radius={24}>
+    <Card tone="sky" padding={20} radius={24}>
       <Text style={[TYPE.body, { color: LB.ink2, fontWeight: '600' }]}>{t('solution.title')}</Text>
       <View style={{ marginTop: 4 }}>
         <MathText
@@ -32,9 +32,7 @@ export function SolutionCard({ status, answer, numeric }: Props) {
           style={TYPE.title}
         />
       </View>
-      {solved ? null : (
-        <Text style={[TYPE.body, { color: LB.ink2, marginTop: 8 }]}>{t('solution.calm')}</Text>
-      )}
+      <Text style={[TYPE.body, { color: LB.ink2, marginTop: 8 }]}>{t('solution.calm')}</Text>
     </Card>
   );
 }
