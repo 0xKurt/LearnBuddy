@@ -1354,7 +1354,8 @@ the learner's own photos or just-finished practice: her photos still being read 
 also behind another card, so the app keeps following the home — or a due or running check they
 caused),
 A result carries the prepared practice that is next (`next`), so a short round never hides
-the practice for a test (user feedback #2).
+the practice for a test (user feedback #2; the app shows `next` as the bar on top and the
+result in the conversation).
 **decision** (how did the test go › enable contact — with the stored rules it would allow,
 `rules`: at most n a day, never after the quiet hour, so the card and the parents' PIN screen
 say exactly that), **done** (Buddy's actions of the last 72 h
@@ -1368,22 +1369,32 @@ card next to "nothing working" — the app polls closely only while something is
 (`home-snapshot.int.test.ts`).
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx`, top to bottom:
-**one** card on top: the **now** card, else the **decision** (with the system notes — no
-model, background work stale — under it); with a now card the decision
-is asked at the end of the conversation with quieter buttons, so there is one violet button
-(`lib/homeLayout.ts`). The card **lies over** the greeting and the row of ways to start, directly
-under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the header, the
-greeting, the row and the conversation stand in exactly the same place with or without it, so
-nothing jumps when a card comes or goes (owner feedback: "Die Meldung sollte einfach über dem
-Menü liegen. Kann man dann ja wegklicken."). Its close button (`<Btn>`, 44 pt, "Karte
-ausblenden") or a swipe up hides it **on this phone only** (`lib/homeCard.ts`, kept in
-AsyncStorage / localStorage) until what it says changes (`topKey`: a different card, or the same
-card with new content, shows again); nothing is answered on the server — "Heute nicht" stays the
-card's own button. A closed decision is asked at the end of the conversation instead. While the
-card covers the row's buttons, the greeting and the row are left out in place (no edge peeking
-out, nothing a screen reader finds behind it); the conversation keeps the room the card covers
-at its top free (so its oldest shown message can be scrolled into view) and still stands at its
-newest message. VoiceOver hears that a card came; Android and the web read its live region; "Buddy is working" is said once (inside "Ich lese dein Blatt …", with
+on top at most **one slim bar** (issue #17, `components/buddy/SlimBar.tsx`) — the thing to act
+on now: a practice to go on with (ResumeBar), one that is ready (ReadyBar — after a result it
+shows what is prepared next), the photo Buddy waits for (CaptureBar), the sheet being read
+(ReadingBar, the real stages inline) — under a hard size contract: one line, the one action as
+a compact button, **≤ ~64 pt collapsed**; a bar with more to say (the stage names, which test,
+"Heute nicht") opens on a tap, and the walkthrough measures the bound
+(`tests/web/core-loop.spec.ts`, `partHeight`). Everything told rather than acted on stands at
+the end of the conversation as a notice with its buttons (`components/buddy/NoticeBubble.tsx`):
+a sheet that could not be read ("Nochmal lesen" right there), a finished practice (the same
+kind words as the summary — never a hit rate; the full summary one tap away), the open
+**decision** (messages to the phone, how the test went — quieter buttons, so there is one
+violet button, the bar's), photos not sent yet, and "Buddy is working"
+(`lib/homeLayout.ts` keeps these rules pure and tested). The system notes (no model, background
+work stale) join the layer on top. The bar **lies over** the greeting and the row of ways to
+start, directly under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the
+header, the greeting, the row and the conversation stand in exactly the same place with or
+without it, so nothing jumps when it comes or goes (owner feedback: "Die Meldung sollte einfach
+über dem Menü liegen. Kann man dann ja wegklicken."); the size contract keeps it within the
+row's room, so nothing below measures or compensates for its height. Its close button (`<Btn>`,
+44 pt, "Karte ausblenden") or a swipe up hides it **on this phone only** (`lib/homeCard.ts`,
+kept in AsyncStorage / localStorage) until what it says changes (`topKey`: a different bar, or
+the same bar with new content, shows again); nothing is answered on the server — "Heute nicht"
+stays the bar's own button. While a bar is on top, the row of ways to start is left out in
+place (no label ends peeking out, nothing a screen reader finds behind it). VoiceOver hears
+that it came; Android and the web read its live region; "Buddy is working" is said once (inside
+"Ich lese dein Blatt …", with
 the photo, or as a line at the end of the conversation); the greeting ("Hallo Lena" / "Was steht an?", full width — long names wrap);
 the ring (`components/lb/OrbitMenu.tsx`) — only Buddy's orb in the middle, five ways to start
 around it ("Arbeit" — with a test planned it prepares her for it; homework; pronunciation;
@@ -1393,7 +1404,8 @@ five (`components/lb/StartRow.tsx`; each as wide as its label, so a word never b
 its newest message like any chat (a new message scrolls to it; when she scrolled up to read she
 is not pulled down until she is back at the end or sends something; `lib/homeLayout.ts`
 `followsEnd`; a jump of the offset because the content or the view changed size is not her
-scrolling up) — the card on top covers only the top of the conversation, never its newest message; a
+scrolling up) — the bar on top never covers the conversation (only its opened details float
+over the conversation's top, and only while she reads them); a
 quiet line names the day where a new one starts (never how many days passed) — what Buddy did stands under its message with "Rückgängig"; no tiles, no
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
