@@ -162,6 +162,10 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // The card lies over the greeting and the ways to start: they stand where they stand
   // without a card (owner: "Die Meldung sollte einfach über dem Menü liegen").
   const homeAt = await homePositions(page);
+  // The layer on top keeps its hard size contract (issue #17): one slim bar,
+  // ≤ ~64 pt collapsed, plus the layer's 8 pt of air above it.
+  const captureBar = await partHeight(page, 'home-card', 'home-top');
+  expect(captureBar, `top layer ${captureBar}pt`).toBeLessThanOrEqual(72);
   await shot(page, '05-buddy-planned');
 
   // ── Messages to the phone need a parent: the PIN, not the student — and the parent sees
@@ -214,6 +218,11 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   });
   await expect(page.getByText(/^4 Aufgaben · ca\. 5 Min\.$/)).toBeVisible();
   expect(await homePositions(page)).toEqual(homeAt);
+  // The ready bar honours the same size contract as every layer on top (issue #17),
+  // and carries the close button (swiping the layer away is walked through in tour.spec.ts).
+  const readyBar = await partHeight(page, 'home-card', 'home-top');
+  expect(readyBar, `top layer ${readyBar}pt`).toBeLessThanOrEqual(72);
+  await expect(page.getByRole('button', { name: 'Karte ausblenden' })).toBeVisible();
   // The chat still stands at its newest message under the card.
   await expect(page.getByText(/Vorbereitet: Mathearbeit Brüche/)).toBeInViewport();
   await shot(page, '09-buddy-prepared');
@@ -261,15 +270,20 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeInViewport();
   await shot(page, '12-buddy-feedback');
 
-  // ── The card on top is closed with its button: nothing else moves, and on this phone it
-  // stays closed until it says something new ──
+  // ── The finished practice stands in the conversation, not on top (issue #17): the same
+  // kind words, the full view one tap away — and nothing lies over the ways to start ──
   const card = page.getByTestId('home-card');
-  await expect(card).toBeVisible();
-  await page.getByRole('button', { name: 'Karte ausblenden' }).click();
   await expect(card).toHaveCount(0);
-  expect(await homePositions(page)).toEqual(homeAt);
+  await expect(page.getByText('Geschafft!')).toBeVisible();
   await page.getByRole('button', { name: 'Arbeit', exact: true }).click({ trial: true });
-  await shot(page, '12b-buddy-card-closed');
+  await shot(page, '12b-buddy-result-in-thread');
+  await page.getByRole('button', { name: 'Ansehen' }).click();
+  // The full summary again (the thread behind keeps its short version of the same words).
+  await expect(
+    page.getByText('Alles saß gleich beim ersten Mal', { exact: false }).last(),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByText('Hallo Mia')).toBeVisible();
   // What the app's own stopwatch measured on the way here (issue #66) — read before the
   // reload, which is what clears it (the spans live in memory, nothing is stored).
   await recordPerf(page, 'core-loop');

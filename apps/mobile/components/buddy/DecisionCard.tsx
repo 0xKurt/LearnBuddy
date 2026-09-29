@@ -1,19 +1,16 @@
-// The one open decision, answered with a tap (no model involved). Alone it is the
-// card on top; while another card is there it is asked at the end of the
-// conversation instead (at most one card on top, one violet button — user
-// feedback #6, docs/UX-PRINCIPLES.md §31–32).
+// The one open decision, answered with a tap (no model involved). It is asked at the end
+// of the conversation like everything Buddy asks — never a card on top (issue #17): the top
+// of home belongs to the slim bar of what happens now, and the violet button with it, so
+// the answers here stay quiet (user feedback #6, docs/UX-PRINCIPLES.md §31–32).
 //
 // Messages to the phone say exactly what would be allowed, from the stored rules —
 // for a minor too, so the parents see what their PIN allows (user feedback #4).
 
 import type { Decision } from '@learnbuddy/shared-types/contracts';
 import type { TFunction } from 'i18next';
-import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
 import { NoticeBubble } from './NoticeBubble.js';
 
 export type OptInDecision = Extract<Decision, { type: 'contact_opt_in' }>;
@@ -31,48 +28,26 @@ type Props = {
   onOptIn: (enable: boolean) => void;
   onAdultOptIn: () => void;
   onOutcome: (goalId: string, outcome: 'good' | 'ok' | 'hard') => void;
-  /** Another card is on top: asked in the conversation, with quieter buttons. */
-  inline?: boolean;
-  /** Room on the title's right (the close button of the card on top, TopOverlay). */
-  titleInset?: number;
 };
 
-export function DecisionCard({
-  decision,
-  busy,
-  onOptIn,
-  onAdultOptIn,
-  onOutcome,
-  inline = false,
-  titleInset = 0,
-}: Props) {
+export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome }: Props) {
   const { t } = useTranslation('buddy');
-  const inset = { paddingRight: titleInset };
-  const size = inline ? 'sm' : 'md';
   if (decision.type === 'how_did_it_go') {
     const goalId = decision.goal.id;
-    const title = t('decision.outcome_title', { title: decision.goal.title });
-    const answers = (['good', 'ok', 'hard'] as const).map((o) => (
-      <Btn
-        key={o}
-        variant="outline"
-        size={size}
-        onPress={() => onOutcome(goalId, o)}
-        disabled={busy}
-      >
-        {t(`decision.outcome_${o}`)}
-      </Btn>
-    ));
-    if (inline) return <NoticeBubble text={title}>{answers}</NoticeBubble>;
     return (
-      <Card tone="lavender" padding={16} radius={22}>
-        <Text accessibilityRole="header" style={[TYPE.title, inset]}>
-          {title}
-        </Text>
-        <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          {answers}
-        </View>
-      </Card>
+      <NoticeBubble text={t('decision.outcome_title', { title: decision.goal.title })}>
+        {(['good', 'ok', 'hard'] as const).map((o) => (
+          <Btn
+            key={o}
+            variant="outline"
+            size="sm"
+            onPress={() => onOutcome(goalId, o)}
+            disabled={busy}
+          >
+            {t(`decision.outcome_${o}`)}
+          </Btn>
+        ))}
+      </NoticeBubble>
     );
   }
   const body = [
@@ -81,41 +56,20 @@ export function DecisionCard({
   ]
     .filter(Boolean)
     .join(' ');
-  // Inline, the violet button belongs to the card on top: here a soft one.
-  const yes = (
-    <Btn
-      key="yes"
-      variant={inline ? 'soft' : 'primary'}
-      size={size}
-      onPress={decision.can_enable_here ? () => onOptIn(true) : onAdultOptIn}
-      disabled={busy}
-    >
-      {decision.can_enable_here ? t('decision.optin_yes') : t('decision.optin_minor_cta')}
-    </Btn>
-  );
-  const no = (
-    <Btn key="no" variant="ghost" size={size} onPress={() => onOptIn(false)} disabled={busy}>
-      {t('decision.optin_no')}
-    </Btn>
-  );
-  if (inline) {
-    return (
-      <NoticeBubble text={t('decision.optin_title')} detail={body}>
-        {yes}
-        {no}
-      </NoticeBubble>
-    );
-  }
+  // The violet button belongs to the bar on top: here a soft one.
   return (
-    <Card tone="lavender" padding={16} radius={22}>
-      <Text accessibilityRole="header" style={[TYPE.title, inset]}>
-        {t('decision.optin_title')}
-      </Text>
-      <Text style={[TYPE.small, { marginTop: 4 }]}>{body}</Text>
-      <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        {yes}
-        {no}
-      </View>
-    </Card>
+    <NoticeBubble text={t('decision.optin_title')} detail={body}>
+      <Btn
+        variant="soft"
+        size="sm"
+        onPress={decision.can_enable_here ? () => onOptIn(true) : onAdultOptIn}
+        disabled={busy}
+      >
+        {decision.can_enable_here ? t('decision.optin_yes') : t('decision.optin_minor_cta')}
+      </Btn>
+      <Btn variant="ghost" size="sm" onPress={() => onOptIn(false)} disabled={busy}>
+        {t('decision.optin_no')}
+      </Btn>
+    </NoticeBubble>
   );
 }

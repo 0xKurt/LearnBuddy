@@ -5,11 +5,11 @@
 // Taps are direct API calls (no model); only free text goes to Buddy.
 // Voice mode (speaker switch next to the menu): Buddy's reply to what she
 // just sent is read aloud, and the mic is the composer's main control.
-// At most one card on top and one violet button; everything else Buddy asks in
-// the conversation, which stands at its newest message unless she scrolled up to read
-// (lib/homeLayout.ts, user feedback #6). The card floats over the greeting and the row of
-// ways to start and can be closed (components/buddy/TopOverlay.tsx): nothing below it moves
-// when it comes or goes.
+// At most one slim bar on top (≤ ~64 pt, issue #17) and one violet button; everything Buddy
+// tells or asks stands in the conversation, which stands at its newest message unless she
+// scrolled up to read (lib/homeLayout.ts, user feedback #6). The bar floats over the greeting
+// and the row of ways to start and can be closed (components/buddy/TopOverlay.tsx): nothing
+// below it moves when it comes or goes.
 // While Buddy writes, the send button is "Stopp" (the turn ends stopped, §Turns); scrolled up to
 // read, "↓ Neue Antwort" brings her to a reply that came meanwhile (lib/buddy/newReply.ts).
 
@@ -26,9 +26,8 @@ import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
-import { SLIM_CLOSE_TOP } from '../components/buddy/SlimBar.js';
+import { CaptureBar, ReadingBar, ReadyBar, ResumeBar } from '../components/buddy/SlimBar.js';
 import { TopEdgeFade, topEdgeMask } from '../components/lb/EdgeFade.js';
-import { NowCard } from '../components/buddy/NowCard.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
 import { CLOSE_INSET, TopOverlay } from '../components/buddy/TopOverlay.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
@@ -83,6 +82,7 @@ import { dayPart, greetingVariant, startsNewSession } from '../lib/buddy/session
 import { drafts } from '../lib/capture/draftStorage.js';
 import { attachedInChat, useLiveAttachments } from '../lib/capture/live.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
+import { summaryLines } from '../lib/practice/summaryLine.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { speakInOrder, stop as stopListening } from '../lib/speech/listen.js';
@@ -96,14 +96,12 @@ import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { reacted, tapped } from '../lib/perf.js';
 
 const VISIBLE_MESSAGES = 6;
-/** Below the start row's round buttons: two lines of label and the room under the row. */
-const LABEL_ROOM = 40;
 
 /** iOS can't present a sheet while another one is still sliding away. */
 const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
 
 export default function BuddyScreen() {
-  const { t } = useTranslation(['buddy', 'common', 'learn']);
+  const { t } = useTranslation(['buddy', 'common', 'learn', 'practice']);
   const home = useHome();
   // A practice to go on with is loaded while its card is on screen (gaps.md #2).
   usePrefetchSession(home.data?.now);
@@ -233,8 +231,7 @@ export default function BuddyScreen() {
   // It lies over the greeting: VoiceOver hears that it came (Android and the web read its
   // live region).
   useAnnounce(openCard ? t('buddy:card.shown') : null, { key: openCard ?? undefined });
-  /** How tall the card is, and where the conversation starts under it. */
-  const [cardHeight, setCardHeight] = useState(0);
+  /** Where the conversation starts (the row of ways to start ends): for its fade-out. */
   const [threadTop, setThreadTop] = useState(0);
   /**
    * Where this visit starts in the conversation (issue #34): decided once, when the screen
@@ -529,8 +526,6 @@ export default function BuddyScreen() {
     <DecisionCard
       key="decision"
       decision={h.decision}
-      inline={layout.decisionInline}
-      titleInset={layout.top === 'decision' ? CLOSE_INSET : 0}
       busy={busy}
       onOptIn={(enable) =>
         enable ? void enableContact(false) : void act(() => answerContactOptIn(false))
@@ -540,12 +535,16 @@ export default function BuddyScreen() {
     />
   ) : null;
   // What Buddy tells at the end of the conversation, with its buttons: nothing on top moves.
-  // The violet button belongs to the card on top when there is one.
-  const quiet = layout.top ? 'soft' : 'primary';
+  // The violet button belongs to the bar on top when there is one.
+  const quiet = layout.bar ? 'soft' : 'primary';
   // Pages she is holding in the composer are on screen; the notice would say the
   // opposite of what she sees (issue #82).
   const shownDraft = attachedCount > 0 ? null : (draft ?? letGo);
   const missing = h.notice?.type === 'pages_missing' ? h.notice : null;
+  // Told at the end of the conversation, never as a card on top (lib/homeLayout.ts,
+  // issue #17): the sheet that could not be read, and the finished practice.
+  const failedNow = layout.failed && h.now?.type === 'material_failed' ? h.now : null;
+  const resultNow = layout.result && h.now?.type === 'practice_result' ? h.now : null;
   const notices = [
     shownDraft ? (
       <NoticeBubble
@@ -659,7 +658,76 @@ export default function BuddyScreen() {
         </Btn>
       </NoticeBubble>
     ) : null,
-    // The open question while another card is on top, and "Buddy is working" said once.
+    // A sheet Buddy could not read: said here, with "Nochmal lesen" right at it (issue #17).
+    failedNow ? (
+      <NoticeBubble
+        key="failed"
+        text={
+          failedNow.title
+            ? t('buddy:now.failed_title_named', { title: failedNow.title })
+            : t('buddy:now.failed_title')
+        }
+        detail={t(`buddy:now.failed_${failedNow.reason ?? 'model_error'}`)}
+      >
+        {failedNow.retryable ? (
+          <Btn
+            size="sm"
+            variant={quiet}
+            disabled={busy}
+            onPress={() =>
+              void act(async () => {
+                await retryMaterial(failedNow.material_id);
+                await refresh();
+              })
+            }
+          >
+            {t('buddy:now.failed_retry')}
+          </Btn>
+        ) : null}
+        <Btn
+          size="sm"
+          variant={failedNow.retryable ? 'ghost' : quiet}
+          disabled={busy}
+          // The same purpose (homework stays homework) and, for a page, the same sheet (M-18).
+          onPress={() =>
+            router.push({
+              pathname: '/capture',
+              params: {
+                ...(failedNow.purpose === 'homework' ? { purpose: failedNow.purpose } : {}),
+                ...(failedNow.completes ? { completes: failedNow.completes } : {}),
+              },
+            })
+          }
+        >
+          {t('buddy:now.failed_new_photo')}
+        </Btn>
+      </NoticeBubble>
+    ) : null,
+    // The finished practice: the same true, kind words as the summary — never a hit rate
+    // (feedback #1). The full view stays one tap away; what is ready next is the bar's job.
+    resultNow ? (
+      <NoticeBubble
+        key="result"
+        text={t('buddy:now.result_title')}
+        detail={summaryLines(resultNow.result, resultNow.mode)
+          .map((l) =>
+            l.count === undefined
+              ? t(`practice:${l.key}`)
+              : t(`practice:${l.key}`, { count: l.count }),
+          )
+          .join(' ')}
+      >
+        <Btn
+          size="sm"
+          variant={quiet}
+          disabled={busy}
+          onPress={() => router.push(`/practice/${resultNow.session_id}`)}
+        >
+          {t('buddy:now.result_view')}
+        </Btn>
+      </NoticeBubble>
+    ) : null,
+    // The open question, and "Buddy is working" said once.
     layout.decisionInline ? decisionCard : null,
     layout.working === 'thread' && h.working ? (
       <WorkingNote key="working" what={h.working} />
@@ -695,46 +763,81 @@ export default function BuddyScreen() {
 
   // Once there is a conversation, it gets the room; the ring shrinks to a row.
   const talking = messages.length > 0 || shownPending !== null || notices.length > 0;
-  // The card first (the close button sits in its corner), then what the system says.
-  const card =
-    layout.top === 'now' && h.now ? (
-      <NowCard
-        key="now"
-        card={h.now}
-        titleInset={CLOSE_INSET}
-        thumb={readingThumb}
-        preparing={layout.working === 'card'}
-        busy={busy}
-        onResume={(id) => router.push(`/practice/${id}`)}
-        onStart={(stepId) =>
-          void act(async () => {
-            const { session_id, session } = await startStep(stepId);
-            if (session) seedSession(session);
-            router.push(`/practice/${session_id}`);
-          })
-        }
-        onSkip={(stepId) => void act(() => skipStep(stepId))}
-        onCapture={({ stepId, goalId, purpose, completes }) =>
-          router.push({
-            pathname: '/capture',
-            params: {
-              ...(stepId ? { stepId } : {}),
-              ...(goalId ? { goalId } : {}),
-              ...(purpose === 'homework' ? { purpose } : {}),
-              ...(completes ? { completes } : {}),
-            },
-          })
-        }
-        onRetryMaterial={(id) =>
-          void act(async () => {
-            await retryMaterial(id);
-            await refresh();
-          })
-        }
-      />
-    ) : layout.top === 'decision' ? (
-      decisionCard
-    ) : null;
+  // The slim bar first (the close button sits in its corner), then what the system says.
+  const startPrepared = (stepId: string) =>
+    void act(async () => {
+      const { session_id, session } = await startStep(stepId);
+      if (session) seedSession(session);
+      router.push(`/practice/${session_id}`);
+    });
+  const skipPrepared = (stepId: string) => void act(() => skipStep(stepId));
+  const bar = ((): React.ReactElement | null => {
+    const now = h.now;
+    if (layout.bar === null || now === null) return null;
+    if (layout.bar === 'resume' && now.type === 'resume_practice') {
+      return (
+        <ResumeBar
+          key="now"
+          card={now}
+          busy={busy}
+          titleInset={CLOSE_INSET}
+          onResume={(id) => router.push(`/practice/${id}`)}
+        />
+      );
+    }
+    if (layout.bar === 'ready' && now.type === 'practice_ready') {
+      return (
+        <ReadyBar
+          key="now"
+          card={now}
+          busy={busy}
+          titleInset={CLOSE_INSET}
+          onStart={startPrepared}
+          onSkip={skipPrepared}
+        />
+      );
+    }
+    // The practice prepared after a result: the bar's job (the result is in the thread).
+    if (layout.bar === 'next' && now.type === 'practice_result' && now.next) {
+      return (
+        <ReadyBar
+          key="now"
+          card={{ type: 'practice_ready', ...now.next }}
+          busy={busy}
+          titleInset={CLOSE_INSET}
+          onStart={startPrepared}
+          onSkip={skipPrepared}
+        />
+      );
+    }
+    if (layout.bar === 'capture' && now.type === 'capture_needed') {
+      const params = {
+        ...(now.step_id ? { stepId: now.step_id } : {}),
+        ...(now.goal ? { goalId: now.goal.id } : {}),
+      };
+      return (
+        <CaptureBar
+          key="now"
+          card={now}
+          busy={busy}
+          titleInset={CLOSE_INSET}
+          onPress={() => router.push({ pathname: '/capture', params })}
+        />
+      );
+    }
+    if (layout.bar === 'reading' && now.type === 'material_processing') {
+      return (
+        <ReadingBar
+          key="now"
+          card={now}
+          thumb={readingThumb}
+          preparing={layout.working === 'bar'}
+          titleInset={CLOSE_INSET}
+        />
+      );
+    }
+    return null;
+  })();
   const notes = [
     !h.system.model ? (
       <Banner key="model" tone="warning">
@@ -749,8 +852,8 @@ export default function BuddyScreen() {
   ].filter((node) => node !== null);
   // Only system notes: the first one leaves room for the close button.
   const top = openCard
-    ? card
-      ? [card, ...notes]
+    ? bar
+      ? [bar, ...notes]
       : notes.map((n, i) =>
           i === 0 ? (
             <View key={`inset-${n.key ?? i}`} style={{ paddingRight: CLOSE_INSET + 16 }}>
@@ -761,17 +864,11 @@ export default function BuddyScreen() {
           ),
         )
     : [];
-  // What the card lies over at the top of the conversation stays reachable by scrolling.
-  const underCard = top.length > 0 ? Math.max(0, cardHeight - threadTop) : 0;
-  // While the card covers the ways to start (their round buttons; at most the ends of their
-  // labels would show under it), they and the greeting are left out — no edge peeking out
-  // beside the card, nothing a screen reader finds behind it — in place, so nothing moves.
-  // A shorter card leaves them as they are.
-  const covered = top.length > 0 && threadTop > 0 && cardHeight >= threadTop - LABEL_ROOM;
-  // The first-visit layout: a card on top lies over the greeting — also the slim bar, which
-  // would leave it half hidden under its fade; the greeting steps back in place (nothing moves).
-  // (A position measured with onLayout goes stale on the web: it only reports size changes.)
-  const greetingCovered = top.length > 0;
+  // The bar on top stands in for the row of ways to start: the row is left out — no label
+  // ends peeking out under the bar, nothing a screen reader finds behind it — in place, so
+  // nothing moves when the bar comes or goes. No measuring: the bar's size contract
+  // (≤ ~64 pt, SlimBar.tsx) keeps it within the row's room (issue #17).
+  const covered = top.length > 0;
   // Her name lives in the top bar (issue #45): the head was a quarter of the screen —
   // a bar, not a stage. What is left here is the one line that carries information:
   // the next test, else the open question, and quietly whether she practised today.
@@ -848,13 +945,6 @@ export default function BuddyScreen() {
               id={openCard}
               closeLabel={t('buddy:card.close')}
               onClose={() => closeCard(openCard)}
-              onHeight={setCardHeight}
-              closeTop={
-                layout.top === 'now' &&
-                (h.now?.type === 'practice_ready' || h.now?.type === 'material_processing')
-                  ? SLIM_CLOSE_TOP
-                  : undefined
-              }
             >
               {top}
             </TopOverlay>
@@ -869,7 +959,7 @@ export default function BuddyScreen() {
                   paddingBottom: 4,
                   opacity: covered ? 0 : 1,
                 }}
-                // Where the conversation starts under the card.
+                // Where the conversation starts (for its fade-out under the row).
                 onLayout={(e) => setThreadTop(e.nativeEvent.layout.height)}
                 pointerEvents={covered ? 'none' : 'auto'}
                 accessibilityElementsHidden={covered}
@@ -888,7 +978,7 @@ export default function BuddyScreen() {
                   flexGrow: 1,
                   justifyContent: 'flex-end',
                   paddingHorizontal: 16,
-                  paddingTop: 12 + underCard,
+                  paddingTop: 12,
                   paddingBottom: 12,
                   gap: 10,
                 }}
@@ -996,14 +1086,8 @@ export default function BuddyScreen() {
                 />
               }
             >
-              {/* Under a card on top the status line steps back instead of peeking out half hidden. */}
-              <View
-                style={{ opacity: greetingCovered ? 0 : 1 }}
-                accessibilityElementsHidden={greetingCovered}
-                importantForAccessibility={greetingCovered ? 'no-hide-descendants' : 'auto'}
-              >
-                {statusLine}
-              </View>
+              {/* The status line: centred, well below the slim bar's room on top. */}
+              {statusLine}
               {/* The ring: Buddy in the middle, ways to start around it. */}
               <OrbitMenu
                 items={orbitItems(h.next)}
