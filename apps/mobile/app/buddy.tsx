@@ -977,10 +977,13 @@ export default function BuddyScreen() {
                 contentContainerStyle={{
                   flexGrow: 1,
                   justifyContent: 'flex-end',
-                  paddingHorizontal: 16,
-                  paddingTop: 12,
-                  paddingBottom: 12,
-                  gap: 10,
+                  paddingHorizontal: SPACE.lg,
+                  paddingTop: SPACE.md,
+                  // sm here + the composer's xs on top: md from the last bubble to the
+                  // pill, on the scale like the sm between turns (issue #51). The same
+                  // numbers as the thread's tail in talk.tsx.
+                  paddingBottom: SPACE.sm,
+                  gap: SPACE.sm,
                 }}
                 keyboardShouldPersistTaps="handled"
                 // A conversation: at its newest message, unless she scrolled up to read.

@@ -21,6 +21,7 @@ import { getThread, undoAction } from '../lib/api/endpoints.js';
 import { keys, queryClient, useHome } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { dayGroups } from '../lib/dayGroups.js';
+import { SPACE } from '../lib/theme/space.js';
 import { mergeThread } from '../lib/threadMerge.js';
 
 export default function History() {
@@ -131,14 +132,14 @@ export default function History() {
         // A chat: it opens at the newest message; older pages load above without a jump.
         maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
         // Edge-to-edge: the newest message must clear the Android gesture/3-button bar.
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}
+        contentContainerStyle={{ padding: SPACE.lg, paddingBottom: insets.bottom + SPACE.lg }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
         ListEmptyComponent={
           <EmptyState orb title={t('thread.empty_title')} body={t('thread.empty_body')} />
         }
         ListHeaderComponent={
           more ? (
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ alignItems: 'center', marginBottom: SPACE.lg }}>
               <Btn
                 variant="outline"
                 size="sm"
@@ -153,7 +154,8 @@ export default function History() {
           ) : null
         }
         renderItem={({ item: g }) => (
-          <View style={{ gap: 10, marginBottom: 10 }}>
+          // sm between days like between turns: the same scale as the chat (issue #51).
+          <View style={{ gap: SPACE.sm, marginBottom: SPACE.sm }}>
             {g.todayLine ? <DayLine day={g.day} /> : null}
             <Conversation
               messages={g.messages}

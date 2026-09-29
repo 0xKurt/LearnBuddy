@@ -36,6 +36,21 @@ import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
 import { SPACE } from '../../lib/theme/space.js';
 
+/** The orb beside Buddy's bubbles; cards and chips under a bubble align to its left edge. */
+export const ORB = 26;
+
+/**
+ * One bubble geometry for everything said in the thread — a message, the message being
+ * sent, the answer being written, a notice (issue #51: one scale, no near-misses per
+ * bubble). paddingVertical 11 is off the scale on purpose: with TYPE.body's 23-point
+ * line a one-liner closes at 45, just over the 44 pt touch height (space.ts TOUCH).
+ */
+export const BUBBLE = {
+  borderRadius: 22,
+  paddingHorizontal: SPACE.lg,
+  paddingVertical: 11,
+} as const;
+
 type Props = {
   messages: MessageView[];
   /** Local message being sent right now (optimistic). */
@@ -117,7 +132,10 @@ export function Conversation({
   const enterOf = (m: MessageView, index: number) =>
     arrivedInPlace(m) ? undefined : riseIn(index);
   const view = (
-    <View style={{ gap: 10 }}>
+    // The thread's air rides one scale (issue #51): sm from turn to turn, and the same
+    // sm from a bubble to its card or chips (the block's xs gap + an xs margin there);
+    // only a bubble's own status line sits closer, at the bare xs.
+    <View style={{ gap: SPACE.sm }}>
       {messages.map((m, index) => {
         const mine = m.role === 'learner';
         const day = breaks[index] ?? null;
@@ -132,15 +150,20 @@ export function Conversation({
           <Animated.View
             key={m.id}
             layout={glide}
-            style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}
+            style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: SPACE.xs }}
           >
             {day ? <DayLine day={day} /> : null}
             <Animated.View
               entering={enterOf(m, 0)}
-              style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-end',
+                gap: SPACE.sm,
+                maxWidth: '92%',
+              }}
             >
               {/* Only the newest Buddy moves (while he writes, the one writing does). */}
-              {mine ? null : <BuddyOrb size={26} breathe={m === lastBuddy && !thinking} />}
+              {mine ? null : <BuddyOrb size={ORB} breathe={m === lastBuddy && !thinking} />}
               <Pressable
                 accessibilityRole="text"
                 accessibilityLabel={spoken}
@@ -163,13 +186,11 @@ export function Conversation({
                 {({ pressed }) => (
                   <View
                     style={[
+                      BUBBLE,
                       {
                         backgroundColor: mine ? LB.primary : LB.paper,
-                        borderRadius: 22,
-                        borderBottomRightRadius: mine ? 6 : 22,
-                        borderBottomLeftRadius: mine ? 22 : 6,
-                        paddingHorizontal: 16,
-                        paddingVertical: 11,
+                        borderBottomRightRadius: mine ? 6 : BUBBLE.borderRadius,
+                        borderBottomLeftRadius: mine ? BUBBLE.borderRadius : 6,
                         opacity: pressed ? 0.85 : 1,
                         transform: [{ scale: pressed ? 0.98 : 1 }],
                       },
@@ -200,10 +221,10 @@ export function Conversation({
                 <Animated.View
                   key={a.id}
                   entering={riseIn(1)}
-                  // The block's own gap is 4; a card needs the same air as there is between
-                  // two bubbles, or it looks glued to the sentence above it (owner 28.09.,
-                  // issue #51).
-                  style={{ width: '86%', marginLeft: 34, marginTop: SPACE.sm }}
+                  // Block gap xs + this xs = sm, the same air as between two bubbles —
+                  // a card glued to its sentence was the complaint (owner 28.09., issue
+                  // #51). marginLeft: flush with the bubble's left edge, past the orb.
+                  style={{ width: '86%', marginLeft: ORB + SPACE.sm, marginTop: SPACE.xs }}
                 >
                   <OfferCard actionId={a.id} offer={a.summary} spoken={spokenMode} />
                 </Animated.View>
@@ -211,7 +232,7 @@ export function Conversation({
                 <Animated.View
                   key={a.id}
                   entering={riseIn(1)}
-                  style={{ width: '86%', marginLeft: 34, marginTop: SPACE.sm }}
+                  style={{ width: '86%', marginLeft: ORB + SPACE.sm, marginTop: SPACE.xs }}
                 >
                   <AreaCard area={a.summary.area} />
                 </Animated.View>
@@ -220,9 +241,14 @@ export function Conversation({
             {showActions && done.length > 0 ? (
               <Animated.View
                 entering={riseIn(1)}
-                // Same breathing room as between bubbles: the offer card sat glued
-                // to its bubble (owner feedback 2026-09-28).
-                style={{ gap: 8, maxWidth: '88%', marginLeft: 34, marginTop: 4 }}
+                // Block gap xs + xs = sm: same breathing room as between bubbles — the
+                // chips sat glued to their bubble (owner feedback 2026-09-28).
+                style={{
+                  gap: SPACE.sm,
+                  maxWidth: '88%',
+                  marginLeft: ORB + SPACE.sm,
+                  marginTop: SPACE.xs,
+                }}
               >
                 {done.map((a) => {
                   const what = describeAction(a.summary, { contactOn });
@@ -280,7 +306,7 @@ export function Conversation({
             {mine && m.status === 'failed' ? (
               <Animated.View
                 entering={riseIn(0)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
               >
                 {/* It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by
                     her is no failure: said calmly, not in red. */}
@@ -304,7 +330,15 @@ export function Conversation({
               </Animated.View>
             ) : null}
             {onOption && m === last && m.role === 'buddy' && m.options && m.options.length > 0 ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              <View
+                // Block gap xs + xs = sm to the bubble, like the cards above.
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: SPACE.sm,
+                  marginTop: SPACE.xs,
+                }}
+              >
                 {m.options.map((o, i) => (
                   <Animated.View key={o} entering={riseIn(2 + i)}>
                     <Btn
@@ -338,15 +372,15 @@ export function Conversation({
       {pending ? (
         <Animated.View key="pending" entering={riseIn(0)} style={{ alignItems: 'flex-end' }}>
           <View
-            style={{
-              maxWidth: '86%',
-              backgroundColor: LB.primary,
-              borderRadius: 22,
-              borderBottomRightRadius: 6,
-              paddingHorizontal: 16,
-              paddingVertical: 11,
-              opacity: 0.8,
-            }}
+            style={[
+              BUBBLE,
+              {
+                maxWidth: '86%',
+                backgroundColor: LB.primary,
+                borderBottomRightRadius: 6,
+                opacity: 0.8,
+              },
+            ]}
           >
             <Text style={[TYPE.body, { color: LB.paper }]}>{pending.text}</Text>
           </View>
@@ -356,20 +390,18 @@ export function Conversation({
         <Animated.View
           key="live"
           entering={riseIn(0)}
-          style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '92%' }}
+          style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}
         >
           {/* Buddy is writing: his moon sways in the rhythm of speech. */}
-          <BuddyOrb size={26} state="speak" />
+          <BuddyOrb size={ORB} state="speak" />
           <View
             accessibilityLiveRegion="polite"
             style={[
+              BUBBLE,
               {
                 flexShrink: 1,
                 backgroundColor: LB.paper,
-                borderRadius: 22,
                 borderBottomLeftRadius: 6,
-                paddingHorizontal: 16,
-                paddingVertical: 11,
               },
               SHADOW.soft,
             ]}
@@ -403,9 +435,9 @@ function SessionLine({ text }: { text: string }) {
         alignSelf: 'stretch',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        marginTop: 10,
-        marginBottom: 2,
+        gap: SPACE.sm,
+        // Block gap xs + xs above, the list's sm below: the same sm to both sides.
+        marginTop: SPACE.xs,
       }}
     >
       <View style={{ flex: 1, height: 1, backgroundColor: LB.hairline }} />
@@ -430,7 +462,10 @@ export function DayLine({ day }: { day: string }) {
   return (
     <Text
       accessibilityRole="header"
-      style={[TYPE.small, { alignSelf: 'center', color: LB.ink2, fontSize: 12, marginVertical: 4 }]}
+      style={[
+        TYPE.small,
+        { alignSelf: 'center', color: LB.ink2, fontSize: 12, marginVertical: SPACE.xs },
+      ]}
     >
       {label}
     </Text>
