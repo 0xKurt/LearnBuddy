@@ -45,6 +45,14 @@ export const POLICIES = {
   speech: { limit: 1000, windowMs: HOUR },
   /** Dictation (speech to text): like answers — a script, not a learner (issue #86). */
   voice: { limit: 600, windowMs: HOUR },
+  /**
+   * Re-agreeing and profile writes (issue #72). Creating an account is 1:1 with a
+   * Supabase-gated sign-up, so its volume is bounded upstream — what this bounds is a
+   * script hammering the idempotent POSTs with one stolen token: each call writes rows.
+   * The very first POST /account of a fresh user has no account row to count on and
+   * passes; every call after it is counted. 30/h is far above any real family's day.
+   */
+  signup: { limit: 30, windowMs: HOUR },
 } as const satisfies Record<string, LimitPolicy>;
 
 export type LimitScope = keyof typeof POLICIES;

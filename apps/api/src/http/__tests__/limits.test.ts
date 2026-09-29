@@ -21,6 +21,15 @@ describe('the hourly budget covers every expensive request', () => {
     expect(scopeFor('POST', '/voice/transcribe')).toBe('voice');
   });
 
+  it('account and learner writes carry the signup budget (issue #72)', () => {
+    expect(scopeFor('POST', '/account')).toBe('signup');
+    expect(scopeFor('POST', '/learner')).toBe('signup');
+    // Deeper account routes keep their own guards (PIN, admin token), not this budget.
+    expect(scopeFor('POST', '/account/admin-session')).toBeNull();
+    expect(scopeFor('POST', '/account/deletion')).toBeNull();
+    expect(scopeFor('POST', '/learner/consent')).toBeNull();
+  });
+
   it('cheap reads stay unbudgeted', () => {
     expect(scopeFor('GET', '/buddy')).toBeNull();
     expect(scopeFor('POST', `/practice/sessions/${id}/hint`)).toBeNull();

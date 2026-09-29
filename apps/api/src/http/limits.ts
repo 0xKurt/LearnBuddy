@@ -22,6 +22,10 @@ const BUDGETED: Array<{ scope: LimitScope; method: string; path: RegExp }> = [
   // Dictation parses up to 2 MB per request before the daily model cap answers 429 —
   // without an hourly budget those rounds were unbounded per account (issue #86).
   { scope: 'voice', method: 'POST', path: /\/voice\/transcribe$/ },
+  // Account and learner writes (issue #72): idempotent, but each call costs rows. The
+  // first POST /account of a fresh user has no account yet and passes uncounted — its
+  // volume is bounded by the Supabase sign-up it needs; everything after is counted.
+  { scope: 'signup', method: 'POST', path: /\/(account|learner)$/ },
 ];
 
 export function scopeFor(method: string, path: string): LimitScope | null {
