@@ -7,7 +7,10 @@
     "title": "More",
     "memory": "What Buddy knows about you",
     "library": "Materials",
-    "settings": "Settings"
+    "settings": "Settings",
+    "short": "More",
+    "read_aloud_on": "Reading aloud is on",
+    "read_aloud_off": "Read answers aloud"
   },
   "system": {
     "no_model": "Buddy can't answer right now. Practice and your reminders still work.",
@@ -311,24 +314,24 @@
   },
   "session": {
     "morning": {
-      "0": "Good morning, {{name}}!",
-      "1": "Morning, {{name}}!",
-      "2": "Morning, {{name}} – sleep well?"
+      "0": "Morning, {{name}}!",
+      "1": "Hey {{name}} – sleep well?",
+      "2": "Up already, {{name}}?"
     },
     "day": {
-      "0": "Hello, {{name}}!",
-      "1": "Hi, {{name}}!",
+      "0": "Hi, {{name}}!",
+      "1": "Hey, {{name}}!",
       "2": "Good to see you, {{name}}!"
     },
     "evening": {
-      "0": "Good evening, {{name}}!",
-      "1": "Hi, {{name}} – how was your day?",
-      "2": "Evening, {{name}}!"
+      "0": "Evening, {{name}}!",
+      "1": "Hey {{name}} – how was your day?",
+      "2": "Hi {{name}}, all good today?"
     },
     "night": {
-      "0": "Hi, {{name}} – still up?",
-      "1": "Hey, {{name}}!",
-      "2": "Good evening, {{name}}!"
+      "0": "Hey {{name}} – still up?",
+      "1": "Hi, {{name}}!",
+      "2": "Up late, {{name}}?"
     }
   }
 }

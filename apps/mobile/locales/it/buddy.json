@@ -7,7 +7,10 @@
     "title": "Altro",
     "memory": "Cosa sa Buddy di te",
     "library": "Materiali",
-    "settings": "Impostazioni"
+    "settings": "Impostazioni",
+    "short": "Altro",
+    "read_aloud_on": "La lettura è attiva",
+    "read_aloud_off": "Leggi le risposte ad alta voce"
   },
   "system": {
     "no_model": "Al momento Buddy non può rispondere. Gli esercizi e i tuoi promemoria funzionano comunque.",
@@ -311,9 +314,9 @@
   },
   "session": {
     "morning": {
-      "0": "Buongiorno, {{name}}!",
-      "1": "Ciao, {{name}}!",
-      "2": "Buongiorno, {{name}} – dormito bene?"
+      "0": "Ciao, {{name}}!",
+      "1": "Ehi {{name}} – dormito bene?",
+      "2": "Già in piedi, {{name}}?"
     },
     "day": {
       "0": "Ciao, {{name}}!",
@@ -321,14 +324,14 @@
       "2": "Che bello vederti, {{name}}!"
     },
     "evening": {
-      "0": "Buonasera, {{name}}!",
-      "1": "Ciao, {{name}} – com’è andata oggi?",
-      "2": "Buonasera, {{name}}!"
+      "0": "Ehi {{name}} – com’è andata oggi?",
+      "1": "Ciao, {{name}}!",
+      "2": "Ciao {{name}}, tutto bene oggi?"
     },
     "night": {
-      "0": "Ciao, {{name}} – ancora in piedi?",
+      "0": "Ciao {{name}} – ancora in piedi?",
       "1": "Ehi, {{name}}!",
-      "2": "Buonasera, {{name}}!"
+      "2": "Fai tardi, {{name}}?"
     }
   }
 }

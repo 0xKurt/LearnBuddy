@@ -7,7 +7,10 @@
     "title": "Mehr",
     "memory": "Was Buddy über dich weiß",
     "library": "Materialien",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "short": "Mehr",
+    "read_aloud_on": "Vorlesen ist an",
+    "read_aloud_off": "Antworten vorlesen"
   },
   "system": {
     "no_model": "Buddy kann gerade nicht antworten. Üben und deine Erinnerungen funktionieren trotzdem.",
@@ -311,24 +314,24 @@
   },
   "session": {
     "morning": {
-      "0": "Guten Morgen, {{name}}!",
-      "1": "Moin, {{name}}!",
-      "2": "Morgen, {{name}} – gut geschlafen?"
+      "0": "Morgen, {{name}}!",
+      "1": "Na, {{name}}?",
+      "2": "Hey {{name}} – gut geschlafen?"
     },
     "day": {
-      "0": "Hallo, {{name}}!",
-      "1": "Hi, {{name}}!",
+      "0": "Hi, {{name}}!",
+      "1": "Hey, {{name}}!",
       "2": "Schön, dass du da bist, {{name}}!"
     },
     "evening": {
-      "0": "Guten Abend, {{name}}!",
-      "1": "Hallo, {{name}} – wie war dein Tag?",
-      "2": "Abend, {{name}}!"
+      "0": "Abend, {{name}}!",
+      "1": "Hey {{name}} – wie war dein Tag?",
+      "2": "Na {{name}}, alles gut heute?"
     },
     "night": {
-      "0": "Hallo, {{name}} – noch wach?",
-      "1": "Hey, {{name}}!",
-      "2": "Guten Abend, {{name}}!"
+      "0": "Hey {{name}} – noch wach?",
+      "1": "Hi, {{name}}!",
+      "2": "Spät dran, {{name}}?"
     }
   }
 }

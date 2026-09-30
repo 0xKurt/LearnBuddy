@@ -7,7 +7,10 @@
     "title": "Más",
     "memory": "Lo que Buddy sabe de ti",
     "library": "Materiales",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "short": "Más",
+    "read_aloud_on": "La lectura está activada",
+    "read_aloud_off": "Leer las respuestas en voz alta"
   },
   "system": {
     "no_model": "Buddy no puede responder ahora mismo. Aun así, puedes practicar y tus recordatorios siguen funcionando.",
@@ -311,9 +314,9 @@
   },
   "session": {
     "morning": {
-      "0": "¡Buenos días, {{name}}!",
-      "1": "¡Hola, {{name}}!",
-      "2": "¡Buenos días, {{name}}! ¿Has dormido bien?"
+      "0": "¡Hola, {{name}}!",
+      "1": "¡Ey {{name}}! ¿Has dormido bien?",
+      "2": "¿Ya en pie, {{name}}?"
     },
     "day": {
       "0": "¡Hola, {{name}}!",
@@ -321,14 +324,14 @@
       "2": "¡Qué bien verte, {{name}}!"
     },
     "evening": {
-      "0": "¡Buenas tardes, {{name}}!",
-      "1": "¡Hola, {{name}}! ¿Qué tal el día?",
+      "0": "¡Ey {{name}}! ¿Qué tal el día?",
+      "1": "¡Hola, {{name}}!",
       "2": "¡Buenas, {{name}}!"
     },
     "night": {
-      "0": "¡Hola, {{name}}! ¿Todavía sin dormir?",
+      "0": "¡Hola {{name}}! ¿Todavía sin dormir?",
       "1": "¡Ey, {{name}}!",
-      "2": "¡Buenas noches, {{name}}!"
+      "2": "¿Trasnochando, {{name}}?"
     }
   }
 }

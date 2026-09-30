@@ -7,7 +7,10 @@
     "title": "Plus",
     "memory": "Ce que Buddy sait de toi",
     "library": "Matériel",
-    "settings": "Réglages"
+    "settings": "Réglages",
+    "short": "Plus",
+    "read_aloud_on": "La lecture est activée",
+    "read_aloud_off": "Lire les réponses à voix haute"
   },
   "system": {
     "no_model": "Buddy ne peut pas répondre pour le moment. Les exercices et tes rappels fonctionnent quand même.",
@@ -311,24 +314,24 @@
   },
   "session": {
     "morning": {
-      "0": "Bonjour, {{name}} !",
-      "1": "Salut, {{name}} !",
-      "2": "Bonjour, {{name}} – bien dormi ?"
+      "0": "Salut, {{name}} !",
+      "1": "Coucou {{name}} – bien dormi ?",
+      "2": "Déjà debout, {{name}} ?"
     },
     "day": {
-      "0": "Bonjour, {{name}} !",
-      "1": "Salut, {{name}} !",
+      "0": "Salut, {{name}} !",
+      "1": "Coucou, {{name}} !",
       "2": "Ça fait plaisir de te voir, {{name}} !"
     },
     "evening": {
-      "0": "Bonsoir, {{name}} !",
-      "1": "Salut, {{name}} – ta journée ?",
-      "2": "Bonsoir, {{name}} !"
+      "0": "Salut {{name}} – ta journée ?",
+      "1": "Coucou, {{name}} !",
+      "2": "Hé {{name}}, ça a été aujourd’hui ?"
     },
     "night": {
-      "0": "Salut, {{name}} – encore debout ?",
+      "0": "Salut {{name}} – encore debout ?",
       "1": "Hé, {{name}} !",
-      "2": "Bonsoir, {{name}} !"
+      "2": "Tu veilles, {{name}} ?"
     }
   }
 }

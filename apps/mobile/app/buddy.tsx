@@ -40,7 +40,6 @@ import { TopicSheet } from '../components/learn/TopicSheet.js';
 import type { TopicKind } from '../components/learn/useStartTopic.js';
 import { Banner } from '../components/lb/Banner.js';
 import { Btn } from '../components/lb/Btn.js';
-import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
@@ -50,7 +49,6 @@ import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
-import { VoiceModeToggle } from '../components/voice/VoiceModeToggle.js';
 import { announce, useAnnounce } from '../lib/announce.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { requestAdmin } from '../lib/adminFlow.js';
@@ -235,6 +233,7 @@ export default function BuddyScreen() {
   // After sending, follow the conversation to its end once the new content has rendered.
   const followEnd = useRef(false);
   const voiceOn = useVoiceMode((s) => s.on);
+  const setVoiceOn = useVoiceMode((s) => s.setOn);
   const words = useSpokenWords();
   /** The message she sent last whose reply hasn't been read aloud yet (voice mode). */
   const awaitingReply = useRef<string | null>(null);
@@ -807,9 +806,12 @@ export default function BuddyScreen() {
       startsNewSession({ lastMessageAt: new Date(lastMessage.created_at), now, coldStart })
         ? {
             afterMessageId: lastMessage.id,
-            text: t(`buddy:session.${dayPart(now.getHours())}.${greetingVariant(now.getDate())}`, {
-              name: h.learner.name,
-            }),
+            text: t(
+              `buddy:session.${dayPart(now.getHours())}.${greetingVariant(now.getHours() * 60 + now.getMinutes())}`,
+              {
+                name: h.learner.name,
+              },
+            ),
           }
         : null;
   }
@@ -950,18 +952,6 @@ export default function BuddyScreen() {
   // nothing moves when the bar comes or goes. No measuring: the bar's size contract
   // (≤ ~64 pt, SlimBar.tsx) keeps it within the row's room (issue #17).
   const covered = top.length > 0;
-  // Her name lives in the top bar (issue #45): the head was a quarter of the screen —
-  // a bar, not a stage. What is left here is the one line that carries information:
-  // the next test, else the open question, and quietly whether she practised today.
-  const headline = (
-    <Text
-      accessibilityRole="header"
-      numberOfLines={1}
-      style={[TYPE.title, { fontSize: 18, lineHeight: 24, flexShrink: 1 }]}
-    >
-      {t('buddy:greeting', { name: h.learner.name })}
-    </Text>
-  );
   const statusLine = (
     <View
       style={{
@@ -992,32 +982,12 @@ export default function BuddyScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow />
       <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
-        <View
-          // The walkthrough measures this row: every point the head takes is one the
-          // conversation loses (issue #64, tests/web/fit.ts).
-          testID="home-header"
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: SPACE.lg,
-            paddingTop: SPACE.sm,
-          }}
-        >
-          {/* Her name sits where the wordmark was (issue #45): one row for who this is
-              and the two ways out of it. A long name is cut, never wrapped. */}
-          {headline}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {/* Voice mode: Buddy reads replies aloud and the mic leads (audit M-77). */}
-            <VoiceModeToggle />
-            <CircleBtn
-              icon="more"
-              onPress={() => setMenuOpen(true)}
-              accessibilityLabel={t('buddy:menu.open')}
-            />
-          </View>
-        </View>
-
+        {/* No header row any more (owner decision 30.09., issue #125). It held three
+            unlike things side by side — a greeting, a state toggle and a menu — and the
+            loudest of them was a setting she rarely touches. The menu now sits at the end
+            of the row of ways to start; reading aloud is a line in that menu, with words
+            instead of a symbol, which also answers "wozu ist der Lautsprecher da" (#52).
+            The conversation gains the 52 pt the head used to take (issue #64). */}
         <View style={{ flex: 1 }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never
             pushes them down, and she can close it (only on this phone). */}
@@ -1049,7 +1019,16 @@ export default function BuddyScreen() {
                 {/* One row above the conversation: the ways to start. The greeting sits in
                     the bar, what is due is a card — nothing else takes height here
                     (owner 28.09., issue #45: "eine zeile mit menu buttons, thats it"). */}
-                <StartRow items={orbitItems(h.next)} disabled={pending !== null} />
+                <StartRow
+                  items={orbitItems(h.next)}
+                  trailing={{
+                    key: 'menu',
+                    icon: 'more',
+                    label: t('buddy:menu.short'),
+                    onPress: () => setMenuOpen(true),
+                  }}
+                  disabled={pending !== null}
+                />
               </View>
               <ScrollView
                 ref={scroll}
@@ -1212,6 +1191,19 @@ export default function BuddyScreen() {
         closeLabel={t('common:actions.close')}
         onClose={() => setMenuOpen(false)}
       >
+        {/* Reading aloud used to be a speaker symbol in the head, and the owner's question
+            was "wozu ist der eigentlich da" (#52). Here it says what it does, in words,
+            and its state is the label — no badge to decode. */}
+        <Btn
+          variant={voiceOn ? 'primary' : 'outline'}
+          full
+          onPress={() => {
+            setVoiceOn(!voiceOn);
+            setMenuOpen(false);
+          }}
+        >
+          {t(voiceOn ? 'buddy:menu.read_aloud_on' : 'buddy:menu.read_aloud_off')}
+        </Btn>
         {(
           [
             ['memory', '/memory'],

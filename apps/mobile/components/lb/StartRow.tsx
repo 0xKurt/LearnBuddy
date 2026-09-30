@@ -1,17 +1,32 @@
 // The ways to start in one row (the ring's items, small): once a conversation
 // is on Buddy's home, the ring makes room for it, and starting stays one tap
 // away without scrolling (CLAUDE.md rule 16). Round icon, label under it.
+//
+// `trailing` is the menu, and it is NOT a way to start (owner decision 30.09.,
+// issue #125: the header goes, the menu joins this row on the right). It sits in
+// the same row but reads differently on purpose — no white disc and no shadow —
+// so five taps do not look like five ways to learn.
 import { Pressable, Text, View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 import { Icon } from './Icon.js';
 import type { OrbitItem } from './OrbitMenu.js';
 
 const NODE = 44;
 
-export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disabled?: boolean }) {
+export function StartRow({
+  items,
+  trailing,
+  disabled = false,
+}: {
+  items: OrbitItem[];
+  /** The menu: same row, quieter, never disabled by a turn in flight. */
+  trailing?: OrbitItem;
+  disabled?: boolean;
+}) {
   const { palette } = useTheme();
   return (
     <View
@@ -88,6 +103,60 @@ export function StartRow({ items, disabled = false }: { items: OrbitItem[]; disa
           )}
         </Pressable>
       ))}
+      {trailing ? (
+        <Pressable
+          key={trailing.key}
+          onPress={trailing.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={trailing.label}
+          // Reachable while Buddy writes: the way out of a screen must not wait for him.
+          style={{
+            flexGrow: 0,
+            flexShrink: 0,
+            minWidth: NODE,
+            alignItems: 'center',
+            // A gap before it, because it is not one of the ways to start — and 6 back on
+            // the right to undo the row's negative margin, which exists so four wide labels
+            // may use a little more width. Without it the disc sits flush to the edge.
+            marginLeft: SPACE.sm,
+            paddingRight: 6,
+          }}
+        >
+          {({ pressed }) => (
+            <>
+              <View
+                style={{
+                  width: NODE,
+                  height: NODE,
+                  borderRadius: NODE / 2,
+                  backgroundColor: palette.primaryLt,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transform: [{ scale: pressed ? 0.94 : 1 }],
+                }}
+              >
+                <Icon name={trailing.icon} size={21} color={palette.primary} />
+              </View>
+              <Text
+                numberOfLines={3}
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
+                style={{
+                  marginTop: 4,
+                  alignSelf: 'stretch',
+                  fontSize: 13,
+                  lineHeight: 16,
+                  letterSpacing: -0.2,
+                  fontWeight: '600',
+                  color: palette.ink2,
+                  textAlign: 'center',
+                }}
+              >
+                {trailing.label}
+              </Text>
+            </>
+          )}
+        </Pressable>
+      ) : null}
     </View>
   );
 }

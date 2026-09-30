@@ -71,10 +71,16 @@ export function dayPart(hour: number): DayPart {
 export const GREETING_VARIANTS = 3;
 
 /**
- * Which wording this opening uses: stable while the screen lives, different across
- * openings — from the day and the opening's own number, never from a clock read during
- * render (that would change on every re-render).
+ * Which wording this opening uses. It was fed the day of the month, so everyone who opened
+ * the app five times on a Tuesday got the same sentence five times — the owner's "auf Dauer
+ * langweilig" (issue #129). It takes the minute of the opening now, which is what the name
+ * always promised: different across openings, and still stable while the screen lives,
+ * because the caller captures `now` once when the session anchor is decided and never reads
+ * the clock during a render.
+ *
+ * Two openings inside the same minute share a greeting on purpose: opening twice in ten
+ * seconds should not look like a slot machine.
  */
-export function greetingVariant(openings: number): number {
-  return ((openings % GREETING_VARIANTS) + GREETING_VARIANTS) % GREETING_VARIANTS;
+export function greetingVariant(minuteOfDay: number): number {
+  return ((minuteOfDay % GREETING_VARIANTS) + GREETING_VARIANTS) % GREETING_VARIANTS;
 }
