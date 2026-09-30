@@ -355,6 +355,27 @@ export const CASES: Case[] = [
     ],
   },
   {
+    // Issue #118, corpus case material-014: Buddy has the tool and pointed at a button
+    // instead. The page must join the sheet it was forgotten from, not become a second one.
+    id: 'de_forgotten_back',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      await env.db.query(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'Mathe Brüche Arbeitsblatt', $2)`,
+        [l.learnerId, env.clock.now()],
+      );
+    },
+    message: 'ich hab die rueckseite vergessen',
+    check: (o) => [
+      ...must(o.tools.includes('request_material'), 'asks for the page itself'),
+      ...must(
+        o.steps.some((s) => s.kind === 'capture'),
+        'as a capture step, not as words',
+      ),
+    ],
+  },
+  {
     id: 'de_open_settings',
     learner: { relation: 'child', birthDate: '2014-02-10' },
     message: 'Ich will die Sprache der App auf Englisch umstellen.',

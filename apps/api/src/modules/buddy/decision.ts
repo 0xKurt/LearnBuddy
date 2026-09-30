@@ -499,6 +499,13 @@ const requestMaterial = z.object({
   args: z.object({
     goal: GoalTarget.nullable(),
     title: Title.describe('What to photograph, e.g. "Arbeitsblatt Brüche"'),
+    /**
+     * A page that belongs to a sheet she already sent — the forgotten back, a page left out
+     * (issue #118). Without it the page becomes a second sheet of its own.
+     */
+    material: MaterialRef.nullable()
+      .optional()
+      .describe('the sheet (sh1) this page belongs to, when it completes one she already sent'),
   }),
 });
 

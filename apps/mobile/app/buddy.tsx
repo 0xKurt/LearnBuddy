@@ -895,6 +895,9 @@ export default function BuddyScreen() {
       const params = {
         ...(now.step_id ? { stepId: now.step_id } : {}),
         ...(now.goal ? { goalId: now.goal.id } : {}),
+        // The forgotten back joins the sheet it was forgotten from instead of becoming a
+        // second one (issue #118) — the same route the library's own "Seite hinzufügen" takes.
+        ...(now.completes ? { completes: now.completes, add: '1' } : {}),
       };
       return (
         <CaptureBar

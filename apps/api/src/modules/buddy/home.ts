@@ -389,6 +389,7 @@ async function nowCardOf(
       step_id: capture.id,
       title: capture.title,
       goal: goal ? goalBrief(goal, today) : null,
+      completes: capture.payload.completes ?? null,
     };
   }
   return null;

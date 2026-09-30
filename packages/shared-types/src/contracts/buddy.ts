@@ -80,7 +80,13 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     state: z.string(),
   }),
   z.object({ tool: z.literal('mark_step_done'), step_id: Uuid, title: z.string() }),
-  z.object({ tool: z.literal('request_material'), step_id: Uuid, title: z.string() }),
+  z.object({
+    tool: z.literal('request_material'),
+    step_id: Uuid,
+    title: z.string(),
+    /** The sheet this page completes, when it is one she already sent (issue #118). */
+    material_id: Uuid.nullable().default(null),
+  }),
   z.object({
     tool: z.literal('set_contact'),
     preferred_start: LocalTime,
@@ -236,6 +242,8 @@ export const NowCard = z.discriminatedUnion('type', [
     step_id: Uuid.nullable(),
     title: z.string(),
     goal: GoalBrief.nullable(),
+    /** A page that joins a sheet she already sent, not a new one (issue #118). */
+    completes: Uuid.nullable().default(null),
   }),
   z.object({
     type: z.literal('material_processing'),

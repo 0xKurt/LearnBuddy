@@ -52,6 +52,8 @@ export type StepPayload = {
   est_minutes?: number;
   focus_topics?: string[];
   subject_id?: string | null;
+  /** capture: the sheet this page joins, when it completes one she already sent (issue #118). */
+  completes?: string;
 };
 
 export type StepRow = {

@@ -512,6 +512,42 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       expect(mine.archived_at).toBeNull();
     });
 
+    it('the forgotten back joins the sheet it was forgotten from (#118)', async () => {
+      const id = await sheet('Mathe Brüche');
+      env.llm.script('buddy_turn', {
+        json: say('Schick mir die Rückseite.', [
+          {
+            tool: 'request_material',
+            args: { goal: null, title: 'Rückseite Mathe Brüche', material: 'sh1' },
+          },
+        ]),
+      });
+      await send(l, 'ich hab die rueckseite vergessen');
+      const step = await env.db.one<{ kind: string; payload: { completes?: string } }>(
+        `select kind, payload from buddy_steps where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(step.kind).toBe('capture');
+      expect(step.payload.completes).toBe(id);
+      // The home card carries it, so the camera opens on that sheet instead of a new one.
+      const home = (await l.api.get<BuddyHome>('/buddy')).body;
+      expect(home.now).toMatchObject({ type: 'capture_needed', completes: id });
+    });
+
+    it('a page cannot join a sheet that could not be read', async () => {
+      await env.db.query(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title, created_at, failed_at)
+         values ($1, gen_random_uuid(), 'failed', 1, 'Unlesbar', $2, $2)`,
+        [l.learnerId, env.clock.now()],
+      );
+      const t = tryAction(env, {
+        tool: 'request_material',
+        args: { goal: null, title: 'Rückseite', material: 'sh1' },
+      });
+      await send(l, 'ich hab die rueckseite vergessen');
+      expect(t.refusal()).toMatch(/could not be read/);
+    });
+
     it('renames a sheet, and undo puts the old name back', async () => {
       const id = await sheet('IMG_2291');
       env.llm.script('buddy_turn', {

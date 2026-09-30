@@ -10,6 +10,7 @@ const capture: NonNullable<BuddyHome['now']> = {
   step_id: '00000000-0000-4000-8000-000000000001',
   title: 'Arbeitsblatt Brüche',
   goal: null,
+  completes: null,
 };
 const reading: NonNullable<BuddyHome['now']> = {
   type: 'material_processing',

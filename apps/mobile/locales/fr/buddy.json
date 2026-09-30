@@ -199,6 +199,7 @@
     "update_step_cancelled": "Annulé : {{title}}",
     "mark_step_done": "Fait : {{title}}",
     "request_material": "J'attends ta photo : {{title}}",
+    "request_material_page": "J’attends la page pour « {{title}} »",
     "set_contact_pause": "Rien sur le téléphone jusqu'au {{date}} inclus",
     "set_contact": "Sur le téléphone seulement entre {{from}} et {{to}}",
     "schedule_check": "Je repasse {{when}}",

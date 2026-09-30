@@ -199,6 +199,7 @@
     "update_step_cancelled": "Cancelado: {{title}}",
     "mark_step_done": "Hecho: {{title}}",
     "request_material": "Espero tu foto: {{title}}",
+    "request_material_page": "Espero la página de «{{title}}»",
     "set_contact_pause": "Nada al móvil hasta el {{date}} inclusive",
     "set_contact": "Al móvil solo de {{from}} a {{to}}",
     "schedule_check": "Vuelvo a pasarme {{when}}",

@@ -118,7 +118,10 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
     case 'mark_step_done':
       return t('action.mark_step_done', { title: a.title });
     case 'request_material':
-      return t('action.request_material', { title: a.title });
+      // A page that joins a sheet is not a new sheet, and the card says which it is (#118).
+      return t(a.material_id ? 'action.request_material_page' : 'action.request_material', {
+        title: a.title,
+      });
     case 'set_contact': {
       if (a.paused_until) {
         return t('action.set_contact_pause', { date: formatLastDay(a.paused_until, locale) });

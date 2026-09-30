@@ -199,6 +199,7 @@
     "update_step_cancelled": "Cancelled: {{title}}",
     "mark_step_done": "Done: {{title}}",
     "request_material": "Waiting for your photo: {{title}}",
+    "request_material_page": "I’m waiting for the page for “{{title}}”",
     "set_contact_pause": "Nothing to the phone until {{date}} (inclusive)",
     "set_contact": "To the phone only between {{from}} and {{to}}",
     "schedule_check": "I'll check in again {{when}}",

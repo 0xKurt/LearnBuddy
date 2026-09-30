@@ -1046,25 +1046,54 @@ async function runRequestMaterial(
   const a = action.args;
   const goal = a.goal ? await targetGoal(ctx, a.goal) : null;
   if (goal && goal.status !== 'active') throw new ToolRejection(`goal ${a.goal} is not active`);
-  const open = await ctx.db.maybeOne<{ id: string; title: string }>(
-    `select id, title from buddy_steps
+  // The forgotten back belongs to the sheet it was forgotten from (issue #118): without this
+  // the page becomes a second sheet, and her questions end up split over two.
+  const completes = a.material ? materialOf(ctx, a.material) : null;
+  if (completes?.status === 'failed') {
+    throw new ToolRejection(
+      `sheet ${a.material} could not be read, so a page cannot join it — she photographs it anew`,
+    );
+  }
+  const open = await ctx.db.maybeOne<{
+    id: string;
+    title: string;
+    payload: { completes?: string };
+  }>(
+    `select id, title, payload from buddy_steps
       where learner_id = $1 and kind = 'capture' and state = 'planned' and goal_id is not distinct from $2
+        and payload->>'completes' is not distinct from $3
       limit 1`,
-    [ctx.learnerId, goal?.id ?? null],
+    [ctx.learnerId, goal?.id ?? null, completes?.id ?? null],
   );
   if (open) {
     return {
-      summary: { tool: 'request_material', step_id: open.id, title: open.title },
+      summary: {
+        tool: 'request_material',
+        step_id: open.id,
+        title: open.title,
+        material_id: open.payload.completes ?? null,
+      },
       undo: null,
     };
   }
   const step = await ctx.db.one<{ id: string }>(
-    `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date)
-     values ($1, $2, 'capture', $3, 'planned', $4) returning id`,
-    [ctx.learnerId, goal?.id ?? null, a.title, today(ctx)],
+    `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, payload)
+     values ($1, $2, 'capture', $3, 'planned', $4, $5) returning id`,
+    [
+      ctx.learnerId,
+      goal?.id ?? null,
+      a.title,
+      today(ctx),
+      completes ? { completes: completes.id } : {},
+    ],
   );
   return {
-    summary: { tool: 'request_material', step_id: step.id, title: a.title },
+    summary: {
+      tool: 'request_material',
+      step_id: step.id,
+      title: a.title,
+      material_id: completes?.id ?? null,
+    },
     undo: { type: 'cancel_step', step_id: step.id },
   };
 }

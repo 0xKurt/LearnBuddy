@@ -199,6 +199,7 @@
     "update_step_cancelled": "Abgesagt: {{title}}",
     "mark_step_done": "Erledigt: {{title}}",
     "request_material": "Ich warte auf dein Foto: {{title}}",
+    "request_material_page": "Ich warte auf die Seite für „{{title}}“",
     "set_contact_pause": "Nichts aufs Handy bis einschließlich {{date}}",
     "set_contact": "Aufs Handy nur zwischen {{from}} und {{to}} Uhr",
     "schedule_check": "Ich schaue {{when}} wieder vorbei",
