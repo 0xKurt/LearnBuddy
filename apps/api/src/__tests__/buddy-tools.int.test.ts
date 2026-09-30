@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
 import { findOrCreateSubject } from '../modules/buddy/plan.js';
+import { buildContext } from '../modules/buddy/context.js';
 import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
@@ -413,17 +414,16 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
   // Issue #111: until now every sheet ended in a button. She says it in the conversation,
   // where she is anyway — the screenshot of a private chat above all (corpus case material-052).
   describe('her sheets, from the conversation', () => {
-    /** Buddy's previous answer asked whether the sheet should go — what the delete needs. */
-    async function askedFirst(text: string) {
-      env.llm.script('buddy_turn', {
-        json: {
-          reply: 'Soll das Blatt wirklich weg?',
-          options: null,
-          actions: [],
-          asks_permission: true,
-        },
-      });
-      await send(l, text);
+    /** Her answer to the card Buddy's proposal put there (issue #151). */
+    async function answerCard(confirm: boolean): Promise<void> {
+      const home = (await l.api.get<BuddyHome>('/buddy')).body;
+      const card = home.thread
+        .flatMap((m) => m.actions)
+        .map((a) => a.summary)
+        .find((x) => x.tool === 'confirm_delete');
+      expect(card).toBeDefined();
+      const id = (card as { pending_id: string }).pending_id;
+      expect((await l.api.post(`/buddy/confirmations/${id}`, { confirm })).status).toBe(200);
     }
 
     async function sheet(title: string | null, questions = 2) {
@@ -447,13 +447,19 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     it('deletes the sheet she means, with its questions and its photos', async () => {
       const keep = await sheet('Mathe Brüche');
       const gone = await sheet('Screenshot');
-      await askedFirst('das is n screenshot von meinem chat mit lisa, loesch das bitte');
+      // The model proposes; nothing happens until she taps (issue #151).
       env.llm.script('buddy_turn', {
-        json: say('Ist weg.', [
-          { tool: 'delete_material', args: { material: 'sh1', quote: 'ja weg damit' } },
+        json: say('Soll das Blatt weg?', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'loesch das bitte' } },
         ]),
       });
-      await send(l, 'ja weg damit');
+      await send(l, 'das is n screenshot von meinem chat mit lisa, loesch das bitte');
+      const still = await env.db.one<{ archived_at: Date | null }>(
+        `select archived_at from materials where id = $1`,
+        [gone],
+      );
+      expect(still.archived_at).toBeNull();
+      await answerCard(true);
 
       // sh1 is the newest sheet — the screenshot, not the one she is learning from.
       const rows = await env.db.query<{ id: string; archived_at: Date | null }>(
@@ -475,41 +481,130 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       expect(jobs.filter((j) => j.kind === 'purge_photos').length).toBe(2);
     });
 
-    it('the card names the sheet and offers no undo — nothing comes back', async () => {
+    it('the card names the sheet, says it cannot be taken back, and offers no undo', async () => {
       await sheet('Chat mit Lisa');
-      await askedFirst('loesch das bitte');
       env.llm.script('buddy_turn', {
-        json: say('Ist weg.', [
-          { tool: 'delete_material', args: { material: 'sh1', quote: 'ja bitte' } },
+        json: say('Soll das weg?', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'loesch das bitte' } },
         ]),
       });
-      await send(l, 'ja bitte');
+      await send(l, 'loesch das bitte');
       const home = (await l.api.get<BuddyHome>('/buddy')).body;
       const acts = home.thread.flatMap((m) => m.actions);
       expect(acts.map((a) => a.undoable)).toEqual([false]);
       expect(acts[0]!.summary).toEqual({
-        tool: 'delete_material',
-        material_id: expect.any(String),
+        tool: 'confirm_delete',
+        pending_id: expect.any(String),
+        what: 'material',
         title: 'Chat mit Lisa',
+        detail: null,
+        status: 'open',
       });
     });
 
-    it('is never done straight away: without Buddy having asked, it is refused', async () => {
-      await sheet('Englisch Vokabelliste');
-      // "I am done with it" is not "erase it" — the live run of buddy.33 had the model delete
-      // a whole vocabulary sheet on exactly this sentence. Nothing here can be taken back, so
-      // the confirmation is enforced in code, not asked for in the prompt.
-      const t = tryAction(env, {
-        tool: 'delete_material',
-        args: { material: 'sh1', quote: 'bin ich durch' },
+    it('keeps the sheet when she says keep, and the card says so afterwards (#151)', async () => {
+      const kept = await sheet('Englisch Vokabelliste');
+      env.llm.script('buddy_turn', {
+        json: say('Soll die Liste weg?', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'bin ich durch' } },
+        ]),
       });
       await send(l, 'mit der vokabelliste bin ich durch');
-      expect(t.refusal()).toMatch(/cannot be taken back/);
+      await answerCard(false);
+      const mine = await env.db.one<{ archived_at: Date | null }>(
+        `select archived_at from materials where id = $1`,
+        [kept],
+      );
+      expect(mine.archived_at).toBeNull();
+      const after = (await l.api.get<BuddyHome>('/buddy')).body.thread
+        .flatMap((m) => m.actions)
+        .map((a) => a.summary)
+        .find((x) => x.tool === 'confirm_delete');
+      expect(after).toMatchObject({ status: 'declined' });
+    });
+
+    it('answers a proposal exactly once, and not after its window (#151)', async () => {
+      await sheet('Chat mit Mia');
+      env.llm.script('buddy_turn', {
+        json: say('Soll das weg?', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'weg damit' } },
+        ]),
+      });
+      await send(l, 'weg damit');
+      const id = (
+        (await l.api.get<BuddyHome>('/buddy')).body.thread
+          .flatMap((m) => m.actions)
+          .map((a) => a.summary)
+          .find((x) => x.tool === 'confirm_delete') as { pending_id: string }
+      ).pending_id;
+      expect((await l.api.post(`/buddy/confirmations/${id}`, { confirm: true })).status).toBe(200);
+      // A second tap answers nothing.
+      const again = await l.api.post(`/buddy/confirmations/${id}`, { confirm: true });
+      expect(again.status).toBe(409);
+
+      // And one left lying around is too old to answer.
+      await sheet('Noch ein Screenshot');
+      env.llm.script('buddy_turn', {
+        json: say('Und das?', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'das auch' } },
+        ]),
+      });
+      await send(l, 'das auch');
+      const old = (
+        (await l.api.get<BuddyHome>('/buddy')).body.thread
+          .flatMap((m) => m.actions)
+          .map((a) => a.summary)
+          .filter((x) => x.tool === 'confirm_delete')
+          .at(-1) as { pending_id: string }
+      ).pending_id;
+      env.clock.hours(2);
+      const late = await l.api.post(`/buddy/confirmations/${old}`, { confirm: true });
+      expect(late.status).toBe(409);
+      expect(late.body).toMatchObject({ error: { details: { reason: 'expired' } } });
+    });
+
+    it("never answers another learner's proposal (#151)", async () => {
+      await sheet('Meins');
+      env.llm.script('buddy_turn', {
+        json: say('Soll das weg?', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'weg' } },
+        ]),
+      });
+      await send(l, 'weg');
+      const id = (
+        (await l.api.get<BuddyHome>('/buddy')).body.thread
+          .flatMap((m) => m.actions)
+          .map((a) => a.summary)
+          .find((x) => x.tool === 'confirm_delete') as { pending_id: string }
+      ).pending_id;
+      const other = await onboard(env, { name: 'Sam' });
+      expect((await other.api.post(`/buddy/confirmations/${id}`, { confirm: true })).status).toBe(
+        404,
+      );
+    });
+
+    it('is never done straight away: the model proposes, she decides (#151)', async () => {
+      // "I am done with it" is not "erase it" — the live run of buddy.33 had the model
+      // delete a whole vocabulary sheet on exactly this sentence. It may still read it that
+      // way; what it can no longer do is act on it. Nothing here can be taken back, so the
+      // consent is a tap in code, not a bit the model sets (external audit F6).
+      await sheet('Englisch Vokabelliste');
+      env.llm.script('buddy_turn', {
+        json: say('Soll die Liste weg?', [
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'bin ich durch' } },
+        ]),
+      });
+      await send(l, 'mit der vokabelliste bin ich durch');
       const mine = await env.db.one<{ archived_at: Date | null }>(
         `select archived_at from materials where learner_id = $1`,
         [l.learnerId],
       );
       expect(mine.archived_at).toBeNull();
+      const open = await env.db.one<{ status: string }>(
+        `select status from buddy_pending_actions where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(open.status).toBe('open');
     });
 
     it('the forgotten back joins the sheet it was forgotten from (#118)', async () => {
@@ -562,16 +657,20 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
           ],
         ],
       );
-      await askedFirst('die eine frage von dem blatt is doof, nimm die raus');
       env.llm.script('buddy_turn', {
-        json: say('Ist raus.', [
+        json: say('Diese hier?', [
           {
             tool: 'delete_item',
-            args: { material: 'sh1', question: 'Wie viel sind 20 % von 80?', quote: 'ja die' },
+            args: {
+              material: 'sh1',
+              question: 'Wie viel sind 20 % von 80?',
+              quote: 'nimm die raus',
+            },
           },
         ]),
       });
-      await send(l, 'ja die');
+      await send(l, 'die eine frage von dem blatt is doof, nimm die raus');
+      await answerCard(true);
       const left = await env.db.query<{ prompt: string; archived_at: Date | null }>(
         `select prompt, archived_at from items where material_id = $1 order by prompt`,
         [id],
@@ -589,12 +688,15 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
          select $1, $2, 'short', p, 'x', 'Prozente' from unnest($3::text[]) p`,
         [l.learnerId, id, ['Wie viel sind 20 % von 80?', 'Wie viel sind 20 % von 60?']],
       );
-      await askedFirst('nimm die prozent frage raus');
       const t = tryAction(env, {
         tool: 'delete_item',
-        args: { material: 'sh1', question: 'Wie viel sind 20 %', quote: 'ja die' },
+        args: {
+          material: 'sh1',
+          question: 'Wie viel sind 20 %',
+          quote: 'nimm die prozent frage raus',
+        },
       });
-      await send(l, 'ja die');
+      await send(l, 'nimm die prozent frage raus');
       expect(t.refusal()).toMatch(/2 questions .* fit that/);
       const left = await env.db.query<{ archived_at: Date | null }>(
         `select archived_at from items where material_id = $1`,
@@ -603,19 +705,36 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       expect(left.every((i) => i.archived_at === null)).toBe(true);
     });
 
-    it('a question is not taken off before Buddy has asked', async () => {
+    it('a proposal on its own takes nothing off — her tap does (#151)', async () => {
+      // The live run of buddy.33 deleted a whole vocabulary sheet on "mit der Vokabelliste
+      // bin ich durch". The model can still decide wrongly; what it can no longer do is
+      // delete. Until she answers, the sheet and its questions are untouched.
       const id = await sheet('Prozente', 0);
       await env.db.query(
         `insert into items (learner_id, material_id, kind, prompt, answer, topic)
          values ($1, $2, 'short', 'Wie viel sind 20 % von 80?', 'x', 'Prozente')`,
         [l.learnerId, id],
       );
-      const t = tryAction(env, {
-        tool: 'delete_item',
-        args: { material: 'sh1', question: 'Wie viel sind 20 % von 80?', quote: 'is doof' },
+      env.llm.script('buddy_turn', {
+        json: say('Die hier?', [
+          {
+            tool: 'delete_item',
+            args: { material: 'sh1', question: 'Wie viel sind 20 % von 80?', quote: 'is doof' },
+          },
+        ]),
       });
       await send(l, 'die frage is doof');
-      expect(t.refusal()).toMatch(/cannot be taken back/);
+      const left = await env.db.one<{ archived_at: Date | null }>(
+        `select archived_at from items where material_id = $1`,
+        [id],
+      );
+      expect(left.archived_at).toBeNull();
+      await answerCard(false);
+      const still = await env.db.one<{ archived_at: Date | null }>(
+        `select archived_at from items where material_id = $1`,
+        [id],
+      );
+      expect(still.archived_at).toBeNull();
     });
 
     it('renames a sheet, and undo puts the old name back', async () => {
@@ -659,7 +778,6 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
 
     it('deleting needs her own words, not a quote she never said', async () => {
       await sheet('Blatt');
-      await askedFirst('was ist mit dem blatt?');
       const t = tryAction(env, {
         tool: 'delete_material',
         args: { material: 'sh1', quote: 'mach alles weg' },
@@ -705,6 +823,78 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
         [l.learnerId],
       );
       expect(rows).toEqual([{ repeat: 'daily', planned_time: '17:00' }]);
+    });
+
+    it('carries the rhythm into the next turn, without the chat having to say it (#152)', async () => {
+      // `repeat` was declared on StepRow and never selected, so `st.repeat` was undefined
+      // and the rhythm never reached the prompt. It held together only while the sentence
+      // was still in the dialogue window (external audit F7).
+      env.llm.script('buddy_turn', {
+        json: say('Mache ich, jeden Tag um 17:00.', [plan({ repeat: 'daily' })]),
+      });
+      await send(l, 'erinner mich jeden tag um 5');
+      const state = await loadBuddyState(env.db, l.learnerId, env.clock.now());
+      expect(state.steps.map((st) => st.repeat)).toEqual(['daily']);
+      const ctx = buildContext(
+        {
+          display_name: 'Lena',
+          birth_date: '2014-02-10',
+          level: 'school',
+          grade: 6,
+          locale: 'de',
+          isMinor: true,
+        },
+        state,
+        env.clock.now(),
+      );
+      expect(ctx.state).toContain('repeats daily');
+    });
+
+    it('takes a rhythm back right after changing it (#152)', async () => {
+      env.llm.script('buddy_turn', {
+        json: say('Jeden Tag um 17:00.', [plan({ repeat: 'daily' })]),
+      });
+      await send(l, 'erinner mich jeden tag um 5');
+      env.llm.script('buddy_turn', {
+        json: say('Nicht mehr jeden Tag.', [
+          {
+            tool: 'update_step',
+            args: {
+              step: 'st1',
+              state: null,
+              day: null,
+              time: null,
+              repeat: 'never',
+              quote: 'nicht mehr jeden tag',
+            },
+          },
+        ]),
+      });
+      await send(l, 'nicht mehr jeden tag');
+      expect(
+        (
+          await env.db.one<{ repeat: string | null }>(
+            `select repeat from buddy_steps where learner_id = $1`,
+            [l.learnerId],
+          )
+        ).repeat,
+      ).toBeNull();
+
+      // A repeat-only change used not to bump the version, while the undo expected
+      // version + 1 — so this answered 409 changed_since.
+      const home = (await l.api.get<BuddyHome>('/buddy')).body;
+      const act = home.thread
+        .flatMap((m) => m.actions)
+        .find((a) => a.summary.tool === 'update_step' && a.undoable)!;
+      expect((await l.api.post(`/buddy/actions/${act.id}/undo`, {})).status).toBe(200);
+      expect(
+        (
+          await env.db.one<{ repeat: string | null }>(
+            `select repeat from buddy_steps where learner_id = $1`,
+            [l.learnerId],
+          )
+        ).repeat,
+      ).toBe('daily');
     });
 
     it('starts on the next day that fits when she named none', async () => {

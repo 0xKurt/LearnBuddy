@@ -35,6 +35,9 @@ const LEARNER_TABLES = [
   'buddy_outreach',
   'buddy_events',
   'buddy_lookbacks',
+  // What Buddy proposed to delete and what she answered (issue #151): hers, and part of
+  // the record of what was done with her data.
+  'buddy_pending_actions',
   // What was talked about on earlier days (issue #22): hers, so it is in her export.
   'buddy_session_summaries',
   'subjects',
@@ -188,6 +191,10 @@ const CONTENT_TABLES: ReadonlyArray<{ table: string; rows: string }> = [
             where m.learner_id = $1`,
   },
   { table: 'materials', rows: `select ctid from materials where learner_id = $1` },
+  {
+    table: 'buddy_pending_actions',
+    rows: `select ctid from buddy_pending_actions where learner_id = $1`,
+  },
   { table: 'buddy_outreach', rows: `select ctid from buddy_outreach where learner_id = $1` },
   { table: 'buddy_actions', rows: `select ctid from buddy_actions where learner_id = $1` },
   { table: 'buddy_memories', rows: `select ctid from buddy_memories where learner_id = $1` },

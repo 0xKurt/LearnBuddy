@@ -1,7 +1,141 @@
 {
+  "a11y": {
+    "reply": "Buddy: {{text}}"
+  },
+  "action": {
+    "remember": "Annotato: {{statement}}",
+    "remember_until": "Annotato fino a {{date}} compreso: {{statement}}",
+    "correct_memory": "Corretto: {{statement}}",
+    "forget": "Dimenticato: {{statement}}",
+    "set_level_school": "{{grade}}º anno di scuola",
+    "set_level_school_unknown": "Scuola",
+    "set_level_university": "Università",
+    "set_level_adult": "Formazione continua",
+    "set_level_unknown": "Anno da definire",
+    "plan_exam": "Aggiunto: {{title}}, {{day}}",
+    "update_goal": "Modificato: {{title}}",
+    "update_goal_day": "Modificato: {{title}} – ora {{day}}",
+    "close_goal_done": "Completato: {{title}}",
+    "close_goal_dropped": "Rimosso: {{title}}",
+    "prepare_practice_one": "Preparato: {{title}} – {{count}} esercizio, circa {{minutes}} min",
+    "prepare_practice_other": "Preparato: {{title}} – {{count}} esercizi, circa {{minutes}} min",
+    "plan_step": "Pianificato: {{title}} {{when}}",
+    "plan_step_agreed": "Concordato: {{title}} {{when}}",
+    "plan_step_repeat_daily": "D’accordo: {{title}} ogni giorno alle {{time}}",
+    "plan_step_repeat_weekdays": "D’accordo: {{title}} nei giorni di scuola alle {{time}}",
+    "plan_step_repeat_weekly": "D’accordo: {{title}} ogni {{weekday}} alle {{time}}",
+    "plan_step_repeat_until": " – fino al {{date}}",
+    "plan_step_repeat_in_app": " – appare qui nell’app (i messaggi sul telefono sono disattivati)",
+    "update_step_repeat_off": "Non arriva più regolarmente: {{title}}",
+    "update_step_moved": "Spostato: {{title}} {{when}}",
+    "update_step_skipped": "Saltato: {{title}}",
+    "update_step_cancelled": "Annullato: {{title}}",
+    "mark_step_done": "Fatto: {{title}}",
+    "request_material": "Aspetto la tua foto: {{title}}",
+    "request_material_page": "Aspetto la pagina per «{{title}}»",
+    "set_contact_pause": "Niente sul telefono fino a {{date}} compreso",
+    "set_contact": "Sul telefono solo dalle {{from}} alle {{to}}",
+    "schedule_check": "Torno a fare un salto {{when}}",
+    "delete_material": "Ho messo via «{{title}}»",
+    "delete_material_untitled": "Ho messo via il foglio",
+    "rename_material": "Il foglio ora si chiama «{{title}}»",
+    "delete_item": "La domanda non c’è più: «{{question}}»",
+    "offer_learning": "Proposto: {{what}} – «{{text}}»",
+    "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
+    "open_area": "Mostrato: {{what}}",
+    "set_contact_quiet": "Sul telefono solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}",
+    "set_contact_days": "mai in questi giorni: {{days}}",
+    "request_material_undone": "Nessuna foto necessaria: {{title}}",
+    "set_voice": "La mia voce: {{voice}}, {{speed}}",
+    "forget_all": "Ho dimenticato tutto quello che sapevo di te ({{count}})"
+  },
+  "area": {
+    "library": "Materiali",
+    "memory": "Cosa sa Buddy di te",
+    "settings": "Impostazioni",
+    "history": "Tutti i messaggi",
+    "capture": "Fotografa una scheda",
+    "open": "Apri",
+    "open_label": "Apri {{what}}"
+  },
+  "card": {
+    "close": "Nascondi scheda",
+    "shown": "Buddy ha messo una scheda in alto. Puoi nasconderla."
+  },
+  "composer": {
+    "placeholder": "Scrivi a Buddy…",
+    "remaining_one": "Ancora un carattere",
+    "remaining_other": "Ancora {{count}} caratteri",
+    "full": "Il campo è pieno: manda prima questo.",
+    "send": "Invia",
+    "photo": "Fotografa una scheda",
+    "keyboard": "Tastiera",
+    "photo_short": "Foto",
+    "attach": {
+      "title": "Cosa vuoi allegare?",
+      "camera": "Scatta una foto",
+      "library": "Dalla galleria",
+      "files": "Dai file"
+    }
+  },
+  "confirm": {
+    "keep": "Tieni",
+    "no_longer_open": "Questa domanda non è più aperta.",
+    "question_body": "Non tornerà più. Non si può annullare.",
+    "question_delete": "Elimina la domanda",
+    "question_deleted": "La domanda non c’è più.",
+    "question_kept": "La domanda resta.",
+    "question_title": "Eliminare questa domanda?",
+    "sheet_body": "Il foglio, le sue domande e le foto spariscono. Non si può annullare.",
+    "sheet_delete": "Elimina il foglio",
+    "sheet_deleted": "Il foglio non c’è più.",
+    "sheet_kept": "Resta tutto com’era.",
+    "sheet_title": "Eliminare questo foglio?"
+  },
+  "decision": {
+    "optin_title": "Posso scriverti sul telefono?",
+    "optin_body": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Mai di sera.",
+    "optin_yes": "Sì, volentieri",
+    "optin_no": "Meglio di no",
+    "optin_minor_body": "Lo permettono i tuoi genitori con il loro PIN.",
+    "optin_minor_cta": "Chiedi ai genitori",
+    "outcome_title": "Com'è andata con “{{title}}”?",
+    "outcome_good": "Bene",
+    "outcome_ok": "Così così",
+    "outcome_hard": "Difficile",
+    "optin_parent": "Per i genitori: permettete a Buddy di scrivere a {{name}} sul telefono. {{rules}} Si può cambiare in qualsiasi momento nelle impostazioni.",
+    "rules_settings": "come indicato nelle impostazioni",
+    "optin_done": "Permesso: ora ti scrivo anche sul telefono – {{rules}}. Puoi cambiarlo nelle impostazioni.",
+    "optin_done_minor": "Permesso: ora Buddy scrive anche a {{name}} sul telefono – {{rules}}. Si può cambiare nelle impostazioni.",
+    "optin_body_rules": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Mai dopo le {{time}}.",
+    "rules_short": "mai dopo le {{time}}"
+  },
+  "delivery": {
+    "scheduled": "arriva {{when}}",
+    "sending": "invio in corso",
+    "accepted": "in arrivo sul tuo telefono",
+    "provider_accepted": "inviato al tuo telefono",
+    "provider_rejected": "non è stato possibile inviarlo al tuo telefono",
+    "send_failed": "non è stato possibile inviarlo al tuo telefono",
+    "send_uncertain": "non è chiaro se sia arrivato sul tuo telefono",
+    "in_app": "solo qui nell'app",
+    "suppressed": "non inviato",
+    "expired": "non più attuale",
+    "cancelled": "annullato",
+    "opened": "aperto"
+  },
+  "done": {
+    "undo": "Annulla",
+    "undo_label": "Annulla: {{what}}",
+    "undone": "annullato",
+    "undo_request_material": "Nessuna foto necessaria"
+  },
   "greeting": "Ciao {{name}}",
   "greeting_ask": "Cosa c'è in arrivo?",
-  "practiced_today": "Esercizi fatti",
+  "intro": {
+    "title": "Sono Buddy.",
+    "body": "Ti aiuto a prepararti per verifiche ed esami – senza stress. Dimmi cosa ti aspetta o mandami una foto della tua scheda."
+  },
   "menu": {
     "open": "Apri il menu",
     "title": "Altro",
@@ -12,9 +146,16 @@
     "read_aloud_on": "La lettura è attiva",
     "read_aloud_off": "Leggi le risposte ad alta voce"
   },
-  "system": {
-    "no_model": "Al momento Buddy non può rispondere. Gli esercizi e i tuoi promemoria funzionano comunque.",
-    "scheduler_stale": "Al momento Buddy non lavora in background. I promemoria potrebbero arrivare in ritardo."
+  "message": {
+    "title_buddy": "Messaggio di Buddy",
+    "title_mine": "Il tuo messaggio",
+    "copy": "Copia",
+    "speak": "Leggi ad alta voce",
+    "copied": "Copiato",
+    "copy_failed": "Copia non riuscita"
+  },
+  "next": {
+    "line": "{{title}} · {{when}}"
   },
   "now": {
     "resume_title": "Continua a esercitarti",
@@ -85,38 +226,59 @@
     },
     "reading_pages": "Le tue pagine"
   },
-  "when": {
-    "today": "oggi",
-    "tomorrow": "domani",
-    "on": "{{day}}",
-    "on_at": "{{day}} alle {{time}}"
+  "practiced_today": "Esercizi fatti",
+  "session": {
+    "morning": {
+      "0": "Ciao, {{name}}!",
+      "1": "Ehi {{name}} – dormito bene?",
+      "2": "Già in piedi, {{name}}?"
+    },
+    "day": {
+      "0": "Ciao, {{name}}!",
+      "1": "Ehi, {{name}}!",
+      "2": "Che bello vederti, {{name}}!"
+    },
+    "evening": {
+      "0": "Ehi {{name}} – com’è andata oggi?",
+      "1": "Ciao, {{name}}!",
+      "2": "Ciao {{name}}, tutto bene oggi?"
+    },
+    "night": {
+      "0": "Ciao {{name}} – ancora in piedi?",
+      "1": "Ehi, {{name}}!",
+      "2": "Fai tardi, {{name}}?"
+    }
   },
-  "decision": {
-    "optin_title": "Posso scriverti sul telefono?",
-    "optin_body": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Mai di sera.",
-    "optin_yes": "Sì, volentieri",
-    "optin_no": "Meglio di no",
-    "optin_minor_body": "Lo permettono i tuoi genitori con il loro PIN.",
-    "optin_minor_cta": "Chiedi ai genitori",
-    "outcome_title": "Com'è andata con “{{title}}”?",
-    "outcome_good": "Bene",
-    "outcome_ok": "Così così",
-    "outcome_hard": "Difficile",
-    "optin_parent": "Per i genitori: permettete a Buddy di scrivere a {{name}} sul telefono. {{rules}} Si può cambiare in qualsiasi momento nelle impostazioni.",
-    "rules_settings": "come indicato nelle impostazioni",
-    "optin_done": "Permesso: ora ti scrivo anche sul telefono – {{rules}}. Puoi cambiarlo nelle impostazioni.",
-    "optin_done_minor": "Permesso: ora Buddy scrive anche a {{name}} sul telefono – {{rules}}. Si può cambiare nelle impostazioni.",
-    "optin_body_rules": "Per esempio poco prima di una verifica o quando ci sono esercizi pronti. Mai dopo le {{time}}.",
-    "rules_short": "mai dopo le {{time}}"
+  "suggest": {
+    "exam": "Ho presto una verifica",
+    "homework": "Compiti",
+    "vocab": "Vocaboli",
+    "test_message": "Fammi una verifica di prova per «{{title}}».",
+    "exam_short": "Verifica",
+    "speak": "Pronuncia"
   },
-  "done": {
-    "undo": "Annulla",
-    "undo_label": "Annulla: {{what}}",
-    "undone": "annullato",
-    "undo_request_material": "Nessuna foto necessaria"
+  "system": {
+    "no_model": "Al momento Buddy non può rispondere. Gli esercizi e i tuoi promemoria funzionano comunque.",
+    "scheduler_stale": "Al momento Buddy non lavora in background. I promemoria potrebbero arrivare in ritardo."
   },
-  "next": {
-    "line": "{{title}} · {{when}}"
+  "talk": {
+    "open": "Parla con Buddy",
+    "title": "Conversazione",
+    "listening": "Ti ascolto.",
+    "listening_sub": "Di’ semplicemente cosa ti serve.",
+    "tap_when_done": "Tocca il microfono quando hai finito.",
+    "thinking": "Ci penso …",
+    "speaking": "Buddy sta parlando …",
+    "paused": "Pronto quando vuoi.",
+    "paused_sub": "Tocca il microfono e parla.",
+    "slow": "Ci vuole di più – la risposta arriverà nella chat.",
+    "end": "Termina",
+    "speak": "Parla",
+    "interrupt": "Interrompi e parla",
+    "short": "Parla",
+    "photo": "Foto",
+    "photo_label": "Mostra una foto",
+    "tap_orb": "Tocca Buddy e ti ascolta."
   },
   "thread": {
     "title": "Chat con Buddy",
@@ -145,83 +307,6 @@
     "new_reply_label": "Vai alla nuova risposta",
     "message_hint": "Tieni premuto per copiare o leggere ad alta voce"
   },
-  "delivery": {
-    "scheduled": "arriva {{when}}",
-    "sending": "invio in corso",
-    "accepted": "in arrivo sul tuo telefono",
-    "provider_accepted": "inviato al tuo telefono",
-    "provider_rejected": "non è stato possibile inviarlo al tuo telefono",
-    "send_failed": "non è stato possibile inviarlo al tuo telefono",
-    "send_uncertain": "non è chiaro se sia arrivato sul tuo telefono",
-    "in_app": "solo qui nell'app",
-    "suppressed": "non inviato",
-    "expired": "non più attuale",
-    "cancelled": "annullato",
-    "opened": "aperto"
-  },
-  "composer": {
-    "placeholder": "Scrivi a Buddy…",
-    "remaining_one": "Ancora un carattere",
-    "remaining_other": "Ancora {{count}} caratteri",
-    "full": "Il campo è pieno: manda prima questo.",
-    "send": "Invia",
-    "photo": "Fotografa una scheda",
-    "keyboard": "Tastiera",
-    "photo_short": "Foto",
-    "attach": {
-      "title": "Cosa vuoi allegare?",
-      "camera": "Scatta una foto",
-      "library": "Dalla galleria",
-      "files": "Dai file"
-    }
-  },
-  "action": {
-    "remember": "Annotato: {{statement}}",
-    "remember_until": "Annotato fino a {{date}} compreso: {{statement}}",
-    "correct_memory": "Corretto: {{statement}}",
-    "forget": "Dimenticato: {{statement}}",
-    "set_level_school": "{{grade}}º anno di scuola",
-    "set_level_school_unknown": "Scuola",
-    "set_level_university": "Università",
-    "set_level_adult": "Formazione continua",
-    "set_level_unknown": "Anno da definire",
-    "plan_exam": "Aggiunto: {{title}}, {{day}}",
-    "update_goal": "Modificato: {{title}}",
-    "update_goal_day": "Modificato: {{title}} – ora {{day}}",
-    "close_goal_done": "Completato: {{title}}",
-    "close_goal_dropped": "Rimosso: {{title}}",
-    "prepare_practice_one": "Preparato: {{title}} – {{count}} esercizio, circa {{minutes}} min",
-    "prepare_practice_other": "Preparato: {{title}} – {{count}} esercizi, circa {{minutes}} min",
-    "plan_step": "Pianificato: {{title}} {{when}}",
-    "plan_step_agreed": "Concordato: {{title}} {{when}}",
-    "plan_step_repeat_daily": "D’accordo: {{title}} ogni giorno alle {{time}}",
-    "plan_step_repeat_weekdays": "D’accordo: {{title}} nei giorni di scuola alle {{time}}",
-    "plan_step_repeat_weekly": "D’accordo: {{title}} ogni {{weekday}} alle {{time}}",
-    "plan_step_repeat_until": " – fino al {{date}}",
-    "plan_step_repeat_in_app": " – appare qui nell’app (i messaggi sul telefono sono disattivati)",
-    "update_step_repeat_off": "Non arriva più regolarmente: {{title}}",
-    "update_step_moved": "Spostato: {{title}} {{when}}",
-    "update_step_skipped": "Saltato: {{title}}",
-    "update_step_cancelled": "Annullato: {{title}}",
-    "mark_step_done": "Fatto: {{title}}",
-    "request_material": "Aspetto la tua foto: {{title}}",
-    "request_material_page": "Aspetto la pagina per «{{title}}»",
-    "set_contact_pause": "Niente sul telefono fino a {{date}} compreso",
-    "set_contact": "Sul telefono solo dalle {{from}} alle {{to}}",
-    "schedule_check": "Torno a fare un salto {{when}}",
-    "delete_material": "Ho messo via «{{title}}»",
-    "delete_material_untitled": "Ho messo via il foglio",
-    "rename_material": "Il foglio ora si chiama «{{title}}»",
-    "delete_item": "La domanda non c’è più: «{{question}}»",
-    "offer_learning": "Proposto: {{what}} – «{{text}}»",
-    "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
-    "open_area": "Mostrato: {{what}}",
-    "set_contact_quiet": "Sul telefono solo dalle {{from}} alle {{to}}, mai dopo le {{quiet}}",
-    "set_contact_days": "mai in questi giorni: {{days}}",
-    "request_material_undone": "Nessuna foto necessaria: {{title}}",
-    "set_voice": "La mia voce: {{voice}}, {{speed}}",
-    "forget_all": "Ho dimenticato tutto quello che sapevo di te ({{count}})"
-  },
   "voice": {
     "name": {
       "warm": "calda",
@@ -236,65 +321,6 @@
       "faster": "più veloce",
       "faster2": "molto più veloce"
     }
-  },
-  "intro": {
-    "title": "Sono Buddy.",
-    "body": "Ti aiuto a prepararti per verifiche ed esami – senza stress. Dimmi cosa ti aspetta o mandami una foto della tua scheda."
-  },
-  "working": {
-    "material": "Sto trasformando la tua scheda in esercizi…",
-    "session": "Sto guardando com'è andata con gli esercizi…"
-  },
-  "suggest": {
-    "exam": "Ho presto una verifica",
-    "homework": "Compiti",
-    "vocab": "Vocaboli",
-    "test_message": "Fammi una verifica di prova per «{{title}}».",
-    "exam_short": "Verifica",
-    "speak": "Pronuncia"
-  },
-  "area": {
-    "library": "Materiali",
-    "memory": "Cosa sa Buddy di te",
-    "settings": "Impostazioni",
-    "history": "Tutti i messaggi",
-    "capture": "Fotografa una scheda",
-    "open": "Apri",
-    "open_label": "Apri {{what}}"
-  },
-  "talk": {
-    "open": "Parla con Buddy",
-    "title": "Conversazione",
-    "listening": "Ti ascolto.",
-    "listening_sub": "Di’ semplicemente cosa ti serve.",
-    "tap_when_done": "Tocca il microfono quando hai finito.",
-    "thinking": "Ci penso …",
-    "speaking": "Buddy sta parlando …",
-    "paused": "Pronto quando vuoi.",
-    "paused_sub": "Tocca il microfono e parla.",
-    "slow": "Ci vuole di più – la risposta arriverà nella chat.",
-    "end": "Termina",
-    "speak": "Parla",
-    "interrupt": "Interrompi e parla",
-    "short": "Parla",
-    "photo": "Foto",
-    "photo_label": "Mostra una foto",
-    "tap_orb": "Tocca Buddy e ti ascolta."
-  },
-  "a11y": {
-    "reply": "Buddy: {{text}}"
-  },
-  "card": {
-    "close": "Nascondi scheda",
-    "shown": "Buddy ha messo una scheda in alto. Puoi nasconderla."
-  },
-  "message": {
-    "title_buddy": "Messaggio di Buddy",
-    "title_mine": "Il tuo messaggio",
-    "copy": "Copia",
-    "speak": "Leggi ad alta voce",
-    "copied": "Copiato",
-    "copy_failed": "Copia non riuscita"
   },
   "voice_pick": {
     "label": "La voce di Buddy",
@@ -315,26 +341,14 @@
       "lower": "Voci più gravi"
     }
   },
-  "session": {
-    "morning": {
-      "0": "Ciao, {{name}}!",
-      "1": "Ehi {{name}} – dormito bene?",
-      "2": "Già in piedi, {{name}}?"
-    },
-    "day": {
-      "0": "Ciao, {{name}}!",
-      "1": "Ehi, {{name}}!",
-      "2": "Che bello vederti, {{name}}!"
-    },
-    "evening": {
-      "0": "Ehi {{name}} – com’è andata oggi?",
-      "1": "Ciao, {{name}}!",
-      "2": "Ciao {{name}}, tutto bene oggi?"
-    },
-    "night": {
-      "0": "Ciao {{name}} – ancora in piedi?",
-      "1": "Ehi, {{name}}!",
-      "2": "Fai tardi, {{name}}?"
-    }
+  "when": {
+    "today": "oggi",
+    "tomorrow": "domani",
+    "on": "{{day}}",
+    "on_at": "{{day}} alle {{time}}"
+  },
+  "working": {
+    "material": "Sto trasformando la tua scheda in esercizi…",
+    "session": "Sto guardando com'è andata con gli esercizi…"
   }
 }

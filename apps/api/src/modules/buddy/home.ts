@@ -440,10 +440,48 @@ async function needsAdult(
  * practice on the same topic: the check questions always were practice, and the
  * explanation itself lives in the chat now.
  */
-function servedSummary(s: ActionSummary): ActionSummary {
-  return s.tool === 'offer_learning' && (s.kind as string) === 'explain'
-    ? { ...s, kind: 'practice' }
-    : s;
+function servedSummary(
+  s: ActionSummary,
+  pending: ReadonlyMap<string, PendingStatus>,
+): ActionSummary {
+  if (s.tool === 'offer_learning' && (s.kind as string) === 'explain')
+    return { ...s, kind: 'practice' };
+  // The card must say where the proposal stands, not where it stood when it was written
+  // (issue #151): she may have answered it on another device, or the app was closed in
+  // between. A row that is gone was deleted with the sheet — the question is moot.
+  if (s.tool === 'confirm_delete')
+    return { ...s, status: pending.get(s.pending_id) ?? 'superseded' };
+  return s;
+}
+
+type PendingStatus = 'open' | 'confirmed' | 'declined' | 'expired' | 'superseded';
+
+/** Where each proposed deletion on this page of the thread stands right now. */
+async function pendingStatuses(
+  deps: Deps,
+  learnerId: string,
+  summaries: readonly ActionSummary[],
+  now: Date,
+): Promise<Map<string, PendingStatus>> {
+  const ids = summaries
+    .filter(
+      (s): s is Extract<ActionSummary, { tool: 'confirm_delete' }> => s.tool === 'confirm_delete',
+    )
+    .map((s) => s.pending_id);
+  if (ids.length === 0) return new Map();
+  const rows = await deps.db.query<{ id: string; status: PendingStatus; expires_at: Date }>(
+    `select id, status, expires_at from buddy_pending_actions
+      where learner_id = $1 and id = any($2::uuid[])`,
+    [learnerId, ids],
+  );
+  return new Map(
+    rows.map((r) => [
+      r.id,
+      // Read against the app's own clock, so a card does not offer a button that the
+      // endpoint would refuse a moment later (CLAUDE.md rule 7).
+      r.status === 'open' && r.expires_at.getTime() <= now.getTime() ? 'expired' : r.status,
+    ]),
+  );
 }
 
 async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<ActionView[]> {
@@ -628,6 +666,12 @@ async function threadOf(
     [learnerId],
   );
   const stale = (at: Date) => acted.at !== null && acted.at.getTime() > at.getTime();
+  const pending = await pendingStatuses(
+    deps,
+    learnerId,
+    actions.map((a) => a.result),
+    now,
+  );
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -661,7 +705,7 @@ async function threadOf(
           id: a.id,
           status: a.status,
           undoable: undoWorks.has(a.id) && !adultOnly.has(a.id),
-          summary: servedSummary(a.result),
+          summary: servedSummary(a.result, pending),
           created_at: a.created_at.toISOString(),
         })),
       created_at: m.created_at.toISOString(),

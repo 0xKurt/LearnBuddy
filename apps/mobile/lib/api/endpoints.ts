@@ -153,6 +153,13 @@ export const skipStep = (stepId: string) =>
 export const undoAction = (actionId: string) =>
   request('POST', `/buddy/actions/${actionId}/undo`, { schema: BuddyHome });
 
+/** Her answer to a proposed deletion — the tap that decides, or the one that keeps it (#151). */
+export const answerConfirmation = (pendingId: string, confirm: boolean) =>
+  request('POST', `/buddy/confirmations/${pendingId}`, {
+    body: { confirm },
+    schema: BuddyHome,
+  });
+
 export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =>
   request('POST', `/buddy/goals/${goalId}/outcome`, { body: { outcome }, schema: BuddyHome });
 

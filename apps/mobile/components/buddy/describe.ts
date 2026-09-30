@@ -158,6 +158,9 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
       return a.title
         ? t('action.delete_material', { title: a.title })
         : t('action.delete_material_untitled');
+    case 'confirm_delete':
+      // The card says it; the chip list would only repeat the question she is looking at.
+      return '';
     case 'rename_material':
       return t('action.rename_material', { title: a.title });
     case 'delete_item':

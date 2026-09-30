@@ -119,6 +119,10 @@ async function main(): Promise<void> {
             [l.learnerId],
           )
         ).map((m) => ({ title: m.title, archived: m.archived_at !== null })),
+        pending: await env.db.query(
+          `select operation, title, detail, status from buddy_pending_actions where learner_id = $1`,
+          [l.learnerId],
+        ),
         memories: await env.db.query(
           `select kind, statement, valid_until from buddy_memories where learner_id = $1 and status = 'active'`,
           [l.learnerId],

@@ -262,7 +262,12 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const steps = await db.query<StepRow>(
     `select id, goal_id, kind, title, state, planned_date, planned_time, agreed, payload, evidence,
-            done_source, version, created_at, finished_at
+            done_source, version, created_at, finished_at,
+            -- Declared on StepRow since #112 and never selected, so st.repeat was
+            -- undefined at run time and Buddy forgot every rhythm the moment the chat
+            -- window moved past it (external audit F7, issue #152). db.query<StepRow> is
+            -- an unchecked claim: a type annotation does not check SQL columns.
+            repeat, repeat_until
        from buddy_steps
       where learner_id = $1
         and (state in ('planned','prepared','in_progress')

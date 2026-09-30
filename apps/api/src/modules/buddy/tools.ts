@@ -45,9 +45,7 @@ import {
 } from '../practice/selection.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
-import { AppError } from '../../lib/errors.js';
 import { bumpContext, rollRepeatingStep } from './plan.js';
-import { archiveMaterial, archiveMaterialItem } from '../materials/service.js';
 import { schoolYearsOf, type ActionOf, type MemoryAbout, type ToolName } from './decision.js';
 import {
   cancelGoalWakeups,
@@ -950,7 +948,7 @@ async function runUpdateStep(
       `step ${a.step} is ${s.state} and cannot be changed — leave this action out and tell her how it stands`,
     );
   }
-  const undo: UndoSpec = {
+  let undo: UndoSpec = {
     type: 'restore_step',
     step_id: s.id,
     state: s.state,
@@ -967,19 +965,30 @@ async function runUpdateStep(
   }
   // "nicht mehr jeden Tag" (issue #112). Ending a repetition leaves the next one standing —
   // she asked for fewer reminders, not for the one tomorrow to vanish unannounced.
-  if (a.repeat !== null && a.repeat !== undefined) {
+  const changesRepeat = a.repeat !== null && a.repeat !== undefined;
+  // The undo of a combined change has to put the rhythm back too, not only the day
+  // (external audit F7, issue #152).
+  if (changesRepeat) undo = { ...undo, repeat: s.repeat, repeat_until: s.repeat_until };
+  if (changesRepeat) {
     const repeat = a.repeat === 'never' ? null : a.repeat;
     if (repeat && !(s.agreed && (a.time ?? s.planned_time))) {
       throw new ToolRejection(
         'a repeating reminder needs her agreement and a time — ask her when it should come',
       );
     }
+    // Exactly ONE version bump per mutation (issue #152): the undo below expects
+    // `version + 1`, and a repeat-only change used not to bump at all — so an undo right
+    // after it answered 409 `changed_since`. When the day or the state changes in the same
+    // action, their own statement carries the single bump.
+    const onlyRepeat = !a.state && !a.day && !a.time;
     await ctx.db.query(
-      `update buddy_steps set repeat = $2, repeat_until = case when $2::text is null then null else repeat_until end
+      `update buddy_steps set repeat = $2,
+                              repeat_until = case when $2::text is null then null else repeat_until end,
+                              version = case when $4 then version + 1 else version end
         where id = $1 and learner_id = $3`,
-      [s.id, repeat, ctx.learnerId],
+      [s.id, repeat, ctx.learnerId, onlyRepeat],
     );
-    if (!a.state && !a.day && !a.time) {
+    if (onlyRepeat) {
       return {
         summary: {
           tool: 'update_step',
@@ -989,7 +998,7 @@ async function runUpdateStep(
           time: s.planned_time,
           state: s.state,
         },
-        undo: { ...undo, repeat: s.repeat, repeat_until: s.repeat_until },
+        undo,
       };
     }
   }
@@ -1158,18 +1167,68 @@ async function runRequestMaterial(
  * sentence that ends a session, not a sheet (issues #111, #120). This is the library's confirm
  * sheet, in the conversation (docs/UX-PRINCIPLES.md §18).
  */
-async function requireAsked(ctx: ToolContext, what: string): Promise<void> {
-  const previous = await ctx.db.maybeOne<{ asked: boolean }>(
-    `select coalesce((output->>'asks_permission')::boolean, false) as asked
-       from buddy_decisions
-      where learner_id = $1 and mode = 'turn' and disposition = 'applied'
-      order by created_at desc, id desc limit 1`,
-    [ctx.learnerId],
-  );
-  if (previous?.asked) return;
-  throw new ToolRejection(
-    `${what} cannot be taken back. Leave this action out of your answer, ask her plainly whether it should go (asks_permission true), and do it in your NEXT answer once she has said yes`,
-  );
+/**
+ * How long a proposal to delete something waits for her answer (issue #151). Long enough to
+ * read the card and think; short enough that a "Löschen" tapped next week is not answering
+ * a question she no longer remembers being asked.
+ */
+const CONFIRM_WINDOW_MINUTES = 60;
+
+/**
+ * The model may only ever PROPOSE a deletion; her tap is the consent (issue #151, external
+ * audit F6). What stood here before read one bit of the last applied decision
+ * (`output->>'asks_permission'`) and failed in both directions: after a lookup the bit sits
+ * nested and a correct "ja, lösch das" was refused, and the bit said only that SOMETHING was
+ * asked — an unrelated question authorised the deletion even after "nein, behalte es".
+ *
+ * Consent is exactly the thing code must own rather than infer (CLAUDE.md rule 1), so it is
+ * bound to this operation, this object, once, and not for ever. An older open proposal for
+ * the same thing is superseded, so she never has two cards asking the same question.
+ */
+async function proposeDeletion(
+  ctx: ToolContext,
+  what: {
+    operation: 'delete_material' | 'delete_item';
+    materialId: string;
+    itemId: string | null;
+    title: string | null;
+    detail: string | null;
+  },
+): Promise<ToolOutcome> {
+  return ctx.db.tx(async (tx) => {
+    await tx.query(
+      `update buddy_pending_actions set status = 'superseded', decided_at = $4
+        where learner_id = $1 and status = 'open' and operation = $2 and material_id = $3`,
+      [ctx.learnerId, what.operation, what.materialId, ctx.now],
+    );
+    const row = await tx.one<{ id: string }>(
+      `insert into buddy_pending_actions
+         (learner_id, operation, material_id, item_id, title, detail, asked_at, expires_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
+      [
+        ctx.learnerId,
+        what.operation,
+        what.materialId,
+        what.itemId,
+        what.title,
+        what.detail,
+        ctx.now,
+        new Date(ctx.now.getTime() + CONFIRM_WINDOW_MINUTES * 60_000),
+      ],
+    );
+    return {
+      summary: {
+        tool: 'confirm_delete' as const,
+        pending_id: row.id,
+        what: what.operation === 'delete_material' ? ('material' as const) : ('item' as const),
+        title: what.title,
+        detail: what.detail,
+        status: 'open' as const,
+      },
+      // Nothing happened yet: there is nothing to take back, and "Behalten" is the way out.
+      undo: null,
+    };
+  });
 }
 
 /** The sheet she named, from this learner's aliases only. */
@@ -1205,18 +1264,14 @@ async function runDeleteMaterial(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const m = materialOf(ctx, a.material);
-  await requireAsked(ctx, `deleting "${m.title ?? 'a sheet'}"`);
-  try {
-    await archiveMaterial({ db: ctx.db, now: () => ctx.now }, ctx.learnerId, m.id);
-  } catch (e) {
-    if (e instanceof AppError && e.code === 'not_found') {
-      throw new ToolRejection(
-        `sheet ${a.material} is already gone — leave this action out and just say so`,
-      );
-    }
-    throw e;
-  }
-  return { summary: { tool: 'delete_material', material_id: m.id, title: m.title }, undo: null };
+  // Proposed, never done: the card carries her answer (issue #151).
+  return proposeDeletion(ctx, {
+    operation: 'delete_material',
+    materialId: m.id,
+    itemId: null,
+    title: m.title,
+    detail: null,
+  });
 }
 
 async function runRenameMaterial(
@@ -1259,7 +1314,6 @@ async function runDeleteItem(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const m = materialOf(ctx, a.material);
-  await requireAsked(ctx, `taking a question off "${m.title ?? 'a sheet'}"`);
   const rows = await ctx.db.query<{ id: string; prompt: string }>(
     `select id, prompt from items
       where learner_id = $1 and material_id = $2 and archived_at is null`,
@@ -1282,11 +1336,15 @@ async function runDeleteItem(
     );
   }
   const hit = hits[0]!;
-  await archiveMaterialItem({ db: ctx.db, now: () => ctx.now }, ctx.learnerId, m.id, hit.id);
-  return {
-    summary: { tool: 'delete_item', item_id: hit.id, question: hit.prompt },
-    undo: null,
-  };
+  // Which question is decided here, from her own words and her own sheet (rule 2); whether
+  // it goes is decided by her tap (issue #151).
+  return proposeDeletion(ctx, {
+    operation: 'delete_item',
+    materialId: m.id,
+    itemId: hit.id,
+    title: m.title,
+    detail: hit.prompt,
+  });
 }
 
 async function runSetContact(

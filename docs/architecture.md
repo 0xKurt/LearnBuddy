@@ -279,6 +279,18 @@ remove anything in the same answer (dropping a goal, forgetting, cancelling a st
 rejects it and asks for a repair (`askedButActed`). Removing on her clear wish is allowed — it is
 visible as a card with undo (`docs/UX-PRINCIPLES.md` §18).
 
+**Deleting is the one thing the model cannot do at all** (`buddy_pending_actions`, issue #151).
+`delete_material` and `delete_item` only ever propose: they write a pending action bound to the
+operation, the object and a one-hour window, and the app puts a card in front of her with the
+name of what would go and two buttons. Her tap deletes it (`POST /buddy/confirmations/:id`), once,
+and the card afterwards says what happened. What stood here before read a single bit of the last
+applied decision (`output->>'asks_permission'`) and failed in both directions (external audit
+30.09., F6): after a lookup the bit sits nested in `output->'final'`, so a correct "ja, lösch das"
+was refused — and looking the sheet up first is how that conversation normally goes — while the
+bit itself said only that _something_ had been asked, so an unrelated question authorised the
+deletion even after she said no. Consent is the one judgement code must own rather than infer
+(hard rule 1); a model that misreads her can now propose, and nothing more.
+
 `modules/buddy/tools.ts`. The only way a decision changes anything. Each tool validates against
 current rows (inside the decision's transaction), makes a bounded change and returns a card
 summary plus undo data. Enforced here, not in the prompt:
@@ -286,7 +298,7 @@ summary plus undo data. Enforced here, not in the prompt:
 - background checks may only `prepare_practice`, `request_material`, `schedule_check`;
 - her own sheets are reachable from the conversation (`delete_material`, `rename_material`,
   issue #111): turn-only and quote-bound, because Buddy must never reach for a sheet on his own
-  initiative. `delete_material` is the library's own `archiveMaterial` — merged pages, questions,
+  initiative. The deletion that follows her tap is the library's own `archiveMaterial` — merged pages, questions,
   running sessions and the photo and content purge stay in one place — and therefore carries **no
   undo**: the photos and the transcript are erased at once, which is the point when she deletes a
   private photo, and a card offering "rückgängig" would promise what nothing can keep;

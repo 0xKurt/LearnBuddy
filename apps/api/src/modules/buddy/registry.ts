@@ -332,7 +332,10 @@ export function removesSomething(a: AnyAction): boolean {
       return a.args.state !== null;
     case 'delete_material':
     case 'delete_item':
-      return true;
+      // Since issue #151 these only PROPOSE: the app puts a card in front of her and her
+      // tap decides. Asking in the reply while proposing is now exactly right — it was
+      // this guard that made the live eval's correct answer fail (buddy.44 run).
+      return false;
     default:
       return false;
   }

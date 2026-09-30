@@ -593,6 +593,8 @@ const deleteMaterial = z.object({
     quote: Quote.describe('her words asking for it to go'),
   }),
 });
+// Both deletions PROPOSE (issue #151): the app puts a card in front of her with the name
+// of what would go, and her tap decides. So the reply asks — it never reports it as done.
 
 const renameMaterialTool = z.object({
   tool: z.literal('rename_material'),

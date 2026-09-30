@@ -25,6 +25,7 @@ import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
+import { ConfirmCard } from './ConfirmCard.js';
 import { deliveryText, describeAction } from './describe.js';
 import { i18n } from '../../lib/i18n/index.js';
 import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
@@ -154,9 +155,13 @@ export function Conversation({
       {messages.map((m, index) => {
         const mine = m.role === 'learner';
         const day = breaks[index] ?? null;
-        // What Buddy did (✓ list); offers are not done yet, they have their own card.
+        // What Buddy did (✓ list); offers are not done yet, and a proposed deletion is a
+        // question waiting for her — both have their own card.
         const done = m.actions.filter(
-          (a) => a.summary.tool !== 'offer_learning' && a.summary.tool !== 'open_area',
+          (a) =>
+            a.summary.tool !== 'offer_learning' &&
+            a.summary.tool !== 'open_area' &&
+            a.summary.tool !== 'confirm_delete',
         );
         const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${speakMathText(markdownPlain(m.text, { spoken: true }), words)}`;
         const stopped = mine && m.status === 'failed' && m.failure_code === 'stopped';
@@ -253,6 +258,15 @@ export function Conversation({
                   style={{ width: '86%', marginLeft: ORB + SPACE.sm, marginTop: SPACE.xs }}
                 >
                   <AreaCard area={a.summary.area} />
+                </Animated.View>
+              ) : a.summary.tool === 'confirm_delete' ? (
+                // Nothing is deleted until she answers this (issue #151).
+                <Animated.View
+                  key={a.id}
+                  entering={riseIn(1)}
+                  style={{ width: '86%', marginLeft: ORB + SPACE.sm, marginTop: SPACE.xs }}
+                >
+                  <ConfirmCard confirm={a.summary} />
                 </Animated.View>
               ) : null,
             )}

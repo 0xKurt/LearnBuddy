@@ -4,6 +4,7 @@
 // goes through the model (POST /buddy/messages).
 
 import {
+  AnswerConfirmationRequest,
   type BuddySettingsView,
   MemoryList,
   OutreachActionRequest,
@@ -37,6 +38,7 @@ import { check, readBody } from '../../http/validate.js';
 import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { t } from '../../i18n/index.js';
+import { archiveMaterial, archiveMaterialItem } from '../materials/service.js';
 import { sessionView, startFromStep } from '../practice/service.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
@@ -246,6 +248,69 @@ buddyRoutes.post('/actions/:id/undo', async (c) => {
       actionId,
       now,
     ]);
+    await bumpContext(tx, learnerId);
+  });
+  return c.json(await home(c));
+});
+
+/**
+ * Her answer to a proposed deletion (issue #151). The tap is the consent — the model only
+ * ever proposed, and nothing was deleted while this card waited.
+ *
+ * Bound to exactly this proposal: one answer, within its window, on an object that has not
+ * changed underneath it. A second tap answers nothing (the row is no longer open), and a
+ * card left over from last week has expired.
+ */
+buddyRoutes.post('/confirmations/:id', async (c) => {
+  const pendingId = check(Uuid, c.req.param('id'));
+  const input = check(AnswerConfirmationRequest, await c.req.json());
+  const deps = depsOf(c);
+  const learnerId = c.get('learner').id;
+  const now = deps.now();
+  await deps.db.tx(async (tx) => {
+    await lockContext(tx, learnerId);
+    const pending = await tx.maybeOne<{
+      id: string;
+      operation: 'delete_material' | 'delete_item';
+      material_id: string;
+      item_id: string | null;
+      status: string;
+      expires_at: Date;
+    }>(
+      `select id, operation, material_id, item_id, status, expires_at
+         from buddy_pending_actions where id = $1 and learner_id = $2 for update`,
+      [pendingId, learnerId],
+    );
+    if (!pending) throw new AppError('not_found', 'Nothing to answer');
+    if (pending.status !== 'open')
+      throw new AppError('conflict', 'This was answered already', { reason: 'already_answered' });
+    if (pending.expires_at.getTime() <= now.getTime()) {
+      await tx.query(
+        `update buddy_pending_actions set status = 'expired', decided_at = $2 where id = $1`,
+        [pendingId, now],
+      );
+      throw new AppError('conflict', 'This question is too old to answer now', {
+        reason: 'expired',
+      });
+    }
+    if (!input.confirm) {
+      await tx.query(
+        `update buddy_pending_actions set status = 'declined', decided_at = $2 where id = $1`,
+        [pendingId, now],
+      );
+      return;
+    }
+    // The same erasure the library button plans, not a second half-done path.
+    const inTx = { db: tx, now: () => now };
+    if (pending.operation === 'delete_material') {
+      await archiveMaterial(inTx, learnerId, pending.material_id);
+    } else if (pending.item_id) {
+      await archiveMaterialItem(inTx, learnerId, pending.material_id, pending.item_id);
+    }
+    await tx.query(
+      `update buddy_pending_actions set status = 'confirmed', decided_at = $2 where id = $1`,
+      [pendingId, now],
+    );
     await bumpContext(tx, learnerId);
   });
   return c.json(await home(c));

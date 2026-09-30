@@ -140,6 +140,11 @@ sweep records when it ran and how many rows it removed — counts only, never co
   conversation, in her export, and are deleted with it — this decides only what a model is
   told.
 
+- **Deleting something of hers needs her own tap**, never the model's reading of a sentence
+  (`buddy_pending_actions`, issue #151). Buddy can propose; the app shows her what would go and
+  she decides. Her answer, and what was proposed, are part of her export and are deleted with
+  the account.
+
 ## Export and deletion (DSGVO Art. 15, 17, 20)
 
 - `GET /account/export` returns everything stored about the learner as JSON, immediately —

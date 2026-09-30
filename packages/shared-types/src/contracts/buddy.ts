@@ -100,6 +100,23 @@ export const ActionSummary = z.discriminatedUnion('tool', [
   }),
   /** What she said about one of her own sheets, done in the conversation (issue #111). */
   z.object({ tool: z.literal('delete_material'), material_id: Uuid, title: z.string().nullable() }),
+  /**
+   * Buddy PROPOSES to delete something; the app shows a card with its name and two
+   * buttons, and her tap is what decides (issue #151). Deleting a sheet cannot be taken
+   * back, and consent is the one thing the model must not read between the lines
+   * (CLAUDE.md rule 1, docs/UX-PRINCIPLES.md §18).
+   */
+  z.object({
+    tool: z.literal('confirm_delete'),
+    pending_id: Uuid,
+    what: z.enum(['material', 'item']),
+    /** The sheet's name as it read when she was asked. */
+    title: z.string().nullable(),
+    /** delete_item: the question, as she would read it. */
+    detail: z.string().nullable(),
+    /** Where it stands now, so the card is honest after the app was closed and reopened. */
+    status: z.enum(['open', 'confirmed', 'declined', 'expired', 'superseded']).default('open'),
+  }),
   z.object({ tool: z.literal('rename_material'), material_id: Uuid, title: z.string() }),
   /** One question she asked to be taken off a sheet (issue #120). */
   z.object({ tool: z.literal('delete_item'), item_id: Uuid, question: z.string() }),
@@ -420,6 +437,10 @@ export type MemoryView = z.infer<typeof MemoryView>;
 
 export const MemoryList = z.object({ memories: z.array(MemoryView) });
 export type MemoryList = z.infer<typeof MemoryList>;
+
+/** Her answer to a proposed deletion (issue #151): the tap that decides, or the one that keeps it. */
+export const AnswerConfirmationRequest = z.object({ confirm: z.boolean() });
+export type AnswerConfirmationRequest = z.infer<typeof AnswerConfirmationRequest>;
 
 export const UpdateMemoryRequest = z.union([
   z.object({ statement: z.string().trim().min(1).max(300), version: z.number().int() }),
