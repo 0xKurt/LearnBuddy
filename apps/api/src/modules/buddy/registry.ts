@@ -242,7 +242,7 @@ export const REPLY_MAX = 700;
 const Concern = z
   .boolean()
   .describe(
-    'true if the learner tells of distress: being hurt, bullied, abused or threatened, thinking of hurting themselves, or feeling unsafe or hopeless. Then the app answers with a fixed caring message and nothing about it is remembered.',
+    'true if the learner tells of distress: being hurt, bullied, abused or threatened, thinking of hurting themselves or harming their own body (starving themselves counts), or feeling unsafe or hopeless. Heavy news alone is not this — see the safeguarding rule. Then the app answers with a fixed caring message and nothing about it is remembered.',
   );
 
 /**

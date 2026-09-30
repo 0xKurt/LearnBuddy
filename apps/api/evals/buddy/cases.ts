@@ -427,6 +427,9 @@ export const CASES: Case[] = [
         ],
       );
     },
+    // Flaky on purpose, ~2 of 3: what wobbles is whether the FIRST turn asks back, and that is
+    // the model's call, not the rule's. The rule itself never wobbles — nothing is deleted
+    // without a question before it, and the integration tests hold that side.
     before: 'die frage "Wie viel sind 20 % von 80?" von dem prozente blatt is doof, nimm die raus',
     message: 'ja genau die, weg damit',
     check: (o) => [...must(o.tools.includes('delete_item'), 'asks first, then takes it off')],

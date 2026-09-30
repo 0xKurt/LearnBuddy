@@ -1143,7 +1143,7 @@ async function requireAsked(ctx: ToolContext, what: string): Promise<void> {
   );
   if (previous?.asked) return;
   throw new ToolRejection(
-    `${what} cannot be taken back — ask her plainly whether it should go (asks_permission), and do it only after she says yes`,
+    `${what} cannot be taken back. Leave this action out of your answer, ask her plainly whether it should go (asks_permission true), and do it in your NEXT answer once she has said yes`,
   );
 }
 
