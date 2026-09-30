@@ -4,13 +4,19 @@
 // removed for it (#125). One thing is not three.
 //
 // What makes it Buddy and not a logo: the orb is the real component, alive and breathing, the
-// same one that stands beside every reply. The name sits next to it in the display face,
-// tightened a step further than the scale — a wordmark is set tighter than a headline — with
-// "Learn" in the reading ink and "Buddy" in the accent, so the eye reads one word with a
-// person in it.
+// same one that stands beside every reply.
 //
-// Premium here means restraint, not decoration: exact optical alignment, one accent, no
-// gradient on the text, no shadow, nothing that moves except the orb that was already moving.
+// The name is set in ONE ink, not two. Splitting a name into a dark half and a coloured half
+// is the cheapest move in the book — every second product does it, which is exactly why it
+// reads as a template instead of as a mark. The orb carries the colour; the name carries the
+// name. One accent on the screen, not two.
+//
+// Proportion is the other half. The orb used to be taller than the whole word, which made the
+// type look like a caption beside it. It is tied to the cap height now (ORB_TO_CAP): the mark
+// reads as one lockup rather than two things placed next to one another.
+//
+// Premium here is restraint: no gradient on the text, no shadow, no second colour, nothing
+// that moves except the orb that was already moving.
 //
 // Sizes follow the phone, not a fixed number (owner: "verschiedene handys haben verschiedene
 // aufloesungen und es sollte in allen gut aussehen"): below 360 pt of width the orb and the
@@ -25,13 +31,19 @@ import { BuddyOrb } from './BuddyOrb.js';
 
 /** Where the two steps sit; below this width everything takes the smaller one. */
 const NARROW = 360;
+/** The orb against the name's cap height — a hair over, so it leads without shouting. */
+const ORB_TO_CAP = 1.45;
 
 export function Wordmark({ state = 'idle' }: { state?: 'idle' | 'think' | 'speak' | 'listen' }) {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const narrow = width < NARROW;
-  const orb = narrow ? 26 : 30;
-  const size = narrow ? 20 : 22;
+  // Bigger and a shade lighter than a heading of the same weight would be: a wordmark can
+  // carry size because it is two words, and size is what makes it look deliberate.
+  const size = narrow ? 23 : 25;
+  // Cap height is about 0.72 em in this face; the orb sits a touch above it so it reads as
+  // the mark and not as a bullet.
+  const orb = Math.round(size * 0.72 * ORB_TO_CAP);
 
   return (
     <View
@@ -43,8 +55,8 @@ export function Wordmark({ state = 'idle' }: { state?: 'idle' | 'think' | 'speak
         flexDirection: 'row',
         alignItems: 'center',
         // Tighter than the spacing scale on purpose: a mark's parts belong to each other,
-        // and 8 already reads as two things standing next to one another.
-        gap: 7,
+        // and a full step already reads as two things standing next to one another.
+        gap: Math.round(size * 0.34),
       }}
     >
       {/* Decorative for the reader — the label above already said the name. */}
@@ -55,16 +67,15 @@ export function Wordmark({ state = 'idle' }: { state?: 'idle' | 'think' | 'speak
           TYPE.display,
           {
             fontSize: size,
-            lineHeight: size + 4,
-            // A wordmark is set tighter than a headline; the scale's -0.6 is for 30 pt.
-            letterSpacing: -0.45,
+            lineHeight: Math.round(size * 1.15),
+            // A wordmark is set tighter than a headline: the scale's -0.6 is tuned for 30 pt,
+            // and a two-word mark wants a touch more than the linear share of that.
+            letterSpacing: -0.6,
             color: palette.ink,
-            // The cap-height sits a hair above the orb's centre; this puts them level.
-            marginTop: 1,
           },
         ]}
       >
-        Learn<Text style={{ color: palette.primary }}>Buddy</Text>
+        LearnBuddy
       </Text>
     </View>
   );

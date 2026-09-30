@@ -31,7 +31,7 @@ import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
 import { whenText } from '../components/buddy/describe.js';
 import { CaptureBar, ReadingBar, ReadyBar, ResumeBar } from '../components/buddy/SlimBar.js';
-import { TopEdgeFade, topEdgeMask } from '../components/lb/EdgeFade.js';
+import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../components/lb/EdgeFade.js';
 import { NoticeBubble } from '../components/buddy/NoticeBubble.js';
 import { CLOSE_INSET, TopOverlay } from '../components/buddy/TopOverlay.js';
 import { WorkingNote } from '../components/buddy/WorkingNote.js';
@@ -835,7 +835,12 @@ export default function BuddyScreen() {
     shownPending === null &&
     live === null &&
     notices.length === 0;
-  const sessionRoom = greetingOpens ? greetingRoom(threadView, SPACE.sm) : 0;
+  // The block ends at the bottom of the view, so a SHORTER block puts the greeting FURTHER
+  // down. It has to clear two things, not one: the thread's own bottom padding and the
+  // 28 pt fade that lies over the view's top edge — without the fade in this sum the
+  // greeting's first line was drawn underneath it (owner twice: "die sprechblase am oberen
+  // rand ist ein bisschen verdeckt", issue #129).
+  const sessionRoom = greetingOpens ? greetingRoom(threadView, SPACE.sm + EDGE_FADE) : 0;
 
   // "↓ Neue Antwort": she scrolled up and Buddy answered (or is writing) meanwhile.
   const newest = newestBuddyId(h.thread);

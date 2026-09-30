@@ -30,9 +30,22 @@ async function read(key: string): Promise<string | null> {
   return SecureStore.getItemAsync(key);
 }
 
+/**
+ * Two things at once (audit 30.09., #133 position 5):
+ *
+ * `THIS_DEVICE_ONLY` keeps the tokens out of an encrypted device backup, so a restore onto
+ * someone else's phone cannot carry a working refresh token with it.
+ *
+ * `AFTER_FIRST_UNLOCK` (instead of the default `WHEN_UNLOCKED`) lets the notification-action
+ * task read the session while the phone is locked — "Heute nicht" and "Seltener schreiben"
+ * are pressed from the lock screen. The press was kept and flushed later either way, so it
+ * degraded gracefully, but it never completed there.
+ */
+const KEYCHAIN = { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY } as const;
+
 async function write(key: string, value: string): Promise<void> {
   if (web) globalThis.localStorage?.setItem(key, value);
-  else await SecureStore.setItemAsync(key, value);
+  else await SecureStore.setItemAsync(key, value, KEYCHAIN);
 }
 
 async function remove(key: string): Promise<void> {
