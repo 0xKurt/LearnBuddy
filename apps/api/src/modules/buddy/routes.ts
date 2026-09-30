@@ -401,6 +401,13 @@ buddyRoutes.post('/outreach/:id/act', async (c) => {
 
 // ─────────────── memory ───────────────
 
+/**
+ * How long "Rückgängig" still works after a note was removed (issue #133 position 12).
+ * Long enough to read the message and change your mind, short enough that removing a
+ * note is still removing it.
+ */
+const UNRETRACT_WINDOW_MINUTES = 5;
+
 buddyRoutes.get('/memory', async (c) => {
   const deps = depsOf(c);
   const rows = await deps.db.query<{
@@ -438,20 +445,33 @@ buddyRoutes.patch('/memory/:id', async (c) => {
   const now = deps.now();
   await deps.db.tx(async (tx) => {
     await lockContext(tx, learnerId);
+    // The undo reaches for the entry it just removed, every other change for a live one.
+    const wanted = 'unretract' in input ? 'retracted' : 'active';
     const current = await tx.maybeOne<{
       id: string;
       kind: string;
       valid_until: Date | null;
       version: number;
+      closed_at: Date | null;
     }>(
-      `select id, kind, valid_until, version from buddy_memories
-        where id = $1 and learner_id = $2 and status = 'active' for update`,
-      [memoryId, learnerId],
+      `select id, kind, valid_until, version, closed_at from buddy_memories
+        where id = $1 and learner_id = $2 and status = $3 for update`,
+      [memoryId, learnerId, wanted],
     );
     if (!current) throw new AppError('not_found', 'Memory not found');
     if (current.version !== input.version)
       throw new AppError('stale', 'This changed meanwhile; reload');
-    if ('retract' in input) {
+    if ('unretract' in input) {
+      // An undo is a second thought, not a way back into something removed last week.
+      const closed = current.closed_at?.getTime() ?? 0;
+      if (now.getTime() - closed > UNRETRACT_WINDOW_MINUTES * 60_000)
+        throw new AppError('not_found', 'That removal can no longer be taken back');
+      await tx.query(
+        `update buddy_memories set status = 'active', closed_at = null, version = version + 1
+          where id = $1`,
+        [memoryId],
+      );
+    } else if ('retract' in input) {
       await tx.query(
         `update buddy_memories set status = 'retracted', closed_at = $2, version = version + 1
           where id = $1`,

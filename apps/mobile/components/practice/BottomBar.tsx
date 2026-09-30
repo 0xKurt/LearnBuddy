@@ -9,7 +9,7 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SPACE, bottomRoom } from '../../lib/theme/space.js';
 import { useToastBar } from '../lb/Toast.js';
 
 export function BottomBar({ children }: { children: ReactNode }) {
@@ -27,7 +27,7 @@ export function BottomBar({ children }: { children: ReactNode }) {
         gap: SPACE.sm,
         paddingHorizontal: SPACE.lg,
         paddingTop: SPACE.sm,
-        paddingBottom: Math.max(insets.bottom, SPACE.sm),
+        paddingBottom: bottomRoom(insets.bottom, SPACE.md),
         backgroundColor: palette.bg,
       }}
     >

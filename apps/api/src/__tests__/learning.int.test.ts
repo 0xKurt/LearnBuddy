@@ -566,4 +566,51 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     ).toBe(200);
     expect((await l.api.get<{ memories: unknown[] }>('/buddy/memory')).body.memories).toEqual([]);
   });
+
+  it('takes a removal back while it is fresh, and not afterwards (#133 position 12)', async () => {
+    const row = await env.db.one<{ id: string }>(
+      `insert into buddy_memories (learner_id, kind, statement, source, created_at)
+       values ($1, 'fact', 'Mag Erdkunde', 'learner_edited', $2) returning id`,
+      [l.learnerId, env.clock.now()],
+    );
+    expect(
+      (await l.api.patch(`/buddy/memory/${row.id}`, { retract: true, version: 1 })).status,
+    ).toBe(200);
+    // Still the wrong version: the undo is under the same fence as every other change.
+    expect(
+      (await l.api.patch(`/buddy/memory/${row.id}`, { unretract: true, version: 1 })).status,
+    ).toBe(409);
+    expect(
+      (await l.api.patch(`/buddy/memory/${row.id}`, { unretract: true, version: 2 })).status,
+    ).toBe(200);
+    const back = await l.api.get<{ memories: Array<{ id: string; version: number }> }>(
+      '/buddy/memory',
+    );
+    expect(back.body.memories.map((m) => m.id)).toEqual([row.id]);
+
+    // Removed again, and left alone: after the window it stays removed.
+    const v = back.body.memories[0]!.version;
+    expect(
+      (await l.api.patch(`/buddy/memory/${row.id}`, { retract: true, version: v })).status,
+    ).toBe(200);
+    env.clock.minutes(6);
+    expect(
+      (await l.api.patch(`/buddy/memory/${row.id}`, { unretract: true, version: v + 1 })).status,
+    ).toBe(404);
+    expect((await l.api.get<{ memories: unknown[] }>('/buddy/memory')).body.memories).toEqual([]);
+  });
+
+  it("never lets one learner take back another's removal (#133 position 12)", async () => {
+    const other = await onboard(env);
+    const row = await env.db.one<{ id: string }>(
+      `insert into buddy_memories (learner_id, kind, statement, source, created_at)
+       values ($1, 'fact', 'Spielt Handball', 'learner_edited', $2) returning id`,
+      [l.learnerId, env.clock.now()],
+    );
+    await l.api.patch(`/buddy/memory/${row.id}`, { retract: true, version: 1 });
+    expect(
+      (await other.api.patch(`/buddy/memory/${row.id}`, { unretract: true, version: 2 })).status,
+    ).toBe(404);
+    expect((await l.api.get<{ memories: unknown[] }>('/buddy/memory')).body.memories).toEqual([]);
+  });
 });

@@ -21,6 +21,7 @@
   "remove_a11y": "Retirer : {{statement}}",
   "saved": "Modifié.",
   "removed": "Retiré. Buddy l'oublie.",
+  "removed_undone": "C’est revenu.",
   "confirm_title": "Tu veux retirer ça ?",
   "confirm_body": "« {{statement}} » – Buddy l'oubliera.",
   "confirm_cta": "Oui, retirer",

@@ -21,6 +21,7 @@
   "remove_a11y": "Entfernen: {{statement}}",
   "saved": "Geändert.",
   "removed": "Entfernt. Buddy vergisst das.",
+  "removed_undone": "Wieder da.",
   "confirm_title": "Das entfernen?",
   "confirm_body": "„{{statement}}“ – Buddy vergisst das dann.",
   "confirm_cta": "Ja, entfernen",

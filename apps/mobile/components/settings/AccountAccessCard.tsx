@@ -13,9 +13,10 @@ import { useTranslation } from 'react-i18next';
 
 import { adminToken, clearAdminToken } from '../../lib/admin.js';
 import { useAnnounce } from '../../lib/announce.js';
+import { ApiError } from '../../lib/api/apiError.js';
 import { setPassword as savePasswordOnServer } from '../../lib/api/endpoints.js';
 import { looksLikeEmail, passwordProblem } from '../../lib/auth/recovery.js';
-import { changeEmail } from '../../lib/auth/supabase.js';
+import { changeEmail, signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -51,6 +52,13 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
   const [repeat, setRepeat] = useState('');
   // Shown inside the sheet: a toast would sit under the open modal on iOS.
   const [failure, setFailure] = useState<string | null>(null);
+  /**
+   * The server wants a fresh sign-in before an adult may change the password (issue #131):
+   * an unlocked phone must not be enough to take over the login. Same shape as the PIN
+   * card — the current password appears, and saving signs in with it first.
+   */
+  const [reauth, setReauth] = useState(false);
+  const [current, setCurrent] = useState('');
 
   async function start(which: Exclude<Open, null>) {
     if (opening) return;
@@ -83,13 +91,16 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
     setOpen(null);
     setPassword('');
     setRepeat('');
+    setReauth(false);
+    setCurrent('');
     // The PIN was for this sheet only.
     clearAdminToken();
   }
 
   const emailValid =
     looksLikeEmail(newEmail) && newEmail.trim().toLowerCase() !== email.toLowerCase();
-  const passwordValid = passwordProblem(password, repeat) === null;
+  const passwordValid =
+    passwordProblem(password, repeat) === null && (!reauth || current.length > 0);
 
   async function saveEmail() {
     if (!emailValid || busy) return;
@@ -116,6 +127,9 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
     setBusy(true);
     setFailure(null);
     try {
+      // Proving it is the account holder, not just whoever holds the phone (#131). The
+      // sign-in is what makes the session fresh; the server checks that, not us.
+      if (reauth) await signIn(email, current);
       // The server checks the parents' PIN itself (asks again if it lapsed meanwhile).
       const done = await asAdultIfNeeded(() => savePasswordOnServer(password), {
         pinSet,
@@ -132,7 +146,13 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
       );
       close();
     } catch (err) {
-      setFailure(messageFor(err));
+      // Not an error to read and shrug at: it is a step, so the field for it appears.
+      if (err instanceof ApiError && err.reason === 'reauth_required' && !reauth) {
+        setReauth(true);
+        setFailure(null);
+      } else {
+        setFailure(messageFor(err));
+      }
     } finally {
       setBusy(false);
     }
@@ -210,6 +230,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
               autoCapitalize="none"
               autoCorrect={false}
               spellCheck={false}
+              clearable
               autoComplete="email"
               keyboardType="email-address"
               textContentType="emailAddress"
@@ -232,7 +253,27 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
           </Btn>
         }
       >
-        <Text style={TYPE.body}>{t('settings:adult.access.password_intro')}</Text>
+        <Text style={TYPE.body}>
+          {t(
+            reauth
+              ? 'settings:adult.access.password_reauth'
+              : 'settings:adult.access.password_intro',
+          )}
+        </Text>
+        {reauth ? (
+          <LbTextInput
+            value={current}
+            onChangeText={setCurrent}
+            placeholder={t('settings:adult.access.password_current')}
+            accessibilityLabel={t('settings:adult.access.password_current')}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="current-password"
+            autoFocus
+          />
+        ) : null}
         <NewPasswordFields
           password={password}
           repeat={repeat}

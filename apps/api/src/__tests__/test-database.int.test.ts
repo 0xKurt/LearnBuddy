@@ -40,7 +40,13 @@ describe.skipIf(!dbReady)('test databases', () => {
     const build = 'lb_tplbuild_000000000000_deadbeef';
     const otherSet = 'lb_tpl_ffffffffffff';
     await admin(async (c) => {
-      for (const n of [old, recent, build, otherSet]) await c.query(`create database "${n}"`);
+      for (const n of [old, recent, build, otherSet]) {
+        // Two of the four names are fixed, so a run killed inside this test leaves them
+        // behind and every later run would fail at "database already exists" instead of
+        // testing anything. Clearing first is what the test claims to be about.
+        await c.query(`drop database if exists "${n}" with (force)`);
+        await c.query(`create database "${n}"`);
+      }
       await c.query(`comment on database "${otherSet}" is 'lb built ${new Date().toISOString()}'`);
     });
     try {

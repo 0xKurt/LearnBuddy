@@ -365,10 +365,14 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // (issue #84: module-scope styles froze the start palette's ink, which was invisible on
   // the night background — the axe pass at every shot is what catches that class now.)
   await page.getByRole('button', { name: 'Aussehen' }).click();
-  await expect(page.getByRole('radio', { name: 'Nacht' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Dunkel' })).toBeVisible();
   await shot(page, '15f-settings-look', { opened: true });
-  await page.getByRole('radio', { name: 'Nacht' }).click();
-  await expect(page.getByRole('radio', { name: 'Nacht' })).toHaveAttribute('aria-checked', 'true');
+  // Two axes since issue #140: the colours are one choice, dark is another. Dark with the
+  // colours kept is the combination the owner asked for — "blau eingestellt, blaue highlights".
+  await page.getByRole('radio', { name: 'Meer' }).click();
+  await page.getByRole('radio', { name: 'Dunkel' }).click();
+  await expect(page.getByRole('radio', { name: 'Dunkel' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: 'Meer' })).toHaveAttribute('aria-checked', 'true');
   await shot(page, '15g-settings-night', { opened: true });
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
@@ -377,6 +381,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await openMenu('Einstellungen');
   await page.getByRole('button', { name: 'Aussehen' }).click();
   await page.getByRole('radio', { name: 'Pastell' }).click();
+  await page.getByRole('radio', { name: 'Hell' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 

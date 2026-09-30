@@ -149,6 +149,8 @@
       "password_cta": "Cambiar contraseña",
       "password_sheet_title": "Cambiar contraseña",
       "password_intro": "La nueva contraseña vale a partir de ahora. Los demás dispositivos donde habéis iniciado sesión tendrán que volver a entrar.",
+      "password_reauth": "Por seguridad, la contraseña actual: así nadie que tenga el móvil un momento puede quedarse con la cuenta.",
+      "password_current": "Contraseña actual",
       "password_save": "Guardar contraseña",
       "saving": "Guardando …",
       "password_saved": "Nueva contraseña guardada. Los demás dispositivos tienen que volver a entrar.",
@@ -190,12 +192,18 @@
     "question": "¿Qué colores te gustan?",
     "hint": "Solo en este dispositivo. Puedes cambiarlo cuando quieras.",
     "sample": "¡Hola! Así se ve un texto.",
-    "name": {
-      "pastellSoft": "Pastel",
-      "night": "Noche",
+    "family": {
+      "pastell": "Pastel",
       "forest": "Bosque",
-      "ocean": "Océano",
+      "ocean": "Mar",
       "sunset": "Atardecer"
-    }
+    },
+    "mode": {
+      "system": "Como el móvil",
+      "light": "Claro",
+      "dark": "Oscuro"
+    },
+    "mode_question": "¿Claro u oscuro?",
+    "mode_hint": "«Como el móvil» se pone oscuro por la tarde solo."
   }
 }

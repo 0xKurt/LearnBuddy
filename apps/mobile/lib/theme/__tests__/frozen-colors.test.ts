@@ -21,8 +21,8 @@ describe('theme tokens stay live across a palette change', () => {
     const body = TYPE.body; // a held reference, like a component module would hold
     const soft = SHADOW.soft;
     try {
-      applyPalette('night');
-      const night = paletteOf('night');
+      applyPalette('pastellDark');
+      const night = paletteOf('pastellDark');
       expect(LB.ink).toBe(night.ink);
       expect(TYPE.body.color).toBe(night.ink);
       expect(TYPE.label.color).toBe(night.ink2);

@@ -149,6 +149,8 @@
       "password_cta": "Changer le mot de passe",
       "password_sheet_title": "Changer le mot de passe",
       "password_intro": "Le nouveau mot de passe s’applique dès maintenant. Les autres appareils où vous êtes connectés devront se reconnecter.",
+      "password_reauth": "Par sécurité, votre mot de passe actuel — ainsi personne qui tient brièvement le téléphone ne peut reprendre le compte.",
+      "password_current": "Mot de passe actuel",
       "password_save": "Enregistrer le mot de passe",
       "saving": "Enregistrement …",
       "password_saved": "Nouveau mot de passe enregistré. Les autres appareils doivent se reconnecter.",
@@ -190,12 +192,18 @@
     "question": "Quelles couleurs préfères-tu ?",
     "hint": "Seulement sur cet appareil. Tu peux changer quand tu veux.",
     "sample": "Salut ! Voilà à quoi ressemble un texte.",
-    "name": {
-      "pastellSoft": "Pastel",
-      "night": "Nuit",
+    "family": {
+      "pastell": "Pastel",
       "forest": "Forêt",
       "ocean": "Océan",
       "sunset": "Soir"
-    }
+    },
+    "mode": {
+      "system": "Comme le téléphone",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "mode_question": "Clair ou sombre ?",
+    "mode_hint": "« Comme le téléphone » passe au sombre le soir tout seul."
   }
 }

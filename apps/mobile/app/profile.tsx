@@ -48,6 +48,7 @@ import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { bottomRoom } from '../lib/theme/space.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
 const onlyDigits = (value: string) => value.replace(/\D+/g, '');
@@ -241,6 +242,7 @@ export default function Profile() {
                   {relation === 'self' ? t('profile.name_self') : t('profile.name_child')}
                 </Text>
                 <LbTextInput
+                  clearable
                   value={name}
                   onChangeText={setName}
                   maxLength={40}
@@ -444,7 +446,7 @@ export default function Profile() {
           style={{
             paddingHorizontal: 20,
             paddingTop: 8,
-            paddingBottom: Math.max(insets.bottom, 16),
+            paddingBottom: bottomRoom(insets.bottom),
             gap: 4,
           }}
         >
@@ -566,7 +568,7 @@ function Handover({ name, busy, onDone }: { name: string; busy: boolean; onDone:
         style={{
           paddingHorizontal: 20,
           paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: bottomRoom(insets.bottom),
         }}
       >
         <Btn size="lg" pill full busy={busy} onPress={onDone}>
@@ -625,7 +627,7 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
         style={{
           paddingHorizontal: 20,
           paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: bottomRoom(insets.bottom),
         }}
       >
         <Btn size="lg" pill full busy={busy} onPress={onDone}>

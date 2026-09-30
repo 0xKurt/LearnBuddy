@@ -263,6 +263,22 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
     expect(env.auth.signedOut.at(-1)).toEqual({ jwt: child.token, scope: 'global' });
   });
 
+  it('an adult has to have signed in just now to change the password (#131)', async () => {
+    // Otherwise an unlocked phone is enough: a sibling could change the password and lock
+    // the family out of their own account. A minor's profile is covered by the parents' PIN.
+    const l = await onboard(env);
+    env.clock.minutes(10);
+    const stale = await l.api.put('/account/password', { password: 'zu-spaet-dran-1' });
+    expect(stale.status).toBe(403);
+    expect(stale.body).toMatchObject({ error: { details: { reason: 'reauth_required' } } });
+    expect(env.auth.passwords.has(l.userId)).toBe(false);
+
+    // Signed in again: the same request goes through.
+    env.auth.signedInAt(l.token, Math.floor(env.clock.now().getTime() / 1000));
+    expect((await l.api.put('/account/password', { password: 'jetzt-frisch-1' })).status).toBe(200);
+    expect(env.auth.passwords.get(l.userId)).toBe('jetzt-frisch-1');
+  });
+
   it('a revoke that fails does not undo the password that was set (#131)', async () => {
     const l = await onboard(env);
     env.auth.signOutFails = true;

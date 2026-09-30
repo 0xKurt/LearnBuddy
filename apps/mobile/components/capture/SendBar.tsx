@@ -14,6 +14,7 @@ import { Btn } from '../lb/Btn.js';
 import { ErrorNote } from '../lb/ErrorNote.js';
 import { Progress } from '../lb/Progress.js';
 import { useToastBar } from '../lb/Toast.js';
+import { bottomRoom } from '../../lib/theme/space.js';
 
 type Props = {
   progress: SendProgress | null;
@@ -65,7 +66,7 @@ export function SendBar({
       style={{
         paddingHorizontal: 16,
         paddingTop: 8,
-        paddingBottom: Math.max(insets.bottom, 16),
+        paddingBottom: bottomRoom(insets.bottom),
         gap: 10,
       }}
     >

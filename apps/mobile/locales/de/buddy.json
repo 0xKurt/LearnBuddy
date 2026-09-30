@@ -161,6 +161,9 @@
   },
   "composer": {
     "placeholder": "Schreib Buddy …",
+    "remaining_one": "Noch ein Zeichen",
+    "remaining_other": "Noch {{count}} Zeichen",
+    "full": "Das Feld ist voll — schick das erst mal ab.",
     "send": "Senden",
     "photo": "Arbeitsblatt fotografieren",
     "keyboard": "Tastatur",

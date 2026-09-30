@@ -16,10 +16,10 @@ describe('the applied palette is the one truth', () => {
     const heard = vi.fn();
     const stop = onPaletteApplied(heard);
 
-    applyPalette('night');
+    applyPalette('pastellDark');
     expect(heard).toHaveBeenCalledTimes(1);
-    expect(activeTheme()).toBe('night');
-    expect(activePalette()).toEqual(paletteOf('night'));
+    expect(activeTheme()).toBe('pastellDark');
+    expect(activePalette()).toEqual(paletteOf('pastellDark'));
 
     applyPalette('forest');
     expect(heard).toHaveBeenCalledTimes(2);

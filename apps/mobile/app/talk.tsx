@@ -56,7 +56,7 @@ import { voiceLocale } from '../lib/speech/voice.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { SPACE } from '../lib/theme/space.js';
+import { SPACE, bottomRoom } from '../lib/theme/space.js';
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'paused';
 
@@ -509,7 +509,7 @@ export default function TalkScreen() {
           paddingHorizontal: SPACE.lg,
           // 12 like before on a phone without a gesture bar; with one, the device's inset
           // replaces it instead of adding to it (the fit check is exact to the pixel).
-          paddingBottom: Math.max(insets.bottom, SPACE.md),
+          paddingBottom: bottomRoom(insets.bottom, SPACE.md),
           paddingTop: SPACE.sm,
         }}
       >

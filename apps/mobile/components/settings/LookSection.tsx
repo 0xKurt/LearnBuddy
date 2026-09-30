@@ -9,7 +9,15 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import { paletteOf, THEME_NAMES, type ThemeName } from '../../lib/theme/palettes.js';
+import {
+  FAMILIES,
+  MODES,
+  paletteOf,
+  themeNameOf,
+  type Family,
+  type Mode,
+  type ThemeName,
+} from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Card } from '../lb/Card.js';
 import { Icon } from '../lb/Icon.js';
@@ -88,21 +96,49 @@ function Swatch({
 
 export function LookSection() {
   const { t } = useTranslation('settings');
-  const { name, choose } = useTheme();
-  const label = (n: ThemeName) => t(`look.name.${n}`);
+  const { name, family, mode, choose } = useTheme();
+  const dark = name.endsWith('Dark');
+  const familyLabel = (f: Family) => t(`look.family.${f}`);
+  const modeLabel = (m: Mode) => t(`look.mode.${m}`);
+
   return (
-    <Group title={t('look.title')} fold="look" summary={label(name)}>
+    <Group
+      title={t('look.title')}
+      fold="look"
+      summary={`${familyLabel(family)} · ${modeLabel(mode)}`}
+    >
       <Card padding={20}>
-        <Row question={t('look.question')} current={label(name)} hint={t('look.hint')}>
+        {/* Two axes since #140: the colour, and whether it is light or dark. Each swatch
+            previews the family in the mode that is showing, so the choice is honest — a
+            green card while the app is dark shows the DARK green. */}
+        <Row question={t('look.question')} current={familyLabel(family)} hint={t('look.hint')}>
           <View accessibilityRole="radiogroup" style={{ gap: 10 }}>
-            {THEME_NAMES.map((n) => (
+            {FAMILIES.map((f) => (
               <Swatch
-                key={n}
-                name={n}
-                on={n === name}
-                label={label(n)}
+                key={f}
+                name={themeNameOf(f, dark)}
+                on={f === family}
+                label={familyLabel(f)}
                 sample={t('look.sample')}
-                onPress={() => choose(n)}
+                onPress={() => choose({ family: f })}
+              />
+            ))}
+          </View>
+        </Row>
+        <Row
+          question={t('look.mode_question')}
+          current={modeLabel(mode)}
+          hint={t('look.mode_hint')}
+        >
+          <View accessibilityRole="radiogroup" style={{ gap: 10 }}>
+            {MODES.map((m) => (
+              <Swatch
+                key={m}
+                name={themeNameOf(family, m === 'dark' || (m === 'system' && dark))}
+                on={m === mode}
+                label={modeLabel(m)}
+                sample={t('look.sample')}
+                onPress={() => choose({ mode: m })}
               />
             ))}
           </View>

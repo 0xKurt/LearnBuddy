@@ -14,14 +14,16 @@
     "language": "Choose language"
   },
   "actions": {
-    "close": "Close",
     "cancel": "Cancel",
-    "save": "Save",
-    "retry": "Try again",
+    "clear_field": "Clear field",
+    "close": "Close",
     "continue": "Continue",
-    "done": "Done",
     "delete": "Delete",
-    "edit": "Change"
+    "done": "Done",
+    "edit": "Change",
+    "retry": "Try again",
+    "save": "Save",
+    "undo": "Undo"
   },
   "loading": "One moment …",
   "offline": "No connection – I'll try again shortly.",

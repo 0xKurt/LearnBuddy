@@ -9,10 +9,12 @@
 
 import { usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, type LayoutChangeEvent, Platform, Text, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { announce } from '../../lib/announce.js';
+import { keyboardOverlap } from '../../lib/keyboard.js';
+import { useKeyboardHeight } from '../../lib/useKeyboardHeight.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -21,17 +23,19 @@ import {
   registerToastBar,
   toast,
   toastBottom,
+  toastDuration,
   useToastState,
+  type ToastAction,
   type ToastBarHandle,
+  type ToastTone,
 } from '../../lib/toast.js';
 
 export { toast } from '../../lib/toast.js';
 
 export function ToastHost() {
-  const { palette } = useTheme();
-  const { message, tone, seq, bars } = useToastState();
+  const { message, tone, seq, action, bars } = useToastState();
   const insets = useSafeAreaInsets();
-  const keyboard = useIosKeyboardHeight();
+  const { overlap, onLayout } = useKeyboardOverlap();
   const pathname = usePathname();
   const lastPath = useRef(pathname);
   useEffect(() => {
@@ -43,20 +47,59 @@ export function ToastHost() {
   useEffect(() => {
     if (!message) return;
     announce(message, { liveRegion: true });
-    const timer = setTimeout(() => toast.hide(), 4500);
+    const timer = setTimeout(() => toast.hide(), toastDuration(tone, action !== null));
     return () => clearTimeout(timer);
-  }, [message, seq]);
-  if (!message) return null;
+  }, [message, seq, tone, action]);
+  return (
+    <>
+      {/* The ruler: it measures the screen and nothing else. Separate from the pill on
+          purpose — measuring the pill's own container would feed the padding back into
+          the measurement and the two would chase each other (issue #141). It is also
+          always mounted, so a message that arrives while the keyboard is already open
+          still knows how tall the screen is without one. */}
+      <View
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        onLayout={onLayout}
+        style={StyleSheet.absoluteFill}
+      />
+      {message ? (
+        <Pill
+          message={message}
+          tone={tone}
+          action={action}
+          bottom={toastBottom(insets.bottom, barHeight(bars), overlap)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function Pill({
+  message,
+  tone,
+  action,
+  bottom,
+}: {
+  message: string;
+  tone: ToastTone;
+  action: ToastAction | null;
+  bottom: number;
+}) {
+  const { palette } = useTheme();
   return (
     <View
-      pointerEvents="none"
+      // Only the offer is touchable; the pill itself never swallows a tap meant for
+      // the screen under it (#133 position 12).
+      pointerEvents="box-none"
       accessibilityLiveRegion="polite"
       accessibilityRole="alert"
       style={{
         position: 'absolute',
         left: 16,
         right: 16,
-        bottom: toastBottom(insets.bottom, barHeight(bars), keyboard),
+        bottom,
         alignItems: 'center',
       }}
     >
@@ -99,6 +142,33 @@ export function ToastHost() {
         <Text style={{ flexShrink: 1, color: palette.paper, fontSize: 15, lineHeight: 21 }}>
           {message}
         </Text>
+        {action ? (
+          <Pressable
+            onPress={() => toast.act()}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={action.label}
+            // The pill is as tall as its text; the target grows outwards through hitSlop.
+            style={{ justifyContent: 'center' }}
+          >
+            {({ pressed }) => (
+              <Text
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
+                style={{
+                  color: palette.paper,
+                  opacity: pressed ? 0.6 : 1,
+                  fontSize: 15,
+                  lineHeight: 21,
+                  fontWeight: '700',
+                  // Not colour alone: the offer is also the only underlined word here.
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {action.label}
+              </Text>
+            )}
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -124,21 +194,22 @@ export function useToastBar(): (e: LayoutChangeEvent) => void {
 }
 
 /**
- * iOS: how much of the screen the keyboard covers (0 when hidden). Android resizes the
- * window for the keyboard, so the toast is above it already.
+ * How much of the screen the keyboard covers here. Not the raw height: on a device whose
+ * window shrinks for the keyboard the pill is above it already, and adding the height
+ * again would park it in mid-screen. The same measurement as every screen makes
+ * (lib/keyboard.ts, issue #141) — hence the full-screen view this hook belongs to.
  */
-function useIosKeyboardHeight(): number {
+function useKeyboardOverlap(): { overlap: number; onLayout: (e: LayoutChangeEvent) => void } {
+  const keyboard = useKeyboardHeight();
   const [height, setHeight] = useState(0);
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-    const show = Keyboard.addListener('keyboardWillShow', (e) =>
-      setHeight(e.endCoordinates.height),
-    );
-    const hide = Keyboard.addListener('keyboardWillHide', () => setHeight(0));
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
-  return height;
+  const base = useRef(0);
+  const onLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const h = e.nativeEvent.layout.height;
+      if (keyboard === 0) base.current = h;
+      setHeight(h);
+    },
+    [keyboard],
+  );
+  return { overlap: keyboardOverlap(keyboard, base.current, height), onLayout };
 }

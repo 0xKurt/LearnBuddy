@@ -149,6 +149,8 @@
       "password_cta": "Cambia password",
       "password_sheet_title": "Cambia password",
       "password_intro": "La nuova password vale da subito. Gli altri dispositivi su cui siete collegati dovranno rientrare.",
+      "password_reauth": "Per sicurezza la password attuale, così nessuno che abbia il telefono per un attimo può prendersi l’accesso.",
+      "password_current": "Password attuale",
       "password_save": "Salva la password",
       "saving": "Salvataggio …",
       "password_saved": "Nuova password salvata. Gli altri dispositivi devono rientrare.",
@@ -190,12 +192,18 @@
     "question": "Quali colori ti piacciono?",
     "hint": "Solo su questo dispositivo. Puoi cambiare quando vuoi.",
     "sample": "Ciao! Ecco come appare un testo.",
-    "name": {
-      "pastellSoft": "Pastello",
-      "night": "Notte",
+    "family": {
+      "pastell": "Pastello",
       "forest": "Bosco",
-      "ocean": "Oceano",
+      "ocean": "Mare",
       "sunset": "Sera"
-    }
+    },
+    "mode": {
+      "system": "Come il telefono",
+      "light": "Chiaro",
+      "dark": "Scuro"
+    },
+    "mode_question": "Chiaro o scuro?",
+    "mode_hint": "«Come il telefono» diventa scuro la sera da solo."
   }
 }

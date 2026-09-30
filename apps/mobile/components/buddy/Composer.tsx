@@ -39,13 +39,16 @@ import { AttachStrip } from './AttachStrip.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SPACE, bottomRoom } from '../../lib/theme/space.js';
 import { Sheet } from '../lb/Sheet.js';
 import { useAttachments } from '../../lib/capture/useAttachments.js';
 import type { SendProgress } from '../../lib/capture/upload.js';
 
 /** SendMessageRequest.text allows at most 2000 characters. */
 const MAX_MESSAGE_LENGTH = 2000;
+// The count only appears once it is about to matter: a permanent 0/2000 under the field
+// would be one more number on a screen that is meant to be calm (#133 position 17).
+const COUNT_FROM = MAX_MESSAGE_LENGTH - 200;
 
 export function Composer({
   disabled,
@@ -157,7 +160,7 @@ export function Composer({
     gap: SPACE.sm,
     paddingHorizontal: SPACE.md,
     paddingTop: SPACE.xs,
-    paddingBottom: Math.max(insets.bottom, SPACE.sm),
+    paddingBottom: bottomRoom(insets.bottom, SPACE.md),
   };
 
   const stopBtn = (size: 'sm' | 'lg') => (
@@ -320,6 +323,24 @@ export function Composer({
       {attachSheet}
       <MicStatus voice={voice} />
       {attachments}
+      {text.length >= COUNT_FROM ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[
+            TYPE.label,
+            {
+              color: text.length >= MAX_MESSAGE_LENGTH ? palette.danger : palette.ink2,
+              alignSelf: 'flex-end',
+              marginBottom: SPACE.xs,
+              marginRight: SPACE.sm,
+            },
+          ]}
+        >
+          {text.length >= MAX_MESSAGE_LENGTH
+            ? t('buddy:composer.full')
+            : t('buddy:composer.remaining', { count: MAX_MESSAGE_LENGTH - text.length })}
+        </Text>
+      ) : null}
       <View
         style={[
           {

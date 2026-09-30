@@ -424,6 +424,13 @@ export type MemoryList = z.infer<typeof MemoryList>;
 export const UpdateMemoryRequest = z.union([
   z.object({ statement: z.string().trim().min(1).max(300), version: z.number().int() }),
   z.object({ retract: z.literal(true), version: z.number().int() }),
+  /**
+   * Taking a removal back, for the "Rückgängig" the app offers in the moment it happens
+   * (issue #133 position 12). Deliberately not a way to resurrect anything at any time:
+   * the server only allows it while the removal is fresh (UNRETRACT_WINDOW_MINUTES) and
+   * the version still matches, so "vergessen" keeps meaning forgotten.
+   */
+  z.object({ unretract: z.literal(true), version: z.number().int() }),
 ]);
 export type UpdateMemoryRequest = z.infer<typeof UpdateMemoryRequest>;
 

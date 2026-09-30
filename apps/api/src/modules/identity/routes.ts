@@ -413,6 +413,16 @@ identityRoutes.put('/account/password', requireUser, requireAccountAnyConsent, a
   const account = c.get('account');
   const learner = await findLearner(deps.db, account.id);
   assertAccountHolderOf(c, learner);
+  // An adult holds their own account, so nothing else stands between an unlocked phone and
+  // a taken-over login — a sibling with the phone in hand could change the password and
+  // lock the family out (audit 30.09., issue #131). The same freshness the PIN already
+  // asks for: a password sign-in within the last five minutes, which a token refresh does
+  // not give. A minor's profile is covered by the parents' PIN above.
+  if (!(learner && isMinor(learner, deps.now())) && !signedInJustNow(c)) {
+    throw new AppError('forbidden', 'Sign in again to change the password', {
+      reason: 'reauth_required',
+    });
+  }
   await deps.auth.updatePassword(c.get('user').userId, input.password);
   // The other devices go too (issue #131). Supabase's admin update leaves every refresh
   // token minting access tokens, and the usual reason to change a password in a family is

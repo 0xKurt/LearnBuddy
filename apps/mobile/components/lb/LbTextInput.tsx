@@ -4,6 +4,7 @@
 
 import { forwardRef, useState } from 'react';
 import { TextInput, View, Text, Pressable, type TextInputProps } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { isDarkBackground } from '../../lib/theme/luminance.js';
@@ -11,6 +12,14 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from './Icon.js';
 
 type Props = TextInputProps & {
+  /**
+   * An × that empties the field, while it has content (#133 position 17). Opt-in, not
+   * everywhere: it earns its place where a typo means retyping a whole address, and it
+   * would only be one more thing to hit next to a one-word answer. Never together with
+   * `showToggle` — both want the same corner, and a password is not a field to wipe by
+   * accident.
+   */
+  clearable?: boolean;
   showToggle?: boolean;
   shown?: boolean;
   onToggle?: () => void;
@@ -21,6 +30,7 @@ type Props = TextInputProps & {
 
 export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
   {
+    clearable,
     showToggle,
     shown,
     onToggle,
@@ -35,7 +45,9 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
   ref,
 ) {
   const { palette } = useTheme();
+  const { t } = useTranslation('common');
   const [focused, setFocused] = useState(false);
+  const canClear = clearable === true && !showToggle && (rest.value ?? '').length > 0;
   const borderColor = error ? palette.danger : focused ? palette.primary : palette.field;
   // iOS has no live regions — the field says its error itself (lib/announcePlan.ts).
   useAnnounce(errorMessage);
@@ -66,7 +78,7 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
               borderRadius: 16,
               // Keep the text still when the border gets thicker.
               paddingHorizontal: focused || error ? 15.5 : 16,
-              paddingRight: showToggle ? 48 : focused || error ? 15.5 : 16,
+              paddingRight: showToggle || canClear ? 48 : focused || error ? 15.5 : 16,
               // minHeight, not height: large system text grows the field instead of clipping.
               minHeight: 52,
               paddingVertical: 12,
@@ -81,6 +93,25 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
             style,
           ]}
         />
+        {canClear && (
+          <Pressable
+            onPress={() => rest.onChangeText?.('')}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t('actions.clear_field')}
+            style={{
+              position: 'absolute',
+              right: 14,
+              top: 0,
+              bottom: 0,
+              justifyContent: 'center',
+            }}
+          >
+            {({ pressed }) => (
+              <Icon name="close" size={18} color={pressed ? palette.ink : palette.ink3} />
+            )}
+          </Pressable>
+        )}
         {showToggle && onToggle && (
           <Pressable
             onPress={onToggle}

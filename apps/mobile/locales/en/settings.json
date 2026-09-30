@@ -149,6 +149,8 @@
       "password_cta": "Change password",
       "password_sheet_title": "Change password",
       "password_intro": "The new password counts from now on. Other devices you are signed in on will have to sign in again.",
+      "password_reauth": "One more step: your current password, so nobody who briefly holds the phone can take the account over.",
+      "password_current": "Current password",
       "password_save": "Save password",
       "saving": "Saving …",
       "password_saved": "New password saved. Other devices have to sign in again.",
@@ -190,12 +192,18 @@
     "question": "Which colours do you like?",
     "hint": "On this device only. You can change it any time.",
     "sample": "Hello! This is what text looks like.",
-    "name": {
-      "pastellSoft": "Pastel",
-      "night": "Night",
+    "family": {
+      "pastell": "Pastel",
       "forest": "Forest",
       "ocean": "Ocean",
       "sunset": "Sunset"
-    }
+    },
+    "mode": {
+      "system": "Like the phone",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "mode_question": "Light or dark?",
+    "mode_hint": "“Like the phone” turns dark in the evening by itself."
   }
 }

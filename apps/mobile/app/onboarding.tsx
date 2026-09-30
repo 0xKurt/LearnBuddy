@@ -19,7 +19,7 @@ import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { SPACE } from '../lib/theme/space.js';
+import { SPACE, bottomRoom } from '../lib/theme/space.js';
 
 const STEPS = ['s1', 's2', 's3'] as const;
 /** The three ways in, shown on the first card (decorative — the body names them). */
@@ -91,7 +91,7 @@ export default function Onboarding() {
       <View
         style={{
           paddingHorizontal: 20,
-          paddingBottom: Math.max(insets.bottom, SPACE.md),
+          paddingBottom: bottomRoom(insets.bottom, SPACE.md),
           gap: SPACE.md,
           alignItems: 'center',
         }}

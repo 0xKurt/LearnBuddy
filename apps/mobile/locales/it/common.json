@@ -14,14 +14,16 @@
     "language": "Scegli la lingua"
   },
   "actions": {
-    "close": "Chiudi",
     "cancel": "Annulla",
-    "save": "Salva",
-    "retry": "Riprova",
+    "clear_field": "Svuota il campo",
+    "close": "Chiudi",
     "continue": "Continua",
-    "done": "Fatto",
     "delete": "Elimina",
-    "edit": "Modifica"
+    "done": "Fatto",
+    "edit": "Modifica",
+    "retry": "Riprova",
+    "save": "Salva",
+    "undo": "Annulla"
   },
   "loading": "Un momento…",
   "offline": "Nessuna connessione – riprovo tra poco.",

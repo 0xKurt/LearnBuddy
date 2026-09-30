@@ -315,6 +315,7 @@ export default function Welcome() {
               autoCapitalize="none"
               autoCorrect={false}
               spellCheck={false}
+              clearable
               autoComplete="email"
               keyboardType="email-address"
               // On sign-up, iOS AutoFill pairs a `username` field with `newPassword`

@@ -88,6 +88,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { reacted } from '../../lib/perf.js';
+import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 
 type AnswerInput = { text: string } | { choice: number };
 
@@ -895,7 +896,7 @@ export default function PracticeScreen() {
             style={{
               paddingHorizontal: 16,
               paddingTop: 8,
-              paddingBottom: voiceOn ? 0 : Math.max(insets.bottom, 12),
+              paddingBottom: voiceOn ? 0 : bottomRoom(insets.bottom, SPACE.md),
             }}
           >
             <ChoiceList

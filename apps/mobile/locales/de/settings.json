@@ -149,6 +149,8 @@
       "password_cta": "Passwort ändern",
       "password_sheet_title": "Passwort ändern",
       "password_intro": "Das neue Passwort gilt ab sofort. Andere Geräte, auf denen ihr angemeldet seid, müssen sich danach neu anmelden.",
+      "password_reauth": "Zur Sicherheit einmal das aktuelle Passwort — damit niemand, der nur kurz das Handy in der Hand hat, den Zugang übernimmt.",
+      "password_current": "Aktuelles Passwort",
       "password_save": "Passwort speichern",
       "saving": "Wird gespeichert …",
       "password_saved": "Neues Passwort gespeichert. Andere Geräte müssen sich neu anmelden.",
@@ -190,12 +192,18 @@
     "question": "Welche Farben magst du?",
     "hint": "Gilt nur auf diesem Gerät. Du kannst jederzeit wechseln.",
     "sample": "Hallo! So sieht ein Text aus.",
-    "name": {
-      "pastellSoft": "Pastell",
-      "night": "Nacht",
+    "family": {
+      "pastell": "Pastell",
       "forest": "Wald",
       "ocean": "Meer",
       "sunset": "Abend"
-    }
+    },
+    "mode": {
+      "system": "Wie das Handy",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "mode_question": "Hell oder dunkel?",
+    "mode_hint": "„Wie das Handy“ wird abends von selbst dunkel."
   }
 }

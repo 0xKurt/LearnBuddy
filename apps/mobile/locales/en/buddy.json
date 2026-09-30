@@ -161,6 +161,9 @@
   },
   "composer": {
     "placeholder": "Write to Buddy …",
+    "remaining_one": "One character left",
+    "remaining_other": "{{count}} characters left",
+    "full": "The field is full — send this part first.",
     "send": "Send",
     "photo": "Photograph a worksheet",
     "keyboard": "Keyboard",

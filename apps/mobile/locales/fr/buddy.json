@@ -161,6 +161,9 @@
   },
   "composer": {
     "placeholder": "Écris à Buddy…",
+    "remaining_one": "Encore un caractère",
+    "remaining_other": "Encore {{count}} caractères",
+    "full": "Le champ est plein — envoie déjà ça.",
     "send": "Envoyer",
     "photo": "Photographier une fiche",
     "keyboard": "Clavier",

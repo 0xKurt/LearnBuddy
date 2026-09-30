@@ -19,6 +19,7 @@ import { MemorySkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
+import type { ToastAction } from '../lib/toast.js';
 import { MemoryItem } from '../components/memory/MemoryItem.js';
 import { ApiError } from '../lib/api/client.js';
 import { updateMemory } from '../lib/api/endpoints.js';
@@ -85,7 +86,12 @@ export default function MemoryScreen() {
     }
   }
 
-  async function change(m: MemoryView, body: UpdateMemoryRequest, done: string) {
+  async function change(
+    m: MemoryView,
+    body: UpdateMemoryRequest,
+    done: string,
+    undo?: ToastAction,
+  ) {
     // A ref, not state: a double tap must not send a second PATCH (it would hit "not found").
     if (inFlight.current) return;
     inFlight.current = true;
@@ -96,7 +102,7 @@ export default function MemoryScreen() {
       void queryClient.invalidateQueries({ queryKey: keys.home });
       await queryClient.invalidateQueries({ queryKey: keys.memory });
       setEditingId(null);
-      toast.show(done);
+      toast.show(done, 'info', undo ? { action: undo } : {});
     } catch (err) {
       toast.show(messageFor(err), 'error');
       if (err instanceof ApiError && (err.code === 'stale' || err.code === 'not_found')) {
@@ -112,7 +118,30 @@ export default function MemoryScreen() {
   function confirmRemove() {
     const m = removeTarget;
     setRemoveOpen(false);
-    if (m) void change(m, { retract: true, version: m.version }, t('memory:removed'));
+    if (!m) return;
+    // The offer is real, not decoration: the server takes a fresh removal back
+    // (UNRETRACT_WINDOW_MINUTES, issue #133 position 12). A removal that has stood
+    // longer than that answers 404, and the message below says so plainly.
+    void change(m, { retract: true, version: m.version }, t('memory:removed'), {
+      label: t('common:actions.undo'),
+      run: () => void undoRemove(m.id, m.version + 1),
+    });
+  }
+
+  async function undoRemove(id: string, version: number) {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      await updateMemory(id, { unretract: true, version });
+      void queryClient.invalidateQueries({ queryKey: keys.home });
+      await queryClient.invalidateQueries({ queryKey: keys.memory });
+      toast.show(t('memory:removed_undone'));
+    } catch (err) {
+      toast.show(messageFor(err), 'error');
+      await memory.refetch();
+    } finally {
+      inFlight.current = false;
+    }
   }
 
   const title = t('memory:title');

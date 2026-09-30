@@ -98,8 +98,9 @@ type QuestionProps = {
   imageMaxHeight?: number;
   /**
    * The card grows to this height when the screen has room the conversation does not
-   * need (issue #96): the figure takes the measured rest of the card, a plain question
-   * stands centred like a flash card. Smaller than the natural height, it does nothing.
+   * need (issue #96) — but only when there is a drawing or a photo to use it (#143).
+   * The figure then takes the measured rest of the card. Smaller than the natural
+   * height, or without a visual, it does nothing.
    */
   minHeight?: number;
 };
@@ -121,8 +122,14 @@ export function QuestionCard({
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
   const filled = fillableAnswer(prompt, answer);
-  const grown = minHeight !== undefined && minHeight > 0;
   const hasVisual = figure !== null || (image !== null && imageKey !== undefined);
+  // Only a card that USES the room takes it (issue #143). #96 gave the card whatever the
+  // conversation did not need, so a drawing could size itself from the measured space —
+  // right for a figure, wrong for one line of text: "da steht nur eine kleine frage und
+  // das feld ist riesig. das wirkt richtig komisch" (owner, 30.09., after the first test
+  // with his daughter). A plain question keeps its own height; the room stays with the
+  // conversation that appears right under it a moment later.
+  const grown = hasVisual && minHeight !== undefined && minHeight > 0;
   // The room the drawing really has inside the grown card, measured instead of guessed
   // from the window (issue #96): the card's padding (18 pt twice), the 12 pt gap under
   // the prompt and the drawing's own frame (FigureView: 12 pt padding twice, 1 pt border
@@ -133,10 +140,7 @@ export function QuestionCard({
   return (
     <Card tone="lavender" padding={18} radius={24} style={grown ? { minHeight } : null}>
       <View style={grown ? { flexGrow: 1 } : null}>
-        <View
-          onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}
-          style={grown && !hasVisual ? { flexGrow: 1, justifyContent: 'center' } : null}
-        >
+        <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
           {fromBuddy || topic ? (
             // Where it comes from and what it is about share one line.
             <View

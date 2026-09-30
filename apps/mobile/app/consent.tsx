@@ -26,6 +26,7 @@ import { currentLocale } from '../lib/i18n/index.js';
 import { signOutHere } from '../lib/leave.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { bottomRoom } from '../lib/theme/space.js';
 
 const POINTS = [
   'point_data',
@@ -152,7 +153,7 @@ export default function Consent() {
         style={{
           paddingHorizontal: 20,
           paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: bottomRoom(insets.bottom),
           gap: 10,
         }}
       >

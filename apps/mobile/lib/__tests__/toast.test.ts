@@ -4,7 +4,14 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { barHeight, registerToastBar, toast, toastBottom, useToastState } from '../toast.js';
+import {
+  barHeight,
+  registerToastBar,
+  toast,
+  toastBottom,
+  toastDuration,
+  useToastState,
+} from '../toast.js';
 
 beforeEach(() => {
   useToastState.setState({
@@ -12,6 +19,8 @@ beforeEach(() => {
     tone: 'info',
     seq: 0,
     survivesNavigation: false,
+    action: null,
+    queue: [],
     bars: {},
   });
 });
@@ -40,11 +49,56 @@ describe('a toast belongs to its screen', () => {
     expect(useToastState.getState().message).toBeNull();
   });
 
-  it('the next plain message drops the privilege', () => {
+  it('each message keeps its own privilege, also while it waits (#133 position 10)', () => {
     toast.show('Gespeichert.', 'info', { survivesNavigation: true });
+    // Waits its turn now instead of replacing the first — and it is meant for THIS screen.
     toast.show('Kopiert.');
     toast.routeChanged();
+    expect(useToastState.getState().message).toBe('Gespeichert.');
+    expect(useToastState.getState().queue).toHaveLength(0);
+    toast.hide();
     expect(useToastState.getState().message).toBeNull();
+  });
+
+  it('a second message waits instead of replacing the first (#133 position 10)', () => {
+    toast.show('Gespeichert.');
+    toast.show('Foto konnte nicht hochgeladen werden.', 'error');
+    expect(useToastState.getState().message).toBe('Gespeichert.');
+    toast.hide();
+    const s = useToastState.getState();
+    expect(s.message).toBe('Foto konnte nicht hochgeladen werden.');
+    expect(s.tone).toBe('error');
+    toast.hide();
+    expect(useToastState.getState().message).toBeNull();
+  });
+
+  it('the same text twice only restarts the timer', () => {
+    toast.show('Gespeichert.');
+    const first = useToastState.getState().seq;
+    toast.show('Gespeichert.');
+    expect(useToastState.getState().seq).toBe(first + 1);
+    expect(useToastState.getState().queue).toHaveLength(0);
+    toast.show('Kopiert.');
+    toast.show('Kopiert.');
+    expect(useToastState.getState().queue).toHaveLength(1);
+  });
+
+  it('an error is given longer to be read, an offer longer still (#133 position 10)', () => {
+    expect(toastDuration('info', false)).toBe(4500);
+    expect(toastDuration('error', false)).toBeGreaterThan(toastDuration('info', false));
+    expect(toastDuration('info', true)).toBeGreaterThan(toastDuration('error', false));
+  });
+
+  it('taking the offer runs it once and takes the message with it (#133 position 12)', () => {
+    let ran = 0;
+    toast.show('Notiz gelöscht.', 'info', { action: { label: 'Rückgängig', run: () => ran++ } });
+    toast.act();
+    expect(ran).toBe(1);
+    expect(useToastState.getState().message).toBeNull();
+    expect(useToastState.getState().action).toBeNull();
+    // Nothing to take any more: a second tap does nothing.
+    toast.act();
+    expect(ran).toBe(1);
   });
 
   it('dismiss clears only the message that no longer holds', () => {

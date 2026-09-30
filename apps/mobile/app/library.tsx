@@ -28,6 +28,7 @@ import { messageFor } from '../lib/errors.js';
 import type { SubjectTone } from '../lib/theme/palettes.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { bottomRoom } from '../lib/theme/space.js';
 
 /** Each kind of subject keeps its pastel, so a subject looks the same everywhere in the list. */
 const KIND_TONE: Record<SubjectKind, SubjectTone> = {
@@ -294,7 +295,7 @@ export default function LibraryScreen() {
             style={{
               paddingHorizontal: 16,
               paddingTop: 8,
-              paddingBottom: Math.max(insets.bottom, 16),
+              paddingBottom: bottomRoom(insets.bottom),
             }}
           >
             <Btn size="lg" pill full onPress={openCapture}>

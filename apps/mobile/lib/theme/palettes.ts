@@ -204,14 +204,19 @@ const night: Palette = {
   },
 };
 
-/** An accent swap on the light palette: the calm stays, the violet turns. */
-function accent(
-  base: Palette,
-  over: Pick<Palette, 'primary' | 'primaryDk' | 'primaryLt' | 'ring' | 'bg' | 'canvas'> & {
-    figureFill: string;
-    figureFillSoft: string;
-  },
-): Palette {
+/**
+ * An accent swap: the calm stays, the hue turns. The same swap applies to the light base
+ * and to the dark one, which is what makes a colour family a *family* rather than a single
+ * palette (issue #140) — "wenn blau eingestellt ist, hat der darkmode blaue highlights".
+ */
+type Accent = Pick<Palette, 'primary' | 'primaryDk' | 'primaryLt' | 'ring' | 'bg' | 'canvas'> & {
+  figureFill: string;
+  figureFillSoft: string;
+  /** The light behind a screen, in the family's own hue (components/lb/Glow.tsx). */
+  glow?: Palette['glow'];
+};
+
+function accent(base: Palette, over: Accent): Palette {
   return {
     ...base,
     primary: over.primary,
@@ -220,48 +225,169 @@ function accent(
     ring: over.ring,
     bg: over.bg,
     canvas: over.canvas,
+    ...(over.glow ? { glow: over.glow } : {}),
     figure: { ...base.figure, fill: over.figureFill, fillSoft: over.figureFillSoft },
   };
 }
 
+/** A colour family: the same hue in both modes. */
+export const FAMILIES = ['pastell', 'forest', 'ocean', 'sunset'] as const;
+export type Family = (typeof FAMILIES)[number];
+
+/**
+ * Light or dark — and `system`, which follows the phone. A mode is NOT a family: until
+ * #140 "Nacht" was one of five flat palettes, so choosing dark meant giving up your
+ * colour. They are two axes now.
+ */
+export const MODES = ['system', 'light', 'dark'] as const;
+export type Mode = (typeof MODES)[number];
+
+/** The hue of each family, in both modes. Written once, applied to both bases. */
+const ACCENTS: Record<Exclude<Family, 'pastell'>, { light: Accent; dark: Accent }> = {
+  forest: {
+    light: {
+      primary: '#2f7d5b',
+      primaryDk: '#256149',
+      primaryLt: '#e0f1e8',
+      ring: 'rgba(47,125,91,0.22)',
+      bg: '#f6fbf8',
+      canvas: '#e9f4ee',
+      figureFill: '#9fd0b6',
+      figureFillSoft: 'rgba(47,125,91,0.14)',
+      glow: [
+        { color: '#cfe9dc', opacity: 0.9 },
+        { color: '#d9f0e4', opacity: 0.95 },
+        { color: '#e8f3d6', opacity: 0.9 },
+      ],
+    },
+    dark: {
+      primary: '#5fae86',
+      primaryDk: '#86c9a6',
+      primaryLt: '#1e3a2c',
+      ring: 'rgba(95,174,134,0.30)',
+      bg: '#121e18',
+      canvas: '#1d2f25',
+      figureFill: '#4a7d63',
+      figureFillSoft: 'rgba(95,174,134,0.20)',
+      glow: [
+        { color: '#1f5e4a', opacity: 0.38 },
+        { color: '#2c6b52', opacity: 0.42 },
+        { color: '#4a6b28', opacity: 0.3 },
+      ],
+    },
+  },
+  ocean: {
+    light: {
+      primary: '#2a6ab0',
+      primaryDk: '#20548c',
+      primaryLt: '#e2edfb',
+      ring: 'rgba(42,106,176,0.22)',
+      bg: '#f6f9fe',
+      canvas: '#e8f0fa',
+      figureFill: '#a6c6ec',
+      figureFillSoft: 'rgba(42,106,176,0.14)',
+      glow: [
+        { color: '#cfe0ff', opacity: 0.9 },
+        { color: '#d6e9fb', opacity: 0.95 },
+        { color: '#d3f0f2', opacity: 0.9 },
+      ],
+    },
+    dark: {
+      primary: '#5a9fe0',
+      primaryDk: '#8bc0f0',
+      primaryLt: '#1b2e45',
+      ring: 'rgba(90,159,224,0.30)',
+      bg: '#121a26',
+      canvas: '#1c2a3c',
+      figureFill: '#41719e',
+      figureFillSoft: 'rgba(90,159,224,0.20)',
+      glow: [
+        { color: '#1f4a86', opacity: 0.38 },
+        { color: '#2a5c96', opacity: 0.42 },
+        { color: '#1f6b72', opacity: 0.3 },
+      ],
+    },
+  },
+  sunset: {
+    light: {
+      primary: '#b45a1f',
+      primaryDk: '#8f4615',
+      primaryLt: '#fdece0',
+      ring: 'rgba(180,90,31,0.22)',
+      bg: '#fdf8f4',
+      canvas: '#f8ece3',
+      figureFill: '#eebb8e',
+      figureFillSoft: 'rgba(180,90,31,0.14)',
+      glow: [
+        { color: '#ffe0c7', opacity: 0.9 },
+        { color: '#ffd9d0', opacity: 0.95 },
+        { color: '#ffe9c2', opacity: 0.9 },
+      ],
+    },
+    dark: {
+      primary: '#e0925a',
+      primaryDk: '#f0b489',
+      primaryLt: '#3d2a1b',
+      ring: 'rgba(224,146,90,0.30)',
+      bg: '#241a14',
+      canvas: '#362820',
+      figureFill: '#9e6a41',
+      figureFillSoft: 'rgba(224,146,90,0.20)',
+      glow: [
+        { color: '#8a4a1f', opacity: 0.38 },
+        { color: '#96432c', opacity: 0.42 },
+        { color: '#8a6420', opacity: 0.3 },
+      ],
+    },
+  },
+};
+
+/**
+ * Every family in both modes, generated rather than typed (issue #140). The key is what is
+ * stored and what `applyPalette` takes; the two axes are resolved into it by the provider.
+ */
 export const PALETTES = {
-  pastellSoft,
-  night,
-  forest: accent(pastellSoft, {
-    primary: '#2f7d5b',
-    primaryDk: '#256149',
-    primaryLt: '#e0f1e8',
-    ring: 'rgba(47,125,91,0.22)',
-    bg: '#f6fbf8',
-    canvas: '#e9f4ee',
-    figureFill: '#9fd0b6',
-    figureFillSoft: 'rgba(47,125,91,0.14)',
-  }),
-  ocean: accent(pastellSoft, {
-    primary: '#2a6ab0',
-    primaryDk: '#20548c',
-    primaryLt: '#e2edfb',
-    ring: 'rgba(42,106,176,0.22)',
-    bg: '#f6f9fe',
-    canvas: '#e8f0fa',
-    figureFill: '#a6c6ec',
-    figureFillSoft: 'rgba(42,106,176,0.14)',
-  }),
-  sunset: accent(pastellSoft, {
-    primary: '#b45a1f',
-    primaryDk: '#8f4615',
-    primaryLt: '#fdece0',
-    ring: 'rgba(180,90,31,0.22)',
-    bg: '#fdf8f4',
-    canvas: '#f8ece3',
-    figureFill: '#eebb8e',
-    figureFillSoft: 'rgba(180,90,31,0.14)',
-  }),
+  pastell: pastellSoft,
+  pastellDark: night,
+  forest: accent(pastellSoft, ACCENTS.forest.light),
+  forestDark: accent(night, ACCENTS.forest.dark),
+  ocean: accent(pastellSoft, ACCENTS.ocean.light),
+  oceanDark: accent(night, ACCENTS.ocean.dark),
+  sunset: accent(pastellSoft, ACCENTS.sunset.light),
+  sunsetDark: accent(night, ACCENTS.sunset.dark),
 } satisfies Record<string, Palette>;
 
 export type ThemeName = keyof typeof PALETTES;
 export const THEME_NAMES = Object.keys(PALETTES) as ThemeName[];
-export const DEFAULT_THEME: ThemeName = 'pastellSoft';
+export const DEFAULT_FAMILY: Family = 'pastell';
+/** Following the phone is the default: the app goes dark in the evening on its own. */
+export const DEFAULT_MODE: Mode = 'system';
+export const DEFAULT_THEME: ThemeName = 'pastell';
+
+/** The palette key for a family and a resolved (never `system`) mode. */
+export function themeNameOf(family: Family, dark: boolean): ThemeName {
+  return (dark ? `${family}Dark` : family) as ThemeName;
+}
+
+/**
+ * What an older stored value meant. Before #140 the five palettes were flat, and "night"
+ * was a family rather than a mode — a device that kept it gets pastell + dark, which is
+ * what it was showing.
+ */
+export function familyModeOf(stored: string | null | undefined): { family: Family; mode: Mode } {
+  switch (stored) {
+    case 'night':
+      return { family: 'pastell', mode: 'dark' };
+    case 'pastellSoft':
+      return { family: 'pastell', mode: 'light' };
+    case 'forest':
+    case 'ocean':
+    case 'sunset':
+      return { family: stored, mode: 'light' };
+    default:
+      return { family: DEFAULT_FAMILY, mode: DEFAULT_MODE };
+  }
+}
 
 export function paletteOf(name: ThemeName | null | undefined): Palette {
   return PALETTES[name ?? DEFAULT_THEME] ?? PALETTES[DEFAULT_THEME];
