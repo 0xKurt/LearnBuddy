@@ -178,6 +178,16 @@ export function buildContext(
     `Name: ${learner.display_name} · age: ${ageGroup(learner.birth_date, today)}${learner.isMinor ? ' (minor)' : ''} · level: ${level}`,
   );
   learnerBlock.push(`Language: ${LANGUAGE_NAMES[learner.locale] ?? learner.locale}`);
+  // "Sehen meine Eltern das?" — read off what the code actually allows, so the answer is the
+  // truth and not an improvised promise (issue #114). The account holder can export
+  // everything (identity/privacy.ts, behind the PIN for a minor: assertAccountHolderOf) but
+  // nothing shows them the conversation as it happens, and Buddy never reports on her by
+  // himself — not even from a safeguarding turn (docs/architecture.md §Safeguarding, D-10).
+  learnerBlock.push(
+    learner.isMinor
+      ? 'Who can read this: only her and you. The adult whose account this is can download everything she writes here, with their PIN — they cannot watch along, and nothing is passed on to them by itself.'
+      : 'Who can read this: only her and you. Nothing is passed on to anyone.',
+  );
 
   // Knowledge, split by what it is.
   const permanent = state.memories.filter((m) => m.kind !== 'constraint');
