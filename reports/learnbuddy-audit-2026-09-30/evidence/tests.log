@@ -1,0 +1,655 @@
+ WARN  Issue while reading "/Users/kurt/.npmrc". Failed to replace env in config: ${NODE_AUTH_TOKEN}
+
+> learnbuddy@0.0.0 test /Users/kurt/git/LearnBuddy
+> pnpm -r --parallel test
+
+ WARN  Issue while reading "/Users/kurt/.npmrc". Failed to replace env in config: ${NODE_AUTH_TOKEN}
+apps/api                                 |  WARN  Unsupported engine: wanted: {"node":"22.x"} (current: {"node":"v26.10.0","pnpm":"10.32.1"})
+Scope: 4 of 5 workspace projects
+apps/mobile test$ vitest run
+apps/api test$ vitest run
+packages/shared-math test$ vitest run
+packages/shared-types test$ vitest run --passWithNoTests
+apps/mobile test: [33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+packages/shared-math test:  RUN  v2.1.9 /Users/kurt/git/LearnBuddy/packages/shared-math
+packages/shared-types test:  RUN  v2.1.9 /Users/kurt/git/LearnBuddy/packages/shared-types
+apps/api test:  RUN  v2.1.9 /Users/kurt/git/LearnBuddy/apps/api
+apps/mobile test:  RUN  v2.1.9 /Users/kurt/git/LearnBuddy/apps/mobile
+apps/mobile test:  ✓ lib/__tests__/homeLayout.test.ts (17 tests) 4ms
+packages/shared-math test:  ✓ src/__tests__/answer.test.ts (7 tests) 12ms
+packages/shared-math test:  ✓ src/__tests__/expression.test.ts (28 tests) 6ms
+apps/mobile test:  ✓ lib/buddy/__tests__/moon.test.ts (38 tests) 123ms
+packages/shared-types test:  ✓ src/contracts/__tests__/compat.test.ts (4 tests) 9ms
+packages/shared-types test:  Test Files  1 passed (1)
+packages/shared-types test:       Tests  4 passed (4)
+packages/shared-types test:    Start at  18:38:35
+packages/shared-types test:    Duration  1.88s (transform 91ms, setup 0ms, collect 140ms, tests 9ms, environment 0ms, prepare 288ms)
+apps/mobile test:  ✓ lib/math/__tests__/prompt.test.ts (21 tests) 8ms
+apps/mobile test:  ✓ lib/speech/__tests__/dictation.test.ts (18 tests) 8ms
+apps/mobile test:  ✓ lib/speech/__tests__/readAloud.test.ts (15 tests) 7ms
+packages/shared-math test:  ✓ src/__tests__/numeric-input.test.ts (23 tests) 106ms
+packages/shared-types test: Done
+packages/shared-math test:  Test Files  3 passed (3)
+packages/shared-math test:       Tests  58 passed (58)
+packages/shared-math test:    Start at  18:38:35
+packages/shared-math test:    Duration  2.00s (transform 168ms, setup 0ms, collect 304ms, tests 125ms, environment 0ms, prepare 1.16s)
+apps/mobile test:  ✓ lib/math/__tests__/parse.test.ts (26 tests) 22ms
+apps/mobile test:  ✓ lib/capture/__tests__/draft.test.ts (12 tests) 31ms
+apps/mobile test:  ✓ lib/capture/__tests__/materialUpload.test.ts (17 tests) 13ms
+packages/shared-math test: Done
+apps/mobile test:  ✓ lib/capture/__tests__/attachments.test.ts (13 tests) 5ms
+apps/mobile test:  ✓ lib/__tests__/wiring.test.ts (6 tests) 28ms
+apps/mobile test:  ✓ lib/speech/__tests__/pipeline.test.ts (8 tests) 117ms
+apps/mobile test:  ✓ lib/speech/__tests__/spoken.test.ts (19 tests) 11ms
+apps/mobile test:  ✓ lib/__tests__/toast.test.ts (15 tests) 4ms
+apps/mobile test:  ✓ lib/observability/__tests__/scrub.test.ts (14 tests) 8ms
+apps/mobile test:  ✓ lib/theme/__tests__/frozen-colors.test.ts (3 tests) 24ms
+apps/mobile test:  ✓ lib/speech/__tests__/engine.test.ts (16 tests) 18ms
+apps/mobile test:  ✓ lib/auth/__tests__/recovery.test.ts (14 tests) 6ms
+apps/mobile test:  ✓ lib/i18n/__tests__/hardcoded.test.ts (2 tests) 31ms
+apps/mobile test:  ✓ lib/api/__tests__/sessionCache.test.ts (7 tests) 164ms
+apps/mobile test:  ✓ lib/buddy/__tests__/markdown.test.ts (16 tests) 4ms
+apps/mobile test:  ✓ lib/auth/__tests__/refresh.test.ts (11 tests) 117ms
+apps/mobile test:  ✓ lib/__tests__/pushQueue.test.ts (8 tests) 4ms
+apps/mobile test:  ✓ lib/math/__tests__/typed.test.ts (39 tests) 40ms
+apps/mobile test:  ✓ lib/buddy/__tests__/sessionAnchor.test.ts (10 tests) 18ms
+apps/mobile test:  ✓ lib/api/__tests__/whenOnline.test.ts (8 tests) 94ms
+apps/mobile test:  ✓ lib/__tests__/pushFlush.test.ts (8 tests) 15ms
+apps/mobile test:  ✓ lib/math/__tests__/figureScale.test.ts (8 tests) 3ms
+apps/mobile test:  ✓ lib/api/__tests__/deviceCache.test.ts (4 tests) 3ms
+apps/mobile test:  ✓ lib/theme/__tests__/contrast.test.ts (128 tests) 10ms
+apps/mobile test:  ✓ lib/api/__tests__/outbox.test.ts (5 tests) 6ms
+apps/mobile test:  ✓ lib/api/__tests__/libraryCache.test.ts (3 tests) 3ms
+apps/mobile test:  ✓ lib/buddy/__tests__/readingStages.test.ts (5 tests) 13ms
+apps/mobile test:  ✓ lib/speech/__tests__/voice.test.ts (8 tests) 5ms
+apps/mobile test:  ✓ lib/__tests__/admin.test.ts (3 tests) 6ms
+apps/mobile test:  ✓ lib/__tests__/pushActions.test.ts (4 tests) 2ms
+apps/mobile test:  ✓ lib/api/__tests__/flush.test.ts (4 tests) 2ms
+apps/mobile test:  ✓ lib/capture/__tests__/incoming.test.ts (3 tests) 4ms
+apps/mobile test:  ✓ lib/math/__tests__/plotLayout.test.ts (4 tests) 2ms
+apps/mobile test:  ✓ lib/__tests__/gate.test.ts (3 tests) 1ms
+apps/mobile test:  ✓ lib/__tests__/gestures.test.ts (5 tests) 6ms
+apps/mobile test:  ✓ lib/i18n/__tests__/parity.test.ts (11 tests) 117ms
+apps/mobile test:  ✓ lib/theme/__tests__/luminance.test.ts (6 tests) 4ms
+apps/mobile test:  ✓ lib/theme/__tests__/apply.test.ts (2 tests) 2ms
+apps/mobile test:  ✓ lib/__tests__/parentsGate.test.ts (4 tests) 2ms
+apps/mobile test:  ✓ lib/__tests__/threadMerge.test.ts (3 tests) 3ms
+apps/mobile test:  ✓ lib/__tests__/dayGroups.test.ts (3 tests) 4ms
+apps/mobile test:  ✓ lib/speech/__tests__/handsFree.test.ts (3 tests) 3ms
+apps/mobile test:  ✓ lib/__tests__/summaryLine.test.ts (3 tests) 2ms
+apps/mobile test:  ✓ lib/api/__tests__/homeCache.test.ts (2 tests) 3ms
+apps/mobile test:  ✓ lib/__tests__/perf.test.ts (3 tests) 5ms
+apps/mobile test:  ✓ lib/buddy/__tests__/reveal.test.ts (5 tests) 18ms
+apps/mobile test:  ✓ lib/api/__tests__/turnIds.test.ts (2 tests) 4ms
+apps/mobile test:  ✓ lib/speech/__tests__/voiceState.test.ts (2 tests) 3ms
+apps/mobile test:  ✓ lib/speech/__tests__/talkTurn.test.ts (5 tests) 4ms
+apps/mobile test:  ✓ lib/math/__tests__/insert.test.ts (5 tests) 3ms
+apps/mobile test:  ✓ lib/buddy/__tests__/newReply.test.ts (5 tests) 17ms
+apps/mobile test:  ✓ lib/speech/__tests__/sentences.test.ts (3 tests) 2ms
+apps/mobile test:  ✓ lib/__tests__/keyboard.test.ts (6 tests) 1ms
+apps/mobile test:  ✓ lib/buddy/__tests__/unsent.test.ts (4 tests) 1ms
+apps/mobile test:  ✓ lib/__tests__/about.test.ts (3 tests) 2ms
+apps/mobile test:  ✓ lib/__tests__/dayBreaks.test.ts (3 tests) 2ms
+apps/mobile test:  ✓ lib/buddy/__tests__/appStart.test.ts (2 tests) 11ms
+apps/mobile test:  ✓ lib/speech/__tests__/turnGuard.test.ts (3 tests) 2ms
+apps/mobile test:  ✓ lib/theme/__tests__/space.test.ts (3 tests) 2ms
+apps/mobile test:  ✓ lib/speech/__tests__/deviceEnd.test.ts (3 tests) 9ms
+apps/mobile test:  ✓ lib/api/__tests__/sse.test.ts (1 test) 2ms
+apps/mobile test:  ✓ lib/__tests__/announcePlan.test.ts (3 tests) 2ms
+apps/mobile test:  ✓ lib/i18n/__tests__/follow.test.ts (2 tests) 4ms
+apps/mobile test:  ✓ lib/__tests__/numbers.test.ts (2 tests) 6ms
+apps/mobile test:  ✓ lib/__tests__/birthDate.test.ts (2 tests) 2ms
+apps/mobile test:  ✓ lib/__tests__/weekdays.test.ts (2 tests) 29ms
+apps/mobile test:  ✓ lib/speech/__tests__/level.test.ts (2 tests) 3ms
+apps/mobile test:  ✓ lib/math/__tests__/emphasis.test.ts (2 tests) 2ms
+apps/mobile test:  ✓ lib/__tests__/net.test.ts (1 test) 3ms
+apps/api test: stdout | src/__tests__/buddy-loop.int.test.ts > Buddy core loop (child learner, Europe/Berlin) > 2 · reads the photographed worksheet in the background and completes the capture step
+apps/api test: [figures] material=ceb4d78c-99b2-4e15-b3ae-3426491f55ec found=0 kept=0
+apps/api test: stdout | src/__tests__/modes.int.test.ts > learning modes > helps with photographed homework without ever giving the solution
+apps/api test: [figures] material=de2ff232-b4b7-4498-bc3c-e9693b40769d found=0 kept=0
+apps/api test:  ✓ src/__tests__/buddy-loop.int.test.ts (8 tests) 2727ms
+apps/api test:    ✓ Buddy core loop (child learner, Europe/Berlin) > 1 · gets to know the learner: level, the test, and what it needs next 439ms
+apps/api test:    ✓ Buddy core loop (child learner, Europe/Berlin) > 2 · reads the photographed worksheet in the background and completes the capture step 358ms
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-7 (repro-05), H-8: homework paused with "Beenden" is found again the next day and after two weeks
+apps/api test: [figures] material=0db2fd51-8a2e-4aa4-bab4-63792009840f found=0 kept=0
+apps/api test:  ✓ src/__tests__/buddy-robustness.int.test.ts (17 tests) 2981ms
+apps/api test:    ✓ Buddy turns under failure > never runs the same message twice (retry after success, and while still processing) 804ms
+apps/api test:    ✓ Buddy turns under failure > does not apply a decision made on stale context, and asks again with the fresh state 318ms
+apps/api test:  ✓ src/modules/practice/__tests__/evaluate.test.ts (121 tests) 48ms
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-11: "Später" sets a task aside without solving or showing anything
+apps/api test: [figures] material=20acc4d1-d966-4485-bb38-2e8cd4220453 found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > a reading cut off at the token limit is read again at once, told to be brief (live finding 2)
+apps/api test: [figures] material=90bc16a7-f58f-4375-ad6a-71df872076b2 found=0 kept=0
+apps/api test: stderr | src/__tests__/identity.int.test.ts > identity and privacy > turns a rule the schema refuses into a 422, not a 500
+apps/api test: [api] check violation { method: 'PATCH', path: '/v1/learner', constraint: 'test_no_zed' }
+apps/api test:  ✓ src/__tests__/identity.int.test.ts (27 tests) 5015ms
+apps/api test:    ✓ identity and privacy > locks the PIN for 15 minutes after 5 wrong attempts, every time, no escalation (ADR 0006) 451ms
+apps/api test:  ✓ src/__tests__/safeguarding.int.test.ts (16 tests) 2071ms
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-9, M-28: the leak check runs on the final verdict and never trusts her guesses
+apps/api test: [figures] material=2af3d1f4-9198-4e31-bc3f-702b34d2fff1 found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > cut off every time: an honest failed card with "Nochmal lesen", above her practice (live finding 2)
+apps/api test: [figures] material=3f8f5b06-cd89-4208-b6bc-70e47387ce57 found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > cut off every time: an honest failed card with "Nochmal lesen", above her practice (live finding 2)
+apps/api test: [figures] material=becc5a56-5796-4580-832b-8893b78d3160 found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-10: a right homework answer written differently from the key closes the task
+apps/api test: [figures] material=2630ecb4-3a6e-4dba-96e1-e695555c8b41 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > lists her questions with the latest result and never a solution
+apps/api test: [figures] material=c4c58cd3-7140-4897-b93b-b1b35aa160a2 found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > quick answers go once she acted: "Foto machen" is gone after the photo was sent (live finding 8)
+apps/api test: [figures] material=5d2f32b4-5810-4575-ae83-ceeb627e5deb found=0 kept=0
+apps/api test:  ✓ src/__tests__/memory-consolidation.int.test.ts (7 tests) 1249ms
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a purge that hits a Storage outage is retried, not parked
+apps/api test: [figures] material=86811cdd-07d0-42ce-bff4-80c59ad7fe0a found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > feedback #7: "Tipp" works in homework help and never carries the solution
+apps/api test: [figures] material=bbe857d3-0ea2-40cd-bad1-e1163f1fefd6 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > shows an empty list for material not read yet, and 404 for unknown or foreign ids
+apps/api test: [figures] material=52888001-8983-4c18-9152-79c6dc1ab339 found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > reports unreadable photos, allows a bounded number of retries, and keeps photos only 7 days
+apps/api test: [figures] material=7fed5aab-9d18-4f63-8cd5-b7d45d4c7517 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a practice of one sheet carries the sheet's name (found by evals/content, #77)
+apps/api test: [figures] material=b6287531-52ca-4655-840a-909baf67f6af found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > keeps the readable pages and tells her exactly which page is missing
+apps/api test: [figures] material=10dd533a-cf81-40f4-ad64-b139865bd4b6 found=0 kept=0
+apps/mobile test:  ✓ lib/photo/__tests__/quality.test.ts (6 tests) 9401ms
+apps/mobile test:    ✓ photo quality > never calls a straight sheet on a dark desk tilted (M-26) 6109ms
+apps/mobile test:    ✓ photo quality > passes photos that can be read: in focus, noisy, with a shadow, slightly soft 1249ms
+apps/mobile test:    ✓ photo quality > names what is wrong 1319ms
+apps/mobile test:    ✓ photo quality > measures the angle of the text lines 530ms
+apps/mobile test:  Test Files  75 passed (75)
+apps/mobile test:       Tests  685 passed (685)
+apps/mobile test:    Start at  18:38:35
+apps/mobile test:    Duration  12.00s (transform 2.09s, setup 0ms, collect 5.45s, tests 10.67s, environment 22ms, prepare 8.80s)
+apps/mobile test: Done
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-12: the last answer finishes the session on the server; a lost /finish loses nothing
+apps/api test: [figures] material=c7c67f0e-ab4f-4c8d-a1a5-2e12340cbc7c found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > deletes a bad question for good: idempotent, out of practice, scoped to her
+apps/api test: [figures] material=a3581658-7581-41f4-88e4-da6188d71ef0 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > deletes a bad question for good: idempotent, out of practice, scoped to her
+apps/api test: [figures] material=0a7921fb-6be7-4356-8888-f5c1bdee8eec found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > deletes a bad question for good: idempotent, out of practice, scoped to her
+apps/api test: [figures] material=d06ee801-2635-4770-8939-4bb60c04721e found=0 kept=0
+apps/api test: stderr | src/__tests__/speech.int.test.ts > Buddy’s natural voice > fails honestly (the app reads with the phone voice): provider down, no language, not configured
+apps/api test: [voice] speech provider failed { kind: 'unavailable' }
+apps/api test: stderr | src/__tests__/speech.int.test.ts > Buddy’s natural voice > fails honestly (the app reads with the phone voice): provider down, no language, not configured
+apps/api test: [voice] speech provider failed { kind: 'timeout' }
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > "Blatt löschen" deletes the transcript, the questions and her answers — also from the export (D-7)
+apps/api test: [figures] material=f8deb68a-0209-4c55-ac4a-eded7e169bcc found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > "Passt so" ends the notice once; a repeat changes nothing
+apps/api test: [figures] material=14005e8b-e5cc-4f45-9222-b552a9d142e5 found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > M-33: a practice session idle for 3 days is abandoned and its step offered again
+apps/api test: [figures] material=eb6ce546-e234-4cbd-a650-45d14bfad7d1 found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > retries a provider timeout later instead of failing the material
+apps/api test: [figures] material=6b8927e2-ade0-461a-9b1b-4e398e7d788a found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > renames a material: trimmed, 1–120 characters, only her own
+apps/api test: [figures] material=0b53ae76-25a4-4110-8805-668dce12e8f2 found=0 kept=0
+apps/api test: (node:96894) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+apps/api test: (Use `node --trace-deprecation ...` to show where the warning was created)
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > "Frage löschen" deletes that question for good; deleting it again is fine
+apps/api test: [figures] material=20d505bf-0976-4de9-aae0-bbaa31565ac6 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > the page photographed again joins the homework and its open help session
+apps/api test: [figures] material=a6e39b53-59ce-444d-8459-1c96539a50a5 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > the page photographed again joins the homework and its open help session
+apps/api test: [figures] material=c453f61e-2332-407a-bb9a-304baf3afb0e found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > prepares practice from new photos at once when the model is briefly down, not ten minutes later
+apps/api test: [figures] material=7a32991a-def7-46af-a0f0-d2998c54479e found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > "Frage passt nicht" skips it here without FSRS and archives it for later
+apps/api test: [figures] material=67091fd5-a2d5-4722-874e-4b4198fab659 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a page added later joins the sheet; a finished help session gets a new one
+apps/api test: [figures] material=681cdd8d-2bd0-4954-a49b-09f490673f6b found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a page added later joins the sheet; a finished help session gets a new one
+apps/api test: [figures] material=83877ede-4f4a-4066-8cb8-0ef6acb024d6 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a page added later joins the sheet; a finished help session gets a new one
+apps/api test: [figures] material=5487008b-2f51-43e4-b36a-baa1a6c34d64 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a page added later joins the sheet; a finished help session gets a new one
+apps/api test: [figures] material=869fb1e6-82b9-4c89-918b-ed9e98772962 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a page added later joins the sheet; a finished help session gets a new one
+apps/api test: [figures] material=fc26181a-a627-4c53-9e6d-ec854b063121 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a page added later joins the sheet; a finished help session gets a new one
+apps/api test: [figures] material=bea21037-32ba-4663-9a32-f3c632ba23a3 found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > feedback #3: "Sitzt" and "Nochmal" never name the same topic, on the result and the home card
+apps/api test: [figures] material=3f0537d2-ba4d-4bcc-ba9d-8ddca3576880 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > refuses "Frage passt nicht" for homework help and while a test runs
+apps/api test: [figures] material=aefd91c2-35e2-492d-8dde-d86ade7afc4d found=0 kept=0
+apps/api test: stdout | src/__tests__/material-items.int.test.ts > the questions of a material > refuses "Frage passt nicht" for homework help and while a test runs
+apps/api test: [figures] material=245b9ea9-0e30-4d1f-8a87-a72a5e6b5978 found=0 kept=0
+apps/api test:  ✓ src/__tests__/material-items.int.test.ts (6 tests) 6652ms
+apps/api test:    ✓ the questions of a material > lists her questions with the latest result and never a solution 1126ms
+apps/api test:    ✓ the questions of a material > shows an empty list for material not read yet, and 404 for unknown or foreign ids 1024ms
+apps/api test:    ✓ the questions of a material > deletes a bad question for good: idempotent, out of practice, scoped to her 1256ms
+apps/api test:    ✓ the questions of a material > renames a material: trimmed, 1–120 characters, only her own 1049ms
+apps/api test:    ✓ the questions of a material > "Frage passt nicht" skips it here without FSRS and archives it for later 1020ms
+apps/api test:    ✓ the questions of a material > refuses "Frage passt nicht" for homework help and while a test runs 1176ms
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > files the questions of a second subject on the sheet under that subject
+apps/api test: [figures] material=e1b55d7a-1709-42e1-a899-b0cfbc23a29e found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > asks for no further upload when the same send is repeated after the photos went through
+apps/api test: [figures] material=c29f2f40-0284-4dd7-a7a4-7bb7e100abe5 found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > feedback #9: with two options, a miss does not leave the other one to tap as "right"
+apps/api test: [figures] material=4a958ff7-526c-45e1-aa1e-634a1c56457e found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a deleted sheet leaves running practice, prepared practice and its homework help (p2-HW-05)
+apps/api test: [figures] material=8974ecf2-3b02-42fa-9f23-8313cfc13140 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a deleted sheet leaves running practice, prepared practice and its homework help (p2-HW-05)
+apps/api test: [figures] material=18cab3fd-ea92-4301-91da-9082e6e02fd4 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > one cut-off page does not cost the whole sheet, even if the model says "unreadable"
+apps/api test: [figures] material=f523a501-8ac3-48b2-903f-3a76d67188be found=0 kept=0
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > deleting material removes its photos now and its questions from practice
+apps/api test: [figures] material=2b97fa0f-41f6-4687-9aaa-019130509d40 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a Storage outage while reading is retried, and never blamed on missing photos (M-16)
+apps/api test: [figures] material=fe483e18-a776-4497-a217-cca5a866574e found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a broken page report costs no questions, and an old notice goes away by itself
+apps/api test: [figures] material=30c242bd-02fc-4bcc-af44-066dd95b7133 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-pages.int.test.ts > pages Buddy could not read > a broken page report costs no questions, and an old notice goes away by itself
+apps/api test: [figures] material=e2bc510f-518c-47c1-a29e-cb2d379cad70 found=0 kept=0
+apps/api test:  ✓ src/__tests__/material-pages.int.test.ts (7 tests) 6917ms
+apps/api test:    ✓ pages Buddy could not read > keeps the readable pages and tells her exactly which page is missing 1055ms
+apps/api test:    ✓ pages Buddy could not read > "Passt so" ends the notice once; a repeat changes nothing 991ms
+apps/api test:    ✓ pages Buddy could not read > the page photographed again joins the homework and its open help session 1109ms
+apps/api test:    ✓ pages Buddy could not read > a page added later joins the sheet; a finished help session gets a new one 992ms
+apps/api test:    ✓ pages Buddy could not read > files the questions of a second subject on the sheet under that subject 1007ms
+apps/api test:    ✓ pages Buddy could not read > one cut-off page does not cost the whole sheet, even if the model says "unreadable" 829ms
+apps/api test:    ✓ pages Buddy could not read > a broken page report costs no questions, and an old notice goes away by itself 933ms
+apps/api test: stdout | src/__tests__/learning.int.test.ts > material and practice under failure > never grades without judgement: no model → the answer stays open; hints and revealing count honestly
+apps/api test: [figures] material=3eea9e5a-8ab9-431b-b668-3878f54ae6ee found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-14, H-15: one rich or broken item never costs the other questions
+apps/api test: [figures] material=7d688069-d1e5-42d9-ba15-71dcacca33c2 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > labels every photo in the reading request so page numbers name real photos
+apps/api test: [figures] material=85e16ec3-fbd8-441f-900c-27728e102274 found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-16: a photo sent with the composer camera completes the one open capture step
+apps/api test: [figures] material=461b067c-eee7-4586-b8e1-9b2e001e92d4 found=0 kept=0
+apps/api test: stdout | src/__tests__/session-lifecycle.int.test.ts > session lifecycle > H-16: a photo sent with the composer camera completes the one open capture step
+apps/api test: [figures] material=2a5bc6a1-8d53-4cd1-94ea-4e2e186d4dd4 found=0 kept=0
+apps/api test:  ✓ src/__tests__/speech.int.test.ts (11 tests) 13546ms
+apps/api test:    ✓ Buddy’s natural voice > reads a sentence in her voice; only the text leaves; the same sentence again comes from the cache 1153ms
+apps/api test:    ✓ Buddy’s natural voice > never shares a learner sentence, voice named or not (review 28.09.) 1292ms
+apps/api test:    ✓ Buddy’s natural voice > shares voice-picker samples across learners, long-lived (issue #12) 1214ms
+apps/api test:    ✓ Buddy’s natural voice > keeps the audio one day: the scheduler deletes it, then it is made again 934ms
+apps/api test:    ✓ Buddy’s natural voice > fails honestly (the app reads with the phone voice): provider down, no language, not configured 2157ms
+apps/api test:    ✓ Buddy’s natural voice > bounds cost only: past the hourly budget new sentences are refused, cached ones still play 957ms
+apps/api test:    ✓ Buddy’s natural voice > "sprich langsamer" and "andere Stimme" change her voice through a Buddy tool, undoable 895ms
+apps/api test:    ✓ Buddy’s natural voice > refuses what changes nothing or goes past the limit, and the model says so instead 938ms
+apps/api test:    ✓ Buddy’s natural voice > a voice change decided on an old context is not applied (fence, rule 4) 870ms
+apps/api test:    ✓ Buddy’s natural voice > she picks a voice with a tap: the preview changes nothing, the choice is saved and fenced 1249ms
+apps/api test:    ✓ Buddy’s natural voice > a tap on a voice while Buddy is deciding makes that decision stale (fence, rule 4) 1888ms
+apps/api test: stdout | src/__tests__/modes.int.test.ts > learning modes > a practice test for a planned test stays within the sheets photographed for it (live finding 6)
+apps/api test: PREPARED [{"id":"3c8ad18b-8cdf-471e-82f3-5b26649608b9","client_request_id":"4aaf0e67-c19e-4710-bec3-79e29344c8e8"}] offer 4aaf0e67-c19e-4710-bec3-79e29344c8e8
+apps/api test:  ✓ src/__tests__/modes.int.test.ts (14 tests) 16990ms
+apps/api test:    ✓ learning modes > helps with photographed homework without ever giving the solution 2221ms
+apps/api test:    ✓ learning modes > refuses the removed explain kind: explaining is the chat, never a mode (issue #70) 1174ms
+apps/api test:    ✓ learning modes > runs a practice test: one try, no hints, no answers until the end 1544ms
+apps/api test:    ✓ learning modes > grades numbers and math by the key in a test: a right answer is never missed, a wrong one never praised 1076ms
+apps/api test:    ✓ learning modes > keeps case, ß and punctuation in German: a spelling difference is almost, never right 1284ms
+apps/api test:    ✓ learning modes > shows no "done" result for a session left without answering anything 806ms
+apps/api test:    ✓ learning modes > says honestly when a request is nothing to learn from 1048ms
+apps/api test:    ✓ learning modes > asks typed vocabulary in both directions and checks near misses without a model 1059ms
+apps/api test:    ✓ learning modes > offers her own words to tap when she is recognising, not when she must write (#147) 883ms
+apps/api test:    ✓ learning modes > lets the tutor decide a vocabulary answer that is missing a word (#146) 931ms
+apps/api test:    ✓ learning modes > listens to a recording: word feedback, retry stays open, a replay is not judged twice 891ms
+apps/api test:    ✓ learning modes > refuses a pronunciation judgement that lands after "Beenden" (M-34) 858ms
+apps/api test:    ✓ learning modes > keeps figures the app can draw and drops broken ones without losing the question 1472ms
+apps/api test:    ✓ learning modes > a practice test for a planned test stays within the sheets photographed for it (live finding 6) 1741ms
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > refused runs (daily budget, outage) do not use up her retries (M-14)
+apps/api test: [figures] material=4d322b43-7ad9-4d8f-851e-53463968e678 found=0 kept=0
+apps/api test:  ✓ src/__tests__/session-lifecycle.int.test.ts (14 tests) 17798ms
+apps/api test:    ✓ session lifecycle > H-7 (repro-05), H-8: homework paused with "Beenden" is found again the next day and after two weeks 2642ms
+apps/api test:    ✓ session lifecycle > H-11: "Später" sets a task aside without solving or showing anything 1155ms
+apps/api test:    ✓ session lifecycle > H-9, M-28: the leak check runs on the final verdict and never trusts her guesses 1494ms
+apps/api test:    ✓ session lifecycle > H-10: a right homework answer written differently from the key closes the task 1011ms
+apps/api test:    ✓ session lifecycle > feedback #7: "Tipp" works in homework help and never carries the solution 1142ms
+apps/api test:    ✓ session lifecycle > H-12: the last answer finishes the session on the server; a lost /finish loses nothing 1086ms
+apps/api test:    ✓ session lifecycle > M-33: a practice session idle for 3 days is abandoned and its step offered again 1193ms
+apps/api test:    ✓ session lifecycle > M-36: a test handed in early shows untouched questions with their solution 1023ms
+apps/api test:    ✓ session lifecycle > feedback #3: "Sitzt" and "Nochmal" never name the same topic, on the result and the home card 961ms
+apps/api test:    ✓ session lifecycle > feedback #9: with two options, a miss does not leave the other one to tap as "right" 964ms
+apps/api test:    ✓ session lifecycle > H-13 (repro-12): a draft resent after its upload was given up becomes a new sheet 846ms
+apps/api test:    ✓ session lifecycle > H-14, H-15: one rich or broken item never costs the other questions 1009ms
+apps/api test:    ✓ session lifecycle > H-16: a photo sent with the composer camera completes the one open capture step 1850ms
+apps/api test:    ✓ session lifecycle > M-38: a university learner gets topics pitched at the university, not refused as "not school" 1420ms
+apps/api test: stdout | src/__tests__/hybrid-search.int.test.ts > hybrid material search > indexes the passages of a sheet when the reading makes it ready
+apps/api test: [figures] material=a4dc9392-677e-4f8f-abf8-57facf2fa559 found=0 kept=0
+apps/api test:  ✓ src/__tests__/learning.int.test.ts (15 tests) 18644ms
+apps/api test:    ✓ material and practice under failure > keeps purpose and sheet on a failed card, and the sheet being read comes first (M-18, M-19) 2884ms
+apps/api test:    ✓ material and practice under failure > a reading cut off at the token limit is read again at once, told to be brief (live finding 2) 920ms
+apps/api test:    ✓ material and practice under failure > cut off every time: an honest failed card with "Nochmal lesen", above her practice (live finding 2) 1661ms
+apps/api test:    ✓ material and practice under failure > quick answers go once she acted: "Foto machen" is gone after the photo was sent (live finding 8) 1131ms
+apps/api test:    ✓ material and practice under failure > reports unreadable photos, allows a bounded number of retries, and keeps photos only 7 days 1075ms
+apps/api test:    ✓ material and practice under failure > does not offer a retry for something that is not learning material 1004ms
+apps/api test:    ✓ material and practice under failure > retries a provider timeout later instead of failing the material 1015ms
+apps/api test:    ✓ material and practice under failure > prepares practice from new photos at once when the model is briefly down, not ten minutes later 944ms
+apps/api test:    ✓ material and practice under failure > does not claim to read photos that never all arrived, and says so after a day (issue #115) 896ms
+apps/api test:    ✓ material and practice under failure > asks for no further upload when the same send is repeated after the photos went through 975ms
+apps/api test:    ✓ material and practice under failure > deleting material removes its photos now and its questions from practice 902ms
+apps/api test:    ✓ material and practice under failure > never grades without judgement: no model → the answer stays open; hints and revealing count honestly 1016ms
+apps/api test:    ✓ material and practice under failure > lets the learner correct or remove what Buddy knows, with optimistic concurrency 1688ms
+apps/api test:    ✓ material and practice under failure > takes a removal back while it is fresh, and not afterwards (#133 position 12) 1447ms
+apps/api test:    ✓ material and practice under failure > never lets one learner take back another's removal (#133 position 12) 1083ms
+apps/api test:  ✓ src/__tests__/notification-actions.int.test.ts (5 tests) 6385ms
+apps/api test:    ✓ notification buttons > practice that is ready gets "Jetzt üben", and the button starts exactly that practice 868ms
+apps/api test:    ✓ notification buttons > any other message gets "Heute nicht" and "Seltener schreiben" only 863ms
+apps/api test:    ✓ notification buttons > "Heute nicht" moves its practice to tomorrow and keeps Buddy quiet for the rest of the day 1765ms
+apps/api test:    ✓ notification buttons > "Seltener schreiben" needs no PIN under 16, says what changed, and only important messages ring 1760ms
+apps/api test:    ✓ notification buttons > another learner's message is not found; a bad action is refused 1129ms
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a page added to a sheet wakes Buddy about that sheet again (repro-16)
+apps/api test: [figures] material=2d15d8bf-0578-4f86-808c-3f15c8733347 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a page added to a sheet wakes Buddy about that sheet again (repro-16)
+apps/api test: [figures] material=ab2c6d8a-5237-430f-b533-facbcd33abf1 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a late reading still shows its page notice (from reading, not from upload)
+apps/api test: [figures] material=36cd2763-cac5-4d0c-8387-e3d52a337878 found=0 kept=0
+apps/api test:  ✓ src/__tests__/session-summaries.int.test.ts (7 tests) 1020ms
+apps/api test:  ✓ src/__tests__/delivery.int.test.ts (17 tests) 20517ms
+apps/api test:    ✓ background work and delivery > one learner per device (M-65, D-6) > a sibling signing in on the phone stops the previous learner’s pushes to it 3036ms
+apps/api test:    ✓ background work and delivery > one learner per device (M-65, D-6) > registering another learner’s token on the device deactivates the old one 924ms
+apps/api test:    ✓ background work and delivery > one learner per device (M-65, D-6) > claiming her own phone again keeps her token; a late release switches it off 1479ms
+apps/api test:    ✓ background work and delivery > keeps an agreed reminder in the app when contact outside the app is off 865ms
+apps/api test:    ✓ background work and delivery > sends an agreed reminder at the agreed minute, also after Buddy wrote on its own that day 1183ms
+apps/api test:    ✓ background work and delivery > never resends a push whose outcome is unknown, but keeps the text in the app 1034ms
+apps/api test:    ✓ background work and delivery > marks a device as gone when the provider says so, and falls back to the app 1040ms
+apps/api test:    ✓ background work and delivery > waits for the provider after a rate limit instead of dropping or hammering 1006ms
+apps/api test:    ✓ background work and delivery > treats a send that crashed midway as uncertain — it is never sent twice 862ms
+apps/api test:    ✓ background work and delivery > shows the message in the app instead of pushing while the learner is using it 879ms
+apps/api test:    ✓ background work and delivery > her answer that is due now is in the thread at once while she is in the app, not a run later 831ms
+apps/api test:    ✓ background work and delivery > does not start something unasked while the learner is in the app, but does after they left 906ms
+apps/api test:    ✓ background work and delivery > does the work once when two scheduler runs overlap 1651ms
+apps/api test:    ✓ background work and delivery > drops a planned "practice is ready" once the learner has done that practice 1718ms
+apps/api test:    ✓ background work and delivery > holds and cancels planned messages when the learner pauses, without a backlog afterwards 1068ms
+apps/api test:    ✓ background work and delivery > upgrades delivery status only from provider receipts, and handles a rejected receipt 1000ms
+apps/api test:    ✓ without any model configured > says so honestly in conversation, and still prepares practice before a test 1034ms
+apps/api test: stdout | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > crops the figure the vision pass found and shows it with the question
+apps/api test: [figures] material=e26e3ea3-76a9-4033-ac1f-7af231929efb found=1 kept=1
+apps/api test:  ✓ src/__tests__/practice-wishes.int.test.ts (19 tests) 22390ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > takes only the questions that did not sit — fewer than the minutes suggest, never filled up 2414ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > says plainly that nothing went wrong instead of preparing something else 1190ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > never reaches another learner’s questions, however they went 1524ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > never prepares from a context that has changed meanwhile 1055ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > takes the harder half of her own questions, and the easier half 1156ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > says her material has no harder half instead of handing her the same questions again 1047ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > writes new questions at the level she asked for, and keeps them at it 999ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > asks her own vocabulary in the direction she wants, and only vocabulary 1112ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > says she has no vocabulary in that direction instead of asking something else 891ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > carries the direction from Buddy’s offer into the session, and stores both ways 882ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > practises the sheet she pointed at, not the other one of the same subject 845ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > takes only the vocabulary when she asks for vocabulary, whatever else the subject holds 877ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > says there is no vocabulary here instead of practising the other questions 1545ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > never reaches another learner's sheet through the alias 1719ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > takes the number she named instead of the minute estimate 1002ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > asks fifty when the list has fifty — no ceiling of our own (#145) 1075ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > reaches past the old 200-row window when she asks for everything (#145) 956ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > asks the whole list when she asks for all of it, past what ten minutes would give 1100ms
+apps/api test:    ✓ what she can ask for beyond the topic (issue #113) > still uses the minutes when she said nothing about how many 1001ms
+apps/api test: stdout | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > a vision pass that finds nothing, nonsense or fails leaves the sheet ready without images
+apps/api test: [figures] material=09f3a859-c0b5-498c-bd5e-e2b882145267 found=0 kept=0
+apps/api test: stdout | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > a vision pass that finds nothing, nonsense or fails leaves the sheet ready without images
+apps/api test: [figures] material=0f480248-8774-4989-a8d5-864b85f3165a found=0 kept=0
+apps/api test: stderr | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > a vision pass that finds nothing, nonsense or fails leaves the sheet ready without images
+apps/api test: [figures] material=f61bff1b-a20a-4f0e-af5e-6042639e0aa3 skipped — down
+apps/api test:  ✓ src/__tests__/reexplain.int.test.ts (5 tests) 5421ms
+apps/api test:    ✓ explain again ("Anders erklären") > explains a solution again, the way she asked, once per tap 1210ms
+apps/api test:    ✓ explain again ("Anders erklären") > explains a closed question’s solution — not an open one, not in a running test 958ms
+apps/api test:    ✓ explain again ("Anders erklären") > homework: only a task she solved herself, never with another task’s answer 988ms
+apps/api test:    ✓ explain again ("Anders erklären") > says so honestly when the model is out, stores nothing, and works on the next tap 1159ms
+apps/api test:    ✓ explain again ("Anders erklären") > another learner’s session or question is not found 1107ms
+apps/api test: stdout | src/__tests__/material-pdf.int.test.ts > worksheets as PDF > reads a PDF and a photo as one sheet: its pages count, the model gets the PDF
+apps/api test: [figures] material=9049d3f6-4b64-4662-88fd-815d87fb07b1 found=0 kept=0
+apps/api test: stderr | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > an exhausted figures budget skips the pass; the sheet is ready
+apps/api test: [figures] material=3b97d4ab-82e7-45f4-ae9a-6111fdbfb9b3 skipped — Daily limit for this kind of help is reached
+apps/api test:  ✓ src/__tests__/fence.int.test.ts (6 tests) 6841ms
+apps/api test:    ✓ context fence, lock order, leases > a tap during an apply waits instead of deadlocking (repro-01) 1828ms
+apps/api test:    ✓ context fence, lock order, leases > a check that outlives one lease keeps it, and is applied exactly once (repro-17) 899ms
+apps/api test:    ✓ context fence, lock order, leases > a time-zone change while Buddy thinks makes the decision stale, not a day off (repro-21) 985ms
+apps/api test:    ✓ context fence, lock order, leases > several quick messages count as her words together (repro-22) 1035ms
+apps/api test:    ✓ context fence, lock order, leases > a message resent days later resolves days from the day the model counted from 1197ms
+apps/api test:    ✓ context fence, lock order, leases > schedule_check rejects a time that exists twice on a clock change (rule 2) 897ms
+apps/api test:  ✓ src/__tests__/stream.int.test.ts (8 tests) 1327ms
+apps/api test:  ✓ src/modules/buddy/__tests__/policy.test.ts (21 tests) 16ms
+apps/api test: stdout | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > a Storage outage while uploading the crop costs the image, not the sheet
+apps/api test: [figures] material=7404bb3a-6da4-43dd-82e3-090dcd0deb3f found=1 kept=0
+apps/api test: stderr | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > a Storage outage while uploading the crop costs the image, not the sheet
+apps/api test: [figures] material=7404bb3a-6da4-43dd-82e3-090dcd0deb3f upload failed — storage upload failed (transient)
+apps/api test: stdout | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > deleting the material erases its crops from Storage with the content (D-7)
+apps/api test: [figures] material=c89cea63-7185-45fe-96c9-adc28915e058 found=1 kept=1
+apps/api test:  ✓ src/__tests__/lookups.int.test.ts (7 tests) 7626ms
+apps/api test:    ✓ Buddy lookups > reads her own worksheet within the turn — never another learner's 1101ms
+apps/api test:    ✓ Buddy lookups > bounds the loop: after two lookup rounds the model must answer 1105ms
+apps/api test:    ✓ Buddy lookups > survives broken lookup calls and keeps worksheet text as data 1032ms
+apps/api test:    ✓ Buddy lookups > tells her how practice went, from the stored results 1108ms
+apps/api test:    ✓ Buddy lookups > points to a part of the app with a button, and changes nothing 1370ms
+apps/api test:    ✓ Buddy lookups > rejects a reply that asks whether to delete while already deleting 943ms
+apps/api test:    ✓ Buddy lookups > never hands the text of a homework sheet to the chat model (p2-sec-homework-solution-chat-unenforced) 965ms
+apps/api test: stdout | src/__tests__/concept-images.int.test.ts > concept images (issue #50) > a deleted question keeps the shared crop alive until the last question goes
+apps/api test: [figures] material=7b85b240-876a-4bb0-8bdc-c20c5ad38a29 found=1 kept=1
+apps/api test:  ✓ src/__tests__/concept-images.int.test.ts (6 tests) 6612ms
+apps/api test:    ✓ concept images (issue #50) > crops the figure the vision pass found and shows it with the question 1257ms
+apps/api test:    ✓ concept images (issue #50) > a vision pass that finds nothing, nonsense or fails leaves the sheet ready without images 1089ms
+apps/api test:    ✓ concept images (issue #50) > an exhausted figures budget skips the pass; the sheet is ready 1028ms
+apps/api test:    ✓ concept images (issue #50) > a Storage outage while uploading the crop costs the image, not the sheet 1345ms
+apps/api test:    ✓ concept images (issue #50) > deleting the material erases its crops from Storage with the content (D-7) 912ms
+apps/api test:    ✓ concept images (issue #50) > a deleted question keeps the shared crop alive until the last question goes 980ms
+apps/api test:  ✓ src/llm/__tests__/json-schema.test.ts (12 tests) 6ms
+apps/api test:  ✓ src/__tests__/again.int.test.ts (4 tests) 1971ms
+apps/api test:  ✓ src/__tests__/hints.int.test.ts (6 tests) 6597ms
+apps/api test:    ✓ hint ladder > hands out prepared hints at once, never twice, and explains after the third miss 1194ms
+apps/api test:    ✓ hint ladder > a miss never burns the only prepared hint, and the first "Tipp" is a hint, not the solution (live finding 1) 1156ms
+apps/api test:    ✓ hint ladder > writes a hint with the tutor when none is prepared (yet) 1060ms
+apps/api test:    ✓ hint ladder > drops prepared hints that give the answer away 1068ms
+apps/api test:    ✓ hint ladder > never lets the model give the solution before the second hint 1006ms
+apps/api test:    ✓ hint ladder > gives no hints in a test or for homework, and none for another learner 1111ms
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a photo of something else inside a read sheet is deleted at once (p2-page-not-material-photo-kept-7-days)
+apps/api test: [figures] material=326fd2ee-5078-42d1-8b26-124a39e71b86 found=0 kept=0
+apps/api test:  ✓ src/__tests__/erasure.int.test.ts (9 tests) 9567ms
+apps/api test:    ✓ account erasure > an auth outage at the due time is retried until the account is gone, and is visible meanwhile 1231ms
+apps/api test:    ✓ account erasure > deletes the account even while storage is down; the photos follow when it is back (D-9) 965ms
+apps/api test:    ✓ account erasure > deletes a long-used account: only live photos, never more than 1000 per request 1144ms
+apps/api test:    ✓ account erasure > deletes an account whose photos are no longer in storage 1054ms
+apps/api test:    ✓ account erasure > a deletion parked by an earlier version is picked up again when requested again 997ms
+apps/api test:    ✓ account erasure > a run killed in the middle resumes where it stopped, even after three lost leases 1226ms
+apps/api test:    ✓ account erasure > cancelling while the job runs is refused, not silently ignored 932ms
+apps/api test:    ✓ account erasure > forgets what the model wrote after 90 days, and the call log after 180 (#78) 1000ms
+apps/api test:    ✓ account erasure > the export contains model usage and background jobs, too 1018ms
+apps/api test:  ✓ src/__tests__/hybrid-search.int.test.ts (11 tests | 1 skipped) 13272ms
+apps/api test:    ✓ hybrid material search > chunks extracted text into bounded passages (pure mechanics) 1961ms
+apps/api test:    ✓ hybrid material search > indexes the passages of a sheet when the reading makes it ready 1322ms
+apps/api test:    ✓ hybrid material search > finds the sheet despite a typo (trigram), and catches up passages for old sheets 1299ms
+apps/api test:    ✓ hybrid material search > still answers exact queries like before the fusion 878ms
+apps/api test:    ✓ hybrid material search > never returns another learner's sheets, on any list 1076ms
+apps/api test:    ✓ hybrid material search > hands homework back without its text, also on trigram hits 1075ms
+apps/api test:    ✓ hybrid material search > degrades to full text + trigram when the embedding budget is used up 1201ms
+apps/api test:    ✓ hybrid material search > pre-injects clearly matching passages into the turn, capped and marked as data 1063ms
+apps/api test:    ✓ hybrid material search > injects nothing when her words point at no sheet 1024ms
+apps/api test:    ✓ hybrid material search > pre-injection stays under its context budget and never carries homework text 1178ms
+apps/api test:  ✓ src/lib/__tests__/time.test.ts (22 tests) 17ms
+apps/api test:  ✓ src/auth/__tests__/verifier.test.ts (11 tests) 49ms
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a page added to a sheet does not complete a newer photo request of the test (p2-J-01)
+apps/api test: [figures] material=22153c35-a61a-4c51-bd35-720c0f4d2d33 found=0 kept=0
+apps/api test: stdout | src/__tests__/material-lifecycle.int.test.ts > material lifecycle and erasure > a page added to a sheet does not complete a newer photo request of the test (p2-J-01)
+apps/api test: [figures] material=7f513ecb-ddb2-4e2b-84f5-4628e3a56b1d found=0 kept=0
+apps/api test:  ✓ src/__tests__/endpoints.int.test.ts (7 tests) 1063ms
+apps/api test:  ✓ src/__tests__/stop.int.test.ts (5 tests) 1162ms
+apps/api test:  ✓ src/__tests__/material-pdf.int.test.ts (6 tests) 6122ms
+apps/api test:    ✓ worksheets as PDF > reads a PDF and a photo as one sheet: its pages count, the model gets the PDF 1003ms
+apps/api test:    ✓ worksheets as PDF > a PDF alone: every page is reported, a cut-off page is named 1256ms
+apps/api test:    ✓ worksheets as PDF > more than 20 pages in all: refused at submit, the files are deleted at once 902ms
+apps/api test:    ✓ worksheets as PDF > a file that is not a PDF, or PDFs too large for the model call, are refused 975ms
+apps/api test:    ✓ worksheets as PDF > Storage out while counting pages: she is told to retry, nothing is lost 1106ms
+apps/api test:    ✓ worksheets as PDF > only the listed file types are taken 879ms
+apps/api test:  ✓ src/__tests__/material-lifecycle.int.test.ts (26 tests) 29658ms
+apps/api test:    ✓ material lifecycle and erasure > a reading given up by the scheduler still purges its photos and tells Buddy (repro-14) 2510ms
+apps/api test:    ✓ material lifecycle and erasure > a send that never finished is named while it hangs and leaves a card when it is given up (issue #115) 1312ms
+apps/api test:    ✓ material lifecycle and erasure > pages nobody asked to send are still given up quietly after a day (issue #56) 1388ms
+apps/api test:    ✓ material lifecycle and erasure > photos no job will purge any more are found by the safety net 1029ms
+apps/api test:    ✓ material lifecycle and erasure > a purge that hits a Storage outage is retried, not parked 1283ms
+apps/api test:    ✓ material lifecycle and erasure > a practice of one sheet carries the sheet's name (found by evals/content, #77) 864ms
+apps/api test:    ✓ material lifecycle and erasure > "Blatt löschen" deletes the transcript, the questions and her answers — also from the export (D-7) 1084ms
+apps/api test:    ✓ material lifecycle and erasure > "Frage löschen" deletes that question for good; deleting it again is fine 1016ms
+apps/api test:    ✓ material lifecycle and erasure > deleting during the reading yields no ready sheet, no questions and no wake-up (repro-13) 942ms
+apps/api test:    ✓ material lifecycle and erasure > photos that arrive after the sheet was deleted are removed too 976ms
+apps/api test:    ✓ material lifecycle and erasure > a deleted sheet leaves running practice, prepared practice and its homework help (p2-HW-05) 906ms
+apps/api test:    ✓ material lifecycle and erasure > a Storage outage while reading is retried, and never blamed on missing photos (M-16) 839ms
+apps/api test:    ✓ material lifecycle and erasure > labels every photo in the reading request so page numbers name real photos 1468ms
+apps/api test:    ✓ material lifecycle and erasure > refused runs (daily budget, outage) do not use up her retries (M-14) 1757ms
+apps/api test:    ✓ material lifecycle and erasure > after the photos are purged, retrying is refused honestly (M-15) 975ms
+apps/api test:    ✓ material lifecycle and erasure > a page added to a sheet wakes Buddy about that sheet again (repro-16) 1128ms
+apps/api test:    ✓ material lifecycle and erasure > a late reading still shows its page notice (from reading, not from upload) 809ms
+apps/api test:    ✓ material lifecycle and erasure > a removed memory keeps its undo window, then its words are erased everywhere (D-7) 1040ms
+apps/api test:    ✓ material lifecycle and erasure > an outage of the model while reading does not use up a run either 1105ms
+apps/api test:    ✓ material lifecycle and erasure > a reading run that lost its lease writes nothing: it cannot fail a sheet the next run read (extraction-status-writes-unfenced) 1178ms
+apps/api test:    ✓ material lifecycle and erasure > a reading run that lost its lease stores no questions (extraction-status-writes-unfenced) 1178ms
+apps/api test:    ✓ material lifecycle and erasure > two sends of the same new sheet at once get the same sheet, never a 500 (create-material-idempotency-race) 987ms
+apps/api test:    ✓ material lifecycle and erasure > questions that all fail validation are not blamed on the photo (empty-after-validation-says-unreadable) 992ms
+apps/api test:    ✓ material lifecycle and erasure > a photo of something else inside a read sheet is deleted at once (p2-page-not-material-photo-kept-7-days) 1164ms
+apps/api test:    ✓ material lifecycle and erasure > a page added to a sheet does not complete a newer photo request of the test (p2-J-01) 937ms
+apps/api test:    ✓ photos without a model > fail at once, honestly, instead of after minutes of retries (p2-uf-llm-disabled-capture-dead-end) 788ms
+apps/api test: stdout | src/__tests__/reading-stages.int.test.ts > reading stages on the home card > follows the real stages: sending → waiting → reading → read, tasks found, practice being made
+apps/api test: [figures] material=66b97acc-f6cf-4c72-a857-0f430b6f3b3d found=0 kept=0
+apps/api test:  ✓ evals/buddy/__tests__/compare.test.ts (6 tests) 2ms
+apps/api test: stdout | src/__tests__/home-snapshot.int.test.ts > home: one snapshot > a page that joins the help session while the home is read: before or after, never both
+apps/api test: [figures] material=b423e893-7eba-4151-a32b-5e8f474619aa found=0 kept=0
+apps/api test:  ✓ src/modules/practice/__tests__/homework.test.ts (10 tests) 39ms
+apps/api test: stdout | src/__tests__/home-snapshot.int.test.ts > home: one snapshot > a page that joins the help session while the home is read: before or after, never both
+apps/api test: [figures] material=6fd175e1-b46c-4158-ad81-7bc201868497 found=0 kept=0
+apps/api test:  ✓ src/__tests__/home-snapshot.int.test.ts (1 test) 866ms
+apps/api test:    ✓ home: one snapshot > a page that joins the help session while the home is read: before or after, never both 866ms
+apps/api test:  ✓ src/__tests__/buddy-tools.int.test.ts (27 tests) 30344ms
+apps/api test:    ✓ Buddy act tools > update_step with a state and a new day is refused, never half applied (update-step-state-drops-move) 2273ms
+apps/api test:    ✓ Buddy act tools > undoing "the test is over" opens its steps again (restore-goal-leaves-steps-cancelled) 1318ms
+apps/api test:    ✓ Buddy act tools > a temporary situation said again with a new end gets that end (remember-dedupe-misreports, M-54) 1459ms
+apps/api test:    ✓ Buddy act tools > a new preparation never cancels practice her agreed reminder prepared (p2-prepare-practice-cancels-reminder-prepared-step) 1040ms
+apps/api test:    ✓ Buddy act tools > a memory keeps only what she said: no invented day or time (live finding 4) 1241ms
+apps/api test:    ✓ Buddy act tools > a day is named the way she says it: the weekday within a week, never "in 4 days" (live finding 9) 912ms
+apps/api test:    ✓ Buddy act tools > undoing a forget never makes a second copy (p2-J-memory-F7) 1142ms
+apps/api test:    ✓ Buddy act tools > forgets everything at once, past the action cap, and takes it back as one (issue #114) 1102ms
+apps/api test:    ✓ Buddy act tools > homework tasks are not counted as practice questions in Buddy's picture (p2-HW-06) 909ms
+apps/api test:    ✓ Buddy act tools > the thread offers "Rückgängig" only when it would work (audit M-56) 965ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > deletes the sheet she means, with its questions and its photos 874ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > the card names the sheet and offers no undo — nothing comes back 878ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > is never done straight away: without Buddy having asked, it is refused 1438ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > the forgotten back joins the sheet it was forgotten from (#118) 1716ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > a page cannot join a sheet that could not be read 1024ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > takes one question off a sheet, found by its own words (#120) 991ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > never guesses which question she meant 789ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > a question is not taken off before Buddy has asked 1041ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > renames a sheet, and undo puts the old name back 1110ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > a sheet that is not hers is not a sheet Buddy can touch 1151ms
+apps/api test:    ✓ Buddy act tools > her sheets, from the conversation > deleting needs her own words, not a quote she never said 962ms
+apps/api test:    ✓ Buddy act tools > a repeating reminder > is one step with a rhythm, not one step per day 1332ms
+apps/api test:    ✓ Buddy act tools > a repeating reminder > starts on the next day that fits when she named none 993ms
+apps/api test:    ✓ Buddy act tools > a repeating reminder > needs her agreement and a time — Buddy does not put himself on a schedule 1035ms
+apps/api test:    ✓ Buddy act tools > a repeating reminder > an end before the first day is refused, not silently ignored 861ms
+apps/api test:    ✓ Buddy act tools > a repeating reminder > she can end it, and the next one still stands 914ms
+apps/api test:    ✓ Buddy act tools > a repeating reminder > saying she practised does not quietly end the repetition 872ms
+apps/api test:  ✓ src/__tests__/speak-stream.int.test.ts (2 tests) 1090ms
+apps/api test:  ✓ src/__tests__/scale.int.test.ts (5 tests) 2195ms
+apps/api test:  ✓ src/__tests__/pages-while-capturing.int.test.ts (3 tests) 674ms
+apps/api test:  ✓ src/__tests__/prepare-offer.int.test.ts (2 tests) 709ms
+apps/api test:  ✓ src/__tests__/home-cards.int.test.ts (2 tests) 1784ms
+apps/api test:    ✓ home: the card on top > shows the prepared test practice with the result of an unrelated round 1042ms
+apps/api test:    ✓ home: the card on top > offers nothing next that is not ready today or not hers 741ms
+apps/api test:  ✓ src/modules/buddy/__tests__/context-layering.test.ts (3 tests) 13ms
+apps/api test:  ✓ src/__tests__/lookback.int.test.ts (4 tests) 3661ms
+apps/api test:    ✓ Looking back > names what now sits a week later — once, in the app only, and not again soon 987ms
+apps/api test:    ✓ Looking back > refuses a look back that was not offered (never invented) and asks again 833ms
+apps/api test:    ✓ Looking back > stays silent when the topic is still shaky, or was shaky only days ago 1041ms
+apps/api test:    ✓ Looking back > shows "practiced today" from her own answers, in her time zone 801ms
+apps/api test:  ✓ src/__tests__/terminal.int.test.ts (5 tests) 6583ms
+apps/api test:    ✓ terminal states and honest outages > a parked job of every kind has its defined effect 969ms
+apps/api test:    ✓ terminal states and honest outages > /health is not ok when the last run failed, or when due work waits with no heartbeat 971ms
+apps/api test:    ✓ terminal states and honest outages > the retention sweeps are observable: /health says when they ran and what they removed (#78) 1104ms
+apps/api test:    ✓ terminal states and honest outages > the home says Buddy cannot answer once today’s allowance is used up 1857ms
+apps/api test:    ✓ terminal states and honest outages > a turn that throws outside the model call ends as failed, not "processing" (M-46) 1681ms
+apps/api test:  ✓ src/speech/__tests__/google.test.ts (4 tests) 5ms
+apps/api test:  ✓ src/__tests__/config.test.ts (6 tests) 5ms
+apps/api test:  ✓ src/__tests__/speak-word.int.test.ts (4 tests) 1034ms
+apps/api test: stdout | src/__tests__/reading-stages.int.test.ts > reading stages on the home card > homework has no practice to build: after reading, the help is there
+apps/api test: [figures] material=d6d8b018-564f-4da1-b98a-ca205dd45c24 found=0 kept=0
+apps/api test:  ✓ src/__tests__/reading-stages.int.test.ts (3 tests) 3044ms
+apps/api test:    ✓ reading stages on the home card > follows the real stages: sending → waiting → reading → read, tasks found, practice being made 930ms
+apps/api test:    ✓ reading stages on the home card > waits honestly while the reader is busy, and a requeued reading starts over 930ms
+apps/api test:    ✓ reading stages on the home card > homework has no practice to build: after reading, the help is there 1184ms
+apps/api test:  ✓ src/modules/buddy/__tests__/context-material.test.ts (3 tests) 13ms
+apps/api test:  ✓ src/__tests__/contact.int.test.ts (26 tests) 32033ms
+apps/api test:    ✓ contact promises > the longest pause there is can actually be set (issue #119) 3172ms
+apps/api test:    ✓ contact promises > under 16 she cannot undo a pause without the adult (rule 6, ADR 0006) 1135ms
+apps/api test:    ✓ contact promises > a 16-year-old undoes her own pause and turns contact on herself, without a PIN (ADR 0006) 1350ms
+apps/api test:    ✓ contact promises > Buddy may write several times a day in the app: nothing is counted (ADR 0006, repro-02) 2115ms
+apps/api test:    ✓ contact promises > with contact to the phone off, Buddy still writes in the app (ADR 0006) 1049ms
+apps/api test:    ✓ contact promises > she can push the morning end later, and never pull it earlier (issue #114) 986ms
+apps/api test:    ✓ contact promises > resolves "in an hour" on the server, and refuses it inside the quiet hours (issue #112) 998ms
+apps/api test:    ✓ contact promises > a reminder she wants again and again > comes again the next day, and keeps coming 889ms
+apps/api test:    ✓ contact promises > a reminder she wants again and again > a repetition for school days skips the weekend 957ms
+apps/api test:    ✓ contact promises > a reminder she wants again and again > a weekly one keeps its weekday 882ms
+apps/api test:    ✓ contact promises > a reminder she wants again and again > stops at the end she named, and says nothing after it 1015ms
+apps/api test:    ✓ contact promises > a reminder she wants again and again > a phone that was off for a week owes her one reminder, not seven 1798ms
+apps/api test:    ✓ contact promises > an agreed reminder never vanishes (H-37, repro-15) > 1B: deferred by quiet hours, then paused → it waits in the app, saying it is late 1318ms
+apps/api test:    ✓ contact promises > an agreed reminder never vanishes (H-37, repro-15) > 1B′: quiet hours moved over the agreed time → it waits in the app 1060ms
+apps/api test:    ✓ contact promises > an agreed reminder never vanishes (H-37, repro-15) > 1C: the scheduler is 7 hours late → it waits in the app, saying it is late 922ms
+apps/api test:    ✓ contact promises > an agreed reminder never vanishes (H-37, repro-15) > 1D: 7 hours late into quiet hours → still in the app 1002ms
+apps/api test:    ✓ contact promises > a reminder for English with only maths questions prepares nothing and says only what was agreed (H-30) 1150ms
+apps/api test:    ✓ contact promises > an outreach message about an unknown goal is refused, not sent without its link (p2-outreach-links-silently-dropped) 1158ms
+apps/api test:    ✓ contact promises > doing the practice a message was about answers it, without tapping the push (previous-unanswered-needs-push-tap) 960ms
+apps/api test:    ✓ contact promises > a reminder job that runs again sends nothing twice (agreed-reminder-duplicate-on-rerun) 1339ms
+apps/api test:    ✓ contact promises > plan_step keeps the subject she named, and an agreed reminder is never silently unscheduled (M-58) 892ms
+apps/api test:    ✓ contact promises > rules tightened after scheduling hold at send time (M-59) 989ms
+apps/api test:    ✓ contact promises > a countdown delivered on the exam day says "Heute", not "Morgen" (M-60) 1906ms
+apps/api test:    ✓ contact promises > stopping contact does not bring the opt-in card straight back (M-62) 837ms
+apps/api test:    ✓ contact promises > a send whose outcome is unknown still leaves its text in the thread (M-63) 858ms
+apps/api test:    ✓ contact promises > "Heute nicht" moves prepared practice to tomorrow instead of skipping it for good (M-57) 1294ms
+apps/api test:  ✓ src/__tests__/limits.int.test.ts (3 tests) 550ms
+apps/api test:  ✓ src/storage/__tests__/gateway.test.ts (3 tests) 27ms
+apps/api test:  ✓ src/__tests__/transcribe-stream.int.test.ts (3 tests) 779ms
+apps/api test:  ✓ src/__tests__/events.int.test.ts (2 tests) 2023ms
+apps/api test:    ✓ Buddy events > records a finished session once, wakes Buddy with it and marks it handled 1281ms
+apps/api test:    ✓ Buddy events > records nothing for a session left without an answer 742ms
+apps/api test:  ✓ src/llm/__tests__/partial.test.ts (7 tests) 5ms
+apps/api test:  ✓ src/llm/__tests__/classify.test.ts (11 tests) 16ms
+apps/api test:  ✓ src/modules/buddy/__tests__/stream.test.ts (7 tests) 2ms
+apps/api test:  ✓ src/modules/practice/__tests__/tutor.test.ts (4 tests) 2ms
+apps/api test:  ✓ src/__tests__/cors.int.test.ts (2 tests) 1346ms
+apps/api test:  ✓ src/i18n/__tests__/i18n.test.ts (4 tests) 4ms
+apps/api test:  ✓ src/__tests__/database-exposure.int.test.ts (4 tests) 902ms
+apps/api test:  ✓ src/modules/practice/__tests__/tapChoices.test.ts (7 tests) 3ms
+apps/api test:  ✓ src/__tests__/consent.int.test.ts (2 tests) 1879ms
+apps/api test:    ✓ outdated consent in the background > Buddy checks and outreach wait until the account agreed again (p2-ml-consent-version-not-enforced-server-side) 846ms
+apps/api test:    ✓ outdated consent in the background > a phone can still be unregistered while the new text waits for consent 1033ms
+apps/api test:  ✓ src/llm/__tests__/routes.test.ts (4 tests) 5ms
+apps/api test:  ✓ src/modules/practice/__tests__/items.test.ts (11 tests) 10ms
+apps/api test:  ✓ src/modules/buddy/__tests__/registry.test.ts (5 tests) 4ms
+apps/api test:  ✓ src/push/__tests__/transport.test.ts (3 tests) 6ms
+apps/api test:  ✓ src/llm/__tests__/usage.test.ts (3 tests) 2ms
+apps/api test:  ✓ src/http/__tests__/limits.test.ts (4 tests) 1ms
+apps/api test:  ✓ src/modules/buddy/__tests__/text.test.ts (5 tests) 2ms
+apps/api test:  ✓ src/modules/buddy/__tests__/dialogue.test.ts (3 tests) 3ms
+apps/api test:  ✓ evals/concern/__tests__/cases.test.ts (4 tests) 2ms
+apps/api test:  ✓ src/__tests__/self-consent.int.test.ts (4 tests) 1948ms
+apps/api test:    ✓ her own consent from 16 > an adult profile is never asked (it agreed for itself from the start) 1121ms
+apps/api test:  ✓ src/modules/materials/__tests__/extract.test.ts (4 tests) 4ms
+apps/api test:  ✓ src/__tests__/voice.int.test.ts (6 tests) 5933ms
+apps/api test:    ✓ voice > writes down a spoken answer, tells the model the mode and language, stores nothing 909ms
+apps/api test:    ✓ voice > returns empty text for silence, and an honest error when the model is down 815ms
+apps/api test:    ✓ voice > writes down a long dictation piece by piece, each heard with the tail of the ones before 906ms
+apps/api test:    ✓ voice > a broken piece costs neither the other pieces nor the day's allowance 1324ms
+apps/api test:    ✓ voice > counts every piece against the hourly budget and refuses honestly beyond it 723ms
+apps/api test:    ✓ voice > refuses an oversized single piece (transport bound; the app cuts long dictations first), and unknown formats 1255ms
+apps/api test:  ✓ src/llm/__tests__/latex.test.ts (4 tests) 4ms
+apps/api test:  ✓ src/modules/practice/__tests__/brief.test.ts (3 tests) 2ms
+apps/api test:  ✓ src/modules/buddy/__tests__/school-year.test.ts (2 tests) 2ms
+apps/api test:  ✓ src/modules/practice/__tests__/dollarMath.test.ts (4 tests) 2ms
+apps/api test:  ✓ src/modules/materials/__tests__/pdf.test.ts (2 tests) 16ms
+apps/api test:  ✓ src/modules/buddy/__tests__/dayspec.test.ts (2 tests) 4ms
+apps/api test:  ✓ src/testing/__tests__/banner.test.ts (1 test) 11ms
+apps/api test:  ✓ src/lib/__tests__/version.test.ts (1 test) 3ms
+apps/api test:  ✓ src/__tests__/school-year.int.test.ts (1 test) 1350ms
+apps/api test:    ✓ school year (M-39) > "je suis en 4e" is her 8th school year, shown back as such 1350ms
+apps/api test:  ✓ src/__tests__/consent-confirmation.int.test.ts (4 tests) 4037ms
+apps/api test:    ✓ consent confirmed by e-mail > records the click once, with Supabase’s instant, and never rewrites it 1136ms
+apps/api test:    ✓ consent confirmed by e-mail > is recorded even when the privacy text changed meanwhile 762ms
+apps/api test:    ✓ consent confirmed by e-mail > is part of the export the account holder gets 1785ms
+apps/api test:    ✓ consent confirmed by e-mail > records nothing without the click — and locks nobody out 354ms
+apps/api test:  ✓ src/__tests__/test-database.int.test.ts (3 tests) 3642ms
+apps/api test:    ✓ test databases > drops what interrupted runs left behind, never what a concurrent run may use 1238ms
+apps/api test:    ✓ test databases > never copies a half-built template 2119ms
+apps/api test:  ✓ src/__tests__/scheduler-trigger.int.test.ts (4 tests) 2952ms
+apps/api test:    ✓ scheduler trigger chain > is scheduled every minute 1139ms
+apps/api test:    ✓ scheduler trigger chain > does nothing without the Vault secrets 1328ms
+apps/api test:    ✓ scheduler trigger chain > posts to the API with the secret, and the API runs the tick and reports healthy 368ms
+apps/api test:  Test Files  88 passed (88)
+apps/api test:       Tests  744 passed | 1 skipped (745)
+apps/api test:    Start at  18:38:35
+apps/api test:    Duration  38.99s (transform 2.62s, setup 0ms, collect 30.92s, tests 353.86s, environment 9ms, prepare 6.56s)
+apps/api test: Done

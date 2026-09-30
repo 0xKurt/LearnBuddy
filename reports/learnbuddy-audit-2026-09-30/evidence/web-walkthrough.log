@@ -1,0 +1,151 @@
+npm warn Unknown user config "HUGEICONS_AUTH_TOKEN". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Web apps/mobile/index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+| (node:98919) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:98920) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:98921) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:98922) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:98923) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:98924) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:98925) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:98926) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+Web apps/mobile/index.ts ▓▓▓▓▓▓▓▓░░░░░░░░ 52.0% (617/934)
+Web apps/mobile/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.2% (1637/1731)
+Web Bundled 7733ms apps/mobile/index.ts (1910 modules)
+
+› Assets (19):
+../../node_modules/.pnpm/@react-navigation+elements@2.9.18_@react-navigation+native@7.2.4_react-native@0.81.5_@b_725a80226ed5ec14dcc24b20989a255e/node_modules/@react-navigation/elements/lib/module/assets/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
+../../node_modules/.pnpm/@react-navigation+elements@2.9.18_@react-navigation+native@7.2.4_react-native@0.81.5_@b_725a80226ed5ec14dcc24b20989a255e/node_modules/@react-navigation/elements/lib/module/assets/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
+../../node_modules/.pnpm/@react-navigation+elements@2.9.18_@react-navigation+native@7.2.4_react-native@0.81.5_@b_725a80226ed5ec14dcc24b20989a255e/node_modules/@react-navigation/elements/lib/module/assets/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
+../../node_modules/.pnpm/@react-navigation+elements@2.9.18_@react-navigation+native@7.2.4_react-native@0.81.5_@b_725a80226ed5ec14dcc24b20989a255e/node_modules/@react-navigation/elements/lib/module/assets/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
+../../node_modules/.pnpm/@react-navigation+elements@2.9.18_@react-navigation+native@7.2.4_react-native@0.81.5_@b_725a80226ed5ec14dcc24b20989a255e/node_modules/@react-navigation/elements/lib/module/assets/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
+../../node_modules/.pnpm/expo-router@6.0.24_a30c02472751020badb76052971e40f3/node_modules/expo-router/assets/arrow_down.017bc6ba3fc25503e5eb5e53826d48a8.png (9.46 kB)
+../../node_modules/.pnpm/expo-router@6.0.24_a30c02472751020badb76052971e40f3/node_modules/expo-router/assets/error.d1ea1496f9057eb392d5bbf3732a61b7.png (469 B)
+../../node_modules/.pnpm/expo-router@6.0.24_a30c02472751020badb76052971e40f3/node_modules/expo-router/assets/file.19eeb73b9593a38f8e9f418337fc7d10.png (138 B)
+../../node_modules/.pnpm/expo-router@6.0.24_a30c02472751020badb76052971e40f3/node_modules/expo-router/assets/forward.d8b800c443b8972542883e0b9de2bdc6.png (188 B)
+../../node_modules/.pnpm/expo-router@6.0.24_a30c02472751020badb76052971e40f3/node_modules/expo-router/assets/pkg.ab19f4cbc543357183a20571f68380a3.png (364 B)
+../../node_modules/.pnpm/expo-router@6.0.24_a30c02472751020badb76052971e40f3/node_modules/expo-router/assets/sitemap.412dd9275b6b48ad28f5e3d81bb1f626.png (465 B)
+../../node_modules/.pnpm/expo-router@6.0.24_a30c02472751020badb76052971e40f3/node_modules/expo-router/assets/unmatched.20e71bdf79e3a97bf55fd9e164041578.png (4.75 kB)
+assets/splash-icon.ae51b17877d2e968c3d870b2a04c6b34.png (339 kB)
+
+› web bundles (1):
+_expo/static/js/web/index-8f75f9134ec45b920cbc9045c7a8da1d.js (3.85 MB)
+
+› Files (3):
+favicon.ico (14.5 kB)
+index.html (1.22 kB)
+metadata.json (49 B)
+
+Exported: dist-web
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "shamefully-hoist". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "HUGEICONS_AUTH_TOKEN". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+(node:99095) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m(node:99102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m[43m[30m WARN [39m[49m Issue while reading "/Users/kurt/.npmrc". Failed to replace env in config: ${NODE_AUTH_TOKEN}
+[2m[WebServer] [22m(node:99129) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m(node:99135) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m(node:99141) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 11 tests using 1 worker
+
+(node:99142) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:99142) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:99142) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+HOME 360x740: header 35pt, composer 68pt
+[2m[WebServer] [22m[figures] material=2b73b7ba-cd42-40e8-9b13-f5eb73c657a2 skipped — unscripted model call (figures)
+  ✓   1 tests/web/core-loop.spec.ts:56:5 › core loop: a parent sets up, the student plans a test → photo → prepared practice → feedback remembered (1.5m)
+  ✓   2 tests/web/languages.spec.ts:86:7 › registration fits in en (4.8s)
+  ✓   3 tests/web/languages.spec.ts:86:7 › registration fits in fr (4.7s)
+  ✓   4 tests/web/languages.spec.ts:86:7 › registration fits in es (4.7s)
+  ✓   5 tests/web/languages.spec.ts:86:7 › registration fits in it (4.7s)
+  ✓   6 tests/web/layout.spec.ts:48:7 › the home fits on 390px (1.3s)
+  ✓   7 tests/web/layout.spec.ts:48:7 › the home fits on 320px (1.2s)
+  ✘   8 tests/web/modes.spec.ts:63:5 › learning modes: explain, homework help without the solution, practice with math (1.3m)
+(node:1054) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1054) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:1054) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   9 tests/web/offline.spec.ts:9:5 › answers given offline arrive once: app open, and after it was closed (3.4s)
+  ✓  10 tests/web/onboarding-exit.spec.ts:7:5 › sign up, decline at consent, sign in again, leave at the profile step (595ms)
+[2m[WebServer] [22m[figures] material=aadf4635-b0e3-4dfb-bc6c-40c035adbd10 skipped — unscripted model call (figures)
+[2m[WebServer] [22m[figures] material=7058b432-7f17-4e5f-97b1-3331278ed42a skipped — unscripted model call (figures)
+[2m[WebServer] [22m[figures] material=99159cbf-d37b-47a3-8a04-64c6007a8ab0 skipped — unscripted model call (figures)
+  ✘  11 tests/web/tour.spec.ts:75:5 › feature tour: undo, resend, memory, history, settings, parents, photo, explanation (3.0m)
+
+
+  1) tests/web/modes.spec.ts:63:5 › learning modes: explain, homework help without the solution, practice with math
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Tipp aufs Mikro, wenn du fertig bist.')
+    Expected: visible
+    Timeout: 20000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 20000ms[22m
+    [2m  - waiting for getByText('Tipp aufs Mikro, wenn du fertig bist.')[22m
+
+
+      293 |   await expect(page.getByText('GESPRÄCH')).toBeVisible();
+      294 |   await expect(page.getByText('Ich höre zu.')).toBeVisible();
+    > 295 |   await expect(page.getByText('Tipp aufs Mikro, wenn du fertig bist.')).toBeVisible();
+          |                                                                         ^
+      296 |   await shot(page, '32-talk-listening');
+      297 |   await page.waitForTimeout(1500);
+      298 |   const streamed = page.waitForResponse((r) => r.url().endsWith('/v1/buddy/messages'));
+        at /Users/kurt/git/LearnBuddy/tests/web/modes.spec.ts:295:73
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/web/modes-learning-modes-expla-a3b67-solution-practice-with-math/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/web/modes-learning-modes-expla-a3b67-solution-practice-with-math/error-context.md
+
+  2) tests/web/tour.spec.ts:75:5 › feature tour: undo, resend, memory, history, settings, parents, photo, explanation
+
+    [31mTest timeout of 180000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 180000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' })[22m
+
+
+      351 |   await page.getByRole('button', { name: 'Aufnahme starten' }).click();
+      352 |   await page.waitForTimeout(1200);
+    > 353 |   await page.getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' }).click();
+          |                                                                                      ^
+      354 |   // The card keeps the marked sentence; what the judgement says stands once, in the
+      355 |   // thread under Buddy's reply (issue #14) — not a third time in the card.
+      356 |   await expect(page.getByText('Fast', { exact: true })).toBeVisible();
+        at /Users/kurt/git/LearnBuddy/tests/web/tour.spec.ts:353:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/web/tour-feature-tour-undo-res-d4bc6-s-parents-photo-explanation/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/web/tour-feature-tour-undo-res-d4bc6-s-parents-photo-explanation/error-context.md
+
+  2 failed
+    tests/web/modes.spec.ts:63:5 › learning modes: explain, homework help without the solution, practice with math
+    tests/web/tour.spec.ts:75:5 › feature tour: undo, resend, memory, history, settings, parents, photo, explanation
+  9 passed (6.3m)

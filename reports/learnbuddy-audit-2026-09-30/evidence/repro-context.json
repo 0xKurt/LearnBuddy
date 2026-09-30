@@ -1,0 +1,81 @@
+{
+  "old_sheet_unreachable": {
+    "database_sheet_count": 11,
+    "state_sheet_count": 10,
+    "old_sheet_has_alias": false,
+    "lookup_hits": [
+      {
+        "title": "Latein Einzigartiger Originalzettel",
+        "subject": null,
+        "read_on": "2026-09-28",
+        "excerpt": "<b>Latein</b> <b>Einzigartiger</b> Originalzettel"
+      }
+    ],
+    "lookup_keys": ["title", "subject", "read_on", "excerpt"],
+    "context_says": "- 10 of 11 sheets are listed here (the newest); search_material finds the others"
+  },
+  "recurrence_context_and_undo": {
+    "persisted_repeat": "daily",
+    "loaded_has_repeat": false,
+    "context_repeats": false,
+    "changed_status": 200,
+    "actual": {
+      "repeat": null,
+      "version": 1
+    },
+    "stored_undo": {
+      "type": "restore_step",
+      "state": "planned",
+      "repeat": "daily",
+      "step_id": "bd334661-c846-491c-89fe-e29c79a87a99",
+      "done_source": null,
+      "planned_date": "2026-09-29",
+      "planned_time": "17:00",
+      "repeat_until": "2026-10-02",
+      "expect_version": 2
+    },
+    "undo_response": {
+      "status": 409,
+      "body": {
+        "error": {
+          "code": "conflict",
+          "message": "This changed since — undo it by hand",
+          "details": {
+            "reason": "changed_since"
+          }
+        }
+      }
+    }
+  },
+  "lookup_confirmation_not_recognised": {
+    "asked_status": 200,
+    "confirmed_status": 200,
+    "actually_deleted": false,
+    "rejected": [
+      {
+        "disposition": "rejected",
+        "errors": [
+          "action 1 (delete_material): deleting \"Latein Vokabeln\" cannot be taken back. Leave this action out of your answer, ask her plainly whether it should go (asks_permission true), and do it in your NEXT answer once she has said yes"
+        ]
+      }
+    ]
+  },
+  "unrelated_confirmation_accepts_deletion": {
+    "status": 200,
+    "actually_deleted": true
+  },
+  "sensitive_and_blocked_messages_enter_summary": {
+    "planned": 1,
+    "concern_original_sent_to_summary": true,
+    "blocked_original_sent_to_summary": true,
+    "memories": 0,
+    "persisted_summaries": [
+      {
+        "day": "2026-09-28",
+        "summary": "Sie wird zuhause geschlagen und möchte sich wehtun.",
+        "topics": ["Notlage"]
+      }
+    ],
+    "derived_sensitive_sentence_in_later_state": true
+  }
+}

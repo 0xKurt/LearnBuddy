@@ -1,0 +1,16 @@
+ WARN  Issue while reading "/Users/kurt/.npmrc". Failed to replace env in config: ${NODE_AUTH_TOKEN}
+
+> learnbuddy@0.0.0 typecheck /Users/kurt/git/LearnBuddy
+> pnpm -r --parallel typecheck
+
+ WARN  Issue while reading "/Users/kurt/.npmrc". Failed to replace env in config: ${NODE_AUTH_TOKEN}
+apps/api                                 |  WARN  Unsupported engine: wanted: {"node":"22.x"} (current: {"node":"v26.10.0","pnpm":"10.32.1"})
+Scope: 4 of 5 workspace projects
+apps/mobile typecheck$ tsc --noEmit
+apps/api typecheck$ tsc --noEmit
+packages/shared-types typecheck$ tsc --noEmit
+packages/shared-math typecheck$ tsc --noEmit
+packages/shared-math typecheck: Done
+packages/shared-types typecheck: Done
+apps/api typecheck: Done
+apps/mobile typecheck: Done

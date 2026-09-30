@@ -1,0 +1,27 @@
+{
+  "extraction": {
+    "supplied_pairs": 50,
+    "model_schema_accepts_fifty": false,
+    "parser_success": true,
+    "retained_pairs": 25,
+    "page_report": [
+      {
+        "page": 1,
+        "read": "all",
+        "problem": null
+      }
+    ]
+  },
+  "one_correct_question": {
+    "answered": 1,
+    "first_try": 1,
+    "secure_topics": ["Brüche"],
+    "shaky_topics": []
+  },
+  "unverified_solution_key": {
+    "task": "6 + 4",
+    "supplied_key": "8",
+    "mathematically_correct_student_answer": "10",
+    "rule_verdict": "incorrect"
+  }
+}

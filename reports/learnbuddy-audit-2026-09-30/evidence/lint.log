@@ -1,0 +1,4 @@
+ WARN  Issue while reading "/Users/kurt/.npmrc". Failed to replace env in config: ${NODE_AUTH_TOKEN}
+
+> learnbuddy@0.0.0 lint /Users/kurt/git/LearnBuddy
+> eslint .
