@@ -45,6 +45,7 @@ import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
 import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
 import { StartRow } from '../components/lb/StartRow.js';
+import { Wordmark } from '../components/lb/Wordmark.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
@@ -982,12 +983,15 @@ export default function BuddyScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow />
       <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
-        {/* No header row any more (owner decision 30.09., issue #125). It held three
-            unlike things side by side — a greeting, a state toggle and a menu — and the
-            loudest of them was a setting she rarely touches. The menu now sits at the end
-            of the row of ways to start; reading aloud is a line in that menu, with words
-            instead of a symbol, which also answers "wozu ist der Lautsprecher da" (#52).
-            The conversation gains the 52 pt the head used to take (issue #64). */}
+        {/* The head that held three unlike things is gone (#125): a greeting, a state
+            toggle and a menu, side by side, the loudest of them a setting she rarely
+            touches. The menu sits at the end of the ways to start now, and reading aloud
+            is a line in it with words instead of a symbol (#52).
+            What stands here instead is the mark, and only the mark (#135) — one thing,
+            not three, and nothing in it to tap. */}
+        <View style={{ paddingHorizontal: SPACE.lg, paddingTop: SPACE.xs, paddingBottom: 2 }}>
+          <Wordmark state={pending !== null ? 'think' : 'idle'} />
+        </View>
         <View style={{ flex: 1 }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never
             pushes them down, and she can close it (only on this phone). */}

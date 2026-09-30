@@ -22,6 +22,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { useAnnounce } from '../../lib/announce.js';
 import { formatClock } from '../../lib/speech/voice.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
@@ -94,7 +95,9 @@ export function MicButton({
   const working = voice.state === 'starting' || voice.state === 'transcribing';
   // A running recording can always be stopped.
   const off = recording ? false : disabled || working;
-  const d = size === 'lg' ? 72 : size === 'sm' ? 48 : 56;
+  // 'sm' is the composer pill, where it stands beside the + and the talk button: one size
+  // for the three, or their centres drift apart on the pill's baseline (issue #134).
+  const d = size === 'lg' ? 72 : size === 'sm' ? TOUCH : 56;
   const filled = size === 'lg' || recording || filledIdle;
   const bg = recording ? palette.primaryDk : filled ? palette.primary : palette.paper;
   const fg = filled ? palette.paper : palette.primaryDk;

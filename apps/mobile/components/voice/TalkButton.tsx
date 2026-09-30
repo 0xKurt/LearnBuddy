@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { TOUCH } from '../../lib/theme/space.js';
 import { Icon } from '../lb/Icon.js';
 
 export function TalkButton({ onPress }: { onPress: () => void }) {
@@ -23,9 +24,11 @@ export function TalkButton({ onPress }: { onPress: () => void }) {
       {({ pressed }) => (
         <View
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
+            // TOUCH, like its neighbours in the pill: three sizes in one row put their
+            // centres 4 pt apart, which is what the owner saw (issue #134).
+            width: TOUCH,
+            height: TOUCH,
+            borderRadius: TOUCH / 2,
             backgroundColor: palette.primary,
             alignItems: 'center',
             justifyContent: 'center',
