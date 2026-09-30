@@ -649,7 +649,7 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       });
       await send(other, 'weg damit');
       // sh1 does not exist in the other learner's own state — there is nothing to reach for.
-      expect(t.refusal()).toMatch(/unknown sheet sh1/);
+      expect(t.refusal()).toMatch(/there is no sheet sh1/);
       const mine = await env.db.one<{ archived_at: Date | null }>(
         `select archived_at from materials where learner_id = $1`,
         [l.learnerId],

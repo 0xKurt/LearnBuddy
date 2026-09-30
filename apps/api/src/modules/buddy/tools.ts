@@ -235,7 +235,10 @@ function resolveFutureDay(ctx: ToolContext, spec: DaySpec, what: string): string
     throw new ToolRejection(
       `${what} would be on ${r.date}, which is in the past — ask the learner`,
     );
-  if (d > MAX_PLAN_DAYS) throw new ToolRejection(`${what} is more than a year ahead`);
+  if (d > MAX_PLAN_DAYS)
+    throw new ToolRejection(
+      `${what} is more than a year ahead — ask her for a nearer day instead of planning one`,
+    );
   return r.date;
 }
 
@@ -266,19 +269,28 @@ function resolveEnd(ctx: ToolContext, spec: UntilSpec, what: string): Date {
 
 function goalOf(ctx: ToolContext, alias: string): GoalRow {
   const g = ctx.aliases.goals.get(alias);
-  if (!g) throw new ToolRejection(`unknown goal ${alias}`);
+  if (!g)
+    throw new ToolRejection(
+      `there is no goal ${alias} — STATE lists every one she has. Leave this action out instead of picking another`,
+    );
   return g;
 }
 
 function stepOf(ctx: ToolContext, alias: string): StepRow {
   const s = ctx.aliases.steps.get(alias);
-  if (!s) throw new ToolRejection(`unknown step ${alias}`);
+  if (!s)
+    throw new ToolRejection(
+      `there is no step ${alias} — STATE lists every one she has. Leave this action out instead of picking another`,
+    );
   return s;
 }
 
 function memoryOf(ctx: ToolContext, alias: string): MemoryRow {
   const m = ctx.aliases.memories.get(alias);
-  if (!m) throw new ToolRejection(`unknown memory ${alias}`);
+  if (!m)
+    throw new ToolRejection(
+      `there is nothing known as ${alias} — STATE lists what you know about her. Leave this action out instead of picking another`,
+    );
   return m;
 }
 
@@ -288,7 +300,10 @@ async function lockGoal(ctx: ToolContext, id: string, ref: string): Promise<Goal
       where g.id = $1 and g.learner_id = $2 for update of g`,
     [id, ctx.learnerId],
   );
-  if (!row) throw new ToolRejection(`goal ${ref} no longer exists`);
+  if (!row)
+    throw new ToolRejection(
+      `goal ${ref} is gone since STATE was written — leave this action out and answer her without it`,
+    );
   return row;
 }
 
@@ -313,7 +328,10 @@ async function currentStep(ctx: ToolContext, alias: string): Promise<StepRow> {
     `select * from buddy_steps where id = $1 and learner_id = $2 for update`,
     [s.id, ctx.learnerId],
   );
-  if (!row) throw new ToolRejection(`step ${alias} no longer exists`);
+  if (!row)
+    throw new ToolRejection(
+      `step ${alias} is gone since STATE was written — leave this action out and answer her without it`,
+    );
   return row;
 }
 
@@ -581,7 +599,10 @@ async function runCloseGoal(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const g = await currentGoal(ctx, a.goal);
-  if (g.status !== 'active') throw new ToolRejection(`goal ${a.goal} is already closed`);
+  if (g.status !== 'active')
+    throw new ToolRejection(
+      `goal ${a.goal} is already closed — leave this action out and just say so`,
+    );
   await ctx.db.query(
     `update buddy_goals set status = $2, outcome = $3, closed_at = $4, version = version + 1 where id = $1`,
     [g.id, a.status, a.outcome, ctx.now],
@@ -900,7 +921,9 @@ async function runUpdateStep(
   requireQuote(ctx, a.quote);
   const s = await currentStep(ctx, a.step);
   if (!['planned', 'prepared'].includes(s.state)) {
-    throw new ToolRejection(`step ${a.step} is ${s.state} and cannot be changed`);
+    throw new ToolRejection(
+      `step ${a.step} is ${s.state} and cannot be changed — leave this action out and tell her how it stands`,
+    );
   }
   const undo: UndoSpec = {
     type: 'restore_step',
@@ -1010,7 +1033,9 @@ async function runMarkStepDone(
   requireQuote(ctx, a.quote);
   const s = await currentStep(ctx, a.step);
   if (!['planned', 'prepared', 'in_progress'].includes(s.state)) {
-    throw new ToolRejection(`step ${a.step} is already ${s.state}`);
+    throw new ToolRejection(
+      `step ${a.step} is already ${s.state} — leave this action out and just say so`,
+    );
   }
   await ctx.db.query(
     `update buddy_steps set state = 'done', done_source = 'learner_reported', finished_at = $2,
@@ -1125,7 +1150,10 @@ async function requireAsked(ctx: ToolContext, what: string): Promise<void> {
 /** The sheet she named, from this learner's aliases only. */
 function materialOf(ctx: ToolContext, alias: string) {
   const m = ctx.aliases.materials.get(alias);
-  if (!m) throw new ToolRejection(`unknown sheet ${alias}`);
+  if (!m)
+    throw new ToolRejection(
+      `there is no sheet ${alias} — STATE lists her sheets. Leave this action out instead of picking another`,
+    );
   return m;
 }
 
@@ -1157,7 +1185,9 @@ async function runDeleteMaterial(
     await archiveMaterial({ db: ctx.db, now: () => ctx.now }, ctx.learnerId, m.id);
   } catch (e) {
     if (e instanceof AppError && e.code === 'not_found') {
-      throw new ToolRejection(`sheet ${a.material} is already gone`);
+      throw new ToolRejection(
+        `sheet ${a.material} is already gone — leave this action out and just say so`,
+      );
     }
     throw e;
   }
@@ -1171,7 +1201,10 @@ async function runRenameMaterial(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const m = materialOf(ctx, a.material);
-  if (m.title === a.title) throw new ToolRejection(`sheet ${a.material} is already called that`);
+  if (m.title === a.title)
+    throw new ToolRejection(
+      `sheet ${a.material} is already called that — leave this action out and just say so`,
+    );
   const r = await ctx.db.query(
     `update materials set title = $3
       where id = $1 and learner_id = $2 and archived_at is null returning id`,
@@ -1429,7 +1462,10 @@ async function runScheduleCheck(
         and payload ->> 'reason' = 'checkin_requested'`,
     [ctx.learnerId],
   );
-  if (pending.n >= 3) throw new ToolRejection('there are already 3 checks planned');
+  if (pending.n >= 3)
+    throw new ToolRejection(
+      'there are already 3 checks planned — leave this action out; one of them will come anyway',
+    );
   const id = await enqueueJob(ctx.db, {
     learnerId: ctx.learnerId,
     kind: 'buddy_check',

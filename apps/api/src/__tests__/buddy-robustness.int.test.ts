@@ -632,7 +632,7 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
         },
       ]),
       (req) => {
-        expect(ScriptedGateway.textOf(req)).toContain('unknown goal g1');
+        expect(ScriptedGateway.textOf(req)).toContain('there is no goal g1');
         expect(ScriptedGateway.textOf(req)).not.toContain('Englisch Vokabeltest');
         return say('Ich sehe bei dir keinen Test – welcher war gemeint?');
       },
