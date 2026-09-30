@@ -117,11 +117,19 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
     setFailure(null);
     try {
       // The server checks the parents' PIN itself (asks again if it lapsed meanwhile).
-      await asAdultIfNeeded(() => savePasswordOnServer(password), {
+      const done = await asAdultIfNeeded(() => savePasswordOnServer(password), {
         pinSet,
         purpose: 'credentials',
       });
-      toast.show(t('settings:adult.access.password_saved'));
+      // Never claim the other devices are out when the revoke could not be confirmed
+      // (issue #131, CLAUDE.md rule 5) — the password is set either way.
+      toast.show(
+        t(
+          done.others_signed_out === false
+            ? 'settings:adult.access.password_saved_others_unsure'
+            : 'settings:adult.access.password_saved',
+        ),
+      );
       close();
     } catch (err) {
       setFailure(messageFor(err));

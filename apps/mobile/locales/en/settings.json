@@ -148,10 +148,11 @@
       "password_title": "Password",
       "password_cta": "Change password",
       "password_sheet_title": "Change password",
-      "password_intro": "The new password counts for signing in from now on. This phone stays signed in.",
+      "password_intro": "The new password counts from now on. Other devices you are signed in on will have to sign in again.",
       "password_save": "Save password",
       "saving": "Saving …",
-      "password_saved": "New password saved."
+      "password_saved": "New password saved. Other devices have to sign in again.",
+      "password_saved_others_unsure": "New password saved. We could not confirm just now whether the other devices were signed out."
     },
     "open": "Open",
     "close": "Close",

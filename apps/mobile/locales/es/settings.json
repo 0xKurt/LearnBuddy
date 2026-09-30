@@ -148,10 +148,11 @@
       "password_title": "Contraseña",
       "password_cta": "Cambiar contraseña",
       "password_sheet_title": "Cambiar contraseña",
-      "password_intro": "La nueva contraseña vale desde ahora para iniciar sesión. Este móvil sigue con la sesión iniciada.",
+      "password_intro": "La nueva contraseña vale a partir de ahora. Los demás dispositivos donde habéis iniciado sesión tendrán que volver a entrar.",
       "password_save": "Guardar contraseña",
       "saving": "Guardando …",
-      "password_saved": "Nueva contraseña guardada."
+      "password_saved": "Nueva contraseña guardada. Los demás dispositivos tienen que volver a entrar.",
+      "password_saved_others_unsure": "Nueva contraseña guardada. Ahora mismo no pudimos confirmar si se cerró la sesión en los demás dispositivos."
     },
     "open": "Abrir",
     "close": "Cerrar",

@@ -77,8 +77,15 @@ export const updateLearner = (input: UpdateLearnerRequest) =>
   request('PATCH', '/learner', { body: input, schema: LearnerView });
 
 /** A new password; for a minor's profile the server wants the parents' admin token. */
+/**
+ * `others_signed_out` false means the password IS set but the revoke could not be confirmed
+ * (issue #131) — the card says so rather than claiming the other devices are out.
+ */
 export const setPassword = (password: string) =>
-  request('PUT', '/account/password', { body: { password } });
+  request('PUT', '/account/password', {
+    body: { password },
+    schema: z.object({ password_set: z.boolean(), others_signed_out: z.boolean() }),
+  });
 
 export const setPin = (pin: string, currentPin?: string) =>
   request('PUT', '/account/pin', {

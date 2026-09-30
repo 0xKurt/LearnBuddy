@@ -316,6 +316,16 @@ export class FakeAuth implements AuthVerifier {
   async updatePassword(userId: string, password: string): Promise<void> {
     this.passwords.set(userId, password);
   }
+
+  /** What the real one revokes; the tests read it to see the scope that was asked for. */
+  readonly signedOut: Array<{ jwt: string; scope: 'others' | 'global' }> = [];
+  /** Set to make the revoke fail, so a test can prove the password still changed. */
+  signOutFails = false;
+
+  async signOutOthers(jwt: string, scope: 'others' | 'global'): Promise<void> {
+    if (this.signOutFails) throw new AppError('unavailable', 'Sign-in service unavailable');
+    this.signedOut.push({ jwt, scope });
+  }
 }
 
 export type StorageOp = 'sign' | 'list' | 'download' | 'upload' | 'remove';

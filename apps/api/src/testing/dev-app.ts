@@ -91,6 +91,9 @@ export class DevAuth implements AuthVerifier {
   async updatePassword(userId: string, password: string): Promise<void> {
     for (const u of this.users.values()) if (u.id === userId) u.password = password;
   }
+
+  /** The dev stand-in keeps no refresh tokens, so there is nothing to revoke (#131). */
+  async signOutOthers(): Promise<void> {}
 }
 
 export class DevStorage extends MemoryStorage {

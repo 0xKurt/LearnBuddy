@@ -237,6 +237,45 @@ describe.skipIf(!dbReady)('identity and privacy', () => {
     expect((await adult.api.put('/account/password', { password: 'kurz' })).status).toBe(422);
   });
 
+  it('a password change ends the other sessions — all of them for a minor (#131)', async () => {
+    // The reason a family changes a password is usually that someone else knows it. Supabase's
+    // admin update leaves every refresh token working, so without this their phone stays in.
+    const adult = await onboard(env);
+    expect((await adult.api.put('/account/password', { password: 'ein-neues-1' })).status).toBe(
+      200,
+    );
+    // The last entry, not the whole list: earlier tests in this file change passwords too.
+    expect(env.auth.signedOut.at(-1)).toEqual({ jwt: adult.token, scope: 'others' });
+
+    // A minor's change came through the parents' PIN, so the phone in hand goes too: the
+    // person holding it may be the one the change is against.
+    const child = await onboard(env, { relation: 'child', pin: '2468' });
+    const session = await child.api.post<{ admin_token: string }>('/account/admin-session', {
+      pin: '2468',
+    });
+    const done = await child.api
+      .with({ 'x-admin-token': session.body.admin_token })
+      .put<{ others_signed_out: boolean; scope: string }>('/account/password', {
+        password: 'noch-ein-neues-1',
+      });
+    expect(done.status).toBe(200);
+    expect(done.body).toMatchObject({ others_signed_out: true, scope: 'global' });
+    expect(env.auth.signedOut.at(-1)).toEqual({ jwt: child.token, scope: 'global' });
+  });
+
+  it('a revoke that fails does not undo the password that was set (#131)', async () => {
+    const l = await onboard(env);
+    env.auth.signOutFails = true;
+    const res = await l.api.put<{ password_set: boolean; others_signed_out: boolean }>(
+      '/account/password',
+      { password: 'trotzdem-gesetzt-1' },
+    );
+    // Saying the change failed would be worse than saying the other devices may still be in.
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ password_set: true, others_signed_out: false });
+    expect(env.auth.passwords.get(l.userId)).toBe('trotzdem-gesetzt-1');
+  });
+
   it('keeps the admin token short-lived (5 minutes)', async () => {
     const l = await onboard(env, { relation: 'child', pin: '2468' });
     const session = await l.api.post<{ admin_token: string; expires_at: string }>(

@@ -42,6 +42,17 @@ export interface AuthVerifier {
    * checks: for a minor's profile the parents' PIN (PUT /account/password).
    */
   updatePassword(userId: string, password: string): Promise<void>;
+  /**
+   * Ends sessions on the other devices — or on all of them (issue #131). Changing a
+   * password leaves every refresh token minting access tokens, and in a family app the
+   * usual reason to change it is that someone else knows it: exactly their device would
+   * stay signed in.
+   *
+   * `jwt` is the caller's own bearer token, which is what Supabase scopes 'others' against.
+   * An outage here must not undo the password that was already set, so the caller treats a
+   * failure as a warning, not as an error.
+   */
+  signOutOthers(jwt: string, scope: 'others' | 'global'): Promise<void>;
 }
 
 /** Latest interactive authentication recorded in a (verified) Supabase token. */
@@ -149,5 +160,14 @@ export class SupabaseAuthVerifier implements AuthVerifier {
       throw new AppError('invalid_input', 'Password not accepted', { reason: 'weak_password' });
     // Any other definite "no" (e.g. the service key) is not an outage the parent could wait out.
     throw new AppError('internal', 'Sign-in service refused the change');
+  }
+
+  async signOutOthers(jwt: string, scope: 'others' | 'global'): Promise<void> {
+    const { error } = await this.client.auth.admin.signOut(jwt, scope);
+    if (!error) return;
+    // A session that is already gone is what was asked for.
+    const outcome = authOutcomeOf(error);
+    if (outcome === 'refused' && (error.status === 404 || error.status === 401)) return;
+    throw new AppError('unavailable', 'Sign-in service unavailable');
   }
 }

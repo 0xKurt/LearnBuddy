@@ -35,6 +35,13 @@ export function depsOf(c: AppContext): Deps {
   return c.get('deps');
 }
 
+/** The caller's own token — what Supabase scopes a "sign out the others" against (#131). */
+export function bearerOf(c: AppContext): string {
+  const token = bearer(c);
+  if (!token) throw new AppError('unauthenticated', 'Missing bearer token');
+  return token;
+}
+
 function bearer(c: AppContext): string | null {
   const h = c.req.header('authorization');
   if (!h) return null;

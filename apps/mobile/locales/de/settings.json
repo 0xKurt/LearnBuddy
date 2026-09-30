@@ -148,10 +148,11 @@
       "password_title": "Passwort",
       "password_cta": "Passwort ändern",
       "password_sheet_title": "Passwort ändern",
-      "password_intro": "Das neue Passwort gilt ab sofort für die Anmeldung. Auf diesem Handy bleibt ihr angemeldet.",
+      "password_intro": "Das neue Passwort gilt ab sofort. Andere Geräte, auf denen ihr angemeldet seid, müssen sich danach neu anmelden.",
       "password_save": "Passwort speichern",
       "saving": "Wird gespeichert …",
-      "password_saved": "Neues Passwort gespeichert."
+      "password_saved": "Neues Passwort gespeichert. Andere Geräte müssen sich neu anmelden.",
+      "password_saved_others_unsure": "Neues Passwort gespeichert. Ob andere Geräte abgemeldet wurden, konnten wir gerade nicht bestätigen."
     },
     "open": "Öffnen",
     "close": "Schließen",

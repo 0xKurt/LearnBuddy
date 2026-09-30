@@ -16,6 +16,7 @@ import { Hono } from 'hono';
 import {
   assertAccountHolder,
   assertAccountHolderOf,
+  bearerOf,
   depsOf,
   hasValidAdminToken,
   requireAccount,
@@ -410,9 +411,26 @@ identityRoutes.put('/account/password', requireUser, requireAccountAnyConsent, a
   const deps = depsOf(c);
   const input = await readBody(c, SetPasswordRequest);
   const account = c.get('account');
-  assertAccountHolderOf(c, await findLearner(deps.db, account.id));
+  const learner = await findLearner(deps.db, account.id);
+  assertAccountHolderOf(c, learner);
   await deps.auth.updatePassword(c.get('user').userId, input.password);
-  return c.json({ password_set: true });
+  // The other devices go too (issue #131). Supabase's admin update leaves every refresh
+  // token minting access tokens, and the usual reason to change a password in a family is
+  // that someone else knows it — exactly their phone would stay signed in.
+  //
+  // For a minor the change came through the parents' PIN, so 'global': the phone in hand
+  // signs in again as well. That is the safer default when the person holding it may be
+  // the one the change is against.
+  const scope = learner && isMinor(learner, deps.now()) ? 'global' : 'others';
+  let othersSignedOut = true;
+  try {
+    await deps.auth.signOutOthers(bearerOf(c), scope);
+  } catch {
+    // The password IS changed; saying it failed would be worse than saying the other
+    // devices may still be signed in (CLAUDE.md rule 5).
+    othersSignedOut = false;
+  }
+  return c.json({ password_set: true, others_signed_out: othersSignedOut, scope });
 });
 
 // ─────────────── privacy ───────────────

@@ -148,10 +148,11 @@
       "password_title": "Password",
       "password_cta": "Cambia password",
       "password_sheet_title": "Cambia password",
-      "password_intro": "La nuova password vale da subito per l'accesso. Questo telefono resta connesso.",
+      "password_intro": "La nuova password vale da subito. Gli altri dispositivi su cui siete collegati dovranno rientrare.",
       "password_save": "Salva la password",
       "saving": "Salvataggio …",
-      "password_saved": "Nuova password salvata."
+      "password_saved": "Nuova password salvata. Gli altri dispositivi devono rientrare.",
+      "password_saved_others_unsure": "Nuova password salvata. In questo momento non abbiamo potuto confermare se gli altri dispositivi sono stati disconnessi."
     },
     "open": "Apri",
     "close": "Chiudi",
