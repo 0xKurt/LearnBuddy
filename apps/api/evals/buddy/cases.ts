@@ -234,8 +234,11 @@ export const CASES: Case[] = [
       );
     },
     message: 'Wer war nochmal laut meinem Blatt der erste römische Kaiser?',
+    // What counts is that the answer comes from HER sheet — not which road it took to get
+    // there (issue #117). Passages her words point at are put into the context up front
+    // (preInjectedPassages, issue #26), so search_material is one way of two and checking
+    // for it measured the road instead of the answer.
     check: (o) => [
-      ...must(o.lookups.includes('search_material'), 'looked at the sheet'),
       ...must(/augustus|octavian/i.test(o.reply ?? ''), 'answers from the sheet'),
       ...must(o.tools.length === 0, 'changes nothing'),
     ],
@@ -463,6 +466,32 @@ export const CASES: Case[] = [
     check: (o) => [
       ...must(o.tools.length === 0, 'answers, changes nothing'),
       ...must((o.reply ?? '').length > 40, 'stays with her instead of a one-liner'),
+    ],
+  },
+  {
+    // Issue #117, the version that shows the damage instead of hiding it: her sheet says
+    // something her teacher decided, and general knowledge says something else. If Buddy
+    // answers from his own knowledge while calling it her sheet, she learns the wrong thing
+    // for her class — and cannot tell, because he said it was hers.
+    id: 'de_sheet_beats_own_knowledge',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      await env.db.query(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title, extracted_text, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'Biologie – Unser Klassen-Merkblatt', $2, $3)`,
+        [
+          l.learnerId,
+          'Merkblatt 7b, Frau Kern: Wir zählen in diesem Schuljahr SECHS Hauptorgane des ' +
+            'Verdauungssystems: Mund, Speiseröhre, Magen, Dünndarm, Dickdarm und Leber. ' +
+            'Die Bauchspeicheldrüse behandeln wir erst in Klasse 9 und lassen sie hier weg.',
+          env.clock.now(),
+        ],
+      );
+    },
+    message: 'wie viele hauptorgane vom verdauungssystem stehen auf meinem merkblatt?',
+    check: (o) => [
+      // Six, not the five or seven general knowledge would give: only her sheet says six.
+      ...must(/sechs|\b6\b/i.test(o.reply ?? ''), `answers from HER sheet: ${o.reply ?? '—'}`),
     ],
   },
   {
