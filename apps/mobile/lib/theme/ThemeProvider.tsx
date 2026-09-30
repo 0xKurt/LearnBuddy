@@ -165,17 +165,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => contextOf(name, family, mode, choose),
     [name, family, mode, choose],
   );
-  // `key` remounts the tree on a change, so styles built once in a component's body
-  // (a StyleSheet in a module, a memo) cannot keep the old colours.
-  return (
-    <Ctx.Provider value={value}>
-      <Ctx.Consumer>{() => <ThemeScope key={name}>{children}</ThemeScope>}</Ctx.Consumer>
-    </Ctx.Provider>
-  );
-}
-
-function ThemeScope({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  // No `key` here, deliberately (issue #148). It used to remount the whole tree on every
+  // palette change, so a style built once in a component could not keep the old colours —
+  // and it threw away every screen's state with it: the onboarding jumped back to its
+  // first card, and a half-typed message would have gone the same way. What it guarded
+  // against is now proven mechanically instead: `applyPalette` refills TYPE, SHADOW and
+  // the tones IN PLACE, and `__tests__/frozen-colors.test.ts` fails any source file that
+  // captures a live token in a module constant (issues #84, #29).
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 /**

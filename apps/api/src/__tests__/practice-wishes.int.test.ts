@@ -560,6 +560,43 @@ describe.skipIf(!dbReady)('what she can ask for beyond the topic (issue #113)', 
     expect(set!.item_ids).toHaveLength(5);
   });
 
+  it('asks fifty when the list has fifty — no ceiling of our own (#145)', async () => {
+    // "wenn mein kind scheiss 50 vokabeln lernen muss, dann muss sie die scheiss 50
+    // vokabeln lernen" (owner, 30.09.). A number invented here would be a decision about
+    // her homework, and the silent cut of #49 all over again.
+    await seed(
+      env,
+      l,
+      'Französisch',
+      Array.from({ length: 50 }, (_, i) => ({
+        prompt: `Vokabel ${i + 1}`,
+        kind: 'vocab' as const,
+        promptLang: 'fr',
+        lang: 'de',
+      })),
+    );
+    env.llm.script('buddy_turn', {
+      json: say('Alle fünfzig.', [prepare({ all_of_them: true, vocabulary_only: true })]),
+    });
+    expect((await send(l, 'ich muss 50 vokabeln lernen, frag mich alle ab')).status).toBe(200);
+    const [set] = await preparedSets(env, l);
+    expect(set!.item_ids).toHaveLength(50);
+  });
+
+  it('reaches past the old 200-row window when she asks for everything (#145)', async () => {
+    // The candidate query used to stop at 200 rows, which nothing said out loud.
+    await seed(
+      env,
+      l,
+      'Erdkunde',
+      Array.from({ length: 250 }, (_, i) => ({ prompt: `Frage ${i + 1}` })),
+    );
+    env.llm.script('buddy_turn', { json: say('Alles.', [prepare({ all_of_them: true })]) });
+    expect((await send(l, 'frag mich alles ab')).status).toBe(200);
+    const [set] = await preparedSets(env, l);
+    expect(set!.item_ids).toHaveLength(250);
+  });
+
   it('asks the whole list when she asks for all of it, past what ten minutes would give', async () => {
     // Twenty-four words: the minute estimate would have handed her twelve of them, and the
     // old ceiling fifteen — "wieder sinnlos, weil begrenzt auf 10" (owner, 30.09.).

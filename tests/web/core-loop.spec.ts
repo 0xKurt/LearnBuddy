@@ -111,10 +111,20 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '03c-voice');
   await page.getByRole('button', { name: 'Weiter' }).click();
 
-  // ── The three first-start cards, then the home ──
+  // ── The first-start cards, then the home ──
   await expect(page.getByText('Sag es Buddy einfach')).toBeVisible();
   await shot(page, '03d-onboarding');
-  await page.getByRole('button', { name: 'Überspringen' }).click();
+  // Walk to the last card: the colours are chosen here now, not three taps deep in the
+  // settings (issue #136), and every card has to fit without scrolling (rule 16).
+  for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Such dir deine Farben aus')).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Meer' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Dunkel' })).toBeVisible();
+  await shot(page, '03e-onboarding-look');
+  await page.getByRole('radio', { name: 'Abend' }).click();
+  await expect(page.getByRole('radio', { name: 'Abend' })).toHaveAttribute('aria-checked', 'true');
+  await shot(page, '03f-onboarding-look-sunset');
+  await page.getByRole('button', { name: "Los geht's" }).click();
 
   // ── The student's first look: who Buddy is and how to start ──
   await expect(page.getByText('LearnBuddy')).toBeVisible();

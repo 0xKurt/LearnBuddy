@@ -14,6 +14,7 @@ import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon, type IconName } from '../components/lb/Icon.js';
+import { FamilyChoice, ModeChoice } from '../components/lb/LookChoice.js';
 import { useSettings } from '../lib/api/queries.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
@@ -21,7 +22,10 @@ import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { SPACE, bottomRoom } from '../lib/theme/space.js';
 
-const STEPS = ['s1', 's2', 's3'] as const;
+// The look comes last: it is the one answer she sees IMMEDIATELY — the next screen is
+// already in the colours she picked (issue #136). Three tips deep in the settings, nobody
+// ever found it.
+const STEPS = ['s1', 's2', 's3', 's4'] as const;
 /** The three ways in, shown on the first card (decorative — the body names them). */
 const WAYS: IconName[] = ['keyboard', 'mic', 'camera'];
 
@@ -56,13 +60,19 @@ export default function Onboarding() {
           gap: compact ? 14 : 18,
         }}
       >
-        <BuddyOrb size={compact ? 72 : 96} state={last ? 'happy' : 'idle'} />
+        <BuddyOrb size={key === 's4' ? 56 : compact ? 72 : 96} state={last ? 'happy' : 'idle'} />
         <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
           {t(`onboarding.${key}_title`)}
         </Text>
         <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 340 }]}>
           {t(`onboarding.${key}_body`)}
         </Text>
+        {key === 's4' ? (
+          <View style={{ alignSelf: 'stretch', gap: compact ? SPACE.sm : SPACE.md }}>
+            <FamilyChoice compact />
+            <ModeChoice compact />
+          </View>
+        ) : null}
         {step === 0 ? (
           <View
             accessibilityElementsHidden

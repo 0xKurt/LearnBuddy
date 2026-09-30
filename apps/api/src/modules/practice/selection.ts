@@ -47,14 +47,19 @@ export type PracticeWish = {
 export const QUESTIONS_PER_MINUTE = 1.2;
 
 /**
- * The most questions one set can hold (issue #145). Not a number that decides for her: the
- * 15 below is what a MINUTE ESTIMATE may produce, and that is a guess about how long she
- * wants to sit. When she names a number, or asks for all of them, that guess has nothing to
- * say — a word list with 24 words is 24 questions. What stays is a ceiling on one sitting,
- * and Buddy is told when it bit so it is said out loud instead of silently cutting
- * ("diese ganzen harten limits werden uns sehr auf die füße fallen", owner 28.09., #49).
+ * How many questions a set holds: a number, or everything there is (issues #145, #49).
+ *
+ * There is no ceiling on "all". I first put one at 60 and the owner was having none of it:
+ * "wenn mein kind scheiss 50 vokabeln lernen muss, dann muss sie die scheiss 50 vokabeln
+ * lernen … das kunstlich deckeln ist der falsche weg" (30.09.). He is right — a number I
+ * invent is a decision about her homework that I have no standing to make, and it is
+ * exactly the kind of silent cut that made #49.
+ *
+ * The 15 in `questionCountFor` stays, because it is not a cap on her material: it bounds
+ * what a MINUTE ESTIMATE may produce, and that estimate is a guess about how long she wants
+ * to sit, made when she said nothing about the size at all.
  */
-export const MOST_QUESTIONS_AT_ONCE = 60;
+export type HowMany = number | 'all';
 
 export function questionCountFor(minutes: number): number {
   return Math.min(15, Math.max(3, Math.round(minutes * QUESTIONS_PER_MINUTE)));
@@ -67,7 +72,7 @@ export async function selectPracticeItems(
   learnerId: string,
   scope: PracticeScope,
   focusTopics: string[],
-  count: number,
+  count: HowMany,
   now: Date,
   wish: PracticeWish = {},
 ): Promise<string[]> {
@@ -133,7 +138,11 @@ export async function selectPracticeItems(
              else 2 end,
         p.due nulls last,
         p.created_at, p.id
-      limit 200`,
+      -- No fixed ceiling: a word list with fifty words is fifty questions (#145). The
+      -- limit follows what was asked for, with room above it so a focus topic still has
+      -- something to sort; "all" takes the lot.
+      -- NULL is no limit in Postgres; the cast is what makes the driver send it as one.
+      limit $11::bigint`,
     [
       learnerId,
       goalMaterialsOnly ? scope.goalId : null,
@@ -145,6 +154,7 @@ export async function selectPracticeItems(
       wish.ownLanguage ?? null,
       wish.difficulty ?? null,
       wish.vocabularyOnly === true,
+      count === 'all' ? null : Math.max(200, count),
     ],
   );
   if (candidates.length === 0) return [];
@@ -157,10 +167,10 @@ export async function selectPracticeItems(
       return topic !== '' && wanted.some((w) => topic.includes(w) || w.includes(topic));
     });
     // Only narrow when the focus actually matches a meaningful set.
-    if (focused.length >= Math.min(3, count)) {
+    if (focused.length >= (count === 'all' ? 3 : Math.min(3, count))) {
       const rest = candidates.filter((c) => !focused.includes(c));
       pool = [...focused, ...rest];
     }
   }
-  return pool.slice(0, count).map((c) => c.id);
+  return (count === 'all' ? pool : pool.slice(0, count)).map((c) => c.id);
 }

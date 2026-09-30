@@ -97,3 +97,16 @@ describe('no module-scope capture of live theme tokens', () => {
     expect(hits, 'convert these to functions read at render time (issue #84)').toEqual([]);
   });
 });
+
+// The provider must not remount the tree on a palette change (issue #148). It used to,
+// with `key={name}`, and that threw away every screen's state — the onboarding jumped back
+// to its first card, a half-typed message would have gone the same way. The two guards
+// above are what makes the remount unnecessary; this keeps someone from putting it back
+// without reading why.
+describe('a palette change keeps the screen it is on', () => {
+  it('has no key on the provider that would remount its children', () => {
+    const src = readFileSync(join(import.meta.dirname, '..', 'ThemeProvider.tsx'), 'utf8');
+    expect(src).not.toMatch(/<\w+\s+key=\{name\}/);
+    expect(src).toMatch(/issue #148/);
+  });
+});

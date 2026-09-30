@@ -1,103 +1,19 @@
-// The palette this device wears (issue #29). Curated choices, no colour picker: the app
-// must stay calm and friendly whatever she takes (docs/DESIGN-BRIEF.md). Every palette
-// holds the same contrast pairs (lib/theme/__tests__/contrast.test.ts).
-//
-// Each option shows what it would look like (issue #84, owner: "man sollte vorher schon
-// sehen wie es aussehen könnte"): a small card drawn in THAT palette's own colours — read
-// from PALETTES, never from the palette in use, so the previews stay true whichever theme is on.
+// The palette this device wears (issue #29), as a settings group. The choice itself lives
+// in components/lb/LookChoice.tsx — the onboarding asks the same question (issue #136),
+// and one question deserves one component.
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
 
-import {
-  FAMILIES,
-  MODES,
-  paletteOf,
-  themeNameOf,
-  type Family,
-  type Mode,
-  type ThemeName,
-} from '../../lib/theme/palettes.js';
+import { type Family, type Mode } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Card } from '../lb/Card.js';
-import { Icon } from '../lb/Icon.js';
+import { FamilyChoice, ModeChoice } from '../lb/LookChoice.js';
 import { Group } from './Group.js';
 import { Row } from './Row.js';
 
-function Swatch({
-  name,
-  on,
-  label,
-  sample,
-  onPress,
-}: {
-  name: ThemeName;
-  on: boolean;
-  label: string;
-  sample: string;
-  onPress: () => void;
-}) {
-  const { palette } = useTheme();
-  const p = paletteOf(name);
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      accessibilityState={{ selected: on, checked: on }}
-      // The web needs the attribute itself (axe: aria-required-attr, issue #73).
-      aria-checked={on}
-      onPress={onPress}
-    >
-      {({ pressed }) => (
-        <View
-          style={{
-            borderRadius: 18,
-            overflow: 'hidden',
-            borderWidth: on ? 2.5 : 1,
-            // The ring reads in the ACTIVE palette (it frames the control, not the preview).
-            borderColor: on ? palette.primary : palette.hairline,
-            opacity: pressed ? 0.85 : 1,
-          }}
-        >
-          <View style={{ backgroundColor: p.bg, padding: 12, gap: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View
-                style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: p.primary }}
-              />
-              <Text style={{ color: p.ink, fontSize: 15, fontWeight: '700', flex: 1 }}>
-                {label}
-              </Text>
-              {/* The word "checked" is announced; the check is the visible twin, in the
-                  preview's own readable colour — never colour alone. */}
-              {on ? <Icon name="check" size={18} color={p.primaryDk} /> : null}
-            </View>
-            <View style={{ backgroundColor: p.paper, borderRadius: 12, padding: 10, gap: 2 }}>
-              <Text style={{ color: p.ink, fontSize: 13, lineHeight: 18 }}>{sample}</Text>
-              <View
-                style={{
-                  alignSelf: 'flex-start',
-                  backgroundColor: p.primary,
-                  borderRadius: 999,
-                  paddingHorizontal: 10,
-                  paddingVertical: 3,
-                }}
-              >
-                <Text style={{ color: p.paper, fontSize: 12, fontWeight: '600' }}>
-                  {sample.split(' ')[0]}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-    </Pressable>
-  );
-}
-
 export function LookSection() {
   const { t } = useTranslation('settings');
-  const { name, family, mode, choose } = useTheme();
-  const dark = name.endsWith('Dark');
+  const { family, mode } = useTheme();
   const familyLabel = (f: Family) => t(`look.family.${f}`);
   const modeLabel = (m: Mode) => t(`look.mode.${m}`);
 
@@ -112,36 +28,14 @@ export function LookSection() {
             previews the family in the mode that is showing, so the choice is honest — a
             green card while the app is dark shows the DARK green. */}
         <Row question={t('look.question')} current={familyLabel(family)} hint={t('look.hint')}>
-          <View accessibilityRole="radiogroup" style={{ gap: 10 }}>
-            {FAMILIES.map((f) => (
-              <Swatch
-                key={f}
-                name={themeNameOf(f, dark)}
-                on={f === family}
-                label={familyLabel(f)}
-                sample={t('look.sample')}
-                onPress={() => choose({ family: f })}
-              />
-            ))}
-          </View>
+          <FamilyChoice />
         </Row>
         <Row
           question={t('look.mode_question')}
           current={modeLabel(mode)}
           hint={t('look.mode_hint')}
         >
-          <View accessibilityRole="radiogroup" style={{ gap: 10 }}>
-            {MODES.map((m) => (
-              <Swatch
-                key={m}
-                name={themeNameOf(family, m === 'dark' || (m === 'system' && dark))}
-                on={m === mode}
-                label={modeLabel(m)}
-                sample={t('look.sample')}
-                onPress={() => choose({ mode: m })}
-              />
-            ))}
-          </View>
+          <ModeChoice />
         </Row>
       </Card>
     </Group>

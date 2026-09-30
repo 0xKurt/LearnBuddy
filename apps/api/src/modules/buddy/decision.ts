@@ -445,7 +445,7 @@ const preparePractice = z.object({
       .number()
       .int()
       .min(1)
-      .max(60)
+      .max(500)
       .nullable()
       .optional()
       .describe(

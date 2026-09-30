@@ -54,7 +54,8 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
   await expect(page.getByText('Wie soll Buddy klingen?')).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
-  // The three first-start cards (app/onboarding.tsx) come before the home.
+  // The first-start cards (app/onboarding.tsx) come before the home; the last one is the
+  // colour choice (issue #136). Skipping them keeps the default palette.
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }

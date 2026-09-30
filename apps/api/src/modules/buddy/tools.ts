@@ -38,9 +38,9 @@ import {
 } from '../../lib/time.js';
 import { t } from '../../i18n/index.js';
 import {
-  MOST_QUESTIONS_AT_ONCE,
   questionCountFor,
   selectPracticeItems,
+  type HowMany,
   type PracticeWish,
 } from '../practice/selection.js';
 import { enqueueJob } from '../scheduler/jobs.js';
@@ -678,13 +678,11 @@ async function runPreparePractice(
       })())
     : null;
   // What she said beats what the minutes guess (issue #145): a named number, or all there
-  // is. The minutes are the fallback for when she said nothing about the size at all.
-  const count =
-    a.all_of_them === true
-      ? MOST_QUESTIONS_AT_ONCE
-      : a.question_count != null
-        ? Math.min(MOST_QUESTIONS_AT_ONCE, a.question_count)
-        : questionCountFor(a.minutes);
+  // is, with no ceiling of my invention on top — "wenn mein kind scheiss 50 vokabeln lernen
+  // muss, dann muss sie die scheiss 50 vokabeln lernen" (owner, 30.09.). The minutes are
+  // the fallback for when she said nothing about the size at all.
+  const count: HowMany =
+    a.all_of_them === true ? 'all' : (a.question_count ?? questionCountFor(a.minutes));
   // The one sheet she pointed at (issue #144). Resolved from her own aliases, so a sheet
   // that is not hers cannot be reached by guessing an id (hard rule 2).
   const material = a.sheet ? materialOf(ctx, a.sheet) : null;

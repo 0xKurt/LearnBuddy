@@ -315,9 +315,11 @@ summary plus undo data. Enforced here, not in the prompt:
   language. How many questions there are comes from what she SAID — a number she named, or
   "all of them" — and only from the minute estimate when she said nothing about the size
   (issue #145): the minutes are a guess about how long she wants to sit, and a word list with
-  24 words is 24 questions, not the twelve that guess would allow. `MOST_QUESTIONS_AT_ONCE`
-  (60) bounds one sitting; the card states the real number, which the model cannot know while
-  it writes the reply. A wish that matches three questions prepares three: the set is never
+  24 words is 24 questions, not the twelve that guess would allow. There is no ceiling on "all", and
+  none on a number she names: "wenn mein kind scheiss 50 vokabeln lernen muss, dann muss sie
+  die scheiss 50 vokabeln lernen … das kunstlich deckeln ist der falsche weg" (owner, 30.09.,
+  issue #145), and the candidate query's old fixed `limit 200` is gone with it. The card
+  states the real number, which the model cannot know while it writes the reply. A wish that matches three questions prepares three: the set is never
   filled up with questions she did not ask for. A wish that matches none is rejected back to the model with
   the reason (nothing went wrong / no such half / no vocabulary that way / no vocabulary here at
   all) and what to offer
