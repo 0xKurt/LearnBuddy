@@ -15,9 +15,7 @@
 #
 # Needs a signed-in device AND a real microphone permission. MIUI asks for the
 # permission the first time; grant it by hand once, then this runs unattended.
-#
-# No screenshots here: every screen this touches sets FLAG_SECURE
-# (lib/privacy/screenGuard.ts), so the files would be black.
+
 appId: com.learnbuddy.app.dev
 ---
 - launchApp:

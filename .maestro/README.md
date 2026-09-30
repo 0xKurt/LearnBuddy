@@ -69,12 +69,12 @@ umzufallen, misst nichts. Die zwei Zahlen liest ein Mensch und trägt sie in
 Das Testgerät (Xiaomi 2412DPC0AG, Android 16) hat zwei Eigenheiten, die beim Schreiben
 dieser Flows aufgefallen sind:
 
-- **Vier Bildschirme sind `FLAG_SECURE`** (`lib/privacy/screenGuard.ts`, Issue #36): das
-  Zuhause mit dem Gespräch, der Verlauf, der Gesprächsmodus und die Übung. Screenshots davon
-  sind schwarz — von Maestro und von `adb` gleichermaßen. **Deshalb macht ab dem Anmelden
-  kein Flow mehr Screenshots:** eine schwarze Datei sieht aus wie ein Beleg und ist keiner.
-  Was diese Flows zeigen, zeigen sie per `assertVisible`. Bilder gibt es nur vom
-  Willkommensbildschirm, der nicht geschützt ist.
+- **Screenshots gingen bis zum 30.09. gar nicht**, sobald man angemeldet war: vier Bildschirme
+  setzten `FLAG_SECURE`, und weil das ein _Fenster_-Flag ist und das Zuhause unter allem
+  montiert bleibt, war die ganze App schwarz — auch die Einstellungen. Das ist raus (#128),
+  Screenshots funktionieren wieder überall. Die Flows belegen ihre Schritte trotzdem per
+  `assertVisible` und nicht per Bild: eine Behauptung, die der Testlauf selbst prüft, ist mehr
+  wert als eine Datei, die jemand ansehen müsste.
 - **Die Mikrofon-Berechtigung** fragt MIUI beim ersten Mal in einem eigenen Dialog. Einmal
   von Hand erteilen, danach läuft `04-voice` unbeaufsichtigt.
 

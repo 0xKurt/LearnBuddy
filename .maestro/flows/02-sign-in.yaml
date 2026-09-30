@@ -26,8 +26,8 @@ env:
     text: 'Anmelden'
     index: 1
 # The conversation is the screen behind the sign-in; its composer is the proof.
-# The composer is the proof, not a picture: the home sets FLAG_SECURE
-# (lib/privacy/screenGuard.ts), so a screenshot here is a black rectangle.
+# The composer is the proof: an assertion the run itself checks beats a file
+# someone would have to look at.
 - assertVisible:
     id: 'composer'
     timeout: 20000

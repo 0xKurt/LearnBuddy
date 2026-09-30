@@ -21,14 +21,10 @@ import { getThread, undoAction } from '../lib/api/endpoints.js';
 import { keys, queryClient, useHome } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { dayGroups } from '../lib/dayGroups.js';
-import { useScreenGuard } from '../lib/privacy/screenGuard.js';
 import { SPACE } from '../lib/theme/space.js';
 import { mergeThread } from '../lib/threadMerge.js';
 
 export default function History() {
-  // Everything ever said is on this screen: no screenshot, no recording
-  // (lib/privacy/screenGuard.ts, issue #36).
-  useScreenGuard('history');
   const { t } = useTranslation('buddy');
   const insets = useSafeAreaInsets();
   const home = useHome();

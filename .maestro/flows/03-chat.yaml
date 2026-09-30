@@ -9,10 +9,8 @@ appId: com.learnbuddy.app.dev
     id: 'composer'
     timeout: 20000
 
-# No screenshot from here on: home, history, talk and practice all set
-# FLAG_SECURE (lib/privacy/screenGuard.ts, issue #36), so the file would be a
-# black rectangle that looks like evidence and is none. What these flows prove,
-# they prove by assertion.
+# What these flows prove, they prove by assertion: the run checks it itself,
+# where a screenshot only waits for someone to look at it.
 
 - tapOn:
     id: 'composer'

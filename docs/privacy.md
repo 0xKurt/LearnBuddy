@@ -103,13 +103,16 @@ sweep records when it ran and how many rows it removed — counts only, never co
   private.
   PDFs of worksheets are handled exactly like photos (same bucket, same 7-day retention and
   deletion); a PDF refused at submit (too many pages, too large, not readable) is deleted at once.
-- The screens that carry the conversation — Buddy's home, the talk screen, the history and a
-  practice — ask the phone not to copy them out: on Android `FLAG_SECURE` (no screenshot, no
-  screen recording, and a blank card in the app switcher), on iOS the window is blanked while
-  the screen is recorded and screenshots are blocked (iOS 13+). Older iOS versions cannot do it
-  and then nothing happens; in the browser no page can ask for this at all, so there it is
-  honestly not done (`apps/mobile/lib/privacy/screenGuard.ts`, issue #36). **Not yet verified on
-  a device.**
+- **The app does not block screenshots** (owner's decision, 30.09.2026, issue #128). It used to:
+  Buddy's home, the talk screen, the history and a practice asked Android for `FLAG_SECURE`.
+  Two things settled it. A child who wants to share "10 out of 10!" is doing something right,
+  and the app should not stand in the way. And the protection guarded against the wrong person
+  anyway — the one holding the phone _is_ the learner.
+  Verified on a device on 30.09. before removing it, which also showed the block was wider than
+  this document ever claimed: `FLAG_SECURE` is a _window_ flag and expo-router runs the whole
+  app in one activity, so with the home mounted underneath, **every** screen was uncapturable
+  once signed in — settings, library, the adults' area included. What a learner shares from her
+  own screen is hers to decide; nothing else changes about what leaves the phone.
 
 ## Distress and sensitive disclosures
 
