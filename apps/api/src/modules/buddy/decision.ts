@@ -62,6 +62,17 @@ export const StepTarget = z
   .describe(
     'step alias from STATE (st1), or "new" for the practice (prepare_practice) or step (plan_step) created earlier in this same answer',
   );
+/**
+ * A standing arrangement, not a single day (issue #112). "jeden Tag um 5", "immer montags":
+ * the step keeps its time and moves itself on after each reminder. Only these three — a child
+ * asks for a rhythm, not a calendar rule, and anything finer would be a form to fill in.
+ */
+export const RepeatSchema = z
+  .enum(['daily', 'weekdays', 'weekly', 'never'])
+  .describe(
+    'a reminder she wants again and again: daily, weekdays (Mon-Fri), weekly (same weekday). "never" ends a repetition she already has',
+  );
+
 export const MemoryRef = alias('m', 'memory');
 export const MaterialRef = alias('sh', 'sheet');
 export const SubjectRef = alias('f', 'subject');
@@ -445,6 +456,11 @@ const planStep = z.object({
     agreed: z
       .boolean()
       .describe('true only if the learner asked for / agreed to this time (a reminder)'),
+    /** Needs agreed=true and a time: Buddy's own idea is a suggestion, never a standing rule. */
+    repeat: RepeatSchema.nullable(),
+    repeat_until: UntilSpecSchema.nullable().describe(
+      'only with repeat: the last day it should still come ("bis zu den Ferien"); null = until she ends it',
+    ),
     quote: Quote.nullable().describe('Required when agreed=true'),
     // Optional in parsing (older scripted answers have neither); the model sees both.
     subject: SubjectRef.nullable()
@@ -467,6 +483,8 @@ const updateStep = z.object({
     day: DaySpecSchema.nullable(),
     time: LocalTimeSchema.nullable(),
     state: z.enum(['skipped', 'cancelled']).nullable(),
+    /** "nicht mehr jeden Tag" ends the repetition and leaves the next one standing (#112). */
+    repeat: RepeatSchema.nullable(),
     quote: Quote,
   }),
 });

@@ -67,6 +67,9 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     date: LocalDate,
     time: LocalTime.nullable(),
     agreed: z.boolean(),
+    /** A standing arrangement, so the card can say "jeden Tag" and not just a date (#112). */
+    repeat: z.enum(['daily', 'weekdays', 'weekly']).nullable(),
+    repeat_until: LocalDate.nullable(),
   }),
   z.object({
     tool: z.literal('update_step'),

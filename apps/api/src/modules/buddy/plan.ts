@@ -2,7 +2,7 @@
 // versioning, subjects, exam wake-ups, agreed-step reminders.
 
 import type { Db } from '../../lib/db.js';
-import { addDays, daysBetween, localParts, zonedToInstant } from '../../lib/time.js';
+import { addDays, daysBetween, localParts, weekdayOf, zonedToInstant } from '../../lib/time.js';
 import { cancelQueuedJobs, enqueueJob } from '../scheduler/jobs.js';
 import type { SettingsRow } from './state.js';
 
@@ -121,4 +121,64 @@ export async function scheduleStepReminder(
     dedupeKey: `step:${step.id}:v${step.version}`,
     payload: { reason: 'step_due', step_id: step.id },
   });
+}
+
+/**
+ * A repeating reminder moves itself on once its own reminder has fired (issue #112): the step
+ * keeps its title, its time and its identity, and only its date advances. No row per
+ * occurrence — rule 6 forbids showing a learner counts of missed days, so a history of
+ * occurrences would be data we must never use.
+ *
+ * Returns the new date, or null when the repetition has run out (and is then cleared, so the
+ * step is an ordinary one again and her state shows the truth).
+ */
+export async function rollRepeatingStep(
+  db: Db,
+  learnerId: string,
+  step: {
+    id: string;
+    version: number;
+    planned_date: string | null;
+    planned_time: string | null;
+    repeat: 'daily' | 'weekdays' | 'weekly' | null;
+    repeat_until: string | null;
+  },
+  settings: { timezone: string },
+  now: Date,
+): Promise<string | null> {
+  if (!step.repeat || !step.planned_time) return null;
+  // Always counted from today, never from the stored date. That makes rolling idempotent:
+  // the reminder fires at 17:00 and rolls, she practises at 17:05 and it rolls again — both
+  // land on tomorrow, not on the day after. It is also what a phone that was off for a week
+  // needs: one reminder tomorrow, not six missed ones at once.
+  const today = localParts(now, settings.timezone).date;
+  let next = addDays(today, 1);
+  if (step.repeat === 'weekdays') {
+    // Saturday and Sunday are skipped: "jeden Tag nach der Schule" means school days.
+    while ([6, 7].includes(weekdayOf(next))) next = addDays(next, 1);
+  } else if (step.repeat === 'weekly') {
+    const target = weekdayOf(step.planned_date ?? today);
+    while (weekdayOf(next) !== target) next = addDays(next, 1);
+  }
+  if (step.repeat_until && next > step.repeat_until) {
+    await db.query(
+      `update buddy_steps set repeat = null, repeat_until = null, version = version + 1 where id = $1`,
+      [step.id],
+    );
+    return null;
+  }
+  const moved = await db.one<{ id: string; version: number }>(
+    `update buddy_steps set planned_date = $2, state = 'planned', prepared_at = null,
+                            evidence = null, done_source = null, finished_at = null,
+                            version = version + 1
+      where id = $1 returning id, version`,
+    [step.id, next],
+  );
+  await scheduleStepReminder(
+    db,
+    learnerId,
+    moved,
+    zonedToInstant(next, step.planned_time, settings.timezone),
+  );
+  return next;
 }

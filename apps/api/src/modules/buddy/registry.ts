@@ -320,6 +320,8 @@ export function removesSomething(a: AnyAction): boolean {
       return true;
     case 'update_step':
       return a.args.state !== null;
+    case 'delete_material':
+      return true;
     default:
       return false;
   }

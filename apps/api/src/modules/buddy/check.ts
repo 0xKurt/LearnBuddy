@@ -42,7 +42,7 @@ import {
   lookBackErrors,
   type LookBackFact,
 } from './lookback.js';
-import { bumpContext } from './plan.js';
+import { bumpContext, rollRepeatingStep } from './plan.js';
 import { BUDDY_PROMPT_VERSION, CHECK_SYSTEM, repairMessage } from './prompts.js';
 import { loadBuddyState, type BuddyState, type SettingsRow } from './state.js';
 import { claimMessage, processTurn, pushAvailable, TURN_STALL_MS } from './turn.js';
@@ -249,6 +249,10 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
           agreed: boolean;
           goal_id: string | null;
           version: number;
+          planned_date: string | null;
+          planned_time: string | null;
+          repeat: 'daily' | 'weekdays' | 'weekly' | null;
+          repeat_until: string | null;
           payload: {
             item_ids?: string[];
             est_minutes?: number;
@@ -319,8 +323,11 @@ async function sendAgreedReminder(deps: Deps, learner: LearnerRow, trig: Trigger
       // Rendered when shown: a reminder that arrives late says so (D-13).
       template: { key, params, agreed_at: trig.job.run_at.toISOString() },
     });
+    // A standing arrangement moves on the moment its reminder has gone out, not when she
+    // reacts (issue #112) — a day she ignores must not end the repetition silently.
+    const nextDate = await rollRepeatingStep(tx, learner.id, step, settings, now);
     await bumpContext(tx, learner.id);
-    return { outcome: plan.status, reason: plan.reason };
+    return { outcome: plan.status, reason: plan.reason, next: nextDate };
   });
   await finishJob(deps.db, trig.job, now, { status: 'done', result: result });
 }

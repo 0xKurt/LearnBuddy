@@ -80,6 +80,24 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
         minutes: a.est_minutes,
       });
     case 'plan_step':
+      // A standing arrangement is what she agreed to — the card says the rhythm, not the one
+      // date it happens to start on (issue #112).
+      if (a.repeat && a.time) {
+        const until = a.repeat_until
+          ? t('action.plan_step_repeat_until', { date: formatDayShort(a.repeat_until, locale) })
+          : '';
+        const inApp =
+          a.agreed && opts.contactOn === false ? t('action.plan_step_repeat_in_app') : '';
+        return (
+          t(`action.plan_step_repeat_${a.repeat}`, {
+            title: a.title,
+            time: a.time,
+            weekday: formatWeekday(a.date, locale),
+          }) +
+          until +
+          inApp
+        );
+      }
       if (a.agreed && opts.contactOn === false) {
         return t('action.plan_step_agreed_in_app', {
           title: a.title,

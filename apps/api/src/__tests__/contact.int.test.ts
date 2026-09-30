@@ -325,6 +325,8 @@ describe.skipIf(!dbReady)('contact promises', () => {
         day: { kind: 'unknown' },
         time: null,
         in_minutes: n,
+        repeat: null,
+        repeat_until: null,
         agreed: true,
         quote,
         subject: null,
@@ -369,6 +371,129 @@ describe.skipIf(!dbReady)('contact promises', () => {
       await env.db.query(`select 1 from buddy_steps where learner_id = $1`, [l.learnerId]),
     ).toHaveLength(1);
     expect(late.body.home.thread.at(-1)!.text).toBe('Um die Zeit ist Ruhe — morgen früh?');
+  });
+
+  // Issue #112: "erinner mich jeden tag um 5" — the most ordinary thing a child asks a learning
+  // companion, and until now only answerable as a handful of single steps, then silence.
+  describe('a reminder she wants again and again', () => {
+    /** The repetition as plan_step writes it, driven through the real planning code. */
+    async function repeating(
+      learnerId: string,
+      opts: {
+        date: string;
+        time: string;
+        at: string;
+        repeat: 'daily' | 'weekdays' | 'weekly';
+        until?: string;
+      },
+    ): Promise<string> {
+      return env.db.tx(async (tx) => {
+        const step = await tx.one<{ id: string; version: number }>(
+          `insert into buddy_steps (learner_id, kind, title, state, planned_date, planned_time,
+                                    agreed, repeat, repeat_until)
+           values ($1, 'practice', 'Vokabeln üben', 'planned', $2, $3, true, $4, $5)
+           returning id, version`,
+          [learnerId, opts.date, opts.time, opts.repeat, opts.until ?? null],
+        );
+        await scheduleStepReminder(tx, learnerId, step, new Date(opts.at));
+        return step.id;
+      });
+    }
+    const dateOf = async (stepId: string) =>
+      (
+        await env.db.one<{ planned_date: string; repeat: string | null }>(
+          `select planned_date, repeat from buddy_steps where id = $1`,
+          [stepId],
+        )
+      ).planned_date;
+
+    it('comes again the next day, and keeps coming', async () => {
+      const l = await onboard(env);
+      await enableContact(env, l.learnerId);
+      // Monday 28.09.2026, 17:00 local.
+      const id = await repeating(l.learnerId, {
+        date: '2026-09-28',
+        time: '17:00',
+        at: '2026-09-28T15:00:00Z',
+        repeat: 'daily',
+      });
+      env.clock.set('2026-09-28T15:00:00Z');
+      await tick(env);
+      expect(await dateOf(id)).toBe('2026-09-29');
+
+      env.clock.set('2026-09-29T15:00:00Z');
+      await tick(env);
+      expect(await dateOf(id)).toBe('2026-09-30');
+      // Two reminders, both hers, both actually sent — not one and then silence.
+      expect((await outreach(env, l.learnerId)).map((r) => r.origin)).toEqual(['agreed', 'agreed']);
+    });
+
+    it('a repetition for school days skips the weekend', async () => {
+      const l = await onboard(env);
+      await enableContact(env, l.learnerId);
+      // Friday 02.10.2026.
+      const id = await repeating(l.learnerId, {
+        date: '2026-10-02',
+        time: '17:00',
+        at: '2026-10-02T15:00:00Z',
+        repeat: 'weekdays',
+      });
+      env.clock.set('2026-10-02T15:00:00Z');
+      await tick(env);
+      expect(await dateOf(id)).toBe('2026-10-05'); // Monday, not Saturday
+    });
+
+    it('a weekly one keeps its weekday', async () => {
+      const l = await onboard(env);
+      await enableContact(env, l.learnerId);
+      const id = await repeating(l.learnerId, {
+        date: '2026-09-28', // Monday
+        time: '17:00',
+        at: '2026-09-28T15:00:00Z',
+        repeat: 'weekly',
+      });
+      env.clock.set('2026-09-28T15:00:00Z');
+      await tick(env);
+      expect(await dateOf(id)).toBe('2026-10-05'); // the next Monday
+    });
+
+    it('stops at the end she named, and says nothing after it', async () => {
+      const l = await onboard(env);
+      await enableContact(env, l.learnerId);
+      const id = await repeating(l.learnerId, {
+        date: '2026-09-28',
+        time: '17:00',
+        at: '2026-09-28T15:00:00Z',
+        repeat: 'daily',
+        until: '2026-09-28',
+      });
+      env.clock.set('2026-09-28T15:00:00Z');
+      await tick(env);
+      const row = await env.db.one<{ repeat: string | null; planned_date: string }>(
+        `select repeat, planned_date from buddy_steps where id = $1`,
+        [id],
+      );
+      // The last one was today: the repetition is cleared, the step stays where it was.
+      expect(row.repeat).toBeNull();
+      expect(row.planned_date).toBe('2026-09-28');
+      expect((await outreach(env, l.learnerId)).length).toBe(1);
+    });
+
+    it('a phone that was off for a week owes her one reminder, not seven', async () => {
+      const l = await onboard(env);
+      await enableContact(env, l.learnerId);
+      const id = await repeating(l.learnerId, {
+        date: '2026-09-28',
+        time: '17:00',
+        at: '2026-09-28T15:00:00Z',
+        repeat: 'daily',
+      });
+      // The tick only runs a week later: the step must not walk forward day by day.
+      env.clock.set('2026-10-05T15:00:00Z');
+      await tick(env);
+      expect(await dateOf(id)).toBe('2026-10-06');
+      expect((await outreach(env, l.learnerId)).length).toBe(1);
+    });
   });
 
   describe('an agreed reminder never vanishes (H-37, repro-15)', () => {
@@ -580,6 +705,8 @@ describe.skipIf(!dbReady)('contact promises', () => {
         day: { kind: 'in_days', days },
         time,
         in_minutes: null,
+        repeat: null,
+        repeat_until: null,
         agreed: true,
         quote: 'erinner mich ans Brüche üben',
         subject: 'f1',

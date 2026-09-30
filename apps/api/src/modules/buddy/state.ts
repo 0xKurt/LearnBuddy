@@ -63,6 +63,9 @@ export type StepRow = {
   planned_date: string | null;
   planned_time: string | null;
   agreed: boolean;
+  /** A standing arrangement: the step moves itself on after each reminder (issue #112). */
+  repeat: 'daily' | 'weekdays' | 'weekly' | null;
+  repeat_until: string | null;
   payload: StepPayload;
   evidence: Record<string, unknown> | null;
   done_source: 'evidence' | 'learner_reported' | null;

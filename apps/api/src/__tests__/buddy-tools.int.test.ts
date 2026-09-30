@@ -31,7 +31,9 @@ function tryAction(env: TestEnv, action: unknown): { refusal: () => string | nul
   let refusal: string | null = null;
   env.llm.script('buddy_turn', { json: say('Mache ich.', [action]) }, (req: LlmRequest) => {
     const text = ScriptedGateway.textOf(req);
-    const m = /action 1 \([a-z_]+\): ([^\n"]+)/.exec(text);
+    // To the end of the line, quotes included: a rejection that names a sheet or a memory
+    // carries them, and stopping at the first one silently truncated the reason.
+    const m = /action 1 \([a-z_]+\): (.+)/.exec(text);
     refusal = m ? m[1]! : null;
     return say('Das geht so nicht.');
   });
@@ -64,6 +66,7 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
         day: { kind: 'weekday', weekday: 5, weeks_ahead: 0 },
         time: null,
         state: 'skipped',
+        repeat: null,
         quote: 'Vokabeln lieber Freitag',
       },
     });
@@ -410,6 +413,19 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
   // Issue #111: until now every sheet ended in a button. She says it in the conversation,
   // where she is anyway — the screenshot of a private chat above all (corpus case material-052).
   describe('her sheets, from the conversation', () => {
+    /** Buddy's previous answer asked whether the sheet should go — what the delete needs. */
+    async function askedFirst(text: string) {
+      env.llm.script('buddy_turn', {
+        json: {
+          reply: 'Soll das Blatt wirklich weg?',
+          options: null,
+          actions: [],
+          asks_permission: true,
+        },
+      });
+      await send(l, text);
+    }
+
     async function sheet(title: string | null, questions = 2) {
       return env.db.tx(async (tx) => {
         const subject = await findOrCreateSubject(tx, l.learnerId, 'Mathe', 'math');
@@ -431,12 +447,13 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
     it('deletes the sheet she means, with its questions and its photos', async () => {
       const keep = await sheet('Mathe Brüche');
       const gone = await sheet('Screenshot');
+      await askedFirst('das is n screenshot von meinem chat mit lisa, loesch das bitte');
       env.llm.script('buddy_turn', {
         json: say('Ist weg.', [
-          { tool: 'delete_material', args: { material: 'sh1', quote: 'loesch das bitte' } },
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'ja weg damit' } },
         ]),
       });
-      await send(l, 'das is n screenshot von meinem chat mit lisa, loesch das bitte');
+      await send(l, 'ja weg damit');
 
       // sh1 is the newest sheet — the screenshot, not the one she is learning from.
       const rows = await env.db.query<{ id: string; archived_at: Date | null }>(
@@ -460,12 +477,13 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
 
     it('the card names the sheet and offers no undo — nothing comes back', async () => {
       await sheet('Chat mit Lisa');
+      await askedFirst('loesch das bitte');
       env.llm.script('buddy_turn', {
         json: say('Ist weg.', [
-          { tool: 'delete_material', args: { material: 'sh1', quote: 'loesch das bitte' } },
+          { tool: 'delete_material', args: { material: 'sh1', quote: 'ja bitte' } },
         ]),
       });
-      await send(l, 'loesch das bitte');
+      await send(l, 'ja bitte');
       const home = (await l.api.get<BuddyHome>('/buddy')).body;
       const acts = home.thread.flatMap((m) => m.actions);
       expect(acts.map((a) => a.undoable)).toEqual([false]);
@@ -474,6 +492,24 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
         material_id: expect.any(String),
         title: 'Chat mit Lisa',
       });
+    });
+
+    it('is never done straight away: without Buddy having asked, it is refused', async () => {
+      await sheet('Englisch Vokabelliste');
+      // "I am done with it" is not "erase it" — the live run of buddy.33 had the model delete
+      // a whole vocabulary sheet on exactly this sentence. Nothing here can be taken back, so
+      // the confirmation is enforced in code, not asked for in the prompt.
+      const t = tryAction(env, {
+        tool: 'delete_material',
+        args: { material: 'sh1', quote: 'bin ich durch' },
+      });
+      await send(l, 'mit der vokabelliste bin ich durch');
+      expect(t.refusal()).toMatch(/cannot be taken back/);
+      const mine = await env.db.one<{ archived_at: Date | null }>(
+        `select archived_at from materials where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(mine.archived_at).toBeNull();
     });
 
     it('renames a sheet, and undo puts the old name back', async () => {
@@ -517,6 +553,7 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
 
     it('deleting needs her own words, not a quote she never said', async () => {
       await sheet('Blatt');
+      await askedFirst('was ist mit dem blatt?');
       const t = tryAction(env, {
         tool: 'delete_material',
         args: { material: 'sh1', quote: 'mach alles weg' },
@@ -528,6 +565,115 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
         [l.learnerId],
       );
       expect(mine.archived_at).toBeNull();
+    });
+  });
+
+  // Issue #112: a rhythm she asked for, and the limits code puts around it.
+  describe('a repeating reminder', () => {
+    const plan = (over: Record<string, unknown>) => ({
+      tool: 'plan_step',
+      args: {
+        goal: null,
+        kind: 'practice',
+        title: 'Vokabeln üben',
+        day: { kind: 'in_days', days: 1 },
+        time: '17:00',
+        in_minutes: null,
+        repeat: null,
+        repeat_until: null,
+        agreed: true,
+        quote: 'erinner mich jeden tag um 5',
+        subject: null,
+        focus_topics: [],
+        ...over,
+      },
+    });
+
+    it('is one step with a rhythm, not one step per day', async () => {
+      env.llm.script('buddy_turn', {
+        json: say('Mache ich, jeden Tag um 17:00.', [plan({ repeat: 'daily' })]),
+      });
+      await send(l, 'erinner mich jeden tag um 5');
+      const rows = await env.db.query<{ repeat: string | null; planned_time: string }>(
+        `select repeat, planned_time from buddy_steps where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(rows).toEqual([{ repeat: 'daily', planned_time: '17:00' }]);
+    });
+
+    it('needs her agreement and a time — Buddy does not put himself on a schedule', async () => {
+      const t = tryAction(env, plan({ repeat: 'daily', agreed: false, quote: null }));
+      await send(l, 'ich lern grad Vokabeln');
+      expect(t.refusal()).toMatch(/needs her agreement and a time/);
+      expect(
+        await env.db.query(
+          `select 1 from buddy_steps where learner_id = $1 and repeat is not null`,
+          [l.learnerId],
+        ),
+      ).toEqual([]);
+    });
+
+    it('an end before the first day is refused, not silently ignored', async () => {
+      // First day in five days, but it should end today: that is not a repetition.
+      const t = tryAction(
+        env,
+        plan({
+          repeat: 'daily',
+          day: { kind: 'in_days', days: 5 },
+          repeat_until: { kind: 'end_of_day', days: 0 },
+        }),
+      );
+      await send(l, 'erinner mich jeden tag um 5');
+      expect(t.refusal()).toMatch(/would end .* before its first day|already be over/);
+    });
+
+    it('she can end it, and the next one still stands', async () => {
+      env.llm.script('buddy_turn', {
+        json: say('Klar, jeden Tag.', [plan({ repeat: 'daily' })]),
+      });
+      await send(l, 'erinner mich jeden tag um 5');
+      env.llm.script('buddy_turn', {
+        json: say('Kommt nicht mehr regelmäßig.', [
+          {
+            tool: 'update_step',
+            args: {
+              step: 'st1',
+              day: null,
+              time: null,
+              state: null,
+              repeat: 'never',
+              quote: 'nicht mehr jeden tag',
+            },
+          },
+        ]),
+      });
+      await send(l, 'nicht mehr jeden tag');
+      const row = await env.db.one<{ repeat: string | null; state: string }>(
+        `select repeat, state from buddy_steps where learner_id = $1`,
+        [l.learnerId],
+      );
+      // Fewer reminders, not none: the one she already has keeps standing.
+      expect(row).toEqual({ repeat: null, state: 'planned' });
+    });
+
+    it('saying she practised does not quietly end the repetition', async () => {
+      env.llm.script('buddy_turn', {
+        json: say('Klar, jeden Tag.', [plan({ repeat: 'daily' })]),
+      });
+      await send(l, 'erinner mich jeden tag um 5');
+      env.llm.script('buddy_turn', {
+        json: say('Stark!', [
+          { tool: 'mark_step_done', args: { step: 'st1', quote: 'hab ich gemacht' } },
+        ]),
+      });
+      await send(l, 'hab ich gemacht');
+      const row = await env.db.one<{ repeat: string | null; state: string; planned_date: string }>(
+        `select repeat, state, planned_date from buddy_steps where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(row.repeat).toBe('daily');
+      expect(row.state).toBe('planned');
+      expect(row.planned_date).toBe('2026-09-29'); // tomorrow, counted from today
     });
   });
 });

@@ -233,7 +233,12 @@ export function buildContext(
         ? ` (${st.payload.item_ids.length} questions, ~${st.payload.est_minutes ?? '?'} min)`
         : '';
     const done = st.done_source === 'learner_reported' ? ' (learner said so)' : '';
-    return `  - ${alias} ${st.kind} "${st.title}": ${st.state}${done}${when}${agreed}${extra}`;
+    // A standing arrangement, so a second "erinner mich jeden Tag" is recognised as the one
+    // she already has instead of becoming a second one (issue #112).
+    const again = st.repeat
+      ? ` [repeats ${st.repeat}${st.repeat_until ? ` until ${fmtDay(st.repeat_until, today, learner.locale)}` : ''}]`
+      : '';
+    return `  - ${alias} ${st.kind} "${st.title}": ${st.state}${done}${when}${agreed}${again}${extra}`;
   };
 
   goalsBlock.push('## Goals and plan');

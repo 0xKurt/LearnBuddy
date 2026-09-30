@@ -28,6 +28,8 @@ export type Outcome = {
     title: string;
     planned_date: string | null;
     planned_time: string | null;
+    /** A standing arrangement (issue #112). */
+    repeat: string | null;
     agreed: boolean;
     state: string;
   }>;
@@ -48,6 +50,8 @@ export type Case = {
     birthDate?: string;
   };
   setup?: (env: TestEnv, l: Learner) => Promise<void>;
+  /** A first message that just runs; the measured turn then answers Buddy's reply to it. */
+  before?: string;
   message: string;
   /** Returns the violated expectations (empty = pass). */
   check: (o: Outcome) => string[];
@@ -250,9 +254,13 @@ export const CASES: Case[] = [
           [l.learnerId, title, env.clock.now()],
         );
     },
-    message: 'das is n screenshot von meinem chat mit lisa, loesch das bitte',
+    // Two turns on purpose: deleting cannot be taken back, so Buddy asks first and the
+    // delete rides on her "ja" (issue #111). If the first turn does not ask, nothing is
+    // deleted here and the case fails — which is exactly what it should measure.
+    before: 'das is n screenshot von meinem chat mit lisa, loesch das bitte',
+    message: 'ja genau, weg damit',
     check: (o) => [
-      ...must(o.tools.includes('delete_material'), 'deletes it'),
+      ...must(o.tools.includes('delete_material'), 'asks first, then deletes it'),
       ...must(
         o.materials.some((m) => m.title === 'Screenshot Chat' && m.archived),
         'the screenshot is gone',
@@ -301,6 +309,29 @@ export const CASES: Case[] = [
         o.materials.every((m) => !m.archived),
         'the sheet is still there',
       ),
+    ],
+  },
+  {
+    // Issue #112: the most ordinary thing a child asks a learning companion, and until now
+    // only answerable as a handful of single steps against the action cap, then silence.
+    id: 'de_repeating_reminder',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    message: 'kannst du mich jeden tag um 5 ans vokabeln lernen erinnern?',
+    check: (o) => [
+      ...must(o.steps.length === 1, 'one step, not one per day'),
+      ...must(o.steps[0]?.repeat === 'daily', 'with a daily rhythm'),
+      ...must(o.steps[0]?.planned_time === '17:00', 'at the time she said'),
+      ...must(o.steps[0]?.agreed === true, 'agreed with her'),
+    ],
+  },
+  {
+    id: 'de_repeating_school_days',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    message: 'erinner mich immer an schultagen um halb vier',
+    check: (o) => [
+      ...must(o.steps.length === 1, 'one step'),
+      ...must(o.steps[0]?.repeat === 'weekdays', 'on school days'),
+      ...must(o.steps[0]?.planned_time === '15:30', 'at 15:30'),
     ],
   },
   {

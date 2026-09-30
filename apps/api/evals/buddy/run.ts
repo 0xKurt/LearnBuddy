@@ -78,6 +78,14 @@ async function main(): Promise<void> {
           [l.learnerId],
         );
       }
+      // Something she said first, so the measured turn is an answer to Buddy's own question
+      // (issue #111: deleting a sheet takes two turns on purpose).
+      if (c.before) {
+        await l.api.post('/buddy/messages', {
+          client_message_id: crypto.randomUUID(),
+          text: c.before,
+        });
+      }
       const res = await l.api.post<{ status: Outcome['status']; error_code: string | null }>(
         '/buddy/messages',
         {
@@ -116,7 +124,7 @@ async function main(): Promise<void> {
           [l.learnerId],
         ),
         steps: await env.db.query(
-          `select kind, title, planned_date, planned_time, agreed, state from buddy_steps where learner_id = $1`,
+          `select kind, title, planned_date, planned_time, repeat, agreed, state from buddy_steps where learner_id = $1`,
           [l.learnerId],
         ),
         settings: await env.db.one(

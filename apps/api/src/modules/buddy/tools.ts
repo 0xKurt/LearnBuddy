@@ -23,6 +23,7 @@ import {
 
 import type { Db } from '../../lib/db.js';
 import {
+  addDays,
   daysBetween,
   inWindow,
   localParts,
@@ -39,7 +40,7 @@ import { questionCountFor, selectPracticeItems, type PracticeWish } from '../pra
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
 import { AppError } from '../../lib/errors.js';
-import { bumpContext } from './plan.js';
+import { bumpContext, rollRepeatingStep } from './plan.js';
 import { archiveMaterial } from '../materials/service.js';
 import { schoolYearsOf, type ActionOf, type MemoryAbout, type ToolName } from './decision.js';
 import {
@@ -118,6 +119,9 @@ export type UndoSpec =
       planned_date: string | null;
       planned_time: string | null;
       done_source: string | null;
+      /** Absent in undo records written before repeating reminders existed (issue #112). */
+      repeat?: 'daily' | 'weekdays' | 'weekly' | null;
+      repeat_until?: string | null;
       expect_version: number;
     }
   | {
@@ -795,10 +799,30 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
       `the usual reminder time (${ctx.settings.preferred_start}) is already over on ${date} — ask the learner for a time`,
     );
   }
+  // A standing arrangement, not a suggestion repeated behind her back (issue #112).
+  const repeat = a.repeat === 'never' ? null : a.repeat;
+  const plannedTime = a.time ?? local?.time ?? null;
+  if (repeat && !(a.agreed && plannedTime)) {
+    throw new ToolRejection(
+      'a repeating reminder needs her agreement and a time — ask her when it should come',
+    );
+  }
+  // resolveUntil returns the exclusive bound (midnight after the last day), so the last day
+  // it may still fire is the day before it — otherwise "bis Freitag" would run through Saturday.
+  const repeatUntil =
+    repeat && a.repeat_until
+      ? addDays(
+          localParts(resolveEnd(ctx, a.repeat_until, 'the repetition'), ctx.settings.timezone).date,
+          -1,
+        )
+      : null;
+  if (repeatUntil && repeatUntil < date) {
+    throw new ToolRejection(`the repetition would end (${repeatUntil}) before its first day`);
+  }
   const step = await ctx.db.one<{ id: string; version: number }>(
     `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, planned_time, agreed,
-                              payload)
-     values ($1, $2, $3, $4, 'planned', $5, $6, $7, $8) returning id, version`,
+                              payload, repeat, repeat_until)
+     values ($1, $2, $3, $4, 'planned', $5, $6, $7, $8, $9, $10) returning id, version`,
     [
       ctx.learnerId,
       goal?.id ?? null,
@@ -806,9 +830,11 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
       a.title,
       date,
       // A relative wish has its clock time too — the server just worked it out (#112).
-      a.time ?? local?.time ?? null,
+      plannedTime,
       a.agreed,
       { subject_id: subjectId, focus_topics: a.focus_topics ?? [] },
+      repeat,
+      repeatUntil,
     ],
   );
   ctx.created.stepId = step.id;
@@ -821,8 +847,10 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
       date,
       // The resolved time, so the card shows what was really agreed — not null because
       // she said it relative (issue #112).
-      time: a.time ?? local?.time ?? null,
+      time: plannedTime,
       agreed: a.agreed,
+      repeat,
+      repeat_until: repeatUntil,
     },
     undo: { type: 'cancel_step', step_id: step.id },
   };
@@ -852,6 +880,34 @@ async function runUpdateStep(
     throw new ToolRejection(
       `a ${a.state} step is not moved — change either its state or its day/time`,
     );
+  }
+  // "nicht mehr jeden Tag" (issue #112). Ending a repetition leaves the next one standing —
+  // she asked for fewer reminders, not for the one tomorrow to vanish unannounced.
+  if (a.repeat !== null && a.repeat !== undefined) {
+    const repeat = a.repeat === 'never' ? null : a.repeat;
+    if (repeat && !(s.agreed && (a.time ?? s.planned_time))) {
+      throw new ToolRejection(
+        'a repeating reminder needs her agreement and a time — ask her when it should come',
+      );
+    }
+    await ctx.db.query(
+      `update buddy_steps set repeat = $2, repeat_until = case when $2::text is null then null else repeat_until end
+        where id = $1 and learner_id = $3`,
+      [s.id, repeat, ctx.learnerId],
+    );
+    if (!a.state && !a.day && !a.time) {
+      return {
+        summary: {
+          tool: 'update_step',
+          step_id: s.id,
+          title: s.title,
+          date: s.planned_date,
+          time: s.planned_time,
+          state: s.state,
+        },
+        undo: { ...undo, repeat: s.repeat, repeat_until: s.repeat_until },
+      };
+    }
   }
   if (a.state) {
     await ctx.db.query(
@@ -930,6 +986,9 @@ async function runMarkStepDone(
       where learner_id = $1 and kind = 'buddy_check' and status = 'queued' and payload ->> 'step_id' = $2`,
     [ctx.learnerId, s.id],
   );
+  // On a standing arrangement "done" means done for today: the next one is set up again, so
+  // saying she practised never quietly ends the repetition (issue #112).
+  await rollRepeatingStep(ctx.db, ctx.learnerId, s, ctx.settings, ctx.now);
   return {
     summary: { tool: 'mark_step_done', step_id: s.id, title: s.title },
     undo: {
@@ -989,7 +1048,13 @@ function materialOf(ctx: ToolContext, alias: string) {
  * No undo: `archiveMaterial` schedules the photos and the transcript for erasure right away,
  * which is the point when she deletes a private photo. Offering "rückgängig" on a card whose
  * content is already on its way out would be a promise we cannot keep (CLAUDE.md rule 5).
- * The card names the sheet instead, so a wrong one is visible at once.
+ *
+ * Because it cannot be taken back, the confirmation is enforced here and not left to the
+ * prompt: the live run of buddy.33 had the model delete a whole vocabulary sheet on "mit der
+ * Vokabelliste bin ich durch" — a sentence that ends a session, not a sheet. So Buddy must
+ * have asked in his previous answer (asks_permission) before this runs; the first attempt is
+ * rejected and repaired into a question, and her "ja" is what carries the second one. That is
+ * the library's confirm sheet, in the conversation (docs/UX-PRINCIPLES.md §18).
  */
 async function runDeleteMaterial(
   action: ActionOf<'delete_material'>,
@@ -998,6 +1063,20 @@ async function runDeleteMaterial(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const m = materialOf(ctx, a.material);
+  // The tools of a decision run before its own row is written, so the newest one is the
+  // answer before this one.
+  const previous = await ctx.db.maybeOne<{ asked: boolean }>(
+    `select coalesce((output->>'asks_permission')::boolean, false) as asked
+       from buddy_decisions
+      where learner_id = $1 and mode = 'turn' and disposition = 'applied'
+      order by created_at desc, id desc limit 1`,
+    [ctx.learnerId],
+  );
+  if (!previous?.asked) {
+    throw new ToolRejection(
+      `deleting "${m.title ?? 'a sheet'}" cannot be taken back — ask her plainly whether it should go (asks_permission), and delete it only after she says yes`,
+    );
+  }
   try {
     await archiveMaterial({ db: ctx.db, now: () => ctx.now }, ctx.learnerId, m.id);
   } catch (e) {
@@ -1557,7 +1636,11 @@ export async function runUndo(
     }
     case 'restore_step': {
       const r = await db.query(
+        // `repeat` only when the undo record carries it: older records must not clear a
+        // repetition they never knew about (issue #112).
         `update buddy_steps set state = $3, planned_date = $4, planned_time = $5, done_source = $6,
+                                repeat = case when $8 then $9 else repeat end,
+                                repeat_until = case when $8 then $10 else repeat_until end,
                                 finished_at = null, version = version + 1
           where id = $1 and learner_id = $2 and version = $7
             and state in ('planned','prepared','skipped','cancelled','done')
@@ -1570,6 +1653,9 @@ export async function runUndo(
           undo.planned_time,
           undo.done_source,
           undo.expect_version,
+          undo.repeat !== undefined,
+          undo.repeat ?? null,
+          undo.repeat_until ?? null,
         ],
       );
       const step = r[0] as { id: string; version: number; agreed: boolean } | undefined;
