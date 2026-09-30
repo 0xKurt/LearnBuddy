@@ -376,6 +376,34 @@ export const CASES: Case[] = [
     ],
   },
   {
+    // Issue #121, corpus case time-017: she names a time of day, not a clock time. Without
+    // one the server falls back to her preferred start (15:00 by default) — an afternoon
+    // reminder for "vor der Schule". Whatever is agreed, the reply must say the time.
+    id: 'de_vague_morning',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    // Contact to the phone stays off, as in the corpus run: the reminder then waits in the
+    // app, and saying so must not replace saying WHEN.
+    message: 'morgen früh vor der schule erinner mich an das arbeitsblatt',
+    check: (o) => {
+      const step = o.steps.find((s) => s.agreed);
+      const hour = step?.planned_time ? Number(step.planned_time.slice(0, 2)) : null;
+      return [
+        // Either she is asked for a time, or one is agreed — but not silently in the afternoon.
+        ...must(
+          step === undefined || (hour !== null && hour < 12),
+          `a reminder for "vor der Schule" is in the morning (got ${step?.planned_time ?? 'none'})`,
+        ),
+        // And the reply says WHICH time — the hour that was really agreed, not just
+        // "morgen früh" (rule 5: never claim more than the tool did).
+        ...must(
+          step === undefined ||
+            (hour !== null && new RegExp(`\\b0?${hour}\\b`).test(o.reply ?? '')),
+          `the reply names the agreed hour (${step?.planned_time ?? 'none'}): ${o.reply ?? '—'}`,
+        ),
+      ];
+    },
+  },
+  {
     id: 'de_open_settings',
     learner: { relation: 'child', birthDate: '2014-02-10' },
     message: 'Ich will die Sprache der App auf Englisch umstellen.',
