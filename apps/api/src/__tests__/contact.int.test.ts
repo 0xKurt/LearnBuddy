@@ -146,6 +146,32 @@ describe.skipIf(!dbReady)('contact promises', () => {
     },
   };
 
+  it('the longest pause there is can actually be set (issue #119)', async () => {
+    const l = await onboard(env);
+    await enableContact(env, l.learnerId);
+    // An UntilSpec ends at midnight AFTER its last day, so measuring the limit in
+    // milliseconds made the longest expressible pause always too long by the rest of today.
+    // A learner asking for silence then got model_invalid — an error instead of an answer.
+    env.llm.script(
+      'buddy_turn',
+      reply('Ich bin still. So weit reicht es: 60 Tage.', [
+        {
+          ...pauseAction,
+          args: {
+            ...pauseAction.args,
+            pause: { kind: 'end_of_day', days: 60 },
+            quote: 'schreib mir nicht mehr',
+          },
+        },
+      ]),
+    );
+    await send(l, 'schreib mir nicht mehr');
+    const settings = await l.api.get<{ paused_until: string | null }>('/buddy/settings');
+    // The 60th day is her last quiet one, so the pause ends at midnight after it — the cap is
+    // reached exactly, neither refused nor quietly shortened.
+    expect(settings.body.paused_until).toBe('2026-11-27T23:00:00.000Z'); // 28.09. + 60 Tage
+  });
+
   it('under 16 she cannot undo a pause without the adult (rule 6, ADR 0006)', async () => {
     const l = await onboard(env, { relation: 'child', pin: '4711' });
     await enableContact(env, l.learnerId);

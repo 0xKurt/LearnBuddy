@@ -31,6 +31,7 @@ import {
   resolveDay,
   resolveLocalDateTime,
   resolveUntil,
+  weekdayOf,
   zonedToInstant,
   type DaySpec,
   type UntilSpec,
@@ -249,8 +250,16 @@ function resolveEnd(ctx: ToolContext, spec: UntilSpec, what: string): Date {
   }
   if (r.until.getTime() <= ctx.now.getTime())
     throw new ToolRejection(`${what} would already be over`);
-  if (r.until.getTime() - ctx.now.getTime() > MAX_CONSTRAINT_DAYS * 86_400_000) {
-    throw new ToolRejection(`${what} is limited to ${MAX_CONSTRAINT_DAYS} days`);
+  // Counted in days, not in milliseconds. An UntilSpec ends at midnight AFTER its last day,
+  // so measuring the instant made the longest expressible end (end_of_day with 60 days) always
+  // too long by the rest of today — the model repaired into the same rejection and the learner
+  // got model_invalid instead of an answer (issue #119).
+  const lastDay = addDays(localParts(r.until, ctx.settings.timezone).date, -1);
+  if (daysBetween(localParts(ctx.now, ctx.settings.timezone).date, lastDay) > MAX_CONSTRAINT_DAYS) {
+    // A rejection is a repair instruction: it says the way out, not only the limit.
+    throw new ToolRejection(
+      `${what} is limited to ${MAX_CONSTRAINT_DAYS} days: use kind "end_of_day" with days ${MAX_CONSTRAINT_DAYS} for the longest there is, and say in your reply that this is how far it reaches`,
+    );
   }
   return r.until;
 }
@@ -745,6 +754,25 @@ async function runPreparePractice(
   };
 }
 
+/**
+ * The first day a rhythm should run when she named none (issue #112): today if its time is
+ * still ahead and the day fits the rhythm, otherwise the next day that does. "weekly" without
+ * a named weekday starts on the first day that works and keeps that weekday from then on.
+ */
+function firstDayOfRhythm(
+  ctx: ToolContext,
+  repeat: 'daily' | 'weekdays' | 'weekly',
+  time: string,
+): string {
+  const now = localParts(ctx.now, ctx.settings.timezone);
+  const fits = (date: string) => repeat !== 'weekdays' || ![6, 7].includes(weekdayOf(date));
+  let date = now.date;
+  if (minutesOf(time) <= minutesOf(now.time)) date = addDays(date, 1);
+  // At most a week: every rhythm here has a day inside any seven.
+  for (let i = 0; i < 7 && !fits(date); i++) date = addDays(date, 1);
+  return date;
+}
+
 async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Promise<ToolOutcome> {
   const a = action.args;
   if (a.agreed) requireQuote(ctx, a.quote);
@@ -758,7 +786,15 @@ async function runPlanStep(action: ActionOf<'plan_step'>, ctx: ToolContext): Pro
     throw new ToolRejection('use either in_minutes or a time, not both');
   }
   const local = relative ? localParts(relative, ctx.settings.timezone) : null;
-  const date = local ? local.date : resolveFutureDay(ctx, a.day, 'this step');
+  // A rhythm usually comes without a first day — "immer an Schultagen um halb vier" says when
+  // it repeats, not when it starts. The server works that day out (rule 2: the model never
+  // writes dates), instead of rejecting the action and leaving the learner with an error
+  // (issue #112, seen live in buddy.35).
+  const rhythmStart =
+    !local && a.repeat && a.repeat !== 'never' && a.day.kind === 'unknown' && a.time
+      ? firstDayOfRhythm(ctx, a.repeat, a.time)
+      : null;
+  const date = local ? local.date : (rhythmStart ?? resolveFutureDay(ctx, a.day, 'this step'));
   let at: Date | null = relative;
   if (local && inWindow(minutesOf(local.time), ctx.settings.quiet_start, ctx.settings.quiet_end)) {
     throw new ToolRejection(

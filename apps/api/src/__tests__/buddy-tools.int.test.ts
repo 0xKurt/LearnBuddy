@@ -601,6 +601,47 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       expect(rows).toEqual([{ repeat: 'daily', planned_time: '17:00' }]);
     });
 
+    it('starts on the next day that fits when she named none', async () => {
+      // The clock is 10:00 Berlin on Monday 28.09. A rhythm usually comes without a first
+      // day — she says when it repeats, not when it starts — and the server works that out
+      // instead of the model guessing a date (rule 2).
+      env.llm.script('buddy_turn', {
+        json: say('An Schultagen um halb vier.', [
+          plan({
+            repeat: 'weekdays',
+            day: { kind: 'unknown' },
+            time: '15:30',
+            quote: 'immer an schultagen um halb vier',
+          }),
+        ]),
+      });
+      await send(l, 'erinner mich immer an schultagen um halb vier');
+      const today = await env.db.one<{ planned_date: string }>(
+        `select planned_date from buddy_steps where learner_id = $1`,
+        [l.learnerId],
+      );
+      expect(today.planned_date).toBe('2026-09-28'); // today: 15:30 is still ahead
+
+      // A time that is already past today moves it on.
+      env.llm.script('buddy_turn', {
+        json: say('An Schultagen früh.', [
+          plan({
+            repeat: 'weekdays',
+            day: { kind: 'unknown' },
+            time: '08:00',
+            title: 'Früh üben',
+            quote: 'und morgens um 8',
+          }),
+        ]),
+      });
+      await send(l, 'und morgens um 8');
+      const early = await env.db.one<{ planned_date: string }>(
+        `select planned_date from buddy_steps where learner_id = $1 and title = 'Früh üben'`,
+        [l.learnerId],
+      );
+      expect(early.planned_date).toBe('2026-09-29');
+    });
+
     it('needs her agreement and a time — Buddy does not put himself on a schedule', async () => {
       const t = tryAction(env, plan({ repeat: 'daily', agreed: false, quote: null }));
       await send(l, 'ich lern grad Vokabeln');

@@ -146,7 +146,18 @@ async function main(): Promise<void> {
       const problems =
         outcome.status === 'done'
           ? c.check(outcome)
-          : [`turn ${outcome.status} (${outcome.errorCode ?? 'no code'})`];
+          : [
+              // Why the answer was rejected, not just that it was: a schema the model keeps
+              // missing is a bug in the schema, and "model_invalid" alone never says which.
+              `turn ${outcome.status} (${outcome.errorCode ?? 'no code'})`,
+              ...(
+                await env.db.query<{ errors: string[] | null }>(
+                  `select errors from buddy_decisions where learner_id = $1 and errors is not null
+                    order by created_at desc limit 1`,
+                  [l.learnerId],
+                )
+              ).flatMap((d) => d.errors ?? []),
+            ];
       // cached: what the provider served from its prefix cache (issue #25). Every case is a
       // different learner on its own throwaway database, so what can be cached between them
       // is only the part before `contents` — system prompt plus response schema. Measured
