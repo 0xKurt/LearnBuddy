@@ -509,6 +509,25 @@ const requestMaterial = z.object({
   }),
 });
 
+/**
+ * One question off a sheet (issue #120). She names it in words, not by an id: the server finds
+ * it in that sheet's own questions (rule 2). Like deleting a sheet it cannot be taken back —
+ * the text, the solution and her answers go — so the same two turns apply.
+ */
+const deleteItem = z.object({
+  tool: z.literal('delete_item'),
+  args: z.object({
+    material: MaterialRef,
+    question: z
+      .string()
+      .trim()
+      .min(3)
+      .max(300)
+      .describe('the question as it stands on the sheet (from find_questions), word for word'),
+    quote: Quote,
+  }),
+});
+
 const setContact = z.object({
   tool: z.literal('set_contact'),
   args: z.object({
@@ -643,6 +662,7 @@ export const ACT_SCHEMAS = {
   request_material: requestMaterial,
   delete_material: deleteMaterial,
   rename_material: renameMaterialTool,
+  delete_item: deleteItem,
   set_contact: setContact,
   set_voice: setVoice,
   schedule_check: scheduleCheck,

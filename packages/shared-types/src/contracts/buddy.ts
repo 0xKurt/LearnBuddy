@@ -101,6 +101,8 @@ export const ActionSummary = z.discriminatedUnion('tool', [
   /** What she said about one of her own sheets, done in the conversation (issue #111). */
   z.object({ tool: z.literal('delete_material'), material_id: Uuid, title: z.string().nullable() }),
   z.object({ tool: z.literal('rename_material'), material_id: Uuid, title: z.string() }),
+  /** One question she asked to be taken off a sheet (issue #120). */
+  z.object({ tool: z.literal('delete_item'), item_id: Uuid, question: z.string() }),
   z.object({ tool: z.literal('schedule_check'), at: IsoDateTime }),
   /** Buddy's voice as she asked for it ("sprich langsamer", "andere Stimme"), ADR 0008. */
   z.object({ tool: z.literal('set_voice'), voice: VoiceName, speed: VoiceSpeed }),

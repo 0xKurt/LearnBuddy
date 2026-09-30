@@ -42,7 +42,7 @@ import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
 import { AppError } from '../../lib/errors.js';
 import { bumpContext, rollRepeatingStep } from './plan.js';
-import { archiveMaterial } from '../materials/service.js';
+import { archiveMaterial, archiveMaterialItem } from '../materials/service.js';
 import { schoolYearsOf, type ActionOf, type MemoryAbout, type ToolName } from './decision.js';
 import {
   cancelGoalWakeups,
@@ -1098,6 +1098,30 @@ async function runRequestMaterial(
   };
 }
 
+/**
+ * What cannot be taken back takes two turns: Buddy asks in one answer, and only her yes in the
+ * next carries the deed. The tools of a decision run before its own row is written, so the
+ * newest row is the answer before this one.
+ *
+ * In code and not in the prompt, because the prompt did not hold it: the live run of buddy.33
+ * had the model delete a whole vocabulary sheet on "mit der Vokabelliste bin ich durch" — a
+ * sentence that ends a session, not a sheet (issues #111, #120). This is the library's confirm
+ * sheet, in the conversation (docs/UX-PRINCIPLES.md §18).
+ */
+async function requireAsked(ctx: ToolContext, what: string): Promise<void> {
+  const previous = await ctx.db.maybeOne<{ asked: boolean }>(
+    `select coalesce((output->>'asks_permission')::boolean, false) as asked
+       from buddy_decisions
+      where learner_id = $1 and mode = 'turn' and disposition = 'applied'
+      order by created_at desc, id desc limit 1`,
+    [ctx.learnerId],
+  );
+  if (previous?.asked) return;
+  throw new ToolRejection(
+    `${what} cannot be taken back — ask her plainly whether it should go (asks_permission), and do it only after she says yes`,
+  );
+}
+
 /** The sheet she named, from this learner's aliases only. */
 function materialOf(ctx: ToolContext, alias: string) {
   const m = ctx.aliases.materials.get(alias);
@@ -1128,20 +1152,7 @@ async function runDeleteMaterial(
   const a = action.args;
   requireQuote(ctx, a.quote);
   const m = materialOf(ctx, a.material);
-  // The tools of a decision run before its own row is written, so the newest one is the
-  // answer before this one.
-  const previous = await ctx.db.maybeOne<{ asked: boolean }>(
-    `select coalesce((output->>'asks_permission')::boolean, false) as asked
-       from buddy_decisions
-      where learner_id = $1 and mode = 'turn' and disposition = 'applied'
-      order by created_at desc, id desc limit 1`,
-    [ctx.learnerId],
-  );
-  if (!previous?.asked) {
-    throw new ToolRejection(
-      `deleting "${m.title ?? 'a sheet'}" cannot be taken back — ask her plainly whether it should go (asks_permission), and delete it only after she says yes`,
-    );
-  }
+  await requireAsked(ctx, `deleting "${m.title ?? 'a sheet'}"`);
   try {
     await archiveMaterial({ db: ctx.db, now: () => ctx.now }, ctx.learnerId, m.id);
   } catch (e) {
@@ -1171,6 +1182,52 @@ async function runRenameMaterial(
   return {
     summary: { tool: 'rename_material', material_id: m.id, title: a.title },
     undo: { type: 'rename_material_back', material_id: m.id, title: m.title },
+  };
+}
+
+/**
+ * One question off a sheet (issue #120). She says which one in words — "die mit den 20 Prozent"
+ * is not it, the question as it stands is — and the server finds it among that sheet's own
+ * questions. No id from the model (rule 2), and no guessing: if her words fit more than one,
+ * the action is refused and Buddy asks which.
+ *
+ * Like deleting a sheet this cannot be taken back (`archiveMaterialItem` erases the text, the
+ * solution and her answers by job), so it takes the same two turns: Buddy must have asked.
+ */
+async function runDeleteItem(
+  action: ActionOf<'delete_item'>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const a = action.args;
+  requireQuote(ctx, a.quote);
+  const m = materialOf(ctx, a.material);
+  await requireAsked(ctx, `taking a question off "${m.title ?? 'a sheet'}"`);
+  const rows = await ctx.db.query<{ id: string; prompt: string }>(
+    `select id, prompt from items
+      where learner_id = $1 and material_id = $2 and archived_at is null`,
+    [ctx.learnerId, m.id],
+  );
+  if (rows.length === 0) throw new ToolRejection(`sheet ${a.material} has no questions left`);
+  const wanted = normalizeForMatch(a.question);
+  // Word for word first; only if that finds nothing, the question that contains her words.
+  const exact = rows.filter((r) => normalizeForMatch(r.prompt) === wanted);
+  const hits =
+    exact.length > 0 ? exact : rows.filter((r) => normalizeForMatch(r.prompt).includes(wanted));
+  if (hits.length === 0) {
+    throw new ToolRejection(
+      `no question on sheet ${a.material} reads like that — look them up (find_questions) and use one word for word`,
+    );
+  }
+  if (hits.length > 1) {
+    throw new ToolRejection(
+      `${hits.length} questions on sheet ${a.material} fit that; nothing is deleted on a guess — name them and ask which`,
+    );
+  }
+  const hit = hits[0]!;
+  await archiveMaterialItem({ db: ctx.db, now: () => ctx.now }, ctx.learnerId, m.id, hit.id);
+  return {
+    summary: { tool: 'delete_item', item_id: hit.id, question: hit.prompt },
+    undo: null,
   };
 }
 
@@ -1409,6 +1466,7 @@ export const ACT_HANDLERS: {
   request_material: runRequestMaterial,
   delete_material: runDeleteMaterial,
   rename_material: runRenameMaterial,
+  delete_item: runDeleteItem,
   set_contact: runSetContact,
   set_voice: runSetVoice,
   offer_learning: runOfferLearning,

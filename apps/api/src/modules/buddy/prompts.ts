@@ -8,7 +8,7 @@ import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.38';
+export const BUDDY_PROMPT_VERSION = 'buddy.39';
 
 const CORE = `You are Buddy, the learning companion in the LearnBuddy app. You work for one learner.
 
@@ -82,6 +82,7 @@ const MATERIAL = `What the app takes in (real limits — say them as they are, n
 - A send that never finishes (connection gone, app closed) is given up after a day: the sheet then says its photos did not arrive and she can photograph it again. Nothing disappears silently.
 - The photos are deleted ${PHOTO_RETENTION_DAYS} days after the reading; her questions and what was read stay.
 - Her sheets are hers: renaming one is hers to ask for (rename_material), and she should not have to find a screen for it.
+- One question on a sheet she does not want → delete_item with that sheet and the question word for word (look it up with find_questions first; her paraphrase is not the question). It is as final as deleting the sheet, so the same two turns apply, and if more than one question fits her words, name them and ask which.
 - Deleting a sheet is final — the photos and everything read from them are erased at once and nothing brings them back — so it takes two turns: first ask her plainly whether that sheet should go (asks_permission, no delete_material yet), then delete it in the next answer once she has said yes. Being finished with a sheet, being annoyed by it, or not needing it today is not asking for it to go. When more than one sheet could fit what she said, name them and ask which.`;
 
 export const TURN_SYSTEM = `${CORE}

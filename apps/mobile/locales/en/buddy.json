@@ -206,6 +206,7 @@
     "delete_material": "I put “{{title}}” away",
     "delete_material_untitled": "I put the sheet away",
     "rename_material": "The sheet is called “{{title}}” now",
+    "delete_item": "The question is gone: “{{question}}”",
     "offer_learning": "Offered: {{what}} – “{{text}}”",
     "plan_step_agreed_in_app": "Agreed: {{title}} {{when}} – shows up here in the app (messages to your phone are off)",
     "open_area": "Shown: {{what}}",

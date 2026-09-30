@@ -206,6 +206,7 @@
     "delete_material": "Ich habe „{{title}}“ weggeräumt",
     "delete_material_untitled": "Ich habe das Blatt weggeräumt",
     "rename_material": "Das Blatt heißt jetzt „{{title}}“",
+    "delete_item": "Die Frage ist weg: „{{question}}“",
     "offer_learning": "Angeboten: {{what}} – „{{text}}“",
     "plan_step_agreed_in_app": "Verabredet: {{title}} {{when}} – erscheint hier in der App (Nachrichten aufs Handy sind aus)",
     "open_area": "Gezeigt: {{what}}",

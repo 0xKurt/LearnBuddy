@@ -1277,7 +1277,9 @@ export async function materialItems(
  * practice again. Idempotent — deleting it twice is fine; another learner's ids are 404.
  */
 export async function archiveMaterialItem(
-  deps: Deps,
+  // Narrower than Deps on purpose: the conversation calls this too (issue #120), where only
+  // the connection and the clock exist — and those are all this needs.
+  deps: Pick<Deps, 'db' | 'now'>,
   learnerId: string,
   materialId: string,
   itemId: string,

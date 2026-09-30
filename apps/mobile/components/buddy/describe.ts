@@ -160,6 +160,8 @@ export function describeAction(a: ActionSummary, opts: { contactOn?: boolean } =
         : t('action.delete_material_untitled');
     case 'rename_material':
       return t('action.rename_material', { title: a.title });
+    case 'delete_item':
+      return t('action.delete_item', { question: a.question });
     case 'schedule_check':
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),

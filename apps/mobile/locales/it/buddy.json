@@ -206,6 +206,7 @@
     "delete_material": "Ho messo via «{{title}}»",
     "delete_material_untitled": "Ho messo via il foglio",
     "rename_material": "Il foglio ora si chiama «{{title}}»",
+    "delete_item": "La domanda non c’è più: «{{question}}»",
     "offer_learning": "Proposto: {{what}} – «{{text}}»",
     "plan_step_agreed_in_app": "Concordato: {{title}} {{when}} – compare qui nell'app (i messaggi sul telefono sono disattivati)",
     "open_area": "Mostrato: {{what}}",

@@ -404,6 +404,34 @@ export const CASES: Case[] = [
     },
   },
   {
+    // Issue #120, corpus case material-031: she wants one question gone, and until now that
+    // ended in the library. Two turns, like every deletion that cannot be taken back.
+    id: 'de_question_off_sheet',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    setup: async (env, l) => {
+      const sheet = await env.db.one<{ id: string }>(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title, ready_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'Prozente Arbeitsblatt', $2) returning id`,
+        [l.learnerId, env.clock.now()],
+      );
+      await env.db.query(
+        `insert into items (learner_id, material_id, kind, prompt, answer, topic)
+         select $1, $2, 'short', p, 'x', 'Prozente' from unnest($3::text[]) p`,
+        [
+          l.learnerId,
+          sheet.id,
+          [
+            'Wie viel sind 20 % von 80?',
+            'Erkläre den Unterschied zwischen Grundwert und Prozentwert.',
+          ],
+        ],
+      );
+    },
+    before: 'die frage "Wie viel sind 20 % von 80?" von dem prozente blatt is doof, nimm die raus',
+    message: 'ja genau die, weg damit',
+    check: (o) => [...must(o.tools.includes('delete_item'), 'asks first, then takes it off')],
+  },
+  {
     id: 'de_open_settings',
     learner: { relation: 'child', birthDate: '2014-02-10' },
     message: 'Ich will die Sprache der App auf Englisch umstellen.',

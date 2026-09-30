@@ -548,6 +548,76 @@ describe.skipIf(!dbReady)('Buddy act tools', () => {
       expect(t.refusal()).toMatch(/could not be read/);
     });
 
+    it('takes one question off a sheet, found by its own words (#120)', async () => {
+      const id = await sheet('Prozente', 0);
+      await env.db.query(
+        `insert into items (learner_id, material_id, kind, prompt, answer, topic)
+         select $1, $2, 'short', p, 'x', 'Prozente' from unnest($3::text[]) p`,
+        [
+          l.learnerId,
+          id,
+          [
+            'Wie viel sind 20 % von 80?',
+            'Erkläre den Unterschied zwischen Grundwert und Prozentwert.',
+          ],
+        ],
+      );
+      await askedFirst('die eine frage von dem blatt is doof, nimm die raus');
+      env.llm.script('buddy_turn', {
+        json: say('Ist raus.', [
+          {
+            tool: 'delete_item',
+            args: { material: 'sh1', question: 'Wie viel sind 20 % von 80?', quote: 'ja die' },
+          },
+        ]),
+      });
+      await send(l, 'ja die');
+      const left = await env.db.query<{ prompt: string; archived_at: Date | null }>(
+        `select prompt, archived_at from items where material_id = $1 order by prompt`,
+        [id],
+      );
+      expect(left.map((i) => [i.prompt.slice(0, 8), i.archived_at === null])).toEqual([
+        ['Erkläre ', true],
+        ['Wie viel', false],
+      ]);
+    });
+
+    it('never guesses which question she meant', async () => {
+      const id = await sheet('Prozente', 0);
+      await env.db.query(
+        `insert into items (learner_id, material_id, kind, prompt, answer, topic)
+         select $1, $2, 'short', p, 'x', 'Prozente' from unnest($3::text[]) p`,
+        [l.learnerId, id, ['Wie viel sind 20 % von 80?', 'Wie viel sind 20 % von 60?']],
+      );
+      await askedFirst('nimm die prozent frage raus');
+      const t = tryAction(env, {
+        tool: 'delete_item',
+        args: { material: 'sh1', question: 'Wie viel sind 20 %', quote: 'ja die' },
+      });
+      await send(l, 'ja die');
+      expect(t.refusal()).toMatch(/2 questions .* fit that/);
+      const left = await env.db.query<{ archived_at: Date | null }>(
+        `select archived_at from items where material_id = $1`,
+        [id],
+      );
+      expect(left.every((i) => i.archived_at === null)).toBe(true);
+    });
+
+    it('a question is not taken off before Buddy has asked', async () => {
+      const id = await sheet('Prozente', 0);
+      await env.db.query(
+        `insert into items (learner_id, material_id, kind, prompt, answer, topic)
+         values ($1, $2, 'short', 'Wie viel sind 20 % von 80?', 'x', 'Prozente')`,
+        [l.learnerId, id],
+      );
+      const t = tryAction(env, {
+        tool: 'delete_item',
+        args: { material: 'sh1', question: 'Wie viel sind 20 % von 80?', quote: 'is doof' },
+      });
+      await send(l, 'die frage is doof');
+      expect(t.refusal()).toMatch(/cannot be taken back/);
+    });
+
     it('renames a sheet, and undo puts the old name back', async () => {
       const id = await sheet('IMG_2291');
       env.llm.script('buddy_turn', {

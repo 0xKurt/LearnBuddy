@@ -158,6 +158,16 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     does: 'give one of her sheets the name she asked for',
     run: ACT_HANDLERS.rename_material,
   },
+  delete_item: {
+    // Same reasons as delete_material: only in the conversation, only on her words, and
+    // nothing comes back — its text, solution and her answers are erased (issue #120).
+    surfaces: TURN,
+    touches: ['material'],
+    needsQuote: true,
+    undoable: false,
+    does: 'take one question off a sheet (she asked for it to go)',
+    run: ACT_HANDLERS.delete_item,
+  },
   set_contact: {
     surfaces: TURN,
     touches: ['settings'],
@@ -321,6 +331,7 @@ export function removesSomething(a: AnyAction): boolean {
     case 'update_step':
       return a.args.state !== null;
     case 'delete_material':
+    case 'delete_item':
       return true;
     default:
       return false;
