@@ -119,8 +119,22 @@ Gegen die Abnahme aus Issue #59:
 
 - **Erste Worte im Chat < 1,5 s:** erstes SSE-Event median **1,42 s** — API-seitig erfüllt;
   am Gerät kommt das Funknetz dazu (Gerätemessung offen).
-- **Übung starten < 1 s / nächste Frage < 0,5 s:** app-seitig (Session-Cache, Prefetch) —
-  der Browser-Walkthrough misst diese Spannen (`test-results/web/perf.jsonl`); Gerätewerte offen.
+- **Übung starten < 1 s / nächste Frage < 0,5 s:** aus dem Walkthrough vom 30.09.
+  (`test-results/web/perf.jsonl`, 11 Durchläufe, gescriptetes Modell):
+
+  | Marke                                 | n   | min   | median | max   |
+  | ------------------------------------- | --- | ----- | ------ | ----- |
+  | `start_offer` (Angebot → Übung läuft) | 3   | 9 ms  | 10 ms  | 10 ms |
+  | `check` (Antwort → nächste Frage)     | 7   | 19 ms | 22 ms  | 35 ms |
+  | `first_audio` (Antwort → erster Ton)  | 1   | 16 ms | 16 ms  | 16 ms |
+  | `relisten` (letztes Wort → Mikro)     | 1   | 46 ms | 46 ms  | 46 ms |
+
+  **Der App-Anteil ist vernachlässigbar.** Das Modell ist hier gescriptet und die Stimme eine
+  Attrappe, also messen diese Zahlen genau das: Session-Cache, Prefetch und Rendering kosten
+  Millisekunden, keine Sekunden. Was ein Kind als Warten erlebt, sind Modell und Netz — und
+  am Gerät der Start des Android-Erkenners. **Diese Marken sagen nichts über das Handy**;
+  sie schließen nur aus, dass die App selbst bremst.
+
 - **Erstes Audio < 1 s nach der Antwort:** mit Per-Satz-MP3 **nicht erreichbar** (Modellzeit
   bis zum ersten fertigen Satz + eine Synthese, §Vorlesen unten) — das Kriterium braucht
   entweder Streaming-TTS oder eine ehrliche Korrektur; die Stille ZWISCHEN Sätzen ist 0,00 s.
