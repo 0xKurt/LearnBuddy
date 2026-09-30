@@ -391,4 +391,155 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
     );
     expect(open.every((r) => r.status === 'open')).toBe(true);
   });
+
+  // ─────────────── a sheet bigger than one reading (issue #150) ───────────────
+
+  it('reads a fifty-word list to the end, over more than one reading', async () => {
+    // "wenn mein kind scheiss 50 vokabeln lernen muss, dann muss sie die scheiss 50
+    // vokabeln lernen" (owner, 30.09.). One model answer holds only so many; the sheet is
+    // not what has to shrink for that.
+    const pair = (n: number) =>
+      item({
+        kind: 'vocab',
+        prompt: `mot ${n}`,
+        answer: `Wort ${n}`,
+        prompt_lang: 'fr',
+        lang: 'de',
+        topic: 'Unité 3',
+      });
+    const reading = (from: number, to: number, more: boolean) => ({
+      is_learning_material: true,
+      readable: true,
+      title: 'Unité 3',
+      subject: { name: 'Französisch', kind: 'french' },
+      extracted_text: 'Vokabelliste Unité 3',
+      items: Array.from({ length: to - from + 1 }, (_, i) => pair(from + i)),
+      more_items: more,
+      pages: [{ page: 1, read: 'all', problem: null }],
+    });
+    // First reading takes what fits and says there is more; the second finishes the list.
+    env.llm.script('extraction', { json: reading(1, 30, true) });
+    env.llm.script('extraction', { json: reading(31, 50, false) });
+    env.llm.script('buddy_check', WAIT);
+
+    const created = await lena.api.post<{
+      material: MaterialView;
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: randomUUID(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'study',
+    });
+    expect(created.status).toBe(201);
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    expect((await lena.api.post(`/materials/${created.body.material.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+
+    const view = await lena.api.get<MaterialItemsView>(
+      `/materials/${created.body.material.id}/items`,
+    );
+    expect(view.status).toBe(200);
+    // Fifty pairs, and the app asks each one both ways — so a hundred questions, and the
+    // French side of every single pair is there, in the order it stands on the sheet.
+    expect(view.body.items).toHaveLength(100);
+    expect(view.body.items.map((i) => i.prompt).filter((p) => p.startsWith('mot '))).toEqual(
+      Array.from({ length: 50 }, (_, i) => `mot ${i + 1}`),
+    );
+    expect(view.body.material.items_incomplete).toBe(false);
+  });
+
+  it('never counts the same pair twice when the second reading repeats itself', async () => {
+    const pair = (n: number) =>
+      item({
+        kind: 'vocab',
+        prompt: `mot ${n}`,
+        answer: `Wort ${n}`,
+        prompt_lang: 'fr',
+        lang: 'de',
+      });
+    const base = {
+      is_learning_material: true,
+      readable: true,
+      title: 'Unité 4',
+      subject: { name: 'Französisch', kind: 'french' },
+      extracted_text: 'Liste',
+      pages: [{ page: 1, read: 'all', problem: null }],
+    };
+    env.llm.script('extraction', {
+      json: { ...base, items: [pair(1), pair(2)], more_items: true },
+    });
+    // The model hands back one it already gave (differently spaced) plus one new one.
+    env.llm.script('extraction', {
+      json: {
+        ...base,
+        items: [item({ kind: 'vocab', prompt: '  MOT 2 ', answer: 'Wort 2' }), pair(3)],
+        more_items: false,
+      },
+    });
+    env.llm.script('buddy_check', WAIT);
+
+    const created = await lena.api.post<{
+      material: MaterialView;
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: randomUUID(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'study',
+    });
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    await lena.api.post(`/materials/${created.body.material.id}/submit`);
+    await env.flushBackground();
+
+    const view = await lena.api.get<MaterialItemsView>(
+      `/materials/${created.body.material.id}/items`,
+    );
+    expect(view.body.items.map((i) => i.prompt).filter((p) => p.startsWith('mot '))).toEqual([
+      'mot 1',
+      'mot 2',
+      'mot 3',
+    ]);
+  });
+
+  it('says a sheet is incomplete instead of letting it pass for the whole one', async () => {
+    const pair = (n: number) =>
+      item({
+        kind: 'vocab',
+        prompt: `mot ${n}`,
+        answer: `Wort ${n}`,
+        prompt_lang: 'fr',
+        lang: 'de',
+      });
+    const reading = (from: number) => ({
+      is_learning_material: true,
+      readable: true,
+      title: 'Riesige Liste',
+      subject: { name: 'Französisch', kind: 'french' },
+      extracted_text: 'Liste',
+      items: [pair(from), pair(from + 1)],
+      // Never done, however often it is asked.
+      more_items: true,
+      pages: [{ page: 1, read: 'all', problem: null }],
+    });
+    for (let i = 0; i < 4; i++) env.llm.script('extraction', { json: reading(i * 2 + 1) });
+    env.llm.script('buddy_check', WAIT);
+
+    const created = await lena.api.post<{
+      material: MaterialView;
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: randomUUID(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'study',
+    });
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    await lena.api.post(`/materials/${created.body.material.id}/submit`);
+    await env.flushBackground();
+
+    const view = await lena.api.get<MaterialItemsView>(
+      `/materials/${created.body.material.id}/items`,
+    );
+    // Four readings, and the sheet still has more: it says so rather than looking whole.
+    expect(view.body.items.filter((i) => i.prompt.startsWith('mot '))).toHaveLength(8);
+    expect(view.body.material.items_incomplete).toBe(true);
+  });
 });

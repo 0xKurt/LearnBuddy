@@ -136,6 +136,17 @@ describe.skipIf(!dbReady)('safeguarding', () => {
       [l.learnerId],
     );
     expect(JSON.stringify(rejected)).toContain('concern');
+
+    // And nothing may be DERIVED from it and kept either (issue #149). The memory tools
+    // were already refused above; the session summariser read the same table with no such
+    // rule, so a summary of this could come back as STATE while buddy_memories stays
+    // empty. The disposition sits on the message itself now.
+    const marked = await env.db.one<{ recall_block: string | null }>(
+      `select recall_block from buddy_messages
+        where learner_id = $1 and role = 'learner' order by seq desc limit 1`,
+      [l.learnerId],
+    );
+    expect(marked.recall_block).toBe('concern');
   });
 
   // A child rarely says only one thing (issue #110, corpus life-088 and life-090): the

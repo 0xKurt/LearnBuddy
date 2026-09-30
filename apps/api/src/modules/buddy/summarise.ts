@@ -11,6 +11,7 @@
 //   it got, so a conversation that goes on later is summarised from there.
 // - Nothing about the learner leaves this module except what she said herself.
 
+import { recallText, type RecallBlock } from './recall.js';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -51,7 +52,14 @@ const SYSTEM = `You write down what a school student and her learning companion 
 
 Answer with the JSON object described by the schema.`;
 
-type Row = { id: string; role: 'learner' | 'buddy'; text: string; created_at: Date };
+type Row = {
+  id: string;
+  role: 'learner' | 'buddy';
+  text: string;
+  created_at: Date;
+  /** Why a model may not be told this message's words again (issue #149). */
+  recall_block: RecallBlock;
+};
 
 /**
  * The stretch of conversation that is over and not summarised yet: from the message after
@@ -69,7 +77,7 @@ export async function pendingSession(
     [learnerId],
   );
   const rows = await db.query<Row>(
-    `select id, role, text, created_at from buddy_messages
+    `select id, role, text, created_at, recall_block from buddy_messages
       where learner_id = $1 and status = 'done' and ($2::timestamptz is null or created_at > $2)
       order by seq
       limit 200`,
@@ -170,8 +178,17 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
   let summary = '';
   let topics: string[] = [];
   if (due.rows.length >= MIN_MESSAGES) {
+    // A blocked or distress message never reaches this model (issue #149). It is left out
+    // rather than replaced: a summariser told "something was held back here" would write
+    // that down, and a summary is stored, derived knowledge — exactly what docs/privacy.md
+    // promises such a message never becomes. The rows themselves stay in the window, so
+    // the coverage pointer still moves past them and they are not read again tomorrow.
     const said = due.rows
-      .map((r) => `${r.role === 'learner' ? 'SHE' : 'BUDDY'}: ${r.text}`)
+      .map((r) => {
+        const text = recallText(r, learner.locale, false);
+        return text === null ? null : `${r.role === 'learner' ? 'SHE' : 'BUDDY'}: ${text}`;
+      })
+      .filter((line): line is string => line !== null)
       .join('\n')
       .slice(0, 12_000);
     const res = await callModel(deps, learnerId, day, {

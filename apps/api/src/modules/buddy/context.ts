@@ -348,6 +348,13 @@ export function buildContext(
   // Why a sheet did not work decides what she can do next, so it is named, not counted.
   for (const m of state.materials.filter((x) => x.status === 'failed'))
     materialBlock.push(`- "${m.title ?? 'a sheet'}" ${failureNote(m.failure_reason)}`);
+  // Read fine, but not all of it turned into questions (issue #150): he must be able to
+  // say so, or a half-read word list passes for a whole one — which is how "frag mich alle
+  // Vokabeln ab" handed back half a sheet.
+  for (const m of state.materials.filter((x) => x.status === 'ready' && x.items_incomplete))
+    materialBlock.push(
+      `- "${m.title ?? 'sheet'}": ${m.item_count} questions read, and the sheet has MORE. Say that plainly if she asks for all of it; never let it pass for the whole sheet`,
+    );
   for (const m of state.materials.filter((x) => x.status === 'ready' && x.page_problems.length))
     materialBlock.push(
       `- "${m.title ?? 'sheet'}": page(s) ${m.page_problems.map((p) => p.page).join(', ')} of ${m.photo_count} not read completely; no questions from what was missing (the learner sees a card to photograph them again)`,

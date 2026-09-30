@@ -95,6 +95,8 @@ export type DaySummaryRow = {
 };
 
 export type MessageRow = {
+  /** Why a model may not be told this message's words again (modules/buddy/recall.ts, #149). */
+  recall_block: 'blocked' | 'concern' | null;
   id: string;
   role: 'learner' | 'buddy';
   text: string;
@@ -140,6 +142,8 @@ export type MaterialBrief = {
   photo_count: number;
   /** Pages not read completely that Lena has not answered yet (resolved: empty). */
   page_problems: PageProblem[];
+  /** The sheet holds more questions than were read into items (issue #150). */
+  items_incomplete: boolean;
   created_at: Date;
   /**
    * When the reading failed (migration 0056). A send given up after a day fails a full day
@@ -279,7 +283,8 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
 
   const messages = (
     await db.query<MessageRow>(
-      `select id, role, text, status, failure_code, reply_to_id, ask, outreach_id, decision_id, created_at
+      `select id, role, text, status, failure_code, recall_block, reply_to_id, ask, outreach_id,
+              decision_id, created_at
          from buddy_messages where learner_id = $1
         order by seq desc
         limit $2`,
@@ -336,6 +341,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             -- still at hand) — the home notice and Buddy's context see the same window.
             case when m.pages_resolved_at is null and m.ready_at > $3::timestamptz - interval '24 hours'
                  then m.page_problems else '[]'::jsonb end as page_problems,
+            m.items_incomplete,
             (select count(*) from items i where i.material_id = m.id and i.archived_at is null
                 and i.origin <> 'homework')::int as item_count
        from materials m

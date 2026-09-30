@@ -89,6 +89,13 @@ export const MaterialView = z.object({
   session_status: z.enum(['active', 'finished', 'abandoned']).nullable().default(null),
   /** Pages not read completely, while Lena has not answered the notice. */
   page_problems: z.array(PageProblem),
+  /**
+   * The sheet holds more questions than were read into items (issue #150). The pages were
+   * legible — there were simply more of them than the readings could take. Said out loud
+   * rather than left to be discovered: a sheet that looks whole and is not is what made
+   * "ask me all the vocabulary" hand back half a word list.
+   */
+  items_incomplete: z.boolean().default(false),
   /** Pages: a photo is one, a PDF counts its pages (known once submitted). */
   photo_count: z.number().int(),
   /** Pages added to a sheet: once read, their questions are part of that sheet. */

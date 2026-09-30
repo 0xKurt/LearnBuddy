@@ -9,7 +9,8 @@ const m = (
   role: 'learner' | 'buddy',
   text: string,
   failure_code: string | null = null,
-) => ({ id, role, text, status: 'done' as const, failure_code });
+  recall_block: 'blocked' | 'concern' | null = failure_code === 'blocked' ? 'blocked' : null,
+) => ({ id, role, text, status: 'done' as const, failure_code, recall_block });
 
 describe('turnDialogue', () => {
   it('always ends with her messages, even when a reminder arrived after them (M-50)', () => {

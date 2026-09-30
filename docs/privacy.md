@@ -129,6 +129,16 @@ sweep records when it ran and how many rows it removed — counts only, never co
   required before production use.
 - A message the provider's safety filter blocked is kept (her conversation, her data), marked
   `blocked`, and never sent to the model again.
+- **One rule decides what a model may be told about a past message**, not one rule per path
+  (`modules/buddy/recall.ts`, `buddy_messages.recall_block`, issue #149). Until 30.09. the turn
+  swapped a blocked message for a fixed line while the session summariser, reading the same
+  table, had none — so the one text the code swore never to resend went to the summary model,
+  and a summary of a distress disclosure could come back as context while `buddy_memories`
+  stayed empty as promised. A blocked message now shows the model a fixed "held back" line in a
+  live dialogue and nothing at all anywhere else; a distress disclosure shows nothing to any
+  model after its own turn, because a summary is stored, derived knowledge. Both stay in her
+  conversation, in her export, and are deleted with it — this decides only what a model is
+  told.
 
 ## Export and deletion (DSGVO Art. 15, 17, 20)
 

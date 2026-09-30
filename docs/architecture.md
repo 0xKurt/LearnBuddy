@@ -824,7 +824,7 @@ $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                              |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                       |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                      |
-| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 20 photos                                                                                                                                                                                                                                          |
+| Extraction                      | 120 s timeout, 12 000 output tokens, thinking 2048, ≤ 3 runs per material, ≤ 4 readings per run (issue #150), ≤ 20 photos                                                                                                                                                                                                       |
 | Jobs                            | 3 attempts (erasure jobs: unlimited, backoff ≤ 6 h), leases 120–180 s; tick budget 45 s                                                                                                                                                                                                                                         |
 | Turn stall                      | taken over after 3 minutes                                                                                                                                                                                                                                                                                                      |
 | Contact                         | none: messages are not counted (ADR 0006); the same topic is not raised twice within 72 h                                                                                                                                                                                                                                       |
@@ -859,6 +859,19 @@ largest tools are set_contact (~1 300), remember (~1 100), plan_step (~900). Nex
 context caching of the fixed part, or offering only the tools a turn can use.
 
 ## Material
+
+**A sheet is read to its end, not to a limit** (`materials/extract.ts`, `service.ts`, issue #150).
+One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
+whether the sheet has more (`more_items`), and the sheet is read again for the rest with the
+prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. New questions are
+merged; a prompt that only differs in spacing or case is the same question and is not added
+twice. Until 30.09. the cap was 25 with no second reading, so a fifty-word list quietly became
+twenty-five while the page report still said "all" — the silent cut of #49 one layer below where
+it was looked for, and the reason "frag mich alle Vokabeln ab" could not work however well the
+selection behaved ("das kunstlich deckeln ist der falsche weg", owner 30.09.). If the sheet still
+has more after the last reading, `materials.items_incomplete` says so, Buddy is told in STATE, and
+he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). Homework is
+a short list by design and is never continued.
 
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is

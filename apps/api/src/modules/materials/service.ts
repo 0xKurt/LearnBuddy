@@ -36,6 +36,8 @@ import {
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
   ExtractionParse,
+  MOST_READINGS,
+  moreRules,
   ExtractionResult,
   type PageReport,
   HOMEWORK_SYSTEM,
@@ -60,6 +62,15 @@ const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
 
+/**
+ * Two prompts that mean the same question (issue #150). A continued reading must not hand
+ * back "le vélo" as new when "Le vélo " is already there — the model retypes from the same
+ * photo, and its spacing and capitals are not what makes a question a different one.
+ */
+function samePrompt(prompt: string): string {
+  return prompt.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+}
+
 type MaterialRow = {
   id: string;
   learner_id: string;
@@ -72,6 +83,8 @@ type MaterialRow = {
   photo_count: number;
   purpose: 'study' | 'homework';
   page_problems: PageProblem[];
+  /** The sheet holds more questions than were read into items (issue #150). */
+  items_incomplete: boolean;
   pages_resolved_at: Date | null;
   completes_material_id: string | null;
   merged_into: string | null;
@@ -126,6 +139,7 @@ function toView(
     session_id: m.session_id,
     session_status: m.session_status,
     page_problems: m.pages_resolved_at ? [] : m.page_problems,
+    items_incomplete: m.items_incomplete,
     photo_count: m.photo_count,
     merged_into: m.merged_into,
     subject_name: m.subject_name,
@@ -722,12 +736,14 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     [materialId, job.id, job.lease_token, deps.now()],
   );
   const homework = m.purpose === 'homework';
-  const read = (lean: boolean) =>
+  const read = (lean: boolean, alreadyRead: readonly string[] = []) =>
     callModel(deps, learner.id, localParts(now, tz.timezone).date, {
       purpose: 'extraction',
       tier: 'smart',
       promptVersion: EXTRACT_PROMPT_VERSION,
-      system: `${homework ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM}${lean ? `\n\n${LEAN_RULES}` : ''}`,
+      system: `${homework ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM}${lean ? `\n\n${LEAN_RULES}` : ''}${
+        alreadyRead.length > 0 ? `\n\n${moreRules(alreadyRead)}` : ''
+      }`,
       contents: [
         {
           role: 'user',
@@ -762,6 +778,41 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       res = await read(lean);
     }
     result = ExtractionParse.safeParse(res.json);
+    // The sheet has more than one answer could hold: read it again for the rest (#150).
+    // A word list with fifty pairs is fifty questions — "das kunstlich deckeln ist der
+    // falsche weg" (owner, 30.09.). Homework is a short list by design and is never
+    // continued; a reading that had to go lean is already at the model's limit.
+    if (!homework && result.success) {
+      for (let pass = 1; pass < MOST_READINGS && result.data.more_items; pass++) {
+        const seen = result.data.items.map((it) => it.prompt);
+        let next;
+        try {
+          next = await read(lean, seen);
+        } catch (err) {
+          // The rest could not be read. What was read stands, and the sheet says it is
+          // incomplete rather than pretending to be whole (rule 5).
+          if (err instanceof LlmError && (err.retryable || err.truncated)) break;
+          throw err;
+        }
+        const parsed = ExtractionParse.safeParse(next.json);
+        if (!parsed.success) break;
+        const known = new Set(seen.map(samePrompt));
+        const fresh = parsed.data.items.filter((it) => !known.has(samePrompt(it.prompt)));
+        // No progress: stop rather than ask a fourth time for the same nothing.
+        if (fresh.length === 0) {
+          result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
+          break;
+        }
+        result = {
+          success: true,
+          data: {
+            ...result.data,
+            items: [...result.data.items, ...fresh],
+            more_items: parsed.data.more_items,
+          },
+        } as typeof result;
+      }
+    }
   } catch (err) {
     if (isAppError(err) && err.code === 'budget_exhausted')
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
@@ -888,22 +939,43 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     if (target) {
       await tx.query(
         `update materials set status = 'ready', failure_reason = null, title = $2, subject_id = $3,
-                              ready_at = $4, page_problems = $5, merged_into = $6
+                              ready_at = $4, page_problems = $5, merged_into = $6,
+                              items_incomplete = $7
           where id = $1`,
-        [materialId, target.title, subjectId, now, JSON.stringify(pageProblems), target.id],
+        [
+          materialId,
+          target.title,
+          subjectId,
+          now,
+          JSON.stringify(pageProblems),
+          target.id,
+          x.more_items,
+        ],
       );
       await tx.query(
         `update materials set extracted_text = concat_ws(E'\n\n', extracted_text, $2::text),
-                              subject_id = coalesce(subject_id, $3)
+                              subject_id = coalesce(subject_id, $3),
+                              items_incomplete = items_incomplete or $4
           where id = $1`,
-        [target.id, x.extracted_text, subjectId],
+        [target.id, x.extracted_text, subjectId, x.more_items],
       );
     } else {
       await tx.query(
         `update materials set status = 'ready', failure_reason = null, title = coalesce(title, $2),
-                              extracted_text = $3, subject_id = $4, ready_at = $5, page_problems = $6
+                              extracted_text = $3, subject_id = $4, ready_at = $5, page_problems = $6,
+                              items_incomplete = $7
           where id = $1`,
-        [materialId, x.title, x.extracted_text, subjectId, now, JSON.stringify(pageProblems)],
+        [
+          materialId,
+          x.title,
+          x.extracted_text,
+          subjectId,
+          now,
+          JSON.stringify(pageProblems),
+          // Still more on the sheet after every reading it was given (#150): said out loud
+          // instead of letting a half-read sheet pass for a whole one.
+          x.more_items,
+        ],
       );
     }
     if (homework) {

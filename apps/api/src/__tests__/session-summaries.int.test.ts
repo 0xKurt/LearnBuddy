@@ -34,13 +34,23 @@ async function said(
   env: TestEnv,
   l: Learner,
   at: Date,
-  lines: Array<['learner' | 'buddy', string]>,
+  lines: Array<
+    ['learner' | 'buddy', string] | ['learner' | 'buddy', string, 'blocked' | 'concern']
+  >,
 ): Promise<void> {
-  for (const [i, [role, text]] of lines.entries()) {
+  for (const [i, line] of lines.entries()) {
+    const [role, text, block] = line;
     await env.db.query(
-      `insert into buddy_messages (learner_id, role, text, status, created_at)
-       values ($1, $2, $3, 'done', $4)`,
-      [l.learnerId, role, text, new Date(at.getTime() + i * 60_000)],
+      `insert into buddy_messages (learner_id, role, text, status, failure_code, recall_block, created_at)
+       values ($1, $2, $3, 'done', $4, $5, $6)`,
+      [
+        l.learnerId,
+        role,
+        text,
+        block === 'blocked' ? 'blocked' : null,
+        block ?? null,
+        new Date(at.getTime() + i * 60_000),
+      ],
     );
   }
 }
@@ -284,5 +294,55 @@ describe.skipIf(!dbReady)('summaries of earlier conversations', () => {
       l.learnerId,
     ]);
     expect(left).toEqual([]);
+  });
+
+  it('never puts a blocked or a distress message in front of the summary model (#149)', async () => {
+    // The test before this one deletes its account, so this one brings its own learner.
+    env.clock.hours(48);
+    const her = await onboard(env, { relation: 'child', name: 'Nora', birthDate: '2013-08-01' });
+    const earlier = new Date(env.clock.now().getTime() - 26 * HOUR);
+    await said(env, her, earlier, [
+      ['learner', 'wir haben morgen erdkunde test über flüsse'],
+      ['buddy', 'Notiert. Soll ich dich vorher erinnern?'],
+      // The provider's safety filter held this one. docs/privacy.md: never sent to the
+      // model again — and until #149 the summariser was not told.
+      ['learner', 'GEHEIMER BLOCKIERTER TEXT', 'blocked'],
+      ['buddy', 'Da kann ich dir gerade nicht antworten.'],
+      // A distress disclosure. It stays in her conversation; nothing may be derived from
+      // it and kept, and a summary is exactly that.
+      ['learner', 'GEHEIMES VERTRAULICHES DETAIL', 'concern'],
+      ['buddy', 'Das klingt schwer. Sprich mit einem Erwachsenen, dem du vertraust.'],
+      ['learner', 'ok danke'],
+      ['buddy', 'Ich bin da.'],
+    ]);
+
+    let sawSummaryInput: string | null = null;
+    env.llm.byDefault('summary', {
+      json: {
+        summary: 'Sie schreibt morgen einen Erdkundetest über Flüsse.',
+        topics: ['Erdkunde', 'Flüsse'],
+      },
+    });
+    await tick(env);
+    // What the model was actually shown.
+    const call = env.llm.callsFor('summary').at(-1)!;
+    sawSummaryInput = JSON.stringify(call);
+    expect(sawSummaryInput).not.toContain('GEHEIMER BLOCKIERTER TEXT');
+    expect(sawSummaryInput).not.toContain('GEHEIMES VERTRAULICHES DETAIL');
+    // The rest of the conversation is summarised as usual: the rule removes two messages,
+    // not the day.
+    expect(sawSummaryInput).toContain('erdkunde test über flüsse');
+
+    // And the coverage still moves past them, so they are not read again tomorrow.
+    const row = await env.db.one<{ until_message_id: string }>(
+      `select until_message_id from buddy_session_summaries
+        where learner_id = $1 order by ended_at desc limit 1`,
+      [her.learnerId],
+    );
+    const last = await env.db.one<{ text: string }>(
+      `select text from buddy_messages where id = $1`,
+      [row.until_message_id],
+    );
+    expect(last.text).toBe('Ich bin da.');
   });
 });

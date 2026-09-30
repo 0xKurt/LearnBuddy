@@ -15,7 +15,23 @@ import {
   SPELLING_RULES,
 } from '../practice/items.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v3.11';
+export const EXTRACT_PROMPT_VERSION = 'extract.v4.0';
+
+/**
+ * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
+ * with more says so (`more_items`) and is read again for the rest, until it is covered.
+ * What bounds this number is the model's output budget for a single answer — not a
+ * decision about how much homework a child may have.
+ *
+ * Until 30.09. this was 25 and there was no second pass, so a 50-word list quietly became
+ * 25 words while the page report still said "all". That is the silent cut of issue #49 one
+ * layer below where it was looked for, and it is why "frag mich alle Vokabeln ab" could
+ * not work however well the selection behaved.
+ */
+export const ITEMS_PER_READING = 60;
+
+/** How often one sheet may be read for more, before it is called incomplete out loud. */
+export const MOST_READINGS = 4;
 
 const SUBJECT_KINDS = [
   'math',
@@ -95,7 +111,13 @@ export const ExtractionResult = z.object({
     .string()
     .max(12000)
     .describe('Faithful transcription (Markdown), used to ground explanations'),
-  items: z.array(ItemDraft).max(25),
+  items: z.array(ItemDraft).max(ITEMS_PER_READING),
+  /**
+   * The sheet holds more questions or word pairs than this answer lists (issue #150).
+   * Saying so is what lets the rest be read; guessing from a full list would mistake a
+   * sheet that happens to have exactly as many for one that was cut off.
+   */
+  more_items: z.boolean().default(false),
   /** Rare: a second school subject on the same sheet; its questions are filed there. */
   other_subject: z
     .object({
@@ -110,7 +132,9 @@ export const ExtractionResult = z.object({
 export type ExtractionResult = z.infer<typeof ExtractionResult>;
 
 /** How the answer is parsed: item by item, so one broken item costs only itself (H-14, H-15). */
-export const ExtractionParse = ExtractionResult.extend({ items: itemsOneByOne(ItemDraft, 25) });
+export const ExtractionParse = ExtractionResult.extend({
+  items: itemsOneByOne(ItemDraft, ITEMS_PER_READING),
+});
 
 /**
  * Homework asks for less: at most 12 tasks and no worked solution (the learner never sees
@@ -124,7 +148,19 @@ export const HomeworkExtraction = ExtractionResult.extend({
  * Added when an answer was cut off at the token limit (live finding 2: a 2-task sheet ran
  * into the limit after 40 s): the same reading, told to be brief.
  */
-export const LEAN_RULES = `KEEP IT SHORT — the last answer was cut off at the length limit. extracted_text: the text as printed, once, nothing repeated, no commentary. At most 10 questions (vocabulary: at most 25 pairs). hints: at most 2 short ones. worked_solution: at most 2 short sentences. Never repeat a phrase, a list or a line; stop as soon as the JSON is complete.`;
+export const LEAN_RULES = `KEEP IT SHORT — the last answer was cut off at the length limit. extracted_text: the text as printed, once, nothing repeated, no commentary. At most 10 questions (vocabulary: at most 25 pairs) — and set more_items true, so the rest is read afterwards. hints: at most 2 short ones. worked_solution: at most 2 short sentences. Never repeat a phrase, a list or a line; stop as soon as the JSON is complete.`;
+
+/**
+ * Appended when a sheet is read again for the rest of it (issue #150). The prompts already
+ * written are listed so nothing is repeated — the model sees the same photos, so "carry on
+ * where you stopped" is only meaningful with them in front of it.
+ */
+export function moreRules(alreadyRead: readonly string[]): string {
+  return `CONTINUE — this sheet was read before and more was left. These questions already exist, word for word:
+${alreadyRead.map((p) => `- ${p}`).join('\n')}
+
+Write ONLY the ones that are still missing, in the order they stand on the sheet. Never repeat one of the above, not even worded differently. extracted_text: the same faithful transcription as before. pages: the same page reports. Set more_items true if there is still more after what you write now.`;
+}
 
 export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study material (worksheets, textbook pages, notebook pages, vocabulary lists) for the LearnBuddy app.
 
@@ -132,7 +168,8 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    A page that is cut off or partly unreadable does not make the rest unreadable: use what you can read, and report every photo in pages (one entry each, in order; a PDF counts one page per PDF page: its label says which page numbers its pages have): read "all", "part" (text cut off at an edge, covered by a finger, blurred or in a reflection in places) or "none", with the problem. Text that stops mid-sentence at the edge of the photo is cut off (read "part", cut_off): transcribe it only up to where it stops and end it with "[…]", never complete it. A single photo of something else among school pages is read "none" with not_material; the other pages still count. Answers already written in by hand are the learner's own attempts: never take them as the solution and do not ask about them. Never guess what you cannot see: write questions only from what is readable.
 2. Transcribe the material faithfully into extracted_text (Markdown). Don't add anything that isn't there.
 3. Write practice questions that check exactly this material, pitched at the learner's level (LEARNER). Each has the correct answer.
-   - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Up to 25 pairs; the app asks both directions itself.
+   - A vocabulary list: one "vocab" item per pair (prompt = foreign word as printed incl. article, answer = translation, prompt_lang / lang = their languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). The app asks both directions itself.
+   - Write questions for EVERY pair or task the sheet has, not a selection of them: the learner asked for her sheet, not for a sample of it. If they do not all fit in one answer, write as many as fit, in the order they stand on the sheet, and set more_items true — you will be asked for the rest. Set more_items false only when nothing is left.
    - Otherwise 8–15 questions. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}

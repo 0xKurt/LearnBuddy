@@ -31,6 +31,7 @@ import { preInjectedPassages } from './connectors/material.js';
 import { buildContents, buildContext } from './context.js';
 import { prepareOffered } from '../practice/prepare.js';
 import { askedButActed, emptyReply, TurnDecision, TurnDecisionForModel } from './registry.js';
+import { recallText } from './recall.js';
 import { bumpContext } from './plan.js';
 import { replyProgress, type ReplyProgress } from './stream.js';
 import { BUDDY_PROMPT_VERSION, TURN_SYSTEM, repairMessage } from './prompts.js';
@@ -417,18 +418,21 @@ async function decideTurn(
  *     placed before her run, so the dialogue always ends with her (audit M-50).
  */
 export function turnDialogue(
-  messages: ReadonlyArray<Pick<MessageRow, 'id' | 'role' | 'text' | 'status' | 'failure_code'>>,
+  messages: ReadonlyArray<
+    Pick<MessageRow, 'id' | 'role' | 'text' | 'status' | 'failure_code' | 'recall_block'>
+  >,
   triggerId: string,
   locale: string,
 ): {
   dialogue: Array<{ role: 'learner' | 'buddy'; text: string }>;
   learnerWords: string[];
 } {
-  const heldBack = t(locale, 'safeguarding.held_back');
-  const shown = messages.map((m) => ({
-    ...m,
-    text: m.role === 'learner' && m.failure_code === 'blocked' ? heldBack : m.text,
-  }));
+  // One rule for what a model may be told about a past message (modules/buddy/recall.ts,
+  // issue #149). This path had its own version of it and the summariser had none, which is
+  // how a blocked message reached the summary model after all.
+  const shown = messages
+    .map((m) => ({ ...m, text: recallText(m, locale, true) }))
+    .filter((m): m is typeof m & { text: string } => m.text !== null);
   const at = shown.findIndex((m) => m.id === triggerId);
   if (at < 0) {
     return { dialogue: shown.map((m) => ({ role: m.role, text: m.text })), learnerWords: [] };
@@ -440,7 +444,7 @@ export function turnDialogue(
   return {
     dialogue: ordered.map((m) => ({ role: m.role, text: m.text })),
     learnerWords: run
-      .filter((m) => m.role === 'learner' && m.failure_code !== 'blocked')
+      .filter((m) => m.role === 'learner' && (m.recall_block ?? null) === null)
       .map((m) => m.text),
   };
 }
@@ -518,7 +522,7 @@ async function answerWithSafeguarding(
     // Lock order: the learner's settings row first, like every fenced write (docs §Turns).
     await tx.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learner.id]);
     const owned = await tx.query(
-      `update buddy_messages set status = 'done', failure_code = 'blocked'
+      `update buddy_messages set status = 'done', failure_code = 'blocked', recall_block = 'blocked'
         where id = $1 and status = 'processing' and claim_token = $2 returning id`,
       [message.id, message.claim_token],
     );

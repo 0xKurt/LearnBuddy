@@ -220,6 +220,19 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           ],
         );
       }
+      if (input.triggerMessageId && input.concern === true) {
+        // A distress disclosure stays in her conversation and in her export — it is hers
+        // (docs/privacy.md). What must never happen is that something is DERIVED from it
+        // and kept: a session summary is exactly that, and it would come back as STATE
+        // while `buddy_memories` stays empty as promised. The disposition goes on the
+        // message itself, so every later model context honours it through one rule
+        // (modules/buddy/recall.ts, issue #149) instead of each path remembering.
+        await tx.query(
+          `update buddy_messages set recall_block = 'concern'
+            where id = $1 and learner_id = $2 and recall_block is null`,
+          [input.triggerMessageId, input.learnerId],
+        );
+      }
       if (input.triggerMessageId) {
         // The answer covers this message and earlier ones the model saw in its dialogue
         // window (never older ones it did not see — old-failed-messages-marked-done-unseen)
