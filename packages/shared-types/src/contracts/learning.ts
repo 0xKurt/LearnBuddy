@@ -177,6 +177,14 @@ export const ItemView = z.object({
    * (sessions); null in the material list and when the sheet has none (issue #50).
    */
   image: ItemImage.nullable().default(null),
+  /**
+   * Words to TAP instead of typing, for vocabulary she is recognising (issue #147).
+   * They are a way in, not a different question: tapping one sends it as the answer and
+   * it is graded like anything she types, so the key stays the key and typing keeps
+   * working. Null wherever tapping would defeat the exercise — writing the foreign word
+   * — and wherever there is not enough of her own vocabulary to build honest choices.
+   */
+  tap_choices: z.array(z.string()).nullable().default(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 

@@ -35,6 +35,24 @@ describe('tutor invariants', () => {
       'partially_correct',
     );
   });
+
+  it('lets the model call one near miss right: a vocabulary word missing its article (#146)', () => {
+    // Without the flag the rule stands, whatever the model says.
+    expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'missing_word').verdict).toBe(
+      'partially_correct',
+    );
+    expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'missing_word', true).verdict).toBe(
+      'correct',
+    );
+    // The flag opens exactly that one door — accents stay a near miss even with it set.
+    expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'close', true).verdict).toBe(
+      'partially_correct',
+    );
+    // ...and it never turns a wrong answer into a right one.
+    expect(enforceTutorInvariants(d({ verdict: 'correct' }), 'incorrect', true).verdict).toBe(
+      'incorrect',
+    );
+  });
 });
 
 describe('mentionsSolution', () => {

@@ -469,4 +469,130 @@ describe.skipIf(!dbReady)('what she can ask for beyond the topic (issue #113)', 
     );
     expect(stored.map((r) => r.prompt)).toEqual(['der Hund', 'die Maus', 'la souris', 'le chien']);
   });
+  // ─────────────── one sheet, or nothing but vocabulary (issue #144) ───────────────
+
+  it('practises the sheet she pointed at, not the other one of the same subject', async () => {
+    // Exactly the owner's daughter's situation on 30.09.: two French sheets, one a word
+    // list, one about giving directions. Newest sheet first in STATE, so the word list
+    // seeded second is sh1.
+    const directions = await seed(env, l, 'Französisch', [
+      { prompt: 'Wo ist der Bahnhof?' },
+      { prompt: 'Wie komme ich zur Post?' },
+      { prompt: 'Geh geradeaus' },
+    ]);
+    const words = await seed(env, l, 'Französisch', [
+      { prompt: 'le vélo', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+      { prompt: 'la gare', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+    ]);
+    env.llm.script('buddy_turn', {
+      json: say('Die vom Vokabelzettel.', [prepare({ sheet: 'sh1' })]),
+    });
+    expect((await send(l, 'frag mich die vokabeln von dem zettel ab')).status).toBe(200);
+
+    const [set] = await preparedSets(env, l);
+    expect(set!.item_ids.sort()).toEqual([words.get('le vélo')!, words.get('la gare')!].sort());
+    for (const p of ['Wo ist der Bahnhof?', 'Wie komme ich zur Post?', 'Geh geradeaus']) {
+      expect(set!.item_ids).not.toContain(directions.get(p)!);
+    }
+  });
+
+  it('takes only the vocabulary when she asks for vocabulary, whatever else the subject holds', async () => {
+    const directions = await seed(env, l, 'Französisch', [
+      { prompt: 'Wo ist der Bahnhof?' },
+      { prompt: 'Geh geradeaus' },
+    ]);
+    const words = await seed(env, l, 'Französisch', [
+      { prompt: 'le vélo', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+      { prompt: 'la gare', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+    ]);
+    env.llm.script('buddy_turn', {
+      json: say('Nur Vokabeln.', [prepare({ vocabulary_only: true })]),
+    });
+    expect((await send(l, 'frag mich vokabeln ab')).status).toBe(200);
+
+    const [set] = await preparedSets(env, l);
+    expect(set!.item_ids.sort()).toEqual([words.get('le vélo')!, words.get('la gare')!].sort());
+    expect(set!.item_ids).not.toContain(directions.get('Geh geradeaus')!);
+  });
+
+  it('says there is no vocabulary here instead of practising the other questions', async () => {
+    await seed(env, l, 'Französisch', [
+      { prompt: 'Wo ist der Bahnhof?' },
+      { prompt: 'Geh geradeaus' },
+    ]);
+    const attempt = tryAction(env, prepare({ vocabulary_only: true }));
+    expect((await send(l, 'frag mich vokabeln ab')).status).toBe(200);
+    expect(attempt.refusal()).toContain('no vocabulary');
+    expect(await preparedSets(env, l)).toEqual([]);
+  });
+
+  it("never reaches another learner's sheet through the alias", async () => {
+    const other = await onboard(env, { relation: 'child', name: 'Mara', birthDate: '2013-05-05' });
+    await seed(env, other, 'Französisch', [
+      { prompt: 'le chat', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+    ]);
+    await seed(env, l, 'Französisch', [{ prompt: 'Geh geradeaus' }]);
+    // sh2 is not hers: her own STATE lists exactly one sheet.
+    const attempt = tryAction(env, prepare({ sheet: 'sh2' }));
+    expect((await send(l, 'frag mich das andere blatt ab')).status).toBe(200);
+    expect(attempt.refusal()).toContain('no sheet sh2');
+    expect(await preparedSets(env, l)).toEqual([]);
+  });
+  // ─────────────── how many, from what she said (issue #145) ───────────────
+
+  it('takes the number she named instead of the minute estimate', async () => {
+    await seed(
+      env,
+      l,
+      'Französisch',
+      Array.from({ length: 12 }, (_, i) => ({
+        prompt: `Vokabel ${i + 1}`,
+        kind: 'vocab' as const,
+        promptLang: 'fr',
+        lang: 'de',
+      })),
+    );
+    env.llm.script('buddy_turn', {
+      json: say('Fünf also.', [prepare({ question_count: 5 })]),
+    });
+    expect((await send(l, 'frag mich fünf vokabeln ab')).status).toBe(200);
+    const [set] = await preparedSets(env, l);
+    expect(set!.item_ids).toHaveLength(5);
+  });
+
+  it('asks the whole list when she asks for all of it, past what ten minutes would give', async () => {
+    // Twenty-four words: the minute estimate would have handed her twelve of them, and the
+    // old ceiling fifteen — "wieder sinnlos, weil begrenzt auf 10" (owner, 30.09.).
+    await seed(
+      env,
+      l,
+      'Französisch',
+      Array.from({ length: 24 }, (_, i) => ({
+        prompt: `Wort ${i + 1}`,
+        kind: 'vocab' as const,
+        promptLang: 'fr',
+        lang: 'de',
+      })),
+    );
+    env.llm.script('buddy_turn', {
+      json: say('Alle.', [prepare({ all_of_them: true, vocabulary_only: true })]),
+    });
+    expect((await send(l, 'frag mich alle vokabeln ab')).status).toBe(200);
+    const [set] = await preparedSets(env, l);
+    expect(set!.item_ids).toHaveLength(24);
+  });
+
+  it('still uses the minutes when she said nothing about how many', async () => {
+    await seed(
+      env,
+      l,
+      'Französisch',
+      Array.from({ length: 30 }, (_, i) => ({ prompt: `Frage ${i + 1}` })),
+    );
+    env.llm.script('buddy_turn', { json: say('Zehn Minuten.', [prepare({})]) });
+    expect((await send(l, 'lass uns kurz üben')).status).toBe(200);
+    const [set] = await preparedSets(env, l);
+    // questionCountFor(10) = 12.
+    expect(set!.item_ids).toHaveLength(12);
+  });
 });

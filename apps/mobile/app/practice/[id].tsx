@@ -690,8 +690,17 @@ export default function PracticeScreen() {
     item.kind === 'multiple_choice' && item.choices && item.choices.length > 0
       ? item.choices
       : null;
+  // Vocabulary she is recognising: her own words to tap, instead of typing every one of
+  // them on a phone (issue #147). Not a different question — tapping one sends it as the
+  // answer and the same rules grade it — but it IS the whole way to answer here: four
+  // cards and a field would not fit a 360×740 phone without scrolling (rule 16), and
+  // asking her to choose between two ways to say the same thing is the complexity this
+  // app is supposed to carry for her. Producing the foreign word is still typed; the
+  // server only offers tapping where she is recognising (practice/tapChoices.ts).
+  const tapChoices =
+    choices === null && item.tap_choices && item.tap_choices.length > 0 ? item.tap_choices : null;
   const speaking = item.kind === 'speak';
-  const typed = open && choices === null && !speaking;
+  const typed = open && choices === null && tapChoices === null && !speaking;
   const tried = new Set(
     turns
       .filter((turn) => turn.role === 'learner' && turn.verdict === 'incorrect')
@@ -904,6 +913,17 @@ export default function PracticeScreen() {
               tried={tried}
               disabled={locked}
               onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}
+            />
+          </View>
+        ) : null}
+        {open && tapChoices ? (
+          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+            <ChoiceList
+              choices={tapChoices}
+              tried={tried}
+              disabled={locked}
+              // The word goes as if she had typed it: same grading, same key (issue #147).
+              onChoose={(_index, choice) => void answer(item.id, { text: choice }, choice)}
             />
           </View>
         ) : null}

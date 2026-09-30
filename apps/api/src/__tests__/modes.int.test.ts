@@ -521,12 +521,6 @@ describe.skipIf(!dbReady)('learning modes', () => {
     expect(accents.body.verdict).toBe('partially_correct');
     expect(accents.body.reply.text).toContain('Akzente');
 
-    // French → German without the article: almost right, the solution stays hidden.
-    const noArticle = await answer(l, res.body, forth, 'Schüler');
-    expect(noArticle.body.verdict).toBe('partially_correct');
-    expect(noArticle.body.reply.text).toContain('fehlt noch ein Wort');
-    expect(noArticle.body.reply.text).not.toContain('der Schüler');
-
     // A slip: the spelling is shown, the question stays open — she types it herself.
     const slip = await answer(l, res.body, forth, 'der Schühler');
     expect(slip.body.verdict).toBe('partially_correct');
@@ -543,6 +537,126 @@ describe.skipIf(!dbReady)('learning modes', () => {
       [forth],
     );
     expect(key.accepted_answers).toContain('der Lernende');
+  });
+
+  it('offers her own words to tap when she is recognising, not when she must write (#147)', async () => {
+    const pairs = [
+      ['le vélo', 'das Fahrrad'],
+      ['la gare', 'der Bahnhof'],
+      ["l'école", 'die Schule'],
+      ['le livre', 'das Buch'],
+    ] as const;
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Unité 3',
+        subject: { name: 'Französisch', kind: 'french' },
+        items: pairs.map(([fr, de]) =>
+          item({
+            kind: 'vocab',
+            prompt: fr,
+            answer: de,
+            prompt_lang: 'fr',
+            lang: 'de',
+            topic: 'Unité 3',
+          }),
+        ),
+      },
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'vocab',
+      text: pairs.map(([fr, de]) => `${fr} – ${de}`).join(', '),
+    });
+    expect(res.status).toBe(201);
+
+    const german = res.body.items.filter((i) => i.item.lang === 'de');
+    const french = res.body.items.filter((i) => i.item.lang === 'fr');
+    expect(german).not.toHaveLength(0);
+    expect(french).not.toHaveLength(0);
+
+    // Reading French and picking the German word is recognition: that is what tapping tests.
+    for (const i of german) {
+      expect(i.item.tap_choices).toHaveLength(4);
+      // Only her own words from this very set, never an invented one.
+      for (const c of i.item.tap_choices!) {
+        expect(pairs.map(([, de]) => de)).toContain(c);
+      }
+    }
+    // Writing the French word is production; four words would hand it over.
+    for (const i of french) expect(i.item.tap_choices).toBeNull();
+
+    // Tapping is a way in, not a different question: the word is graded like a typed one,
+    // and the rules alone decide it.
+    const recognise = german[0]!;
+    const right = recognise.item.tap_choices!.find((c) =>
+      pairs.some(([fr, de]) => fr === recognise.item.prompt && de === c),
+    )!;
+    const before = env.llm.callsFor('tutor').length;
+    const tapped = await answer(l, res.body, recognise.item.id, right);
+    expect(tapped.body.verdict).toBe('correct');
+    expect(env.llm.callsFor('tutor')).toHaveLength(before);
+  });
+
+  it('lets the tutor decide a vocabulary answer that is missing a word (#146)', async () => {
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Unité 3',
+        subject: { name: 'Französisch', kind: 'french' },
+        items: [
+          item({
+            kind: 'vocab',
+            prompt: 'le vélo',
+            answer: 'das Fahrrad',
+            prompt_lang: 'fr',
+            lang: 'de',
+            topic: 'Unité 3',
+          }),
+          item({
+            kind: 'vocab',
+            prompt: "aller à l'école",
+            answer: 'zur Schule gehen',
+            prompt_lang: 'fr',
+            lang: 'de',
+            topic: 'Unité 3',
+          }),
+        ],
+      },
+    });
+    const res = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'vocab',
+      text: "le vélo – das Fahrrad, aller à l'école – zur Schule gehen",
+    });
+    expect(res.status).toBe(201);
+    const idOf = (prompt: string) => res.body.items.find((i) => i.item.prompt === prompt)!.item.id;
+
+    // The rules see THAT the first word is gone, never WHICH — "Fahrrad" forgot the
+    // article, "Schule gehen" lost the preposition that tells you where. Telling those
+    // apart needs the language, not a list of articles per language (CLAUDE.md rule 3),
+    // so the model judges and code holds it to its answer.
+    env.llm.script('tutor', tutor('Richtig — mit Artikel: das Fahrrad.', { verdict: 'correct' }));
+    const noArticle = await answer(l, res.body, idOf('le vélo'), 'Fahrrad');
+    expect(noArticle.body.verdict).toBe('correct');
+    expect(noArticle.body.reply.text).toContain('das Fahrrad');
+    // The key keeps its article: the shortened form is not learned as an answer, or the
+    // gender would quietly disappear from the question for good.
+    const key = await env.db.one<{ answer: string; accepted_answers: string[] }>(
+      `select answer, accepted_answers from items where id = $1`,
+      [idOf('le vélo')],
+    );
+    expect(key.answer).toBe('das Fahrrad');
+    expect(key.accepted_answers).not.toContain('Fahrrad');
+
+    // A missing word that carries meaning stays a near miss, and the reply says which.
+    env.llm.script('tutor', tutor('Fast — es fehlt „zur".', { verdict: 'partially_correct' }));
+    const dropped = await answer(l, res.body, idOf("aller à l'école"), 'Schule gehen');
+    expect(dropped.body.verdict).toBe('partially_correct');
+    expect(dropped.body.reply.text).toContain('zur');
+    expect(
+      dropped.body.session.items.find((i) => i.item.id === idOf("aller à l'école"))?.status,
+    ).toBe('open');
   });
 
   it('listens to a recording: word feedback, retry stays open, a replay is not judged twice', async () => {

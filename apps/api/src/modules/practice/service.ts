@@ -33,6 +33,7 @@ import { differentNumber, NEAR_MISS, plainMath, ruleCheck, type RuleVerdict } fr
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
+import { tapChoicesFor } from './tapChoices.js';
 import {
   TUTOR_PROMPT_VERSION,
   TUTOR_SYSTEM,
@@ -531,6 +532,15 @@ export async function sessionView(
   );
   const current = currentOpen(items);
   const active = s.status === 'active';
+  // Her own words from this very set, so tapping never offers one she has not met
+  // (issue #147). Computed here, not stored: the key stays the typed answer. Her app
+  // language decides whether tapping is offered at all — recognising, not producing.
+  const own = await db.one<{ locale: string }>(`select locale from learners where id = $1`, [
+    learnerId,
+  ]);
+  const vocabInSet = items
+    .filter((i) => i.kind === 'vocab')
+    .map((i) => ({ id: i.id, answer: i.answer, lang: i.lang }));
   // Homework never shows the solution; a test shows the answers once it is finished.
   const revealAllowed = s.mode !== 'help' && !(s.mode === 'test' && active);
   // A finished test shows every solution, also of the questions she never got to (audit M-36).
@@ -554,6 +564,8 @@ export async function sessionView(
         prompt_lang: i.prompt_lang,
         figure: i.figure,
         image: imageOf(i, imageUrls),
+        // A test asks her to produce, so nothing is offered to tap there.
+        tap_choices: s.mode === 'test' ? null : tapChoicesFor(i, vocabInSet, own.locale),
       },
       status: i.status,
       attempts: i.attempts,
@@ -641,6 +653,21 @@ function asTestTurn<
   if (j.verdict === null) return { ...j, gaveHint: false, revealed: false };
   const key = j.verdict === 'not_an_attempt' ? 'practice.test_no_hints' : 'practice.test_noted';
   return { ...j, reply: t(locale, key), gaveHint: false, revealed: false };
+}
+
+/**
+ * A vocabulary answer that is only missing its first word goes to the tutor (issue #146).
+ *
+ * The rules can see THAT a word is missing, never WHICH: "vélo" for "le vélo" forgot the
+ * article and is what the owner wants counted right — "du sport" for "faire du sport"
+ * dropped the verb and is not. Telling those apart needs the language, not a list of
+ * articles per language the app would have to keep for every language a child might learn
+ * (CLAUDE.md rule 3). So the model judges, as it does for every other undecidable case,
+ * and the fixed reply ("da fehlt noch ein Wort") stops being the answer — it never said
+ * which word, which is exactly why "sie wusste nicht was los ist" (owner, 30.09.).
+ */
+function articleMissing(rule: RuleVerdict, item: { kind: string }): boolean {
+  return rule === 'missing_word' && item.kind === 'vocab';
 }
 
 /** The fixed, kind reply to a near miss the rules found (a slip shows the spelling instead). */
@@ -751,7 +778,7 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
-  } else if (NEAR_MISS.has(rule) && session.mode !== 'help') {
+  } else if (NEAR_MISS.has(rule) && !articleMissing(rule, item) && session.mode !== 'help') {
     // A near miss needs no model: a fixed, kind answer at once. A slip shows the
     // spelling and stays open, so she types it right herself (never in homework,
     // which never shows the solution — there the tutor judges).
@@ -862,7 +889,7 @@ export async function answerItem(
         });
         const parsed = TutorDecision.safeParse(r.json);
         if (!parsed.success) throw new Error('tutor output invalid');
-        return enforceTutorInvariants(parsed.data, rule);
+        return enforceTutorInvariants(parsed.data, rule, articleMissing(rule, item));
       };
       // Homework: a task is solved only when code finds her final answer (by value, or the key
       // or an accepted answer in her words). A "correct" code cannot confirm is a right step:

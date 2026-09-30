@@ -299,17 +299,28 @@ summary plus undo data. Enforced here, not in the prompt:
   and `correct_memory` may move the end (`until`);
 - `update_step` either changes the state or moves the step, never both; `prepare_practice`
   never replaces a step her agreed reminder prepared;
-- `prepare_practice` carries three things she can ask for beyond the topic (issue #113), and
-  code — not the prompt — decides what each means: `only_wrong` keeps only questions whose last
+- `prepare_practice` carries five things she can ask for beyond the topic (issues #113, #144),
+  and code — not the prompt — decides what each means: `sheet` (a `sh` alias from her own STATE,
+  never an id from the model) keeps the questions to the one sheet she pointed at, and
+  `vocabulary_only` keeps `kind = 'vocab'` without asking for a direction. Those two exist
+  because a subject used to be the narrowest scope there was: two French sheets — a word list
+  and a page about giving directions — were one pool, so "frag mich die Vokabeln ab" handed the
+  learner the other sheet (owner's daughter, 30.09.). The three from #113: `only_wrong` keeps only questions whose last
   attempt needed help or was not known — read from `session_items`, the same place
   `find_questions` reports from, so what Buddy says about a question and what he selects agree,
   and so a practice test counts too (it feeds no FSRS state at all); one never asked is not one
   she got wrong. `difficulty` (`easier`/`harder`) keeps the half of her own questions below or
   above the median of `items.difficulty` **in that very pool**, and `direction`
   (`recognise`/`produce`) keeps one direction of her vocabulary pairs, read off her app
-  language. A wish that matches three questions prepares three: the set is never filled up with
-  questions she did not ask for. A wish that matches none is rejected back to the model with
-  the reason (nothing went wrong / no such half / no vocabulary that way) and what to offer
+  language. How many questions there are comes from what she SAID — a number she named, or
+  "all of them" — and only from the minute estimate when she said nothing about the size
+  (issue #145): the minutes are a guess about how long she wants to sit, and a word list with
+  24 words is 24 questions, not the twelve that guess would allow. `MOST_QUESTIONS_AT_ONCE`
+  (60) bounds one sitting; the card states the real number, which the model cannot know while
+  it writes the reply. A wish that matches three questions prepares three: the set is never
+  filled up with questions she did not ask for. A wish that matches none is rejected back to the model with
+  the reason (nothing went wrong / no such half / no vocabulary that way / no vocabulary here at
+  all) and what to offer
   instead — Buddy says it plainly rather than practising something else (rule 5);
 - undo is refused when the object changed since (version check) — no blind overwrite of, e.g.,
   an adult's later settings change; undoing `close_goal` opens the steps it cancelled again;
@@ -1159,17 +1170,36 @@ selection already skips archived items) and rename the material (`PATCH /materia
 ## Practice
 
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
-focus topics). Answers are checked by rules where exactness is decidable (multiple choice,
+focus topics; one sheet or vocabulary only when she asked for that, issue #144). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing
 accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
 fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in
-homework). See **Grading** below for what "decidable" means. Answers the model judges right that the rules did not know are added to the item's
+homework). One near miss is handed on instead of answered by a rule: a **vocabulary** answer
+missing its first word (issue #146). The rules see that a word is gone, never which — "vélo" for
+"le vélo" forgot the article and counts as right, "Schule gehen" for "zur Schule gehen" lost the
+preposition and does not, and telling those apart needs the language rather than a list of
+articles per language the app would have to keep (hard rule 3). So the tutor judges it, the
+reply names the missing word, and `enforceTutorInvariants` allows a "correct" there and nowhere
+else among the near misses. The key is not extended in that case: the article stays part of the
+question. See **Grading** below for what "decidable" means. Answers the model judges right that the rules did not know are added to the item's
 accepted answers, so the rules know them next time; otherwise the tutor model judges with a
 structured decision, and the server enforces invariants (a non-attempt is never graded, a
 revealed answer never counts as right, a rule-checked wrong answer stays wrong). Without a model,
 nothing is graded ("kann ich gerade nicht prüfen"). Each question feeds spaced repetition (FSRS,
 no short-term steps) once per session: first try → Good, with help → Hard, revealed → Again.
 Finishing records evidence on Buddy's step (only if something was answered) and wakes Buddy.
+
+**Tapping a word instead of typing it** (`practice/tapChoices.ts`, issue #147). Typing twenty
+vocabulary answers on a phone is a lot of work for little repetition, and every slip becomes the
+subject instead of the word. So a vocabulary question whose answer is in the learner's OWN
+language — she is recognising, not producing — carries `tap_choices`: her own words from that
+very session, three of them wrong, in an order that is stable per question (a hash of its id, no
+clock and no random source, so a reload does not reshuffle them under her finger). Tapping one
+sends it as if she had typed it: the same rules grade it, the key stays the typed answer, and
+nothing in grading, FSRS or the tutor knows this exists. Nothing is offered where it would defeat
+the exercise — writing the foreign word, a practice test, or a set with too few of her own words
+to build honest choices. On that question tapping is then the whole way to answer: four cards and
+a text field do not fit a 360×740 phone (rule 16).
 
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and

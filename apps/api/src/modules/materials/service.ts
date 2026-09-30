@@ -1258,6 +1258,9 @@ export async function materialItems(
       kind: r.kind,
       prompt: r.prompt,
       choices: r.choices,
+      // The sheet lists its questions; tapping belongs to a session, where her own other
+      // words are what the choices are made of (issue #147).
+      tap_choices: null,
       unit: r.unit,
       topic: r.topic,
       origin: r.origin,

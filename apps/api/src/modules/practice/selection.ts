@@ -34,11 +34,27 @@ export type PracticeWish = {
   difficulty?: DifficultyWish | null;
   /** Vocabulary only; needs `ownLanguage` to tell the two sides apart. */
   direction?: VocabDirection | null;
+  /**
+   * Only vocabulary, without asking for a direction (issue #144). "Frag mich die Vokabeln
+   * ab" used to reach the pool as nothing but the subject, so a second sheet of the same
+   * subject — a page about giving directions next to a word list — was practised instead.
+   */
+  vocabularyOnly?: boolean;
   /** The learner's app language (ISO 639-1), for the direction. */
   ownLanguage?: string | null;
 };
 
 export const QUESTIONS_PER_MINUTE = 1.2;
+
+/**
+ * The most questions one set can hold (issue #145). Not a number that decides for her: the
+ * 15 below is what a MINUTE ESTIMATE may produce, and that is a guess about how long she
+ * wants to sit. When she names a number, or asks for all of them, that guess has nothing to
+ * say — a word list with 24 words is 24 questions. What stays is a ceiling on one sitting,
+ * and Buddy is told when it bit so it is said out loud instead of silently cutting
+ * ("diese ganzen harten limits werden uns sehr auf die füße fallen", owner 28.09., #49).
+ */
+export const MOST_QUESTIONS_AT_ONCE = 60;
 
 export function questionCountFor(minutes: number): number {
   return Math.min(15, Math.max(3, Math.round(minutes * QUESTIONS_PER_MINUTE)));
@@ -95,6 +111,8 @@ export async function selectPracticeItems(
           and (not $6::boolean
                or (last.status is not null
                    and not (last.status = 'correct' and coalesce(last.first_try_correct, false))))
+          -- Vocabulary and nothing else, whichever side is asked (issue #144).
+          and (not $10::boolean or i.kind = 'vocab')
           -- One direction of a vocabulary pair; her own language says which side is foreign.
           and ($7::text is null
                or (i.kind = 'vocab'
@@ -126,6 +144,7 @@ export async function selectPracticeItems(
       wish.direction ?? null,
       wish.ownLanguage ?? null,
       wish.difficulty ?? null,
+      wish.vocabularyOnly === true,
     ],
   );
   if (candidates.length === 0) return [];

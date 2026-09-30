@@ -426,6 +426,37 @@ const preparePractice = z.object({
       .describe(
         'Vocabulary only, and only what she asked for: "recognise" shows the foreign word and asks what it means, "produce" shows it in her own language and asks for the foreign word. Either way only vocabulary is chosen; null for everything else.',
       ),
+    // Two sheets of the same subject used to be one pool, so asking for the vocabulary
+    // could hand her the other sheet (issue #144).
+    sheet: MaterialRef.nullable()
+      .optional()
+      .describe(
+        'the one sheet the questions must come from, when she pointed at a sheet. STATE lists her sheets with their aliases. null when she named no sheet.',
+      ),
+    vocabulary_only: z
+      .boolean()
+      .optional()
+      .describe(
+        'true when she asked for vocabulary and nothing else. Then only vocabulary is chosen, even from a subject whose other sheets are about something different. Leave it out when she asked for a subject or a topic in general.',
+      ),
+    // Without these two, "minutes" was the only thing that could set the size — a guess
+    // about how long she wants to sit, standing in for what she actually said (#145).
+    question_count: z
+      .number()
+      .int()
+      .min(1)
+      .max(60)
+      .nullable()
+      .optional()
+      .describe(
+        'the number of questions SHE named. null when she named none — then the minutes decide.',
+      ),
+    all_of_them: z
+      .boolean()
+      .optional()
+      .describe(
+        'true when she asked for everything there is (a whole word list, the whole sheet). Then the minutes do not limit it. Do not put a number in your reply: you cannot know it yet, and the card says how many it became.',
+      ),
   }),
 });
 

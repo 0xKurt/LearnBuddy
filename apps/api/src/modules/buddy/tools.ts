@@ -37,7 +37,12 @@ import {
   type UntilSpec,
 } from '../../lib/time.js';
 import { t } from '../../i18n/index.js';
-import { questionCountFor, selectPracticeItems, type PracticeWish } from '../practice/selection.js';
+import {
+  MOST_QUESTIONS_AT_ONCE,
+  questionCountFor,
+  selectPracticeItems,
+  type PracticeWish,
+} from '../practice/selection.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
 import { AppError } from '../../lib/errors.js';
@@ -652,7 +657,11 @@ function noneFit(wish: PracticeWish): string {
   if (wish.difficulty) {
     return `her own questions for this have no ${wish.difficulty} half — say so and offer to write new ones at that level (offer_learning with difficulty)`;
   }
-  return 'she has no vocabulary for this in that direction — say so and offer to write it (offer_learning) or ask for a photo of the list (request_material)';
+  if (wish.direction) {
+    return 'she has no vocabulary for this in that direction — say so and offer to write it (offer_learning) or ask for a photo of the list (request_material)';
+  }
+  // Issue #144: she asked for vocabulary in a subject whose sheets are about other things.
+  return 'there is no vocabulary here — say plainly that this sheet (or this subject) holds no word list, and offer to ask for a photo of one (request_material) or to write vocabulary with her (offer_learning). Never practise the other questions instead';
 }
 
 async function runPreparePractice(
@@ -668,17 +677,35 @@ async function runPreparePractice(
         throw new ToolRejection(`unknown subject ${a.subject}`);
       })())
     : null;
-  const count = questionCountFor(a.minutes);
-  const scope = { goalId: goal?.id ?? null, subjectId };
+  // What she said beats what the minutes guess (issue #145): a named number, or all there
+  // is. The minutes are the fallback for when she said nothing about the size at all.
+  const count =
+    a.all_of_them === true
+      ? MOST_QUESTIONS_AT_ONCE
+      : a.question_count != null
+        ? Math.min(MOST_QUESTIONS_AT_ONCE, a.question_count)
+        : questionCountFor(a.minutes);
+  // The one sheet she pointed at (issue #144). Resolved from her own aliases, so a sheet
+  // that is not hers cannot be reached by guessing an id (hard rule 2).
+  const material = a.sheet ? materialOf(ctx, a.sheet) : null;
+  const scope = { goalId: goal?.id ?? null, subjectId, materialId: material?.id ?? null };
   // What she asked for beyond the topic (issue #113). Code decides what it means; the set is
   // never filled up with questions she did not ask for.
   const wish: PracticeWish = {
     onlyWrong: a.only_wrong === true,
     difficulty: a.difficulty ?? null,
     direction: a.direction ?? null,
+    // A direction already means vocabulary; asking for vocabulary without one is the case
+    // that used to fall through to the whole subject (issue #144).
+    vocabularyOnly: a.vocabulary_only === true,
     ownLanguage: ctx.locale,
   };
-  const narrowed = wish.onlyWrong === true || wish.difficulty !== null || wish.direction !== null;
+  const narrowed =
+    wish.onlyWrong === true ||
+    wish.difficulty !== null ||
+    wish.direction !== null ||
+    wish.vocabularyOnly === true ||
+    material !== null;
   const itemIds = await selectPracticeItems(
     ctx.db,
     ctx.learnerId,
