@@ -6,6 +6,9 @@
 // paper, text on tints, a field's border) are checked per palette in
 // lib/theme/__tests__/contrast.test.ts — a palette that fails there is not shipped.
 
+/** One of the three soft blobs behind a screen (components/lb/Glow.tsx). */
+export type GlowStop = { color: string; opacity: number };
+
 export type Palette = {
   ink: string;
   ink2: string;
@@ -45,6 +48,12 @@ export type Palette = {
   butter: string;
   butterDeep: string;
   rose: string;
+  /**
+   * The soft light behind a screen (blue, lilac, pink), in that order. A palette owns it
+   * because a dark one needs its OWN tones, not dimmed light ones: until issue #124 the
+   * three pastels were hardcoded in the component and washed the night palette out.
+   */
+  glow: readonly [GlowStop, GlowStop, GlowStop];
   /** Shadows are part of the look: a dark palette needs a different cast. */
   shadowColor: string;
   /** How strong the two elevations are (soft, float) in this palette. */
@@ -94,6 +103,12 @@ const pastellSoft: Palette = {
   butter: '#f6efdc',
   butterDeep: '#ddc995',
   rose: '#e6def6',
+  // Exactly what Glow.tsx used to hardcode, so the light look does not move (issue #124).
+  glow: [
+    { color: '#cfdcff', opacity: 0.9 },
+    { color: '#e3d6ff', opacity: 0.95 },
+    { color: '#ffd6ea', opacity: 0.9 },
+  ],
   shadowColor: '#4b3a8f',
   shadowOpacity: [0.08, 0.14],
   figure: {
@@ -140,6 +155,15 @@ const night: Palette = {
   butter: '#42381f',
   butterDeep: '#8d7942',
   rose: '#3a3155',
+  // Its own tones, not dimmed light ones: deep and saturated at low opacity, so they LIFT
+  // the ground (#191627) instead of covering it. The low opacity also does most of the work
+  // against the banding the owner saw — a long fade from a bright colour to nothing is what
+  // shows rings on an 8-bit panel (issue #124).
+  glow: [
+    { color: '#2f4d96', opacity: 0.38 },
+    { color: '#5a41a6', opacity: 0.42 },
+    { color: '#8e3a69', opacity: 0.3 },
+  ],
   shadowColor: '#000000',
   shadowOpacity: [0.3, 0.45],
   figure: {
