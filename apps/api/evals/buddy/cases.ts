@@ -316,7 +316,9 @@ export const CASES: Case[] = [
     // only answerable as a handful of single steps against the action cap, then silence.
     id: 'de_repeating_reminder',
     learner: { relation: 'child', birthDate: '2014-02-10' },
-    message: 'kannst du mich jeden tag um 5 ans vokabeln lernen erinnern?',
+    // "um 5" on its own is genuinely ambiguous (5:00 lies in the quiet hours and would be
+    // refused), and asking her back is a fair answer — that noise is not what this measures.
+    message: 'kannst du mich jeden tag um 17 uhr ans vokabeln lernen erinnern?',
     check: (o) => [
       ...must(o.steps.length === 1, 'one step, not one per day'),
       ...must(o.steps[0]?.repeat === 'daily', 'with a daily rhythm'),
