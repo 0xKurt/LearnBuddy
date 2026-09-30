@@ -73,3 +73,7 @@ test-results/
 vertex-sa.json
 # EAS local credentials (keystore passwords)
 apps/mobile/credentials.json
+
+# Maestro writes screenshots and recordings next to where it runs (issue #37).
+.maestro/**/*.png
+.maestro/**/*.mp4

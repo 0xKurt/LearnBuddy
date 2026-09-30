@@ -1,0 +1,26 @@
+# The core of the app on a real phone: she writes, Buddy answers, and what he
+# did stands in the conversation as a card (issue #37).
+# Needs a signed-in device — run 02-sign-in first, or sign in by hand.
+appId: com.learnbuddy.app.dev
+---
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: 'composer'
+    timeout: 20000
+
+# No screenshot from here on: home, history, talk and practice all set
+# FLAG_SECURE (lib/privacy/screenGuard.ts, issue #36), so the file would be a
+# black rectangle that looks like evidence and is none. What these flows prove,
+# they prove by assertion.
+
+- tapOn:
+    id: 'composer'
+- inputText: 'Erklär mir bitte kurz, was ein Nenner ist'
+- hideKeyboard
+- tapOn:
+    text: 'Senden'
+# The model really answers here (hosted API): more room than a scripted turn.
+- assertVisible:
+    text: '.*Nenner.*'
+    timeout: 45000

@@ -1,0 +1,24 @@
+# The first screen, on a real phone. Needs no account, so this one runs
+# anywhere — it is the smoke test that the build starts at all (issue #37).
+#
+# German strings on purpose: the flag row follows the device language, and the
+# phone this was written against is German. For another language, change
+# `lang` below and the four texts with it.
+appId: com.learnbuddy.app.dev
+---
+- launchApp:
+    clearState: false
+- assertVisible: 'Dein Lernbuddy für Arbeiten und Tests.'
+- takeScreenshot: 01-welcome
+
+# Both ways in stand side by side, and the under-16 notice is part of the
+# first screen — not hidden behind a tap (docs/privacy.md, ADR 0006).
+- assertVisible: 'Neues Konto'
+- assertVisible: 'Anmelden'
+- assertVisible:
+    text: 'Unter 16.*'
+
+# The CTA says what is still missing instead of failing silently.
+- tapOn: 'Konto erstellen'
+- assertVisible: 'Gib zuerst deine E-Mail-Adresse ein.'
+- takeScreenshot: 02-welcome-cta-hint

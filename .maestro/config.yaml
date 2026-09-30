@@ -1,0 +1,8 @@
+# Shared settings for every flow in this folder (issue #37).
+# `maestro test .maestro/flows` runs them in file order.
+flows:
+  - flows/*.yaml
+
+# Screenshots and the recording land here; the folder is git-ignored.
+# (Maestro writes them next to where it is started, so the tasks in the
+# README pass --output explicitly.)

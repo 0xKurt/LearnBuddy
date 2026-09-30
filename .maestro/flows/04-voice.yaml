@@ -1,0 +1,49 @@
+# Voice on the device — the one thing no simulator and no browser can measure
+# (issues #41, #59). What this flow does is put the app into the state where
+# the two marks are taken; the NUMBERS are read from the log, not asserted
+# here:
+#
+#   adb logcat -c && maestro test .maestro/flows/04-voice.yaml
+#   adb logcat -d -s ReactNativeJS | grep lb-perf
+#     [lb-perf] first_audio <ms>   Buddy's words appear → the first sound
+#     [lb-perf] relisten   <ms>    his last word → the recogniser runs again
+#
+# Acceptance (issue #41): first_audio < 1000 ms, relisten < 500 ms. They are
+# not asserted as steps because a threshold that fails on a slow network would
+# make the flow lie about the app (CLAUDE.md rule 5) — a human reads the two
+# numbers and writes them into docs/speed-audit.md.
+#
+# Needs a signed-in device AND a real microphone permission. MIUI asks for the
+# permission the first time; grant it by hand once, then this runs unattended.
+#
+# No screenshots here: every screen this touches sets FLAG_SECURE
+# (lib/privacy/screenGuard.ts), so the files would be black.
+appId: com.learnbuddy.app.dev
+---
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: 'composer'
+    timeout: 20000
+
+# Reading aloud, while she keeps typing (the speaker in the head, issue #52).
+- tapOn:
+    text: 'Sprachmodus'
+- assertVisible: 'Ich lese dir vor.*'
+- tapOn:
+    id: 'composer'
+- inputText: 'Sag mir bitte einen kurzen Satz über Brüche'
+- hideKeyboard
+- tapOn:
+    text: 'Senden'
+# first_audio is taken between these two moments.
+- assertVisible:
+    text: '.*Brüche.*'
+    timeout: 45000
+
+# The conversation screen: Buddy speaks and listens by himself — relisten is
+# taken when the recogniser runs again after his last word.
+- tapOn: 'Mit Buddy sprechen'
+- assertVisible:
+    text: 'Ich höre zu.*'
+    timeout: 20000

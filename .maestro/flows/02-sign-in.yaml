@@ -1,0 +1,33 @@
+# Signing in on the device. The credentials come from the environment and are
+# NEVER written into this repository:
+#
+#   MAESTRO_LB_EMAIL=... MAESTRO_LB_PASSWORD=... maestro test .maestro/flows
+#
+# Without them the flow stops at the first step with a clear message instead of
+# typing an empty field and failing three steps later.
+appId: com.learnbuddy.app.dev
+env:
+  MAESTRO_LB_EMAIL: ''
+  MAESTRO_LB_PASSWORD: ''
+---
+# Stops here, readably, instead of typing an empty field and failing three
+# steps later with something that looks like a bug in the app.
+- assertTrue: ${MAESTRO_LB_EMAIL !== '' && MAESTRO_LB_PASSWORD !== ''}
+
+- launchApp:
+    clearState: false
+- tapOn: 'Anmelden'
+- tapOn: 'E-Mail'
+- inputText: ${MAESTRO_LB_EMAIL}
+- tapOn: 'Passwort'
+- inputText: ${MAESTRO_LB_PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: 'Anmelden'
+    index: 1
+# The conversation is the screen behind the sign-in; its composer is the proof.
+# The composer is the proof, not a picture: the home sets FLAG_SECURE
+# (lib/privacy/screenGuard.ts), so a screenshot here is a black rectangle.
+- assertVisible:
+    id: 'composer'
+    timeout: 20000
