@@ -42,9 +42,24 @@ export function measured(): readonly PerfSpan[] {
   return spans;
 }
 
-/** The browser walkthrough reads this; on a phone it does nothing. */
+/**
+ * The browser walkthrough reads the global; on a phone there is no DOM, so a development
+ * build writes the span to the log instead — otherwise the numbers exist and nobody can
+ * read them (issue #41: the device measurement was blocked on exactly this).
+ * `adb logcat -s ReactNativeJS | grep lb-perf` on Android, the Metro console everywhere.
+ * Never in a release build: this is a measuring aid, not telemetry, and nothing leaves
+ * the device either way.
+ */
 function publish(): void {
+  const span = spans[spans.length - 1];
+  if (typeof document === 'undefined') {
+    // `typeof` and not a bare __DEV__: the unit tests run under vitest, where the bundler's
+    // global does not exist at all.
+    if (span && typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.log(`[lb-perf] ${span.action} ${span.ms}ms`);
+    }
+    return;
+  }
   const global = globalThis as { __lbPerf?: PerfSpan[] };
-  if (typeof document === 'undefined') return;
   global.__lbPerf = [...spans];
 }
