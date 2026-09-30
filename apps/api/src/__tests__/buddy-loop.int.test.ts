@@ -496,15 +496,12 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     });
     view = (await lina.api.post<SessionView>(`/practice/sessions/${sessionId}/finish`)).body;
     await env.flushBackground();
+    // Four right answers across four topics are four right answers — not four topics she
+    // has (issue #155). The screen says how many went well today and names none of them.
     expect(view.summary).toEqual({
       answered: 4,
       first_try: 4,
-      secure_topics: expect.arrayContaining([
-        'Brüche kürzen',
-        'Brüche vergleichen',
-        'Begriffe',
-        'Brüche erweitern',
-      ]),
+      secure_topics: [],
       shaky_topics: [],
     });
     const step = await env.db.one<{ state: string; done_source: string }>(

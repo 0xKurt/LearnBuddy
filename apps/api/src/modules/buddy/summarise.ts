@@ -52,6 +52,44 @@ const SYSTEM = `You write down what a school student and her learning companion 
 
 Answer with the JSON object described by the schema.`;
 
+/**
+ * How much of a conversation one summary may be built from. The limit is the model's
+ * input, not the conversation: what does not fit is left for the next run rather than
+ * marked as done (issue #154).
+ */
+const SUMMARY_CHARS = 12_000;
+
+/**
+ * The conversation as the model will read it, cut at a MESSAGE boundary, and the index of
+ * the last message that is covered by it.
+ *
+ * A message that may not be recalled is left out of the text but still counts as covered:
+ * it was seen and deliberately skipped (issue #149), and re-reading it tomorrow would only
+ * skip it again while the pointer stood still.
+ */
+function upTo(
+  rows: readonly Row[],
+  locale: string,
+  limit: number,
+): { text: string; covered: number } {
+  const lines: string[] = [];
+  let length = 0;
+  let covered = 0;
+  for (const [i, r] of rows.entries()) {
+    const text = recallText(r, locale, false);
+    if (text !== null) {
+      const line = `${r.role === 'learner' ? 'SHE' : 'BUDDY'}: ${text}`;
+      // Never cut a message in half, and never leave the first one out entirely.
+      const next = length + line.length + (lines.length > 0 ? 1 : 0);
+      if (next > limit && lines.length > 0) break;
+      lines.push(line);
+      length = next;
+    }
+    covered = i;
+  }
+  return { text: lines.join('\n'), covered };
+}
+
 type Row = {
   id: string;
   role: 'learner' | 'buddy';
@@ -70,7 +108,7 @@ export async function pendingSession(
   db: Db,
   learnerId: string,
   now: Date,
-): Promise<{ rows: Row[] } | null> {
+): Promise<{ rows: Row[]; continues: boolean } | null> {
   const since = await db.maybeOne<{ ended_at: Date }>(
     `select ended_at from buddy_session_summaries where learner_id = $1
       order by ended_at desc limit 1`,
@@ -84,6 +122,12 @@ export async function pendingSession(
     [learnerId, since?.ended_at ?? null],
   );
   if (rows.length === 0) return null;
+  // The tail of a conversation that has already been written down once (issue #154): the
+  // first pending message follows the last covered one without a pause. MIN_MESSAGES is
+  // there so a two-line exchange does not cost a model call — a tail is not that, and
+  // leaving it out is how the correction at the end of a long afternoon disappeared.
+  const continues =
+    since !== null && rows[0]!.created_at.getTime() - since.ended_at.getTime() < SESSION_GAP_MS;
   // Everything up to the first long pause; what comes after belongs to the next conversation.
   let end = rows.length;
   for (let i = 1; i < rows.length; i++) {
@@ -97,11 +141,7 @@ export async function pendingSession(
   // Still going: only a conversation that has come to rest is written down.
   if (end === rows.length && now.getTime() - last.created_at.getTime() < SESSION_GAP_MS)
     return null;
-  if (session.length < MIN_MESSAGES) {
-    // Too short to be worth a model call — but it must not block the next one either.
-    return { rows: session };
-  }
-  return { rows: session };
+  return { rows: session, continues };
 }
 
 /**
@@ -131,7 +171,12 @@ export async function planSummaries(deps: Deps): Promise<number> {
       learnerId: l.id,
       kind: 'summarise_session',
       runAt: now,
-      dedupeKey: `summary:${l.id}:${due.rows[due.rows.length - 1]!.id}`,
+      // Keyed on where this stretch STARTS, not where it ends (issue #154). A long
+      // conversation can need a second summary for its tail, and the tail ends at the
+      // same message as the first one did — so an end-keyed job was thrown away as a
+      // duplicate and the last part was never written down. The start moves with every
+      // summary that lands, so a real repeat is still deduped.
+      dedupeKey: `summary:${l.id}:${due.rows[0]!.id}`,
       payload: { until_message_id: due.rows[due.rows.length - 1]!.id },
     });
     planned += 1;
@@ -162,7 +207,13 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
     return;
   }
   const first = due.rows[0]!;
-  const last = due.rows[due.rows.length - 1]!;
+  // How far this summary really reaches. It used to be the last message of the whole
+  // stretch, whatever the model was shown — and the model was shown the first 12 000
+  // characters. Everything past that counted as summarised without ever being read, and
+  // the next run started behind it: a correction at the end of a long afternoon ("die
+  // Arbeit wurde doch auf Montag verschoben") was skipped in silence (external audit F8,
+  // issue #154). Now it is cut at a message boundary and the pointer says where.
+  let coveredIndex = due.rows.length - 1;
   const learner = await deps.db.maybeOne<{ locale: string; timezone: string }>(
     `select l.locale,
             coalesce((select timezone from buddy_settings where learner_id = l.id), 'Europe/Berlin') as timezone
@@ -177,20 +228,14 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
 
   let summary = '';
   let topics: string[] = [];
-  if (due.rows.length >= MIN_MESSAGES) {
+  if (due.rows.length >= MIN_MESSAGES || due.continues) {
     // A blocked or distress message never reaches this model (issue #149). It is left out
     // rather than replaced: a summariser told "something was held back here" would write
     // that down, and a summary is stored, derived knowledge — exactly what docs/privacy.md
     // promises such a message never becomes. The rows themselves stay in the window, so
     // the coverage pointer still moves past them and they are not read again tomorrow.
-    const said = due.rows
-      .map((r) => {
-        const text = recallText(r, learner.locale, false);
-        return text === null ? null : `${r.role === 'learner' ? 'SHE' : 'BUDDY'}: ${text}`;
-      })
-      .filter((line): line is string => line !== null)
-      .join('\n')
-      .slice(0, 12_000);
+    const { text: said, covered } = upTo(due.rows, learner.locale, SUMMARY_CHARS);
+    coveredIndex = covered;
     const res = await callModel(deps, learnerId, day, {
       purpose: 'summary',
       // The cheap model is enough for two sentences about what was said.
@@ -219,12 +264,16 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
 
   // Row and job end in one transaction, fenced on the lease (like the extraction jobs):
   // a run whose lease was taken over writes nothing — its successor writes the one row.
+  const covered = due.rows[coveredIndex]!;
   await deps.db.tx(async (tx) => {
     const finished = await finishJob(tx, job, deps.now(), {
       status: 'done',
       result: {
         outcome: summary ? 'summarised' : 'recorded_empty',
-        messages: due.rows.length,
+        // What this row really covers, so a stretch that took two summaries is legible in
+        // the job log instead of looking like one that took a single one.
+        messages: coveredIndex + 1,
+        of: due.rows.length,
       },
     });
     if (!finished) return;
@@ -235,10 +284,10 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
         learnerId,
         day,
         first.created_at,
-        last.created_at,
+        covered.created_at,
         summary || '—',
         JSON.stringify(topics),
-        last.id,
+        covered.id,
       ],
     );
   });

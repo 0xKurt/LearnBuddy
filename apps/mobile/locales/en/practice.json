@@ -36,7 +36,7 @@
   "finish_failed": "I couldn't load your result just now.",
   "summary": {
     "title": "Done!",
-    "secure": "Solid: {{topics}}",
+    "secure": "Managed today without a hint: {{topics}}",
     "shaky": "Worth another look: {{topics}}"
   },
   "ended": "This practice has already ended.",

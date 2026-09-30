@@ -36,7 +36,7 @@
   "finish_failed": "Dein Ergebnis konnte ich gerade nicht laden.",
   "summary": {
     "title": "Geschafft!",
-    "secure": "Sitzt: {{topics}}",
+    "secure": "Heute ohne Tipp geschafft: {{topics}}",
     "shaky": "Schauen wir nochmal an: {{topics}}"
   },
   "ended": "Diese Übung ist schon beendet.",

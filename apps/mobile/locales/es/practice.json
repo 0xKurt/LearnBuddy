@@ -36,7 +36,7 @@
   "finish_failed": "No he podido cargar tu resultado ahora mismo.",
   "summary": {
     "title": "¡Lo has conseguido!",
-    "secure": "Lo dominas: {{topics}}",
+    "secure": "Hoy sin pista: {{topics}}",
     "shaky": "Lo repasamos otra vez: {{topics}}"
   },
   "ended": "Esta práctica ya ha terminado.",

@@ -36,7 +36,7 @@
   "finish_failed": "Je n'ai pas pu charger ton résultat pour le moment.",
   "summary": {
     "title": "C'est fait !",
-    "secure": "Tu maîtrises : {{topics}}",
+    "secure": "Réussi aujourd’hui sans indice : {{topics}}",
     "shaky": "On revoit ça ensemble : {{topics}}"
   },
   "ended": "Cet entraînement est déjà terminé.",

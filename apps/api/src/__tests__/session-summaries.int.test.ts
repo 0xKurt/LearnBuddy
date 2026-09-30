@@ -345,4 +345,64 @@ describe.skipIf(!dbReady)('summaries of earlier conversations', () => {
     );
     expect(last.text).toBe('Ich bin da.');
   });
+
+  it('does not mark a long conversation as done past what it read (#154)', async () => {
+    // The model is shown the first 12 000 characters. What came after used to count as
+    // summarised anyway, and the next run started behind it — so the most important part
+    // of a long afternoon, the correction at the end, vanished in silence.
+    env.clock.hours(48);
+    const her = await onboard(env, { relation: 'child', name: 'Ida', birthDate: '2013-03-03' });
+    const long = new Date(env.clock.now().getTime() - 26 * HOUR);
+    const filler = 'Wir haben heute lange über Brüche gesprochen und alles durchgerechnet. '.repeat(
+      12,
+    );
+    const lines: Array<['learner' | 'buddy', string]> = [];
+    for (let i = 0; i < 20; i++) {
+      lines.push(['learner', `${filler} (${i})`]);
+      lines.push(['buddy', `${filler} [${i}]`]);
+    }
+    lines.push(['learner', 'ach warte, die arbeit wurde auf MONTAG verschoben']);
+    lines.push(['buddy', 'Gut zu wissen, ich merke mir Montag.']);
+    await said(env, her, long, lines);
+
+    env.llm.byDefault('summary', {
+      json: { summary: 'Sie hat über Brüche gesprochen.', topics: ['Brüche'] },
+    });
+    await tick(env);
+
+    const row = await env.db.one<{ until_message_id: string }>(
+      `select until_message_id from buddy_session_summaries
+        where learner_id = $1 order by ended_at desc limit 1`,
+      [her.learnerId],
+    );
+    const covered = await env.db.one<{ text: string; seq: string }>(
+      `select text, seq from buddy_messages where id = $1`,
+      [row.until_message_id],
+    );
+    // It did NOT claim the whole conversation.
+    const lastOfAll = await env.db.one<{ seq: string; text: string }>(
+      `select seq, text from buddy_messages where learner_id = $1 order by seq desc limit 1`,
+      [her.learnerId],
+    );
+    expect(Number(covered.seq)).toBeLessThan(Number(lastOfAll.seq));
+
+    // What it did not read is read on the following runs, until the conversation really
+    // is covered — correction and all. Bounded, so a pointer that stood still would fail
+    // here rather than loop.
+    let covers = covered.seq;
+    for (let i = 0; i < 6 && covers !== lastOfAll.seq; i++) {
+      await tick(env);
+      const row = await env.db.one<{ seq: string }>(
+        `select m.seq from buddy_session_summaries s join buddy_messages m on m.id = s.until_message_id
+          where s.learner_id = $1 order by s.ended_at desc limit 1`,
+        [her.learnerId],
+      );
+      // Every run must move forward, or the tail would never arrive.
+      expect(Number(row.seq)).toBeGreaterThan(Number(covers));
+      covers = row.seq;
+    }
+    expect(covers).toBe(lastOfAll.seq);
+    const seen = JSON.stringify(env.llm.callsFor('summary'));
+    expect(seen).toContain('auf MONTAG verschoben');
+  });
 });

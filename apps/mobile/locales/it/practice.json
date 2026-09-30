@@ -36,7 +36,7 @@
   "finish_failed": "Al momento non riesco a caricare il tuo risultato.",
   "summary": {
     "title": "Ce l'hai fatta!",
-    "secure": "Lo sai bene: {{topics}}",
+    "secure": "Oggi senza aiuto: {{topics}}",
     "shaky": "Lo rivediamo insieme: {{topics}}"
   },
   "ended": "Questi esercizi sono già finiti.",

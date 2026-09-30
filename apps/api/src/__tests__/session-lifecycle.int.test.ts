@@ -409,7 +409,9 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
       ['open', 'Nenner'],
     ]);
     // Only what she answered counts.
-    expect(done.body.summary).toMatchObject({ answered: 1, secure_topics: ['Kürzen'] });
+    // One question answered names no topic (issue #155) — it says what she did, not what
+    // she can.
+    expect(done.body.summary).toMatchObject({ answered: 1, secure_topics: [] });
   });
 
   it('feedback #3: "Sitzt" and "Nochmal" never name the same topic, on the result and the home card', async () => {
@@ -430,7 +432,9 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
     const last = await answer(l, s.id, byPrompt('Wie heißt der untere Teil?'), 'Nenner');
     const summary = last.body.session.summary!;
     expect(summary.shaky_topics.map((x) => x.toLowerCase())).toEqual(['kürzen']);
-    expect(summary.secure_topics).toEqual(['Begriffe']);
+    // "Begriffe" had one question: right today, but not enough to be named (issue #155).
+    // What this test is about still holds — a topic is never in both lists.
+    expect(summary.secure_topics).toEqual([]);
     const home = (await l.api.get<BuddyHome>('/buddy')).body;
     expect(home.now).toMatchObject({
       type: 'practice_result',

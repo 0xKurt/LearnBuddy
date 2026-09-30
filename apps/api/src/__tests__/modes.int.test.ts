@@ -394,11 +394,8 @@ describe.skipIf(!dbReady)('learning modes', () => {
     });
     const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`, {});
     await env.flushBackground();
-    expect(done.body.summary?.secure_topics.sort()).toEqual([
-      'Dezimalzahlen',
-      'Gemischte Zahlen',
-      'Prozent',
-    ]);
+    // One question each: right today, and not a claim about the topic (issue #155).
+    expect(done.body.summary?.secure_topics.sort()).toEqual([]);
     expect(done.body.summary?.shaky_topics.sort()).toEqual([
       'Kürzen',
       'Multiplizieren',

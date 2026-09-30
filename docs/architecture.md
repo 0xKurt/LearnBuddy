@@ -687,8 +687,22 @@ state block under "Earlier conversations". Cheap tokens (the fast model, `purpos
 instead of an ever longer message list. Rules that hold: a conversation still going is never
 written down; a stretch is written once; a conversation the model cannot summarise gets an
 **empty** row so the next one is not stuck behind it — and an empty row never reaches the
-context, because Buddy has nothing to say about that day (rule 5). Summaries go with the
-account (cascade) and are covered by `session-summaries.int.test.ts`.
+context, because Buddy has nothing to say about that day (rule 5).
+
+**A summary never covers more than it read** (issue #154). The model is shown at most
+`SUMMARY_CHARS` (12 000) characters, cut at a **message** boundary, and `until_message_id`
+names the last message that cut included. It used to name the last message of the whole
+stretch whatever the model saw, so everything past 12 000 characters counted as summarised
+without being read and the next run started behind it — and what stands at the end of a long
+afternoon is often what matters most ("die Arbeit wurde doch auf Montag verschoben"). A long
+conversation now takes as many runs as it needs; the job is keyed on where the pending stretch
+**starts** (its end does not move between those runs), and the tail of a conversation that is
+already being written down is summarised even when it is shorter than `MIN_MESSAGES` — that
+threshold is there so a two-line exchange costs no model call, and a tail is not that. A
+message that may not be recalled (issue #149) is left out of the text but still counts as
+covered: it was seen and deliberately skipped.
+
+Summaries go with the account (cascade) and are covered by `session-summaries.int.test.ts`.
 
 **Memory that stays usable** (`modules/buddy/consolidate.ts`, issue #20, migration
 `0053_memory_consolidation.sql`). The cap of 60 never throws anything away silently: at 60
@@ -1251,9 +1265,15 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
 - _Idle sessions_ are closed by the scheduler (`closeIdleSessions`): help after 14 days, other
   sessions after 3 days without activity are `abandoned` and their step goes back to `prepared`
   (Buddy can offer it again); a session with nothing open left is finished instead.
-- _Summary_ (`practice/summary.ts`): one computation for the result screen and the home card —
-  a topic "sits" only when every closed question of it was right at once, otherwise it is shaky;
-  never both. The app says it in words (`apps/mobile/lib/practice/summaryLine.ts`): homework
+- _Summary_ (`practice/summary.ts`): one computation for the result screen, the home card and
+  Buddy's context — a topic is named as having gone well only when every closed question of it
+  was right at once **and** there were at least `ENOUGH_FOR_A_TOPIC` (2) of them; one that
+  needed help, was shown or missed makes it shaky, and a single one is enough for that, because
+  saying something still needs work claims less than saying it is done. Never both. The screen
+  says what was observed today ("Heute ohne Tipp geschafft"), not that she has the topic: the
+  external audit of 30.09. photographed it calling four topics settled after four answers — one
+  question each — and a child and a parent can read that as being ready for the test (issue
+  #155, rule 5). FSRS per question is not a statement about "Brüche". The app says it in words (`apps/mobile/lib/practice/summaryLine.ts`): homework
   "Du hast N Aufgaben selbst gelöst", otherwise "Du hast N Fragen beantwortet" and only a whole
   round right at once is named — never a hit rate, never a zero (user feedback #1, #3).
 - _"Lösung zeigen"_ only after a try or a hint (`reveal_available`, 409 `try_first`; a spoken

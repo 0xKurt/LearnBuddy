@@ -13,28 +13,46 @@ export type SummaryRow = {
 };
 
 /**
+ * How many questions of a topic must have gone well before the summary names it as one
+ * that went well (issue #155).
+ *
+ * One is not a topic. The external audit of 30.09. photographed the result screen calling
+ * four topics settled after four answers — one question each. FSRS per question is not a
+ * statement about "Brüche", and a child and a parent can read that as being ready for the
+ * test. What the screen says now is what was observed today ("heute ohne Tipp"), and even
+ * that needs more than a single question behind it (CLAUDE.md rule 5).
+ */
+export const ENOUGH_FOR_A_TOPIC = 2;
+
+/**
  * The one summary of a session, used by the result screen and by Buddy's home card alike
- * (user feedback #3): a topic "sits" only when every closed question of it was right at once;
- * one that needed help, was shown or missed makes it shaky. A topic is never in both lists
- * (topics are compared without case and outer spaces; the first spelling is shown).
+ * (user feedback #3): a topic counts as having gone well when every closed question of it
+ * was right at once AND there were at least `ENOUGH_FOR_A_TOPIC` of them; one that needed
+ * help, was shown or missed makes it shaky — a single one is enough for that, because
+ * saying something still needs work claims less than saying it is done. A topic is never
+ * in both lists (topics are compared without case and outer spaces; the first spelling is
+ * shown).
  */
 export function summarize(items: readonly SummaryRow[]): PracticeSummary {
   // A question she took out as not fitting was neither answered nor shaky.
   const closed = items.filter((i) => i.status !== 'open' && !i.flagged_at);
-  const byTopic = new Map<string, { name: string; shaky: boolean }>();
+  const byTopic = new Map<string, { name: string; shaky: boolean; seen: number }>();
   for (const i of closed) {
     const name = i.topic?.trim();
     if (!name) continue;
     const key = name.toLocaleLowerCase();
-    const t = byTopic.get(key) ?? { name, shaky: false };
+    const t = byTopic.get(key) ?? { name, shaky: false, seen: 0 };
     if (!(i.status === 'correct' && i.first_try_correct)) t.shaky = true;
+    t.seen += 1;
     byTopic.set(key, t);
   }
   const topics = [...byTopic.values()];
   return {
     answered: closed.length,
     first_try: closed.filter((i) => i.status === 'correct' && i.first_try_correct).length,
-    secure_topics: topics.filter((v) => !v.shaky).map((v) => v.name),
+    secure_topics: topics
+      .filter((v) => !v.shaky && v.seen >= ENOUGH_FOR_A_TOPIC)
+      .map((v) => v.name),
     shaky_topics: topics.filter((v) => v.shaky).map((v) => v.name),
   };
 }
