@@ -38,10 +38,20 @@ export const TONE_DEEP: Record<SubjectTone, string> = toneDeepOf(active.palette)
 export const FIGURE: Figure = figureOf(active.palette);
 
 /** The colour tokens of a palette (everything but the derived maps). */
-type ColorToken = Exclude<keyof Palette, 'figure' | 'shadowColor' | 'shadowOpacity' | 'glow'>;
+type ColorToken = Exclude<
+  keyof Palette,
+  'figure' | 'shadowColor' | 'shadowOpacity' | 'glow' | 'buddyLight'
+>;
 
 function colorsOf(p: Palette): Record<ColorToken, string> {
-  const { figure: _figure, shadowColor: _sc, shadowOpacity: _so, glow: _glow, ...colors } = p;
+  const {
+    figure: _figure,
+    shadowColor: _sc,
+    shadowOpacity: _so,
+    glow: _glow,
+    buddyLight: _bl,
+    ...colors
+  } = p;
   return colors;
 }
 

@@ -17,7 +17,7 @@ import * as SystemUI from 'expo-system-ui';
 import { Platform } from 'react-native';
 
 import { activePalette } from './colors.js';
-import { barStyleFor } from './luminance.js';
+import { isDarkBackground } from './luminance.js';
 
 /** Paints the window behind the app and the navigation bar icons in the active palette. */
 export function applySystemChrome(): void {
@@ -26,11 +26,17 @@ export function applySystemChrome(): void {
   // covers every screen, this only removes the flash between them.
   void SystemUI.setBackgroundColorAsync(palette.bg).catch(() => undefined);
   if (Platform.OS !== 'android') return;
-  // Android only, and only where the system lets an app say it: with edge-to-edge (the
-  // default since SDK 54) this reaches the three-button bar; a gesture bar draws its own
-  // handle and ignores it. Not verified on a device yet — see the report on issue #36.
+  // Android only. Verified on a device on 30.09. (issue #138) and it was saying the
+  // opposite of what it meant:
+  //
+  // `barStyleFor` names the CONTENT colour, like expo-status-bar — 'light' means light
+  // icons, which is what a dark bar needs. `NavigationBar.setStyle` names the BAR:
+  // "'light' — a light navigation bar with dark content". Passing one into the other
+  // inverted it, so the night palette asked for a light bar and got one.
+  //
+  // The bar is dark when the app behind it is.
   try {
-    NavigationBar.setStyle(barStyleFor(palette.bg));
+    NavigationBar.setStyle(isDarkBackground(palette.bg) ? 'dark' : 'light');
   } catch {
     // An older Android or an emulator that does not honour it: the bar keeps its default.
   }

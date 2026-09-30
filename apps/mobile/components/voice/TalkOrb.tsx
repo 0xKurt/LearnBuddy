@@ -17,6 +17,7 @@ import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { moonForTalk, type TalkMode } from '../../lib/buddy/moon.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 
 export type OrbMode = TalkMode;
@@ -53,12 +54,17 @@ export function TalkOrb({
 }
 
 /**
- * The prototype's stage: a soft pool of pastel light (blue upper left, lilac, pink lower
- * right) behind Buddy, so his white halo, trail and ping read as they do there. It fades
- * out towards its edge, so it melts into the screen's own light.
+ * The prototype's stage: a soft pool of light (blue upper left, lilac, pink lower right)
+ * behind Buddy, fading out at its edge so it melts into the screen's own light.
+ *
+ * Its tones come from the palette since issue #139. Hardcoded, the pastels melted into the
+ * light ground they were made for and sat on the night one as a near-white disc at full
+ * opacity — which is what the owner saw.
  */
 function Stage({ size, box }: { size: number; box: number }) {
   const id = useSvgId('stage');
+  const { palette } = useTheme();
+  const [base, blue, pink] = palette.buddyLight.stage;
   const r = size / 2;
   return (
     <View
@@ -68,17 +74,17 @@ function Stage({ size, box }: { size: number; box: number }) {
       <Svg width={size} height={size}>
         <Defs>
           <RadialGradient id={`${id}base`} cx="0.5" cy="0.5" r="0.5">
-            <Stop offset="0" stopColor="#efe6ff" stopOpacity={1} />
-            <Stop offset="0.62" stopColor="#efe6ff" stopOpacity={0.9} />
-            <Stop offset="1" stopColor="#efe6ff" stopOpacity={0} />
+            <Stop offset="0" stopColor={base.color} stopOpacity={base.opacity} />
+            <Stop offset="0.62" stopColor={base.color} stopOpacity={base.opacity * 0.9} />
+            <Stop offset="1" stopColor={base.color} stopOpacity={0} />
           </RadialGradient>
           <RadialGradient id={`${id}blue`} cx="0.36" cy="0.36" r="0.3">
-            <Stop offset="0" stopColor="#e3e9ff" stopOpacity={0.9} />
-            <Stop offset="1" stopColor="#e3e9ff" stopOpacity={0} />
+            <Stop offset="0" stopColor={blue.color} stopOpacity={blue.opacity} />
+            <Stop offset="1" stopColor={blue.color} stopOpacity={0} />
           </RadialGradient>
           <RadialGradient id={`${id}pink`} cx="0.64" cy="0.66" r="0.28">
-            <Stop offset="0" stopColor="#fde3f0" stopOpacity={0.9} />
-            <Stop offset="1" stopColor="#fde3f0" stopOpacity={0} />
+            <Stop offset="0" stopColor={pink.color} stopOpacity={pink.opacity} />
+            <Stop offset="1" stopColor={pink.color} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Circle cx={r} cy={r} r={r} fill={`url(#${id}base)`} />

@@ -47,10 +47,13 @@ export function DevHostNote() {
       importantForAccessibility="no-hide-descendants"
       style={{
         position: 'absolute',
-        // The header's middle is free (greeting left, buttons right), so nothing here
-        // covers a control — unlike the bottom, where the composer lives.
+        // Left, not centred. It went to the top on 29.09. because the bottom is where the
+        // composer lives, and back then the head held a greeting on the left and buttons on
+        // the right — the middle was the free part. Since #135 the mark stands there,
+        // centred, and this was drawn straight across it (issue #137). The mark is centred,
+        // so the left edge is what is free now, and it still covers no control.
         top: insets.top + 2,
-        alignSelf: 'center',
+        left: 10,
         backgroundColor: 'rgba(178,58,58,0.92)',
         borderRadius: 999,
         paddingHorizontal: 9,

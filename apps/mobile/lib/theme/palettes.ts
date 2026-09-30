@@ -54,6 +54,16 @@ export type Palette = {
    * three pastels were hardcoded in the component and washed the night palette out.
    */
   glow: readonly [GlowStop, GlowStop, GlowStop];
+  /**
+   * Buddy's own light: the halo around him, and the pool he stands in on the talk screen
+   * (base, blue, pink). Hardcoded until issue #139, which put a near-white disc at full
+   * opacity on the night palette's near-black ground — a smudge, not a glow. A light in a
+   * dark room is coloured, and much fainter.
+   */
+  buddyLight: {
+    halo: GlowStop;
+    stage: readonly [GlowStop, GlowStop, GlowStop];
+  };
   /** Shadows are part of the look: a dark palette needs a different cast. */
   shadowColor: string;
   /** How strong the two elevations are (soft, float) in this palette. */
@@ -109,6 +119,15 @@ const pastellSoft: Palette = {
     { color: '#e3d6ff', opacity: 0.95 },
     { color: '#ffd6ea', opacity: 0.9 },
   ],
+  // Likewise exactly what BuddyOrb and TalkOrb used to hardcode (issue #139).
+  buddyLight: {
+    halo: { color: '#ffffff', opacity: 0.95 },
+    stage: [
+      { color: '#efe6ff', opacity: 1 },
+      { color: '#e3e9ff', opacity: 0.9 },
+      { color: '#fde3f0', opacity: 0.9 },
+    ],
+  },
   shadowColor: '#4b3a8f',
   shadowOpacity: [0.08, 0.14],
   figure: {
@@ -164,6 +183,16 @@ const night: Palette = {
     { color: '#5a41a6', opacity: 0.42 },
     { color: '#8e3a69', opacity: 0.3 },
   ],
+  // A light in a dark room is coloured and far fainter than one in a bright one: a lilac
+  // bloom that lifts the ground, and a pool in deep violet instead of near-white (#139).
+  buddyLight: {
+    halo: { color: '#c3aeff', opacity: 0.4 },
+    stage: [
+      { color: '#33285c', opacity: 0.95 },
+      { color: '#2a3568', opacity: 0.8 },
+      { color: '#4e2a49', opacity: 0.8 },
+    ],
+  },
   shadowColor: '#000000',
   shadowOpacity: [0.3, 0.45],
   figure: {

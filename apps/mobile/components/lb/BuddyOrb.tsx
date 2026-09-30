@@ -411,15 +411,26 @@ function Shadow({ size, u }: { size: number; u: number }) {
 }
 
 /** The white halo behind the glass (the prototype's, on its pastel stage). */
+/**
+ * The bloom around Buddy. Its colour comes from the palette (issue #139): white light was
+ * made for the pastel ground and turns into a near-white disc on the night one.
+ *
+ * The falloff lost its step too. It used to sit flat at full strength out to half the
+ * radius and then drop to 0.4 in one go — invisible against a light ground, a hard edge
+ * against a dark one. The inner part is behind the orb anyway.
+ */
 function Halo({ size }: { size: number }) {
   const id = useSvgId('halo');
+  const { palette } = useTheme();
+  const { color, opacity } = palette.buddyLight.halo;
   return (
     <Svg width={size} height={size}>
       <Defs>
         <RadialGradient id={id} cx="0.5" cy="0.5" r="0.5">
-          <Stop offset="0.5" stopColor="#ffffff" stopOpacity={0.95} />
-          <Stop offset="0.76" stopColor="#ffffff" stopOpacity={0.4} />
-          <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
+          <Stop offset="0.4" stopColor={color} stopOpacity={opacity} />
+          <Stop offset="0.66" stopColor={color} stopOpacity={opacity * 0.42} />
+          <Stop offset="0.85" stopColor={color} stopOpacity={opacity * 0.12} />
+          <Stop offset="1" stopColor={color} stopOpacity={0} />
         </RadialGradient>
       </Defs>
       <Circle cx={size / 2} cy={size / 2} r={size / 2} fill={`url(#${id})`} />
