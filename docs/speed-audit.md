@@ -209,9 +209,49 @@ echtes Gerät liefern kann. Deshalb misst die App jetzt selbst (`lib/perf.ts`):
 
 Im Browser-Walkthrough landen beide in `test-results/web/perf.jsonl`; die Gerätemessung
 steht aus — **hier stehen bewusst keine Zahlen, bis eine Messung existiert** (Regel 5).
-Die Synthese-Seite ist oben gemessen (0,74–1,6 s pro Satz); gegen ein langes erstes Stück
-stehen `shortOpening` (#41) und die 2,5-s-Grenze, ab der die Handy-Stimme das erste Stück
-liest.
+
+### Das erste gesprochene Stück (30.09., `apps/api/evals/tts/opening.ts`, 3 Runden live)
+
+Chirp 3: HD, EU-Endpunkt, de-DE. Jede Länge einmal pro Runde und vor jeder Wiederholung,
+damit eine langsame Minute alle Varianten gleich trifft — die erste Fassung dieser Messung
+meldete sonst einen Unterschied zwischen zwei **identischen** Texten.
+
+| Zeichen | min    | median | max    | spielt  |
+| ------- | ------ | ------ | ------ | ------- |
+| 20      | 0,35 s | 0,36 s | 0,67 s | 1,46 s  |
+| 33      | 0,47 s | 0,49 s | 0,50 s | 2,50 s  |
+| 58      | 0,54 s | 0,64 s | 0,64 s | 3,82 s  |
+| 77      | 0,73 s | 0,84 s | 0,88 s | 5,93 s  |
+| 98      | 0,91 s | 0,91 s | 0,93 s | 6,50 s  |
+| 113     | 0,98 s | 1,15 s | 1,20 s | 6,74 s  |
+| 160     | 1,21 s | 1,30 s | 1,36 s | 9,58 s  |
+| 198     | 1,39 s | 1,40 s | 1,50 s | 11,69 s |
+
+Die Synthese wächst fast linear mit der Länge und **kreuzt die Sekunde bei rund 100–110
+Zeichen**. Genau da steht `OPENING_MAX = 110` (`lib/speech/readAloud.ts`) — die Grenze ist
+damit gemessen, nicht geraten.
+
+Vier echte lange Eröffnungssätze, ungeteilt gegen am ersten Klausel-Rand geschnitten:
+
+| Satz                  | ganz   | 1. Stück | früher | spielt | 2. Stück braucht | Lücke |
+| --------------------- | ------ | -------- | ------ | ------ | ---------------- | ----- |
+| Urknall (118)         | 1,05 s | 0,66 s   | 0,38 s | 4,66 s | 0,55 s           | keine |
+| Brüche addieren (141) | 1,00 s | 0,59 s   | 0,41 s | 3,82 s | 0,64 s           | keine |
+| Pizza teilen (122)    | 0,90 s | 0,78 s   | 0,12 s | 4,97 s | 0,49 s           | keine |
+| Englischtest (122)    | 0,96 s | 0,70 s   | 0,26 s | 3,29 s | 0,67 s           | keine |
+
+**Median 0,38 s früher, Lücke in 4/4 gedeckt:** das erste Stück spielt drei- bis siebenmal
+so lange, wie die Synthese des zweiten braucht, der Prefetch (`lib/speech/listen.ts`) kommt
+also immer mit. Der Schnitt kostet nichts und bringt gut ein Drittel der Wartezeit.
+
+Kein Provider-Cache, der die Zahlen schönt: derselbe Satz zweimal → 1,32 s, dann 0,94 s
+(Verbindungsaufbau, kein Treffer aus einem Cache).
+
+**Was damit belegt ist und was nicht:** die Synthese des ersten Stücks bleibt unter einer
+Sekunde (0,59–0,78 s). Ob das Abnahmekriterium „erstes Audio < 1 s" gehalten wird, sagt
+erst die Gerätemessung — dazwischen liegen noch App→API→Google und die Wiedergabe.
+Gegen ein langes erstes Stück stehen `shortOpening` und die 2,5-s-Grenze, ab der die
+Handy-Stimme einspringt.
 
 **Barge-in (#35).** Während Buddy spricht, bleibt das Mikrofon aus: weder expo-audio noch
 expo-speech-recognition sichern Geräte-Echo-Cancellation zu, ein offenes Mikrofon schriebe
