@@ -56,7 +56,7 @@ async function onboardChild(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   // The three first-start cards (app/onboarding.tsx) come before the home.
   await page.getByRole('button', { name: 'Überspringen' }).click();
-  await expect(page.getByText('Hallo Lena')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
 test('learning modes: explain, homework help without the solution, practice with math', async ({
@@ -222,23 +222,26 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(explained).toBeHidden({ timeout: 8000 });
   await shot(page, '27-practice-voice-mode');
   await page.getByRole('button', { name: 'Übung beenden' }).click();
-  await expect(page.getByText('Hallo Lena')).toBeVisible();
-  // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo),
-  // and the home has the same switch (audit M-77).
-  const homeSwitch = page.getByRole('switch', { name: 'Sprachmodus' }).last();
-  await expect(homeSwitch).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
+  // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).
+  // The head no longer carries a speaker switch (#125, #52) — reading aloud is a line in
+  // the menu whose LABEL is its state, so there is nothing left to decode.
   await expect(page.getByRole('button', { name: 'Tastatur' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
   await shot(page, '26-buddy-voice-mode');
+  await page.getByRole('button', { name: 'Mehr' }).click();
+  await expect(page.getByRole('button', { name: 'Vorlesen ist an' })).toBeVisible();
+  await page.getByRole('button', { name: 'Schließen' }).click();
   // "Tastatur" goes back to typing.
   await page.getByRole('button', { name: 'Tastatur' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
-  await expect(homeSwitch).toHaveAttribute('aria-checked', 'false');
-  // Switched on from the home itself, and off again.
-  await homeSwitch.click();
-  await expect(homeSwitch).toHaveAttribute('aria-checked', 'true');
+  // Switched on from the home itself, and off again — through the menu now (#52): the
+  // line's own label is the state, so the round trip reads as words both ways.
+  await page.getByRole('button', { name: 'Mehr' }).click();
+  await page.getByRole('button', { name: 'Antworten vorlesen' }).click();
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
-  await homeSwitch.click();
+  await page.getByRole('button', { name: 'Mehr' }).click();
+  await page.getByRole('button', { name: 'Vorlesen ist an' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
   // Off again: "Ich lese dir vor …" no longer holds, so it does not stay on screen.
   await expect(explained).toHaveCount(0);
@@ -272,7 +275,7 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Die wackligen nochmal üben' }).click();
   await expect(page.getByText('Wer gründete Rom der Sage nach?')).toBeVisible();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
-  await expect(page.getByText('Hallo Lena')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
 
   // ── Any part of the app, by just asking Buddy ──
   await page.getByLabel('Schreib Buddy …').fill('Zeig mir meine Arbeitsblätter');
@@ -304,7 +307,7 @@ test('learning modes: explain, homework help without the solution, practice with
   ).toBeVisible();
   await shot(page, '33-talk-answer');
   await page.getByRole('button', { name: 'Beenden' }).last().click();
-  await expect(page.getByText('Hallo Lena')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The same conversation: what was said by voice is in the chat.
   await expect(page.getByText('Was steht diese Woche an?')).toBeVisible();
 

@@ -45,6 +45,7 @@ import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
 import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
 import { StartRow, TRAILING_WIDTH } from '../components/lb/StartRow.js';
+import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Wordmark } from '../components/lb/Wordmark.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { Sheet } from '../components/lb/Sheet.js';
@@ -994,8 +995,31 @@ export default function BuddyScreen() {
             is a line in it with words instead of a symbol (#52).
             What stands here instead is the mark, and only the mark (#135) — one thing,
             not three, and nothing in it to tap. */}
-        <View style={{ paddingHorizontal: SPACE.lg, paddingTop: SPACE.xs, paddingBottom: 2 }}>
+        <View
+          // The walkthrough measures this row: every point the head takes is one the
+          // conversation loses (issue #64, tests/web/fit.ts).
+          testID="home-header"
+          style={{
+            paddingHorizontal: SPACE.lg,
+            paddingTop: SPACE.xs,
+            paddingBottom: 2,
+            justifyContent: 'center',
+          }}
+        >
           <Wordmark />
+          {/* The menu belongs with the ways to start (owner 30.09., #125) — but the first
+              visit has a ring instead of that row, and a screen with no way into settings,
+              memory or the library is broken. When there is no row to hold it, the mark's
+              row does, absolutely placed so the mark stays optically centred. */}
+          {talking ? null : (
+            <View style={{ position: 'absolute', right: SPACE.lg, top: SPACE.xs }}>
+              <CircleBtn
+                icon="more"
+                onPress={() => setMenuOpen(true)}
+                accessibilityLabel={t('buddy:menu.short')}
+              />
+            </View>
+          )}
         </View>
         <View style={{ flex: 1 }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never

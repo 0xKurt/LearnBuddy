@@ -28,7 +28,7 @@ test('answers given offline arrive once: app open, and after it was closed', asy
   await page.getByRole('button', { name: 'Weiter' }).click();
   // The three first-start cards (app/onboarding.tsx) come before the home.
   await page.getByRole('button', { name: 'Überspringen' }).click();
-  await expect(page.getByText('Hallo Sam')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
 
   // Started the way the app starts things now: asked in the chat, Buddy offers it.
   await page.getByLabel('Schreib Buddy …').fill('Ich will Hauptstädte üben');

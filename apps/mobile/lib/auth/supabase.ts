@@ -120,6 +120,20 @@ export function authRedirect(path: string): string {
   return `learnbuddy://${path}`;
 }
 
+/**
+ * Sends the confirmation mail again (issue #132). Supabase's links expire, and a mail that
+ * lands in a parent's spam filter otherwise locks the whole family out of an account they
+ * just made — there was no way back to it anywhere in the app.
+ */
+export async function resendConfirmation(email: string): Promise<void> {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: authRedirect('') },
+  });
+  if (error) throw new AuthFailure(reasonOf(error.message, error.status, error.code));
+}
+
 export async function requestPasswordReset(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: authRedirect('reset-password'),

@@ -11,12 +11,28 @@ export type AboutLink = {
   detail: string | null;
 };
 
-type Config = { privacyUrl: string; imprintUrl: string; supportEmail: string };
+type Config = {
+  privacyUrl: string;
+  imprintUrl: string;
+  supportEmail: string;
+  /**
+   * What goes into the support mail's body before she writes a word (audit 30.09., #133
+   * position 14). Without it the first reply is always "which version, which phone?" — and
+   * a parent writing for help should not have to go looking. Nothing personal: the app's
+   * build, the OS and the device model, the same three lines any bug report needs.
+   */
+  diagnostics?: { app: string; os: string; device: string } | null;
+};
 
 const WEB = /^https?:\/\/\S+$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function aboutLinks({ privacyUrl, imprintUrl, supportEmail }: Config): AboutLink[] {
+export function aboutLinks({
+  privacyUrl,
+  imprintUrl,
+  supportEmail,
+  diagnostics = null,
+}: Config): AboutLink[] {
   const out: AboutLink[] = [];
   const privacy = privacyUrl.trim();
   const imprint = imprintUrl.trim();
@@ -24,7 +40,14 @@ export function aboutLinks({ privacyUrl, imprintUrl, supportEmail }: Config): Ab
   if (WEB.test(privacy)) out.push({ kind: 'privacy', href: privacy, detail: null });
   if (WEB.test(imprint)) out.push({ kind: 'imprint', href: imprint, detail: null });
   if (EMAIL.test(support)) {
-    out.push({ kind: 'support', href: `mailto:${encodeURI(support)}`, detail: support });
+    // `mailto:` query, not the address: an address with a "?" in it would otherwise eat
+    // the body. The subject stays empty so her own words are the subject line.
+    const body = diagnostics
+      ? `?body=${encodeURIComponent(
+          `\n\n---\nLearnBuddy ${diagnostics.app}\n${diagnostics.os}\n${diagnostics.device}`,
+        )}`
+      : '';
+    out.push({ kind: 'support', href: `mailto:${encodeURI(support)}${body}`, detail: support });
   }
   return out;
 }

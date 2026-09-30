@@ -15,13 +15,12 @@ mkdirSync(SHOTS, { recursive: true });
 
 /** The app scrolls inside its own views: a tall window shows a whole screen. */
 /** A photographed "worksheet", rendered by the browser itself. */
-/** Where the menu, the greeting and the ways to start stand on Buddy's home (card or not). */
+/** Where the mark, the menu and the ways to start stand on Buddy's home (card or not). */
 async function homePositions(page: Page): Promise<number[]> {
   const ys: number[] = [];
   for (const target of [
-    page.getByRole('button', { name: 'Menü öffnen' }),
-    page.getByText('Hallo Mia'),
-    // By its label: under a card that covers it, the row is left out for screen readers.
+    page.getByText('LearnBuddy'),
+    page.getByRole('button', { name: 'Mehr' }),
     page.getByText('Arbeit', { exact: true }),
   ]) {
     const box = await target.boundingBox();
@@ -118,7 +117,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Überspringen' }).click();
 
   // ── The student's first look: who Buddy is and how to start ──
-  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   await expect(
     page.getByText('Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten', { exact: false }),
   ).toBeVisible();
@@ -130,8 +129,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   const head = await partHeight(page, 'home-header', 'home');
   const bar = await partHeight(page, 'composer', 'home');
   console.log(`HOME 360x740: header ${head}pt, composer ${bar}pt`);
-  // Measured 29.09.: 52 pt head, 68 pt bar — 16 % of a 740 pt phone. The bound is what
-  // we keep, not what we hope for.
+  // Measured 29.09.: 52 pt head, 68 pt bar — 16 % of a 740 pt phone. The head is the mark
+  // alone since 30.09. (#125, #135), so this has room; the bound is what we keep, not what
+  // we hope for.
   expect(head + bar, `head ${head}pt + composer ${bar}pt`).toBeLessThanOrEqual(160);
   await page.setViewportSize({ width: 390, height: 844 });
 
@@ -185,7 +185,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   ).toBeVisible();
   await shot(page, '06-parent-pin');
   for (const digit of pin) await page.getByRole('button', { name: digit, exact: true }).click();
-  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The web cannot set up this phone for notifications: no toast over the chat about it (live
   // finding 8) — settings says it calmly.
   await expect(page.getByText(/^Erlaubt[.:]/)).toHaveCount(0);
@@ -272,7 +272,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 
   // ── Feedback understood, behaviour adapted ──
-  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   await page.getByLabel('Schreib Buddy …').fill('Mach die Übungen bitte kürzer.');
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('Mach ich – ab jetzt kurze Runden.')).toBeVisible();
@@ -294,18 +294,18 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
     page.getByText('Alles saß gleich beim ersten Mal', { exact: false }).last(),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
-  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   // What the app's own stopwatch measured on the way here (issue #66) — read before the
   // reload, which is what clears it (the spans live in memory, nothing is stored).
   await recordPerf(page, 'core-loop');
   await page.reload();
-  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeVisible();
   await expect(card).toHaveCount(0);
 
   // ── Secondary, but one tap away: what Buddy knows, the sheets, the settings ──
   const openMenu = async (item: string) => {
-    await page.getByRole('button', { name: 'Menü öffnen' }).click();
+    await page.getByRole('button', { name: 'Mehr' }).click();
     await page.getByRole('button', { name: item }).click();
   };
   await openMenu('Was Buddy über dich weiß');
@@ -371,14 +371,14 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByRole('radio', { name: 'Nacht' })).toHaveAttribute('aria-checked', 'true');
   await shot(page, '15g-settings-night', { opened: true });
   await page.getByRole('button', { name: 'Zurück' }).click();
-  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The whole home in the night palette: fit and contrast, like every other stop.
   await shot(page, '15h-home-night');
   await openMenu('Einstellungen');
   await page.getByRole('button', { name: 'Aussehen' }).click();
   await page.getByRole('radio', { name: 'Pastell' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
-  await expect(page.getByText('Hallo Mia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
 
   test.info().annotations.push({ type: 'email', description: email });
 });

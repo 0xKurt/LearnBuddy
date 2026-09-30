@@ -92,11 +92,12 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0 }
         position: 'absolute',
         top: 0,
         left: 0,
-        right: 0,
-        paddingLeft: 16,
-        // Stop before the menu instead of painting over it (issue #135): the card floats over
-        // the greeting and the ways to start, but never over the way out.
-        paddingRight: 16 + rightInset,
+        // The CONTAINER stops before the menu, not just its padding (issue #135). Padding
+        // would have moved the card's ink but left the layer spanning the full width, and a
+        // layer at zIndex 10 swallows every tap under it — the walkthrough caught the menu
+        // being unclickable while a card was up, which is exactly what this had to fix.
+        right: rightInset,
+        paddingHorizontal: 16,
         paddingTop: 8,
         zIndex: 10,
         elevation: 12,

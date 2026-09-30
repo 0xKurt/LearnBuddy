@@ -6,6 +6,7 @@ import { forwardRef, useState } from 'react';
 import { TextInput, View, Text, Pressable, type TextInputProps } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
+import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon } from './Icon.js';
 
@@ -44,6 +45,10 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
         <TextInput
           ref={ref}
           placeholderTextColor={palette.placeholder}
+          // iOS draws a light keyboard over the night palette unless it is told otherwise
+          // (audit 30.09., #133 position 7). Derived, not hardcoded: a new dark palette
+          // gets it for free, and a light one is unaffected.
+          keyboardAppearance={isDarkBackground(palette.bg) ? 'dark' : 'light'}
           {...rest}
           onFocus={(e) => {
             setFocused(true);

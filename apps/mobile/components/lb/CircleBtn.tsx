@@ -34,7 +34,10 @@ export function CircleBtn({
 }) {
   const { palette } = useTheme();
   const { t } = useTranslation('common');
-  const inner = (
+  // Every other control in the system answers a finger; this one did not (audit 30.09.,
+  // #133 position 6). The same dip Btn and StartRow use, so a press feels the same
+  // wherever it lands.
+  const inner = (pressed: boolean) => (
     <View
       style={{
         width: 44,
@@ -47,12 +50,14 @@ export function CircleBtn({
         borderWidth: plain ? 0 : 1,
         alignItems: 'center',
         justifyContent: 'center',
+        opacity: pressed ? 0.78 : 1,
+        transform: [{ scale: pressed ? 0.94 : 1 }],
       }}
     >
       <Icon name={icon} size={plain ? 24 : 20} color={plain ? palette.ink2 : palette.ink} />
     </View>
   );
-  if (!onPress) return inner;
+  if (!onPress) return inner(false);
   return (
     <Pressable
       onPress={onPress}
@@ -60,7 +65,7 @@ export function CircleBtn({
       accessibilityLabel={accessibilityLabel ?? t(LABEL_KEY[icon])}
       accessibilityHint={accessibilityHint}
     >
-      {inner}
+      {({ pressed }) => inner(pressed)}
     </Pressable>
   );
 }

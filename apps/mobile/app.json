@@ -14,6 +14,7 @@
       "supportsTablet": false,
       "associatedDomains": ["applinks:learnbuddy.app"],
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Damit du Arbeitsblätter fotografieren kannst.",
         "NSPhotoLibraryUsageDescription": "Damit du Fotos von Arbeitsblättern auswählen kannst."
       },
@@ -97,7 +98,8 @@
       [
         "expo-notifications",
         {
-          "color": "#6a48d7"
+          "color": "#6a48d7",
+          "icon": "./assets/notification-icon.png"
         }
       ],
       "expo-localization",

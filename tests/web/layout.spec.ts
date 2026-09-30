@@ -1,6 +1,10 @@
-// Layout under stress: a long name ("Annalena-Marie") on a normal and a small
-// phone. Nothing may overlap the ring's buttons or spill past the screen edge.
-// Screenshots go to test-results/web/shots (30-…).
+// Layout under stress on a normal and a small phone: nothing may overlap the ways to start
+// or spill past the screen edge. Screenshots go to test-results/web/shots (30-…).
+//
+// It used to anchor on a long name in the head, because the head carried a greeting that
+// could be truncated. The head is the mark alone now (#125, #135) and the name only appears
+// inside a chat bubble, which wraps — so the long name stays in the run as a realistic
+// account, and what is measured is the mark, the row and the composer.
 
 import { join } from 'node:path';
 
@@ -41,29 +45,30 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 320, height: 640 },
 ]) {
-  test(`a long name fits on ${viewport.width}px`, async ({ page }) => {
+  test(`the home fits on ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await onboard(page, 'Annalena-Marie');
-    const greeting = page.getByText('Annalena-Marie', { exact: false }).first();
-    await expect(greeting).toBeVisible();
+    const mark = page.getByText('LearnBuddy').first();
+    await expect(mark).toBeVisible();
     await page.waitForTimeout(400);
-    await page.screenshot({ path: join(SHOTS, `30-long-name-${viewport.width}.png`) });
+    await page.screenshot({ path: join(SHOTS, `30-home-fits-${viewport.width}.png`) });
 
-    // The greeting stays inside the screen and clear of every ring button.
-    const g = await greeting.boundingBox();
+    // The mark stays inside the screen and clear of every way to start.
+    const g = await mark.boundingBox();
     expect(g).not.toBeNull();
     expect(g!.x).toBeGreaterThanOrEqual(0);
     expect(g!.x + g!.width).toBeLessThanOrEqual(viewport.width);
     // "Erklär mir was" is gone (owner decision 28.09.): explaining happens in the chat.
-    for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln']) {
+    // "Mehr" joined the row on 30.09. (#125) and is measured with the rest.
+    for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln', 'Mehr']) {
       const b = await page.getByRole('button', { name, exact: true }).boundingBox();
       expect(b, name).not.toBeNull();
-      expect(overlaps(g!, b!), `greeting overlaps ${name}`).toBe(false);
+      expect(overlaps(g!, b!), `mark overlaps ${name}`).toBe(false);
       expect(b!.x, name).toBeGreaterThanOrEqual(0);
       expect(b!.x + b!.width, name).toBeLessThanOrEqual(viewport.width);
     }
-    // The ring's buttons (icon and label) never run into each other.
-    const names = ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln'];
+    // The row's buttons (icon and label) never run into each other.
+    const names = ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln', 'Mehr'];
     const boxes = await Promise.all(
       names.map((name) => page.getByRole('button', { name, exact: true }).boundingBox()),
     );

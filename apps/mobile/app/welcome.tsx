@@ -5,7 +5,7 @@
 // field errors below their field) — never only a vanishing toast.
 
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View, useWindowDimensions, type TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,12 +21,21 @@ import { LanguageFlags } from '../components/lb/LanguageFlags.js';
 import { WaitHint } from '../components/lb/WaitHint.js';
 import { useAnnounce } from '../lib/announce.js';
 import { MIN_PASSWORD_LENGTH, looksLikeEmail } from '../lib/auth/recovery.js';
-import { AuthFailure, requestPasswordReset, signIn, signUp } from '../lib/auth/supabase.js';
+import {
+  AuthFailure,
+  requestPasswordReset,
+  signIn,
+  signUp,
+  resendConfirmation,
+} from '../lib/auth/supabase.js';
 import { messageFor } from '../lib/errors.js';
 import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+
+/** How long before the confirmation mail may be sent again (issue #132). */
+const RESEND_COOLDOWN_S = 60;
 
 export default function Welcome() {
   const { palette } = useTheme();
@@ -39,6 +48,11 @@ export default function Welcome() {
   const [shownRepeat, setShownRepeat] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
+  /** The address the mail went to, so the card can show it: a typo is invisible otherwise. */
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [resendBusy, setResendBusy] = useState(false);
+  /** Seconds until the mail may be sent again — Supabase rate-limits it, and so do we. */
+  const [resendIn, setResendIn] = useState(0);
   // The screen follows the device language; a tap on a flag switches at once,
   // and the choice flows into the profile step (which saves it to the learner).
   const lang = currentLocale();
@@ -48,6 +62,8 @@ export default function Welcome() {
   const [touched, setTouched] = useState({ email: false, password: false });
   // A problem stays visible above the CTA until the next attempt or edit.
   const [failure, setFailure] = useState<string | null>(null);
+  /** The sign-in failed because the address is unconfirmed: the resend belongs right here. */
+  const [notConfirmed, setNotConfirmed] = useState(false);
   const [failureSeq, setFailureSeq] = useState(0);
   // She tapped the waiting CTA: from then on the line above it says what is still
   // missing (issue #97). Counted, so every further tap announces it again.
@@ -88,6 +104,12 @@ export default function Welcome() {
         ? t('welcome.cta_hint_repeat')
         : null;
 
+  // Counts down while the card is up; cleared with it, so nothing ticks in the background.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendIn]);
   useAnnounce(confirmSent ? t('welcome.confirm_title') : null);
   useAnnounce(resetSent ? t('welcome.reset_sent') : null);
   useAnnounce(failure, { key: failureSeq });
@@ -108,6 +130,7 @@ export default function Welcome() {
       if (mode === 'signup') {
         const signedIn = await signUp(email.trim(), password);
         if (!signedIn) {
+          setConfirmEmail(email.trim());
           setConfirmSent(true);
           setMode('signin');
           return;
@@ -117,6 +140,7 @@ export default function Welcome() {
       }
       router.replace('/');
     } catch (err) {
+      setNotConfirmed(err instanceof AuthFailure && err.reason === 'email_not_confirmed');
       if (err instanceof AuthFailure && err.reason === 'already_registered') {
         // The message says "sign in" — take her there, values stay filled in.
         setMode('signin');
@@ -126,6 +150,34 @@ export default function Welcome() {
     } finally {
       inFlight.current = false;
       setBusy(false);
+    }
+  }
+
+  /**
+   * The mail again (issue #132). Supabase's links expire and spam filters eat them; without
+   * this a family is locked out of the account they just made, with nothing in the app to
+   * click. The cooldown is ours as well as theirs — a second tap two seconds later helps
+   * nobody and can trip the provider's own limit.
+   */
+  async function resend() {
+    if (resendBusy || resendIn > 0) return;
+    const to = (confirmEmail || email).trim();
+    if (!looksLikeEmail(to)) {
+      fail(t('welcome.reset_needs_email'));
+      return;
+    }
+    setResendBusy(true);
+    setFailure(null);
+    try {
+      await resendConfirmation(to);
+      setConfirmEmail(to);
+      setConfirmSent(true);
+      setResendIn(RESEND_COOLDOWN_S);
+    } catch (err) {
+      // A request that never left the phone must not pretend a mail is coming.
+      fail(messageFor(err));
+    } finally {
+      setResendBusy(false);
     }
   }
 
@@ -205,7 +257,35 @@ export default function Welcome() {
           {confirmSent ? (
             <Card tone="mint">
               <Text style={TYPE.title}>{t('welcome.confirm_title')}</Text>
-              <Text style={[TYPE.body, { marginTop: 4 }]}>{t('welcome.confirm_body')}</Text>
+              <Text style={[TYPE.body, { marginTop: 4 }]}>
+                {t('welcome.confirm_body', { email: confirmEmail })}
+              </Text>
+              <Text style={[TYPE.small, { marginTop: 4 }]}>{t('welcome.confirm_spam')}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                <Btn
+                  variant="outline"
+                  size="sm"
+                  pill
+                  busy={resendBusy}
+                  disabled={resendIn > 0}
+                  onPress={() => void resend()}
+                >
+                  {resendIn > 0 ? t('welcome.confirm_wait') : t('welcome.confirm_resend')}
+                </Btn>
+                <Btn
+                  variant="ghost"
+                  size="sm"
+                  pill
+                  onPress={() => {
+                    setConfirmSent(false);
+                    setConfirmEmail('');
+                    setMode('signup');
+                    setEmail('');
+                  }}
+                >
+                  {t('welcome.confirm_other')}
+                </Btn>
+              </View>
             </Card>
           ) : null}
 
@@ -351,12 +431,28 @@ export default function Welcome() {
         </ScrollView>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 8 }}>
           {failure ? (
-            <Text
-              accessibilityLiveRegion="polite"
-              style={[TYPE.small, { color: palette.danger, textAlign: 'center' }]}
-            >
-              {failure}
-            </Text>
+            <>
+              <Text
+                accessibilityLiveRegion="polite"
+                style={[TYPE.small, { color: palette.danger, textAlign: 'center' }]}
+              >
+                {failure}
+              </Text>
+              {/* Told to confirm an address, with no way to get the mail again, is a dead
+                  end — and the card that had the button may be long gone (issue #132). */}
+              {notConfirmed ? (
+                <Btn
+                  variant="ghost"
+                  size="sm"
+                  pill
+                  busy={resendBusy}
+                  disabled={resendIn > 0}
+                  onPress={() => void resend()}
+                >
+                  {resendIn > 0 ? t('welcome.confirm_wait') : t('welcome.confirm_resend')}
+                </Btn>
+              ) : null}
+            </>
           ) : whyWait > 0 ? (
             <WaitHint>{waitHint}</WaitHint>
           ) : null}

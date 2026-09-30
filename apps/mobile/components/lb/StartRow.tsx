@@ -58,6 +58,10 @@ export function StartRow({
           accessibilityRole="button"
           accessibilityLabel={item.label}
           accessibilityState={{ disabled }}
+          // Out of sight under a card, so out of the reader's way too — an invisible
+          // control that is still announced is worse than one that is simply gone.
+          accessibilityElementsHidden={covered}
+          importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
           // Each item is as wide as its label and shares what is left: on a 360 px phone
           // "Hausaufgabe" keeps one line (equal fifths broke it mid-word) and a
           // multi-word label ("Erklär mir was") wraps between words instead.

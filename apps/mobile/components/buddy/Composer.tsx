@@ -25,6 +25,7 @@ import { fadeIn } from '../../lib/theme/enter.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -358,6 +359,9 @@ export function Composer({
           onBlur={() => setFocused(false)}
           placeholder={t('buddy:composer.placeholder')}
           placeholderTextColor={palette.ink3}
+          // Same as every other field: a light keyboard over the night palette is the one
+          // white rectangle on a dark screen (#133 position 7).
+          keyboardAppearance={isDarkBackground(palette.bg) ? 'dark' : 'light'}
           accessibilityLabel={t('buddy:composer.placeholder')}
           multiline
           // The web's textarea starts two rows tall; one row, growing with the text.

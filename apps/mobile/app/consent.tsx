@@ -163,7 +163,7 @@ export default function Consent() {
             label={t(forHerself ? 'consent.own_accept' : 'consent.accept')}
           />
         </Card>
-        <Btn size="lg" pill full disabled={!accepted || busy} onPress={() => void accept()}>
+        <Btn size="lg" pill full busy={busy} disabled={!accepted} onPress={() => void accept()}>
           {t('consent.cta')}
         </Btn>
         <Btn variant="ghost" size="sm" pill center disabled={busy} onPress={() => void decline()}>

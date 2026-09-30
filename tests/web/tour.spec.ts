@@ -41,7 +41,7 @@ async function onboardChild(page: Page, email: string): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   // The three first-start cards (app/onboarding.tsx) come before the home.
   await page.getByRole('button', { name: 'Überspringen' }).click();
-  await expect(page.getByText('Hallo Pia')).toBeVisible();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 
 async function say(page: Page, text: string): Promise<void> {
@@ -68,7 +68,7 @@ async function swipeCardAway(page: Page): Promise<void> {
 }
 
 const openMenu = async (page: Page, item: string) => {
-  await page.getByRole('button', { name: 'Menü öffnen' }).click();
+  await page.getByRole('button', { name: 'Mehr' }).click();
   await page.getByRole('button', { name: item }).click();
 };
 
