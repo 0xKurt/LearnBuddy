@@ -106,8 +106,9 @@ export const TIME = asks('time', [
     id: 'time-013',
     says: 'ich geh jetzt erst raus, erinner mich in 3 stunden',
     wants: 'a reminder in three hours, and Buddy to know she is out',
-    expect: { kind: 'acts', tools: ['plan_step', 'remember'] },
-    hunch: 'Relative hours again; the constraint part has a path.',
+    // "ich geh raus" ist ein Zustand für genau diese drei Stunden, kein Satz fürs Gedächtnis:
+    // die Erinnerung trägt ihn schon. Live gemessen (30.09.) — plan_step allein ist richtig.
+    expect: { kind: 'acts', tools: ['plan_step'] },
   },
   {
     id: 'time-014',
@@ -197,7 +198,9 @@ export const TIME = asks('time', [
     id: 'time-024',
     says: 'morgen vormittag so gegen halb 10',
     wants: 'a reminder tomorrow at 09:30',
-    expect: { kind: 'acts', tools: ['plan_step'] },
+    // Der Satz sagt eine Zeit, aber nicht wofür. Live gemessen (30.09.): Buddy fragt, ob eine
+    // Erinnerung gemeint ist — auf einen Halbsatz hin etwas einzutragen wäre geraten.
+    expect: { kind: 'asks_back', why: 'Die Zeit steht, der Anlass nicht.' },
   },
 
   // ── recurring ────────────────────────────────────────────────────────────────────────────

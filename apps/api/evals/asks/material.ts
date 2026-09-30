@@ -358,9 +358,10 @@ export const MATERIAL = asks('material', [
     id: 'material-052',
     says: 'oh nein das is n screenshot von meinem chat mit lisa, loesch das bitte',
     wants: 'Private Nachrichten sofort aus dem System heraus.',
-    expect: { kind: 'acts', tools: ['open_area'] },
-    hunch:
-      'Ein ausdrücklicher Löschwunsch im Chat endet bei einem Knopf in die Bibliothek — kein direkter Weg.',
+    // Seit #111 gibt es delete_material — und weil Löschen endgültig ist, verlangt der Code
+    // die Rückfrage: erst fragen, dann auf ihr Ja löschen. Der Maßstab ist deshalb die Frage,
+    // nicht die Tat (live gemessen 30.09., findings-live.md).
+    expect: { kind: 'asks_back', why: 'Löschen ist endgültig — der Code verlangt ihr Ja zuerst.' },
   },
   {
     id: 'material-053',
@@ -400,7 +401,9 @@ export const MATERIAL = asks('material', [
     id: 'material-058',
     says: 'das is mein stundenplan, kannst du den auch lesen',
     wants: 'Dass Buddy den Stundenplan kennt und mitdenkt.',
-    expect: { kind: 'answers' },
+    // Live gemessen: Buddy zeigt ihr den Weg zur Kamera (open_area), statt ihn zu beschreiben.
+    // Das ist die Tat statt der Ankündigung — der Maßstab "nur reden" war zu eng.
+    expect: { kind: 'acts', tools: ['open_area'] },
     hunch:
       'Ein Stundenplan ist kein Arbeitsblatt — die Extraktion wird ihn als not_learning_material ablehnen, obwohl er nützlich wäre.',
   },
@@ -450,8 +453,12 @@ export const MATERIAL = asks('material', [
     id: 'material-065',
     says: 'loesch das blatt von gestern',
     wants: 'Ein bestimmtes Blatt loswerden, gesagt statt getippt.',
-    expect: { kind: 'acts', tools: ['open_area'] },
-    hunch: 'Nur der Umweg über die Bibliothek; Buddy löscht nichts selbst.',
+    // "von gestern" passt oft auf mehr als ein Blatt, und gelöscht wird nichts auf Verdacht
+    // (#111). Nachfragen ist hier die richtige Antwort, nicht das Ausweichen.
+    expect: {
+      kind: 'asks_back',
+      why: 'Mehrere Blätter können gemeint sein; Löschen ist endgültig.',
+    },
   },
   {
     id: 'material-066',
@@ -487,12 +494,10 @@ export const MATERIAL = asks('material', [
     id: 'material-071',
     says: 'schick mal das bild nochmal',
     wants: 'Das eigene Foto noch einmal ansehen.',
-    expect: {
-      kind: 'refuses',
-      why: 'Fotos werden nie zurückgegeben und nach der Aufbewahrungsfrist gelöscht.',
-    },
-    hunch:
-      'Es gibt keinen Weg, ein hochgeladenes Seitenfoto wieder anzusehen — kein Endpunkt, kein Bildschirm.',
+    // Buddy lehnt ehrlich ab UND zeigt, wo sie neu fotografiert (live gemessen): das Ablehnen
+    // allein wäre weniger, nicht mehr. Seit #57 sieht sie ihre Seiten außerdem im Gespräch,
+    // solange die Fotos ohnehin auf dem Handy liegen.
+    expect: { kind: 'acts', tools: ['open_area'] },
   },
   {
     id: 'material-072',

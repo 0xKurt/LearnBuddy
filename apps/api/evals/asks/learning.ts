@@ -216,7 +216,9 @@ export const LEARNING = asks('learning', [
     says: 'lass uns da weitermachen wo wir aufgehört haben',
     wants:
       'To resume, not restart — they remember roughly where it stopped and expect Buddy to as well.',
-    expect: { kind: 'answers' },
+    // Live gemessen (30.09.): Buddy antwortet mit einem Startknopf für genau das Thema, an dem
+    // sie war — die Tat statt der Ankündigung. "Nur reden" war der engere, ärmere Maßstab.
+    expect: { kind: 'acts', tools: ['offer_learning'] },
     hunch:
       'The app does offer it: home.ts builds a resume_practice card for an unfinished session. But Buddy, asked in the chat, is blind to it — practice_history lists finished sessions only, and no lookup reports an open one. So he answers about something he cannot see while the card sits on the very next screen.',
   },
@@ -727,7 +729,9 @@ export const LEARNING = asks('learning', [
     id: 'learning-099',
     says: 'ich will gitarre lernen bringst du mir das bei',
     wants: 'Learning in the full sense, on something that cannot be answered by typing.',
-    expect: { kind: 'answers' },
+    // Live gemessen (30.09.): Buddy sagt ehrlich, was im Chat geht (Theorie, Noten, Akkorde)
+    // und was nicht — und merkt sich, dass sie Gitarre lernen will. Genau das soll er.
+    expect: { kind: 'acts', tools: ['remember'] },
     hunch:
       'The prompt says to judge by purpose, not topic, so this is learning. But generate.ts must produce items answered by typing, choosing or speaking — "no tasks to draw, build, hand in or look up elsewhere" — so the theory can be practised and the instrument cannot. Where that line falls is not stated, and the child gets either a refusal that contradicts the purpose rule or an offer that turns guitar into a quiz.',
   },
