@@ -79,7 +79,8 @@
       "read": "Lesen",
       "build": "Übungen",
       "a11y": "Schritt {{step}} von {{total}}: {{label}}"
-    }
+    },
+    "reading_pages": "Deine Seiten"
   },
   "when": {
     "today": "heute",

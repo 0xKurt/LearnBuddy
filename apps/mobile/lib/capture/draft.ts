@@ -6,8 +6,10 @@
 // A draft that was already being sent keeps its request id, so going on uses
 // the same material (the API answers repeats with it) and nothing is doubled.
 //
-// Photos that were sent are kept on the phone for a day, so a notice about a
-// page that could not be read can show that very page.
+// Photos that were sent are kept on the phone for a day, so what the chat says
+// about that sheet can show it: the page that could not be read, and the pages
+// being read right now (issue #57). The day is the notice's own lifetime — the
+// preview does not hold a photo one minute longer (docs/privacy.md).
 //
 // Pure: the storage is passed in (draftStorage.ts on a phone, .web.ts in a browser).
 
@@ -60,7 +62,8 @@ export type SentPhotos = z.infer<typeof Sent>;
 
 /** A draft older than this is dropped (the photos are deleted after 7 days on the server too). */
 export const DRAFT_MAX_AGE_MS = 7 * 86_400_000;
-/** Sent photos are kept this long on the phone for the page notice (it shows for 24 h). */
+/** Sent photos are kept this long on the phone for the page notice (it shows for 24 h)
+ * and for the preview of the sheet in the chat while that notice or the reading stands. */
 export const SENT_KEEP_MS = 24 * 3_600_000;
 
 export type DraftStorage = {
@@ -204,11 +207,20 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
       await this.prune();
     },
 
+    /**
+     * Every page of a sent material, in the order they were taken, while they are
+     * kept — what the sheet's card in the chat shows of it (issue #57). Empty for a
+     * set with a PDF in it: there a file is not a page, and a PDF is no picture.
+     * Nothing is held any longer for this: the same day the page notice already had.
+     */
+    async sentPages(materialId: string): Promise<string[]> {
+      const entry = (await readSent()).find((s) => s.materialId === materialId);
+      return entry?.paged ? entry.uris.map(fix) : [];
+    },
+
     /** The photo of one page of a sent material (1-based), while it is kept. */
     async sentPage(materialId: string, page: number): Promise<string | null> {
-      const entry = (await readSent()).find((s) => s.materialId === materialId);
-      const uri = entry?.paged ? (entry.uris[page - 1] ?? null) : null;
-      return uri === null ? null : fix(uri);
+      return (await this.sentPages(materialId))[page - 1] ?? null;
     },
 
     /** Signed out: the draft and every kept photo are deleted. */

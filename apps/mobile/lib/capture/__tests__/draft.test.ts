@@ -96,9 +96,14 @@ describe('photo drafts', () => {
     expect(await s.sentPage('mat-1', 2)).toBe(p2);
     expect(await s.sentPage('mat-1', 3)).toBeNull();
     expect(await s.sentPage('other', 1)).toBeNull();
+    // The preview of the sheet in the chat shows every page, in the order taken (issue #57),
+    // and lives exactly as long as the page notice — not one minute longer.
+    expect(await s.sentPages('mat-1')).toEqual([p1, p2]);
+    expect(await s.sentPages('other')).toEqual([]);
     t = new Date('2026-09-29T15:00:00Z');
     await s.prune();
     expect(await s.sentPage('mat-1', 2)).toBeNull();
+    expect(await s.sentPages('mat-1')).toEqual([]);
     expect(m.files.size).toBe(0);
   });
 

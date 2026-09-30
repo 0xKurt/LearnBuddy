@@ -111,6 +111,9 @@ const VISIBLE_MESSAGES = 6;
 /** iOS can't present a sheet while another one is still sliding away. */
 const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
 
+/** One empty list for every "no photos": a fresh array each render would re-run the effect. */
+const NO_THUMBS: readonly string[] = [];
+
 export default function BuddyScreen() {
   const { palette } = useTheme();
   // The conversation is on this screen: no screenshot, no recording, blank in the app
@@ -177,17 +180,33 @@ export default function BuddyScreen() {
     home.data?.now?.type === 'material_processing' ? home.data.now.material_id : null;
   useEffect(() => {
     if (!readingId) {
-      setReadingThumb(null);
+      setReadingPages(NO_THUMBS);
       return;
     }
     let alive = true;
-    void drafts.sentPage(readingId, 1).then((uri) => {
-      if (alive) setReadingThumb(uri);
+    void drafts.sentPages(readingId).then((uris) => {
+      if (alive) setReadingPages(uris);
     });
     return () => {
       alive = false;
     };
   }, [readingId]);
+  // A sheet Buddy could not read: its first page, so she sees which one it was about
+  // (issue #57) — while the photos are on the phone anyway, nothing is held for it.
+  const failedId = home.data?.now?.type === 'material_failed' ? home.data.now.material_id : null;
+  useEffect(() => {
+    if (!failedId) {
+      setFailedThumb(null);
+      return;
+    }
+    let alive = true;
+    void drafts.sentPage(failedId, 1).then((uri) => {
+      if (alive) setFailedThumb(uri);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [failedId]);
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   /** The message being answered right now and how to end its stream ("Stopp"). */
   const sending = useRef<{ id: string; controller: AbortController } | null>(null);
@@ -213,8 +232,10 @@ export default function BuddyScreen() {
     if (b.following) scroll.current?.scrollToEnd({ animated: followEnd.current });
     followEnd.current = false;
   }
-  /** The photo of the sheet being read, while it is on the phone (it arrived). */
-  const [readingThumb, setReadingThumb] = useState<string | null>(null);
+  /** The photos of the sheet being read, while they are on the phone (they arrived). */
+  const [readingPages, setReadingPages] = useState<readonly string[]>(NO_THUMBS);
+  /** The photo of the sheet Buddy could not read, while it is on the phone. */
+  const [failedThumb, setFailedThumb] = useState<string | null>(null);
   // After sending, follow the conversation to its end once the new content has rendered.
   const followEnd = useRef(false);
   const voiceOn = useVoiceMode((s) => s.on);
@@ -686,6 +707,7 @@ export default function BuddyScreen() {
             : t('buddy:now.failed_title')
         }
         detail={t(`buddy:now.failed_${failedNow.reason ?? 'model_error'}`)}
+        thumb={failedThumb}
       >
         {failedNow.retryable ? (
           <Btn
@@ -890,7 +912,7 @@ export default function BuddyScreen() {
         <ReadingBar
           key="now"
           card={now}
-          thumb={readingThumb}
+          pages={readingPages}
           preparing={layout.working === 'bar'}
           titleInset={CLOSE_INSET}
         />

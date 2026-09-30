@@ -9,7 +9,7 @@
 import type { NowCard } from '@learnbuddy/shared-types/contracts';
 import { Image } from 'expo-image';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -140,20 +140,27 @@ function Bar({
   );
 }
 
-/** Her sheet being read: photo, status, the stage dots — the rest on a tap. */
+/**
+ * Her sheet being read: photo, status, the stage dots — the rest on a tap. The pages
+ * she just sent stand in the opened bar as thumbnails, each one shown large on a tap
+ * (issue #57: "eine vorschau von den bildern sieht man auch nicht"), for as long as
+ * the photos are on the phone anyway — nothing is kept longer for them.
+ */
 export function ReadingBar({
   card,
-  thumb,
+  pages,
   preparing,
   titleInset,
 }: {
   card: Processing;
-  thumb: string | null;
+  /** The photos of this sheet while they are still on the phone, in page order. */
+  pages: readonly string[];
   preparing: boolean;
   titleInset: number;
 }) {
   const { palette } = useTheme();
-  const { t } = useTranslation('buddy');
+  const { t } = useTranslation(['buddy', 'capture']);
+  const thumb = pages[0] ?? null;
   const view = readingView(card, preparing);
   const title = t(
     view.title.key,
@@ -177,7 +184,10 @@ export function ReadingBar({
       label={[title, stepText, body].filter(Boolean).join('. ')}
       leading={
         thumb ? (
-          <ZoomablePhoto uri={thumb}>
+          <ZoomablePhoto
+            uri={thumb}
+            label={t('capture:photo_label', { index: 1, total: pages.length })}
+          >
             <View
               style={[{ borderRadius: 7, backgroundColor: palette.paper, padding: 2 }, SHADOW.soft]}
             >
@@ -198,6 +208,8 @@ export function ReadingBar({
         <>
           <Text style={[TYPE.small, { fontSize: 14, lineHeight: 20 }]}>{body}</Text>
           <StepNames view={view} />
+          {/* One page is the thumbnail on the bar already; from two on they belong here. */}
+          {pages.length > 1 ? <SentPages uris={pages} /> : null}
         </>
       }
     />
@@ -368,6 +380,79 @@ export function CaptureBar({
         ) : undefined
       }
     />
+  );
+}
+
+/**
+ * The pages of the sheet, in the order they were taken: a small picture each, shown
+ * large on a tap (ZoomViewer) — so "schief, unscharf, halbe Seite" is visible while
+ * the sheet is being read (issue #57). The number stands under the picture, not over
+ * it: on a thumbnail this small a badge would cover the very thing she wants to see.
+ * A page the phone cannot show says so instead of standing there empty.
+ */
+function SentPages({ uris }: { uris: readonly string[] }) {
+  const { palette } = useTheme();
+  const { t } = useTranslation(['buddy', 'capture']);
+  const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={TYPE.label}>{t('now.reading_pages')}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+      >
+        {uris.map((uri, i) => {
+          const label = t('capture:photo_label', { index: i + 1, total: uris.length });
+          return (
+            <View key={uri} style={{ alignItems: 'center', gap: 2 }}>
+              <View
+                style={{
+                  // 44 wide keeps the tap target at the 44 pt rule; 58 is the page's shape.
+                  width: 44,
+                  height: 58,
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  backgroundColor: palette.canvas,
+                }}
+              >
+                {broken.has(uri) ? (
+                  <View
+                    accessible
+                    accessibilityLabel={t('capture:preview_failed')}
+                    style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Icon name="eye-off" size={18} color={palette.ink3} />
+                  </View>
+                ) : (
+                  <ZoomablePhoto uri={uri} label={label} fill>
+                    <Image
+                      source={{ uri }}
+                      accessible
+                      accessibilityLabel={label}
+                      contentFit="cover"
+                      transition={120}
+                      recyclingKey={uri}
+                      cachePolicy="memory-disk"
+                      onError={() => setBroken((was) => new Set(was).add(uri))}
+                      style={{ flex: 1 }}
+                    />
+                  </ZoomablePhoto>
+                )}
+              </View>
+              <Text
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
+                style={{ fontSize: 11, lineHeight: 14, color: palette.ink2 }}
+              >
+                {i + 1}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
