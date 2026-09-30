@@ -44,7 +44,7 @@ import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
 import { Icon } from '../components/lb/Icon.js';
 import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
-import { StartRow } from '../components/lb/StartRow.js';
+import { StartRow, TRAILING_WIDTH } from '../components/lb/StartRow.js';
 import { Wordmark } from '../components/lb/Wordmark.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { Sheet } from '../components/lb/Sheet.js';
@@ -995,7 +995,7 @@ export default function BuddyScreen() {
             What stands here instead is the mark, and only the mark (#135) — one thing,
             not three, and nothing in it to tap. */}
         <View style={{ paddingHorizontal: SPACE.lg, paddingTop: SPACE.xs, paddingBottom: 2 }}>
-          <Wordmark state={pending !== null ? 'think' : 'idle'} />
+          <Wordmark />
         </View>
         <View style={{ flex: 1 }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never
@@ -1005,6 +1005,7 @@ export default function BuddyScreen() {
               id={openCard}
               closeLabel={t('buddy:card.close')}
               onClose={() => closeCard(openCard)}
+              rightInset={TRAILING_WIDTH}
             >
               {top}
             </TopOverlay>
@@ -1013,17 +1014,9 @@ export default function BuddyScreen() {
           {talking ? (
             <>
               <View
-                style={{
-                  paddingHorizontal: 16,
-                  paddingTop: 6,
-                  paddingBottom: 4,
-                  opacity: covered ? 0 : 1,
-                }}
+                style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4 }}
                 // Where the conversation starts (for its fade-out under the row).
                 onLayout={(e) => setThreadTop(e.nativeEvent.layout.height)}
-                pointerEvents={covered ? 'none' : 'auto'}
-                accessibilityElementsHidden={covered}
-                importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
               >
                 {/* One row above the conversation: the ways to start. The greeting sits in
                     the bar, what is due is a card — nothing else takes height here
@@ -1037,6 +1030,7 @@ export default function BuddyScreen() {
                     onPress: () => setMenuOpen(true),
                   }}
                   disabled={pending !== null}
+                  covered={covered}
                 />
               </View>
               <ScrollView

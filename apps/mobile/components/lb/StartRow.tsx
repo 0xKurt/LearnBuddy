@@ -16,16 +16,28 @@ import { Icon } from './Icon.js';
 import type { OrbitItem } from './OrbitMenu.js';
 
 const NODE = 44;
+/**
+ * How much room the menu takes on the right, so a card laid over this row can leave it free
+ * (issue #135): the disc, the gap before it and the 6 that undo the row's negative margin.
+ */
+export const TRAILING_WIDTH = NODE + 8 + 6;
 
 export function StartRow({
   items,
   trailing,
   disabled = false,
+  covered = false,
 }: {
   items: OrbitItem[];
   /** The menu: same row, quieter, never disabled by a turn in flight. */
   trailing?: OrbitItem;
   disabled?: boolean;
+  /**
+   * A card lies over this row. The ways to start go out of sight under it — the menu does
+   * NOT (owner 30.09.: "wir muessen auch verhindern dass info texte das menue komplett
+   * verdecken. das nervt"). The way out of a screen may never be behind something.
+   */
+  covered?: boolean;
 }) {
   const { palette } = useTheme();
   return (
@@ -42,7 +54,7 @@ export function StartRow({
         <Pressable
           key={item.key}
           onPress={item.onPress}
-          disabled={disabled}
+          disabled={disabled || covered}
           accessibilityRole="button"
           accessibilityLabel={item.label}
           accessibilityState={{ disabled }}
@@ -55,7 +67,7 @@ export function StartRow({
             flexBasis: 'auto',
             minWidth: NODE,
             alignItems: 'center',
-            opacity: disabled ? 0.6 : 1,
+            opacity: covered ? 0 : disabled ? 0.6 : 1,
           }}
         >
           {({ pressed }) => (

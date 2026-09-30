@@ -36,9 +36,11 @@ type Props = {
   /** What the close button says to a screen reader ("Karte ausblenden"). */
   closeLabel: string;
   onClose: () => void;
+  /** Room to leave on the right for something that must stay reachable (the menu). */
+  rightInset?: number;
 };
 
-export function TopOverlay({ id, children, closeLabel, onClose }: Props) {
+export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0 }: Props) {
   const { palette } = useTheme();
   const lift = useRef(new Animated.Value(0)).current;
   const closeRef = useRef(onClose);
@@ -91,7 +93,10 @@ export function TopOverlay({ id, children, closeLabel, onClose }: Props) {
         top: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 16,
+        paddingLeft: 16,
+        // Stop before the menu instead of painting over it (issue #135): the card floats over
+        // the greeting and the ways to start, but never over the way out.
+        paddingRight: 16 + rightInset,
         paddingTop: 8,
         zIndex: 10,
         elevation: 12,
