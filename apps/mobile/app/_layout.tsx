@@ -27,6 +27,7 @@ import { currentSession, loadSession, onSessionChange } from '../lib/auth/sessio
 import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i18n/index.js';
 import { startCrashReports } from '../lib/observability/sentry.js';
 import { barStyleFor } from '../lib/theme/luminance.js';
+import { watchReducedMotion } from '../lib/theme/motion.js';
 import { restoreTheme, ThemeProvider, useTheme } from '../lib/theme/ThemeProvider.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { ShareIntake } from '../components/capture/ShareIntake.js';
@@ -257,6 +258,11 @@ export default function RootLayout() {
     if (router.canDismiss()) router.dismissAll();
     router.replace('/');
   }, [ready, pathname]);
+
+  // Whether the system asks for less motion, so the entering animations can drop the rise
+  // and keep the cross-fade (issue #126). Read once and kept current: someone can turn it
+  // on while the app is open, and Android counts "Animationen aus" as asking for it.
+  useEffect(() => watchReducedMotion(), []);
 
   // Android cut the app off while the camera was open: the photo goes on to capture (M-22).
   useEffect(() => {
