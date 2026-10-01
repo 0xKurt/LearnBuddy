@@ -70,6 +70,7 @@
     "instruction": "Dillo ad alta voce",
     "listen": "Ascolta",
     "listen_slow": "Ascolta lentamente",
+    "listen_slow_short": "Lentamente",
     "listen_stop": "Ferma",
     "listen_hint": "Te lo legge ad alta voce.",
     "no_voice": "La lettura ad alta voce ora non funziona su questo dispositivo – forse manca la voce per questa lingua.",

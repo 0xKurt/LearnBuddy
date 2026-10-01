@@ -2,10 +2,17 @@
 // large and, once Buddy has listened, the same sentence word by word: words
 // that sound right in calm green, words to practise in warm amber and
 // underlined (never red), the tips below and one overall line. SpeakPanel is
-// the pinned bottom part: "Anhören", "Langsam anhören" and the record button
-// (tap to start, tap to stop, 15 s at most). The recording goes to the server,
+// the pinned bottom part: hearing the sentence, saying it (tap to start, tap to
+// stop, 15 s at most) and the way past it. The recording goes to the server,
 // whose model listens to it; a failed upload is sent again with the same
 // client_turn_id, so it is counted only once.
+//
+// The bar carries TWO shapes, not four (issue #186): one large filled pill — the single
+// leading action, which always says what pressing it will do — and small pills for
+// everything quiet around it (soft for a tool on this sentence, ghost for a way out). The
+// owner looked at the old bar, with a text link, two outlined boxes, a big filled button
+// and a ghost button on it, and wrote "und ich weiss auch nicht wieso das vom design so
+// anders ist" (01.10.).
 
 import type {
   AnswerResponse,
@@ -27,6 +34,7 @@ import { messageFor } from '../../lib/errors.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
 import { formatClock, MAX_RECORDING_MS, type SpeakMime } from '../../lib/speech/voice.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
@@ -451,11 +459,33 @@ export function SpeakPanel({
     onSkip?.();
   }
 
-  const recordLabel = recording
-    ? t('speak.record_stop')
-    : hasFeedback
-      ? t('speak.record_again')
-      : t('speak.record');
+  const micRefused = rec.denied && Platform.OS !== 'web';
+
+  /**
+   * What the one big control does right now — and it is always the thing to do next
+   * (issues #185, #186): without a microphone it opens the settings, while recording it
+   * finishes the recording, with a recording that did not arrive it sends that one again,
+   * otherwise it starts recording. Nothing else in this bar is ever filled, so there is
+   * never a second thing competing for her eye.
+   */
+  const lead = micRefused
+    ? 'settings'
+    : recording
+      ? 'stop'
+      : sending === 'failed'
+        ? 'resend'
+        : 'record';
+
+  const leadText =
+    lead === 'settings'
+      ? t('speak.open_settings')
+      : lead === 'stop'
+        ? t('speak.record_stop')
+        : lead === 'resend'
+          ? t('speak.resend')
+          : hasFeedback
+            ? t('speak.record_again')
+            : t('speak.record');
 
   // One status row, never a stack (issue #14): what is true right now replaces what was
   // true before — a microphone that was refused, the running recording, Buddy listening,
@@ -465,7 +495,11 @@ export function SpeakPanel({
   // "Sprechen" sat there looking as inviting as ever. The owner pressed it and wrote "der
   // sprechen button funktioniert nicht. kp wieso" (01.10., issue #185). The sentence stays;
   // the button is gone, because the big one below says it now.
-  const micRefused = rec.denied && Platform.OS !== 'web';
+  //
+  // What a row like this still needs — dropping a recording, skipping while it waits — are
+  // the same small ghost pills as the rest of the quiet controls (issue #186). "Nochmal
+  // senden" is not among them: it is the leading action while a send has failed, so it
+  // stands in the big control below rather than as a second filled button up here.
   const status = rec.denied ? (
     <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
       {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
@@ -477,7 +511,7 @@ export function SpeakPanel({
         time: formatClock(rec.elapsedMs),
         max: formatClock(MAX_RECORDING_MS),
       })}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 24 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, minHeight: 24 }}
     >
       <RecordingDot />
       <Text style={[TYPE.body, { fontWeight: '600' }]}>
@@ -488,16 +522,16 @@ export function SpeakPanel({
       </Text>
     </View>
   ) : waitingOffline ? (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: SPACE.sm }}>
       <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
         {t('speak.waiting_offline')}
       </Text>
-      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-        <Btn variant="ghost" onPress={discard} disabled={disabled}>
+      <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
+        <Btn size="sm" pill variant="ghost" onPress={discard} disabled={disabled}>
           {t('speak.record_new')}
         </Btn>
         {onSkip ? (
-          <Btn variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
+          <Btn size="sm" pill variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
             {t('speak.skip')}
           </Btn>
         ) : null}
@@ -508,24 +542,21 @@ export function SpeakPanel({
       accessible
       accessibilityRole="progressbar"
       accessibilityLabel={t('speak.listening')}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 24 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, minHeight: 24 }}
     >
       <ActivityIndicator color={palette.primary} />
       <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('speak.listening')}</Text>
     </View>
   ) : sending === 'failed' ? (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: SPACE.sm }}>
       <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
         {t('speak.send_failed')}
       </Text>
-      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-        <Btn onPress={() => void send()} disabled={disabled}>
-          {t('speak.resend')}
-        </Btn>
-        <Btn variant="ghost" onPress={discard} disabled={disabled}>
-          {t('speak.record_new')}
-        </Btn>
-      </View>
+      {/* Sending it again is the big control below ("Nochmal senden"); letting go of this
+          recording is the quiet alternative. */}
+      <Btn size="sm" pill variant="ghost" onPress={discard} disabled={disabled}>
+        {t('speak.record_new')}
+      </Btn>
     </View>
   ) : problem ? (
     <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
@@ -537,34 +568,57 @@ export function SpeakPanel({
     <BottomBar>
       {status}
 
-      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+      {/* Hearing the sentence is ONE thing with a quieter variant, not two equal buttons
+          (issue #186): "Anhören" is the soft pill the app uses for reading aloud wherever
+          it offers it, and "Langsam" stands beside it as its modifier — close enough
+          (SPACE.xs) to read as one control, and the rank is in the pill, the icon and the
+          label, never in the colour alone. ListenButton decides that, once. */}
+      <View style={{ flexDirection: 'row', gap: SPACE.xs, flexWrap: 'wrap' }}>
         <ListenButton text={item.prompt} lang={lang} disabled={recording || busy} />
         <ListenButton text={item.prompt} lang={lang} slow disabled={recording || busy} />
       </View>
 
-      {/* One big control, and it always says what pressing it will do. Without the
-          microphone that is "open the settings", not "speak" — a button that cannot do
-          its job must not keep offering it (issue #185). */}
+      {/* The one leading action: the only filled thing in the bar, and it always says what
+          pressing it will do. Without the microphone that is "open the settings", not
+          "speak" — a button that cannot do its job must not keep offering it (issue #185). */}
       <Btn
         size="lg"
         full
-        variant={recording ? 'soft' : 'primary'}
-        onPress={micRefused ? () => void Linking.openSettings() : toggleRecording}
-        disabled={micRefused ? false : recording ? false : locked}
-        accessibilityLabel={
-          micRefused
-            ? t('speak.open_settings')
-            : recording
-              ? t('speak.record_stop_label')
-              : t('speak.record_label')
+        pill
+        variant={lead === 'stop' ? 'soft' : 'primary'}
+        {...(lead === 'stop'
+          ? { icon: 'stop' as const }
+          : lead === 'record'
+            ? { icon: 'mic' as const }
+            : {})}
+        onPress={
+          lead === 'settings'
+            ? () => void Linking.openSettings()
+            : lead === 'resend'
+              ? () => void send()
+              : toggleRecording
         }
-        accessibilityHint={recording || micRefused ? undefined : t('speak.record_hint')}
+        disabled={lead === 'record' ? locked : lead === 'resend' ? disabled : false}
+        accessibilityLabel={
+          lead === 'settings'
+            ? t('speak.open_settings')
+            : lead === 'stop'
+              ? t('speak.record_stop_label')
+              : lead === 'resend'
+                ? t('speak.resend')
+                : t('speak.record_label')
+        }
+        {...(lead === 'record' ? { accessibilityHint: t('speak.record_hint') } : {})}
       >
-        {micRefused ? t('speak.open_settings') : recordLabel}
+        {leadText}
       </Btn>
 
+      {/* The way past this sentence — the same quiet pill as the controls above it, and the
+          only one: for a sentence she is to SAY there is no solution to show, so the
+          screen's "Lösung zeigen" chip (the same `reveal` call under another name) is not
+          offered next to it any more (app/practice/[id].tsx, issue #186). */}
       {onSkip && !recording && !waitingOffline ? (
-        <Btn variant="ghost" center onPress={onSkip} disabled={locked}>
+        <Btn size="sm" pill variant="ghost" center onPress={onSkip} disabled={locked}>
           {t('speak.skip')}
         </Btn>
       ) : null}

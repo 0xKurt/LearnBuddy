@@ -70,6 +70,7 @@
     "instruction": "Sag es laut",
     "listen": "Anhören",
     "listen_slow": "Langsam anhören",
+    "listen_slow_short": "Langsam",
     "listen_stop": "Anhalten",
     "listen_hint": "Liest es dir vor.",
     "no_voice": "Vorlesen klappt auf diesem Gerät gerade nicht – vielleicht fehlt die Stimme für diese Sprache.",

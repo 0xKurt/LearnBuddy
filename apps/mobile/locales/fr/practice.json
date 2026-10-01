@@ -70,6 +70,7 @@
     "instruction": "Dis-le à voix haute",
     "listen": "Écouter",
     "listen_slow": "Écouter lentement",
+    "listen_slow_short": "Lentement",
     "listen_stop": "Arrêter",
     "listen_hint": "Te le lit à voix haute.",
     "no_voice": "La lecture à voix haute ne marche pas sur cet appareil pour le moment – la voix de cette langue manque peut-être.",

@@ -350,6 +350,17 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('textbox').last().fill('Englisch: The weather is nice today.');
   await inSheet(page).getByRole('button', { name: "Los geht's" }).click();
   await expect(page.getByText('The weather is nice today.').first()).toBeVisible();
+  // One leading action and one way past the sentence (issue #186). "Lösung zeigen" was the
+  // same `reveal` call under a second name, in a second shape, on the other side of the
+  // screen — the owner read the bar as a toolbar. For a sentence she is to SAY there is
+  // nothing to reveal: it stands in the card above.
+  await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Diesmal überspringen' })).toHaveCount(1);
+  // Hearing it is one control with a quieter variant beside it, not two equal buttons.
+  await expect(page.getByRole('button', { name: 'Anhören', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Langsam anhören' })).toBeVisible();
+  // The bar before she has said anything, measured at both phone sizes (fit.ts).
+  await shot(page, '48a-speak-ready');
   await page.getByRole('button', { name: 'Aufnahme starten' }).click();
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken' }).click();

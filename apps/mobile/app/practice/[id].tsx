@@ -954,7 +954,13 @@ export default function PracticeScreen() {
                 {open ? (
                   <HelpChips
                     onHint={hint}
-                    onReveal={skip}
+                    // A spoken sentence has no solution to show — it stands in the card, and
+                    // the bar under it already offers the one way past it ("Diesmal
+                    // überspringen", which is this very `reveal` call). Two names in two
+                    // shapes for one action, on opposite sides of the screen, was half of
+                    // why this screen felt unlike the rest (issue #186). In a running test
+                    // the bar has no way out, so there the chip stays.
+                    onReveal={speaking && canReveal ? undefined : skip}
                     revealLabel={skipLabel}
                     revealHint={skipHint}
                     disabled={locked}

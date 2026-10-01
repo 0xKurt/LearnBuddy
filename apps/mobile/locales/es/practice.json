@@ -70,6 +70,7 @@
     "instruction": "Dilo en voz alta",
     "listen": "Escuchar",
     "listen_slow": "Escuchar despacio",
+    "listen_slow_short": "Despacio",
     "listen_stop": "Parar",
     "listen_hint": "Te lo lee en voz alta.",
     "no_voice": "Leer en voz alta no funciona ahora en este dispositivo – quizá falta la voz para este idioma.",

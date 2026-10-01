@@ -1,27 +1,35 @@
-// "Anhören": a small button that reads a word or sentence aloud in its
-// language (lib/speech/listen.ts). Tapping it again while it plays stops it.
-// The speaker icon and the label both say what it does; the state is announced.
+// "Anhören": hearing a word or a sentence read aloud in its language
+// (lib/speech/listen.ts). Tapping it again while it plays stops it.
+//
+// Its shape and its rank are decided here, once (issue #186). It is the same small soft
+// pill the app already uses for "read this aloud" ("Nochmal vorlesen" over a question), so
+// the same action looks the same wherever it stands — before this, the pronunciation bar
+// drew it as an outlined box and the question above it as a pill, and the owner asked
+// "ich weiss auch nicht wieso das vom design so anders ist" (01.10.).
+//
+// `slow` is NOT a second way to listen: it is this one, slower. So it renders as the
+// quieter ghost pill beside its sibling, without the speaker icon and labelled with the
+// modifier alone ("Langsam") — while a screen reader still hears the whole action
+// ("Langsam anhören"). Two equal-rank buttons made her sort out every time which of the
+// two mattered.
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
 
 import { speak, stop, type ListenEnd } from '../../lib/speech/listen.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { Icon } from '../lb/Icon.js';
+import { Btn } from '../lb/Btn.js';
 import { toast } from '../lb/Toast.js';
 
 type Props = {
   text: string;
   /** The text's language (ISO 639-1, e.g. "fr"). */
   lang: string;
-  /** Read at the slower "langsam" speed. */
+  /** The same listening, at the slower "langsam" speed — a variant, never a second way. */
   slow?: boolean;
   disabled?: boolean;
 };
 
 export function ListenButton({ text, lang, slow = false, disabled = false }: Props) {
-  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const [playing, setPlaying] = useState(false);
   const mounted = useRef(true);
@@ -58,7 +66,14 @@ export function ListenButton({ text, lang, slow = false, disabled = false }: Pro
     void speak(text, lang, { slow, onEnd });
   }
 
+  // What stands on it, and what a screen reader hears. While it plays, both say "Anhalten":
+  // the label is the state, never the colour alone.
   const label = playing
+    ? t('speak.listen_stop')
+    : slow
+      ? t('speak.listen_slow_short')
+      : t('speak.listen');
+  const spoken = playing
     ? t('speak.listen_stop')
     : slow
       ? t('speak.listen_slow')
@@ -66,44 +81,18 @@ export function ListenButton({ text, lang, slow = false, disabled = false }: Pro
   const off = disabled || text.trim().length === 0;
 
   return (
-    <Pressable
+    <Btn
+      size="sm"
+      pill
+      variant={slow ? 'ghost' : 'soft'}
+      // The speaker belongs to the action; its slower variant does not repeat the icon.
+      {...(playing ? { icon: 'stop' as const } : slow ? {} : { icon: 'speak' as const })}
       onPress={press}
       disabled={off}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={playing ? undefined : t('speak.listen_hint')}
-      accessibilityState={{ disabled: off, busy: playing }}
-      hitSlop={4}
-      style={{ alignSelf: 'flex-start', borderRadius: 12, opacity: off ? 0.6 : 1 }}
+      accessibilityLabel={spoken}
+      {...(playing ? {} : { accessibilityHint: t('speak.listen_hint') })}
     >
-      {({ pressed }) => (
-        <View
-          style={{
-            minHeight: 44,
-            paddingHorizontal: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: playing ? palette.primary : palette.hairline,
-            backgroundColor: playing ? palette.primaryLt : palette.paper,
-            opacity: pressed ? 0.78 : 1,
-          }}
-        >
-          <Icon name="speak" size={20} color={playing ? palette.primaryDk : palette.ink} />
-          <Text
-            style={{
-              fontSize: 15,
-              lineHeight: 20,
-              fontWeight: '600',
-              color: playing ? palette.primaryDk : palette.ink,
-            }}
-          >
-            {label}
-          </Text>
-        </View>
-      )}
-    </Pressable>
+      {label}
+    </Btn>
   );
 }

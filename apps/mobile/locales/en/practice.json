@@ -70,6 +70,7 @@
     "instruction": "Say it out loud",
     "listen": "Listen",
     "listen_slow": "Listen slowly",
+    "listen_slow_short": "Slowly",
     "listen_stop": "Stop",
     "listen_hint": "Reads it aloud to you.",
     "no_voice": "Reading aloud isn't working on this device right now – the voice for this language may be missing.",
