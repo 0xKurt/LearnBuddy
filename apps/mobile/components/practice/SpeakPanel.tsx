@@ -460,17 +460,16 @@ export function SpeakPanel({
   // One status row, never a stack (issue #14): what is true right now replaces what was
   // true before — a microphone that was refused, the running recording, Buddy listening,
   // a recording waiting for a connection, a send that failed, or a quiet hint.
+  // A refused microphone used to explain itself here and offer its own button — three
+  // rows above the one she actually pressed, with two "Anhören" buttons in between, while
+  // "Sprechen" sat there looking as inviting as ever. The owner pressed it and wrote "der
+  // sprechen button funktioniert nicht. kp wieso" (01.10., issue #185). The sentence stays;
+  // the button is gone, because the big one below says it now.
+  const micRefused = rec.denied && Platform.OS !== 'web';
   const status = rec.denied ? (
-    <View style={{ gap: 8 }}>
-      <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
-        {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
-      </Text>
-      {Platform.OS !== 'web' ? (
-        <Btn variant="soft" onPress={() => void Linking.openSettings()}>
-          {t('speak.open_settings')}
-        </Btn>
-      ) : null}
-    </View>
+    <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
+      {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
+    </Text>
   ) : recording ? (
     <View
       accessible
@@ -543,16 +542,25 @@ export function SpeakPanel({
         <ListenButton text={item.prompt} lang={lang} slow disabled={recording || busy} />
       </View>
 
+      {/* One big control, and it always says what pressing it will do. Without the
+          microphone that is "open the settings", not "speak" — a button that cannot do
+          its job must not keep offering it (issue #185). */}
       <Btn
         size="lg"
         full
         variant={recording ? 'soft' : 'primary'}
-        onPress={toggleRecording}
-        disabled={recording ? false : locked}
-        accessibilityLabel={recording ? t('speak.record_stop_label') : t('speak.record_label')}
-        accessibilityHint={recording ? undefined : t('speak.record_hint')}
+        onPress={micRefused ? () => void Linking.openSettings() : toggleRecording}
+        disabled={micRefused ? false : recording ? false : locked}
+        accessibilityLabel={
+          micRefused
+            ? t('speak.open_settings')
+            : recording
+              ? t('speak.record_stop_label')
+              : t('speak.record_label')
+        }
+        accessibilityHint={recording || micRefused ? undefined : t('speak.record_hint')}
       >
-        {recordLabel}
+        {micRefused ? t('speak.open_settings') : recordLabel}
       </Btn>
 
       {onSkip && !recording && !waitingOffline ? (
