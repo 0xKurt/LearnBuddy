@@ -1,11 +1,13 @@
 import { defineConfig } from 'vitest/config';
 
-// Mobile workspace test runner. Pure-logic modules (lib/camera/*, lib/auth/pin
-// etc.) run under Node — no React Native bridge, no Expo runtime. Screens and
-// components that depend on RN modules are not under test here yet; that lands
-// when the device-test infra slice arrives.
+// Pure-logic modules (lib/camera/*, lib/auth/pin etc.) run under Node — no React Native
+// bridge, no Expo runtime. Components and screens are a project of their own
+// (vitest.components.config.ts, listed together in vitest.workspace.ts): they render
+// through react-native-web under jsdom and need different module resolution, which must
+// not leak into the resolution these tests have today.
 export default defineConfig({
   test: {
+    name: 'lib',
     environment: 'node',
     include: ['lib/**/*.test.ts'],
     globals: false,

@@ -70,11 +70,14 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "~19.1.17",
     "@vitest/coverage-v8": "^2.1.9",
     "babel-plugin-module-resolver": "^5.0.2",
+    "jsdom": "^25.0.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
+    "vite": "^5.4.21",
     "vitest": "^2.1.9"
   }
 }

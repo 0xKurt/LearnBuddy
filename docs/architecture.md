@@ -1995,6 +1995,18 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 - A dev build on a phone that talks to a real backend names its host on screen
   (`components/lb/DevHostNote.tsx`, dev builds only — issue #79: a test run on real data must
   be visible).
+- **Component tests** (`apps/mobile/components/**/__tests__/*.test.tsx`): one component in any
+  state, rendered through react-native-web under jsdom — the same engine the walkthrough's web
+  build uses. One runner, two projects (`vitest.workspace.ts`: `lib` under Node as before,
+  `components` under jsdom), so `pnpm test` covers both. It exists because there was nothing
+  between a pure function and a full browser run: a refused microphone (#185), a failed upload, a
+  long label (#191) or a palette switched mid-session were reachable only by building the bundle
+  and driving Chromium, and some of them not at all. It sees what is rendered — text, roles,
+  labels, accessibility state, handlers, declared styles — and is blind to geometry (jsdom lays
+  nothing out: alignment and overflow stay the walkthrough's job), to motion and navigation (both
+  replaced, `apps/mobile/testing/`, each file with the rule-8 banner naming what it therefore does
+  not cover) and to the native bridge. **Which layer can see which defect is written down in
+  `docs/testing-layers.md`**, including the two of 01.10. that no automated layer can catch.
 - Browser walkthrough: `pnpm --filter @learnbuddy/api dev:stack` starts the real API and
   scheduler on a throwaway copy of the schema with stand-ins for Supabase Auth, photo storage and
   a scripted model (`src/testing/dev-stack.ts`, scenario in `src/testing/scenarios/`). The app's
@@ -2058,9 +2070,11 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   tests are, not a rule to satisfy; a percentage says nothing about whether the failure paths
   are covered, and a gate would invite tests written for the number. Counted is what these
   tests can reach: `src/**` in the API and the packages, `lib/**` in the app. Screens,
-  components and the seams to Expo (camera, notifications, file system) are deliberately out —
-  they are a device test (issue #37), and having them in the total would only make the figure
-  look worse without saying anything about the logic. First measurement (29.09.2026):
+  components and the seams to Expo (camera, notifications, file system) are deliberately out of
+  the **number** — a percentage over a tree whose first component tests landed on 01.10. would
+  only make the figure look worse without saying anything about the logic, and the seams to the
+  device are a device test (issue #37). What the component tests cover is named case by case in
+  `docs/testing-layers.md` instead. First measurement (29.09.2026):
   `src/**` in the API 86.6 % of statements, `lib/**` in the app 56.8 % — up from 52.4 %
   before the tests of issue #102.
   The pattern the gaps were closed with: the decision is lifted out of the React hook or the
