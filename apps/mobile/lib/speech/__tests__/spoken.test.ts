@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { SpokenWords } from '../../math/speak.js';
 import {
   choiceLetter,
   endSentence,
@@ -14,28 +13,12 @@ import {
   transcriptLang,
 } from '../spoken.js';
 
-// The German words from locales/de/math.json "spoken" (only what these tests need).
-const WORDS: SpokenWords = {
-  frac: '{{num}} durch {{den}}',
-  frac_long: 'Bruch: {{num}} durch {{den}}',
-  mixed: 'und {{num}} durch {{den}}',
-  power: 'hoch {{exp}}',
-  squared: 'hoch 2',
-  cubed: 'hoch 3',
-  sub: 'Index {{sub}}',
-  sqrt: 'Wurzel aus {{body}}',
-  root: '{{index}}. Wurzel aus {{body}}',
-  cbrt: 'dritte Wurzel aus {{body}}',
-  period: 'Periode {{body}}',
-  segment: 'Strecke {{body}}',
-  vector: 'Vektor {{body}}',
-  blank: 'Lücke',
-  symbols: { '+': 'plus', '=': 'gleich', '<': 'kleiner als', '>': 'größer als' },
-};
+// The real German words (locales/de/math.json), not a copy — see lib/math/__tests__/words.ts.
+import { DE as WORDS } from '../../math/__tests__/words.js';
 
 describe('spokenText', () => {
   it('reads math in words and drops **bold** markers', () => {
-    expect(spokenText('Kürze **zuerst** $\\frac{6}{8}$', WORDS)).toBe('Kürze zuerst 6 durch 8');
+    expect(spokenText('Kürze **zuerst** $\\frac{6}{8}$', WORDS)).toBe('Kürze zuerst 6 Achtel');
   });
 });
 
@@ -59,7 +42,7 @@ describe('questionReadText', () => {
         ['$\\frac{1}{2}$', '$\\frac{3}{4}$', 'beide gleich'],
         WORDS,
       ),
-    ).toBe('Welcher Bruch ist größer? A: 1 durch 2, B: 3 durch 4, C: beide gleich.');
+    ).toBe('Welcher Bruch ist größer? A: ein Halb, B: 3 Viertel, C: beide gleich.');
   });
 
   it('ends a question without punctuation before the choices', () => {

@@ -1,8 +1,96 @@
 {
   "spoken": {
     "frac": "{{num}} entre {{den}}",
+    "frac_one": "un {{name}}",
+    "frac_named": "{{num}} {{name}}",
+    "frac_names": {
+      "2": {
+        "one": "medio",
+        "many": "medios"
+      },
+      "3": {
+        "one": "tercio",
+        "many": "tercios"
+      },
+      "4": {
+        "one": "cuarto",
+        "many": "cuartos"
+      },
+      "5": {
+        "one": "quinto",
+        "many": "quintos"
+      },
+      "6": {
+        "one": "sexto",
+        "many": "sextos"
+      },
+      "7": {
+        "one": "séptimo",
+        "many": "séptimos"
+      },
+      "8": {
+        "one": "octavo",
+        "many": "octavos"
+      },
+      "9": {
+        "one": "noveno",
+        "many": "novenos"
+      },
+      "10": {
+        "one": "décimo",
+        "many": "décimos"
+      },
+      "11": {
+        "one": "onceavo",
+        "many": "onceavos"
+      },
+      "12": {
+        "one": "doceavo",
+        "many": "doceavos"
+      },
+      "13": {
+        "one": "treceavo",
+        "many": "treceavos"
+      },
+      "14": {
+        "one": "catorceavo",
+        "many": "catorceavos"
+      },
+      "15": {
+        "one": "quinceavo",
+        "many": "quinceavos"
+      },
+      "16": {
+        "one": "dieciseisavo",
+        "many": "dieciseisavos"
+      },
+      "17": {
+        "one": "diecisieteavo",
+        "many": "diecisieteavos"
+      },
+      "18": {
+        "one": "dieciochoavo",
+        "many": "dieciochoavos"
+      },
+      "19": {
+        "one": "diecinueveavo",
+        "many": "diecinueveavos"
+      },
+      "20": {
+        "one": "veinteavo",
+        "many": "veinteavos"
+      },
+      "100": {
+        "one": "centésimo",
+        "many": "centésimos"
+      },
+      "1000": {
+        "one": "milésimo",
+        "many": "milésimos"
+      }
+    },
     "frac_long": "fracción: {{num}}, dividido entre {{den}}",
-    "mixed": "y {{num}} entre {{den}}",
+    "mixed": "y {{frac}}",
     "power": "elevado a {{exp}}",
     "squared": "al cuadrado",
     "cubed": "al cubo",

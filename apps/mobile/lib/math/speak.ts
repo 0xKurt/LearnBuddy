@@ -5,11 +5,21 @@
 import { splitMath, type MathAtom } from './parse.js';
 
 export type SpokenWords = {
-  /** "{{num}} durch {{den}}" */
+  /** "{{num}} durch {{den}}" — the fallback for a denominator with no simple word. */
   frac: string;
+  /** "ein {{name}}" (numerator 1: "ein Fünftel", "un demi", "one half") */
+  frac_one: string;
+  /** "{{num}} {{name}}" ("2 Fünftel", "2 fifths", "2 cinquièmes") */
+  frac_named: string;
+  /**
+   * What a denominator is called, singular and plural ("5" → Fünftel/Fünftel,
+   * fifth/fifths, demi/demis). A denominator the language has no simple word for is
+   * absent, and the fraction falls back to `frac` — clumsy, but never a made-up word.
+   */
+  frac_names: Readonly<Record<string, { one: string; many: string }>>;
   /** "Bruch: {{num}} durch {{den}}" (numerator or denominator longer than one term) */
   frac_long: string;
-  /** "und {{num}} durch {{den}}": the fraction of a mixed number ($3\frac{1}{2}$ → "3 und 1 durch 2") */
+  /** "und {{frac}}": the fraction of a mixed number ($3\frac{1}{2}$ → "3 und ein Halb") */
   mixed: string;
   /** "hoch {{exp}}" */
   power: string;
@@ -93,6 +103,24 @@ function isShort(atoms: MathAtom[]): boolean {
   return atoms.length === 1 && atoms[0]?.type === 'chars' && /^[\w.,]+$/.test(atoms[0].text);
 }
 
+/**
+ * A fraction as the language names it: "2/5" → "zwei Fünftel", not "zwei durch fünf"
+ * (issue #175, owner 01.10.). A fraction is not a division, and reading it as one is the
+ * very distinction the exercise is about.
+ *
+ * Only whole numbers, and only denominators the locale has a word for; everything else
+ * keeps the plain form. The numeral stays a digit — every voice reads "2 Fünftel" as
+ * "zwei Fünftel", and spelling it out would need a second set of number words.
+ */
+function namedFraction(num: string, den: string, words: SpokenWords): string | null {
+  if (!/^\d+$/.test(num) || !/^\d+$/.test(den)) return null;
+  const name = words.frac_names[String(Number(den))];
+  if (!name) return null;
+  return num === '1'
+    ? fill(words.frac_one, { name: name.one })
+    : fill(words.frac_named, { num, name: name.many });
+}
+
 /** A whole number right before a simple fraction: a mixed number (3½), not "3 times ½". */
 function followsWholeNumber(atoms: MathAtom[], i: number): boolean {
   let j = i - 1;
@@ -117,10 +145,11 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
             const num = speakAtoms(a.num, words);
             const den = speakAtoms(a.den, words);
             const short = isShort(a.num) && isShort(a.den);
+            const named = short ? namedFraction(num, den, words) : null;
+            const plain = named ?? fill(short ? words.frac : words.frac_long, { num, den });
             if (short && /^\d+$/.test(num) && /^\d+$/.test(den) && followsWholeNumber(atoms, i))
-              return ` ${fill(words.mixed, { num, den })} `;
-            const template = short ? words.frac : words.frac_long;
-            return ` ${fill(template, { num, den })} `;
+              return ` ${fill(words.mixed, { frac: named ?? fill(words.frac, { num, den }) })} `;
+            return ` ${plain} `;
           }
           case 'sup': {
             const exp = speakAtoms(a.body, words);

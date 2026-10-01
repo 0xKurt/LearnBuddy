@@ -1,8 +1,96 @@
 {
   "spoken": {
     "frac": "{{num}} sur {{den}}",
+    "frac_one": "un {{name}}",
+    "frac_named": "{{num}} {{name}}",
+    "frac_names": {
+      "2": {
+        "one": "demi",
+        "many": "demis"
+      },
+      "3": {
+        "one": "tiers",
+        "many": "tiers"
+      },
+      "4": {
+        "one": "quart",
+        "many": "quarts"
+      },
+      "5": {
+        "one": "cinquième",
+        "many": "cinquièmes"
+      },
+      "6": {
+        "one": "sixième",
+        "many": "sixièmes"
+      },
+      "7": {
+        "one": "septième",
+        "many": "septièmes"
+      },
+      "8": {
+        "one": "huitième",
+        "many": "huitièmes"
+      },
+      "9": {
+        "one": "neuvième",
+        "many": "neuvièmes"
+      },
+      "10": {
+        "one": "dixième",
+        "many": "dixièmes"
+      },
+      "11": {
+        "one": "onzième",
+        "many": "onzièmes"
+      },
+      "12": {
+        "one": "douzième",
+        "many": "douzièmes"
+      },
+      "13": {
+        "one": "treizième",
+        "many": "treizièmes"
+      },
+      "14": {
+        "one": "quatorzième",
+        "many": "quatorzièmes"
+      },
+      "15": {
+        "one": "quinzième",
+        "many": "quinzièmes"
+      },
+      "16": {
+        "one": "seizième",
+        "many": "seizièmes"
+      },
+      "17": {
+        "one": "dix-septième",
+        "many": "dix-septièmes"
+      },
+      "18": {
+        "one": "dix-huitième",
+        "many": "dix-huitièmes"
+      },
+      "19": {
+        "one": "dix-neuvième",
+        "many": "dix-neuvièmes"
+      },
+      "20": {
+        "one": "vingtième",
+        "many": "vingtièmes"
+      },
+      "100": {
+        "one": "centième",
+        "many": "centièmes"
+      },
+      "1000": {
+        "one": "millième",
+        "many": "millièmes"
+      }
+    },
     "frac_long": "fraction : {{num}}, divisé par {{den}}",
-    "mixed": "et {{num}} sur {{den}}",
+    "mixed": "et {{frac}}",
     "power": "puissance {{exp}}",
     "squared": "au carré",
     "cubed": "au cube",

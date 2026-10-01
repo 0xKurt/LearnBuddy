@@ -1,8 +1,96 @@
 {
   "spoken": {
     "frac": "{{num}} over {{den}}",
+    "frac_one": "one {{name}}",
+    "frac_named": "{{num}} {{name}}",
+    "frac_names": {
+      "2": {
+        "one": "half",
+        "many": "halves"
+      },
+      "3": {
+        "one": "third",
+        "many": "thirds"
+      },
+      "4": {
+        "one": "quarter",
+        "many": "quarters"
+      },
+      "5": {
+        "one": "fifth",
+        "many": "fifths"
+      },
+      "6": {
+        "one": "sixth",
+        "many": "sixths"
+      },
+      "7": {
+        "one": "seventh",
+        "many": "sevenths"
+      },
+      "8": {
+        "one": "eighth",
+        "many": "eighths"
+      },
+      "9": {
+        "one": "ninth",
+        "many": "ninths"
+      },
+      "10": {
+        "one": "tenth",
+        "many": "tenths"
+      },
+      "11": {
+        "one": "eleventh",
+        "many": "elevenths"
+      },
+      "12": {
+        "one": "twelfth",
+        "many": "twelfths"
+      },
+      "13": {
+        "one": "thirteenth",
+        "many": "thirteenths"
+      },
+      "14": {
+        "one": "fourteenth",
+        "many": "fourteenths"
+      },
+      "15": {
+        "one": "fifteenth",
+        "many": "fifteenths"
+      },
+      "16": {
+        "one": "sixteenth",
+        "many": "sixteenths"
+      },
+      "17": {
+        "one": "seventeenth",
+        "many": "seventeenths"
+      },
+      "18": {
+        "one": "eighteenth",
+        "many": "eighteenths"
+      },
+      "19": {
+        "one": "nineteenth",
+        "many": "nineteenths"
+      },
+      "20": {
+        "one": "twentieth",
+        "many": "twentieths"
+      },
+      "100": {
+        "one": "hundredth",
+        "many": "hundredths"
+      },
+      "1000": {
+        "one": "thousandth",
+        "many": "thousandths"
+      }
+    },
     "frac_long": "fraction: {{num}}, divided by {{den}}",
-    "mixed": "and {{num}} over {{den}}",
+    "mixed": "and {{frac}}",
     "power": "to the power of {{exp}}",
     "squared": "squared",
     "cubed": "cubed",

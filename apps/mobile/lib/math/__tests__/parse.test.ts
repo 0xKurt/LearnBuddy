@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { hasMath, parseMath, plainText, splitMath, THIN, type MathAtom } from '../parse.js';
-import { speakMathText, type SpokenWords } from '../speak.js';
+import { speakMathText } from '../speak.js';
+import { DE } from './words.js';
 
 const T = ' ';
 
@@ -181,41 +182,23 @@ describe('parseMath', () => {
   });
 });
 
-const DE: SpokenWords = {
-  frac: '{{num}} durch {{den}}',
-  frac_long: 'Bruch: {{num}}, durch {{den}}',
-  mixed: 'und {{num}} durch {{den}}',
-  power: 'hoch {{exp}}',
-  squared: 'Quadrat',
-  cubed: 'hoch 3',
-  sub: 'Index {{sub}}',
-  sqrt: 'Wurzel aus {{body}}',
-  root: '{{index}}. Wurzel aus {{body}}',
-  cbrt: 'dritte Wurzel aus {{body}}',
-  period: 'Periode {{body}}',
-  segment: 'Strecke {{body}}',
-  vector: 'Vektor {{body}}',
-  blank: 'Lücke',
-  symbols: { '+': 'plus', '−': 'minus', '=': 'gleich', '·': 'mal', π: 'pi', '≤': 'kleiner gleich' },
-};
-
 describe('speakMathText', () => {
   it('reads a mixed number as one number and ":" as division (p2-mixed-number-and-division-spoken-wrong)', () => {
     const words = { ...DE, symbols: { ...DE.symbols, ':': 'geteilt durch' } };
-    expect(speakMathText('$3\\frac{1}{2}$', words)).toBe('3 und 1 durch 2');
-    expect(speakMathText('$3\\,\\frac{1}{2}$', words)).toBe('3 und 1 durch 2');
+    expect(speakMathText('$3\\frac{1}{2}$', words)).toBe('3 und ein Halb');
+    expect(speakMathText('$3\\,\\frac{1}{2}$', words)).toBe('3 und ein Halb');
     expect(speakMathText('$6 : 3$', words)).toBe('6 geteilt durch 3');
     // Not a mixed number: a decimal, or letters in the fraction.
     expect(speakMathText('$2\\frac{x}{3}$', words)).toBe('2 x durch 3');
-    expect(speakMathText('$0,5\\frac{1}{2}$', words)).toBe('0,5 1 durch 2');
+    expect(speakMathText('$0,5\\frac{1}{2}$', words)).toBe('0,5 ein Halb');
   });
 
   it('reads a simple fraction', () => {
-    expect(speakMathText('$\\frac{3}{4}$', DE)).toBe('3 durch 4');
+    expect(speakMathText('$\\frac{3}{4}$', DE)).toBe('3 Viertel');
   });
   it('reads a sum of fractions inside a sentence', () => {
     expect(speakMathText('Rechne $\\frac{2}{3} + \\frac{1}{6}$.', DE)).toBe(
-      'Rechne 2 durch 3 plus 1 durch 6.',
+      'Rechne 2 Drittel plus ein Sechstel.',
     );
   });
   it('reads powers, roots and indices', () => {
@@ -227,7 +210,7 @@ describe('speakMathText', () => {
     expect(speakMathText('$2^{5}$', DE)).toBe('2 hoch 5');
   });
   it('reads a longer fraction with the long form', () => {
-    expect(speakMathText('$\\frac{x+1}{2}$', DE)).toBe('Bruch: x plus 1, durch 2');
+    expect(speakMathText('$\\frac{x+1}{2}$', DE)).toBe('Bruch: x plus 1, geteilt durch 2');
   });
   it('leaves plain text alone', () => {
     expect(speakMathText('Wie viel ist 5 $?', DE)).toBe('Wie viel ist 5 $?');

@@ -1,8 +1,96 @@
 {
   "spoken": {
     "frac": "{{num}} durch {{den}}",
+    "frac_one": "ein {{name}}",
+    "frac_named": "{{num}} {{name}}",
+    "frac_names": {
+      "2": {
+        "one": "Halb",
+        "many": "Halbe"
+      },
+      "3": {
+        "one": "Drittel",
+        "many": "Drittel"
+      },
+      "4": {
+        "one": "Viertel",
+        "many": "Viertel"
+      },
+      "5": {
+        "one": "Fünftel",
+        "many": "Fünftel"
+      },
+      "6": {
+        "one": "Sechstel",
+        "many": "Sechstel"
+      },
+      "7": {
+        "one": "Siebtel",
+        "many": "Siebtel"
+      },
+      "8": {
+        "one": "Achtel",
+        "many": "Achtel"
+      },
+      "9": {
+        "one": "Neuntel",
+        "many": "Neuntel"
+      },
+      "10": {
+        "one": "Zehntel",
+        "many": "Zehntel"
+      },
+      "11": {
+        "one": "Elftel",
+        "many": "Elftel"
+      },
+      "12": {
+        "one": "Zwölftel",
+        "many": "Zwölftel"
+      },
+      "13": {
+        "one": "Dreizehntel",
+        "many": "Dreizehntel"
+      },
+      "14": {
+        "one": "Vierzehntel",
+        "many": "Vierzehntel"
+      },
+      "15": {
+        "one": "Fünfzehntel",
+        "many": "Fünfzehntel"
+      },
+      "16": {
+        "one": "Sechzehntel",
+        "many": "Sechzehntel"
+      },
+      "17": {
+        "one": "Siebzehntel",
+        "many": "Siebzehntel"
+      },
+      "18": {
+        "one": "Achtzehntel",
+        "many": "Achtzehntel"
+      },
+      "19": {
+        "one": "Neunzehntel",
+        "many": "Neunzehntel"
+      },
+      "20": {
+        "one": "Zwanzigstel",
+        "many": "Zwanzigstel"
+      },
+      "100": {
+        "one": "Hundertstel",
+        "many": "Hundertstel"
+      },
+      "1000": {
+        "one": "Tausendstel",
+        "many": "Tausendstel"
+      }
+    },
     "frac_long": "Bruch: {{num}}, geteilt durch {{den}}",
-    "mixed": "und {{num}} durch {{den}}",
+    "mixed": "und {{frac}}",
     "power": "hoch {{exp}}",
     "squared": "Quadrat",
     "cubed": "hoch 3",
