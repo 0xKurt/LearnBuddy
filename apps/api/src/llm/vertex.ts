@@ -31,6 +31,7 @@ import {
 } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
 import { costMicros } from './pricing.js';
+import { retryDelayMs, worthASecondTry } from './retry.js';
 
 // Children use the app: strict on sexual content, medium elsewhere.
 const SAFETY: SafetySetting[] = [
@@ -136,7 +137,39 @@ export class VertexGateway implements LlmGateway {
     return c;
   }
 
+  /**
+   * One structured answer, with ONE short second chance (issue #167).
+   *
+   * The second attempt happens only for the two errors that mean "not now" — the provider
+   * unreachable or busy — and only when nothing has been handed out yet. A streamed call
+   * that already gave `onPartial` some text cannot start over: she would watch a sentence
+   * be replaced by another one.
+   */
   async generate(req: LlmRequest): Promise<LlmResult> {
+    // Per CALL, not per gateway: one instance serves every request at once, so a field
+    // here would let one streamed answer suppress every other call's second chance — and
+    // never reset.
+    let handedOut = false;
+    const watched: LlmRequest = req.onPartial
+      ? {
+          ...req,
+          onPartial: (text) => {
+            // From here on she has seen words: a second attempt would replace them.
+            handedOut = true;
+            req.onPartial?.(text);
+          },
+        }
+      : req;
+    try {
+      return await this.attempt(watched);
+    } catch (err) {
+      if (!worthASecondTry(err) || handedOut) throw err;
+      await new Promise((done) => setTimeout(done, retryDelayMs(Math.random)));
+      return this.attempt(watched);
+    }
+  }
+
+  private async attempt(req: LlmRequest): Promise<LlmResult> {
     const { location, model } = splitModelSpec(
       modelFor(this.config, req),
       this.config.GOOGLE_VERTEX_LOCATION,

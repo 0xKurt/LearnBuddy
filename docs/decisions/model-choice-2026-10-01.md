@@ -94,3 +94,43 @@ es eine Zeile.
 
 Die Messung ist zwei Befehle: `VERTEX_MODEL_SMART=eu/gemini-3.x-flash npx tsx evals/tutor/run.ts`
 und dasselbe für `evals/buddy/run.ts`.
+
+## Nachtrag 2: Es war nie das Modell. Es ist das Kontingent. (01.10., abends)
+
+Der Owner, nachdem er den Nachtrag oben gelesen hatte:
+
+> 3.6 will be shut down soon. so we need to deal with 3.8.
+
+Richtig — und bevor man damit umgeht, muss man wissen, womit. Ein serieller Probelauf, drei
+Aufrufe je Modell, derselbe Satz, derselbe Service Account, nichts sonst nebenher:
+
+| Modell                | #1                         | #2         | #3      |
+| --------------------- | -------------------------- | ---------- | ------- |
+| `eu/gemini-3.8-flash` | **429 RESOURCE_EXHAUSTED** | 229 739 ms | 6337 ms |
+| `eu/gemini-3.6-flash` | 940 ms                     | 987 ms     | 988 ms  |
+
+Das ist kein Qualitätsunterschied und kein Zufall. **3.8 hat in diesem Projekt in `eu` so gut
+wie kein Kontingent.** Der zweite Aufruf kam nach knapp vier Minuten zurück, weil Googles
+eigener Client innerhalb des Aufrufs zurückweicht und neu versucht — nicht, weil das Modell
+langsam rechnet.
+
+Damit ist **jede Zahl, die ich oben über 3.8 geschrieben habe, ungültig.** Die 34/49 und 39/49
+haben nicht gemessen, wie gut 3.8 antwortet, sondern wie oft es überhaupt drankam. Ich habe
+Kontingent-Mangel als Modell-Eigenschaft gelesen, zweimal, und daraus eine Empfehlung gebaut.
+Die Empfehlung („3.6 bleibt") steht zufällig immer noch — aber nicht aus dem Grund, den ich
+angegeben hatte.
+
+### Was daraus folgt
+
+1. **Für den Owner, und es hat eine Frist:** das Kontingent für `gemini-3.8-flash` in der
+   Region `eu` muss in der GCP-Konsole angehoben werden (IAM & Verwaltung → Kontingente,
+   Dienst „Vertex AI API", Modell 3.8, Region `eu`). Solange es bei 429 bleibt, ist ein
+   Wechsel nicht möglich — nicht schlecht, **nicht möglich**. Und 3.6 wird abgeschaltet.
+2. **Erst danach lässt sich 3.8 überhaupt bewerten.** Die Suite neu laufen zu lassen, bevor
+   das Kontingent steht, misst wieder nur das Kontingent.
+3. **Der Wiederholungsversuch aus #167 hilft hier nicht** und wurde entsprechend eingeengt:
+   ein 429 wird _nicht_ wiederholt. Pause von 350 ms kauft kein Kontingent, und der Client
+   hat ohnehin schon zurückgewichen. Was das Kind schützt, ist die 30-Sekunden-Grenze im
+   Aufruf (`turn.ts`), nicht ein zweiter Versuch.
+
+Nachmessen, zwei Befehle, sobald das Kontingent steht — dieselben wie oben.
