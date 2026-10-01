@@ -63,6 +63,7 @@ const state: BuddyState = {
   summaries: [{ day: '2026-09-27', summary: 'Vokabeln geübt.', topics: ['Englisch'] }],
   subjects: [{ id: 's-1', name: 'Mathe', kind: 'math', item_count: 12, material_count: 1 }],
   topics: [{ subject_id: 's-1', topic: 'Brüche', total: 12, seen: 8, secure: 5, shaky: 1, due: 0 }],
+  focus: null,
   materials: [],
   sessions: [],
   outreach: [],

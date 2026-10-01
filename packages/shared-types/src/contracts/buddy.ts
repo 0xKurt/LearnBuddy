@@ -385,6 +385,19 @@ export const BuddyHome = z.object({
    * greeting (DESIGN-BRIEF §What we are NOT allows it). Never a count, never missed days.
    */
   practiced_today: z.boolean().catch(false),
+  /**
+   * What she is working on, as one line above the conversation (issue #160). Her own words
+   * where she gave them, otherwise the subject and the sheet. Null while nothing has been
+   * agreed — the line is not an empty slot waiting to be filled.
+   */
+  focus: z
+    .object({
+      text: z.string(),
+      /** The sheet it is about, so tapping the line can open it. */
+      material_id: Uuid.nullable().default(null),
+    })
+    .nullable()
+    .catch(null),
   /** Context version the home was built from (debugging and stale checks). */
   context_version: z.number().int(),
 });

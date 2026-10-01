@@ -95,6 +95,7 @@ async function homeFrom(
     system,
     working,
     practiced_today: practicedToday,
+    focus: focusLine(state),
     context_version: state.settings.context_version,
   };
 }
@@ -440,6 +441,24 @@ async function needsAdult(
  * practice on the same topic: the check questions always were practice, and the
  * explanation itself lives in the chat now.
  */
+/**
+ * What she is working on, as one line (issue #160).
+ *
+ * Her own words first, because the line should read like her: "frag mich die vokabeln von
+ * dem zettel ab" says more to her than "Französisch · Vokabelliste" does. The sheet and the
+ * subject are the fallback, and nothing at all is the honest answer while nothing has been
+ * agreed — an empty slot waiting to be filled is a dashboard, which this is not (rule 16).
+ */
+function focusLine(state: BuddyState): { text: string; material_id: string | null } | null {
+  const f = state.focus;
+  if (!f) return null;
+  const said = f.said?.trim();
+  if (said) return { text: said, material_id: f.material_id };
+  const parts = [f.subject_name, f.material_title].filter((x): x is string => Boolean(x));
+  if (parts.length === 0) return null;
+  return { text: parts.join(' · '), material_id: f.material_id };
+}
+
 function servedSummary(
   s: ActionSummary,
   pending: ReadonlyMap<string, PendingStatus>,

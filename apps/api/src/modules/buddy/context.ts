@@ -378,6 +378,31 @@ export function buildContext(
     }
   }
 
+  // What she is working on right now (issue #160). It stands before the sessions because
+  // it is the thing a turn is usually about, and it survives a pause and a restart — which
+  // the chat window does not.
+  if (state.focus) {
+    const f = state.focus;
+    const parts = [
+      f.subject_name,
+      f.goal_title ? `for "${f.goal_title}"` : null,
+      f.material_title ? `sheet "${f.material_title}"` : f.material_id ? 'one sheet' : null,
+      f.vocabulary_only ? 'vocabulary only' : null,
+      f.direction === 'produce'
+        ? 'she writes the foreign word'
+        : f.direction === 'recognise'
+          ? 'she says what it means'
+          : null,
+    ].filter((x): x is string => Boolean(x));
+    if (parts.length > 0) {
+      practiceBlock.push('## What she is working on');
+      practiceBlock.push(`- ${parts.join(' · ')}`);
+      if (f.said) practiceBlock.push(`  her words: "${f.said}"`);
+      practiceBlock.push(
+        '  This still holds unless she says otherwise. Do not ask again for what is here, and do not quietly widen it.',
+      );
+    }
+  }
   practiceBlock.push('## Recent practice');
   if (state.sessions.length === 0) practiceBlock.push('- none yet');
   for (const s of state.sessions.slice(0, 3)) {

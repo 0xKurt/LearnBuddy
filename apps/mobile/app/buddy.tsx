@@ -21,7 +21,7 @@ import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts'
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Animated from 'react-native-reanimated';
-import { Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -1056,6 +1056,39 @@ export default function BuddyScreen() {
                   disabled={pending !== null}
                   covered={covered}
                 />
+                {/* What she is working on, in her own words (issue #160). One line, under
+                    the ways to start, and only when there is something — an empty slot
+                    waiting to be filled would be a dashboard (rule 16). Tapping opens the
+                    sheet it is about. */}
+                {h.focus ? (
+                  <Pressable
+                    disabled={!h.focus.material_id}
+                    accessibilityRole={h.focus.material_id ? 'button' : 'text'}
+                    accessibilityLabel={t('buddy:focus.label', { what: h.focus.text })}
+                    onPress={() =>
+                      h.focus?.material_id
+                        ? router.push(`/material/${h.focus.material_id}`)
+                        : undefined
+                    }
+                    style={{ paddingTop: SPACE.xs }}
+                  >
+                    {({ pressed }) => (
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          TYPE.small,
+                          {
+                            color: palette.ink3,
+                            textAlign: 'center',
+                            opacity: pressed ? 0.6 : 1,
+                          },
+                        ]}
+                      >
+                        {h.focus?.text}
+                      </Text>
+                    )}
+                  </Pressable>
+                ) : null}
               </View>
               <ScrollView
                 ref={scroll}

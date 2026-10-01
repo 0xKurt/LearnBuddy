@@ -130,6 +130,9 @@
     "undone": "rückgängig gemacht",
     "undo_request_material": "Kein Foto nötig"
   },
+  "focus": {
+    "label": "Du arbeitest gerade an: {{what}}"
+  },
   "greeting": "Hallo {{name}}",
   "greeting_ask": "Was steht an?",
   "intro": {

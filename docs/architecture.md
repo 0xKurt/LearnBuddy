@@ -311,6 +311,18 @@ summary plus undo data. Enforced here, not in the prompt:
   and `correct_memory` may move the end (`until`);
 - `update_step` either changes the state or moves the step, never both; `prepare_practice`
   never replaces a step her agreed reminder prepared;
+- **what she is working on is state, not something re-read out of the chat** (`buddy_focus`,
+  migration `0063`, issue #160). It is written from what a tool was actually TOLD — if
+  `prepare_practice` ran with this sheet, this direction and vocabulary only, that is what she
+  is working on, and there is nothing to interpret. The next `prepare_practice` that names no
+  sheet, subject or goal carries it on; anything she DOES name wins, which is how she changes
+  it. A sheet she deleted or a goal she closed is no scope to carry on with and is dropped by
+  the join. Buddy sees it as one line in STATE ("What she is working on"), the app as one line
+  above the conversation in HER words (`BuddyHome.focus`, tapping opens the sheet), and null
+  while nothing has been agreed — an empty slot waiting to be filled would be a dashboard
+  (rule 16). This is the state whose absence made #144: "frag mich die Vokabeln ab" reached
+  the pool as the SUBJECT, with both French sheets in it, and after a pause there was nothing
+  left at all;
 - a sheet the SEARCH found is reachable in the same turn (issue #153). STATE carries the ten
   newest and their aliases; everything older was findable and then unreachable, so Buddy could
   name a sheet he had just found and have nothing to point at. A `search_material` hit now

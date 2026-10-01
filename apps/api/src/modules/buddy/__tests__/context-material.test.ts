@@ -64,6 +64,7 @@ function block(materials: MaterialBrief[]): string {
     subjects: [],
     topics: [],
     materials,
+    focus: null,
     sessions: [],
     outreach: [],
     totals: {

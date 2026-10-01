@@ -662,6 +662,56 @@ function noneFit(wish: PracticeWish): string {
   return 'there is no vocabulary here — say plainly that this sheet (or this subject) holds no word list, and offer to ask for a photo of one (request_material) or to write vocabulary with her (offer_learning). Never practise the other questions instead';
 }
 
+/**
+ * What she is working on, kept as state (issue #160).
+ *
+ * Written from what a tool was actually TOLD, not from what the model says afterwards: if
+ * `prepare_practice` ran with this sheet and this direction, that is what she is working on,
+ * and there is nothing to interpret. The sheet comes from her own aliases, so no id is ever
+ * written by the model (hard rule 2).
+ *
+ * `said` is her own words for it, taken from the quote the tool already carries — the line
+ * above the conversation should read like her, not like a row.
+ */
+async function rememberFocus(
+  ctx: ToolContext,
+  focus: {
+    materialId: string | null;
+    subjectId: string | null;
+    goalId: string | null;
+    vocabularyOnly: boolean;
+    direction: 'recognise' | 'produce' | null;
+    said: string | null;
+  },
+): Promise<void> {
+  await ctx.db.query(
+    `insert into buddy_focus (learner_id, material_id, subject_id, goal_id, vocabulary_only,
+                              direction, said, updated_at)
+     values ($1, $2, $3, $4, $5, $6, $7, $8)
+     on conflict (learner_id) do update
+       set material_id = excluded.material_id,
+           subject_id = excluded.subject_id,
+           goal_id = excluded.goal_id,
+           vocabulary_only = excluded.vocabulary_only,
+           direction = excluded.direction,
+           -- Her words only change when there are new ones; a tool run without a quote
+           -- must not blank the line she is looking at.
+           said = coalesce(excluded.said, buddy_focus.said),
+           version = buddy_focus.version + 1,
+           updated_at = excluded.updated_at`,
+    [
+      ctx.learnerId,
+      focus.materialId,
+      focus.subjectId,
+      focus.goalId,
+      focus.vocabularyOnly,
+      focus.direction,
+      focus.said?.slice(0, 200) ?? null,
+      ctx.now,
+    ],
+  );
+}
+
 async function runPreparePractice(
   action: ActionOf<'prepare_practice'>,
   ctx: ToolContext,
@@ -684,16 +734,44 @@ async function runPreparePractice(
   // The one sheet she pointed at (issue #144). Resolved from her own aliases, so a sheet
   // that is not hers cannot be reached by guessing an id (hard rule 2).
   const material = a.sheet ? materialOf(ctx, a.sheet) : null;
-  const scope = { goalId: goal?.id ?? null, subjectId, materialId: material?.id ?? null };
+  // What she is working on, when this answer says nothing about it (issue #160). "Weiter"
+  // after a pause is the whole point: the scope she agreed to is still the scope, and it
+  // does not have to be read back out of the chat. Anything she DOES name wins — naming a
+  // sheet or a subject is how she changes it.
+  const kept =
+    !material && !subjectId && !goal
+      ? await ctx.db.maybeOne<{
+          material_id: string | null;
+          subject_id: string | null;
+          goal_id: string | null;
+          vocabulary_only: boolean;
+          direction: 'recognise' | 'produce' | null;
+        }>(
+          `select f.material_id, f.subject_id, f.goal_id, f.vocabulary_only, f.direction
+             from buddy_focus f
+             left join materials m on m.id = f.material_id
+             left join buddy_goals g on g.id = f.goal_id
+            where f.learner_id = $1
+              -- A sheet she deleted or a goal she closed is no scope to carry on with.
+              and (f.material_id is null or m.archived_at is null)
+              and (f.goal_id is null or g.status = 'active')`,
+          [ctx.learnerId],
+        )
+      : null;
+  const scope = {
+    goalId: goal?.id ?? kept?.goal_id ?? null,
+    subjectId: subjectId ?? kept?.subject_id ?? null,
+    materialId: material?.id ?? kept?.material_id ?? null,
+  };
   // What she asked for beyond the topic (issue #113). Code decides what it means; the set is
   // never filled up with questions she did not ask for.
   const wish: PracticeWish = {
     onlyWrong: a.only_wrong === true,
     difficulty: a.difficulty ?? null,
-    direction: a.direction ?? null,
+    direction: a.direction ?? kept?.direction ?? null,
     // A direction already means vocabulary; asking for vocabulary without one is the case
     // that used to fall through to the whole subject (issue #144).
-    vocabularyOnly: a.vocabulary_only === true,
+    vocabularyOnly: a.vocabulary_only === true || (kept?.vocabulary_only ?? false),
     ownLanguage: ctx.locale,
   };
   const narrowed =
@@ -786,6 +864,16 @@ async function runPreparePractice(
     ],
   );
   ctx.created.stepId = step.id;
+  // What she is working on now (issue #160): written from what this tool was told, so the
+  // next turn does not have to read it back out of the chat — which is where it went wrong.
+  await rememberFocus(ctx, {
+    materialId: scope.materialId,
+    subjectId: scope.subjectId,
+    goalId: scope.goalId,
+    vocabularyOnly: wish.vocabularyOnly === true,
+    direction: wish.direction ?? null,
+    said: ctx.learnerWords?.at(-1) ?? null,
+  });
   return {
     summary: {
       tool: 'prepare_practice',

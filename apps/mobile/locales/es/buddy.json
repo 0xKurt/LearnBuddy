@@ -130,6 +130,9 @@
     "undone": "deshecho",
     "undo_request_material": "No hace falta foto"
   },
+  "focus": {
+    "label": "Estás trabajando en: {{what}}"
+  },
   "greeting": "Hola, {{name}}",
   "greeting_ask": "¿Qué tienes pendiente?",
   "intro": {

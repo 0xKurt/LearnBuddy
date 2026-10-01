@@ -131,6 +131,20 @@ export type TopicProgress = {
   due: number;
 };
 
+/** What she is working on, held across turns and restarts (issue #160). */
+export type FocusRow = {
+  material_id: string | null;
+  material_title: string | null;
+  subject_id: string | null;
+  subject_name: string | null;
+  goal_id: string | null;
+  goal_title: string | null;
+  vocabulary_only: boolean;
+  direction: 'recognise' | 'produce' | null;
+  said: string | null;
+  updated_at: Date;
+};
+
 export type MaterialBrief = {
   id: string;
   title: string | null;
@@ -201,6 +215,8 @@ export type BuddyState = {
   subjects: SubjectRow[];
   topics: TopicProgress[];
   materials: MaterialBrief[];
+  /** What she is working on, or null while nothing has been agreed (issue #160). */
+  focus: FocusRow | null;
   sessions: SessionBrief[];
   outreach: OutreachRow[];
   /** Totals irrespective of the bounded lists (coverage signals). */
@@ -258,6 +274,21 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
       order by (g.status = 'active') desc, g.due_date nulls last, g.created_at, g.seq
       limit $3`,
     [learnerId, now, LIMITS.goals],
+  );
+
+  // What she is working on (issue #160). Joined to its own rows, so a sheet she deleted or
+  // a goal she closed does not leave a line that points at nothing.
+  const focus = await db.maybeOne<FocusRow>(
+    `select f.material_id, m.title as material_title,
+            f.subject_id, s.name as subject_name,
+            f.goal_id, g.title as goal_title,
+            f.vocabulary_only, f.direction, f.said, f.updated_at
+       from buddy_focus f
+       left join materials m on m.id = f.material_id and m.archived_at is null
+       left join subjects s on s.id = f.subject_id
+       left join buddy_goals g on g.id = f.goal_id and g.status = 'active'
+      where f.learner_id = $1`,
+    [learnerId],
   );
 
   const steps = await db.query<StepRow>(
@@ -436,6 +467,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     subjects,
     topics,
     materials,
+    focus,
     sessions,
     outreach,
     totals: {

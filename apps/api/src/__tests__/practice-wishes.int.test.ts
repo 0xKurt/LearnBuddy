@@ -11,7 +11,9 @@ import type { SendMessageResponse, SessionView } from '@learnbuddy/shared-types/
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
+import { buildContext } from '../modules/buddy/context.js';
 import { findOrCreateSubject } from '../modules/buddy/plan.js';
+import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -631,5 +633,117 @@ describe.skipIf(!dbReady)('what she can ask for beyond the topic (issue #113)', 
     const [set] = await preparedSets(env, l);
     // questionCountFor(10) = 12.
     expect(set!.item_ids).toHaveLength(12);
+  });
+
+  // ─────────────── what she is working on, kept (issue #160) ───────────────
+
+  it('carries the agreed scope into the next turn, without her repeating it', async () => {
+    // "frag mich die Vokabeln von dem Zettel ab" … pause … "weiter". The second turn names
+    // nothing, and used to arrive at the pool as nothing — which is how #144 happened.
+    const directions = await seed(env, l, 'Französisch', [
+      { prompt: 'Wo ist der Bahnhof?' },
+      { prompt: 'Geh geradeaus' },
+    ]);
+    const words = await seed(env, l, 'Französisch', [
+      { prompt: 'le vélo', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+      { prompt: 'la gare', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+    ]);
+    env.llm.script('buddy_turn', {
+      json: say('Die vom Zettel.', [
+        prepare({ sheet: 'sh1', subject: null, vocabulary_only: true }),
+      ]),
+    });
+    expect((await send(l, 'frag mich die vokabeln von dem zettel ab')).status).toBe(200);
+
+    // Buddy's next context says what she is working on, so he does not have to re-read it.
+    const state = await loadBuddyState(env.db, l.learnerId, env.clock.now());
+    expect(state.focus).toMatchObject({ vocabulary_only: true });
+    const ctx = buildContext(
+      {
+        display_name: 'Lena',
+        birth_date: '2014-02-10',
+        level: 'school',
+        grade: 6,
+        locale: 'de',
+        isMinor: true,
+      },
+      state,
+      env.clock.now(),
+    );
+    expect(ctx.state).toContain('What she is working on');
+    expect(ctx.state).toContain('vocabulary only');
+
+    // A day later: "weiter", naming nothing at all.
+    env.clock.hours(20);
+    // She names nothing at all — no sheet, no subject.
+    env.llm.script('buddy_turn', {
+      json: say('Weiter geht es.', [prepare({ subject: null })]),
+    });
+    expect((await send(l, 'weiter')).status).toBe(200);
+
+    const sets = await preparedSets(env, l);
+    const second = sets.at(-1)!;
+    expect(second.item_ids.sort()).toEqual([words.get('le vélo')!, words.get('la gare')!].sort());
+    for (const p of ['Wo ist der Bahnhof?', 'Geh geradeaus']) {
+      expect(second.item_ids).not.toContain(directions.get(p)!);
+    }
+  });
+
+  it('what she names wins over what was kept (#160)', async () => {
+    const directions = await seed(env, l, 'Erdkunde', [
+      { prompt: 'Längster Fluss Europas?' },
+      { prompt: 'Hauptstadt von Italien?' },
+    ]);
+    await seed(env, l, 'Französisch', [
+      { prompt: 'le vélo', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+      { prompt: 'la gare', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+    ]);
+    env.llm.script('buddy_turn', {
+      json: say('Vokabeln.', [prepare({ sheet: 'sh1', subject: null, vocabulary_only: true })]),
+    });
+    await send(l, 'frag mich die vokabeln ab');
+
+    // Now she names a different subject: that is how she changes it, and the kept scope
+    // must not drag the old sheet along. Her subjects carry aliases in STATE order.
+    const state = await loadBuddyState(env.db, l.learnerId, env.clock.now());
+    const geo = state.subjects.findIndex((x) => x.name === 'Erdkunde');
+    expect(geo).toBeGreaterThanOrEqual(0);
+    env.llm.script('buddy_turn', {
+      json: say('Erdkunde also.', [prepare({ subject: `f${geo + 1}` })]),
+    });
+    expect((await send(l, 'jetzt lieber erdkunde')).status).toBe(200);
+    const second = (await preparedSets(env, l)).at(-1)!;
+    expect(second.item_ids.sort()).toEqual(
+      [
+        directions.get('Längster Fluss Europas?')!,
+        directions.get('Hauptstadt von Italien?')!,
+      ].sort(),
+    );
+  });
+
+  it('a sheet she deleted is no scope to carry on with (#160)', async () => {
+    const words = await seed(env, l, 'Französisch', [
+      { prompt: 'le vélo', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+      { prompt: 'la gare', kind: 'vocab', promptLang: 'fr', lang: 'de' },
+    ]);
+    env.llm.script('buddy_turn', {
+      json: say('Vom Zettel.', [prepare({ sheet: 'sh1', subject: null })]),
+    });
+    await send(l, 'frag mich das blatt ab');
+    await env.db.query(`update materials set archived_at = $2 where learner_id = $1`, [
+      l.learnerId,
+      env.clock.now(),
+    ]);
+    await env.db.query(`update items set archived_at = $2 where learner_id = $1`, [
+      l.learnerId,
+      env.clock.now(),
+    ]);
+
+    // "Weiter" now has nothing to carry on with, and says so instead of practising
+    // something else (rule 5).
+    const attempt = tryAction(env, prepare({ subject: null }));
+    expect((await send(l, 'weiter')).status).toBe(200);
+    expect(attempt.refusal()).toContain('no questions');
+    expect(words.size).toBe(2);
   });
 });

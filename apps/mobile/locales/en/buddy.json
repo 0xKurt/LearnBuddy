@@ -130,6 +130,9 @@
     "undone": "undone",
     "undo_request_material": "No photo needed"
   },
+  "focus": {
+    "label": "You are working on: {{what}}"
+  },
   "greeting": "Hi {{name}}",
   "greeting_ask": "What's coming up?",
   "intro": {
