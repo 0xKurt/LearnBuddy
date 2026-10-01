@@ -175,14 +175,32 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => contextOf(name, family, mode, choose),
     [name, family, mode, choose],
   );
-  // No `key` here, deliberately (issue #148). It used to remount the whole tree on every
-  // palette change, so a style built once in a component could not keep the old colours —
-  // and it threw away every screen's state with it: the onboarding jumped back to its
-  // first card, and a half-typed message would have gone the same way. What it guarded
-  // against is now proven mechanically instead: `applyPalette` refills TYPE, SHADOW and
-  // the tones IN PLACE, and `__tests__/frozen-colors.test.ts` fails any source file that
-  // captures a live token in a module constant (issues #84, #29).
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  // `key` remounts the tree when the palette changes, and it has to (issues #84, #148, #171).
+  //
+  // The colour tokens (LB, TYPE, SHADOW, TONE_*) are refilled IN PLACE so a held reference
+  // sees the new palette. That is necessary and not sufficient: a component that passes a
+  // token object straight through — `style={TYPE.title}` — keeps the same object identity,
+  // and React Native then has nothing to diff and leaves the native view as it was. The
+  // values are new; the pixels are not.
+  //
+  // I removed this key on 30.09. (#148) because it threw away every screen's state — the
+  // onboarding jumped back to its first card — and trusted `frozen-colors.test.ts` to cover
+  // it. That test proves the refill, not the repaint. On the phone, one day later, switching
+  // to dark left every settings heading at **1.39:1** contrast (measured, Xiaomi, 01.10.);
+  // the same heading after a fresh mount is 10.73:1. So the key is back.
+  //
+  // What #148 was really about is handled where it belongs: a screen whose state must
+  // survive keeps it (app/onboarding.tsx, lib/drafts.ts), instead of the whole tree paying
+  // for it with wrong colours.
+  return (
+    <Ctx.Provider value={value}>
+      <Ctx.Consumer>{() => <ThemeScope key={name}>{children}</ThemeScope>}</Ctx.Consumer>
+    </Ctx.Provider>
+  );
+}
+
+function ThemeScope({ children }: { children: ReactNode }) {
+  return <>{children}</>;
 }
 
 /**

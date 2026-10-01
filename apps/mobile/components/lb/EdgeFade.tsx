@@ -45,7 +45,11 @@ export function TopEdgeFade({ top = 0 }: { top?: number }) {
       <Svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1 1">
         <Defs>
           <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={palette.bg} stopOpacity={0.9} />
+            {/* Fully opaque at the very top: at 0.9 a tenth of the card underneath still
+                came through, and on a real phone that reads as a hard-cut lavender sliver
+                under the row (measured on the Xiaomi, 01.10.) — the very fault this fade
+                exists to remove (live finding 8, issue #63). */}
+            <Stop offset="0" stopColor={palette.bg} stopOpacity={1} />
             <Stop offset="0.35" stopColor={palette.bg} stopOpacity={0.7} />
             <Stop offset="1" stopColor={palette.bg} stopOpacity={0} />
           </LinearGradient>

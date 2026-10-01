@@ -26,6 +26,9 @@ import { SPACE, bottomRoom } from '../lib/theme/space.js';
 // already in the colours she picked (issue #136). Three tips deep in the settings, nobody
 // ever found it.
 const STEPS = ['s1', 's2', 's3', 's4'] as const;
+
+/** Survives the remount a palette change causes (issue #171); reset when she is done. */
+const keptStep = { at: 0 };
 /** The three ways in, shown on the first card (decorative — the body names them). */
 const WAYS: IconName[] = ['keyboard', 'mic', 'camera'];
 
@@ -33,12 +36,27 @@ export default function Onboarding() {
   const { palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('common');
-  const [step, setStep] = useState(0);
+  /**
+   * Which card she is on. Kept outside the component (issue #171): a palette change
+   * remounts the tree so every native view picks up the new colours (lib/theme/
+   * ThemeProvider.tsx), and the colour choice sits on the LAST card — so without this she
+   * would tap a colour and land back on the first card, which is exactly what #148 saw.
+   * A module ref, not storage: it belongs to this run of the app, not to the device.
+   */
+  const [step, setStepValue] = useState(keptStep.at);
+  const setStep = (next: number | ((s: number) => number)) => {
+    setStepValue((s) => {
+      const value = typeof next === 'function' ? next(s) : next;
+      keptStep.at = value;
+      return value;
+    });
+  };
   const compact = useWindowDimensions().height < 780;
   const key = STEPS[step] ?? 's1';
   const last = step === STEPS.length - 1;
   const settings = useSettings();
   const done = () => {
+    keptStep.at = 0;
     // Contact was allowed at registration: ask the OS right after the card
     // that explained why (permissions come with their context, never earlier).
     if (settings.data?.contact_enabled) void registerDeviceForPush().catch(() => undefined);
