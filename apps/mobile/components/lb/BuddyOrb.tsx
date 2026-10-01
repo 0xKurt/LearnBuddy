@@ -75,7 +75,12 @@ import { useSvgId } from '../../lib/theme/svgId.js';
 export type { MoonState } from '../../lib/buddy/moon.js';
 
 /** The orb's radius as a share of its box (a thin margin for the rim). */
-const FILL = 0.48;
+/**
+ * How much of the orb's box the glass ball itself fills; the rest is where the moon flies
+ * (lib/buddy/orbRoom.ts). Exported because the splash hand-off has to draw the ball at the
+ * same size as the baked splash picture, or the swap jumps (issue #192).
+ */
+export const FILL = 0.48;
 /** Half the glass's viewBox, in moon units. */
 const VIEW = ORB_R / (2 * FILL);
 
