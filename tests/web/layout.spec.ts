@@ -53,28 +53,29 @@ for (const viewport of [
     await page.waitForTimeout(400);
     await page.screenshot({ path: join(SHOTS, `30-home-fits-${viewport.width}.png`) });
 
-    // The mark stays inside the screen and clear of every way to start.
+    // The head stays inside the screen: the name and the way into everything else
+    // never run into each other (issue #174 — the row of four circles moved into ⋯).
     const g = await mark.boundingBox();
     expect(g).not.toBeNull();
     expect(g!.x).toBeGreaterThanOrEqual(0);
     expect(g!.x + g!.width).toBeLessThanOrEqual(viewport.width);
+    const more = await page.getByRole('button', { name: 'Mehr', exact: true }).boundingBox();
+    expect(more).not.toBeNull();
+    expect(overlaps(g!, more!), 'mark overlaps ⋯').toBe(false);
+    expect(more!.x).toBeGreaterThanOrEqual(0);
+    expect(more!.x + more!.width).toBeLessThanOrEqual(viewport.width);
+
+    // Every way to start is reachable through ⋯ and fits inside the screen.
     // "Erklär mir was" is gone (owner decision 28.09.): explaining happens in the chat.
-    // "Mehr" joined the row on 30.09. (#125) and is measured with the rest.
-    for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln', 'Mehr']) {
+    await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+    for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln']) {
       const b = await page.getByRole('button', { name, exact: true }).boundingBox();
       expect(b, name).not.toBeNull();
-      expect(overlaps(g!, b!), `mark overlaps ${name}`).toBe(false);
       expect(b!.x, name).toBeGreaterThanOrEqual(0);
       expect(b!.x + b!.width, name).toBeLessThanOrEqual(viewport.width);
     }
-    // The row's buttons (icon and label) never run into each other.
-    const names = ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln', 'Mehr'];
-    const boxes = await Promise.all(
-      names.map((name) => page.getByRole('button', { name, exact: true }).boundingBox()),
-    );
-    for (let i = 0; i < names.length; i++)
-      for (let j = i + 1; j < names.length; j++)
-        expect(overlaps(boxes[i]!, boxes[j]!), `${names[i]} overlaps ${names[j]}`).toBe(false);
+    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeHidden();
     // The composer bar: camera, field and mic inside the screen, the field centred on the mic.
     const camera = await page
       .getByRole('button', { name: 'Was möchtest du anhängen?' })

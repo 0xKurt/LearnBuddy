@@ -11,9 +11,8 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
-import { BUBBLE, ORB } from './Conversation.js';
+import { BUBBLE } from './Conversation.js';
 
 type Props = {
   text: string;
@@ -35,7 +34,6 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
       <View
         style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}
       >
-        <BuddyOrb size={ORB} />
         <View
           accessible
           accessibilityLiveRegion="polite"
@@ -75,17 +73,8 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
         </View>
       </View>
       {children ? (
-        // Flush with the bubble's left edge, past the orb — like cards under a message.
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: SPACE.sm,
-            paddingLeft: ORB + SPACE.sm,
-          }}
-        >
-          {children}
-        </View>
+        // Flush with the bubble's left edge — like cards under a message.
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>{children}</View>
       ) : null}
     </View>
   );

@@ -24,7 +24,6 @@ import { Btn } from '../lb/Btn.js';
 import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
-import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { ConfirmCard } from './ConfirmCard.js';
 import { deliveryText, describeAction } from './describe.js';
 import { i18n } from '../../lib/i18n/index.js';
@@ -38,9 +37,6 @@ import { RichText } from './RichText.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
 import { SPACE } from '../../lib/theme/space.js';
-
-/** The orb beside Buddy's bubbles; cards and chips under a bubble align to its left edge. */
-export const ORB = 26;
 
 /**
  * One bubble geometry for everything said in the thread — a message, the message being
@@ -127,10 +123,6 @@ export function Conversation({
   const [menu, setMenu] = useState<MenuMessage | null>(null);
   const last = messages[messages.length - 1];
   const lastBuddy = [...messages].reverse().find((m) => m.role === 'buddy');
-  // Whether Buddy's greeting stands in what is shown here (its message may have scrolled out
-  // of the last few): then the orb that moves is his, the one that just woke up.
-  const greetsHere =
-    sessionStart !== null && messages.some((m) => m.id === sessionStart.afterMessageId);
   const breaks = dayBreaks(messages.map((m) => m.created_at));
   const thinking =
     pending !== null || messages.some((m) => m.role === 'learner' && m.status === 'processing');
@@ -182,11 +174,6 @@ export function Conversation({
                 maxWidth: '92%',
               }}
             >
-              {/* Only the newest Buddy moves (while he writes, the one writing does) — and
-                  with a greeting standing under the thread, that is the one who just woke up. */}
-              {mine ? null : (
-                <BuddyOrb size={ORB} breathe={m === lastBuddy && !thinking && !greetsHere} />
-              )}
               <Pressable
                 accessibilityRole="text"
                 accessibilityLabel={spoken}
@@ -245,9 +232,8 @@ export function Conversation({
                   key={a.id}
                   entering={riseIn(1)}
                   // Block gap xs + this xs = sm, the same air as between two bubbles —
-                  // a card glued to its sentence was the complaint (owner 28.09., issue
-                  // #51). marginLeft: flush with the bubble's left edge, past the orb.
-                  style={{ width: '86%', marginLeft: ORB + SPACE.sm, marginTop: SPACE.xs }}
+                  // a card glued to its sentence was the complaint (owner 28.09., issue #51).
+                  style={{ width: '86%', marginTop: SPACE.xs }}
                 >
                   <OfferCard actionId={a.id} offer={a.summary} spoken={spokenMode} />
                 </Animated.View>
@@ -255,7 +241,7 @@ export function Conversation({
                 <Animated.View
                   key={a.id}
                   entering={riseIn(1)}
-                  style={{ width: '86%', marginLeft: ORB + SPACE.sm, marginTop: SPACE.xs }}
+                  style={{ width: '86%', marginTop: SPACE.xs }}
                 >
                   <AreaCard area={a.summary.area} />
                 </Animated.View>
@@ -264,7 +250,7 @@ export function Conversation({
                 <Animated.View
                   key={a.id}
                   entering={riseIn(1)}
-                  style={{ width: '86%', marginLeft: ORB + SPACE.sm, marginTop: SPACE.xs }}
+                  style={{ width: '86%', marginTop: SPACE.xs }}
                 >
                   <ConfirmCard confirm={a.summary} />
                 </Animated.View>
@@ -278,7 +264,6 @@ export function Conversation({
                 style={{
                   gap: SPACE.sm,
                   maxWidth: '88%',
-                  marginLeft: ORB + SPACE.sm,
                   marginTop: SPACE.xs,
                 }}
               >
@@ -388,9 +373,7 @@ export function Conversation({
                 ))}
               </View>
             ) : null}
-            {opensHere ? (
-              <SessionGreeting text={sessionStart!.text} room={sessionRoom} breathe={!thinking} />
-            ) : null}
+            {opensHere ? <SessionGreeting text={sessionStart!.text} room={sessionRoom} /> : null}
           </Animated.View>
         );
       })}
@@ -426,8 +409,6 @@ export function Conversation({
           entering={riseIn(0)}
           style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}
         >
-          {/* Buddy is writing: his moon sways in the rhythm of speech. */}
-          <BuddyOrb size={ORB} state="speak" />
           <View
             accessibilityLiveRegion="polite"
             style={[
@@ -465,15 +446,7 @@ export function Conversation({
  * rest of it is free (the screen passes it while nothing follows the greeting). Everything
  * older is then one swipe above — hidden from neither eye nor screen reader.
  */
-function SessionGreeting({
-  text,
-  room = 0,
-  breathe,
-}: {
-  text: string;
-  room?: number;
-  breathe: boolean;
-}) {
+function SessionGreeting({ text, room = 0 }: { text: string; room?: number }) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   return (
@@ -492,7 +465,6 @@ function SessionGreeting({
           maxWidth: '92%',
         }}
       >
-        <BuddyOrb size={ORB} breathe={breathe} />
         <View
           accessibilityRole="text"
           accessibilityLabel={`${t('thread.buddy')}: ${text}`}

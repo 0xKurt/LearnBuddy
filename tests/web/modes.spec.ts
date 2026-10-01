@@ -64,9 +64,11 @@ test('learning modes: explain, homework help without the solution, practice with
   page,
 }) => {
   await onboardChild(page);
-  // No tiles or lists: Buddy, and the ways to start above the field.
-  await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeVisible();
+  // No tiles or lists: Buddy, his name, and one way into everything else (issue #174).
   await expect(page.getByText('Was willst du machen?')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
   await shot(page, '20-home-start-row');
 
   // ── "Erklär mir den Dativ" → the explanation is the answer, practice is offered ──
@@ -110,6 +112,7 @@ test('learning modes: explain, homework help without the solution, practice with
 
   // ── Homework help: hints only, no "show solution", solved by herself ──
   await closeCardIfAny(page);
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe eintippen' }).click();
   await expect(page.getByText('Welche Aufgabe? Schreib sie ab.')).toBeVisible();

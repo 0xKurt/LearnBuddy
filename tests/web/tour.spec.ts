@@ -238,6 +238,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── Homework of two pages, the second cut off: Lena is told, and takes just that page again ──
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
   await expect(page.getByText('Fotografier deine Hausaufgabe')).toBeVisible();
@@ -344,6 +345,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Übung beenden' }).click();
 
   // ── Pronunciation: record (a fake microphone), sent, feedback per word ──
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Aussprache', exact: true }).click();
   await page.getByRole('textbox').last().fill('Englisch: The weather is nice today.');
   await inSheet(page).getByRole('button', { name: "Los geht's" }).click();

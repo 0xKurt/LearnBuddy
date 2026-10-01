@@ -15,14 +15,10 @@ mkdirSync(SHOTS, { recursive: true });
 
 /** The app scrolls inside its own views: a tall window shows a whole screen. */
 /** A photographed "worksheet", rendered by the browser itself. */
-/** Where the mark, the menu and the ways to start stand on Buddy's home (card or not). */
+/** Where the mark and the way into everything else stand on Buddy's home (card or not). */
 async function homePositions(page: Page): Promise<number[]> {
   const ys: number[] = [];
-  for (const target of [
-    page.getByText('LearnBuddy'),
-    page.getByRole('button', { name: 'Mehr' }),
-    page.getByText('Arbeit', { exact: true }),
-  ]) {
+  for (const target of [page.getByText('LearnBuddy'), page.getByRole('button', { name: 'Mehr' })]) {
     const box = await target.boundingBox();
     if (!box) throw new Error('not on the screen');
     ys.push(Math.round(box.y));
@@ -133,7 +129,8 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(
     page.getByText('Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten', { exact: false }),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Arbeit', exact: true })).toBeVisible();
+  // The ways to start live in ⋯ since #174; the head carries Buddy, his name and that one way.
+  await expect(page.getByRole('button', { name: 'Mehr', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Was möchtest du anhängen?' })).toBeVisible();
   await shot(page, '04-buddy-first-visit');
   // What the head and the bar take on the smallest phone: the rest is conversation (#64).
@@ -294,11 +291,11 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await shot(page, '12-buddy-feedback');
 
   // ── The finished practice stands in the conversation, not on top (issue #17): the same
-  // kind words, the full view one tap away — and nothing lies over the ways to start ──
+  // kind words, the full view one tap away — and nothing lies over the way to start ──
   const card = page.getByTestId('home-card');
   await expect(card).toHaveCount(0);
   await expect(page.getByText('Geschafft!')).toBeVisible();
-  await page.getByRole('button', { name: 'Arbeit', exact: true }).click({ trial: true });
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click({ trial: true });
   await shot(page, '12b-buddy-result-in-thread');
   await page.getByRole('button', { name: 'Ansehen' }).click();
   // The full summary again (the thread behind keeps its short version of the same words).

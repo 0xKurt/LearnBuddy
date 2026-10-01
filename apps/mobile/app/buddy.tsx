@@ -25,7 +25,6 @@ import { Platform, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard, optInRules, type OptInDecision } from '../components/buddy/DecisionCard.js';
@@ -42,11 +41,8 @@ import { Banner } from '../components/lb/Banner.js';
 import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
-import { Icon } from '../components/lb/Icon.js';
-import { OrbitMenu, type OrbitItem } from '../components/lb/OrbitMenu.js';
-import { StartRow, TRAILING_WIDTH } from '../components/lb/StartRow.js';
-import { CircleBtn } from '../components/lb/CircleBtn.js';
-import { Wordmark } from '../components/lb/Wordmark.js';
+import { Icon, type IconName } from '../components/lb/Icon.js';
+import { Header } from '../components/buddy/Header.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
@@ -112,6 +108,8 @@ const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
 
 /** One empty list for every "no photos": a fresh array each render would re-run the effect. */
 const NO_THUMBS: readonly string[] = [];
+
+type StartItem = { key: string; label: string; icon: IconName; onPress: () => void };
 
 export default function BuddyScreen() {
   const { palette } = useTheme();
@@ -490,7 +488,8 @@ export default function BuddyScreen() {
    * examples of what Buddy does, not a feature catalog). The first one fits her
    * situation; everything else she just says, and Buddy answers with a button.
    */
-  function orbitItems(next: BuddyHome['next']): OrbitItem[] {
+  /** The four ways to start, as the ⋯ menu lists them (issue #174). */
+  function orbitItems(next: BuddyHome['next']): StartItem[] {
     const exam = next.find((i) => i.kind === 'exam');
     return [
       // Always "Arbeit" where she looks for it (user feedback #17); with a test planned it
@@ -530,6 +529,12 @@ export default function BuddyScreen() {
   /** From a choice sheet on: first let it close, then go on. */
   function fromChoice(next: () => void): void {
     setChoice(null);
+    setTimeout(next, SHEET_SWAP_MS);
+  }
+
+  /** Same from the ⋯ menu: two of the ways to start open a sheet of their own (#174). */
+  function fromMenu(next: () => void): void {
+    setMenuOpen(false);
     setTimeout(next, SHEET_SWAP_MS);
   }
 
@@ -989,38 +994,11 @@ export default function BuddyScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow />
       <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
-        {/* The head that held three unlike things is gone (#125): a greeting, a state
-            toggle and a menu, side by side, the loudest of them a setting she rarely
-            touches. The menu sits at the end of the ways to start now, and reading aloud
-            is a line in it with words instead of a symbol (#52).
-            What stands here instead is the mark, and only the mark (#135) — one thing,
-            not three, and nothing in it to tap. */}
-        <View
-          // The walkthrough measures this row: every point the head takes is one the
-          // conversation loses (issue #64, tests/web/fit.ts).
-          testID="home-header"
-          style={{
-            paddingHorizontal: SPACE.lg,
-            paddingTop: SPACE.xs,
-            paddingBottom: 2,
-            justifyContent: 'center',
-          }}
-        >
-          <Wordmark />
-          {/* The menu belongs with the ways to start (owner 30.09., #125) — but the first
-              visit has a ring instead of that row, and a screen with no way into settings,
-              memory or the library is broken. When there is no row to hold it, the mark's
-              row does, absolutely placed so the mark stays optically centred. */}
-          {talking ? null : (
-            <View style={{ position: 'absolute', right: SPACE.lg, top: SPACE.xs }}>
-              <CircleBtn
-                icon="more"
-                onPress={() => setMenuOpen(true)}
-                accessibilityLabel={t('buddy:menu.short')}
-              />
-            </View>
-          )}
-        </View>
+        {/* Buddy, his name, and one way into everything else (issue #174). The owner drew
+            it: orb left, LearnBuddy beside it, three dots right. The row of four circles
+            that used to stand here moved into those dots, and the orb that stood beside
+            every single reply is gone with it — one Buddy, in one place. */}
+        <Header state={pending !== null ? 'think' : 'idle'} onMenu={() => setMenuOpen(true)} />
         <View style={{ flex: 1 }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never
             pushes them down, and she can close it (only on this phone). */}
@@ -1029,7 +1007,6 @@ export default function BuddyScreen() {
               id={openCard}
               closeLabel={t('buddy:card.close')}
               onClose={() => closeCard(openCard)}
-              rightInset={TRAILING_WIDTH}
             >
               {top}
             </TopOverlay>
@@ -1037,29 +1014,14 @@ export default function BuddyScreen() {
 
           {talking ? (
             <>
+              {/* What she is working on, in her own words (issue #160). One line, and only
+                  when there is something — an empty slot waiting to be filled would be a
+                  dashboard (rule 16). Tapping opens the sheet it is about. */}
               <View
-                style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4 }}
-                // Where the conversation starts (for its fade-out under the row).
+                style={{ paddingHorizontal: SPACE.lg, paddingBottom: h.focus ? SPACE.xs : 0 }}
+                // Where the conversation starts (for its fade-out under the head).
                 onLayout={(e) => setThreadTop(e.nativeEvent.layout.height)}
               >
-                {/* One row above the conversation: the ways to start. The greeting sits in
-                    the bar, what is due is a card — nothing else takes height here
-                    (owner 28.09., issue #45: "eine zeile mit menu buttons, thats it"). */}
-                <StartRow
-                  items={orbitItems(h.next)}
-                  trailing={{
-                    key: 'menu',
-                    icon: 'more',
-                    label: t('buddy:menu.short'),
-                    onPress: () => setMenuOpen(true),
-                  }}
-                  disabled={pending !== null}
-                  covered={covered}
-                />
-                {/* What she is working on, in her own words (issue #160). One line, under
-                    the ways to start, and only when there is something — an empty slot
-                    waiting to be filled would be a dashboard (rule 16). Tapping opens the
-                    sheet it is about. */}
                 {h.focus ? (
                   <Pressable
                     disabled={!h.focus.material_id}
@@ -1070,7 +1032,6 @@ export default function BuddyScreen() {
                         ? router.push(`/material/${h.focus.material_id}`)
                         : undefined
                     }
-                    style={{ paddingTop: SPACE.xs }}
                   >
                     {({ pressed }) => (
                       <Text
@@ -1217,14 +1178,9 @@ export default function BuddyScreen() {
             >
               {/* The status line: centred, well below the slim bar's room on top. */}
               {statusLine}
-              {/* The ring: Buddy in the middle, ways to start around it. */}
-              <OrbitMenu
-                items={orbitItems(h.next)}
-                disabled={pending !== null}
-                // Only Buddy in the middle: nothing that could run into the labels on a small phone.
-                center={<BuddyOrb size={72} />}
-              />
-              {/* First visit: one sentence about Buddy; the ring above shows how to start. */}
+              {/* The ring of circles around Buddy is gone, and so is the big orb that stood
+                  in it (issue #174): Buddy is in the head now, on every screen, and the same
+                  ball twice on one screen reads as a mistake. First visit: one sentence. */}
               <Text
                 style={[
                   TYPE.body,
@@ -1251,6 +1207,21 @@ export default function BuddyScreen() {
         closeLabel={t('common:actions.close')}
         onClose={() => setMenuOpen(false)}
       >
+        {/* The four ways to start used to be a row of circles above the conversation. They
+            live here now (issue #174): the conversation gets the screen, and what she can
+            start is one tap away instead of a permanent row. */}
+        {orbitItems(h.next).map((item) => (
+          <Btn
+            key={item.key}
+            variant="outline"
+            full
+            icon={item.icon}
+            disabled={pending !== null}
+            onPress={() => fromMenu(item.onPress)}
+          >
+            {item.label}
+          </Btn>
+        ))}
         {/* Reading aloud used to be a speaker symbol in the head, and the owner's question
             was "wozu ist der eigentlich da" (#52). Here it says what it does, in words,
             and its state is the label — no badge to decode. */}
