@@ -32,6 +32,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { toast } from '../lb/Toast.js';
+import { dropped, reacted, tapped } from '../../lib/perf.js';
 import { BottomBar } from './BottomBar.js';
 import { ListenButton } from './ListenButton.js';
 import { WordSheet, type SpokenWord } from './WordSheet.js';
@@ -374,8 +375,10 @@ export function SpeakPanel({
       // She left the question meanwhile: nothing is shown or read aloud for a screen she left.
       if (!mounted.current) return;
       setSending('idle');
+      reacted('speak_wait');
       // The screen reads or announces the feedback (practice/[id].tsx readFeedback).
       await onResult(res);
+      reacted('speak_total');
     } catch (err) {
       onProgress?.(null);
       if (err instanceof WaitAborted) return; // she recorded again or skipped while offline
@@ -398,10 +401,18 @@ export function SpeakPanel({
 
   const rec = useRecording({
     onRecorded: (r: Recording) => {
+      // Closing the file and turning it into base64 happens before the first byte moves.
+      reacted('speak_finish');
       pending.current = { clientTurnId: newId(), itemId: item.id, mime: r.mime, base64: r.base64 };
+      tapped('speak_wait');
       void send();
     },
     onFailed: (why) => {
+      // Nothing she can see came of it: the marks are forgotten, so her next attempt is
+      // not measured from this one (lib/perf.ts).
+      dropped('speak_finish');
+      dropped('speak_wait');
+      dropped('speak_total');
       if (why !== 'denied') setProblem(why);
     },
   });
@@ -412,6 +423,12 @@ export function SpeakPanel({
 
   function toggleRecording(): void {
     if (recording) {
+      // Four numbers the device alone can give (issue #169): her finger leaves the button
+      // → the recording is closed → the answer is on screen. Server-side we only ever saw
+      // the middle. 'speak_finish' is the app's own share before anything leaves the
+      // phone; 'speak_total' is what she actually waits.
+      tapped('speak_finish');
+      tapped('speak_total');
       void rec.stop();
       return;
     }

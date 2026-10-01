@@ -100,7 +100,7 @@ import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { SPACE } from '../lib/theme/space.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
-import { reacted, tapped } from '../lib/perf.js';
+import { dropped, reacted, tapped } from '../lib/perf.js';
 
 const VISIBLE_MESSAGES = 6;
 
@@ -328,6 +328,9 @@ export default function BuddyScreen() {
   ): Promise<boolean> {
     // Tap → her bubble on screen: the span she calls "hängt" (issue #66).
     tapped('send');
+    // And tap → Buddy's FIRST WORD on screen, which is the wait she actually sits
+    // through (issue #169). Server-side we only ever saw the model's share of it.
+    tapped('reply');
     setPending({ id: clientMessageId, text });
     reacted('send');
     setLive(null);
@@ -359,6 +362,8 @@ export default function BuddyScreen() {
           // Written at the end: seen there while she follows it; scrolled up to read, she
           // stays where she is and "↓ Neue Antwort" shows.
           setLive(e.text);
+          // The first character of the answer is on screen.
+          if (e.text.length > 0) reacted('reply');
           if (!voiceOn) return;
           if (!along.speaker) {
             along.speaker = createStreamSpeaker(
@@ -379,11 +384,14 @@ export default function BuddyScreen() {
       if (res.status === 'failed') {
         // Whatever was said of a withdrawn answer stops mid-sentence.
         along.speaker?.cancel();
+        // No first word ever came: her wait is not the app's measurement (lib/perf.ts).
+        dropped('reply');
         announce(turnFailureText(res.error_code));
       } else along.speaker?.feed(replyAfter(res.home.thread, clientMessageId)?.text ?? '', true);
       return true;
     } catch (err) {
       along.speaker?.cancel();
+      dropped('reply');
       // Nothing to read when the reply comes after a failure she was told about.
       awaitingReply.current = null;
       // She stopped it: the home from the stop says where it stands.
