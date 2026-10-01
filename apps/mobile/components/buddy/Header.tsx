@@ -25,6 +25,11 @@ import { Icon } from '../lb/Icon.js';
 /** Below this width the name takes the smaller step (phones are not one size). */
 const NARROW = 360;
 
+/** The orb's size, and with the padding around it the height of the whole band. */
+const ORB = 36;
+/** How tall the head is, measured from its own parts — anything placed under it can ask. */
+export const HEADER_HEIGHT = ORB + 2 * SPACE.sm;
+
 export function Header({
   state = 'idle',
   onMenu,
@@ -48,7 +53,7 @@ export function Header({
         paddingVertical: SPACE.sm,
       }}
     >
-      <BuddyOrb size={36} state={state} />
+      <BuddyOrb size={ORB} state={state} />
       <Text
         accessibilityRole="header"
         maxFontSizeMultiplier={MAX_FONT_SCALE}

@@ -15,8 +15,10 @@ import { Text } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HEADER_HEIGHT } from '../buddy/Header.js';
 import { ENV } from '../../lib/env.js';
 import { fadeIn, fadeOut } from '../../lib/theme/enter.js';
+import { SPACE } from '../../lib/theme/space.js';
 
 declare const __DEV__: boolean;
 
@@ -47,13 +49,13 @@ export function DevHostNote() {
       importantForAccessibility="no-hide-descendants"
       style={{
         position: 'absolute',
-        // Left, not centred. It went to the top on 29.09. because the bottom is where the
-        // composer lives, and back then the head held a greeting on the left and buttons on
-        // the right — the middle was the free part. Since #135 the mark stands there,
-        // centred, and this was drawn straight across it (issue #137). The mark is centred,
-        // so the left edge is what is free now, and it still covers no control.
-        top: insets.top + 2,
-        left: 10,
+        // UNDER the head, not in it. The bottom is where the composer lives (issue #103),
+        // and the top band is Buddy, his name and ⋯ since #174 — at the left edge this lay
+        // straight across the orb, the same fault as #137 one head later. Below the band
+        // nothing is a control, it touches nothing (pointerEvents none) and it leaves by
+        // itself after six seconds.
+        top: insets.top + HEADER_HEIGHT,
+        left: SPACE.lg,
         backgroundColor: 'rgba(178,58,58,0.92)',
         borderRadius: 999,
         paddingHorizontal: 9,

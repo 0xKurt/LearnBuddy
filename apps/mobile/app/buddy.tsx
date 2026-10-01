@@ -959,11 +959,6 @@ export default function BuddyScreen() {
           ),
         )
     : [];
-  // The bar on top stands in for the row of ways to start: the row is left out — no label
-  // ends peeking out under the bar, nothing a screen reader finds behind it — in place, so
-  // nothing moves when the bar comes or goes. No measuring: the bar's size contract
-  // (≤ ~64 pt, SlimBar.tsx) keeps it within the row's room (issue #17).
-  const covered = top.length > 0;
   const statusLine = (
     <View
       style={{
@@ -1123,9 +1118,14 @@ export default function BuddyScreen() {
                   }
                 />
               </ScrollView>
-              {/* A message scrolled up under the ways to start fades out there instead of a
-                  hard-cut violet sliver (live finding 8). */}
-              {!covered && threadTop > 0 ? <TopEdgeFade top={threadTop} /> : null}
+              {/* A message scrolled up under the head fades out there instead of a hard-cut
+                  violet sliver (live finding 8). It used to be left out whenever a card was
+                  open — on the idea that the card covers the edge itself — and that is
+                  exactly when the lavender stripe was measured on the phone (issue #170):
+                  the card ends a few pixels above where the thread begins. The card sits
+                  above this anyway (zIndex 10 against 1), so drawing it always costs
+                  nothing and closes the gap. */}
+              {threadTop > 0 ? <TopEdgeFade top={threadTop} /> : null}
               {pill ? (
                 <Animated.View
                   entering={riseIn(0)}
