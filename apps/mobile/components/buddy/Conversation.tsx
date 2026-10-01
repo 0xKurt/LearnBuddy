@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
+import { Icon } from '../lb/Icon.js';
 import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
@@ -263,57 +264,77 @@ export function Conversation({
                 // chips sat glued to their bubble (owner feedback 2026-09-28).
                 style={{
                   gap: SPACE.sm,
+                  // Stretch, not shrink-to-fit: the column stands in a block that aligns
+                  // its children to the side, so without this each receipt was only as
+                  // wide as its "Rückgängig" button and the sentence broke after three
+                  // words (issue #191). The cap keeps it inside the bubble column.
+                  alignSelf: 'stretch',
                   maxWidth: '88%',
                   marginTop: SPACE.xs,
                 }}
               >
                 {done.map((a) => {
                   const what = describeAction(a.summary, { contactOn });
+                  const undone = a.status === 'undone';
                   return (
                     <Animated.View
                       key={a.id}
                       layout={glide}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                        backgroundColor: a.status === 'undone' ? palette.canvas : palette.mint,
-                        borderRadius: 16,
-                        paddingLeft: 12,
-                      }}
+                      // A receipt, not a label. It used to be a green pill with the text
+                      // squeezed into whatever the "Rückgängig" button left over — on a
+                      // phone that came out as "✓" on one line and "Ein" on the next, and
+                      // two of them stacked read as green blobs nobody could place (owner
+                      // 01.10.: "ich weiss auch nicht was die gruenen felder da sein
+                      // sollen und es sieht auch haesslich aus", issue #191).
+                      //
+                      // Now it is a quiet line in the conversation's own tones: a tick,
+                      // the sentence with room to breathe, and the way back under it.
+                      // Taking something back is a principle here (UX-PRINCIPLES: undo
+                      // over confirmation), so it stays — it just stops shouting.
+                      style={{ gap: SPACE.xs }}
                     >
-                      <Text
-                        style={[
-                          TYPE.small,
-                          {
-                            fontSize: 13,
-                            flex: 1,
-                            color: a.status === 'undone' ? palette.ink2 : palette.ink,
-                          },
-                        ]}
+                      <View
+                        style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.xs }}
                       >
-                        {a.status !== 'undone'
-                          ? `✓ ${what}`
-                          : a.summary.tool === 'request_material'
-                            ? t('action.request_material_undone', { title: a.summary.title })
-                            : `${what} – ${t('done.undone')}`}
-                      </Text>
-                      {onUndo && a.undoable && a.status !== 'undone' ? (
-                        <Btn
-                          size="sm"
-                          variant="ghost"
-                          onPress={() => {
-                            haptic.tap();
-                            onUndo(a.id);
-                          }}
-                          disabled={undoBusy ?? busy}
-                          accessibilityLabel={t('done.undo_label', { what })}
+                        <View style={{ paddingTop: 2 }}>
+                          <Icon
+                            name={undone ? 'close' : 'check'}
+                            size={14}
+                            color={undone ? palette.ink3 : palette.successText}
+                          />
+                        </View>
+                        <Text
+                          style={[
+                            TYPE.small,
+                            { flex: 1, fontSize: 13, color: undone ? palette.ink3 : palette.ink2 },
+                          ]}
                         >
-                          {/* Taking back a request for a photo: "no photo needed" (#14). */}
-                          {a.summary.tool === 'request_material'
-                            ? t('done.undo_request_material')
-                            : t('done.undo')}
-                        </Btn>
+                          {!undone
+                            ? what
+                            : a.summary.tool === 'request_material'
+                              ? t('action.request_material_undone', { title: a.summary.title })
+                              : `${what} – ${t('done.undone')}`}
+                        </Text>
+                      </View>
+                      {onUndo && a.undoable && !undone ? (
+                        <View style={{ paddingLeft: 14 + SPACE.xs }}>
+                          <Btn
+                            size="sm"
+                            variant="outline"
+                            pill
+                            onPress={() => {
+                              haptic.tap();
+                              onUndo(a.id);
+                            }}
+                            disabled={undoBusy ?? busy}
+                            accessibilityLabel={t('done.undo_label', { what })}
+                          >
+                            {/* Taking back a request for a photo: "no photo needed" (#14). */}
+                            {a.summary.tool === 'request_material'
+                              ? t('done.undo_request_material')
+                              : t('done.undo')}
+                          </Btn>
+                        </View>
                       ) : null}
                     </Animated.View>
                   );

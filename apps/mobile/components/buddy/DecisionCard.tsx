@@ -67,7 +67,12 @@ export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome 
       >
         {decision.can_enable_here ? t('decision.optin_yes') : t('decision.optin_minor_cta')}
       </Btn>
-      <Btn variant="ghost" size="sm" onPress={() => onOptIn(false)} disabled={busy}>
+      {/* Outline, not ghost: next to a filled "Ja, gern" the ghost had no shape at all
+          and read as a word someone forgot to finish (owner 01.10.: "lieber nicht hat
+          gar keinen button background irgendwie.. kp", issue #191). Two answers to one
+          question are two buttons; which one leads is said by the fill, not by one of
+          them being invisible. */}
+      <Btn variant="outline" size="sm" onPress={() => onOptIn(false)} disabled={busy}>
         {t('decision.optin_no')}
       </Btn>
     </NoticeBubble>
