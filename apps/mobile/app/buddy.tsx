@@ -1125,7 +1125,11 @@ export default function BuddyScreen() {
                   the card ends a few pixels above where the thread begins. The card sits
                   above this anyway (zIndex 10 against 1), so drawing it always costs
                   nothing and closes the gap. */}
-              {threadTop > 0 ? <TopEdgeFade top={threadTop} /> : null}
+              {/* `threadTop` is 0 whenever there is no focus line — and 0 is where the
+                  conversation starts then, not a reason to leave the fade out. On the
+                  phone that showed as a message sliced off hard under the head (seen on
+                  the Xiaomi, 01.10.), the very fault this exists to remove. */}
+              <TopEdgeFade top={threadTop} />
               {pill ? (
                 <Animated.View
                   entering={riseIn(0)}

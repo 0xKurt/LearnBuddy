@@ -95,7 +95,19 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
 
   if (!mounted) return null;
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onClose}>
+    <Modal
+      visible
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+      // Android gives a modal its own window, and that window does not inherit the app's
+      // system chrome: under a dark sheet the navigation bar comes back white (measured on
+      // the Xiaomi, 01.10., issue #177). Asking for translucent bars is right either way —
+      // React Native refuses the navigation bar without the status bar, hence both — but it
+      // did **not** fix it on that device, so nothing here claims it does.
+      statusBarTranslucent
+      navigationBarTranslucent
+    >
       {/* A modal is its own root: gestures inside it need their own handler root. */}
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardSafe style={{ flex: 1 }}>
