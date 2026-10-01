@@ -29,6 +29,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 import { dismissedBySwipe } from '../../lib/gestures.js';
 import { KeyboardSafe } from './KeyboardSafe.js';
+import { useA11ySettings } from '../../lib/a11ySettings.js';
 
 type Props = {
   visible: boolean;
@@ -42,6 +43,7 @@ type Props = {
 
 export function Sheet({ visible, title, closeLabel, onClose, children, footer }: Props) {
   const { palette } = useTheme();
+  const { reduceTransparency } = useA11ySettings();
   const insets = useSafeAreaInsets();
   const { height: screen } = useWindowDimensions();
   const reduced = useReducedMotion();
@@ -117,7 +119,15 @@ export function Sheet({ visible, title, closeLabel, onClose, children, footer }:
                 onPress={onClose}
                 style={{ flex: 1 }}
               >
-                <View style={{ flex: 1, backgroundColor: 'rgba(31,27,46,0.28)' }} />
+                {/* The veil separates the sheet from the screen. With Reduce Transparency
+                    it becomes opaque rather than disappearing (issue #133 position 13):
+                    taking it away would leave the sheet floating over readable text. */}
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: reduceTransparency ? palette.ink : 'rgba(31,27,46,0.28)',
+                  }}
+                />
               </Pressable>
             </Animated.View>
             <Animated.View

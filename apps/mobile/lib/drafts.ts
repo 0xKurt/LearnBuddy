@@ -89,3 +89,73 @@ export function useDraft(name: string): {
 
   return { text, setText, clear };
 }
+
+/**
+ * A whole form kept on the device, not one field (issue #133 position 9).
+ *
+ * The profile step is where a parent and a child sit together and type a name, a birth
+ * date and a language. Android kills a backgrounded app without warning, and losing that
+ * means doing it again in exactly the moment they were already being patient. The PIN is
+ * never part of it — a secret does not belong in a draft — and neither is the consent
+ * checkbox: agreement is given, not restored.
+ *
+ * Same storage and the same wipe list as `useDraft`, so a sign-out takes it with
+ * everything else that was local (lib/localWork.ts).
+ */
+export function useFormDraft<T extends Record<string, string | null>>(
+  name: string,
+  empty: T,
+): { draft: T | null; keep: (next: T) => void; clear: () => void; ready: boolean } {
+  const key = PREFIX + name;
+  const [draft, setDraft] = useState<T | null>(null);
+  const [ready, setReady] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void readItem(key)
+      .then((kept) => {
+        if (!alive) return;
+        if (kept) {
+          try {
+            const parsed: unknown = JSON.parse(kept);
+            // Only the fields this form knows: a draft written by an older version must
+            // not put a key back that no longer exists.
+            if (parsed && typeof parsed === 'object') {
+              const out = { ...empty };
+              for (const k of Object.keys(empty) as Array<keyof T>) {
+                const v = (parsed as Record<string, unknown>)[k as string];
+                if (typeof v === 'string') out[k] = v as T[keyof T];
+              }
+              setDraft(out);
+            }
+          } catch {
+            // Unreadable: it is a convenience, not data to recover at any cost.
+          }
+        }
+        setReady(true);
+      })
+      .catch(() => setReady(true));
+    return () => {
+      alive = false;
+      if (timer.current) clearTimeout(timer.current);
+    };
+    // `empty` is the shape of the form, not a value to react to: it is written fresh on
+    // every render and would restart this effect for ever.
+  }, [key]);
+
+  function keep(next: T): void {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      void remember(key).then(() => writeItem(key, JSON.stringify(next)));
+    }, SAVE_AFTER_MS);
+  }
+
+  function clear(): void {
+    if (timer.current) clearTimeout(timer.current);
+    setDraft(null);
+    void writeItem(key, null);
+  }
+
+  return { draft, keep, clear, ready };
+}

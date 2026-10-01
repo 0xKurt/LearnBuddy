@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 
+import { useA11ySettings } from '../../lib/a11ySettings.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 /** Where each blob sits: centre, radius (in the 0–100 viewBox). */
@@ -29,6 +30,12 @@ const MID = { offset: 0.5, factor: 0.28 } as const;
 export function Glow({ height = 520 }: { height?: number }) {
   const { palette } = useTheme();
   const base = useSvgId('g');
+  // The OS was asked for no see-through surfaces (issue #133 position 13). The light is
+  // what makes the app calm for most people and exactly what makes text hard to find for
+  // whoever turned this on. It goes; the ground stays the palette's own colour, so nothing
+  // is left unreadable.
+  const { reduceTransparency } = useA11ySettings();
+  if (reduceTransparency) return null;
   return (
     <View
       pointerEvents="none"

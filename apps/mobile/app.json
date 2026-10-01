@@ -12,7 +12,6 @@
     "ios": {
       "bundleIdentifier": "com.learnbuddy.app",
       "supportsTablet": false,
-      "associatedDomains": ["applinks:learnbuddy.app"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Damit du Arbeitsblätter fotografieren kannst.",
@@ -52,19 +51,6 @@
         "backgroundColor": "#faf7fd"
       },
       "permissions": ["CAMERA"],
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "learnbuddy.app"
-            }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
-      ],
       "allowBackup": false
     },
     "web": {

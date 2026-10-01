@@ -43,6 +43,8 @@ import {
   type ThemeName,
 } from './palettes.js';
 import { applySystemChrome } from './systemChrome.js';
+import { applyBoldText } from './type.js';
+import { useA11ySettings } from '../a11ySettings.js';
 
 /** Pre-#140 this held one palette name; it now holds the family, and the mode sits beside it. */
 const KEY = 'lb.theme';
@@ -147,6 +149,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     applySystemChrome();
   }, [name]);
+
+  // The OS's Bold Text setting reaches the whole type scale from here (issue #133
+  // position 13): the style objects are refilled in place, like a palette change, so no
+  // component has to know about it.
+  const { boldText } = useA11ySettings();
+  useEffect(() => {
+    applyBoldText(boldText, paletteOf(name));
+  }, [boldText, name]);
 
   const choose = useCallback<ThemeContext['choose']>((next) => {
     // The tokens change through the effect above, so a screen never shows half of the old

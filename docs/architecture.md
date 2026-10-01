@@ -860,6 +860,16 @@ pronunciation 6 s (before dropping its thinking budget, 3–4 s after); preparin
 2.5–6 s (Buddy says so meanwhile). Model cost per step: $0.0003–0.0005 for a judged answer,
 $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
+**Two accessibility settings the OS owns** (`lib/a11ySettings.ts`, issue #133 position 13).
+**Bold Text** reaches the whole type scale at once: `applyBoldText` refills `TYPE` in place,
+exactly like a palette change, so every screen that reads `TYPE.body` at render time follows
+and no component knows about it. Each style moves up one step rather than everything becoming
+one weight — the app's hierarchy is carried by weight, so flattening it would take the
+hierarchy with it. **Reduce Transparency** removes the decorative `Glow` (the ground stays the
+palette's own colour, so nothing is left unreadable) and makes the sheet's veil opaque instead
+of removing it: the veil is what separates a sheet from the screen behind it. Both are
+followed while the app runs, not read once at start.
+
 ## Dependencies and their advisories
 
 `pnpm audit --prod` reports around ninety findings, and the number on its own is useless: it

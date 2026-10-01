@@ -10,7 +10,7 @@
 
 import type { AppLocale } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Platform,
   ScrollView,
@@ -49,6 +49,7 @@ import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { bottomRoom } from '../lib/theme/space.js';
+import { useFormDraft } from '../lib/drafts.js';
 
 /** Android number pads emit "-", "," and spaces too; a date or PIN is digits only. */
 const onlyDigits = (value: string) => value.replace(/\D+/g, '');
@@ -71,6 +72,38 @@ export default function Profile() {
   const [contactOk, setContactOk] = useState(false);
   const [pin, setPinValue] = useState('');
   const [pinRepeat, setPinRepeat] = useState('');
+  /**
+   * What they typed, kept on the device (issue #133 position 9). This is where a parent
+   * and a child sit together over a name and a birth date; Android kills a backgrounded
+   * app without warning, and losing it means doing it again in the one moment they were
+   * already being patient. The PIN is not in here — a secret does not belong in a draft —
+   * and neither is the consent box: agreement is given, not restored.
+   */
+  const form = useFormDraft('profile', {
+    relation: '',
+    name: '',
+    day: '',
+    month: '',
+    year: '',
+    locale: '',
+  });
+  const restored = useRef(false);
+  useEffect(() => {
+    if (!form.ready || restored.current || !form.draft) return;
+    restored.current = true;
+    const d = form.draft;
+    if (d.relation === 'self' || d.relation === 'child') setRelation(d.relation);
+    if (d.name) setName(d.name);
+    if (d.day) setDay(d.day);
+    if (d.month) setMonth(d.month);
+    if (d.year) setYear(d.year);
+    if (d.locale) setLocale(d.locale as AppLocale);
+  }, [form.ready, form.draft]);
+  useEffect(() => {
+    if (!form.ready) return;
+    form.keep({ relation: relation ?? '', name, day, month, year, locale });
+    // `form` is stable per key; keeping it out of the list avoids a write per render.
+  }, [form.ready, relation, name, day, month, year, locale]);
   // The number pad has no return key: a filled field hands focus to the next one.
   const monthRef = useRef<TextInput>(null);
   const yearRef = useRef<TextInput>(null);
@@ -139,6 +172,8 @@ export default function Profile() {
         ...(needsParents ? { pin } : {}),
       });
       applyLocale(locale);
+      // Saved on the server: the draft has done its job (issue #133 position 9).
+      form.clear();
       // The parents set it up: first what is set now, then the phone goes to the child.
       setStep(needsParents ? 'handover' : 'voice');
     } catch (err) {
