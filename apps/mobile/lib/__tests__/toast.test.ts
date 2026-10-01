@@ -120,6 +120,25 @@ describe('a toast belongs to its screen', () => {
     toast.show('Keine Verbindung.', 'error');
     expect(useToastState.getState().tone).toBe('error');
   });
+
+  it('an error cannot be asked to outlive its screen (issue #183)', () => {
+    // The privilege is a confirmation's. A red message standing over the next screen
+    // explains nothing there and covers its controls — a child saw exactly that.
+    toast.show('Keine Verbindung.', 'error', { survivesNavigation: true });
+    expect(useToastState.getState().survivesNavigation).toBe(false);
+    toast.routeChanged();
+    expect(useToastState.getState().message).toBeNull();
+  });
+
+  it('an error waiting its turn goes with the screen too', () => {
+    toast.show('Gespeichert.', 'info', { survivesNavigation: true });
+    toast.show('Foto konnte nicht hochgeladen werden.', 'error', { survivesNavigation: true });
+    toast.routeChanged();
+    expect(useToastState.getState().message).toBe('Gespeichert.');
+    expect(useToastState.getState().queue).toHaveLength(0);
+    toast.hide();
+    expect(useToastState.getState().message).toBeNull();
+  });
 });
 
 describe('the pill stands above the bar the screen really has', () => {

@@ -7,6 +7,7 @@ import { createClient, type Session as SupabaseSession } from '@supabase/supabas
 import { Platform } from 'react-native';
 
 import { ENV } from '../env.js';
+import { AuthFailure } from './authFailure.js';
 import { savedByLostTry, type RecoveryLink } from './recovery.js';
 import { createRefresher, RefreshBackoff } from './refresh.js';
 import { clearSession, currentSession, saveSession, type Session } from './session.js';
@@ -15,26 +16,10 @@ export const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
 });
 
-export class AuthFailure extends Error {
-  constructor(
-    readonly reason:
-      | 'invalid_credentials'
-      | 'email_not_confirmed'
-      | 'weak_password'
-      | 'already_registered'
-      | 'same_password'
-      | 'invalid_email'
-      | 'email_taken'
-      | 'reauth_needed'
-      | 'session_expired'
-      | 'link_invalid'
-      | 'rate_limited'
-      | 'network'
-      | 'unknown',
-  ) {
-    super(reason);
-  }
-}
+// Lives in lib/auth/authFailure.ts (free of the Supabase client and of React Native, so the
+// code that decides what a failure means stays testable under Node); this stays its usual
+// address.
+export { AuthFailure } from './authFailure.js';
 
 function toSession(s: SupabaseSession): Session {
   return {

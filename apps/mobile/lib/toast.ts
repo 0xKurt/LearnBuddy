@@ -4,7 +4,8 @@
 // A message belongs to the screen it appeared on — a route change clears it, so
 // "Frage gelöscht." never floats over the settings (docs/UX-PRINCIPLES.md §24).
 // The one exception is explicit: show(…, { survivesNavigation: true }) for a word
-// that is meant for the screen being navigated to (saved-and-back, session over).
+// that is meant for the screen being navigated to (saved-and-back, session over) —
+// and never for an error, which always dies with its own screen (issue #183).
 // Bottom bars (Composer, BottomBar, SendBar) register their measured height here,
 // so the pill stands above the bar the screen really has instead of a guessed 90 pt.
 
@@ -26,6 +27,9 @@ export type ToastOptions = {
    * while going back, "session over" on the way to the start screen): route changes
    * do not clear it — only its timer or the next message do. Never the default; a
    * toast dies with its screen (issue #91).
+   *
+   * Only a confirmation can be meant for the next screen. An error is ignored here and
+   * dies with the screen that raised it — see show() (issue #183).
    */
   survivesNavigation?: boolean;
   /**
@@ -96,7 +100,12 @@ export const toast = {
     const entry: Entry = {
       message,
       tone,
-      survivesNavigation: options.survivesNavigation === true,
+      // An error belongs to the screen that raised it, and only there. On the next screen it
+      // explains nothing, it covers that screen's controls, and it reads as if the screen she
+      // just opened were broken — a child saw exactly that, a red message standing over the
+      // menu and the pronunciation sheet (issue #183). So the flag is a confirmation's to
+      // ask for; for an error it is ignored, in code, not in review.
+      survivesNavigation: tone !== 'error' && options.survivesNavigation === true,
       action: options.action ?? null,
     };
     useToastState.setState((s) => {

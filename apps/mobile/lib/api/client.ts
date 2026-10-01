@@ -153,6 +153,35 @@ async function readJson<S extends ZodTypeAny>(
 }
 
 /**
+ * Lets go of a response body this call is finished with — deliberately *not* `reader.cancel()`.
+ *
+ * Cancelling closes the body's stream on this side. expo's own `didComplete` listener then
+ * calls `close()` on the same controller a second time without checking whether it still may
+ * (`expo/src/winter/fetch/FetchResponse.ts`, `get body()`: it keeps an `isControllerClosed`
+ * flag for exactly this and reads it in every branch except that one), and the second close
+ * throws `TypeError: The stream is not in a state that permits close` from inside a native
+ * event callback — with none of this file's `try`/`catch` or `.catch()` on the stack. It
+ * escapes to the engine's own handler, and a child read the English sentence on her screen
+ * (issue #183, after leaving the conversation while a reply was still streaming).
+ *
+ * There is nothing to cancel anyway: after the `done` event the server has already closed the
+ * response (`apps/api/src/modules/buddy/routes.ts`, `streamSSE`), and a call ended on this
+ * side was ended natively by the AbortSignal, which expo subscribes to itself. Releasing the
+ * lock leaves the stream readable, so expo's close is the first and only one.
+ *
+ * And this failure gets no message at all, on purpose: walking out of a conversation while
+ * Buddy is still speaking is not something the learner did wrong, and nothing is lost by it.
+ */
+function letGo(reader: ReadableStreamDefaultReader<Uint8Array>): void {
+  try {
+    reader.releaseLock();
+  } catch {
+    // A reader with a read still in flight cannot be released; the body goes with the
+    // response either way.
+  }
+}
+
+/**
  * A call whose answer streams as server-sent events (docs/architecture.md §Speed):
  * every event but the last goes to onEvent; the `done` event is the result
  * (validated like request()), an `error` event throws. A server that answers
@@ -194,13 +223,13 @@ export async function streamRequest<S extends ZodTypeAny>(
       throw streamLost();
     }
     if (opts.signal?.aborted) {
-      void reader.cancel().catch(() => undefined);
+      letGo(reader);
       throw aborted();
     }
     if (chunk.done) break;
     for (const e of sse.push(decoder.decode(chunk.value, { stream: true }))) {
       if (e.event === 'done') {
-        void reader.cancel().catch(() => undefined);
+        letGo(reader);
         const parsed = opts.schema.safeParse(safeJson(e.data));
         if (!parsed.success)
           throw new ApiError('invalid_response', `Unexpected response for ${method} ${path}`, 200);
