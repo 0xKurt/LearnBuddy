@@ -39,8 +39,16 @@ import { lookupsField, withLookups } from './lookups.js';
 import { loadBuddyState, type MessageRow, TURN_STALL_MS } from './state.js';
 
 const TURN_SCHEMA = toJsonSchema(TurnDecisionForModel);
-/** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
-const TURN_STEP_SCHEMA = toJsonSchema(
+/**
+ * A step that may still ask for lookups first (ADR 0005 §The agent loop).
+ *
+ * Exported for one reason: `stream.ts` decides whether a half-written reply may be shown
+ * by reading the fields that come BEFORE `reply`, so the order here is a contract, not a
+ * detail. `__tests__/stream.test.ts` reads it from this schema instead of assuming it —
+ * a reorder tried on 01.10. (to make the prefix cache hit) silently switched that guard
+ * off while every test stayed green.
+ */
+export const TURN_STEP_SCHEMA = toJsonSchema(
   z.object({ lookups: lookupsField }).extend(TurnDecisionForModel.shape),
 );
 const MAX_ROUNDS = 4;

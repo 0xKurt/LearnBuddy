@@ -1,15 +1,47 @@
 import { describe, expect, it } from 'vitest';
 
 import { replyProgress } from '../stream.js';
+import { TURN_STEP_SCHEMA } from '../turn.js';
 
-const answer = (actions: unknown[], lookups: unknown[] = []) =>
-  JSON.stringify({
+/**
+ * The order the model really writes its fields in, taken from the schema itself.
+ *
+ * `replyProgress` closes the half-written JSON at `"reply":` and reads what came BEFORE
+ * it, so `lookups` and `actions` have to be in front of `reply` for it to decide anything.
+ * This helper used to hardcode that order — which meant a reorder of the schema (tried on
+ * 01.10. to make the prefix cache hit, see docs/decisions/prefix-cache-2026-10-01.md)
+ * silently stopped the guard from firing and every test here stayed green. A lookup
+ * round's reply is thrown away; shown and read aloud, it is a sentence Buddy takes back
+ * two seconds later.
+ *
+ * Deriving the order here means the next attempt fails loudly instead.
+ */
+const FIELD_ORDER = Object.keys(
+  (TURN_STEP_SCHEMA as { properties?: Record<string, unknown> }).properties ?? {},
+);
+
+const answer = (actions: unknown[], lookups: unknown[] = []) => {
+  const value: Record<string, unknown> = {
     lookups,
     actions,
     reply: 'Klar, los geht es.',
     options: null,
     asks_permission: false,
+  };
+  const ordered: Record<string, unknown> = {};
+  for (const key of FIELD_ORDER) if (key in value) ordered[key] = value[key];
+  for (const key of Object.keys(value)) if (!(key in ordered)) ordered[key] = value[key];
+  return JSON.stringify(ordered);
+};
+
+describe('the field order the guard depends on', () => {
+  it('writes lookups and actions before the reply', () => {
+    // If this fails, `replyProgress` can no longer see them and every other test in this
+    // file would pass while the guard does nothing.
+    expect(FIELD_ORDER.indexOf('lookups')).toBeLessThan(FIELD_ORDER.indexOf('reply'));
+    expect(FIELD_ORDER.indexOf('actions')).toBeLessThan(FIELD_ORDER.indexOf('reply'));
   });
+});
 
 describe('replyProgress', () => {
   it('lets a reply that changes nothing be spoken while it is written', () => {

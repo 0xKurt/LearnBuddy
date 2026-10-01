@@ -18,11 +18,16 @@
 // exactly — only where it sits in the block changed. What the cache actually
 // pays for today is measured, and it is not this block: see docs/architecture.md
 // §Speed and `llm_calls.cached_tokens`.
+//
+// Every section is named here (the `blocks` array at the end), so what each one costs per
+// turn and whether an answer referred to it can be measured without changing a byte of what
+// is sent: `blocks.ts`, issue #168.
 
 import { dayLabel } from '../../i18n/index.js';
 import { addDays, daysBetween, localParts, weekdayName, weekdayOf } from '../../lib/time.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import type { LearnerContext } from '../../http/context.js';
+import { aliasesIn, blockData, occursIn, reportState, type BlockName } from './blocks.js';
 import type {
   BuddyState,
   GoalRow,
@@ -518,24 +523,43 @@ export function buildContext(
   //                  ends the block. Everything after it (the dialogue) is uncacheable
   //                  anyway — the 24-message window slides with every turn.
   //   note         — only when her message is older than today (a resend, a recovery).
-  const blocks = [
-    learnerBlock,
-    knowledgeBlock,
-    temporaryBlock,
-    voiceBlock,
-    contactBlock,
-    summariesBlock,
-    materialBlock,
-    goalsBlock,
-    practiceBlock,
-    standingBlock,
-    nowBlock,
-    noteBlock,
+  const blocks: Array<{ name: BlockName; lines: string[] }> = [
+    { name: 'learner', lines: learnerBlock },
+    { name: 'knows', lines: knowledgeBlock },
+    { name: 'temporary', lines: temporaryBlock },
+    { name: 'voice', lines: voiceBlock },
+    { name: 'contact', lines: contactBlock },
+    { name: 'earlier', lines: summariesBlock },
+    { name: 'material', lines: materialBlock },
+    { name: 'goals', lines: goalsBlock },
+    { name: 'practice', lines: practiceBlock },
+    { name: 'waiting', lines: standingBlock },
+    { name: 'now', lines: nowBlock },
+    { name: 'note', lines: noteBlock },
   ];
-  const text = blocks
-    .filter((b) => b.length > 0)
-    .map((b) => b.join('\n'))
-    .join('\n\n');
+  const present = blocks.filter((b) => b.lines.length > 0);
+  const text = present.map((b) => b.lines.join('\n')).join('\n\n');
+
+  // What each section cost and what it offered, for the measurement behind issue #168. Does
+  // nothing at all unless an audit is registered (blocks.ts), and never touches `text`.
+  reportState(() => {
+    const data = blockData(state, learner);
+    return {
+      learnerId: st.learner_id,
+      blocks: present.map(({ name, lines }) => {
+        const body = lines.join('\n');
+        return {
+          name,
+          chars: body.length,
+          text: body,
+          // Only what this block really printed: a topic cut off at the sixth of its bucket
+          // above, or a session beyond the third, was never in front of the model and must
+          // not be credited to it.
+          data: [...new Set([...data[name], ...aliasesIn(body)])].filter((d) => occursIn(body, d)),
+        };
+      }),
+    };
+  });
 
   return { state: text, aliases, contextVersion: st.context_version };
 }

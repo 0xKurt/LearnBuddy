@@ -17,8 +17,10 @@ import { writeFileSync } from 'node:fs';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
+import { setStateAudit } from '../../src/modules/buddy/blocks.js';
 import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
+import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { CASES, type Outcome } from './cases.js';
@@ -53,6 +55,11 @@ async function main(): Promise<void> {
     throw new Error('Set LLM_BACKEND=vertex and the Vertex variables (docs/SETUP-VERTEX.md)');
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
   const gateway = new VertexGateway(config);
+  // What each STATE section costs and whether an answer pointed back at it (issue #168).
+  // Off by default: with no audit registered the request is byte-identical (blockaudit.ts).
+  const blockOut = process.env.BUDDY_BLOCK_AUDIT;
+  const blocks = blockOut ? new BlockAudit() : null;
+  if (blocks) setStateAudit(blocks.record);
   const only = process.argv.slice(2);
   const cases = only.length ? CASES.filter((c) => only.includes(c.id)) : CASES;
 
@@ -251,6 +258,18 @@ async function main(): Promise<void> {
         inputTokens: cost.input,
         cachedTokens: cost.cached,
       });
+      // Every JSON object the model wrote in this case: its decisions carry the reply, the
+      // actions with their arguments and the lookup calls, applied or rejected.
+      if (blocks) {
+        const written = await env.db.query<{ output: unknown }>(
+          `select output from buddy_decisions where learner_id = $1 and output is not null`,
+          [l.learnerId],
+        );
+        const turnCalls = await env.db.one<{ n: number }>(
+          `select count(*)::int as n from llm_calls where purpose = 'buddy_turn'`,
+        );
+        blocks.closeCase(written.map((r) => JSON.stringify(r.output)).join('\n'), turnCalls.n);
+      }
     } finally {
       await env.close();
     }
@@ -259,6 +278,11 @@ async function main(): Promise<void> {
     `\n${cases.length - failed}/${cases.length} passed · total $${(costMicros / 1e6).toFixed(4)}` +
       ` · ${inputTokens} input tokens, ${cachedTokens} of them from the provider's prefix cache`,
   );
+  if (blocks && blockOut) {
+    console.info(`\n${blocks.table()}`);
+    writeFileSync(blockOut, `${JSON.stringify(blocks.json(), null, 2)}\n`);
+    console.info(`state block audit \u2192 ${blockOut}`);
+  }
   if (process.env.BUDDY_EVAL_OUT) {
     writeFileSync(
       process.env.BUDDY_EVAL_OUT,
