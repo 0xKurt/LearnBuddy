@@ -91,7 +91,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // ── The hand-over: what is set now, and the phone goes to Mia (user feedback #10) ──
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await expect(page.getByText('PIN der Eltern: gesetzt – nur ihr kennt sie')).toBeVisible();
-  await expect(page.getByText(/Nachrichten aufs Handy: aus/)).toBeVisible();
+  await expect(page.getByText(/Push-Benachrichtigungen: aus/)).toBeVisible();
   await shot(page, '03b-handover');
   await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
 
@@ -156,17 +156,23 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // One card on top (the photo); the question about messages is asked in the conversation,
   // with what would be allowed — also for a minor (user feedback #4, #6).
   await expect(page.getByText('Schick mir ein Foto')).toBeVisible();
-  await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeVisible();
+  await expect(
+    page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?'),
+  ).toBeVisible();
   await expect(page.getByText(/Nie nach 20:00 Uhr\. Das erlauben deine Eltern/)).toBeVisible();
   // The conversation stands at its newest message, like any chat: Buddy's question at the end
   // is on screen, not below the fold (05-buddy-planned-360).
-  await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeInViewport();
+  await expect(
+    page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?'),
+  ).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Eltern fragen' })).toBeInViewport();
   // With the keyboard open (a small phone keeps ~420 pt of window) the newest message must
   // still be on screen — "wenn ich was schreibe, erkenne ich in der app gar nichts mehr"
   // (owner 28.09., issue #51).
   await page.setViewportSize({ width: 360, height: 420 });
-  await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeInViewport();
+  await expect(
+    page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?'),
+  ).toBeInViewport();
   await page.setViewportSize({ width: 390, height: 844 });
   // The card lies over the greeting and the ways to start: they stand where they stand
   // without a card (owner: "Die Meldung sollte einfach über dem Menü liegen").
@@ -190,7 +196,9 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Eltern fragen' }).click();
   await expect(page.getByText('PIN der Eltern')).toBeVisible();
   await expect(
-    page.getByText(/Ihr erlaubt, dass Buddy Mia aufs Handy schreibt\. .*Nie nach 20:00 Uhr/),
+    page.getByText(
+      /Ihr erlaubt, dass Buddy Mia Push-Benachrichtigungen aufs Handy schickt\. .*Nie nach 20:00 Uhr/,
+    ),
   ).toBeVisible();
   await shot(page, '06-parent-pin');
   for (const digit of pin) await page.getByRole('button', { name: digit, exact: true }).click();
@@ -198,7 +206,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // The web cannot set up this phone for notifications: no toast over the chat about it (live
   // finding 8) — settings says it calmly.
   await expect(page.getByText(/^Erlaubt[.:]/)).toHaveCount(0);
-  await expect(page.getByText('Darf ich dir aufs Handy schreiben?')).toBeHidden();
+  await expect(page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?')).toBeHidden();
 
   // ── The worksheet: photographed, sent, read in the background ──
   await page.getByRole('button', { name: 'Foto machen' }).click();
@@ -349,11 +357,11 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   await openMenu('Einstellungen');
-  await expect(page.getByText('Darf Buddy dir aufs Handy schreiben?')).toBeVisible();
+  await expect(page.getByText('Darf Buddy dir Benachrichtigungen schicken?')).toBeVisible();
   await expect(page.getByText('Für Eltern')).toBeVisible();
   await shot(page, '15-settings');
   // Every group is closed with what is set now; one tap opens it.
-  await page.getByRole('button', { name: 'Darf Buddy dir aufs Handy schreiben?' }).click();
+  await page.getByRole('button', { name: 'Darf Buddy dir Benachrichtigungen schicken?' }).click();
   await expect(page.getByRole('button', { name: 'Nicht mehr erlauben' })).toBeVisible();
   // Where the note about phone messages lives, calmly (instead of a toast on the home).
   await expect(page.getByText(/Alles kommt hier in der App\./)).toBeVisible();

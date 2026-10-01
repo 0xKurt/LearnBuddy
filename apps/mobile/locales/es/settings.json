@@ -4,7 +4,7 @@
   "clock": "{{time}}",
   "pin_first": "Para esto hace falta el PIN de los padres. Todavía no hay ninguno. Se crea más abajo, en “Para los padres”.",
   "contact": {
-    "question": "¿Puede Buddy escribirte al móvil?",
+    "question": "¿Puede Buddy enviarte notificaciones?",
     "state_on": "Sí – nunca después de las {{quiet}}.",
     "state_off": "No – solo aquí, en la app.",
     "answer_off": "No. Buddy solo te escribe aquí, en la app.",
@@ -79,7 +79,7 @@
       "title": "PIN de los padres",
       "is_set": "Hay un PIN configurado.",
       "not_set": "Todavía no hay ningún PIN.",
-      "body": "Con el PIN, los padres permiten, por ejemplo, que Buddy escriba al móvil. El hijo o la hija no debería conocerlo.",
+      "body": "Con el PIN, los padres permiten, por ejemplo, que Buddy envíe notificaciones push al móvil. El hijo o la hija no debería conocerlo.",
       "change": "Cambiar el PIN",
       "create": "Crear un PIN",
       "current": "PIN actual",

@@ -49,8 +49,8 @@ const optIn: NonNullable<BuddyHome['decision']> = {
 
 describe('home layout (user feedback #6, issue #17)', () => {
   it('has at most one slim bar on top; the opt-in is asked in the chat', () => {
-    // Lena's crowded home (p2-04): "Schick mir ein Foto" and "Darf ich dir aufs Handy
-    // schreiben?" both on top, each with a violet button.
+    // Lena's crowded home (p2-04): "Schick mir ein Foto" and "Darf ich dir
+    // Benachrichtigungen aufs Handy schicken?" both on top, each with a violet button.
     const l = homeLayout({ now: capture, decision: optIn, working: null } satisfies Parts);
     expect(l).toEqual({
       bar: 'capture',

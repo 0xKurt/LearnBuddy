@@ -1,5 +1,5 @@
 // A group of settings under a plain heading — a question the learner would
-// ask ("Darf Buddy dir aufs Handy schreiben?") or a plain name ("Für Eltern").
+// ask ("Darf Buddy dir Benachrichtigungen schicken?") or a plain name ("Für Eltern").
 //
 // On the settings screen every group is closed (CLAUDE.md rule 16: rare
 // settings stay closed until opened): the heading and one line with what is

@@ -4,7 +4,7 @@
   "clock": "{{time}}",
   "pin_first": "This needs your parents' PIN. There isn't one yet. It's set below under “For parents”.",
   "contact": {
-    "question": "May Buddy text your phone?",
+    "question": "May Buddy send you notifications?",
     "state_on": "Yes – never after {{quiet}}.",
     "state_off": "No – only here in the app.",
     "answer_off": "No. Buddy only writes to you here in the app.",
@@ -79,7 +79,7 @@
       "title": "Parents' PIN",
       "is_set": "A PIN is set.",
       "not_set": "There's no PIN yet.",
-      "body": "With the PIN, parents allow things like Buddy texting the phone. The child shouldn't know it.",
+      "body": "With the PIN, parents allow things like Buddy sending push notifications to the phone. The child shouldn't know it.",
       "change": "Change PIN",
       "create": "Set PIN",
       "current": "Current PIN",

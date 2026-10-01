@@ -76,8 +76,8 @@ Wenn der Owner umformuliert, müssen diese sieben Dinge drinbleiben:
   <li>Buddy nutzt eine KI von Google Cloud mit Servern in der EU.</li>
   <li>Keine Werbung, kein Weiterverkauf – und wir trainieren keine Modelle mit euren Daten.</li>
   <li>
-    Buddy schreibt nur aufs Handy, wenn das erlaubt ist. Bei unter 16-Jährigen erlauben es die
-    Eltern – mit ihrer PIN.
+    Push-Benachrichtigungen aufs Handy schickt Buddy nur, wenn das erlaubt ist. Bei unter
+    16-Jährigen erlauben es die Eltern – mit ihrer PIN.
   </li>
   <li>Alles lässt sich jederzeit ansehen, ändern und löschen.</li>
 </ul>
@@ -122,8 +122,8 @@ Wenn der Owner umformuliert, müssen diese sieben Dinge drinbleiben:
   <li>Buddy uses an AI by Google Cloud with servers in the EU.</li>
   <li>No advertising, nothing sold on – and we train no models on your data.</li>
   <li>
-    Buddy only messages the phone if that is allowed. For under 16s, the parents allow it – with
-    their PIN.
+    Buddy only sends push notifications to the phone if that is allowed. For under 16s, the parents
+    allow it – with their PIN.
   </li>
   <li>Everything can be viewed, changed and deleted at any time.</li>
 </ul>
@@ -168,8 +168,8 @@ Wenn der Owner umformuliert, müssen diese sieben Dinge drinbleiben:
   <li>Buddy utilise une IA de Google Cloud, avec des serveurs dans l'UE.</li>
   <li>Pas de publicité, rien de revendu – et nous n'entraînons aucun modèle avec vos données.</li>
   <li>
-    Buddy n'écrit sur le téléphone que si c'est autorisé. Pour les moins de 16 ans, ce sont les
-    parents qui l'autorisent – avec leur code PIN.
+    Buddy n'envoie des notifications push sur le téléphone que si c'est autorisé. Pour les moins de
+    16 ans, ce sont les parents qui l'autorisent – avec leur code PIN.
   </li>
   <li>Tout peut être consulté, modifié et supprimé à tout moment.</li>
 </ul>
@@ -215,8 +215,8 @@ Wenn der Owner umformuliert, müssen diese sieben Dinge drinbleiben:
   <li>Buddy usa una IA de Google Cloud con servidores en la UE.</li>
   <li>Sin publicidad, sin venta de datos – y no entrenamos ningún modelo con vuestros datos.</li>
   <li>
-    Buddy solo escribe al móvil si está permitido. En el caso de menores de 16 años, lo permiten los
-    padres, con su PIN.
+    Buddy solo envía notificaciones push al móvil si está permitido. En el caso de menores de 16
+    años, lo permiten los padres, con su PIN.
   </li>
   <li>Todo se puede ver, cambiar y borrar en cualquier momento.</li>
 </ul>
@@ -261,8 +261,8 @@ Wenn der Owner umformuliert, müssen diese sieben Dinge drinbleiben:
   <li>Buddy usa un'IA di Google Cloud con server nell'UE.</li>
   <li>Niente pubblicità, niente vendita dei dati – e non addestriamo modelli con i vostri dati.</li>
   <li>
-    Buddy scrive sul telefono solo se è permesso. Per chi ha meno di 16 anni lo permettono i
-    genitori – con il loro PIN.
+    Buddy manda notifiche push sul telefono solo se è permesso. Per chi ha meno di 16 anni lo
+    permettono i genitori – con il loro PIN.
   </li>
   <li>Tutto si può vedere, modificare e cancellare in qualsiasi momento.</li>
 </ul>
