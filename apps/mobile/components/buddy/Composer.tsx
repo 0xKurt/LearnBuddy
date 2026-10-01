@@ -403,24 +403,36 @@ export function Composer({
             outlineWidth: 0,
           }}
         />
-        {/* Like a messenger: the mic while the field is empty (or she is speaking), send once there is text. */}
-        {stoppable ? (
-          stopBtn('sm')
-        ) : (trimmed.length === 0 && !attached) || voice.state !== 'idle' ? (
-          <MicButton
-            voice={voice}
-            size="sm"
-            label={t('common:voice.message')}
-            disabled={disabled}
-          />
-        ) : (
-          <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
-            {t('buddy:composer.send')}
-          </Btn>
-        )}
-        {/* Conversation mode: the waveform circle at the pill's end, same scale
-            as its neighbours (owner feedback 2026-09-28). */}
-        <TalkButton onPress={onTalk} />
+        {/* The two controls at the end, in their own row.
+            Two reasons, both from the owner on 01.10. (issue #187):
+            - **Their own alignment.** `Btn` pins itself with `alignSelf: 'flex-start'`,
+              which overrode the pill's `alignItems: 'flex-end'` — so "Senden" floated 8 pt
+              above the + and the waveform once the field grew to two lines. Inside this
+              row the pill's rule governs again and all three sit on the last line.
+            - **Their own gap.** The pill's gap is 2, because the field carries its own
+              padding on both sides; between two round controls that is too tight
+              ("der abstand zwischen senden und voice mode button sollte groesser sein"). */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
+          {/* Like a messenger: the mic while the field is empty (or she is speaking),
+              send once there is text. */}
+          {stoppable ? (
+            stopBtn('sm')
+          ) : (trimmed.length === 0 && !attached) || voice.state !== 'idle' ? (
+            <MicButton
+              voice={voice}
+              size="sm"
+              label={t('common:voice.message')}
+              disabled={disabled}
+            />
+          ) : (
+            <Btn onPress={send} disabled={disabled || pages.busy} pill size="sm">
+              {t('buddy:composer.send')}
+            </Btn>
+          )}
+          {/* Conversation mode: the waveform circle at the pill's end, same scale
+              as its neighbours (owner feedback 2026-09-28). */}
+          <TalkButton onPress={onTalk} />
+        </View>
       </View>
     </View>
   );

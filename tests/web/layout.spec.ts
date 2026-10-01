@@ -105,3 +105,71 @@ for (const viewport of [
     expect(overflow).toBeLessThanOrEqual(0);
   });
 }
+
+/**
+ * Controls that stand in one row must look like one row — on the last line, the same
+ * height, with the same air between them.
+ *
+ * This exists because of a bug the owner found and I could not explain to him (01.10.,
+ * issue #187): once the composer field grew to two lines, "Senden" floated 8 pt above
+ * the + and the waveform. The cause was a component quietly overriding its parent —
+ * `Btn` pins itself with `alignSelf: 'flex-start'`, which beats the row's
+ * `alignItems: 'flex-end'`. Nothing in the suite could see that: every check asked
+ * whether a thing EXISTS and FITS, none asked whether things that belong together line
+ * up. His question was "wieso gibt es dafür keinen test". This is the test.
+ */
+test('the composer row stays one row when the field grows', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await onboard(page, 'Annalena-Marie');
+  const field = page.getByLabel('Schreib Buddy …');
+  await expect(field).toBeVisible();
+  const oneLine = (await field.boundingBox())!.height;
+
+  // Long enough to wrap several times in a 390 pt pill.
+  await field.fill(
+    'Ich schreibe am Freitag eine Mathearbeit über Brüche und weiß noch nicht, ' +
+      'wo ich anfangen soll, kannst du mir dabei helfen das zu sortieren?',
+  );
+  const grown = (await field.boundingBox())!.height;
+  // The web build pins the textarea to one row (`numberOfLines: 1` in Composer.tsx), so
+  // here it does NOT grow — and that is exactly why this suite was blind to the bug this
+  // test is named after (issue #188). The alignment below is checked at whatever height
+  // the browser gives; the growing case belongs on a phone until #188 is fixed.
+  console.log(`COMPOSER field ${oneLine}pt → ${grown}pt after filling`);
+
+  const plus = (await page
+    .getByRole('button', { name: 'Was möchtest du anhängen?' })
+    .boundingBox())!;
+  const send = (await page.getByRole('button', { name: 'Senden' }).boundingBox())!;
+  const talk = (await page.getByRole('button', { name: 'Mit Buddy sprechen' }).boundingBox())!;
+
+  // One line: every control ends where its neighbours end. 2 px for rounding.
+  const bottom = (b: Box) => b.y + b.height;
+  expect(
+    Math.abs(bottom(plus) - bottom(talk)),
+    '+ and the waveform end on the same line',
+  ).toBeLessThanOrEqual(2);
+  expect(
+    Math.abs(bottom(send) - bottom(talk)),
+    'send and the waveform end on the same line',
+  ).toBeLessThanOrEqual(2);
+
+  // Same size: three touch targets in a row, not three different ones.
+  for (const [what, b] of [
+    ['+', plus],
+    ['send', send],
+  ] as const) {
+    expect(
+      Math.abs(b.height - talk.height),
+      `${what} is as tall as the waveform`,
+    ).toBeLessThanOrEqual(2);
+  }
+
+  // Air between the two round controls at the end (owner 01.10.: "der abstand zwischen
+  // senden und voice mode button sollte groesser sein"). The pill's own gap is 2, which
+  // is right next to the text field and too tight between two buttons.
+  const gap = talk.x - (send.x + send.width);
+  expect(gap, 'send and the waveform have real air between them').toBeGreaterThanOrEqual(6);
+
+  await page.screenshot({ path: join(SHOTS, '31-composer-grown.png') });
+});
