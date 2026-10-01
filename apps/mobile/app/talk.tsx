@@ -32,7 +32,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { CircleBtn } from '../components/lb/CircleBtn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
-import { MicButton } from '../components/voice/MicButton.js';
+import { MicButton, MIC_RING_ROOM } from '../components/voice/MicButton.js';
 import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
 import { talkMode } from '../lib/buddy/moon.js';
 import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
@@ -51,6 +51,7 @@ import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/liste
 import { createStreamSpeaker, type StreamSpeaker } from '../lib/speech/streamSpeaker.js';
 import { talkListensByItself } from '../lib/speech/handsFree.js';
 import { warmRecognition } from '../lib/speech/recognize.js';
+import { talkHeadline, type TalkPhase } from '../lib/speech/talkState.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
 import { voiceLocale } from '../lib/speech/voice.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
@@ -58,7 +59,7 @@ import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { SPACE, bottomRoom } from '../lib/theme/space.js';
 
-type Phase = 'listening' | 'thinking' | 'speaking' | 'paused';
+type Phase = TalkPhase;
 
 /** How many of the newest messages the talk screen shows (a tail, not the history). */
 const TAIL = 3;
@@ -347,19 +348,9 @@ export default function TalkScreen() {
         ? { text: pending.text }
         : null;
 
-  const headline =
-    phase === 'thinking' || voice.state === 'transcribing'
-      ? t('buddy:talk.thinking')
-      : phase === 'speaking'
-        ? t('buddy:talk.speaking')
-        : voice.state === 'starting'
-          ? // Not "Ich höre zu" until the recorder really runs (issue #158): she would
-            // speak into a microphone that is still being prepared and only find out
-            // afterwards that nothing arrived.
-            t('buddy:talk.getting_ready')
-          : listening
-            ? t('buddy:talk.listening')
-            : t('buddy:talk.paused');
+  // Not "Ich höre zu" until the recorder really runs (issue #158): the decision is pure
+  // and tested in lib/speech/talkState.ts, because it is a claim, not a label.
+  const headline = t(talkHeadline(listening ? 'listening' : phase, voice.state));
   const sub = listening
     ? voice.onDevice
       ? t('buddy:talk.listening_sub')
@@ -512,9 +503,12 @@ export default function TalkScreen() {
           alignItems: 'center',
           justifyContent: 'space-around',
           paddingHorizontal: SPACE.lg,
-          // 12 like before on a phone without a gesture bar; with one, the device's inset
-          // replaces it instead of adding to it (the fit check is exact to the pixel).
-          paddingBottom: bottomRoom(insets.bottom, SPACE.md),
+          // Room for the mic's pulsing ring, which is drawn absolute and scaled and so
+          // reaches past its button (MIC_RING_ROOM, 17 pt) — with SPACE.md it stuck four
+          // pixels past the bottom of the phone and made the whole page scrollable.
+          // With a gesture bar the device's inset replaces this instead of adding to it
+          // (the fit check is exact to the pixel).
+          paddingBottom: bottomRoom(insets.bottom, MIC_RING_ROOM),
           paddingTop: SPACE.sm,
         }}
       >

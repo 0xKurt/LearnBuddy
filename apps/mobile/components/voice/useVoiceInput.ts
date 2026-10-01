@@ -15,6 +15,7 @@
 // The microphone is only ever started by a tap (toggle); nothing here starts
 // it by itself. Whatever is being read aloud stops when she starts speaking.
 
+import type { MicState } from '../../lib/speech/talkState.js';
 import type { TranscribeRequest } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,7 +35,8 @@ import { toast } from '../lb/Toast.js';
 export type VoicePurpose = TranscribeRequest['purpose'];
 
 /** idle → starting (asking for the mic) → recording → transcribing → idle. */
-export type VoiceInputState = 'idle' | 'starting' | 'recording' | 'transcribing';
+/** One definition, shared with what the conversation screen is allowed to claim (#158). */
+export type VoiceInputState = MicState;
 
 /**
  * Why no text came out (nothing understood, only a tap, an unreadable or broken
