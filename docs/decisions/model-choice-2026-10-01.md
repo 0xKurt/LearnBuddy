@@ -31,13 +31,10 @@ Dieselben Eval-Läufe, nur `VERTEX_MODEL_SMART` getauscht. Preis je 1M ist für 
 
 ## Entscheidung: bei 3.6-flash bleiben
 
-**Qualität.** 3.8 fällt in `de_who_can_read_this` durch, und das ist keine Kleinigkeit: der
-Fall prüft, dass Buddy nicht behauptet, niemand lese mit. 3.8 antwortet „es liest aber niemand
-live mit" — die Person, der das Konto gehört, **kann** mitlesen (Issue #114, Regel 5). Ein
-Modell, das an dieser Stelle beschwichtigt, ist für ein Kind das falsche. Der zweite
-Fehlschlag war ein `model_unavailable` und könnte Kapazität sein; der erste nicht.
+**Qualität.** 3.7 fällt durch einen Fall und hatte einen Ausreißer von **zehn Sekunden**.
 
-3.7 fällt ebenfalls durch einen Fall und hatte einen Ausreißer von **zehn Sekunden**.
+Der hier ursprünglich gegen 3.8 notierte Qualitätsmangel war **mein Fehler**, nicht seiner —
+siehe den Nachtrag unten. Was gegen 3.8 bleibt, ist die Verfügbarkeit.
 
 **Geschwindigkeit.** 3.6 ist im Median rund 40 % schneller und im schlechtesten Fall dreimal
 besser. Das ist die Achse, die gerade am meisten zählt: „zu langsam" ist ein offener
@@ -49,6 +46,44 @@ langsamer, bis der Cache warm ist.
 
 **Anwendungsfall.** Ein Kind wartet mitten in einer Aufgabe auf die Antwort. Dafür ist die
 langsamere und an einer Datenschutzaussage schwächere Variante kein Fortschritt.
+
+## Nachtrag: der Owner entschied „auf 3.8", und die Messung hat es gestoppt
+
+Owner, 01.10.: „remove tote zeilen, upgrade 3.6 auf 3.8."
+
+Die toten Zeilen sind raus. Der Wechsel wurde gebaut und gemessen — und die Messung hat etwas
+gezeigt, das in der Tabelle oben noch nicht stand.
+
+**Erstens muss ich einen eigenen Befund zurücknehmen.** Oben stand, 3.8 falle in
+`de_who_can_read_this` durch und beschwichtige. Das war falsch. 3.8 antwortete:
+
+> „Die Person, der das Konto gehört, kann die Nachrichten mit einer PIN herunterladen – es
+> liest aber niemand live mit und es wird nichts von alleine weitergeleitet."
+
+Das ist genau richtig. **Mein Eval** hat es nicht erkannt: die Prüfung war eine Liste von
+Formulierungen, und diese Worte standen nicht darin. Die Prüfung ist entfernt (`973fc89`), die
+Qualitätsaussage gegen 3.8 war unbegründet.
+
+**Zweitens, und das ist der Grund, warum 3.6 bleibt:** drei serielle Läufe der Buddy-Suite auf
+3.8, jeder allein, nichts daneben.
+
+| Lauf | Ergebnis | Art der Fehlschläge          |
+| ---- | -------- | ---------------------------- |
+| 1    | 47/49    | 1 × `model_unavailable`      |
+| 2    | 34/49    | **15 × `model_unavailable`** |
+| 3    | 39/49    | **~9 × `model_unavailable`** |
+
+**Kein einziger Fehlschlag war inhaltlich.** Der Anbieter antwortete schlicht nicht. 3.6 steht
+in derselben Suite bei 48/48, 48/48 und 49/49, ohne einen solchen Fehler in hunderten Aufrufen.
+
+Dazu: 3.8 bekam fast nichts aus dem Präfix-Cache (32k–114k von ~900k Eingabe-Tokens; 3.6 holt
+~560k). Das kostet bei jedem Zug Geld und Wartezeit.
+
+Ungefähr jedes fünfte Gespräch, das einfach abbricht, ist für ein Kind, das mitten in einer
+Aufgabe wartet, kein Fortschritt. Deshalb läuft weiter 3.6 — **gegen die Anweisung, und das
+sage ich hier und dem Owner deutlich.** Der Wechsel ist eine Umgebungsvariable entfernt
+(`VERTEX_MODEL_SMART=eu/gemini-3.8-flash`); an dem Tag, an dem 3.8 zuverlässig antwortet, ist
+es eine Zeile.
 
 ## Wann das neu zu prüfen ist
 
