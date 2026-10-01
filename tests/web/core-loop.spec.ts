@@ -390,6 +390,15 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // The whole home in the night palette: fit and contrast, like every other stop.
   await shot(page, '15h-home-night');
+  // And the conversation screen in the dark, because that is where the light lives
+  // (issue #139): Buddy's halo and the light carpet behind him used to be fixed white,
+  // which on #191627 is a bright disc, not a glow. The caption sits on the brightest part
+  // of it, so the contrast check at every shot is what holds this.
+  await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
+  await expect(page.getByText('GESPRÄCH')).toBeVisible();
+  await shot(page, '15i-talk-night');
+  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByText('LearnBuddy')).toBeVisible();
   await openMenu('Einstellungen');
   await page.getByRole('button', { name: 'Aussehen' }).click();
   await page.getByRole('radio', { name: 'Pastell' }).click();

@@ -142,9 +142,9 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText(/Länge .*mal.* Breite/)).toBeVisible();
   await shot(page, '23-homework-hints');
-  // Typed math is previewed as it will be read.
+  // Typed math is previewed as it will be read — named, not divided (issue #175).
   await page.getByLabel('Deine Antwort').fill('3/4');
-  await expect(page.getByLabel('Vorschau deiner Antwort: 3 durch 4')).toBeVisible();
+  await expect(page.getByLabel('Vorschau deiner Antwort: 3 Viertel')).toBeVisible();
   // The worst case of the pinned bar: math keys (the field has focus), the preview under
   // the pill, "Prüfen". What it takes, the question loses on a small phone with the
   // keyboard open — help is a chip in the conversation, not a row down here (issue #16).

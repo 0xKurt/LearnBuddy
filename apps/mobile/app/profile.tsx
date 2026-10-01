@@ -73,6 +73,12 @@ export default function Profile() {
   const [pin, setPinValue] = useState('');
   const [pinRepeat, setPinRepeat] = useState('');
   /**
+   * Four dots typed blind, twice, on a phone — and a mismatch sends the adult back to the
+   * start with no way to see which digit went wrong (audit 30.09., #133 position 17).
+   * Off by default; the child is usually sitting right there.
+   */
+  const [pinShown, setPinShown] = useState(false);
+  /**
    * What they typed, kept on the device (issue #133 position 9). This is where a parent
    * and a child sit together over a name and a birth date; Android kills a backgrounded
    * app without warning, and losing it means doing it again in the one moment they were
@@ -443,7 +449,13 @@ export default function Profile() {
                       accessibilityLabel={t('profile.pin_title')}
                       keyboardType="number-pad"
                       maxLength={4}
-                      secureTextEntry
+                      secureTextEntry={!pinShown}
+                      showToggle
+                      shown={pinShown}
+                      onToggle={() => setPinShown((v) => !v)}
+                      toggleAccessibilityLabel={t(
+                        pinShown ? 'profile.pin_hide' : 'profile.pin_show',
+                      )}
                     />
                   </View>
                   <View style={{ flex: 1, gap: 4 }}>
@@ -456,7 +468,9 @@ export default function Profile() {
                       accessibilityLabel={t('profile.pin_repeat')}
                       keyboardType="number-pad"
                       maxLength={4}
-                      secureTextEntry
+                      // One switch for both fields: they are one decision, and a second
+                      // eye in the row beside it would only be another thing to hit.
+                      secureTextEntry={!pinShown}
                     />
                   </View>
                 </View>

@@ -27,24 +27,38 @@ export function Checkbox({
       onPress={() => onChange(!checked)}
       hitSlop={6}
     >
-      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 6 }}>
+      {/* The row answers the finger (audit 30.09., #133 position 6): a consent row that
+          looks the same whether it was hit or missed leaves her tapping again. The box
+          takes the press, the way every other control here does. */}
+      {({ pressed }) => (
         <View
           style={{
-            width: 26,
-            height: 26,
-            borderRadius: 9,
-            borderWidth: 1.5,
-            borderColor: checked ? palette.primary : palette.ink3,
-            backgroundColor: checked ? palette.primary : palette.paper,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: 1,
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'flex-start',
+            paddingVertical: 6,
+            opacity: pressed ? 0.7 : 1,
           }}
         >
-          {checked ? <Icon name="check" size={16} color={palette.paper} /> : null}
+          <View
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 9,
+              borderWidth: 1.5,
+              borderColor: checked ? palette.primary : palette.ink3,
+              backgroundColor: checked ? palette.primary : palette.paper,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 1,
+              transform: [{ scale: pressed ? 0.94 : 1 }],
+            }}
+          >
+            {checked ? <Icon name="check" size={16} color={palette.paper} /> : null}
+          </View>
+          <Text style={[TYPE.body, { flex: 1, fontSize: 15 }]}>{label}</Text>
         </View>
-        <Text style={[TYPE.body, { flex: 1, fontSize: 15 }]}>{label}</Text>
-      </View>
+      )}
     </Pressable>
   );
 }

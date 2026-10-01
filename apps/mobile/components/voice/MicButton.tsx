@@ -28,6 +28,19 @@ import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import type { VoiceInput } from './useVoiceInput.js';
 
+/** How far the ring grows past the button at its widest. */
+const PULSE_SCALE = 1.45;
+
+/**
+ * The room the pulsing ring needs around the big mic, in points.
+ *
+ * It is drawn absolute and scaled, so it reaches past its button without the layout
+ * knowing — and on the conversation screen that was four pixels past the bottom of the
+ * phone, which the fit check caught as a scrolling page (issue #133, measured 01.10.).
+ * Derived from the ring's own geometry, not guessed: (72 · 1.45 − 72) / 2, rounded up.
+ */
+export const MIC_RING_ROOM = Math.ceil((72 * (PULSE_SCALE - 1)) / 2);
+
 function PulseRing({ size }: { size: number }) {
   const { palette } = useTheme();
   const progress = useRef(new Animated.Value(0)).current;
@@ -48,7 +61,9 @@ function PulseRing({ size }: { size: number }) {
     return () => loop.stop();
   }, [progress, still]);
 
-  const scale = still ? 1.18 : progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.45] });
+  const scale = still
+    ? 1.18
+    : progress.interpolate({ inputRange: [0, 1], outputRange: [1, PULSE_SCALE] });
   const opacity = still ? 0.6 : progress.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] });
 
   return (

@@ -63,8 +63,30 @@ export async function overflows(page: Page): Promise<Overflow[]> {
   return page.evaluate(() => {
     const out: { label: string; overflow: number; allowed: boolean }[] = [];
     const doc = document.scrollingElement ?? document.documentElement;
-    if (doc.scrollHeight - doc.clientHeight > 2)
-      out.push({ label: 'page', overflow: doc.scrollHeight - doc.clientHeight, allowed: false });
+    if (doc.scrollHeight - doc.clientHeight > 2) {
+      // Name what sticks out, not just that something does. "page overflow: 4" sent me
+      // hunting through a screen's whole layout once (issue #170 session); the element
+      // that reaches furthest past the fold is the answer in one line.
+      let worst = { what: '', past: 0 };
+      for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
+        const box = el.getBoundingClientRect();
+        if (box.height === 0 || box.width === 0) continue;
+        const past = Math.round(box.bottom - doc.clientHeight);
+        if (past <= worst.past) continue;
+        const id = el.getAttribute('data-testid');
+        worst = {
+          what:
+            id ??
+            `${el.tagName.toLowerCase()}${el.className ? `.${String(el.className).split(' ')[0]}` : ''} "${(el.innerText ?? '').replace(/\s+/g, ' ').slice(0, 30)}"`,
+          past,
+        };
+      }
+      out.push({
+        label: worst.what ? `page (lowest: ${worst.what}, ${worst.past}px past)` : 'page',
+        overflow: doc.scrollHeight - doc.clientHeight,
+        allowed: false,
+      });
+    }
     for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
       const style = getComputedStyle(el);
       if (!['auto', 'scroll'].includes(style.overflowY)) continue;
