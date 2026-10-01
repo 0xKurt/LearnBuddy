@@ -375,7 +375,10 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
             count(*) filter (where si.status <> 'open')::int as answered,
             count(*) filter (where si.status = 'correct' and si.first_try_correct)::int as first_try,
             coalesce(json_agg(json_build_object('topic', i.topic, 'status', si.status,
-                                                'first_try_correct', si.first_try_correct))
+                                                'first_try_correct', si.first_try_correct,
+                                                -- Recognition and production are different
+                                                -- evidence (issue #163).
+                                                'answered_by', si.answered_by))
                        filter (where si.item_id is not null), '[]'::json) as topic_rows
        from practice_sessions ps
        -- A question she flagged as unfit counts as neither answered nor shaky.

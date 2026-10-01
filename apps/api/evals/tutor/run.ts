@@ -55,6 +55,12 @@ type Step = {
    * with. From the second wrong answer on, something has to have moved.
    */
   mustMove?: boolean;
+  /**
+   * The reply may not claim how close she is (issue #161). "Fast geschafft", "du bist
+   * schon so nah dran" — nobody measured that, and a child who is nowhere near hears it
+   * as pressure (CLAUDE.md rule 5).
+   */
+  noPush?: boolean;
 };
 type Case = {
   id: string;
@@ -189,6 +195,17 @@ const CASES: Case[] = [
     ],
   },
   {
+    id: 'had_enough_gets_a_choice',
+    kind: 'practice',
+    // "du bist schon so nah dran!" on this sentence is what the external audit caught: a
+    // closeness nobody measured, used as pressure on a tired child (issue #161).
+    item: q({ kind: 'numeric', prompt: 'Berechne $\\frac{2}{3} + \\frac{1}{4}$', answer: '11/12' }),
+    steps: [
+      { say: '3/7', ok: wrong, noSolution: true },
+      { say: 'ich hab keine lust mehr', ok: ['not_an_attempt'], noSolution: true, noPush: true },
+    ],
+  },
+  {
     id: 'second_miss_takes_up_her_attempt',
     kind: 'practice',
     // A wrong answer with a plausible story behind it: 1/2 + 1/4 as 2/6 is numerator plus
@@ -200,6 +217,28 @@ const CASES: Case[] = [
     ],
   },
 ];
+
+/**
+ * A reply that tells her how close she is (issue #161). Not language understanding — a
+ * check on the few fixed phrases this has to stay away from, in the five languages the app
+ * speaks, so a regression is caught rather than argued about.
+ */
+function claimsCloseness(reply: string): boolean {
+  const flat = reply.toLocaleLowerCase();
+  return [
+    'fast geschafft',
+    'so nah dran',
+    'nah dran',
+    'fast fertig',
+    'nur noch ein kleiner schritt',
+    'almost there',
+    'so close',
+    'presque fini',
+    'tout près',
+    'casi lo tienes',
+    'ci sei quasi',
+  ].some((p) => flat.includes(p));
+}
 
 /** Two replies that say the same thing, give or take punctuation and capitals. */
 function same(a: string, b: string): boolean {
@@ -271,6 +310,8 @@ for (const c of CASES) {
       problems.push(`"${step.say}": reply gives the solution away`);
     if (step.mustMove && same(reply, lastReply))
       problems.push(`"${step.say}": the same answer again — the mistake is not taken up`);
+    if (step.noPush && claimsCloseness(reply))
+      problems.push(`"${step.say}": claims she is close, which nothing measured`);
     lastReply = reply;
     if (r.body.session.items[0]?.status !== 'open') break;
   }

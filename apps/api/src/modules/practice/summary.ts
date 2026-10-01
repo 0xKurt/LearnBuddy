@@ -10,6 +10,8 @@ export type SummaryRow = {
   status: 'open' | 'correct' | 'revealed' | 'skipped' | 'missed';
   first_try_correct: boolean | null;
   flagged_at?: Date | null;
+  /** How the closing answer was given (issue #163); absent in rows written before it. */
+  answered_by?: 'typed' | 'tapped' | 'spoken' | null;
 };
 
 /**
@@ -36,14 +38,18 @@ export const ENOUGH_FOR_A_TOPIC = 2;
 export function summarize(items: readonly SummaryRow[]): PracticeSummary {
   // A question she took out as not fitting was neither answered nor shaky.
   const closed = items.filter((i) => i.status !== 'open' && !i.flagged_at);
-  const byTopic = new Map<string, { name: string; shaky: boolean; seen: number }>();
+  const byTopic = new Map<string, { name: string; shaky: boolean; shown: number }>();
   for (const i of closed) {
     const name = i.topic?.trim();
     if (!name) continue;
     const key = name.toLocaleLowerCase();
-    const t = byTopic.get(key) ?? { name, shaky: false, seen: 0 };
+    const t = byTopic.get(key) ?? { name, shaky: false, shown: 0 };
     if (!(i.status === 'correct' && i.first_try_correct)) t.shaky = true;
-    t.seen += 1;
+    // A word she TAPPED from four of her own is recognition, and a class test asks her to
+    // produce it (issue #163). It counts as answered and as right; it does not count
+    // towards naming the topic as one that went well, or recognising four words would
+    // read the same as writing them.
+    if (i.answered_by !== 'tapped') t.shown += 1;
     byTopic.set(key, t);
   }
   const topics = [...byTopic.values()];
@@ -51,7 +57,7 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
     answered: closed.length,
     first_try: closed.filter((i) => i.status === 'correct' && i.first_try_correct).length,
     secure_topics: topics
-      .filter((v) => !v.shaky && v.seen >= ENOUGH_FOR_A_TOPIC)
+      .filter((v) => !v.shaky && v.shown >= ENOUGH_FOR_A_TOPIC)
       .map((v) => v.name),
     shaky_topics: topics.filter((v) => v.shaky).map((v) => v.name),
   };

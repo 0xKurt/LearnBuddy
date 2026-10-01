@@ -327,6 +327,13 @@ export const AnswerRequest = z
     item_id: Uuid,
     text: z.string().trim().min(1).max(2000).nullable().optional(),
     choice: z.number().int().min(0).max(5).nullable().optional(),
+    /**
+     * How she gave it (issue #163). A word she TAPPED from four of her own is recognition;
+     * the same word typed is production, and a class test asks for the second. Since #147
+     * a tap travels as ordinary text so that grading stays one path — so the answer itself
+     * no longer shows the difference, and the app has to say. Absent means typed.
+     */
+    via: z.enum(['typed', 'tapped', 'spoken']).optional(),
   })
   .refine((v) => (v.text ?? null) !== null || (v.choice ?? null) !== null, {
     message: 'text or choice is required',

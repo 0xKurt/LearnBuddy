@@ -53,6 +53,27 @@ describe('what one practice may claim', () => {
     expect(s.secure_topics).toEqual(['Brüche']);
   });
 
+  it('a tapped word shows she recognised it, not that she can write it (#163)', () => {
+    // Since #147 she can tap one of four of her own words. A class test asks her to
+    // produce it; four right taps must not read like four words she has.
+    const tapped = summarize([
+      row({ answered_by: 'tapped' }),
+      row({ answered_by: 'tapped' }),
+      row({ answered_by: 'tapped' }),
+    ]);
+    expect(tapped.answered).toBe(3);
+    expect(tapped.first_try).toBe(3);
+    expect(tapped.secure_topics).toEqual([]);
+
+    // Written ones carry the topic, and a tap beside them changes nothing.
+    const written = summarize([
+      row({ answered_by: 'typed' }),
+      row({ answered_by: 'typed' }),
+      row({ answered_by: 'tapped' }),
+    ]);
+    expect(written.secure_topics).toEqual(['Brüche']);
+  });
+
   it('counts a topic once however it is written', () => {
     const s = summarize([row({ topic: 'Brüche' }), row({ topic: ' brüche ' })]);
     expect(s.secure_topics).toEqual(['Brüche']);

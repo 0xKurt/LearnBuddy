@@ -1290,9 +1290,15 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   (Buddy can offer it again); a session with nothing open left is finished instead.
 - _Summary_ (`practice/summary.ts`): one computation for the result screen, the home card and
   Buddy's context — a topic is named as having gone well only when every closed question of it
-  was right at once **and** there were at least `ENOUGH_FOR_A_TOPIC` (2) of them; one that
-  needed help, was shown or missed makes it shaky, and a single one is enough for that, because
-  saying something still needs work claims less than saying it is done. Never both. The screen
+  was right at once **and** at least `ENOUGH_FOR_A_TOPIC` (2) of them were answered in a way
+  that shows she can produce it. A word she TAPPED from four of her own (issue #147) is
+  recognition: it counts as answered and as right, and not towards naming the topic, because a
+  class test asks her to write it and someone who can only recognise would otherwise look
+  exactly as good (`session_items.answered_by`, issue #163). Spoken answers are their own kind
+  for the same reason — a recording tests pronunciation and oral recall, not reliably spelling.
+  One that needed help, was shown or missed makes it shaky; one that
+  a single one is enough for that, because saying something still needs work claims less than
+  saying it is done. Never both. The screen
   says what was observed today ("Heute ohne Tipp geschafft"), not that she has the topic: the
   external audit of 30.09. photographed it calling four topics settled after four answers — one
   question each — and a child and a parent can read that as being ready for the test (issue

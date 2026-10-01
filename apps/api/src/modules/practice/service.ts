@@ -111,6 +111,8 @@ type SessionItemRow = {
   flagged_at?: Date | null;
   /** Homework help "Später": still open, behind the other open tasks (migration 0024). */
   deferred_at?: Date | null;
+  /** How the closing answer was given (issue #163): typed, tapped or spoken. */
+  answered_by?: 'typed' | 'tapped' | 'spoken' | null;
 };
 
 // ─────────────── start ───────────────
@@ -500,7 +502,8 @@ export async function sessionView(
   const s = await loadSession(db, learnerId, sessionId);
   const items = await db.query<SessionItemRow & ItemRow & ItemImageRow>(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.prepared_hints_used,
-            si.first_try_correct, si.flagged_at, si.deferred_at, i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
+            si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by,
+            i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
@@ -955,13 +958,26 @@ export async function answerItem(
             gaveHint: !d.revealed_answer,
             revealed: d.revealed_answer,
           }
-        : {
-            verdict: d.verdict,
-            evaluatedBy: 'model',
-            reply: d.reply,
-            gaveHint: d.gave_hint,
-            revealed: d.revealed_answer,
-          };
+        : d.intent === 'wants_to_stop'
+          ? {
+              // She has had enough (issue #161). The words here are the app's, not the
+              // model's: this is the moment where a cheerful "du bist schon so nah dran"
+              // is both untrue and pressure, and the external audit caught exactly that.
+              // What she gets is a real choice — stop for today, or one small example —
+              // and the way out is already on screen ("Übung beenden").
+              verdict: 'not_an_attempt',
+              evaluatedBy: 'rule',
+              reply: t(learner.locale, 'practice.had_enough'),
+              gaveHint: false,
+              revealed: false,
+            }
+          : {
+              verdict: d.verdict,
+              evaluatedBy: 'model',
+              reply: d.reply,
+              gaveHint: d.gave_hint,
+              revealed: d.revealed_answer,
+            };
     } catch (err) {
       if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
       // No model: say what the rules know, never pretend to have judged.
@@ -1109,9 +1125,22 @@ export async function answerItem(
       await tx.query(
         `update session_items set attempts = $3, hints_used = $4, status = $5, first_try_correct = $6,
                                   closed_at = case when $5 = 'open' then null else $7::timestamptz end,
-                                  deferred_at = null, prepared_hints_used = $8
+                                  deferred_at = null, prepared_hints_used = $8,
+                                  -- How the CLOSING answer was given (issue #163); an open
+                                  -- question keeps nothing, a tap is not production.
+                                  answered_by = case when $5 = 'open' then null else $9::text end
           where session_id = $1 and item_id = $2`,
-        [sessionId, item.id, attempts, hints, status, firstTry, now, prepared],
+        [
+          sessionId,
+          item.id,
+          attempts,
+          hints,
+          status,
+          firstTry,
+          now,
+          prepared,
+          input.via ?? 'typed',
+        ],
       );
       if (status !== 'open' && learnsFsrs(session.mode)) {
         await reviewItem(

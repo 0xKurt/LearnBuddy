@@ -90,7 +90,14 @@ import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { reacted } from '../../lib/perf.js';
 import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 
-type AnswerInput = { text: string } | { choice: number };
+/**
+ * What she sent, and how (issue #163). `via` is not decoration: since #147 a tapped word
+ * travels as ordinary text so grading stays one path — so the text alone no longer shows
+ * whether she recognised the word or wrote it, and a class test asks for the second.
+ */
+type AnswerInput = ({ text: string } | { choice: number }) & {
+  via?: 'typed' | 'tapped' | 'spoken';
+};
 
 /** The last answer sent; until the server confirms it, retrying the same answer reuses its id. */
 type SentAnswer = {
@@ -717,7 +724,7 @@ export default function PracticeScreen() {
     (item.origin === 'material' || item.origin === 'buddy');
 
   function check(value: string): void {
-    if (value) void answer(item.id, { text: value }, value);
+    if (value) void answer(item.id, { text: value, via: 'typed' }, value);
   }
 
   // A small row of quiet tools under the question (never a second headline).
@@ -923,7 +930,9 @@ export default function PracticeScreen() {
               tried={tried}
               disabled={locked}
               // The word goes as if she had typed it: same grading, same key (issue #147).
-              onChoose={(_index, choice) => void answer(item.id, { text: choice }, choice)}
+              onChoose={(_index, choice) =>
+                void answer(item.id, { text: choice, via: 'tapped' }, choice)
+              }
             />
           </View>
         ) : null}
@@ -943,7 +952,7 @@ export default function PracticeScreen() {
           <SpokenChoiceBar
             prompt={item.prompt}
             disabled={locked}
-            onText={(said) => void answer(item.id, { text: said }, said)}
+            onText={(said) => void answer(item.id, { text: said, via: 'spoken' }, said)}
             onReadAgain={() => readQuestion(item)}
           />
         ) : null}
