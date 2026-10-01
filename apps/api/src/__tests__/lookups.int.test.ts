@@ -36,6 +36,22 @@ async function say(l: Learner, text: string) {
   });
 }
 
+/** The model tries `action`; when it is refused, it says so (and the refusal is returned). */
+function tryAction(env: TestEnv, action: unknown): { refusal: () => string | null } {
+  let refusal: string | null = null;
+  env.llm.script(
+    'buddy_turn',
+    { json: { lookups: [], reply: 'Mache ich.', options: null, actions: [action] } },
+    (req: LlmRequest) => {
+      const text = ScriptedGateway.textOf(req);
+      const m = /action 1 \([a-z_]+\): (.+)/.exec(text);
+      refusal = m ? m[1]! : null;
+      return final('Das geht so nicht.');
+    },
+  );
+  return { refusal: () => refusal };
+}
+
 describe.skipIf(!dbReady)('Buddy lookups', () => {
   let env: TestEnv;
   let lena: Learner;
@@ -314,5 +330,91 @@ describe.skipIf(!dbReady)('Buddy lookups', () => {
     ]);
     const newest = await searchMaterials(env.deps, lena.learnerId, 'Europe/Berlin', '', 3);
     expect(JSON.stringify(newest)).not.toContain('6/8');
+  });
+
+  it('a sheet too old for STATE can be practised from in the same turn (#153)', async () => {
+    // STATE carries the ten newest sheets. Everything older was findable and then
+    // unreachable: Buddy could say he had found her sheet and have nothing to point at
+    // (external audit F3). Now a hit brings its own handle, for this turn.
+    await sheet(
+      env,
+      lena.learnerId,
+      'Die Römer',
+      'Augustus wurde 27 v. Chr. der erste römische Kaiser.',
+    );
+    const old = await env.db.one<{ id: string }>(`select id from materials where learner_id = $1`, [
+      lena.learnerId,
+    ]);
+    await env.db.query(
+      `insert into items (learner_id, material_id, kind, prompt, answer, topic)
+       values ($1, $2, 'short', 'Wer war der erste Kaiser?', 'Augustus', 'Römer')`,
+      [lena.learnerId, old.id],
+    );
+    // Twelve newer sheets push it past the window.
+    for (let i = 0; i < 12; i++) {
+      env.clock.minutes(1);
+      await sheet(env, lena.learnerId, `Neuer Zettel ${i}`, `Text ${i}`);
+    }
+
+    let handed: string | null = null;
+    env.llm.script(
+      'buddy_turn',
+      {
+        json: {
+          lookups: [{ tool: 'search_material', args: { query: 'Römer Kaiser' } }],
+          reply: '…',
+          options: null,
+          actions: [],
+        },
+      },
+      (req) => {
+        const text = ScriptedGateway.textOf(req);
+        // The hit names a handle the act tools accept.
+        // The hit names a handle the act tools accept — past the ten STATE carries.
+        const m = /"sheet"\s*:\s*"(sh\d+)"/.exec(text);
+        handed = m ? m[1]! : null;
+        expect(handed).toBe('sh11');
+        return {
+          lookups: [],
+          reply: 'Von dem Blatt also.',
+          options: null,
+          asks_permission: false,
+          actions: [
+            {
+              tool: 'prepare_practice',
+              args: {
+                goal: null,
+                subject: null,
+                minutes: 10,
+                focus_topics: [],
+                sheet: handed,
+              },
+            },
+          ],
+        };
+      },
+    );
+    expect((await say(lena, 'üb mit mir das römer blatt von früher')).status).toBe(200);
+    const step = await env.db.one<{ payload: { item_ids: string[] } }>(
+      `select payload from buddy_steps where learner_id = $1 and kind = 'practice'`,
+      [lena.learnerId],
+    );
+    const from = await env.db.query<{ material_id: string }>(
+      `select material_id from items where id = any($1::uuid[])`,
+      [step.payload.item_ids],
+    );
+    expect(from.map((r) => r.material_id)).toEqual([old.id]);
+  });
+
+  it("a handle never reaches another learner's sheet (#153)", async () => {
+    await sheet(env, tom.learnerId, 'Toms Römer', 'Toms Notiz über die Römer.');
+    // Lena asks for the same words; her search finds nothing of hers, so there is no
+    // handle to hand over — and sh1 means nothing in her own map.
+    const t = tryAction(env, {
+      tool: 'prepare_practice',
+      args: { goal: null, subject: null, minutes: 10, focus_topics: [], sheet: 'sh1' },
+    });
+    expect((await say(lena, 'üb mit mir die römer')).status).toBe(200);
+    expect(t.refusal()).toContain('no sheet sh1');
   });
 });

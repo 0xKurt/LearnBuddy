@@ -12,11 +12,24 @@ import type { Deps } from '../../deps.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import { searchMaterials } from './connectors/material.js';
 import { findQuestions, recentResults } from './connectors/practice.js';
+import type { Aliases } from './context.js';
 
 export type Surface = 'turn' | 'check';
 export type ConnectorName = 'material' | 'practice' | 'items';
 
-type LookupContext = { deps: Deps; learnerId: string; timezone: string };
+type LookupContext = {
+  deps: Deps;
+  learnerId: string;
+  timezone: string;
+  /**
+   * The turn's own alias map (issue #153). A sheet the search finds beyond the ten newest
+   * is not in STATE, so it had no alias — and the act tools accept nothing else. Buddy
+   * could name the sheet he had just found and then reach for nothing. A hit registers
+   * itself here, so the model can say "practise sh11" in the same turn, and only there:
+   * the map is built per turn and dies with it, so a handle from yesterday means nothing.
+   */
+  aliases?: Aliases;
+};
 
 type LookupSpec<A extends z.ZodTypeAny> = {
   name: string;
@@ -34,11 +47,11 @@ const Query = z.string().trim().min(2).max(120);
 const searchMaterial = defineLookup({
   name: 'search_material',
   description:
-    'Read the learner\'s own worksheets: passages matching the query (topic words, e.g. "Römer Kaiser"), with title, subject and the day it was read. Empty query = the newest sheets. Homework comes without its text (homework: true): help with it happens in the help session, never here.',
+    'Read the learner\'s own worksheets: passages matching the query (topic words, e.g. "Römer Kaiser"), with title, subject and the day it was read. Empty query = the newest sheets. Every hit carries a "sheet" alias you can use in the SAME answer to practise from it, rename it or propose deleting it — also for sheets too old to stand in STATE. Homework comes without its text (homework: true): help with it happens in the help session, never here.',
   args: z.object({ query: z.string().trim().max(120) }),
   surfaces: ['turn', 'check'],
   connectors: ['material'],
-  run: (c, a) => searchMaterials(c.deps, c.learnerId, c.timezone, a.query, 3),
+  run: (c, a) => searchMaterials(c.deps, c.learnerId, c.timezone, a.query, 3, c.aliases),
 });
 
 const practiceHistory = defineLookup({

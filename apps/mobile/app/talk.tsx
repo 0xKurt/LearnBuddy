@@ -352,9 +352,14 @@ export default function TalkScreen() {
       ? t('buddy:talk.thinking')
       : phase === 'speaking'
         ? t('buddy:talk.speaking')
-        : listening || voice.state === 'starting'
-          ? t('buddy:talk.listening')
-          : t('buddy:talk.paused');
+        : voice.state === 'starting'
+          ? // Not "Ich höre zu" until the recorder really runs (issue #158): she would
+            // speak into a microphone that is still being prepared and only find out
+            // afterwards that nothing arrived.
+            t('buddy:talk.getting_ready')
+          : listening
+            ? t('buddy:talk.listening')
+            : t('buddy:talk.paused');
   const sub = listening
     ? voice.onDevice
       ? t('buddy:talk.listening_sub')

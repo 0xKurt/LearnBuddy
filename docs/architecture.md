@@ -311,6 +311,12 @@ summary plus undo data. Enforced here, not in the prompt:
   and `correct_memory` may move the end (`until`);
 - `update_step` either changes the state or moves the step, never both; `prepare_practice`
   never replaces a step her agreed reminder prepared;
+- a sheet the SEARCH found is reachable in the same turn (issue #153). STATE carries the ten
+  newest and their aliases; everything older was findable and then unreachable, so Buddy could
+  name a sheet he had just found and have nothing to point at. A `search_material` hit now
+  carries a `sheet` handle minted server-side from her own row (never written by the model,
+  hard rule 2) and registered in that turn's alias map — it dies with the turn, so it cannot be
+  replayed, and a sheet that already has an alias keeps it rather than getting a second name;
 - `prepare_practice` carries five things she can ask for beyond the topic (issues #113, #144),
   and code — not the prompt — decides what each means: `sheet` (a `sh` alias from her own STATE,
   never an id from the model) keeps the questions to the one sheet she pointed at, and

@@ -30,6 +30,7 @@ import {
   type SpeakMime,
 } from './voice.js';
 import { levelFromDb } from './level.js';
+import { START_DEADLINE_MS, startTimedOut } from './startDeadline.js';
 
 /** Speech, not music: mono, 22.05 kHz AAC in an .m4a on phones; the browser's own format on the web. */
 const SPEECH_RECORDING: RecordingOptions = {
@@ -403,6 +404,17 @@ export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORD
     if (phaseRef.current !== 'idle') return;
     cancelled.current = false;
     setPhase('starting');
+    // Getting ready has its own deadline (issue #158). Asking for the permission and
+    // preparing the recorder can hang — a denied-then-reopened Settings sheet, a phone
+    // busy with another app — and nothing here used to time out. She would see "Ich höre
+    // zu", speak, and find out later that nothing was recorded.
+    const tooSlow = setTimeout(() => {
+      if (!startTimedOut({ phase: phaseRef.current, mounted: mounted.current })) return;
+      cancelled.current = true;
+      handlers.current.onFailed('failed');
+      setPhase('idle');
+      void allowRecording(false);
+    }, START_DEADLINE_MS);
     try {
       let perm = await getRecordingPermissionsAsync();
       if (!perm.granted && perm.canAskAgain) perm = await requestRecordingPermissionsAsync();
@@ -437,6 +449,8 @@ export function useRecording({ onRecorded, onFailed, onChunk, maxMs = MAX_RECORD
       await allowRecording(false);
       handlers.current.onFailed('failed');
       setPhase('idle');
+    } finally {
+      clearTimeout(tooSlow);
     }
   }, [finish, recorder, setPhase]);
 

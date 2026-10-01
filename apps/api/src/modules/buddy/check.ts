@@ -508,7 +508,12 @@ async function decide(
     let raw: unknown;
     try {
       const looked = await withLookups({
-        ctx: { deps, learnerId: learner.id, timezone: state.settings.timezone },
+        ctx: {
+          deps,
+          learnerId: learner.id,
+          timezone: state.settings.timezone,
+          aliases: ctx.aliases,
+        },
         surface: 'check',
         contents: buildContents(ctx.state, dialogue, tail),
         call: async (messages, final) => {

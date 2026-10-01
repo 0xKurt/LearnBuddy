@@ -275,7 +275,7 @@ async function decideTurn(
     let raw: unknown;
     try {
       const looked = await withLookups({
-        ctx: { deps, learnerId: learner.id, timezone: tz },
+        ctx: { deps, learnerId: learner.id, timezone: tz, aliases: ctx.aliases },
         surface: 'turn',
         contents,
         call: async (messages, final) => {

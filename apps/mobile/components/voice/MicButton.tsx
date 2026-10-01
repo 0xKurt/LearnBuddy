@@ -174,13 +174,17 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
   const status =
     voice.state === 'transcribing'
       ? t('voice.transcribing')
-      : voice.denied
-        ? Platform.OS === 'web'
-          ? t('voice.denied_web')
-          : t('voice.denied')
-        : voice.hint && voice.state === 'idle'
-          ? t(`voice.problem.${voice.hint}`)
-          : null;
+      : // Getting ready is its own state and says so (issue #158): nothing here may read
+        // as "go ahead, talk" while the recorder is still being prepared.
+        voice.state === 'starting'
+        ? t('voice.getting_ready')
+        : voice.denied
+          ? Platform.OS === 'web'
+            ? t('voice.denied_web')
+            : t('voice.denied')
+          : voice.hint && voice.state === 'idle'
+            ? t(`voice.problem.${voice.hint}`)
+            : null;
   useAnnounce(status, { liveRegion: voice.state === 'transcribing' });
 
   if (voice.state === 'recording') {

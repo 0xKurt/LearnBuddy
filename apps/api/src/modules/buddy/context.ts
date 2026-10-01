@@ -32,13 +32,20 @@ import type {
   SubjectRow,
 } from './state.js';
 
+/** What the act tools need of a sheet they are pointed at (issue #153). */
+export type MaterialTarget = Pick<MaterialBrief, 'id' | 'title' | 'status'>;
+
 export type Aliases = {
   goals: Map<string, GoalRow>;
   steps: Map<string, StepRow>;
   memories: Map<string, MemoryRow>;
   subjects: Map<string, SubjectRow>;
-  /** Her sheets, so Buddy can name one to rename or delete it (issue #111). */
-  materials: Map<string, MaterialBrief>;
+  /**
+   * Her sheets, so Buddy can name one to practise from, rename or delete (issues #111,
+   * #153). STATE fills it with the ten newest; `search_material` adds what it finds
+   * beyond them, for this turn only.
+   */
+  materials: Map<string, MaterialTarget>;
 };
 
 export type BuiltContext = {

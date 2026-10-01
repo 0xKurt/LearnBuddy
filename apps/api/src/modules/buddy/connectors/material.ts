@@ -21,8 +21,15 @@ import { callEmbedding } from '../../../llm/call.js';
 import { vectorLiteral } from '../../../llm/embeddings.js';
 import { catchUpPassages, materialEmbeddingsReady } from '../../materials/passages.js';
 import { prefixQuery, trigramWords } from './search.js';
+import type { Aliases, MaterialTarget } from '../context.js';
 
 export type MaterialHit = {
+  /**
+   * How the act tools reach this sheet in the SAME turn (issue #153). Registered
+   * server-side from her own rows; the model never writes an id (hard rule 2), and a
+   * handle from an earlier turn means nothing because the map is built per turn.
+   */
+  sheet: string;
   title: string;
   subject: string | null;
   /** Local date the sheet was read (YYYY-MM-DD). */
@@ -37,6 +44,27 @@ export type MaterialHit = {
 };
 
 export type SearchDeps = Pick<Deps, 'db' | 'embeddings' | 'now'>;
+
+/**
+ * A sheet the search found, named so the act tools can reach it in this turn (issue #153).
+ *
+ * STATE carries the ten newest sheets and their aliases; everything older was findable and
+ * then unreachable — Buddy could say "ich hab deinen Zettel gefunden" and have nothing to
+ * point at. The handle is minted here from her own row, never written by the model (hard
+ * rule 2), and the map lives for one turn, so it cannot be replayed later.
+ *
+ * A sheet that already has an alias keeps it: two names for one sheet in the same answer
+ * is how a model picks the wrong one.
+ */
+function register(aliases: Aliases | undefined, m: MaterialTarget): string {
+  if (!aliases) return '';
+  for (const [alias, known] of aliases.materials) if (known.id === m.id) return alias;
+  let n = aliases.materials.size + 1;
+  while (aliases.materials.has(`sh${n}`)) n++;
+  const alias = `sh${n}`;
+  aliases.materials.set(alias, m);
+  return alias;
+}
 
 /** Candidates per list before fusion; small multiples of the result limit. */
 const LIST_SIZE = 12;
@@ -66,10 +94,12 @@ export async function searchMaterials(
   timezone: string,
   query: string,
   limit: number,
+  /** The turn's alias map: a hit registers itself so it can be acted on (issue #153). */
+  aliases?: Aliases,
 ): Promise<MaterialHit[]> {
   const gathered = await gather(deps, learnerId, timezone, query);
   // Nothing searchable in the query (as before 0054): the newest sheets.
-  if (gathered === null) return newestMaterials(deps.db, learnerId, timezone, limit);
+  if (gathered === null) return newestMaterials(deps.db, learnerId, timezone, limit, aliases);
   const fused = gathered.fused.slice(0, limit);
   if (fused.length === 0) return [];
   const meta = await materialMeta(
@@ -83,6 +113,7 @@ export async function searchMaterials(
     if (!m) continue;
     const excerpt = gathered.headlines.get(f.materialId) ?? f.passages.join(' … ');
     hits.push({
+      sheet: register(aliases, { id: m.id, title: m.title, status: 'ready' }),
       title: m.title ?? '',
       subject: m.subject,
       read_on: m.ready_at ? localParts(m.ready_at, timezone).date : null,
@@ -212,15 +243,17 @@ async function newestMaterials(
   learnerId: string,
   timezone: string,
   limit: number,
+  aliases?: Aliases,
 ): Promise<MaterialHit[]> {
   const rows = await db.query<{
+    id: string;
     title: string | null;
     subject: string | null;
     ready_at: Date | null;
     purpose: 'study' | 'homework';
     excerpt: string;
   }>(
-    `select m.title, s.name as subject, m.ready_at, m.purpose, left(m.extracted_text, 600) as excerpt
+    `select m.id, m.title, s.name as subject, m.ready_at, m.purpose, left(m.extracted_text, 600) as excerpt
        from materials m left join subjects s on s.id = m.subject_id
       where m.learner_id = $1 and m.status = 'ready' and m.archived_at is null
         and m.extracted_text is not null
@@ -228,6 +261,7 @@ async function newestMaterials(
     [learnerId, limit],
   );
   return rows.map((r) => ({
+    sheet: register(aliases, { id: r.id, title: r.title, status: 'ready' }),
     title: r.title ?? '',
     subject: r.subject,
     read_on: r.ready_at ? localParts(r.ready_at, timezone).date : null,
