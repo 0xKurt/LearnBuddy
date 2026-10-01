@@ -80,10 +80,11 @@ async function main(): Promise<void> {
       }
       // Something she said first, so the measured turn is an answer to Buddy's own question
       // (issue #111: deleting a sheet takes two turns on purpose).
-      if (c.before) {
+      // Everything she says before the measured turn, each a whole turn of its own.
+      for (const said of [...(c.before ? [c.before] : []), ...(c.conversation ?? [])]) {
         await l.api.post('/buddy/messages', {
           client_message_id: crypto.randomUUID(),
-          text: c.before,
+          text: said,
         });
       }
       const res = await l.api.post<{ status: Outcome['status']; error_code: string | null }>(
@@ -97,6 +98,32 @@ async function main(): Promise<void> {
         `select text, ask from buddy_messages where learner_id = $1 and role = 'buddy' order by seq desc limit 1`,
         [l.learnerId],
       );
+      // Every turn of this conversation, so a case can judge the SHAPE and not only the
+      // last answer (issue #127).
+      const turns = (
+        await env.db.query<{ output: { asks_permission?: boolean } | null; text: string | null }>(
+          `select d.output,
+                  (select m.text from buddy_messages m
+                    where m.decision_id = d.id and m.role = 'buddy'
+                    order by m.seq limit 1) as text
+             from buddy_decisions d
+            where d.learner_id = $1 and d.mode = 'turn' and d.disposition = 'applied'
+            -- The eval's clock does not move between turns, so created_at ties: the
+            -- message that triggered each decision is what puts them in order.
+            order by (select m.seq from buddy_messages m where m.id = d.trigger_message_id),
+                     d.created_at`,
+          [l.learnerId],
+        )
+      ).map((r) => ({
+        // After a lookup the decision is stored as { lookups, final }.
+        asks:
+          (r.output as { asks_permission?: boolean; final?: { asks_permission?: boolean } } | null)
+            ?.asks_permission ??
+          (r.output as { final?: { asks_permission?: boolean } } | null)?.final?.asks_permission ??
+          false,
+        tools: [] as string[],
+        reply: r.text ?? '',
+      }));
       const outcome: Outcome = {
         status: res.body.status,
         errorCode: res.body.error_code,
@@ -113,6 +140,7 @@ async function main(): Promise<void> {
              from buddy_goals g left join subjects s on s.id = g.subject_id where g.learner_id = $1`,
           [l.learnerId],
         ),
+        turns,
         materials: (
           await env.db.query<{ title: string | null; archived_at: Date | null }>(
             `select title, archived_at from materials where learner_id = $1`,
@@ -190,6 +218,14 @@ async function main(): Promise<void> {
           `, ${cost.input} in, ${cost.cached} cached)` +
           (problems.length
             ? `\n    - ${problems.join('\n    - ')}\n    reply: ${outcome.reply ?? '—'}\n    tools: ${outcome.tools.join(', ') || 'none'}\n    goals: ${JSON.stringify(outcome.goals)}`
+            : '') +
+          // A conversation is judged by its shape, so its shape is printed — pass or fail
+          // (issue #127). "How often did he ask back" is only readable next to what was said.
+          (c.conversation
+            ? `\n` +
+              outcome.turns
+                .map((t, i) => `    ${i + 1}.${t.asks ? ' [asks]' : ''} ${t.reply}`)
+                .join('\n')
             : ''),
       );
       // What he actually answered, not only whether the check passed (issue #80): two runs
