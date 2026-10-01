@@ -1228,7 +1228,24 @@ preposition and does not, and telling those apart needs the language rather than
 articles per language the app would have to keep (hard rule 3). So the tutor judges it, the
 reply names the missing word, and `enforceTutorInvariants` allows a "correct" there and nowhere
 else among the near misses. The key is not extended in that case: the article stays part of the
-question. See **Grading** below for what "decidable" means. Answers the model judges right that the rules did not know are added to the item's
+question. See **Grading** below for what "decidable" means. A key that contradicts the arithmetic its OWN question asks for is
+dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): the external
+audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
+sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is
+decided — a prompt that is nothing but a constant expression — because claiming to check a
+worded task would be the same mistake one level up (rule 5); checked task families with
+solutions computed from parameters are issue #162.
+
+The FIRST wrong answer the rules are sure about gets a fixed kind line at once, with no model:
+a slip deserves a quick "try again". From the SECOND one on the tutor writes the reply (issue
+#156) — the same question wrong twice is a gap, not a slip, and the rules can only repeat
+themselves; the external audit watched "Noch nicht ganz …" twice and then the solution, with
+the mistake never taken up. The JUDGEMENT stays the rules': `enforceTutorInvariants` holds a
+rule-certain wrong answer wrong whatever the model says, so only the words are the tutor's.
+The tutor eval measures that something moved between the two, not only that the solution
+stayed locked.
+
+Answers the model judges right that the rules did not know are added to the item's
 accepted answers, so the rules know them next time; otherwise the tutor model judges with a
 structured decision, and the server enforces invariants (a non-attempt is never graded, a
 revealed answer never counts as right, a rule-checked wrong answer stays wrong). Without a model,

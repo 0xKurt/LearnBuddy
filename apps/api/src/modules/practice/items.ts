@@ -14,6 +14,7 @@ import { z } from 'zod';
 import type { Db } from '../../lib/db.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { mentionsSolution } from './tutor.js';
+import { keyAgreesWithPrompt } from './keyCheck.js';
 
 export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm; for geometry and sets also \\overline{3} (repeating decimal, segment), \\angle, \\parallel, \\perp, \\in, \\mathbb{N}, \\vec{v}. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs. A dollar sign meaning money is written \\$ ("kostet \\$5").`;
 
@@ -259,6 +260,11 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
     };
     // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
     if (placeholderQuestion(it)) continue;
+    // The key contradicts the arithmetic its own question asks for (issue #157). A rule
+    // check would then reject her right answer with full authority, and she would have to
+    // argue with a tutor that is sure of itself. Dropped, like every other item whose
+    // shape does not hold together.
+    if (!keyAgreesWithPrompt(it)) continue;
     if (it.kind === 'multiple_choice') {
       if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
       if (it.correct_choice >= it.choices.length) continue;

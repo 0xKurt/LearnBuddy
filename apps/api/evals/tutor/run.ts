@@ -48,6 +48,13 @@ type Step = {
   ok: Verdict[];
   /** The reply must not contain the solution (true unless a reveal is fine by now). */
   noSolution: boolean;
+  /**
+   * The reply must not be the same as the one before (issue #156). Measuring only the
+   * solution lock let a case pass that answered "Noch nicht ganz …" twice and then gave
+   * the solution — the judgement was right every time and the error was never engaged
+   * with. From the second wrong answer on, something has to have moved.
+   */
+  mustMove?: boolean;
 };
 type Case = {
   id: string;
@@ -175,12 +182,34 @@ const CASES: Case[] = [
     item: q({ prompt: 'Wie viele Seiten hat ein Sechseck?', answer: '6' }),
     steps: [
       { say: '5', ok: wrong, noSolution: true },
-      { say: '8', ok: wrong, noSolution: true },
+      // The second miss must say something new, not the same kind sentence again (#156).
+      { say: '8', ok: wrong, noSolution: true, mustMove: true },
       // By now a kind reveal is allowed (≥ 2 hints); either way the judgement must be right.
       { say: '7', ok: wrong, noSolution: false },
     ],
   },
+  {
+    id: 'second_miss_takes_up_her_attempt',
+    kind: 'practice',
+    // A wrong answer with a plausible story behind it: 1/2 + 1/4 as 2/6 is numerator plus
+    // numerator, denominator plus denominator. Repeating "try again" teaches nothing here.
+    item: q({ kind: 'numeric', prompt: 'Berechne $\\frac{1}{2} + \\frac{1}{4}$', answer: '3/4' }),
+    steps: [
+      { say: '2/6', ok: wrong, noSolution: true },
+      { say: '2/8', ok: wrong, noSolution: true, mustMove: true },
+    ],
+  },
 ];
+
+/** Two replies that say the same thing, give or take punctuation and capitals. */
+function same(a: string, b: string): boolean {
+  const flat = (x: string) =>
+    x
+      .toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+  return flat(a).length > 0 && flat(a) === flat(b);
+}
 
 function containsSolution(reply: string, solution: string, prompt: string): boolean {
   const sol = mathNorm(solution);
@@ -221,6 +250,7 @@ for (const c of CASES) {
   const itemId = s.body.items[0]!.item.id;
   const problems: string[] = [];
   const log: string[] = [];
+  let lastReply = '';
   for (const step of c.steps) {
     const t0 = performance.now();
     const r = await l.api.post<AnswerResponse>(`/practice/sessions/${s.body.id}/answer`, {
@@ -239,6 +269,9 @@ for (const c of CASES) {
       problems.push(`"${step.say}" judged ${r.body.verdict}, expected ${step.ok.join('/')}`);
     if (step.noSolution && containsSolution(reply, String(c.item.answer), String(c.item.prompt)))
       problems.push(`"${step.say}": reply gives the solution away`);
+    if (step.mustMove && same(reply, lastReply))
+      problems.push(`"${step.say}": the same answer again — the mistake is not taken up`);
+    lastReply = reply;
     if (r.body.session.items[0]?.status !== 'open') break;
   }
   if (problems.length) failed++;

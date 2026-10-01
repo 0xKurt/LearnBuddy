@@ -816,9 +816,16 @@ export async function answerItem(
       gaveHint: false,
       revealed: true,
     };
-  } else if (givesHints(session.mode) && rule === 'incorrect') {
-    // Wrong for sure: kind feedback at once, no model. It is no hint and uses none up — the
-    // hints stay for "Tipp" (live finding 1).
+  } else if (givesHints(session.mode) && rule === 'incorrect' && item.attempts === 0) {
+    // The FIRST wrong try: kind feedback at once, no model. A slip deserves a quick "try
+    // again" and not a lesson, and the hints stay for "Tipp" (live finding 1).
+    //
+    // From the second one on it goes to the tutor instead (issue #156). The same question
+    // wrong twice is a gap, not a slip, and the rules can only repeat themselves — the
+    // external audit watched exactly that: "Noch nicht ganz …", "Noch nicht ganz …", then
+    // the solution, with the error itself never engaged with. The JUDGEMENT stays the
+    // rules' either way: `enforceTutorInvariants` holds a rule-certain wrong answer wrong
+    // whatever the model says. Only the reply is the tutor's.
     judged = {
       verdict: 'incorrect',
       evaluatedBy: 'rule',

@@ -542,4 +542,49 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
     expect(view.body.items.filter((i) => i.prompt.startsWith('mot '))).toHaveLength(8);
     expect(view.body.material.items_incomplete).toBe(true);
   });
+
+  it('drops a question whose key contradicts its own arithmetic (#157)', async () => {
+    // The external audit put a key of 8 on "6 + 4" and watched the right answer 10 be
+    // rejected by a rule check that sounds certain. She would have to argue with a tutor
+    // that is sure of itself — so the question never gets asked.
+    env.llm.script('extraction', {
+      json: {
+        is_learning_material: true,
+        readable: true,
+        title: 'Rechnen',
+        subject: { name: 'Mathe', kind: 'math' },
+        extracted_text: 'Rechnen',
+        items: [
+          item({ kind: 'numeric', prompt: '6 + 4', answer: '8', topic: 'Addition' }),
+          item({ kind: 'numeric', prompt: '7 + 5', answer: '12', topic: 'Addition' }),
+          // Not decidable from the question alone: left alone, right or wrong.
+          item({
+            kind: 'numeric',
+            prompt: 'Wie viel sind 20 % von 80?',
+            answer: '16',
+            topic: 'Prozente',
+          }),
+        ],
+        more_items: false,
+        pages: [{ page: 1, read: 'all', problem: null }],
+      },
+    });
+    env.llm.script('buddy_check', WAIT);
+    const created = await lena.api.post<{
+      material: MaterialView;
+      uploads: Array<{ path: string }>;
+    }>('/materials', {
+      client_request_id: randomUUID(),
+      photo_mimes: ['image/jpeg'],
+      purpose: 'study',
+    });
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    await lena.api.post(`/materials/${created.body.material.id}/submit`);
+    await env.flushBackground();
+
+    const view = await lena.api.get<MaterialItemsView>(
+      `/materials/${created.body.material.id}/items`,
+    );
+    expect(view.body.items.map((i) => i.prompt)).toEqual(['7 + 5', 'Wie viel sind 20 % von 80?']);
+  });
 });

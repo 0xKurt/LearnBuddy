@@ -31,6 +31,18 @@ const item = (over: Record<string, unknown>) => ({
   ...over,
 });
 
+/** What the tutor answers; the JUDGEMENT stays the rules' (enforceTutorInvariants). */
+const tutorSays = (reply: string, over: Record<string, unknown> = {}) => ({
+  json: {
+    intent: 'answer',
+    verdict: 'incorrect',
+    reply,
+    gave_hint: false,
+    revealed_answer: false,
+    ...over,
+  },
+});
+
 const HINTS = [
   'Gefragt ist die Summe von zwei Brüchen.',
   'Bring beide Brüche auf denselben Nenner.',
@@ -129,10 +141,15 @@ describe.skipIf(!dbReady)('hint ladder', () => {
     expect((await hint(l, s, id, turnId)).body.reply.id).toBe(tapped.body.reply.id);
     expect(tapped.body.session.items[0]).toMatchObject({ hints_used: 1, hints_left: 2 });
 
+    // The SECOND wrong try goes to the tutor (issue #156): the same question wrong twice
+    // is a gap, not a slip, and repeating "Noch nicht ganz" engages with nothing. The
+    // judgement stays the rules' — the model cannot talk a wrong answer right.
+    env.llm.script('tutor', tutorSays('Hast du die Nenner schon gleichnamig gemacht?'));
     const second = await answer(l, s, id, '0,5');
     expect(second.body.verdict).toBe('incorrect');
+    expect(second.body.reply.text).toContain('Nenner');
+    expect(env.llm.callsFor('tutor')).toHaveLength(calls + 1);
     expect((await hint(l, s, id)).body.reply.text).toBe(HINTS[1]);
-    expect(env.llm.callsFor('tutor')).toHaveLength(calls); // no model so far
 
     // Third wrong try: the solution, explained — and the question comes back (FSRS).
     const third = await answer(l, s, id, '1');

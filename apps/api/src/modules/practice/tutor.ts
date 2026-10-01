@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 
-export const TUTOR_PROMPT_VERSION = 'tutor.v3.7';
+export const TUTOR_PROMPT_VERSION = 'tutor.v3.8';
 
 export const TutorDecision = z.object({
   intent: z
@@ -42,7 +42,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - intent "answer": the learner tried an answer (hedged answers like "not sure, maybe 12" are answers).
   - verdict "correct" only if the learner expressed the right idea themselves (own words are fine).
   - "partially_correct": name what is right, then nudge toward what is missing without giving it away.
-  - "incorrect": stay warm and give the next hint.
+  - "incorrect": stay warm. On a FIRST wrong answer a short encouragement is enough. From the SECOND one on, the same question has now gone wrong twice — that is a gap, not a slip, so do not repeat yourself: take up what she actually wrote. Name the step you think she stumbled on as a QUESTION she can answer ("Hast du … schon …?"), or show the same idea on smaller numbers. A guess she says no to is dropped, not repeated. Never state the solution.
 - intent "help_request" (asking for a hint, "I don't understand the question"), "no_answer" ("don't know", empty), "question" or "off_topic": verdict "not_an_attempt". Help them: explain the question or give the next hint; for off-topic, steer back kindly.
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
 - If a RULE CHECK says the answer is wrong, it is wrong.
