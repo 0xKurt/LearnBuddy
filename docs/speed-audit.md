@@ -26,8 +26,24 @@ sichtbar ist. Wiederholen: `pnpm --filter @learnbuddy/api exec tsx scripts/speed
 | pronounce  | 2     | 2.88s         | 3.53s      | 1 005            | 618               |
 | transcribe | 6     | 2.02s         | 2.72s      | 1 303            | 82                |
 
-TTS: lokal `SPEECH_BACKEND` nicht gesetzt — übersprungen (auf Vercel
-konfiguriert; bei Bedarf lokal setzen und erneut laufen lassen).
+TTS: lokal `SPEECH_BACKEND` nicht gesetzt — übersprungen, in dieser Tabelle gibt es
+deshalb keine TTS-Zeile (das Skript ruft TTS nur bei `SPEECH_BACKEND=google` auf).
+
+> **Korrektur 01.10.2026.** Hier stand „auf Vercel konfiguriert". Das war eine
+> Behauptung, keine Messung, und zum Zeitpunkt der Baseline (28.09.) falsch: der
+> Standard in `apps/api/src/config.ts` ist `disabled`, und #176 hat gezeigt, dass die
+> natürliche Stimme bis dahin **nie** eingeschaltet war — jede Vorlese-Anfrage fiel auf
+> die Stimme des Telefons zurück. Die Zeile hat genau das kaschiert.
+> **Stand jetzt, gemessen am 01.10. ~19:05 UTC:** `curl -s https://learn-buddy-api.vercel.app/v1/health`
+> antwortet `"voice":true`. Das Feld ist `deps.speech.available` (`apps/api/src/app.ts`),
+> und `available` ist nur bei `GoogleSpeech` wahr (`production.ts`: `SPEECH_BACKEND === 'google'`)
+> — auf Vercel steht die Variable also inzwischen. Was damit **nicht** belegt ist: dass ein
+> echter Chirp-3-Aufruf durchgeht (IAM-Recht, aktivierte API). Das ist die offene
+> Live-Verifikation aus ADR 0008 und #176.
+>
+> Echte TTS-Zahlen stehen weiter unten — §Vorlesen im Voice-Mode und §Das erste
+> gesprochene Stück: dort wurde `SPEECH_BACKEND=google` für den Lauf gesetzt und gegen
+> den echten EU-Endpunkt gemessen.
 
 ## Lesart (Stand Baseline)
 
@@ -55,6 +71,11 @@ konfiguriert; bei Bedarf lokal setzen und erneut laufen lassen).
   einzige Form, mit der ein Präfix-Cache je weiter greifen kann. Ablesbar in
   `llm_calls.cached_tokens` (Migration 0052); `cost_micros` bleibt der ungerabattierte
   Preis. Siehe `docs/architecture.md` §Speed.
+  **Nachgemessen 01.10. in Produktion:** Diese Eval-Zahlen gelten **nicht** für den
+  Betrieb. Über Vercel trägt der Cache bei `buddy_turn` **28 348 von 308 726**
+  Eingabe-Tokens (9,2 %, 14 Aufrufe, 3 mit Treffer) — der Eval feuert hunderte Aufrufe mit
+  demselben Präfix in Minuten, Produktion eine Handvoll Stunden auseinander. Wer eine von
+  beiden Zahlen zitiert, muss sagen, welche: `docs/decisions/prefix-cache-2026-10-01.md`.
 - SSE-TTFB 1,1–1,2 s ist eine gute Basis; Thinking-Caps (#10) sollten den
   Median weiter drücken — Nachmessung nach P1 hier ergänzen.
 

@@ -91,6 +91,17 @@ Done 2026-09-28 with the production service account (`GoogleSpeech.synthesize`, 
 so the API is enabled and the role suffices (step 1) and step 2 holds for German. Production runs
 with `SPEECH_BACKEND=google`. Steps 2 (other languages), 3, 4 and 5 are still open.
 
+**2026-10-01, a whole turn this time** (`SPEECH_BACKEND=google npx tsx evals/tts/run.ts`, ten
+sentences): synthesis **0.81 s** per sentence serial, 0.80 s in parallel; first audio after
+**2.46–2.92 s**; fetching one sentence ahead closes every gap (silence between sentences 2.41 s →
+**0.00 s**); a whole turn 23.7 s. Asking for the same sentence twice: 0.48 s then 0.50 s — the
+provider has no cache of its own worth counting on, ours does the work.
+
+And production really carries it now: `speech_cache` in the hosted database was **empty until
+2026-10-01 17:12 UTC** and has rows since. Before that date nobody had ever heard a synthesised
+sentence from this app, whatever the configuration said (issue #176). Measured on a Mac over
+Wi-Fi, not on the phone — step 5 stays open.
+
 Before switching `SPEECH_BACKEND=google` on:
 
 1. Enable the **Cloud Text-to-Speech API** in the project; give the service account a role that
