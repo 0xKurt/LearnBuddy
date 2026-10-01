@@ -42,6 +42,23 @@
   },
   "practice": {
     "accents": "Quasi – controlla di nuovo gli accenti.",
+    "bar": {
+      "shade_prompt": "Colora {{fraction}}.",
+      "compare_prompt": "Quale frazione è maggiore: {{left}} o {{right}}?",
+      "add_prompt": "Calcola {{first}} + {{second}} e colora il risultato.",
+      "topic_shade": "Rappresentare le frazioni",
+      "topic_compare": "Confrontare le frazioni",
+      "topic_add": "Addizionare le frazioni",
+      "hint_parts": "La barra è divisa in {{parts}} parti uguali.",
+      "hint_shade": "Quante di queste parti sono {{fraction}}?",
+      "hint_compare_reach": "Guarda fin dove arriva la parte colorata in ogni barra.",
+      "hint_compare_parts": "Più parti ha un intero, più piccola è una parte.",
+      "hint_add_same": "Qui le due frazioni sono divise in parti uguali.",
+      "hint_add_count": "Conta insieme le parti colorate delle due barre.",
+      "worked_shade": "La barra intera è {{parts}} parti. {{fraction}} della barra sono {{answer}}.",
+      "worked_compare": "Nella barra {{answer}} arriva più lontano: è la frazione maggiore.",
+      "worked_add": "Le due frazioni sono divise in {{parts}} parti uguali. In tutto sono colorate {{answer}}."
+    },
     "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla tu.",
     "correct": "Esatto – ottimo lavoro!",
     "had_enough": "Va bene, per oggi può bastare. Puoi chiudere l’esercizio, oppure facciamo insieme un esempio piccolo. Dimmi tu.",

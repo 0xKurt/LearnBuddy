@@ -10,6 +10,13 @@
     "placeholder": "Ta réponse…",
     "unit_hint": "Réponse en {{unit}}"
   },
+  "bar": {
+    "shade_how": "Touche les parts de la barre.",
+    "shaded": "{{filled}} parts sur {{total}} coloriées",
+    "part": "Part {{n}} sur {{total}}",
+    "pick_how": "Touche la barre qui est la plus grande.",
+    "pick_option": "Choisir {{fraction}}"
+  },
   "back_to_buddy": "Retour à Buddy",
   "check": "Vérifier",
   "choice_tried": "Déjà essayé",

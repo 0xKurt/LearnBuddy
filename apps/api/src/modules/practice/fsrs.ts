@@ -23,19 +23,43 @@ type StateRow = {
   lapses: number;
   state: number;
   last_review: Date | null;
+  last_outcome: ItemOutcome | null;
 };
 
+/**
+ * One review of one question — and, in the same transaction and from the same read, the
+ * state it overwrites (`session_items.state_before`, issue #164).
+ *
+ * It is recorded here because this is the only code that changes `item_states`. A question
+ * closes in three places — an answer, "Lösung zeigen", a spoken sentence — and when each of
+ * them had to remember to write it down beforehand, two of them did not: a judgement she
+ * disputed after a reveal or a recording found nothing to go back to and took her whole
+ * history for that question with it. Nothing can forget it from here.
+ *
+ * The two kinds of empty are different on purpose, and `disputeVerdict` reads them apart:
+ *   · jsonb `null` — this session reviewed the question and it held nothing before, so
+ *     taking the review back means removing the row;
+ *   · SQL NULL (never written) — this session never reviewed it (a test, homework help),
+ *     so there is no effect of its own to take back and `item_states` is not touched.
+ */
 export async function reviewItem(
   db: Db,
   learnerId: string,
+  sessionId: string,
   itemId: string,
   outcome: ItemOutcome,
   now: Date,
 ): Promise<void> {
   const prev = await db.maybeOne<StateRow>(
-    `select due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses, state, last_review
+    `select due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses, state,
+            last_review, last_outcome
        from item_states where item_id = $1 for update`,
     [itemId],
+  );
+  // `JSON.stringify(null)` is the string "null": jsonb null, not SQL NULL (see above).
+  await db.query(
+    `update session_items set state_before = $3::jsonb where session_id = $1 and item_id = $2`,
+    [sessionId, itemId, JSON.stringify(prev ?? null)],
   );
   const card: Card = prev
     ? {

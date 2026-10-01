@@ -98,6 +98,7 @@ const ITEM: ItemView = {
   figure: null,
   image: null,
   tap_choices: null,
+  surface: null,
 };
 
 const RECORDING: Recorded = {

@@ -1300,8 +1300,9 @@ dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): 
 audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
 sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is
 decided — a prompt that is nothing but a constant expression — because claiming to check a
-worded task would be the same mistake one level up (rule 5); checked task families with
-solutions computed from parameters are issue #162.
+worded task would be the same mistake one level up (rule 5). The other half of that answer is
+**Bruchbalken** below: a question whose key is not checked but _computed_, from the same
+parameters its own text was written from (issue #162).
 
 The FIRST wrong answer the rules are sure about gets a fixed kind line at once, with no model:
 a slip deserves a quick "try again". From the SECOND one on the tutor writes the reply (issue
@@ -1331,6 +1332,57 @@ nothing in grading, FSRS or the tutor knows this exists. Nothing is offered wher
 the exercise — writing the foreign word, a practice test, or a set with too few of her own words
 to build honest choices. On that question tapping is then the whole way to answer: four cards and
 a text field do not fit a 360×740 phone (rule 16).
+
+**Bruchbalken — a surface she works with** (`contracts/bars.ts`, `practice/bars.ts`, migration
+`0064_fraction_bar_tasks.sql`, issue #162). Everything used to run through text: for "1/2 + 1/4"
+she got sentences about fractions, where one picture shows the connection at a glance — and
+`FigureView` could _show_ a bar but nothing there was something to _work_ with.
+
+**The model chooses, code computes.** A `BarTask` is all the model may say: one of three
+reviewed tasks and a handful of small whole numbers.
+
+| task      | parameters            | the question code writes                                                                 |
+| --------- | --------------------- | ---------------------------------------------------------------------------------------- |
+| `shade`   | `parts`, `units`      | "Färbe $\frac{1}{2}$ ein." — the amount named in lowest terms, on a bar of `parts` parts |
+| `compare` | `left`, `right`       | "Welcher Bruch ist größer: …?" — two bars of the same length, each in its own parts      |
+| `add`     | `parts, first,second` | "Rechne $\frac{1}{2}$ + $\frac{1}{4}$ …" — both drawn, the sum shaded                    |
+
+The contract has **no field** for a question text, an answer, a figure, a hint or a worked
+solution, so no parameter set — valid or not — can produce a question whose key disagrees with
+its own words; the worst a bad one does is produce _no_ question (`barItem` returns null, like
+any item whose shape does not hold together). What the ranges already make inexpressible is not
+validated away afterwards: a fraction is named from a closed vocabulary (`BAR_FRACTIONS`: proper,
+in lowest terms, denominator ≤ 6), so an improper fraction, a zero numerator, a name that is not
+reduced and a bar a phone cannot draw are not sayable. The denominator stops at 6 because the bar
+she taps is one row of segments: on a 360 pt phone a segment is then ~49 pt wide, a real touch
+target. Both parameters that still depend on each other (`units < parts`, `first + second ≤
+parts`) and the degenerate `left = right` yield nothing, never something false.
+
+The task is stored (`items.bar_task`) next to the prompt, key, figure, hints and worked solution
+computed from it, so the question has **one** source and a test can derive it again and compare
+(`fraction-bars.int.test.ts`). At most `MAX_BAR_ITEMS` (3) per prepared set, and only in
+`practice`: homework is what she typed, a vocabulary list is a list, and a test gives one try per
+question.
+
+_A figure is what she READS, a surface is what she TOUCHES._ `ItemView.surface` carries the
+second: `shade` (an empty bar of `parts` parts; a tap fills it up to that part, a tap on the last
+filled part gives one back) or `pick` (two bars; a tap answers with that bar's fraction). It never
+carries the solution, and it is gone once the question closes. Shading writes the fraction into
+the same answer field — so "Prüfen", the math keys and typing are unchanged and text stays
+reachable (`components/practice/FractionBarAnswer.tsx`; every part is a real button with a name,
+and how much is shaded stands there in words, never colour alone). A picked bar goes out at once
+like a choice, and two bars are two options: once one is ruled out, tapping the other closes the
+question with the solution explained rather than counting as right (the rule of user feedback #9).
+
+Grading: because **code wrote the prompt**, code knows it asked for an _amount_ and not for a
+notation — so for these items value equality is final and 2/4, 1/2 and 0,5 are one answer
+(`evaluate.ts` `form_free`). That licence reaches exactly the questions code computed; for a key
+the model wrote, decision D-3 stands ("Kürze $\frac{6}{8}$" is not answered by 6/8). A
+calculation typed back ("1/4+1/4") is still the tutor's, as everywhere (audit H-1).
+
+Still open for a later step: the number line and the vocabulary card (#162's second and third
+representation), and bar tasks from a photographed sheet — the extraction prompt does not offer
+them yet, so today they come from a topic she named.
 
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
@@ -1372,17 +1424,38 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   #155, rule 5). FSRS per question is not a statement about "Brüche". The app says it in words (`apps/mobile/lib/practice/summaryLine.ts`): homework
   "Du hast N Aufgaben selbst gelöst", otherwise "Du hast N Fragen beantwortet" and only a whole
   round right at once is named — never a hit rate, never a zero (user feedback #1, #3).
-- _"Die Bewertung stimmt nicht"_ (`disputeVerdict`, migration `0062`, issue #164). The rule
-  check is certain by design, and that certainty can stand in for a key nobody verified.
+- _"Die Bewertung stimmt nicht"_ (`disputeVerdict`, migrations `0062` and `0065`, issue #164).
+  The rule check is certain by design, and that certainty can stand in for a key nobody verified.
   Issue #157 catches it where arithmetic makes it decidable; everywhere else the only one who
   can see it is the child in front of it, and she must be able to say so without arguing with
   a tutor that is sure of itself. Three things follow, and all three are hers: the question
   leaves this result, it leaves future practice (its key is suspect), and the spaced
   repetition goes back to exactly what it held before this session reviewed it
-  (`session_items.state_before`, written on every close) — the history from earlier,
-  undisputed sessions stays. Different from "Frage passt nicht", which takes an unfit question
-  out while it is still **open**; this is about a judgement already given. Not during a test
-  (the results come at the end) and not for homework, which is helped with rather than judged.
+  (`session_items.state_before`) — the history from earlier, undisputed sessions stays.
+  Nothing is deleted: `disputed_at` stays on the row, and the task, the source, her answer and
+  the key it was compared against stay readable (`items`, `practice_turns.verdict` and
+  `evaluated_by` — rule or model). Every claimed weakness derived from it disappears at once,
+  because the dispute also sets `flagged_at`: the summary, Buddy's home card and his STATE
+  (`summary.ts`, `buddy/state.ts`, `connectors/practice.ts`), the look-back
+  (`buddy/lookback.ts`) and the material list all skip a flagged row, and the archived item is
+  out of `selectPracticeItems`. One transaction, `deps.now()`, the session row locked first,
+  and `bumpContext` behind it (rules 4 and 7). _Where the state to go back to comes from:_
+  `reviewItem` (`practice/fsrs.ts`) writes it from the same read it overwrites, because it is
+  the only code that changes `item_states`. The three ways a question closes — an answer,
+  "Lösung zeigen", a spoken sentence — each used to have to remember it, and two did not: a
+  dispute after a reveal or a recording found nothing recorded, read that as "there was nothing
+  before" and deleted the row. So the column
+  has two kinds of empty (migration `0065`): jsonb `null` = reviewed, nothing held before →
+  remove the row; SQL NULL = never reviewed here (a test, homework help, a row from before) →
+  `item_states` is not touched, because a session that fed nothing has nothing to take back
+  and clearing it would be a guess (rule 5). Different from "Frage passt nicht", which takes an
+  unfit question out while it is still **open**; this is about a judgement already given. Not
+  during a test (the results come at the end) and not for homework, which is helped with rather
+  than judged. The control and that rule live in `components/practice/DisputeVerdict.tsx` (one
+  tap at the verdict, one sentence saying what will happen, no field to justify anything — rule 16) and are pinned by `components/practice/__tests__/DisputeVerdict.test.tsx`.
+  **Still open from #164:** the first half — showing the cut-out of an unreadable spot and
+  asking about it ("ist das 12 oder 17?") instead of losing the question. It needs coordinates
+  out of the extraction and a crop view, and belongs with #162.
 - _"Lösung zeigen"_ only after a try or a hint (`reveal_available`, 409 `try_first`; a spoken
   sentence can always be skipped), user feedback #8. A wrong choice that leaves a single untried
   option closes the question with the worked solution — shown, never right (feedback #9).
@@ -1563,6 +1636,9 @@ word list, so it stays a prompt rule.
   may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
   (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
   not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
+  A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
+  (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
+  task instead of written by the model.
 
 ## Voice
 

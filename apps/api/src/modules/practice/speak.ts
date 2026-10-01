@@ -284,7 +284,14 @@ export async function speakItem(
         [sessionId, item.id, closes, firstTry, now],
       );
       if (closes && session.mode !== 'test' && session.mode !== 'help') {
-        await reviewItem(tx, learner.id, item.id, firstTry ? 'first_try' : 'with_help', now);
+        await reviewItem(
+          tx,
+          learner.id,
+          sessionId,
+          item.id,
+          firstTry ? 'first_try' : 'with_help',
+          now,
+        );
       }
       await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
         sessionId,

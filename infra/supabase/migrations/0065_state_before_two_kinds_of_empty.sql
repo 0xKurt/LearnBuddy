@@ -1,0 +1,27 @@
+-- `session_items.state_before` has two kinds of empty, and they mean opposite things (#164).
+--
+-- Migration 0062 introduced the column with the promise that it "is written on every close".
+-- It was not: only an answered question wrote it. "Lösung zeigen" (`revealItem`) and a spoken
+-- sentence (`speakItem`) both feed FSRS and both wrote nothing — so a judgement she disputed
+-- after a reveal or a recording found no state to go back to, and the code read that as
+-- "there was nothing before" and DELETED `item_states`. Her history from earlier, undisputed
+-- sessions went with it. The one case this feature exists for — the shown solution is the
+-- wrong key, and she is the only one who can see it — was the case that lost the most.
+--
+-- The write now lives inside `reviewItem` (practice/fsrs.ts), the only code that changes
+-- `item_states`, taken from the same read it overwrites. Nothing can forget it any more, and
+-- the column distinguishes:
+--
+--   · a state object  — go back to exactly this;
+--   · jsonb `null`    — this session reviewed the question and it held nothing before, so
+--                       taking the review back means removing the row;
+--   · SQL NULL        — nothing was ever recorded: this session never reviewed the question
+--                       (a test, homework help, or a row closed before this migration), so
+--                       it left no effect of its own and `item_states` is not touched.
+--
+-- The third case is why this is a comment change and not a data migration: rows written
+-- before today cannot say which of the two empties they meant, and guessing at them is the
+-- mistake this whole issue is about (CLAUDE.md rule 5). An old row is therefore read as "not
+-- recorded" — a dispute on it leaves the spaced repetition alone instead of clearing it.
+comment on column session_items.state_before is
+  'The item_states row as it stood before THIS session reviewed the question, written by practice/fsrs.ts reviewItem, so a disputed verdict can be taken back exactly. jsonb null: reviewed, nothing held before (remove the row). SQL NULL: never reviewed here (leave item_states alone). Issue #164.';

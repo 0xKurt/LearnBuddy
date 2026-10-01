@@ -47,6 +47,12 @@ import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
+import {
+  canDisputeVerdict,
+  DisputeVerdictButton,
+  DisputeVerdictSheet,
+} from '../../components/practice/DisputeVerdict.js';
+import { FractionBarAnswer } from '../../components/practice/FractionBarAnswer.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
@@ -188,6 +194,13 @@ export default function PracticeScreen() {
   // Kept on the device: a half-typed answer survives Android killing the app.
   const { text, setText } = useDraft(`session.${id}`);
   const [pending, setPending] = useState<{ itemId: string; text: string } | null>(null);
+  /**
+   * What the fraction bar wrote into the answer field, and for which question (issue #162).
+   * Only so the server hears HOW she answered (issue #163): the same text typed is a
+   * different thing from the same text shaded. Once she edits it — or the next question
+   * happens to want the same fraction — it is hers again.
+   */
+  const [shadedAnswer, setShadedAnswer] = useState<{ itemId: string; text: string } | null>(null);
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -757,7 +770,9 @@ export default function PracticeScreen() {
     (item.origin === 'material' || item.origin === 'buddy');
 
   function check(value: string): void {
-    if (value) void answer(item.id, { text: value, via: 'typed' }, value);
+    // A shaded bar is a tap, even though "Prüfen" sends it (issue #163).
+    const shaded = shadedAnswer?.itemId === item.id && shadedAnswer.text === value;
+    if (value) void answer(item.id, { text: value, via: shaded ? 'tapped' : 'typed' }, value);
   }
 
   // A small row of quiet tools under the question (never a second headline).
@@ -773,30 +788,22 @@ export default function PracticeScreen() {
     ) : null,
   ].filter((node) => node !== null);
 
-  // A judgement she has been given and may disagree with (issue #164). Never while a test
-  // runs — there the results come at the end — and never for homework, which is helped
-  // with rather than judged.
-  const disputable =
-    !open &&
-    session.status === 'active' &&
-    session.mode !== 'help' &&
-    !testing &&
-    item.origin !== 'homework';
-
-  const disputeButton = disputable ? (
-    <Btn
-      size="sm"
-      variant="ghost"
-      pill
+  // A judgement she has been given and may disagree with (issue #164). The rule and the copy
+  // live in components/practice/DisputeVerdict.tsx, where a component test holds them.
+  const disputeButton = canDisputeVerdict({
+    open,
+    sessionStatus: session.status,
+    testing,
+    mode: session.mode,
+    origin: item.origin,
+  }) ? (
+    <DisputeVerdictButton
       disabled={locked}
       onPress={() => {
         setDisputeFor(item.id);
         setDisputeOpen(true);
       }}
-      accessibilityHint={t('practice:dispute.hint')}
-    >
-      {t('practice:dispute.button')}
-    </Btn>
+    />
   ) : null;
 
   const flagButton = flaggable ? (
@@ -1001,6 +1008,24 @@ export default function PracticeScreen() {
             />
           </View>
         ) : null}
+        {/* The fraction bar she works with (issue #162). It sits where her finger already
+            is — right above the field — and it writes into that very field, so "Prüfen",
+            the math keys and typing stay exactly what they were. A picked bar goes out at
+            once, like a choice. */}
+        {open && item.surface ? (
+          <View style={{ paddingHorizontal: 16, paddingTop: 8 }} testID="answer-surface">
+            <FractionBarAnswer
+              surface={item.surface}
+              value={text}
+              disabled={locked}
+              onChange={(next) => {
+                setShadedAnswer({ itemId: item.id, text: next });
+                setText(next);
+              }}
+              onPick={(picked) => void answer(item.id, { text: picked, via: 'tapped' }, picked)}
+            />
+          </View>
+        ) : null}
         {typed ? (
           <AnswerComposer
             kind={item.kind}
@@ -1057,17 +1082,12 @@ export default function PracticeScreen() {
 
       {/* A judgement she disagrees with (issue #164): the question and its mark go, and
           her learning state goes back to what it was before this answer. */}
-      <Sheet
+      <DisputeVerdictSheet
         visible={disputeOpen}
-        title={t('practice:dispute.sheet_title')}
-        closeLabel={t('common:actions.cancel')}
+        busy={busy}
         onClose={() => setDisputeOpen(false)}
-      >
-        <Text style={TYPE.body}>{t('practice:dispute.sheet_body')}</Text>
-        <Btn full busy={busy} onPress={() => void dispute()}>
-          {t('practice:dispute.confirm')}
-        </Btn>
-      </Sheet>
+        onConfirm={() => void dispute()}
+      />
     </Screen>
   );
 }

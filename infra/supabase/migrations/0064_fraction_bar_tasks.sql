@@ -1,0 +1,23 @@
+-- Bruchbalken: die erste Lernfläche, mit der sie *arbeiten* kann (issue #162).
+--
+-- Das Modell wählt, der Code rechnet. In dieser Spalte steht genau das, was das Modell
+-- gesagt hat: eine von drei geprüften Aufgaben und eine Handvoll kleiner ganzer Zahlen
+-- (`BarTask`, packages/shared-types/src/contracts/bars.ts). Alles andere an der Frage —
+-- `prompt`, `answer`, `figure`, `hints`, `worked_solution` — ist daraus GERECHNET
+-- (apps/api/src/modules/practice/bars.ts) und steht in den Spalten, die es immer schon
+-- gab, damit Sitzung, Bewertung und FSRS unverändert weiterlaufen.
+--
+-- Warum die Aufgabe trotzdem gespeichert wird, obwohl das Gerechnete daneben steht:
+--   * sie ist die EINE geprüfte Quelle der Frage (Abnahmekriterium von #162) — ein Test
+--     rechnet aus ihr nach und vergleicht mit dem, was gespeichert wurde;
+--   * sie sagt der App, welche Fläche die Frage hat (`ItemView.surface`), ohne die Lösung
+--     zu verraten;
+--   * sie sagt der Bewertung, dass diese Frage nach einer MENGE fragt und nicht nach einer
+--     Schreibweise: weil der Code den Fragetext selbst geschrieben hat, weiß er, dass
+--     keine bestimmte Form verlangt ist — also ist jede Form des richtigen Werts richtig
+--     (2/4 für 1/2, 0,5 für 1/2). Für vom Modell geschriebene Zahlenfragen gilt das
+--     weiter NICHT (Entscheidung D-3: „Kürze 6/8" ist nicht mit 6/8 beantwortet).
+--
+-- Kein Backfill: alte Zeilen haben keine Aufgabe und werden genau wie bisher behandelt.
+
+alter table items add column bar_task jsonb;

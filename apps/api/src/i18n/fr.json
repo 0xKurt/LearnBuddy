@@ -42,6 +42,23 @@
   },
   "practice": {
     "accents": "Presque – vérifie encore les accents.",
+    "bar": {
+      "shade_prompt": "Colorie {{fraction}}.",
+      "compare_prompt": "Quelle fraction est la plus grande : {{left}} ou {{right}} ?",
+      "add_prompt": "Calcule {{first}} + {{second}} et colorie le résultat.",
+      "topic_shade": "Représenter les fractions",
+      "topic_compare": "Comparer les fractions",
+      "topic_add": "Additionner les fractions",
+      "hint_parts": "La barre est partagée en {{parts}} parts égales.",
+      "hint_shade": "Combien de ces parts font {{fraction}} ?",
+      "hint_compare_reach": "Regarde jusqu'où va la partie coloriée dans chaque barre.",
+      "hint_compare_parts": "Plus un tout a de parts, plus une part est petite.",
+      "hint_add_same": "Ici, les deux fractions sont partagées en parts égales.",
+      "hint_add_count": "Compte ensemble les parts coloriées des deux barres.",
+      "worked_shade": "La barre entière fait {{parts}} parts. {{fraction}} de la barre, c'est {{answer}}.",
+      "worked_compare": "Dans la barre, {{answer}} va plus loin – c'est la plus grande fraction.",
+      "worked_add": "Les deux fractions sont partagées en {{parts}} parts égales. Ensemble, {{answer}} est colorié."
+    },
     "cannot_check": "Je ne peux pas vérifier ça pour le moment. Tu peux regarder la solution et comparer toi-même.",
     "correct": "C'est juste – bravo !",
     "had_enough": "D’accord — ça suffit pour aujourd’hui si tu veux. Tu peux arrêter l’exercice, ou on fait un petit exemple ensemble. Dis-moi ce que tu préfères.",

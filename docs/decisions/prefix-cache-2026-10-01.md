@@ -313,3 +313,45 @@ cd apps/api && LLM_BACKEND=vertex BUDDY_EVAL_OUT=run.json npx tsx evals/buddy/ru
 
 Die Zeichenmessung der Prompt-Bausteine steht als Skript in §Befund 3 — sie braucht kein
 Modell und keine Datenbank.
+
+## Nachtrag, am selben Abend: der vorgeschlagene Umbau wurde gebaut und verworfen
+
+Die Zeichenmessung oben stimmt und wurde reproduziert (32 → 32 249 gemeinsame Zeichen, bei
+identischer Länge 33 431 und — kanonisch verglichen — identischem Inhalt). Trotzdem geht die
+Änderung nicht raus. Drei Gründe, in dieser Reihenfolge.
+
+**1. Gemessen bringt sie nichts.** Kontrolliertes A/B in einem eigenen Worktree auf `7b09b64`
+gepinnt (im Hauptbaum wäre der Vergleich wertlos gewesen — zwischen den Läufen landete
+`efe87d1`):
+
+|         | Fälle | Eingabe-Tokens | aus dem Cache | Anteil     |
+| ------- | ----- | -------------- | ------------- | ---------- |
+| vorher  | 48/49 | 1 219 324      | 835 726       | **68,5 %** |
+| nachher | 48/49 | 1 173 373      | 799 202       | **68,1 %** |
+
+**2. Und der Eval kann es bauartbedingt nicht zeigen.** Nur eine Runde, die das
+Endrunden-Schema benutzt, kann profitieren — dahin kommt man erst, wenn das Modell zweimal
+nach Lookups fragt (`MAX_LOOKUP_STEPS = 2`). Über 53 Züge und 60 Aufrufe brauchte kein Fall
+mehr als zwei Aufrufe je Zug. Jeder Schritt-Aufruf benutzt das Schritt-Schema, dessen Bytes so
+oder so identisch sind: ein Treffer von exakt 18 306 Tokens trat in **beiden** Läufen 33-mal
+auf. Die hier vorgeschlagene Prüfmethode beantwortet ihre eigene Frage nicht.
+
+**3. Sie würde eine bewiesene Zusage brechen.** `stream.ts` schließt das unfertige JSON bei
+`"reply":` und liest, was davor steht — `lookups` muss also vorher dasein. Rückt es nach
+hinten, hört die Prüfung still auf zu greifen (nachgestellt: `speakable` wird `true`), und die
+Antwort einer Lookup-Runde, die ausdrücklich verworfen wird, würde gezeigt und im Sprachmodus
+**vorgelesen**, bevor die nächste Runde sie ersetzt.
+
+**Was daraus bleibt:** `__tests__/stream.test.ts` leitet die Feldreihenfolge jetzt aus dem
+Schema ab, statt sie anzunehmen — dieselbe Umstellung lässt dort jetzt zwei Tests laut
+fehlschlagen; vorher blieben alle grün. Das war die eigentliche Lücke.
+
+**Die bessere Form, falls es je wieder aufgegriffen wird:** `stream.ts` braucht `lookups` _vor_
+`reply`, nicht ganz vorn. Hinter `actions` eingeschoben ergibt **31 610** gemeinsame Zeichen —
+98 % des vollen Gewinns — und `speakable` bleibt in einer Lookup-Runde `false`. Gebaut wird sie
+erst, wenn ein Messaufbau existiert, der einen Gewinn überhaupt sichtbar machen kann.
+
+Und eine zweite Stelle mit derselben Konstruktion wartet: `apps/api/src/modules/buddy/check.ts`
+baut das Schema für `buddy_check` genauso.
+
+Kosten dieser Untersuchung: ~2,12 $.

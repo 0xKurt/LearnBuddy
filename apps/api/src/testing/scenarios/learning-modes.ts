@@ -103,6 +103,27 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
         }
       : { items: [] },
   );
+  // Fraction bars (issue #162): the model chooses the task and its numbers — there is no
+  // field for a question, an answer or a figure, so this is ALL it can say. The question
+  // the walkthrough then reads on screen was written by the server.
+  // Registered before the fractions rule below, whose /Bruch/ would also match "Bruchbalken".
+  scriptGenerations({
+    when: /Bruchbalken/i,
+    answer: () => ({
+      usable: true,
+      title: 'Bruchbalken',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [],
+      bars: [
+        { task: 'shade', parts: 4, units: 2 },
+        // The sentence issue #162 opens with: "1/2 + 1/4". The only shape with a figure to
+        // READ above the question and a surface to WORK with under it, so it is also the
+        // tallest one the walkthrough measures on 360×740.
+        { task: 'add', parts: 4, first: 2, second: 1 },
+        { task: 'compare', left: '1/2', right: '3/5' },
+      ],
+    }),
+  });
   // Practice without a photo: fractions, with a figure.
   scriptGenerations({
     when: /Brüche|Bruch/i,
@@ -195,6 +216,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /brüche vergleichen üben/i,
       answer: says('Gute Idee – ich hab dir ein paar Fragen zu Brüchen vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Brüche vergleichen' } },
+      ]),
+    },
+    {
+      when: /balken/i,
+      answer: says('Gern – ich hab dir Bruchbalken zum Ausprobieren vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Bruchbalken' } },
       ]),
     },
     {

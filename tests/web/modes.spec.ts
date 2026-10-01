@@ -252,6 +252,58 @@ test('learning modes: explain, homework help without the solution, practice with
   // Off again: "Ich lese dir vor …" no longer holds, so it does not stay on screen.
   await expect(explained).toHaveCount(0);
 
+  // ── Bruchbalken: a surface she WORKS with, not one more sentence (issue #162) ──
+  // The scripted model said only three tasks and their whole numbers (there is no field in
+  // which it could say more); every word, every bar and every key here is the server's.
+  await page.getByLabel('Schreib Buddy …').fill('Zeig mir Bruchbalken zum Üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('Bruchbalken zum Ausprobieren', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  // The question code wrote from the task: one half, on a bar of quarters.
+  await expect(page.getByText('Färbe', { exact: false }).first()).toBeVisible();
+  await expect(page.getByText('0 von 4 Teilen gefärbt')).toBeVisible();
+  // Four real touch targets, each with a name (a screen reader can shade the bar too).
+  await expect(page.getByRole('button', { name: 'Teil 1 von 4' })).toBeVisible();
+  // Shading three quarters, then taking one back — the whole point is that she can change
+  // her mind before anything is judged.
+  await page.getByRole('button', { name: 'Teil 3 von 4' }).click();
+  await expect(page.getByText('3 von 4 Teilen gefärbt')).toBeVisible();
+  await page.getByRole('button', { name: 'Teil 2 von 4' }).click();
+  await expect(page.getByText('2 von 4 Teilen gefärbt')).toBeVisible();
+  await shot(page, '34-fraction-bar-shade');
+  // What she shaded stands in the answer field, so "Prüfen" is the same one way to a
+  // verdict as everywhere else — and typing is still right there next to it.
+  await expect(page.getByLabel('Deine Antwort')).toHaveValue('2/4');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  // 2/4 for a question that named 1/2: the same amount, and a rule says so without a model.
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // "1/2 + 1/4" — the sentence the issue opens with, and the only shape with both: the two
+  // addends DRAWN above the question (the figure, where the connection is visible at a
+  // glance) and the empty bar under it she shades. The tallest of the three, so this is the
+  // one that proves it fits 360×740.
+  await expect(page.getByText('Rechne', { exact: false }).first()).toBeVisible();
+  await expect(page.getByTestId('question-figure')).toBeVisible();
+  await page.getByRole('button', { name: 'Teil 3 von 4' }).click();
+  await expect(page.getByText('3 von 4 Teilen gefärbt')).toBeVisible();
+  await shot(page, '35-fraction-bar-add');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Two bars of the same length: comparing is seeing, and the answer is one tap.
+  await expect(page.getByRole('button', { name: 'ein Halb wählen' })).toBeVisible();
+  await shot(page, '36-fraction-bar-compare');
+  await page.getByRole('button', { name: '3 Fünftel wählen' }).click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  // That was the last question: the server finished the session, so "Weiter" leads to the
+  // summary rather than to another bar.
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+
   // ── Practice test: no verdicts or solutions until the end ──
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
   await page.getByRole('button', { name: 'Senden' }).click();

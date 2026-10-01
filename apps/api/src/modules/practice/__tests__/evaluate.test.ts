@@ -413,6 +413,36 @@ describe('grading truth table', () => {
   }
 });
 
+// A question whose text, picture and key code computed itself (`practice/bars.ts`) asks for
+// an AMOUNT: code knows it never asked for a notation, so every way of writing the right
+// value is right and a rule may say so. The same licence must NOT reach a key the model
+// wrote — "Kürze $\frac{6}{8}$" is not answered by 6/8, which is decision D-3 and stays.
+describe('a question that asks for an amount, not a notation (issue #162)', () => {
+  const bar = item({ kind: 'numeric', answer: '2/4', form_free: true });
+  const written = item({ kind: 'numeric', answer: '2/4' });
+
+  it('counts every form of the right value as right', () => {
+    expect(check(bar, '2/4')).toBe('correct');
+    expect(check(bar, '1/2')).toBe('correct');
+    expect(check(bar, '0,5')).toBe('correct');
+    expect(check(bar, '3/6')).toBe('correct');
+  });
+
+  it('still says wrong to a different amount, and leaves a calculation to the tutor', () => {
+    expect(check(bar, '3/4')).toBe('incorrect');
+    expect(check(bar, '2')).toBe('incorrect');
+    // The task typed back as a calculation is no answer anyone can grade (audit H-1).
+    expect(check(bar, '1/4+1/4')).toBe('unknown');
+    expect(check(bar, 'die Hälfte')).toBe('unknown');
+  });
+
+  it('changes nothing for a key the model wrote (decision D-3 stands)', () => {
+    expect(check(written, '2/4')).toBe('correct');
+    expect(check(written, '1/2')).toBe('unknown');
+    expect(check(written, '0,5')).toBe('unknown');
+  });
+});
+
 describe('spelling strictness (decision D-2)', () => {
   it('is strict for vocabulary and language subjects, gentle elsewhere, and settable per item', () => {
     expect(spellingOf(item({ kind: 'vocab' }))).toBe('strict');

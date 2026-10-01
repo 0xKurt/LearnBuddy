@@ -42,6 +42,23 @@
   },
   "practice": {
     "accents": "Fast – schau nochmal auf die Akzente.",
+    "bar": {
+      "shade_prompt": "Färbe {{fraction}} ein.",
+      "compare_prompt": "Welcher Bruch ist größer: {{left}} oder {{right}}?",
+      "add_prompt": "Rechne {{first}} + {{second}} und färbe das Ergebnis ein.",
+      "topic_shade": "Brüche darstellen",
+      "topic_compare": "Brüche vergleichen",
+      "topic_add": "Brüche addieren",
+      "hint_parts": "Der Balken ist in {{parts}} gleich große Teile geteilt.",
+      "hint_shade": "Wie viele dieser Teile sind {{fraction}}?",
+      "hint_compare_reach": "Schau, wie weit der gefärbte Teil in jedem Balken reicht.",
+      "hint_compare_parts": "Je mehr Teile ein Ganzes hat, desto kleiner ist ein einzelnes Teil.",
+      "hint_add_same": "Beide Brüche sind hier in gleich große Teile geteilt.",
+      "hint_add_count": "Zähle die gefärbten Teile der beiden Balken zusammen.",
+      "worked_shade": "Der ganze Balken sind {{parts}} Teile. {{fraction}} davon sind {{answer}}.",
+      "worked_compare": "Im Balken reicht {{answer}} weiter – das ist der größere Bruch.",
+      "worked_add": "Beide Brüche sind in {{parts}} gleich große Teile geteilt. Zusammen sind {{answer}} gefärbt."
+    },
     "cannot_check": "Das kann ich gerade nicht prüfen. Du kannst dir die Lösung ansehen und selbst vergleichen.",
     "correct": "Stimmt – gut gemacht!",
     "had_enough": "Okay — für heute reicht es auch. Du kannst die Übung beenden, oder wir machen noch ein kleines Beispiel zusammen. Sag einfach, was dir lieber ist.",

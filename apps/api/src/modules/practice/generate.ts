@@ -8,7 +8,11 @@
 // One structured model call; items are validated like extracted ones.
 // Idempotent per client_request_id.
 
-import type { DifficultyWish, StartTopicRequest } from '@learnbuddy/shared-types/contracts';
+import {
+  BarTask,
+  type DifficultyWish,
+  type StartTopicRequest,
+} from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -19,6 +23,7 @@ import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { ageOn } from '../identity/model.js';
+import { BAR_RULES, barItems, MAX_BAR_ITEMS } from './bars.js';
 import {
   FIGURE_RULES,
   ItemDraft,
@@ -33,7 +38,7 @@ import {
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.9';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.10';
 
 const SUBJECT_KINDS = [
   'math',
@@ -67,6 +72,13 @@ export const GeneratedSet = z.object({
   // Hints and worked solutions are written right after, in the background
   // (hints.ts): she starts at once instead of waiting for them.
   items: z.array(ItemDraft.omit({ hints: true, worked_solution: true })).max(25),
+  /**
+   * Fraction-bar tasks (issue #162). A separate list on purpose: here the model picks a
+   * reviewed task and its numbers and NOTHING else — there is no field for a question text,
+   * an answer or a figure, so it cannot write one that disagrees with the solution code
+   * computes (`practice/bars.ts`).
+   */
+  bars: z.array(BarTask).max(MAX_BAR_ITEMS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -199,6 +211,7 @@ Rules:
 - ${SPELLING_RULES}
 - ${MATH_RULES}
 - ${FIGURE_RULES}
+- ${BAR_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${LANGUAGE_RULES}
 - Title: short, what it is about (e.g. "Dativ", "Unité 3 – Vokabeln", "Brüche addieren").
@@ -340,9 +353,11 @@ async function prepareTopic(
       // cost, more careful content (docs/architecture.md §Speed).
       thinkingBudget: 2048,
     });
-    const parsed = GeneratedSet.extend({ items: itemsOneByOne(itemSchema, 25) }).safeParse(
-      res.json,
-    );
+    const parsed = GeneratedSet.extend({
+      items: itemsOneByOne(itemSchema, 25),
+      // One unusable task costs its own question, never the whole set (audit H-14/H-15).
+      bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
+    }).safeParse(res.json);
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
     set = parsed.data;
@@ -364,7 +379,17 @@ async function prepareTopic(
     // Homework is what the learner typed — tasks the model added are dropped.
     items = items.filter((i) => fromLearnerText(i.prompt, input.text));
   }
-  if (!set.usable || items.length === 0) {
+  // The fraction bars, as questions code wrote from the tasks the model chose (issue #162).
+  // Only in practice: homework is what she typed, a vocabulary list is a list, and a test
+  // gives one try per question — none of them is a place to try out a new surface.
+  // They go last, so the set starts with reading and ends with working.
+  //
+  // `atLevel` deliberately does not touch them. It holds the model to its own difficulty
+  // marks; a bar's mark is computed, and a surface is not a difficulty tier anyway — taking
+  // the bar away because she asked for something harder would remove the one thing that
+  // makes a harder fraction task approachable.
+  const bars = input.kind === 'practice' ? barItems(set.bars, learner.locale) : [];
+  if (!set.usable || items.length + bars.length === 0) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
   }
   try {
@@ -375,7 +400,7 @@ async function prepareTopic(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        items,
+        [...items, ...bars],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );

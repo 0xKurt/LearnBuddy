@@ -40,6 +40,15 @@ export type ItemForCheck = {
   spelling: 'strict' | 'gentle' | null;
   /** subjects.kind of the item's subject, when it has one. */
   subject_kind: string | null;
+  /**
+   * The question asks for an AMOUNT, not a notation (issue #162): set only for a question
+   * whose text, picture and key code computed from a reviewed task (`practice/bars.ts`), so
+   * code KNOWS no particular form was asked for — 2/4, 1/2 and 0,5 are then one answer and
+   * a rule may say "correct" for any of them. Absent for everything the model wrote, where
+   * decision D-3 stands: the same value in another form is the tutor's to judge, because
+   * "Kürze $\frac{6}{8}$" is not answered by 6/8.
+   */
+  form_free?: boolean;
 };
 
 /**
@@ -232,7 +241,8 @@ function numericVerdict(item: ItemForCheck, text: string): RuleVerdict {
     const key = parseCanonicalKey(keyText);
     const c = compareNumbers(given, key, { unit: item.unit, tolerance: item.tolerance });
     if (c === 'equal') {
-      if (sameWrittenForm(given, key)) return 'correct';
+      // The question asks for an amount (issue #162): any way of writing it is the answer.
+      if (item.form_free === true || sameWrittenForm(given, key)) return 'correct';
       equalInOtherForm = true;
     }
     if (c !== 'different') allDifferent = false;

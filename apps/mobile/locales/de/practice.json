@@ -10,6 +10,13 @@
     "placeholder": "Deine Antwort …",
     "unit_hint": "Antwort in {{unit}}"
   },
+  "bar": {
+    "shade_how": "Tippe auf die Teile des Balkens.",
+    "shaded": "{{filled}} von {{total}} Teilen gefärbt",
+    "part": "Teil {{n}} von {{total}}",
+    "pick_how": "Tippe den Balken an, der mehr ist.",
+    "pick_option": "{{fraction}} wählen"
+  },
   "back_to_buddy": "Zurück zu Buddy",
   "check": "Prüfen",
   "choice_tried": "Schon ausprobiert",

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { Figure } from './figure.js';
 
@@ -192,6 +193,15 @@ export const ItemView = z.object({
    * — and wherever there is not enough of her own vocabulary to build honest choices.
    */
   tap_choices: z.array(z.string()).nullable().default(null),
+  /**
+   * The learning surface she WORKS with instead of only reading about it (issue #162):
+   * a fraction bar she taps. Only for a question whose text, picture and key code computed
+   * from one reviewed task (`BarTask`, `apps/api/src/modules/practice/bars.ts`) — the model
+   * picks the task and its numbers, nothing else. Null everywhere else, and the surface
+   * never carries the solution. Typing stays the way it always was: a tap writes the
+   * fraction into the same answer field.
+   */
+  surface: AnswerSurface.nullable().default(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 

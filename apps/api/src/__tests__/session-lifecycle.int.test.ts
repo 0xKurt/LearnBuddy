@@ -106,6 +106,33 @@ async function answer(l: Learner, sessionId: string, itemId: string, text: strin
   });
 }
 
+/** The whole spaced-repetition state of one question, for "is it exactly what it was?" (#164). */
+type FsrsState = {
+  due: Date;
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  scheduled_days: number;
+  reps: number;
+  lapses: number;
+  state: number;
+  last_review: Date | null;
+  last_outcome: string | null;
+};
+
+const STATE_SQL = `select due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses,
+                          state, last_review, last_outcome
+                     from item_states where item_id = $1`;
+
+/** The context fence (rule 4): anything a Buddy decision depends on bumps it. */
+async function contextVersion(env: TestEnv, l: Learner): Promise<number> {
+  const row = await env.db.one<{ context_version: number }>(
+    `select context_version from buddy_settings where learner_id = $1`,
+    [l.learnerId],
+  );
+  return row.context_version;
+}
+
 describe.skipIf(!dbReady)('session lifecycle', () => {
   let env: TestEnv;
   let l: Learner;
@@ -708,5 +735,221 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
     const early = await l.api.post(`/practice/sessions/${s.id}/items/${open}/dispute`, {});
     expect(early.status).toBe(409);
     expect(early.body).toMatchObject({ error: { details: { reason: 'not_judged' } } });
+  });
+
+  it('a shown solution taken back leaves the earlier history standing (#164)', async () => {
+    // The case this feature exists for: the key is wrong, she taps "Lösung zeigen", and the
+    // solution she is shown is the wrong one. A reveal is the harshest review FSRS has
+    // (Again), and until `state_before` was written by `reviewItem` itself nobody recorded
+    // what it overwrote — so taking the judgement back read "there was nothing before" and
+    // deleted the row, with everything she had earned in earlier sessions in it.
+    const study = await sendSheet(env, l, {
+      purpose: 'study',
+      items: [
+        item({ kind: 'numeric', prompt: 'Wie viel ist 5 + 7?', answer: '12', topic: 'Rechnen' }),
+      ],
+    });
+    const first = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id }))
+      .body;
+    const q = first.items[0]!.item.id;
+    expect((await answer(l, first.id, q, '12')).body.verdict).toBe('correct');
+    const earned = await env.db.one<FsrsState>(STATE_SQL, [q]);
+    expect(earned).toMatchObject({ reps: 1, last_outcome: 'first_try' });
+
+    // The next day the same question comes round again. She tries, is told she is wrong, and
+    // asks to see the solution ("Lösung zeigen" needs a try first, user feedback #8).
+    env.clock.hours(24);
+    const second = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id }))
+      .body;
+    expect(second.id).not.toBe(first.id);
+    expect((await answer(l, second.id, q, '13')).body.verdict).toBe('incorrect');
+    // A try does not close the question, so nothing has been reviewed yet.
+    expect(await env.db.one<FsrsState>(STATE_SQL, [q])).toEqual(earned);
+    const revealed = await l.api.post<SessionView>(`/practice/sessions/${second.id}/reveal`, {
+      item_id: q,
+    });
+    expect(revealed.status).toBe(200);
+    const lapsed = await env.db.one<FsrsState>(STATE_SQL, [q]);
+    expect(lapsed.last_outcome).toBe('revealed');
+    expect(lapsed.due.getTime()).not.toBe(earned.due.getTime());
+
+    // "Die Bewertung stimmt nicht" on the solution she was shown.
+    const fence = await contextVersion(env, l);
+    const disputed = await l.api.post<SessionView>(
+      `/practice/sessions/${second.id}/items/${q}/dispute`,
+      {},
+    );
+    expect(disputed.status).toBe(200);
+    // Exactly what the question held before this session touched it — not a guess, not gone.
+    expect(await env.db.one<FsrsState>(STATE_SQL, [q])).toEqual(earned);
+    // Behind the context fence (rule 4): Buddy's picture of her questions has changed.
+    expect(await contextVersion(env, l)).toBeGreaterThan(fence);
+    // Nothing is deleted: what she disagreed with stays readable.
+    expect(
+      await env.db.one<{ disputed_at: Date | null; prompt: string; answer: string }>(
+        `select si.disputed_at, i.prompt, i.answer from session_items si join items i on i.id = si.item_id
+          where si.session_id = $1 and si.item_id = $2`,
+        [second.id, q],
+      ),
+    ).toMatchObject({ prompt: 'Wie viel ist 5 + 7?', answer: '12' });
+
+    // Saying it twice does not take it back twice.
+    expect(
+      (await l.api.post(`/practice/sessions/${second.id}/items/${q}/dispute`, {})).status,
+    ).toBe(200);
+    expect(await env.db.one<FsrsState>(STATE_SQL, [q])).toEqual(earned);
+  });
+
+  it('a verdict from a test takes back nothing it never fed (#164)', async () => {
+    // A test does not feed the spaced repetition at all (`learnsFsrs`), so a disputed test
+    // verdict has no learning-state effect of its own. Clearing `item_states` anyway would
+    // throw away what her practice earned — on a hunch, which is the mistake this issue is
+    // about (rule 5). Nothing recorded means nothing to take back.
+    const study = await sendSheet(env, l, {
+      purpose: 'study',
+      items: [
+        item({ kind: 'numeric', prompt: 'Wie viel ist 6 + 4?', answer: '10', topic: 'Rechnen' }),
+      ],
+    });
+    const practice = (
+      await l.api.post<SessionView>('/practice/sessions', { material_id: study.id })
+    ).body;
+    const q = practice.items[0]!.item.id;
+    await answer(l, practice.id, q, '10');
+    const earned = await env.db.one<FsrsState>(STATE_SQL, [q]);
+
+    env.clock.hours(24);
+    const exam = (
+      await l.api.post<SessionView>('/practice/sessions', { material_id: study.id, mode: 'test' })
+    ).body;
+    expect(exam.mode).toBe('test');
+    await answer(l, exam.id, q, '7');
+    expect(
+      await env.db.one<{ state_before: unknown }>(
+        `select state_before from session_items where session_id = $1 and item_id = $2`,
+        [exam.id, q],
+      ),
+    ).toEqual({ state_before: null });
+
+    expect((await l.api.post(`/practice/sessions/${exam.id}/items/${q}/dispute`, {})).status).toBe(
+      200,
+    );
+    expect(await env.db.one<FsrsState>(STATE_SQL, [q])).toEqual(earned);
+  });
+
+  it('a disputed verdict stops feeding what is called shaky, and what is practised next (#164)', async () => {
+    // Consequence 3 of the issue: while a judgement is in dispute, no claimed weakness
+    // derived from it is used — not in what Buddy says, not in what gets scheduled.
+    const study = await sendSheet(env, l, {
+      purpose: 'study',
+      items: [
+        item({ kind: 'numeric', prompt: 'Wie viel ist 5 + 7?', answer: '12', topic: 'Rechnen' }),
+        item({ kind: 'numeric', prompt: 'Wie viel ist 6 + 4?', answer: '10', topic: 'Rechnen' }),
+      ],
+    });
+    const s = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id })).body;
+    const byPrompt = (p: string) => s.items.find((i) => i.item.prompt === p)!.item.id;
+    const wrongKey = byPrompt('Wie viel ist 5 + 7?');
+    // The rules reject her right answer, because the key says so; then she gets there "with
+    // help", which is what makes the topic shaky.
+    await answer(l, s.id, wrongKey, '13');
+    await answer(l, s.id, wrongKey, '12');
+    const last = await answer(l, s.id, byPrompt('Wie viel ist 6 + 4?'), '10');
+    expect(last.body.session.summary).toMatchObject({ shaky_topics: ['Rechnen'] });
+    const home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.now).toMatchObject({
+      type: 'practice_result',
+      result: { shaky_topics: ['Rechnen'] },
+    });
+
+    const disputed = await l.api.post<SessionView>(
+      `/practice/sessions/${s.id}/items/${wrongKey}/dispute`,
+      {},
+    );
+    expect(disputed.status).toBe(200);
+    // Nothing is called shaky any more: the only question that was is the one in dispute.
+    expect(disputed.body.summary).toEqual({
+      answered: 1,
+      first_try: 1,
+      secure_topics: [],
+      shaky_topics: [],
+    });
+    expect((await l.api.get<BuddyHome>('/buddy')).body.now).toMatchObject({
+      type: 'practice_result',
+      result: { shaky_topics: [] },
+    });
+    // And it is not what comes next either: a suspect key is not asked again.
+    env.clock.hours(24);
+    const next = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id }))
+      .body;
+    expect(next.items.map((i) => i.item.prompt)).toEqual(['Wie viel ist 6 + 4?']);
+  });
+
+  it('a judgement is only hers to take back (#164)', async () => {
+    const study = await sendSheet(env, l, {
+      purpose: 'study',
+      items: [
+        item({ kind: 'numeric', prompt: 'Wie viel ist 5 + 7?', answer: '12', topic: 'Rechnen' }),
+      ],
+    });
+    const s = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id })).body;
+    const q = s.items[0]!.item.id;
+    await answer(l, s.id, q, '12');
+    const state = await env.db.one<FsrsState>(STATE_SQL, [q]);
+
+    const other = await onboard(env, {
+      relation: 'child',
+      name: 'Jonas',
+      birthDate: '2013-05-05',
+      pin: '1357',
+    });
+    expect((await other.api.post(`/practice/sessions/${s.id}/items/${q}/dispute`, {})).status).toBe(
+      404,
+    );
+    // Her own session, a question that is not in it.
+    expect(
+      (await l.api.post(`/practice/sessions/${s.id}/items/${randomUUID()}/dispute`, {})).status,
+    ).toBe(404);
+    // A question of hers, through a session that is not hers.
+    expect(
+      (await l.api.post(`/practice/sessions/${randomUUID()}/items/${q}/dispute`, {})).status,
+    ).toBe(404);
+    // Nothing moved.
+    expect(await env.db.one<FsrsState>(STATE_SQL, [q])).toEqual(state);
+    expect(
+      await env.db.one<{ disputed_at: Date | null }>(
+        `select disputed_at from session_items where session_id = $1 and item_id = $2`,
+        [s.id, q],
+      ),
+    ).toEqual({ disputed_at: null });
+  });
+
+  it('two taps at the same moment take a judgement back once (#164)', async () => {
+    const study = await sendSheet(env, l, {
+      purpose: 'study',
+      items: [
+        item({ kind: 'numeric', prompt: 'Wie viel ist 5 + 7?', answer: '12', topic: 'Rechnen' }),
+      ],
+    });
+    const s = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id })).body;
+    const q = s.items[0]!.item.id;
+    await answer(l, s.id, q, '12');
+    const at = env.clock.now();
+    env.clock.hours(1);
+
+    // Two requests in flight at once (a double tap, a retried request): the session row is
+    // locked first, so the second one finds the dispute already recorded.
+    const both = await Promise.all([
+      l.api.post(`/practice/sessions/${s.id}/items/${q}/dispute`, {}),
+      l.api.post(`/practice/sessions/${s.id}/items/${q}/dispute`, {}),
+    ]);
+    expect(both.map((r) => r.status)).toEqual([200, 200]);
+    const row = await env.db.one<{ disputed_at: Date }>(
+      `select disputed_at from session_items where session_id = $1 and item_id = $2`,
+      [s.id, q],
+    );
+    expect(row.disputed_at.getTime()).toBeGreaterThan(at.getTime());
+    // One undo, not two: this question had no state before, so it is back to never practised.
+    expect(await env.db.query(`select 1 from item_states where item_id = $1`, [q])).toEqual([]);
   });
 });

@@ -29,6 +29,7 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
+import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
 import { differentNumber, NEAR_MISS, plainMath, ruleCheck, type RuleVerdict } from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
@@ -78,6 +79,12 @@ export type ItemRow = {
   worked_solution: string | null;
   tolerance: number | null;
   spelling: 'strict' | 'gentle' | null;
+  /**
+   * The reviewed fraction-bar task this question's text, picture and key were COMPUTED
+   * from (issue #162), or null for every question the model wrote itself. Read as a task
+   * through `taskOf`, never trusted as it stands.
+   */
+  bar_task: unknown;
 };
 
 export type SessionRow = {
@@ -486,6 +493,16 @@ async function signImageUrls(
   return urls;
 }
 
+/**
+ * The learning surface of a question computed from a reviewed task, or null (issue #162).
+ * A column that no longer parses as a task yields no surface: the question is still
+ * answerable by typing, and nothing is guessed at.
+ */
+function surfaceFor(stored: unknown): ItemView['surface'] {
+  const task = taskOf(stored);
+  return task ? surfaceOf(task) : null;
+}
+
 /** The crop that goes with the question, or null (contract: ItemImage). */
 function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
   const url = row.image_path ? urls.get(row.image_path) : undefined;
@@ -505,6 +522,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
+            i.bar_task,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -569,6 +587,10 @@ export async function sessionView(
         image: imageOf(i, imageUrls),
         // A test asks her to produce, so nothing is offered to tap there.
         tap_choices: s.mode === 'test' ? null : tapChoicesFor(i, vocabInSet, own.locale),
+        // The fraction bar she works with, derived from the task the question was computed
+        // from (issue #162). Only while the question is open: once it is closed the bars
+        // would be a control without a purpose, and the solution stands in the thread.
+        surface: i.status === 'open' && active ? surfaceFor(i.bar_task) : null,
       },
       status: i.status,
       attempts: i.attempts,
@@ -718,13 +740,16 @@ export async function answerItem(
       reason: 'use_speak',
     });
   }
+  // The reviewed task this question was computed from, if any (issue #162).
+  const barTask = taskOf(item.bar_task);
   // A request for help is not an answer: nothing for the rules to check.
   const byRules: RuleVerdict = hintRequest
     ? 'unknown'
-    : ruleCheck(item, {
-        text: input.text ?? null,
-        choice: input.choice ?? null,
-      });
+    : ruleCheck(
+        // A question code computed asks for an amount, so any form of it is right (#162).
+        { ...item, form_free: barTask !== null },
+        { text: input.text ?? null, choice: input.choice ?? null },
+      );
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -735,20 +760,28 @@ export async function answerItem(
   // Two options and one was wrong: tapping the other one is no knowledge. A wrong choice that
   // leaves a single untried option closes the question with the solution explained — shown,
   // never right (user feedback #9).
+  // The same holds for two bars she compares (issue #162): once one of them is ruled out,
+  // tapping the other is elimination, not knowledge.
+  const twoBars = barTask !== null && pickAnswers(barTask) !== null;
   let onlyOneLeft = false;
   if (
     givesHints(session.mode) &&
-    item.kind === 'multiple_choice' &&
-    item.choices &&
-    rule === 'incorrect'
+    rule === 'incorrect' &&
+    ((item.kind === 'multiple_choice' && item.choices !== null) || twoBars)
   ) {
     const wrong = await deps.db.query<{ text: string }>(
       `select distinct text from practice_turns
         where session_id = $1 and item_id = $2 and role = 'learner' and verdict = 'incorrect'`,
       [sessionId, item.id],
     );
-    const tried = new Set([...wrong.map((w) => w.text), text]);
-    onlyOneLeft = item.choices.filter((c) => !tried.has(c)).length <= 1;
+    const said = [...wrong.map((w) => w.text), text];
+    const untried = untriedPicks(barTask, said);
+    if (untried !== null) {
+      onlyOneLeft = untried.length <= 1;
+    } else if (item.choices) {
+      const tried = new Set(said);
+      onlyOneLeft = item.choices.filter((c) => !tried.has(c)).length <= 1;
+    }
   }
 
   type Judged = {
@@ -1143,23 +1176,14 @@ export async function answerItem(
         ],
       );
       if (status !== 'open' && learnsFsrs(session.mode)) {
-        // What the spaced repetition held BEFORE this review (issue #164), so a judgement
-        // she says is wrong can be taken back without costing her the history from
-        // earlier sessions. Null means the question had none yet.
-        const before = await tx.maybeOne(
-          `select due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses,
-                  state, last_review, last_outcome
-             from item_states where item_id = $1 and learner_id = $2`,
-          [item.id, learner.id],
-        );
-        await tx.query(
-          `update session_items set state_before = $3::jsonb
-            where session_id = $1 and item_id = $2`,
-          [sessionId, item.id, before ? JSON.stringify(before) : null],
-        );
+        // What the spaced repetition held BEFORE this review is recorded by `reviewItem`
+        // itself (`session_items.state_before`, issue #164), from the same read that
+        // overwrites it — so a judgement she says is wrong can be taken back without
+        // costing her the history from earlier sessions.
         await reviewItem(
           tx,
           learner.id,
+          sessionId,
           item.id,
           outcomeOf({ status, first_try_correct: firstTry }),
           now,
@@ -1341,7 +1365,9 @@ export async function revealItem(
         where session_id = $1 and item_id = $2`,
       [sessionId, itemId, now],
     );
-    if (learnsFsrs(s.mode)) await reviewItem(tx, learnerId, itemId, 'revealed', now);
+    // `reviewItem` records what it overwrites, so a solution she says was the wrong one can
+    // be taken back exactly (issue #164) — a reveal is the harshest review there is.
+    if (learnsFsrs(s.mode)) await reviewItem(tx, learnerId, sessionId, itemId, 'revealed', now);
     await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
       sessionId,
       now,
@@ -1469,7 +1495,15 @@ export async function flagItem(
  * Three things happen, and all three are hers: the question leaves this result, it leaves
  * future practice (its key is suspect, so asking it again would repeat the mistake), and
  * the spaced repetition goes back to exactly what it held before this session reviewed it —
- * the history from earlier, undisputed sessions stays.
+ * the history from earlier, undisputed sessions stays. Nothing is deleted: the judgement,
+ * her answer and the key it was compared against stay on the row (`disputed_at`,
+ * `practice_turns`, `items`), so what she disagreed with can still be read.
+ *
+ * What this never does is guess. `state_before` is written by `reviewItem` (fsrs.ts) and
+ * says one of three things: a state to go back to, jsonb `null` ("there was nothing, so
+ * remove the row"), or nothing at all — SQL NULL, meaning this session never reviewed the
+ * question (a test, homework help). Then there is no effect of its own to take back, and
+ * `item_states` is left exactly as it is rather than cleared on a hunch (rule 5).
  *
  * Different from "Frage passt nicht", which takes an unfit question out while it is still
  * open. This is about a judgement she has already been given.
@@ -1482,19 +1516,30 @@ export async function disputeVerdict(
 ): Promise<SessionView> {
   const now = deps.now();
   await deps.db.tx(async (tx) => {
+    // The session row first, as every other writer does (`lockActiveSession`): this one also
+    // touches `last_activity_at` at the end, and taking that lock last would cross an answer
+    // committing at the same moment. A finished session keeps its verdicts disputable — the
+    // result screen is where she reads them.
+    const session = await tx.maybeOne<{ id: string }>(
+      `select id from practice_sessions where id = $1 and learner_id = $2 for update`,
+      [sessionId, learnerId],
+    );
+    if (!session) throw new AppError('not_found', 'Session not found');
     const si = await tx.maybeOne<{
       status: SessionItemRow['status'];
       flagged_at: Date | null;
       disputed_at: Date | null;
       state_before: Record<string, unknown> | null;
+      /** False when nothing was ever recorded; true also for jsonb `null` (see above). */
+      reviewed: boolean;
       origin: ItemRow['origin'];
       archived_at: Date | null;
     }>(
-      `select si.status, si.flagged_at, si.disputed_at, si.state_before, i.origin, i.archived_at
+      `select si.status, si.flagged_at, si.disputed_at, si.state_before,
+              si.state_before is not null as reviewed, i.origin, i.archived_at
          from session_items si
          join items i on i.id = si.item_id
-         join practice_sessions ps on ps.id = si.session_id
-        where si.session_id = $1 and si.item_id = $2 and ps.learner_id = $3 and i.learner_id = $3
+        where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
         for update of si, i`,
       [sessionId, itemId, learnerId],
     );
@@ -1543,13 +1588,15 @@ export async function disputeVerdict(
           si.state_before.last_outcome,
         ],
       );
-    } else {
-      // There was nothing before this session: the question goes back to never practised.
+    } else if (si.reviewed) {
+      // Recorded, and it said there was nothing: back to never practised.
       await tx.query(`delete from item_states where item_id = $1 and learner_id = $2`, [
         itemId,
         learnerId,
       ]);
     }
+    // Nothing recorded: this session never reviewed the question, so it left no effect of
+    // its own. Whatever `item_states` holds comes from somewhere else and stays.
     await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
       sessionId,
       now,

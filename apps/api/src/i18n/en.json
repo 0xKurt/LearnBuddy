@@ -42,6 +42,23 @@
   },
   "practice": {
     "accents": "Almost – check the accents again.",
+    "bar": {
+      "shade_prompt": "Shade in {{fraction}}.",
+      "compare_prompt": "Which fraction is bigger: {{left}} or {{right}}?",
+      "add_prompt": "Work out {{first}} + {{second}} and shade in the result.",
+      "topic_shade": "Showing fractions",
+      "topic_compare": "Comparing fractions",
+      "topic_add": "Adding fractions",
+      "hint_parts": "The bar is divided into {{parts}} equal parts.",
+      "hint_shade": "How many of those parts are {{fraction}}?",
+      "hint_compare_reach": "Look at how far the shaded part reaches in each bar.",
+      "hint_compare_parts": "The more parts a whole has, the smaller one part is.",
+      "hint_add_same": "Both fractions are divided into equal parts here.",
+      "hint_add_count": "Count the shaded parts of both bars together.",
+      "worked_shade": "The whole bar is {{parts}} parts. {{fraction}} of it is {{answer}}.",
+      "worked_compare": "{{answer}} reaches further in the bar – that is the bigger fraction.",
+      "worked_add": "Both fractions are divided into {{parts}} equal parts. Together {{answer}} is shaded."
+    },
     "cannot_check": "I can't check that right now. You can look at the solution and compare yourself.",
     "correct": "That's right – well done!",
     "had_enough": "Okay — that is enough for today if you want. You can end the practice, or we do one small example together. Just say which you would rather.",

@@ -7,7 +7,7 @@
 // questions (both directions), each with its own FSRS state — the session may
 // ask just one of them when the learner asked for that direction (issue #113).
 
-import { Figure, type VocabDirection } from '@learnbuddy/shared-types/contracts';
+import { Figure, type BarTask, type VocabDirection } from '@learnbuddy/shared-types/contracts';
 import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
@@ -314,16 +314,20 @@ export type ItemSource = {
 export async function insertItems(
   db: Db,
   src: ItemSource,
-  items: ItemDraft[],
+  /**
+   * `bar_task` is never the model's (it has no such field, issue #162): it is set only by
+   * `practice/bars.ts`, which computed this item's prompt, key and figure from it.
+   */
+  items: ReadonlyArray<ItemDraft & { bar_task?: BarTask | null }>,
   direction: VocabDirection | null = null,
 ): Promise<string[]> {
   const ids: string[] = [];
-  const insert = async (it: ItemDraft, asked = true) => {
+  const insert = async (it: ItemDraft & { bar_task?: BarTask | null }, asked = true) => {
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution, tolerance, spelling)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) returning id`,
+                          hints, worked_solution, tolerance, spelling, bar_task)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -346,6 +350,7 @@ export async function insertItems(
         it.worked_solution,
         it.tolerance,
         it.spelling,
+        it.bar_task ? JSON.stringify(it.bar_task) : null,
       ],
     );
     if (asked) ids.push(row.id);

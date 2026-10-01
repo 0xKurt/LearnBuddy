@@ -1342,6 +1342,9 @@ export async function materialItems(
       // The concept image is shown where the question is shown full size (sessions);
       // the material list stays a list (issue #50).
       image: null,
+      // Same for the fraction bar (issue #162): a surface is something she works WITH on
+      // an open question, not a control in a list of what the sheet holds.
+      surface: null,
       result: resultOf(r),
     })),
   };
