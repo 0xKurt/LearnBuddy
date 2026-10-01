@@ -202,7 +202,7 @@ describe('speakMathText', () => {
     );
   });
   it('reads powers, roots and indices', () => {
-    expect(speakMathText('$x^{2} - 4x + 3 = 0$', DE)).toBe('x Quadrat minus 4x plus 3 gleich 0');
+    expect(speakMathText('$x^{2} - 4x + 3 = 0$', DE)).toBe('x hoch 2 minus 4x plus 3 gleich 0');
     expect(speakMathText('$\\sqrt{16}$', DE)).toBe('Wurzel aus 16');
     expect(speakMathText('$\\sqrt[3]{27}$', DE)).toBe('dritte Wurzel aus 27');
     expect(speakMathText('$\\sqrt[4]{16}$', DE)).toBe('4. Wurzel aus 16');

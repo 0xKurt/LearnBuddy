@@ -23,8 +23,24 @@ export type SpokenWords = {
   mixed: string;
   /** "hoch {{exp}}" */
   power: string;
+  /** "hoch 2" — what a reader says for x², NOT the noun "Quadrat" (issue #175). */
   squared: string;
+  /** "hoch 3" */
   cubed: string;
+  /** "Quadrat{{unit}}": a unit squared is one word, not a power ("3 cm²"). */
+  unit_area: string;
+  /** "Kubik{{unit}}" */
+  unit_volume: string;
+  /**
+   * How a unit is spoken: alone in singular and plural ("cm" → Zentimeter,
+   * "centimetre/centimetres"), and the form that goes inside a squared unit — German glues
+   * and lowercases it ("Quadrat**z**entimeter"), the others keep the plural ("square
+   * centimetres"). The locale says which, so no casing rule lives in the code.
+   *
+   * A symbol the locale does not name stays as it is: a voice spelling out "ha" is clumsy,
+   * inventing a word for it is worse (rule 5).
+   */
+  units: Readonly<Record<string, { one: string; many: string; compound: string }>>;
   /** "Index {{sub}}" */
   sub: string;
   /** "Wurzel aus {{body}}" */
@@ -92,11 +108,68 @@ function squash(s: string): string {
 
 function speakChars(text: string, words: SpokenWords): string {
   let out = '';
-  for (const ch of text) {
+  const chars = [...text];
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i]!;
+    // "15 °C" is one thing to say, not a degree sign and a letter (issue #175): a voice
+    // reading "Grad C" sounds like an abbreviation nobody says out loud.
+    if (ch === '°') {
+      const unit = words.units[`°${chars[i + 1] ?? ''}`];
+      if (unit) {
+        out += ` ${unit.many} `;
+        i += 1;
+        continue;
+      }
+    }
     const word = words.symbols[ch];
-    out += word !== undefined ? ` ${word} ` : ch === ' ' ? ' ' : ch;
+    out += word !== undefined ? ` ${word} ` : ch === ' ' ? ' ' : ch;
   }
   return out;
+}
+
+/**
+ * A unit as it is spoken, if the locale names this symbol.
+ *
+ * Not a word list standing in for language understanding (rule 3): a unit symbol is
+ * notation with one fixed reading, like a date format. What the locale does not name
+ * stays as written — a voice spelling out "ha" is clumsy, inventing a word is worse.
+ */
+type UnitForm = 'one' | 'many' | 'compound';
+
+function spokenUnit(symbol: string, words: SpokenWords, form: UnitForm): string | null {
+  return words.units[symbol.trim()]?.[form] ?? null;
+}
+
+/**
+ * A unit standing right before a ² or ³, as one word: "3 cm²" is
+ * "3 Quadratzentimeter", never "3 Zentimeter hoch 2" (issue #175).
+ *
+ * Returns the unit's spoken form and what is left of the atom that carried it ("3 cm"
+ * keeps "3"). Both the unit's atom and the power ask this, so they always agree.
+ */
+function unitPower(
+  atoms: MathAtom[],
+  powerAt: number,
+  words: SpokenWords,
+): { unit: string; keep: string } | null {
+  const power = atoms[powerAt];
+  if (power?.type !== 'sup') return null;
+  const body = power.body;
+  if (body.length !== 1 || body[0]?.type !== 'chars') return null;
+  const exp = body[0].text.trim();
+  if (exp !== '2' && exp !== '3') return null;
+  const prev = atoms[powerAt - 1];
+  if (prev?.type === 'text') {
+    const unit = spokenUnit(prev.text, words, 'compound');
+    return unit === null ? null : { unit, keep: '' };
+  }
+  if (prev?.type === 'chars') {
+    const tail = /([A-Za-zμ]+)\s*$/.exec(prev.text);
+    if (!tail) return null;
+    const unit = spokenUnit(tail[1]!, words, 'compound');
+    return unit === null ? null : { unit, keep: prev.text.slice(0, tail.index) };
+  }
+  return null;
 }
 
 function isShort(atoms: MathAtom[]): boolean {
@@ -135,12 +208,21 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
     atoms
       .map((a, i) => {
         switch (a.type) {
-          case 'chars':
-            return speakChars(a.text, words);
+          case 'chars': {
+            // "3 cm" before a ²: the unit is spoken by the power as one word, so only what
+            // stands before it is said here.
+            const absorbed = unitPower(atoms, i + 1, words);
+            return speakChars(absorbed ? absorbed.keep : a.text, words);
+          }
           case 'symbol':
             return ` ${words.symbols[a.char.trim()] ?? a.char.trim()} `;
-          case 'text':
-            return a.text;
+          case 'text': {
+            // Spaces around it: "$3\\text{cm}$" used to come out "3cm", which a voice reads
+            // as one word (issue #175). `squash` takes the extra air back out.
+            if (unitPower(atoms, i + 1, words)) return ' ';
+            const unit = spokenUnit(a.text, words, 'many');
+            return ` ${unit ?? a.text} `;
+          }
           case 'frac': {
             const num = speakAtoms(a.num, words);
             const den = speakAtoms(a.den, words);
@@ -153,6 +235,13 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
           }
           case 'sup': {
             const exp = speakAtoms(a.body, words);
+            // A unit squared is one word — "Quadratzentimeter", not "Zentimeter hoch 2"
+            // (issue #175). Only for a unit the locale names; everything else is a power.
+            const asUnit = unitPower(atoms, i, words);
+            if (asUnit)
+              return ` ${fill(exp === '2' ? words.unit_area : words.unit_volume, {
+                unit: asUnit.unit,
+              })} `;
             if (exp === '2') return ` ${words.squared} `;
             if (exp === '3') return ` ${words.cubed} `;
             return ` ${fill(words.power, { exp })} `;

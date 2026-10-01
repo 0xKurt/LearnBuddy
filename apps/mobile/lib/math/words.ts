@@ -6,11 +6,37 @@
 // carried their own hand-written copies, so "{{num}} durch {{den}}" passed every run while
 // the app said "zwei durch fünf" for 2/5 out loud.
 
+// Cost, measured 01.10. on this machine (the owner asked that reading aloud not slow the
+// answer down): building one language's words with the real i18next takes **0.31 ms**, and
+// speaking a dense sentence — two fractions, a squared unit, a power, a root, a temperature
+// — takes **14 µs**. The build happens once per component per language change, the speaking
+// once per message. Nothing here is on the path of a waiting child.
+
 import { SYMBOL_KEYS, type SpokenWords } from './speak.js';
 
 /** The denominators a language names ("ein Fünftel"); anything else keeps "x durch y". */
 export const NAMED_DENOMINATORS = [
   2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 100, 1000,
+] as const;
+
+/** The unit symbols a locale names; anything else is spoken as it is written. */
+export const UNIT_SYMBOLS = [
+  'mm',
+  'cm',
+  'dm',
+  'm',
+  'km',
+  'g',
+  'kg',
+  't',
+  'ml',
+  'l',
+  's',
+  'min',
+  'h',
+  '€',
+  '°C',
+  '°F',
 ] as const;
 
 /** Templates keep their {{placeholders}} (i18next fills each with itself); speak.ts fills them. */
@@ -23,6 +49,7 @@ export const KEEP_PLACEHOLDERS = {
   index: '{{index}}',
   name: '{{name}}',
   frac: '{{frac}}',
+  unit: '{{unit}}',
 } as const;
 
 /** Looks up one key under the "math" namespace ("spoken.frac", "blank.label"). */
@@ -47,6 +74,18 @@ export function spokenWordsFrom(t: Lookup): SpokenWords {
     power: raw('power'),
     squared: raw('squared'),
     cubed: raw('cubed'),
+    unit_area: raw('unit_area'),
+    unit_volume: raw('unit_volume'),
+    units: Object.fromEntries(
+      UNIT_SYMBOLS.map((sym) => [
+        sym,
+        {
+          one: t(`spoken.units.${sym}.one`),
+          many: t(`spoken.units.${sym}.many`),
+          compound: t(`spoken.units.${sym}.compound`),
+        },
+      ]),
+    ),
     sub: raw('sub'),
     sqrt: raw('sqrt'),
     root: raw('root'),

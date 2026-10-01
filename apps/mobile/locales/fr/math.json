@@ -94,6 +94,90 @@
     "power": "puissance {{exp}}",
     "squared": "au carré",
     "cubed": "au cube",
+    "unit_area": "{{unit}} carrés",
+    "unit_volume": "{{unit}} cubes",
+    "units": {
+      "mm": {
+        "one": "millimètre",
+        "many": "millimètres",
+        "compound": "millimètres"
+      },
+      "cm": {
+        "one": "centimètre",
+        "many": "centimètres",
+        "compound": "centimètres"
+      },
+      "dm": {
+        "one": "décimètre",
+        "many": "décimètres",
+        "compound": "décimètres"
+      },
+      "m": {
+        "one": "mètre",
+        "many": "mètres",
+        "compound": "mètres"
+      },
+      "km": {
+        "one": "kilomètre",
+        "many": "kilomètres",
+        "compound": "kilomètres"
+      },
+      "g": {
+        "one": "gramme",
+        "many": "grammes",
+        "compound": "grammes"
+      },
+      "kg": {
+        "one": "kilogramme",
+        "many": "kilogrammes",
+        "compound": "kilogrammes"
+      },
+      "t": {
+        "one": "tonne",
+        "many": "tonnes",
+        "compound": "tonnes"
+      },
+      "ml": {
+        "one": "millilitre",
+        "many": "millilitres",
+        "compound": "millilitres"
+      },
+      "l": {
+        "one": "litre",
+        "many": "litres",
+        "compound": "litres"
+      },
+      "s": {
+        "one": "seconde",
+        "many": "secondes",
+        "compound": "secondes"
+      },
+      "min": {
+        "one": "minute",
+        "many": "minutes",
+        "compound": "minutes"
+      },
+      "h": {
+        "one": "heure",
+        "many": "heures",
+        "compound": "heures"
+      },
+      "€": {
+        "one": "euro",
+        "many": "euros",
+        "compound": "euros"
+      },
+      "°C": {
+        "one": "degré Celsius",
+        "many": "degrés Celsius",
+        "compound": "degrés Celsius"
+      },
+      "°F": {
+        "one": "degré Fahrenheit",
+        "many": "degrés Fahrenheit",
+        "compound": "degrés Fahrenheit"
+      }
+    },
     "sub": "indice {{sub}}",
     "sqrt": "racine carrée de {{body}}",
     "root": "racine {{index}}-ième de {{body}}",

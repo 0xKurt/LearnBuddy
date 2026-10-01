@@ -92,8 +92,92 @@
     "frac_long": "Bruch: {{num}}, geteilt durch {{den}}",
     "mixed": "und {{frac}}",
     "power": "hoch {{exp}}",
-    "squared": "Quadrat",
+    "squared": "hoch 2",
     "cubed": "hoch 3",
+    "unit_area": "Quadrat{{unit}}",
+    "unit_volume": "Kubik{{unit}}",
+    "units": {
+      "mm": {
+        "one": "Millimeter",
+        "many": "Millimeter",
+        "compound": "millimeter"
+      },
+      "cm": {
+        "one": "Zentimeter",
+        "many": "Zentimeter",
+        "compound": "zentimeter"
+      },
+      "dm": {
+        "one": "Dezimeter",
+        "many": "Dezimeter",
+        "compound": "dezimeter"
+      },
+      "m": {
+        "one": "Meter",
+        "many": "Meter",
+        "compound": "meter"
+      },
+      "km": {
+        "one": "Kilometer",
+        "many": "Kilometer",
+        "compound": "kilometer"
+      },
+      "g": {
+        "one": "Gramm",
+        "many": "Gramm",
+        "compound": "gramm"
+      },
+      "kg": {
+        "one": "Kilogramm",
+        "many": "Kilogramm",
+        "compound": "kilogramm"
+      },
+      "t": {
+        "one": "Tonne",
+        "many": "Tonnen",
+        "compound": "tonnen"
+      },
+      "ml": {
+        "one": "Milliliter",
+        "many": "Milliliter",
+        "compound": "milliliter"
+      },
+      "l": {
+        "one": "Liter",
+        "many": "Liter",
+        "compound": "liter"
+      },
+      "s": {
+        "one": "Sekunde",
+        "many": "Sekunden",
+        "compound": "sekunden"
+      },
+      "min": {
+        "one": "Minute",
+        "many": "Minuten",
+        "compound": "minuten"
+      },
+      "h": {
+        "one": "Stunde",
+        "many": "Stunden",
+        "compound": "stunden"
+      },
+      "€": {
+        "one": "Euro",
+        "many": "Euro",
+        "compound": "euro"
+      },
+      "°C": {
+        "one": "Grad Celsius",
+        "many": "Grad Celsius",
+        "compound": "grad Celsius"
+      },
+      "°F": {
+        "one": "Grad Fahrenheit",
+        "many": "Grad Fahrenheit",
+        "compound": "grad Fahrenheit"
+      }
+    },
     "sub": "Index {{sub}}",
     "sqrt": "Wurzel aus {{body}}",
     "root": "{{index}}. Wurzel aus {{body}}",

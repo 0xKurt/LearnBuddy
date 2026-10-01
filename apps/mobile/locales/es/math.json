@@ -94,6 +94,90 @@
     "power": "elevado a {{exp}}",
     "squared": "al cuadrado",
     "cubed": "al cubo",
+    "unit_area": "{{unit}} cuadrados",
+    "unit_volume": "{{unit}} cúbicos",
+    "units": {
+      "mm": {
+        "one": "milímetro",
+        "many": "milímetros",
+        "compound": "milímetros"
+      },
+      "cm": {
+        "one": "centímetro",
+        "many": "centímetros",
+        "compound": "centímetros"
+      },
+      "dm": {
+        "one": "decímetro",
+        "many": "decímetros",
+        "compound": "decímetros"
+      },
+      "m": {
+        "one": "metro",
+        "many": "metros",
+        "compound": "metros"
+      },
+      "km": {
+        "one": "kilómetro",
+        "many": "kilómetros",
+        "compound": "kilómetros"
+      },
+      "g": {
+        "one": "gramo",
+        "many": "gramos",
+        "compound": "gramos"
+      },
+      "kg": {
+        "one": "kilogramo",
+        "many": "kilogramos",
+        "compound": "kilogramos"
+      },
+      "t": {
+        "one": "tonelada",
+        "many": "toneladas",
+        "compound": "toneladas"
+      },
+      "ml": {
+        "one": "mililitro",
+        "many": "mililitros",
+        "compound": "mililitros"
+      },
+      "l": {
+        "one": "litro",
+        "many": "litros",
+        "compound": "litros"
+      },
+      "s": {
+        "one": "segundo",
+        "many": "segundos",
+        "compound": "segundos"
+      },
+      "min": {
+        "one": "minuto",
+        "many": "minutos",
+        "compound": "minutos"
+      },
+      "h": {
+        "one": "hora",
+        "many": "horas",
+        "compound": "horas"
+      },
+      "€": {
+        "one": "euro",
+        "many": "euros",
+        "compound": "euros"
+      },
+      "°C": {
+        "one": "grado Celsius",
+        "many": "grados Celsius",
+        "compound": "grados Celsius"
+      },
+      "°F": {
+        "one": "grado Fahrenheit",
+        "many": "grados Fahrenheit",
+        "compound": "grados Fahrenheit"
+      }
+    },
     "sub": "subíndice {{sub}}",
     "sqrt": "raíz cuadrada de {{body}}",
     "root": "raíz de índice {{index}} de {{body}}",

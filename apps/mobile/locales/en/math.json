@@ -92,8 +92,92 @@
     "frac_long": "fraction: {{num}}, divided by {{den}}",
     "mixed": "and {{frac}}",
     "power": "to the power of {{exp}}",
-    "squared": "squared",
-    "cubed": "cubed",
+    "squared": "to the power of 2",
+    "cubed": "to the power of 3",
+    "unit_area": "square {{unit}}",
+    "unit_volume": "cubic {{unit}}",
+    "units": {
+      "mm": {
+        "one": "millimetre",
+        "many": "millimetres",
+        "compound": "millimetres"
+      },
+      "cm": {
+        "one": "centimetre",
+        "many": "centimetres",
+        "compound": "centimetres"
+      },
+      "dm": {
+        "one": "decimetre",
+        "many": "decimetres",
+        "compound": "decimetres"
+      },
+      "m": {
+        "one": "metre",
+        "many": "metres",
+        "compound": "metres"
+      },
+      "km": {
+        "one": "kilometre",
+        "many": "kilometres",
+        "compound": "kilometres"
+      },
+      "g": {
+        "one": "gram",
+        "many": "grams",
+        "compound": "grams"
+      },
+      "kg": {
+        "one": "kilogram",
+        "many": "kilograms",
+        "compound": "kilograms"
+      },
+      "t": {
+        "one": "tonne",
+        "many": "tonnes",
+        "compound": "tonnes"
+      },
+      "ml": {
+        "one": "millilitre",
+        "many": "millilitres",
+        "compound": "millilitres"
+      },
+      "l": {
+        "one": "litre",
+        "many": "litres",
+        "compound": "litres"
+      },
+      "s": {
+        "one": "second",
+        "many": "seconds",
+        "compound": "seconds"
+      },
+      "min": {
+        "one": "minute",
+        "many": "minutes",
+        "compound": "minutes"
+      },
+      "h": {
+        "one": "hour",
+        "many": "hours",
+        "compound": "hours"
+      },
+      "€": {
+        "one": "euro",
+        "many": "euros",
+        "compound": "euros"
+      },
+      "°C": {
+        "one": "degree Celsius",
+        "many": "degrees Celsius",
+        "compound": "degrees Celsius"
+      },
+      "°F": {
+        "one": "degree Fahrenheit",
+        "many": "degrees Fahrenheit",
+        "compound": "degrees Fahrenheit"
+      }
+    },
     "sub": "sub {{sub}}",
     "sqrt": "square root of {{body}}",
     "root": "root {{index}} of {{body}}",
