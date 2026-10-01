@@ -27,6 +27,7 @@ export type IconName =
   | 'book'
   | 'keyboard'
   | 'headphones'
+  | 'speak-off'
   | 'voice'
   | 'stop'
   | 'file';
@@ -170,6 +171,15 @@ export function Icon({ name, size = 22, color = 'currentColor' }: IconProps) {
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M11 5L6 9H3v6h3l5 4V5z" {...common} />
           <Path d="M16 8.5a5 5 0 010 7M19 6a8 8 0 010 12" {...common} />
+        </Svg>
+      );
+    case 'speak-off':
+      // The same speaker with its waves struck through: reading aloud is off. The shape
+      // carries the state, not the colour alone (issue #181, design system).
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M11 5L6 9H3v6h3l5 4V5z" {...common} />
+          <Path d="M16 9.5l5 5M21 9.5l-5 5" {...common} />
         </Svg>
       );
     case 'shield':

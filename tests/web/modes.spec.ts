@@ -228,24 +228,26 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   // Still in voice mode at Buddy: the bar is voice-first (keyboard · big mic · photo).
-  // The head no longer carries a speaker switch (#125, #52) — reading aloud is a line in
-  // the menu whose LABEL is its state, so there is nothing left to decode.
   await expect(page.getByRole('button', { name: 'Tastatur' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
   await shot(page, '26-buddy-voice-mode');
+  // The speaker is back in the head (issue #181), and this time it says which way it is:
+  // a switch with a state, not the bare symbol #52 took out. Its name IS its state.
+  const readAloudOn = page.getByRole('switch', { name: 'Vorlesen ist an' });
+  const readAloudOff = page.getByRole('switch', { name: 'Antworten vorlesen' });
+  await expect(readAloudOn).toHaveAttribute('aria-checked', 'true');
+  // And it is no longer a second place to look.
   await page.getByRole('button', { name: 'Mehr' }).click();
-  await expect(page.getByRole('button', { name: 'Vorlesen ist an' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Vorlesen ist an' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Schließen' }).click();
-  // "Tastatur" goes back to typing.
+  // "Tastatur" goes back to typing — and it is the SAME state, so the head follows it.
   await page.getByRole('button', { name: 'Tastatur' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
-  // Switched on from the home itself, and off again — through the menu now (#52): the
-  // line's own label is the state, so the round trip reads as words both ways.
-  await page.getByRole('button', { name: 'Mehr' }).click();
-  await page.getByRole('button', { name: 'Antworten vorlesen' }).click();
+  await expect(readAloudOff).toHaveAttribute('aria-checked', 'false');
+  // On and off again from the head itself, one tap each way.
+  await readAloudOff.click();
   await expect(page.getByRole('button', { name: 'Nachricht sprechen' })).toBeVisible();
-  await page.getByRole('button', { name: 'Mehr' }).click();
-  await page.getByRole('button', { name: 'Vorlesen ist an' }).click();
+  await readAloudOn.click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
   // Off again: "Ich lese dir vor …" no longer holds, so it does not stay on screen.
   await expect(explained).toHaveCount(0);

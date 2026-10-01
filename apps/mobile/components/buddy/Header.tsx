@@ -32,10 +32,15 @@ export const HEADER_HEIGHT = ORB + 2 * SPACE.sm;
 
 export function Header({
   state = 'idle',
+  readAloud,
+  onReadAloud,
   onMenu,
 }: {
   /** What Buddy is doing right now; the orb shows it. */
   state?: MoonState;
+  /** Whether Buddy reads his answers out. */
+  readAloud: boolean;
+  onReadAloud: () => void;
   onMenu: () => void;
 }) {
   const { palette } = useTheme();
@@ -48,7 +53,7 @@ export function Header({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: SPACE.md,
+        gap: SPACE.sm,
         paddingHorizontal: SPACE.lg,
         paddingVertical: SPACE.sm,
       }}
@@ -71,6 +76,35 @@ export function Header({
       >
         LearnBuddy
       </Text>
+      {/* Reading aloud, back in the head (issue #181). A speaker stood here before and
+          was taken out (#52) — rightly: it was a symbol with no state, so the owner's
+          "wozu ist der eigentlich da" had no answer. This one answers it. The SHAPE says
+          which way it is (struck through when off), never the colour alone, and it is a
+          switch so a screen reader says it too. It is the one setting a child changes in
+          the middle of working, so it costs one tap, not three. */}
+      <Pressable
+        onPress={onReadAloud}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: readAloud }}
+        aria-checked={readAloud}
+        accessibilityLabel={t(readAloud ? 'menu.read_aloud_on' : 'menu.read_aloud_off')}
+        hitSlop={SPACE.sm}
+        style={{
+          width: TOUCH,
+          height: TOUCH,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: TOUCH / 2,
+        }}
+      >
+        {({ pressed }) => (
+          <Icon
+            name={readAloud ? 'speak' : 'speak-off'}
+            size={22}
+            color={readAloud ? palette.primaryDk : pressed ? palette.ink : palette.ink3}
+          />
+        )}
+      </Pressable>
       <Pressable
         onPress={onMenu}
         accessibilityRole="button"

@@ -41,10 +41,11 @@ import { Banner } from '../components/lb/Banner.js';
 import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
-import { Icon, type IconName } from '../components/lb/Icon.js';
+import { Icon } from '../components/lb/Icon.js';
+import { headState } from '../lib/buddy/headState.js';
 import { Header } from '../components/buddy/Header.js';
+import { MenuSheet, type StartItem } from '../components/buddy/MenuSheet.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
-import { Sheet } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import { useSpokenWords } from '../components/math/useSpokenMath.js';
 import { announce, useAnnounce } from '../lib/announce.js';
@@ -108,8 +109,6 @@ const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
 
 /** One empty list for every "no photos": a fresh array each render would re-run the effect. */
 const NO_THUMBS: readonly string[] = [];
-
-type StartItem = { key: string; label: string; icon: IconName; onPress: () => void };
 
 export default function BuddyScreen() {
   const { palette } = useTheme();
@@ -993,7 +992,19 @@ export default function BuddyScreen() {
             it: orb left, LearnBuddy beside it, three dots right. The row of four circles
             that used to stand here moved into those dots, and the orb that stood beside
             every single reply is gone with it — one Buddy, in one place. */}
-        <Header state={pending !== null ? 'think' : 'idle'} onMenu={() => setMenuOpen(true)} />
+        <Header
+          // What Buddy is doing, from the same facts the thread uses (issue #179):
+          // `pending` alone said idle while the answer was being written.
+          state={headState({
+            sending: pending !== null,
+            working: h.thread.some((m) => m.role === 'learner' && m.status === 'processing'),
+            streaming: live !== null,
+            voiceMode: voiceOn,
+          })}
+          readAloud={voiceOn}
+          onReadAloud={() => setVoiceOn(!voiceOn)}
+          onMenu={() => setMenuOpen(true)}
+        />
         <View style={{ flex: 1 }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never
             pushes them down, and she can close it (only on this phone). */}
@@ -1205,60 +1216,15 @@ export default function BuddyScreen() {
         />
       </KeyboardSafe>
 
-      <Sheet
+      <MenuSheet
         visible={menuOpen}
-        title={t('buddy:menu.title')}
-        closeLabel={t('common:actions.close')}
+        // Each way to start closes the sheet first: two of them open a sheet of their
+        // own, and two modals in one frame do not come up on iOS.
+        start={orbitItems(h.next).map((i) => ({ ...i, onPress: () => fromMenu(i.onPress) }))}
+        canStart={pending === null}
+        onGo={(path) => fromMenu(() => router.push(path))}
         onClose={() => setMenuOpen(false)}
-      >
-        {/* The four ways to start used to be a row of circles above the conversation. They
-            live here now (issue #174): the conversation gets the screen, and what she can
-            start is one tap away instead of a permanent row. */}
-        {orbitItems(h.next).map((item) => (
-          <Btn
-            key={item.key}
-            variant="outline"
-            full
-            icon={item.icon}
-            disabled={pending !== null}
-            onPress={() => fromMenu(item.onPress)}
-          >
-            {item.label}
-          </Btn>
-        ))}
-        {/* Reading aloud used to be a speaker symbol in the head, and the owner's question
-            was "wozu ist der eigentlich da" (#52). Here it says what it does, in words,
-            and its state is the label — no badge to decode. */}
-        <Btn
-          variant={voiceOn ? 'primary' : 'outline'}
-          full
-          onPress={() => {
-            setVoiceOn(!voiceOn);
-            setMenuOpen(false);
-          }}
-        >
-          {t(voiceOn ? 'buddy:menu.read_aloud_on' : 'buddy:menu.read_aloud_off')}
-        </Btn>
-        {(
-          [
-            ['memory', '/memory'],
-            ['library', '/library'],
-            ['settings', '/settings'],
-          ] as const
-        ).map(([key, path]) => (
-          <Btn
-            key={key}
-            variant="outline"
-            full
-            onPress={() => {
-              setMenuOpen(false);
-              router.push(path);
-            }}
-          >
-            {t(`buddy:menu.${key}`)}
-          </Btn>
-        ))}
-      </Sheet>
+      />
 
       <ChoiceSheet
         visible={choice !== null}
