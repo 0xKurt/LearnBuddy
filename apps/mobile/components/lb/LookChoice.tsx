@@ -1,51 +1,53 @@
-// The two things that decide how the app looks: which colours, and light or dark
-// (issue #140). One component, because it is one choice — it stands in the settings and,
-// since issue #136, in the onboarding, where it is the first thing that is hers: the next
-// screen is already in the colours she picked.
+// How the app looks: a row of colour cards, and one switch for light/dark (issue #172).
 //
-// Curated options, no colour picker: the app must stay calm and friendly whatever she
-// takes (docs/DESIGN-BRIEF.md), and every combination is checked for readable contrast
+// It used to be seven stacked cards, each with a sample sentence and a sample pill. On the
+// phone the owner's verdict was short: "das mit den farb cards ist komisch und nicht best
+// practice. niemand stellt das so dar", and then: "pastell, wald, meer, abend — alle
+// dunkel. wie das handy, hell dunkel, alle gleich farbend."
+//
+// Both complaints were right and they were the same fault. The card showed the palette's
+// BACKGROUND, and in dark mode all four backgrounds are near-black — so the four colours
+// looked identical. And the three mode cards previewed the same family, so of course they
+// were indistinguishable. What tells the families apart is the accent (#9d82f5 violet,
+// #5fae86 green, #5a9fe0 blue, #e0925a orange — distinct in dark too), so that is what the
+// card shows.
+//
+// Light/dark is a switch, not a third thing to read. "Wie das Handy" stays as the default
+// BEHAVIOUR rather than a third option: until she touches the switch it follows the phone,
+// and the switch shows what is actually on screen either way — so it never displays a state
+// the app is not in. Touching it is her decision and pins it.
+//
+// Curated colours, no colour picker: the app must stay calm and friendly whatever she takes
+// (docs/DESIGN-BRIEF.md), and every combination is checked for readable contrast
 // (lib/theme/__tests__/contrast.test.ts).
-//
-// Each option shows what it would look like (issue #84, owner: "man sollte vorher schon
-// sehen wie es aussehen könnte") — drawn from PALETTES, never from the palette in use, so
-// the previews stay true whichever theme is on. `compact` is the same choice in less
-// room: the onboarding has to fit a 360×740 phone without scrolling (rule 16), so there
-// the preview is a tile instead of a little page.
 
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import {
-  FAMILIES,
-  MODES,
-  paletteOf,
-  themeNameOf,
-  type Family,
-  type Mode,
-  type ThemeName,
-} from '../../lib/theme/palettes.js';
+import { FAMILIES, paletteOf, themeNameOf, type Family } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from './Icon.js';
 
-export function Swatch({
-  name,
+/** One colour, as a card filled with that colour. */
+function ColourCard({
+  family,
+  dark,
   on,
   label,
-  sample,
-  compact = false,
   onPress,
 }: {
-  name: ThemeName;
+  family: Family;
+  dark: boolean;
   on: boolean;
   label: string;
-  sample: string;
-  compact?: boolean;
   onPress: () => void;
 }) {
   const { palette } = useTheme();
-  const p = paletteOf(name);
+  // The family in the mode that is showing: green while the app is dark shows the DARK
+  // green, so the choice is honest.
+  const p = paletteOf(themeNameOf(family, dark));
   return (
     <Pressable
       accessibilityRole="radio"
@@ -54,108 +56,61 @@ export function Swatch({
       // The web needs the attribute itself (axe: aria-required-attr, issue #73).
       aria-checked={on}
       onPress={onPress}
-      style={compact ? { flexBasis: 0, flexGrow: 1 } : undefined}
+      style={{ flexBasis: 0, flexGrow: 1, gap: SPACE.xs }}
     >
       {({ pressed }) => (
-        <View
-          style={{
-            borderRadius: 18,
-            overflow: 'hidden',
-            borderWidth: on ? 2.5 : 1,
-            // The ring reads in the ACTIVE palette (it frames the control, not the preview).
-            borderColor: on ? palette.primary : palette.hairline,
-            opacity: pressed ? 0.85 : 1,
-          }}
-        >
-          {compact ? (
-            <View
-              style={{
-                backgroundColor: p.bg,
-                // The tile carries the whole touch target: a label under a small square
-                // would leave the square itself below 44 pt.
-                minHeight: TOUCH + SPACE.lg,
-                paddingVertical: SPACE.sm,
-                paddingHorizontal: SPACE.xs,
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: SPACE.xs,
-              }}
-            >
-              <View
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 11,
-                  backgroundColor: p.primary,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {/* Never colour alone: the chosen one also carries the check. */}
-                {on ? <Icon name="check" size={14} color={p.paper} /> : null}
-              </View>
-              <Text
-                numberOfLines={1}
-                style={{ color: p.ink, fontSize: 12, fontWeight: '600', textAlign: 'center' }}
-              >
-                {label}
-              </Text>
-            </View>
-          ) : (
-            <View style={{ backgroundColor: p.bg, padding: 12, gap: 8 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View
-                  style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: p.primary }}
-                />
-                <Text style={{ color: p.ink, fontSize: 15, fontWeight: '700', flex: 1 }}>
-                  {label}
-                </Text>
-                {/* The word "checked" is announced; the check is the visible twin, in the
-                    preview's own readable colour — never colour alone. */}
-                {on ? <Icon name="check" size={18} color={p.primaryDk} /> : null}
-              </View>
-              <View style={{ backgroundColor: p.paper, borderRadius: 12, padding: 10, gap: 2 }}>
-                <Text style={{ color: p.ink, fontSize: 13, lineHeight: 18 }}>{sample}</Text>
-                <View
-                  style={{
-                    alignSelf: 'flex-start',
-                    backgroundColor: p.primary,
-                    borderRadius: 999,
-                    paddingHorizontal: 10,
-                    paddingVertical: 3,
-                  }}
-                >
-                  <Text style={{ color: p.paper, fontSize: 12, fontWeight: '600' }}>
-                    {sample.split(' ')[0]}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
-        </View>
+        <>
+          <View
+            style={{
+              height: 72,
+              borderRadius: 18,
+              // The accent, because that is what tells the four apart — in both modes.
+              backgroundColor: p.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+              // The ring is drawn in the palette IN USE: it says "selected", it is not
+              // part of the colour being shown.
+              borderWidth: on ? 3 : 0,
+              borderColor: palette.ink,
+              opacity: pressed ? 0.8 : 1,
+            }}
+          >
+            {/* Never colour alone: the chosen one also carries the check. */}
+            {on ? <Icon name="check" size={26} color={p.paper} /> : null}
+          </View>
+          <Text
+            numberOfLines={1}
+            style={[
+              TYPE.label,
+              {
+                textAlign: 'center',
+                color: on ? palette.ink : palette.ink2,
+                fontWeight: on ? '700' : '600',
+              },
+            ]}
+          >
+            {label}
+          </Text>
+        </>
       )}
     </Pressable>
   );
 }
 
-/** The colours. */
-export function FamilyChoice({ compact = false }: { compact?: boolean }) {
+/** The colours: one row of cards. */
+export function FamilyChoice() {
   const { t } = useTranslation('settings');
   const { name, family, choose } = useTheme();
   const dark = name.endsWith('Dark');
   return (
-    <View
-      accessibilityRole="radiogroup"
-      style={compact ? { flexDirection: 'row', gap: SPACE.sm } : { gap: 10 }}
-    >
+    <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', gap: SPACE.sm }}>
       {FAMILIES.map((f) => (
-        <Swatch
+        <ColourCard
           key={f}
-          name={themeNameOf(f, dark)}
+          family={f}
+          dark={dark}
           on={f === family}
           label={t(`look.family.${f}` as const)}
-          sample={t('look.sample')}
-          compact={compact}
           onPress={() => choose({ family: f })}
         />
       ))}
@@ -163,29 +118,69 @@ export function FamilyChoice({ compact = false }: { compact?: boolean }) {
   );
 }
 
-/** Light, dark, or whatever the phone is doing. */
-export function ModeChoice({ compact = false }: { compact?: boolean }) {
+/** Light or dark: one switch, showing what is actually on screen. */
+export function ModeChoice() {
   const { t } = useTranslation('settings');
-  const { name, family, mode, choose } = useTheme();
+  const { name, palette, choose } = useTheme();
   const dark = name.endsWith('Dark');
   return (
-    <View
-      accessibilityRole="radiogroup"
-      style={compact ? { flexDirection: 'row', gap: SPACE.sm } : { gap: 10 }}
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={t('look.mode_question')}
+      accessibilityHint={t('look.mode_hint')}
+      // aria-checked (not accessibilityState) so the web build says it too.
+      aria-checked={dark}
+      onPress={() => choose({ mode: dark ? 'light' : 'dark' })}
+      style={{ borderRadius: 999 }}
     >
-      {MODES.map((m) => (
-        <Swatch
-          key={m}
-          name={themeNameOf(family, m === 'dark' || (m === 'system' && dark))}
-          on={m === mode}
-          label={t(`look.mode.${m}` as const)}
-          sample={t('look.sample')}
-          compact={compact}
-          onPress={() => choose({ mode: m })}
-        />
-      ))}
-    </View>
+      {({ pressed }) => (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: SPACE.md,
+            paddingVertical: SPACE.sm,
+            opacity: pressed ? 0.8 : 1,
+          }}
+        >
+          <Text style={[TYPE.body, { color: palette.ink, flexShrink: 1 }]}>
+            {t(`look.mode.${dark ? 'dark' : 'light'}` as const)}
+          </Text>
+          {/* The track and its knob: 52 × 32, the knob on the side that is on. */}
+          <View
+            style={{
+              width: 52,
+              height: 32,
+              borderRadius: 16,
+              padding: 3,
+              backgroundColor: dark ? palette.primary : palette.canvas,
+              borderWidth: 1,
+              borderColor: dark ? palette.primary : palette.hairline,
+              alignItems: dark ? 'flex-end' : 'flex-start',
+              justifyContent: 'center',
+            }}
+          >
+            <View
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: palette.paper,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {/* The knob carries the state in a shape as well, never colour alone. */}
+              <Icon
+                name={dark ? 'check' : 'close'}
+                size={14}
+                color={dark ? palette.primaryDk : palette.ink3}
+              />
+            </View>
+          </View>
+        </View>
+      )}
+    </Pressable>
   );
 }
-
-export type { Family, Mode };

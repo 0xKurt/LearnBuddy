@@ -27,6 +27,8 @@ import { useColorScheme } from 'react-native';
 import { readItem, writeItem } from '../api/outboxStorage.js';
 import { activeTheme, applyPalette, onPaletteApplied } from './colors.js';
 import {
+  FAMILIES,
+  MODES,
   DEFAULT_FAMILY,
   DEFAULT_MODE,
   familyModeOf,
@@ -102,10 +104,31 @@ export async function keptChoice(): Promise<{ family: Family; mode: Mode }> {
   // `familyModeOf` answers both — an old "night" becomes pastell + dark, which is what it
   // was showing.
   if (mode === null) return familyModeOf(family);
-  return {
-    family: (family as Family | null) ?? DEFAULT_FAMILY,
-    mode: (mode as Mode | null) ?? DEFAULT_MODE,
-  };
+  return { family: familyOf(family), mode: modeOf(mode) };
+}
+
+/**
+ * What is on the device is text, and text can be anything (issue #172).
+ *
+ * This used to be `family as Family`, and the cast lied. A device that had chosen a colour
+ * BEFORE #140 holds the old palette name — `pastellSoft` — and as soon as a mode was stored
+ * beside it, that name was taken at face value as a family. `themeNameOf('pastellSoft',
+ * true)` is `'pastellSoftDark'`, which is in no palette, so `paletteOf` fell back to the
+ * light default: the owner switched to dark on 01.10. and **nothing happened**, while every
+ * colour preview showed a palette the app was not in.
+ *
+ * So it is read, not asserted. An unknown value is translated if it is an old name
+ * (`familyModeOf`) and otherwise falls back — never carried on as if it were valid.
+ */
+function familyOf(stored: string | null): Family {
+  if (stored !== null && (FAMILIES as readonly string[]).includes(stored)) return stored as Family;
+  return familyModeOf(stored).family;
+}
+
+function modeOf(stored: string | null): Mode {
+  return stored !== null && (MODES as readonly string[]).includes(stored)
+    ? (stored as Mode)
+    : DEFAULT_MODE;
 }
 
 export async function restoreTheme(): Promise<void> {

@@ -104,6 +104,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   const picked = page.waitForResponse(
     (r) => r.url().endsWith('/buddy/settings') && r.request().method() === 'PATCH' && r.ok(),
   );
+  // "Hell" here is one of Buddy's VOICES (warm · freundlich · hell · klar), not the theme.
   await page.getByRole('radio', { name: 'Hell' }).click();
   await picked;
   // The walkthrough runs without Buddy's own voice: the phone reads the sample, and says so.
@@ -119,7 +120,8 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Such dir deine Farben aus')).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Meer' })).toBeVisible();
-  await expect(page.getByRole('radio', { name: 'Dunkel' })).toBeVisible();
+  // The same two controls as in the settings (issue #172): colour cards and one switch.
+  await expect(page.getByRole('switch', { name: 'Hell oder dunkel?' })).toBeVisible();
   await shot(page, '03e-onboarding-look');
   await page.getByRole('radio', { name: 'Abend' }).click();
   await expect(page.getByRole('radio', { name: 'Abend' })).toHaveAttribute('aria-checked', 'true');
@@ -375,14 +377,17 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   // (issue #84: module-scope styles froze the start palette's ink, which was invisible on
   // the night background — the axe pass at every shot is what catches that class now.)
   await page.getByRole('button', { name: 'Aussehen' }).click();
-  await expect(page.getByRole('radio', { name: 'Dunkel' })).toBeVisible();
+  // Four colour cards and one switch since issue #172 — "einmal farb cards, dazu einen
+  // hell/dunkel switch, thats it" (owner, on seeing seven preview cards on the phone).
+  const darkSwitch = page.getByRole('switch', { name: 'Hell oder dunkel?' });
+  await expect(darkSwitch).toBeVisible();
   await shot(page, '15f-settings-look', { opened: true });
   // Two axes since issue #140: the colours are one choice, dark is another. Dark with the
   // colours kept is the combination the owner asked for — "blau eingestellt, blaue highlights".
   await page.getByRole('radio', { name: 'Meer' }).click();
-  await page.getByRole('radio', { name: 'Dunkel' }).click();
-  await expect(page.getByRole('radio', { name: 'Dunkel' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: 'Meer' })).toHaveAttribute('aria-checked', 'true');
+  await darkSwitch.click();
+  await expect(darkSwitch).toHaveAttribute('aria-checked', 'true');
   await shot(page, '15g-settings-night', { opened: true });
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
@@ -391,7 +396,7 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await openMenu('Einstellungen');
   await page.getByRole('button', { name: 'Aussehen' }).click();
   await page.getByRole('radio', { name: 'Pastell' }).click();
-  await page.getByRole('radio', { name: 'Hell' }).click();
+  await page.getByRole('switch', { name: 'Hell oder dunkel?' }).click();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 

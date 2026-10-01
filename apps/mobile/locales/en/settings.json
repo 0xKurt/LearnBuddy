@@ -204,6 +204,6 @@
       "dark": "Dark"
     },
     "mode_question": "Light or dark?",
-    "mode_hint": "“Like the phone” turns dark in the evening by itself."
+    "mode_hint": "Follows your phone until you set it here once."
   }
 }

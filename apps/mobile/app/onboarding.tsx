@@ -87,8 +87,11 @@ export default function Onboarding() {
         </Text>
         {key === 's4' ? (
           <View style={{ alignSelf: 'stretch', gap: compact ? SPACE.sm : SPACE.md }}>
-            <FamilyChoice compact />
-            <ModeChoice compact />
+            {/* The same two controls as in the settings (issue #172): dots for the
+                colours, a segmented control for light/dark. One question, one component,
+                and nothing to learn twice. */}
+            <FamilyChoice />
+            <ModeChoice />
           </View>
         ) : null}
         {step === 0 ? (
