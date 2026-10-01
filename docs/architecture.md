@@ -323,6 +323,24 @@ summary plus undo data. Enforced here, not in the prompt:
   (rule 16). This is the state whose absence made #144: "frag mich die Vokabeln ab" reached
   the pool as the SUBJECT, with both French sheets in it, and after a pause there was nothing
   left at all;
+- **what already stands in front of her is state too** (`loadStandingOffers` in
+  `modules/buddy/state.ts`, `BuddyState.standing`, issue #184). An `offer_learning` changes
+  nothing in the database, so Buddy could not see his own offer still standing: measured
+  01.10., the same four turns offered the same practice three times while the first button sat
+  right there — no single answer wrong, the conversation treading water (the measured core of
+  #127). STATE now carries a section of its own, "Already waiting for her": every offer of his
+  she has not taken up (in her own words, with the direction or difficulty it carries) and every
+  practice step in `prepared`. **Taken up is read from the session, never from the offer** — what
+  he offers is prepared in the background under the offer's own action id (issue #48), so the
+  session existing proves nothing about her; only an answered, tried or revealed question, or a
+  session no longer `active`, does (rule 5). The window is a day: the button never stops working
+  (`OfferCard.tsx` reuses the offer's id, so the same offer always opens the same session), but a
+  day is as far back as "right there in front of her" reaches honestly. Code is the floor under
+  the prompt, not the prompt itself: an offer identical in every field it carries — kind, text,
+  goal, difficulty, direction — to one still standing is **refused** with its reason, and the
+  repair round answers without it (`runOfferLearning`, `standing-offer.int.test.ts`); judging
+  whether a differently worded offer is the same thing is left to the model, which now has the
+  facts to judge it with;
 - a sheet the SEARCH found is reachable in the same turn (issue #153). STATE carries the ten
   newest and their aliases; everything older was findable and then unreachable, so Buddy could
   name a sheet he had just found and have nothing to point at. A `search_material` hit now

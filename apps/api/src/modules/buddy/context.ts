@@ -161,6 +161,7 @@ export function buildContext(
   const materialBlock: string[] = [];
   const summariesBlock: string[] = [];
   const practiceBlock: string[] = [];
+  const standingBlock: string[] = [];
   const voiceBlock: string[] = [];
   const contactBlock: string[] = [];
   const noteBlock: string[] = [];
@@ -413,6 +414,48 @@ export function buildContext(
     );
   }
 
+  // What already stands in front of her (issue #184). Buddy's own offer and a practice he
+  // prepared are both "something she can tap"; neither was in the state he reads each turn, so
+  // he offered the same practice again, and again, while the first button sat right there
+  // (measured 01.10. — the core of "gefühlt funktioniert alles schlechter als vorher", #127).
+  // What stands is read off her rows, not off the conversation: an offer whose session she has
+  // not worked in (state.ts loadStandingOffers), and a prepared practice step.
+  const stepAliasById = new Map<string, string>();
+  for (const [alias, row] of aliases.steps) stepAliasById.set(row.id, alias);
+  const preparedSteps = state.steps.filter(
+    (s) => s.kind === 'practice' && s.state === 'prepared' && (s.payload.item_ids?.length ?? 0) > 0,
+  );
+  if (state.standing.length > 0 || preparedSteps.length > 0) {
+    standingBlock.push('## Already waiting for her (one tap starts it, nothing more needed)');
+    for (const o of state.standing) {
+      const at = localParts(o.created_at, tz);
+      const wish = [
+        o.difficulty,
+        o.direction === 'produce'
+          ? 'she writes the foreign word'
+          : o.direction === 'recognise'
+            ? 'she says what it means'
+            : null,
+      ].filter((x): x is string => Boolean(x));
+      standingBlock.push(
+        `- your ${o.kind} offer "${o.text}"${wish.length ? ` (${wish.join(' · ')})` : ''}` +
+          ` from ${at.date} ${at.time}: its button is in the conversation, she has not started it`,
+      );
+    }
+    for (const s of preparedSteps) {
+      const alias = stepAliasById.get(s.id);
+      standingBlock.push(
+        `- practice you prepared${alias ? ` ${alias}` : ''} "${s.title}"` +
+          ` (${s.payload.item_ids?.length ?? 0} questions): ready to start, she has not started it`,
+      );
+    }
+    standingBlock.push(
+      '  She needs nothing from you to start any of this. Making a second one of the same thing' +
+        ' adds nothing she can see: say where the next step is instead. Something she asks for' +
+        ' that is genuinely different gets its own.',
+    );
+  }
+
   const st = state.settings;
   // How her replies sound when read aloud (set_voice changes it, ADR 0008).
   voiceBlock.push(
@@ -469,6 +512,8 @@ export function buildContext(
   //   goals        — goal and step tools; its day labels ("in 4 days") turn over at local
   //                  midnight, so it is stable within a day but not across one.
   //   practice     — a finished practice rewrites it; volatile in an active session.
+  //   waiting      — an offer or a prepared practice appears the moment Buddy makes one and
+  //                  disappears the moment she starts it: as volatile as a turn can be.
   //   Now          — the local time to the minute: different in almost every turn, so it
   //                  ends the block. Everything after it (the dialogue) is uncacheable
   //                  anyway — the 24-message window slides with every turn.
@@ -483,6 +528,7 @@ export function buildContext(
     materialBlock,
     goalsBlock,
     practiceBlock,
+    standingBlock,
     nowBlock,
     noteBlock,
   ];

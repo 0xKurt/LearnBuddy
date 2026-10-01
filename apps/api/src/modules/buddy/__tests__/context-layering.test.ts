@@ -66,6 +66,7 @@ const state: BuddyState = {
   focus: null,
   materials: [],
   sessions: [],
+  standing: [],
   outreach: [],
   totals: { activeGoals: 1, openSteps: 0, memories: 1, items: 12, materials: 1 },
 };

@@ -2,7 +2,13 @@
 // model context, the home screen and deterministic decisions. All queries are
 // scoped by learner_id; nothing here trusts client input.
 
-import type { PageProblem, VoiceName } from '@learnbuddy/shared-types/contracts';
+import type {
+  ActionSummary,
+  DifficultyWish,
+  PageProblem,
+  VocabDirection,
+  VoiceName,
+} from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
 import { summarize, type SummaryRow } from '../practice/summary.js';
@@ -204,6 +210,34 @@ export type OutreachRow = {
   created_at: Date;
 };
 
+/** What the offer card in the chat carries (`ActionSummary`, `components/learn/OfferCard.tsx`). */
+type OfferSummary = Extract<ActionSummary, { tool: 'offer_learning' }>;
+
+/**
+ * An offer of Buddy's that is still standing: the button sits in the conversation and one tap
+ * starts it — the offer's action id is the app's request id, so the same offer always opens the
+ * same session (`OfferCard.tsx`, `practice/prepare.ts`).
+ *
+ * Without this in STATE Buddy could not see his own offer still standing, and offered the same
+ * practice again turn after turn — no single answer wrong, the conversation treading water
+ * (measured 01.10., issues #184 and #127).
+ *
+ * "Not taken up" is read from the session, never from the offer: what Buddy offers is prepared
+ * in the background under that same action id (issue #48), so a session existing proves nothing
+ * about her — only work in it does (CLAUDE.md rule 5).
+ */
+export type StandingOffer = {
+  /** The offer's action id; the app starts its session under it. */
+  id: string;
+  kind: OfferSummary['kind'];
+  /** What was offered, in the learner's own words, as the card says it. */
+  text: string;
+  goal_id: string | null;
+  difficulty: DifficultyWish | null;
+  direction: VocabDirection | null;
+  created_at: Date;
+};
+
 export type BuddyState = {
   settings: SettingsRow;
   goals: GoalRow[];
@@ -218,6 +252,8 @@ export type BuddyState = {
   /** What she is working on, or null while nothing has been agreed (issue #160). */
   focus: FocusRow | null;
   sessions: SessionBrief[];
+  /** Offers of his she has not taken up yet, oldest first (issue #184). */
+  standing: StandingOffer[];
   outreach: OutreachRow[];
   /** Totals irrespective of the bounded lists (coverage signals). */
   totals: {
@@ -247,7 +283,15 @@ export const LIMITS = {
   materials: 10,
   sessions: 5,
   outreachDays: 14,
+  /** Offers still standing; more than a handful is not a list the model needs to read. */
+  standing: 5,
 } as const;
+
+/**
+ * How long an offer she has not taken up still counts as standing. Its button never stops
+ * working, but a day is as far back as "right there in front of her" reaches honestly.
+ */
+export const STANDING_WINDOW_MS = 24 * 3_600_000;
 
 export async function loadSettings(db: Db, learnerId: string): Promise<SettingsRow> {
   const row = await db.maybeOne<SettingsRow>(`select * from buddy_settings where learner_id = $1`, [
@@ -260,6 +304,58 @@ export async function loadSettings(db: Db, learnerId: string): Promise<SettingsR
      returning *`,
     [learnerId],
   );
+}
+
+/**
+ * Offers of Buddy's she has not taken up (issue #184), oldest first.
+ *
+ * Taken up means worked in, not prepared: the row `practice_sessions` gets under the offer's
+ * action id may have been written by the background preparation seconds after the offer
+ * (`practice/prepare.ts`), so only an answered, tried or revealed question — or a session that
+ * is no longer active — proves she started it.
+ */
+export async function loadStandingOffers(
+  db: Db,
+  learnerId: string,
+  now: Date,
+): Promise<StandingOffer[]> {
+  const rows = await db.query<{
+    id: string;
+    // Read back raw: rows written before a field existed simply do not carry it (the
+    // contract's zod defaults never ran on this path), so every one is normalised below.
+    result: {
+      kind: OfferSummary['kind'];
+      text: string;
+      goal_id?: string | null;
+      difficulty?: DifficultyWish | null;
+      direction?: VocabDirection | null;
+    };
+    created_at: Date;
+  }>(
+    `select a.id, a.result, a.created_at
+       from buddy_actions a
+      where a.learner_id = $1 and a.tool = 'offer_learning' and a.status = 'applied'
+        and a.created_at > $2
+        and not exists (
+          select 1 from practice_sessions ps
+           where ps.learner_id = a.learner_id and ps.client_request_id = a.id
+             and (ps.status <> 'active'
+                  or exists (select 1 from session_items si
+                              where si.session_id = ps.id
+                                and (si.status <> 'open' or si.attempts > 0))))
+      order by a.seq desc
+      limit $3`,
+    [learnerId, new Date(now.getTime() - STANDING_WINDOW_MS), LIMITS.standing],
+  );
+  return rows.reverse().map((r) => ({
+    id: r.id,
+    kind: r.result.kind,
+    text: r.result.text,
+    goal_id: r.result.goal_id ?? null,
+    difficulty: r.result.difficulty ?? null,
+    direction: r.result.direction ?? null,
+    created_at: r.created_at,
+  }));
 }
 
 export async function loadBuddyState(db: Db, learnerId: string, now: Date): Promise<BuddyState> {
@@ -428,6 +524,9 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     return { ...s, secure_topics: summary.secure_topics, shaky_topics: summary.shaky_topics };
   });
 
+  // What he already put in front of her and she has not taken up (issue #184).
+  const standing = await loadStandingOffers(db, learnerId, now);
+
   const outreach = await db.query<OutreachRow>(
     `select id, kind, origin, topic_key, title, body, why, status, send_at, sent_at, opened_at,
             responded_at, response, goal_id, step_id, created_at
@@ -469,6 +568,7 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     materials,
     focus,
     sessions,
+    standing,
     outreach,
     totals: {
       activeGoals: totals.goals,

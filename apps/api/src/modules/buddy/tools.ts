@@ -53,7 +53,13 @@ import {
   scheduleExamWakeups,
   scheduleStepReminder,
 } from './plan.js';
-import type { GoalRow, MemoryRow, SettingsRow, StepRow } from './state.js';
+import {
+  loadStandingOffers,
+  type GoalRow,
+  type MemoryRow,
+  type SettingsRow,
+  type StepRow,
+} from './state.js';
 import { loosens } from './policy.js';
 import { normalizeForMatch, quoteOccursIn, unsupportedSpecifics } from './text.js';
 
@@ -1585,6 +1591,26 @@ async function runOfferLearning(
       (g) => g.status === 'active' && normalizeForMatch(g.title) === normalizeForMatch(a.text),
     );
     goal = named.length === 1 ? named[0]! : null;
+  }
+  // The same offer twice is not a second thing she can tap — the first button is still there,
+  // unstarted (issue #184). STATE says what stands, so this is the floor under the prompt, not
+  // the rule itself: only an offer identical in every field it carries is refused, with the
+  // reason, and the model answers again pointing at the one she already has.
+  const standing = await loadStandingOffers(ctx.db, ctx.learnerId, ctx.now);
+  const wanted = normalizeForMatch(a.text);
+  if (
+    standing.some(
+      (o) =>
+        o.kind === a.kind &&
+        normalizeForMatch(o.text) === wanted &&
+        o.goal_id === (goal?.id ?? null) &&
+        o.difficulty === (a.difficulty ?? null) &&
+        o.direction === (a.direction ?? null),
+    )
+  ) {
+    throw new ToolRejection(
+      'you already offered exactly this and its button is still standing, unstarted — leave this action out and tell her where it is instead',
+    );
   }
   // Changes nothing: the learner starts it with a tap (the model never starts sessions).
   return {
