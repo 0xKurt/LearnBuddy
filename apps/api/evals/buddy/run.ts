@@ -101,11 +101,20 @@ async function main(): Promise<void> {
       // Every turn of this conversation, so a case can judge the SHAPE and not only the
       // last answer (issue #127).
       const turns = (
-        await env.db.query<{ output: { asks_permission?: boolean } | null; text: string | null }>(
+        await env.db.query<{
+          output: { asks_permission?: boolean } | null;
+          text: string | null;
+          tools: string[] | null;
+        }>(
           `select d.output,
                   (select m.text from buddy_messages m
                     where m.decision_id = d.id and m.role = 'buddy'
-                    order by m.seq limit 1) as text
+                    order by m.seq limit 1) as text,
+                  -- What this turn DID, not only what it said. It was declared and never
+                  -- filled, so every check that read it saw an empty list and passed by
+                  -- accident (found 01.10. while measuring issue #127).
+                  (select array_agg(a.tool order by a.seq) from buddy_actions a
+                    where a.decision_id = d.id) as tools
              from buddy_decisions d
             where d.learner_id = $1 and d.mode = 'turn' and d.disposition = 'applied'
             -- The eval's clock does not move between turns, so created_at ties: the
@@ -121,7 +130,7 @@ async function main(): Promise<void> {
             ?.asks_permission ??
           (r.output as { final?: { asks_permission?: boolean } } | null)?.final?.asks_permission ??
           false,
-        tools: [] as string[],
+        tools: r.tools ?? [],
         reply: r.text ?? '',
       }));
       const outcome: Outcome = {

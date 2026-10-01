@@ -897,6 +897,7 @@ export const CASES: Case[] = [
     message: 'ok weiter',
     check: (o) => {
       const asked = o.turns.filter((t) => t.asks).length;
+      const offers = o.turns.filter((t) => t.tools.includes('offer_learning')).length;
       return [
         // Nothing here is destructive and nothing is ambiguous. One clarifying question in
         // four turns is a conversation; three is an interrogation.
@@ -904,10 +905,29 @@ export const CASES: Case[] = [
           asked <= 1,
           `asks for permission in ${asked} of ${o.turns.length} turns — nothing here needs it`,
         ),
-        // And by the end something has actually happened.
+        // Something is standing that she can start with one tap. The model never starts a
+        // session itself (hard rule 1), so either a prepared step or a standing offer is
+        // what "something happened" means here — the check used to demand only the step,
+        // which `offer_learning` deliberately never produces.
         ...must(
-          o.steps.some((s) => s.kind === 'practice'),
-          'never actually prepares the practice',
+          o.steps.some((s) => s.kind === 'practice') ||
+            o.turns.some((t) => t.tools.includes('offer_learning')),
+          'nothing she can start: neither a prepared practice nor an offer',
+        ),
+        // But ONCE. Measured 01.10.: he offered in three turns running — "klicke einfach
+        // auf den Button", then "tippe einfach unten auf den Button" — while the first
+        // offer was still standing right there. That repetition is what the owner meant
+        // with "gefühlt funktioniert alles schlechter als vorher" (issue #127): nothing is
+        // wrong with any single answer, and the conversation still treads water.
+        // And it happens ONCE. Measured 01.10., two runs of the same four turns: once he
+        // offered three times running, once he prepared it and then offered twice more —
+        // "klicke einfach auf den Button", then "tippe einfach unten auf den Button",
+        // while the first was still standing. Nothing is wrong with any single answer and
+        // the conversation treads water. That is what the owner meant with "gefühlt
+        // funktioniert alles schlechter als vorher" (issue #127).
+        ...must(
+          offers <= 1,
+          `offers the same practice in ${offers} turns — the first one is still standing`,
         ),
       ];
     },
