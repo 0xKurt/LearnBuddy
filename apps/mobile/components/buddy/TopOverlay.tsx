@@ -38,9 +38,15 @@ type Props = {
   onClose: () => void;
   /** Room to leave on the right for something that must stay reachable (the menu). */
   rightInset?: number;
+  /**
+   * How tall the card is. What lies under it has to know: the session greeting is placed
+   * from the bottom of the view upwards, and without this the card was drawn straight
+   * over it (owner 01.10., issue #190).
+   */
+  onHeight?: (height: number) => void;
 };
 
-export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0 }: Props) {
+export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0, onHeight }: Props) {
   const { palette } = useTheme();
   const lift = useRef(new Animated.Value(0)).current;
   const closeRef = useRef(onClose);
@@ -52,6 +58,9 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0 }
   useEffect(() => {
     lift.setValue(0);
   }, [id, lift]);
+  // Gone means gone: without this the last measured height would keep pushing the
+  // greeting down after the card was closed (issue #190).
+  useEffect(() => () => onHeight?.(0), [onHeight]);
 
   const pan = useMemo(
     () =>
@@ -87,6 +96,7 @@ export function TopOverlay({ id, children, closeLabel, onClose, rightInset = 0 }
   return (
     <Animated.View
       testID="home-card"
+      onLayout={(e) => onHeight?.(e.nativeEvent.layout.height)}
       {...pan.panHandlers}
       style={{
         position: 'absolute',

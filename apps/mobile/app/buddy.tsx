@@ -263,6 +263,8 @@ export default function BuddyScreen() {
   useAnnounce(openCard ? t('buddy:card.shown') : null, { key: openCard ?? undefined });
   /** Where the conversation starts (the row of ways to start ends): for its fade-out. */
   const [threadTop, setThreadTop] = useState(0);
+  /** How tall the card lying over the conversation is (0 = none); the greeting clears it. */
+  const [cardHeight, setCardHeight] = useState(0);
   /**
    * Where this visit starts in the conversation (issues #34, #104): decided once, when the
    * screen first sees the thread — on the app's own start, or after a break of a few hours,
@@ -853,7 +855,13 @@ export default function BuddyScreen() {
   // 28 pt fade that lies over the view's top edge — without the fade in this sum the
   // greeting's first line was drawn underneath it (owner twice: "die sprechblase am oberen
   // rand ist ein bisschen verdeckt", issue #129).
-  const sessionRoom = greetingOpens ? greetingRoom(threadView, SPACE.sm + EDGE_FADE) : 0;
+  // …and a card lying on top is the third thing: it is drawn over the conversation, so
+  // without its height in this sum "Weiterüben" was painted straight across the greeting
+  // (owner 01.10.: "meldungen wie die uebung wieter zu machen verdecken die willkommens
+  // nachricht", issue #190). The block only shrinks while a card is actually open.
+  const sessionRoom = greetingOpens
+    ? greetingRoom(threadView, SPACE.sm + EDGE_FADE + cardHeight)
+    : 0;
 
   // "↓ Neue Antwort": she scrolled up and Buddy answered (or is writing) meanwhile.
   const newest = newestBuddyId(h.thread);
@@ -1021,6 +1029,7 @@ export default function BuddyScreen() {
               id={openCard}
               closeLabel={t('buddy:card.close')}
               onClose={() => closeCard(openCard)}
+              onHeight={setCardHeight}
             >
               {top}
             </TopOverlay>

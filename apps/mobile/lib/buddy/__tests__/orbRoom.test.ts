@@ -20,18 +20,11 @@ describe('when the moon moves', () => {
     for (const state of MOON_STATES) expect(orbMoves(true, false, state)).toBe(true);
   });
 
-  it('keeps moving where the movement IS the message, even with reduce motion', () => {
-    // An activity indicator keeps spinning under reduce motion on every platform, and
-    // this is the app's only "Buddy is working" signal.
-    for (const state of ['think', 'speak', 'listen'] as const) {
-      expect(orbMoves(true, true, state)).toBe(true);
-    }
-  });
-
-  it('stops the decorative drift when reduce motion is on', () => {
-    for (const state of ['idle', 'wait', 'happy'] as const) {
-      expect(orbMoves(true, true, state)).toBe(false);
-    }
+  it('keeps moving with reduce motion on — in EVERY state (owner decision, twice)', () => {
+    // "der mond bewegt sich trotzdem nicht. wenn die app nichts tut gibts ja den idle
+    // zustand." Buddy is not decoration on his own screen; a frozen Buddy reads as a
+    // broken app. Everything else still obeys the setting (lib/theme/enter.ts).
+    for (const state of MOON_STATES) expect(orbMoves(true, true, state)).toBe(true);
   });
 
   it('stays still wherever the caller asked for stillness', () => {

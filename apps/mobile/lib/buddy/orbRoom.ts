@@ -24,18 +24,26 @@ export function orbSlot(size: number): number {
   return Math.ceil(size * ORB_SPREAD);
 }
 
-/** The states in which the moon is saying something, not just being alive. */
-const WORKING: ReadonlySet<MoonState> = new Set<MoonState>(['think', 'speak', 'listen']);
-
 /**
- * Whether the moon moves.
+ * Whether the moon moves. It does, unless the caller asked for a still one.
  *
- * With reduce motion on, decoration stops — the idle drift is decoration. But "Buddy is
- * thinking" is **information**, and it is the only thing on the screen that says so. Every
- * platform keeps its activity indicator spinning under reduce motion for exactly that
- * reason, and so does this. WCAG 2.3.3 is about movement that carries nothing.
+ * This deliberately ignores the system's reduce-motion setting, and that was an owner
+ * decision, twice stated (01.10.): "auch keine idle animation", then "der mond bewegt sich
+ * trotzdem nicht. wenn die app nichts tut gibts ja den idle zustand."
+ *
+ * The case for honouring the setting was: the idle drift carries no information, so it is
+ * decoration, and decoration stops. The case against — his — is that Buddy is not
+ * decoration on his own screen: a frozen Buddy reads as a broken app, which is the
+ * opposite of calm. The moon is one small element that neither translates the page nor
+ * parallaxes; it is the app's heartbeat.
+ *
+ * Everything else still obeys the setting: entering cards and messages cross-fade instead
+ * of rising, lists re-order without gliding (lib/theme/enter.ts, issue #126). This is the
+ * one exception, made on purpose and written down here so the next person sees why.
+ *
+ * `reduced` stays in the signature: it is what the exception is about, and the test holds
+ * the promise that it changes nothing.
  */
-export function orbMoves(breathe: boolean, reduced: boolean, state: MoonState): boolean {
-  if (!breathe) return false;
-  return !reduced || WORKING.has(state);
+export function orbMoves(breathe: boolean, _reduced: boolean, _state: MoonState): boolean {
+  return breathe;
 }
