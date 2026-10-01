@@ -623,4 +623,90 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
     expect(res.status).toBe(201);
     await env.flushBackground();
   });
+
+  it('takes a judgement back that she says is wrong, FSRS and all (#164)', async () => {
+    // The rule check is certain by design, and that certainty can stand in for a key
+    // nobody verified — the audit put 8 on "6 + 4" and watched 10 be rejected. Where
+    // arithmetic cannot decide it (#157), only the child in front of it can.
+    const study = await sendSheet(env, l, {
+      purpose: 'study',
+      items: [
+        item({
+          prompt: 'Wie heißt die Hauptstadt von Australien?',
+          answer: 'Sydney',
+          topic: 'Welt',
+        }),
+        item({ prompt: 'Wie heißt die Hauptstadt von Italien?', answer: 'Rom', topic: 'Welt' }),
+      ],
+    });
+    const s = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id })).body;
+    const wrongKey = s.items.find((i) => i.item.prompt.includes('Australien'))!.item.id;
+    const other = s.items.find((i) => i.item.prompt.includes('Italien'))!.item.id;
+
+    // She answers the other one right first, so there is history worth keeping.
+    await answer(l, s.id, other, 'Rom');
+    // And then gets told her right answer is wrong: the tutor compares against the key,
+    // and the key says Sydney. Three times, until the question closes and FSRS counts it.
+    for (let i = 0; i < 3; i++)
+      env.llm.script('tutor', tutor('Das ist nicht die Hauptstadt.', { verdict: 'incorrect' }));
+    let judged = await answer(l, s.id, wrongKey, 'Canberra');
+    judged = await answer(l, s.id, wrongKey, 'Canberra');
+    judged = await answer(l, s.id, wrongKey, 'Canberra');
+    expect(judged.body.verdict).toBe('incorrect');
+    expect(judged.body.session.items.find((i) => i.item.id === wrongKey)?.status).not.toBe('open');
+    // The wrong judgement left its mark on the spaced repetition.
+    const after = await env.db.one<{ reps: number; last_outcome: string }>(
+      `select reps, last_outcome from item_states where item_id = $1`,
+      [wrongKey],
+    );
+    expect(after.reps).toBe(1);
+    expect(after.last_outcome).toBe('revealed');
+
+    const disputed = await l.api.post<SessionView>(
+      `/practice/sessions/${s.id}/items/${wrongKey}/dispute`,
+      {},
+    );
+    expect(disputed.status).toBe(200);
+
+    // The spaced repetition is back to never practised — this question had no history.
+    expect(await env.db.query(`select 1 from item_states where item_id = $1`, [wrongKey])).toEqual(
+      [],
+    );
+    // The other question keeps its own, undisputed history.
+    expect(
+      (
+        await env.db.one<{ reps: number }>(`select reps from item_states where item_id = $1`, [
+          other,
+        ])
+      ).reps,
+    ).toBe(1);
+    // The question is out of future practice: its key is suspect.
+    expect(
+      (
+        await env.db.one<{ archived_at: Date | null }>(
+          `select archived_at from items where id = $1`,
+          [wrongKey],
+        )
+      ).archived_at,
+    ).not.toBeNull();
+    // And out of the result.
+    expect(disputed.body.summary?.answered ?? 0).toBeLessThanOrEqual(1);
+
+    // Saying it twice changes nothing.
+    expect(
+      (await l.api.post(`/practice/sessions/${s.id}/items/${wrongKey}/dispute`, {})).status,
+    ).toBe(200);
+  });
+
+  it('there is nothing to disagree with before a judgement (#164)', async () => {
+    const study = await sendSheet(env, l, {
+      purpose: 'study',
+      items: [item({ prompt: 'Kürze 4/8.', answer: '1/2', topic: 'Kürzen' })],
+    });
+    const s = (await l.api.post<SessionView>('/practice/sessions', { material_id: study.id })).body;
+    const open = s.items[0]!.item.id;
+    const early = await l.api.post(`/practice/sessions/${s.id}/items/${open}/dispute`, {});
+    expect(early.status).toBe(409);
+    expect(early.body).toMatchObject({ error: { details: { reason: 'not_judged' } } });
+  });
 });

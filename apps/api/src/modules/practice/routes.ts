@@ -31,6 +31,7 @@ import {
   answerItem,
   deferItem,
   finishSession,
+  disputeVerdict,
   flagItem,
   hintItem,
   revealItem,
@@ -102,6 +103,16 @@ practiceRoutes.post('/sessions/:id/items/:itemId/flag', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const itemId = check(Uuid, c.req.param('itemId'));
   return c.json(await flagItem(depsOf(c), c.get('learner').id, sessionId, itemId));
+});
+
+/**
+ * "Die Bewertung stimmt nicht" (issue #164): the question leaves this result and future
+ * practice, and its spaced-repetition effect goes back to what it was before.
+ */
+practiceRoutes.post('/sessions/:id/items/:itemId/dispute', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const itemId = check(Uuid, c.req.param('itemId'));
+  return c.json(await disputeVerdict(depsOf(c), c.get('learner').id, sessionId, itemId));
 });
 
 practiceRoutes.post('/sessions/:id/finish', async (c) => {

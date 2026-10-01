@@ -1,46 +1,71 @@
 {
-  "title_fallback": "Entraînement",
-  "loading": "Je récupère tes questions…",
-  "end": "Terminer",
-  "end_label": "Terminer l'entraînement",
-  "end_hint": "Retour à Buddy. Tes réponses sont enregistrées – tu pourras continuer ici plus tard.",
-  "end_hint_test": "Rend le test d'entraînement et te montre comment ça s'est passé.",
-  "progress": "Question {{current}} sur {{total}}",
+  "again": {
+    "shaky": "Revoir ce qui n'est pas encore sûr",
+    "topic": "Revoir : {{topics}}",
+    "harder": "Encore, un peu plus difficile",
+    "harder_topic": "Encore, un peu plus difficile : {{topics}}"
+  },
   "answer": {
     "label": "Ta réponse",
     "placeholder": "Ta réponse…",
     "unit_hint": "Réponse en {{unit}}"
   },
+  "back_to_buddy": "Retour à Buddy",
   "check": "Vérifier",
-  "show_solution": "Voir la solution",
+  "choice_tried": "Déjà essayé",
+  "dispute": {
+    "button": "Cette correction est fausse",
+    "confirm": "Retirer la correction",
+    "done": "D’accord – celle-là ne compte pas.",
+    "hint": "Retire cette question et sa note.",
+    "sheet_body": "Alors je retire cette question — elle ne compte pas et ne reviendra plus. Ta progression reste comme avant.",
+    "sheet_title": "La correction est fausse ?"
+  },
+  "end": "Terminer",
+  "end_hint": "Retour à Buddy. Tes réponses sont enregistrées – tu pourras continuer ici plus tard.",
+  "end_hint_test": "Rend le test d'entraînement et te montre comment ça s'est passé.",
+  "end_label": "Terminer l'entraînement",
+  "ended": "Cet entraînement est déjà terminé.",
+  "finish_failed": "Je n'ai pas pu charger ton résultat pour le moment.",
+  "finishing": "Un instant – ton résultat arrive.",
+  "flag": {
+    "button": "Question inadaptée",
+    "hint": "Retire cette question, elle ne reviendra plus.",
+    "sheet_title": "Question inadaptée ?",
+    "sheet_body": "Cette question ne reviendra plus.",
+    "confirm": "La retirer",
+    "done": "D'accord – la question est retirée."
+  },
+  "help_note": "Devoirs – je te donne des indices, tu trouves la solution toi-même.",
   "hint": "Indice",
   "hint_label": "Obtenir un indice",
-  "choice_tried": "Déjà essayé",
-  "thread": {
-    "you": "Toi",
-    "buddy": "Buddy",
-    "thinking": "Buddy regarde ta réponse…"
+  "image_fallback": "Image pour cet exercice",
+  "later": "Plus tard",
+  "later_done": "D'accord – celui-là revient plus tard.",
+  "later_hint": "L'exercice reste ouvert et revient après les autres.",
+  "loading": "Je récupère tes questions…",
+  "next": "Suivant",
+  "origin_buddy": "Question de Buddy",
+  "progress": "Question {{current}} sur {{total}}",
+  "reexplain": {
+    "label": "Expliquer autrement ?",
+    "simpler": "Plus simple",
+    "example": "Avec un exemple",
+    "why": "Pourquoi c'est comme ça ?",
+    "hint": "Buddy te l'explique encore, de cette façon.",
+    "thinking": "Buddy l'explique autrement …",
+    "title": "Expliqué autrement"
   },
-  "verdict": {
-    "correct": "Juste",
-    "partially_correct": "Presque",
-    "incorrect": "Pas tout à fait",
-    "unchecked": "Non vérifié"
+  "self_solved": {
+    "title": "Trouvé sans aide !",
+    "body": "Tu l'as trouvé par toi-même."
   },
+  "show_solution": "Voir la solution",
+  "skip": "Passer",
   "solution": {
     "title": "Solution",
     "calm": "Prends le temps de la regarder."
   },
-  "next": "Suivant",
-  "finishing": "Un instant – ton résultat arrive.",
-  "finish_failed": "Je n'ai pas pu charger ton résultat pour le moment.",
-  "summary": {
-    "title": "C'est fait !",
-    "secure": "Réussi aujourd’hui sans indice : {{topics}}",
-    "shaky": "On revoit ça ensemble : {{topics}}"
-  },
-  "ended": "Cet entraînement est déjà terminé.",
-  "back_to_buddy": "Retour à Buddy",
   "speak": {
     "instruction": "Dis-le à voix haute",
     "listen": "Écouter",
@@ -82,40 +107,13 @@
     "word_good": "C'est ça !",
     "word_again": "Presque – réécoute-le et réessaie."
   },
-  "help_note": "Devoirs – je te donne des indices, tu trouves la solution toi-même.",
-  "origin_buddy": "Question de Buddy",
-  "image_fallback": "Image pour cet exercice",
-  "self_solved": {
-    "title": "Trouvé sans aide !",
-    "body": "Tu l'as trouvé par toi-même."
+  "summary": {
+    "title": "C'est fait !",
+    "secure": "Réussi aujourd’hui sans indice : {{topics}}",
+    "shaky": "On revoit ça ensemble : {{topics}}"
   },
   "summary_help": {
     "title": "Devoirs terminés"
-  },
-  "test_note": "Test d'entraînement – une réponse par question, pas d'indices. Tu verras le résultat à la fin.",
-  "skip": "Passer",
-  "summary_test": {
-    "title": "Test terminé !",
-    "review": "Comment ça s'est passé",
-    "right": "Juste",
-    "missed": "Pas encore juste",
-    "skipped": "Passée",
-    "solution": "Solution : {{answer}}",
-    "untouched": "Pas traitée"
-  },
-  "again": {
-    "shaky": "Revoir ce qui n'est pas encore sûr",
-    "topic": "Revoir : {{topics}}",
-    "harder": "Encore, un peu plus difficile",
-    "harder_topic": "Encore, un peu plus difficile : {{topics}}"
-  },
-  "flag": {
-    "button": "Question inadaptée",
-    "hint": "Retire cette question, elle ne reviendra plus.",
-    "sheet_title": "Question inadaptée ?",
-    "sheet_body": "Cette question ne reviendra plus.",
-    "confirm": "La retirer",
-    "done": "D'accord – la question est retirée."
   },
   "summary_line": {
     "help_one": "Tu as résolu {{count}} exercice toi-même.",
@@ -125,16 +123,26 @@
     "all_first": "Tout était juste du premier coup.",
     "first_one": "Juste du premier coup."
   },
-  "later": "Plus tard",
-  "later_hint": "L'exercice reste ouvert et revient après les autres.",
-  "later_done": "D'accord – celui-là revient plus tard.",
-  "reexplain": {
-    "label": "Expliquer autrement ?",
-    "simpler": "Plus simple",
-    "example": "Avec un exemple",
-    "why": "Pourquoi c'est comme ça ?",
-    "hint": "Buddy te l'explique encore, de cette façon.",
-    "thinking": "Buddy l'explique autrement …",
-    "title": "Expliqué autrement"
+  "summary_test": {
+    "title": "Test terminé !",
+    "review": "Comment ça s'est passé",
+    "right": "Juste",
+    "missed": "Pas encore juste",
+    "skipped": "Passée",
+    "solution": "Solution : {{answer}}",
+    "untouched": "Pas traitée"
+  },
+  "test_note": "Test d'entraînement – une réponse par question, pas d'indices. Tu verras le résultat à la fin.",
+  "thread": {
+    "you": "Toi",
+    "buddy": "Buddy",
+    "thinking": "Buddy regarde ta réponse…"
+  },
+  "title_fallback": "Entraînement",
+  "verdict": {
+    "correct": "Juste",
+    "partially_correct": "Presque",
+    "incorrect": "Pas tout à fait",
+    "unchecked": "Non vérifié"
   }
 }

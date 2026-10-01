@@ -65,6 +65,7 @@ import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
 import { ApiError, newId } from '../../lib/api/client.js';
 import {
   answerItem,
+  disputeVerdict,
   deferItem,
   finishSession,
   flagItem,
@@ -195,6 +196,9 @@ export default function PracticeScreen() {
   /** "Frage passt nicht": the confirm sheet, and the question it is about. */
   const [flagFor, setFlagFor] = useState<string | null>(null);
   const [flagOpen, setFlagOpen] = useState(false);
+  /** "Bewertung stimmt nicht" (issue #164): the same, for a judgement already given. */
+  const [disputeFor, setDisputeFor] = useState<string | null>(null);
+  const [disputeOpen, setDisputeOpen] = useState(false);
   /** "Anders erklären": the way she tapped, while Buddy writes. */
   const [again, setAgain] = useState<{ itemId: string; way: ReexplainWay } | null>(null);
   // Measured, so free space goes to the question instead of an empty conversation
@@ -476,6 +480,35 @@ export default function PracticeScreen() {
     }
   }
 
+  /**
+   * "Die Bewertung stimmt nicht" confirmed (issue #164). Different from "Frage passt
+   * nicht", which is about an unfit question while it is still open: this is about a
+   * judgement she has already been given and disagrees with. The question leaves the
+   * result and future practice, and her learning state goes back to what it was.
+   */
+  async function dispute(): Promise<void> {
+    const itemId = disputeFor;
+    if (!itemId || working.current) return;
+    working.current = true;
+    setBusy(true);
+    try {
+      await store(await disputeVerdict(id, itemId));
+      setDisputeOpen(false);
+      setPinnedId(null);
+      setText('');
+      lastSent.current = null;
+      Keyboard.dismiss();
+      toast.show(t('practice:dispute.done'));
+    } catch (err) {
+      setDisputeOpen(false);
+      toast.show(messageFor(err), 'error');
+      if (outdated(err)) void queryClient.invalidateQueries({ queryKey: keys.session(id) });
+    } finally {
+      working.current = false;
+      setBusy(false);
+    }
+  }
+
   /** "Frage passt nicht" confirmed: out of this session and out of future practice. */
   async function flag(): Promise<void> {
     const itemId = flagFor;
@@ -740,6 +773,32 @@ export default function PracticeScreen() {
     ) : null,
   ].filter((node) => node !== null);
 
+  // A judgement she has been given and may disagree with (issue #164). Never while a test
+  // runs — there the results come at the end — and never for homework, which is helped
+  // with rather than judged.
+  const disputable =
+    !open &&
+    session.status === 'active' &&
+    session.mode !== 'help' &&
+    !testing &&
+    item.origin !== 'homework';
+
+  const disputeButton = disputable ? (
+    <Btn
+      size="sm"
+      variant="ghost"
+      pill
+      disabled={locked}
+      onPress={() => {
+        setDisputeFor(item.id);
+        setDisputeOpen(true);
+      }}
+      accessibilityHint={t('practice:dispute.hint')}
+    >
+      {t('practice:dispute.button')}
+    </Btn>
+  ) : null;
+
   const flagButton = flaggable ? (
     <Btn
       size="sm"
@@ -794,7 +853,7 @@ export default function PracticeScreen() {
               position={session.items.indexOf(shown) + 1}
               total={session.items.length}
               closed={session.items.filter((i) => i.status !== 'open').length}
-              right={flagButton}
+              right={flagButton ?? disputeButton}
             />
             {session.mode === 'help' || testing ? (
               <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
@@ -987,6 +1046,20 @@ export default function PracticeScreen() {
         <Text style={TYPE.body}>{t('practice:flag.sheet_body')}</Text>
         <Btn full busy={busy} onPress={() => void flag()}>
           {t('practice:flag.confirm')}
+        </Btn>
+      </Sheet>
+
+      {/* A judgement she disagrees with (issue #164): the question and its mark go, and
+          her learning state goes back to what it was before this answer. */}
+      <Sheet
+        visible={disputeOpen}
+        title={t('practice:dispute.sheet_title')}
+        closeLabel={t('common:actions.cancel')}
+        onClose={() => setDisputeOpen(false)}
+      >
+        <Text style={TYPE.body}>{t('practice:dispute.sheet_body')}</Text>
+        <Btn full busy={busy} onPress={() => void dispute()}>
+          {t('practice:dispute.confirm')}
         </Btn>
       </Sheet>
     </Screen>

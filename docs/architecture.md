@@ -1305,6 +1305,17 @@ session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
   #155, rule 5). FSRS per question is not a statement about "Brüche". The app says it in words (`apps/mobile/lib/practice/summaryLine.ts`): homework
   "Du hast N Aufgaben selbst gelöst", otherwise "Du hast N Fragen beantwortet" and only a whole
   round right at once is named — never a hit rate, never a zero (user feedback #1, #3).
+- _"Die Bewertung stimmt nicht"_ (`disputeVerdict`, migration `0062`, issue #164). The rule
+  check is certain by design, and that certainty can stand in for a key nobody verified.
+  Issue #157 catches it where arithmetic makes it decidable; everywhere else the only one who
+  can see it is the child in front of it, and she must be able to say so without arguing with
+  a tutor that is sure of itself. Three things follow, and all three are hers: the question
+  leaves this result, it leaves future practice (its key is suspect), and the spaced
+  repetition goes back to exactly what it held before this session reviewed it
+  (`session_items.state_before`, written on every close) — the history from earlier,
+  undisputed sessions stays. Different from "Frage passt nicht", which takes an unfit question
+  out while it is still **open**; this is about a judgement already given. Not during a test
+  (the results come at the end) and not for homework, which is helped with rather than judged.
 - _"Lösung zeigen"_ only after a try or a hint (`reveal_available`, 409 `try_first`; a spoken
   sentence can always be skipped), user feedback #8. A wrong choice that leaves a single untried
   option closes the question with the worked solution — shown, never right (feedback #9).

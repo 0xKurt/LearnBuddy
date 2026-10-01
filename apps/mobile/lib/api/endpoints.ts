@@ -329,6 +329,15 @@ export const reexplainItem = (id: string, itemId: string, way: ReexplainWay) =>
       schema: AnswerResponse,
     }),
   );
+/**
+ * "Die Bewertung stimmt nicht" (issue #164): the question leaves this result and future
+ * practice, and its spaced-repetition effect goes back to what it was before.
+ */
+export const disputeVerdict = (sessionId: string, itemId: string) =>
+  request('POST', `/practice/sessions/${sessionId}/items/${itemId}/dispute`, {
+    schema: SessionView,
+  });
+
 /** "Frage passt nicht": skipped here, never asked again. */
 export const flagItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/items/${itemId}/flag`, { schema: SessionView });

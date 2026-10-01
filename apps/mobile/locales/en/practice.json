@@ -1,46 +1,71 @@
 {
-  "title_fallback": "Practice",
-  "loading": "Getting your questions …",
-  "end": "End",
-  "end_label": "End practice",
-  "end_hint": "Back to Buddy. Your answers are saved – you can carry on here later.",
-  "end_hint_test": "Hands in the practice test and shows you how it went.",
-  "progress": "Question {{current}} of {{total}}",
+  "again": {
+    "shaky": "Practise the shaky ones again",
+    "topic": "Practise again: {{topics}}",
+    "harder": "More like this, a bit harder",
+    "harder_topic": "More like this, a bit harder: {{topics}}"
+  },
   "answer": {
     "label": "Your answer",
     "placeholder": "Your answer …",
     "unit_hint": "Answer in {{unit}}"
   },
+  "back_to_buddy": "Back to Buddy",
   "check": "Check",
-  "show_solution": "Show solution",
+  "choice_tried": "Already tried",
+  "dispute": {
+    "button": "This verdict is wrong",
+    "confirm": "Take the verdict back",
+    "done": "All right – that one does not count.",
+    "hint": "Takes this question and its mark back.",
+    "sheet_body": "Then I take this question out — it does not count and will not come up again. Your progress stays as it was before.",
+    "sheet_title": "Is the verdict wrong?"
+  },
+  "end": "End",
+  "end_hint": "Back to Buddy. Your answers are saved – you can carry on here later.",
+  "end_hint_test": "Hands in the practice test and shows you how it went.",
+  "end_label": "End practice",
+  "ended": "This practice has already ended.",
+  "finish_failed": "I couldn't load your result just now.",
+  "finishing": "One moment – your result is on its way.",
+  "flag": {
+    "button": "Question doesn't fit",
+    "hint": "Takes this question out; it won't come up again.",
+    "sheet_title": "Question doesn't fit?",
+    "sheet_body": "This question won't come up again.",
+    "confirm": "Take it out",
+    "done": "Got it – the question is out."
+  },
+  "help_note": "Homework – I'll give you hints, you'll find the answer yourself.",
   "hint": "Hint",
   "hint_label": "Get a hint",
-  "choice_tried": "Already tried",
-  "thread": {
-    "you": "You",
-    "buddy": "Buddy",
-    "thinking": "Buddy is looking at your answer …"
+  "image_fallback": "Picture for this task",
+  "later": "Later",
+  "later_done": "All right – that one comes back later.",
+  "later_hint": "The task stays open and comes back after the others.",
+  "loading": "Getting your questions …",
+  "next": "Next",
+  "origin_buddy": "Question from Buddy",
+  "progress": "Question {{current}} of {{total}}",
+  "reexplain": {
+    "label": "Explain it differently?",
+    "simpler": "Simpler, please",
+    "example": "With an example",
+    "why": "Why is that?",
+    "hint": "Buddy explains it again, this way.",
+    "thinking": "Buddy is explaining it another way …",
+    "title": "Explained another way"
   },
-  "verdict": {
-    "correct": "Right",
-    "partially_correct": "Almost",
-    "incorrect": "Not quite yet",
-    "unchecked": "Not checked"
+  "self_solved": {
+    "title": "Solved it yourself!",
+    "body": "You worked that out on your own."
   },
+  "show_solution": "Show solution",
+  "skip": "Skip",
   "solution": {
     "title": "Solution",
     "calm": "Take your time to look at it."
   },
-  "next": "Next",
-  "finishing": "One moment – your result is on its way.",
-  "finish_failed": "I couldn't load your result just now.",
-  "summary": {
-    "title": "Done!",
-    "secure": "Managed today without a hint: {{topics}}",
-    "shaky": "Worth another look: {{topics}}"
-  },
-  "ended": "This practice has already ended.",
-  "back_to_buddy": "Back to Buddy",
   "speak": {
     "instruction": "Say it out loud",
     "listen": "Listen",
@@ -82,40 +107,13 @@
     "word_good": "That sits!",
     "word_again": "Almost – listen again and try it."
   },
-  "help_note": "Homework – I'll give you hints, you'll find the answer yourself.",
-  "origin_buddy": "Question from Buddy",
-  "image_fallback": "Picture for this task",
-  "self_solved": {
-    "title": "Solved it yourself!",
-    "body": "You worked that out on your own."
+  "summary": {
+    "title": "Done!",
+    "secure": "Managed today without a hint: {{topics}}",
+    "shaky": "Worth another look: {{topics}}"
   },
   "summary_help": {
     "title": "Homework done"
-  },
-  "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
-  "skip": "Skip",
-  "summary_test": {
-    "title": "Practice test done!",
-    "review": "How it went",
-    "right": "Right",
-    "missed": "Not right yet",
-    "skipped": "Skipped",
-    "solution": "Answer: {{answer}}",
-    "untouched": "Not answered"
-  },
-  "again": {
-    "shaky": "Practise the shaky ones again",
-    "topic": "Practise again: {{topics}}",
-    "harder": "More like this, a bit harder",
-    "harder_topic": "More like this, a bit harder: {{topics}}"
-  },
-  "flag": {
-    "button": "Question doesn't fit",
-    "hint": "Takes this question out; it won't come up again.",
-    "sheet_title": "Question doesn't fit?",
-    "sheet_body": "This question won't come up again.",
-    "confirm": "Take it out",
-    "done": "Got it – the question is out."
   },
   "summary_line": {
     "help_one": "You solved {{count}} task yourself.",
@@ -125,16 +123,26 @@
     "all_first": "All of it right the first time.",
     "first_one": "Right the first time."
   },
-  "later": "Later",
-  "later_hint": "The task stays open and comes back after the others.",
-  "later_done": "All right – that one comes back later.",
-  "reexplain": {
-    "label": "Explain it differently?",
-    "simpler": "Simpler, please",
-    "example": "With an example",
-    "why": "Why is that?",
-    "hint": "Buddy explains it again, this way.",
-    "thinking": "Buddy is explaining it another way …",
-    "title": "Explained another way"
+  "summary_test": {
+    "title": "Practice test done!",
+    "review": "How it went",
+    "right": "Right",
+    "missed": "Not right yet",
+    "skipped": "Skipped",
+    "solution": "Answer: {{answer}}",
+    "untouched": "Not answered"
+  },
+  "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
+  "thread": {
+    "you": "You",
+    "buddy": "Buddy",
+    "thinking": "Buddy is looking at your answer …"
+  },
+  "title_fallback": "Practice",
+  "verdict": {
+    "correct": "Right",
+    "partially_correct": "Almost",
+    "incorrect": "Not quite yet",
+    "unchecked": "Not checked"
   }
 }

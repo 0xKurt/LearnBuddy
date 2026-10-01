@@ -1143,6 +1143,20 @@ export async function answerItem(
         ],
       );
       if (status !== 'open' && learnsFsrs(session.mode)) {
+        // What the spaced repetition held BEFORE this review (issue #164), so a judgement
+        // she says is wrong can be taken back without costing her the history from
+        // earlier sessions. Null means the question had none yet.
+        const before = await tx.maybeOne(
+          `select due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses,
+                  state, last_review, last_outcome
+             from item_states where item_id = $1 and learner_id = $2`,
+          [item.id, learner.id],
+        );
+        await tx.query(
+          `update session_items set state_before = $3::jsonb
+            where session_id = $1 and item_id = $2`,
+          [sessionId, item.id, before ? JSON.stringify(before) : null],
+        );
         await reviewItem(
           tx,
           learner.id,
@@ -1438,6 +1452,109 @@ export async function flagItem(
     ]);
     await finishIfComplete(tx, learnerId, sessionId, now);
     // Buddy's prepared practice and picture of her questions may include it.
+    await bumpContext(tx, learnerId);
+  });
+  return sessionView(deps.db, learnerId, sessionId, deps.storage);
+}
+
+/**
+ * "Die Bewertung stimmt nicht" (issue #164).
+ *
+ * The rule check is certain by design, and that certainty can stand in for a key nobody
+ * verified — the external audit put `8` on `6 + 4` and watched the right answer `10` be
+ * rejected. Issue #157 now catches that where arithmetic makes it decidable; everywhere
+ * else the only one who can see it is the child in front of it, and she must be able to say
+ * so without arguing with a tutor that is sure of itself.
+ *
+ * Three things happen, and all three are hers: the question leaves this result, it leaves
+ * future practice (its key is suspect, so asking it again would repeat the mistake), and
+ * the spaced repetition goes back to exactly what it held before this session reviewed it —
+ * the history from earlier, undisputed sessions stays.
+ *
+ * Different from "Frage passt nicht", which takes an unfit question out while it is still
+ * open. This is about a judgement she has already been given.
+ */
+export async function disputeVerdict(
+  deps: Deps,
+  learnerId: string,
+  sessionId: string,
+  itemId: string,
+): Promise<SessionView> {
+  const now = deps.now();
+  await deps.db.tx(async (tx) => {
+    const si = await tx.maybeOne<{
+      status: SessionItemRow['status'];
+      flagged_at: Date | null;
+      disputed_at: Date | null;
+      state_before: Record<string, unknown> | null;
+      origin: ItemRow['origin'];
+      archived_at: Date | null;
+    }>(
+      `select si.status, si.flagged_at, si.disputed_at, si.state_before, i.origin, i.archived_at
+         from session_items si
+         join items i on i.id = si.item_id
+         join practice_sessions ps on ps.id = si.session_id
+        where si.session_id = $1 and si.item_id = $2 and ps.learner_id = $3 and i.learner_id = $3
+        for update of si, i`,
+      [sessionId, itemId, learnerId],
+    );
+    if (!si) throw new AppError('not_found', 'Question not in this session');
+    // Saying it twice changes nothing — and must not undo a second time.
+    if (si.disputed_at) return;
+    if (si.status === 'open') {
+      throw new AppError('conflict', 'There is no judgement yet to disagree with', {
+        reason: 'not_judged',
+      });
+    }
+    // Her homework is helped with, never graded, so there is no verdict to dispute.
+    if (si.origin === 'homework') {
+      throw new AppError('conflict', 'Homework tasks are not judged', {
+        reason: 'dispute_not_allowed',
+      });
+    }
+    await tx.query(
+      `update session_items set disputed_at = $3, flagged_at = coalesce(flagged_at, $3)
+        where session_id = $1 and item_id = $2`,
+      [sessionId, itemId, now],
+    );
+    // The key is suspect: asking it again would repeat the same wrong judgement.
+    if (!si.archived_at) {
+      await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
+    }
+    // And the spaced repetition goes back to what it was before this review.
+    if (si.state_before) {
+      await tx.query(
+        `update item_states set due = $3, stability = $4, difficulty = $5, elapsed_days = $6,
+                                scheduled_days = $7, reps = $8, lapses = $9, state = $10,
+                                last_review = $11, last_outcome = $12
+          where item_id = $1 and learner_id = $2`,
+        [
+          itemId,
+          learnerId,
+          si.state_before.due,
+          si.state_before.stability,
+          si.state_before.difficulty,
+          si.state_before.elapsed_days,
+          si.state_before.scheduled_days,
+          si.state_before.reps,
+          si.state_before.lapses,
+          si.state_before.state,
+          si.state_before.last_review,
+          si.state_before.last_outcome,
+        ],
+      );
+    } else {
+      // There was nothing before this session: the question goes back to never practised.
+      await tx.query(`delete from item_states where item_id = $1 and learner_id = $2`, [
+        itemId,
+        learnerId,
+      ]);
+    }
+    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+      sessionId,
+      now,
+    ]);
+    // Buddy's picture of her questions and his prepared practice may hold it.
     await bumpContext(tx, learnerId);
   });
   return sessionView(deps.db, learnerId, sessionId, deps.storage);

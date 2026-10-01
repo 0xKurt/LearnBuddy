@@ -1,46 +1,71 @@
 {
-  "title_fallback": "Üben",
-  "loading": "Ich hole deine Fragen …",
-  "end": "Beenden",
-  "end_label": "Übung beenden",
-  "end_hint": "Zurück zu Buddy. Deine Antworten bleiben gespeichert – du kannst später hier weitermachen.",
-  "end_hint_test": "Gibt den Probetest ab und zeigt dir, wie es lief.",
-  "progress": "Frage {{current}} von {{total}}",
+  "again": {
+    "shaky": "Die wackligen nochmal üben",
+    "topic": "Nochmal üben: {{topics}}",
+    "harder": "Mehr davon, etwas schwerer",
+    "harder_topic": "Mehr davon, etwas schwerer: {{topics}}"
+  },
   "answer": {
     "label": "Deine Antwort",
     "placeholder": "Deine Antwort …",
     "unit_hint": "Antwort in {{unit}}"
   },
+  "back_to_buddy": "Zurück zu Buddy",
   "check": "Prüfen",
-  "show_solution": "Lösung zeigen",
+  "choice_tried": "Schon ausprobiert",
+  "dispute": {
+    "button": "Bewertung stimmt nicht",
+    "confirm": "Bewertung zurücknehmen",
+    "done": "Alles klar – die zählt nicht.",
+    "hint": "Nimmt diese Frage und ihre Wertung zurück.",
+    "sheet_body": "Dann nehme ich diese Frage raus — sie zählt nicht und kommt nicht mehr dran. Dein Lernstand bleibt, wie er vorher war.",
+    "sheet_title": "Stimmt die Bewertung nicht?"
+  },
+  "end": "Beenden",
+  "end_hint": "Zurück zu Buddy. Deine Antworten bleiben gespeichert – du kannst später hier weitermachen.",
+  "end_hint_test": "Gibt den Probetest ab und zeigt dir, wie es lief.",
+  "end_label": "Übung beenden",
+  "ended": "Diese Übung ist schon beendet.",
+  "finish_failed": "Dein Ergebnis konnte ich gerade nicht laden.",
+  "finishing": "Einen Moment – dein Ergebnis kommt gleich.",
+  "flag": {
+    "button": "Frage passt nicht",
+    "hint": "Nimmt diese Frage raus, sie kommt nicht mehr dran.",
+    "sheet_title": "Frage passt nicht?",
+    "sheet_body": "Diese Frage kommt nicht mehr dran.",
+    "confirm": "Rausnehmen",
+    "done": "Alles klar – die Frage ist raus."
+  },
+  "help_note": "Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.",
   "hint": "Tipp",
   "hint_label": "Einen Tipp bekommen",
-  "choice_tried": "Schon ausprobiert",
-  "thread": {
-    "you": "Du",
-    "buddy": "Buddy",
-    "thinking": "Buddy schaut sich deine Antwort an …"
+  "image_fallback": "Bild zur Aufgabe",
+  "later": "Später",
+  "later_done": "Alles klar – die kommt später nochmal dran.",
+  "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
+  "loading": "Ich hole deine Fragen …",
+  "next": "Weiter",
+  "origin_buddy": "Frage von Buddy",
+  "progress": "Frage {{current}} von {{total}}",
+  "reexplain": {
+    "label": "Anders erklärt?",
+    "simpler": "Einfacher bitte",
+    "example": "Mit Beispiel",
+    "why": "Warum ist das so?",
+    "hint": "Buddy erklärt es dir nochmal, auf diese Art.",
+    "thinking": "Buddy erklärt es nochmal anders …",
+    "title": "Nochmal anders erklärt"
   },
-  "verdict": {
-    "correct": "Richtig",
-    "partially_correct": "Fast",
-    "incorrect": "Noch nicht ganz",
-    "unchecked": "Nicht geprüft"
+  "self_solved": {
+    "title": "Selbst gelöst!",
+    "body": "Das hast du allein herausgefunden."
   },
+  "show_solution": "Lösung zeigen",
+  "skip": "Überspringen",
   "solution": {
     "title": "Lösung",
     "calm": "Schau sie dir in Ruhe an."
   },
-  "next": "Weiter",
-  "finishing": "Einen Moment – dein Ergebnis kommt gleich.",
-  "finish_failed": "Dein Ergebnis konnte ich gerade nicht laden.",
-  "summary": {
-    "title": "Geschafft!",
-    "secure": "Heute ohne Tipp geschafft: {{topics}}",
-    "shaky": "Schauen wir nochmal an: {{topics}}"
-  },
-  "ended": "Diese Übung ist schon beendet.",
-  "back_to_buddy": "Zurück zu Buddy",
   "speak": {
     "instruction": "Sag es laut",
     "listen": "Anhören",
@@ -82,40 +107,13 @@
     "word_good": "Das sitzt!",
     "word_again": "Fast – hör es dir nochmal an und probier es."
   },
-  "help_note": "Hausaufgabe – ich gebe dir Tipps, die Lösung findest du selbst.",
-  "origin_buddy": "Frage von Buddy",
-  "image_fallback": "Bild zur Aufgabe",
-  "self_solved": {
-    "title": "Selbst gelöst!",
-    "body": "Das hast du allein herausgefunden."
+  "summary": {
+    "title": "Geschafft!",
+    "secure": "Heute ohne Tipp geschafft: {{topics}}",
+    "shaky": "Schauen wir nochmal an: {{topics}}"
   },
   "summary_help": {
     "title": "Hausaufgabe geschafft"
-  },
-  "test_note": "Probetest – eine Antwort pro Frage, keine Tipps. Das Ergebnis siehst du am Ende.",
-  "skip": "Überspringen",
-  "summary_test": {
-    "title": "Probetest geschafft!",
-    "review": "So lief's",
-    "right": "Richtig",
-    "missed": "Noch nicht richtig",
-    "skipped": "Übersprungen",
-    "solution": "Lösung: {{answer}}",
-    "untouched": "Nicht bearbeitet"
-  },
-  "again": {
-    "shaky": "Die wackligen nochmal üben",
-    "topic": "Nochmal üben: {{topics}}",
-    "harder": "Mehr davon, etwas schwerer",
-    "harder_topic": "Mehr davon, etwas schwerer: {{topics}}"
-  },
-  "flag": {
-    "button": "Frage passt nicht",
-    "hint": "Nimmt diese Frage raus, sie kommt nicht mehr dran.",
-    "sheet_title": "Frage passt nicht?",
-    "sheet_body": "Diese Frage kommt nicht mehr dran.",
-    "confirm": "Rausnehmen",
-    "done": "Alles klar – die Frage ist raus."
   },
   "summary_line": {
     "help_one": "Du hast {{count}} Aufgabe selbst gelöst.",
@@ -125,16 +123,26 @@
     "all_first": "Alles saß gleich beim ersten Mal.",
     "first_one": "Gleich beim ersten Mal richtig."
   },
-  "later": "Später",
-  "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
-  "later_done": "Alles klar – die kommt später nochmal dran.",
-  "reexplain": {
-    "label": "Anders erklärt?",
-    "simpler": "Einfacher bitte",
-    "example": "Mit Beispiel",
-    "why": "Warum ist das so?",
-    "hint": "Buddy erklärt es dir nochmal, auf diese Art.",
-    "thinking": "Buddy erklärt es nochmal anders …",
-    "title": "Nochmal anders erklärt"
+  "summary_test": {
+    "title": "Probetest geschafft!",
+    "review": "So lief's",
+    "right": "Richtig",
+    "missed": "Noch nicht richtig",
+    "skipped": "Übersprungen",
+    "solution": "Lösung: {{answer}}",
+    "untouched": "Nicht bearbeitet"
+  },
+  "test_note": "Probetest – eine Antwort pro Frage, keine Tipps. Das Ergebnis siehst du am Ende.",
+  "thread": {
+    "you": "Du",
+    "buddy": "Buddy",
+    "thinking": "Buddy schaut sich deine Antwort an …"
+  },
+  "title_fallback": "Üben",
+  "verdict": {
+    "correct": "Richtig",
+    "partially_correct": "Fast",
+    "incorrect": "Noch nicht ganz",
+    "unchecked": "Nicht geprüft"
   }
 }

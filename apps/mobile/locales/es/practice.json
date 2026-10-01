@@ -1,46 +1,71 @@
 {
-  "title_fallback": "Práctica",
-  "loading": "Estoy cargando tus preguntas…",
-  "end": "Terminar",
-  "end_label": "Terminar la práctica",
-  "end_hint": "Volver a Buddy. Tus respuestas quedan guardadas: puedes seguir aquí más tarde.",
-  "end_hint_test": "Entrega el examen de práctica y te muestra cómo te ha ido.",
-  "progress": "Pregunta {{current}} de {{total}}",
+  "again": {
+    "shaky": "Repasar lo que aún no está seguro",
+    "topic": "Repasar: {{topics}}",
+    "harder": "Más de esto, un poco más difícil",
+    "harder_topic": "Más de esto, un poco más difícil: {{topics}}"
+  },
   "answer": {
     "label": "Tu respuesta",
     "placeholder": "Tu respuesta…",
     "unit_hint": "Respuesta en {{unit}}"
   },
+  "back_to_buddy": "Volver con Buddy",
   "check": "Comprobar",
-  "show_solution": "Ver la solución",
+  "choice_tried": "Ya la has probado",
+  "dispute": {
+    "button": "La corrección no es correcta",
+    "confirm": "Retirar la corrección",
+    "done": "Vale, esa no cuenta.",
+    "hint": "Retira esta pregunta y su nota.",
+    "sheet_body": "Entonces quito esta pregunta: no cuenta y no volverá a salir. Tu progreso se queda como estaba.",
+    "sheet_title": "¿La corrección no es correcta?"
+  },
+  "end": "Terminar",
+  "end_hint": "Volver a Buddy. Tus respuestas quedan guardadas: puedes seguir aquí más tarde.",
+  "end_hint_test": "Entrega el examen de práctica y te muestra cómo te ha ido.",
+  "end_label": "Terminar la práctica",
+  "ended": "Esta práctica ya ha terminado.",
+  "finish_failed": "No he podido cargar tu resultado ahora mismo.",
+  "finishing": "Un momento: enseguida llega tu resultado.",
+  "flag": {
+    "button": "La pregunta no encaja",
+    "hint": "Quita esta pregunta; ya no volverá a salir.",
+    "sheet_title": "¿La pregunta no encaja?",
+    "sheet_body": "Esta pregunta ya no volverá a salir.",
+    "confirm": "Quitarla",
+    "done": "Vale – la pregunta está fuera."
+  },
+  "help_note": "Deberes – te doy pistas, la solución la encuentras tú.",
   "hint": "Pista",
   "hint_label": "Recibir una pista",
-  "choice_tried": "Ya la has probado",
-  "thread": {
-    "you": "Tú",
-    "buddy": "Buddy",
-    "thinking": "Buddy está mirando tu respuesta…"
+  "image_fallback": "Imagen para esta tarea",
+  "later": "Más tarde",
+  "later_done": "Vale, ese vuelve más tarde.",
+  "later_hint": "El ejercicio sigue abierto y vuelve después de los demás.",
+  "loading": "Estoy cargando tus preguntas…",
+  "next": "Siguiente",
+  "origin_buddy": "Pregunta de Buddy",
+  "progress": "Pregunta {{current}} de {{total}}",
+  "reexplain": {
+    "label": "¿Te lo explico de otra forma?",
+    "simpler": "Más fácil",
+    "example": "Con un ejemplo",
+    "why": "¿Por qué es así?",
+    "hint": "Buddy te lo explica otra vez, de esta forma.",
+    "thinking": "Buddy lo explica de otra forma …",
+    "title": "Explicado de otra forma"
   },
-  "verdict": {
-    "correct": "Correcto",
-    "partially_correct": "Casi",
-    "incorrect": "Todavía no del todo",
-    "unchecked": "Sin comprobar"
+  "self_solved": {
+    "title": "¡Resuelto por ti!",
+    "body": "Lo has descubierto por tu cuenta."
   },
+  "show_solution": "Ver la solución",
+  "skip": "Saltar",
   "solution": {
     "title": "Solución",
     "calm": "Mírala con calma."
   },
-  "next": "Siguiente",
-  "finishing": "Un momento: enseguida llega tu resultado.",
-  "finish_failed": "No he podido cargar tu resultado ahora mismo.",
-  "summary": {
-    "title": "¡Lo has conseguido!",
-    "secure": "Hoy sin pista: {{topics}}",
-    "shaky": "Lo repasamos otra vez: {{topics}}"
-  },
-  "ended": "Esta práctica ya ha terminado.",
-  "back_to_buddy": "Volver con Buddy",
   "speak": {
     "instruction": "Dilo en voz alta",
     "listen": "Escuchar",
@@ -82,40 +107,13 @@
     "word_good": "¡Ya lo tienes!",
     "word_again": "Casi: escúchala otra vez y prueba."
   },
-  "help_note": "Deberes – te doy pistas, la solución la encuentras tú.",
-  "origin_buddy": "Pregunta de Buddy",
-  "image_fallback": "Imagen para esta tarea",
-  "self_solved": {
-    "title": "¡Resuelto por ti!",
-    "body": "Lo has descubierto por tu cuenta."
+  "summary": {
+    "title": "¡Lo has conseguido!",
+    "secure": "Hoy sin pista: {{topics}}",
+    "shaky": "Lo repasamos otra vez: {{topics}}"
   },
   "summary_help": {
     "title": "Deberes hechos"
-  },
-  "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
-  "skip": "Saltar",
-  "summary_test": {
-    "title": "¡Examen de prueba terminado!",
-    "review": "Cómo te ha ido",
-    "right": "Bien",
-    "missed": "Todavía no",
-    "skipped": "Saltada",
-    "solution": "Solución: {{answer}}",
-    "untouched": "Sin responder"
-  },
-  "again": {
-    "shaky": "Repasar lo que aún no está seguro",
-    "topic": "Repasar: {{topics}}",
-    "harder": "Más de esto, un poco más difícil",
-    "harder_topic": "Más de esto, un poco más difícil: {{topics}}"
-  },
-  "flag": {
-    "button": "La pregunta no encaja",
-    "hint": "Quita esta pregunta; ya no volverá a salir.",
-    "sheet_title": "¿La pregunta no encaja?",
-    "sheet_body": "Esta pregunta ya no volverá a salir.",
-    "confirm": "Quitarla",
-    "done": "Vale – la pregunta está fuera."
   },
   "summary_line": {
     "help_one": "Has resuelto {{count}} ejercicio por tu cuenta.",
@@ -125,16 +123,26 @@
     "all_first": "Todo bien a la primera.",
     "first_one": "Bien a la primera."
   },
-  "later": "Más tarde",
-  "later_hint": "El ejercicio sigue abierto y vuelve después de los demás.",
-  "later_done": "Vale, ese vuelve más tarde.",
-  "reexplain": {
-    "label": "¿Te lo explico de otra forma?",
-    "simpler": "Más fácil",
-    "example": "Con un ejemplo",
-    "why": "¿Por qué es así?",
-    "hint": "Buddy te lo explica otra vez, de esta forma.",
-    "thinking": "Buddy lo explica de otra forma …",
-    "title": "Explicado de otra forma"
+  "summary_test": {
+    "title": "¡Examen de prueba terminado!",
+    "review": "Cómo te ha ido",
+    "right": "Bien",
+    "missed": "Todavía no",
+    "skipped": "Saltada",
+    "solution": "Solución: {{answer}}",
+    "untouched": "Sin responder"
+  },
+  "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
+  "thread": {
+    "you": "Tú",
+    "buddy": "Buddy",
+    "thinking": "Buddy está mirando tu respuesta…"
+  },
+  "title_fallback": "Práctica",
+  "verdict": {
+    "correct": "Correcto",
+    "partially_correct": "Casi",
+    "incorrect": "Todavía no del todo",
+    "unchecked": "Sin comprobar"
   }
 }
