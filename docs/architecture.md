@@ -848,6 +848,33 @@ pronunciation 6 s (before dropping its thinking budget, 3–4 s after); preparin
 2.5–6 s (Buddy says so meanwhile). Model cost per step: $0.0003–0.0005 for a judged answer,
 $0.001–0.002 for a reply, $0.0015–0.004 for preparing a practice.
 
+## Dependencies and their advisories
+
+`pnpm audit --prod` reports around ninety findings, and the number on its own is useless: it
+counts the developer's build tools and the server's own runtime alike, and treating them the
+same produces either a false alarm or a false calm (issue #159). What matters is whether a
+finding is **reachable** from something that runs for her.
+
+Three paths, three answers:
+
+- **The API's runtime** — everything under `apps__api` in the audit's paths. This is reachable
+  code on a public endpoint and is kept clear: as of 01.10. nothing is open there. `hono`
+  (its CORS middleware is what the app uses), `@hono/node-server`, and `ws` and `protobufjs`
+  under `@google/genai` were raised to their patched versions; the last two come in through a
+  transitive range that still allows the vulnerable builds, so the floor is pinned in the root
+  `pnpm.overrides`.
+- **The app that reaches the phone** — what Metro actually bundles. A Node-only module
+  (`child_process`, `fs`) cannot be bundled into a React Native app at all, which is why the
+  two "critical" findings are not on this path: `tar` arrives through the Expo CLI and
+  `shell-quote` through the React Native devtools.
+- **Build and development tooling** — the rest. It runs on a developer's machine against the
+  repository's own files. Documented and left, with the reason, rather than counted as a
+  vulnerability of the product; what an attacker would need is already the ability to run code
+  here.
+
+Before a public release this is redone and the remaining findings are listed with their
+reasons (#159 keeps that promise separate from the internal pilot).
+
 ## Limits
 
 | What                            | Limit                                                                                                                                                                                                                                                                                                                           |
