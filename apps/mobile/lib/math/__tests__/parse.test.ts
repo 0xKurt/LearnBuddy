@@ -169,7 +169,9 @@ describe('parseMath', () => {
 
   it('draws and reads common school notation instead of glued names (M-44)', () => {
     expect(plainText(splitMath('$0{,}\\overline{3}$'))).toBe('0,3\u0305');
-    expect(speakMathText('$0{,}\\overline{3}$', DE)).toBe('0, Periode 3');
+    // The comma has no digit behind it, so it is said as a word — a bare "0," is a pause
+    // where the child has to hear "Komma" (issue #175). See ./numbers.test.ts.
+    expect(speakMathText('$0{,}\\overline{3}$', DE)).toBe('0 Komma Periode 3');
     expect(speakMathText('$\\overline{AB}$', DE)).toBe('Strecke AB');
     expect(
       speakMathText('$g \\parallel h$', { ...DE, symbols: { ...DE.symbols, '∥': 'parallel zu' } }),
@@ -205,7 +207,8 @@ describe('speakMathText', () => {
     expect(speakMathText('$x^{2} - 4x + 3 = 0$', DE)).toBe('x hoch 2 minus 4x plus 3 gleich 0');
     expect(speakMathText('$\\sqrt{16}$', DE)).toBe('Wurzel aus 16');
     expect(speakMathText('$\\sqrt[3]{27}$', DE)).toBe('dritte Wurzel aus 27');
-    expect(speakMathText('$\\sqrt[4]{16}$', DE)).toBe('4. Wurzel aus 16');
+    // "4. Wurzel" is read "vier Punkt Wurzel"; the index is an ordinal (issue #175).
+    expect(speakMathText('$\\sqrt[4]{16}$', DE)).toBe('vierte Wurzel aus 16');
     expect(speakMathText('$x_{1}$', DE)).toBe('x Index 1');
     expect(speakMathText('$2^{5}$', DE)).toBe('2 hoch 5');
   });

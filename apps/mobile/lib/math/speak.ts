@@ -45,10 +45,25 @@ export type SpokenWords = {
   sub: string;
   /** "Wurzel aus {{body}}" */
   sqrt: string;
-  /** "{{index}}. Wurzel aus {{body}}" */
+  /**
+   * "{{index}}. Wurzel aus {{body}}" — the fallback for an index the language has no
+   * ordinal for (a letter, a fraction, above 20). Clumsy, but never an invented word.
+   */
   root: string;
+  /** "{{ordinal}} Wurzel aus {{body}}" ("vierte Wurzel aus 16", "fourth root of 16") */
+  root_named: string;
+  /**
+   * The ordinal that stands in front of this language's word for "root" ("4" → vierte,
+   * fourth, quatrième). Only that one grammatical slot: German, Spanish and Italian
+   * ordinals inflect, so there is no single ordinal word per number (issue #175).
+   * The entries for 2 and 3 are not used by a root — those have their own names (`sqrt`,
+   * `cbrt`) — they are here so the set 1–20 stays complete and readable.
+   */
+  root_ordinals: Readonly<Record<string, string>>;
   /** "dritte Wurzel aus {{body}}" */
   cbrt: string;
+  /** "Komma" / "point": the decimal separator as a word, where it has no digit after it. */
+  decimal: string;
   /** "Periode {{body}}" (\overline over digits: 0,\overline{3}) */
   period: string;
   /** "Strecke {{body}}" (\overline over letters: \overline{AB}) */
@@ -194,6 +209,31 @@ function namedFraction(num: string, den: string, words: SpokenWords): string | n
     : fill(words.frac_named, { num, name: name.many });
 }
 
+/**
+ * The digits of a repeating decimal, if the next atom is one: `0{,}\overline{3}`.
+ *
+ * Positional, not guessed (rule 3): an \overline over digits right after an atom is the
+ * period of the number that atom ends with — the same kind of fixed reading as a unit
+ * before a ².
+ */
+function startsRepeatingDecimal(next: MathAtom | undefined): boolean {
+  if (next?.type !== 'overline') return false;
+  const body = next.body;
+  return body.length === 1 && body[0]?.type === 'chars' && /^[0-9\s]+$/.test(body[0].text);
+}
+
+/**
+ * The decimal separator in front of a period, as a word: "0,\overline{3}" is
+ * "0 Komma Periode 3", not "0, Periode 3" (issue #175). With no digit behind it, the comma
+ * is punctuation to every voice — a pause where the child must hear "Komma".
+ *
+ * Which character marks the separator differs by language, which word is said comes from
+ * the locale; only a separator with nothing after it is ever spoken.
+ */
+function withSpokenSeparator(said: string, words: SpokenWords): string {
+  return said.replace(/[.,]\s*$/, ` ${words.decimal} `);
+}
+
 /** A whole number right before a simple fraction: a mixed number (3½), not "3 times ½". */
 function followsWholeNumber(atoms: MathAtom[], i: number): boolean {
   let j = i - 1;
@@ -212,7 +252,8 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
             // "3 cm" before a ²: the unit is spoken by the power as one word, so only what
             // stands before it is said here.
             const absorbed = unitPower(atoms, i + 1, words);
-            return speakChars(absorbed ? absorbed.keep : a.text, words);
+            const said = speakChars(absorbed ? absorbed.keep : a.text, words);
+            return startsRepeatingDecimal(atoms[i + 1]) ? withSpokenSeparator(said, words) : said;
           }
           case 'symbol':
             return ` ${words.symbols[a.char.trim()] ?? a.char.trim()} `;
@@ -254,6 +295,11 @@ function speakAtoms(atoms: MathAtom[], words: SpokenWords): string {
             const index = speakAtoms(a.index, words);
             if (index === '2') return ` ${fill(words.sqrt, { body })} `;
             if (index === '3') return ` ${fill(words.cbrt, { body })} `;
+            // "4. Wurzel aus 16" is read "vier Punkt Wurzel"; a teacher says "vierte
+            // Wurzel" (issue #175). The ordinal comes from the locale, and an index the
+            // language has no ordinal for (a letter, 25) keeps the plain form.
+            const ordinal = /^\d+$/.test(index) ? words.root_ordinals[String(Number(index))] : null;
+            if (ordinal) return ` ${fill(words.root_named, { ordinal, body })} `;
             return ` ${fill(words.root, { index, body })} `;
           }
           case 'overline': {

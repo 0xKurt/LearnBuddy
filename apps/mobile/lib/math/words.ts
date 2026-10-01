@@ -11,12 +11,26 @@
 // speaking a dense sentence — two fractions, a squared unit, a power, a root, a temperature
 // — takes **14 µs**. The build happens once per component per language change, the speaking
 // once per message. Nothing here is on the path of a waiting child.
+//
+// Re-measured 01.10. after the root ordinals and the decimal word: the 22 lookups they add
+// cost **0.033 ms**, so the build stays in the same third of a millisecond (0.22 → 0.25 ms
+// on this run; the 0.31 ms above was the same build under more load, so it still holds as
+// the upper figure). Speaking is unchanged at ~9 µs, with a repeating decimal added to the
+// dense sentence.
 
 import { SYMBOL_KEYS, type SpokenWords } from './speak.js';
 
 /** The denominators a language names ("ein Fünftel"); anything else keeps "x durch y". */
 export const NAMED_DENOMINATORS = [
   2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 100, 1000,
+] as const;
+
+/**
+ * The root indices a language has an ordinal word for ("vierte Wurzel"); an index outside
+ * this set keeps the plain form ("n. Wurzel aus x") — clumsy, but never invented.
+ */
+export const ROOT_ORDINALS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
 ] as const;
 
 /** The unit symbols a locale names; anything else is spoken as it is written. */
@@ -50,6 +64,7 @@ export const KEEP_PLACEHOLDERS = {
   name: '{{name}}',
   frac: '{{frac}}',
   unit: '{{unit}}',
+  ordinal: '{{ordinal}}',
 } as const;
 
 /** Looks up one key under the "math" namespace ("spoken.frac", "blank.label"). */
@@ -89,7 +104,12 @@ export function spokenWordsFrom(t: Lookup): SpokenWords {
     sub: raw('sub'),
     sqrt: raw('sqrt'),
     root: raw('root'),
+    root_named: raw('root_named'),
+    root_ordinals: Object.fromEntries(
+      ROOT_ORDINALS.map((n) => [String(n), t(`spoken.root_ordinals.${n}`)]),
+    ),
     cbrt: raw('cbrt'),
+    decimal: t('spoken.decimal'),
     period: raw('period'),
     segment: raw('segment'),
     vector: raw('vector'),
