@@ -238,6 +238,15 @@ export function bootWarnings(c: Config): string[] {
       `DATABASE_CA_CERT is not set: TLS to ${host} is verified against the system roots only (Supabase needs its own CA from Dashboard → Database → SSL)`,
     );
   }
+  // Buddy's natural voice off means every reply is read with the phone's own voice — the
+  // app sounds like a robot and nothing in it says so (issue #176, owner 01.10.: "alle
+  // finden die abgehakte computerstimme gruselig"). The fallback is correct; being silent
+  // about it was not.
+  if (c.SPEECH_BACKEND !== 'google') {
+    warnings.push(
+      "SPEECH_BACKEND is not 'google': Buddy has no natural voice, so every reply is read with the phone's own",
+    );
+  }
   return warnings;
 }
 

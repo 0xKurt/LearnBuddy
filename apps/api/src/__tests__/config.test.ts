@@ -11,6 +11,10 @@ const base = {
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
   LLM_BACKEND: 'disabled',
+  // The natural voice is a boot warning of its own since issue #176; these cases are about
+  // the database, so they are set up with it on.
+  SPEECH_BACKEND: 'google',
+  GOOGLE_CLOUD_PROJECT: 'learnbuddy-test',
 };
 const LONDON = 'postgres://postgres.ref:pw@aws-1-eu-west-2.pooler.supabase.com:6543/postgres';
 const FRANKFURT = 'postgres://postgres.ref:pw@aws-0-eu-central-1.pooler.supabase.com:6543/postgres';
@@ -66,6 +70,20 @@ describe('database region', () => {
       /cannot be read/,
     );
     expect(databaseRegionWarning('postgres://p@127.0.0.1:5432/postgres')).toBeNull();
+  });
+
+  it('says at boot when Buddy has no natural voice (issue #176)', () => {
+    // Off, every reply is read with the phone's own voice — the robot everyone found
+    // creepy. The fallback stays; being quiet about it is what was wrong.
+    const off = loadConfig({
+      ...base,
+      DATABASE_URL: FRANKFURT,
+      DATABASE_CA_CERT: 'PEM',
+      SPEECH_BACKEND: 'disabled',
+    });
+    expect(bootWarnings(off)).toEqual([expect.stringMatching(/SPEECH_BACKEND/)]);
+    const on = loadConfig({ ...base, DATABASE_URL: FRANKFURT, DATABASE_CA_CERT: 'PEM' });
+    expect(bootWarnings(on)).toEqual([]);
   });
 
   it('points at the missing CA certificate for a remote database', () => {

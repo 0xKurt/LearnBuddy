@@ -166,6 +166,9 @@ export function createApp(deps: Deps): Hono<AppEnv> {
         erasure: { ok: erasureOk, ...erasure },
         model: deps.llm.available,
         push: deps.push.enabled,
+        // Whether Buddy reads with his own voice or the app falls back to the phone's
+        // (issue #176): from the outside those two sound alike, and one of them is a robot.
+        voice: deps.speech.available,
       },
       ok ? 200 : 503,
     );
