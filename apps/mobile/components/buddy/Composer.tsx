@@ -25,6 +25,7 @@ import { fadeIn } from '../../lib/theme/enter.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { growsWithText } from '../../lib/growsWithText.js';
 import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -385,23 +386,27 @@ export function Composer({
           keyboardAppearance={isDarkBackground(palette.bg) ? 'dark' : 'light'}
           accessibilityLabel={t('buddy:composer.placeholder')}
           multiline
-          // The web's textarea starts two rows tall; one row, growing with the text.
+          // Where the growing starts: the web's textarea is two rows tall by default, which
+          // makes an empty field look like a box to fill in (`growsWithText` does the rest).
           {...(Platform.OS === 'web' ? { numberOfLines: 1 } : {})}
           maxLength={MAX_MESSAGE_LENGTH}
           onSubmitEditing={send}
           textAlignVertical="center"
-          style={{
-            flex: 1,
-            minHeight: 44,
-            maxHeight: 120,
-            backgroundColor: 'transparent',
-            paddingHorizontal: SPACE.xs,
-            paddingVertical: SPACE.sm,
-            fontSize: 16,
-            lineHeight: 22,
-            color: palette.ink,
-            outlineWidth: 0,
-          }}
+          style={[
+            {
+              flex: 1,
+              minHeight: 44,
+              maxHeight: 120,
+              backgroundColor: 'transparent',
+              paddingHorizontal: SPACE.xs,
+              paddingVertical: SPACE.sm,
+              fontSize: 16,
+              lineHeight: 22,
+              color: palette.ink,
+              outlineWidth: 0,
+            },
+            growsWithText,
+          ]}
         />
         {/* The two controls at the end, in their own row.
             Two reasons, both from the owner on 01.10. (issue #187):

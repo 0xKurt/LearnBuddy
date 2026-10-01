@@ -27,6 +27,7 @@ import { hasMath } from '../../lib/math/parse.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
+import { growsWithText } from '../../lib/growsWithText.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -165,7 +166,10 @@ export function AnswerComposer({
             accessibilityLabel={t('answer.label')}
             accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
             multiline
-            // The web's textarea starts two rows tall; one row, growing with the text.
+            // Where the growing starts: the web's textarea is two rows tall by default,
+            // which makes an empty answer field look like a box to fill in. The growing
+            // itself is `growsWithText` in the style below — without it a long answer
+            // scrolled away inside one row in the browser (issue #188).
             {...(Platform.OS === 'web' && !long ? { numberOfLines: 1 } : {})}
             maxLength={MAX_ANSWER_LENGTH}
             autoCorrect={false}
@@ -180,21 +184,24 @@ export function AnswerComposer({
               if (!long && canCheck) onCheck(value.trim());
             }}
             textAlignVertical={long ? 'top' : 'center'}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              minHeight: long ? 88 : 48,
-              maxHeight: 150,
-              alignSelf: 'center',
-              backgroundColor: 'transparent',
-              paddingHorizontal: 0,
-              paddingTop: 13,
-              paddingBottom: 13,
-              fontSize: 16,
-              lineHeight: 22,
-              color: palette.ink,
-              outlineWidth: 0,
-            }}
+            style={[
+              {
+                flex: 1,
+                minWidth: 0,
+                minHeight: long ? 88 : 48,
+                maxHeight: 150,
+                alignSelf: 'center',
+                backgroundColor: 'transparent',
+                paddingHorizontal: 0,
+                paddingTop: 13,
+                paddingBottom: 13,
+                fontSize: 16,
+                lineHeight: 22,
+                color: palette.ink,
+                outlineWidth: 0,
+              },
+              growsWithText,
+            ]}
           />
           {unit ? (
             <Text

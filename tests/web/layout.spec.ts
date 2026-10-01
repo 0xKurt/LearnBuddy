@@ -131,11 +131,12 @@ test('the composer row stays one row when the field grows', async ({ page }) => 
       'wo ich anfangen soll, kannst du mir dabei helfen das zu sortieren?',
   );
   const grown = (await field.boundingBox())!.height;
-  // The web build pins the textarea to one row (`numberOfLines: 1` in Composer.tsx), so
-  // here it does NOT grow — and that is exactly why this suite was blind to the bug this
-  // test is named after (issue #188). The alignment below is checked at whatever height
-  // the browser gives; the growing case belongs on a phone until #188 is fixed.
-  console.log(`COMPOSER field ${oneLine}pt → ${grown}pt after filling`);
+  // The field must really have grown, or everything below is checked in the one state where
+  // the bug could not show itself. The browser pinned the textarea to one row until #188, and
+  // that — not the missing check — is why the suite stayed blind to #187. A second line of
+  // type is 22 pt, so 10 pt is more than rounding and less than one line: it cannot pass
+  // while the field is still single-row.
+  expect(grown - oneLine, 'the field grows with a long sentence').toBeGreaterThanOrEqual(10);
 
   const plus = (await page
     .getByRole('button', { name: 'Was möchtest du anhängen?' })
