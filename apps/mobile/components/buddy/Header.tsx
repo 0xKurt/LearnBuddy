@@ -16,6 +16,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
+import { orbSlot } from '../../lib/buddy/orbRoom.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { MAX_FONT_SCALE } from '../lb/Btn.js';
@@ -53,12 +54,21 @@ export function Header({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: SPACE.sm,
-        paddingHorizontal: SPACE.lg,
+        gap: SPACE.xs,
+        paddingLeft: SPACE.md,
+        paddingRight: SPACE.lg,
         paddingVertical: SPACE.sm,
       }}
     >
-      <BuddyOrb size={ORB} state={state} />
+      {/* A slot wide enough for the moon (issue #182). It flies well outside the orb's
+          own box — in "listen" it parks upper right, which landed on the "L" of the name.
+          The slot is as wide as the drawing really gets; the height stays the orb's, so
+          the band does not grow and the moon simply rises into the padding above it. */}
+      <View
+        style={{ width: orbSlot(ORB), height: ORB, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <BuddyOrb size={ORB} state={state} />
+      </View>
       <Text
         accessibilityRole="header"
         maxFontSizeMultiplier={MAX_FONT_SCALE}

@@ -67,6 +67,7 @@ import {
   type MoonState,
   type Sparkle,
 } from '../../lib/buddy/moon.js';
+import { orbMoves } from '../../lib/buddy/orbRoom.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE, SPRING } from '../../lib/theme/motion.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
@@ -106,7 +107,8 @@ export function BuddyOrb({
 }) {
   const reduce = useReducedMotion();
   const detail = moonDetail(size);
-  const live = breathe && !reduce;
+  // Decoration stops with reduce motion; "Buddy is working" does not (issue #182).
+  const live = orbMoves(breathe, reduce, state);
   const { pose, fade, order } = useMoon(state, level, live, detail.ghosts);
   const bob = useSharedValue(1);
   const u = (size * FILL) / ORB_R;
