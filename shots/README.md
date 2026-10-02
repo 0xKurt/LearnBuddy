@@ -6,11 +6,11 @@ Code: branch `claude/train2-proaktiv-59-169`. Echte App im Browser gegen die ech
 | Datei | Zustand |
 | --- | --- |
 | `01-offer-preparing-*` | Buddy hat eine Übung angeboten und schreibt sie noch: die Karte sieht aus wie immer — „bereite vor" wird nie als „liegt bereit" gezeigt (Regel 5). |
-| `02-offer-ready-*` | Die Fragen stehen: oben rechts „✓ Liegt bereit" (Chip, Ton `mint`, Text + Haken — Farbe ist nie das einzige Signal). Die Karte springt nicht: der Chip sitzt in der Kopfzeile. Ihr Tipp öffnet die Übung ohne weitere Anfrage. |
+| `02-offer-ready-*` | Die Fragen stehen: oben rechts „✓ Liegt bereit" (Chip, Ton `mint`, Text + Haken — Farbe ist nie das einzige Signal). Die Karte springt nicht: die Kopfzeile hält die Höhe des Chips schon vorher (`CHIP_HEIGHT`), Buddys Worte stehen in beiden Zuständen bei y 484 (390) bzw. 380 (360) — `modes.spec` prüft das. Ihr Tipp öffnet die Übung ohne weitere Anfrage. |
 | `03-practice-opened-*` | Nach „Los geht's": die erste Frage, unverändert (der Übungsbildschirm selbst wurde hier nicht umgestaltet). |
 | `composite-offer-390.png`, `composite-offer-360.png` | nebeneinander: vorbereiten hell · bereit hell · vorbereiten dunkel · bereit dunkel · geöffnet. |
 
-Design-Runden: zuerst eine graugrüne Textzeile mit dünnem Haken (wirkte wie Systemtext), dann der
+Design-Runden: zuletzt (`ef508c4`) die Höhe — in der vorigen Runde wurde die Karte mit dem Chip 7 px höher und schob das Gespräch nach oben; behoben und neu fotografiert. Davor: zuerst eine graugrüne Textzeile mit dünnem Haken (wirkte wie Systemtext), dann der
 `success`-Chip (auf Lila matschig grau), jetzt `mint` mit Haken — ruhig in beiden Themes,
 Kontrast `successText` auf `mint` ≥ 4,5 : 1.
 
