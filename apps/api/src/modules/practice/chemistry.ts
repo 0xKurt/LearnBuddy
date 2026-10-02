@@ -76,7 +76,9 @@ function digitsNormalised(s: string): string {
       out += String(sup);
       inSuper = true;
     } else if (ch === '⁺' || ch === '⁻') {
-      out += ch === '⁺' ? '+' : '-';
+      // A raised sign is a charge as surely as a caret is: "MnO₄⁻" is permanganate, never MnO
+      // with a charge of 4−. Without a superscript digit before it, the caret says so.
+      out += `${inSuper ? '' : '^'}${ch === '⁺' ? '+' : '-'}`;
       inSuper = false;
     } else {
       out += ch;
@@ -111,6 +113,22 @@ export function parseFormula(raw: string): Parsed {
   if (m) {
     // A trailing sign with two or more digits and no caret and no space: ambiguous, refuse.
     if (!caret && !spacedSign && /\d{2,}[+-]\s*$/.test(spaced)) return null;
+    // One digit before the sign after SEVERAL element symbols is the same ambiguity one size
+    // smaller: "NO3-" is nitrate (an index 3, charge 1−) and was read as NO with a charge of
+    // 3−, which made a right half-equation "unbalanced" with full confidence (issue #263). For
+    // a single element ("Fe3+", "S2-") the digit can only be the charge; for more it is not
+    // certain which, so it is refused like "SO42-" — "NO3^-" or "NO3 -" says it.
+    // A complex ion's bracket ("[Cu(NH3)4]2+") closes the formula, so a digit after it is the
+    // charge; only a digit right after an element symbol is in question.
+    if (
+      !caret &&
+      !spacedSign &&
+      m[1] !== '' &&
+      /[A-Za-z]\d[+-]\s*$/.test(spaced) &&
+      (spaced.match(/[A-Z]/g) ?? []).length > 1
+    ) {
+      return null;
+    }
     const size = Number(m[1] === '' ? '1' : m[1]) || 1;
     charge = size * (m[2] === '-' ? -1 : 1);
     body = spaced.slice(0, m.index);
@@ -190,6 +208,11 @@ export function termsOf(side: string): string[] {
   return terms.map((t) => t.trim()).filter((t) => t !== '');
 }
 
+/** "e-", "e^-", "e⁻", "e^{-}": the electron, however it is written. Never a bare "e". */
+function isElectron(raw: string): boolean {
+  return /^e\^?-$/.test(digitsNormalised(cleaned(raw)).replace(/\s+/g, ''));
+}
+
 /** One side: substances joined by "+", each with an optional coefficient. */
 function parseSide(raw: string): { atoms: Atoms; coefficients: number[] } | null {
   const parts = termsOf(raw);
@@ -202,6 +225,14 @@ function parseSide(raw: string): { atoms: Atoms; coefficients: number[] } | null
     const n = m ? Number(m[1]) : 1;
     const formula = m ? m[2]! : part;
     if (n === 0) return null;
+    // An electron in a half-equation (issue #263, redox): no atoms, one negative charge each.
+    // "Fe → Fe³⁺ + 3 e⁻" is balanced by charge exactly when the electrons are counted right,
+    // so a wrong electron count is found by the charge check below and named by it.
+    if (isElectron(formula)) {
+      coefficients.push(n);
+      charge -= n;
+      continue;
+    }
     const parsed = parseFormula(formula);
     if (!parsed) return null;
     coefficients.push(n);
@@ -227,10 +258,14 @@ export function looksLikeEquation(s: string): boolean {
 
 /** The formula of each substance with its coefficient stripped, for comparing reactions. */
 function substancesOf(side: string): string[] {
-  return termsOf(side)
-    .map((p) => p.replace(/\s+/g, '').replace(/^\d+/, ''))
-    .filter((p) => p !== '')
-    .sort();
+  return (
+    termsOf(side)
+      // The caret only says the digits after it are a charge: "Fe^3+" and "Fe3+" are one ion,
+      // "e^-" and "e-" one electron.
+      .map((p) => p.replace(/\s+/g, '').replace(/^\d+/, '').replace(/\^/g, ''))
+      .filter((p) => p !== '')
+      .sort()
+  );
 }
 
 export function parseEquation(raw: string): Equation | null {
