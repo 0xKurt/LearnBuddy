@@ -879,14 +879,28 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await shot(page, '42b-test-time-up-night');
   await page.emulateMedia({ colorScheme: 'light' });
   // The end of the review: the question she did not get to, its solution, nothing marked wrong.
-  await page
-    .getByTestId('scroll-list')
-    .evaluate((el) => el.scrollTo({ top: el.scrollHeight, behavior: 'instant' }));
-  await expect(page.getByText('3 · Nicht beantwortet')).toBeInViewport();
-  await shot(page, '42c-test-time-up-review');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await shot(page, '42d-test-time-up-review-night');
+  // Shot per phone after a swipe to the end (`shot` re-lays the page out at each size, which
+  // puts a list back to its top); the fit itself was checked at 42 above.
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const phone of PHONES) {
+      await page.setViewportSize(phone);
+      await page.mouse.move(phone.width / 2, phone.height * 0.6);
+      await expect(async () => {
+        await page.mouse.wheel(0, 600);
+        await expect(page.getByText('Lösung: Traubenzucker')).toBeInViewport({
+          ratio: 1,
+          timeout: 500,
+        });
+      }).toPass({ timeout: 10_000 });
+      await settle(page);
+      await page.screenshot({
+        path: join(SHOTS, `42c-test-time-up-review-${scheme}-${phone.width}.png`),
+      });
+    }
+  }
   await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
