@@ -37,6 +37,34 @@ anderen weiß —, aber es zeigt, dass Nummernreihenfolge und Anwendungsreihenfo
 sind. Eine Migration, die auf einer vorherigen aufbaut, darf sich darauf nicht verlassen; sie muss
 ihre Voraussetzung selbst prüfen oder in derselben Datei stehen.
 
+## Eine Migration wird NIE unter einem anderen Namen angewendet als ihrem Dateinamen
+
+Das ist keine Ordnungsfrage, es ist die Bedingung dafür, dass der Deploy-Check funktioniert.
+
+`apps/api/scripts/deploy-check.ts` prüft vor dem Promoten, dass **jede Migration auf der Platte
+angewendet ist** — hinzugefügt, nachdem zwei fehlende Migrationen die Stimmwahl einer Lernenden mit
+einem nackten Fehler umgelegt haben (#67, #79). Er vergleicht dafür den **Dateinamen ohne `.sql`**
+mit der Spalte `name` in `supabase_migrations.schema_migrations`:
+
+```sql
+select name from supabase_migrations.schema_migrations order by version
+```
+
+Wer eine Migration über das MCP-Werkzeug mit einem anderen `name` anwendet — der bloßen Kurzform
+oder dem Namen der Spalte, die sie hinzufügt —, macht sie für diesen Vergleich **unsichtbar**. Das
+Schema ist dann vollständig, aber der Wächter meldet sie als fehlend.
+
+**Stand 02.10.2026: 16 von 63 Einträgen tragen nicht ihren Dateinamen** (0057–0066 vom 30.09./01.10.,
+0072–0078 von heute). Einer ist schlimmer als die anderen: `0073_items_still_coming.sql` steht dort
+als `items_pending_until` — benannt nach der Spalte, die sie anlegt, nicht nach der Datei.
+
+Die Folge ist nicht ein Ausfall, sondern ein **blinder Wächter**: er meldet jetzt 16 angewendete
+Migrationen als fehlend, und eine echte fehlende wäre darin nicht mehr zu erkennen. Genau das war
+der Fall, für den er gebaut wurde.
+
+Das Ledger ist Produktionszustand und wird hier nicht nebenbei repariert — das ist eine
+Owner-Entscheidung.
+
 ## Beim Schreiben einer neuen Migration
 
 1. `ls` in diesem Verzeichnis, höchste Nummer + 1. Nie eine Lücke füllen.
@@ -46,3 +74,5 @@ ihre Voraussetzung selbst prüfen oder in derselben Datei stehen.
 3. Additiv: neue Tabellen, neue Spalten mit Vorgabewert, erweiterte CHECKs. Kein Drop, kein Rename
    (`docs/architecture.md` §Migrations).
 4. Der Kommentarkopf sagt, **warum** — die Spalte selbst bekommt ein `comment on column`.
+5. Beim Anwenden: `name` ist **exakt der Dateiname ohne `.sql`**, zum Beispiel
+   `0079_etwas_neues` — nie `etwas_neues`, nie der Name einer Spalte.
