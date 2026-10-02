@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   checkEquation,
+  sameSubstance,
   imbalanceOf,
   looksLikeEquation,
   needsReducing,
@@ -210,5 +211,32 @@ describe('what the rule check now decides without a model', () => {
     expect(check(time, '14:50')).toBe('unknown');
     const mono = item({ kind: 'short', answer: '3:1', subject_kind: 'biology' });
     expect(check(mono, '1:3')).toBe('unknown');
+  });
+});
+
+describe('a single substance, counted (#227 finding 6)', () => {
+  it('is the same substance however the indices are written', () => {
+    expect(sameSubstance('H2SO4', 'H₂SO₄')).toBe('same');
+    expect(sameSubstance('H2O', 'H₂O')).toBe('same');
+    expect(sameSubstance('Ca(OH)2', 'CaO2H2')).toBe('same');
+  });
+
+  it('knows a different substance for certain', () => {
+    expect(sameSubstance('H2SO4', 'H2SO3')).toBe('different');
+    expect(sameSubstance('CO2', 'CO')).toBe('different');
+    expect(sameSubstance('Fe^3+', 'Fe^2+')).toBe('different');
+  });
+
+  it('says nothing about a name, a word or a single letter', () => {
+    // Code may not turn a word into a substance.
+    expect(sameSubstance('H2O', 'Wasser')).toBe('unknown');
+    expect(sameSubstance('Wasser', 'H2O')).toBe('unknown');
+    // "He" is helium and also an English pronoun; one atom of one element is not unmistakable.
+    expect(sameSubstance('He', 'He')).toBe('unknown');
+    expect(sameSubstance('A', 'A')).toBe('unknown');
+  });
+
+  it('leaves a whole equation to the counting that is meant for it', () => {
+    expect(sameSubstance('2 H2 + O2 -> 2 H2O', '2 H2 + O2 → 2 H2O')).toBe('unknown');
   });
 });

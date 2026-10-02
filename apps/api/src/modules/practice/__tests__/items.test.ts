@@ -83,3 +83,54 @@ describe('the answer form a question may ask for (#208)', () => {
     expect(ANSWER_FORM_RULES).toMatch(/fraction/);
   });
 });
+
+describe('a multiple-choice question whose shape contradicts itself (#227)', () => {
+  const mc = (over: Record<string, unknown>) =>
+    draft({ kind: 'multiple_choice', prompt: 'Wer war der erste römische Kaiser?', ...over });
+
+  it('keeps one that holds together', () => {
+    const ok = mc({
+      answer: 'Augustus',
+      choices: ['Augustus', 'Nero', 'Cicero'],
+      correct_choice: 0,
+    });
+    expect(usableItems([ok])).toHaveLength(1);
+  });
+
+  it('drops two options that are the same word — she could pick the other right one', () => {
+    const twice = mc({
+      answer: 'Augustus',
+      choices: ['Augustus', 'augustus ', 'Nero'],
+      correct_choice: 0,
+    });
+    expect(usableItems([twice])).toEqual([]);
+  });
+
+  it('drops two options worth the same number, written two ways', () => {
+    // "0,5" and "1/2" are one option written twice; whichever she taps, one of them is wrong.
+    const twice = mc({
+      prompt: 'Welcher Wert ist die Hälfte?',
+      answer: '0,5',
+      choices: ['0,5', '$\\frac{1}{2}$', '0,25'],
+      correct_choice: 0,
+    });
+    expect(usableItems([twice])).toEqual([]);
+  });
+
+  it('drops one whose key names something other than the option it points at', () => {
+    // `answer` says Augustus, the index points at Nero. The index decides the verdict with full
+    // authority, so nobody could ever argue — and nobody can tell which the question meant.
+    const off = mc({ answer: 'Augustus', choices: ['Nero', 'Augustus'], correct_choice: 0 });
+    expect(usableItems([off])).toEqual([]);
+  });
+
+  it('accepts a key that says the same number in another notation', () => {
+    const same = mc({
+      prompt: 'Wie viel ist die Hälfte von 1?',
+      answer: '0,5',
+      choices: ['$\\frac{1}{2}$', '2', '5'],
+      correct_choice: 0,
+    });
+    expect(usableItems([same])).toHaveLength(1);
+  });
+});

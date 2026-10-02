@@ -12,7 +12,13 @@
 //   there is a near miss where spelling is the point (decision D-2: language subjects and
 //   vocabulary, or an item marked strict) and otherwise for the tutor to judge gently.
 
-import { checkEquation, type EquationFault, looksLikeEquation, sameRatio } from './chemistry.js';
+import {
+  checkEquation,
+  type EquationFault,
+  looksLikeEquation,
+  sameRatio,
+  sameSubstance,
+} from './chemistry.js';
 import { checkPath, lastValue } from './steps.js';
 import {
   canonicalMath,
@@ -415,6 +421,15 @@ export function ruleCheck(
 
   if (item.kind === 'numeric') return numericVerdict(item, text);
 
+  // A single chemical formula, counted instead of compared as text (issue #227, finding 6):
+  // "H₂SO₄" and "H2SO4" are the same substance, "H2SO3" is certainly another one. Only when
+  // BOTH sides are unmistakably a formula — a name or a single capital letter is not.
+  for (const key of [item.answer, ...item.accepted_answers]) {
+    const same = sameSubstance(key, text);
+    if (same === 'same') return 'correct';
+    if (same === 'different') return 'incorrect';
+  }
+
   // A ratio — a Punnett cross, an inheritance pattern — compared reduced, and ONLY when the
   // key is a ratio too: the same characters mean division everywhere else, and deciding which
   // from context would be guessing (rule 3, issue #175). This sits here rather than in
@@ -440,7 +455,22 @@ export function ruleCheck(
  */
 export function differentNumber(item: ItemForCheck, text: string): boolean {
   if (item.kind !== 'short' && item.kind !== 'formula' && item.kind !== 'numeric') return false;
-  return compareWithKeys(item, text) === 'different';
+  if (compareWithKeys(item, text) === 'different') return true;
+  // A typed CALCULATION whose value is already wrong (issue #227, finding 7): "17·22" where the
+  // answer is 391. The value is computed and it is not the key's, so nothing is left to judge.
+  //
+  // The asymmetry is the point: a calculation whose value MATCHES is the task typed back rather
+  // than answered (audit H-1), and that is not "wrong" — it stays for the tutor. So only a
+  // differing value is decided here, never a matching one.
+  const given = parseNumericInput(text);
+  if (given.form !== 'expression' || given.value === null) return false;
+  const keys = [item.answer, ...item.accepted_answers].map((k) => parseCanonicalKey(k));
+  if (keys.length === 0 || keys.some((k) => k.value === null || k.unit !== item.unit)) return false;
+  return keys.every(
+    (k) =>
+      Math.abs((k.value as number) - (given.value as number)) >
+      1e-9 * Math.max(1, Math.abs(k.value as number)),
+  );
 }
 
 /**

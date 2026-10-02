@@ -351,3 +351,40 @@ export function sameRatio(key: string, text: string): boolean | null {
   const b = reduce(got);
   return a.every((n, i) => n === b[i]);
 }
+
+/**
+ * Whether a parsed formula is worth treating as a SUBSTANCE rather than a word that happens to
+ * start with a capital. "He" is helium and also the English pronoun; "A" is nothing. Two atoms,
+ * or two different elements, is where a chemical formula starts being unmistakable.
+ */
+function isSubstance(p: { atoms: Map<string, number>; charge: number }): boolean {
+  // A charge is never a word: "Fe^3+" is an ion and nothing else, even though it is one atom
+  // of one element.
+  if (p.charge !== 0) return true;
+  if (p.atoms.size >= 2) return true;
+  let total = 0;
+  for (const n of p.atoms.values()) total += n;
+  return total >= 2;
+}
+
+export type SubstanceCheck = 'same' | 'different' | 'unknown';
+
+/**
+ * Her answer against a key, when BOTH are chemical formulas (issue #227, finding 6). Without
+ * this, "H₂SO₄" for a key of "H2SO4" — the same substance, written with subscripts — went to the
+ * model, and so did "H2SO3", which is certainly a different substance. Counting decides both.
+ *
+ * `unknown` whenever either side is not unmistakably a formula: a name ("Wasser"), a single
+ * capital letter, anything that does not parse. Code may not turn a word into a substance.
+ */
+export function sameSubstance(key: string, text: string): SubstanceCheck {
+  // An equation is counted by `checkEquation`; this is for a single substance.
+  if (looksLikeEquation(key) || looksLikeEquation(text)) return 'unknown';
+  const a = parseFormula(key);
+  const b = parseFormula(text);
+  if (!a || !b || !isSubstance(a) || !isSubstance(b)) return 'unknown';
+  if (a.charge !== b.charge) return 'different';
+  if (a.atoms.size !== b.atoms.size) return 'different';
+  for (const [el, n] of a.atoms) if (b.atoms.get(el) !== n) return 'different';
+  return 'same';
+}

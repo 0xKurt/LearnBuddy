@@ -8,7 +8,7 @@
 // ask just one of them when the learner asked for that direction (issue #113).
 
 import { Figure, type BarTask, type VocabDirection } from '@learnbuddy/shared-types/contracts';
-import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
+import { canonicalText, compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import type { Db } from '../../lib/db.js';
@@ -162,6 +162,44 @@ export function itemsOneByOne<S extends z.ZodTypeAny>(schema: S, max: number) {
 }
 
 /** The solution as a learner would see it (a choice's text for multiple choice). */
+/** Two options that are the same thing — as text, or as a number written two ways. */
+function sameTwice(choices: readonly string[]): boolean {
+  const seen = new Set<string>();
+  for (const c of choices) {
+    // Case-insensitive on purpose: two options that differ only in capitalisation are one
+    // option for her — she taps the other right one and is told she is wrong. `canonicalText`
+    // only folds whitespace, which is the right strictness for GRADING and too weak here.
+    const text = canonicalText(c).toLocaleLowerCase();
+    const num = parseCanonicalKey(c);
+    // A number is compared by VALUE: "0,5" and "$\\frac{1}{2}$" are one option, written twice.
+    const key = num.value !== null && !num.unit ? `n:${num.value}` : `t:${text}`;
+    if (seen.has(key)) return true;
+    seen.add(key);
+  }
+  return false;
+}
+
+/**
+ * The key and the option the index points at must be the same answer. They are written
+ * separately by the model, so they can disagree — and then the index wins and the verdict is
+ * final. An empty key says nothing and is left alone; the option is the answer there.
+ */
+function keyMatchesChoice(it: ItemDraft): boolean {
+  if (!it.choices || it.correct_choice === null) return true;
+  const chosen = it.choices[it.correct_choice];
+  if (chosen === undefined) return false;
+  // The schema already refuses an empty key (`answer` is min(1)), so there is no "no key"
+  // case to let through — this only compares the two things that exist.
+  const key = it.answer.trim();
+  if (canonicalText(key) === canonicalText(chosen)) return true;
+  const a = parseCanonicalKey(key);
+  const b = parseCanonicalKey(chosen);
+  if (a.value !== null && b.value !== null && a.unit === b.unit) {
+    return Math.abs(a.value - b.value) <= 1e-9 * Math.max(1, Math.abs(a.value));
+  }
+  return false;
+}
+
 function solutionText(it: ItemDraft): string {
   return it.kind === 'multiple_choice' && it.choices && it.correct_choice !== null
     ? (it.choices[it.correct_choice] ?? it.answer)
@@ -279,6 +317,20 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
     if (it.kind === 'multiple_choice') {
       if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
       if (it.correct_choice >= it.choices.length) continue;
+      // Only the index was ever checked, and it decides the verdict with full authority — a
+      // multiple-choice answer never reaches the tutor (issue #227, finding 2). Three ways the
+      // shape can be broken while the index is in range, and all three grade silently wrong:
+      //
+      //   - two options that are the SAME: she picks the other right one and is told she is
+      //     wrong, with no way to argue;
+      //   - two options worth the same ("0,5" and "$\\frac{1}{2}$") — the same thing, and the
+      //     model usually does not notice it wrote the answer twice;
+      //   - a key that does not match the option it points at: then `answer` says one thing and
+      //     the index another, and nobody can tell which the question meant.
+      //
+      // Dropped, not repaired — like every other item whose shape does not hold together.
+      if (sameTwice(it.choices)) continue;
+      if (!keyMatchesChoice(it)) continue;
       it.hints = it.hints.filter((h) => !mentionsSolution(h, solutionText(it), it.prompt));
       out.push(it);
       continue;

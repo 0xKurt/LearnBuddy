@@ -537,6 +537,27 @@ describe('what kind of slip a typo was (#207)', () => {
   });
 });
 
+describe('a typed calculation whose value is already wrong (#227 finding 7)', () => {
+  const sum = item({ kind: 'numeric', answer: '391' });
+
+  it('is certainly wrong when the value differs', () => {
+    expect(differentNumber(sum, '17·22')).toBe(true);
+    expect(differentNumber(sum, '17*22')).toBe(true);
+  });
+
+  it('leaves the task typed BACK alone — the value is right, so nothing is decided', () => {
+    // 17·23 is 391: she retyped the question instead of answering it (audit H-1). That is not
+    // an answer anyone can grade, and it is certainly not wrong.
+    expect(differentNumber(sum, '17·23')).toBe(false);
+    expect(check(sum, '17·23')).toBe('unknown');
+  });
+
+  it('says nothing when a unit is involved on either side', () => {
+    const withUnit = item({ kind: 'numeric', answer: '391', unit: 'cm' });
+    expect(differentNumber(withUnit, '17·22')).toBe(false);
+  });
+});
+
 describe('differentNumber (tests only)', () => {
   const short = (answer: string, accepted: string[] = []) =>
     item({ answer, accepted_answers: accepted });
