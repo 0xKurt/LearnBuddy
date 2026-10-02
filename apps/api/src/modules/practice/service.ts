@@ -890,7 +890,11 @@ export async function answerItem(
         reason: 'no_parts',
       });
     }
-    partsCheck = checkStructured(structured, input.parts);
+    // The word cells of a table (#230) follow the subject's spelling rule like any answer.
+    partsCheck = checkStructured(structured, input.parts, {
+      spelling: item.spelling,
+      subject_kind: item.subject_kind,
+    });
     if (!partsCheck) {
       throw new AppError('invalid_input', 'These parts do not fit this question', {
         reason: 'parts_mismatch',
@@ -1384,8 +1388,9 @@ export async function answerItem(
           firstTry,
           now,
           prepared,
-          // Arranging parts is tapping (issue #163), unless the app says otherwise.
-          input.via ?? (partsCheck ? 'tapped' : 'typed'),
+          // Arranging parts is tapping (issue #163), unless the app says otherwise — but the
+          // cells of a table (#230) are typed, every one of them.
+          input.via ?? (partsCheck && partsCheck.type !== 'table_fill' ? 'tapped' : 'typed'),
         ],
       );
       // A free text she did not get right produces NO review: `Again` is a statement about

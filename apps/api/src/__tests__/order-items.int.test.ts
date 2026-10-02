@@ -21,6 +21,10 @@ import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/h
 
 const dbReady = await testDatabaseAvailable();
 
+/** The elements of an order's view (the view union also holds the other structured kinds). */
+const elementsOf = (view: SessionItemView['item']['task_view'] | undefined) =>
+  view?.type === 'order' ? view.elements : [];
+
 /** The four steps of germination, in the right order — what the model writes. */
 const KEIMUNG = [
   'Der Samen nimmt Wasser auf',
@@ -82,7 +86,7 @@ describe.skipIf(!dbReady)('order items', () => {
   function idsFor(si: SessionItemView, texts: string[]): string[] {
     const view = si.item.task_view;
     expect(view?.type).toBe('order');
-    const byText = new Map((view?.elements ?? []).map((e) => [e.text, e.id]));
+    const byText = new Map(elementsOf(view).map((e) => [e.text, e.id]));
     return texts.map((x) => byText.get(x) ?? 'zz');
   }
 
@@ -122,7 +126,7 @@ describe.skipIf(!dbReady)('order items', () => {
     expect(si?.item.kind).toBe('order');
     expect(si?.item.prompt).toBe('Bring die Keimung in die richtige Reihenfolge.');
     // Shown shuffled, with ids that are the server's and say nothing about the order.
-    const shown = si?.item.task_view?.elements ?? [];
+    const shown = elementsOf(si?.item.task_view);
     expect(shown.map((e) => e.id)).toEqual(['a', 'b', 'c', 'd']);
     expect([...shown.map((e) => e.text)].sort()).toEqual([...KEIMUNG].sort());
     expect(shown.map((e) => e.text)).not.toEqual(KEIMUNG);
@@ -180,7 +184,7 @@ describe.skipIf(!dbReady)('order items', () => {
     );
     // Still open, still with its parts and without its key.
     expect(first.body.session.items[0]?.status).toBe('open');
-    expect(first.body.session.items[0]?.item.task_view?.elements).toHaveLength(4);
+    expect(elementsOf(first.body.session.items[0]?.item.task_view)).toHaveLength(4);
     expect(first.body.session.items[0]?.answer).toBeNull();
 
     // The second miss is answered by code too — no tutor call (afterEach holds that).
@@ -390,7 +394,7 @@ describe.skipIf(!dbReady)('order items', () => {
     });
     expect(started.status).toBe(201);
     const si = started.body.items[0]!;
-    expect(si.item.task_view?.elements).toHaveLength(4);
+    expect(elementsOf(si.item.task_view)).toHaveLength(4);
     const res = await answer(started.body, si.item.id, idsFor(si, KEIMUNG));
     expect(res.body.verdict).toBe('correct');
   });

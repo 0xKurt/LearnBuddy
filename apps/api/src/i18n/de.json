@@ -101,6 +101,20 @@
     "order": {
       "first_wrong": "Noch nicht ganz – schau nochmal, was ganz am Anfang steht.",
       "right_until": "Bis Schritt {{right}} stimmt's! Ab Schritt {{from}} passt die Reihenfolge noch nicht ganz."
+    },
+    "table": {
+      "right": "{{count}} von {{total}} Feldern stimmen.",
+      "right_one": "1 von {{total}} Feldern stimmt.",
+      "look_one": "Schau nochmal bei {{cell}}.",
+      "near_one": "Bei {{cell}} fehlt nur noch eine Kleinigkeit.",
+      "look_many": "Schau nochmal bei {{cells}}.",
+      "look_more": "Schau nochmal bei {{cells}} und {{more}} weiteren.",
+      "none_right": "Noch stimmt keins der Felder – fang am besten bei {{cell}} an.",
+      "cell": "„{{row}}“ / „{{column}}“",
+      "cell_in_column": "Zeile {{row}}, Spalte „{{column}}“",
+      "cell_at": "Zeile {{row}}, Spalte {{column}}",
+      "brick": "Reihe {{row}}, Stein {{n}}",
+      "and": "und"
     }
   },
   "contact": {

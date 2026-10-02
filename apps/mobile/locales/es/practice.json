@@ -177,5 +177,12 @@
     "partially_correct": "Casi",
     "incorrect": "Todavía no del todo",
     "unchecked": "Sin comprobar"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "fila {{row}}, columna {{column}}",
+    "brick": "fila {{row}}, ladrillo {{n}}",
+    "check_waits": "Solo cuando todas las casillas estén rellenas.",
+    "scroll": "Tabla, se desplaza hacia los lados"
   }
 }

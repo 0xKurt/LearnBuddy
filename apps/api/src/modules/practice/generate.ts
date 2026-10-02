@@ -44,8 +44,9 @@ import {
   StructuredDraftNoHelp,
   structuredItems,
 } from './structured.js';
+import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.12';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.13';
 
 const SUBJECT_KINDS = [
   'math',
@@ -87,9 +88,9 @@ export const GeneratedSet = z.object({
    */
   bars: z.array(BarTask).max(MAX_BAR_ITEMS).default([]),
   /**
-   * Structured items (issues #228–#232): an order to find, for now. Their own list, because
-   * their key is a shape code checks (`practice/structured.ts`, Regel 0 of #224), not a
-   * text in `answer`.
+   * Structured items (issues #228–#232): an order to find, a table to fill in. Their own
+   * list, because their key is a shape code checks (`practice/structured.ts`, Regel 0 of
+   * #224), not a text in `answer`.
    */
   structured: z.array(StructuredDraftNoHelp).max(MAX_STRUCTURED_ITEMS).default([]),
 });
@@ -227,6 +228,7 @@ Rules:
 - ${FIGURE_RULES}
 - ${BAR_RULES}
 - ${ORDER_RULES}
+- ${TABLE_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${LANGUAGE_RULES}
 - Title: short, what it is about (e.g. "Dativ", "Unité 3 – Vokabeln", "Brüche addieren").
@@ -264,8 +266,8 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
  * test). Not in homework — that is what she typed — nor in a vocabulary or speaking list.
  */
 const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
-  practice: new Set(['order']),
-  test: new Set(['order']),
+  practice: new Set(['order', 'table_fill']),
+  test: new Set(['order', 'table_fill']),
   vocab: new Set(),
   speak: new Set(),
   help: new Set(),

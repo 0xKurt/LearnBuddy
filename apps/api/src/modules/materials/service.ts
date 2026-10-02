@@ -64,7 +64,7 @@ import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 /** The structured kinds a sheet may give (issue #228: an order to find). */
-const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order']);
+const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill']);
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);

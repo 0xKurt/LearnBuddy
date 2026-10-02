@@ -101,6 +101,20 @@
     "order": {
       "first_wrong": "Pas encore tout à fait – regarde encore ce qui vient en premier.",
       "right_until": "Jusqu'à l'étape {{right}}, c'est juste ! À partir de l'étape {{from}}, l'ordre n'est pas encore tout à fait bon."
+    },
+    "table": {
+      "right": "{{count}} cases sur {{total}} sont justes.",
+      "right_one": "1 case sur {{total}} est juste.",
+      "look_one": "Regarde encore {{cell}}.",
+      "near_one": "Pour {{cell}}, il ne manque qu'un petit détail.",
+      "look_many": "Regarde encore {{cells}}.",
+      "look_more": "Regarde encore {{cells}} et {{more}} autres.",
+      "none_right": "Aucune case n'est encore juste – commence plutôt par {{cell}}.",
+      "cell": "« {{row}} » / « {{column}} »",
+      "cell_in_column": "ligne {{row}}, colonne « {{column}} »",
+      "cell_at": "ligne {{row}}, colonne {{column}}",
+      "brick": "rangée {{row}}, brique {{n}}",
+      "and": "et"
     }
   },
   "contact": {

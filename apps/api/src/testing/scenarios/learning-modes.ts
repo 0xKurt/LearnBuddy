@@ -57,6 +57,54 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Tables to fill in (issue #230): the model writes every value and marks the gaps; the
+  // server recomputes the totals and the wall (Regel 0), names the gaps and keeps the keys.
+  // Matched on her own request only, so an older topic in a later request never picks it.
+  // The first is the 4×4 of the issue's acceptance: a two-way table with its totals.
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*Vierfeldertafel/i,
+    answer: () => {
+      const v = (text: string) => ({ text, gap: false, also: [] });
+      const g = (text: string) => ({ text, gap: true, also: [] });
+      return {
+        usable: true,
+        title: 'Vierfeldertafel und Zahlenmauer',
+        subject: { name: 'Mathe', kind: 'math' },
+        items: [],
+        structured: [
+          {
+            type: 'table_fill',
+            prompt:
+              '30 Kinder der 6b sagen, ob sie einen Hund oder eine Katze haben. Fülle die Tafel aus.',
+            header: ['', 'Hund', 'kein Hund', 'Summe'],
+            rows: [
+              [v('Katze'), v('4'), g('6'), v('10')],
+              [v('keine Katze'), g('8'), v('12'), g('20')],
+              [v('Summe'), v('12'), g('18'), v('30')],
+            ],
+            family: 'totals',
+            fn: null,
+            x_in: null,
+            topic: 'Vierfeldertafel',
+            difficulty: 2,
+            prompt_lang: 'de',
+          },
+          {
+            type: 'table_fill',
+            prompt: 'Rechne die Zahlenmauer aus: Jeder Stein ist die Summe der zwei darunter.',
+            header: null,
+            rows: [[g('20')], [v('8'), g('12')], [g('3'), v('5'), v('7')]],
+            family: 'wall',
+            fn: null,
+            x_in: null,
+            topic: 'Zahlenmauern',
+            difficulty: 1,
+            prompt_lang: 'de',
+          },
+        ],
+      };
+    },
+  });
   // "Erklär mir den Dativ" — since buddy.22 the explanation is the chat answer itself
   // (owner decision 28.09.); what can be started afterwards is practice on it.
   scriptGenerations({
@@ -294,6 +342,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /keimung/i,
       answer: says('Klar – ordne mal die Keimung, Schritt für Schritt.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Keimung ordnen' } },
+      ]),
+    },
+    {
+      when: /vierfeldertafel/i,
+      answer: says('Gern – eine Vierfeldertafel und danach eine Zahlenmauer.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Vierfeldertafel ausfüllen' } },
       ]),
     },
     {

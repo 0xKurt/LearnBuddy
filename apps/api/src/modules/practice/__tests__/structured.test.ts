@@ -181,7 +181,9 @@ describe('order: what the model wrote (Regel 0)', () => {
       ],
       new Set(['order']),
     );
-    expect(items.map((i) => i.task.elements.length)).toEqual([4, 3]);
+    expect(items.map((i) => (i.task.type === 'order' ? i.task.elements.length : 0))).toEqual([
+      4, 3,
+    ]);
     expect(structuredItems([{ ...ok, elements: STEPS }], new Set())).toEqual([]);
     expect(
       structuredItems(
@@ -234,13 +236,13 @@ describe('order: her answer (Regel 0)', () => {
     const swapped = [STEPS[0]!, STEPS[1]!, STEPS[3]!, STEPS[2]!];
     const check = checkStructured(task, answerFor(task, swapped));
     expect(check?.correct).toBe(false);
-    expect(check?.first_wrong).toBe(3);
+    expect(check?.type === 'order' && check.first_wrong).toBe(3);
     expect(check?.parts.map((p) => p.ok)).toEqual([true, true, false, false]);
     expect(structuredReply('de', check!)).toBe(
       "Bis Schritt 2 stimmt's! Ab Schritt 3 passt die Reihenfolge noch nicht ganz.",
     );
     const wrongStart = checkStructured(task, answerFor(task, [...STEPS].reverse()));
-    expect(wrongStart?.first_wrong).toBe(1);
+    expect(wrongStart?.type === 'order' && wrongStart.first_wrong).toBe(1);
     expect(structuredReply('de', wrongStart!)).toBe(
       'Noch nicht ganz – schau nochmal, was ganz am Anfang steht.',
     );

@@ -37,6 +37,21 @@ import { z } from 'zod';
 import { t } from '../../i18n/index.js';
 import { dollarMathRuns } from './dollarMath.js';
 import { ItemDraft } from './items.js';
+import {
+  checkTable,
+  tableAnswerText,
+  TableDraftBase,
+  tableKeys,
+  tableProblem,
+  tableReply,
+  tableShownText,
+  tableSolution,
+  tableTaskFrom,
+  tableView,
+  type CellContext,
+  type TableCheck,
+  type TableProblem,
+} from './table.js';
 import { mentionsSolution } from './tutor.js';
 
 /** At most this many structured questions in one prepared set (a set is not a puzzle book). */
@@ -80,17 +95,24 @@ const OrderDraftWithHelp = OrderDraftBase.extend({
 });
 
 /** A structured task as the model writes it, with prepared help (photo reading). */
-export const StructuredDraft = z.discriminatedUnion('type', [OrderDraftWithHelp]);
+export const StructuredDraft = z.discriminatedUnion('type', [
+  OrderDraftWithHelp,
+  TableDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
+]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
 /** Homework: hints, but no worked solution (she never sees one there; fewer tokens). */
 export const StructuredDraftHomework = z.discriminatedUnion('type', [
   OrderDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
 /** The same without hints and worked solution (a topic: help is written in the background). */
-export const StructuredDraftNoHelp = z.discriminatedUnion('type', [OrderDraftBase]);
+export const StructuredDraftNoHelp = z.discriminatedUnion('type', [OrderDraftBase, TableDraftBase]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
 /**
@@ -117,7 +139,9 @@ export type TaskProblem =
   /** Every element is a number, but no direction was stated: the order is a guess. */
   | 'numbers_without_direction'
   /** A numeric sequence whose key is not sorted the way `numeric` says. */
-  | 'numeric_unsorted';
+  | 'numeric_unsorted'
+  /** table_fill (#230): see `table.ts`. */
+  | TableProblem;
 
 /** An element as it is compared for sameness: markup, case and surrounding marks set aside. */
 function sameness(text: string): string {
@@ -181,6 +205,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
   switch (task.type) {
     case 'order':
       return orderProblem(task);
+    case 'table_fill':
+      return tableProblem(task);
   }
 }
 
@@ -261,6 +287,8 @@ export function solutionOf(task: StructuredTask): string {
       const byId = new Map(task.elements.map((e) => [e.id, e.text]));
       return task.key.map((id) => byId.get(id) ?? '').join(ORDER_JOIN);
     }
+    case 'table_fill':
+      return tableSolution(task);
   }
 }
 
@@ -283,6 +311,38 @@ export function structuredItem(
         task,
         prompt,
         answer,
+        accepted_answers: [],
+        unit: null,
+        choices: null,
+        correct_choice: null,
+        topic: draft.topic,
+        difficulty: draft.difficulty,
+        prompt_lang: draft.prompt_lang,
+        lang: null,
+        figure: null,
+        tolerance: null,
+        spelling: null,
+        source_excerpt: null,
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
+    case 'table_fill': {
+      const task = tableTaskFrom(draft);
+      if (!task) return null;
+      const prompt = dollarMathRuns(draft.prompt);
+      // Help never gives a cell away: no hint may state a key that the table does not show
+      // already (the same check as every prepared hint, per cell).
+      const visible = `${prompt} ${tableShownText(task)}`;
+      const keys = tableKeys(task);
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !keys.some((k) => mentionsSolution(h, k, visible)),
+      );
+      return {
+        kind: 'table_fill',
+        task,
+        prompt,
+        answer: solutionOf(task),
         accepted_answers: [],
         unit: null,
         choices: null,
@@ -335,6 +395,8 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
   switch (task.type) {
     case 'order':
       return { type: 'order', elements: task.elements };
+    case 'table_fill':
+      return tableView(task);
   }
 }
 
@@ -347,13 +409,16 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = {
-  type: 'order';
-  correct: boolean;
-  /** In her order: each element she placed, and whether it is at its right place. */
-  parts: PartResult[];
-  first_wrong: number | null;
-};
+export type StructuredCheck =
+  | {
+      type: 'order';
+      correct: boolean;
+      /** In her order: each element she placed, and whether it is at its right place. */
+      parts: PartResult[];
+      first_wrong: number | null;
+    }
+  /** table_fill (#230): every gap, how many are right, and which are not yet. */
+  | TableCheck;
 
 function checkOrder(task: OrderTask, answer: OrderAnswer): StructuredCheck | null {
   const ids = new Set(task.elements.map((e) => e.id));
@@ -379,10 +444,14 @@ function checkOrder(task: OrderTask, answer: OrderAnswer): StructuredCheck | nul
 export function checkStructured(
   task: StructuredTask,
   answer: StructuredAnswer,
+  /** What the subject says about spelling (decision D-2), for kinds with written parts. */
+  ctx: CellContext = { spelling: null, subject_kind: null },
 ): StructuredCheck | null {
   switch (task.type) {
     case 'order':
       return answer.type === 'order' ? checkOrder(task, answer) : null;
+    case 'table_fill':
+      return answer.type === 'table_fill' ? checkTable(task, answer, ctx) : null;
   }
 }
 
@@ -390,9 +459,12 @@ export function checkStructured(
 export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): string {
   switch (task.type) {
     case 'order': {
+      if (answer.type !== 'order') return '';
       const byId = new Map(task.elements.map((e) => [e.id, e.text]));
       return answer.order.map((id) => byId.get(id) ?? '').join(ORDER_JOIN);
     }
+    case 'table_fill':
+      return answer.type === 'table_fill' ? tableAnswerText(task, answer) : '';
   }
 }
 
@@ -408,5 +480,7 @@ export function structuredReply(locale: string, check: StructuredCheck): string 
         ? t(locale, 'practice.order.first_wrong')
         : t(locale, 'practice.order.right_until', { right: at - 1, from: at });
     }
+    case 'table_fill':
+      return tableReply(locale, check);
   }
 }

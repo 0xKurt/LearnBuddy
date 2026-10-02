@@ -177,5 +177,12 @@
     "partially_correct": "Presque",
     "incorrect": "Pas tout à fait",
     "unchecked": "Non vérifié"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "ligne {{row}}, colonne {{column}}",
+    "brick": "rangée {{row}}, brique {{n}}",
+    "check_waits": "Seulement quand toutes les cases sont remplies.",
+    "scroll": "Tableau, défile sur le côté"
   }
 }

@@ -1688,6 +1688,49 @@ Platz 2"). Generated in a topic's practice and practice test (not homework, voca
 speaking), and read from a sheet when a task asks to order given things. At most
 `MAX_STRUCTURED_ITEMS` (4) per prepared set.
 
+**Tabelle ausfüllen** (`table_fill`, issue #230, `practice/table.ts`). A table of at most 6
+columns × 10 rows (like `TableFigure`), some cells gaps. The model writes every cell WITH its
+value and marks the gaps (`{text, gap, also}`; `also` = up to 4 accepted spellings), plus an
+optional `family` code can recompute. Code names the gaps by place (`r0c2` = row 0, column 2),
+decides how each is typed (`input`: `math` for a number or term — the math keys come up —,
+`text` for a word) and stores the keys in `items.task`; the view (`task_view`) carries the
+cells she reads and the gaps' ids and inputs, never a key. `answer` is the readable solution row
+by row ("ich: ging · du: gehst, gingst").
+
+Regel 0 on what the model wrote (`tableProblem`; every rejection is a unit test): always the
+structure — one cell per heading in each row (a wall: row k has k bricks and no headings), at
+least one gap and one visible cell, no empty key, no word key standing in its own column heading
+or row label, a solution that fits `items.answer`. And per declared family, recomputed:
+`values` — every value (shown or gap) is `fn` at its x, compiled by `shared-math`'s
+`compileExpression`, to the value's own rounding (x in the headings with one row of values, or
+in the first of two columns); `wall` — every brick is the exact sum of the two under it;
+`totals` (Vierfeldertafel) — the last column and the last row are the exact sums of their row and
+column. A table that does not add up gives no question; nothing is repaired. Truth tables are
+not recomputed yet: they pass with the structural checks only, like a conjugation table.
+
+Her answer (`checkTable`): every gap once and non-empty, else 422 `parts_mismatch`. Each cell
+goes through `ruleCheck` like a single answer — a number by `numericVerdict`, a word by
+`writtenAgainst` with its near misses and the subject's spelling rule (D-2), a term by its text
+and then by value (`checkPath` over "key ↵ answer": the same value at every probe point). A
+table cell is **closed** — it holds its key and the listed spellings and nothing else — so a
+cell no rule calls right or nearly right is not right yet, and no cell goes to the tutor
+(0 model calls per answer). In a recomputed table a cell asks for an amount, so another form of
+the right value is right (as for #162's bars); elsewhere it is nearly right (D-3), like a term
+that has the key's value but is written otherwise. The reply counts and names
+(`tableReply`): "2 von 3 Feldern stimmen. Schau nochmal bei „du“ / „Präteritum“." — a cell by
+its row label and heading, else by row and column numbers, a brick by row and place; three at
+most by name, the rest counted. Her cells stand in the thread in reading order ("6 · 8 · 20");
+the closing answer is recorded as `typed`.
+
+App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
+each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
+stand above "Prüfen" while a number cell has the focus; "Prüfen" waits until every gap holds
+something. Her cells are kept in the draft, so after a wrong check she changes only the cell
+named. The table is as wide as the screen; only columns with words to type can make it wider,
+and only then does it scroll sideways, inside itself. Generated in a topic's practice and
+practice test, and read from a sheet whose table is to be filled in (generate.v1.13,
+extract.v5.2).
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

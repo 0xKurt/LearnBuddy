@@ -101,6 +101,20 @@
     "order": {
       "first_wrong": "Non ancora del tutto: guarda di nuovo cosa viene per primo.",
       "right_until": "Fino al passo {{right}} è giusto! Dal passo {{from}} in poi l'ordine non è ancora del tutto giusto."
+    },
+    "table": {
+      "right": "{{count}} caselle su {{total}} sono giuste.",
+      "right_one": "1 casella su {{total}} è giusta.",
+      "look_one": "Guarda di nuovo {{cell}}.",
+      "near_one": "A {{cell}} manca solo un piccolo dettaglio.",
+      "look_many": "Guarda di nuovo {{cells}}.",
+      "look_more": "Guarda di nuovo {{cells}} e altre {{more}}.",
+      "none_right": "Nessuna casella è ancora giusta: inizia da {{cell}}.",
+      "cell": "«{{row}}» / «{{column}}»",
+      "cell_in_column": "riga {{row}}, colonna «{{column}}»",
+      "cell_at": "riga {{row}}, colonna {{column}}",
+      "brick": "fila {{row}}, mattone {{n}}",
+      "and": "e"
     }
   },
   "contact": {

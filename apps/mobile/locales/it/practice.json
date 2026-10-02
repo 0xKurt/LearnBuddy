@@ -177,5 +177,12 @@
     "partially_correct": "Quasi",
     "incorrect": "Non ancora",
     "unchecked": "Non controllato"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "riga {{row}}, colonna {{column}}",
+    "brick": "fila {{row}}, mattone {{n}}",
+    "check_waits": "Solo quando tutte le caselle sono compilate.",
+    "scroll": "Tabella, scorre di lato"
   }
 }

@@ -559,3 +559,65 @@ test('a written path: three lines in, the first broken step named (issue #221)',
   expect((await quick).postDataJSON()).toMatchObject({ text: '12' });
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
 });
+
+// Its own test (like the written path): the learning-modes walk is long already, and a table
+// needs only a learner and Buddy.
+test('a table to fill in: Enter walks the gaps, each cell checked on its own (issue #230)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  // ── Tabelle ausfüllen: type into the gaps, Enter walks on (issue #230) ──
+  // A 4×4 two-way table whose totals the server recomputed before storing it, then a number
+  // wall. Every cell is checked by code; the reply counts the right ones and names the rest.
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns eine Vierfeldertafel ausfüllen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('eine Vierfeldertafel und danach', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('30 Kinder der 6b', { exact: false })).toBeVisible();
+  const tableCheck = page.getByRole('button', { name: 'Prüfen' });
+  await expect(tableCheck).toBeDisabled();
+  const cell = (name: string) => page.getByLabel(name, { exact: true });
+  // Typed like on the phone: a cell, Enter, the next cell.
+  await cell('Katze, kein Hund').click();
+  await page.keyboard.type('6');
+  await page.keyboard.press('Enter');
+  await expect(cell('keine Katze, Hund')).toBeFocused();
+  await page.keyboard.type('8');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('20');
+  await page.keyboard.press('Enter');
+  // The last one wrong, and still focused: the math keys stand above "Prüfen".
+  await page.keyboard.type('17');
+  await expect(page.getByRole('toolbar')).toBeVisible();
+  await shot(page, '60-table-filled');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '60b-table-filled-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await tableCheck.click();
+  await expect(
+    page.getByText('3 von 4 Feldern stimmen. Schau nochmal bei „Summe“ / „kein Hund“.'),
+  ).toBeVisible();
+  await shot(page, '61-table-feedback');
+  // What she typed stays; she fixes the one cell.
+  await expect(cell('Katze, kein Hund')).toHaveValue('6');
+  await cell('Summe, kein Hund').fill('18');
+  await tableCheck.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // The number wall: brick on brick, centred.
+  await expect(page.getByText('Rechne die Zahlenmauer aus', { exact: false })).toBeVisible();
+  await cell('Reihe 1, Stein 1').fill('20');
+  await cell('Reihe 2, Stein 2').fill('12');
+  await cell('Reihe 3, Stein 1').fill('3');
+  await shot(page, '62-table-wall');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '62b-table-wall-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await tableCheck.click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});

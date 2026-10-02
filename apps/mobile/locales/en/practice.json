@@ -177,5 +177,12 @@
     "partially_correct": "Almost",
     "incorrect": "Not quite yet",
     "unchecked": "Not checked"
+  },
+  "table": {
+    "cell": "{{row}}, {{column}}",
+    "cell_at": "row {{row}}, column {{column}}",
+    "brick": "row {{row}}, brick {{n}}",
+    "check_waits": "Only once every cell is filled in.",
+    "scroll": "Table, scrolls sideways"
   }
 }

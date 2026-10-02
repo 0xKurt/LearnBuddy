@@ -14,6 +14,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 
 import { OrderAnswer } from './OrderAnswer.js';
+import { TableAnswer } from './TableAnswer.js';
 
 type Props = {
   view: StructuredTaskView;
@@ -28,6 +29,10 @@ export function StructuredAnswer({ view, draftKey, disabled, onSubmit }: Props) 
     case 'order':
       return (
         <OrderAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
+      );
+    case 'table_fill':
+      return (
+        <TableAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
       );
   }
 }

@@ -101,6 +101,20 @@
     "order": {
       "first_wrong": "Not quite yet – have another look at what comes first.",
       "right_until": "Right up to step {{right}}! From step {{from}} on, the order isn't quite there yet."
+    },
+    "table": {
+      "right": "{{count}} of {{total}} cells are right.",
+      "right_one": "1 of {{total}} cells is right.",
+      "look_one": "Have another look at {{cell}}.",
+      "near_one": "{{cell}} is only missing a tiny detail.",
+      "look_many": "Have another look at {{cells}}.",
+      "look_more": "Have another look at {{cells}} and {{more}} more.",
+      "none_right": "None of the cells is right yet – best start with {{cell}}.",
+      "cell": "“{{row}}” / “{{column}}”",
+      "cell_in_column": "row {{row}}, column “{{column}}”",
+      "cell_at": "row {{row}}, column {{column}}",
+      "brick": "row {{row}}, brick {{n}}",
+      "and": "and"
     }
   },
   "contact": {
