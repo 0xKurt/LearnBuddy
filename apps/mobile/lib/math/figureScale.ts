@@ -46,7 +46,10 @@ export function figureScale(fullHeight: number, maxHeight: number | undefined): 
     : 1;
 }
 
+/** The padding of a bare figure (an answer option's picture: the option card is its frame). */
+export const BARE_FIGURE_CHROME = 8;
+
 /** The width the drawing itself is given inside the card. */
-export function figureBodyWidth(width: number, scale: number): number {
-  return Math.floor((width - FIGURE_CHROME) * scale);
+export function figureBodyWidth(width: number, scale: number, chrome = FIGURE_CHROME): number {
+  return Math.floor((width - chrome) * scale);
 }

@@ -1933,6 +1933,8 @@ export async function materialItems(
       surface: null,
       // And for a structured item's parts (issue #228): they are worked with in a session.
       task_view: null,
+      // The options' pictures (issue #231) too: the list names its questions by their text.
+      choice_figures: null,
       result: resultOf(r),
     })),
   };

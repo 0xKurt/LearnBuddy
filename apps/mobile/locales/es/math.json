@@ -250,6 +250,7 @@
     "marked": "Marcados: {{list}}",
     "function_plot": "Sistema de coordenadas, x de {{x_min}} a {{x_max}}, y de {{y_min}} a {{y_max}}",
     "graph": "Gráfica de y = {{expr}}",
+    "graph_through": "Gráfica que pasa por {{list}}",
     "graph_named": "Gráfica {{label}}: y = {{expr}}",
     "points": "Puntos: {{list}}",
     "bar_chart": "Diagrama de barras: {{list}}",

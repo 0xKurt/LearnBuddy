@@ -46,7 +46,7 @@ import {
 } from './structured.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.13';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.14';
 
 const SUBJECT_KINDS = [
   'math',

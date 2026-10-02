@@ -17,6 +17,11 @@ type Props = {
    */
   label?: ReactNode;
   onPress?: () => void;
+  /**
+   * A second, quieter way in on the same target — never the only way to anything. The answer
+   * option with a picture opens it large this way, while a tap still answers (issue #231).
+   */
+  onLongPress?: () => void;
   variant?: Variant;
   size?: Size;
   full?: boolean;
@@ -121,6 +126,7 @@ export function Btn({
   children,
   label,
   onPress,
+  onLongPress,
   variant = 'primary',
   size = 'md',
   full = false,
@@ -159,6 +165,7 @@ export function Btn({
   const button = (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       disabled={off}
       accessibilityRole={selected === undefined ? 'button' : 'radio'}
       accessibilityLabel={accessibilityLabel ?? children}

@@ -51,7 +51,23 @@ export function keyAgreesWithPrompt(item: {
   prompt: string;
   answer: string;
   unit: string | null;
+  choices?: readonly string[] | null;
+  correct_choice?: number | null;
 }): boolean {
+  // Multiple choice: the option the index points at is the key the learner is judged by
+  // (#227 Nr. 2) — "$6 + 4$" with the options 8, 10, 12 and the index on 8 is the #157 case.
+  if (item.kind === 'multiple_choice') {
+    const chosen =
+      item.choices && item.correct_choice != null ? item.choices[item.correct_choice] : undefined;
+    return chosen === undefined
+      ? true
+      : keyAgreesWithPrompt({
+          kind: 'numeric',
+          prompt: item.prompt,
+          answer: chosen,
+          unit: item.unit,
+        });
+  }
   if (item.kind !== 'numeric' && item.kind !== 'short' && item.kind !== 'formula') return true;
   const asked = askedArithmetic(item.prompt);
   if (asked === null) return true;

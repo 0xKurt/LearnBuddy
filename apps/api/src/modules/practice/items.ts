@@ -14,6 +14,7 @@ import { z } from 'zod';
 import type { Db } from '../../lib/db.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { mentionsSolution } from './tutor.js';
+import { choiceProblem, MAX_FIGURE_CHOICES } from './choiceCheck.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
 import type { StructuredItem } from './structured.js';
 
@@ -36,7 +37,7 @@ export const ANSWER_FORM_RULES = `A question asks for exactly the whole answer, 
 /** When case, ß and punctuation decide (decision D-2). */
 export const SPELLING_RULES = `spelling: "strict" when the task practises spelling, capitalisation or punctuation; "gentle" when they don't matter for the answer; null otherwise (the subject decides).`;
 
-export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null.`;
+export const FIGURE_RULES = `Figures: add "figure" only when a question needs one (a fraction to see, a number line, a function graph, a bar chart, a geometric figure, a table) — as data, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"). Otherwise figure is null. Pictures as the OPTIONS of a multiple_choice ("Welcher Graph passt zu $f(x) = x^{2} - 1$?"): 2–4 choices, "choice_figures" = one figure per choice in the same order, "choices" = what each option shows in words or math (the app shows the pictures, not these texts); for graphs every option is a function_plot with exactly one function, all with the same window, no two alike, and "answer" = the right graph's function, named as in the question ("f(x) = x^2 - 1"; for a derivative "f'(x) = 2*x"). Otherwise choice_figures is null.`;
 
 /**
  * Correct language (live finding 5: "gekürt", "echtdarstellbar", "echtere/größer als 1",
@@ -89,6 +90,18 @@ export const ItemDraft = z.object({
     .describe('vocab: language of the answer; speak: language to say it in; else null'),
   // A figure over a bound (9 points, 8 columns) is dropped, never the question (audit H-15).
   figure: Figure.nullable().default(null).catch(null),
+  // No `.catch` here: an option's picture that cannot be read costs the whole question — a
+  // "which graph" question with one graph missing is not a question (#231, Regel 0).
+  choice_figures: z
+    .array(Figure)
+    .min(2)
+    .max(MAX_FIGURE_CHOICES)
+    // Optional, not defaulted: the drafts code builds itself (bars.ts, structured.ts) never
+    // have option pictures and need not say so.
+    .nullish()
+    .describe(
+      'multiple_choice only: one figure per choice, same order as choices, when the options ARE pictures ("Welcher Graph passt zu …?"); else null',
+    ),
   tolerance: z
     .number()
     .positive()
@@ -202,6 +215,26 @@ function usableFigure(f: ItemDraft['figure']): ItemDraft['figure'] {
 }
 
 /**
+ * The options' pictures as the app will draw them — all of them or the question goes (an
+ * empty list stands for "one could not be drawn": `choiceProblem` then rejects the count).
+ * Unlike the question's own figure nothing is dropped from a picture either: a graph whose
+ * function the app cannot read would be an empty option.
+ */
+function optionFigures(raw: ItemDraft): Figure[] | null {
+  if (raw.kind !== 'multiple_choice' || !raw.choice_figures) return null;
+  const drawn: Figure[] = [];
+  for (const written of raw.choice_figures) {
+    const f = usableFigure(written);
+    if (f === null) return [];
+    if (f.type === 'function_plot' && written.type === 'function_plot') {
+      if (f.functions.length !== written.functions.length) return [];
+    }
+    drawn.push(f);
+  }
+  return drawn;
+}
+
+/**
  * An explicit tolerance only for a number key, and never wider than a tenth of the key
  * (decision D-1: a wider tolerance only where the item declares one, and within bounds —
  * a model-written tolerance must not turn 242 for 240 into a right answer).
@@ -266,6 +299,7 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
       accepted_answers: raw.accepted_answers.map(dollarMathField),
       choices: raw.choices ? raw.choices.map(dollarMathField) : null,
       figure: usableFigure(raw.figure),
+      choice_figures: optionFigures(raw),
       tolerance: usableTolerance(raw),
       spelling:
         raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
@@ -278,8 +312,9 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
     // shape does not hold together.
     if (!keyAgreesWithPrompt(it)) continue;
     if (it.kind === 'multiple_choice') {
-      if (!it.choices || it.choices.length < 2 || it.correct_choice === null) continue;
-      if (it.correct_choice >= it.choices.length) continue;
+      // One question with ONE right option, or none at all (#227 Nr. 2, #231): duplicates,
+      // a key that names another option, graphs that look alike or do not fit the key.
+      if (choiceProblem(it) !== null) continue;
       it.hints = it.hints.filter((h) => !mentionsSolution(h, solutionText(it), it.prompt));
       out.push(it);
       continue;
@@ -288,7 +323,7 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
     const leaks = (h: string) =>
       [solutionText(it), ...it.accepted_answers].some((sol) => mentionsSolution(h, sol, it.prompt));
     it.hints = it.hints.filter((h) => !leaks(h));
-    const plain = { ...it, choices: null, correct_choice: null };
+    const plain = { ...it, choices: null, correct_choice: null, choice_figures: null };
     if (it.kind === 'vocab') {
       if (!it.lang || !it.prompt_lang || it.lang === it.prompt_lang) continue;
       out.push(plain);
@@ -346,8 +381,8 @@ export async function insertItems(
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution, tolerance, spelling, bar_task, task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) returning id`,
+                          hints, worked_solution, tolerance, spelling, bar_task, task, choice_figures)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -372,6 +407,7 @@ export async function insertItems(
         it.spelling,
         'bar_task' in it && it.bar_task ? JSON.stringify(it.bar_task) : null,
         task ? JSON.stringify(task) : null,
+        'choice_figures' in it && it.choice_figures ? JSON.stringify(it.choice_figures) : null,
       ],
     );
     if (asked) ids.push(row.id);

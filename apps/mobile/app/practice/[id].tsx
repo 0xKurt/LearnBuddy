@@ -148,7 +148,10 @@ function questionParts(item: ItemView, words: SpokenWords, t: TFunction): Spoken
         {
           text: questionReadText(
             item.prompt,
-            item.kind === 'multiple_choice' ? item.choices : null,
+            // Options that are pictures are not read by their texts: the text may be the
+            // very formula the question asks about (issue #231). They are seen, and a screen
+            // reader hears each one described.
+            item.kind === 'multiple_choice' && !item.choice_figures ? item.choices : null,
             words,
           ),
           // The sheet's language (a German biology sheet stays German on an English phone).
@@ -1068,6 +1071,7 @@ export default function PracticeScreen() {
           >
             <ChoiceList
               choices={choices}
+              figures={item.choice_figures}
               tried={tried}
               disabled={locked}
               onChoose={(index, choice) => void answer(item.id, { choice: index }, choice)}

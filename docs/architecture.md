@@ -2013,6 +2013,33 @@ word list, so it stays a prompt rule.
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
+- **Pictures as options** (issue #231, migration `0072_choice_figures.sql`) — a multiple choice
+  may carry `choice_figures`: one `Figure` per option, any type, parallel to `choices` (all or
+  none, 2–4, so they fit a 2×2 grid). A parallel list rather than a new shape for `choices`:
+  `choices text[]`, the index judgement, the tutor, voice matching and the shown solution stay
+  exactly as they are, and a build that does not know the field still reads the question
+  (`ItemView.choice_figures` is `.catch(null)`; an old build then shows the option texts). The
+  texts stay what the option IS ("$y = x^{2} - 1$", "Quadrat") — the tutor, a spoken answer and
+  the solution use them — but the app never shows or reads them for a picture option: the text
+  can be the very formula asked about. The card shows the drawing with its letter on the corner
+  (`ChoiceList` → `FigureChoices`); `FigureView bare` drops the legend and the frame, and the
+  screen-reader label describes a graph by the whole-number points it passes, never by its
+  formula ("C: Graph durch (−2 | 3), (−1 | 0) …"). A tap answers; holding a card opens the
+  picture in the figure viewer (`Btn onLongPress` → `ZoomViewer`) — no extra button.
+  **Regel 0 before storing** (`practice/choiceCheck.ts`, every multiple choice, #227 Nr. 2):
+  no two options the same as written (math via `canonicalMath`, words via `canonicalText` —
+  case counts, a spelling question is about it) or by value ("0,5" and "1/2"; consequence: a
+  question that offers equal values in different forms, "which is fully reduced?", is not
+  asked as multiple choice); a key that names an option by text, value or letter must name the
+  one `correct_choice` points at; a numeric prompt's arithmetic must agree with the option the
+  index points at (`keyCheck.ts`, as for numeric keys). With pictures: no two identical
+  drawings; function graphs are one function per option, each visible in its window, no two
+  within 2 % of the window's height of each other everywhere (they would LOOK alike), the
+  key (`answer`, "f(x) = x^2 - 1") must compile, exactly one graph must equal it at 61 sample
+  points, that graph must be the indexed one — and when the prompt defines the function
+  (`$f(x) = …$`), the key must be that function (a key named `f'` is held only against `f'`, so
+  "which graph is the derivative" stays possible). Any failure drops the item, never repairs it.
+  Not decided by code: whether a geometry option is symmetric, whether a word option is right.
 
 ## Voice
 

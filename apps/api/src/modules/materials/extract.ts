@@ -18,7 +18,7 @@ import {
 import { ORDER_RULES, StructuredDraft, StructuredDraftHomework } from '../practice/structured.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v5.2';
+export const EXTRACT_PROMPT_VERSION = 'extract.v5.3';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

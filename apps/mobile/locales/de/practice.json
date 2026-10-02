@@ -37,6 +37,7 @@
   },
   "check": "Prüfen",
   "choice_tried": "Schon ausprobiert",
+  "choice_zoom_hint": "Gedrückt halten zeigt das Bild groß.",
   "dispute": {
     "button": "Bewertung stimmt nicht",
     "confirm": "Bewertung zurücknehmen",
