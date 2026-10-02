@@ -52,6 +52,11 @@ type Label = { text: string; x: number; y: number; anchor: string };
 
 /** The numbers drawn on the figure, in page coordinates. */
 async function labels(page: Page): Promise<{ box: DOMRectLike; labels: Label[] }> {
+  // After a theme switch the touch layer can stand before its drawing does: wait for both.
+  await page.waitForFunction(() => {
+    const layer = document.querySelector('[data-testid="figure-touch"]');
+    return !!layer?.parentElement?.querySelector('svg text');
+  });
   return page.evaluate(() => {
     const layer = document.querySelector('[data-testid="figure-touch"]');
     const svg = layer?.parentElement?.querySelector('svg');
