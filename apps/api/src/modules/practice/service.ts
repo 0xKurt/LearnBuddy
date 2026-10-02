@@ -54,6 +54,7 @@ import {
   type PartsCheck,
   type PartsPlace,
 } from './parts.js';
+import { graphAgain, graphTaskOf } from './graph.js';
 import {
   checkStaffLine,
   staffAgain,
@@ -180,6 +181,12 @@ export type ItemRow = {
    * question has at most one computed source (migration 0078). Read through `staffTaskOf`.
    */
   staff_task: unknown;
+  /**
+   * The reviewed diagram or tree this question was COMPUTED from (issues #247, #256), or null.
+   * Never set together with the other two computed sources (migration 0093). Read through
+   * `graphTaskOf`.
+   */
+  graph_task: unknown;
 };
 
 export type SessionRow = {
@@ -766,7 +773,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.parts_task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.parts_task, i.listen_task, i.staff_task, i.graph_task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -1238,6 +1245,8 @@ export async function answerItem(
   if (!text) throw new AppError('invalid_input', 'Empty answer');
   // The reviewed task this question was computed from, if any (issue #162).
   const barTask = taskOf(item.bar_task);
+  // The reviewed diagram or tree this question was computed from, if any (issues #247, #256).
+  const graphTask = graphTaskOf(item.graph_task);
   // Every part compared, by code, with no model in any branch (`parts.ts`).
   const partsCheck: PartsCheck | null =
     partsTask !== null && filled !== null ? checkParts(partsTask, filled, item.id, item) : null;
@@ -1279,7 +1288,11 @@ export async function answerItem(
         : ruleCheck(
             // A question code computed asks for an amount, so any form of it is right (#162);
             // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening: listenTask !== null },
+            {
+              ...item,
+              form_free: barTask !== null || graphTask !== null,
+              listening: listenTask !== null,
+            },
             { text: input.text ?? null, choice: input.choice ?? null },
           );
   // A plain number with another value is a wrong answer for sure — except in homework,
@@ -1453,6 +1466,18 @@ export async function answerItem(
         staffCheck !== null
           ? staffLineReply(learner.locale, staffCheck, item.attempts)
           : staffAgain(learner.locale, staffTask),
+      gaveHint: false,
+      revealed: false,
+    };
+  } else if (givesHints(session.mode) && rule === 'incorrect' && graphTask !== null) {
+    // A wrong answer on a diagram or tree gets a fixed, kind line from code — for the reason the
+    // note line does (`staffAgain` above): the tutor does not SEE the drawing, and a model writing
+    // about a picture it does not have is the confident wrong statement rule 5 forbids. The third
+    // miss explains the solution, as everywhere; the branch above comes first.
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: graphAgain(learner.locale, graphTask),
       gaveHint: false,
       revealed: false,
     };

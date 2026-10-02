@@ -11,6 +11,7 @@
 
 import {
   BarTask,
+  GraphTask,
   MAX_LISTEN_QUESTIONS,
   StaffTask,
   type DifficultyWish,
@@ -59,6 +60,7 @@ import {
   givenUpOnPreparing,
   type PracticeLearner,
 } from './service.js';
+import { GRAPH_RULES, MAX_GRAPH_ITEMS, graphItems } from './graph.js';
 import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
 
 export const GENERATE_PROMPT_VERSION = 'generate.v1.13';
@@ -121,6 +123,13 @@ export const GeneratedSet = z.object({
    * disagrees with the staff that is drawn (`practice/staff.ts`).
    */
   staffs: z.array(StaffTask).max(MAX_STAFF_ITEMS).default([]),
+  /**
+   * Diagrams and trees (issues #247, #256): boxes and arrows, a probability tree, a pedigree, an
+   * automaton — as data with aliases. A separate list for the reason the bars and staffs are one:
+   * the model supplies the graph and nothing about the question; code checks it, lays it out and
+   * computes the question and its key (`practice/graph.ts`).
+   */
+  graphs: z.array(GraphTask).max(MAX_GRAPH_ITEMS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -273,6 +282,7 @@ Rules:
 - ${FIGURE_RULES}
 - ${BAR_RULES}
 - ${STAFF_RULES}
+- ${GRAPH_RULES}
 - ${PARTS_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
@@ -427,6 +437,7 @@ async function generateSet(
     // One unusable task costs its own question, never the whole set (audit H-14/H-15).
     bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
     staffs: itemsOneByOne(StaffTask, MAX_STAFF_ITEMS),
+    graphs: itemsOneByOne(GraphTask, MAX_GRAPH_ITEMS),
     // The same for the listening questions: one that does not fit its schema costs itself, not
     // the text. A listening task that does not fit at all is no listening task, and the run then
     // has nothing — which the caller says plainly (`not_usable`, issue #210).
@@ -443,7 +454,7 @@ async function generateSet(
   // field that is there gets filled in.
   const forModel =
     input.kind === 'listen'
-      ? setSchema.omit({ bars: true, items: true })
+      ? setSchema.omit({ bars: true, items: true, graphs: true })
       : setSchema.omit({ listen: true });
   let handedOver = false;
   const onPartial = opts.onFirstItems
@@ -526,6 +537,8 @@ type Prepared = {
   listening: ItemDraft[];
   /** Note lines, as questions code wrote from the tasks the model chose (issue #226). */
   staffs: StoredItem[];
+  /** Diagrams and trees, as questions code wrote from the graphs the model gave (#247, #256). */
+  graphs: StoredItem[];
 };
 
 /**
@@ -603,11 +616,19 @@ function preparedFrom(
     input.kind === 'practice' || input.kind === 'test'
       ? staffItems(set.staffs, learner.locale)
       : [];
+  // Diagrams and trees (issues #247, #256): in practice and in a test, like the note lines —
+  // reading a cycle, a tree or a pedigree is what a test asks, and every answer here is decided
+  // by code. Not in homework (what she typed is the task) and not in a vocabulary list.
+  const graphs =
+    input.kind === 'practice' || input.kind === 'test'
+      ? graphItems(set.graphs, learner.locale)
+      : [];
   return {
     items,
     bars,
     listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [],
     staffs,
+    graphs,
   };
 }
 
@@ -707,7 +728,7 @@ async function prepareTopic(
     head,
     // Only the first questions start the run — never the bars, which belong last. A listening run
     // never starts early (it has no `items` at all), so there is nothing of its own to hold back.
-    { items: first.items.slice(0, FIRST_BATCH), bars: [], listening: [], staffs: [] },
+    { items: first.items.slice(0, FIRST_BATCH), bars: [], listening: [], staffs: [], graphs: [] },
     { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
   );
   deps.background(async () => {
@@ -745,7 +766,8 @@ async function store(
     prepared.items.length +
       prepared.bars.length +
       prepared.listening.length +
-      prepared.staffs.length ===
+      prepared.staffs.length +
+      prepared.graphs.length ===
       0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
@@ -759,7 +781,13 @@ async function store(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...prepared.items, ...prepared.bars, ...prepared.listening, ...prepared.staffs],
+        [
+          ...prepared.items,
+          ...prepared.bars,
+          ...prepared.listening,
+          ...prepared.staffs,
+          ...prepared.graphs,
+        ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );
@@ -825,8 +853,10 @@ async function addTheRest(
   }
   const prepared = preparedFrom(set, learner, input, ownSheets, deps.speech);
   const known = new Set(head.slice(0, FIRST_BATCH).map((i) => samePrompt(i.prompt)));
-  const rest: ItemDraft[] = [];
-  for (const it of [...prepared.items, ...prepared.bars]) {
+  const rest: StoredItem[] = [];
+  // The computed ones too: a streamed run starts on its first ordinary questions, and the note
+  // lines and diagrams of the same answer belong to the rest (#226, #247, #256).
+  for (const it of [...prepared.items, ...prepared.bars, ...prepared.staffs, ...prepared.graphs]) {
     const key = samePrompt(it.prompt);
     if (known.has(key)) continue;
     known.add(key);

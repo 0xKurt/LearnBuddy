@@ -2025,6 +2025,61 @@ Bauweise verhindern soll). Höchstens `MAX_STAFF_ITEMS` (8) je vorbereitetem Sat
 Bruchbalken, weil eine Notenzeile keine Beigabe ist, sondern die Frage selbst — in `practice` und im
 Probetest, nicht in der Hausaufgabenhilfe.
 
+**Schemata und Bäume — Kästchen mit Pfeilen, Baumdiagramm, Stammbaum, Automat**
+(`contracts/graph.ts`, `contracts/graphLayout.ts`, `practice/graph.ts`,
+`components/math/GraphFigure.tsx`, Migration `0093_graph_tasks.sql`; Issues #247 und #256 aus der
+Analyse #224). Kreisläufe, Nahrungsketten, Wirkungsgefüge, Baumdiagramme, Stammbäume und Automaten
+gab es bis hierher nur als Fotoausschnitt. Dieselbe Bauweise wie Bruchbalken und Notenzeile: **das
+Modell liefert den Graphen als Daten, Code prüft, legt aus, zeichnet und rechnet.** Ein `GraphTask`
+(Liste `graphs` im Generator, höchstens `MAX_GRAPH_ITEMS` = 4) hat Knoten mit selbst gewählten
+Kürzeln (`n1`, `p3` — Regel 2: Code löst sie auf, das Modell schreibt nie eine Id), Kanten zwischen
+diesen Kürzeln und die Art der Frage — **kein** Feld für Fragetext, Schlüssel, Optionen oder Figur.
+Keine der vier Figuren steht in `ModelFigure`.
+
+| `g`        | was das Modell liefert                                             | was Code prüft (sonst keine Frage)                                                                                                                                               | Antwort                                                                                   |
+| ---------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `diagram`  | Titel, `chain`/`cycle`/`web`, Kästchen, Pfeile, Lücken             | eindeutige Kästchen, keine Kante ins Leere, zusammenhängend, Kreislauf geschlossen, Kette ohne Zyklus, Lückenwort nirgends sonst sichtbar (Kästchen, Pfeil, Titel), Layout passt | Lücke → `table_fill` je Feld · Reihenfolge → `order` · Pfeil-Beschriftung → `match_pairs` |
+| `prob`     | Titel, Äste mit Elternkürzel und `"1/3"`/`"0.25"`                  | ≤ 3 Stufen, 2–3 Äste je Knoten, die Äste jedes Knotens ergeben **exakt** 1 (Brüche mit `bigint`, kein Gleitkomma), Pfade unterscheidbar                                          | Pfad- oder Gesamtwahrscheinlichkeit / versteckter Ast → `numeric`, `form_free`            |
+| `pedigree` | Personen (Geschlecht, Merkmal, Eltern), Erbgang                    | ein Gründerpaar, eingeheiratete Partner, ≤ 4 Generationen; **alle Genotyp-Belegungen** für AD/AR/XD/XR aufgezählt — der genannte Erbgang muss der **einzige** verträgliche sein  | Erbgang (4 Optionen) / Genotyp, nur wenn genau einer möglich ist → `multiple_choice`      |
+| `dfa`      | Zustände (erster = Start, Endzustände), Übergänge, Wort, `accepts` | deterministisch, ≤ 3 Zeichen, alles erreichbar; der Lauf des Worts braucht nur vorhandene Übergänge; `accepts` muss der Rechnung entsprechen                                     | „Wird das Wort akzeptiert?" → `multiple_choice`                                           |
+
+Wo das Modell doch einen Schlüssel nennt (Erbgang, `accepts`), ist das eine **Behauptung, die Code
+nachrechnet** — stimmt sie nicht, entsteht keine Frage (Regel 0 in beide Richtungen: verwerfen, nie
+reparieren). Ein fehlender Übergang heißt nicht „verworfen": ob er in einen Fehlerzustand führt, ist
+eine Konvention, und Code rät keine Konvention. Der Genotyp wird **angetippt** und nicht getippt,
+obwohl #256 Text vorschlägt: „aa" und „Aa" unterscheiden sich nur in der Großschreibung, und die
+behandeln die Textregeln als Beinahe-Treffer — ein Genotyp darf nicht durch diese Tür.
+
+_Das Layout macht Code_ (`graphLayout.ts`), **eine** Rechnung für beide Seiten: der Server ruft sie,
+bevor er eine Frage anlegt, und verwirft jede Figur, die in der logischen Breite `LAYOUT_W` = 280
+(etwa die Breite einer Fragekarte auf 360 pt) nicht ohne Überlappung passt; die App zeichnet genau,
+was dieselbe Rechnung liefert, und skaliert per `viewBox`. Kette und Kreislauf liegen auf einem
+Raster (Kette als Schlange, Kreislauf am Rand entlang im Uhrzeigersinn, 2 oder 3 Spalten), ein Netz
+in Schichten nach längstem Pfad (höchstens 3 nebeneinander, 4 übereinander), ein Baumdiagramm von
+links nach rechts mit der Wahrscheinlichkeit bei 60 % des Asts, ein Stammbaum als aufgeräumter Baum
+aus Familien (Nummern in Leserichtung), ein Automat als Reihe mit Bögen. Text wird geschätzt, nicht
+gemessen — großzügig, damit eine echte Schrift nie breiter ist —, deterministisch umbrochen, und ein
+zu langes Wort bekommt einen Trennstrich. Alle Kästchen einer Figur sind gleich hoch. Geprüft wird:
+nichts überlappt, kein Pfeil läuft durch ein fremdes Kästchen, keine Nummer sitzt auf einem Kästchen,
+kein Text läuft aus seinem Kästchen (`__tests__/graph.test.ts` für 3–8 Kästchen mit 40-Zeichen-Texten).
+
+Eine falsche Antwort bekommt eine feste Zeile von Code (`graphAgain`) — der Tutor sieht die Zeichnung
+nicht, genau wie bei der Notenzeile. Mit dem Screenreader ist jede Figur ein Satz mit demselben
+Inhalt („Schema mit 5 Kästchen: Pfeil 1 von Meer zu leeres Kästchen 1 …", „Person 4: Frau, mit
+Merkmal, Kind von 1 und 2"). Gefüllt heißt im Stammbaum „mit Merkmal" — die Füllung ist nie das
+einzige Signal. In `practice` und im Probetest, nicht in der Hausaufgabenhilfe.
+
+_Schemagröße_ (#281): `GraphTask` ist **eine** Union mit vier Zweigen und **einer** nullable Hülle
+(`parent` im Baumdiagramm); leere Listen statt nullable Felder, kurze Namen. Das `explain`-Schema
+wächst damit von 21 575 auf 25 209 Zeichen (+17 %). Native Token auf Vertex sind **nicht gemessen**
+(kein Zugang in dieser Sitzung).
+
+**Ausdrücklich draußen:** **Struktogramm und Programmablaufplan** (#247 nennt sie; geschachtelte
+Blöcke und Verzweigungen sind eine eigene Figur, kein Kästchen-Pfeil-Graph); ein Schema mit frei
+gesetzten Positionen (`free` aus dem Plan von #247 — die Positionen wären wieder Modellausgabe, das
+Netz mit Schichten deckt Nahrungsnetz und Wirkungsgefüge ab); Stammbäume, in denen zwei Familien
+zusammenheiraten, und zweite Ehen; nichtdeterministische Automaten; Vierfeldertafel ↔ Baum.
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

@@ -37,6 +37,12 @@ import { localDecimal } from '../../lib/numbers.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
+import {
+  AutomatonPicture,
+  DiagramPicture,
+  PedigreePicture,
+  ProbTreePicture,
+} from './GraphFigure.js';
 import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
 import { useSpokenWords } from './useSpokenMath.js';
@@ -145,6 +151,15 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
     // Zeichnung die Fläche ist, auf die sie schreibt — eine Figur ist, was sie LIEST.
     case 'staff':
       return <StaffLine fig={figure} width={width} />;
+    // Schemata und Bäume (issues #247, #256): laid out by the shared `graphLayout.ts`.
+    case 'diagram':
+      return <DiagramPicture fig={figure} width={width} />;
+    case 'prob_tree':
+      return <ProbTreePicture fig={figure} width={width} />;
+    case 'pedigree':
+      return <PedigreePicture fig={figure} width={width} />;
+    case 'automaton':
+      return <AutomatonPicture fig={figure} width={width} />;
   }
 }
 
@@ -1090,5 +1105,71 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
     case 'staff':
       return describeStaff(figure, t);
+    // The same content in words, so the question can be answered with a screen reader too — an
+    // empty box, a hidden branch and a filled symbol are said, never only drawn.
+    case 'diagram': {
+      const box = (i: number) => {
+        const b = figure.boxes[i];
+        if (!b) return '';
+        return b.blank ? t('figure.diagram_blank', { n: b.text }) : speak(b.text);
+      };
+      const parts = [t('figure.diagram', { count: figure.boxes.length })];
+      parts.push(
+        list(
+          figure.arrows.map((a) =>
+            a.tag
+              ? t('figure.diagram_arrow_tag', { from: box(a.from), to: box(a.to), tag: a.tag })
+              : t('figure.diagram_arrow', { from: box(a.from), to: box(a.to) }),
+          ),
+        ),
+      );
+      figure.legend.forEach((label, i) =>
+        parts.push(t('figure.diagram_legend', { tag: i + 1, label: speak(label) })),
+      );
+      return parts.join('. ');
+    }
+    case 'prob_tree': {
+      const path = (k: number): string[] => {
+        const n = figure.nodes[k];
+        if (!n) return [];
+        return [...(n.parent >= 0 ? path(n.parent) : []), n.text];
+      };
+      const branch = (k: number) => {
+        const n = figure.nodes[k];
+        const p = n?.p === '?' ? t('figure.tree_unknown') : speak(n?.p ?? '');
+        return t('figure.tree_branch', { path: path(k).join(' – '), p });
+      };
+      return [t('figure.tree'), ...figure.nodes.map((_, k) => branch(k))].join('. ');
+    }
+    case 'pedigree': {
+      const parts = [t('figure.pedigree', { count: figure.people.length })];
+      figure.people.forEach((p, k) => {
+        const bits = [
+          t(p.sex === 'm' ? 'figure.pedigree_man' : 'figure.pedigree_woman', { n: k + 1 }),
+          t(p.ill ? 'figure.pedigree_ill' : 'figure.pedigree_well'),
+        ];
+        if (p.parents.length === 2) {
+          bits.push(
+            t('figure.pedigree_child', {
+              a: (p.parents[0] ?? 0) + 1,
+              b: (p.parents[1] ?? 0) + 1,
+            }),
+          );
+        }
+        parts.push(bits.join(', '));
+      });
+      return parts.join('. ');
+    }
+    case 'automaton': {
+      const accepting = figure.states.flatMap((s, k) => (s.accept ? [`q${k}`] : []));
+      return [
+        t('figure.automaton', { count: figure.states.length, accept: list(accepting) }),
+        list(
+          figure.moves.map((m) =>
+            t('figure.automaton_move', { from: `q${m.from}`, to: `q${m.to}`, syms: m.syms }),
+          ),
+        ),
+      ].join('. ');
+    }
   }
 }

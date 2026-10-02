@@ -23,6 +23,7 @@ import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
 import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
 import { scriptCoreLoop } from './scenarios/core-loop.js';
+import { scriptGraphs } from './scenarios/graphs.js';
 import { scriptLearningModes } from './scenarios/learning-modes.js';
 import { scriptTour } from './scenarios/tour.js';
 import { installGenerations } from './scenarios/generations.js';
@@ -52,6 +53,9 @@ async function main(): Promise<void> {
   const model = process.env.LB_DEV_MODEL === 'disabled' ? new DisabledGateway() : scripted;
   if (model === scripted) {
     scriptCoreLoop(scripted);
+    // Before the learning modes: its rules are narrow ("Schemata", "Automaten"), and the first
+    // rule that matches wins.
+    scriptGraphs();
     scriptLearningModes(scripted);
     scriptTour(scripted);
     // Chat answers are matched by what the learner wrote and prepared practice by what was
