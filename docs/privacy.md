@@ -104,6 +104,7 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
 | Voice-picker sample audio (fixed app sentences, no learner content)                                                       | `speech_cache_shared` (key = hash of voice, rate and text)                                | **90 days**, deleted by the scheduler; not learner data — shared by all accounts                                                                                                                                                                                                                                                                                                                                               |
 | Transcribed text and questions from the material                                                                          | `materials`, `items`                                                                      | until the material (or the question) or the account is deleted: deleting erases the text, the questions and the answers given to them within minutes; what remains is a row with ids, dates and counts                                                                                                                                                                                                                         |
 | Search passages of the transcription and their embedding vectors (hybrid material search, issue #23)                      | `material_passages`                                                                       | derived learning content like the transcription — deleted with the material (cascade) and in the account deletion's content stage; the embedding is computed on Vertex AI (EU region) and stored only here                                                                                                                                                                                                                     |
+| Spots of a page the reading could not decide, the readings offered and the one she picked (issue #164)                    | `material_unclear_spots`                                                                  | content of the sheet — deleted with the material (`purgeContent`) and with the account                                                                                                                                                                                                                                                                                                                                         |
 | Practice sessions, answers, spaced-repetition state                                                                       | `practice_sessions`, `practice_turns`, `item_states`                                      | until deletion (answers and state of a deleted question: with the question)                                                                                                                                                                                                                                                                                                                                                    |
 | What happened, for Buddy to react to (material read, practice finished; ids and counts only)                              | `buddy_events`                                                                            | until deletion                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Which progress Buddy named in the chat ("was shaky, now sits": topic, when, the message)                                  | `buddy_lookbacks`                                                                         | until deletion                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -126,7 +127,9 @@ sweep records when it ran and how many rows it removed — counts only, never co
 
 ## Access control
 
-- The app only talks to the API. The API connects to Postgres with a privileged role and scopes
+- The app only talks to the API. The API connects to Postgres with its own role — versioned in
+  `infra/supabase/templates/api-role.sql` and tested by running the API as it
+  (`api-role.int.test.ts`): no superuser, no DDL, nothing in `auth` — and scopes
   every query by the learner derived from the verified token; model output can only reference
   the learner's own rows through aliases.
 - Row level security is enabled on every table **without policies**, and no database function
@@ -190,7 +193,15 @@ sweep records when it ran and how many rows it removed — counts only, never co
 ## Export and deletion (DSGVO Art. 15, 17, 20)
 
 - `GET /account/export` returns everything stored about the learner as JSON, immediately —
-  including model usage (`llm_calls`) and background jobs (`jobs`).
+  including model usage (`llm_calls`), background jobs (`jobs`), the wrong-PIN and request
+  counters (`attempt_counters`) and which spoken audio is cached (`speech_cache`: key, size and
+  times, not the audio). **Completeness is checked against the database catalogue, not a list**
+  (`apps/api/src/__tests__/export-completeness.int.test.ts`, issue #32): every column naming a
+  learner or an account cascades from it on deletion, and every such table is in the export — a
+  new table without an export entry fails the test. On 02.10.2026 it found three tables the
+  export had missed (`material_unclear_spots`, `speech_cache`, `attempt_counters`); all three are
+  exported now. For a minor the export sits behind the parents' PIN and contains the whole
+  conversation; Buddy tells her so when she asks (`docs/dpia.md` R7).
 - `POST /account/deletion` schedules deletion after a **7-day hold** (cancellable with
   `DELETE /account/deletion`). During the hold the app works as before; nothing else changes.
   When the hold is over the scheduler carries it out as a resumable job (docs/architecture.md
@@ -209,7 +220,7 @@ sweep records when it ran and how many rows it removed — counts only, never co
 ## Folgenabschätzung
 
 Die Datenschutz-Folgenabschätzung (Art. 35) steht in `docs/dpia.md`: Systembeschreibung,
-Rechtsgrundlagen, zehn Risiken mit den Maßnahmen, die sie tragen, die Abwägung der
+Rechtsgrundlagen, zwölf Risiken mit den Maßnahmen, die sie tragen, die Abwägung der
 Alterssicherung (EDPB Statement 1/2025 §13) und die offenen Punkte vor einem Start über den
 Familienkreis hinaus.
 
@@ -222,7 +233,13 @@ Familienkreis hinaus.
   (`apps/api/src/config.ts`). **Before launch:** confirm the model is GA (Google's preview terms
   exclude services likely used by under-18s) and switch off abuse-monitoring prompt logging. Prompts contain the learner's display name and age in
   years (never the birth date), her messages, memory, goals and material text needed for the answer. **legal review:** confirm the data
-  processing terms (no training on customer data) for the configured project.
+  processing terms (no training on customer data) for the configured project. **Provider-side cache:** the
+  prompt is layered for Gemini's implicit prefix cache (`docs/architecture.md` §Speed); for the
+  same learner the reused beginning reaches into the state block and so contains her display
+  name, age in years, level and language. Google documents this cache as in-memory with a 24-hour
+  lifetime (its zero-data-retention page, retrieved 2026-10-02, issue #279) — the provider's
+  statement, not verified by us. Whether to keep it or switch it off for the project is open
+  (`docs/dpia.md` R11, §7).
 - **Speech recognition of the device** (Apple / Google) — also in conversation mode, where the
   mic reopens after each answer only while the conversation screen she opened is open: used first for talking instead of typing,
   **only on-device** (`requiresOnDeviceRecognition`; on Android only when the language's offline

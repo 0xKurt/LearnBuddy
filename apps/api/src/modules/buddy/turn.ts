@@ -733,7 +733,13 @@ async function homeworkLeak(
     [learnerId],
   );
   const hers = learnerWords.join('\n');
-  return open.some((i) => !homeworkSolved(i, hers) && mentionsSolution(reply, i.answer, i.prompt))
+  // Every key of the task, not only the first (#227 B7): an accepted answer given away is the
+  // solution given away.
+  return open.some(
+    (i) =>
+      !homeworkSolved(i, hers) &&
+      [i.answer, ...i.accepted_answers].some((k) => mentionsSolution(reply, k, i.prompt)),
+  )
     ? [
         'reply: it gives away the solution of her open homework task. Help her find it herself (a question, a first step) — never the result.',
       ]

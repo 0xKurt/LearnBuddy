@@ -73,6 +73,7 @@
     "no_single_solution": "Aquí no hay una única respuesta correcta que pueda mostrarte: en un texto así, lo que cuenta es cómo lo argumentas. Dime dónde te atascas y miramos tu texto juntos.",
     "not_lowest": "Bien ajustada. Ahora simplifícala – todos los números de delante se dividen por {{factor}}.",
     "not_quite": "Todavía no del todo. Vuelve a mirar la pregunta – o muestra la solución.",
+    "not_transformed": "Es equivalente – pero así ya está escrito en el enunciado. Transfórmalo un poco más.",
     "one_way_intro": "Una forma de abordarlo – una, no la única:",
     "parts": {
       "order_prefix": "Hasta el paso {{step}} todo está bien. Mira otra vez el paso {{next}}.",
@@ -209,6 +210,7 @@
       "fault_rest_here": "En la posición número {{index}} del compás {{bar}} va un silencio.",
       "fault_note_here": "En la posición número {{index}} del compás {{bar}} va una nota."
     },
+    "same_value": "El valor es correcto – solo lo has escrito de otra forma. Mira en qué forma quiere la tarea el resultado.",
     "step_broke": "Hasta la línea {{line}} todo cuadra. Algo se pierde al pasar a la línea siguiente: mira otra vez ese paso.",
     "step_broke_last": "Tu camino está bien hasta el final; solo el último paso no. Mira otra vez la última línea.",
     "test_no_hints": "En el examen no hay pistas: escribe lo que pienses o salta la pregunta.",
@@ -221,6 +223,8 @@
     "typo_wrong": "Casi – una letra todavía no está bien. ¿La encuentras?",
     "unbalanced_charge": "Casi – las cargas todavía no coinciden: {{left}} a la izquierda, {{right}} a la derecha.",
     "unbalanced_element": "Casi – cuenta otra vez el {{element}}: {{left}} a la izquierda, {{right}} a la derecha.",
+    "unbalanced_mass": "Casi – los números másicos todavía no coinciden: {{left}} a la izquierda, {{right}} a la derecha.",
+    "unbalanced_atomic": "Casi – los números atómicos todavía no coinciden: {{left}} a la izquierda, {{right}} a la derecha.",
     "untitled": "Práctica",
     "worked_intro": "Mira, así se hace:"
   },

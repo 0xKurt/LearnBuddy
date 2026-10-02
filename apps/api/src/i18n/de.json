@@ -73,6 +73,7 @@
     "no_single_solution": "Hier gibt es nicht die eine Lösung, die ich dir zeigen könnte: bei so einem Text zählt, wie du es begründest. Sag mir, woran du hängst, dann schauen wir zusammen auf deinen Text.",
     "not_lowest": "Richtig ausgeglichen! Jetzt noch kürzen – alle Zahlen davor lassen sich durch {{factor}} teilen.",
     "not_quite": "Noch nicht ganz. Schau dir die Frage nochmal an – oder lass dir die Lösung zeigen.",
+    "not_transformed": "Gleichwertig – aber das steht genau so schon in der Aufgabe. Forme es noch um.",
     "one_way_intro": "So könnte man das angehen – ein Weg, nicht der einzige:",
     "parts": {
       "order_prefix": "Bis Schritt {{step}} stimmt alles. Schau dir Schritt {{next}} nochmal an.",
@@ -209,6 +210,7 @@
       "fault_rest_here": "An der {{index}}. Stelle in Takt {{bar}} gehört eine Pause hin.",
       "fault_note_here": "An der {{index}}. Stelle in Takt {{bar}} gehört eine Note hin."
     },
+    "same_value": "Der Wert stimmt – du hast es nur anders geschrieben. Schau noch, in welcher Form die Aufgabe das Ergebnis haben möchte.",
     "step_broke": "Bis Zeile {{line}} stimmt alles. Von dort zur nächsten Zeile geht etwas verloren – schau dir diesen Schritt nochmal an.",
     "step_broke_last": "Dein Weg stimmt bis zum Schluss – nur der letzte Schritt nicht. Schau nochmal auf die letzte Zeile.",
     "test_no_hints": "Im Test gibt es keine Tipps – schreib einfach, was du denkst, oder überspring die Frage.",
@@ -221,6 +223,8 @@
     "typo_wrong": "Fast – ein Buchstabe stimmt noch nicht. Findest du ihn?",
     "unbalanced_charge": "Fast – die Ladungen stimmen noch nicht: links {{left}}, rechts {{right}}.",
     "unbalanced_element": "Fast – zähl das {{element}} nochmal: links {{left}}, rechts {{right}}.",
+    "unbalanced_mass": "Fast – die Massenzahlen stimmen noch nicht: links {{left}}, rechts {{right}}.",
+    "unbalanced_atomic": "Fast – die Ordnungszahlen stimmen noch nicht: links {{left}}, rechts {{right}}.",
     "untitled": "Übung",
     "worked_intro": "Schau, so geht's:"
   },

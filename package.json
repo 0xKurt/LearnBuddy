@@ -17,6 +17,8 @@
     "test": "pnpm -r --parallel test",
     "test:coverage": "pnpm -r test:coverage",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && sh scripts/web-walkthrough.sh",
+    "create-buddy": "tsx packages/buddy-kit/src/cli/create-buddy.ts",
+    "provision": "tsx packages/buddy-kit/src/cli/provision.ts",
     "build": "pnpm -r --parallel build",
     "prepare": "husky",
     "postinstall": "node apps/api/scripts/vercel-shared.mjs",
@@ -36,6 +38,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.2.11",
     "prettier": "^3.4.2",
+    "tsx": "^4.21.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0"
   },
