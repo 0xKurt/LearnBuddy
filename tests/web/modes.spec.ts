@@ -14,6 +14,32 @@ function inSheet(page: Page) {
   return page.locator('[aria-modal="true"]');
 }
 
+/** The words every offer card's button carries (components/learn/OfferCard.tsx). */
+const START = "Los geht's";
+
+/**
+ * The start button of the offer whose card says `says`.
+ *
+ * Not "the newest `Los geht's`", and that cost two runs to learn (issue #267). The thread keeps
+ * every earlier offer, and the new one renders a frame AFTER Buddy's words — so `.last()` after
+ * waiting for the text clicked the PREVIOUS offer about one run in two, and counting the buttons
+ * first raced the other way: the earlier offers also render after the composer does, so the
+ * baseline came out too low and the expected count was never reached.
+ *
+ * Scoping to the card that carries the offer's own words needs neither a count nor a timing
+ * assumption. `.last()` over the divs that both contain those words and hold a start button is
+ * the INNERMOST such div — the card itself — because an ancestor always precedes its child in
+ * document order.
+ */
+function offerStart(page: Page, says: string) {
+  return page
+    .locator('div')
+    .filter({ has: page.getByRole('button', { name: START }) })
+    .filter({ hasText: says })
+    .last()
+    .getByRole('button', { name: START });
+}
+
 /**
  * The bar on top (a paused practice, a waiting photo) floats over the ways to start.
  * Right after leaving a practice the home may still show the stale bar until the fresh
@@ -156,6 +182,7 @@ test('learning modes: explain, homework help without the solution, practice with
   const stack = await bottomStack(page, 'practice-typed-math');
   expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(200);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
+
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toHaveCount(0);
   await page.getByLabel('Deine Antwort').fill('28');
@@ -176,20 +203,13 @@ test('learning modes: explain, homework help without the solution, practice with
 
   // ── Practice without a photo: fractions drawn, math rendered ──
   // Said to Buddy instead of picking a tile: Buddy answers with a start button.
-  const starts = page.getByRole('button', { name: "Los geht's" });
-  const startsBefore = await starts.count();
+  const fractions = 'ein paar Fragen zu Brüchen vorbereitet';
   await page.getByLabel('Schreib Buddy …').fill('Ich will Brüche vergleichen üben');
   await page.getByRole('button', { name: 'Senden' }).click();
-  await expect(
-    page.getByText('ein paar Fragen zu Brüchen vorbereitet', { exact: false }),
-  ).toBeVisible();
-  // The offer card in the thread, not a sheet: its button is the newest one — but it renders a
-  // frame AFTER Buddy's text, and `.last()` does not wait for a match it already has. Waiting
-  // for the text alone and then taking `.last()` clicked the PREVIOUS offer about one run in
-  // two, and the app opened that older session instead (seen 02.10.2026, issue #267). Waiting
-  // for the count makes the newest button the one that exists.
-  await expect(starts).toHaveCount(startsBefore + 1);
-  await starts.last().click();
+  await expect(page.getByText(fractions, { exact: false })).toBeVisible();
+  // The offer card in the thread, not a sheet — and the button is taken from THAT card's own
+  // words rather than from the order or the number of the buttons (see `offerStart`, issue #267).
+  await offerStart(page, fractions).click();
   await expect(page.getByText('Frage von Buddy')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
@@ -319,12 +339,11 @@ test('learning modes: explain, homework help without the solution, practice with
   // The scripted model wrote only the four tasks — the elements in their right order, the pairs,
   // the groups, the table with its gaps. Every board below is the server's (shuffled from the
   // item id, never into its own order), every verdict is code's, and no model is asked at all.
-  const startsBeforeBoards = await starts.count();
+  const boards = 'mit einer Tabelle am Ende';
   await page.getByLabel('Schreib Buddy …').fill('Lass uns ordnen und zuordnen üben');
   await page.getByRole('button', { name: 'Senden' }).click();
-  await expect(page.getByText('mit einer Tabelle am Ende', { exact: false })).toBeVisible();
-  await expect(starts).toHaveCount(startsBeforeBoards + 1);
-  await starts.last().click();
+  await expect(page.getByText(boards, { exact: false })).toBeVisible();
+  await offerStart(page, boards).click();
 
   // Reihenfolge: five steps. Their state stands in words on every element, so a screen reader
   // can order them too — that is why this is tapping and not drag and drop.
