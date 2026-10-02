@@ -136,6 +136,7 @@ describe('wiring', () => {
       'apps/api',
       'packages/shared-types',
       'packages/shared-math',
+      'packages/shared-maps',
     ]) {
       const pkg = JSON.parse(read(join(root, dir, 'package.json'))) as Record<
         string,

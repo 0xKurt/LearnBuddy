@@ -9,6 +9,9 @@
 //                        number line, a bar of a chart, a time on a clock face.
 //   grid_draw  (#249) — she draws on a grid: sets points (the line through two of them is
 //                        drawn), fills squares, pulls bars up to their height.
+//   map        (#251) — a member of figure_tap: a map from Natural Earth (packages/shared-maps).
+//                        She taps a country, a Land, a river, a capital or a zone; names the
+//                        marked one; or reads the marked city's position off the graticule.
 //
 // The figures are a family on purpose: the periodic table (#250), labelling (#252) and the
 // figures after them add a member to `TapFigure` (and its `TapValue`), not a new mechanism.
@@ -77,6 +80,39 @@ export const TapBar = z.object({
 });
 export type TapBar = z.infer<typeof TapBar>;
 
+// ─────────────── maps (#251) ───────────────
+
+/** The map sections the app carries (packages/shared-maps; the list is checked to match). */
+export const MAP_AREA_IDS = ['world', 'europe', 'germany'] as const;
+export const MapAreaId = z.enum(MAP_AREA_IDS);
+export type MapAreaId = z.infer<typeof MapAreaId>;
+
+/** What is on the map: countries or Länder, rivers, capitals, the illumination zones. */
+export const MapLayer = z.enum(['areas', 'rivers', 'cities', 'zones']);
+export type MapLayer = z.infer<typeof MapLayer>;
+
+/** What she does: tap the named feature, name the marked one, read the marked city's position. */
+export const MapAsk = z.enum(['tap', 'name', 'coords']);
+export type MapAsk = z.infer<typeof MapAsk>;
+
+/** A feature's id in the map data (`ITA`, `DE-BY`, `r-rhein`, `c-berlin`) — code's, never the model's. */
+export const MapFeatureId = z.string().regex(/^[A-Za-z0-9-]{1,40}$/);
+
+/** A name she types for the marked feature. */
+export const MAP_NAME_MAX = 60;
+/** The longest outline a mark may carry (the largest country of the world map is far below). */
+export const MAP_MARK_MAX = 40_000;
+
+/**
+ * The marked feature as the app draws it: its outline or line in map units, or a position.
+ * Never its id — the view would carry the answer to "Wie heißt das markierte Land?".
+ */
+export const MapMark = z.discriminatedUnion('form', [
+  z.object({ form: z.literal('path'), d: z.string().min(1).max(MAP_MARK_MAX) }),
+  z.object({ form: z.literal('point'), x: Num, y: Num }),
+]);
+export type MapMark = z.infer<typeof MapMark>;
+
 /** The figure she taps in. Never carries the key. */
 export const TapFigure = z.discriminatedUnion('kind', [
   z.object({
@@ -103,6 +139,16 @@ export const TapFigure = z.discriminatedUnion('kind', [
     kind: z.literal('clock'),
     snap: ClockSnap,
   }),
+  z.object({
+    kind: z.literal('map'),
+    area: MapAreaId,
+    layer: MapLayer,
+    ask: MapAsk,
+    /** The feature to name or read (ask `name`, `coords`); null when she taps (`tap`). */
+    mark: MapMark.nullable(),
+    /** Parallels and meridians with their degrees (always for `coords`). */
+    graticule: z.boolean(),
+  }),
 ]);
 export type TapFigure = z.infer<typeof TapFigure>;
 export type TapKind = TapFigure['kind'];
@@ -116,6 +162,19 @@ export const TapValue = z.discriminatedUnion('kind', [
     kind: z.literal('clock'),
     h: z.number().int().min(1).max(12),
     m: z.number().int().min(0).max(59),
+  }),
+  /** A feature of a map she tapped — and the key of `tap` and `name` (the marked one). */
+  z.object({ kind: z.literal('map'), id: MapFeatureId }),
+  /** The name she typed for the marked feature (ask `name`). */
+  z.object({ kind: z.literal('map_name'), text: z.string().trim().min(1).max(MAP_NAME_MAX) }),
+  /**
+   * A position in degrees, north and east positive: her reading in whole degrees, the key
+   * from the data (ask `coords`).
+   */
+  z.object({
+    kind: z.literal('map_coords'),
+    lat: Num.min(-90).max(90),
+    lon: Num.min(-180).max(180),
   }),
 ]);
 export type TapValue = z.infer<typeof TapValue>;

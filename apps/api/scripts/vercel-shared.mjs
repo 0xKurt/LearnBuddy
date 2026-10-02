@@ -11,7 +11,7 @@ if (process.env.VERCEL !== '1') process.exit(0);
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 
-for (const name of ['shared-types', 'shared-math']) {
+for (const name of ['shared-types', 'shared-math', 'shared-maps']) {
   const dir = join(root, 'packages', name);
   execFileSync(
     'pnpm',

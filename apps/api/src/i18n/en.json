@@ -276,6 +276,33 @@
       "cells_extra_one": "Nearly – one square too many is coloured.",
       "cells_both": "Not quite yet – squares are missing ({{missing}}) and some are coloured too many ({{extra}}).",
       "bar_wrong": "The bar “{{label}}” is not at the right height yet."
+    },
+    "map": {
+      "degree": "{{n}}° {{dir}}",
+      "position": "{{lat}}, {{lon}}",
+      "dir_N": "N",
+      "dir_S": "S",
+      "dir_E": "E",
+      "dir_W": "W",
+      "tap_neighbour": "Close – that's {{name}}, a neighbour.",
+      "tap_other": "That's {{name}} – take another look at the map.",
+      "toward_n": "The one you're looking for is further north.",
+      "toward_ne": "The one you're looking for is further northeast.",
+      "toward_e": "The one you're looking for is further east.",
+      "toward_se": "The one you're looking for is further southeast.",
+      "toward_s": "The one you're looking for is further south.",
+      "toward_sw": "The one you're looking for is further southwest.",
+      "toward_w": "The one you're looking for is further west.",
+      "toward_nw": "The one you're looking for is further northwest.",
+      "name_neighbour": "Close – {{name}} is right next to it.",
+      "name_other": "That's somewhere else on the map – take a closer look.",
+      "name_wrong": "Not yet – the marked one has a different name.",
+      "lat_right": "The latitude is right – read the longitude again from the vertical lines.",
+      "lon_right": "The longitude is right – read the latitude again from the horizontal lines.",
+      "coords_swapped": "Almost – latitude and longitude are swapped. Latitude is read from the horizontal lines.",
+      "hemisphere": "The numbers fit – check again whether it's north or south, east or west.",
+      "coords_wrong": "Not yet – find the nearest lines and read their degrees.",
+      "slip": "Right! It's spelled: {{name}}."
     }
   },
   "contact": {

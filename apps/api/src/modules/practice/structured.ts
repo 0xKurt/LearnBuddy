@@ -57,6 +57,7 @@ import {
   figureTapNamesPart,
   figureTapProblem,
   figureTapReply,
+  figureTapRightReply,
   figureTapSolution,
   figureTapTaskFrom,
   figureTapView,
@@ -454,7 +455,8 @@ export function structuredItem(
   switch (draft.type) {
     case 'figure_tap':
     case 'grid_draw': {
-      const task = draft.type === 'figure_tap' ? figureTapTaskFrom(draft) : gridDrawTaskFrom(draft);
+      const task =
+        draft.type === 'figure_tap' ? figureTapTaskFrom(draft, locale) : gridDrawTaskFrom(draft);
       if (typeof task === 'string') return null;
       const prompt = dollarMathRuns(draft.prompt);
       const answer = solutionOf(task, locale);
@@ -1031,6 +1033,32 @@ export function structuredReply(
     case 'grid_draw':
       return gridDrawReply(locale, check);
   }
+}
+
+/**
+ * The reply to a RIGHT structured answer when code has more to say than "Richtig" (a map name
+ * typed with a slip, #251), or null for the usual reply.
+ */
+export function structuredRightReply(
+  locale: string,
+  task: StructuredTask,
+  check: StructuredCheck,
+): string | null {
+  return task.type === 'figure_tap' && check.type === 'figure_tap'
+    ? figureTapRightReply(locale, task, check)
+    : null;
+}
+
+/**
+ * Was this structured answer TYPED rather than arranged by tapping (issue #163)? The cells of a
+ * table (#230), the name of a marked map feature and a position read off a map (#251).
+ */
+export function typedParts(answer: StructuredAnswer): boolean {
+  if (answer.type === 'table_fill') return true;
+  return (
+    answer.type === 'figure_tap' &&
+    (answer.value.kind === 'map_name' || answer.value.kind === 'map_coords')
+  );
 }
 
 /**

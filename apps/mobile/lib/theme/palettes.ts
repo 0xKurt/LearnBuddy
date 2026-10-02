@@ -75,6 +75,8 @@ export type Palette = {
     fill: string;
     fillSoft: string;
     series: readonly [string, string, string];
+    /** A map (issue #251): water, land she is asked about, land around it, borders, rivers. */
+    map: { sea: string; land: string; context: string; border: string; river: string };
   };
 };
 
@@ -136,6 +138,13 @@ const pastellSoft: Palette = {
     fill: '#b9a4f0',
     fillSoft: 'rgba(106,72,215,0.14)',
     series: ['#6a48d7', '#2f7fb8', '#3f8a5c'],
+    map: {
+      sea: '#e4eef8',
+      land: '#ffffff',
+      context: '#eeebf4',
+      border: 'rgba(60,40,120,0.38)',
+      river: '#4a8fd0',
+    },
   },
 };
 
@@ -201,6 +210,13 @@ const night: Palette = {
     fill: '#6f5bb8',
     fillSoft: 'rgba(157,130,245,0.20)',
     series: ['#b9a4ff', '#7fb6e6', '#87c79c'],
+    map: {
+      sea: '#1b2536',
+      land: '#302c47',
+      context: '#232036',
+      border: 'rgba(220,210,255,0.42)',
+      river: '#7fb6e6',
+    },
   },
 };
 
@@ -427,6 +443,12 @@ export type Figure = {
    * never the only signal (each graph also has a label and its own dash pattern).
    */
   series: string[];
+  /** A map (issue #251). */
+  sea: string;
+  land: string;
+  landContext: string;
+  border: string;
+  river: string;
 };
 
 export function toneBgOf(p: Palette): Record<SubjectTone, string> {
@@ -466,5 +488,10 @@ export function figureOf(p: Palette): Figure {
     empty: p.paper,
     point: p.primaryDk,
     series: [...p.figure.series],
+    sea: p.figure.map.sea,
+    land: p.figure.map.land,
+    landContext: p.figure.map.context,
+    border: p.figure.map.border,
+    river: p.figure.map.river,
   };
 }

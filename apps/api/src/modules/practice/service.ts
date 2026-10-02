@@ -61,7 +61,9 @@ import {
   checkStructured,
   structuredNamesPart,
   structuredReply,
+  structuredRightReply,
   structuredTaskOf,
+  typedParts,
   viewOf,
   type StructuredCheck,
 } from './structured.js';
@@ -1266,10 +1268,11 @@ export async function answerItem(
     judged = {
       verdict: 'correct',
       evaluatedBy: 'rule',
-      reply: t(
-        learner.locale,
-        session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
-      ),
+      reply:
+        (structured && partsCheck && session.mode !== 'test'
+          ? structuredRightReply(learner.locale, structured, partsCheck)
+          : null) ??
+        t(learner.locale, session.mode === 'help' ? 'practice.help_solved' : 'practice.correct'),
       gaveHint: false,
       revealed: false,
     };
@@ -1779,7 +1782,8 @@ export async function answerItem(
           prepared,
           // Arranging parts is tapping (issue #163), unless the app says otherwise — but the
           // cells of a table (#230) are typed, every one of them.
-          input.via ?? (partsCheck && partsCheck.type !== 'table_fill' ? 'tapped' : 'typed'),
+          // A map name or a position read off a map (#251) is typed too.
+          input.via ?? (partsCheck && input.parts && !typedParts(input.parts) ? 'tapped' : 'typed'),
         ],
       );
       // A free text she did not get right produces NO review: `Again` is a statement about

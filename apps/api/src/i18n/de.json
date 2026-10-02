@@ -276,6 +276,33 @@
       "cells_extra_one": "Fast – ein Kästchen ist zu viel gefärbt.",
       "cells_both": "Noch nicht ganz – es fehlen Kästchen ({{missing}}), und einige sind zu viel gefärbt ({{extra}}).",
       "bar_wrong": "Die Säule „{{label}}“ hat noch nicht die richtige Höhe."
+    },
+    "map": {
+      "degree": "{{n}}° {{dir}}",
+      "position": "{{lat}}, {{lon}}",
+      "dir_N": "N",
+      "dir_S": "S",
+      "dir_E": "O",
+      "dir_W": "W",
+      "tap_neighbour": "Knapp daneben – das ist {{name}}, ein Nachbar.",
+      "tap_other": "Das ist {{name}} – schau nochmal auf die Karte.",
+      "toward_n": "Das Gesuchte liegt weiter nördlich.",
+      "toward_ne": "Das Gesuchte liegt weiter nordöstlich.",
+      "toward_e": "Das Gesuchte liegt weiter östlich.",
+      "toward_se": "Das Gesuchte liegt weiter südöstlich.",
+      "toward_s": "Das Gesuchte liegt weiter südlich.",
+      "toward_sw": "Das Gesuchte liegt weiter südwestlich.",
+      "toward_w": "Das Gesuchte liegt weiter westlich.",
+      "toward_nw": "Das Gesuchte liegt weiter nordwestlich.",
+      "name_neighbour": "Knapp daneben – {{name}} liegt direkt daneben.",
+      "name_other": "Das liegt woanders auf der Karte – schau nochmal genau hin.",
+      "name_wrong": "Noch nicht – das Markierte heißt anders.",
+      "lat_right": "Die Breite stimmt schon – lies die Länge nochmal an den senkrechten Linien ab.",
+      "lon_right": "Die Länge stimmt schon – lies die Breite nochmal an den waagerechten Linien ab.",
+      "coords_swapped": "Fast – Breite und Länge sind vertauscht. Die Breite liest du an den waagerechten Linien ab.",
+      "hemisphere": "Die Zahlen passen – schau nochmal, ob es Nord oder Süd, Ost oder West ist.",
+      "coords_wrong": "Noch nicht – such die nächsten Linien und lies ihre Gradzahlen ab.",
+      "slip": "Richtig! Geschrieben wird es: {{name}}."
     }
   },
   "contact": {

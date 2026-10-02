@@ -276,6 +276,33 @@
       "cells_extra_one": "Presque – une case de trop est coloriée.",
       "cells_both": "Pas tout à fait – il manque des cases ({{missing}}) et certaines sont coloriées en trop ({{extra}}).",
       "bar_wrong": "La barre « {{label}} » n'a pas encore la bonne hauteur."
+    },
+    "map": {
+      "degree": "{{n}}° {{dir}}",
+      "position": "{{lat}}, {{lon}}",
+      "dir_N": "N",
+      "dir_S": "S",
+      "dir_E": "E",
+      "dir_W": "O",
+      "tap_neighbour": "Tout près – c'est {{name}}, un voisin.",
+      "tap_other": "C'est {{name}} – regarde encore la carte.",
+      "toward_n": "Ce que tu cherches est plus au nord.",
+      "toward_ne": "Ce que tu cherches est plus au nord-est.",
+      "toward_e": "Ce que tu cherches est plus à l'est.",
+      "toward_se": "Ce que tu cherches est plus au sud-est.",
+      "toward_s": "Ce que tu cherches est plus au sud.",
+      "toward_sw": "Ce que tu cherches est plus au sud-ouest.",
+      "toward_w": "Ce que tu cherches est plus à l'ouest.",
+      "toward_nw": "Ce que tu cherches est plus au nord-ouest.",
+      "name_neighbour": "Tout près – {{name}} est juste à côté.",
+      "name_other": "C'est ailleurs sur la carte – regarde bien.",
+      "name_wrong": "Pas encore – ce qui est marqué porte un autre nom.",
+      "lat_right": "La latitude est juste – relis la longitude sur les lignes verticales.",
+      "lon_right": "La longitude est juste – relis la latitude sur les lignes horizontales.",
+      "coords_swapped": "Presque – latitude et longitude sont inversées. La latitude se lit sur les lignes horizontales.",
+      "hemisphere": "Les nombres sont bons – vérifie si c'est nord ou sud, est ou ouest.",
+      "coords_wrong": "Pas encore – cherche les lignes les plus proches et lis leurs degrés.",
+      "slip": "Juste ! Ça s'écrit : {{name}}."
     }
   },
   "contact": {

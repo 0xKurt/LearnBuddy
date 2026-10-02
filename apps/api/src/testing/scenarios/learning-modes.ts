@@ -329,6 +329,81 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Karten (issue #251): the model names each feature by NAME — "Bayern", "Italien", "Berlin",
+  // "Tropen" — and code resolves it against the Natural Earth data; the key is the data's id or
+  // position. The first is the acceptance of #251: Germany with its 16 Länder on 360×740, every
+  // one tappable (Berlin, Bremen, Hamburg after the magnifying first tap).
+  scriptGenerations({
+    when: /Bundesländer auf der Karte/i,
+    answer: () => ({
+      usable: true,
+      title: 'Karten',
+      subject: { name: 'Erdkunde', kind: 'other' },
+      items: [],
+      structured: [
+        {
+          type: 'figure_tap',
+          prompt: 'Tippe auf Bayern.',
+          plane: null,
+          number_line: null,
+          bars: null,
+          clock: null,
+          map: { area: 'germany', layer: 'areas', ask: 'tap', feature: 'Bayern', graticule: false },
+          topic: 'Bundesländer',
+          difficulty: 1,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'figure_tap',
+          prompt: 'Wie heißt das markierte Land?',
+          plane: null,
+          number_line: null,
+          bars: null,
+          clock: null,
+          map: {
+            area: 'europe',
+            layer: 'areas',
+            ask: 'name',
+            feature: 'Italien',
+            graticule: false,
+          },
+          topic: 'Europa',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'figure_tap',
+          prompt: 'Welche Koordinaten hat die markierte Hauptstadt?',
+          plane: null,
+          number_line: null,
+          bars: null,
+          clock: null,
+          map: {
+            area: 'germany',
+            layer: 'cities',
+            ask: 'coords',
+            feature: 'Berlin',
+            graticule: true,
+          },
+          topic: 'Gradnetz',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'figure_tap',
+          prompt: 'Tippe auf die Zone zwischen den Wendekreisen.',
+          plane: null,
+          number_line: null,
+          bars: null,
+          clock: null,
+          map: { area: 'world', layer: 'zones', ask: 'tap', feature: 'Tropen', graticule: false },
+          topic: 'Beleuchtungszonen',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   scriptGenerations({
     when: /Auf dem Raster zeichnen/i,
     answer: () => ({
@@ -538,6 +613,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /koordinaten antippen/i,
       answer: says('Gern – tipp mal in ein paar Figuren.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Koordinaten antippen' } },
+      ]),
+    },
+    {
+      when: /bundesländer auf der karte/i,
+      answer: says('Gern – hier kommt eine stumme Karte.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Bundesländer auf der Karte' } },
       ]),
     },
     {

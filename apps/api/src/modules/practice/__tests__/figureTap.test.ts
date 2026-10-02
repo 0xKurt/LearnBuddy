@@ -19,7 +19,7 @@ import {
 } from '../structured.js';
 
 const META = { topic: 'Koordinaten', difficulty: 2, prompt_lang: null } as const;
-const NONE = { plane: null, number_line: null, bars: null, clock: null };
+const NONE = { plane: null, number_line: null, bars: null, clock: null, map: null };
 
 function plane(
   key: { x: number; y: number },

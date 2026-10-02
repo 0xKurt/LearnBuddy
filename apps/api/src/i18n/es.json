@@ -276,6 +276,33 @@
       "cells_extra_one": "Casi – hay una casilla de más coloreada.",
       "cells_both": "Todavía no del todo – faltan casillas ({{missing}}) y sobran algunas coloreadas ({{extra}}).",
       "bar_wrong": "La barra «{{label}}» todavía no tiene la altura correcta."
+    },
+    "map": {
+      "degree": "{{n}}° {{dir}}",
+      "position": "{{lat}}, {{lon}}",
+      "dir_N": "N",
+      "dir_S": "S",
+      "dir_E": "E",
+      "dir_W": "O",
+      "tap_neighbour": "Casi – eso es {{name}}, un vecino.",
+      "tap_other": "Eso es {{name}} – mira otra vez el mapa.",
+      "toward_n": "Lo que buscas está más al norte.",
+      "toward_ne": "Lo que buscas está más al noreste.",
+      "toward_e": "Lo que buscas está más al este.",
+      "toward_se": "Lo que buscas está más al sureste.",
+      "toward_s": "Lo que buscas está más al sur.",
+      "toward_sw": "Lo que buscas está más al suroeste.",
+      "toward_w": "Lo que buscas está más al oeste.",
+      "toward_nw": "Lo que buscas está más al noroeste.",
+      "name_neighbour": "Casi – {{name}} está justo al lado.",
+      "name_other": "Eso está en otro lugar del mapa – mira con calma.",
+      "name_wrong": "Todavía no – lo marcado tiene otro nombre.",
+      "lat_right": "La latitud está bien – vuelve a leer la longitud en las líneas verticales.",
+      "lon_right": "La longitud está bien – vuelve a leer la latitud en las líneas horizontales.",
+      "coords_swapped": "Casi – has invertido latitud y longitud. La latitud se lee en las líneas horizontales.",
+      "hemisphere": "Los números encajan – mira si es norte o sur, este u oeste.",
+      "coords_wrong": "Todavía no – busca las líneas más cercanas y lee sus grados.",
+      "slip": "¡Correcto! Se escribe: {{name}}."
     }
   },
   "contact": {

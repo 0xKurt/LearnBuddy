@@ -276,6 +276,33 @@
       "cells_extra_one": "Quasi – c’è un quadretto colorato di troppo.",
       "cells_both": "Non ancora del tutto – mancano quadretti ({{missing}}) e alcuni sono colorati di troppo ({{extra}}).",
       "bar_wrong": "La barra «{{label}}» non ha ancora l’altezza giusta."
+    },
+    "map": {
+      "degree": "{{n}}° {{dir}}",
+      "position": "{{lat}}, {{lon}}",
+      "dir_N": "N",
+      "dir_S": "S",
+      "dir_E": "E",
+      "dir_W": "O",
+      "tap_neighbour": "Quasi – questo è {{name}}, un vicino.",
+      "tap_other": "Questo è {{name}} – guarda di nuovo la carta.",
+      "toward_n": "Quello che cerchi è più a nord.",
+      "toward_ne": "Quello che cerchi è più a nord-est.",
+      "toward_e": "Quello che cerchi è più a est.",
+      "toward_se": "Quello che cerchi è più a sud-est.",
+      "toward_s": "Quello che cerchi è più a sud.",
+      "toward_sw": "Quello che cerchi è più a sud-ovest.",
+      "toward_w": "Quello che cerchi è più a ovest.",
+      "toward_nw": "Quello che cerchi è più a nord-ovest.",
+      "name_neighbour": "Quasi – {{name}} è proprio accanto.",
+      "name_other": "Quello è da un'altra parte della carta – guarda con calma.",
+      "name_wrong": "Non ancora – ciò che è segnato ha un altro nome.",
+      "lat_right": "La latitudine è giusta – rileggi la longitudine sulle linee verticali.",
+      "lon_right": "La longitudine è giusta – rileggi la latitudine sulle linee orizzontali.",
+      "coords_swapped": "Quasi – hai scambiato latitudine e longitudine. La latitudine si legge sulle linee orizzontali.",
+      "hemisphere": "I numeri vanno bene – controlla se è nord o sud, est o ovest.",
+      "coords_wrong": "Non ancora – cerca le linee più vicine e leggi i loro gradi.",
+      "slip": "Giusto! Si scrive: {{name}}."
     }
   },
   "contact": {

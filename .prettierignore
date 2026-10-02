@@ -8,3 +8,5 @@ coverage
 pnpm-lock.yaml
 LearnBuddy/
 design-examples/
+# Generated map data (packages/shared-maps/scripts/build-maps.mjs), one feature per line.
+packages/shared-maps/src/data/

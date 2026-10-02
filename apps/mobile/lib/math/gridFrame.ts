@@ -28,6 +28,7 @@ import {
   stepsBetween,
   type Pt,
 } from '../../../../packages/shared-math/src/grid.js';
+import { onMap } from '../maps/mapFrame.js';
 import { TOUCH } from '../theme/space.js';
 
 /** How wide a step becomes when the figure is magnified: a target with room around the finger. */
@@ -246,6 +247,8 @@ export function onFigure(figure: TapFigure, v: TapValue): boolean {
         v.m < 60 &&
         v.m % figure.snap === 0
       );
+    case 'map':
+      return onMap(figure, v);
   }
 }
 

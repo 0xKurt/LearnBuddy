@@ -41,6 +41,19 @@ import {
 import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
+import {
+  checkMap,
+  MAP_RULES,
+  MapDraft,
+  mapNamesPart,
+  mapReply,
+  mapSlipReply,
+  mapTaskFrom,
+  mapTaskProblem,
+  mapValueWords,
+  type MapCheck,
+  type MapProblem,
+} from './mapTask.js';
 
 /** Why a figure task is not stored. Each one is a test (`__tests__/figureTap.test.ts`). */
 export type FigureProblem =
@@ -57,13 +70,15 @@ export type FigureProblem =
   /** "The highest bar" — but the key's bar is not the one, alone, highest (or lowest). */
   | 'not_extreme'
   /** A text over its cap (a bar's name, a point's name): it would not fit the figure. */
-  | 'figure_text';
+  | 'figure_text'
+  /** A map (#251): see `mapTask.ts`. */
+  | MapProblem;
 
 /**
  * What the generator and the photo reading are told about tap tasks. Exact, minimal and without
  * an example sentence (models copy examples; repo convention).
  */
-export const FIGURE_TAP_RULES = `Tap tasks ("structured", type "figure_tap"): only when the answer is ONE place in a figure that the learner taps — a point in a coordinate system, a number on a number line, the bar of a bar chart, a time on a clock face. Fill exactly one of plane, number_line, bars and clock, the others null. plane: the axes from x_min to x_max and y_min to y_max in steps of step (${PLANE_STEPS_MIN}–${PLANE_STEPS_MAX} steps per axis, every bound a multiple of step), marks: up to ${TAP_MARKS_MAX} points already drawn {x, y, label} (label up to ${MARK_LABEL_MAX} characters or null), key: the point to tap {x, y}, a grid point. number_line: min, max, step between numbered ticks (${PLANE_STEPS_MIN}–${PLANE_STEPS_MAX} ticks), snap: step or an even part of it (step/2, step/4, step/5, step/10) — where a tap can land —, marks: up to ${TAP_MARKS_MAX} marked numbers {value, label}, key: the number to tap, a multiple of snap from min. bars: ${TAP_BARS_MIN}–${TAP_BARS_MAX} bars {label, value} (label up to ${BAR_LABEL_MAX} characters, no two alike), unit or null, key: the label of the bar to tap, extreme: "max" or "min" when the task asks for the highest or lowest bar, else null. clock: snap 5, 15 or 30 (the minutes a hand can stand on), key {h, m}: hour 1–12 and minute, a multiple of snap. prompt: what to tap; when the key is a point or number, the prompt names it (it is not drawn); when it is one of several drawn marks or bars, the prompt says which by its property. If the place could be two, write no tap task.`;
+export const FIGURE_TAP_RULES = `Tap tasks ("structured", type "figure_tap"): only when the answer is ONE place in a figure that the learner taps — a point in a coordinate system, a number on a number line, the bar of a bar chart, a time on a clock face. Fill exactly one of plane, number_line, bars, clock and map, the others null. plane: the axes from x_min to x_max and y_min to y_max in steps of step (${PLANE_STEPS_MIN}–${PLANE_STEPS_MAX} steps per axis, every bound a multiple of step), marks: up to ${TAP_MARKS_MAX} points already drawn {x, y, label} (label up to ${MARK_LABEL_MAX} characters or null), key: the point to tap {x, y}, a grid point. number_line: min, max, step between numbered ticks (${PLANE_STEPS_MIN}–${PLANE_STEPS_MAX} ticks), snap: step or an even part of it (step/2, step/4, step/5, step/10) — where a tap can land —, marks: up to ${TAP_MARKS_MAX} marked numbers {value, label}, key: the number to tap, a multiple of snap from min. bars: ${TAP_BARS_MIN}–${TAP_BARS_MAX} bars {label, value} (label up to ${BAR_LABEL_MAX} characters, no two alike), unit or null, key: the label of the bar to tap, extreme: "max" or "min" when the task asks for the highest or lowest bar, else null. clock: snap 5, 15 or 30 (the minutes a hand can stand on), key {h, m}: hour 1–12 and minute, a multiple of snap. prompt: what to tap; when the key is a point or number, the prompt names it (it is not drawn); when it is one of several drawn marks or bars, the prompt says which by its property. ${MAP_RULES} If the place could be two, write no tap task.`;
 
 const Num = z.number().finite();
 /** Parsed generously: a name over its cap is not a broken draft but one that does not fit. */
@@ -127,6 +142,7 @@ export const FigureTapDraftBase = z.object({
     .nullable()
     .default(null)
     .describe('A clock face; null unless a time is set'),
+  map: MapDraft,
 });
 export type FigureTapDraft = z.infer<typeof FigureTapDraftBase>;
 
@@ -146,6 +162,7 @@ export function planeProblem(g: PlaneGrid): FigureProblem | null {
 /** What is wrong with a tap task, or null when it holds together. */
 export function figureTapProblem(task: FigureTapTask): FigureProblem | null {
   const { figure, key } = task;
+  if (figure.kind === 'map') return mapTaskProblem(figure, key);
   if (figure.kind !== key.kind) return 'figure_form';
   switch (figure.kind) {
     case 'plane': {
@@ -202,12 +219,24 @@ function barId(i: number): string {
  * which reach every rejection through it.
  */
 export function figureTapTaskFrom(
-  draft: Pick<FigureTapDraft, 'plane' | 'number_line' | 'bars' | 'clock'>,
+  draft: Pick<FigureTapDraft, 'plane' | 'number_line' | 'bars' | 'clock'> & {
+    map?: FigureTapDraft['map'];
+    prompt?: string;
+  },
+  /** Her language: a map question that asks for a name needs a name in it. */
+  locale: string = 'de',
 ): FigureTapTask | FigureProblem {
-  const given = [draft.plane, draft.number_line, draft.bars, draft.clock].filter((x) => x !== null);
+  const map = draft.map ?? null;
+  const given = [draft.plane, draft.number_line, draft.bars, draft.clock, map].filter(
+    (x) => x !== null,
+  );
   if (given.length !== 1) return 'figure_form';
   let task: FigureTapTask;
-  if (draft.plane) {
+  if (map) {
+    const built = mapTaskFrom(map, draft.prompt ?? '', locale);
+    if (typeof built === 'string') return built;
+    task = built;
+  } else if (draft.plane) {
     const p = draft.plane;
     if (p.marks.length > TAP_MARKS_MAX) return 'grid';
     if (p.marks.some((m) => (m.label?.length ?? 0) > MARK_LABEL_MAX)) return 'figure_text';
@@ -305,8 +334,9 @@ function clockWords(h: number, m: number): string {
   return `${h}:${String(m).padStart(2, '0')}`;
 }
 
-/** What a tap means in words: "(2 | −1)", "−1,5", "März", "3:15". */
+/** What a tap means in words: "(2 | −1)", "−1,5", "März", "3:15", "Bayern", "52° N, 13° O". */
 export function tapWords(locale: string, figure: TapFigure, value: TapValue): string {
+  if (figure.kind === 'map') return mapValueWords(locale, figure, value);
   switch (value.kind) {
     case 'plane':
       return pointWords(locale, value);
@@ -318,6 +348,8 @@ export function tapWords(locale: string, figure: TapFigure, value: TapValue): st
         : '';
     case 'clock':
       return clockWords(value.h, value.m);
+    default:
+      return '';
   }
 }
 
@@ -352,6 +384,8 @@ export type FigureTapCheck = {
   type: 'figure_tap';
   correct: boolean;
   miss: TapMiss | null;
+  /** A map (#251): its own verdict, and the figure the reply names features from. */
+  map: (MapCheck & { figure: Extract<TapFigure, { kind: 'map' }> }) | null;
 };
 
 /** Does her value stand on a place of this figure? Anything else was never a tap. */
@@ -367,6 +401,8 @@ function onFigure(figure: TapFigure, v: TapValue): boolean {
       return v.kind === 'bars' && figure.bars.some((b) => b.id === v.id);
     case 'clock':
       return v.kind === 'clock' && v.m % figure.snap === 0;
+    case 'map':
+      return false;
   }
 }
 
@@ -380,11 +416,16 @@ export function checkFigureTap(
 ): FigureTapCheck | null {
   const v = answer.value;
   const { figure, key } = task;
+  if (figure.kind === 'map') {
+    const m = checkMap(figure, key, v);
+    return m ? { type: 'figure_tap', correct: m.correct, miss: null, map: { ...m, figure } } : null;
+  }
   if (!onFigure(figure, v)) return null;
   const done = (miss: TapMiss | null): FigureTapCheck => ({
     type: 'figure_tap',
     correct: miss === null,
     miss,
+    map: null,
   });
   switch (key.kind) {
     case 'plane': {
@@ -411,6 +452,8 @@ export function checkFigureTap(
       if (hr && mr) return done(null);
       return done(hr ? 'hour_right' : mr ? 'minute_right' : 'time');
     }
+    default:
+      return null;
   }
 }
 
@@ -420,6 +463,7 @@ export function checkFigureTap(
  * hint ladder and counts as help (`figureTapNamesPart`).
  */
 export function figureTapReply(locale: string, check: FigureTapCheck, priorMisses: number): string {
+  if (check.map) return mapReply(locale, check.map.figure, check.map, priorMisses);
   switch (check.miss) {
     case null:
       return t(locale, 'practice.correct');
@@ -453,5 +497,19 @@ export function figureTapReply(locale: string, check: FigureTapCheck, priorMisse
 }
 
 export function figureTapNamesPart(check: FigureTapCheck, priorMisses: number): boolean {
+  if (check.map) return mapNamesPart(check.map, priorMisses);
   return (check.miss === 'left' || check.miss === 'right') && priorMisses >= 1;
+}
+
+/**
+ * The reply to a RIGHT tap answer when code has more to say than "Richtig": a map name typed
+ * with a slip is right, and the reply shows how it is written. Null: the usual reply.
+ */
+export function figureTapRightReply(
+  locale: string,
+  task: FigureTapTask,
+  check: FigureTapCheck,
+): string | null {
+  if (!check.correct || !check.map?.slip || task.figure.kind !== 'map') return null;
+  return mapSlipReply(locale, task.figure, task.key);
 }

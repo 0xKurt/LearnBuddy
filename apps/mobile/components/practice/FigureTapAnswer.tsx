@@ -36,6 +36,7 @@ import {
   zoomWindow,
   type Window,
 } from '../../lib/math/gridFrame.js';
+import { isMapView } from '../../lib/maps/mapFrame.js';
 import { Btn } from '../lb/Btn.js';
 import { Segmented } from '../lb/Segmented.js';
 import { formatNumber } from '../math/FigureView.js';
@@ -50,6 +51,7 @@ import {
   TapBarsSvg,
 } from './figure/TapFigures.js';
 import { TouchLayer } from './figure/TouchLayer.js';
+import { MapAnswer } from './MapAnswer.js';
 
 type Props = {
   view: FigureTapTaskView;
@@ -84,6 +86,9 @@ export function useTapWords(view: FigureTapTaskView): (v: TapValue | null) => st
       }
       case 'clock':
         return t('figure.your_time', { time: clockText(v.h, v.m) });
+      default:
+        // A map's answer is worded by `MapAnswer` (never the tapped feature's name, #251).
+        return '';
     }
   };
 }
@@ -105,10 +110,18 @@ function shownText(
         : '';
     case 'clock':
       return clockText(v.h, v.m);
+    default:
+      return '';
   }
 }
 
-export function FigureTapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+export function FigureTapAnswer(props: Props) {
+  // A map (#251) is a tap figure with answers of its own: a name, a position.
+  if (isMapView(props.view)) return <MapAnswer {...props} view={props.view} />;
+  return <TapAnswer {...props} />;
+}
+
+function TapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);
   const value = tapFrom(kept, view);

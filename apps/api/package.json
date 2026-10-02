@@ -21,6 +21,7 @@
   "dependencies": {
     "@google/genai": "^2.25.0",
     "@hono/node-server": "^1.19.15",
+    "@learnbuddy/shared-maps": "workspace:*",
     "@learnbuddy/shared-math": "workspace:*",
     "@learnbuddy/shared-types": "workspace:*",
     "@supabase/supabase-js": "^2.47.10",
