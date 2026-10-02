@@ -225,5 +225,16 @@
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
     "scroll": "Tabla, se desplaza hacia los lados"
+  },
+  "rubric": {
+    "points": "Puntos clave de tu explicación",
+    "elements": "Lo que necesita tu texto",
+    "met": "está",
+    "open": "aún falta",
+    "met_a11y": "{{name}}: está",
+    "open_a11y": "{{name}}: aún falta",
+    "spots": "Aquí puedes pulir",
+    "quote": "«{{quote}}»",
+    "quote_a11y": "Tu pasaje: {{quote}}"
   }
 }

@@ -80,10 +80,11 @@
       "why": "¿Por qué es así?"
     },
     "rubric": {
-      "element_met": "{{name}}: está",
-      "element_open": "{{name}}: todavía no",
+      "ask_next": "Eso ya se sostiene. {{ask}}",
+      "ask_start": "Empecemos por aquí: {{ask}}",
       "next_counted": "Casi – solo falta {{name}}: {{missing}}",
       "next_judged": "Eso ya se sostiene. Mira otra vez si {{name}} está ahí: {{missing}}",
+      "next_line": "Eso ya se sostiene. La línea de «{{cite}}» no está en el texto – mira otra vez: {{missing}}",
       "next_verb": "Eso ya se sostiene. Solo en «{{verb}}» el tiempo verbal aún no encaja: {{missing}}",
       "start": "Empecemos por {{name}}: {{missing}}"
     },

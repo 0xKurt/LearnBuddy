@@ -69,7 +69,7 @@ import {
 } from './structured.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.15';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
 
 const SUBJECT_KINDS = [
   'math',
@@ -268,6 +268,7 @@ const TASK: Record<StartTopicRequest['kind'], string> = {
   vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. If there are no pairs, usable = false.`,
   listen: LISTEN_RULES,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words.`,
+  oral: `The learner wants to be QUIZZED ORALLY ("Frag mich ab", "Darf ich's dir erklären?"): write 3–5 OPEN questions on the topic they named that she answers by EXPLAINING in her own words, aloud or typed — "Erkläre, wie …", "Beschreibe, warum …", "Was passiert bei …?", at their grade, the important ideas of the topic first. Every one is kind "long" with a rubric of kind "explain": its 3–6 key points are what a complete explanation at her level contains, each a short noun phrase in the learner's language that never repeats the question, each check "judged" — a key point with a number or a formula lists that value in "exact" with its accepted ways to write or say it — and each with ONE follow-up question in "ask" that a teacher asks when that point is missing, asking for it without stating it. answer = a short sample explanation in 2–4 sentences (shown only as one possible way, never as the solution). No other kinds, no choices.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers).`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own.`,
 };
@@ -306,6 +307,8 @@ const MODE: Record<StartTopicRequest['kind'], 'practice' | 'help' | 'test'> = {
   // A listening run IS practice — the same hints rule, the same spaced repetition, the same
   // card. Only what she gets the question from is different (issue #210).
   listen: 'practice',
+  // "Frag mich ab" is practice too: the same hint ladder, the same spaced repetition (#236).
+  oral: 'practice',
   help: 'help',
 };
 
@@ -316,6 +319,7 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
   speak: 'typed',
   // Buddy wrote the text and the questions, so the card says so ("Frage von Buddy").
   listen: 'buddy',
+  oral: 'buddy',
   help: 'homework',
 };
 
@@ -329,6 +333,9 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
   // each of them is checked against the spoken text first (issue #210, `listen.ts` Rule 0).
   // An ordinary question mixed in would be one she could answer without listening.
   listen: new Set([]),
+  // Only open questions to explain (issue #236): a number or a choice is not something she
+  // explains, and the run is what she asked for.
+  oral: new Set(['long']),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
 
@@ -344,6 +351,7 @@ const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
   vocab: new Set(),
   speak: new Set(),
   listen: new Set(),
+  oral: new Set(),
   help: new Set(),
 };
 
@@ -450,10 +458,14 @@ async function generateSet(
   // fraction bars (a bar is a maths surface, and this run is about hearing) and no ordinary
   // `items` either — a question she could answer without listening is not the exercise, and a
   // field that is there gets filled in.
+  // An oral quiz gets the questions and nothing else (issue #236): a bar, a note line or an
+  // arrangement to tap is not something she explains.
   const forModel =
     input.kind === 'listen'
       ? setSchema.omit({ bars: true, items: true, structured: true })
-      : setSchema.omit({ listen: true });
+      : input.kind === 'oral'
+        ? setSchema.omit({ listen: true, bars: true, staffs: true, structured: true })
+        : setSchema.omit({ listen: true });
   let handedOver = false;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
@@ -503,7 +515,10 @@ async function generateSet(
           ],
         },
       ],
-      schema: sheets || input.kind === 'listen' ? toJsonSchema(forModel) : GENERATED_SCHEMA,
+      schema:
+        sheets || input.kind === 'listen' || input.kind === 'oral'
+          ? toJsonSchema(forModel)
+          : GENERATED_SCHEMA,
       maxOutputTokens: 10_000,
       temperature: 0.4,
       // A streamed run must be finished inside the window the run waits for it, or it would
@@ -575,6 +590,12 @@ function preparedFrom(
     ),
     input.difficulty,
   );
+  if (input.kind === 'oral') {
+    // An oral quiz question without its key points would be judged as one string against a
+    // sample explanation — exactly what #236 replaces. Such a question is dropped, not kept
+    // as something else (Regel 0: reject, never repair).
+    items = items.filter((i) => i.rubric !== null && i.rubric.kind === 'explain');
+  }
   if (input.kind === 'help') {
     // Homework is what the learner typed — tasks the model added are dropped.
     items = items.filter((i) => fromLearnerText(i.prompt, input.text));

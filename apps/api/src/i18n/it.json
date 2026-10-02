@@ -80,10 +80,11 @@
       "why": "Perché è così?"
     },
     "rubric": {
-      "element_met": "{{name}}: c'è",
-      "element_open": "{{name}}: non ancora",
+      "ask_next": "Questo regge già. {{ask}}",
+      "ask_start": "Iniziamo da qui: {{ask}}",
       "next_counted": "Quasi – manca solo {{name}}: {{missing}}",
       "next_judged": "Questo regge già. Guarda di nuovo se {{name}} c'è: {{missing}}",
+      "next_line": "Questo regge già. La riga di «{{cite}}» non c’è nel testo – guarda di nuovo: {{missing}}",
       "next_verb": "Questo regge già. Solo in «{{verb}}» il tempo verbale non torna ancora: {{missing}}",
       "start": "Iniziamo da {{name}}: {{missing}}"
     },

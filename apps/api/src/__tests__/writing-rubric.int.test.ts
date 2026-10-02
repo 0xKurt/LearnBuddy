@@ -123,6 +123,15 @@ const judges = (
 
 const held = (text: string) => ({ element: 'r4', met: true, quote: text });
 
+/**
+ * Where an element stands in the list next to Buddy's sentence (issues #236, #258): 'steht',
+ * 'noch nicht', or absent when nobody measured it.
+ */
+const stateOf = (res: { body: AnswerResponse }, name: string) => {
+  const p = res.body.reply.rubric?.points.find((x) => x.name === name);
+  return p === undefined ? 'absent' : p.met ? 'steht' : 'noch nicht';
+};
+
 const reviews = (env: TestEnv, itemId: string) =>
   env.db
     .query<{ n: number }>(`select count(*)::int as n from item_states where item_id = $1`, [itemId])
@@ -186,10 +195,13 @@ describe.skipIf(!dbReady)('a writing task is answered element by element', () =>
     const reply = res.body.reply.text;
 
     // Exactly this element missing, the others there.
-    expect(reply).toContain('Einleitungssatz: noch nicht');
-    expect(reply).toContain('Länge: steht');
-    expect(reply).toContain('Präsens: steht');
-    expect(reply).toContain('eigenes Urteil: steht');
+    expect(stateOf(res, 'Einleitungssatz')).toBe('noch nicht');
+    expect(stateOf(res, 'Länge')).toBe('steht');
+    expect(stateOf(res, 'Präsens')).toBe('steht');
+    expect(stateOf(res, 'eigenes Urteil')).toBe('steht');
+    // The list is stored with the turn, so it is there again when the session is reloaded.
+    const reloaded = (await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
+    expect(reloaded.turns.at(-1)?.rubric).toEqual(res.body.reply.rubric);
     // ONE next step, the element's own sentence — not a list to work through.
     expect(reply).toContain('Fast – fehlt nur noch Einleitungssatz');
     expect(reply).toContain('Nenne im ersten Satz den Titel und den Autor.');
@@ -221,7 +233,7 @@ describe.skipIf(!dbReady)('a writing task is answered element by element', () =>
       ]),
     );
     const res = await answer(l, s, id, WHOLE);
-    expect(res.body.reply.text).toContain('eigenes Urteil: noch nicht');
+    expect(stateOf(res, 'eigenes Urteil')).toBe('noch nicht');
     // Code cannot see this element, so Buddy asks instead of asserting it is missing.
     expect(res.body.reply.text).toContain('Schau nochmal, ob eigenes Urteil schon drinsteht');
     expect(res.body.verdict).toBe('partially_correct');
@@ -238,7 +250,8 @@ describe.skipIf(!dbReady)('a writing task is answered element by element', () =>
     );
     const res = await answer(l, s, id, WHOLE);
     const reply = res.body.reply.text;
-    expect(reply).toContain('Präsens: steht');
+    expect(stateOf(res, 'Präsens')).toBe('steht');
+    expect(stateOf(res, 'eigenes Urteil')).toBe('absent');
     expect(reply).not.toContain('eigenes Urteil');
     // Nothing points at a place, so Buddy keeps his own sentence …
     expect(reply).toContain('Das liest sich rund.');
@@ -261,7 +274,7 @@ describe.skipIf(!dbReady)('a writing task is answered element by element', () =>
       ]),
     );
     const res = await answer(l, s, id, WHOLE);
-    expect(res.body.reply.text).toContain('Präsens: noch nicht');
+    expect(stateOf(res, 'Präsens')).toBe('noch nicht');
     expect(res.body.reply.text).toContain('Nur bei „stirbt“ stimmt die Zeitform noch nicht');
     expect(res.body.reply.text).not.toContain('wachte');
   });

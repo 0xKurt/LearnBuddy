@@ -225,5 +225,16 @@
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
+  },
+  "rubric": {
+    "points": "Punti chiave della tua spiegazione",
+    "elements": "Cosa serve al tuo testo",
+    "met": "c’è",
+    "open": "manca ancora",
+    "met_a11y": "{{name}}: c’è",
+    "open_a11y": "{{name}}: manca ancora",
+    "spots": "Qui puoi ancora rifinire",
+    "quote": "«{{quote}}»",
+    "quote_a11y": "Il tuo passaggio: {{quote}}"
   }
 }

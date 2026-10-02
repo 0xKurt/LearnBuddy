@@ -13,12 +13,12 @@
 import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
-import { RubricClaim, type AskedElement } from './rubric.js';
+import { RubricClaim, RubricSpot, type AskedElement } from './rubric.js';
 
 // v6: drei Änderungen auf einmal — die Regel ihres Bundeslandes (#214), die Pflichtelemente einer
 // Schreibaufgabe (#211) und das Gehörte (#210). Drei Agenten hatten unabhängig voneinander erhöht
 // (v4, v4.0, v3.10); gemessen wird aber DIESER Prompt, und den gab es vorher nicht.
-export const TUTOR_PROMPT_VERSION = 'tutor.v6';
+export const TUTOR_PROMPT_VERSION = 'tutor.v7';
 
 export const TutorDecision = z.object({
   intent: z
@@ -56,7 +56,20 @@ export const RubricDecision = TutorDecision.extend({
   elements: z
     .array(RubricClaim)
     .max(8)
-    .describe('One entry for every element listed in REQUIRED ELEMENTS, named by its ref.'),
+    .describe(
+      'One entry for every element listed in REQUIRED ELEMENTS or KEY POINTS, named by its ref.',
+    ),
+  /**
+   * Bis zu drei Stellen aus ihrem Aufsatz zum Verbessern (issue #258) — nur, wenn der Block
+   * SPOTS sie verlangt. Was davon ankommt, entscheidet `spotsIn`: ein Zitat, das in ihrem Text
+   * steht, und ein Vorschlag ohne Ziffer. Vier oder fünf werden gelesen und auf drei gekürzt,
+   * statt den ganzen Aufruf an einer überzähligen Stelle scheitern zu lassen.
+   */
+  spots: z
+    .array(RubricSpot)
+    .max(5)
+    .default([])
+    .describe('Only when SPOTS is given: up to 3 places in her text to improve. Empty otherwise.'),
 });
 export type RubricDecision = z.infer<typeof RubricDecision>;
 
@@ -73,6 +86,8 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
 - FREE TEXT (kind long: an argument, a summary, a stance, an analysis): its quality is what is asked, and quality is not one string. SOLUTION is at most a sketch of what could be written — judge against the question, not against that text, and never present it as the answer. Judge WHAT SHE WROTE: name what carries and what is still missing. Never a verdict on the whole text as such; if anything carries, it is partially_correct. Do not mark spelling, capitalisation, punctuation or style here — that is not what the question asks. revealed_answer stays false: there is nothing to reveal.
 - REQUIRED ELEMENTS (only when that block is given): this writing task is judged element by element, never as a whole. Write one entry in "elements" for EVERY element listed there, named by its ref, and judge each one on its own — a weak element says nothing about the next one. "met" is true only when the element really is in her text. Then "quote" holds the words from HER text that carry it, copied out of it character for character: the server looks the quote up in her text and does not accept the element without it, so never paraphrase, never tidy it up, never write a quote you did not find there. A tense element takes no quote — list in "verbs" the verb forms from her text that are not in the required tense, copied out of it, and leave the list empty when the tense holds throughout. The server builds what she reads out of these elements, so your "reply" is only a short fallback: say nothing about how many elements hold, write no count and no grade, and never call the whole text wrong.
+- KEY POINTS (only when that block is given): an OPEN question she answers by explaining in her own words — spoken (then written down by speech recognition, so ignore spelling and punctuation entirely) or typed, maybe over several answers to follow-up questions. Judge every key point against EVERYTHING she has said about this question in this conversation, not only her last answer: what she explained before still counts. "met" is true only when she really said it, in any wording; "quote" holds her own words that carry it, copied character for character out of ONE of her answers. The server picks the one follow-up question itself, so your "reply" is only a short fallback: no count, no grade, never the missing point itself.
+- SPOTS (only when that block is given): name up to 3 concrete places in her text that would get better — each a verbatim quote of her words and ONE sentence on how: a direction (a clearer link, an example, a reason), never the rewritten sentence, never a number, a grade or a score. The server drops a spot whose quote is not in her text.
 - LISTENING (see QUESTION: listening): she HEARD the text in STUDY MATERIAL read aloud and has never seen it. Judge only whether she understood it — never her language: no mark on spelling, capitalisation, punctuation, grammar or word choice, not even in passing, and a right understanding written with a slip is correct. Her own words count as much as the text's. Never write the text out, and never quote the part that holds the answer: she can listen again, and that is the help here.
 - If a RULE CHECK says the answer is wrong, it is wrong.
 - CURRICULUM: in Germany the curriculum is a matter for the states, and at some places the expected answer differs from one Bundesland to the next. When a CURRICULUM line is given, it is her own state's curriculum: it decides what counts as a complete answer here, and you add nothing to it. When it says no state's rule applies, a wording another German curriculum uses is not an error — accept it, say what is missing rather than calling the answer wrong, and when you are not certain it is wrong, the verdict is partially_correct.
@@ -157,7 +172,13 @@ export function tutorContext(input: {
    * bewusst NICHT: das Modell erfährt davon nichts und kann einer Angabe, die in ihrem Text
    * steht, also nicht widersprechen (CLAUDE.md Regel 1, `rubric.ts` `askedElements`).
    */
-  rubric?: { form: string; asked: readonly AskedElement[] } | null;
+  rubric?: {
+    kind: 'text' | 'explain';
+    form: string;
+    asked: readonly AskedElement[];
+    /** Ask for up to three places to improve (an essay with a text rubric, issue #258). */
+    spots: boolean;
+  } | null;
 }): string {
   const i = input.item;
   const lines = [
@@ -186,8 +207,16 @@ export function tutorContext(input: {
   if (rubric && rubric.asked.length) {
     lines.push(
       '',
-      `REQUIRED ELEMENTS of this ${rubric.form} — one entry in "elements" for each, named by its ref:`,
+      rubric.kind === 'explain'
+        ? `KEY POINTS of a complete explanation — one entry in "elements" for each, named by its ref, judged against everything she said about this question:`
+        : `REQUIRED ELEMENTS of this ${rubric.form} — one entry in "elements" for each, named by its ref:`,
       ...rubric.asked.map((e) => `${e.ref} "${e.name}" — ${askedFor(e)}`),
+    );
+  }
+  if (rubric && rubric.spots) {
+    lines.push(
+      '',
+      'SPOTS: up to 3 places in her text to improve, each a verbatim quote of her words and one sentence on how.',
     );
   }
   if (input.material) lines.push('', `STUDY MATERIAL:\n${input.material}`);

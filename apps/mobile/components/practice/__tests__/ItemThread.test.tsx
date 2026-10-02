@@ -19,6 +19,7 @@ const turn = (over: Partial<PracticeTurnView>): PracticeTurnView => ({
   verdict: null,
   pronunciation: null,
   reexplain: null,
+  rubric: null,
   created_at: '2026-10-02T15:00:00.000Z',
   ...over,
 });
@@ -51,5 +52,45 @@ describe('the thread under a question', () => {
   it('does not show it while it is sent either, only that Buddy is looking', () => {
     renderInApp(<ItemThread turns={[]} pending={ANSWER.text} echoAnswers={false} />);
     expect(screen.queryByText(ANSWER.text)).toBeNull();
+  });
+
+  it('answers an explanation with the list of key points, never with a right/wrong chip (#236)', () => {
+    const said = turn({ text: 'Mit Licht und aus CO2 und Wasser.', verdict: 'partially_correct' });
+    const reply = turn({
+      id: '00000000-0000-4000-8000-000000000003',
+      role: 'tutor',
+      text: 'Das trägt schon. Und wo in der Zelle passiert das?',
+      rubric: {
+        kind: 'explain',
+        points: [
+          { name: 'Licht als Energiequelle', met: true },
+          { name: 'Ort: Chloroplast', met: false },
+        ],
+        spots: [],
+      },
+    });
+    renderInApp(<ItemThread turns={[said, reply]} pending={null} />);
+    expect(screen.queryByText('Fast')).toBeNull();
+    // The state in words on every row, not in colour alone.
+    expect(screen.getByLabelText('Licht als Energiequelle: drin')).toBeDefined();
+    expect(screen.getByLabelText('Ort: Chloroplast: fehlt noch')).toBeDefined();
+    expect(screen.getByText(reply.text)).toBeDefined();
+  });
+
+  it('shows an essay its places to improve as her own quotes (#258)', () => {
+    const reply = turn({
+      id: '00000000-0000-4000-8000-000000000004',
+      role: 'tutor',
+      text: 'Das liest sich schon rund.',
+      rubric: {
+        kind: 'text',
+        points: [{ name: 'Absätze', met: true }],
+        spots: [{ quote: 'Das ist so', tip: 'Begründe das mit einem Beispiel.' }],
+      },
+    });
+    renderInApp(<ItemThread turns={[ANSWER, reply]} pending={null} />);
+    expect(screen.getByText('Hier kannst du noch feilen')).toBeDefined();
+    expect(screen.getByText('„Das ist so“')).toBeDefined();
+    expect(screen.getByText('Begründe das mit einem Beispiel.')).toBeDefined();
   });
 });

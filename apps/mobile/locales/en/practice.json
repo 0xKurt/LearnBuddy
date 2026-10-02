@@ -225,5 +225,16 @@
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
+  },
+  "rubric": {
+    "points": "Key points of your explanation",
+    "elements": "What your text needs",
+    "met": "in there",
+    "open": "still missing",
+    "met_a11y": "{{name}}: in there",
+    "open_a11y": "{{name}}: still missing",
+    "spots": "Places to polish",
+    "quote": "“{{quote}}”",
+    "quote_a11y": "Your passage: {{quote}}"
   }
 }

@@ -5,7 +5,8 @@
     "test": "Practice test",
     "vocab": "Test my vocab",
     "speak": "Practise speaking",
-    "listen": "Practise listening"
+    "listen": "Practise listening",
+    "oral": "Oral quiz"
   },
   "homework": {
     "title": "Homework help",
@@ -52,6 +53,11 @@
       "title": "What should the text be about?",
       "hint": "I read you a short text and ask you about it.",
       "placeholder": "e.g. English Unit 3, holidays in French"
+    },
+    "oral": {
+      "title": "What should I quiz you on?",
+      "hint": "I ask open questions – you explain, out loud or typed.",
+      "placeholder": "e.g. photosynthesis, the French Revolution"
     },
     "help": {
       "title": "Which task? Copy it here.",

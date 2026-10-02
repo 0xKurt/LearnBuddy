@@ -344,7 +344,7 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
         raw.kind === 'short' || raw.kind === 'long' || raw.kind === 'vocab' ? raw.spelling : null,
       // Only a free text has required elements, and only a rubric that can be checked is kept
       // (issue #211). A rubric that does not hold costs itself, never the question.
-      rubric: usableRubric(raw.rubric, raw.kind),
+      rubric: usableRubric(raw.rubric, raw.kind, raw.prompt),
     };
     // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
     if (placeholderQuestion(it)) continue;
@@ -381,7 +381,10 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
     // A rubric's "what to look for" sentences are shown to her like a hint, so they are held to
     // the hint rule (issue #211). Here the whole rubric goes rather than the one sentence: an
     // element with nothing to say when it is missing would be a tick box without a next step.
-    if (it.rubric && it.rubric.elements.some((e) => leaks(e.missing))) it.rubric = null;
+    // A follow-up question of a key point (issue #236) is read out to her the same way.
+    if (it.rubric && it.rubric.elements.some((e) => leaks(e.missing) || leaks(e.ask ?? ''))) {
+      it.rubric = null;
+    }
     const plain = { ...it, choices: null, correct_choice: null };
     if (it.kind === 'vocab') {
       if (!it.lang || !it.prompt_lang || it.lang === it.prompt_lang) continue;

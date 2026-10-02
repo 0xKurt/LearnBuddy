@@ -225,5 +225,16 @@
     "brick": "rangée {{row}}, brique {{n}}",
     "check_waits": "Seulement quand toutes les cases sont remplies.",
     "scroll": "Tableau, défile sur le côté"
+  },
+  "rubric": {
+    "points": "Points clés de ton explication",
+    "elements": "Ce dont ton texte a besoin",
+    "met": "c’est là",
+    "open": "il manque encore",
+    "met_a11y": "{{name}} : c’est là",
+    "open_a11y": "{{name}} : il manque encore",
+    "spots": "Ce que tu peux encore peaufiner",
+    "quote": "« {{quote}} »",
+    "quote_a11y": "Ton passage : {{quote}}"
   }
 }

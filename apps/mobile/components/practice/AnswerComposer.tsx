@@ -25,7 +25,11 @@
 // is allowed where, and what the return key does, is `lib/practice/pathEntry.ts`;
 // the server checks each step and names the first line that broke (issue #209).
 
-import type { ItemKind } from '@learnbuddy/shared-types/contracts';
+import {
+  ANSWER_CHARS_MAX,
+  ESSAY_CHARS_MAX,
+  type ItemKind,
+} from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -62,8 +66,6 @@ import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { BottomBar } from './BottomBar.js';
 import { tapped } from '../../lib/perf.js';
 
-/** AnswerRequest.text allows at most 2000 characters. */
-const MAX_ANSWER_LENGTH = 2000;
 /** The web field's rows for a path: five lines of 22 fill the field's maxHeight of 150. */
 const PATH_ROWS = 5;
 
@@ -115,6 +117,8 @@ export function AnswerComposer({
   const { t } = useTranslation(['practice', 'common']);
   const voiceMode = useVoiceMode((s) => s.on);
   const long = kind === 'long';
+  // An essay may be long (issue #258); the server holds every other answer to the short bound.
+  const maxLength = long ? ESSAY_CHARS_MAX : ANSWER_CHARS_MAX;
   const exact = kind === 'numeric' || kind === 'formula';
   // A written path, and what the return key therefore does (issue #221).
   const path = hasPath(kind, value);
@@ -136,7 +140,7 @@ export function AnswerComposer({
 
   const insert = (insertion: Insertion) => {
     const next = insertAtCursor(value, selection.current, insertion);
-    if (next.value.length > MAX_ANSWER_LENGTH) return;
+    if (next.value.length > maxLength) return;
     // A key is typing too: it ends the hands-free loop like the keyboard does.
     useHandsFree.getState().disarm();
     selection.current = next.selection;
@@ -162,7 +166,7 @@ export function AnswerComposer({
         latest.current.value,
         said,
         long ? 'append' : inPath ? 'line' : 'replace',
-        MAX_ANSWER_LENGTH,
+        maxLength,
       );
       onChange(next);
       if (useVoiceMode.getState().on && !latest.current.disabled && !inPath) onCheck(next.trim());
@@ -234,7 +238,7 @@ export function AnswerComposer({
             {...(Platform.OS === 'web' && !long
               ? { numberOfLines: Math.min(lineCount(value), PATH_ROWS) }
               : {})}
-            maxLength={MAX_ANSWER_LENGTH}
+            maxLength={maxLength}
             autoCorrect={false}
             spellCheck={false}
             autoComplete="off"

@@ -180,7 +180,41 @@ describe('the rubric of a writing task (#211)', () => {
     draft({ kind: 'long', prompt: 'Schreibe eine Inhaltsangabe.', rubric: RUBRIC, ...over });
 
   it('keeps a rubric on a free text', () => {
-    expect(usableItems([essay()])[0]?.rubric).toEqual(RUBRIC);
+    // Read with its defaults: a writing task (`text`), no follow-ups (issue #236).
+    expect(usableItems([essay()])[0]?.rubric).toEqual({
+      kind: 'text',
+      ...RUBRIC,
+      elements: RUBRIC.elements.map((e) => ({ ...e, ask: null })),
+    });
+  });
+
+  it('drops a key point rubric whose follow-up gives away the sample explanation (#236)', () => {
+    const point = (name: string, ask: string) => ({
+      name,
+      missing: 'Schau nochmal hin.',
+      ask,
+      check: { by: 'judged' },
+    });
+    const explain = (ask: string) =>
+      essay({
+        prompt: 'Erkläre, wie ein Regenbogen entsteht.',
+        answer: 'Lichtbrechung',
+        rubric: {
+          kind: 'explain',
+          form: 'Erklärung',
+          elements: [
+            point('Sonnenlicht', 'Was braucht es dafür am Himmel?'),
+            point('Regentropfen', 'Woran passiert es?'),
+            point('Brechung', ask),
+          ],
+        },
+      });
+    expect(
+      usableItems([explain('Was passiert mit dem Licht im Tropfen?')])[0]?.rubric,
+    ).not.toBeNull();
+    const [leaky] = usableItems([explain('Kennst du die Lichtbrechung?')]);
+    // The rubric goes, the question stays (like a leaking hint costs only itself).
+    expect(leaky).toMatchObject({ kind: 'long', rubric: null });
   });
 
   it('drops a rubric that is not about a written text, never the question', () => {

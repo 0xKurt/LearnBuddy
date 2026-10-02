@@ -24,7 +24,7 @@ import {
 } from '../practice/structured.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7.1';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7.2';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -296,7 +296,7 @@ export const NOT_PRACTICABLE_RULES = `Decide for EVERY task on the sheet whether
    - drawing: what the learner has to produce is a drawn thing — a construction with compasses and ruler, a function graph, a circuit, force arrows, a structural formula, a reaction mechanism with arrows, a labelled schema, a curve plotted from values, a tree or branching diagram, a cross-section, a map sketch, a flow chart, a formal diagram of a program or a data model, musical notation.
    - spoken_dialogue: free speaking with a partner who answers back — a speaking exam with role cards, a tandem conversation, a debate, a discussion to be held.
    - experiment: something carried out in the physical world — an experiment to perform, a specimen to prepare, a dissection, microscopy, measuring or mapping outdoors.
-   - long_text: one continuous written text longer than roughly 300 words — the answer field holds 2000 characters, so it cannot be written here at all.
+   - long_text: one continuous written text longer than roughly 1800 words — the answer field of an essay holds 15 000 characters, so it cannot be written here at all. An essay, an argument (Erörterung, Stellungnahme), an analysis or an interpretation up to that length IS practicable: write it as one question of kind "long" with its rubric (kind "text": the elements its text form requires).
    - multi_day_project: a product made over days or weeks — a research or term paper, a project, a talk to be presented.
    - practical: made or performed away from a screen — a work of art, a composition, playing an instrument, a sporting exercise.
    - ear_training: the answer depends on hearing a sound this sheet cannot produce.

@@ -55,9 +55,30 @@ import { z } from 'zod';
 export const RUBRIC_MIN = 2;
 export const RUBRIC_MAX = 6;
 
-/** Die Grenzen einer Wortzahl: unter 20 Wörtern ist kein Text gefordert, über 400 passt er nicht ins Antwortfeld (2000 Zeichen). */
+/**
+ * Die Grenzen einer Wortzahl: unter 20 Wörtern ist kein Text gefordert, über 1800 passt er nicht
+ * ins Antwortfeld eines Aufsatzes (`ESSAY_CHARS_MAX`, 15 000 Zeichen — issue #258).
+ */
 export const RUBRIC_WORDS_MIN = 20;
-export const RUBRIC_WORDS_MAX = 400;
+export const RUBRIC_WORDS_MAX = 1800;
+
+/**
+ * Wie viele Kernpunkte eine Erklärfrage hat (issue #236). Drei, weil zwei Punkte eine Frage mit
+ * zwei Teilen sind und keine Erklärung; sechs, weil die Rückmeldung eine Liste bleibt, die sie auf
+ * einen Blick liest, und weil ein Kind in einer mündlichen Abfrage nicht mehr als sechs Dinge zu
+ * einer Frage sagt.
+ */
+export const KEY_POINTS_MIN = 3;
+export const KEY_POINTS_MAX = 6;
+
+/** Wie viele Zahlen oder Formeln ein Kernpunkt exakt verlangen darf, je mit bis zu vier Schreibweisen. */
+export const KEY_POINT_EXACT_MAX = 3;
+
+/** Wie viele Stellen zum Verbessern ein Aufsatz zurückbekommt — drei, wie im Issue (#258). */
+export const RUBRIC_SPOTS_MAX = 3;
+
+/** Wie lang ein Verbesserungsvorschlag zu einer Stelle sein darf: ein Satz. */
+export const RUBRIC_TIP_MAX = 200;
 
 /** Wie viele Verben das Modell zu einer Zeitform nennen darf, bevor es eine Liste wird. */
 export const RUBRIC_VERBS_MAX = 6;
@@ -101,9 +122,34 @@ export const RubricCheck = z.discriminatedUnion('by', [
       'The tense the text form requires throughout. Checked by naming the verbs that break it; the server verifies each of them stands in her text.',
     ),
   z
-    .object({ by: z.literal('judged') })
+    .object({
+      by: z.literal('paragraphs'),
+      min: z.number().int().min(2).max(12),
+    })
     .describe(
-      'Only where nothing can be counted: an own judgement, a reasoning, the thread of the text. The model must point at a verbatim quote from her text for it, and the server checks the quote is really there.',
+      'The text has to be divided into at least this many paragraphs (an essay: introduction, main part, conclusion). Counted by the server: blocks separated by an empty line or a line break.',
+    ),
+  z
+    .object({
+      by: z.literal('line_refs'),
+      min: z.number().int().min(1).max(10),
+    })
+    .describe(
+      'Only for a task about a printed text with numbered lines: quotes carry their line ("Z. 12", "l. 4"). The server counts the line references in her text and checks that every cited line exists in the material.',
+    ),
+  z
+    .object({
+      by: z.literal('judged'),
+      exact: z
+        .array(z.array(RubricTerm).min(1).max(4))
+        .max(KEY_POINT_EXACT_MAX)
+        .default([])
+        .describe(
+          'Only when the element contains a number or a formula (a year, a value, "CO₂", "E = mc²"): each entry is ONE such value, given as 1–4 accepted ways to write or say it (e.g. ["CO2", "Kohlenstoffdioxid"]). The server checks exactly that one of them stands in her words; the rest of the element is judged. Empty otherwise.',
+        ),
+    })
+    .describe(
+      'Only where nothing can be counted: an own judgement, a reasoning, the thread of the text, a key point of an explanation. The model must point at a verbatim quote from her text for it, and the server checks the quote is really there.',
     ),
 ]);
 export type RubricCheck = z.infer<typeof RubricCheck>;
@@ -126,6 +172,16 @@ export const RubricElement = z.object({
       "ONE short sentence saying what to look for when this element is not there yet, in the learner's language. It is what she reads as her next step, so write it to her, never about her, and never give away a content she is supposed to produce.",
     ),
   check: RubricCheck,
+  ask: z
+    .string()
+    .trim()
+    .min(1)
+    .max(160)
+    .nullable()
+    .default(null)
+    .describe(
+      'Only for kind "explain": the ONE follow-up question a teacher asks when this key point is missing from her explanation, in the learner\'s language, ending with "?" — it asks for the point, it never states it (e.g. "Und wo in der Zelle passiert das?"). null for kind "text".',
+    ),
 });
 export type RubricElement = z.infer<typeof RubricElement>;
 
@@ -139,6 +195,12 @@ export type RubricElement = z.infer<typeof RubricElement>;
  */
 export const Rubric = z
   .object({
+    kind: z
+      .enum(['text', 'explain'])
+      .default('text')
+      .describe(
+        'text: a written text of a named form, ticked off element by element. explain: an OPEN question she answers by explaining in her own words (aloud or typed) — "Erklär, wie …", "Beschreibe, warum …"; the elements are its 3–6 KEY POINTS, every one "judged", each with its follow-up question in "ask".',
+      ),
     form: z
       .string()
       .trim()
@@ -150,21 +212,44 @@ export const Rubric = z
     elements: z.array(RubricElement).min(RUBRIC_MIN).max(RUBRIC_MAX),
   })
   .describe(
-    'Only for kind "long", and only when the task really asks for a text of a named form whose required elements the task or the text form states. The elements are what a teacher ticks off; prefer a check the server can count (a length, a piece of information that must be named, the tense) and use "judged" only where nothing can be counted. Never write a rubric whose elements you are guessing at — without one the question behaves as it does today.',
+    'Only for kind "long". kind "text": only when the task really asks for a text of a named form whose required elements the task or the text form states; the elements are what a teacher ticks off — prefer a check the server can count (a length, paragraphs, a piece of information that must be named, line references, the tense) and use "judged" only where nothing can be counted. kind "explain": an open question to be explained; the elements are the 3–6 key points a complete explanation at her level contains, each a short noun phrase (never the question itself), each "judged" with its follow-up question. Never write a rubric whose elements you are guessing at — without one the question behaves as it does today.',
   );
 export type Rubric = z.infer<typeof Rubric>;
 
-// ─────────────── Was hier (noch) NICHT steht: die Rückmeldung als Struktur ───────────────
+// ─────────────── Die Rückmeldung als Struktur (issues #236, #258) ───────────────
 //
-// Die Rückmeldung pro Element verlässt den Server als SATZ, nicht als Struktur: Buddys Antwort
-// trägt die Elemente mit ihrem Stand in Worten („steht" / „noch nicht") und darunter EINEN
-// nächsten Schritt, zusammengesetzt im Server aus seinen eigenen Texten
-// (`apps/api/src/modules/practice/rubric.ts`, `rubricReply`). Deshalb steht hier kein
-// Anzeige-Objekt neben `PracticeTurnView.pronunciation`.
+// Bis #211 verließ die Rückmeldung pro Element den Server als SATZ („Einleitung: steht ·
+// Präsens: noch nicht"). Das hat getragen, solange es zwei, drei Elemente einer Schreibaufgabe
+// waren. Mit der Erklärfrage (#236) und dem Aufsatz (#258) kommt mehr: bis zu sechs Kernpunkte und
+// drei Stellen aus ihrem Text — als eine Zeile mit Mittelpunkten wird das ein Absatz, den sie
+// entziffern muss. Also steht die Liste jetzt neben dem Satz, wie `PronunciationNote` neben der
+// Sprechrückmeldung: der Satz sagt den EINEN nächsten Schritt (er wird vorgelesen), die Liste
+// zeigt, was schon trägt.
 //
-// Der Grund ist nicht Sparsamkeit, sondern dass ein Satz hier mehr kann: er wird vorgelesen und
-// von der Vorleseansage ausgesprochen (`lib/speech/spoken.ts`), er braucht kein Symbol, dessen
-// Bedeutung man kennen muss, und er trägt keine Zahl, die sich zu einem Punktestand addieren
-// ließe (Regel 6). Eine eigene Fläche mit Häkchen wäre das nächste, was man bauen könnte — sie
-// wäre eine Verbesserung der Darstellung, nicht der Aussage, und sie hat ihr eigenes Vorbild
-// (`PronunciationNote`), wenn sie gebraucht wird.
+// Was die Struktur bewusst NICHT trägt: keine Zahl, keinen Anteil, keine Note (Regel 6 und die
+// Abnahme von #258). Ein Punkt ist `met` oder nicht — und ein Element, über das niemand etwas
+// gemessen hat (`unknown` in `practice/rubric.ts`), steht gar nicht drin.
+
+/** Ein Punkt der Rückmeldung: sein Name und ob er in ihrem Text steht. */
+export const RubricPointView = z.object({
+  name: z.string(),
+  met: z.boolean(),
+});
+export type RubricPointView = z.infer<typeof RubricPointView>;
+
+/**
+ * Eine Stelle aus IHREM Text, an der sie verbessern kann (nur beim Aufsatz, #258): das Zitat ist
+ * wörtlich ihres — der Server hat es in ihrem Text gefunden, sonst stünde es hier nicht.
+ */
+export const RubricSpotView = z.object({
+  quote: z.string(),
+  tip: z.string(),
+});
+export type RubricSpotView = z.infer<typeof RubricSpotView>;
+
+export const RubricFeedback = z.object({
+  kind: z.enum(['text', 'explain']),
+  points: z.array(RubricPointView).max(RUBRIC_MAX),
+  spots: z.array(RubricSpotView).max(RUBRIC_SPOTS_MAX).default([]),
+});
+export type RubricFeedback = z.infer<typeof RubricFeedback>;

@@ -5,7 +5,8 @@
     "test": "Verifica di prova",
     "vocab": "Ripassare i vocaboli",
     "speak": "Esercitare la pronuncia",
-    "listen": "Comprensione orale"
+    "listen": "Comprensione orale",
+    "oral": "Interrogazione orale"
   },
   "homework": {
     "title": "Aiuto con i compiti",
@@ -52,6 +53,11 @@
       "title": "Di che cosa deve parlare il testo?",
       "hint": "Ti leggo un testo breve e poi ti faccio delle domande.",
       "placeholder": "per es. Unit 3 di inglese, le vacanze in francese"
+    },
+    "oral": {
+      "title": "Su cosa ti interrogo?",
+      "hint": "Ti faccio domande aperte – tu spieghi, a voce o scrivendo.",
+      "placeholder": "ad es. fotosintesi, la Rivoluzione francese"
     },
     "help": {
       "title": "Quale esercizio? Ricopialo qui.",

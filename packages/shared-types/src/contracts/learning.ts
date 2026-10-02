@@ -4,6 +4,7 @@ import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { Figure } from './figure.js';
 import { ListenRef } from './listen.js';
+import { RubricFeedback } from './rubric.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
@@ -69,8 +70,10 @@ export const NotPracticableForm = z.enum([
   /** A real experiment, a specimen, a dissection, a survey in the field: the physical world. */
   'experiment',
   /**
-   * A text far beyond the answer field (2000 characters): material-based writing, an
-   * interpretation, an essay. An input problem, not a marking problem.
+   * A text far beyond the essay field (`ESSAY_CHARS_MAX`, 1500 to 2000 words). An essay, an
+   * Erörterung or an interpretation up to that length is practicable since issue #258 — a free
+   * text with its rubric; only what is longer still lands here. An input problem, not a marking
+   * problem.
    */
   'long_text',
   /** A piece of work over days or weeks as the PRODUCT: Facharbeit, GFS, project, presentation. */
@@ -500,6 +503,13 @@ export const PracticeTurnView = z.object({
   pronunciation: PronunciationFeedback.nullable(),
   /** Part of an "Anders erklären" exchange (her request and the new explanation), else null. */
   reexplain: ReexplainWay.nullable(),
+  /**
+   * A tutor turn about a free text with key points or required elements (issues #211, #236,
+   * #258): which of them stand in her words, and for an essay up to three places from her own
+   * text to improve. The reply's text says the one next step; this is the list next to it. No
+   * count and no grade anywhere in it. Null for every other turn.
+   */
+  rubric: RubricFeedback.nullable().default(null),
   created_at: IsoDateTime,
 });
 export type PracticeTurnView = z.infer<typeof PracticeTurnView>;
@@ -593,11 +603,29 @@ export const StartPracticeRequest = z
   });
 export type StartPracticeRequest = z.infer<typeof StartPracticeRequest>;
 
+/**
+ * How long a typed answer may be. 2000 characters for every question — and up to 15 000 for a
+ * free text (`kind` long), because an essay, an Erörterung or an interpretation is longer than an
+ * answer (issue #258).
+ *
+ * The issue says "ca. 12 000 Zeichen (≈ 1800 Wörter)" and its acceptance test pastes 1500 words.
+ * Those two do not fit together for every German text: an ordinary one runs at about 6.5
+ * characters per word with its space, an interpretation full of compounds ("Personifikation",
+ * "Erzählperspektive") at 8 and more — 1500 such words are 12 000 characters and over. The bound
+ * is there so the field has an end, not to cut off an essay of the length the issue promises, so
+ * it has the room: 15 000 characters hold 1500 words even at 10 characters a word.
+ *
+ * The contract allows the larger bound; the server holds every other question to the smaller one,
+ * because it knows the question and the app may be old.
+ */
+export const ANSWER_CHARS_MAX = 2000;
+export const ESSAY_CHARS_MAX = 15_000;
+
 export const AnswerRequest = z
   .object({
     client_turn_id: Uuid,
     item_id: Uuid,
-    text: z.string().trim().min(1).max(2000).nullable().optional(),
+    text: z.string().trim().min(1).max(ESSAY_CHARS_MAX).nullable().optional(),
     choice: z.number().int().min(0).max(5).nullable().optional(),
     /**
      * How she gave it (issue #163). A word she TAPPED from four of her own is recognition;
@@ -700,11 +728,15 @@ export const StartTopicRequest = z.object({
    * practice: questions on a topic · vocab: a typed vocabulary list ·
    * speak: sentences/words to say aloud · listen: a spoken text with questions about it
    * (Hörverstehen, issue #210 — refused before any model call when there is no voice to
-   * read it) · help: a homework task the learner typed ·
+   * read it) · oral: "Frag mich ab" — open questions SHE answers by explaining, aloud or
+   * typed, each checked against its key points with one follow-up for a missing one (issue
+   * #236) · help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
-   * end). Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
+   * end). Buddy explaining something is the chat's answer, never a mode (owner decision
+   * 28.09., issue #70; the kind `explain` stays refused) — `oral` is the other direction:
+   * she explains, Buddy listens.
    */
-  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test']),
+  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'oral', 'help', 'test']),
   text: z.string().trim().min(2).max(3000),
   subject: z.string().trim().max(60).nullable().optional(),
   /**

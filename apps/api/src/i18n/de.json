@@ -80,10 +80,11 @@
       "why": "Warum ist das so?"
     },
     "rubric": {
-      "element_met": "{{name}}: steht",
-      "element_open": "{{name}}: noch nicht",
+      "ask_next": "Das trägt schon. {{ask}}",
+      "ask_start": "Lass uns da anfangen: {{ask}}",
       "next_counted": "Fast – fehlt nur noch {{name}}: {{missing}}",
       "next_judged": "Das trägt schon. Schau nochmal, ob {{name}} schon drinsteht: {{missing}}",
+      "next_line": "Das trägt schon. Die Zeile bei „{{cite}}“ gibt es im Text nicht – schau nochmal nach: {{missing}}",
       "next_verb": "Das trägt schon. Nur bei „{{verb}}“ stimmt die Zeitform noch nicht: {{missing}}",
       "start": "Lass uns bei {{name}} anfangen: {{missing}}"
     },

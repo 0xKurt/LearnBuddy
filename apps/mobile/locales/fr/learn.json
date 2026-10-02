@@ -5,7 +5,8 @@
     "test": "Test d'entraînement",
     "vocab": "Réviser le vocabulaire",
     "speak": "Travailler la prononciation",
-    "listen": "Compréhension orale"
+    "listen": "Compréhension orale",
+    "oral": "Interrogation orale"
   },
   "homework": {
     "title": "Aide aux devoirs",
@@ -52,6 +53,11 @@
       "title": "Le texte doit parler de quoi ?",
       "hint": "Je te lis un petit texte, puis je te pose des questions.",
       "placeholder": "p. ex. Unité 3, les vacances en anglais"
+    },
+    "oral": {
+      "title": "Sur quoi je t’interroge ?",
+      "hint": "Je te pose des questions ouvertes – tu expliques, à l’oral ou par écrit.",
+      "placeholder": "p. ex. la photosynthèse, la Révolution française"
     },
     "help": {
       "title": "Quel exercice ? Recopie-le.",

@@ -225,5 +225,16 @@
     "brick": "Reihe {{row}}, Stein {{n}}",
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
     "scroll": "Tabelle, seitlich verschiebbar"
+  },
+  "rubric": {
+    "points": "Kernpunkte deiner Erklärung",
+    "elements": "Was dein Text braucht",
+    "met": "drin",
+    "open": "fehlt noch",
+    "met_a11y": "{{name}}: drin",
+    "open_a11y": "{{name}}: fehlt noch",
+    "spots": "Hier kannst du noch feilen",
+    "quote": "„{{quote}}“",
+    "quote_a11y": "Deine Stelle: {{quote}}"
   }
 }

@@ -8,6 +8,8 @@
 // plan what comes next.
 
 import {
+  ANSWER_CHARS_MAX,
+  RubricFeedback,
   isStructuredKind,
   type AnswerRequest,
   type CurriculumRegion,
@@ -74,9 +76,12 @@ import { MAX_ACCEPTED } from './items.js';
 import {
   askedElements,
   checkRubric,
+  rubricFeedback,
   rubricOf,
   rubricReply,
   rubricVerdict,
+  spotsIn,
+  type RubricSpot,
   type RubricClaim,
 } from './rubric.js';
 import {
@@ -666,6 +671,12 @@ function workedReply(
 
 // ─────────────── view ───────────────
 
+/** The stored list next to a reply (migration 0091), or null when it no longer reads as one. */
+function feedbackOf(stored: unknown): RubricFeedback | null {
+  const r = RubricFeedback.safeParse(stored);
+  return r.success ? r.data : null;
+}
+
 export async function loadSession(
   db: Db,
   learnerId: string,
@@ -774,9 +785,10 @@ export async function sessionView(
     verdict: PracticeTurnView['verdict'];
     pronunciation: PracticeTurnView['pronunciation'];
     reexplain: PracticeTurnView['reexplain'];
+    rubric_feedback: unknown;
     created_at: Date;
   }>(
-    `select id, item_id, role, text, verdict, pronunciation, reexplain, created_at from practice_turns
+    `select id, item_id, role, text, verdict, pronunciation, reexplain, rubric_feedback, created_at from practice_turns
       where session_id = $1 order by seq`,
     [sessionId],
   );
@@ -896,6 +908,8 @@ export async function sessionView(
       verdict: tr.verdict,
       pronunciation: tr.pronunciation,
       reexplain: tr.reexplain,
+      // Read as feedback, never trusted as it stands: a row that no longer fits shows nothing.
+      rubric: tr.rubric_feedback === null ? null : feedbackOf(tr.rubric_feedback),
       created_at: tr.created_at.toISOString(),
     })),
     current_item_id: active ? (current?.id ?? null) : null,
@@ -1168,6 +1182,11 @@ export async function answerItem(
         input.text ??
         (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
   if (!text) throw new AppError('invalid_input', 'Empty answer');
+  // An essay may be long (issue #258); every other answer keeps the old bound. The contract
+  // allows the larger one because only the server knows which question this is.
+  if (item.kind !== 'long' && text.length > ANSWER_CHARS_MAX) {
+    throw new AppError('invalid_input', 'This answer is too long', { reason: 'too_long' });
+  }
   // The reviewed task this question was computed from, if any (issue #162).
   const barTask = taskOf(item.bar_task);
   // The curriculum place this question is at, if any (migration 0074, issue #214). Read
@@ -1182,6 +1201,27 @@ export async function answerItem(
   // called at all (the rules alone answered, or the model was unavailable) — and then every
   // judged element is `unknown` rather than missing: nobody measured it.
   let claims: readonly RubricClaim[] = [];
+  /** The places to improve the model named for an essay (issue #258), before `spotsIn` checks them. */
+  let spots: readonly RubricSpot[] = [];
+  // An essay is asked for places to improve; an explanation is not (issue #258 vs #236).
+  const wantsSpots = rubric !== null && rubric.kind === 'text';
+  // An EXPLANATION is judged on everything she said about this question, not only on her last
+  // answer (issue #236): her answer to a follow-up adds to the first one instead of replacing it.
+  // Read once here, from the stored turns of this question in this run, and what Buddy already
+  // asked comes along — a follow-up is not asked twice while another point has had none.
+  const earlier =
+    rubric !== null && rubric.kind === 'explain'
+      ? await deps.db.query<{ role: 'learner' | 'tutor'; text: string }>(
+          `select role, text from practice_turns where session_id = $1 and item_id = $2 order by seq`,
+          [sessionId, item.id],
+        )
+      : [];
+  const judgedText = [...earlier.filter((e) => e.role === 'learner').map((e) => e.text), text].join(
+    '\n',
+  );
+  const buddySaid = earlier.filter((e) => e.role === 'tutor').map((e) => e.text);
+  /** The tutor answers in the wider schema: there are elements to ask about, or places to name. */
+  const wide = asked.length > 0 || wantsSpots;
   // The spoken text this question was answered from, if any (issue #210). It decides two
   // things below: that only the content is judged (never the spelling of a word she HEARD),
   // and that the tutor is given that text as the material it may judge against.
@@ -1448,7 +1488,9 @@ export async function answerItem(
                   region: learner.curriculum_region,
                   grade: learner.grade,
                 }),
-                rubric: rubric ? { form: rubric.form, asked } : null,
+                rubric: rubric
+                  ? { kind: rubric.kind, form: rubric.form, asked, spots: wantsSpots }
+                  : null,
               }),
             },
           ],
@@ -1470,19 +1512,23 @@ export async function answerItem(
           promptVersion: TUTOR_PROMPT_VERSION,
           system: TUTOR_SYSTEM,
           contents: messages,
-          schema: asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA,
-          maxOutputTokens: 1024,
+          schema: wide ? RUBRIC_SCHEMA : TUTOR_SCHEMA,
+          // Up to six elements with their quotes and three places with a sentence each need
+          // room an ordinary verdict does not (issue #258).
+          maxOutputTokens: wide ? 2048 : 1024,
           temperature: 0.3,
           timeoutMs: 20_000,
           thinkingBudget: 0,
         });
         // A writing task with required elements answers in a wider schema — the same decision
-        // plus one line per element (issue #211); everything else answers as before.
+        // plus one line per element (issue #211) and, for an essay, the places to improve
+        // (issue #258); everything else answers as before.
         let d: TutorDecisionT;
-        if (asked.length) {
+        if (wide) {
           const parsed = RubricDecision.safeParse(r.json);
           if (!parsed.success) throw new Error('tutor output invalid');
           claims = parsed.data.elements;
+          spots = parsed.data.spots;
           d = parsed.data;
         } else {
           const parsed = TutorDecision.safeParse(r.json);
@@ -1631,8 +1677,20 @@ export async function answerItem(
   //
   // Nur für eine echte Antwort: eine Tipp-Bitte und alles, was keine Antwort war, bleiben
   // unberührt (dort hat sie nichts geschrieben, das gegen die Elemente zu halten wäre).
+  //
+  // Seit #236/#258 steht die Liste der Elemente als Struktur NEBEN dem Satz (`feedback`, in
+  // `practice_turns.rubric_feedback`, Migration 0091) — der Satz ist nur noch der eine nächste
+  // Schritt, bei einer Erklärung die eine Nachfrage. Und eine Erklärung wird gegen alles
+  // gehalten, was sie zu dieser Frage gesagt hat (`judgedText`), ein Aufsatz gegen den Text, den
+  // sie gerade abgibt: den schreibt sie neu, eine Erklärung ergänzt sie.
+  let feedback: RubricFeedback | null = null;
   if (rubric && judged.verdict !== null && judged.verdict !== 'not_an_attempt') {
-    const outcome = checkRubric(rubric, text, claims);
+    const against = rubric.kind === 'explain' ? judgedText : text;
+    const outcome = checkRubric(rubric, against, claims, {
+      material: item.extracted_text,
+      said: buddySaid,
+    });
+    feedback = rubricFeedback(outcome, spotsIn(text, spots));
     judged = {
       ...judged,
       verdict: rubricVerdict(outcome),
@@ -1709,9 +1767,18 @@ export async function answerItem(
         ],
       );
       await tx.query(
-        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed)
-         values ($1, $2, $3, $4, 'tutor', $5, $6, $7)`,
-        [sessionId, learner.id, item.id, seq + 1, judged.reply, judged.gaveHint, judged.revealed],
+        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, gave_hint, revealed, rubric_feedback)
+         values ($1, $2, $3, $4, 'tutor', $5, $6, $7, $8)`,
+        [
+          sessionId,
+          learner.id,
+          item.id,
+          seq + 1,
+          judged.reply,
+          judged.gaveHint,
+          judged.revealed,
+          feedback ? JSON.stringify(feedback) : null,
+        ],
       );
       // The key learns: an answer the model judged right that the rules did not know
       // is accepted by the rules next time — at once and without a model.

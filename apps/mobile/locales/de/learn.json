@@ -5,7 +5,8 @@
     "test": "Probetest",
     "vocab": "Vokabeln abfragen",
     "speak": "Aussprache üben",
-    "listen": "Hörverstehen üben"
+    "listen": "Hörverstehen üben",
+    "oral": "Mündlich abfragen"
   },
   "homework": {
     "title": "Hilfe bei Hausaufgaben",
@@ -52,6 +53,11 @@
       "title": "Wozu willst du einen Hörtext?",
       "hint": "Ich lese dir einen kurzen Text vor und frage dich dazu.",
       "placeholder": "z. B. Englisch Unit 3, Ferien auf Französisch"
+    },
+    "oral": {
+      "title": "Was soll ich dich abfragen?",
+      "hint": "Ich stelle dir offene Fragen – du erklärst, gesprochen oder getippt.",
+      "placeholder": "z. B. Fotosynthese, Französische Revolution"
     },
     "help": {
       "title": "Welche Aufgabe? Schreib sie ab.",

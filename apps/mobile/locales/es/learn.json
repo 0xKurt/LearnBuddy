@@ -5,7 +5,8 @@
     "test": "Examen de prueba",
     "vocab": "Repasar vocabulario",
     "speak": "Practicar pronunciación",
-    "listen": "Comprensión oral"
+    "listen": "Comprensión oral",
+    "oral": "Examen oral"
   },
   "homework": {
     "title": "Ayuda con los deberes",
@@ -52,6 +53,11 @@
       "title": "¿De qué quieres el texto?",
       "hint": "Te leo un texto corto y luego te pregunto.",
       "placeholder": "p. ej. Unit 3 de inglés, las vacaciones en francés"
+    },
+    "oral": {
+      "title": "¿Sobre qué te pregunto?",
+      "hint": "Te hago preguntas abiertas – tú lo explicas, hablando o escribiendo.",
+      "placeholder": "p. ej. fotosíntesis, la Revolución francesa"
     },
     "help": {
       "title": "¿Qué ejercicio? Cópialo aquí.",

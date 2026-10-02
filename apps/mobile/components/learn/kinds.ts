@@ -12,6 +12,9 @@ export const KIND_ICON: Record<TopicKind, IconName> = {
   // Hörverstehen: the speaker, the same icon everything that is READ ALOUD carries
   // (`ListenButton`) — the microphone above is for her own voice (issue #210).
   listen: 'speak',
+  // "Frag mich ab" (issue #236): she explains, so the idea — not the microphone, which is only
+  // one of the two ways she may answer.
+  oral: 'bulb',
   help: 'pencil',
 };
 
@@ -22,6 +25,7 @@ export const KIND_LABEL: Record<TopicKind, string> = {
   vocab: 'start.vocab',
   speak: 'start.speak',
   listen: 'start.listen',
+  oral: 'start.oral',
   help: 'start.homework',
 };
 
@@ -34,5 +38,7 @@ export const KIND_EXAMPLES: Record<TopicKind, number> = {
   // Listening is asked for in the chat and prepared from what she says there (issue #210):
   // there is no sheet to open for it, so there is nothing to offer examples in.
   listen: 0,
+  // The same for an oral quiz (issue #236): asked for in the chat, from what she says there.
+  oral: 0,
   help: 0,
 };

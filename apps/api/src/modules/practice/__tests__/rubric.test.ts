@@ -1,4 +1,5 @@
-// Die Rubrik einer Schreibaufgabe, Element für Element (issue #211).
+// Die Rubrik einer Schreibaufgabe, Element für Element (issue #211), und dieselbe Rubrik für die
+// Erklärfrage (#236) und den Aufsatz (#258).
 //
 // Was hier geprüft wird, ist die Trennlinie: was Code entscheidet, entscheidet Code — und zwar
 // so, dass eine Angabe, die in ihrem Text STEHT, nie als fehlend gemeldet wird; was das Modell
@@ -11,17 +12,22 @@ import type { Rubric, RubricElement } from '@learnbuddy/shared-types/contracts';
 import {
   askedElements,
   checkRubric,
+  lineRefsIn,
+  materialLines,
   opening,
+  paragraphsIn,
+  rubricFeedback,
   rubricOf,
   rubricReply,
   rubricVerdict,
+  spotsIn,
   usableRubric,
   wordsIn,
   type RubricClaim,
 } from '../rubric.js';
 
 const element = (over: Partial<RubricElement> & { check: RubricElement['check'] }): RubricElement =>
-  ({ name: 'Element', missing: 'Schau nochmal hin.', ...over }) as RubricElement;
+  ({ name: 'Element', missing: 'Schau nochmal hin.', ask: null, ...over }) as RubricElement;
 
 const opener = element({
   name: 'Einleitungssatz',
@@ -41,10 +47,14 @@ const length = element({
 const judged = element({
   name: 'eigenes Urteil',
   missing: 'Sag am Ende, was du selbst davon hältst.',
-  check: { by: 'judged' },
+  check: { by: 'judged', exact: [] },
 });
 
-const rubric = (elements: RubricElement[]): Rubric => ({ form: 'Inhaltsangabe', elements });
+const rubric = (elements: RubricElement[]): Rubric => ({
+  kind: 'text',
+  form: 'Inhaltsangabe',
+  elements,
+});
 
 const claim = (over: Partial<RubricClaim> & { element: string }): RubricClaim => ({
   met: false,
@@ -111,7 +121,7 @@ describe('what the model is asked about', () => {
     // that they are part of the rubric, so it cannot contradict them (CLAUDE.md rule 1).
     expect(askedElements(rubric([opener, length, tense, judged]))).toEqual([
       { ref: 'r3', name: 'Präsens', check: { by: 'tense', tense: 'present' } },
-      { ref: 'r4', name: 'eigenes Urteil', check: { by: 'judged' } },
+      { ref: 'r4', name: 'eigenes Urteil', check: { by: 'judged', exact: [] } },
     ]);
     expect(askedElements(rubric([opener, length]))).toEqual([]);
   });
@@ -228,28 +238,34 @@ describe('what the model claims has to point at her text (Regel 0 aus #224)', ()
 });
 
 describe('what Buddy says', () => {
-  it('names every element with its state and exactly ONE next step', () => {
+  it('says exactly ONE next step; the elements stand next to it as a list', () => {
     const o = checkRubric(rubric([opener, length, judged]), 'Zu kurz.', [
       claim({ element: 'r3', met: false }),
     ]);
     const reply = rubricReply('de', o, 'Buddys eigener Satz.');
-    const [line, step, ...rest] = reply.split('\n');
-    expect(rest).toEqual([]);
-    expect(line).toBe(
-      'Einleitungssatz: noch nicht · Länge: noch nicht · eigenes Urteil: noch nicht',
-    );
     // Nothing holds yet, so no "Fast" — that would be untrue and would read as pressure.
-    expect(step).toBe(
+    expect(reply).toBe(
       'Lass uns bei Einleitungssatz anfangen: Nenne im ersten Satz Titel und Autor.',
     );
+    // The list is a structure next to the sentence, not a line in it (issues #236, #258).
+    expect(rubricFeedback(o)).toEqual({
+      kind: 'text',
+      points: [
+        { name: 'Einleitungssatz', met: false },
+        { name: 'Länge', met: false },
+        { name: 'eigenes Urteil', met: false },
+      ],
+      spots: [],
+    });
     // No count, no score, no grade anywhere in it (CLAUDE.md rule 6).
     expect(reply).not.toMatch(/\d\s*(von|\/)\s*\d/);
+    expect(JSON.stringify(rubricFeedback(o))).not.toMatch(/\d/);
     expect(reply).not.toContain('Falsch');
   });
 
   it('says "fehlt nur noch" for a counted element once something holds', () => {
     const o = checkRubric(rubric([length, opener]), SUMMARY.replace('Kafka', 'ihm'), []);
-    expect(rubricReply('de', o, 'x')).toContain(
+    expect(rubricReply('de', o, 'x')).toBe(
       'Fast – fehlt nur noch Einleitungssatz: Nenne im ersten Satz Titel und Autor.',
     );
   });
@@ -266,14 +282,221 @@ describe('what Buddy says', () => {
     const o = checkRubric(rubric([length, judged]), SUMMARY, [
       claim({ element: 'r2', met: true, quote: 'was ich sehr bedrückend finde' }),
     ]);
-    expect(rubricReply('de', o, 'Das liest sich rund.')).toBe(
-      'Länge: steht · eigenes Urteil: steht\nDas liest sich rund.',
+    expect(rubricReply('de', o, 'Das liest sich rund.')).toBe('Das liest sich rund.');
+    expect(rubricFeedback(o).points).toEqual([
+      { name: 'Länge', met: true },
+      { name: 'eigenes Urteil', met: true },
+    ]);
+  });
+
+  it('leaves an element nobody measured out of the list', () => {
+    const o = checkRubric(rubric([length, judged]), SUMMARY, []);
+    expect(rubricFeedback(o).points).toEqual([{ name: 'Länge', met: true }]);
+  });
+
+  it("writes the sentence in the learner's language", () => {
+    const o = checkRubric(rubric([length, opener]), 'Zu kurz.', []);
+    expect(rubricReply('fr', o, 'x')).toContain('Commençons par Länge');
+    expect(rubricReply('it', o, 'x')).toContain('Iniziamo da Länge');
+  });
+});
+
+// ─────────────── die Erklärfrage (#236) ───────────────
+
+const point = (name: string, ask: string, exact: string[][] = []): RubricElement =>
+  element({ name, missing: `${name} fehlt noch.`, ask, check: { by: 'judged', exact } });
+
+const PHOTO: Rubric = {
+  kind: 'explain',
+  form: 'Erklärung',
+  elements: [
+    point('Licht als Energiequelle', 'Woher bekommt die Pflanze die Energie dafür?'),
+    point('CO₂ und Wasser werden zu Glucose', 'Woraus baut die Pflanze den Zucker?', [
+      ['CO2', 'Kohlenstoffdioxid', 'Kohlendioxid'],
+    ]),
+    point('Ort: Chloroplast', 'Und wo in der Zelle passiert das?'),
+  ],
+};
+const PHOTO_Q = 'Erkläre, wie die Fotosynthese funktioniert.';
+
+describe('an explanation question (issue #236)', () => {
+  it('keeps a key-point rubric only when every point can be asked and checked', () => {
+    expect(usableRubric(PHOTO, 'long', PHOTO_Q)).toBe(PHOTO);
+    // Fewer than three points is a two-part question, not an explanation.
+    expect(usableRubric({ ...PHOTO, elements: PHOTO.elements.slice(0, 2) }, 'long')).toBeNull();
+    // Every point is judged — a counted check belongs to a text form, not an explanation.
+    expect(usableRubric({ ...PHOTO, elements: [...PHOTO.elements, length] }, 'long')).toBeNull();
+    // Every point has its follow-up, and the follow-up is a question.
+    const noAsk = { ...PHOTO.elements[0]!, ask: null };
+    expect(
+      usableRubric({ ...PHOTO, elements: [noAsk, ...PHOTO.elements.slice(1)] }, 'long'),
+    ).toBeNull();
+    const statement = { ...PHOTO.elements[0]!, ask: 'Die Energie kommt vom Licht.' };
+    expect(
+      usableRubric({ ...PHOTO, elements: [statement, ...PHOTO.elements.slice(1)] }, 'long'),
+    ).toBeNull();
+  });
+
+  it('drops a rubric whose follow-up gives the value away', () => {
+    const giveaway = point('CO₂ als Ausgangsstoff', 'Nimmt die Pflanze CO2 auf?', [['CO2']]);
+    expect(
+      usableRubric({ ...PHOTO, elements: [giveaway, ...PHOTO.elements.slice(1)] }, 'long'),
+    ).toBeNull();
+  });
+
+  it('drops a key point that just repeats the question', () => {
+    const echo = point(PHOTO_Q, 'Wie geht das?');
+    expect(
+      usableRubric({ ...PHOTO, elements: [echo, ...PHOTO.elements.slice(1)] }, 'long', PHOTO_Q),
+    ).toBeNull();
+  });
+
+  it('leaves no number in a key point to a judgement', () => {
+    // "1914" in the name and no exact value for it: a number code can check would be judged.
+    const year = point('Kriegsbeginn 1914', 'Wann begann der Krieg?');
+    const rest = PHOTO.elements.slice(1);
+    expect(usableRubric({ ...PHOTO, elements: [year, ...rest] }, 'long')).toBeNull();
+    const checked = point('Kriegsbeginn 1914', 'Wann begann der Krieg?', [['1914']]);
+    expect(usableRubric({ ...PHOTO, elements: [checked, ...rest] }, 'long')).not.toBeNull();
+    // An "exact" value without any digit is a word that could be paraphrased — not its field.
+    const word = point('Licht', 'Woher?', [['Sonne']]);
+    expect(usableRubric({ ...PHOTO, elements: [word, ...rest] }, 'long')).toBeNull();
+  });
+
+  it('carries no follow-up on a writing task', () => {
+    const r = rubric([length, { ...judged, ask: 'Was hältst du davon?' }]);
+    expect(usableRubric(r, 'long')).toBeNull();
+  });
+
+  it('two of three points: exactly one follow-up, the one for the third', () => {
+    const said = 'Die Pflanze braucht Licht als Energie und macht aus CO2 und Wasser Zucker.';
+    const o = checkRubric(PHOTO, said, [
+      claim({ element: 'r1', met: true, quote: 'braucht Licht als Energie' }),
+      claim({ element: 'r2', met: true, quote: 'aus CO2 und Wasser Zucker' }),
+      claim({ element: 'r3', met: false }),
+    ]);
+    expect(o.elements.map((e) => e.state)).toEqual(['met', 'met', 'open']);
+    expect(rubricVerdict(o)).toBe('partially_correct');
+    const reply = rubricReply('de', o, 'x');
+    expect(reply).toBe('Das trägt schon. Und wo in der Zelle passiert das?');
+    expect(reply.match(/\?/g)).toHaveLength(1);
+  });
+
+  it('checks a number or a formula in a key point exactly, whatever the model says', () => {
+    // The model is happy with "Gase" — the value the point names is not in her words.
+    const said = 'Die Pflanze nimmt Gase und Wasser auf und macht Zucker daraus.';
+    const o = checkRubric(PHOTO, said, [
+      claim({ element: 'r2', met: true, quote: 'nimmt Gase und Wasser auf' }),
+    ]);
+    expect(o.elements[1]?.state).toBe('open');
+    // Spoken as a word, it counts: one of the accepted ways to say it.
+    const spoken = checkRubric(PHOTO, 'Aus Kohlendioxid und Wasser wird Zucker.', [
+      claim({ element: 'r2', met: true, quote: 'Aus Kohlendioxid und Wasser wird Zucker' }),
+    ]);
+    expect(spoken.elements[1]?.state).toBe('met');
+  });
+
+  it('does not ask the same follow-up twice while another point had none', () => {
+    const o = checkRubric(
+      PHOTO,
+      'Mit Licht.',
+      [
+        claim({ element: 'r1', met: true, quote: 'Licht' }),
+        claim({ element: 'r2' }),
+        claim({ element: 'r3' }),
+      ],
+      {
+        said: ['Das trägt schon. Woraus baut die Pflanze den Zucker?'],
+      },
+    );
+    expect(o.step?.ask).toBe('Und wo in der Zelle passiert das?');
+    // Once every open point has been asked, it is the first one again — never nothing.
+    const all = checkRubric(
+      PHOTO,
+      'Mit Licht.',
+      [
+        claim({ element: 'r1', met: true, quote: 'Licht' }),
+        claim({ element: 'r2' }),
+        claim({ element: 'r3' }),
+      ],
+      {
+        said: ['Woraus baut die Pflanze den Zucker?', 'Und wo in der Zelle passiert das?'],
+      },
+    );
+    expect(all.step?.ask).toBe('Woraus baut die Pflanze den Zucker?');
+  });
+
+  it('starts with a follow-up when nothing holds yet, without "Das trägt schon"', () => {
+    const o = checkRubric(PHOTO, 'Keine Ahnung.', [claim({ element: 'r1' })]);
+    expect(rubricReply('de', o, 'x')).toBe(
+      'Lass uns da anfangen: Woher bekommt die Pflanze die Energie dafür?',
     );
   });
 
-  it("writes the line in the learner's language", () => {
-    const o = checkRubric(rubric([length, opener]), 'Zu kurz.', []);
-    expect(rubricReply('fr', o, 'x')).toContain('Länge : pas encore');
-    expect(rubricReply('it', o, 'x')).toContain('Länge: non ancora');
+  it('shows no places to improve for an explanation', () => {
+    const o = checkRubric(PHOTO, 'Licht.', []);
+    expect(rubricFeedback(o, [{ quote: 'Licht', tip: 'Mehr.' }]).spots).toEqual([]);
+  });
+});
+
+// ─────────────── der Aufsatz (#258) ───────────────
+
+describe('an essay (issue #258)', () => {
+  it('counts paragraphs by line breaks, not by empty lines', () => {
+    expect(paragraphsIn('Einleitung.\nHauptteil.\n\n\nSchluss.')).toBe(3);
+    expect(paragraphsIn('Ein einziger Block.')).toBe(1);
+    const r = rubric([length, element({ name: 'Absätze', check: { by: 'paragraphs', min: 3 } })]);
+    expect(checkRubric(r, 'Eins.\nZwei.', []).elements[1]?.state).toBe('open');
+    expect(checkRubric(r, 'Eins.\nZwei.\nDrei.', []).elements[1]?.state).toBe('met');
+  });
+
+  it('reads line references as a format, and checks every cited line exists', () => {
+    expect(lineRefsIn('wie es heißt (Z. 12) und später (Zeilen 3–5), dann l. 7')).toEqual([
+      { cite: 'Z. 12', lines: [12] },
+      { cite: 'Zeilen 3–5', lines: [3, 5] },
+      { cite: 'l. 7', lines: [7] },
+    ]);
+    // A word that merely starts with the letter is no reference.
+    expect(lineRefsIn('Zebra 12 und Leben 4')).toEqual([]);
+    const material = Array.from({ length: 20 }, (_, n) => `Zeile ${n + 1} des Gedichts`).join('\n');
+    expect(materialLines(material)).toBe(20);
+    const cites = element({ name: 'Zitate mit Zeile', check: { by: 'line_refs', min: 2 } });
+    // Something already holds, so the sentence may say "Das trägt schon" before the line.
+    const r = rubric([
+      cites,
+      element({ name: 'Bild', check: { by: 'mentions', terms: ['Bild'], where: 'anywhere' } }),
+    ]);
+    const ok = checkRubric(r, 'Das Bild (Z. 3) und der Schluss (Z. 18).', [], { material });
+    expect(ok.elements[0]?.state).toBe('met');
+    const wrong = checkRubric(r, 'Das Bild (Z. 3) und der Schluss (Z. 87).', [], { material });
+    expect(wrong.elements[0]?.state).toBe('open');
+    expect(wrong.step).toMatchObject({ cite: 'Z. 87' });
+    expect(rubricReply('de', wrong, 'x')).toContain('Die Zeile bei „Z. 87“ gibt es im Text nicht');
+    // Too few references: counted, no material needed.
+    expect(checkRubric(r, 'Das Bild (Z. 3).', [], {}).elements[0]?.state).toBe('open');
+    // Enough references but nothing to check them against: nobody measured — unknown.
+    expect(checkRubric(r, '(Z. 3) und (Z. 4)', [], {}).elements[0]?.state).toBe('unknown');
+  });
+
+  it('keeps only places whose quote stands in her text, three at most, none with a digit', () => {
+    const text =
+      'Ich finde, Schuluniformen sind gut. Sie machen alle gleich. Außerdem spart man Zeit am Morgen. Das ist so.';
+    const kept = spotsIn(text, [
+      {
+        quote: 'Sie machen alle gleich',
+        tip: 'Begründe das mit einem Beispiel aus deinem Alltag.',
+      },
+      { quote: 'Uniformen fördern Disziplin', tip: 'Ein Zitat, das es nicht gibt.' },
+      { quote: 'Das ist so.', tip: 'Gib hier eine Note von 2.' },
+      { quote: 'sie machen alle gleich', tip: 'Doppelt.' },
+      { quote: 'spart man Zeit am Morgen', tip: 'Verknüpfe das mit deiner These.' },
+      { quote: 'Ich finde', tip: 'Formuliere die These deutlicher.' },
+      { quote: 'Das ist so', tip: 'Noch einer, über drei.' },
+    ]);
+    expect(kept.map((k) => k.quote)).toEqual([
+      'Sie machen alle gleich',
+      'spart man Zeit am Morgen',
+      'Ich finde',
+    ]);
   });
 });

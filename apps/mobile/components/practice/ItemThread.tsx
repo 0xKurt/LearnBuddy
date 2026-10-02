@@ -7,6 +7,9 @@
 // What arrives while the screen is open moves a little (Buddy's reply rises in, a right
 // answer is celebrated softly, a "not yet" nudges her answer; Verdict.tsx); what was
 // there when the question opened just stands.
+// An explanation or a text with key points (issues #236, #258) gets no chip at all: its answer is
+// the list under Buddy's reply (RubricNote) — which points are in her words — and a "Richtig" or
+// "Noch nicht ganz" on top of that would be exactly the right/wrong the issues rule out.
 
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { useRef } from 'react';
@@ -21,6 +24,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
+import { RubricNote } from './RubricNote.js';
 import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
 import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
@@ -89,9 +93,11 @@ export function ItemThread({
         const before = index > 0 ? turns[index - 1] : undefined;
         const afterCorrect =
           !hideVerdicts && before?.role === 'learner' && before.verdict === 'correct';
+        // Answered point by point: the list under the reply says it, not a chip (#236, #258).
+        const listed = mine && (turns[index + 1]?.rubric ?? null) !== null;
         // While a new answer is on its way, the previous judgement no longer applies.
         const verdict =
-          mine && turn.id === latestAnswerId && pending === null && !hideVerdicts
+          mine && turn.id === latestAnswerId && pending === null && !hideVerdicts && !listed
             ? verdictKey(turn.verdict)
             : null;
         const bubble = (
@@ -126,6 +132,7 @@ export function ItemThread({
             {pronunciation && !mine && turn.pronunciation ? (
               <PronunciationNote feedback={turn.pronunciation} />
             ) : null}
+            {!mine && turn.rubric && !hideVerdicts ? <RubricNote feedback={turn.rubric} /> : null}
           </Rise>
         );
       })}
