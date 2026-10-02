@@ -30,7 +30,8 @@ export type AudioMime =
 
 export type LlmMessage = { role: 'user' | 'model'; parts: LlmPart[] };
 
-export type LlmPurpose =
+/** What the app itself calls the model for; each has its own daily allowance (call.ts). */
+export type AppPurpose =
   | 'buddy_turn'
   | 'buddy_check'
   | 'tutor'
@@ -44,6 +45,16 @@ export type LlmPurpose =
   | 'reexplain'
   | 'summary'
   | 'consolidate';
+
+export type LlmPurpose =
+  | AppPurpose
+  /**
+   * The overall-impression eval's judge (issue #127, evals/impression/judge.ts). Never called
+   * by the app — `callModel` does not accept it — its own purpose so VERTEX_ROUTES can give
+   * the judge a different (ideally stronger) model than the one it judges, and the bill
+   * shows it apart.
+   */
+  | 'eval_judge';
 
 export type LlmRequest = {
   purpose: LlmPurpose;
@@ -150,4 +161,18 @@ export class DisabledGateway implements LlmGateway {
   async generate(): Promise<LlmResult> {
     throw new LlmError('unavailable', 'No language model is configured (LLM_BACKEND=disabled)');
   }
+}
+
+/**
+ * The detail the app needs to tell "the provider is throttling us" from "the model could
+ * not answer" (issue #206). Both stay `model_unavailable` on the wire, so an older app build
+ * that only knows that code still reads a true sentence; a build that knows the reason says
+ * the more precise one ("Buddy ist gerade überlastet"). Only a provider 429 that survived
+ * every retry (retry.ts) counts: guessing "busy" for any other failure would claim
+ * something that is not proven (rule 5).
+ */
+export function modelFailureDetails(err: unknown): { reason: 'model_busy' } | undefined {
+  return err instanceof LlmError && err.kind === 'rate_limited'
+    ? { reason: 'model_busy' }
+    : undefined;
 }

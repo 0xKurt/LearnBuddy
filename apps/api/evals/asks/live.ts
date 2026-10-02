@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { BUDDY } from './buddy.js';
@@ -119,7 +120,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const config = loadConfig({
-    ...process.env,
+    ...evalEnv(),
     DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://unused/unused',
     SUPABASE_URL: process.env.SUPABASE_URL ?? 'http://unused.local',
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',

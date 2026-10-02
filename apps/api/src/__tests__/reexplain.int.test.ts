@@ -259,9 +259,20 @@ describe.skipIf(!dbReady)('explain again ("Anders erklären")', () => {
     const down = await reexplain(l, s, first, 'simpler');
     expect(down.status).toBe(503);
     expect(down.body).toMatchObject({ error: { code: 'model_unavailable' } });
+    // Down is not "busy": the reason is only given for a proven 429 (issue #206).
+    expect(JSON.stringify(down.body)).not.toContain('model_busy');
     expect((await l.api.get<SessionView>(`/practice/sessions/${s.id}`)).body.turns).toHaveLength(
       turns,
     );
+
+    // Throttled through every retry: the same code, so an older app still reads a true
+    // sentence, plus the reason that lets this one say "überlastet" (issue #206).
+    env.llm.script('reexplain', { error: new LlmError('rate_limited', 'provider rate limit') });
+    const busy = await reexplain(l, s, first, 'simpler');
+    expect(busy.status).toBe(503);
+    expect(busy.body).toMatchObject({
+      error: { code: 'model_unavailable', details: { reason: 'model_busy' } },
+    });
 
     env.llm.script('reexplain', {
       json: { explanation: 'Unten steht, in wie viele Teile du teilst.' },

@@ -36,10 +36,11 @@ export type TurnRule = {
   /** Buddy's answer; a function sees the whole request (for quotes). */
   answer: (req: LlmRequest) => unknown;
   /**
-   * Fails once with "provider down" and works when she sends it again (the tour walks
-   * through that). Counted per rule, per process.
+   * Fails once and works when she sends it again (the tour walks through that): `true` as
+   * "provider down", `'busy'` as a provider 429 that outlasted the retries (issue #206).
+   * Counted per rule, per process.
    */
-  failFirst?: boolean;
+  failFirst?: boolean | 'busy';
 };
 
 const rules: TurnRule[] = [];
@@ -63,7 +64,9 @@ export function installTurns(llm: ScriptedGateway): void {
     const key = rule.when.source;
     if (rule.failFirst && !failedOnce.has(key)) {
       failedOnce.add(key);
-      throw new LlmError('unavailable', 'provider down');
+      throw rule.failFirst === 'busy'
+        ? new LlmError('rate_limited', 'provider rate limit')
+        : new LlmError('unavailable', 'provider down');
     }
     return rule.answer(req);
   });

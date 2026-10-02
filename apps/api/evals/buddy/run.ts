@@ -17,6 +17,7 @@ import { writeFileSync } from 'node:fs';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { setStateAudit } from '../../src/modules/buddy/blocks.js';
 import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
@@ -44,7 +45,7 @@ const transcript: Array<{
 
 async function main(): Promise<void> {
   const config = loadConfig({
-    ...process.env,
+    ...evalEnv(),
     // Never connected to (every case gets a throwaway database), but validated
     // by loadConfig — the same placeholder every other eval passes.
     DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://unused/unused',

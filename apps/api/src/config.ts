@@ -33,6 +33,7 @@ const VertexRoutes = z
     reexplain: ModelSpec,
     summary: ModelSpec,
     consolidate: ModelSpec,
+    eval_judge: ModelSpec,
   })
   .partial()
   .strict();
@@ -71,6 +72,14 @@ const Config = z
     /** 'disabled' runs the app without a model: Buddy says so honestly. */
     LLM_BACKEND: z.enum(['vertex', 'disabled']).default('vertex'),
     GOOGLE_CLOUD_PROJECT: z.string().optional(),
+    /**
+     * Whose traffic this process sends to the model (issue #206): 'live' for the app,
+     * 'eval' for the eval runners, which set it themselves (evals/eval-env.ts). Every Vertex
+     * request carries it as the label `traffic`, so the bill and the quota pages in the
+     * Cloud Console can tell an eval run from a child waiting for an answer. It changes
+     * nothing about how a call is made.
+     */
+    LLM_TRAFFIC: z.enum(['live', 'eval']).default('live'),
     GOOGLE_VERTEX_LOCATION: EuLocation.default('europe-west4'),
     /** Service-account JSON inline (Vercel); written to a temp file at boot. */
     GOOGLE_APPLICATION_CREDENTIALS_JSON: z.string().optional(),

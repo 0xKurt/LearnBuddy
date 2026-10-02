@@ -164,6 +164,9 @@ export async function claimMessage(
 /** Stable codes for why a turn failed: stored on the message, sent to the app. */
 const FAILURE_CODE: Record<string, string> = {
   model_unavailable: 'model_unavailable',
+  // The provider throttled us through every retry (issue #206): said as "overloaded, try
+  // again in a moment", not as a generic failure, because that is what is proven.
+  model_busy: 'busy',
   budget_exhausted: 'budget',
   model_invalid: 'invalid',
   stale: 'stale',
@@ -343,7 +346,9 @@ async function decideTurn(
         : err instanceof LlmError
           ? err.kind === 'invalid_output'
             ? 'model_invalid'
-            : 'model_unavailable'
+            : err.kind === 'rate_limited'
+              ? 'model_busy'
+              : 'model_unavailable'
           : 'internal';
       await record('failed', [code]);
       return failTurn(deps, message, code);

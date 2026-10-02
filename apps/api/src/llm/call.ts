@@ -8,7 +8,13 @@ import { DAILY_LIMITS } from '../config.js';
 import type { Db } from '../lib/db.js';
 import { AppError } from '../lib/errors.js';
 import type { EmbeddingGateway, EmbedRequest, EmbedResult } from './embeddings.js';
-import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
+import {
+  LlmError,
+  type AppPurpose,
+  type LlmGateway,
+  type LlmRequest,
+  type LlmResult,
+} from './gateway.js';
 
 export type ModelDeps = {
   db: Db;
@@ -95,7 +101,7 @@ export async function callModel(
   deps: ModelDeps,
   learnerId: string,
   localDay: string,
-  req: LlmRequest,
+  req: LlmRequest & { purpose: AppPurpose },
 ): Promise<LlmResult> {
   if (!deps.llm.available) throw new LlmError('unavailable', 'no model configured');
   const kind = req.purpose;

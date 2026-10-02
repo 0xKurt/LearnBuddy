@@ -8,12 +8,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import type { AnswerResponse, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
 const config = loadConfig({
-  ...process.env,
+  ...evalEnv(),
   DATABASE_URL: 'x',
   SUPABASE_URL: 'http://x.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',

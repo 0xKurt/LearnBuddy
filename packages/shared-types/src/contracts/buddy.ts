@@ -204,7 +204,8 @@ export const MessageView = z.object({
   status: z.enum(['processing', 'done', 'failed']),
   /**
    * Why a learner message failed (status failed) or was held back by the safety filter
-   * (status done, 'blocked'): blocked · model_unavailable · budget · invalid · stale · internal.
+   * (status done, 'blocked'): blocked · model_unavailable · busy (the provider throttled us,
+   * #206) · budget · invalid · stale · internal.
    * The app says what really happened instead of "not arrived" (CLAUDE.md rule 5).
    */
   failure_code: z.string().nullable().default(null),
@@ -443,7 +444,7 @@ export type SendMessageRequest = z.infer<typeof SendMessageRequest>;
 
 export const SendMessageResponse = z.object({
   status: z.enum(['done', 'processing', 'failed']),
-  /** Stable code when failed: model_unavailable, budget_exhausted, … */
+  /** Stable code when failed: model_unavailable, model_busy (throttled, #206), budget_exhausted, … */
   error_code: z.string().nullable(),
   home: BuddyHome,
 });

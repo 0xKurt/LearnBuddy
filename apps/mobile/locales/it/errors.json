@@ -46,10 +46,12 @@
     "stream_lost": "La connessione si è interrotta a metà. Se il tuo messaggio è arrivato, Buddy risponderà comunque.",
     "too_many_pages": "Sono troppe pagine – una scheda può averne al massimo 20. Prendi solo quelle che ti servono.",
     "file_unreadable": "Questo file non si apre. Scegline un altro o fotografa la scheda.",
-    "file_too_large": "Il file è troppo grande – al massimo 15 MB. Meglio fotografare la scheda."
+    "file_too_large": "Il file è troppo grande – al massimo 15 MB. Meglio fotografare la scheda.",
+    "model_busy": "Buddy è sovraccarico in questo momento. Riprova tra un minuto."
   },
   "turn": {
     "model_unavailable": "Buddy non ha potuto rispondere in questo momento.",
+    "model_busy": "Buddy è sovraccarico in questo momento. Riprova tra un attimo.",
     "model_invalid": "Buddy ha fatto confusione. Invialo di nuovo.",
     "budget_exhausted": "Per oggi Buddy non può più rispondere.",
     "stale": "Sono cambiate troppe cose contemporaneamente. Invialo di nuovo.",

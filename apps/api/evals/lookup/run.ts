@@ -16,6 +16,7 @@ import { randomUUID } from 'node:crypto';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { VertexEmbeddings } from '../../src/llm/vertex-embeddings.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
@@ -125,7 +126,7 @@ async function seed(env: TestEnv, l: Learner, sheets: Case['sheets']): Promise<v
 
 async function main(): Promise<void> {
   const config = loadConfig({
-    ...process.env,
+    ...evalEnv(),
     DATABASE_URL:
       process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
     SUPABASE_URL: process.env.SUPABASE_URL ?? 'http://unused.local',

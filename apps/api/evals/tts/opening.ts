@@ -19,6 +19,7 @@
 // requires live verification in Claude Code session (live provider)
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { rateFor } from '../../src/speech/gateway.js';
 import { GoogleSpeech } from '../../src/speech/google.js';
 
@@ -28,7 +29,7 @@ const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
 const config = loadConfig({
-  ...process.env,
+  ...evalEnv(),
   SPEECH_BACKEND: 'google',
   DATABASE_URL: 'postgres://unused/unused',
   SUPABASE_URL: 'http://x.local',

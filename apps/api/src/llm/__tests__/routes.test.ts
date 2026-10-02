@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadConfig } from '../../config.js';
-import { modelFor, splitModelSpec } from '../vertex.js';
+import { modelFor, requestLabels, splitModelSpec } from '../vertex.js';
 
 const env = {
   DATABASE_URL: 'postgres://127.0.0.1/x',
@@ -52,5 +52,17 @@ describe('model routes', () => {
     expect(modelFor(c, { purpose: 'tutor', tier: 'smart' })).toBe('eu/gemini-3.6-flash');
     const routed = loadConfig({ ...env, VERTEX_ROUTES: '{"pronounce":"eu/gemini-3.6-flash"}' });
     expect(modelFor(routed, { purpose: 'pronounce', tier: 'smart' })).toBe('eu/gemini-3.6-flash');
+  });
+
+  it('labels every request with whose traffic it is and its purpose (issue #206)', () => {
+    // The app is live unless told otherwise; only the eval runners say 'eval'.
+    expect(requestLabels(loadConfig(env), { purpose: 'buddy_turn' })).toEqual({
+      traffic: 'live',
+      purpose: 'buddy_turn',
+    });
+    expect(
+      requestLabels(loadConfig({ ...env, LLM_TRAFFIC: 'eval' }), { purpose: 'tutor' }),
+    ).toEqual({ traffic: 'eval', purpose: 'tutor' });
+    expect(() => loadConfig({ ...env, LLM_TRAFFIC: 'staging' })).toThrow();
   });
 });

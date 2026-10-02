@@ -25,7 +25,7 @@ import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
-import { LlmError, type LlmMessage } from '../../llm/gateway.js';
+import { LlmError, modelFailureDetails, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import {
@@ -267,7 +267,11 @@ export async function reexplain(
     if (isAppError(err)) throw err;
     if (err instanceof LlmError) {
       // Nothing is stored: she can simply tap again.
-      throw new AppError('model_unavailable', 'Buddy cannot explain it again right now');
+      throw new AppError(
+        'model_unavailable',
+        'Buddy cannot explain it again right now',
+        modelFailureDetails(err),
+      );
     }
     throw err;
   }

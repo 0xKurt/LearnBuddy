@@ -20,6 +20,7 @@ import { randomUUID } from 'node:crypto';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import {
   fuseRrf,
   lexicalLists,
@@ -42,7 +43,7 @@ function dot(a: number[], b: number[]): number {
 
 async function main(): Promise<void> {
   const config = loadConfig({
-    ...process.env,
+    ...evalEnv(),
     // Only the Vertex part of the config is used; the search runs on a throwaway
     // test database (createTestEnv), never on this URL.
     DATABASE_URL:

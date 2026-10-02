@@ -169,6 +169,7 @@ export class VertexGateway implements LlmGateway {
         ...(req.thinkingBudget !== undefined
           ? { thinkingConfig: { thinkingBudget: req.thinkingBudget } }
           : {}),
+        labels: requestLabels(this.config, req),
         // Not req.timeoutMs: that is the budget for the whole call including retries, and
         // this attempt only gets what is left of it (retry.ts).
         abortSignal: AbortSignal.timeout(timeoutMs),
@@ -222,6 +223,19 @@ export class VertexGateway implements LlmGateway {
       throw new LlmError('invalid_output', 'output is not valid JSON', usage);
     }
   }
+}
+
+/**
+ * The labels every request carries (issue #206). Vertex keeps them on the billing export, so
+ * an eval run and live traffic in the same project stay apart on the bill, per purpose —
+ * which is how the owner sees whether evals ate the quota the app needed. No learner data:
+ * two fixed vocabularies, both already lowercase with underscores as Vertex requires.
+ */
+export function requestLabels(
+  config: Pick<Config, 'LLM_TRAFFIC'>,
+  req: Pick<LlmRequest, 'purpose'>,
+): Record<string, string> {
+  return { traffic: config.LLM_TRAFFIC, purpose: req.purpose };
 }
 
 /** Provider errors → the shared outcome classes (lib/outcome.ts). Exported for unit tests. */

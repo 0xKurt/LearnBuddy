@@ -46,10 +46,12 @@
     "stream_lost": "La connexion a été coupée en cours de route. Si ton message est arrivé, Buddy répondra quand même.",
     "too_many_pages": "Ça fait trop de pages – 20 au maximum pour une fiche. Garde seulement celles dont tu as besoin.",
     "file_unreadable": "Ce fichier ne s'ouvre pas. Prends-en un autre ou photographie la fiche.",
-    "file_too_large": "Le fichier est trop lourd – 15 Mo au maximum. Prends plutôt la fiche en photo."
+    "file_too_large": "Le fichier est trop lourd – 15 Mo au maximum. Prends plutôt la fiche en photo.",
+    "model_busy": "Buddy est surchargé en ce moment. Réessaie dans une minute."
   },
   "turn": {
     "model_unavailable": "Buddy n'a pas pu répondre à l'instant.",
+    "model_busy": "Buddy est surchargé en ce moment. Réessaie dans un instant.",
     "model_invalid": "Buddy s'est emmêlé les pinceaux. Renvoie ton message.",
     "budget_exhausted": "Buddy ne peut plus répondre aujourd'hui.",
     "stale": "Trop de choses ont changé en même temps. Renvoie ton message.",

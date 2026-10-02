@@ -77,3 +77,6 @@ apps/mobile/credentials.json
 # Maestro writes screenshots and recordings next to where it runs (issue #37).
 .maestro/**/*.png
 .maestro/**/*.mp4
+
+# Overall-impression eval output (scripts/eval-impression.sh, issue #127)
+.impression/

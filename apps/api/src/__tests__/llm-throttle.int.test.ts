@@ -105,16 +105,29 @@ describe.skipIf(!dbReady)('a throttled model provider', () => {
       error: new LlmError('rate_limited', 'provider rate limit'),
     });
     const throttled = await send(l, 'Erklär mir Bruchrechnen');
-    // She reads the honest "couldn't answer just now" — a throttle is not her fault and not
-    // a broken app, and the app never claims to know more than it does (rule 5).
-    expect(throttled.body).toMatchObject({ status: 'failed', error_code: 'model_unavailable' });
+    // She reads "Buddy ist gerade überlastet – gleich nochmal": a throttle is not her fault
+    // and not a broken app, and it is exactly what the provider told us — no more (rule 5).
+    expect(throttled.body).toMatchObject({ status: 'failed', error_code: 'model_busy' });
 
     env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'provider error 503') });
     const down = await send(l, 'Und nochmal');
+    // Anything that is not a proven 429 keeps the plain "couldn't answer just now".
     expect(down.body).toMatchObject({ status: 'failed', error_code: 'model_unavailable' });
 
-    // Same learner-facing code, two different facts in the log: that is what makes the rate
-    // countable afterwards. No migration was needed — `error_code` already carries the kind.
+    // The thread remembers why each message was not answered, so the reason survives a
+    // reload — and only the throttled one says "busy".
+    const stored = await env.db.query<{ text: string; failure_code: string }>(
+      `select text, failure_code from buddy_messages
+        where learner_id = $1 and role = 'learner' order by seq`,
+      [l.learnerId],
+    );
+    expect(stored.map((m) => `${m.text}/${m.failure_code}`)).toEqual([
+      'Erklär mir Bruchrechnen/busy',
+      'Und nochmal/model_unavailable',
+    ]);
+
+    // Two different facts in the log: that is what makes the rate countable afterwards. No
+    // migration was needed — `error_code` already carries the kind.
     const calls = await env.db.query<{ outcome: string; error_code: string; created_at: Date }>(
       `select outcome, error_code, created_at from llm_calls
         where learner_id = $1 and purpose = 'buddy_turn' order by created_at, error_code`,

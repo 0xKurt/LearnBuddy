@@ -24,6 +24,7 @@ import { writeFileSync } from 'node:fs';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
@@ -184,7 +185,7 @@ function table(
 
 async function main(): Promise<void> {
   const config = loadConfig({
-    ...process.env,
+    ...evalEnv(),
     DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://unused/unused',
     SUPABASE_URL: process.env.SUPABASE_URL ?? 'http://unused.local',
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',

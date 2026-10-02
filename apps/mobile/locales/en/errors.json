@@ -46,10 +46,12 @@
     "stream_lost": "The connection dropped midway. If your message arrived, Buddy will still answer.",
     "too_many_pages": "That's too many pages – one sheet can have 20 at most. Take only the pages you need.",
     "file_unreadable": "This file won't open. Take another one or photograph the sheet.",
-    "file_too_large": "The file is too big – 15 MB at most. Better take a photo of the sheet."
+    "file_too_large": "The file is too big – 15 MB at most. Better take a photo of the sheet.",
+    "model_busy": "Buddy is overloaded right now. Try again in a minute."
   },
   "turn": {
     "model_unavailable": "Buddy couldn't answer just now.",
+    "model_busy": "Buddy is overloaded right now. Try again in a moment.",
     "model_invalid": "Buddy got muddled. Send it again.",
     "budget_exhausted": "Buddy can't answer any more today.",
     "stale": "Too much changed at once. Send it again.",

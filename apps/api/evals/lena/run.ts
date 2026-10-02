@@ -27,6 +27,7 @@ import type {
 import { chromium } from '@playwright/test';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { mentionsSolution } from '../../src/modules/practice/tutor.js';
 import type { LlmGateway } from '../../src/llm/gateway.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
@@ -43,7 +44,7 @@ import {
 } from '../../src/testing/harness.js';
 
 const config = loadConfig({
-  ...process.env,
+  ...evalEnv(),
   DATABASE_URL: 'postgres://unused/unused',
   SUPABASE_URL: 'http://unused.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',

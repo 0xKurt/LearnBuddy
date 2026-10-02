@@ -9,6 +9,7 @@
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { mathNorm } from '../../src/modules/practice/tutor.js';
@@ -20,7 +21,7 @@ const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
 const config = loadConfig({
-  ...process.env,
+  ...evalEnv(),
   DATABASE_URL: 'postgres://unused/unused',
   SUPABASE_URL: 'http://x.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',

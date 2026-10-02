@@ -28,6 +28,12 @@ export function scriptTour(llm: ScriptedGateway): void {
       failFirst: true,
       answer: says('Katzen, schön! Das merke ich mir.', [remember('Mag Katzen', 'ich mag Katzen')]),
     },
+    {
+      // Throttled once through every retry (issue #206): "überlastet", and resending works.
+      when: /ich mag hunde/i,
+      failFirst: 'busy',
+      answer: says('Hunde, super! Das merke ich mir.', [remember('Mag Hunde', 'ich mag Hunde')]),
+    },
     { when: /^danke/i, answer: says('Gern!') },
     { when: /^tschüss/i, answer: says('Bis später!') },
     {

@@ -22,6 +22,7 @@ import {
 } from '@learnbuddy/shared-types/contracts';
 
 import { loadConfig } from '../src/config.js';
+import { evalEnv } from '../evals/eval-env.js';
 import { VertexGateway } from '../src/llm/vertex.js';
 import { GoogleSpeech } from '../src/speech/google.js';
 import { createTestEnv, apiClient, onboard } from '../src/testing/harness.js';
@@ -62,7 +63,8 @@ const wants = (s: Stage) => asked.length === 0 || asked.includes(s);
 
 async function main(): Promise<void> {
   const cfg = loadConfig({
-    ...process.env,
+    // A measurement run is eval traffic: its own project, never the live quota by accident (#206).
+    ...evalEnv(),
     NODE_ENV: 'development',
     DATABASE_URL: 'postgres://unused/unused',
     SUPABASE_URL: 'http://localhost:54321',

@@ -9,7 +9,7 @@ import type { Deps } from '../../deps.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
-import type { AudioMime } from '../../llm/gateway.js';
+import { modelFailureDetails, type AudioMime } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialString } from '../../llm/partial.js';
 
@@ -107,6 +107,6 @@ export async function transcribe(
     return { text: parsed.data.heard_speech ? parsed.data.text.trim() : '' };
   } catch (err) {
     if (isAppError(err)) throw err;
-    throw new AppError('model_unavailable', 'Could not listen right now');
+    throw new AppError('model_unavailable', 'Could not listen right now', modelFailureDetails(err));
   }
 }

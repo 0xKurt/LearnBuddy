@@ -215,6 +215,54 @@ Erwartung: eine Zeile mit `ok: true`, dem Modellnamen, Tokens und Kosten. Häufi
 
 Falls du gegen ein Limit läufst (passiert beim Eval-Harness-Run, der mehrere hundert Calls in kurzer Zeit feuert), Quota Increase Request über die UI stellen — bei Privatperson + 5-stelligen RPM-Anfragen wird das in <24h genehmigt.
 
+**Was am 01.10.2026 passiert ist (Issue #206) und was nur du ändern kannst.** 13 Minuten lang
+antwortete jedes Modell im Projekt mit `429 RESOURCE_EXHAUSTED`, auch auf ein einzelnes „Say hi“.
+Bei den Gemini-Modellen gilt meist die **Dynamic Shared Quota**: kein festes Kontingent pro
+Projekt, sondern ein Pool, den sich alle Kunden einer Region teilen — ein 429 heißt dann „der
+Pool ist gerade voll“, nicht „dein Limit ist erreicht“ (Google, Vertex-Doku „Dynamic shared
+quota“; Google-Cloud-Blog „Reduce 429 errors on Vertex AI“, 12.03.2026). Eine Quota-Erhöhung hilft
+dort also nur bedingt. Was hilft, der Reihe nach:
+
+1. **Evals in ein eigenes Projekt** (siehe §Evals unten). Das kostet nichts extra und ist der
+   größte Hebel gegen selbstgemachte Engpässe.
+2. **Alarm beobachten:** `GET /health` antwortet 503 mit `model throttled: …`, sobald in 60 min
+   ≥ 10 % von ≥ 20 Aufrufen gedrosselt wurden (docs/architecture.md §Model calls).
+3. **Priority PayGo** (laut Vertex-Preisseite, Stand 02.10.2026, 1,8× Standardpreis) oder
+   **Provisioned Throughput** (fest gekaufte Kapazität in „GSU“, ab 1 GSU, Wochen- bis
+   Jahresbindung; laut Blog vom 12.03.2026 die einzige Stufe, die vom geteilten Pool isoliert)
+   für `buddy_turn`. Erst sinnvoll, wenn der Alarm wiederholt anschlägt. **Ob Provisioned
+   Throughput für 3.6 Flash in `eu`/`europe-west4` angeboten wird, ist nicht geprüft** — in der
+   Console unter Vertex AI → Provisioned Throughput nachsehen.
+4. Der „globale Endpunkt“, den Google gegen 429 empfiehlt, ist für LearnBuddy **keine Option**:
+   er verarbeitet nicht garantiert in der EU (§5, `docs/privacy.md`).
+
+## Evals — eigenes Projekt (Issue #206)
+
+Evals und Video-Drehs dürfen nicht gegen dasselbe Kontingent laufen wie die App, die ein Kind
+gerade benutzt. Die Eval-Skripte erzwingen das: ohne eigenes Projekt brechen sie vor dem ersten
+Aufruf ab.
+
+1. Zweites Projekt anlegen (§2), z. B. `learnbuddy-evals`, dasselbe Billing-Konto, eigenes
+   Budget-Alert (§3), Vertex AI API aktivieren (§4).
+2. Entweder dem bestehenden Service Account dort die Rolle _Vertex AI User_ geben, oder einen
+   eigenen Service Account mit JSON-Key anlegen (§6).
+3. In `apps/api/.env.local` ergänzen:
+
+```bash
+EVAL_GOOGLE_CLOUD_PROJECT=learnbuddy-evals
+# nur bei eigenem Service Account:
+EVAL_GOOGLE_APPLICATION_CREDENTIALS=/pfad/zu/evals-sa.json
+# optional, sonst dieselbe Region wie die App:
+# EVAL_GOOGLE_VERTEX_LOCATION=europe-west4
+```
+
+Der Name des App-Projekts wird dort abgelehnt. Wer für einen einzelnen Lauf bewusst doch das
+Live-Kontingent nutzen will: `EVAL_SHARE_LIVE_QUOTA=1` (der Lauf warnt dann laut).
+
+Jeder Aufruf trägt die Labels `traffic=live|eval` und `purpose=<Zweck>`. In der
+Billing-Export-Tabelle (BigQuery) oder unter Billing → Reports → „Labels“ lässt sich damit
+ablesen, was Evals gekostet haben. Labels enthalten keine Lerndaten.
+
 ---
 
 ## 11. GDPR-Akte — was du dir aufheben solltest

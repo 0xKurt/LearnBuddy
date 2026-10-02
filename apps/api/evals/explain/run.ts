@@ -21,6 +21,7 @@ import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 
 import { loadConfig } from '../../src/config.js';
+import { evalEnv } from '../eval-env.js';
 import { BUDDY_PROMPT_VERSION } from '../../src/modules/buddy/prompts.js';
 import { toJsonSchema } from '../../src/llm/json-schema.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
@@ -71,7 +72,7 @@ Answer with the JSON object described by the schema.`;
 
 async function main(): Promise<void> {
   const config = loadConfig({
-    ...process.env,
+    ...evalEnv(),
     DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://unused/unused',
     SUPABASE_URL: process.env.SUPABASE_URL ?? 'http://unused.local',
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',

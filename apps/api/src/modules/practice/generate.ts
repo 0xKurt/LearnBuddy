@@ -23,6 +23,7 @@ import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
+import { modelFailureDetails } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { answerUpTo } from '../../llm/partial.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
@@ -512,7 +513,11 @@ async function generateSet(
     return parsed.data;
   } catch (err) {
     if (isAppError(err)) throw err;
-    throw new AppError('model_unavailable', 'Could not prepare this right now');
+    throw new AppError(
+      'model_unavailable',
+      'Could not prepare this right now',
+      modelFailureDetails(err),
+    );
   }
 }
 

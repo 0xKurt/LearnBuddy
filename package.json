@@ -17,6 +17,7 @@
     "test": "pnpm -r --parallel test",
     "test:coverage": "pnpm -r test:coverage",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && sh scripts/web-walkthrough.sh",
+    "eval:impression": "sh scripts/eval-impression.sh",
     "build": "pnpm -r --parallel build",
     "prepare": "husky",
     "postinstall": "node apps/api/scripts/vercel-shared.mjs",

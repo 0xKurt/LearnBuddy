@@ -791,6 +791,28 @@ that is honestly known about it — so this rate is a floor, never a ceiling. Ev
 app stays the owner's: quotas and region in the Cloud Console, and evals and video shoots on
 their own project so they stop taking capacity from the live app (issue #206, points 1 and 2).
 
+(3) **She is told what happened, and only that** (issue #206, 02.10.). A 429 that outlasts the
+retries is no longer said like an outage. A Buddy turn fails with `error_code 'model_busy'` and
+the message keeps `failure_code 'busy'` (migration `0106_turn_failure_busy.sql`): "Buddy ist
+gerade überlastet – gleich nochmal", with "Nochmal senden" beside it. Every other model endpoint
+(preparing practice, explaining again, listening, dictation) keeps the wire code
+`model_unavailable` — an older app build still reads a true sentence — and adds
+`details.reason 'model_busy'`, which this build says as "überlastet, versuch's in einer Minute
+nochmal" (`modelFailureDetails` in `llm/gateway.ts`). Only a proven 429 gets the word; an outage,
+a timeout or unusable output keep "konnte gerade nicht antworten" (rule 5). Proven in
+`llm-throttle.int.test.ts` and `reexplain.int.test.ts`.
+
+(4) **Evals cannot take the live quota by accident** (issue #206, point 2 in code). Every eval
+runner and `scripts/speed-audit.ts` builds its config from `evals/eval-env.ts`: without
+`EVAL_GOOGLE_CLOUD_PROJECT` (optionally `EVAL_GOOGLE_APPLICATION_CREDENTIALS`,
+`EVAL_GOOGLE_VERTEX_LOCATION`) the run stops before its first call and says why; naming the app's
+own project there is refused too. Sharing the live quota anyway takes `EVAL_SHARE_LIVE_QUOTA=1`
+and prints a warning. Every Vertex request carries the labels `traffic` (`LLM_TRAFFIC`: `live`
+for the app, `eval` for runners) and `purpose` (`requestLabels` in `llm/vertex.ts`); Vertex
+forwards request labels to the billing export, so what evals cost and where they ran is
+readable on the bill. Labels carry no learner data. Not labelled: Text-to-Speech and embedding
+calls (their APIs are separate; the eval project separation covers them).
+
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
 to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1
 Flash-Lite — as strict as 3.6 Flash in `evals/speak`, half the cost), else the tier's model. A model may carry its location
@@ -913,6 +935,15 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
   twice as fast, no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **Where the waiting goes, from the app's own calls** (issue #165): `evals/speed/where-time-goes.ts
+<from> <to>` reads `llm_calls` over an explicit window (aggregates only, no text) and prints per
+  purpose the calls, 429s, timeouts, p50/p90 model latency, its share of all model waiting,
+  median input/output/thought tokens and the prefix-cache share — plus a least-squares fit
+  `latency ≈ base + a·input + b·(output + thought)` with R², withheld below 30 calls or when the
+  tokens do not vary enough to separate. It answers "would the schema diet make Buddy faster or
+  only cheaper" from production numbers; it is a correlation, and the experiment that settles it
+  stays `evals/stream`. The provider and model alternatives are in
+  `docs/decisions/speed-alternatives-2026-10-02.md`.
 - **Output tokens ARE the wait, and thinking tokens count as output** (issues #219/#220, measured
   02.10., `docs/speed-audit.md` §Ausgabe-Tokens): roughly a 1 s floor plus 250–300 written tokens a
   second. So the only way to shorten a wait is to need fewer tokens before the learner can start —
@@ -2836,7 +2867,8 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 ## Testing
 
 - Unit: time and DST (`lib/__tests__`), contact policy, i18n parity.
-- Live evals need the Vertex variables from `apps/api/.env.local` and a local Postgres;
+- Live evals need the Vertex variables from `apps/api/.env.local`, their own project
+  (`EVAL_GOOGLE_CLOUD_PROJECT`, issue #206 — see §Model calls) and a local Postgres;
   `evals/speak` and `evals/voice` additionally need `espeak-ng` on the machine (they speak the
   test sentences themselves). Without it they stop with `spawnSync espeak-ng ENOENT` — that is
   a missing tool, not a broken eval.
@@ -2850,6 +2882,29 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   present in only one file are listed, not guessed about, so partial runs (`run.ts case-id …`)
   compare too. The comparison itself is pure and unit-tested
   (`evals/buddy/__tests__/compare.test.ts`); only producing the transcripts costs money.
+- **Overall impression between two revisions** (issue #127): one command,
+  `sh scripts/eval-impression.sh <revision-A> [<revision-B>]` (`pnpm eval:impression …`; B
+  defaults to the working tree). Each side walks ten ordinary afternoons
+  (`evals/impression/scenarios.ts`: vocabulary from a sheet, an exam and a reminder, homework,
+  a bad day, explain-it-simpler, fewer messages, an old sheet, boredom, deleting, an English
+  adult) `IMPRESSION_RUNS` times (default 3), each on a fresh database, and writes every turn
+  down: answer, buttons, what it applied, ask-back flag, wall-clock, input tokens, cost. An
+  older revision runs in a temporary git worktree with **today's** harness copied in, so only
+  the product differs. Then a model (`purpose 'eval_judge'`, routable on its own) compares each
+  pair **blind** ("Gespräch 1/2", never a version) and **in both orders**; a side wins a pair
+  only if it wins both orders, else it is a tie, and how often the two orders disagreed is
+  reported as the judge's position bias. An answer outside the judge's schema is rejected and
+  counted, never guessed into a preference. **The scenario is the unit of evidence**: its runs
+  decide it by majority, and an exact two-sided sign test over scenarios gives the verdict —
+  "B better", "B worse" (exit 1), or "no detectable difference" together with how many decided
+  scenarios one side would have needed (never "equal"). Secondary, paired per scenario and
+  marked uncorrected for multiple testing: ask-backs, repeated offers, unanswered turns, input
+  tokens and wall-clock per turn, cost — each with a bootstrap 95 % interval and an exact
+  sign-flip permutation p. Proven offline: the statistics against textbook values
+  (`__tests__/stats.test.ts`), the judge's pairing, blindness, order handling and wording with
+  a stand-in judge (`judge.test.ts`), and the runner's recording against the real schema with a
+  scripted model (`run.int.test.ts`). The live run needs model credentials and an eval project
+  (`docs/SETUP-VERTEX.md` §Evals) and has not been run from the build session.
 - **Repeated cases** (issue #225): a model decision is not deterministic, and a case that fails
   one run in five is not checked by one run. A case can carry `repeat: { runs, maxFailures }`;
   `evals/buddy/run.ts` then runs it that often, each on a fresh database, and fails it when more

@@ -20,7 +20,7 @@ import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
-import type { AudioMime } from '../../llm/gateway.js';
+import { modelFailureDetails, type AudioMime } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialArray, partialString } from '../../llm/partial.js';
 import { ageOn } from '../identity/model.js';
@@ -219,7 +219,7 @@ export async function speakItem(
     judged = parsed.data;
   } catch (err) {
     if (isAppError(err)) throw err;
-    throw new AppError('model_unavailable', 'Could not listen right now');
+    throw new AppError('model_unavailable', 'Could not listen right now', modelFailureDetails(err));
   }
 
   const overall = judged.audible ? judged.overall : 'retry';
@@ -423,6 +423,6 @@ export async function speakWord(
     };
   } catch (err) {
     if (isAppError(err)) throw err;
-    throw new AppError('model_unavailable', 'Could not listen right now');
+    throw new AppError('model_unavailable', 'Could not listen right now', modelFailureDetails(err));
   }
 }
