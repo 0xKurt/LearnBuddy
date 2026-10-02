@@ -113,7 +113,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { reacted, tapped } from '../../lib/perf.js';
-import { bottomRoom, SPACE } from '../../lib/theme/space.js';
+import { bottomRoom, SPACE, TOUCH } from '../../lib/theme/space.js';
 
 /**
  * What she sent, and how (issue #163). `via` is not decoration: since #147 a tapped word
@@ -144,6 +144,23 @@ type SentAnswer = {
  * rounded). The parts below scroll inside themselves before the reply is pushed away.
  */
 const STRUCTURED_REPLY_ROOM = 140;
+
+/**
+ * What a structured surface keeps of its parts while that reply room is taken: its top padding
+ * and two lines of gaps or cells (2 × TOUCH and the step between them). With the keyboard up on
+ * 360×740 the question and a full reply left a cloze nothing, and the gap she was fixing
+ * vanished under the reply (issue #232). The reply gives way first — it still scrolls in the
+ * conversation.
+ */
+const STRUCTURED_PARTS_FLOOR = SPACE.sm + 2 * TOUCH + SPACE.xs;
+
+/**
+ * The surface's own "Prüfen" bar under its parts (`BottomBar.tsx`): its top padding, the md
+ * `<Btn>` (48 pt, `Btn.tsx`) and the room under it. The surface's measured height holds both.
+ */
+function surfaceBarHeight(safeBottom: number): number {
+  return SPACE.sm + 48 + bottomRoom(safeBottom, SPACE.md);
+}
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -264,6 +281,8 @@ export default function PracticeScreen() {
   const [middleHeight, setMiddleHeight] = useState(0);
   const [threadNeed, setThreadNeed] = useState(0);
   const [questionContentHeight, setQuestionContentHeight] = useState(0);
+  // The structured surface's measured height; null until it has been laid out.
+  const [surfaceHeight, setSurfaceHeight] = useState<number | null>(null);
   const [cardHeight, setCardHeight] = useState(0);
   const working = useRef(false);
   const lastSent = useRef<SentAnswer | null>(null);
@@ -986,6 +1005,25 @@ export default function PracticeScreen() {
   const spare = Math.min(Math.max(0, middleHeight - threadNeed - EDGE_FADE), questionCap);
   const aroundCard = Math.max(0, questionContentHeight - cardHeight);
   const cardMin = middleHeight > 0 && cardHeight > 0 ? Math.max(0, spare - aroundCard) : 0;
+  // The floor of the middle above a structured surface: the whole question, then the reply
+  // up to STRUCTURED_REPLY_ROOM — but the reply only out of what the surface can spare above
+  // its bar and STRUCTURED_PARTS_FLOOR. Middle plus surface is the room both share, whatever the floor,
+  // so the cap does not move when it is applied.
+  const replyWanted = turns.length > 0 ? Math.min(threadNeed, STRUCTURED_REPLY_ROOM) : 0;
+  const replyRoom =
+    surfaceHeight === null
+      ? replyWanted
+      : Math.min(
+          replyWanted,
+          Math.max(
+            0,
+            middleHeight +
+              surfaceHeight -
+              questionContentHeight -
+              STRUCTURED_PARTS_FLOOR -
+              surfaceBarHeight(insets.bottom),
+          ),
+        );
 
   // No scrolling to find what matters (CLAUDE.md rule 16): the question stays on top,
   // the way to answer stays at the bottom, and only the conversation between them
@@ -1001,14 +1039,8 @@ export default function PracticeScreen() {
             // let a tall arrangement — twelve elements above four groups on 360×740 — take the
             // whole column and draw itself over the question card. Once she has checked, Buddy's
             // reply ("3 von 5 Paaren stimmen schon") is what matters next, so the conversation
-            // keeps room for it too, up to STRUCTURED_REPLY_ROOM.
-            ...(open && item.task_view
-              ? {
-                  minHeight:
-                    questionContentHeight +
-                    (turns.length > 0 ? Math.min(threadNeed, STRUCTURED_REPLY_ROOM) : 0),
-                }
-              : {}),
+            // keeps room for it too, up to STRUCTURED_REPLY_ROOM (`replyRoom`).
+            ...(open && item.task_view ? { minHeight: questionContentHeight + replyRoom } : {}),
           }}
           onLayout={(e) => setMiddleHeight(Math.round(e.nativeEvent.layout.height))}
         >
@@ -1208,7 +1240,11 @@ export default function PracticeScreen() {
             own "Prüfen" in the pinned bar and its arrangement in a draft, so a theme switch
             (a remount) keeps it. Keyed by the question, so a new one starts empty. */}
         {open && item.task_view ? (
-          <View testID="answer-surface" style={{ flexShrink: 1, minHeight: 0 }}>
+          <View
+            testID="answer-surface"
+            style={{ flexShrink: 1, minHeight: 0 }}
+            onLayout={(e) => setSurfaceHeight(Math.round(e.nativeEvent.layout.height))}
+          >
             <StructuredAnswer
               key={item.id}
               view={item.task_view}

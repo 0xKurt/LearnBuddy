@@ -124,6 +124,8 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const boxes = useRef<Array<{ y: number; h: number }>>([]);
   /** The gap she is typing in (a ref: the layout callback below must see it at once). */
   const typingIn = useRef<number | null>(null);
+  /** How tall the text's window is now (the keyboard shrinks it). */
+  const windowHeight = useRef(0);
   const units = unitsOf(view.segments);
 
   /**
@@ -140,7 +142,11 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
     const above = boxes.current.filter((b) => b && centre(b) < box.y);
     const prev = Math.max(...above.map(centre), -Infinity);
     const top = above.filter((b) => Math.abs(centre(b) - prev) < 2).map((b) => b.y);
-    scroller.current?.scrollTo({ y: top.length > 0 ? Math.min(...top) : 0, animated: false });
+    const fromAbove = top.length > 0 ? Math.min(...top) : 0;
+    // The line above only when both lines fit: with the keyboard up on a small phone the text
+    // may have room for one line, and that one must be the gap's own.
+    const bothFit = windowHeight.current === 0 || box.y + box.h - fromAbove <= windowHeight.current;
+    scroller.current?.scrollTo({ y: bothFit ? fromAbove : box.y, animated: false });
   };
   const total = ids.length;
   const used = new Set(Object.values(filled));
@@ -284,7 +290,8 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: Props) {
           keyboardShouldPersistTaps="handled"
           // The keyboard comes up AFTER the focus and shrinks the text: the gap she types in
           // must stay in view then too.
-          onLayout={() => {
+          onLayout={(e) => {
+            windowHeight.current = e.nativeEvent.layout.height;
             if (typingIn.current !== null) showGap(typingIn.current);
           }}
           contentContainerStyle={{
