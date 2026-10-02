@@ -7,7 +7,6 @@
 
 import { expect, test } from '@playwright/test';
 
-import { PHONES, shot } from './fit';
 import { recordPerf } from './perf';
 import { onboardTalker, REPLY, sayOneThing, voiceAsSilence } from './talk';
 
@@ -30,27 +29,15 @@ test('Buddy reads to the end over beeps, and listens again by himself', async ({
     expect(spans.map((s) => s.action)).toContain('relisten');
   }
 
-  // The speaking state, at both sizes, light and dark. Each turn starts at the size and in
-  // the scheme it is shot in: the walkthrough's resizing and scheme switch remount the
-  // full-screen modal (a phone does neither mid-turn), which would shoot the listening state.
+  // Tapping Buddy still interrupts him, as before the ear (issue #35). The speaking state's
+  // shots come from talk-barge.spec.ts: one exchange per size and scheme, no repeated reply.
   await page.unroute('**/v1/voice/speech');
   await voiceAsSilence(page, 15_000);
-  for (const phone of PHONES) {
-    for (const scheme of ['light', 'dark'] as const) {
-      await page.setViewportSize(phone);
-      await page.emulateMedia({ colorScheme: scheme });
-      await expect(page.getByRole('button', { name: 'Aufnahme stoppen' })).toBeVisible();
-      await sayOneThing(page, false);
-      await expect(page.getByText('Sprich einfach dazwischen, dann hört er dir zu.')).toBeVisible();
-      // `shot` names the 360 one itself (…-360.png).
-      await shot(page, `34-talk-speaking-${scheme}`, { phones: [phone] });
-      await expect(page.getByText('Buddy spricht …')).toBeVisible();
-      // Tapping Buddy still interrupts him, as before the ear (issue #35).
-      await page.getByRole('button', { name: 'Unterbrechen und sprechen' }).first().click();
-      await expect(page.getByRole('button', { name: 'Aufnahme stoppen' })).toBeVisible();
-    }
-  }
-  await page.emulateMedia({ colorScheme: 'light' });
+  await sayOneThing(page, false);
+  await expect(page.getByText('Buddy spricht …')).toBeVisible();
+  await page.getByRole('button', { name: 'Unterbrechen und sprechen' }).first().click();
+  await expect(page.getByText('Buddy spricht …')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Aufnahme stoppen' })).toBeVisible();
   await page.getByRole('button', { name: 'Beenden' }).last().click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 });

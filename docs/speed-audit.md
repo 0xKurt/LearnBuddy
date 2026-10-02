@@ -317,6 +317,11 @@ Fake-Mikrofon öffnet sofort. Ein echtes Laptop-Mikrofon braucht dafür messbar 
 gemessen, nicht behauptet. Das Satz-Pipelining (#24) und der kurze erste Satz (`shortOpening`)
 waren schon drin; dieser Durchlauf bestätigt nur, dass die App selbst nichts mehr dazulegt.
 
+Zweiter Lauf am selben Abend, nachdem der Erkenner auf ein noch loslassendes Ohr warten muss
+(`lib/speech/bargeMonitor.ts`): `first_audio` 204 / 169 / 182 ms, `relisten` 45 / 39 / 49 ms
+— im Browser unverändert (dort gibt das Ohr nichts frei, es teilt das Gerät); was das Warten auf
+Android kostet, misst nur das Gerät.
+
 **Barge-in (#35), gemessen im selben Aufbau** (`tests/web/talk-barge.spec.ts`): ein Mikrofon,
 das nach 3 s Stille etwas Stimmförmiges „sagt" (150 Hz mit Obertönen, vier Silben pro Sekunde),
 stoppt Buddy **3,87 s** nach „Buddy spricht …" — also rund 0,3 s Torzeit plus Bildschirm, nachdem
