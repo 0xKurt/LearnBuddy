@@ -44,7 +44,7 @@ import {
   type SubjectTone,
   type ThemeName,
 } from './palettes.js';
-import { applySystemChrome } from './systemChrome.js';
+import { applySystemChrome, applySystemScheme } from './systemChrome.js';
 import { applyBoldText } from './type.js';
 import { useA11ySettings } from '../a11ySettings.js';
 
@@ -172,6 +172,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     applySystemChrome();
   }, [name]);
+
+  // The OS learns which side she chose, or that the phone decides (lib/theme/systemScheme.ts):
+  // a sheet's navigation bar, the keyboard and alerts follow it (#177). For `system` it must
+  // hand control back — `useColorScheme()` above reports any override as the phone's answer.
+  useEffect(() => {
+    applySystemScheme(mode);
+  }, [mode]);
 
   // The OS's Bold Text setting reaches the whole type scale from here (issue #133
   // position 13): the style objects are refilled in place, like a palette change, so no

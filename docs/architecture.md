@@ -2813,6 +2813,29 @@ default as selected after a restart). **Android's navigation bar is not verified
 device:** with edge-to-edge (SDK 54's default) the style reaches the three-button bar, while a
 gesture bar draws its own handle and ignores it.
 
+**The OS also learns which side the app shows** (issues #177, #194). `app.json` used to pin
+`userInterfaceStyle: "light"`, so AppCompat's night mode stayed "no" whatever she chose — and
+an open sheet is an Android `Modal` in its **own window**, whose navigation bar React Native
+0.81 sets from that night mode (`Window.enableEdgeToEdge()` → `isAppearanceLightNavigationBars
+= !UiModeUtils.isDarkMode(...)`). `NavigationBar.setStyle` only reaches the activity's window:
+on the night palette every sheet got a light, contrast-enforced bar. Now `userInterfaceStyle`
+is `"automatic"` and `applySystemScheme` (`lib/theme/systemChrome.ts`, decision in
+`systemScheme.ts`, unit-tested) hands `Appearance.setColorScheme` the chosen side — or `null`
+when she follows the phone, because `useColorScheme()` reports any override back as the phone's
+answer. The activity declares `uiMode` in `configChanges` (checked in the prebuild output), so
+the switch is a configuration change, not a recreation. Keyboard, alerts and pickers follow the
+same switch on both platforms.
+
+**Before any JavaScript, the OS knows only light and dark** — never her colour family. The
+native splash therefore has a `dark` variant (`expo-splash-screen` → `dark`: `night.bg` and
+`assets/splash-icon-dark.png`, the orb with the night halo baked on the night ground), chosen by
+the phone's own dark mode; `SplashHandoff` then takes over in her palette. iOS has a dark and a
+tinted icon (`ios.icon`). All drawn by `scripts/brand/render-icons.mjs`;
+`lib/theme/__tests__/nativeConfig.test.ts` ties the app.json colours to the palettes.
+**Verified in code and in the generated native projects (`expo prebuild`: `values-night`
+splash colour, `drawable-night` logo, `UIUserInterfaceStyle Automatic`, the dark/tinted
+AppIcon entries), not on a device** — all of it needs a native rebuild.
+
 ### Crash reports (issue #36)
 
 Off unless the app is built with `EXPO_PUBLIC_SENTRY_DSN` — the same shape as

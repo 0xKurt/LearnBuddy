@@ -169,6 +169,12 @@ own SVG, rendered by Chromium) into `apps/mobile/assets/`; change the script, no
 native splash hands over to an identical picture in the app (`components/lb/SplashHandoff.tsx`)
 that settles and fades into the first screen.
 
+On a phone in dark mode the splash is the same picture on the night ground (`#191627`), its
+halo the faint lilac of the night palette instead of white light (issue #194); iOS gets a dark
+icon (the orb on the system's own dark backdrop) and a tinted one (the same picture in
+grayscale, which iOS colours). The OS only knows light and dark, so the native splash shows the
+default family's night; the app's own hand-off then fades into her colours.
+
 ### Buddy's moon (his signature)
 
 Owner decision 2026-09-27 (with his daughter): Buddy's orb has one element only Buddy has — a

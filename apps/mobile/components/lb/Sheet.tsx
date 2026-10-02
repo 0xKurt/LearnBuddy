@@ -121,6 +121,11 @@ export function Sheet({
       // the Xiaomi, 01.10., issue #177). Asking for translucent bars is right either way —
       // React Native refuses the navigation bar without the status bar, hence both — but it
       // did **not** fix it on that device, so nothing here claims it does.
+      // What decides that window's bar is the app's night mode: React Native's
+      // `enableEdgeToEdge()` sets it from `UiModeUtils.isDarkMode`, and app.json pinned that
+      // to light. The palette now tells the OS which side it shows
+      // (lib/theme/systemScheme.ts, `applySystemScheme`) — verified in the code path and the
+      // generated config; on a device only after a native rebuild.
       statusBarTranslucent
       navigationBarTranslucent
     >

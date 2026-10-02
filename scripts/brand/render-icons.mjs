@@ -11,9 +11,22 @@ import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const out = resolve(process.argv[2] ?? 'apps/mobile/assets');
+/** Optional: render only these files (comma-separated names), e.g. `ONLY=icon-dark.png`. */
+const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(',')) : null;
 
 const BG = '#faf7fd';
 const VIOLET = '#6a48d7';
+
+/**
+ * The night: the default family's dark ground and the coloured, far fainter light Buddy
+ * wears on it (apps/mobile/lib/theme/palettes.ts → `night.bg`, `night.buddyLight.halo`,
+ * issue #139). White light was made for the pastel page and is a near-white disc on this one.
+ */
+const NIGHT_BG = '#191627';
+const NIGHT = {
+  halo: { color: '#c3aeff', opacity: 0.4 },
+  shadow: { color: '#000000', opacity: 0.45 },
+};
 
 /** The soft pastel light (blue · lilac · pink) behind the orb, as in components/lb/Glow.tsx. */
 function backdrop() {
@@ -48,14 +61,30 @@ function backdrop() {
  * upper left — blue → lilac → pink body, a white rim, a soft shine and one
  * crisp highlight, a violet depth at the lower edge and a halo of white light.
  */
-function orb(cx, cy, r, { halo = true, shadow = true } = {}) {
+function orb(cx, cy, r, { halo = true, shadow = true, night = false } = {}) {
   const k = r / 330; // drawn at r = 330, scaled
+  // At night the halo takes the in-app falloff (components/lb/BuddyOrb.tsx → Halo): no flat
+  // plateau and step, which reads as a hard edge on a dark ground.
+  const haloStops = night
+    ? [
+        [0.4, 1],
+        [0.66, 0.42],
+        [0.85, 0.12],
+        [1, 0],
+      ]
+        .map(
+          ([o, f]) =>
+            `<stop offset="${o}" stop-color="${NIGHT.halo.color}" stop-opacity="${NIGHT.halo.opacity * f}"/>`,
+        )
+        .join('')
+    : `<stop offset="0.55" stop-color="#ffffff" stop-opacity="0.95"/>
+        <stop offset="0.75" stop-color="#ffffff" stop-opacity="0.45"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>`;
+  const cast = night ? NIGHT.shadow : { color: VIOLET, opacity: 0.26 };
   return `
     <defs>
       <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
-        <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.95"/>
-        <stop offset="0.75" stop-color="#ffffff" stop-opacity="0.45"/>
-        <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+        ${haloStops}
       </radialGradient>
       <linearGradient id="body" x1="0.12" y1="0.08" x2="0.9" y2="0.95">
         <stop offset="0" stop-color="#a9bfff"/>
@@ -97,7 +126,7 @@ function orb(cx, cy, r, { halo = true, shadow = true } = {}) {
     ${
       shadow
         ? `<ellipse cx="${cx + r * 0.04}" cy="${cy + r * 0.92}" rx="${r * 0.74}" ry="${r * 0.17}"
-             fill="${VIOLET}" fill-opacity="0.26" filter="url(#soft)"/>`
+             fill="${cast.color}" fill-opacity="${cast.opacity}" filter="url(#soft)"/>`
         : ''
     }
     <g clip-path="url(#sphere)">
@@ -239,6 +268,33 @@ const FILES = [
     body: orb(...SPLASH) + moon(...SPLASH, BOOST),
     opaque: true,
   },
+  // The same picture baked on the night ground, for a phone in dark mode (issue #194):
+  // expo-splash-screen's `dark` variant, with the window colour `NIGHT_BG` behind it. The
+  // native splash only knows the phone's light/dark — never her colour family — so it is the
+  // default family's night; components/lb/SplashHandoff.tsx takes over in her own palette.
+  {
+    name: 'splash-icon-dark.png',
+    size: 1024,
+    body: orb(...SPLASH, { night: true }) + moon(...SPLASH, BOOST),
+    opaque: true,
+    bg: NIGHT_BG,
+  },
+  // iOS 18 dark icon: the orb on a transparent ground — iOS lays its own dark backdrop under
+  // it (Apple HIG, App icons). The night halo, because white light on that backdrop is a disc.
+  {
+    name: 'icon-dark.png',
+    size: 1024,
+    body: orb(...ICON, { night: true }) + moon(...ICON, BOOST),
+  },
+  // iOS 18 tinted icon: a grayscale picture on black; iOS colours it by brightness. Opaque
+  // black, as Apple's template is, so no stray alpha decides the tint.
+  {
+    name: 'icon-tinted.png',
+    size: 1024,
+    body: `<g style="filter: grayscale(1)">${orb(...ICON, { night: true }) + moon(...ICON, BOOST)}</g>`,
+    opaque: true,
+    bg: '#000000',
+  },
   // Web: no halo, no glow (they would blur at 48 px); the moon a little larger to read.
   {
     name: 'favicon.png',
@@ -258,9 +314,10 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ deviceScaleFactor: 1 });
 await mkdir(out, { recursive: true });
 for (const f of FILES) {
+  if (ONLY && !ONLY.has(f.name)) continue;
   await page.setViewportSize({ width: f.size, height: f.size });
   await page.setContent(
-    `<html><body style="margin:0;background:${f.opaque ? BG : 'transparent'}">${svg(
+    `<html><body style="margin:0;background:${f.opaque ? (f.bg ?? BG) : 'transparent'}">${svg(
       f.size,
       f.body,
     )}</body></html>`,

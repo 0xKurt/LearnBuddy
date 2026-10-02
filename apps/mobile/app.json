@@ -6,11 +6,16 @@
     "scheme": "learnbuddy",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "backgroundColor": "#faf7fd",
     "ios": {
       "bundleIdentifier": "com.learnbuddy.app",
+      "icon": {
+        "light": "./assets/icon.png",
+        "dark": "./assets/icon-dark.png",
+        "tinted": "./assets/icon-tinted.png"
+      },
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -70,7 +75,11 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#faf7fd"
+          "backgroundColor": "#faf7fd",
+          "dark": {
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#191627"
+          }
         }
       ],
       "expo-secure-store",

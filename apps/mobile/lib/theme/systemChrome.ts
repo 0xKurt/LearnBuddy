@@ -14,10 +14,12 @@
 
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
-import { Platform } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 
 import { activePalette } from './colors.js';
 import { isDarkBackground } from './luminance.js';
+import type { Mode } from './palettes.js';
+import { systemSchemeFor } from './systemScheme.js';
 
 /** Paints the window behind the app and the navigation bar icons in the active palette. */
 export function applySystemChrome(): void {
@@ -39,5 +41,22 @@ export function applySystemChrome(): void {
     NavigationBar.setStyle(isDarkBackground(palette.bg) ? 'dark' : 'light');
   } catch {
     // An older Android or an emulator that does not honour it: the bar keeps its default.
+  }
+}
+
+/**
+ * Tells the OS whether the app is light or dark, so the parts it draws for us follow
+ * (lib/theme/systemScheme.ts says why — above all the navigation bar under an open sheet,
+ * issue #177, which lives in the sheet's own window and nothing else can reach).
+ *
+ * On Android this is AppCompat's night mode. The activity declares `uiMode` in its
+ * `configChanges` (Expo's template), so a change reaches it as a configuration change and
+ * does not recreate it — the app keeps its state.
+ */
+export function applySystemScheme(mode: Mode): void {
+  try {
+    Appearance.setColorScheme(systemSchemeFor(mode));
+  } catch {
+    // No native appearance module (a test runner): the OS keeps following the phone.
   }
 }
