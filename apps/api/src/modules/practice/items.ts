@@ -15,6 +15,7 @@ import type { Db } from '../../lib/db.js';
 import { dollarMathField, dollarMathRuns } from './dollarMath.js';
 import { mentionsSolution } from './tutor.js';
 import { keyAgreesWithPrompt } from './keyCheck.js';
+import type { StructuredItem } from './structured.js';
 
 export const MATH_RULES = `Math (also in choices, answers and accepted_answers): write it between dollar signs in this LaTeX subset only: \\frac{a}{b}, x^{2}, x_{1}, \\sqrt{x}, \\cdot, \\times, \\div, \\pi, \\le, \\ge, \\ne, \\approx, \\degree, \\pm; for geometry and sets also \\overline{3} (repeating decimal, segment), \\angle, \\parallel, \\perp, \\in, \\mathbb{N}, \\vec{v}. Example: "Kürze $\\frac{6}{8}$." Plain numbers and words stay outside the dollar signs. A dollar sign meaning money is written \\$ ("kostet \\$5").`;
 
@@ -305,6 +306,12 @@ export function usableItems(items: ItemDraft[]): ItemDraft[] {
   return out;
 }
 
+/**
+ * What `insertItems` stores: a question the model wrote (possibly computed from a bar task,
+ * #162), or a structured question whose key is its `task` (#228–#232).
+ */
+export type InsertableItem = (ItemDraft & { bar_task?: BarTask | null }) | StructuredItem;
+
 export type ItemSource = {
   learnerId: string;
   materialId: string | null;
@@ -328,17 +335,19 @@ export async function insertItems(
   /**
    * `bar_task` is never the model's (it has no such field, issue #162): it is set only by
    * `practice/bars.ts`, which computed this item's prompt, key and figure from it.
+   * `task` is set only by `practice/structured.ts` (issues #228–#232), after Regel 0.
    */
-  items: ReadonlyArray<ItemDraft & { bar_task?: BarTask | null }>,
+  items: ReadonlyArray<InsertableItem>,
   direction: VocabDirection | null = null,
 ): Promise<string[]> {
   const ids: string[] = [];
-  const insert = async (it: ItemDraft & { bar_task?: BarTask | null }, asked = true) => {
+  const insert = async (it: InsertableItem, asked = true) => {
+    const task = 'task' in it && it.task ? it.task : null;
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution, tolerance, spelling, bar_task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) returning id`,
+                          hints, worked_solution, tolerance, spelling, bar_task, task)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -361,12 +370,14 @@ export async function insertItems(
         it.worked_solution,
         it.tolerance,
         it.spelling,
-        it.bar_task ? JSON.stringify(it.bar_task) : null,
+        'bar_task' in it && it.bar_task ? JSON.stringify(it.bar_task) : null,
+        task ? JSON.stringify(task) : null,
       ],
     );
     if (asked) ids.push(row.id);
   };
-  const pair = (it: ItemDraft) => it.kind === 'vocab' && !!it.lang && !!it.prompt_lang;
+  const pair = (it: InsertableItem): it is ItemDraft =>
+    it.kind === 'vocab' && !!it.lang && !!it.prompt_lang;
   for (const it of items) await insert(it, !(pair(it) && direction === 'produce'));
   // The other direction of each pair comes after all first directions — asked right after
   // its twin, the answer would still be on screen. Its alternatives are unknown; the tutor

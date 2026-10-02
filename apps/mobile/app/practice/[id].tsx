@@ -19,14 +19,16 @@
 // The mic is the main control; reading stops when she starts speaking or
 // leaves. The microphone itself only ever starts with her tap.
 
-import type {
-  AnswerResponse,
-  ItemView,
-  PracticeTurnView,
-  ReexplainWay,
-  SessionItemView,
-  SessionView,
-  SpeakStreamEvent,
+import {
+  isStructuredKind,
+  type AnswerResponse,
+  type ItemView,
+  type PracticeTurnView,
+  type ReexplainWay,
+  type SessionItemView,
+  type SessionView,
+  type SpeakStreamEvent,
+  type StructuredAnswer as StructuredParts,
 } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { TFunction } from 'i18next';
@@ -67,6 +69,7 @@ import {
   SpeakCard,
   SpeakPanel,
 } from '../../components/practice/SpeakPanel.js';
+import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
 import { VoiceModeToggle } from '../../components/voice/VoiceModeToggle.js';
 import { ApiError, newId } from '../../lib/api/client.js';
 import {
@@ -102,7 +105,7 @@ import { bottomRoom, SPACE } from '../../lib/theme/space.js';
  * travels as ordinary text so grading stays one path — so the text alone no longer shows
  * whether she recognised the word or wrote it, and a class test asks for the second.
  */
-type AnswerInput = ({ text: string } | { choice: number }) & {
+type AnswerInput = ({ text: string } | { choice: number } | { parts: StructuredParts }) & {
   via?: 'typed' | 'tapped' | 'spoken';
 };
 
@@ -112,6 +115,8 @@ type SentAnswer = {
   itemId: string;
   text: string | null;
   choice: number | null;
+  /** A structured answer (issue #228), as JSON so the same arrangement is recognised. */
+  parts: string | null;
 };
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
@@ -363,13 +368,18 @@ export default function PracticeScreen() {
     working.current = true;
     const answerText = 'text' in input ? input.text : null;
     const choice = 'choice' in input ? input.choice : null;
+    const parts = 'parts' in input ? JSON.stringify(input.parts) : null;
     const prev = lastSent.current;
     // Retrying the very same answer keeps its id, so the server records it only once.
     const clientTurnId =
-      prev && prev.itemId === itemId && prev.text === answerText && prev.choice === choice
+      prev &&
+      prev.itemId === itemId &&
+      prev.text === answerText &&
+      prev.choice === choice &&
+      prev.parts === parts
         ? prev.clientTurnId
         : newId();
-    lastSent.current = { clientTurnId, itemId, text: answerText, choice };
+    lastSent.current = { clientTurnId, itemId, text: answerText, choice, parts };
     haptic.tap();
     setPinnedId(itemId);
     setPending({ itemId, text: shownText });
@@ -760,7 +770,10 @@ export default function PracticeScreen() {
   const tapChoices =
     choices === null && item.tap_choices && item.tap_choices.length > 0 ? item.tap_choices : null;
   const speaking = item.kind === 'speak';
-  const typed = open && choices === null && tapChoices === null && !speaking;
+  // A structured item (issue #228) is answered on its own surface, never by typing: the
+  // server takes only `parts` for it.
+  const structured = isStructuredKind(item.kind);
+  const typed = open && choices === null && tapChoices === null && !speaking && !structured;
   const tried = new Set(
     turns
       .filter((turn) => turn.role === 'learner' && turn.verdict === 'incorrect')
@@ -1030,6 +1043,19 @@ export default function PracticeScreen() {
                 setText(next);
               }}
               onPick={(picked) => void answer(item.id, { text: picked, via: 'tapped' }, picked)}
+            />
+          </View>
+        ) : null}
+        {/* A structured item's parts (issues #228–#232): one surface per kind, each with its
+            own "Prüfen" in the pinned bar. Keyed by the question, so a new one starts empty. */}
+        {open && item.task_view ? (
+          <View testID="answer-surface">
+            <StructuredAnswer
+              key={item.id}
+              view={item.task_view}
+              draftKey={`session.${id}.${item.id}`}
+              disabled={locked}
+              onSubmit={(parts, shownText) => void answer(item.id, { parts }, shownText)}
             />
           </View>
         ) : null}

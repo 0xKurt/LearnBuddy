@@ -32,6 +32,7 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, usableItems } from '../practice/items.js';
+import { structuredItems } from '../practice/structured.js';
 import { createSession } from '../practice/service.js';
 import {
   EXTRACT_PROMPT_VERSION,
@@ -57,6 +58,9 @@ import {
 import { attachConceptImages } from './images.js';
 import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
+
+/** The structured kinds a sheet may give (issue #228: an order to find). */
+const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order']);
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
@@ -807,7 +811,7 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     // continued; a reading that had to go lean is already at the model's limit.
     if (!homework && result.success) {
       for (let pass = 1; pass < MOST_READINGS && result.data.more_items; pass++) {
-        const seen = result.data.items.map((it) => it.prompt);
+        const seen = [...result.data.items, ...result.data.structured].map((it) => it.prompt);
         let next;
         try {
           next = await read(lean, seen);
@@ -821,8 +825,11 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         if (!parsed.success) break;
         const known = new Set(seen.map(samePrompt));
         const fresh = parsed.data.items.filter((it) => !known.has(samePrompt(it.prompt)));
+        const freshStructured = parsed.data.structured.filter(
+          (it) => !known.has(samePrompt(it.prompt)),
+        );
         // No progress: stop rather than ask a fourth time for the same nothing.
-        if (fresh.length === 0) {
+        if (fresh.length === 0 && freshStructured.length === 0) {
           result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
           break;
         }
@@ -834,6 +841,7 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
           data: {
             ...result.data,
             items: [...result.data.items, ...fresh],
+            structured: [...result.data.structured, ...freshStructured],
             more_items: parsed.data.more_items,
             not_practicable: [
               ...result.data.not_practicable,
@@ -859,7 +867,11 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
   if (!result.success) return fail(deps, job, materialId, 'model_error');
   const x = result.data;
   if (!x.is_learning_material) return fail(deps, job, materialId, 'not_learning_material');
-  const items = usableItems(x.items);
+  // The ordinary questions, and after them the structured ones that pass Regel 0 (#228).
+  const items = [
+    ...usableItems(x.items),
+    ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
+  ];
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not
   // cost the whole sheet (the model says so for a cut-off page at times); the
@@ -1445,6 +1457,8 @@ export async function materialItems(
       // Same for the fraction bar (issue #162): a surface is something she works WITH on
       // an open question, not a control in a list of what the sheet holds.
       surface: null,
+      // And for a structured item's parts (issue #228): they are worked with in a session.
+      task_view: null,
       result: resultOf(r),
     })),
   };

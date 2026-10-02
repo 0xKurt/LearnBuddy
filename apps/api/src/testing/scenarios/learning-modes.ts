@@ -152,6 +152,44 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Order items (issue #228): the model writes the elements in the RIGHT order and nothing
+  // about a key — the server checks them (Regel 0), shuffles them and keeps the key. The
+  // second set is the tallest an order may be: eight elements, the bound of rule 16 on
+  // 360×740.
+  scriptGenerations({
+    when: /Keimung/i,
+    answer: () => ({
+      usable: true,
+      title: 'Keimung',
+      subject: { name: 'Biologie', kind: 'biology' },
+      items: [],
+      structured: [
+        {
+          type: 'order',
+          prompt: 'Bring die Keimung einer Bohne in die richtige Reihenfolge.',
+          elements: [
+            'Der Samen nimmt Wasser auf und quillt',
+            'Die Keimwurzel wächst nach unten',
+            'Der Keimstängel streckt sich zum Licht',
+            'Die ersten Laubblätter entfalten sich',
+          ],
+          numeric: null,
+          topic: 'Keimung',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'order',
+          prompt: 'Ordne die Zahlen der Größe nach, mit der kleinsten zuerst.',
+          elements: ['-12', '-3', '0,5', '$\\frac{3}{4}$', '2', '17', '105', '1000'],
+          numeric: 'ascending',
+          topic: 'Zahlen ordnen',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   // Practice without a photo: fractions, with a figure.
   scriptGenerations({
     when: /Brüche|Bruch/i,
@@ -250,6 +288,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /mit rechenweg üben/i,
       answer: says('Gern – ich hab dir Gleichungen mit Rechenweg vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Gleichungen mit Rechenweg' } },
+      ]),
+    },
+    {
+      when: /keimung/i,
+      answer: says('Klar – ordne mal die Keimung, Schritt für Schritt.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Keimung ordnen' } },
       ]),
     },
     {

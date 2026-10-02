@@ -12,6 +12,8 @@
 //   there is a near miss where spelling is the point (decision D-2: language subjects and
 //   vocabulary, or an item marked strict) and otherwise for the tutor to judge gently.
 
+import type { ItemKind } from '@learnbuddy/shared-types/contracts';
+
 import { checkEquation, type EquationFault, looksLikeEquation, sameRatio } from './chemistry.js';
 import { checkPath, lastValue } from './steps.js';
 import {
@@ -30,7 +32,8 @@ import {
 export { plainMath };
 
 export type ItemForCheck = {
-  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
+  /** Structured kinds (#228–#232) never reach `ruleCheck`: their parts are checked in structured.ts. */
+  kind: ItemKind;
   answer: string;
   accepted_answers: string[];
   unit: string | null;

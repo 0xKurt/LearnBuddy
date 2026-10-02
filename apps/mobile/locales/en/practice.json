@@ -52,6 +52,14 @@
   "later_hint": "The task stays open and comes back after the others.",
   "loading": "Getting your questions …",
   "next": "Next",
+  "order": {
+    "how": "Tap them in order.",
+    "element_open": "{{text}}, no place yet",
+    "element_placed": "{{text}}, place {{n}}",
+    "hint_open": "Gets place {{n}}.",
+    "hint_placed": "Takes it back – and everything after it.",
+    "check_waits": "Once every one has a place."
+  },
   "origin_buddy": "Question from Buddy",
   "progress": "Question {{current}} of {{total}}",
   "reexplain": {

@@ -95,7 +95,11 @@
     "unbalanced_charge": "Presque – les charges ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "unbalanced_element": "Presque – recompte le {{element}} : {{left}} à gauche, {{right}} à droite.",
     "untitled": "Exercice",
-    "worked_intro": "Regarde, voilà comment faire :"
+    "worked_intro": "Regarde, voilà comment faire :",
+    "order": {
+      "first_wrong": "Pas encore tout à fait – regarde encore ce qui vient en premier.",
+      "right_until": "Jusqu'à l'étape {{right}}, c'est juste ! À partir de l'étape {{from}}, l'ordre n'est pas encore tout à fait bon."
+    }
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

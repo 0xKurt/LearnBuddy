@@ -7,15 +7,17 @@
 // step (done only if something was actually answered) and wakes Buddy to
 // plan what comes next.
 
-import type {
-  AnswerRequest,
-  Figure,
-  ItemView,
-  SessionMode,
-  AnswerResponse,
-  HintRequest,
-  PracticeTurnView,
-  SessionView,
+import {
+  isStructuredKind,
+  type AnswerRequest,
+  type Figure,
+  type ItemKind,
+  type ItemView,
+  type SessionMode,
+  type AnswerResponse,
+  type HintRequest,
+  type PracticeTurnView,
+  type SessionView,
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -43,6 +45,14 @@ import {
 } from './evaluate.js';
 import { checkPath } from './steps.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
+import {
+  answerTextOf,
+  checkStructured,
+  structuredReply,
+  structuredTaskOf,
+  viewOf,
+  type StructuredCheck,
+} from './structured.js';
 import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
@@ -73,7 +83,7 @@ export type PracticeLearner = {
 
 export type ItemRow = {
   id: string;
-  kind: 'short' | 'long' | 'numeric' | 'multiple_choice' | 'formula' | 'vocab' | 'speak';
+  kind: ItemKind;
   prompt: string;
   answer: string;
   accepted_answers: string[];
@@ -96,6 +106,12 @@ export type ItemRow = {
    * through `taskOf`, never trusted as it stands.
    */
   bar_task: unknown;
+  /**
+   * A structured item's task WITH its key (issues #228–#232, migration 0069), or null for
+   * every other question. Read through `structuredTaskOf`, never trusted as it stands; it
+   * leaves the server only as `task_view`, without the key.
+   */
+  task: unknown;
 };
 
 export type SessionRow = {
@@ -527,6 +543,16 @@ function surfaceFor(stored: unknown): ItemView['surface'] {
   return task ? surfaceOf(task) : null;
 }
 
+/**
+ * What a structured question shows (issues #228–#232): its task without the key, or null for
+ * every other question — and for a stored task that no longer reads (nothing is guessed at).
+ */
+function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task_view'] {
+  if (!isStructuredKind(row.kind)) return null;
+  const task = structuredTaskOf(row.task, row.kind);
+  return task ? viewOf(task) : null;
+}
+
 /** The crop that goes with the question, or null (contract: ItemImage). */
 function imageOf(row: ItemImageRow, urls: Map<string, string>): ItemView['image'] {
   const url = row.image_path ? urls.get(row.image_path) : undefined;
@@ -546,7 +572,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task,
+            i.bar_task, i.task,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -615,6 +641,9 @@ export async function sessionView(
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
         surface: i.status === 'open' && active ? surfaceFor(i.bar_task) : null,
+        // The parts of a structured question (issue #228), without the key and only while
+        // it can be answered: once closed, her answer and the solution stand in the thread.
+        task_view: i.status === 'open' && active ? taskViewFor(i) : null,
       },
       status: i.status,
       attempts: i.attempts,
@@ -803,9 +832,39 @@ export async function answerItem(
   if (!item) throw new AppError('not_found', 'Question not in this session');
   if (item.status !== 'open') throw new AppError('conflict', 'This question is already closed');
 
+  // A structured question (issues #228–#232) is answered with parts and judged by code
+  // alone: the parts are compared with the key in `items.task` (Regel 0 of #224). A request
+  // for help is still a request for help — its text goes to the tutor as for any question.
+  const structured = isStructuredKind(item.kind) ? structuredTaskOf(item.task, item.kind) : null;
+  if (isStructuredKind(item.kind) && !structured) {
+    throw new AppError('conflict', 'This question cannot be answered', {
+      reason: 'task_unreadable',
+    });
+  }
+  let partsCheck: StructuredCheck | null = null;
+  if (!hintRequest && input.parts) {
+    if (!structured) {
+      throw new AppError('invalid_input', 'This question is not answered with parts', {
+        reason: 'no_parts',
+      });
+    }
+    partsCheck = checkStructured(structured, input.parts);
+    if (!partsCheck) {
+      throw new AppError('invalid_input', 'These parts do not fit this question', {
+        reason: 'parts_mismatch',
+      });
+    }
+  } else if (!hintRequest && structured) {
+    throw new AppError('invalid_input', 'This question is answered with parts', {
+      reason: 'use_parts',
+    });
+  }
+
   const text =
-    input.text ??
-    (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null);
+    structured && input.parts && partsCheck
+      ? answerTextOf(structured, input.parts)
+      : (input.text ??
+        (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
   if (!text) throw new AppError('invalid_input', 'Empty answer');
   if (item.kind === 'speak') {
     throw new AppError('conflict', 'This question is answered by speaking', {
@@ -817,11 +876,15 @@ export async function answerItem(
   // A request for help is not an answer: nothing for the rules to check.
   const byRules: RuleVerdict = hintRequest
     ? 'unknown'
-    : ruleCheck(
-        // A question code computed asks for an amount, so any form of it is right (#162).
-        { ...item, form_free: barTask !== null },
-        { text: input.text ?? null, choice: input.choice ?? null },
-      );
+    : partsCheck
+      ? partsCheck.correct
+        ? 'correct'
+        : 'incorrect'
+      : ruleCheck(
+          // A question code computed asks for an amount, so any form of it is right (#162).
+          { ...item, form_free: barTask !== null },
+          { text: input.text ?? null, choice: input.choice ?? null },
+        );
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -934,6 +997,17 @@ export async function answerItem(
       reply: workedReply(learner.locale, item),
       gaveHint: false,
       revealed: true,
+    };
+  } else if (partsCheck && rule === 'incorrect') {
+    // A structured answer that is not right yet (issue #228): code knows WHERE it stops
+    // being right, so it says so — every time, not only on the first try, and never through
+    // a model (0 model calls per answer). The third miss above shows the solution.
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply: structuredReply(learner.locale, partsCheck),
+      gaveHint: false,
+      revealed: false,
     };
   } else if (givesHints(session.mode) && rule === 'incorrect' && item.attempts === 0) {
     // The FIRST wrong try: kind feedback at once, no model. A slip deserves a quick "try
@@ -1255,7 +1329,8 @@ export async function answerItem(
           firstTry,
           now,
           prepared,
-          input.via ?? 'typed',
+          // Arranging parts is tapping (issue #163), unless the app says otherwise.
+          input.via ?? (partsCheck ? 'tapped' : 'typed'),
         ],
       );
       // A free text she did not get right produces NO review: `Again` is a statement about

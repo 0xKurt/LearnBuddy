@@ -95,7 +95,11 @@
     "unbalanced_charge": "Almost – the charges don't match yet: {{left}} on the left, {{right}} on the right.",
     "unbalanced_element": "Almost – count the {{element}} again: {{left}} on the left, {{right}} on the right.",
     "untitled": "Practice",
-    "worked_intro": "Here's how it works:"
+    "worked_intro": "Here's how it works:",
+    "order": {
+      "first_wrong": "Not quite yet – have another look at what comes first.",
+      "right_until": "Right up to step {{right}}! From step {{from}} on, the order isn't quite there yet."
+    }
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

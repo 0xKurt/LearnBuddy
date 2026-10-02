@@ -95,7 +95,11 @@
     "unbalanced_charge": "Quasi – le cariche non corrispondono ancora: {{left}} a sinistra, {{right}} a destra.",
     "unbalanced_element": "Quasi – riconta il {{element}}: {{left}} a sinistra, {{right}} a destra.",
     "untitled": "Esercizio",
-    "worked_intro": "Guarda, si fa così:"
+    "worked_intro": "Guarda, si fa così:",
+    "order": {
+      "first_wrong": "Non ancora del tutto: guarda di nuovo cosa viene per primo.",
+      "right_until": "Fino al passo {{right}} è giusto! Dal passo {{from}} in poi l'ordine non è ancora del tutto giusto."
+    }
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

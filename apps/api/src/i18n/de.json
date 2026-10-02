@@ -95,7 +95,11 @@
     "unbalanced_charge": "Fast – die Ladungen stimmen noch nicht: links {{left}}, rechts {{right}}.",
     "unbalanced_element": "Fast – zähl das {{element}} nochmal: links {{left}}, rechts {{right}}.",
     "untitled": "Übung",
-    "worked_intro": "Schau, so geht's:"
+    "worked_intro": "Schau, so geht's:",
+    "order": {
+      "first_wrong": "Noch nicht ganz – schau nochmal, was ganz am Anfang steht.",
+      "right_until": "Bis Schritt {{right}} stimmt's! Ab Schritt {{from}} passt die Reihenfolge noch nicht ganz."
+    }
   },
   "contact": {
     "less_often": "Alles klar – aufs Handy schreibe ich dir ab jetzt nur noch, wenn's wirklich wichtig ist. Alles andere findest du hier. Ändern kannst du das in den Einstellungen."

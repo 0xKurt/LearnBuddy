@@ -52,6 +52,14 @@
   "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
   "loading": "Ich hole deine Fragen …",
   "next": "Weiter",
+  "order": {
+    "how": "Tippe sie der Reihe nach an.",
+    "element_open": "{{text}}, noch ohne Platz",
+    "element_placed": "{{text}}, Platz {{n}}",
+    "hint_open": "Bekommt Platz {{n}}.",
+    "hint_placed": "Nimmt es zurück – und alles, was danach kommt.",
+    "check_waits": "Erst wenn alle einen Platz haben."
+  },
   "origin_buddy": "Frage von Buddy",
   "progress": "Frage {{current}} von {{total}}",
   "reexplain": {

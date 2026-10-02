@@ -95,7 +95,11 @@
     "unbalanced_charge": "Casi – las cargas todavía no coinciden: {{left}} a la izquierda, {{right}} a la derecha.",
     "unbalanced_element": "Casi – cuenta otra vez el {{element}}: {{left}} a la izquierda, {{right}} a la derecha.",
     "untitled": "Práctica",
-    "worked_intro": "Mira, así se hace:"
+    "worked_intro": "Mira, así se hace:",
+    "order": {
+      "first_wrong": "Todavía no del todo: mira otra vez qué va primero.",
+      "right_until": "¡Hasta el paso {{right}} está bien! A partir del paso {{from}}, el orden aún no es del todo correcto."
+    }
   },
   "contact": {
     "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."

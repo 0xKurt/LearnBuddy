@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { Figure } from './figure.js';
+import { StructuredAnswer, StructuredTaskView } from './structured.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
 
@@ -230,6 +231,16 @@ export const ItemKind = z.enum([
   'vocab',
   /** Say the prompt aloud in lang; the model listens to the recording. */
   'speak',
+  // Structured items (issues #228–#232, contracts/structured.ts): answered with `parts`,
+  // judged by code against `items.task`. `task_view` shows what to arrange.
+  /** Put 3–8 elements into the right order (#228). */
+  'order',
+  /** Pair or group elements (#229). */
+  'match',
+  /** Fill the gaps of a table (#230). */
+  'table_fill',
+  /** Fill several gaps in one text (#232). */
+  'cloze',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 
@@ -294,6 +305,14 @@ export const ItemView = z.object({
    * fraction into the same answer field.
    */
   surface: AnswerSurface.nullable().default(null),
+  /**
+   * A structured item's task as she works with it (issues #228–#232): for `order` the
+   * elements, shuffled, with server-given ids. Never the key — that stays in `items.task`
+   * on the server. Set for every structured kind while the question is open, null for every
+   * other question. A view type this build does not know reads as null (`.catch`): the
+   * question then shows without its surface instead of the whole session failing to load.
+   */
+  task_view: StructuredTaskView.nullable().default(null).catch(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 
@@ -436,10 +455,17 @@ export const AnswerRequest = z
      * no longer shows the difference, and the app has to say. Absent means typed.
      */
     via: z.enum(['typed', 'tapped', 'spoken']).optional(),
+    /**
+     * The answer to a structured item (issues #228–#232): the parts she arranged, by the ids
+     * of `ItemView.task_view`. Its `type` must be the item's kind. A structured item takes
+     * only this; every other item takes text or a choice.
+     */
+    parts: StructuredAnswer.nullable().optional(),
   })
-  .refine((v) => (v.text ?? null) !== null || (v.choice ?? null) !== null, {
-    message: 'text or choice is required',
-  });
+  .refine(
+    (v) => (v.text ?? null) !== null || (v.choice ?? null) !== null || (v.parts ?? null) !== null,
+    { message: 'text, choice or parts is required' },
+  );
 export type AnswerRequest = z.infer<typeof AnswerRequest>;
 
 /** "Tipp": the next prepared hint for an open question — at once, no model. */

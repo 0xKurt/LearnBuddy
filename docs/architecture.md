@@ -1605,6 +1605,54 @@ Still open for a later step: the number line and the vocabulary card (#162's sec
 representation), and bar tasks from a photographed sheet — the extraction prompt does not offer
 them yet, so today they come from a topic she named.
 
+**Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
+migration `0069_structured_items.sql`, issue #228; the foundation of #229 match, #230
+table_fill, #232 cloze). Some answers are not a sentence but an arrangement: an order, pairs,
+table cells, gaps. They are their own item kinds (`order`, `match`, `table_fill`, `cloze` — all
+four are in the kind check already), and #224's "Regel 0" holds in both directions: code
+validates what the model wrote, and code judges what she answers — never a model.
+
+Three shapes per kind, discriminated by `type` (= the item's kind):
+
+| shape                | where                 | what it holds                                                      |
+| -------------------- | --------------------- | ------------------------------------------------------------------ |
+| `StructuredTask`     | `items.task` (server) | the definition WITH the key; `order`: elements, key (ids), numeric |
+| `StructuredTaskView` | `ItemView.task_view`  | the same WITHOUT the key, only while the question is open          |
+| `StructuredAnswer`   | `AnswerRequest.parts` | what she arranged, by part id; `order`: every element id once      |
+
+The model writes the content in a separate list of its answer (`structured`, next to `items`;
+generation and both photo readings), for `order` the 3–8 elements **in the right order** plus
+`numeric` (`ascending`/`descending` when every element is a number). Code then checks
+(`orderProblem`) and stores nothing that fails — nothing is repaired: fewer than 3 or more than 8
+elements, two elements alike after normalising (case, spacing, math markup), a key that is not a
+permutation (reachable for a stored row; a draft cannot produce one because code writes the key),
+numbers without a stated direction, a direction for elements that are not all numbers of one
+unit, and a numeric key that is not strictly sorted by value. Code gives the ids (`a`, `b`, …
+by display position, so an id says where an element stands, never where it belongs), shuffles
+deterministically per content (never the right order, never its reverse) and writes `answer` as
+the readable solution ("A → B → C"), so "Lösung zeigen", the hint ladder, the tutor for "Tipp",
+the test review and the summary run unchanged. The database holds the two together
+(`items_task_matches_kind`: a structured kind always has a task, every other kind never, and
+`task->>'type' = kind`); a stored task is read through `structuredTaskOf`, which re-checks it.
+
+Answering (`answerItem`): a structured item takes only `parts` (text → 422 `use_parts`; a
+foreign shape, a missing, doubled or unknown id → 422 `parts_mismatch`; `parts` for any other
+item → 422 `no_parts`). `checkStructured` returns the verdict and a result per part; for `order`
+also the first wrong place, and the reply names it ("Bis Schritt 2 stimmt's! Ab Schritt 3 …",
+`structuredReply`) on every wrong try — 0 model calls per answer. The rest is the ordinary flow:
+the third miss explains the solution, a test only notes the answer, FSRS rates the closed item,
+turns are idempotent per `client_turn_id`. Her answer stands in the thread in her order; the
+closing answer is recorded as `tapped`, which for a structured kind still counts towards a topic
+in the summary (tapping is the only way to answer it, not recognition).
+
+App: `components/practice/StructuredAnswer.tsx` switches on `task_view.type`; a new kind adds
+its component there and nothing else on the screen. `OrderAnswer.tsx` is one gesture: tap the
+elements in order, they get numbers; tapping a numbered one takes it back with everything after
+it; "Prüfen" waits until all have a place. The place is said in words to a screen reader ("…,
+Platz 2"). Generated in a topic's practice and practice test (not homework, vocabulary or
+speaking), and read from a sheet when a task asks to order given things. At most
+`MAX_STRUCTURED_ITEMS` (4) per prepared set.
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

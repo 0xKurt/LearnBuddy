@@ -38,8 +38,14 @@ import {
   usableItems,
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
+import {
+  MAX_STRUCTURED_ITEMS,
+  ORDER_RULES,
+  StructuredDraftNoHelp,
+  structuredItems,
+} from './structured.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.11';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.12';
 
 const SUBJECT_KINDS = [
   'math',
@@ -80,6 +86,12 @@ export const GeneratedSet = z.object({
    * computes (`practice/bars.ts`).
    */
   bars: z.array(BarTask).max(MAX_BAR_ITEMS).default([]),
+  /**
+   * Structured items (issues #228–#232): an order to find, for now. Their own list, because
+   * their key is a shape code checks (`practice/structured.ts`, Regel 0 of #224), not a
+   * text in `answer`.
+   */
+  structured: z.array(StructuredDraftNoHelp).max(MAX_STRUCTURED_ITEMS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -214,6 +226,7 @@ Rules:
 - ${MATH_RULES}
 - ${FIGURE_RULES}
 - ${BAR_RULES}
+- ${ORDER_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${LANGUAGE_RULES}
 - Title: short, what it is about (e.g. "Dativ", "Unité 3 – Vokabeln", "Brüche addieren").
@@ -244,6 +257,18 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
   vocab: new Set(['vocab']),
   speak: new Set(['speak']),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
+};
+
+/**
+ * Structured kinds a kind may produce (issue #228: in a topic's practice and in a practice
+ * test). Not in homework — that is what she typed — nor in a vocabulary or speaking list.
+ */
+const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
+  practice: new Set(['order']),
+  test: new Set(['order']),
+  vocab: new Set(),
+  speak: new Set(),
+  help: new Set(),
 };
 
 /** Most words of a task (≥ 60 %) occur in what the learner typed. */
@@ -359,6 +384,7 @@ async function prepareTopic(
       items: itemsOneByOne(itemSchema, 25),
       // One unusable task costs its own question, never the whole set (audit H-14/H-15).
       bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
+      structured: itemsOneByOne(StructuredDraftNoHelp, MAX_STRUCTURED_ITEMS),
     }).safeParse(res.json);
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
@@ -391,7 +417,12 @@ async function prepareTopic(
   // the bar away because she asked for something harder would remove the one thing that
   // makes a harder fraction task approachable.
   const bars = input.kind === 'practice' ? barItems(set.bars, learner.locale) : [];
-  if (!set.usable || items.length + bars.length === 0) {
+  // Structured items, after Regel 0 (issue #228): one that fails costs only itself. Built
+  // from her sheets, their topic must be one of the sheets' too, like every other question.
+  const structured = structuredItems(set.structured, STRUCTURED[input.kind]).filter(
+    (it) => !sheets || (it.topic !== null && (sheets.topics as string[]).includes(it.topic)),
+  );
+  if (!set.usable || items.length + bars.length + structured.length === 0) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
   }
   try {
@@ -402,7 +433,7 @@ async function prepareTopic(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...items, ...bars],
+        [...items, ...structured, ...bars],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );

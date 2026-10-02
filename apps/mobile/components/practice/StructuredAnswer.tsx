@@ -1,0 +1,33 @@
+// The place in the practice card where a structured item is answered (issues #228–#232).
+// One component per `task_view.type`; this switch is the only thing the screen knows about
+// them. A new kind (#229 match, #230 table_fill, #232 cloze) adds its component and one
+// `case` here — the screen (`app/practice/[id].tsx`), the outbox and the answer flow stay as
+// they are, because every kind answers with the same `parts`.
+//
+// Each surface brings its own "Prüfen" in the pinned bar (it knows when its answer is
+// complete) and sends `parts` plus a short text of the answer for the conversation while
+// the server judges it.
+
+import type {
+  StructuredAnswer as Parts,
+  StructuredTaskView,
+} from '@learnbuddy/shared-types/contracts';
+
+import { OrderAnswer } from './OrderAnswer.js';
+
+type Props = {
+  view: StructuredTaskView;
+  /** Where the surface keeps her unsent arrangement (`lib/drafts.ts`), per question. */
+  draftKey: string;
+  disabled: boolean;
+  onSubmit: (parts: Parts, shown: string) => void;
+};
+
+export function StructuredAnswer({ view, draftKey, disabled, onSubmit }: Props) {
+  switch (view.type) {
+    case 'order':
+      return (
+        <OrderAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
+      );
+  }
+}

@@ -2,7 +2,7 @@
 // show (user feedback #3: one computation, so "Sitzt" and "Nochmal" never contradict).
 // docs/architecture.md §Practice.
 
-import type { PracticeSummary } from '@learnbuddy/shared-types/contracts';
+import { isStructuredKind, type PracticeSummary } from '@learnbuddy/shared-types/contracts';
 
 import { noSingleSolution } from './evaluate.js';
 
@@ -59,7 +59,9 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
     // produce it (issue #163). It counts as answered and as right; it does not count
     // towards naming the topic as one that went well, or recognising four words would
     // read the same as writing them.
-    if (i.answered_by !== 'tapped') t.shown += 1;
+    // A structured item (an order, issue #228) is answered by tapping and by nothing else:
+    // there tapping IS producing the answer, so it counts like typing.
+    if (i.answered_by !== 'tapped' || isStructuredKind(i.kind ?? '')) t.shown += 1;
     byTopic.set(key, t);
   }
   const topics = [...byTopic.values()];

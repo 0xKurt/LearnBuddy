@@ -311,6 +311,69 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
+  // ── Reihenfolge: tap in order, tap again to take back (issue #228) ──
+  // The scripted model wrote the elements in the right order and nothing else; the server
+  // shuffled them, keeps the key and judges the order without a model.
+  await page.getByLabel('Schreib Buddy …').fill('Lass mich die Keimung ordnen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('ordne mal die Keimung', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Bring die Keimung einer Bohne', { exact: false })).toBeVisible();
+  const STEP = [
+    'Der Samen nimmt Wasser auf und quillt',
+    'Die Keimwurzel wächst nach unten',
+    'Der Keimstängel streckt sich zum Licht',
+    'Die ersten Laubblätter entfalten sich',
+  ];
+  const open = (text: string) => page.getByRole('button', { name: `${text}, noch ohne Platz` });
+  const placed = (text: string, n: number) =>
+    page.getByRole('button', { name: `${text}, Platz ${n}` });
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  // Nothing placed: "Prüfen" waits.
+  await expect(check).toBeDisabled();
+  await open(STEP[0]!).click();
+  await open(STEP[1]!).click();
+  await open(STEP[2]!).click();
+  await expect(placed(STEP[2]!, 3)).toBeVisible();
+  // Changed her mind: tapping place 2 takes it back, and place 3 with it.
+  await placed(STEP[1]!, 2).click();
+  await expect(open(STEP[1]!)).toBeVisible();
+  await expect(open(STEP[2]!)).toBeVisible();
+  await open(STEP[1]!).click();
+  await open(STEP[3]!).click();
+  await open(STEP[2]!).click();
+  await shot(page, '37-order-placed');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '37b-order-placed-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await check.click();
+  // Code found the place: the first two are right.
+  await expect(page.getByText("Bis Schritt 2 stimmt's", { exact: false })).toBeVisible();
+  await shot(page, '38-order-feedback');
+  // Her order stays; she fixes only the end.
+  await placed(STEP[3]!, 3).click();
+  await open(STEP[2]!).click();
+  await open(STEP[3]!).click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Eight numbers, the most an order may have: it still fits 360×740 without scrolling.
+  await expect(page.getByText('Ordne die Zahlen der Größe nach', { exact: false })).toBeVisible();
+  for (const n of ['-12', '-3', '0,5', '3 Viertel', '2', '17', '105', '1000']) {
+    await page.getByRole('button', { name: `${n}, noch ohne Platz` }).click();
+  }
+  await shot(page, '39-order-eight');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '39b-order-eight-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await check.click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+
   // ── Practice test: no verdicts or solutions until the end ──
   await page.getByLabel('Schreib Buddy …').fill('Mach einen Probetest über die Römer');
   await page.getByRole('button', { name: 'Senden' }).click();

@@ -52,6 +52,14 @@
   "later_hint": "El ejercicio sigue abierto y vuelve después de los demás.",
   "loading": "Estoy cargando tus preguntas…",
   "next": "Siguiente",
+  "order": {
+    "how": "Tócalos en orden.",
+    "element_open": "{{text}}, todavía sin lugar",
+    "element_placed": "{{text}}, lugar {{n}}",
+    "hint_open": "Recibe el lugar {{n}}.",
+    "hint_placed": "Lo quita, y también todo lo que viene después.",
+    "check_waits": "Solo cuando todos tengan su lugar."
+  },
   "origin_buddy": "Pregunta de Buddy",
   "progress": "Pregunta {{current}} de {{total}}",
   "reexplain": {
