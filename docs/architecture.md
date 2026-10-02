@@ -2034,7 +2034,7 @@ and passes through at least two grid points in range; an `on_graph` with at leas
 points on the graph (`unsolvable` otherwise). The model writes values and names, never an id or a
 mirror image (CLAUDE.md rule 2); bars get server ids by position. The solution text (`items.answer`,
 "(2 | −1)", "Die Gerade y = 2x − 1, zum Beispiel durch …") is written by code in her language.
-Generation (`generate.v1.16`: practice and practice test) and both photo readings (`extract.v7.2`)
+Generation (`generate.v1.16`, the library added in `generate.v1.17`: practice and practice test) and both photo readings (`extract.v7.2`)
 may write them; a printed "plot / mirror / colour / draw bars on the grid" task is no longer a
 `drawing` the app cannot practise. Freehand and compass constructions stay `drawing` (#224: only a
 grid is exactly checkable).
@@ -2061,6 +2061,59 @@ all the height the question and Buddy's reply leave (`FIGURE_REPLY_ROOM` = 200 i
 `app/practice/[id].tsx`, so a four-line reply is never cut under the question card) and draws itself
 for that box (`FigureSurface.tsx`), top-aligned under the question. Walkthrough:
 `tests/web/figures.spec.ts`, shots 50–68 at 390×844 and 360×740, light and dark.
+
+**Figure library — periodic table, schematic drawings, circuits, logic gates, colour wheel**
+(`contracts/periodic.ts`, `contracts/schematics.ts`, `contracts/circuit.ts`, `practice/library.ts`,
+`practice/circuit.ts`, `practice/libraryNames.ts`, `lib/figure/`, `components/practice/figure/
+LibraryFigures.tsx` and `schematics/art.tsx`; issues #250, #252, #261 from the analysis #224). No
+migration: the tap questions are `figure_tap` (four more members of `TapFigure`/`TapValue`, the
+mechanism of #248 unchanged), the others are `numeric`, `short`, `multiple_choice`, `match` and
+`table_fill`, with a code-written figure in `items.figure` (four more members of `Figure`, never of
+`ModelFigure`).
+
+_The model chooses, code writes_ — the build of the note line and the fraction bar, for the same
+reason (#157): the key is read off the figure, so it must be computed from it. The generator gets a
+separate list `figures` (at most 4 tasks → at most 8 questions, practice and practice test, not
+homework) whose schema holds only choices (≈ 2.8k characters, 6 `anyOf`; #281 keeps schemas small —
+names, positions and facts are in code and the language files, so a new drawing costs no schema):
+
+| task      | the model chooses                                                                                  | the questions code writes                                                                                                                                             | key computed from                                                                           |
+| --------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `element` | a symbol, `ask`, a second symbol, `full`                                                           | tap by name / by period and group; protons, electrons, neutrons, valence, group, period (numbers); metal–metalloid–nonmetal, higher EN (options)                      | the table: Z, group, period, rounded mass − Z, Pauling EN                                   |
+| `label`   | one of 15 drawings, 2–8 of its part ids, `ask`                                                     | one tap question per part ("Tippe auf den Zellkern."), one naming question per part ("Wie heißt Teil 3?", four names of the same drawing), or one match number ↔ name | the library's name of the part (5 languages, synonyms)                                      |
+| `circuit` | battery V, blocks in series of 1–3 parallel branches of lamps/resistors (Ω)/switches, `asked` part | tap the one dark / the one lit lamp; how many light; series/parallel/mixed; equivalent resistance; what the ammeter / voltmeter (placed by code) shows                | exact rational net analysis (`circuit.ts`)                                                  |
+| `logic`   | a gate on A, B (NOT: A), optionally a second gate with C                                           | a truth table to fill (X after the first gate, then Q), gates drawn as DIN EN 60617 boxes                                                                             | `truthTable`                                                                                |
+| `color`   | a field of Itten's wheel, `ask`, a second field                                                    | tap a colour, its complement, what two colours mix to                                                                                                                 | opposite field; the field between two primaries or a primary and its neighbouring secondary |
+
+_Regel 0 on the model's side, never repaired:_ an unknown symbol or part, a repeated part, more
+pins on one side than fit at 44 pt (`SCHEMATIC_SIDE_MAX` 4 left/right, 5 under the drawing), a
+neutron question where the rounding is a coin toss (|frac − 0.5| < 0.1, e.g. Cl 35.45) or there is
+no stable isotope, valence or main group for a d-block element, an `unclear` class (Po, At,
+superheavy), an EN pair closer than 0.2 or without values, a circuit over its caps (3 blocks × 3
+branches × 3 parts, 4 parts wide, 8 in all) or with a short circuit, a numeric result that is no
+decimal of at most three places (1/3 A), "the one dark lamp" when there are two, colours that mix to
+nothing the wheel shows. Each such choice gives no question; the rest of the set stays.
+
+_Her side:_ a tap is an id (element, pin, field, lamp) compared exactly; a tap on a part without a
+pin, another figure's id or text is 422 `parts_mismatch`. A wrong tap's reply names what she
+tapped — feedback, never the key: "Das ist Ca (Calcium) — die Gruppe stimmt schon. Schau in eine
+andere Periode.", "Das ist: Vakuole.", "Das ist Blaugrün." Numbers, options and tables go through
+the ordinary rule check (with unit) and `table.ts`. Hints and worked solutions are code's, in her
+language, written with the question — no hint call, no tutor call (the integration test asserts
+zero model calls besides the one generation).
+
+_Drawing._ The schematics are our own flat drawings in the app's pastels (`palette.art`, its own
+tones at night), 100 units wide, no text in them. A part is pointed at by a leader line from its
+point on the drawing (`at` in `contracts/schematics.ts`) to a pin at the margin (left, right or
+under the drawing); pins keep their parts' order so lines never cross, and the pins — not the
+parts — are what she taps and what carries a number (`lib/figure/pins.ts`, tested for every
+drawing with all its parts on 360×740 and 390×844). The main-group table (I–VIII, periods 1–6)
+is tapped directly (8 columns of ≥ 39 pt with the whole cell as target); the full table magnifies
+the columns she aims at on the first tap, like a fine grid. The wheel's pigments are the same in
+every family (`palette.wheel`) and every field carries its name; a circuit's parts carry their
+names (L1, R1, S1) and values. "Eingeben" offers the pins, lamps or a stepper through the elements
+or colours. Not built: labelling inside the photo of her own sheet (`HOTSPOT_BILD`, #252 plan item 4) — it needs the photo reading to return label regions and is a change of the extraction, not
+of the library. Walkthrough: `tests/web/library.spec.ts`, shots 80–99.
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration

@@ -10,8 +10,9 @@
 //   grid_draw  (#249) — she draws on a grid: sets points (the line through two of them is
 //                        drawn), fills squares, pulls bars up to their height.
 //
-// The figures are a family on purpose: the periodic table (#250), labelling (#252) and the
-// figures after them add a member to `TapFigure` (and its `TapValue`), not a new mechanism.
+// The figures are a family on purpose: the periodic table (#250), labelling (#252), the circuit
+// and the colour wheel (#261) are members of `TapFigure` (and its `TapValue`), not a new
+// mechanism — their places are named parts, so a tap on them is an id.
 //
 // Grids are exact (packages/shared-math/src/grid.ts): every value she can give lies ON a grid
 // point, a tap snaps to the nearest one, and the key must be one of them or the task is not
@@ -20,7 +21,10 @@
 
 import { z } from 'zod';
 
+import { Circuit, WheelId } from './circuit.js';
 import { PartId } from './common.js';
+import { PeriodicTableKind } from './periodic.js';
+import { SCHEMATIC_PARTS_MAX, SCHEMATIC_PARTS_MIN, SchematicId } from './schematics.js';
 
 const Num = z.number().finite();
 
@@ -103,6 +107,25 @@ export const TapFigure = z.discriminatedUnion('kind', [
     kind: z.literal('clock'),
     snap: ClockSnap,
   }),
+  // The figure library (issues #250, #252, #261): each place she can tap is a named part, so a
+  // tap is an id — the element, the pin of a drawing's part, a field of the wheel, a lamp.
+  z.object({
+    kind: z.literal('periodic'),
+    table: PeriodicTableKind,
+  }),
+  z.object({
+    kind: z.literal('schematic'),
+    drawing: SchematicId,
+    /** The parts that carry a pin, in pin order (contracts/schematics.ts `pinOrder`). */
+    parts: z.array(PartId).min(SCHEMATIC_PARTS_MIN).max(SCHEMATIC_PARTS_MAX),
+  }),
+  z.object({
+    kind: z.literal('color_wheel'),
+  }),
+  z.object({
+    kind: z.literal('circuit'),
+    circuit: Circuit,
+  }),
 ]);
 export type TapFigure = z.infer<typeof TapFigure>;
 export type TapKind = TapFigure['kind'];
@@ -117,6 +140,10 @@ export const TapValue = z.discriminatedUnion('kind', [
     h: z.number().int().min(1).max(12),
     m: z.number().int().min(0).max(59),
   }),
+  z.object({ kind: z.literal('periodic'), id: PartId }),
+  z.object({ kind: z.literal('schematic'), id: PartId }),
+  z.object({ kind: z.literal('color_wheel'), id: WheelId }),
+  z.object({ kind: z.literal('circuit'), id: PartId }),
 ]);
 export type TapValue = z.infer<typeof TapValue>;
 

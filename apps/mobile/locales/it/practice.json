@@ -222,6 +222,7 @@
   "table": {
     "cell": "{{row}}, {{column}}",
     "cell_at": "riga {{row}}, colonna {{column}}",
+    "cell_in_row": "«{{row}}», colonna {{column}}",
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
@@ -250,7 +251,32 @@
     "bar_choice": "{{label}} ({{value}})",
     "canvas": "Figura da toccare",
     "clock_canvas": "Orologio da impostare",
-    "check_waits": "Solo quando hai toccato un posto."
+    "check_waits": "Solo quando hai toccato un posto.",
+    "your_element": "Il tuo elemento: {{element}}",
+    "your_pin": "Il tuo punto: {{n}}",
+    "pin": "Punto {{n}}",
+    "your_color": "Il tuo colore: {{color}}",
+    "your_lamp": "La tua lampadina: {{lamp}}",
+    "periodic_canvas": "Tavola periodica da toccare",
+    "schematic_canvas": "{{drawing}} con {{count}} punti da toccare",
+    "wheel_canvas": "Cerchio cromatico da toccare",
+    "circuit_canvas": "Schema elettrico da toccare",
+    "element": "Elemento",
+    "color": "Colore",
+    "wheel": {
+      "y": "giallo",
+      "yo": "giallo-|arancio",
+      "o": "arancione",
+      "ro": "rosso-|arancio",
+      "r": "rosso",
+      "rv": "rosso-|viola",
+      "v": "viola",
+      "bv": "blu-|viola",
+      "b": "blu",
+      "bg": "blu-|verde",
+      "g": "verde",
+      "yg": "giallo-|verde"
+    }
   },
   "draw": {
     "how_points": "Tocca dei punti sulla griglia.",

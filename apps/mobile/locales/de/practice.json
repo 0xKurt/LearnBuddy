@@ -222,6 +222,7 @@
   "table": {
     "cell": "{{row}}, {{column}}",
     "cell_at": "Zeile {{row}}, Spalte {{column}}",
+    "cell_in_row": "„{{row}}“, Spalte {{column}}",
     "brick": "Reihe {{row}}, Stein {{n}}",
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
     "scroll": "Tabelle, seitlich verschiebbar"
@@ -250,7 +251,32 @@
     "bar_choice": "{{label}} ({{value}})",
     "canvas": "Figur zum Antippen",
     "clock_canvas": "Uhr zum Stellen",
-    "check_waits": "Erst wenn du eine Stelle angetippt hast."
+    "check_waits": "Erst wenn du eine Stelle angetippt hast.",
+    "your_element": "Dein Element: {{element}}",
+    "your_pin": "Dein Punkt: {{n}}",
+    "pin": "Punkt {{n}}",
+    "your_color": "Deine Farbe: {{color}}",
+    "your_lamp": "Deine Lampe: {{lamp}}",
+    "periodic_canvas": "Periodensystem zum Antippen",
+    "schematic_canvas": "{{drawing}} mit {{count}} Punkten zum Antippen",
+    "wheel_canvas": "Farbkreis zum Antippen",
+    "circuit_canvas": "Schaltplan zum Antippen",
+    "element": "Element",
+    "color": "Farbe",
+    "wheel": {
+      "y": "Gelb",
+      "yo": "Gelb|orange",
+      "o": "Orange",
+      "ro": "Rot|orange",
+      "r": "Rot",
+      "rv": "Rot|violett",
+      "v": "Violett",
+      "bv": "Blau|violett",
+      "b": "Blau",
+      "bg": "Blau|grün",
+      "g": "Grün",
+      "yg": "Gelb|grün"
+    }
   },
   "draw": {
     "how_points": "Tippe Punkte ins Raster.",

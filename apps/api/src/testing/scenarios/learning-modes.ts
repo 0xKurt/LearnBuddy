@@ -329,6 +329,83 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // The figure library (issues #250, #252, #261): the model only CHOOSES — a drawing and its
+  // parts, an element, a net, a gate, a colour — and code writes questions, figures and keys.
+  scriptGenerations({
+    when: /Zelle beschriften/i,
+    answer: () => ({
+      usable: true,
+      title: 'Pflanzenzelle',
+      subject: { name: 'Biologie', kind: 'biology' },
+      items: [],
+      figures: [
+        {
+          task: 'label',
+          drawing: 'plant_cell',
+          ask: 'tap',
+          parts: ['nucleus', 'vacuole', 'cell_wall', 'chloroplast', 'membrane'],
+        },
+        { task: 'label', drawing: 'eye', ask: 'name', parts: ['lens', 'retina', 'iris', 'cornea'] },
+      ],
+    }),
+  });
+  scriptGenerations({
+    when: /Periodensystem üben/i,
+    answer: () => ({
+      usable: true,
+      title: 'Periodensystem',
+      subject: { name: 'Chemie', kind: 'chemistry' },
+      items: [],
+      figures: [
+        { task: 'element', ask: 'find', element: 'Mg' },
+        { task: 'element', ask: 'valence', element: 'S' },
+        { task: 'element', ask: 'locate', element: 'Cu', full: true },
+      ],
+    }),
+  });
+  scriptGenerations({
+    when: /Stromkreise und Farben/i,
+    answer: () => ({
+      usable: true,
+      title: 'Schaltungen und Farben',
+      subject: { name: 'Physik', kind: 'physics' },
+      items: [],
+      figures: [
+        {
+          task: 'circuit',
+          ask: 'dark_lamp',
+          voltage: 4.5,
+          blocks: [
+            {
+              branches: [
+                [
+                  { part: 'lamp', ohm: null, open: false, asked: false },
+                  { part: 'switch', ohm: null, open: true, asked: false },
+                ],
+                [{ part: 'lamp', ohm: null, open: false, asked: false }],
+              ],
+            },
+          ],
+        },
+        {
+          task: 'circuit',
+          ask: 'current',
+          voltage: 12,
+          blocks: [
+            { branches: [[{ part: 'resistor', ohm: 6, open: false, asked: false }]] },
+            {
+              branches: [
+                [{ part: 'resistor', ohm: 6, open: false, asked: true }],
+                [{ part: 'resistor', ohm: 12, open: false, asked: false }],
+              ],
+            },
+          ],
+        },
+        { task: 'logic', gate: 'not', then: 'and' },
+        { task: 'color', ask: 'complement', color: 'r' },
+      ],
+    }),
+  });
   scriptGenerations({
     when: /Auf dem Raster zeichnen/i,
     answer: () => ({
@@ -538,6 +615,24 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /koordinaten antippen/i,
       answer: says('Gern – tipp mal in ein paar Figuren.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Koordinaten antippen' } },
+      ]),
+    },
+    {
+      when: /zelle beschriften/i,
+      answer: says('Gern – beschrifte mal eine Pflanzenzelle.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Zelle beschriften' } },
+      ]),
+    },
+    {
+      when: /periodensystem üben/i,
+      answer: says('Klar – ab ins Periodensystem.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Periodensystem üben' } },
+      ]),
+    },
+    {
+      when: /stromkreise und farben/i,
+      answer: says('Gern – Stromkreise, Gatter und der Farbkreis.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Stromkreise und Farben' } },
       ]),
     },
     {

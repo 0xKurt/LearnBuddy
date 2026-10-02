@@ -388,7 +388,21 @@ export function tableTaskFrom(
 function rowLabel(task: TableFillTask, row: number, col: number): string | null {
   if (task.family === 'wall' || col === 0) return null;
   const first = task.rows[row]![0]!;
-  return isGap(first) || first.text.trim() === '' ? null : first.text;
+  if (isGap(first) || first.text.trim() === '') return null;
+  // Only a name no other row has names a row: a truth table's rows all start with 0 or 1
+  // (issue #261), and "„1“ / „Q“" would point at four cells at once.
+  const same = task.rows.filter((r) => r[0] && !isGap(r[0]) && r[0].text === first.text);
+  return same.length === 1 ? first.text : null;
+}
+
+/**
+ * What names a column in a sentence: its heading, when no other column has it. A truth table laid
+ * across has 0 and 1 as headings (issue #261); "„Q“ / „0“" would point at two cells.
+ */
+function columnLabel(task: TableFillTask, col: number): string | null {
+  const name = task.header?.[col]?.trim() || null;
+  if (name === null) return null;
+  return task.header!.filter((h) => h.trim() === name).length === 1 ? name : null;
 }
 
 /** The solution as she reads it, row by row: "ich: gehe, ging · du: gehst, gingst". */
@@ -535,7 +549,7 @@ export function checkTable(
         row: row + 1,
         col: col + 1,
         row_label: rowLabel(task, row, col),
-        col_label: task.header?.[col]?.trim() || null,
+        col_label: columnLabel(task, col),
         near: verdict === 'near',
       });
     }
@@ -568,6 +582,9 @@ function cellName(locale: string, miss: TableMiss, wall: boolean): string {
   }
   if (miss.col_label !== null) {
     return t(locale, 'practice.table.cell_in_column', { row: miss.row, column: miss.col_label });
+  }
+  if (miss.row_label !== null) {
+    return t(locale, 'practice.table.cell_in_row', { row: miss.row_label, column: miss.col });
   }
   return t(locale, 'practice.table.cell_at', { row: miss.row, column: miss.col });
 }

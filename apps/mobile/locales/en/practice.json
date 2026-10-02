@@ -222,6 +222,7 @@
   "table": {
     "cell": "{{row}}, {{column}}",
     "cell_at": "row {{row}}, column {{column}}",
+    "cell_in_row": "“{{row}}”, column {{column}}",
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
@@ -250,7 +251,32 @@
     "bar_choice": "{{label}} ({{value}})",
     "canvas": "Figure to tap",
     "clock_canvas": "Clock to set",
-    "check_waits": "Only once you have tapped a place."
+    "check_waits": "Only once you have tapped a place.",
+    "your_element": "Your element: {{element}}",
+    "your_pin": "Your dot: {{n}}",
+    "pin": "Dot {{n}}",
+    "your_color": "Your colour: {{color}}",
+    "your_lamp": "Your lamp: {{lamp}}",
+    "periodic_canvas": "Periodic table to tap",
+    "schematic_canvas": "{{drawing}} with {{count}} dots to tap",
+    "wheel_canvas": "Colour wheel to tap",
+    "circuit_canvas": "Circuit diagram to tap",
+    "element": "Element",
+    "color": "Colour",
+    "wheel": {
+      "y": "yellow",
+      "yo": "yellow-|orange",
+      "o": "orange",
+      "ro": "red-|orange",
+      "r": "red",
+      "rv": "red-|violet",
+      "v": "violet",
+      "bv": "blue-|violet",
+      "b": "blue",
+      "bg": "blue-|green",
+      "g": "green",
+      "yg": "yellow-|green"
+    }
   },
   "draw": {
     "how_points": "Tap points onto the grid.",

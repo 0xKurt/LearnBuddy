@@ -53,6 +53,16 @@ export function t(
   return template.replace(/\{\{(\w+)\}\}/g, (_, name: string) => String(vars[name] ?? ''));
 }
 
+/**
+ * A word of the figure library (`library.*`: an element, a part of a drawing, a colour) in her
+ * language, or null when the library has none. Keys are built from ids (`elements.na`), which
+ * `t` cannot type; every id has its word in all five files (`library.test.ts`).
+ */
+export function libraryTerm(locale: string, key: string): string | null {
+  const messages = MESSAGES[(locale as Locale) in MESSAGES ? (locale as Locale) : 'de'];
+  return lookup(messages, `library.${key}`) ?? null;
+}
+
 /** "Freitag" / "Morgen" / "Heute" for a learner-local date relative to today. */
 export function dayLabel(locale: string, weekday: number, daysFromToday: number): string {
   const messages = MESSAGES[(locale as Locale) in MESSAGES ? (locale as Locale) : 'de'];

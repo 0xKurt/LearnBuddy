@@ -37,10 +37,16 @@ import {
   type PlaneGrid,
   type TapFigure,
   type TapValue,
+  elementOf,
+  inTable,
+  pinOrder,
+  SCHEMATICS,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
+import { circuitProblem } from './circuit.js';
+import { colorName, elementName, partNames } from './libraryNames.js';
 
 /** Why a figure task is not stored. Each one is a test (`__tests__/figureTap.test.ts`). */
 export type FigureProblem =
@@ -57,7 +63,9 @@ export type FigureProblem =
   /** "The highest bar" — but the key's bar is not the one, alone, highest (or lowest). */
   | 'not_extreme'
   /** A text over its cap (a bar's name, a point's name): it would not fit the figure. */
-  | 'figure_text';
+  | 'figure_text'
+  /** Library figures (#250, #252, #261): the key names no element, pin, field or lamp of the figure. */
+  | 'library_key';
 
 /**
  * What the generator and the photo reading are told about tap tasks. Exact, minimal and without
@@ -189,6 +197,31 @@ export function figureTapProblem(task: FigureTapTask): FigureProblem | null {
       if (key.m % figure.snap !== 0) return 'off_grid';
       return null;
     }
+    case 'periodic': {
+      if (key.kind !== 'periodic') return 'figure_form';
+      const e = elementOf(key.id);
+      return e && inTable(figure.table, e) ? null : 'library_key';
+    }
+    case 'schematic': {
+      if (key.kind !== 'schematic') return 'figure_form';
+      const known = SCHEMATICS[figure.drawing].parts;
+      if (figure.parts.some((p) => !(p in known))) return 'library_key';
+      // The pins stand in pin order, so their numbers and their places agree (schematics.ts).
+      const order = pinOrder(figure.drawing, figure.parts);
+      if (order.length !== figure.parts.length || order.some((p, i) => p !== figure.parts[i]))
+        return 'figure_form';
+      return figure.parts.includes(key.id) ? null : 'library_key';
+    }
+    case 'color_wheel':
+      return key.kind === 'color_wheel' ? null : 'figure_form';
+    case 'circuit': {
+      if (key.kind !== 'circuit') return 'figure_form';
+      if (circuitProblem(figure.circuit) !== null) return 'grid';
+      const lamp = figure.circuit.blocks
+        .flatMap((b) => b.branches.flat())
+        .find((p) => p.id === key.id);
+      return lamp?.part === 'lamp' ? null : 'library_key';
+    }
   }
 }
 
@@ -318,6 +351,20 @@ export function tapWords(locale: string, figure: TapFigure, value: TapValue): st
         : '';
     case 'clock':
       return clockWords(value.h, value.m);
+    case 'periodic': {
+      const e = elementOf(value.id);
+      if (!e) return '';
+      const name = elementName(locale, e);
+      return name ? `${e.sym} (${name})` : e.sym;
+    }
+    case 'schematic':
+      return figure.kind === 'schematic'
+        ? (partNames(locale, figure.drawing, value.id)[0] ?? '')
+        : '';
+    case 'color_wheel':
+      return colorName(locale, value.id) ?? '';
+    case 'circuit':
+      return value.id.toUpperCase();
   }
 }
 
@@ -346,12 +393,28 @@ export type TapMiss =
   /** clock: hour right, minutes not; minutes right, hour not; both wrong. */
   | 'hour_right'
   | 'minute_right'
-  | 'time';
+  | 'time'
+  /** periodic table: the right group (or period), another element; another element altogether. */
+  | 'group_right'
+  | 'period_right'
+  | 'element'
+  /** schematic: another part (the reply names the one she tapped). */
+  | 'part'
+  /** colour wheel: another field (named). */
+  | 'color'
+  /** circuit: another lamp. */
+  | 'lamp';
 
 export type FigureTapCheck = {
   type: 'figure_tap';
   correct: boolean;
   miss: TapMiss | null;
+  /**
+   * What she tapped, in words, where the reply names it ("Das ist die Vakuole."): only for
+   * library figures, where each place is a named part. Naming the WRONG part is feedback, never
+   * the key.
+   */
+  tapped?: { figure: TapFigure; value: TapValue };
 };
 
 /** Does her value stand on a place of this figure? Anything else was never a tap. */
@@ -367,6 +430,22 @@ function onFigure(figure: TapFigure, v: TapValue): boolean {
       return v.kind === 'bars' && figure.bars.some((b) => b.id === v.id);
     case 'clock':
       return v.kind === 'clock' && v.m % figure.snap === 0;
+    case 'periodic': {
+      if (v.kind !== 'periodic') return false;
+      const e = elementOf(v.id);
+      return e !== null && inTable(figure.table, e);
+    }
+    case 'schematic':
+      return v.kind === 'schematic' && figure.parts.includes(v.id);
+    case 'color_wheel':
+      return v.kind === 'color_wheel';
+    case 'circuit':
+      return (
+        v.kind === 'circuit' &&
+        figure.circuit.blocks.some((b) =>
+          b.branches.some((br) => br.some((p) => p.id === v.id && p.part === 'lamp')),
+        )
+      );
   }
 }
 
@@ -411,6 +490,28 @@ export function checkFigureTap(
       if (hr && mr) return done(null);
       return done(hr ? 'hour_right' : mr ? 'minute_right' : 'time');
     }
+    case 'periodic': {
+      if (v.kind !== 'periodic') return null;
+      if (v.id === key.id) return done(null);
+      const a = elementOf(v.id);
+      const b = elementOf(key.id);
+      const miss: TapMiss =
+        a && b && a.group === b.group
+          ? 'group_right'
+          : a && b && a.period === b.period
+            ? 'period_right'
+            : 'element';
+      return { ...done(miss), tapped: { figure, value: v } };
+    }
+    case 'schematic':
+      if (v.kind !== 'schematic') return null;
+      return v.id === key.id ? done(null) : { ...done('part'), tapped: { figure, value: v } };
+    case 'color_wheel':
+      if (v.kind !== 'color_wheel') return null;
+      return v.id === key.id ? done(null) : { ...done('color'), tapped: { figure, value: v } };
+    case 'circuit':
+      if (v.kind !== 'circuit') return null;
+      return done(v.id === key.id ? null : 'lamp');
   }
 }
 
@@ -449,7 +550,23 @@ export function figureTapReply(locale: string, check: FigureTapCheck, priorMisse
       return t(locale, 'practice.figure.minute_right');
     case 'time':
       return t(locale, 'practice.figure.time_wrong');
+    case 'group_right':
+      return t(locale, 'practice.figure.group_right', { tapped: tappedWords(locale, check) });
+    case 'period_right':
+      return t(locale, 'practice.figure.period_right', { tapped: tappedWords(locale, check) });
+    case 'element':
+      return t(locale, 'practice.figure.element_wrong', { tapped: tappedWords(locale, check) });
+    case 'part':
+      return t(locale, 'practice.figure.part_wrong', { tapped: tappedWords(locale, check) });
+    case 'color':
+      return t(locale, 'practice.figure.color_wrong', { tapped: tappedWords(locale, check) });
+    case 'lamp':
+      return t(locale, 'practice.figure.lamp_wrong');
   }
+}
+
+function tappedWords(locale: string, check: FigureTapCheck): string {
+  return check.tapped ? tapWords(locale, check.tapped.figure, check.tapped.value) : '';
 }
 
 export function figureTapNamesPart(check: FigureTapCheck, priorMisses: number): boolean {

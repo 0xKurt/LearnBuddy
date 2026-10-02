@@ -222,6 +222,7 @@
   "table": {
     "cell": "{{row}}, {{column}}",
     "cell_at": "fila {{row}}, columna {{column}}",
+    "cell_in_row": "«{{row}}», columna {{column}}",
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
     "scroll": "Tabla, se desplaza hacia los lados"
@@ -250,7 +251,32 @@
     "bar_choice": "{{label}} ({{value}})",
     "canvas": "Figura para tocar",
     "clock_canvas": "Reloj para ajustar",
-    "check_waits": "Solo cuando hayas tocado un sitio."
+    "check_waits": "Solo cuando hayas tocado un sitio.",
+    "your_element": "Tu elemento: {{element}}",
+    "your_pin": "Tu punto: {{n}}",
+    "pin": "Punto {{n}}",
+    "your_color": "Tu color: {{color}}",
+    "your_lamp": "Tu lámpara: {{lamp}}",
+    "periodic_canvas": "Tabla periódica para tocar",
+    "schematic_canvas": "{{drawing}} con {{count}} puntos para tocar",
+    "wheel_canvas": "Círculo cromático para tocar",
+    "circuit_canvas": "Esquema eléctrico para tocar",
+    "element": "Elemento",
+    "color": "Color",
+    "wheel": {
+      "y": "amarillo",
+      "yo": "amarillo |anaranjado",
+      "o": "naranja",
+      "ro": "rojo |anaranjado",
+      "r": "rojo",
+      "rv": "rojo |violáceo",
+      "v": "violeta",
+      "bv": "azul |violáceo",
+      "b": "azul",
+      "bg": "azul |verdoso",
+      "g": "verde",
+      "yg": "amarillo |verdoso"
+    }
   },
   "draw": {
     "how_points": "Toca puntos en la cuadrícula.",

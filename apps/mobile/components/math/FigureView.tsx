@@ -36,7 +36,17 @@ import { speakMathText } from '../../lib/math/speak.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { logicInputs } from '@learnbuddy/shared-types/contracts';
+
+import { periodicFrame } from '../../lib/figure/library.js';
+import { pinLayout } from '../../lib/figure/pins.js';
 import { describeStaff } from '../../lib/music/words.js';
+import {
+  CircuitSvg,
+  LogicSvg,
+  PeriodicSvg,
+  SchematicSvg,
+} from '../practice/figure/LibraryFigures.js';
 import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
 import { useSpokenWords } from './useSpokenMath.js';
@@ -145,6 +155,33 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
     // Zeichnung die Fläche ist, auf die sie schreibt — eine Figur ist, was sie LIEST.
     case 'staff':
       return <StaffLine fig={figure} width={width} />;
+    // The figure library (issues #250, #252, #261): the same drawings she taps in, here with the
+    // element, the numbered part or the instrument the question is about.
+    case 'periodic': {
+      const frame = periodicFrame(figure.table, width, Infinity);
+      return <PeriodicSvg frame={frame} table={figure.table} mark={figure.mark} />;
+    }
+    case 'schematic': {
+      const layout = pinLayout(
+        figure.drawing,
+        figure.parts,
+        { width, height: width * 0.78 },
+        { compact: true },
+      );
+      return (
+        <SchematicSvg
+          drawing={figure.drawing}
+          layout={layout}
+          numbered
+          focus={figure.focus}
+          chosen={null}
+        />
+      );
+    }
+    case 'circuit':
+      return <CircuitSvg circuit={figure} width={Math.min(width, 420)} chosen={null} />;
+    case 'logic':
+      return <LogicSvg net={figure} width={Math.min(width, 380)} />;
   }
 }
 
@@ -1090,5 +1127,70 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
     case 'staff':
       return describeStaff(figure, t);
+    // In words, so the question is answerable with a screen reader, not merely present.
+    case 'periodic': {
+      const head = t(figure.table === 'main' ? 'figure.periodic_main' : 'figure.periodic_full');
+      if (!figure.mark) return head;
+      const sym = figure.mark.charAt(0).toUpperCase() + figure.mark.slice(1);
+      return `${head}. ${t('figure.periodic_mark', { element: sym })}`;
+    }
+    case 'schematic': {
+      const head = t('figure.schematic', {
+        drawing: t(`figure.drawings.${figure.drawing}`),
+        count: figure.parts.length,
+      });
+      if (!figure.focus) return head;
+      return `${head}. ${t('figure.schematic_focus', { n: figure.parts.indexOf(figure.focus) + 1 })}`;
+    }
+    case 'circuit': {
+      const name = (id: string) => id.toUpperCase();
+      const part = (p: (typeof figure.blocks)[number]['branches'][number][number]) => {
+        if (p.part === 'switch')
+          return t(p.open ? 'figure.circuit_open' : 'figure.circuit_closed', { name: name(p.id) });
+        const base = t(p.part === 'lamp' ? 'figure.circuit_lamp' : 'figure.circuit_resistor', {
+          name: name(p.id),
+        });
+        return p.ohm === null
+          ? base
+          : t('figure.circuit_ohm', { part: base, ohm: formatNumber(p.ohm) });
+      };
+      const blocks = figure.blocks.map((b) =>
+        b.branches.length === 1
+          ? t('figure.circuit_series', { list: list(b.branches[0]!.map(part)) })
+          : t('figure.circuit_parallel', {
+              list: b.branches
+                .map((br) => br.map(part).join(', '))
+                .join(t('figure.circuit_branch_join')),
+            }),
+      );
+      const head =
+        figure.voltage === null
+          ? t('figure.circuit')
+          : t('figure.circuit_voltage', { voltage: formatNumber(figure.voltage) });
+      const meter = figure.meter
+        ? [
+            t(
+              figure.meter.kind === 'ammeter'
+                ? 'figure.circuit_ammeter'
+                : 'figure.circuit_voltmeter',
+              {
+                name: name(figure.meter.at),
+              },
+            ),
+          ]
+        : [];
+      return [head, ...blocks, ...meter].join('. ');
+    }
+    case 'logic': {
+      const inputs = logicInputs(figure);
+      const gate = t(`figure.gates.${figure.gate}`);
+      if (figure.then === null) return t('figure.logic', { gate, inputs: list(inputs) });
+      return t('figure.logic_two', {
+        gate,
+        inputs: list(inputs.slice(0, figure.gate === 'not' ? 1 : 2)),
+        then: t(`figure.gates.${figure.then}`),
+        last: inputs[inputs.length - 1]!,
+      });
+    }
   }
 }

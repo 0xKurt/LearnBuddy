@@ -129,17 +129,27 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: Props) {
 
   // What names a cell for a screen reader: its row and its column, in words.
   const wall = view.layout === 'wall';
+  // A first column names its rows only when no two rows share the name (a truth table's rows
+  // all start with 0 or 1, issue #261): two cells with the same label are one cell to her.
+  const firsts = view.rows.map((r) => (r[0] && !isGap(r[0]) ? r[0].text : ''));
+  const namesRows = firsts.every((x, i) => x !== '' && firsts.indexOf(x) === i);
+  // The same for the headings: a truth table laid across has 0 and 1 above its columns.
+  const heads = view.header ?? [];
+  const namesCols = heads.every((x, i) => heads.indexOf(x) === i);
   const labelOf = (row: number, col: number): string => {
     if (wall) return t('table.brick', { row: row + 1, n: col + 1 });
     const first = view.rows[row]?.[0];
-    const rowName = col > 0 && first && !isGap(first) && first.text !== '' ? first.text : null;
-    const colName = view.header?.[col] ?? '';
-    return rowName !== null && colName !== ''
-      ? t('table.cell', {
-          row: speakMathText(rowName, words),
-          column: speakMathText(colName, words),
-        })
-      : t('table.cell_at', { row: row + 1, column: col + 1 });
+    const rowName =
+      namesRows && col > 0 && first && !isGap(first) && first.text !== '' ? first.text : null;
+    const colName = namesCols ? (view.header?.[col] ?? '') : '';
+    if (rowName !== null && colName !== '')
+      return t('table.cell', {
+        row: speakMathText(rowName, words),
+        column: speakMathText(colName, words),
+      });
+    if (rowName !== null)
+      return t('table.cell_in_row', { row: speakMathText(rowName, words), column: col + 1 });
+    return t('table.cell_at', { row: row + 1, column: col + 1 });
   };
 
   const gap = (cell: TableViewGap, row: number, col: number) => {

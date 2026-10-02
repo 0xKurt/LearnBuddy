@@ -21,8 +21,21 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { WHEEL_IDS, wheelIndex } from '@learnbuddy/shared-types/contracts';
+
 import { hourAt, minuteAt } from '../../../../packages/shared-math/src/grid.js';
 import { useDraft } from '../../lib/drafts.js';
+import {
+  cellAt,
+  circuitLayout,
+  lampAt,
+  periodicFrame,
+  periodicNeedsZoom,
+  periodicZoom,
+  wheelFieldAt,
+  wheelWord,
+} from '../../lib/figure/library.js';
+import { pinAt, pinLayout } from '../../lib/figure/pins.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import {
   fullWindow,
@@ -41,6 +54,13 @@ import { Segmented } from '../lb/Segmented.js';
 import { formatNumber } from '../math/FigureView.js';
 import { clockText, TapExactSheet } from './figure/ExactSheet.js';
 import { FigureSurface } from './figure/FigureSurface.js';
+import {
+  CircuitSvg,
+  PeriodicSvg,
+  SchematicSvg,
+  WHEEL_HOLE,
+  WheelSvg,
+} from './figure/LibraryFigures.js';
 import { PlaneSvg } from './figure/PlaneSvg.js';
 import {
   ClockSvg,
@@ -62,12 +82,21 @@ type Props = {
 const BARS_MAX = 260;
 /** A clock face larger than this is a poster, not a question. */
 const CLOCK_MAX = 300;
+/** The colour wheel: large enough for its twelve names, never a poster. */
+const WHEEL_MAX = 340;
+
+/** The twelve colour names as the wheel shows them ("Blau|violett"), clockwise from yellow. */
+export function useWheelNames(): string[] {
+  const { t } = useTranslation('practice');
+  return WHEEL_IDS.map((id) => t(`figure.wheel.${id}`));
+}
 /** The row with the choice of hand above the face: one button and its gap. */
 const HAND_ROW = TOUCH + SPACE.sm;
 
 /** Her tap in words, the same words the thread and the server use. */
 export function useTapWords(view: FigureTapTaskView): (v: TapValue | null) => string {
   const { t } = useTranslation('practice');
+  const wheel = useWheelNames();
   return (v) => {
     if (v === null) return t('figure.nothing');
     switch (v.kind) {
@@ -84,8 +113,26 @@ export function useTapWords(view: FigureTapTaskView): (v: TapValue | null) => st
       }
       case 'clock':
         return t('figure.your_time', { time: clockText(v.h, v.m) });
+      case 'periodic':
+        return t('figure.your_element', { element: symbolOf(v.id) });
+      case 'schematic':
+        return t('figure.your_pin', { n: pinNumber(view, v.id) });
+      case 'color_wheel':
+        return t('figure.your_color', { color: wheelWord(wheel[wheelIndex(v.id)] ?? '') });
+      case 'circuit':
+        return t('figure.your_lamp', { lamp: v.id.toUpperCase() });
     }
   };
+}
+
+/** "na" → "Na": an element's id is its symbol in lower case. */
+function symbolOf(id: string): string {
+  return id.charAt(0).toUpperCase() + id.slice(1);
+}
+
+/** A pin's number: its place among the drawing's pins (they come in pin order). */
+function pinNumber(view: FigureTapTaskView, id: string): number {
+  return view.figure.kind === 'schematic' ? view.figure.parts.indexOf(id) + 1 : 0;
 }
 
 /** What she sent, as it stands in the conversation (the server writes the same). */
@@ -93,6 +140,7 @@ function shownText(
   v: TapValue,
   view: FigureTapTaskView,
   t: (k: string, o?: Record<string, string>) => string,
+  wheel: readonly string[],
 ): string {
   switch (v.kind) {
     case 'plane':
@@ -105,6 +153,14 @@ function shownText(
         : '';
     case 'clock':
       return clockText(v.h, v.m);
+    case 'periodic':
+      return symbolOf(v.id);
+    case 'schematic':
+      return t('figure.pin', { n: String(pinNumber(view, v.id)) });
+    case 'color_wheel':
+      return wheelWord(wheel[wheelIndex(v.id)] ?? '');
+    case 'circuit':
+      return v.id.toUpperCase();
   }
 }
 
@@ -114,12 +170,14 @@ export function FigureTapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
   const value = tapFrom(kept, view);
   const set = (v: TapValue) => keep(JSON.stringify(v));
   const words = useTapWords(view);
+  const wheel = useWheelNames();
   const [zoom, setZoom] = useState<Window | null>(null);
   const [lineWin, setLineWin] = useState<{ v0: number; v1: number } | null>(null);
+  const [ptWin, setPtWin] = useState<{ c0: number; c1: number } | null>(null);
   const [exact, setExact] = useState(false);
   const [hand, setHand] = useState<'hour' | 'minute'>('hour');
   const fig = view.figure;
-  const zoomed = zoom !== null || lineWin !== null;
+  const zoomed = zoom !== null || lineWin !== null || ptWin !== null;
 
   const exactBtn = zoomed ? (
     <Btn
@@ -129,6 +187,7 @@ export function FigureTapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
       onPress={() => {
         setZoom(null);
         setLineWin(null);
+        setPtWin(null);
       }}
       accessibilityHint={t('figure.whole_hint')}
     >
@@ -271,6 +330,125 @@ export function FigureTapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
           </View>
         );
       }
+      case 'periodic': {
+        const frame = periodicFrame(fig.table, box.width, box.height, ptWin);
+        const chosen = value?.kind === 'periodic' ? value.id : null;
+        return (
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`${t('figure.periodic_canvas')}. ${words(value)}`}
+            accessibilityHint={t('figure.exact_hint')}
+            style={{ width: frame.width, height: frame.height }}
+          >
+            <PeriodicSvg frame={frame} table={fig.table} mark={chosen} />
+            <TouchLayer
+              testID="figure-touch"
+              width={frame.width}
+              height={frame.height}
+              disabled={disabled}
+              onTap={(x, y) => {
+                // The full table's cells are too small for a finger: the first tap magnifies.
+                if (ptWin === null && periodicNeedsZoom(frame)) {
+                  setPtWin(periodicZoom(frame, x));
+                  return;
+                }
+                const cell = cellAt(frame, x, y);
+                if (!cell) return;
+                set({ kind: 'periodic', id: cell.id });
+                setPtWin(null);
+              }}
+            />
+          </View>
+        );
+      }
+      case 'schematic': {
+        const layout = pinLayout(fig.drawing, fig.parts, box);
+        const chosen = value?.kind === 'schematic' ? value.id : null;
+        return (
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`${t('figure.schematic_canvas', { drawing: t(`figure.drawings.${fig.drawing}`, { ns: 'math' }), count: fig.parts.length })}. ${words(value)}`}
+            accessibilityHint={t('figure.exact_hint')}
+            style={{ width: layout.width, height: layout.height }}
+          >
+            <SchematicSvg
+              drawing={fig.drawing}
+              layout={layout}
+              numbered={false}
+              focus={null}
+              chosen={chosen}
+            />
+            <TouchLayer
+              testID="figure-touch"
+              width={layout.width}
+              height={layout.height}
+              disabled={disabled}
+              onTap={(x, y) => {
+                const pin = pinAt(layout, x, y);
+                if (pin) set({ kind: 'schematic', id: pin.id });
+              }}
+            />
+          </View>
+        );
+      }
+      case 'color_wheel': {
+        const size = Math.max(200, Math.min(box.width, box.height, WHEEL_MAX));
+        const chosen = value?.kind === 'color_wheel' ? wheelIndex(value.id) : null;
+        return (
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`${t('figure.wheel_canvas')}. ${words(value)}`}
+            accessibilityHint={t('figure.exact_hint')}
+            style={{ width: size, height: size }}
+          >
+            <WheelSvg size={size} names={wheel} chosen={chosen} />
+            <TouchLayer
+              testID="figure-touch"
+              width={size}
+              height={size}
+              disabled={disabled}
+              onTap={(x, y) => {
+                const i = wheelFieldAt(size, x, y, (size / 2 - 3) * WHEEL_HOLE);
+                const id = i === null ? undefined : WHEEL_IDS[i];
+                if (id) set({ kind: 'color_wheel', id });
+              }}
+            />
+          </View>
+        );
+      }
+      case 'circuit': {
+        const layout = circuitLayout(fig.circuit, Math.min(box.width, 420));
+        const chosen = value?.kind === 'circuit' ? value.id : null;
+        return (
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`${t('figure.circuit_canvas')}. ${words(value)}`}
+            accessibilityHint={t('figure.exact_hint')}
+            style={{ width: layout.width, height: layout.height }}
+          >
+            <CircuitSvg
+              circuit={fig.circuit}
+              width={layout.width}
+              layout={layout}
+              chosen={chosen}
+            />
+            <TouchLayer
+              testID="figure-touch"
+              width={layout.width}
+              height={layout.height}
+              disabled={disabled}
+              onTap={(x, y) => {
+                const id = lampAt(layout, x, y);
+                if (id) set({ kind: 'circuit', id });
+              }}
+            />
+          </View>
+        );
+      }
     }
   };
 
@@ -304,7 +482,7 @@ export function FigureTapAnswer({ view, draftKey, disabled, onSubmit }: Props) {
             full
             disabled={disabled || value === null}
             onPress={() =>
-              value && onSubmit({ type: 'figure_tap', value }, shownText(value, view, t))
+              value && onSubmit({ type: 'figure_tap', value }, shownText(value, view, t, wheel))
             }
             accessibilityHint={value === null ? t('figure.check_waits') : undefined}
           >

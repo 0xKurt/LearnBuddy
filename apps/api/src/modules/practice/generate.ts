@@ -58,6 +58,12 @@ import {
   givenUpOnPreparing,
   type PracticeLearner,
 } from './service.js';
+import {
+  FIGURE_LIBRARY_RULES,
+  FigureTaskDraft,
+  libraryItems,
+  MAX_FIGURE_TASKS,
+} from './library.js';
 import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
 import {
   MAX_STRUCTURED_ITEMS,
@@ -71,7 +77,7 @@ import { FIGURE_TAP_RULES } from './figureTap.js';
 import { GRID_DRAW_RULES } from './gridDraw.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.17';
 
 const SUBJECT_KINDS = [
   'math',
@@ -131,6 +137,13 @@ export const GeneratedSet = z.object({
    * disagrees with the staff that is drawn (`practice/staff.ts`).
    */
   staffs: z.array(StaffTask).max(MAX_STAFF_ITEMS).default([]),
+  /**
+   * The figure library (issues #250, #252, #261): the periodic table, our own schematic drawings,
+   * circuits, logic gates and the colour wheel. A separate list for the reason the note lines are
+   * one: the model chooses an element, a drawing and its parts, a net — and code writes the
+   * question, the figure and the key from it (`practice/library.ts`).
+   */
+  figures: z.array(FigureTaskDraft).max(MAX_FIGURE_TASKS).default([]),
   /**
    * Structured items (issues #228–#230): an order to find, a table to fill in, links to make.
    * Their own list, because their key is a shape code builds and checks
@@ -289,6 +302,7 @@ Rules:
 - ${FIGURE_RULES}
 - ${BAR_RULES}
 - ${STAFF_RULES}
+- ${FIGURE_LIBRARY_RULES}
 - ${ORDER_RULES}
 - ${TABLE_RULES}
 - ${MATCH_RULES}
@@ -439,6 +453,7 @@ async function generateSet(
     // One unusable task costs its own question, never the whole set (audit H-14/H-15).
     bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
     staffs: itemsOneByOne(StaffTask, MAX_STAFF_ITEMS),
+    figures: itemsOneByOne(FigureTaskDraft, MAX_FIGURE_TASKS),
     structured: itemsOneByOne(StructuredDraftNoHelp, MAX_STRUCTURED_ITEMS),
     // The same for the listening questions: one that does not fit its schema costs itself, not
     // the text. A listening task that does not fit at all is no listening task, and the run then
@@ -456,7 +471,7 @@ async function generateSet(
   // field that is there gets filled in.
   const forModel =
     input.kind === 'listen'
-      ? setSchema.omit({ bars: true, items: true, structured: true })
+      ? setSchema.omit({ bars: true, items: true, structured: true, figures: true })
       : setSchema.omit({ listen: true });
   let handedOver = false;
   const onPartial = opts.onFirstItems
@@ -539,6 +554,8 @@ type Prepared = {
   listening: ItemDraft[];
   /** Note lines, as questions code wrote from the tasks the model chose (issue #226). */
   staffs: StoredItem[];
+  /** Library figures, as questions code wrote from what the model chose (#250, #252, #261). */
+  figures: StoredItem[];
   /** Orders, tables and links to make, after Regel 0 (issues #228–#230). */
   structured: StructuredItem[];
 };
@@ -623,6 +640,16 @@ function preparedFrom(
     input.kind === 'practice' || input.kind === 'test'
       ? staffItems(set.staffs, learner.locale)
       : [];
+  // The figure library (issues #250, #252, #261): in practice and in a test, like the note lines —
+  // reading the periodic table, labelling a cell, a circuit and the colour wheel are what a class
+  // test asks, and every answer is a tap, an option, a number or a table checked by code. Not in
+  // homework or a vocabulary list: there the task is what she brought. Built from her sheets,
+  // their topic must be one of the sheets' too.
+  const figures = (
+    input.kind === 'practice' || input.kind === 'test'
+      ? libraryItems(set.figures, learner.locale)
+      : []
+  ).filter((it) => sheetTopics === null || (it.topic !== null && sheetTopics.includes(it.topic)));
   // Orders, tables and links to make (issues #228–#230), each checked by code before it is
   // stored: one that fails costs only itself. Built from her sheets, their topic must be one of
   // the sheets' too, like every other question.
@@ -637,6 +664,7 @@ function preparedFrom(
     bars,
     listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [],
     staffs,
+    figures,
     structured,
   };
 }
@@ -742,6 +770,7 @@ async function prepareTopic(
       bars: [],
       listening: [],
       staffs: [],
+      figures: [],
       structured: [],
     },
     { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
@@ -789,6 +818,7 @@ async function store(
       prepared.bars.length +
       prepared.listening.length +
       prepared.staffs.length +
+      prepared.figures.length +
       prepared.structured.length ===
       0
   ) {
@@ -809,6 +839,7 @@ async function store(
           ...prepared.bars,
           ...prepared.listening,
           ...prepared.staffs,
+          ...prepared.figures,
         ],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
@@ -891,7 +922,13 @@ async function addTheRest(
   // note-line or bar prompt is written by code and may be the same words for two questions that
   // differ in their figure (issue #277: the note lines and listening questions of a run that
   // started early were dropped here altogether).
-  rest.push(...prepared.structured, ...prepared.bars, ...prepared.listening, ...prepared.staffs);
+  rest.push(
+    ...prepared.structured,
+    ...prepared.bars,
+    ...prepared.listening,
+    ...prepared.staffs,
+    ...prepared.figures,
+  );
   if (rest.length === 0) {
     await givenUpOnPreparing(deps.db, learner.id, sessionId);
     return;

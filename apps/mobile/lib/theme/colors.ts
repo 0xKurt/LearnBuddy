@@ -40,7 +40,7 @@ export const FIGURE: Figure = figureOf(active.palette);
 /** The colour tokens of a palette (everything but the derived maps). */
 type ColorToken = Exclude<
   keyof Palette,
-  'figure' | 'shadowColor' | 'shadowOpacity' | 'glow' | 'buddyLight'
+  'figure' | 'shadowColor' | 'shadowOpacity' | 'glow' | 'buddyLight' | 'art' | 'wheel' | 'wheelInk'
 >;
 
 function colorsOf(p: Palette): Record<ColorToken, string> {
@@ -50,6 +50,9 @@ function colorsOf(p: Palette): Record<ColorToken, string> {
     shadowOpacity: _so,
     glow: _glow,
     buddyLight: _bl,
+    art: _art,
+    wheel: _wheel,
+    wheelInk: _wheelInk,
     ...colors
   } = p;
   return colors;

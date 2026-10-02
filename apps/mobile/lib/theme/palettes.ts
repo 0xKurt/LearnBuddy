@@ -76,6 +76,40 @@ export type Palette = {
     fillSoft: string;
     series: readonly [string, string, string];
   };
+  /**
+   * The inks of the schematic drawings (issue #252, components/practice/figure/schematics/):
+   * calm pastels per material — plant green, petal pink, tissue rose, a lilac nucleus, water
+   * blue, sand, bone, glass and metal — and the line they are drawn with. A dark palette has its
+   * own deeper tones, so a drawing never glows on the night ground.
+   */
+  art: {
+    line: string;
+    leaf: string;
+    leafDeep: string;
+    petal: string;
+    petalDeep: string;
+    tissue: string;
+    tissueDeep: string;
+    lilac: string;
+    lilacDeep: string;
+    water: string;
+    waterDeep: string;
+    sand: string;
+    sandDeep: string;
+    bone: string;
+    glass: string;
+    metal: string;
+    metalDeep: string;
+    flame: string;
+    flameCore: string;
+  };
+  /**
+   * Itten's twelve fields clockwise from yellow (issue #261). Pigments, not accents: the same
+   * hues in every family, one step deeper at night so the light names on them stay readable.
+   */
+  wheel: readonly string[];
+  /** A field's name on the wheel: dark ink on the light fields, light ink on the dark ones. */
+  wheelInk: readonly [string, string];
 };
 
 /** "Pastell Soft" — the look the owner chose (2026-09-25); the default. */
@@ -137,6 +171,42 @@ const pastellSoft: Palette = {
     fillSoft: 'rgba(106,72,215,0.14)',
     series: ['#6a48d7', '#2f7fb8', '#3f8a5c'],
   },
+  art: {
+    line: '#5d5873',
+    leaf: '#cfe9c8',
+    leafDeep: '#7fbf7a',
+    petal: '#fbd3e3',
+    petalDeep: '#ee9cbf',
+    tissue: '#fde7e4',
+    tissueDeep: '#f0a8a0',
+    lilac: '#ddd0fa',
+    lilacDeep: '#a98de8',
+    water: '#d9e7fb',
+    waterDeep: '#8fb3ea',
+    sand: '#f4e6c8',
+    sandDeep: '#d3b67a',
+    bone: '#f7f2e6',
+    glass: '#e6f2f8',
+    metal: '#d8d6e2',
+    metalDeep: '#9f9bb3',
+    flame: '#9cc3f2',
+    flameCore: '#5c8fe0',
+  },
+  wheel: [
+    '#f5d33b',
+    '#f4b23a',
+    '#ef8a33',
+    '#e5612f',
+    '#d83f3c',
+    '#b83d76',
+    '#844d9e',
+    '#5b55a6',
+    '#2f6db4',
+    '#22928e',
+    '#46a64b',
+    '#a6c93c',
+  ],
+  wheelInk: ['#1f1b2e', '#ffffff'],
 };
 
 /** The same room at night: deep violet-grey, the same violet accent, lighter ink. */
@@ -202,6 +272,42 @@ const night: Palette = {
     fillSoft: 'rgba(157,130,245,0.20)',
     series: ['#b9a4ff', '#7fb6e6', '#87c79c'],
   },
+  art: {
+    line: '#bdb7d3',
+    leaf: '#2c4a33',
+    leafDeep: '#5f9c66',
+    petal: '#5a3047',
+    petalDeep: '#b5678d',
+    tissue: '#4f3236',
+    tissueDeep: '#b0706a',
+    lilac: '#3e3466',
+    lilacDeep: '#8f78d6',
+    water: '#26364f',
+    waterDeep: '#5e82bd',
+    sand: '#47402c',
+    sandDeep: '#a08a52',
+    bone: '#3b3830',
+    glass: '#263643',
+    metal: '#3d3a4f',
+    metalDeep: '#77728f',
+    flame: '#3f6aa8',
+    flameCore: '#7fa9ee',
+  },
+  wheel: [
+    '#d9b62a',
+    '#d6962c',
+    '#d27427',
+    '#c95226',
+    '#bf3634',
+    '#a03468',
+    '#73438b',
+    '#4f4a93',
+    '#295f9e',
+    '#1d7f7b',
+    '#3c9141',
+    '#8fae33',
+  ],
+  wheelInk: ['#15121f', '#ffffff'],
 };
 
 /**

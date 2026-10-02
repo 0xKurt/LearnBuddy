@@ -5,6 +5,10 @@
 
 import { z } from 'zod';
 
+import { Circuit, LogicNet } from './circuit.js';
+import { PartId } from './common.js';
+import { PeriodicTableKind } from './periodic.js';
+import { SCHEMATIC_PARTS_MAX, SchematicId } from './schematics.js';
 import { StaffFigure } from './staff.js';
 
 const Label = z.string().trim().min(1).max(40);
@@ -72,6 +76,32 @@ export const TableFigure = z.object({
     .max(10),
 });
 
+// ─── the figure library (issues #250, #252, #261): drawn from code's data, never the model's ───
+//
+// Like the note line these are in `Figure` and NOT in `ModelFigure`: the question's key is read
+// off them (the element's group, the part a number points at, the current through a lamp), so
+// they only ever come out of apps/api/src/modules/practice/library.ts, which computes question,
+// drawing and key from one checked task.
+
+/** The periodic table, one element marked (or none). */
+export const PeriodicFigure = z.object({
+  type: z.literal('periodic'),
+  table: PeriodicTableKind,
+  mark: PartId.nullable(),
+});
+
+/** A schematic drawing with numbered pins (1, 2, … in pin order); `focus` is the one asked for. */
+export const SchematicFigure = z.object({
+  type: z.literal('schematic'),
+  drawing: SchematicId,
+  parts: z.array(PartId).min(1).max(SCHEMATIC_PARTS_MAX),
+  focus: PartId.nullable(),
+});
+
+export const CircuitFigure = Circuit.extend({ type: z.literal('circuit') });
+
+export const LogicFigure = LogicNet.extend({ type: z.literal('logic') });
+
 /**
  * The figures the MODEL may write next to a question of its own (`ItemDraft.figure`).
  *
@@ -94,7 +124,7 @@ export const ModelFigure = z.discriminatedUnion('type', [
 ]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
-/** Every figure a question can SHOW (`ItemView.figure`) — the model's six and the note line. */
+/** Every figure a question can SHOW (`ItemView.figure`): the model's six, the note line and the library's four. */
 export const Figure = z.discriminatedUnion('type', [
   FractionFigure,
   NumberLineFigure,
@@ -103,5 +133,9 @@ export const Figure = z.discriminatedUnion('type', [
   GeometryFigure,
   TableFigure,
   StaffFigure,
+  PeriodicFigure,
+  SchematicFigure,
+  CircuitFigure,
+  LogicFigure,
 ]);
 export type Figure = z.infer<typeof Figure>;

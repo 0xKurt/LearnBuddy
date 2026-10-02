@@ -8,10 +8,15 @@
 // It stays closed until she opens it (progressive disclosure, docs/UX-PRINCIPLES.md): the
 // figure is the way for most, this is the way for everyone.
 
-import type {
-  FigureTapTaskView,
-  GridDrawTaskView,
-  TapValue,
+import {
+  circuitParts,
+  elementId,
+  tableElements,
+  WHEEL_IDS,
+  wheelIndex,
+  type FigureTapTaskView,
+  type GridDrawTaskView,
+  type TapValue,
 } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +28,7 @@ import {
   stepsBetween,
   type Pt,
 } from '../../../../../packages/shared-math/src/grid.js';
+import { wheelWord } from '../../../lib/figure/library.js';
 import { toggleCell, togglePoint, type Drawing } from '../../../lib/math/gridFrame.js';
 import { SPACE } from '../../../lib/theme/space.js';
 import { useTheme } from '../../../lib/theme/ThemeProvider.js';
@@ -245,6 +251,92 @@ export function TapExactSheet({
       );
       break;
     }
+    // The figure library (#250, #252, #261): one step through the elements in the order of their
+    // atomic numbers, or one button per pin, colour or lamp — the same value a tap sets.
+    case 'periodic': {
+      const els = tableElements(fig.table);
+      const ids = els.map(elementId);
+      const now = value?.kind === 'periodic' ? ids.indexOf(value.id) : -1;
+      const at = Math.max(0, now);
+      body = (
+        <Stepper
+          label={t('figure.element')}
+          value={now < 0 ? '–' : `${els[at]!.sym} (${els[at]!.z})`}
+          canLess
+          canMore
+          position={{ now: at, count: ids.length }}
+          onLess={() =>
+            onChange({ kind: 'periodic', id: ids[(at - 1 + ids.length) % ids.length]! })
+          }
+          onMore={() =>
+            onChange({ kind: 'periodic', id: ids[now < 0 ? 0 : (at + 1) % ids.length]! })
+          }
+          lessLabel={t('figure.less', { name: t('figure.element') })}
+          moreLabel={t('figure.more', { name: t('figure.element') })}
+        />
+      );
+      break;
+    }
+    case 'schematic':
+      body = (
+        <View
+          accessibilityRole="radiogroup"
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
+        >
+          {fig.parts.map((id, i) => {
+            const on = value?.kind === 'schematic' && value.id === id;
+            return (
+              <Btn
+                key={id}
+                variant={on ? 'primary' : 'outline'}
+                selected={on}
+                onPress={() => onChange({ kind: 'schematic', id })}
+              >
+                {t('figure.pin', { n: i + 1 })}
+              </Btn>
+            );
+          })}
+        </View>
+      );
+      break;
+    case 'color_wheel': {
+      const names = WHEEL_IDS.map((id) => wheelWord(t(`figure.wheel.${id}`)));
+      const i = value?.kind === 'color_wheel' ? wheelIndex(value.id) : -1;
+      body = (
+        <Round
+          name={t('figure.color')}
+          value={i}
+          shown={i < 0 ? '–' : names[i]!}
+          values={WHEEL_IDS.map((_, k) => k)}
+          onChange={(k) => onChange({ kind: 'color_wheel', id: WHEEL_IDS[k]! })}
+        />
+      );
+      break;
+    }
+    case 'circuit':
+      body = (
+        <View
+          accessibilityRole="radiogroup"
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
+        >
+          {circuitParts(fig.circuit)
+            .filter((p) => p.part === 'lamp')
+            .map((p) => {
+              const on = value?.kind === 'circuit' && value.id === p.id;
+              return (
+                <Btn
+                  key={p.id}
+                  variant={on ? 'primary' : 'outline'}
+                  selected={on}
+                  onPress={() => onChange({ kind: 'circuit', id: p.id })}
+                >
+                  {p.id.toUpperCase()}
+                </Btn>
+              );
+            })}
+        </View>
+      );
+      break;
   }
   return (
     <Frame open={open} onClose={onClose} readout={readout}>

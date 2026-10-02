@@ -9,12 +9,16 @@
 // (packages/shared-math/src/grid.ts), so the zoom never changes what can be answered — only
 // how big it is under the finger.
 
-import type {
-  FigureTapTaskView,
-  GridDrawTaskView,
-  PlaneGrid,
-  TapFigure,
-  TapValue,
+import {
+  circuitParts,
+  elementOf,
+  inTable,
+  WHEEL_IDS,
+  type FigureTapTaskView,
+  type GridDrawTaskView,
+  type PlaneGrid,
+  type TapFigure,
+  type TapValue,
 } from '@learnbuddy/shared-types/contracts';
 
 // Imported by path: the mobile bundle takes only this small, dependency-free module.
@@ -245,6 +249,21 @@ export function onFigure(figure: TapFigure, v: TapValue): boolean {
         v.m >= 0 &&
         v.m < 60 &&
         v.m % figure.snap === 0
+      );
+    // The figure library (#250, #252, #261): a tap names a part the figure has.
+    case 'periodic': {
+      if (v.kind !== 'periodic') return false;
+      const e = elementOf(v.id);
+      return e !== null && inTable(figure.table, e);
+    }
+    case 'schematic':
+      return v.kind === 'schematic' && figure.parts.includes(v.id);
+    case 'color_wheel':
+      return v.kind === 'color_wheel' && (WHEEL_IDS as readonly string[]).includes(v.id);
+    case 'circuit':
+      return (
+        v.kind === 'circuit' &&
+        circuitParts(figure.circuit).some((p) => p.id === v.id && p.part === 'lamp')
       );
   }
 }
