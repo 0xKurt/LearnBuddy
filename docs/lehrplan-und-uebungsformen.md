@@ -1,6 +1,6 @@
 # Lehrplan und Übungsformen — was am Gymnasium wirklich geübt wird, und was Buddy davon kann
 
-**Stand:** 01.10.2026, §13.4 korrigiert am 02.10.2026 · **Auftrag:** Issue #193 (Owner, 01.10.2026) · **Quellenstand:** alle Webquellen
+**Stand:** 01.10.2026, §13.4 korrigiert am 02.10.2026, §16 (fehlende Fächer, Issue #265) ergänzt am 02.10.2026 · **Auftrag:** Issue #193 (Owner, 01.10.2026) · **Quellenstand:** alle Webquellen
 am 01.10.2026 abgerufen; „Stand" bei einem Dokument ist dessen Eigendatum.
 
 > **Wozu dieses Dokument da ist.** Buddy kann heute vier Dinge: eine Frage getippt beantworten,
@@ -21,22 +21,23 @@ am 01.10.2026 abgerufen; „Stand" bei einem Dokument ist dessen Eigendatum.
 
 ### 0.1 Schnellzugriff — finde dein Fach
 
-| Fach                                         | Abschnitt                                                    | Dominanter Eimer Sek I       | Dominanter Eimer Sek II | Buddy heute  |
-| -------------------------------------------- | ------------------------------------------------------------ | ---------------------------- | ----------------------- | ------------ |
-| Mathematik                                   | [§3](#3-mathematik)                                          | C                            | C + R                   | Gruppe 1 + 2 |
-| Physik                                       | [§4.1](#41-physik)                                           | C + R                        | R                       | Gruppe 2 + 3 |
-| Chemie                                       | [§4.2](#42-chemie)                                           | C                            | C + R                   | Gruppe 1 + 3 |
-| Biologie                                     | [§4.3](#43-biologie)                                         | R                            | R                       | Gruppe 2 + 3 |
-| Informatik                                   | [§5](#5-informatik)                                          | C                            | R                       | Gruppe 3     |
-| Deutsch                                      | [§6](#6-deutsch)                                             | C (Sprache) + R (Schreiben)  | **R + H, kein C**       | **Gruppe 2** |
-| Englisch / Französisch / Spanisch / Russisch | [§7](#7-moderne-fremdsprachen)                               | C                            | R + H                   | Gruppe 1 + 2 |
-| Latein / Griechisch                          | [§8](#8-latein-und-griechisch)                               | C (Formen) + H (Übersetzung) | H                       | **Gruppe 2** |
-| Geschichte                                   | [§9.1](#91-geschichte)                                       | C + R                        | R + H                   | Gruppe 2     |
-| Geographie / Erdkunde                        | [§9.2](#92-geographie--erdkunde)                             | **C stark**                  | R + H                   | Gruppe 1 + 3 |
-| Politik / SoWi / Wirtschaft                  | [§9.3](#93-politik--sozialwissenschaften--wirtschaft--recht) | C + R                        | R + H                   | Gruppe 2     |
-| Religion / Ethik / Philosophie               | [§10.1](#101-religion-ethik-philosophie)                     | R                            | H                       | Gruppe 2     |
-| Kunst, Musik                                 | [§10.2](#102-kunst-und-musik)                                | C (Fachwissen)               | H (Praxis)              | Gruppe 3     |
-| Sport                                        | [§10.3](#103-sport)                                          | —                            | H                       | Gruppe 3     |
+| Fach                                                                                                                              | Abschnitt                                                                    | Dominanter Eimer Sek I       | Dominanter Eimer Sek II | Buddy heute  |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------- | ----------------------- | ------------ |
+| Mathematik                                                                                                                        | [§3](#3-mathematik)                                                          | C                            | C + R                   | Gruppe 1 + 2 |
+| Physik                                                                                                                            | [§4.1](#41-physik)                                                           | C + R                        | R                       | Gruppe 2 + 3 |
+| Chemie                                                                                                                            | [§4.2](#42-chemie)                                                           | C                            | C + R                   | Gruppe 1 + 3 |
+| Biologie                                                                                                                          | [§4.3](#43-biologie)                                                         | R                            | R                       | Gruppe 2 + 3 |
+| Informatik                                                                                                                        | [§5](#5-informatik)                                                          | C                            | R                       | Gruppe 3     |
+| Deutsch                                                                                                                           | [§6](#6-deutsch)                                                             | C (Sprache) + R (Schreiben)  | **R + H, kein C**       | **Gruppe 2** |
+| Englisch / Französisch / Spanisch / Russisch                                                                                      | [§7](#7-moderne-fremdsprachen)                                               | C                            | R + H                   | Gruppe 1 + 2 |
+| Latein / Griechisch                                                                                                               | [§8](#8-latein-und-griechisch)                                               | C (Formen) + H (Übersetzung) | H                       | **Gruppe 2** |
+| Geschichte                                                                                                                        | [§9.1](#91-geschichte)                                                       | C + R                        | R + H                   | Gruppe 2     |
+| Geographie / Erdkunde                                                                                                             | [§9.2](#92-geographie--erdkunde)                                             | **C stark**                  | R + H                   | Gruppe 1 + 3 |
+| Politik / SoWi / Wirtschaft                                                                                                       | [§9.3](#93-politik--sozialwissenschaften--wirtschaft--recht)                 | C + R                        | R + H                   | Gruppe 2     |
+| Religion / Ethik / Philosophie                                                                                                    | [§10.1](#101-religion-ethik-philosophie)                                     | R                            | H                       | Gruppe 2     |
+| Kunst, Musik                                                                                                                      | [§10.2](#102-kunst-und-musik)                                                | C (Fachwissen)               | H (Praxis)              | Gruppe 3     |
+| Sport                                                                                                                             | [§10.3](#103-sport)                                                          | —                            | H                       | Gruppe 3     |
+| _Nachtrag #265:_ BwR, Technik/NwT, Sport-Theorie, Philosophie O, Psychologie/Pädagogik, Griechisch, Russisch, Darstellendes Spiel | [§16](#16-nachtrag-die-fächer-die-in-der-analyse-224-noch-fehlten-issue-265) | je Fach in §16               | je Fach in §16          | §16.10       |
 
 **Die vier Gruppen** (ausgeführt in §12): **1** gut abgedeckt · **2** läuft heute durch, wird aber
 **falsch behandelt** · **3** kann Buddy gar nicht und sollte es sagen · **4** die eine Empfehlung.
@@ -2117,3 +2118,413 @@ Bericht als Issue-Kandidaten hergibt, in der Reihenfolge, in der sie im Text ste
    Land richtig oder falsch ist (Satzglieder, `vergleichen`, Hypothesentest, Metrum, Klimatyp,
    Puffer-Rechnung). Buddy kennt heute Klasse und Fach, aber kein Land. Solange das so ist, kann
    eine Rückmeldung fachlich korrekt und für ihre Schule trotzdem falsch sein.
+
+---
+
+## §16 Nachtrag: die Fächer, die in der Analyse #224 noch fehlten (Issue #265)
+
+**Stand:** 02.10.2026, Code-Stand `origin/main` 4ed87e3 · **Auftrag:** Issue #265 (Owner,
+02.10.2026: _„Wichtig ist, dass die allgemeinen Fächer … gut abgedeckt sind (fehlt sicher was)"_).
+
+> **Was dieser Nachtrag ist und was nicht.** Die Analyse in #224 hat 347 Aufgabentypen in 16
+> Fächern. Hier kommen acht Fächer dazu: Wirtschaft/Recht mit **BwR**, **Technik/NwT**,
+> **Sport-Theorie**, **Philosophie/Ethik in der Oberstufe**, **Psychologie/Pädagogik**,
+> **Griechisch**, **Russisch** und **Darstellendes Spiel**. Je Fach die häufigsten Aufgabentypen im
+> Format der Bedarfstabelle (Zeigen · Produzieren · Prüfbar · Erkenn-Variante), dann der Abgleich
+> mit dem Code und die Zuordnung zu den Bausteinen der Wellen 1–6.
+>
+> **Belegstand, ehrlich:** Die **Aufgabenformen** stützen sich, wo es sie gibt, auf die Abschnitte
+> oben (§9.3 Wirtschaft/Recht/Psychologie, §10.1 Philosophie, §10.3 Sport, §7 und §8 für die
+> Sprachen) und auf Suchauszüge vom 02.10.2026 (§16.10). Mehrere Primärquellen waren aus dieser
+> Umgebung **nicht abrufbar** (der ISB-Server, `isb.bayern.de`, wird vom Netz-Proxy blockiert);
+> Zeilen ohne eigenen Beleg sind **Erfahrungswissen** und mit ¹ markiert. Die **Häufigkeiten sind
+> geschätzt**, wie in #224. Die **Prüfbarkeit** (C/R/H, §0.2) ist meine Analyse.
+
+### 16.1 Was „heute" heißt — der Code-Stand, gegen den abgeglichen wurde
+
+Auf `main` (4ed87e3) vorhanden: Kurzantwort getippt, mehrzeilige Eingabe (#221), Multiple Choice,
+Vokabeln getippt und angetippt (#147), Aussprache (gesprochen), **Reihenfolge (#228), Zuordnen
+(#229), Tabelle ausfüllen (#230)** als eine Maschinerie (`AnswerPart`, Migration 0072), die
+Kernpunkte-Rubrik (#211), Hörverstehen (#210, braucht `SPEECH_BACKEND`), Notenzeile (#226),
+Reaktionsgleichungen (#212), Bruchstreifen, Lernkarten. **Noch offen** und deshalb „teilweise":
+Bilder in Antwortoptionen (#231), Lückentext (#232), Lesetext sichtbar (#233), Markieren (#234),
+Term-Gleichwertigkeit (#235, zur Hälfte), Mehrfachauswahl (#240), alle Figuren der Welle 5
+(#245–#249), Schema-Bibliothek (#252), Baumdiagramm (#256), lange Texte (#258), Schaltplan
+(#261), Quelltext (#262).
+
+Zwei Code-Befunde, die nur die neuen Sprachen betreffen (`apps/api/src/modules/practice/evaluate.ts`):
+
+- `withoutAccents` zerlegt nach NFD und **entfernt alle Kombinationszeichen**. Ein fehlender
+  griechischer Akzent oder Spiritus und ein fehlendes russisches Betonungszeichen werden dadurch
+  zum Beinahe-Treffer `close` — als Rückmeldung vertretbar, aber **`ё` gegen `е`** fällt in
+  dieselbe Klasse, obwohl `е` statt `ё` im gedruckten Russisch üblich und nicht falsch ist. Und das
+  **Schluss-Sigma** (`ς` gegen `σ`) ist kein Kombinationszeichen: `λογοσ` statt `λογος` ist für den
+  Vergleich ein ganz anderer Buchstabe.
+- Die Sprachausgabe (`apps/api/src/speech/google.ts`, `LOCALES`) kennt **`ru-RU`**, aber **kein
+  Griechisch** — weder Neugriechisch noch eine Aussprache für Altgriechisch. Hörverstehen und
+  Vorlesen gehen damit in Russisch, in Griechisch nicht.
+
+**Eingabe:** die App hat eigene Tasten nur für Mathe (`apps/mobile/components/math/MathKeys.tsx`).
+Griechisch und Kyrillisch tippt sie nur, wenn die Schülerin die Systemtastatur dieser Schrift
+eingerichtet hat — und für Altgriechisch mit Akzenten und Spiritus hat keine der üblichen
+Handy-Tastaturen eine bequeme Belegung.¹
+
+### 16.2 Wirtschaft/Recht und BwR (17)
+
+**Wo:** Bayern Realschule **BwR** (Betriebswirtschaftslehre/Rechnungswesen, Wahlpflichtfächergruppe
+II, ab Jg. 7, Abschlussprüfung) · Bayern Gymnasium **Wirtschaft und Recht** · BW **Wirtschaft /
+Berufs- und Studienorientierung** · NRW **Wirtschaft-Politik** und **Recht** (O) · Thüringen,
+Sachsen-Anhalt (§9.3). **Beleg BwR** (Suchauszug ISB-Infobrief zur Abschlussprüfung 2023): Pflichtteil
+(Aufgaben 1–5) und Wahlteil (drei von 6–8), **120 Minuten**, „integrierte Aufgabenform" aus
+betriebswirtschaftlichen Fragen, Rechenteilen und Buchführung; Inhalte u. a. **Industriekontenrahmen**,
+Eröffnungs- und Schlussbilanz, **Einkaufskalkulation**, Angebotsvergleich. Der Wortlaut des
+Infobriefs selbst war nicht abrufbar (§16.10).
+
+| Aufgabe                                                                                                                    | Stufe          | Häuf.  | Zeigen                    | Produzieren                      | Prüfbar                                                                              | Erkenn-Variante                     | heute                                                                                                                                                                          | fehlt → Issue      |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------- | ------ | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| **Buchungssatz** zu einem Geschäftsfall oder Beleg bilden (Soll an Haben, Konto-Nr./Kürzel, Beträge; auch zusammengesetzt) | BwR 7–10       | hoch   | Geschäftsfall-Text, Beleg | Konten + Beträge je Seite        | **C** — Kontenmenge und Beträge entscheidbar; Reihenfolge innerhalb einer Seite egal | richtigen Buchungssatz aus 4 wählen | teilweise — als Text ein Stringvergleich, der „2400 FO 1.190,00 an 5000 UEFE 1.000,00, 4800 UST 190,00" nicht als gleich erkennt, wenn Reihenfolge oder Schreibweise abweichen | **neu: V1**        |
+| Beleg lesen: Eingangs-/Ausgangsrechnung, Kontoauszug → Geschäftsfall benennen                                              | BwR 7–10       | hoch   | Beleg (Foto/Ausschnitt)   | Geschäftsfall, dann Buchungssatz | **C**                                                                                | Geschäftsfall aus 4                 | teilweise — Beleg als Konzeptbild (#50), bleibt nicht neben der Frage                                                                                                          | #233, **V1**       |
+| **T-Konten** führen, Saldo bilden, abschließen (über SBK/GUV)                                                              | BwR 7–10       | hoch   | T-Konto                   | Einträge links/rechts, Saldo     | **C** — Summen gleich, Saldo auf der kleineren Seite                                 | —                                   | fehlt — keine T-Konto-Darstellung                                                                                                                                              | **V1**             |
+| Umsatzsteuer, Vorsteuer, Zahllast berechnen                                                                                | BwR 7–10       | hoch   | Zahlen                    | Betrag                           | **C**                                                                                | —                                   | geht                                                                                                                                                                           | –                  |
+| **Einkaufs-/Verkaufskalkulation** im Schema (Listenpreis − Rabatt − Skonto + Bezugskosten …)                               | BwR 8–10       | hoch   | Schema                    | ausgefülltes Schema              | **C** — jede Zeile aus der vorigen rechenbar                                         | —                                   | teilweise — Tabelle geht (#230), aber die Schlüsselwerte rechnet heute das Modell, nicht der Code (Regel 0)                                                                    | #230, **V1**       |
+| Angebotsvergleich (Bezugspreis mehrerer Lieferer)                                                                          | BwR 8          | mittel | Angebote                  | Bezugspreise, Entscheidung       | **C** (Rechnung) / R (Entscheidung mit qualitativen Gründen)                         | —                                   | teilweise                                                                                                                                                                      | #230, #211, **V1** |
+| Abschreibung (linear), Anlagenkartei, Buchwert                                                                             | BwR 9–10       | mittel | Anschaffungsdaten         | Beträge je Jahr                  | **C**                                                                                | —                                   | geht (als Tabelle, #230)                                                                                                                                                       | –                  |
+| Eröffnungs-/Schlussbilanz, Inventar; Aktiva/Passiva zuordnen                                                               | BwR 7, W&R     | hoch   | Posten                    | Bilanz                           | **C**                                                                                | Seite antippen                      | geht (Zuordnen #229, Tabelle #230)                                                                                                                                             | –                  |
+| Kennzahlen (Eigenkapitalrentabilität, Liquidität, Eigenkapitalquote) berechnen und deuten                                  | BwR 10, W&R 10 | mittel | Bilanz/GuV-Zahlen         | Kennzahl + Deutung               | **C** / R                                                                            | —                                   | teilweise — Zahl geht, Deutung über #211                                                                                                                                       | #211               |
+| Lohn- und Gehaltsabrechnung (brutto → netto)                                                                               | BwR 9–10       | mittel | Lohnzettel                | Schema                           | **C**                                                                                | —                                   | geht (Tabelle)                                                                                                                                                                 | –                  |
+| Betriebswirtschaftliche Begriffe erklären (Rechtsformen, Marketing-Mix, Absatzwege)                                        | alle           | hoch   | Frage                     | Erklärung                        | **R**                                                                                | Begriff zuordnen                    | geht (#211, #229)                                                                                                                                                              | –                  |
+| Angebot/Nachfrage-Diagramm: Gleichgewichtspreis ablesen, Verschiebung                                                      | W&R 10, O      | mittel | Diagramm                  | Wert / Richtung                  | **C**                                                                                | welche Verschiebung passt           | teilweise                                                                                                                                                                      | #245, #249         |
+| Wirtschaftskreislauf (Ströme benennen)                                                                                     | W&R, Politik   | mittel | Schema                    | Beschriftung                     | **C**                                                                                | Strom antippen                      | teilweise                                                                                                                                                                      | #247               |
+| Rechtsfall: Geschäftsfähigkeit, Kaufvertrag, Mängelrechte                                                                  | W&R 9–10       | hoch   | Fall                      | Rechtsfolge                      | **C** (Alter → Stufe, Mangel → Recht) / R (Begründung)                               | Rechtsfolge aus 4                   | geht                                                                                                                                                                           | –                  |
+| **Gutachtenstil** (Obersatz, Definition, Subsumtion, Ergebnis)                                                             | Recht O        | mittel | Fall                      | gegliederte Prüfung              | **R** — das Prüfschema ist die Rubrik (§9.3)                                         | Schritte ordnen                     | teilweise — Rubrik (#211) und Reihenfolge (#228) da; mehrschrittige Aufgabe fehlt                                                                                              | #211, #228         |
+| Haushaltsplan / Budget, Kredit und Zinsen                                                                                  | U–M            | mittel | Zahlen                    | Tabelle / Betrag                 | **C**                                                                                | —                                   | geht                                                                                                                                                                           | –                  |
+| Wirtschaftspolitische Statistik/Karikatur auswerten                                                                        | M–O            | mittel | Schaubild                 | Auswertung                       | **R**                                                                                | —                                   | teilweise                                                                                                                                                                      | #211, #246         |
+
+**Befund:** BwR ist das **mechanisch dichteste Fach** dieses Nachtrags — fast alles ist C, und
+genau das tragende Stück, der Buchungssatz, hat heute keine Form. Ein Buchungssatz ist zwei
+Mengen von (Konto, Betrag) mit gleicher Summe; „Reihenfolge innerhalb einer Seite egal" und
+„Konto als Nummer oder Kürzel" sind die beiden Gleichwertigkeiten, die ein Stringvergleich nicht
+kennt. Und Regel 0 in die andere Richtung: ein vom Modell erzeugter Buchungssatz, dessen Soll- und
+Haben-Summe nicht übereinstimmt, ist mechanisch als falsch erkennbar und darf keine Frage werden.
+
+### 16.3 Technik / NwT (14)
+
+**Wo:** BW Gymnasium **NwT** (Naturwissenschaft und Technik, Profilfach ab Kl. 8, seit 2007/08,
+Bildungsplan 2016 mit Beispielcurricula 8–10) · Technik an Real-/Oberschulen (u. a.
+Niedersachsen, NRW Wahlpflicht) · Bayern Realschule Werken/Technisches Zeichnen.¹ Der Wortlaut der
+NwT-Kompetenzen war in dieser Recherche nicht abrufbar (§16.10); die Formen unten sind
+Erfahrungswissen¹ und decken sich mit dem, was §4.1 (Physik) und §5 (Informatik) schon belegen.
+
+| Aufgabe                                                               | Stufe | Häuf.  | Zeigen     | Produzieren               | Prüfbar                       | Erkenn-Variante      | heute                                    | fehlt → Issue                         |
+| --------------------------------------------------------------------- | ----- | ------ | ---------- | ------------------------- | ----------------------------- | -------------------- | ---------------------------------------- | ------------------------------------- |
+| Bauteile, Werkzeuge, Maschinenelemente benennen                       | U–M   | hoch   | Bild       | Name                      | **C**                         | Bild aus 4           | teilweise — Bild nur als Fotoausschnitt  | #231, #252                            |
+| Technische Zeichnung lesen (Ansichten, Dreitafelprojektion, Bemaßung) | M     | hoch   | Zeichnung  | Ansicht / Maß             | **C**                         | welche Ansicht passt | teilweise                                | #231, #255                            |
+| Technische Zeichnung anfertigen                                       | M     | mittel | —          | Zeichnung                 | **C** auf Raster / H freihand | —                    | fehlt                                    | #249 (Raster); Freihand bewusst nicht |
+| Schaltplan lesen und zeichnen, Reihen-/Parallelschaltung              | U–M   | hoch   | Schaltplan | Plan / Größe              | **C**                         | Plan aus 4           | teilweise                                | #261                                  |
+| Ohmsches Gesetz, Leistung, Energie, Wirkungsgrad berechnen            | M     | hoch   | Werte      | Zahl mit Einheit          | **C**                         | —                    | geht                                     | –                                     |
+| Getriebe, Übersetzung, Hebel, Drehmoment                              | M     | mittel | Skizze     | Zahl                      | **C**                         | —                    | geht                                     | –                                     |
+| Werkstoffe und ihre Eigenschaften zuordnen                            | U–M   | mittel | Liste      | Zuordnung                 | **C**                         | —                    | geht (#229)                              | –                                     |
+| Fertigungsverfahren (DIN 8580) zuordnen; Arbeitsablaufplan ordnen     | U–M   | mittel | Schritte   | Reihenfolge / Gruppe      | **C**                         | —                    | geht (#228, #229)                        | –                                     |
+| Messwerte aufnehmen, Tabelle, Diagramm, auswerten                     | M     | hoch   | Messreihe  | Tabelle + Diagramm        | **C** (Werte) / R (Deutung)   | —                    | teilweise                                | #230, #245                            |
+| Energieflussdiagramm (Sankey), Energieumwandlungskette                | M     | mittel | Schema     | Beschriftung / Werte      | **C**                         | —                    | teilweise                                | #247                                  |
+| Steuern und Regeln: Regelkreis, EVA-Prinzip                           | M     | mittel | Schema     | Beschriftung              | **C**                         | Glied antippen       | teilweise                                | #247, #248                            |
+| Mikrocontroller/Ablaufsteuerung programmieren, Programm lesen         | M     | mittel | Code       | Code / Ausgabe            | **C** (Ausgabe) / R           | Ausgabe vorhersagen  | teilweise                                | #262                                  |
+| Logikgatter, Wahrheitstabelle                                         | M     | gering | Gatter     | Tabelle                   | **C**                         | —                    | teilweise (Tabelle ja, Gatter-Bild nein) | #230, #261                            |
+| Nutzwertanalyse, Lastenheft, Projektdokumentation                     | M     | mittel | Kriterien  | gewichtete Tabelle / Text | **C** (Rechnung) / R (Text)   | —                    | teilweise                                | #230, #211                            |
+
+**Befund:** NwT braucht **nichts Eigenes** — es ist eine Kreuzung aus Physik, Informatik und
+Zeichnen, und alles, was fehlt, hat schon ein Issue (#245, #247, #249, #252, #255, #261, #262).
+
+### 16.4 Sport-Theorie (13)
+
+**Wo:** §10.3 — der schriftliche Teil ist Sporttheorie (NRW nur LK; Niedersachsen eA im
+Praxis-Theorie-Verbund; Bayern ersetzt die Schulaufgabe durch Praxis). **Beleg:** KMK-EPA Sport
+i. d. F. 28.09.2017, Operatorenlisten NRW/Niedersachsen (§14).
+
+| Aufgabe                                                                         | Stufe | Häuf.  | Zeigen                | Produzieren         | Prüfbar            | Erkenn-Variante  | heute                                            | fehlt → Issue    |
+| ------------------------------------------------------------------------------- | ----- | ------ | --------------------- | ------------------- | ------------------ | ---------------- | ------------------------------------------------ | ---------------- |
+| Trainingsprinzipien und -methoden benennen, einer Zielsetzung zuordnen          | O     | hoch   | Ziel                  | Methode             | **C**              | —                | geht (#229)                                      | –                |
+| Belastungskomponenten (Intensität, Dauer, Umfang, Dichte, Häufigkeit) bestimmen | O     | hoch   | Trainingsbeschreibung | Werte je Komponente | **C**              | —                | geht (#230)                                      | –                |
+| Energiebereitstellungswege einer Belastung zuordnen                             | O     | hoch   | Belastung             | Weg                 | **C**              | —                | geht                                             | –                |
+| Muskelfasertypen, Agonist/Antagonist, Gelenktypen                               | O     | mittel | Skelett/Muskel        | Beschriftung        | **C**              | im Bild antippen | teilweise                                        | #252, #248       |
+| Biomechanische Prinzipien nach Hochmuth zuordnen                                | O     | mittel | Bewegung              | Prinzip             | **C**              | —                | geht                                             | –                |
+| Phasenstruktur (Meinel) bestimmen; Funktion je Phase                            | O     | mittel | Bildreihe             | Phasen / Funktion   | **C** (Phasen) / R | Phasen ordnen    | teilweise — Ordnen geht (#228), Bildreihe nicht  | #228, #231, #211 |
+| Laktatstufen-/Conconi-Test auswerten                                            | O     | mittel | Diagramm              | Schwelle / Deutung  | **C** / R          | —                | teilweise                                        | #245             |
+| Trainingsherzfrequenz berechnen (z. B. Karvonen)                                | O     | mittel | Werte                 | Zahl                | **C**              | —                | geht                                             | –                |
+| Modell skizzieren und erklären (Superkompensation, Regelkreis)                  | O     | mittel | —                     | Skizze + Text       | **R**              | Kurve aus 4      | teilweise                                        | #245, #247, #211 |
+| Trainingsplan erstellen                                                         | O     | mittel | Ziel, Rahmen          | Plan                | **R**              | —                | teilweise                                        | #230, #211       |
+| Bewegungsanalyse → Fehlerbild → Korrektur                                       | O     | mittel | Bild/Beschreibung     | Text                | **R**              | —                | teilweise                                        | #211             |
+| Regelwissen Sportspiele                                                         | U–O   | mittel | Situation             | Entscheidung        | **C**              | —                | geht                                             | –                |
+| Erörterung (Doping, Sport und Gesellschaft)                                     | O     | hoch   | Material              | Erörterung          | **H**              | —                | teilweise — Rückmeldung je Kernpunkt, keine Note | #258             |
+
+Praxis (absolvieren, demonstrieren, gestalten) ist **nicht app-trainierbar** (§10.3) und zählt
+hier nicht mit.
+
+### 16.5 Philosophie / Ethik in der Oberstufe (12)
+
+**Wo:** §10.1 und die Zeilen „Religion/Ethik" in #224; hier nur, was die **Oberstufe**
+zusätzlich verlangt (NRW Philosophie Sek II, BW Ethik, Bayern Ethik O).¹ Die GPJE-Grenze aus §0.2
+gilt sinngemäß: eine **Position** wird nie „falsch" genannt, nur ihre Begründung an formalen
+Kriterien gemessen.
+
+| Aufgabe                                                                        | Stufe | Häuf.  | Zeigen        | Produzieren       | Prüfbar                                        | Erkenn-Variante      | heute                                          | fehlt → Issue    |
+| ------------------------------------------------------------------------------ | ----- | ------ | ------------- | ----------------- | ---------------------------------------------- | -------------------- | ---------------------------------------------- | ---------------- |
+| Fachbegriffe definieren (Pflicht, Tugend, Glück, Gerechtigkeit)                | O     | hoch   | Begriff       | Definition        | **R**                                          | Definition aus 4     | geht (#211, MC)                                | –                |
+| Philosophen und Positionen zuordnen                                            | O     | hoch   | Zitate/Thesen | Zuordnung         | **C**                                          | —                    | geht (#229)                                    | –                |
+| **Argument in Standardform rekonstruieren** (Prämissen, Konklusion)            | O     | hoch   | Text          | nummerierte Liste | **R**; C für „welcher Satz ist die Konklusion" | Konklusion markieren | teilweise                                      | #234, #228, #211 |
+| Gültigkeit prüfen: Modus ponens/tollens, Fehlschluss benennen                  | O     | mittel | Argument      | Label             | **C**                                          | —                    | geht                                           | –                |
+| Wahrheitstafel / Aussagenlogik                                                 | O     | gering | Formel        | Tabelle           | **C**                                          | —                    | geht (#230)                                    | –                |
+| Ethische Theorie auf einen Fall anwenden (Kant, Utilitarismus, Tugendethik)    | O     | hoch   | Fall          | Anwendung         | **R**                                          | Theorie aus 4        | teilweise                                      | #211             |
+| Philosophischen Text erschließen (These, Begründung, Gedankengang)             | O     | hoch   | Text          | Analyse           | **R**                                          | —                    | teilweise — Text bleibt nicht sichtbar         | #233, #211       |
+| Gedankenexperiment deuten (Höhlengleichnis, Trolley, Gedankenexperiment Rawls) | O     | mittel | Text          | Deutung           | **R**                                          | —                    | teilweise                                      | #211             |
+| Begriffsanalyse (notwendige/hinreichende Bedingungen, Gegenbeispiel)           | O     | mittel | Begriff       | Bedingungen       | **R**                                          | Gegenbeispiel aus 4  | teilweise                                      | #211             |
+| Epochen und Philosophen zeitlich ordnen                                        | O     | gering | Namen         | Reihenfolge       | **C**                                          | —                    | geht (#228)                                    | –                |
+| Problemerörterung / Essay mit eigener Stellungnahme                            | O     | hoch   | Problem       | Essay             | **H**                                          | —                    | teilweise — keine Note, keine Positionswertung | #258             |
+| Dilemma analysieren und Stellung nehmen                                        | O     | hoch   | Dilemma       | Analyse + Urteil  | **R** / **H**                                  | —                    | teilweise                                      | #211             |
+
+### 16.6 Psychologie / Pädagogik (11)
+
+**Wo:** NRW **Erziehungswissenschaft** und **Psychologie** (O, Zentralabitur; §9.3) ·
+Niedersachsen Psychologie nur per EPA · Pädagogik am beruflichen Gymnasium. **Beleg:** NRW-Operator
+`analysieren` mit der Slotliste _„Forschungsbereich, Problemfeld, Hypothesen, Variablen,
+Operationalisierung, Durchführung, Design, Ergebnisse, Messverfahren, Auswertung"_ (§9.3).
+
+| Aufgabe                                                                           | Stufe | Häuf.  | Zeigen              | Produzieren         | Prüfbar                                                           | Erkenn-Variante | heute       | fehlt → Issue |
+| --------------------------------------------------------------------------------- | ----- | ------ | ------------------- | ------------------- | ----------------------------------------------------------------- | --------------- | ----------- | ------------- |
+| Theorien und Begriffe zuordnen (Freud-Instanzen, Erikson-Krisen, Erziehungsstile) | O     | hoch   | Begriffe            | Zuordnung           | **C**                                                             | —               | geht (#229) | –             |
+| Stufenmodelle ordnen (Piaget, Kohlberg)                                           | O     | hoch   | Stufen              | Reihenfolge         | **C**                                                             | —               | geht (#228) | –             |
+| Fallbeispiel einer Theorie/Stufe zuordnen und analysieren                         | O     | hoch   | Fall                | Label + Analyse     | **C** (Label) / R                                                 | Stufe aus 4     | teilweise   | #211          |
+| Lernen am Beispiel: US/UR/NS/CS/CR bzw. Verstärkerart bestimmen                   | O     | hoch   | Beispiel            | Begriffe je Rolle   | **C**                                                             | —               | geht (#230) | –             |
+| **Studie analysieren** (UV/AV, Hypothese, Design, Ergebnis)                       | O     | hoch   | Studienbeschreibung | Slots               | **C** (UV/AV) / **R** (Rest) — die NRW-Slotliste _ist_ die Rubrik | UV antippen     | teilweise   | #211, #234    |
+| Gütekriterien beurteilen (Objektivität, Reliabilität, Validität)                  | O     | mittel | Studie              | Urteil je Kriterium | **R**                                                             | —               | teilweise   | #211          |
+| Statistik einer Studie lesen (Diagramm, Mittelwert, Signifikanzangabe)            | O     | mittel | Diagramm            | Wert / Aussage      | **C**                                                             | —               | teilweise   | #245, #246    |
+| Fachtext erschließen                                                              | O     | hoch   | Text                | Analyse             | **R**                                                             | —               | teilweise   | #233, #211    |
+| Pädagogische Handlungsmöglichkeiten entwickeln                                    | O     | mittel | Fall                | Vorschläge          | **R** / **H**                                                     | —               | teilweise   | #211          |
+| Theorien vergleichen                                                              | O     | mittel | zwei Theorien       | Vergleich           | **R**                                                             | —               | teilweise   | #211          |
+| Erörterung                                                                        | O     | mittel | Material            | Text                | **H**                                                             | —               | teilweise   | #258          |
+
+### 16.7 Griechisch (11)
+
+**Wo:** §8 — Altgriechisch wie Latein unter den KMK-EPA (65 Wörter je Zeitstunde, Übersetzung +
+Interpretation). Neugriechisch steht in NRW unter den modernen Fremdsprachen (§7) und folgt deren
+Klausuranatomie; es ist hier nicht gesondert aufgeführt.
+
+| Aufgabe                                                                          | Stufe      | Häuf.  | Zeigen    | Produzieren                 | Prüfbar                                                                | Erkenn-Variante              | heute                                                                   | fehlt → Issue                          |
+| -------------------------------------------------------------------------------- | ---------- | ------ | --------- | --------------------------- | ---------------------------------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
+| **Alphabet** lesen und schreiben; Umschrift in lateinische Buchstaben und zurück | U (Anfang) | hoch   | Wort      | Wort in der anderen Schrift | **C**                                                                  | Buchstaben zuordnen          | teilweise — Zuordnen geht (#229), Schreiben braucht die Schrift-Eingabe | **neu: V2**                            |
+| Vokabeln griechisch → deutsch                                                    | U–O        | hoch   | Wort      | deutsches Wort              | **C**                                                                  | Bedeutung aus 4              | geht                                                                    | –                                      |
+| Vokabeln deutsch → griechisch (mit Akzent und Spiritus)                          | U–M        | hoch   | Wort      | griechisches Wort           | **C**                                                                  | Form aus 4                   | teilweise — Eingabe, Akzentvergleich, Schluss-Sigma (§16.1)             | **V2**                                 |
+| **Formen bestimmen** (Kasus, Numerus, Genus; Person, Tempus, Modus, Diathese)    | U–O        | hoch   | Form      | Bestimmung                  | **C**                                                                  | Bestimmung aus 4             | geht (Tabelle #230, MC)                                                 | –                                      |
+| **Formen bilden**, Paradigma ausfüllen                                           | U–M        | hoch   | Stammform | Formen                      | **C**                                                                  | —                            | teilweise — Tabelle da, Eingabe nicht                                   | #230, **V2**                           |
+| Akzentregeln anwenden, Akzent/Spiritus setzen                                    | U–M        | mittel | Wort      | Wort mit Zeichen            | **C**                                                                  | richtige Akzentuierung aus 4 | teilweise — fehlende Zeichen sind heute nur `close`                     | **V2**                                 |
+| Satzanalyse: AcI, Genitivus absolutus, Partizipialkonstruktionen erkennen        | M–O        | hoch   | Satz      | Markierung + Label          | **C**                                                                  | Konstruktion aus 4           | teilweise                                                               | #234, #229                             |
+| **Übersetzung**                                                                  | M–O        | hoch   | Text      | Übersetzung                 | **H** (§8.2)                                                           | —                            | teilweise — Rückmeldung je Kernpunkt                                    | #211, #258                             |
+| Interpretation, Rezeption (Mythos, Philosophie, Drama)                           | O          | mittel | Text      | Analyse                     | **R** / **H**                                                          | —                            | teilweise                                                               | #233, #211                             |
+| **Metrik**: Hexameter/Trimeter skandieren (Längen, Zäsur)                        | O          | mittel | Vers      | Längen/Kürzen je Silbe      | **C** (bis auf Mehrdeutigkeiten, die ein Land unterschiedlich zulässt) | Schema aus 4                 | fehlt — keine Silbenform                                                | **neu: V3**                            |
+| Lautes Lesen / Aussprache (erasmisch oder rekonstruiert)                         | U          | mittel | Text      | gesprochen                  | **H**                                                                  | —                            | fehlt — keine griechische Stimme (§16.1)                                | bewusst nicht (keine Stimme verfügbar) |
+
+### 16.8 Russisch (13)
+
+**Wo:** §7 — moderne Fremdsprache mit eigener Klausuranatomie (Wortzahlen abweichend: 450 / 700 /
+900). **Beleg Anfangsunterricht:** BW-Beispielcurricula Russisch als 2. und 3. Fremdsprache
+(Kl. 6 bzw. 8) mit einem **Vorkurs, der vor allem der kyrillischen Schrift in Druck- und
+Schreibschrift gilt** (Suchauszug, §16.10).
+
+| Aufgabe                                            | Stufe       | Häuf.  | Zeigen         | Produzieren                 | Prüfbar       | Erkenn-Variante | heute                                                                         | fehlt → Issue |
+| -------------------------------------------------- | ----------- | ------ | -------------- | --------------------------- | ------------- | --------------- | ----------------------------------------------------------------------------- | ------------- |
+| Kyrillisch lesen; Druck- ↔ Schreibschrift zuordnen | U (Vorkurs) | hoch   | Buchstabe/Wort | Zuordnung                   | **C**         | —               | teilweise — Zuordnen geht (#229); Schreibschrift als Bild nicht               | #229, #231    |
+| Kyrillisch schreiben, Transliteration              | U (Vorkurs) | hoch   | Wort           | Wort in der anderen Schrift | **C**         | —               | teilweise — Eingabe                                                           | **V2**        |
+| Vokabeln russisch → deutsch                        | alle        | hoch   | Wort           | Wort                        | **C**         | Bedeutung aus 4 | geht                                                                          | –             |
+| Vokabeln deutsch → russisch                        | alle        | hoch   | Wort           | Wort                        | **C**         | Wort aus 4      | teilweise — Eingabe; `ё`/`е` wird heute als Beinahe-Treffer behandelt (§16.1) | **V2**        |
+| **Betonung** markieren                             | U–M         | mittel | Wort           | Silbe                       | **C**         | Silbe antippen  | fehlt — Betonungszeichen werden im Vergleich entfernt                         | **V2**, #234  |
+| Kasus bilden (sechs Fälle), Deklinationstabelle    | U–M         | hoch   | Grundform      | Formen                      | **C**         | —               | teilweise — Tabelle da (#230), Eingabe nicht                                  | #230, **V2**  |
+| Verbalaspekt wählen (vollendet/unvollendet)        | M           | hoch   | Satz           | Form                        | **C**         | Form aus 2      | geht                                                                          | –             |
+| Verben der Bewegung, Präpositionen mit Kasus       | M           | hoch   | Lückensatz     | Form                        | **C**         | —               | teilweise                                                                     | #232          |
+| Leseverstehen                                      | M–O         | hoch   | Text           | Antworten                   | **C** / R     | —               | teilweise                                                                     | #233          |
+| Hörverstehen                                       | M–O         | hoch   | Audio          | Antworten                   | **C**         | —               | geht, wenn `SPEECH_BACKEND` an ist (`ru-RU` vorhanden)                        | –             |
+| Aussprache                                         | alle        | mittel | Wort/Satz      | gesprochen                  | **R**         | —               | geht (Aussprache-Pfad, Modell hört)                                           | –             |
+| Schreiben (E-Mail, Text)                           | M–O         | hoch   | Aufgabe        | Text                        | **R** / **H** | —               | teilweise                                                                     | #211, #258    |
+| Sprachmittlung                                     | M–O         | mittel | Text           | Text                        | **R** (§7.4)  | —               | teilweise                                                                     | #211          |
+
+### 16.9 Darstellendes Spiel (9)
+
+**Wo:** Berlin/Brandenburg und Hamburg **Darstellendes Spiel / Theater** (Hamburg mit
+Abiturrichtlinien), BW **Literatur und Theater**, NRW **Literatur** (Q-Phase, Projektkurs).
+**Beleg:** die mündliche Prüfung im Berliner Grundkurs besteht aus einem **praktischen Teil mit
+Gestaltungsaufgabe und Gespräch** und einer **Reflexionsaufgabe** (Suchauszug Fachbrief Berlin,
+§16.10). Eine **schriftliche** Aufgabenart konnte ich für keines der Länder am Primärtext belegen.
+
+| Aufgabe                                                                  | Stufe | Häuf.  | Zeigen           | Produzieren                      | Prüfbar                      | Erkenn-Variante | heute                                                                                           | fehlt → Issue                         |
+| ------------------------------------------------------------------------ | ----- | ------ | ---------------- | -------------------------------- | ---------------------------- | --------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Theaterbegriffe (Bühnenformen, Figur/Rolle, Verfremdung, Theaterzeichen) | M–O   | hoch   | Begriff          | Erklärung                        | **R**; C als Zuordnung       | Begriff aus 4   | geht (#211, #229)                                                                               | –                                     |
+| Theatergeschichte, Epochen und Formen ordnen                             | O     | mittel | Namen/Epochen    | Reihenfolge                      | **C**                        | —               | geht (#228)                                                                                     | –                                     |
+| **Rollentext lernen**: Stichwort → nächster Satz                         | alle  | hoch   | Stichwort        | Replik (getippt oder gesprochen) | **C** (Wortlaut)             | —               | teilweise — getippt geht (Kurzantwort, mehrzeilig #221), gesprochen über „Erklär mal"/Lautlesen | #236, #264                            |
+| Szenischen Text analysieren (Figurenkonstellation, Konflikt)             | O     | mittel | Text             | Analyse                          | **R**                        | —               | teilweise                                                                                       | #233, #211                            |
+| Inszenierungskonzept / Regiekonzept entwickeln                           | O     | mittel | Text             | Konzept                          | **H**                        | —               | teilweise — Rückmeldung je Kernpunkt                                                            | #211                                  |
+| Inszenierungsanalyse einer Aufführung                                    | O     | mittel | Aufführung/Video | Analyse                          | **R**                        | —               | fehlt — Video                                                                                   | bewusst nicht (Video)                 |
+| Rollenbiografie schreiben                                                | M–O   | gering | Figur            | Text                             | **H**                        | —               | teilweise                                                                                       | #258                                  |
+| Probe reflektieren (Probentagebuch)                                      | alle  | mittel | —                | Text                             | **H**                        | —               | teilweise                                                                                       | #211                                  |
+| Spielen, Präsentation, Bühnenbild                                        | alle  | hoch   | —                | Praxis                           | **H**, nicht app-trainierbar | —               | —                                                                                               | bewusst nicht (praktisches Gestalten) |
+
+**Befund:** In Darstellendem Spiel ist fast alles Praxis oder **H**. Das eine Stück mit echtem
+Übungsbedarf und einer exakten Antwort ist das **Rollentext-Lernen** — und das geht heute schon
+getippt, gesprochen mit den Bausteinen aus Welle 2/„Später" (#236, #264). Es bekommt **kein**
+eigenes Issue.
+
+### 16.10 Zählung und Quellen dieses Nachtrags
+
+**Gezählt** per Skript über die Tabellen oben, nicht geschätzt: die Spalte „heute" beginnt mit
+_geht_, _teilweise_ oder _fehlt_; eine Zeile ohne diesen Status (die Praxis in 16.9) zählt als
+„nicht übbar". Neben den drei vorgeschlagenen Bausteinen (§16.11) zeigt jede „teilweise"- und
+„fehlt"-Zeile auf ein **bestehendes** Issue oder auf eine Entscheidung „bewusst nicht" aus #224.
+
+<!-- zaehlung:start -->
+
+| Fach                                      | Typen   | geht   | teilweise | fehlt | nicht übbar | „geht“ gewichtet² |
+| ----------------------------------------- | ------- | ------ | --------- | ----- | ----------- | ----------------- |
+| Wirtschaft/Recht und BwR (17)             | 17      | 7      | 9         | 1     | 0           | 43 %              |
+| Technik / NwT (14)                        | 14      | 4      | 9         | 1     | 0           | 28 %              |
+| Sport-Theorie (13)                        | 13      | 6      | 7         | 0     | 0           | 50 %              |
+| Philosophie / Ethik in der Oberstufe (12) | 12      | 5      | 7         | 0     | 0           | 34 %              |
+| Psychologie / Pädagogik (11)              | 11      | 3      | 8         | 0     | 0           | 32 %              |
+| Griechisch (11)                           | 11      | 2      | 7         | 2     | 0           | 21 %              |
+| Russisch (13)                             | 13      | 4      | 8         | 1     | 0           | 31 %              |
+| Darstellendes Spiel (9)                   | 9       | 2      | 5         | 1     | 1           | 29 %              |
+| **Summe**                                 | **100** | **33** | **60**    | **6** | **1**       | —                 |
+
+² Gewichte hoch = 3, mittel = 2, gering = 1, ohne die nicht übbaren Zeilen — dieselbe Idee wie #224, aber **nicht** dessen Skript; die Zahl ist nur innerhalb dieses Nachtrags vergleichbar.
+
+<!-- zaehlung:end -->
+
+**Nicht gerechnet:** die **Prozentzahlen in #224** (gewichtet nach Häufigkeit, 26 % / 71 % / 4 %
+und die Tabelle je Fach und Welle) stammen aus `analyse.json`, die nur dem Owner vorliegt (#224:
+„Die vollständige Tabelle pro Fach … liegt dem Owner als Datei vor"). Diese Zeilen hier müssen dort
+**angefügt und das Skript neu laufen** — eine geschätzte Prozentzahl wäre genau die Sorte
+Behauptung, die die Analyse vermeiden wollte (#224, Kommentar vom 02.10., 12:00).
+
+**Quellen (abgerufen 02.10.2026; „Suchauszug" = nur der Ausschnitt der Suchmaschine, der
+Primärtext war aus dieser Umgebung nicht abrufbar):**
+
+- ISB Bayern, _Infobrief BwR — Abschlussprüfung 2023_
+  (`isb.bayern.de/fileadmin/user_upload/Realschule/Infobriefe/BWL/2021b_isb_infobrief_bwr_abschlusspruefung_2023.pdf`)
+  — **Suchauszug**; Abruf vom Netz-Proxy blockiert (`CONNECT tunnel failed, response 403`).
+- LehrplanPLUS Bayern, Realschule, _Betriebswirtschaftslehre/Rechnungswesen_, Jg. 7, WPFG II
+  (`lehrplanplus.bayern.de/fachlehrplan/realschule/7/bwl-rechnungswesen/wpfg2`) — Suchauszug.
+- Landesbildungsserver BW, _Bildungsplan 2016, Beispielcurriculum NwT Kl. 8–10_ und
+  _Beispielcurricula Russisch als 2./3. Fremdsprache_ (`schule-bw.de`) — Suchauszüge.
+- Senatsverwaltung Berlin, _Fachbrief Darstellendes Spiel Nr. 4_ (`schulportal.berlin.de`) —
+  Suchauszug.
+- Für Sport, Philosophie, Psychologie/Pädagogik, Recht, Latein/Griechisch und die modernen
+  Fremdsprachen: die Primärquellen aus §14.
+
+### 16.11 Vorschläge für neue Issues
+
+Neu nur, wo **kein vorhandener Baustein passt** (Plan in #265, Schritt 3). Alles andere in den
+Tabellen oben zeigt auf ein bestehendes Issue. Format wie die Wellen-Issues: Regel 0, Kosten,
+Abnahme. Angelegt werden sie von der orchestrierenden Sitzung.
+
+#### V1 — Buchungssatz, T-Konto und Kalkulationsschema (BwR), exakt im Code
+
+**Quelle:** Issue #265 (Owner, 02.10.2026), §16.2 dieses Dokuments. _„Kandidaten sind
+Buchungssatz/T-Konto (BwR, exakt prüfbar)"_.
+
+**Ursache, geprüft:** BwR ist fast vollständig **C**, aber der Buchungssatz — das tragende Stück
+jeder BwR-Arbeit — hat keine Form. Als Kurzantwort wird er per String verglichen
+(`apps/api/src/modules/practice/evaluate.ts`); ein richtiger Satz mit anderer Reihenfolge der
+Soll-Konten oder mit Kürzel statt Kontonummer gilt dann als falsch. T-Konten gibt es nicht; das
+Kalkulationsschema geht als Tabelle (#230), aber die Werte darin rechnet das Modell, nicht der
+Code.
+
+**Plan (minimal, in der vorhandenen Fragekarte, Regel 16):**
+
+1. Vertrag `BookingTask` in `packages/shared-types/src/contracts/` — Geschäftsfall-Text, ein
+   **Kontenplan-Ausschnitt** (Nummer, Kürzel, Name; aus einer festen Liste des
+   Industriekontenrahmens im Code, das Modell schreibt **keine** Kontonummer frei — es wählt per
+   Alias wie überall, Regel 2) und die Lösung als zwei Mengen `(konto, betrag_cent)`.
+2. Antwortform: je Zeile ein Konto **antippen** (aus dem Ausschnitt) und einen Betrag tippen, links
+   Soll, rechts Haben — die vorhandene `AnswerPart`-Maschinerie (Migration 0072) mit Slots
+   `soll.n` / `haben.n`.
+3. Prüfer im Code: Mengengleichheit je Seite (Reihenfolge egal), Beträge in Cent exakt, Nummer und
+   Kürzel desselben Kontos gleich. `parts_left`, wenn einzelne Zeilen stimmen.
+4. T-Konto als Darstellung desselben Vertrags (Einträge links/rechts, Saldo) — Prüfer: Summen
+   gleich, Saldo auf der kleineren Seite.
+5. Kalkulationsschema: Zeilenfolge fest im Code (Listenpreis → Zieleinkaufspreis → Bareinkaufspreis
+   → Bezugspreis …), jede Zeile **aus der vorigen gerechnet**; das Modell liefert nur die
+   Eingangswerte und Sätze.
+
+**Regel 0, beide Richtungen:** (a) ihre Antwort: Mengengleichheit und Beträge entscheidet Code,
+ohne Modellaufruf; (b) was das Modell erzeugt: ein Buchungssatz, dessen Soll- und Haben-Summe
+nicht gleich ist, ein Konto außerhalb des Ausschnitts oder ein Schema, dessen gerechnete Werte
+nicht zu den gelieferten passen, wird **verworfen, nicht repariert** — es entsteht keine Frage.
+
+**Kosten:** M. 0 Modellaufrufe pro Antwort. Keine Migration außer ggf. einer Spalte `booking_task`
+wie `bar_task` (0064) und `staff_task` (0078). Kein neues Datenschutzrisiko.
+
+**Abnahme:** Integrationstests: ein vertauschter, aber richtiger Buchungssatz zählt richtig; Kürzel
+= Nummer; ein falscher Betrag gibt `parts_left`; ein erzeugter Satz mit ungleicher Summe wird
+verworfen; ein Kontoalias einer anderen Frage wird abgewiesen. Walkthrough-Screenshot der Karte bei
+360×740 und 390×844, ohne Scrollen (`tests/web/fit.ts`).
+
+#### V2 — Griechische und kyrillische Schrift: Eingabe und schriftbewusster Vergleich
+
+**Quelle:** Issue #265 (Owner, 02.10.2026): _„Griechisch, Russisch (eigene Schrift → Eingabe!)"_
+und _„eine Tastatur für das griechische/kyrillische Alphabet"_; §16.1, §16.7, §16.8.
+
+**Ursache, geprüft:** (1) Die App hat eigene Tasten nur für Mathe (`MathKeys.tsx`); eine Antwort in
+griechischer oder kyrillischer Schrift setzt eine eingerichtete Systemtastatur voraus — und
+Altgriechisch mit Akzenten und Spiritus hat auf dem Handy keine bequeme Belegung. (2)
+`withoutAccents` (`evaluate.ts`) behandelt `ё`/`е` als Beinahe-Treffer, obwohl `е` für `ё` im
+Russischen üblich ist; das Schluss-Sigma `ς`/`σ` ist für den Vergleich ein anderer Buchstabe;
+Betonungszeichen und Spiritus fallen pauschal in `close`, auch dort, wo sie die gefragte Sache sind.
+
+**Plan:**
+
+1. Eine **Buchstabenleiste** über dem Antwortfeld, nur wenn die Frage eine Antwort in dieser Schrift
+   erwartet (`lang` = `ru`, `el`, `grc`) — dieselbe Bauart wie `MathKeys` (`insertAtCursor`), die
+   Buchstaben des Alphabets, für Altgriechisch dazu die Zeichen für Akzent, Spiritus und Iota
+   subscriptum als Kombinationszeichen. Keine Einstellung, kein Modus (Minimalismus-Leitlinie
+   #224).
+2. Vergleich je Schrift im Code: `ё` ≡ `е` (`correct`, außer die Frage fragt nach `ё`); `σ` am
+   Wortende ≡ `ς`; Akzent/Spiritus/Betonung als eigener Befund statt pauschal `close`, wenn die
+   Frage sie verlangt (Feld im Vertrag, vom Modell gesetzt, vom Code geprüft).
+3. Transliteration (Kyrillisch ↔ Latein nach einer festen Norm, z. B. der wissenschaftlichen
+   Transliteration) als **Code**, damit eine Umschrift-Aufgabe exakt prüfbar ist.
+
+**Regel 0:** (a) ihre Antwort: Schriftvergleich und Transliteration sind Code; (b) was das Modell
+erzeugt: ein Schlüssel, der Zeichen außerhalb der erwarteten Schrift enthält, oder eine
+Transliterations-Aufgabe, deren Schlüssel nicht der Code-Transliteration entspricht, wird
+verworfen.
+
+**Kosten:** M. 0 Modellaufrufe pro Antwort. Keine Migration. Alle fünf Oberflächensprachen
+bekommen die (wenigen) neuen Beschriftungen (`parity.test.ts`). Kein Datenschutzrisiko.
+
+**Abnahme:** Unit-Tests für `ё`/`е`, Schluss-Sigma, Betonung, Spiritus, Transliteration; ein
+Integrationstest, der einen Schlüssel in falscher Schrift verwirft; Walkthrough mit der Leiste bei
+360×740 (Leiste und Antwortfeld zusammen ohne Scrollen, Tasten ≥ 44 pt). **Offen und im Issue zu
+entscheiden:** ob `el`/`grc` als Fachsprache ohne Stimme zulässig ist (es gibt keine griechische
+Stimme, §16.1).
+
+#### V3 — Metrik: Verse skandieren (Latein und Griechisch)
+
+**Quelle:** §16.7 (Griechisch) und §8 (Latein: Metrum ist dort landesabhängig, §15 Punkt 9).
+
+**Ursache, geprüft:** Skandieren ist eine Folge von Längen und Kürzen je Silbe — exakt
+entscheidbar bis auf die Stellen, an denen Länder Mehrdeutigkeiten unterschiedlich zulassen. Es
+gibt dafür keine Form: weder eine Silbenzerlegung noch eine Lang/Kurz-Eingabe. Markieren (#234)
+markiert Wörter, keine Silben; Reihenfolge (#228) ordnet, belegt aber keine Positionen.
+
+**Plan:** eine Antwortform „je Silbe antippen: lang / kurz", die Silben aus dem Vers **vom Code**
+zerlegt (nicht vom Modell); Prüfer im Code gegen das Versmaß (Hexameter, Pentameter, jambischer
+Trimeter), mit einer Liste der zulässigen Varianten je Position. Das Modell liefert nur den Vers
+und das Versmaß.
+
+**Regel 0:** (a) ihre Antwort: Code vergleicht das Schema; (b) was das Modell erzeugt: ein Vers,
+der sich unter dem genannten Versmaß **nicht** skandieren lässt, wird verworfen.
+
+**Kosten:** M bis L (die Silbentrennung für Latein ist regelhaft; für Griechisch mit Diphthongen
+und Positionslänge ein eigenes Stück Code). 0 Modellaufrufe pro Antwort. Kein Datenschutzrisiko.
+**Nach der Kostenregel aus #224 (Regel 1: höchstens M) hinter V1 und V2.**
+
+**Abnahme:** Unit-Tests an je zehn Versen pro Versmaß mit Quellenangabe; ein erzeugter Vers, der
+nicht passt, wird verworfen; Walkthrough bei 360×740 mit einem Hexameter in einer Zeile ohne
+Scrollen.
