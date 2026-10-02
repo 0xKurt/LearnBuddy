@@ -1909,17 +1909,23 @@ gives `ambiguous`; a category nothing belongs to `empty_group`. An error text ca
 Commas: the model writes the sentence WITH its commas, code takes them out and records the gaps;
 syllables: the words with hyphens, code records the cuts. Ids say where a target stands — `w3`
 the third word, `g3` the gap after it, `w3_2` the cut after its second letter — never whether it
-is one of the key's. Bounds measured on 360×740 with every target at 44 pt (`MARK_*`): 3–24 words,
+is one of the key's. Bounds measured on 360×740 with every target at 44 pt (`MARK_*`): 3–24 words (at most 12 when
+the marks are sorted into categories, `MARK_SORTED_WORDS_MAX` — the category chips take a line
+and the summary three; 16 words squeezed the conversation until its "Tipp" row was cut),
 a word ≤ 20 characters, 1–4 syllable words of ≤ 12 letters, a prompt ≤ 90 characters. Her marks
 are compared with the key **as a set** (`checkMark`, 0 model calls); the reply counts and never
 names a place ("Noch nicht ganz: 2 richtig, 1 fehlt noch, 1 zu viel"; a right word in the wrong
 category is counted as such). What code cannot check — whether the syllables are the right ones,
 whether a word really is the subject — is the model's knowledge, and nothing claims otherwise.
-App (`MarkAnswer.tsx`): words flow like text, each a ≥ 44 pt target; a gap is a narrow slot whose
+App (`MarkAnswer.tsx`): words flow like text, each a soft ≥ 44 pt tile (plain words read like the
+question's own text — nothing said "tap me"); a gap is a narrow slot whose
 `hitSlop` reaches into the (untappable) words beside it; a syllable word is a row of 44 pt letter
-tiles ("nach diesem Buchstaben trennen", seven to a line). Never colour alone: a marked word is
-underlined and carries its category's number, the line under the text says what is marked in
-words, a set comma is a comma and a cut a hyphen. `practice/__tests__/mark.test.ts`,
+tiles ("nach diesem Buchstaben trennen", seven to a line on 360×740) inside a box of its own, so a
+longer word wraps inside its box and still reads as one word. Never colour alone: a marked word is
+underlined and carries its category's number on the tile's corner (beside the word it widened every
+marked tile), the line under the text says what is marked in words ("Markiert: Subjekt: …",
+syllables "Getrennt: Scho-ko-la-de"), a set comma is a comma and a cut a hyphen. With categories
+the how-to line is left out — the numbered chips, one already chosen, say it. `practice/__tests__/mark.test.ts`,
 `reading-marking.int.test.ts`, `MarkAnswer.test.tsx`, walkthrough "marking" in
 `tests/web/modes.spec.ts`.
 
@@ -2463,7 +2469,7 @@ word list, so it stays a prompt rule.
   group (`items.read_passage`: title, lines, language — `items_one_text` forbids a question with
   both a text to read and one to hear), because spaced repetition brings a single question back
   alone. **Line by line**: the lines as printed on the sheet, or as Buddy wrote them (told to keep
-  them under 45 characters, a phone line); every line counts, an empty one too, so "Z. 12" in a
+  them under 36 characters, one line on a 360-pt phone); every line counts, an empty one too, so "Z. 12" in a
   question means line 12 of exactly this text. The questions are the forms that exist —
   `multiple_choice`, true/false (a `multiple_choice` whose two options code writes in the text's
   language), `short`, an `order` (#228) or a `mark` (#234) — never a new answer form.
@@ -2475,17 +2481,21 @@ word list, so it stays a prompt rule.
   true/false statement may not copy the text; a marking marks a sentence OF the text; fewer than
   two questions left is no group and nothing is stored. The evidence also gives the question its
   one hint — where to look ("Lies nochmal Z. 5–6", no model) — and, once it is closed,
-  `SessionItemView.evidence` (the lines), which the app tints in the text and says in words.
+  `SessionItemView.evidence` (the lines), which the app tints in the text and says in words (a
+  small reference chip "Im Text: Z. 6–8" under Buddy's reply, `EvidenceNote`).
   Language is not marked (`reading` in `evaluate.ts` and the tutor, as for listening; §7.3).
   From a photo (the extraction's `reading` list, at most two texts a reading, for study material
   and homework) or from Buddy (`offer_learning` kind `read`; the generator sees the reading text
   and nothing else). Unlike a listening question, a reading question may come back inside a
   written run: it brings its text. App: `PassagePanel.tsx` above the question card — a title row
-  with "Einklappen"/"Text zeigen", the lines with their numbers on every fifth line, a fixed share
-  of the screen (`PASSAGE_SHARE`, about eight lines on 360×740) that scrolls in itself
+  (the text's heading, or "Lesetext" when the screen's title already names it; the question card
+  then drops its topic chip, the same words a third time) with "Einklappen"/"Text zeigen", the lines with their numbers on every fifth line, a fixed share
+  of the screen (`PASSAGE_SHARE`, about eight lines on 360×740; `PASSAGE_SHARE_BOARD`, about four,
+  above a marking or an order, whose board needs the room) that scrolls in itself
   (`scroll-text`, the third scroll area `tests/web/fit.ts` allows). Keyed by the text's alias
   (`ItemView.passage.ref`, `t1`), so across the questions about one text it stays put, folded or
-  open, scrolled where she left it. `practice/__tests__/reading.test.ts`,
+  open, scrolled where she left it; which texts she folded is kept in the draft store
+  (`session.<id>.folded`), so a theme switch — a remount — does not spring a folded text open. `practice/__tests__/reading.test.ts`,
   `reading-marking.int.test.ts`, `PassagePanel.test.tsx`, walkthrough "reading text" in
   `tests/web/modes.spec.ts`.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app

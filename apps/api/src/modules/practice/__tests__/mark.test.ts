@@ -148,6 +148,26 @@ describe('marking words: the model names them, code finds them', () => {
     );
   });
 
+  it('a text sorted into categories has at most 12 words — the chips take a line of their own', () => {
+    const many = (n: number) =>
+      ['Der', 'Hund', 'bellt', ...Array.from({ length: n - 3 }, (_, i) => `laut${i}`)].join(' ');
+    const sorted = (text: string) =>
+      words(
+        text,
+        [
+          { word: 'Hund', occurrence: null, category: 'Subjekt' },
+          { word: 'bellt', occurrence: null, category: 'Prädikat' },
+        ],
+        { categories: ['Subjekt', 'Prädikat'] },
+      );
+    expect(markDraftProblem(sorted(many(12)))).toBeNull();
+    expect(markDraftProblem(sorted(many(13)))).toBe('count');
+    // Without categories the same 13 words are a task.
+    expect(
+      markDraftProblem(words(many(13), [{ word: 'Hund', occurrence: null, category: null }])),
+    ).toBeNull();
+  });
+
   it('too few or too many words, no target, or a long prompt is no task', () => {
     expect(
       markDraftProblem(words('Hund bellt', [{ word: 'Hund', occurrence: null, category: null }])),

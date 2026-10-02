@@ -282,6 +282,14 @@ export const MARK_WORD_MAX = 20;
 /** Syllables: a few words, each short enough to stand on one line as letter tiles. */
 export const MARK_SYLLABLE_WORDS_MAX = 4;
 export const MARK_SYLLABLE_LETTERS_MAX = 12;
+/**
+ * Words of a text whose marks are sorted into categories: the chips to choose a category take
+ * a second line, and the line saying what is marked runs to three ("Subjekt: …; Prädikat: …;
+ * Akkusativobjekt: …"). Measured on 360×740 (walkthrough, issue #234): 24 words were 38 pt too
+ * many, 18 still 11 pt, and at 16 the conversation above was squeezed until its "Tipp" row was
+ * cut in half. Twelve — one sentence, the issue's own acceptance size — leaves that row whole.
+ */
+export const MARK_SORTED_WORDS_MAX = 12;
 export const MARK_CATEGORIES_MIN = 2;
 export const MARK_CATEGORIES_MAX = 3;
 /** A category's name ("Subjekt", "Signalwort"): one chip in a row of three. */

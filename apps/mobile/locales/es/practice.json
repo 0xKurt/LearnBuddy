@@ -240,6 +240,7 @@
     "cut_off": "Separar después de «{{before}}» ({{word}})",
     "cut_on": "Separado después de «{{before}}» ({{word}})",
     "marked": "Marcado: {{list}}",
+    "split": "Separado: {{list}}",
     "check_waits": "Cuando hayas marcado algo."
   },
   "reading": {

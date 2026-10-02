@@ -240,6 +240,7 @@
     "cut_off": "Dividi dopo «{{before}}» ({{word}})",
     "cut_on": "Diviso dopo «{{before}}» ({{word}})",
     "marked": "Segnato: {{list}}",
+    "split": "Diviso: {{list}}",
     "check_waits": "Quando hai segnato qualcosa."
   },
   "reading": {

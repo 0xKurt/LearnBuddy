@@ -1,10 +1,10 @@
 // Scripted model answers for the browser walkthrough of reading texts and marking
-// (tests/web/reading.spec.ts, issues #233 and #234). Keyed by what the learner wrote, never by
+// (tests/web/modes.spec.ts, issues #233 and #234). Keyed by what the learner wrote, never by
 // order. The model writes only what it writes in production — the text, its questions, the words
 // to mark; the server checks them (Regel 0), counts the lines, gives the ids and keeps the keys.
 //
 // The marking tasks are the LARGEST the contract allows (contracts/structured.ts, MARK_*): 24
-// words with three categories, a long comma sentence, three syllable words of up to twelve
+// words in an error text, 12 words with three categories, a long comma sentence, three syllable words of up to ten
 // letters — so the walkthrough measures the worst case on 360×740 (rule 16), not a comfortable
 // one. The reading text is long enough that it must scroll in itself.
 // Test tooling only.
@@ -13,27 +13,32 @@
 import { scriptGenerations } from './generations.js';
 import { says, scriptTurns } from './turns.js';
 
-/** A text of 20 lines, each at most 45 characters — the length Buddy is told to write. */
+/** A text of 25 lines, each at most 36 characters — the length Buddy is told to write. */
 export const IGEL_LINES = [
-  'Im Herbst frisst sich der Igel ein dickes',
-  'Fettpolster an. Er sucht Käfer, Würmer und',
-  'Schnecken, manchmal auch heruntergefallenes',
-  'Obst. Wenn es draußen kälter wird und er',
-  'kaum noch Futter findet, baut er sich ein',
-  'Nest aus Laub, Moos und trockenem Gras.',
+  'Im Herbst frisst sich der Igel ein',
+  'dickes Fettpolster an. Er sucht',
+  'Käfer, Würmer und Schnecken,',
+  'manchmal auch heruntergefallenes',
+  'Obst. Wenn es draußen kälter wird',
+  'und er kaum noch Futter findet, baut',
+  'er sich ein Nest aus Laub, Moos und',
+  'trockenem Gras.',
   '',
-  'Meist liegt das Nest unter einer Hecke oder',
-  'in einem Reisighaufen. Dort rollt sich der',
-  'Igel zusammen und beginnt seinen Winter-',
-  'schlaf. Sein Herz schlägt dann nur noch',
-  'etwa fünfmal in der Minute, und seine',
-  'Körpertemperatur sinkt auf wenige Grad.',
+  'Meist liegt das Nest unter einer',
+  'Hecke oder in einem Reisighaufen.',
+  'Dort rollt sich der Igel zusammen',
+  'und beginnt seinen Winterschlaf.',
+  'Sein Herz schlägt dann nur noch etwa',
+  'fünfmal in der Minute, und seine',
+  'Körpertemperatur sinkt auf wenige',
+  'Grad.',
   '',
   'Der Winterschlaf dauert ungefähr von',
-  'November bis März. In dieser Zeit lebt der',
-  'Igel nur von seinem Fett. Wird er gestört,',
-  'verbraucht er viel Kraft. Deshalb sollte',
-  'man einen Laubhaufen im Garten im Winter',
+  'November bis März. In dieser Zeit',
+  'lebt der Igel nur von seinem Fett.',
+  'Wird er gestört, verbraucht er viel',
+  'Kraft. Deshalb sollte man einen',
+  'Laubhaufen im Garten im Winter',
   'einfach liegen lassen.',
 ];
 
@@ -99,10 +104,10 @@ export function scriptReadingMarking(): void {
               corrected: null,
               difficulty: 3,
             },
-            // Line 24 does not exist: this question is never asked (issue #233, Regel 0).
+            // Line 40 does not exist: this question is never asked (issue #233, Regel 0).
             {
               kind: 'short',
-              prompt: 'Was steht in Z. 24?',
+              prompt: 'Was steht in Z. 40?',
               answer: 'nichts',
               accepted_answers: [],
               evidence: 'einfach liegen lassen',
@@ -125,7 +130,7 @@ export function scriptReadingMarking(): void {
             type: 'mark',
             prompt: 'Tippe alle Nomen an.',
             mode: 'words',
-            text: 'am samstag hat meine oma mit uns einen großen kuchen gebacken.',
+            text: 'am samstag hat meine oma mit uns einen großen kuchen schnell gebacken.',
             targets: [
               { word: 'samstag', occurrence: null, category: null },
               { word: 'oma', occurrence: null, category: null },
@@ -137,16 +142,16 @@ export function scriptReadingMarking(): void {
             difficulty: 2,
             prompt_lang: 'de',
           },
-          // The largest marking: 24 words, three categories.
+          // The largest sorted marking: 12 words (MARK_SORTED_WORDS_MAX), three categories.
           {
             type: 'mark',
             prompt: 'Markiere Subjekt, Prädikat und Akkusativobjekt.',
             mode: 'words',
-            text: 'Nach der langen Schulstunde heute im Musikraum packt meine beste Freundin Johanna ihre schwere Gitarre ganz vorsichtig in den neuen braunen Koffer aus Leder.',
+            text: 'Heute trägt meine beste Freundin Johanna ihre schwere neue Gitarre zur Schule.',
             targets: [
               { word: 'meine beste Freundin Johanna', occurrence: null, category: 'Subjekt' },
-              { word: 'packt', occurrence: null, category: 'Prädikat' },
-              { word: 'ihre schwere Gitarre', occurrence: null, category: 'Akkusativobjekt' },
+              { word: 'trägt', occurrence: null, category: 'Prädikat' },
+              { word: 'ihre schwere neue Gitarre', occurrence: null, category: 'Akkusativobjekt' },
             ],
             categories: ['Subjekt', 'Prädikat', 'Akkusativobjekt'],
             corrected: null,
@@ -158,12 +163,29 @@ export function scriptReadingMarking(): void {
             type: 'mark',
             prompt: 'Trenne die Wörter in Silben.',
             mode: 'syllables',
-            text: 'Scho-ko-la-de Schmet-ter-ling Ba-na-ne',
+            text: 'Scho-ko-la-de Ka-nin-chen Ba-na-ne',
             targets: null,
             categories: null,
             corrected: null,
             topic: 'Silben',
             difficulty: 1,
+            prompt_lang: 'de',
+          },
+          // The largest unsorted marking: 24 words (MARK_WORDS_MAX), an error text.
+          {
+            type: 'mark',
+            prompt: 'Tippe die Fehler an.',
+            mode: 'words',
+            text: 'Gestern am Nachmittag bin ich mit meinem hund in den großen Park gelaufen und habe dort mit meiner Freundin lange Fußball gespilt und gelacht.',
+            targets: [
+              { word: 'hund', occurrence: null, category: null },
+              { word: 'gespilt', occurrence: null, category: null },
+            ],
+            categories: null,
+            corrected:
+              'Gestern am Nachmittag bin ich mit meinem Hund in den großen Park gelaufen und habe dort mit meiner Freundin lange Fußball gespielt und gelacht.',
+            topic: 'Rechtschreibung',
+            difficulty: 2,
             prompt_lang: 'de',
           },
         ],

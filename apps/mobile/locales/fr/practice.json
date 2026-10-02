@@ -240,6 +240,7 @@
     "cut_off": "Couper après « {{before}} » ({{word}})",
     "cut_on": "Coupé après « {{before}} » ({{word}})",
     "marked": "Marqué : {{list}}",
+    "split": "Coupé : {{list}}",
     "check_waits": "Dès que tu as marqué quelque chose."
   },
   "reading": {

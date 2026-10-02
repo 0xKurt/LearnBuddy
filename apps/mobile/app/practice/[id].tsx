@@ -65,7 +65,7 @@ import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
-import { PassagePanel } from '../../components/practice/PassagePanel.js';
+import { EvidenceNote, PassagePanel } from '../../components/practice/PassagePanel.js';
 import {
   emptyStaffAnswer,
   StaffAnswer,
@@ -149,10 +149,16 @@ const STRUCTURED_REPLY_ROOM = 140;
 /**
  * How much of the screen's height a reading text may take before it scrolls in itself (issue
  * #233): about eight lines on a 360×740 phone, which leaves the question, its answer and "Prüfen"
- * standing below it. Measured in the walkthrough (tests/web/reading.spec.ts) — any more and a
+ * standing below it. Measured in the walkthrough (tests/web/modes.spec.ts, "reading text") — any more and a
  * multiple-choice question with four options no longer fits beside it.
  */
 const PASSAGE_SHARE = 0.25;
+/**
+ * The same, under a question answered by tapping on a board (a marking, an order): about four
+ * lines on 360×740. The board needs the room — a comma sentence of 22 words did not fit beside
+ * eight lines — and its sentence is quoted from the text, which still scrolls above it.
+ */
+const PASSAGE_SHARE_BOARD = 0.12;
 
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
@@ -250,9 +256,11 @@ export default function PracticeScreen() {
   const [heardTexts, setHeardTexts] = useState<ReadonlySet<string>>(() => new Set());
   /**
    * Reading texts she folded away (issue #233), by their alias: a text stays folded for every
-   * question about it, until she opens it again.
+   * question about it, until she opens it again. Kept in the draft store like every other
+   * arrangement on this screen: a theme switch remounts it, and the text must not spring open.
    */
-  const [foldedTexts, setFoldedTexts] = useState<ReadonlySet<string>>(() => new Set());
+  const { text: foldedKept, setText: keepFolded } = useDraft(`session.${id}.folded`);
+  const foldedTexts = new Set(foldedKept.split(' ').filter((r) => r !== ''));
   /**
    * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
    * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
@@ -1064,15 +1072,18 @@ export default function PracticeScreen() {
                 onToggle={() => {
                   const ref = item.passage?.ref;
                   if (ref === undefined) return;
-                  setFoldedTexts((was) => {
-                    const next = new Set(was);
+                  keepFolded((was) => {
+                    const next = new Set(was.split(' ').filter((r) => r !== ''));
                     if (next.has(ref)) next.delete(ref);
                     else next.add(ref);
-                    return next;
+                    return [...next].join(' ');
                   });
                 }}
-                maxHeight={Math.round(windowHeight * PASSAGE_SHARE)}
+                maxHeight={Math.round(
+                  windowHeight * (item.task_view ? PASSAGE_SHARE_BOARD : PASSAGE_SHARE),
+                )}
                 highlight={shown.status !== 'open' ? shown.evidence : null}
+                screenTitle={title}
               />
             ) : null}
             {/* The next question comes in softly from the side (keyed by the question). */}
@@ -1085,7 +1096,9 @@ export default function PracticeScreen() {
               ) : (
                 <QuestionCard
                   prompt={item.prompt}
-                  topic={item.topic}
+                  // A reading question's topic is its text's, and the text stands right above
+                  // with its heading (issue #233): the same words a third time are noise.
+                  topic={item.passage ? null : item.topic}
                   figure={item.figure}
                   figureMaxHeight={Math.round(windowHeight * 0.14)}
                   image={item.image}
@@ -1162,14 +1175,7 @@ export default function PracticeScreen() {
                     tinted lines above say it too, but never colour alone. */}
                 {shown.evidence !== null ? (
                   <Rise delay={180}>
-                    <Text testID="evidence" style={[TYPE.small, { color: palette.ink2 }]}>
-                      {shown.evidence.from === shown.evidence.to
-                        ? t('practice:reading.evidence_one', { from: shown.evidence.from })
-                        : t('practice:reading.evidence', {
-                            from: shown.evidence.from,
-                            to: shown.evidence.to,
-                          })}
-                    </Text>
+                    <EvidenceNote lines={shown.evidence} />
                   </Rise>
                 ) : null}
                 {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (

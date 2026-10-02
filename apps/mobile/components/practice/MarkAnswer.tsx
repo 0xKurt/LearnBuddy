@@ -42,7 +42,7 @@ const WORD_MIN = GAP_SLOP * 2;
 /** A letter tile (syllables): one target, at the floor. */
 const TILE = TOUCH;
 /** The small number a marked word carries for its category. */
-const BADGE = 18;
+const BADGE = 16;
 
 /** Every place she can tap in this view, in reading order (the server's ids, issue #234). */
 export function targetsOf(view: Pick<MarkTaskView, 'mode' | 'words'>): string[] {
@@ -164,8 +164,10 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
     <>
       <PartsArea>
         <View style={{ gap: SPACE.sm }}>
-          {/* How to mark, only until the first mark: after that the marks say it. */}
-          {marks.length === 0 ? (
+          {/* How to mark, only until the first mark: after that the marks say it. With
+              categories the numbered choice above the words says it (one is already chosen), and
+              on 360×740 the largest such task has no line to spare for the sentence. */}
+          {marks.length === 0 && categories.length === 0 ? (
             <Text style={[TYPE.small, { color: palette.ink2 }]}>{t(`mark.how_${view.mode}`)}</Text>
           ) : null}
           {categories.length > 0 ? (
@@ -213,13 +215,23 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
               borderWidth: 1,
               borderColor: palette.hairline,
               paddingHorizontal: SPACE.sm,
-              paddingVertical: SPACE.xs,
+              paddingVertical: view.mode === 'words' ? SPACE.sm : SPACE.xs,
             }}
           >
             {view.mode === 'syllables' ? (
               <View style={{ gap: SPACE.sm, paddingVertical: SPACE.xs }}>
                 {view.words.map((w, wi) => (
-                  <View key={w.id} style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  // One word, one soft box: a word longer than a line of 44-pt tiles (seven on
+                  // 360×740) wraps INSIDE its box, so it still reads as one word.
+                  <View
+                    key={w.id}
+                    style={{
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      borderRadius: 12,
+                      backgroundColor: palette.canvas,
+                    }}
+                  >
                     {[...w.text].map((ch, li, all) => {
                       const at = `w${wi + 1}_${li + 1}`;
                       const last = li === all.length - 1;
@@ -247,7 +259,15 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
                 ))}
               </View>
             ) : (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  // Tiles in words mode stand apart; the text with comma slots reads as a sentence.
+                  gap: view.mode === 'words' ? SPACE.xs : 0,
+                }}
+              >
                 {view.words.map((w, i) => {
                   const last = i === view.words.length - 1;
                   if (view.mode === 'gaps') {
@@ -309,15 +329,18 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: Props) {
               </View>
             )}
           </View>
-          {/* What is marked, in words (never colour alone) — words mode only: commas and
-              hyphens are characters in the text already. */}
-          {view.mode === 'words' && marks.length > 0 ? (
+          {/* What is marked, in words (never colour alone). Syllables too: a long word wraps
+              in its tiles, and the line spells it whole ("Scho-ko-la-de"). Commas stand in the
+              sentence itself. */}
+          {view.mode !== 'gaps' && marks.length > 0 ? (
             <Text
               testID="mark-summary"
-              numberOfLines={2}
+              numberOfLines={3}
               style={[TYPE.small, { color: palette.ink2 }]}
             >
-              {t('mark.marked', { list: marksText(view, marks) })}
+              {t(view.mode === 'syllables' ? 'mark.split' : 'mark.marked', {
+                list: marksText(view, marks),
+              })}
             </Text>
           ) : null}
         </View>
@@ -388,10 +411,14 @@ function WordChip({
         justifyContent: 'center',
         paddingHorizontal: SPACE.xs,
         borderRadius: 10,
-        backgroundColor: marked ? palette.primaryLt : pressed ? palette.canvas : 'transparent',
+        // Every word looks tappable before anything is marked: a soft tile, not plain text
+        // (found in the 360×740 shot — the sentence read like the question's own text).
+        borderWidth: 1,
+        borderColor: marked ? palette.primary : palette.hairline,
+        backgroundColor: marked ? palette.primaryLt : pressed ? palette.hairline : palette.canvas,
       }}
     >
-      {word.lead ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.lead}</Text> : null}
+      {word.lead ? <Affix text={word.lead} /> : null}
       <View>
         <Text
           style={[
@@ -405,21 +432,48 @@ function WordChip({
           {word.text}
         </Text>
         {/* The underline: a bar, not a text decoration — it reads the same on every platform. */}
-        <View
-          style={{
-            height: 3,
-            borderRadius: 2,
-            marginTop: 1,
-            backgroundColor: marked ? palette.primary : 'transparent',
-          }}
-        />
+        <Underline on={marked} />
       </View>
-      {word.tail ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.tail}</Text> : null}
+      {word.tail ? <Affix text={word.tail} /> : null}
+      {/* The category's number sits on the tile's corner: beside the word it made every
+          marked tile wider, and the largest task no longer fit 360×740. */}
       {n !== null ? (
-        <View style={{ marginLeft: SPACE.xs }}>
+        <View
+          style={{ position: 'absolute', top: -SPACE.xs, right: -SPACE.xs }}
+          pointerEvents="none"
+        >
           <NumberBadge n={n} on />
         </View>
       ) : null}
+    </View>
+  );
+}
+
+function Underline({ on }: { on: boolean }) {
+  const { palette } = useTheme();
+  return (
+    <View
+      style={{
+        height: 3,
+        borderRadius: 2,
+        marginTop: 1,
+        backgroundColor: on ? palette.primary : 'transparent',
+      }}
+    />
+  );
+}
+
+/**
+ * Punctuation beside a word ("Schule."): shown, never tapped. It stands on the word's baseline —
+ * with an empty underline of its own, or the bar under the word would push the word up and the
+ * full stop would hang below it.
+ */
+function Affix({ text }: { text: string }) {
+  const { palette } = useTheme();
+  return (
+    <View>
+      <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
+      <Underline on={false} />
     </View>
   );
 }

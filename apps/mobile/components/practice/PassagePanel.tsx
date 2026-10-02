@@ -43,13 +43,28 @@ type Props = {
   maxHeight: number;
   /** The lines a closed question's answer stands in: tinted, and scrolled into view. */
   highlight: PassageLines | null;
+  /**
+   * The heading the screen already shows (the run's title). A text named the same says
+   * "Lesetext" instead — the same words twice on one screen are noise.
+   */
+  screenTitle?: string;
 };
 
-export function PassagePanel({ passage, open, onToggle, maxHeight, highlight }: Props) {
+export function PassagePanel({
+  passage,
+  open,
+  onToggle,
+  maxHeight,
+  highlight,
+  screenTitle,
+}: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const scroll = useRef<ScrollView>(null);
-  const title = passage.title ?? t('reading.label');
+  const title =
+    passage.title !== null && passage.title.trim() !== screenTitle?.trim()
+      ? passage.title
+      : t('reading.label');
 
   // A closed question shows where its answer stands: the text scrolls there by itself.
   useEffect(() => {
@@ -102,11 +117,14 @@ export function PassagePanel({ passage, open, onToggle, maxHeight, highlight }: 
           ref={scroll}
           testID="scroll-text"
           nestedScrollEnabled
+          // Reachable by keyboard: a text that scrolls must be scrollable without a pointer
+          // (axe `scrollable-region-focusable`; on the web this is tabIndex 0).
+          focusable
+          accessibilityLabel={title}
           style={{ maxHeight, borderTopWidth: 1, borderTopColor: palette.hairline }}
-          contentContainerStyle={{
-            paddingVertical: SPACE.sm,
-            paddingRight: SPACE.md,
-          }}
+          // No right padding here: a tinted line reaches the panel's edge; the text keeps its
+          // distance from it on its own (below).
+          contentContainerStyle={{ paddingVertical: SPACE.sm }}
           accessibilityHint={t('reading.scroll_hint')}
         >
           {passage.lines.map((line, i) => {
@@ -144,6 +162,7 @@ export function PassagePanel({ passage, open, onToggle, maxHeight, highlight }: 
                 <Text
                   style={{
                     flex: 1,
+                    paddingRight: SPACE.md,
                     fontSize: 15,
                     lineHeight: LINE_HEIGHT,
                     color: palette.ink,
@@ -156,6 +175,37 @@ export function PassagePanel({ passage, open, onToggle, maxHeight, highlight }: 
           })}
         </ScrollView>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * Where a closed question's answer stands, in words ("Im Text: Z. 6–8") — the tinted lines in the
+ * text say it too, but never colour alone. A quiet reference chip with the text's icon, so it
+ * reads as a pointer to the text above and not as one more grey line under Buddy's reply.
+ */
+export function EvidenceNote({ lines }: { lines: PassageLines }) {
+  const { palette } = useTheme();
+  const { t } = useTranslation('practice');
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACE.xs,
+        paddingHorizontal: SPACE.sm,
+        paddingVertical: SPACE.xs,
+        borderRadius: 999,
+        backgroundColor: palette.primaryLt,
+      }}
+    >
+      <Icon name="file" size={14} color={palette.primaryDk} />
+      <Text testID="evidence" style={[TYPE.small, { color: palette.primaryDk, fontWeight: '600' }]}>
+        {lines.from === lines.to
+          ? t('reading.evidence_one', { from: lines.from })
+          : t('reading.evidence', { from: lines.from, to: lines.to })}
+      </Text>
     </View>
   );
 }
