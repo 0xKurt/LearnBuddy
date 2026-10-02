@@ -222,7 +222,14 @@
     "unbalanced_charge": "Casi – las cargas todavía no coinciden: {{left}} a la izquierda, {{right}} a la derecha.",
     "unbalanced_element": "Casi – cuenta otra vez el {{element}}: {{left}} a la izquierda, {{right}} a la derecha.",
     "untitled": "Práctica",
-    "worked_intro": "Mira, así se hace:"
+    "worked_intro": "Mira, así se hace:",
+    "chart": {
+      "pyramid": "Pirámide",
+      "bell": "Campana",
+      "urn": "Urna",
+      "humid": "Húmedo",
+      "arid": "Árido"
+    }
   },
   "contact": {
     "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."

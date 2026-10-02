@@ -172,6 +172,8 @@ export function barItem(task: BarTask, locale: string): BarItem | null {
     bar_task: task,
     // A fraction bar is one value against one key; its answer has no parts (issues #228–#230).
     parts_task: null,
+    // Nothing is read off a chart: the bar IS the task (issues #245, #246).
+    read: null,
   };
 
   switch (task.task) {

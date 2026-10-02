@@ -2208,6 +2208,62 @@ that states an open task's answer (`mentionsSolution`, any notation) gets one re
 is stored (503 `reexplain_unavailable`). A model outage stores nothing (503 `model_unavailable`).
 Also after the last question closed and the session finished.
 
+### Charts (issues #245, #246)
+
+Line and climate charts, pies, box plots, histograms, scatter plots and population pyramids next to
+a question. **The model writes data, code checks it, draws it and computes the key.** No migration:
+the chart is an item's `figure` (jsonb), and everything code derives from it is written into the
+item's ordinary columns before it is stored.
+
+- **Contract** (`contracts/figure.ts`): seven `ModelFigure` branches — `line_chart` (1–3 series,
+  categories or a measured x, one optional column series, an optional right axis for a second
+  unit), `climate_chart` (place, height, 12 × °C, 12 × mm), `pie_chart` (labels and shares in %,
+  `half` for a parliament), `box_plot` (1–3 boxes of five numbers, optionally the raw data list),
+  `histogram` (equal classes), `scatter_plot` (points, `fit` for the least-squares line),
+  `pyramid` (age groups from `a0` in steps of `w`, men and women). Short property names and **no
+  nullable field**: they sit in every item of every generated set, under the schema-size pressure
+  of #281 (the generate schema grew from 21,575 to 24,541 characters with 0 new `anyOf`).
+- **Checked, then rejected — never repaired** (`chartProblem`, `packages/shared-math/src/charts.ts`):
+  every series as long as its labels, at most one column series, one unit per axis and a second
+  axis only for a second unit, a measured x that increases, no duplicate labels, category labels
+  that fit the 266 px a 360 px phone leaves the drawing, pie shares that add up to 100 % (± 0.1),
+  a box plot in order and — given a data list — equal to its five numbers under one of the three
+  schoolbook quartile definitions, a scatter plot with a spread in x, a pyramid within 125 years. A
+  chart that breaks one costs its **question**, not only its drawing (`clipDraft`,
+  `chartRead.ts`): "Werte das Klimadiagramm aus" without the diagram is no question.
+- **What a question reads off** (`ItemDraft.read`, `ChartRead`): the model says which reading its
+  question is — `value`, `max`, `min`, `argmax`/`argmin` (a label: a month, a category, a slice),
+  `sum`, `mean`, `range`, `diff`, `angle` (a pie's centre angle), `iqr`, `humid`/`arid` (number of
+  months), `humid_at`, `slope`/`intercept`, `type` (pyramid / bell / urn) — and code computes it
+  (`readChart`). A number key must be the computed value at the precision it is written in; a label
+  must be the label at the computed position (the other ways to write it, "Juli"/"Jul", become the
+  accepted answers, and nothing else); a fixed choice (humid/arid, the pyramid's type) gets its
+  options written by code in the question's language and the model's `correct_choice` must point at
+  the computed one. Disagreement drops the question. A **numeric question on a chart without
+  `read` is dropped** too: its key could not be checked. Interpretation questions ("Welche
+  Klimazone?") stay multiple choice with `read` null. Why a structured claim and not code reading
+  the question's words: that would be a word list standing in for language understanding (rule 3).
+- **Reading tolerance from the drawing**: the learner gets the tolerance the grid allows, never one
+  the model chose — a fifth of a labelled step (the app draws a faint line at every half step),
+  √n of that for a sum of n readings, ÷ n for a mean, twice for a range or a difference. A climate
+  chart is Walter–Lieth as in the atlas (10 °C ≙ 20 mm, above 100 mm compressed tenfold, read
+  tenfold less precisely there). A reading the drawing cannot settle is no question: two months
+  closer than both readings (Berlin, July 19.4 °C, August 19.1 °C → no "warmest month"), a month
+  whose column ends on the temperature line (no humid/arid count), a pyramid between the bands
+  (young third ≥ 1.2 × middle third = pyramid, ≤ 0.8 = urn, 0.9–1.1 = bell). Answers are judged by
+  the rules, no model call (`charts.int.test.ts`: "Üb mit mir Klimadiagramme" → 5 questions, all
+  `evaluated_by = 'rule'`).
+- **Drawing** (`apps/mobile/components/math/ChartFigures.tsx`): react-native-svg with the same axes
+  the API used for the tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
+  only signal: series have markers and dash patterns, columns are columns, pie slices are numbered
+  and listed with their shares, the halves of a pyramid are named. Theme tokens `figure.warm`,
+  `wet`, `wetDeep`, `slices` (light and dark). The screen-reader text (`describeChart`) says every
+  value and nothing derived — no sum, no warmest month, no type — because that is what a question
+  asks her to read off. Walkthrough: `tests/web/charts.spec.ts`, every chart at 390 × 844 and
+  360 × 740, light and dark.
+- **Not checked by code**: the meaning of the prompt itself. A question that claims `read: sum` and
+  asks something else is caught only when the numbers then disagree.
+
 ### Learning modes (migration `0003_learning_modes.sql`)
 
 Questions come from a photo (`material`), from Buddy on a topic the learner named (`buddy`,
@@ -2370,9 +2426,10 @@ word list, so it stays a prompt rule.
   only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
-  may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
-  (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
-  not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
+  may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table, and the
+  charts of §Charts below) as data (`contracts/figure.ts`); the server drops figures it cannot draw
+  (e.g. an expression that does not compile with `@learnbuddy/shared-math` `compileExpression`)
+  without dropping the question — except a chart, which costs its question (§Charts).
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.

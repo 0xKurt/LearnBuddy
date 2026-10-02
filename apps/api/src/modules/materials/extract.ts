@@ -19,7 +19,7 @@ import {
   SPELLING_RULES,
 } from '../practice/items.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v6';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet

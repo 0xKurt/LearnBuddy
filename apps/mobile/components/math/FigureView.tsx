@@ -1,6 +1,6 @@
 // Draws the figure that goes with a question (packages/shared-types/src/contracts/figure.ts):
 // fraction pictures, number lines, function graphs, bar charts, geometry
-// drawings and tables. The model only sends data; this draws it with
+// drawings, tables and the charts of ChartFigures.tsx. The model only sends data; this draws it with
 // react-native-svg at the width that is available. Every figure also carries a
 // text description for screen readers. A function the grammar can't read is
 // left out — the figure never crashes the question.
@@ -8,7 +8,7 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Svg, {
   Circle,
   ClipPath,
@@ -24,7 +24,6 @@ import Svg, {
 // Imported by path: the mobile bundle takes only this small, dependency-free module
 // of @learnbuddy/shared-math (its index also pulls in mathjs).
 import { compileExpression } from '../../../../packages/shared-math/src/expression.js';
-import { currentLocale } from '../../lib/i18n/index.js';
 import {
   figureBodyWidth,
   figureScale,
@@ -33,10 +32,11 @@ import {
 } from '../../lib/math/figureScale.js';
 import { plotFrame, Y_LABEL_GAP } from '../../lib/math/plotLayout.js';
 import { speakMathText } from '../../lib/math/speak.js';
-import { localDecimal } from '../../lib/numbers.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { describeStaff } from '../../lib/music/words.js';
+import { ChartBody, describeChart } from './ChartFigures.js';
+import { FAMILY, FONT, formatNumber, HaloText, SMALL } from './figureInk.js';
 import { MathText } from './MathText.js';
 import { StaffLine } from './StaffLine.js';
 import { useSpokenWords } from './useSpokenMath.js';
@@ -51,21 +51,6 @@ type TableFig = Extract<Figure, { type: 'table' }>;
 type T = (key: string, values?: Record<string, string | number>) => string;
 /** Reads a cell text with math out in words. */
 type Speak = (text: string) => string;
-
-const FONT = 13;
-/** The app's sans-serif inside SVG too (the web would fall back to a serif). */
-const FAMILY = Platform.select({
-  web: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  default: undefined,
-});
-const SMALL = 12;
-
-/** 0.30000000000000004 → "0,3" (decimal comma where usual). */
-export function formatNumber(n: number): string {
-  const rounded = Math.round(n * 1e6) / 1e6;
-  const plain = Object.is(rounded, -0) ? '0' : String(rounded);
-  return localDecimal(plain, currentLocale()).replace('-', '−');
-}
 
 /**
  * `maxHeight` keeps a drawing from pushing the answer off a small screen: a figure
@@ -145,6 +130,15 @@ function FigureBody({ figure, width }: { figure: Figure; width: number }) {
     // Zeichnung die Fläche ist, auf die sie schreibt — eine Figur ist, was sie LIEST.
     case 'staff':
       return <StaffLine fig={figure} width={width} />;
+    // Charts (issues #245, #246) are drawn in ChartFigures.tsx.
+    case 'line_chart':
+    case 'climate_chart':
+    case 'pie_chart':
+    case 'box_plot':
+    case 'histogram':
+    case 'scatter_plot':
+    case 'pyramid':
+      return <ChartBody figure={figure} width={width} />;
   }
 }
 
@@ -581,56 +575,6 @@ function FunctionPlot({ fig, width }: { fig: PlotFig; width: number }) {
         </View>
       ) : null}
     </View>
-  );
-}
-
-/** A label with a paper-coloured outline underneath, so it stays readable over grid and graphs. */
-function HaloText({
-  x,
-  y,
-  color,
-  anchor,
-  text,
-  size = FONT + 1,
-  weight = '600',
-}: {
-  x: number;
-  y: number;
-  color: string;
-  anchor: 'start' | 'middle' | 'end';
-  text: string;
-  size?: number;
-  weight?: '400' | '600';
-}) {
-  const { figure: ink } = useTheme();
-  return (
-    <G>
-      <SvgText
-        fontFamily={FAMILY}
-        x={x}
-        y={y}
-        fontSize={size}
-        fontWeight={weight}
-        fill={ink.paper}
-        stroke={ink.paper}
-        strokeWidth={4}
-        strokeLinejoin="round"
-        textAnchor={anchor}
-      >
-        {text}
-      </SvgText>
-      <SvgText
-        fontFamily={FAMILY}
-        x={x}
-        y={y}
-        fontSize={size}
-        fontWeight={weight}
-        fill={color}
-        textAnchor={anchor}
-      >
-        {text}
-      </SvgText>
-    </G>
   );
 }
 
@@ -1090,5 +1034,13 @@ export function describeFigure(figure: Figure, t: T, speak: Speak = (s) => s): s
     // mit dem Screenreader ist die Aufgabe damit lösbar, nicht nur vorhanden.
     case 'staff':
       return describeStaff(figure, t);
+    case 'line_chart':
+    case 'climate_chart':
+    case 'pie_chart':
+    case 'box_plot':
+    case 'histogram':
+    case 'scatter_plot':
+    case 'pyramid':
+      return describeChart(figure, t);
   }
 }

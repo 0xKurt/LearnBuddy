@@ -363,6 +363,8 @@ const COMMON = {
   source_excerpt: null,
   // A note question is one value against one key; its answer has no parts (issues #228–#230).
   parts_task: null,
+  // A note line is no chart; its key comes from the task itself (issues #245, #246).
+  read: null,
   // None of the twelve state-dependent curriculum places is about music (issue #214), a note
   // question is no writing task with required elements (issue #211), and nothing here is heard
   // from a spoken text — the note itself is what sounds (issue #210).

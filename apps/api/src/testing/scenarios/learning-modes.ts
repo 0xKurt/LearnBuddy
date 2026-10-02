@@ -22,6 +22,117 @@ const base = {
   source_excerpt: null,
 };
 
+const read = (q: string, s = 0, i = 0, j = 0) => ({ q, s, i, j });
+const chart = (over: Record<string, unknown>) => ({
+  ...base,
+  kind: 'numeric',
+  prompt_lang: 'de',
+  topic: 'Diagramme lesen',
+  ...over,
+});
+
+/** The chart questions of the walkthrough (tests/web/charts.spec.ts answers them by prompt). */
+export const CHART_ITEMS = [
+  chart({
+    prompt: 'Wie hoch ist der Jahresniederschlag in Berlin?',
+    answer: '571',
+    unit: 'mm',
+    figure: {
+      type: 'climate_chart',
+      place: 'Berlin',
+      alt: 34,
+      t: [0.6, 1.4, 4.6, 9.4, 14.4, 17.4, 19.4, 19.1, 14.9, 9.9, 5.0, 1.9],
+      p: [42, 33, 41, 37, 54, 69, 56, 58, 45, 37, 44, 55],
+    },
+    read: read('sum', 1),
+  }),
+  chart({
+    prompt: 'Welchen Weg hat der Wagen nach 3 s zurückgelegt?',
+    answer: '18',
+    unit: 'm',
+    figure: {
+      type: 'line_chart',
+      x: ['0', '1', '2', '3', '4', '5'],
+      xt: 'Zeit in s',
+      s: [
+        { n: 'Weg', u: 'm', v: [0, 2, 8, 18, 32, 50], bar: false, r: false },
+        { n: 'Tempo', u: 'm/s', v: [0, 4, 8, 12, 16, 20], bar: false, r: true },
+      ],
+    },
+    read: read('value', 0, 3),
+  }),
+  chart({
+    prompt: 'Wie groß ist der Mittelpunktswinkel für „Bus“?',
+    answer: '144',
+    unit: '°',
+    figure: {
+      type: 'pie_chart',
+      half: false,
+      l: ['Bus', 'Fahrrad', 'Zu Fuß', 'Auto'],
+      v: [40, 30, 20, 10],
+    },
+    read: read('angle', 0, 0),
+  }),
+  chart({
+    prompt: 'Wie groß ist der Median der Klasse 7a?',
+    answer: '152',
+    unit: 'cm',
+    figure: {
+      type: 'box_plot',
+      u: 'cm',
+      b: [
+        { l: 'Klasse 7a', v: [138, 146, 152, 158, 171] },
+        { l: 'Klasse 7b', v: [135, 143, 149, 160, 166] },
+      ],
+      raw: [],
+    },
+    read: read('value', 0, 2),
+  }),
+  chart({
+    prompt: 'Wie groß ist $P(X = 2)$?',
+    answer: '0.375',
+    figure: {
+      type: 'histogram',
+      x0: -0.5,
+      w: 1,
+      v: [0.0625, 0.25, 0.375, 0.25, 0.0625],
+      xt: 'k',
+      yt: 'P(X = k)',
+    },
+    read: read('value', 0, 2),
+  }),
+  chart({
+    prompt: 'Wie groß ist die Steigung der Ausgleichsgeraden?',
+    answer: '1.97',
+    unit: 'm/s',
+    figure: {
+      type: 'scatter_plot',
+      x: [0, 1, 2, 3, 4],
+      y: [1.1, 2.9, 5.2, 6.8, 9],
+      fit: true,
+      xt: 'Zeit in s',
+      yt: 'Weg in m',
+    },
+    read: read('slope'),
+  }),
+  chart({
+    kind: 'multiple_choice',
+    prompt: 'Welchen Typ hat diese Bevölkerungspyramide?',
+    answer: 'Pyramide',
+    choices: ['Pyramide', 'Glocke', 'Urne'],
+    correct_choice: 0,
+    figure: {
+      type: 'pyramid',
+      a0: 0,
+      w: 10,
+      m: [9.5, 8.6, 7.4, 6.1, 4.8, 3.4, 2.1, 1.1, 0.4],
+      f: [9.1, 8.3, 7.3, 6.2, 5.0, 3.8, 2.6, 1.5, 0.6],
+      u: '%',
+    },
+    read: read('type'),
+  }),
+];
+
 function lastText(req: LlmRequest): string {
   const m = req.contents[req.contents.length - 1];
   const parts = m?.parts.flatMap((p) => ('text' in p ? [p.text] : [])) ?? [];
@@ -256,6 +367,18 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Charts (issues #245, #246): one question per chart, each with what it reads off, so the
+  // walkthrough sees every drawing at both phone sizes, light and dark. Every key here is the
+  // value code computes from the data — a wrong one would not reach the screen at all.
+  scriptGenerations({
+    when: /Diagramme lesen/i,
+    answer: () => ({
+      usable: true,
+      title: 'Diagramme lesen',
+      subject: { name: 'Erdkunde', kind: 'geography' },
+      items: CHART_ITEMS,
+    }),
+  });
   // Practice without a photo: fractions, with a figure.
   scriptGenerations({
     when: /Brüche|Bruch/i,
@@ -348,6 +471,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /brüche vergleichen üben/i,
       answer: says('Gute Idee – ich hab dir ein paar Fragen zu Brüchen vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Brüche vergleichen' } },
+      ]),
+    },
+    {
+      when: /diagramme üben/i,
+      answer: says('Gern – ich hab dir Diagramme zum Ablesen vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Diagramme lesen' } },
       ]),
     },
     {

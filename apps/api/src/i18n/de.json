@@ -222,7 +222,14 @@
     "unbalanced_charge": "Fast – die Ladungen stimmen noch nicht: links {{left}}, rechts {{right}}.",
     "unbalanced_element": "Fast – zähl das {{element}} nochmal: links {{left}}, rechts {{right}}.",
     "untitled": "Übung",
-    "worked_intro": "Schau, so geht's:"
+    "worked_intro": "Schau, so geht's:",
+    "chart": {
+      "pyramid": "Pyramide",
+      "bell": "Glocke",
+      "urn": "Urne",
+      "humid": "humid",
+      "arid": "arid"
+    }
   },
   "contact": {
     "less_often": "Alles klar – aufs Handy schreibe ich dir ab jetzt nur noch, wenn's wirklich wichtig ist. Alles andere findest du hier. Ändern kannst du das in den Einstellungen."
