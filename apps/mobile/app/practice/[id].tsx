@@ -309,7 +309,12 @@ export default function PracticeScreen() {
   }
 
   const nothingOpen =
-    session?.status === 'active' && session.items.every((i) => i.status !== 'open');
+    session?.status === 'active' &&
+    // Not while more questions are still being written (issue #220): she was faster than the
+    // generator, and ending the run here would throw away the questions still on their way — the
+    // server refuses it too, this only saves the pointless call.
+    !session.preparing &&
+    session.items.every((i) => i.status !== 'open');
 
   // Once no question is open, the session is finished – once, while the
   // learner may still be reading the last solution.
@@ -706,6 +711,16 @@ export default function PracticeScreen() {
       );
     }
     const active = session.status === 'active';
+    // She answered the questions the run started with and the rest is still being written
+    // (issue #220). Not a result and not an error — the next questions are on their way, and the
+    // screen asks for them until they are there (`usePracticeSession`).
+    if (active && session.preparing) {
+      return (
+        <Screen title={title}>
+          <LoadingState label={t('practice:more_coming')} />
+        </Screen>
+      );
+    }
     if (active && !finishFailed) {
       return (
         <Screen title={title}>
@@ -926,6 +941,9 @@ export default function PracticeScreen() {
               position={session.items.indexOf(shown) + 1}
               total={session.items.length}
               closed={session.items.filter((i) => i.status !== 'open').length}
+              // The server's word, never the app's guess: while it says more questions are coming,
+              // the total is not the number it will be (issue #220).
+              preparing={session.preparing}
               right={flagButton ?? disputeButton}
             />
             {session.mode === 'help' || testing ? (

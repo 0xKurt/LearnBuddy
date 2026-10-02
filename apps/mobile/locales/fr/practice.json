@@ -52,6 +52,7 @@
   "ended": "Cet entraînement est déjà terminé.",
   "finish_failed": "Je n'ai pas pu charger ton résultat pour le moment.",
   "finishing": "Un instant – ton résultat arrive.",
+  "more_coming": "Les questions suivantes arrivent …",
   "flag": {
     "button": "Question inadaptée",
     "hint": "Retire cette question, elle ne reviendra plus.",
@@ -71,6 +72,7 @@
   "next": "Suivant",
   "origin_buddy": "Question de Buddy",
   "progress": "Question {{current}} sur {{total}}",
+  "progress_more_coming": "Question {{current}} · j’en écris d’autres",
   "reexplain": {
     "label": "Expliquer autrement ?",
     "simpler": "Plus simple",

@@ -109,7 +109,7 @@ async function replay(
     [sessionId, clientTurnId],
   );
   if (!turn) return null;
-  const view = await sessionView(deps.db, learnerId, sessionId, deps.storage);
+  const view = await sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
   const reply = await deps.db.maybeOne<{ id: string }>(
     `select id from practice_turns where session_id = $1 and seq = $2 and role = 'tutor'`,
     [sessionId, turn.seq + 1],
@@ -306,7 +306,7 @@ export async function speakItem(
     }
     throw err;
   }
-  const view = await sessionView(deps.db, learner.id, sessionId, deps.storage);
+  const view = await sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
   const turn = [...view.turns].reverse().find((x) => x.item_id === item.id && x.role === 'tutor');
   if (!turn) throw new AppError('internal', 'reply missing');
   return { session: view, verdict, reply: turn };

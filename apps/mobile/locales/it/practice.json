@@ -52,6 +52,7 @@
   "ended": "Questi esercizi sono già finiti.",
   "finish_failed": "Al momento non riesco a caricare il tuo risultato.",
   "finishing": "Un attimo – il tuo risultato sta arrivando.",
+  "more_coming": "Le prossime domande stanno arrivando …",
   "flag": {
     "button": "La domanda non va",
     "hint": "Toglie questa domanda; non uscirà più.",
@@ -71,6 +72,7 @@
   "next": "Avanti",
   "origin_buddy": "Domanda di Buddy",
   "progress": "Domanda {{current}} di {{total}}",
+  "progress_more_coming": "Domanda {{current}} · ne sto scrivendo altre",
   "reexplain": {
     "label": "Spiegato in un altro modo?",
     "simpler": "Più semplice",

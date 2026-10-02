@@ -492,6 +492,22 @@ export const SessionView = z.object({
    * decides it, with the same rule that picks the cards — the app never re-derives it.
    */
   card_pass_offered: z.boolean().default(false),
+  /**
+   * More questions for this run are still being written (issue #220): a practice run starts
+   * with its first few questions and grows while she works, so for a few seconds `items` is
+   * shorter than the run will be.
+   *
+   * Two things follow, and both are the server's word, not the app's guess:
+   * - the run cannot end while this is true — "no open question" does not mean "over", and
+   *   `POST /practice/sessions/:id/finish` pauses instead of finishing;
+   * - no question COUNT may be shown. "Frage 1 von 3" that becomes "Frage 1 von 9" is the
+   *   display that costs trust, so the app shows the position without a total until this is
+   *   false (the issue's trap 2).
+   *
+   * It goes false on its own even if the rest never arrives: the server holds a deadline, so a
+   * run can never be left unfinishable.
+   */
+  preparing: z.boolean().default(false),
   items: z.array(SessionItemView),
   turns: z.array(PracticeTurnView),
   current_item_id: Uuid.nullable(),

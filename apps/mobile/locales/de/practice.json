@@ -52,6 +52,7 @@
   "ended": "Diese Übung ist schon beendet.",
   "finish_failed": "Dein Ergebnis konnte ich gerade nicht laden.",
   "finishing": "Einen Moment – dein Ergebnis kommt gleich.",
+  "more_coming": "Gleich kommen die nächsten Fragen …",
   "flag": {
     "button": "Frage passt nicht",
     "hint": "Nimmt diese Frage raus, sie kommt nicht mehr dran.",
@@ -71,6 +72,7 @@
   "next": "Weiter",
   "origin_buddy": "Frage von Buddy",
   "progress": "Frage {{current}} von {{total}}",
+  "progress_more_coming": "Frage {{current}} · ich schreibe noch mehr",
   "reexplain": {
     "label": "Anders erklärt?",
     "simpler": "Einfacher bitte",

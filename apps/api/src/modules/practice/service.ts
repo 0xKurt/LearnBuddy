@@ -115,6 +115,12 @@ export type SessionRow = {
    * `mode` is read far outside this module, down to `NowCard.mode` in the app's contracts.
    */
   pass: 'cards' | null;
+  /**
+   * Set while the rest of this run's questions is still being written (migration 0073,
+   * issue #220); null for every run that was written in one go. Never compared in SQL — see
+   * `stillPreparing`.
+   */
+  items_pending_until: Date | null;
 };
 
 /**
@@ -123,7 +129,21 @@ export type SessionRow = {
  * untouched (migrations are immutable), but nothing shows or writes them any more.
  */
 export const SESSION_COLS = `id, learner_id, step_id, goal_id,
-       case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass`;
+       case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass,
+       items_pending_until`;
+
+/**
+ * Is this run still waiting for the rest of its questions (issue #220)? The one place that
+ * decides it, because two different answers would mean a run that cannot be finished in one
+ * code path and is finished behind its own back in the other.
+ *
+ * The deadline is compared against the app clock, never against SQL `now()` (CLAUDE.md rule 7):
+ * past it the run is complete with the questions it has, so a refill that never arrived costs
+ * her the extra questions and never her result.
+ */
+export function stillPreparing(s: Pick<SessionRow, 'items_pending_until'>, now: Date): boolean {
+  return s.items_pending_until !== null && s.items_pending_until.getTime() > now.getTime();
+}
 
 type SessionItemRow = {
   item_id: string;
@@ -158,6 +178,11 @@ export type SessionOptions = {
   materialId?: string | null;
   title?: string | null;
   clientRequestId?: string | null;
+  /**
+   * Until when the rest of the questions is still coming (issue #220). Only the split practice
+   * start sets it; every other run is complete when it is created.
+   */
+  itemsPendingUntil?: Date | null;
 };
 
 export async function createSession(
@@ -169,8 +194,8 @@ export async function createSession(
 ): Promise<string> {
   const s = await db.one<{ id: string }>(
     `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
-                                    material_id, title, client_request_id, pass)
-     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) returning id`,
+                                    material_id, title, client_request_id, pass, items_pending_until)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10) returning id`,
     [
       learnerId,
       opts.stepId,
@@ -181,6 +206,7 @@ export async function createSession(
       opts.title ?? null,
       opts.clientRequestId ?? null,
       opts.pass ?? null,
+      opts.itemsPendingUntil ?? null,
     ],
   );
   for (const [position, itemId] of itemIds.entries()) {
@@ -190,6 +216,68 @@ export async function createSession(
     );
   }
   return s.id;
+}
+
+/**
+ * The questions that were still being written when the run started (issue #220), appended
+ * behind the ones already there, and the wait closed in the same transaction.
+ *
+ * Positions continue from the highest one in the run, so the order she sees is the order the
+ * generator wrote in — the first batch first, the rest behind it. Nothing here decides which
+ * questions these are: the caller has already dropped everything that repeats what the run
+ * holds (`samePrompt`, the same rule a continued reading of a sheet uses, issue #150).
+ *
+ * The wait is closed whether or not anything arrived. A refill that came back empty leaves the
+ * run exactly as it was, and `preparing` goes false at once instead of making her wait out the
+ * deadline for questions that will never come.
+ */
+export async function addPreparedItems(
+  db: Db,
+  learnerId: string,
+  sessionId: string,
+  itemIds: readonly string[],
+  now: Date,
+): Promise<number> {
+  const s = await db.maybeOne<SessionRow>(
+    `select ${SESSION_COLS} from practice_sessions
+      where id = $1 and learner_id = $2 for update`,
+    [sessionId, learnerId],
+  );
+  // The run was deleted, or it is over already (the deadline passed and she finished it): the
+  // questions stay in her library, but they do not join a run that has its result.
+  if (!s || s.status !== 'active' || s.items_pending_until === null) return 0;
+  const next = await db.one<{ n: number }>(
+    `select coalesce(max(position) + 1, 0)::int as n from session_items where session_id = $1`,
+    [sessionId],
+  );
+  for (const [i, itemId] of itemIds.entries()) {
+    await db.query(
+      `insert into session_items (session_id, item_id, position) values ($1, $2, $3)`,
+      [sessionId, itemId, next.n + i],
+    );
+  }
+  await db.query(
+    `update practice_sessions set items_pending_until = null, last_activity_at = $2 where id = $1`,
+    [sessionId, now],
+  );
+  return itemIds.length;
+}
+
+/**
+ * The run is not waiting for questions any more, although none arrived (issue #220): the refill
+ * was refused, came back unusable or the model was gone. The run keeps the questions it has and
+ * stops saying "more is coming" — the honest version of a promise that cannot be kept (rule 5).
+ */
+export async function givenUpOnPreparing(
+  db: Db,
+  learnerId: string,
+  sessionId: string,
+): Promise<void> {
+  await db.query(
+    `update practice_sessions set items_pending_until = null
+      where id = $1 and learner_id = $2 and items_pending_until is not null`,
+    [sessionId, learnerId],
+  );
 }
 
 /** Start (or resume) the practice Buddy prepared. Idempotent per step. */
@@ -570,6 +658,8 @@ export async function sessionView(
   learnerId: string,
   sessionId: string,
   storage: StorageGateway,
+  /** The app clock: it decides whether this run is still waiting for questions (issue #220). */
+  now: Date,
 ): Promise<SessionView> {
   const s = await loadSession(db, learnerId, sessionId);
   const items = await db.query<
@@ -631,6 +721,9 @@ export async function sessionView(
     mode: s.mode,
     reveal_allowed: revealAllowed,
     status: s.status,
+    // The rest of the questions is still being written (issue #220). The app shows no total
+    // that would still change, and does not read "no open question" as "this run is over".
+    preparing: active && stillPreparing(s, now),
     title: title?.title ?? '',
     items: items.map((i) => ({
       item: {
@@ -721,13 +814,14 @@ export async function replay(
   sessionId: string,
   clientTurnId: string,
   storage: StorageGateway,
+  now: Date,
 ): Promise<AnswerResponse | null> {
   const learnerTurn = await db.maybeOne<{ seq: number; verdict: AnswerResponse['verdict'] }>(
     `select seq, verdict from practice_turns where session_id = $1 and client_turn_id = $2`,
     [sessionId, clientTurnId],
   );
   if (!learnerTurn) return null;
-  const view = await sessionView(db, learnerId, sessionId, storage);
+  const view = await sessionView(db, learnerId, sessionId, storage, now);
   const reply = await db.maybeOne<{ id: string }>(
     `select id from practice_turns where session_id = $1 and seq = $2 and role = 'tutor'`,
     [sessionId, learnerTurn.seq + 1],
@@ -832,7 +926,14 @@ export async function answerItem(
 ): Promise<AnswerResponse> {
   const hintRequest = opts.hintRequest === true;
   const now = deps.now();
-  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
+  const replayed = await replay(
+    deps.db,
+    learner.id,
+    sessionId,
+    input.client_turn_id,
+    deps.storage,
+    deps.now(),
+  );
   if (replayed) return replayed;
 
   const session = await loadSession(deps.db, learner.id, sessionId);
@@ -1355,12 +1456,19 @@ export async function answerItem(
   } catch (err) {
     // A concurrent duplicate of the same answer won: return its result.
     if (isUniqueViolation(err)) {
-      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
+      const r = await replay(
+        deps.db,
+        learner.id,
+        sessionId,
+        input.client_turn_id,
+        deps.storage,
+        deps.now(),
+      );
       if (r) return r;
     }
     throw err;
   }
-  const view = await sessionView(deps.db, learner.id, sessionId, deps.storage);
+  const view = await sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
   const reply = [...view.turns]
     .reverse()
     .find((tr) => tr.item_id === item.id && tr.role === 'tutor');
@@ -1385,7 +1493,14 @@ export async function hintItem(
   input: HintRequest,
 ): Promise<AnswerResponse> {
   const now = deps.now();
-  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
+  const replayed = await replay(
+    deps.db,
+    learner.id,
+    sessionId,
+    input.client_turn_id,
+    deps.storage,
+    deps.now(),
+  );
   if (replayed) return replayed;
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
@@ -1468,7 +1583,14 @@ export async function hintItem(
       );
     }
     if (isUniqueViolation(err)) {
-      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
+      const r = await replay(
+        deps.db,
+        learner.id,
+        sessionId,
+        input.client_turn_id,
+        deps.storage,
+        deps.now(),
+      );
       if (r) return r;
     }
     throw err;
@@ -1479,6 +1601,7 @@ export async function hintItem(
     sessionId,
     input.client_turn_id,
     deps.storage,
+    deps.now(),
   );
   if (!replayedNow) throw new AppError('internal', 'hint missing');
   return replayedNow;
@@ -1539,7 +1662,7 @@ export async function revealItem(
     ]);
     await finishIfComplete(tx, learnerId, sessionId, now);
   });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
 }
 
 /**
@@ -1576,7 +1699,7 @@ export async function deferItem(
       now,
     ]);
   });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
 }
 
 /**
@@ -1650,7 +1773,7 @@ export async function flagItem(
     // Buddy's prepared practice and picture of her questions may include it.
     await bumpContext(tx, learnerId);
   });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
 }
 
 /**
@@ -1780,7 +1903,7 @@ export async function disputeVerdict(
     // Buddy's picture of her questions and his prepared practice may hold it.
     await bumpContext(tx, learnerId);
   });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
 }
 
 // ─────────────── lifecycle ───────────────
@@ -1857,6 +1980,11 @@ async function finishLocked(db: Db, learnerId: string, s: SessionRow, now: Date)
  * transaction as the answer that closed the last one, so a lost /finish call (network, a
  * killed app) never leaves an answered session invisible and Buddy's step without evidence
  * (audit H-12). The caller holds the session lock.
+ *
+ * Unless the rest of the questions is still being written (issue #220, trap 1): then "nothing
+ * open" means she was faster than the generator, not that the run is over. Finishing here would
+ * end a practice after three questions and hand Buddy's step its evidence, and the six questions
+ * still being written would land in a run that already has a result.
  */
 export async function finishIfComplete(
   db: Db,
@@ -1870,6 +1998,7 @@ export async function finishIfComplete(
     [sessionId, learnerId],
   );
   if (!s || s.status !== 'active') return false;
+  if (stillPreparing(s, now)) return false;
   const open = await db.one<{ n: number }>(
     `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
     [sessionId],
@@ -1884,6 +2013,12 @@ export async function finishIfComplete(
  * Homework help with open tasks is paused, never finished: the tasks stay where they are
  * and the sheet leads back to them (decision D-5, audit H-8). Everything else is finished,
  * with Buddy's step getting its evidence. Idempotent.
+ *
+ * A practice run whose rest is still being written is paused too (issue #220, trap 1). This
+ * endpoint is what the screen calls BY ITSELF the moment it sees no open question — so while
+ * the generator is still writing, that call means "she was faster", not "she is done", and
+ * answering it with a result would throw the run away. A pause costs nothing: the run is
+ * exactly where it was, and the questions still being written join it.
  */
 export async function finishSession(
   deps: Deps,
@@ -1899,6 +2034,13 @@ export async function finishSession(
     );
     if (!s) throw new AppError('not_found', 'Session not found');
     if (s.status !== 'active') return; // idempotent
+    if (stillPreparing(s, now)) {
+      await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+        sessionId,
+        now,
+      ]);
+      return;
+    }
     if (s.mode === 'help') {
       const open = await tx.one<{ n: number }>(
         `select count(*)::int as n from session_items where session_id = $1 and status = 'open'`,
@@ -1914,5 +2056,5 @@ export async function finishSession(
     }
     await finishLocked(tx, learnerId, s, now);
   });
-  return sessionView(deps.db, learnerId, sessionId, deps.storage);
+  return sessionView(deps.db, learnerId, sessionId, deps.storage, deps.now());
 }

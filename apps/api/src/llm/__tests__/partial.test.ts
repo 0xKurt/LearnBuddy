@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { partialArray, partialString } from '../partial.js';
+import { answerUpTo, partialArray, partialString } from '../partial.js';
 
 describe('partialString', () => {
   const full =
@@ -71,5 +71,69 @@ describe('partialArray', () => {
     expect(partialArray('{"actions": [{"words": [{"text": "x", "ok": true}]}]}', 'words')).toEqual(
       [],
     );
+  });
+});
+
+describe('answerUpTo — the answer as it stands after the first n questions (issue #220)', () => {
+  const WHOLE = JSON.stringify({
+    usable: true,
+    title: 'Brüche addieren',
+    subject: { name: 'Mathe', kind: 'math' },
+    items: [
+      { prompt: 'Was ist $\\frac{1}{2} + \\frac{1}{4}$?', answer: '3/4' },
+      { prompt: 'Was ist 2/3 + 1/6?', answer: '5/6' },
+      { prompt: 'Was ist 3/8 + 1/8?', answer: '1/2' },
+    ],
+    bars: [],
+  });
+
+  it('closes the brackets so the finished answer’s schema can read the prefix', () => {
+    const cut = WHOLE.indexOf('5/6') + 6;
+    expect(answerUpTo(WHOLE.slice(0, cut), 'items', 2)).toEqual({
+      usable: true,
+      title: 'Brüche addieren',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [
+        { prompt: 'Was ist $\\frac{1}{2} + \\frac{1}{4}$?', answer: '3/4' },
+        { prompt: 'Was ist 2/3 + 1/6?', answer: '5/6' },
+      ],
+    });
+  });
+
+  it('hands back exactly the first n, never the ones already written after them', () => {
+    expect((answerUpTo(WHOLE, 'items', 2) as { items: unknown[] }).items).toHaveLength(2);
+  });
+
+  it('says "not yet" until n questions are finished, and never half of one', () => {
+    for (let i = 0; i <= WHOLE.length; i++) {
+      const soFar = answerUpTo(WHOLE.slice(0, i), 'items', 2) as {
+        items: { answer: string }[];
+      } | null;
+      if (!soFar) continue;
+      // Whatever it gives, both questions are whole — answers included.
+      expect(soFar.items).toHaveLength(2);
+      expect(soFar.items.map((it) => it.answer)).toEqual(['3/4', '5/6']);
+    }
+    expect(answerUpTo(WHOLE, 'items', 4)).toBeNull();
+    expect(answerUpTo('', 'items', 1)).toBeNull();
+    expect(answerUpTo('{"usable":true,"title":"Brü', 'items', 1)).toBeNull();
+  });
+
+  it('is not fooled by braces in the written text, and reads nested objects whole', () => {
+    const tricky = JSON.stringify({
+      title: 'Mengen',
+      items: [
+        { prompt: 'Schreibe $\\{1, 2\\}$ [so].', figure: { kind: 'fraction', parts: 4 } },
+        { prompt: 'Und $\\{3\\}$?', figure: null },
+      ],
+    });
+    expect(answerUpTo(tricky, 'items', 1)).toEqual({
+      title: 'Mengen',
+      items: [{ prompt: 'Schreibe $\\{1, 2\\}$ [so].', figure: { kind: 'fraction', parts: 4 } }],
+    });
+  });
+
+  it('refuses an array that is not at the first level', () => {
+    expect(answerUpTo('{"actions": [{"items": [{"prompt": "x"}]}]}', 'items', 1)).toBeNull();
   });
 });

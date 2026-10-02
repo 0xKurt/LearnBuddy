@@ -21,6 +21,7 @@ import {
   type LlmRequest,
   type LlmResult,
 } from '../llm/gateway.js';
+import { answerUpTo } from '../llm/partial.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
 import type { SpeechAudio, SpeechError, SpeechGateway, SpeechInput } from '../speech/gateway.js';
 import {
@@ -55,9 +56,37 @@ export class TestClock {
 
 /** One scripted model answer: JSON, an error, or a function of the request (may have side effects). */
 export type ScriptedAnswer =
-  | { json: unknown }
+  | {
+      json: unknown;
+      /**
+       * Makes this a streamed answer that STOPS half-way (issue #220): the text is handed to
+       * `onPartial` up to the point where `n` elements of the first-level array `key` are written,
+       * and then nothing happens until `until` resolves — after which the rest arrives and the
+       * call returns.
+       *
+       * It exists because the whole point of issue #220 is a window: the first questions stand
+       * there and the rest does not yet. Without a stream that can be held open, every test would
+       * race the app (the fake answers instantly) and the one case that matters — she answers the
+       * first questions BEFORE the rest lands — could not be written at all.
+       *
+       * The cut is found with `answerUpTo`, the same function production reads a stream with, so
+       * the fake and the app can never disagree about when the first questions "are there".
+       */
+      pauseAfter?: { key: string; n: number; until: Promise<void> };
+    }
   | { error: LlmError }
   | ((req: LlmRequest) => unknown | Promise<unknown>);
+
+/**
+ * How much of a written answer has to arrive before `n` elements of its first-level array `key`
+ * stand there — read with the same function the app reads a stream with (`llm/partial.ts`).
+ */
+function cutAfter(text: string, key: string, n: number): number {
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '}' && answerUpTo(text.slice(0, i + 1), key, n) !== null) return i + 1;
+  }
+  return text.length;
+}
 
 /**
  * The model in tests. Every call must be scripted: an unscripted call is
@@ -131,8 +160,22 @@ export class ScriptedGateway implements LlmGateway {
     // Streaming: the answer as the model would write it, in a few pieces.
     if (req.onPartial) {
       const text = JSON.stringify(json);
-      for (const n of [Math.floor(text.length / 3), Math.floor((2 * text.length) / 3), text.length])
-        req.onPartial(text.slice(0, n));
+      const pause =
+        typeof answer === 'function' || 'error' in answer ? undefined : answer.pauseAfter;
+      if (pause) {
+        req.onPartial(text.slice(0, cutAfter(text, pause.key, pause.n)));
+        // The rest of the answer is still being written: whatever the caller does with the first
+        // elements, it does it now.
+        await pause.until;
+        req.onPartial(text);
+      } else {
+        for (const n of [
+          Math.floor(text.length / 3),
+          Math.floor((2 * text.length) / 3),
+          text.length,
+        ])
+          req.onPartial(text.slice(0, n));
+      }
     }
     return {
       json,

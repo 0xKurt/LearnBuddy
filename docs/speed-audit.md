@@ -342,3 +342,42 @@ Argument „Reihenfolge ohne Streaming = 0 s" hängt davon nicht ab.
 Abschrift komplett neu schreiben („extracted_text: the same faithful transcription as
 before"). Bei einer 50er-Vokabelliste sind das vier Abschriften statt einer — echte,
 messbare Verschwendung, und etwas anderes als das, was #219 vorschlägt.
+
+### #220 — Übung starten: 6,45 s → 3,90 s (median, am Endpoint)
+
+| Lauf                   | min        | median     | max        | Fragen in der Antwort |
+| ---------------------- | ---------- | ---------- | ---------- | --------------------- |
+| vorher (ein Stück)     | 6,27 s     | 6,45 s     | 7,03 s     | 10 / 8 / 8            |
+| nachher (erste Fragen) | **3,13 s** | **3,90 s** | **4,87 s** | 3 / 3 / 3             |
+
+Modellseite, vorher: `explain` 6,42 s median, **1 432 Ausgabe-Tokens, 0 Denk-Tokens** —
+reine Schreibzeit bei den dokumentierten 250–300 Tokens/s
+(`docs/decisions/prefix-cache-2026-10-01.md`). Nachher: derselbe **eine** Aufruf, 7,36 s
+median, 1 376 Tokens; sie wartet nur nicht mehr darauf.
+
+**Ein Aufruf, nicht zwei.** Der Satz wird gestreamt und nach den ersten drei fertigen Fragen
+aufgeschnitten (`apps/api/src/llm/partial.ts` `answerUpTo`), mit demselben zod-Schema
+geprüft wie die fertige Antwort. Zwei Aufrufe hätten den zweiten erzählen müssen, was der
+erste geschrieben hat, und den ganzen Systemprompt nochmal bezahlt (5 102 Eingabe-Tokens) —
+und hätten das Dubletten-Problem erst erzeugt, das #220 Falle 3 nennt. Die gemessenen Kosten
+des Inhalts-Evals bleiben entsprechend gleich: 5,01 ct vorher, 5,05 ct nachher.
+
+Ehrlich dazu: **die 1,5–2 s der Abnahme werden nicht erreicht.** Drei Fragen sind ~460 der
+1 376 Tokens, dazu der Sockel von ~1 s und die Felder vor den Fragen — ~3 s ist der Boden für
+drei. Unter 2 s käme man nur mit EINER ersten Frage, und dann wäre „wird noch vorbereitet"
+der Normalfall statt der Ausnahme. Zweites Nebenergebnis: der **ganze** Satz ist etwa 1 s
+später komplett als vorher (Streaming-Overhead) — sie fängt 2,5 s früher an, der Rest
+kommt ~1 s später an.
+
+Inhalt, `evals/content` (derselbe Richter, dieselben zwei Blätter, je ein Lauf):
+
+| Stufe               | vorher | nachher   |
+| ------------------- | ------ | --------- |
+| „mehr davon" (#220) | 14/17  | **17/17** |
+| „vom Blatt" (#219)  | 14/14  | 14/14     |
+
+Wall-Clock „Übung starten" im Eval-Lauf: 5,92 s / 6,45 s → **2,91 s / 2,99 s**. Die Sätze
+wuchsen von 3 auf 9 bzw. 8 Fragen, jede genau einmal.
+**Grenze der Zahl:** 17 geurteilte Fragen pro Lauf und ein Modell bei Temperatur 0,4 — im
+Baseline-Lauf waren es 14/17, im nächsten Lauf ohne jede Änderung am `explain`-Pfad 17/17.
+Die Stichprobe erkennt einen groben Einbruch, keine feine Verschlechterung.
