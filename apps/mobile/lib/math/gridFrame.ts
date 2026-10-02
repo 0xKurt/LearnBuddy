@@ -167,6 +167,14 @@ export function zoomWindow(g: PlaneGrid, box: Box, at: Pt): Window {
 }
 
 /**
+ * Squared paper has no numbers: a place on it is counted in squares from the bottom-left
+ * corner (2 squares to the right, 3 up), the way she would count them with her finger.
+ */
+export function squaresFrom(min: number, v: number, step: number): number {
+  return Math.round((v - min) / step);
+}
+
+/**
  * The grid lines whose numbers are written: every one, or every 2nd, 5th … A number like "−4"
  * is ~16 pt wide at 11 pt; below 28 pt per line the numbers of neighbouring lines (and the one
  * at the origin) run into each other — measured on 360×740, shot 50.
