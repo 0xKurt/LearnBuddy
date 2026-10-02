@@ -22,6 +22,8 @@ import {
 import { planSummaries, runSummary } from '../buddy/summarise.js';
 import { planConsolidations, runConsolidation } from '../buddy/consolidate.js';
 import { purgeSpeechCache } from '../voice/speech.js';
+import { purgePerf } from '../perf/service.js';
+import { purgeSpeculations } from '../practice/speculation.js';
 import { abandonStaleUploads, markMaterialFailed, runExtraction } from '../materials/service.js';
 import { closeIdleSessions } from '../practice/lifecycle.js';
 import { handleParkedJobs } from './terminal.js';
@@ -53,6 +55,10 @@ export type RetentionStats = {
   speech_cache: number;
   /** Old decision contents blanked plus old call-log rows deleted (90/180 days). */
   decision_content: number;
+  /** Records of preparations ahead older than 30 days (issue #59). */
+  speculations: number;
+  /** Device timing counts older than 180 days (issue #169). */
+  perf_rollups: number;
 };
 
 export type TickStats = {
@@ -259,6 +265,8 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     const closedMemories = await purgeClosedMemories(deps);
     const speechCache = await purgeSpeechCache(deps);
     const decisionContent = await purgeDecisionContent(deps);
+    const speculations = await purgeSpeculations(deps);
+    const perfRollups = await purgePerf(deps);
     stats.retention = {
       storage_removed: storage.removed,
       storage_waiting: storage.waiting,
@@ -266,6 +274,8 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
       closed_memories: closedMemories,
       speech_cache: speechCache,
       decision_content: decisionContent,
+      speculations,
+      perf_rollups: perfRollups,
     };
     await deps.db.query(
       `insert into system_heartbeats (name, last_started_at, last_finished_at, stats)

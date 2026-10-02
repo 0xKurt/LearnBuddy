@@ -24,6 +24,7 @@ import { materialRoutes } from './modules/materials/routes.js';
 import { erasureBacklog } from './modules/materials/purge.js';
 import { voiceRoutes } from './modules/voice/routes.js';
 import { practiceRoutes } from './modules/practice/routes.js';
+import { perfRoutes } from './modules/perf/routes.js';
 import { schedulerHealth, type SchedulerHealth } from './modules/scheduler/health.js';
 import { runTick } from './modules/scheduler/tick.js';
 
@@ -190,6 +191,7 @@ export function createApp(deps: Deps): Hono<AppEnv> {
   api.route('/practice', practiceRoutes);
   api.route('/materials', materialRoutes);
   api.route('/voice', voiceRoutes);
+  api.route('/', perfRoutes);
 
   // The app calls /v1/…; Vercel rewrites /v1/* to the /api function, and the
   // Node server serves the same routes without a prefix.

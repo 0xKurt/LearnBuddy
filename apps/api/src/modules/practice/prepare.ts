@@ -10,6 +10,10 @@
 //
 // Nothing here tells her anything: a preparation that is not finished is not claimed
 // (CLAUDE.md rule 5); the offer card says what it always said until the session is there.
+//
+// Measured and capped since issue #59 (`speculation.ts`): each preparation ahead is a row — so
+// her tap on another instance waits for it instead of asking the model again — and preparing
+// ahead stops while her offers mostly go untapped. Then her tap prepares, as before #48.
 
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 
@@ -17,6 +21,7 @@ import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
 import { startTopic } from './generate.js';
 import type { PracticeLearner } from './service.js';
+import { claimAhead, finishAhead, speculationAllowed } from './speculation.js';
 
 /** Offers that open a prepared session; `open_area` and the rest have nothing to prepare. */
 type Offer = Extract<ActionSummary, { tool: 'offer_learning' }>;
@@ -36,18 +41,37 @@ export function prepareOffered(
         [learnerId],
       );
       if (!learner) return;
+      // The cap (issue #59): no model call ahead when it is mostly thrown away, and none twice.
+      const allowed = await speculationAllowed(deps.db, learnerId, deps.now());
+      if (!allowed.allowed) return;
+      if (!(await claimAhead(deps.db, learnerId, action.id, deps.now()))) return;
       try {
-        await startTopic(deps, learner, {
-          client_request_id: action.id,
-          kind: offer.kind,
-          text: offer.text,
-          goal_id: offer.goal_id,
-          // Prepared exactly as her tap would ask for it (issue #113) — otherwise the
-          // prepared session and the tapped one would be two different things.
-          difficulty: offer.difficulty,
-          direction: offer.direction,
+        const sessionId = await startTopic(
+          deps,
+          learner,
+          {
+            client_request_id: action.id,
+            kind: offer.kind,
+            text: offer.text,
+            goal_id: offer.goal_id,
+            // Prepared exactly as her tap would ask for it (issue #113) — otherwise the
+            // prepared session and the tapped one would be two different things.
+            difficulty: offer.difficulty,
+            direction: offer.direction,
+          },
+          { ahead: true },
+        );
+        await finishAhead(deps.db, learnerId, action.id, deps.now(), {
+          outcome: 'ready',
+          sessionId,
         });
       } catch (err) {
+        const refused = isAppError(err) && err.details?.reason === 'not_usable';
+        // Ended either way, so her tap never waits for a preparation that is over. Only "nothing
+        // to learn from this" is handed to her tap as the answer; anything else lets it try.
+        await finishAhead(deps.db, learnerId, action.id, deps.now(), {
+          outcome: refused ? 'refused' : 'failed',
+        });
         // "Nothing to learn from this" is not an outage — it is the generator saying this
         // offer can never start, and it would say the same to her tap (issue #196). So it is
         // kept: the button stops being a button, and STATE stops calling it something waiting

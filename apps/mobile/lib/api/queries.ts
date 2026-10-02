@@ -23,7 +23,9 @@ import {
   getMemory,
   getSession,
   getSettings,
+  offerReadiness,
 } from './endpoints.js';
+import { nextReadinessPoll } from './offerReady.js';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +98,30 @@ export const useHome = () =>
       return busy ? 3000 : 60_000;
     },
   });
+
+/**
+ * Whether the practice behind Buddy's newest offer stands there yet (issue #59). Asked while she
+ * reads, bounded (lib/api/offerReady.ts); once it is ready its session is in the cache, so her tap
+ * opens it without another request. Asking never starts it.
+ */
+export function useOfferReadiness(actionId: string, enabled: boolean) {
+  const query = useQuery({
+    queryKey: keys.offer(actionId),
+    queryFn: () => offerReadiness(actionId),
+    enabled,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+    refetchInterval: (q) => nextReadinessPoll(q.state.data, q.state.dataUpdateCount),
+  });
+  const ready = query.data?.state === 'ready' ? query.data.session : null;
+  useEffect(() => {
+    // Never over a copy the practice screen already moved on with.
+    if (ready && queryClient.getQueryData(keys.session(ready.id)) === undefined) {
+      queryClient.setQueryData(keys.session(ready.id), ready);
+    }
+  }, [ready?.id]);
+  return { state: query.data?.state ?? null, session: ready };
+}
 
 export function setHome(home: BuddyHome): void {
   // A turn that finishes after sign-out never refills the cleared cache (shared phone).

@@ -44,6 +44,7 @@ import {
   startManual,
 } from './service.js';
 import { speakItem, speakWord } from './speak.js';
+import { markUsed, offerReadiness } from './speculation.js';
 
 export const practiceRoutes = new Hono<AppEnv>();
 practiceRoutes.use('*', requireUser, requireAccount, requireLearner);
@@ -179,12 +180,22 @@ practiceRoutes.post('/sessions/:id/finish', async (c) => {
   return c.json(view);
 });
 
+// Whether the practice behind Buddy's offer stands there yet (issue #59): the app asks while she
+// reads, so her tap opens it without another request. Asking prepares nothing and starts nothing.
+practiceRoutes.get('/offers/:actionId', async (c) => {
+  const actionId = check(Uuid, c.req.param('actionId'));
+  const deps = depsOf(c);
+  return c.json(await offerReadiness(deps, c.get('learner').id, actionId));
+});
+
 // Learning from something the learner named or typed (no photo).
 practiceRoutes.post('/topic', async (c) => {
   const input = await readBody(c, StartTopicRequest);
   const deps = depsOf(c);
   const learner = c.get('learner');
   const id = await startTopic(deps, learner, input);
+  // Her tap: if Buddy prepared this ahead, it was not for nothing (issue #59, `speculation.ts`).
+  await markUsed(deps.db, learner.id, input.client_request_id, deps.now());
   // Hints for the new questions, while she reads the first one. Best effort: if this
   // never runs, the tutor model helps as before (hints.ts).
   if (input.kind === 'practice') {

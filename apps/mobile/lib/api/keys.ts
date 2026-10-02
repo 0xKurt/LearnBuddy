@@ -9,4 +9,5 @@ export const keys = {
   material: (id: string) => ['material', id] as const,
   materialItems: (id: string) => ['material', id, 'items'] as const,
   session: (id: string) => ['practice', id] as const,
+  offer: (actionId: string) => ['offer', actionId] as const,
 };

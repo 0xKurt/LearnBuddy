@@ -341,7 +341,12 @@ export function Conversation({
                   // a card glued to its sentence was the complaint (owner 28.09., issue #51).
                   style={{ width: '86%', marginTop: SPACE.xs }}
                 >
-                  <OfferCard actionId={a.id} offer={a.summary} spoken={spokenMode} />
+                  <OfferCard
+                    actionId={a.id}
+                    offer={a.summary}
+                    spoken={spokenMode}
+                    newest={m === lastBuddy}
+                  />
                 </Animated.View>
               ) : a.summary.tool === 'open_area' ? (
                 <Animated.View

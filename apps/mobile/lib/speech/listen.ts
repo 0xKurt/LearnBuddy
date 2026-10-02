@@ -31,7 +31,9 @@ import {
   type Reading,
   type ReadingEffects,
 } from './pipeline.js';
-import { deviceRate, NaturalGate, type SpeechFailure } from './readAloud.js';
+import { counted } from '../perf.js';
+import { AheadCache, type AheadAudio } from './ahead.js';
+import { deviceRate, NaturalGate, readingParts, type SpeechFailure } from './readAloud.js';
 import { pickVoice, SPEECH_RATE, voiceLocale } from './voice.js';
 import { voiceStore } from './voiceState.js';
 
@@ -80,6 +82,49 @@ const FETCH_TIMEOUT_MS = 7000;
 const FIRST_PIECE_TIMEOUT_MS = 2500;
 
 let current: Reading | null = null;
+
+// ─────────────── fetched ahead (issue #59) ───────────────
+
+const ahead = new AheadCache(() => counted('speech_ahead_wasted'));
+
+const aheadKey = (locale: string, slow: boolean, spoken: string) =>
+  `${locale}|${slow ? 'slow' : ''}|${spoken}`;
+
+/**
+ * Fetches the first audio of `text` now, so reading it later starts without a wait: the next
+ * question while she answers this one, the verdict word before her answer is judged. Only in her
+ * own voice and speed (a preview voice is never fetched ahead), and only while the natural voice
+ * is on — otherwise the phone reads and there is nothing to fetch. `reusable` = a fixed sentence
+ * that is read again and again (lib/speech/ahead.ts).
+ */
+export function prepareReading(
+  text: string,
+  lang: string,
+  opts: { transform?: (sentence: string) => string; reusable?: boolean; slow?: boolean } = {},
+): void {
+  const locale = voiceLocale(lang);
+  if (!/^[a-z]{2}-[A-Z]{2}$/.test(locale) || !gate.allows(locale)) return;
+  const first = readingParts(text, opts.transform ?? ((s: string) => s))[0]?.spoken[0];
+  if (!first) return;
+  const slow = opts.slow ?? false;
+  ahead.prepare(
+    aheadKey(locale, slow, first),
+    async (): Promise<AheadAudio | null> => {
+      try {
+        const res = await withTimeout(
+          synthesizeSpeech({ text: first, locale, ...(slow ? { slow: true } : {}) }),
+          FETCH_TIMEOUT_MS,
+        );
+        return { base64: res.audio_base64, mime: res.mime, speed: res.speed };
+      } catch (err) {
+        const failure = failureOf(err);
+        if (failure.code !== 'timeout') gate.failed(locale, failure);
+        return null;
+      }
+    },
+    opts.reusable ?? false,
+  );
+}
 
 function failureOf(err: unknown): SpeechFailure {
   if (err instanceof ApiError) {
@@ -131,8 +176,21 @@ function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
   const slow = opts.slow ?? false;
   const self: { reading: Reading | null } = { reading: null };
   const effects: ReadingEffects = {
-    async fetch(spoken, ahead): Promise<Clip> {
+    async fetch(spoken, later): Promise<Clip> {
       if (!/^[a-z]{2}-[A-Z]{2}$/.test(locale) || !gate.allows(locale)) return null;
+      // Fetched before it was needed (issue #59): no request now, or the one already on its way.
+      const kept = opts.voice ? null : ahead.take(aheadKey(locale, slow, spoken));
+      if (kept) {
+        const audio = await withTimeout(
+          kept,
+          later ? FETCH_TIMEOUT_MS : FIRST_PIECE_TIMEOUT_MS,
+        ).catch(() => null);
+        if (audio) {
+          counted('speech_ahead_used');
+          gate.speed = audio.speed;
+          return { uri: audioUri(audio.base64, audio.mime) };
+        }
+      }
       try {
         const res = await withTimeout(
           synthesizeSpeech({
@@ -141,7 +199,7 @@ function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
             ...(slow ? { slow: true } : {}),
             ...(opts.voice ? { voice: opts.voice } : {}),
           }),
-          ahead ? FETCH_TIMEOUT_MS : FIRST_PIECE_TIMEOUT_MS,
+          later ? FETCH_TIMEOUT_MS : FIRST_PIECE_TIMEOUT_MS,
         );
         gate.speed = res.speed;
         return { uri: audioUri(res.audio_base64, res.mime) };
@@ -149,7 +207,7 @@ function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
         const failure = failureOf(err);
         // Giving up on a piece she waits for in silence is impatience, not a broken voice:
         // the phone reads this one, the natural voice stays on for the rest of the reply.
-        const impatient = !ahead && failure.code === 'timeout';
+        const impatient = !later && failure.code === 'timeout';
         if (!impatient) gate.failed(locale, failure);
         return null;
       }

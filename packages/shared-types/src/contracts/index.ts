@@ -10,3 +10,4 @@ export * from './parts.js';
 export * from './rubric.js';
 export * from './listen.js';
 export * from './learning.js';
+export * from './perf.js';

@@ -1039,9 +1039,17 @@ export default function BuddyScreen() {
   // The slim bar first (the close button sits in its corner), then what the system says.
   const startPrepared = (stepId: string) =>
     void act(async () => {
-      const { session_id, session } = await startStep(stepId);
-      if (session) seedSession(session);
-      router.push(`/practice/${session_id}`);
+      // What the background check prepared after a photo, a practice or before a test → its
+      // first question (issue #59: under 1 s). The practice screen says when it is there.
+      tapped('start_step');
+      try {
+        const { session_id, session } = await startStep(stepId);
+        if (session) seedSession(session);
+        router.push(`/practice/${session_id}`);
+      } catch (err) {
+        dropped('start_step');
+        throw err;
+      }
     });
   const skipPrepared = (stepId: string) => void act(() => skipStep(stepId));
   const bar = ((): React.ReactElement | null => {

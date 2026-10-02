@@ -62,6 +62,7 @@
     "example_hint": "Pone el ejemplo en el campo.",
     "submit": "¡Vamos!",
     "preparing": "Buddy lo está preparando …",
+    "ready": "Listo",
     "preparing_hint": "Tarda unos segundos.",
     "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole."
   }

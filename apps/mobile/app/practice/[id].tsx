@@ -111,15 +111,27 @@ import { currentLocale } from '../../lib/i18n/index.js';
 import { announce } from '../../lib/announce.js';
 import { haptic } from '../../lib/haptics.js';
 import type { SpokenWords } from '../../lib/math/speak.js';
-import { speakInOrder, stop as stopListening, type SpokenPart } from '../../lib/speech/listen.js';
-import { feedbackReadText, questionReadText, spokenText } from '../../lib/speech/spoken.js';
+import {
+  prepareReading,
+  speakInOrder,
+  stop as stopListening,
+  type SpokenPart,
+} from '../../lib/speech/listen.js';
+import { followingQuestion, verdictsToHaveReady } from '../../lib/speech/readAhead.js';
+import { voiceStore } from '../../lib/speech/voiceState.js';
+import {
+  endSentence,
+  feedbackReadText,
+  questionReadText,
+  spokenText,
+} from '../../lib/speech/spoken.js';
 import { baseLanguage } from '../../lib/speech/voice.js';
 import { afterFeedback, useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
-import { reacted, tapped } from '../../lib/perf.js';
+import { dropped, reacted, tapped } from '../../lib/perf.js';
 import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 
 /**
@@ -300,14 +312,54 @@ export default function PracticeScreen() {
     onScreen && onScreen.status === 'open' && !session?.card_pass ? onScreen.item : null;
   // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
   // to the end lets the mic listen again, and a closed question moves on by itself.
-  const readQuestion = (item: ItemView) =>
+  const readQuestion = (item: ItemView) => {
+    // The question on screen → its first sound (issue #59: under 1 s).
+    tapped('question_audio');
     speakInOrder(questionParts(item, words, t), (why) => {
+      dropped('question_audio');
       if (why === 'done') useHandsFree.getState().listenNow();
     });
+  };
   useEffect(() => {
     if (voiceOn && toRead) readQuestion(toRead);
     // Only a new question (or switching voice mode on) reads again; "Nochmal vorlesen" repeats it.
   }, [voiceOn, toRead?.id]);
+  useEffect(
+    () =>
+      voiceStore.subscribe(() => {
+        if (voiceStore.get().phase === 'speaking') reacted('question_audio');
+      }),
+    [],
+  );
+
+  // What she will hear next is fetched while she is busy with this question (issue #59): the
+  // next question's first sentence and the verdict words that open Buddy's feedback. Only in
+  // voice mode — otherwise nothing is read, and nothing is fetched.
+  useEffect(() => {
+    if (!voiceOn || !session || session.card_pass) return;
+    const following = followingQuestion(session, onScreen?.item.id ?? null);
+    const first = following ? questionParts(following.item, words, t)[0] : undefined;
+    if (first) prepareReading(first.text, first.lang);
+    for (const v of verdictsToHaveReady(session)) {
+      prepareReading(endSentence(t(`practice:verdict.${v}`)), currentLocale(), { reusable: true });
+    }
+  }, [voiceOn, session?.id, session?.status, onScreen?.item.id, session?.items.length]);
+
+  // A question stands on screen: what led here has reacted — starting an offered or prepared
+  // practice (issue #66/#59), or "Weiter" to the next question (budget 0.5 s). A run that ended
+  // instead leaves "Weiter" without a question: that wait is not the app's.
+  useEffect(() => {
+    if (onScreen?.status === 'open') {
+      reacted('start_offer');
+      reacted('start_step');
+      reacted('next_question');
+    } else if (session && session.status !== 'active') dropped('next_question');
+  }, [onScreen?.item.id, onScreen?.status, session?.status]);
+  useEffect(() => {
+    if (!query.isError) return;
+    dropped('start_offer');
+    dropped('start_step');
+  }, [query.isError]);
 
   // Leaving the screen ends whatever is being read, and the hands-free loop.
   useFocusEffect(
@@ -644,6 +696,7 @@ export default function PracticeScreen() {
   const nextRef = useRef(() => undefined as void);
   nextRef.current = () => next();
   function next(): void {
+    tapped('next_question');
     setPinnedId(null);
     setText('');
     lastSent.current = null;

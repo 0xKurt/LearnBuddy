@@ -49,6 +49,7 @@ import {
   syncPushDevice,
 } from '../lib/push.js';
 import { practiceRoute } from '../lib/pushActions.js';
+import { startPerfReports } from '../lib/perfReport.js';
 
 // Before the first render, so a crash while the app is still starting is reported too.
 // Does nothing unless an EU DSN is configured (lib/observability/sentry.ts, issue #36).
@@ -270,6 +271,9 @@ export default function RootLayout() {
   // and keep the cross-fade (issue #126). Read once and kept current: someone can turn it
   // on while the app is open, and Android counts "Animationen aus" as asking for it.
   useEffect(() => watchReducedMotion(), []);
+
+  // What she waited on this device, summed up, goes to the API (issue #169, lib/perfReport.ts).
+  useEffect(() => startPerfReports(), []);
 
   // Android cut the app off while the camera was open: the photo goes on to capture (M-22).
   useEffect(() => {

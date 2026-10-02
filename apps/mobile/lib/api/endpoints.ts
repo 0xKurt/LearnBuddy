@@ -15,6 +15,7 @@ import {
   MaterialView,
   MemoryList,
   MessageView,
+  OfferReadiness,
   tolerantArray,
   MeResponse,
   type OutreachAction,
@@ -326,6 +327,9 @@ export const listenToItem = (sessionId: string, body: ListenAudioRequest) =>
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */
 export const startTopic = (body: StartTopicRequest) =>
   request('POST', '/practice/topic', { body, schema: SessionView });
+/** Whether Buddy's offered practice stands there yet (issue #59); asking starts nothing. */
+export const offerReadiness = (actionId: string) =>
+  request('GET', `/practice/offers/${actionId}`, { schema: OfferReadiness });
 export const revealItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/reveal`, {
     body: { item_id: itemId },

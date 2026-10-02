@@ -30,6 +30,7 @@ import { ageOn } from '../identity/model.js';
 import { CURRICULUM_RULES, curriculumBlock, offCurriculum, pointOf } from '../curriculum/state.js';
 import { BAR_RULES, barItems, MAX_BAR_ITEMS } from './bars.js';
 import { prepareHints } from './hints.js';
+import { awaitPreparedAhead } from './speculation.js';
 import {
   LISTEN_RULES,
   ListenDraft,
@@ -366,11 +367,18 @@ export async function startTopic(
   deps: Deps,
   learner: PracticeLearner,
   input: StartTopicRequest,
+  opts: {
+    /**
+     * Buddy prepares this himself, before she asked (`prepare.ts`). Only her own request waits for
+     * a preparation running on another instance — the preparation must not wait for itself.
+     */
+    ahead?: boolean;
+  } = {},
 ): Promise<string> {
   const key = `${learner.id}:${input.client_request_id}`;
   const running = inFlight.get(key);
   if (running) return running;
-  const started = prepareTopic(deps, learner, input);
+  const started = prepareTopic(deps, learner, input, opts.ahead === true);
   inFlight.set(key, started);
   try {
     return await started;
@@ -615,6 +623,7 @@ async function prepareTopic(
   deps: Deps,
   learner: PracticeLearner,
   input: StartTopicRequest,
+  ahead: boolean,
 ): Promise<string> {
   const existing = await deps.db.maybeOne<{ id: string }>(
     `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
@@ -628,6 +637,13 @@ async function prepareTopic(
   // (`practice/prepare.ts`), so nothing promises a listening task that cannot be heard.
   const noVoice = input.kind === 'listen' ? noVoiceToReadIt(deps) : null;
   if (noVoice) throw noVoice;
+
+  // Buddy is writing this very offer on another instance (issue #59): her tap waits for that one
+  // instead of paying for the same questions twice. In this process `inFlight` already joined it.
+  if (!ahead) {
+    const joined = await awaitPreparedAhead(deps, learner.id, input.client_request_id);
+    if (joined) return joined;
+  }
 
   const now = deps.now();
   const tz = await deps.db.one<{ timezone: string }>(

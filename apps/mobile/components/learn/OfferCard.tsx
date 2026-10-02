@@ -16,7 +16,11 @@ import { Card } from '../lb/Card.js';
 import { Icon } from '../lb/Icon.js';
 import { KIND_ICON, KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
-import { reacted, tapped } from '../../lib/perf.js';
+import { startTopic } from '../../lib/api/endpoints.js';
+import { keys } from '../../lib/api/keys.js';
+import { queryClient, useOfferReadiness } from '../../lib/api/queries.js';
+import { counted, dropped, tapped } from '../../lib/perf.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_learning' }>;
@@ -25,9 +29,15 @@ export function OfferCard({
   actionId,
   offer,
   spoken = false,
+  newest = false,
 }: {
   actionId: string;
   offer: Offer;
+  /**
+   * The offer under Buddy's newest message: only that one asks whether its practice is ready
+   * (issue #59) — an old card in the history has nothing to win from asking.
+   */
+  newest?: boolean;
   /**
    * Tapped while talking (app/talk.tsx): the practice must not turn silent because she
    * started it with her voice (issue #40) — voice mode goes on, so the question is read
@@ -56,21 +66,47 @@ export function OfferCard({
           : null,
   );
   const label = t(`learn:${KIND_LABEL[offer.kind]}`);
+  // Buddy prepares what he offers while she reads (issue #48); the card asks whether it stands
+  // there yet, so her tap can open it at once. Only "ready" is ever said — "preparing" looks
+  // exactly like the card always did (CLAUDE.md rule 5).
+  const readiness = useOfferReadiness(actionId, newest && !dead);
+  const ready = readiness.session;
 
   async function go(): Promise<void> {
-    // Tap → the first question on screen (issue #66): the wait she complained about.
+    // Tap → the first question on screen (issue #66): the wait she complained about. The
+    // practice screen says when it is there (reacted('start_offer')).
     tapped('start_offer');
-    const session = await start(offer.kind, offer.text, actionId, {
+    const request = {
       goalId: offer.goal_id,
       // What she asked for beyond the topic travels with the offer (issue #113).
       difficulty: offer.difficulty,
       direction: offer.direction,
-    });
+    };
+    if (ready) {
+      // Already there: open it now, and tell the server she started it on the way (that her
+      // tap used what was prepared ahead, and the hints for it start). Its answer is not put
+      // over the screen she is already on.
+      counted('offer_ready_at_tap');
+      if (spoken) useVoiceMode.getState().setOn(true);
+      router.push(`/practice/${ready.id}`);
+      void startTopic({
+        client_request_id: actionId,
+        kind: offer.kind,
+        text: offer.text,
+        ...(request.goalId ? { goal_id: request.goalId } : {}),
+        ...(request.difficulty ? { difficulty: request.difficulty } : {}),
+        ...(request.direction ? { direction: request.direction } : {}),
+      })
+        .then(() => queryClient.invalidateQueries({ queryKey: keys.home }))
+        .catch(() => undefined);
+      return;
+    }
+    counted('offer_waited_at_tap');
+    const session = await start(offer.kind, offer.text, actionId, request);
     if (session) {
       if (spoken) useVoiceMode.getState().setOn(true);
       router.push(`/practice/${session.id}`);
-    }
-    reacted('start_offer');
+    } else dropped('start_offer');
   }
 
   return (
@@ -83,7 +119,23 @@ export function OfferCard({
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <Icon name={KIND_ICON[offer.kind]} size={20} color={palette.primaryDk} />
           </View>
-          <Text style={[TYPE.label, { color: palette.primaryDk }]}>{label.toUpperCase()}</Text>
+          <Text style={[TYPE.label, { color: palette.primaryDk, flex: 1 }]} numberOfLines={1}>
+            {label.toUpperCase()}
+          </Text>
+          {ready && !preparing ? (
+            // Said only once it is true: the questions are stored and her tap opens them.
+            <View
+              accessibilityLiveRegion="polite"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.xs }}
+            >
+              <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                <Icon name="check" size={14} color={palette.successText} />
+              </View>
+              <Text style={[TYPE.small, { color: palette.successText }]}>
+                {t('learn:topic.ready')}
+              </Text>
+            </View>
+          ) : null}
         </View>
         <Text style={TYPE.body} numberOfLines={2}>
           {offer.text}
