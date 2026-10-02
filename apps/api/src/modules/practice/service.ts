@@ -54,6 +54,15 @@ import {
   type PartsCheck,
   type PartsPlace,
 } from './parts.js';
+import {
+  checkStaffLine,
+  staffAgain,
+  staffLineReply,
+  staffSurfaceOf,
+  staffTaskOf,
+  writtenStaffLine,
+  type StaffCheck,
+} from './staff.js';
 import { checkPath } from './steps.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { summarize } from './summary.js';
@@ -165,6 +174,12 @@ export type ItemRow = {
    * reaches the app while the question is open — it is where the answer comes from.
    */
   listen_task: unknown;
+  /**
+   * The reviewed note-line task this question's text, drawing, options and key were COMPUTED
+   * from (issue #226), or null for everything else. Never set together with `bar_task` — a
+   * question has at most one computed source (migration 0078). Read through `staffTaskOf`.
+   */
+  staff_task: unknown;
 };
 
 export type SessionRow = {
@@ -708,9 +723,13 @@ async function signImageUrls(
  * A column that no longer parses as a task yields no surface: the question is still
  * answerable by typing, and nothing is guessed at.
  */
-function surfaceFor(stored: unknown): ItemView['surface'] {
-  const task = taskOf(stored);
-  return task ? surfaceOf(task) : null;
+function surfaceFor(bar: unknown, staff: unknown): ItemView['surface'] {
+  const barTask = taskOf(bar);
+  if (barTask) return surfaceOf(barTask);
+  // The empty staff she writes a note line on (issue #226). The two can never both be there
+  // (migration 0078 `items_one_computed_source`), so the order here settles nothing.
+  const staffTask = staffTaskOf(staff);
+  return staffTask ? staffSurfaceOf(staffTask) : null;
 }
 
 /**
@@ -747,8 +766,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.parts_task, i.archived_at,
-            i.bar_task, i.listen_task, i.archived_at,
+            i.bar_task, i.parts_task, i.listen_task, i.staff_task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -834,7 +852,7 @@ export async function sessionView(
         // The fraction bar she works with, derived from the task the question was computed
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
-        surface: i.status === 'open' && active ? surfaceFor(i.bar_task) : null,
+        surface: i.status === 'open' && active ? surfaceFor(i.bar_task, i.staff_task) : null,
         // The board she arranges, for as long as the question is open — like the fraction bar
         // above, and for the same reason: once the question is closed the pieces would be a
         // control with nothing left to do, and her answer and the solution both stand in the
@@ -1192,12 +1210,30 @@ export async function answerItem(
     });
   }
 
+  // ── eine NOTENZEILE, die sie selbst geschrieben hat (issue #226) ──
+  //
+  // Dieselbe Trennung wie oben, eine Stufe einfacher: die Zeile reist als eine kompakte
+  // Maschinenform in `text` (`renderStaffLine`), weil die App nichts Deutsches zusammenbauen
+  // soll und der Server nichts raten soll. `checkStaffLine` liest sie zurück und vergleicht
+  // Tonnamen, Dauern und Taktfüllung — kein Modell, in keinem Zweig.
+  //
+  // Null heißt „hier ist nichts zu vergleichen": jede andere Notenaufgabe (die wird angetippt),
+  // und eine Antwort, die überhaupt keine Notenzeile ist. Dann läuft alles wie immer — gegen den
+  // Schlüssel in Worten, der in `items.answer` steht. Sie für falsch zu erklären wäre ein Urteil
+  // über Noten, von denen keine da waren (Regel 5).
+  const staffTask = staffTaskOf(item.staff_task);
+  const staffCheck: StaffCheck | null =
+    hintRequest || staffTask === null ? null : checkStaffLine(staffTask, input.text ?? '');
+  /** Ihre Zeile in Worten, damit der Gesprächsfaden lesbar bleibt (wie `writtenParts`). */
+  const staffWritten =
+    staffCheck !== null ? writtenStaffLine(learner.locale, input.text ?? '') : null;
   const text =
     partsTask !== null && filled !== null
       ? // Her arrangement in one line, so the thread, the tutor history and a disputed judgement
         // all see what she actually did.
         writtenParts(partsTask, filled)
-      : (input.text ??
+      : (staffWritten ??
+        input.text ??
         (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
   if (!text) throw new AppError('invalid_input', 'Empty answer');
   // The reviewed task this question was computed from, if any (issue #162).
@@ -1222,6 +1258,10 @@ export async function answerItem(
   // and that the tutor is given that text as the material it may judge against.
   const listenTask = listenTaskOf(item.listen_task);
   // A request for help is not an answer: nothing for the rules to check.
+  // Two checks that code does ENTIRELY on its own and that therefore come before the key
+  // comparison: every part of a multi-part answer (issues #228–#230) and a written note line
+  // (issue #226). Both end in `parts_left` when some of it holds — the same verdict one form
+  // further — and neither ever asks a model.
   const byRules: RuleVerdict = hintRequest
     ? 'unknown'
     : partsCheck !== null
@@ -1230,12 +1270,18 @@ export async function answerItem(
         : partsCheck.verdict === 'partly'
           ? 'parts_left'
           : 'incorrect'
-      : ruleCheck(
-          // A question code computed asks for an amount, so any form of it is right (#162);
-          // a question she HEARD is judged on what she understood, not on how she wrote it (#210).
-          { ...item, form_free: barTask !== null, listening: listenTask !== null },
-          { text: input.text ?? null, choice: input.choice ?? null },
-        );
+      : staffCheck !== null
+        ? staffCheck.verdict === 'correct'
+          ? 'correct'
+          : staffCheck.verdict === 'partly'
+            ? 'parts_left'
+            : 'incorrect'
+        : ruleCheck(
+            // A question code computed asks for an amount, so any form of it is right (#162);
+            // a question she HEARD is judged on what she understood, not how she wrote it (#210).
+            { ...item, form_free: barTask !== null, listening: listenTask !== null },
+            { text: input.text ?? null, choice: input.choice ?? null },
+          );
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -1317,6 +1363,18 @@ export async function answerItem(
       gaveHint: false,
       revealed: false,
     };
+  } else if (rule === 'parts_left' && staffCheck !== null) {
+    // Eine Notenzeile, von der ein Stück hält (issue #226) — dasselbe Urteil, eine Form weiter.
+    // Die Frage bleibt offen, nichts wird zurückgesetzt, und sie bekommt EINE Stelle: wie viele
+    // Zeichen von vorne stimmen, und ab dem zweiten Versuch auch, wo es aufhört („in Takt 2 ist
+    // mehr, als in den Takt passt“). Das ist genau die Rückmeldung, die issue #226 verlangt.
+    judged = {
+      verdict: 'partially_correct',
+      evaluatedBy: 'rule',
+      reply: staffLineReply(learner.locale, staffCheck, item.attempts),
+      gaveHint: false,
+      revealed: false,
+    };
   } else if (
     NEAR_MISS.has(rule) &&
     !articleMissing(rule, item) &&
@@ -1369,6 +1427,34 @@ export async function answerItem(
       reply: workedReply(learner.locale, item),
       gaveHint: false,
       revealed: true,
+    };
+  } else if (
+    givesHints(session.mode) &&
+    rule === 'incorrect' &&
+    staffTask !== null &&
+    // Eine Schreibaufgabe nur, wenn wirklich eine Zeile ankam: sonst hat `ruleCheck` sie gegen
+    // den Schlüssel in Worten geprüft, und dafür ist der Satz hier der falsche.
+    (staffTask.task !== 'write_line' || staffCheck !== null)
+  ) {
+    // Eine falsche Notenantwort bekommt eine feste, freundliche Zeile von Code — bei jedem
+    // Versuch, nicht nur beim ersten, und ohne Modellaufruf.
+    //
+    // Das ist kein Sparen, sondern Regel 5: der Tutor SIEHT die gezeichnete Notenzeile nicht.
+    // Er bekommt Frage, Schlüssel und ihren Text, aber nicht das Bild, aus dem die Antwort
+    // abgelesen wird — und ein Modell, das über ein Bild schreibt, das es nicht hat, erzeugt
+    // genau die sicher klingende Falschaussage, die hier niemand erkennen könnte. Code weiß
+    // dagegen, wo sie hinschauen muss, und sagt genau das (`staffAgain`); bei einer selbst
+    // geschriebenen Zeile sogar die Stelle (`staffLineReply`). Die dritte Fehlprobe erklärt
+    // die Lösung, wie überall — der Zweig darüber greift vorher.
+    judged = {
+      verdict: 'incorrect',
+      evaluatedBy: 'rule',
+      reply:
+        staffCheck !== null
+          ? staffLineReply(learner.locale, staffCheck, item.attempts)
+          : staffAgain(learner.locale, staffTask),
+      gaveHint: false,
+      revealed: false,
     };
   } else if (givesHints(session.mode) && rule === 'incorrect' && item.attempts === 0) {
     // The FIRST wrong try: kind feedback at once, no model. A slip deserves a quick "try

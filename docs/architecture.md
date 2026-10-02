@@ -1931,6 +1931,94 @@ in `items.answer`, damit „Lösung zeigen", die Fragenliste eines Blattes, der 
 und das Zurücknehmen eines Urteils unverändert weiterlaufen; die Textgrenzen in `contracts/parts.ts`
 sind so gerechnet, dass die größte erlaubte Aufgabe jeder Form in diese Spalte passt.
 
+**Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
+`practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration
+`0078_staff_tasks.sql`; Issue #226 aus der Analyse #224). Musik war das schwächste Fach: Notenschrift
+stand als `drawing` in `NotPracticableForm`, also bekamen 21 Aufgabentypen keine Frage. Dabei ist
+Notenlehre der Teil des Lehrplans mit dem **höchsten Anteil formal entscheidbarer Fehlerklassen**
+(`docs/lehrplan-und-uebungsformen.md` §10.2): ein Notenname, ein Notenwert, ein Intervall, eine
+Taktart und die Frage, ob ein Takt voll ist, sind rechenbar. Es gibt hier kein Erkennungsproblem,
+nur einen Antwortvergleich — also **kein Modellaufruf pro Antwort** (Regel 1).
+
+_Das Modell wählt, Code rechnet_ — dieselbe Bauweise wie der Bruchbalken und aus demselben Grund
+(Issue #157). Ein `StaffTask` ist alles, was das Modell sagen darf:
+
+| task             | das Modell wählt                   | die Frage, die Code schreibt                                      |
+| ---------------- | ---------------------------------- | ----------------------------------------------------------------- |
+| `name_note`      | Schlüssel, Tonhöhe                 | „Wie heißt diese Note?" — vier Optionen aus den Nachbartönen      |
+| `name_value`     | Schlüssel, Wert, Punkt, Note/Pause | „Welcher Notenwert ist das?"                                      |
+| `interval`       | Schlüssel, unterer und oberer Ton  | „Welches Intervall …?" — Stufe und Halbtöne gerechnet             |
+| `time_signature` | Schlüssel, Taktart, Takte          | „In welcher Taktart steht diese Zeile?" — ohne Taktart gezeichnet |
+| `write_line`     | Schlüssel, Taktart, Takte          | „Schreibe diese Zeile …" — sie schreibt sie auf eine leere Zeile  |
+
+Der Vertrag hat **kein Feld** für Fragetext, Antwort, Optionen, Figur, Tipp oder Musterlösung, und
+`StaffFigure` steht bewusst nicht in `ModelFigure`: eine Notenzeile schreibt nur Code. Damit kann kein
+Schlüssel der gezeichneten Zeile widersprechen — es gibt keinen zweiten Autor. Issue #226 verlangt
+das als Nachprüfung („der Schlüssel muss zur gezeichneten Zeile passen"); **Rechnen ist die stärkere
+Form derselben Zusage.** Was die Wertebereiche schon unsagbar machen, wird nicht wegvalidiert: eine
+Tonhöhe ist einer von zwölf Namen (eine Schreibung pro Taste, also kein „Eis" und keine Enharmonik),
+eine Dauer eine von fünf, eine Taktart eine von sechs, und jede Dauer ist eine ganze Zahl von
+Zweiunddreißigsteln, damit „ist dieser Takt voll?" nie an einer Rundung hängt. Was danach noch
+voneinander abhängt, ergibt **nichts**: eine Note außerhalb der gezeichneten Zeile, ein Intervall
+ohne reinen, großen oder kleinen Namen (Tritonus, übermäßige Sekunde), ein Takt, der nicht aufgeht,
+eine Taktart, die eine andere gleich lang macht (3/4 und 6/8 sind beide 24 Zweiunddreißigstel, und
+ohne Balkung gäbe es zwei richtige Antworten), eine punktierte ganze Pause.
+
+**Die Lesefragen werden angetippt** (`multiple_choice`), und das ist eine Entscheidung mit drei
+Gründen: so steht es in der Arbeit (§10.2 zählt geschlossene Antwortmengen mit vorgegebenen
+Antwortsymbolen), ein angetippter Index ist sicher richtig oder sicher falsch und kommt deshalb nie
+als `unknown` beim Tutor an — **der die gezeichnete Zeile nicht sehen kann** (Regel 5) —, und fünf
+Sprachen schreiben Tonnamen verschieden (`B` ist auf Deutsch das **H**, auf Französisch **Si**).
+Deshalb hat auch die falsche Antwort ihre eigene feste, freundliche Zeile von Code (`staffAgain`)
+statt den Tutor zu rufen; die dritte Fehlprobe erklärt die Lösung, wie überall.
+
+**Geschrieben wird wirklich geschrieben.** `write_line` gibt ihr eine leere Notenzeile
+(`ItemView.surface`, `mode: 'notes'` — dieselbe Fläche wie der Bruchbalken, eine dritte Form).
+Dreizehn Stellen je Takt sind einzelne Knöpfe mit Namen („H auf der 3. Linie in Takt 1 setzen"), weil
+derselbe Tonname in einem Schlüssel zweimal vorkommt und weil eine Fläche, deren Bedeutung am
+Berührungspunkt hängt, mit dem Screenreader nicht bedienbar wäre. Sie sind 11 pt hoch und damit
+**unter den 44 pt**, die CLAUDE.md verlangt: 13 × 44 = 572 pt nur für die Zeile, und auf einem
+360×740-Handy bleiben unter der Frage und über „Prüfen" 459 pt (die Rechnung steht in
+`StaffAnswer.tsx`). Der Tausch ist zugunsten „alles sichtbar" entschieden; ein Knopf ist dabei immer
+noch ~129 pt breit, trägt seinen Namen, **klingt in dem Moment, in dem er getroffen wird**, und
+danebengetroffen kostet einen Tipp auf „Zurück". Ihre Zeile reist als kompakte Maschinenform in
+`AnswerRequest.text` (`renderStaffLine`: `E4q G4q B4h`, Takte durch `|` getrennt) — die App soll
+nichts Deutsches zusammenbauen und der Server nichts raten; im Gesprächsfaden steht sie in Worten.
+`checkStaffLine` vergleicht **Tonnamen, Dauern und Taktfüllung**, zählt wie `order` ein PRÄFIX und
+nennt **eine** Stelle, in dieser Reihenfolge: zu viele oder zu wenige Zeichen, dann der erste Takt,
+der nicht aufgeht („in Takt 2 ist mehr, als in den Takt passt"), dann das erste Zeichen, das abweicht.
+Ein Teiltreffer ist `partially_correct`, die Frage bleibt offen, FSRS bekommt daraus nichts — genau
+die Form, die die mehrteiligen Antworten schon haben. Die **Oktave** entscheidet dabei nicht: die
+Frage, die Code geschrieben hat, nennt Tonnamen, also ist jede Oktave dieses Namens richtig
+(dieselbe Lizenz wie `form_free`), und damit die Übung nicht leer wird, liegen die Töne einer
+Schreibaufgabe innerhalb der fünf Linien, wo es von den meisten Namen nur einen gibt.
+
+**Anhören** (`lib/music/tone.ts`, `lib/music/play.ts`): die Töne werden als PCM-WAV **im Gerät
+gerechnet** — Dreieckswelle mit Hüllkurve, Tempo aus den Daten — und durch dieselbe Strecke gespielt,
+die Buddys Stimme benutzt (`audioUri` + `playAudio`, `expo-audio`). Keine neue native Abhängigkeit,
+im Browser dasselbe wie auf dem Gerät, und messbar: `lib/music/__tests__/tone.test.ts` rechnet Länge,
+Pegel und Frequenz nach (vier Viertel bei Tempo 60 sind exakt 88200 Samples; die dominante Frequenz
+eines A4 liegt per Goertzel um Faktor 3705 über der eines Halbtons daneben). `react-native-audio-api`
+wäre der naheliegende Weg und liegt bereit, aber kein App-Code importiert es
+(`docs/decisions/upload-waehrend-aufnahme.md` §5), es wäre im Web eine zweite Strecke, und an einem
+echten Oszillator kann kein Test nachrechnen.
+
+**Mit dem Screenreader** ist jede Zeile ein Satz und nicht die Beschreibung eines Bildes:
+„Violinschlüssel, Viervierteltakt. Takt 1: C als Viertelnote, E als Viertelnote, G als halbe Note"
+(`lib/music/words.ts`). Die Tonnamen stehen in den Sprachdateien, nicht im Code — ein Name ist Daten,
+sein Wort ist Übersetzung.
+
+**Ausdrücklich draußen** (und das sind Grenzen, keine Lücken): **Generalvorzeichen am Zeilenanfang**
+(und damit Tonleitern und Quintenzirkel) — ein Kreuz vor der Zeile ändert jede gleichnamige Note im
+Takt, und wer das halb abbildet, markiert richtig Geschriebenes als falsch; **Mehrstimmigkeit,
+Akkorde und Partitur**; **Dreiklänge** (rechenbar, aber noch nicht gebaut); **Notendiktat nach
+Gehör** (dort ist der Ton der Stimulus und die Zeile die Antwort — `ear_training` bleibt in
+`NotPracticableForm`); **Notenzeilen aus einem Foto** (das Modell müsste die Noten vom Bild ablesen,
+und eine Zeile, die leise von der abgedruckten abweicht, wäre genau der falsche Schlüssel, den diese
+Bauweise verhindern soll). Höchstens `MAX_STAFF_ITEMS` (8) je vorbereitetem Satz — mehr als die drei
+Bruchbalken, weil eine Notenzeile keine Beigabe ist, sondern die Frage selbst — in `practice` und im
+Probetest, nicht in der Hausaufgabenhilfe.
+
 **Session lifecycle** (`practice/service.ts`, `practice/lifecycle.ts`, migration
 `0024_session_lifecycle.sql`; audit I-3, I-4; decision D-5). Nothing answered is lost and
 nothing stays open forever:

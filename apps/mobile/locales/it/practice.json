@@ -171,6 +171,19 @@
     "word_good": "Perfetto!",
     "word_again": "Quasi: riascoltala e riprova."
   },
+  "staff": {
+    "play": "Ascolta",
+    "play_stop": "Ferma",
+    "play_hint": "Suona la riga di note.",
+    "no_sound": "Qui ora non esce nessun suono.",
+    "dot": "Punto",
+    "sharp": "Diesis ♯",
+    "rest": "Pausa",
+    "undo": "Annulla",
+    "place": "Metti {{note}} {{where}} nella battuta {{bar}}",
+    "toggle_on": "{{label}}, attivo",
+    "bar_crowded": "Nella battuta {{n}} non c'è più posto per un altro segno."
+  },
   "summary": {
     "title": "Ce l'hai fatta!",
     "secure": "Oggi senza aiuto: {{topics}}",

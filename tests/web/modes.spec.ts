@@ -220,8 +220,11 @@ test('learning modes: explain, homework help without the solution, practice with
   // instead, because every fixed near-miss reply was shut out of that mode. A reply that names a
   // line is a hint, not a solution, so it holds here too (issue #274).
   await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
-  // A near miss, not a wrong answer: her way is mostly right, so the question stays open.
-  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeVisible();
+  // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
+  // answer field is still there and so is the hint. Not „Prüfen": that button only exists while
+  // something is typed, and the field was emptied when the answer went out.
+  await expect(page.getByLabel('Deine Antwort')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toHaveCount(0);
   await page.getByLabel('Deine Antwort').fill('28');

@@ -9,11 +9,13 @@
 
 import {
   hasSeveralParts,
+  ModelFigure,
   PartsTask,
-  Figure,
   Rubric,
   type BarTask,
+  type Figure,
   type ListenTask,
+  type StaffTask,
   type VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
 import { canonicalText, compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
@@ -139,7 +141,9 @@ export const ItemDraft = z.object({
     .default(null)
     .describe('vocab: language of the answer; speak: language to say it in; else null'),
   // A figure over a bound (9 points, 8 columns) is dropped, never the question (audit H-15).
-  figure: Figure.nullable().default(null).catch(null),
+  // `ModelFigure` and not `Figure`: a note line is the one figure the model may not write,
+  // because its key is READ OFF the drawing (issue #226, `contracts/figure.ts` says why).
+  figure: ModelFigure.nullable().default(null).catch(null),
   /**
    * The reviewed task of an answer with several parts (issues #228–#230). Unlike a figure, a
    * broken one costs the QUESTION: for these three kinds it is the whole question, and there is
@@ -510,6 +514,26 @@ export type ItemSource = {
 };
 
 /**
+ * An item as it is STORED. Everything but `figure` is what the model may write; a note line
+ * (`StaffFigure`) only ever comes from `practice/staff.ts`, which computed this item's prompt,
+ * options, key and drawing together (issue #226).
+ */
+export type StoredItem = Omit<ItemDraft, 'figure'> & {
+  figure: Figure | null;
+  /**
+   * Never the model's (it has no such field, issues #162/#226): set only by `practice/bars.ts`
+   * or `practice/staff.ts`, and never both — migration 0078 makes that an either/or.
+   */
+  bar_task?: BarTask | null;
+  staff_task?: StaffTask | null;
+  /**
+   * The spoken text this question is answered from (issue #210): set only by `practice/listen.ts`,
+   * which checked that the answer stands in that very text.
+   */
+  listen_task?: ListenTask | null;
+};
+
+/**
  * Stores the items (a vocabulary pair in both directions) and returns the ids the session
  * asks, in order.
  *
@@ -522,26 +546,17 @@ export type ItemSource = {
 export async function insertItems(
   db: Db,
   src: ItemSource,
-  /**
-   * `bar_task` is never the model's (it has no such field, issue #162): it is set only by
-   * `practice/bars.ts`, which computed this item's prompt, key and figure from it.
-   * `listen_task` is the spoken text this question is answered from (issue #210): set only by
-   * `practice/listen.ts`, which checked that the answer stands in that very text.
-   */
-  items: ReadonlyArray<ItemDraft & { bar_task?: BarTask | null; listen_task?: ListenTask | null }>,
+  items: ReadonlyArray<StoredItem>,
   direction: VocabDirection | null = null,
 ): Promise<string[]> {
   const ids: string[] = [];
-  const insert = async (
-    it: ItemDraft & { bar_task?: BarTask | null; listen_task?: ListenTask | null },
-    asked = true,
-  ) => {
+  const insert = async (it: StoredItem, asked = true) => {
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
                           hints, worked_solution, tolerance, spelling, bar_task, parts_task,
-                          curriculum_point, rubric, listen_task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) returning id`,
+                          curriculum_point, rubric, listen_task, staff_task)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -569,11 +584,12 @@ export async function insertItems(
         it.curriculum_point,
         it.rubric ? JSON.stringify(it.rubric) : null,
         it.listen_task ? JSON.stringify(it.listen_task) : null,
+        it.staff_task ? JSON.stringify(it.staff_task) : null,
       ],
     );
     if (asked) ids.push(row.id);
   };
-  const pair = (it: ItemDraft) => it.kind === 'vocab' && !!it.lang && !!it.prompt_lang;
+  const pair = (it: StoredItem) => it.kind === 'vocab' && !!it.lang && !!it.prompt_lang;
   for (const it of items) await insert(it, !(pair(it) && direction === 'produce'));
   // The other direction of each pair comes after all first directions — asked right after
   // its twin, the answer would still be on screen. Its alternatives are unknown; the tutor

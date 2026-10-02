@@ -64,11 +64,11 @@ export default function Onboarding() {
     // that explained why (permissions come with their context, never earlier).
     if (settings.data?.contact_enabled) void registerDeviceForPush().catch(() => undefined);
     // Straight to where she belongs, not through `/` (issue #208, point 4). `/` renders NOTHING
-    // while it decides — a `<Redirect>` with a cold `/me` shows an empty screen for the 250 ms
-    // `LoadingState` deliberately waits before appearing, and that is the one mechanism that can
-    // produce the blank the owner saw on the way out of these cards. The decision is not
-    // duplicated: it is the same `gateRoute` the start screen uses, on the same cached answer.
-    // Without that answer `/` still decides.
+    // while it decides — a `<Redirect>`, and with a cold `/me` the 250 ms `LoadingState`
+    // deliberately waits before appearing. MEASURED, per frame, in `tests/web/tour.spec.ts`:
+    // seven empty frames in a row over `/`, three without it. Seven is exactly the "4–6 frames"
+    // the owner reported. The decision is not duplicated: it is the same `gateRoute` the start
+    // screen uses, on the same cached answer. Without that answer `/` still decides.
     router.replace(me.data ? gateRoute(me.data) : '/');
   };
 

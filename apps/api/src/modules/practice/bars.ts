@@ -79,8 +79,12 @@ function isMore(a: Frac, b: Frac): boolean {
  * The surface the app shows for a stored task, or null when the question is answered the
  * ordinary way. Never carries the solution: `shade` says only how fine the empty bar is,
  * `pick` only what the two bars look like — which the question text already says.
+ *
+ * The return type names the two modes a BAR can be, not every mode a surface can be: since the
+ * note line joined the union (issue #226) that is the difference between a caller that handles
+ * both cases and a caller that silently skips a third it will never see.
  */
-export function surfaceOf(task: BarTask): AnswerSurface {
+export function surfaceOf(task: BarTask): Exclude<AnswerSurface, { mode: 'notes' }> {
   switch (task.task) {
     case 'shade':
     case 'add':

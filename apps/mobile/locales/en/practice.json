@@ -171,6 +171,19 @@
     "word_good": "That sits!",
     "word_again": "Almost – listen again and try it."
   },
+  "staff": {
+    "play": "Listen",
+    "play_stop": "Stop",
+    "play_hint": "Plays the line of notes.",
+    "no_sound": "No sound is coming out here right now.",
+    "dot": "Dot",
+    "sharp": "Sharp ♯",
+    "rest": "Rest",
+    "undo": "Undo",
+    "place": "Place {{note}} {{where}} in bar {{bar}}",
+    "toggle_on": "{{label}}, on",
+    "bar_crowded": "There is no room for another symbol in bar {{n}}."
+  },
   "summary": {
     "title": "Done!",
     "secure": "Managed today without a hint: {{topics}}",

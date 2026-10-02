@@ -23,6 +23,7 @@ import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { Card } from '../lb/Card.js';
 import { ZoomableFigure } from '../math/ZoomableFigure.js';
 import { MathText } from '../math/MathText.js';
+import { StaffPlayButton } from './StaffPlayButton.js';
 import { StimulusImage } from './StimulusImage.js';
 
 type ProgressProps = {
@@ -200,6 +201,14 @@ export function QuestionCard({
             <View testID="question-figure">
               <ZoomableFigure figure={figure} maxHeight={figureMax} />
             </View>
+            {/* Eine Notenzeile kann man hören (issue #226). Der Knopf steht unter der Zeichnung,
+                weil er zu ihr gehört und nicht zur Frage — und er ist die kleine Pille, mit der
+                die App überall vorliest. */}
+            {figure.type === 'staff' ? (
+              <View style={{ marginTop: 8, alignSelf: 'flex-start' }}>
+                <StaffPlayButton bars={figure.bars} tempo={figure.tempo} />
+              </View>
+            ) : null}
           </View>
         ) : null}
         {image && imageKey ? (

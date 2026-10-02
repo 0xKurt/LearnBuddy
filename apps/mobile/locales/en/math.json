@@ -242,6 +242,58 @@
       "notin": "not an element of"
     }
   },
+  "staff": {
+    "note": {
+      "C": "C",
+      "Cs": "C sharp",
+      "D": "D",
+      "Ds": "D sharp",
+      "E": "E",
+      "F": "F",
+      "Fs": "F sharp",
+      "G": "G",
+      "Gs": "G sharp",
+      "A": "A",
+      "As": "A sharp",
+      "B": "B"
+    },
+    "value_note": {
+      "whole": "whole note",
+      "half": "half note",
+      "quarter": "quarter note",
+      "eighth": "eighth note",
+      "sixteenth": "sixteenth note"
+    },
+    "value_rest": {
+      "whole": "whole rest",
+      "half": "half rest",
+      "quarter": "quarter rest",
+      "eighth": "eighth rest",
+      "sixteenth": "sixteenth rest"
+    },
+    "dotted_note": "dotted {{value}}",
+    "dotted_rest": "dotted {{value}}",
+    "clef": {
+      "treble": "treble clef",
+      "bass": "bass clef"
+    },
+    "time": {
+      "t2_4": "two-four time",
+      "t3_4": "three-four time",
+      "t4_4": "four-four time",
+      "t3_8": "three-eight time",
+      "t6_8": "six-eight time",
+      "t2_2": "two-two time"
+    },
+    "element_note": "{{name}} as {{value}}",
+    "head": "{{clef}}, {{time}}",
+    "bar_list": "Bar {{n}}: {{list}}",
+    "bar_empty": "still empty",
+    "on_line": "on line {{n}}",
+    "in_space": "in space {{n}}",
+    "below_staff": "below the staff",
+    "above_staff": "above the staff"
+  },
   "figure": {
     "label": "Figure",
     "fraction_circle": "Circle divided into {{parts}} equal parts, {{filled}} of them shaded",

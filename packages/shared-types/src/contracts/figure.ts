@@ -5,6 +5,8 @@
 
 import { z } from 'zod';
 
+import { StaffFigure } from './staff.js';
+
 const Label = z.string().trim().min(1).max(40);
 const Num = z.number().finite();
 
@@ -70,6 +72,29 @@ export const TableFigure = z.object({
     .max(10),
 });
 
+/**
+ * The figures the MODEL may write next to a question of its own (`ItemDraft.figure`).
+ *
+ * The note line (`StaffFigure`, issue #226) is deliberately not among them. Every other figure
+ * here illustrates a question whose key the model also wrote, and a wrong picture next to a
+ * right key costs at most a confusing drawing. A note line is different: the key IS read off
+ * the drawing — the note's name, the interval, the time signature — so a line that does not
+ * match would make the key wrong, and the rule check would then reject a right answer with
+ * full authority (the lesson of issue #157). Note lines therefore only ever come out of
+ * `apps/api/src/modules/practice/staff.ts`, which computes the question, the drawing and the
+ * key from one reviewed task.
+ */
+export const ModelFigure = z.discriminatedUnion('type', [
+  FractionFigure,
+  NumberLineFigure,
+  FunctionPlotFigure,
+  BarChartFigure,
+  GeometryFigure,
+  TableFigure,
+]);
+export type ModelFigure = z.infer<typeof ModelFigure>;
+
+/** Every figure a question can SHOW (`ItemView.figure`) — the model's six and the note line. */
 export const Figure = z.discriminatedUnion('type', [
   FractionFigure,
   NumberLineFigure,
@@ -77,5 +102,6 @@ export const Figure = z.discriminatedUnion('type', [
   BarChartFigure,
   GeometryFigure,
   TableFigure,
+  StaffFigure,
 ]);
 export type Figure = z.infer<typeof Figure>;

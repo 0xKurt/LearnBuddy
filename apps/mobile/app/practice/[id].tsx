@@ -73,6 +73,13 @@ import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
+import {
+  emptyStaffAnswer,
+  StaffAnswer,
+  staffComplete,
+  staffLineOf,
+  type StaffAnswerState,
+} from '../../components/practice/StaffAnswer.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
 import { Reexplain } from '../../components/practice/Reexplain.js';
@@ -246,6 +253,12 @@ export default function PracticeScreen() {
    * that is where the run is: a component keyed by the question would forget it every time.
    */
   const [heardTexts, setHeardTexts] = useState<ReadonlySet<string>>(() => new Set());
+  /**
+   * Die Notenzeile, die sie geschrieben hat, und zu welcher Frage (issue #226). Aus demselben
+   * Grund an der Frage festgemacht wie die Anordnung darüber: die nächste Frage beginnt mit einer
+   * leeren Zeile, und nichts Geschriebenes rutscht hinein.
+   */
+  const [written, setWritten] = useState<{ itemId: string; answer: StaffAnswerState } | null>(null);
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -881,9 +894,23 @@ export default function PracticeScreen() {
   // WHOLE way to answer here — a board question has no answer field, not even the table, whose
   // writing happens in its own cells. The one CTA is "Prüfen" under it.
   const board = open ? item.board : null;
-  const typed = open && choices === null && tapChoices === null && board === null && !speaking;
+  // Die leere Notenzeile, auf die sie schreibt (issue #226). Wie das Brett ist sie der GANZE Weg
+  // zu antworten: ein Antwortfeld gibt es daneben nicht, und das eine „Prüfen“ steht darunter.
+  // Der Bruchbalken bleibt der andere Fall derselben Fläche — er schreibt ins Feld, sie nicht.
+  const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
+  const barSurface = open && item.surface && item.surface.mode !== 'notes' ? item.surface : null;
+  const typed =
+    open &&
+    choices === null &&
+    tapChoices === null &&
+    board === null &&
+    staff === null &&
+    !speaking;
   /** Her arrangement of THIS question; a different question starts with an empty board. */
   const boardAnswer = arranged?.itemId === item.id ? arranged.answer : EMPTY_BOARD_ANSWER;
+  /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
+  const staffAnswer =
+    written?.itemId === item.id ? written.answer : emptyStaffAnswer(staff?.bars ?? 1);
   const tried = new Set(
     turns
       .filter((turn) => turn.role === 'learner' && turn.verdict === 'incorrect')
@@ -1169,10 +1196,10 @@ export default function PracticeScreen() {
             is — right above the field — and it writes into that very field, so "Prüfen",
             the math keys and typing stay exactly what they were. A picked bar goes out at
             once, like a choice. */}
-        {open && item.surface ? (
+        {barSurface ? (
           <View style={{ paddingHorizontal: 16, paddingTop: 8 }} testID="answer-surface">
             <FractionBarAnswer
-              surface={item.surface}
+              surface={barSurface}
               value={text}
               disabled={locked}
               onChange={(next) => {
@@ -1241,6 +1268,52 @@ export default function PracticeScreen() {
                   { parts: partsOf(boardAnswer), via: viaFor(board) },
                   renderBoardAnswer(board, boardAnswer),
                 );
+              }}
+            >
+              {t('practice:check')}
+            </Btn>
+          </BottomBar>
+        ) : null}
+        {/* Die Notenzeile, auf die sie schreibt (issue #226). Sie steht, wo sonst das Brett oder
+            das Antwortfeld steht, und gibt wie das Brett als Erstes Platz her: die gemessene Höhe
+            und was sie kostet, stehen in `StaffAnswer.tsx`. */}
+        {staff ? (
+          <View testID="answer-staff" style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}>
+            <ScrollView
+              testID="scroll-list"
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
+            >
+              <StaffAnswer
+                key={item.id}
+                surface={staff}
+                answer={staffAnswer}
+                disabled={locked}
+                onChange={(next) => setWritten({ itemId: item.id, answer: next })}
+              />
+            </ScrollView>
+          </View>
+        ) : null}
+        {staff ? (
+          <BottomBar>
+            <Btn
+              size="lg"
+              pill
+              full
+              // Nichts zu prüfen, solange ein Takt noch leer ist: eine halb geschriebene Zeile
+              // wäre eine Antwort, die noch nicht gegeben wurde.
+              disabled={locked || !staffComplete(staffAnswer)}
+              onPress={() => {
+                tapped('check');
+                const line = staffLineOf(staffAnswer);
+                // Kein `via: 'tapped'`, obwohl sie getippt hat: `via` unterscheidet
+                // WIEDERERKENNEN von PRODUZIEREN (issue #163), und hier ist nichts
+                // wiedererkannt. Ein Wort aus vier eigenen anzutippen ist leichter, als es zu
+                // schreiben; eine Notenzeile selbst zu setzen ist genau das, was die
+                // Klassenarbeit verlangt — mit einem Stift statt mit dem Finger. Dasselbe
+                // Argument, das `summary.ts` für die mehrteiligen Antworten führt.
+                void answer(item.id, { text: line }, line);
               }}
             >
               {t('practice:check')}

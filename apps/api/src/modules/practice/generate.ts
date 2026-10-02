@@ -12,6 +12,7 @@
 import {
   BarTask,
   MAX_LISTEN_QUESTIONS,
+  StaffTask,
   type DifficultyWish,
   type StartTopicRequest,
 } from '@learnbuddy/shared-types/contracts';
@@ -50,6 +51,7 @@ import {
   insertItems,
   samePrompt,
   usableItems,
+  type StoredItem,
 } from './items.js';
 import {
   addPreparedItems,
@@ -57,8 +59,9 @@ import {
   givenUpOnPreparing,
   type PracticeLearner,
 } from './service.js';
+import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.12';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.13';
 
 const SUBJECT_KINDS = [
   'math',
@@ -111,6 +114,13 @@ export const GeneratedSet = z.object({
    * to hear.
    */
   listen: ListenDraft.nullable().default(null),
+  /**
+   * Note-line tasks (issue #226). A separate list for exactly the reason the bars are one: here
+   * the model picks a reviewed task and its musical parameters and NOTHING else — there is no
+   * field for a question text, an answer, options or a drawing, so it cannot write one whose key
+   * disagrees with the staff that is drawn (`practice/staff.ts`).
+   */
+  staffs: z.array(StaffTask).max(MAX_STAFF_ITEMS).default([]),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
@@ -262,6 +272,7 @@ Rules:
 - ${MATH_RULES}
 - ${FIGURE_RULES}
 - ${BAR_RULES}
+- ${STAFF_RULES}
 - ${PARTS_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
@@ -415,6 +426,7 @@ async function generateSet(
     items: itemsOneByOne(itemSchema, 25),
     // One unusable task costs its own question, never the whole set (audit H-14/H-15).
     bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
+    staffs: itemsOneByOne(StaffTask, MAX_STAFF_ITEMS),
     // The same for the listening questions: one that does not fit its schema costs itself, not
     // the text. A listening task that does not fit at all is no listening task, and the run then
     // has nothing — which the caller says plainly (`not_usable`, issue #210).
@@ -508,7 +520,13 @@ async function generateSet(
  * What a set becomes once code has had its say: the questions to store, the bars, and — in a
  * listening run — the questions about the spoken text (issue #210).
  */
-type Prepared = { items: ItemDraft[]; bars: ItemDraft[]; listening: ItemDraft[] };
+type Prepared = {
+  items: ItemDraft[];
+  bars: ItemDraft[];
+  listening: ItemDraft[];
+  /** Note lines, as questions code wrote from the tasks the model chose (issue #226). */
+  staffs: StoredItem[];
+};
 
 /**
  * The questions of a set that may be stored, in the order they will be asked. Every rule here
@@ -577,7 +595,20 @@ function preparedFrom(
   // The listening questions, each one checked against the text that will be read aloud
   // (issue #210): the answer has to stand in it, and the speech provider has to be able to read
   // its language. Whatever fails that is not a question.
-  return { items, bars, listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [] };
+  // The note lines (issue #226). In practice AND in a test, unlike the bars: reading a note, naming
+  // an interval and reading a time signature off the values are exactly what a music test asks, and
+  // one try is enough for a tapped answer. Not in homework or a vocabulary list — there the task is
+  // what she brought.
+  const staffs =
+    input.kind === 'practice' || input.kind === 'test'
+      ? staffItems(set.staffs, learner.locale)
+      : [];
+  return {
+    items,
+    bars,
+    listening: input.kind === 'listen' ? listenItems(set.listen, speech) : [],
+    staffs,
+  };
 }
 
 async function prepareTopic(
@@ -676,7 +707,7 @@ async function prepareTopic(
     head,
     // Only the first questions start the run — never the bars, which belong last. A listening run
     // never starts early (it has no `items` at all), so there is nothing of its own to hold back.
-    { items: first.items.slice(0, FIRST_BATCH), bars: [], listening: [] },
+    { items: first.items.slice(0, FIRST_BATCH), bars: [], listening: [], staffs: [] },
     { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
   );
   deps.background(async () => {
@@ -711,7 +742,11 @@ async function store(
 ): Promise<string> {
   if (
     !set.usable ||
-    prepared.items.length + prepared.bars.length + prepared.listening.length === 0
+    prepared.items.length +
+      prepared.bars.length +
+      prepared.listening.length +
+      prepared.staffs.length ===
+      0
   ) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
   }
@@ -724,7 +759,7 @@ async function store(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...prepared.items, ...prepared.bars, ...prepared.listening],
+        [...prepared.items, ...prepared.bars, ...prepared.listening, ...prepared.staffs],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );
