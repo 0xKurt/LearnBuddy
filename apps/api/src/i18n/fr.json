@@ -74,6 +74,7 @@
     "no_single_solution": "Il n'y a pas ici une seule bonne réponse que je pourrais te montrer : dans un texte comme celui-là, ce qui compte, c'est la façon dont tu argumentes. Dis-moi où tu bloques et on regarde ton texte ensemble.",
     "not_lowest": "Bien équilibrée ! Il reste à simplifier – tous les nombres devant se divisent par {{factor}}.",
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
+    "not_transformed": "C'est équivalent – mais c'est écrit exactement comme dans l'énoncé. Transforme-le encore.",
     "one_way_intro": "Voilà une façon de s'y prendre – une façon, pas la seule :",
     "reexplain": {
       "simpler": "Plus simple, s'il te plaît",
@@ -200,6 +201,7 @@
       "fault_rest_here": "À la place numéro {{index}} de la mesure {{bar}}, il faut un silence.",
       "fault_note_here": "À la place numéro {{index}} de la mesure {{bar}}, il faut une note."
     },
+    "same_value": "La valeur est juste – tu l'as seulement écrite autrement. Regarde sous quelle forme l'exercice veut le résultat.",
     "step_broke": "Tout tient jusqu'à la ligne {{line}}. Quelque chose se perd en passant à la ligne suivante – regarde encore cette étape.",
     "step_broke_last": "Ton raisonnement tient jusqu'au bout – seule la dernière étape ne va pas. Regarde encore la dernière ligne.",
     "test_no_hints": "Pas d'indices pendant le test – écris simplement ce que tu penses, ou passe la question.",
@@ -212,6 +214,8 @@
     "typo_wrong": "Presque – une lettre n'est pas encore la bonne. Tu la trouves ?",
     "unbalanced_charge": "Presque – les charges ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "unbalanced_element": "Presque – recompte le {{element}} : {{left}} à gauche, {{right}} à droite.",
+    "unbalanced_mass": "Presque – les nombres de masse ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
+    "unbalanced_atomic": "Presque – les numéros atomiques ne correspondent pas encore : {{left}} à gauche, {{right}} à droite.",
     "untitled": "Exercice",
     "worked_intro": "Regarde, voilà comment faire :",
     "order": {

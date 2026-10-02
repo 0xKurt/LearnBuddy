@@ -335,7 +335,10 @@ describe('table_fill: her answer, cell by cell', () => {
     const gap = terms.rows[0]![1]!;
     if (!('key' in gap)) throw new Error('gap expected');
     expect(cellVerdict(gap, '2x+6', CTX, false)).toBe('right');
-    expect(cellVerdict(gap, '6+2x', CTX, false)).toBe('near');
+    // The same summands in another order ARE the key's form (issue #235, `form.ts`): right.
+    expect(cellVerdict(gap, '6+2x', CTX, false)).toBe('right');
+    // The right value in another form — the term not multiplied out — is nearly right (#227).
+    expect(cellVerdict(gap, '2(x+3)', CTX, false)).toBe('near');
     expect(cellVerdict(gap, '2x+3', CTX, false)).toBe('wrong');
   });
 

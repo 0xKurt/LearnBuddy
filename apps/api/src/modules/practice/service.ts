@@ -40,6 +40,7 @@ import { listenRefs, listenTaskOf } from './listen.js';
 import {
   differentNumber,
   equationDetail,
+  formNoteFor,
   NEAR_MISS,
   noSingleSolution,
   plainMath,
@@ -90,6 +91,7 @@ import {
   TUTOR_SYSTEM,
   TutorDecision,
   enforceTutorInvariants,
+  VALUE_CONFIRMED,
   givesAwayHomework,
   homeworkSolved,
   mentionsSolution,
@@ -1000,7 +1002,14 @@ function articleMissing(rule: RuleVerdict, item: { kind: string }): boolean {
  * (issue #212). They carry no solution — a line number is not a calculation, and "count the H
  * again: 4 on the left, 2 on the right" is not the balanced equation.
  */
-const LOCATED = new Set<RuleVerdict>(['step_broke', 'unbalanced', 'not_lowest']);
+const LOCATED = new Set<RuleVerdict>([
+  'step_broke',
+  'unbalanced',
+  'not_lowest',
+  // "That is still the task's own term" names no solution either: it says what is NOT done yet,
+  // so it holds in homework help too (issue #235).
+  'not_transformed',
+]);
 
 /**
  * Whether the fixed near-miss reply may be used here (issue #274).
@@ -1022,6 +1031,7 @@ const NEAR_MISS_REPLY: Partial<Record<RuleVerdict, MessageKey>> = {
   spelling: 'practice.spelling',
   close: 'practice.accents',
   missing_word: 'practice.missing_word',
+  not_transformed: 'practice.not_transformed',
 };
 
 /**
@@ -1048,13 +1058,18 @@ function equationReply(locale: string, item: ItemRow, text: string): string | nu
     return t(locale, 'practice.not_lowest', { factor: String(d.factor) });
   }
   const i = d.imbalance;
-  return i.kind === 'charge'
-    ? t(locale, 'practice.unbalanced_charge', { left: String(i.left), right: String(i.right) })
-    : t(locale, 'practice.unbalanced_element', {
-        element: i.element,
-        left: String(i.left),
-        right: String(i.right),
-      });
+  const sides = { left: String(i.left), right: String(i.right) };
+  switch (i.kind) {
+    case 'charge':
+      return t(locale, 'practice.unbalanced_charge', sides);
+    // A nuclear equation (issue #263): the place is which of the two numbers does not add up.
+    case 'mass_number':
+      return t(locale, 'practice.unbalanced_mass', sides);
+    case 'atomic_number':
+      return t(locale, 'practice.unbalanced_atomic', sides);
+    case 'element':
+      return t(locale, 'practice.unbalanced_element', { element: i.element, ...sides });
+  }
 }
 
 /**
@@ -1493,6 +1508,9 @@ export async function answerItem(
                 rubric: rubric
                   ? { kind: rubric.kind, form: rubric.form, asked, spots: wantsSpots }
                   : null,
+                // The value is right and only the form differs: what code read off the two
+                // syntax trees, so the tutor decides about the question, not the algebra (#235).
+                formNote: rule === 'other_form' ? formNoteFor(item, text) : null,
               }),
             },
           ],
@@ -1537,7 +1555,7 @@ export async function answerItem(
           if (!parsed.success) throw new Error('tutor output invalid');
           d = parsed.data;
         }
-        return enforceTutorInvariants(
+        const held = enforceTutorInvariants(
           d,
           rule,
           articleMissing(rule, item),
@@ -1546,6 +1564,14 @@ export async function answerItem(
           curriculumPoint !== null &&
             cautiousAt(curriculumPoint, learner.curriculum_region, learner.grade),
         );
+        // Code confirmed the value and the model still said "wrong" (issue #227, finding 1).
+        // The verdict is held at "partly right" above; the words it wrote for "wrong" would
+        // contradict that, so the reply is the app's own: the value holds, the form is open.
+        return VALUE_CONFIRMED.has(rule) &&
+          d.verdict === 'incorrect' &&
+          held.verdict !== 'incorrect'
+          ? { ...held, reply: t(learner.locale, 'practice.same_value'), gave_hint: false }
+          : held;
       };
       // Homework: a task is solved only when code finds her final answer (by value, or the key
       // or an accepted answer in her words). A "correct" code cannot confirm is a right step:

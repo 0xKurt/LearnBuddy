@@ -236,9 +236,10 @@ const TABLE: Row[] = [
   // Also 'unknown' until #227 finding 5, and the same reason: x = 5 and x = -5 have no solution
   // in common, so nothing is left for the tutor to decide about the value.
   { id: 'C-6', item: { answer: 'x=-5' }, text: 'x=5', locale: 'de', expect: 'incorrect' },
-  // An inequality stays undecided: `steps.ts` refuses them by design (first cut, issue #209),
-  // and a module that cannot read "<" must not pretend it read it.
-  { id: 'C-6', item: { answer: 'x<3' }, text: 'x>3', locale: 'de', expect: 'unknown' },
+  // Was 'unknown' until issue #263: `steps.ts` now reads a linear inequality as its solution set
+  // (a half-line, computed exactly), and x < 3 and x > 3 have no point in common.
+  { id: 'C-6', item: { answer: 'x<3' }, text: 'x>3', locale: 'de', expect: 'incorrect' },
+  { id: 'C-6', item: { answer: 'x<3' }, text: '3>x', locale: 'de', expect: 'correct' },
   { id: 'C-6', item: { answer: '$\\frac{3}{4}$' }, text: '3,4', locale: 'de', expect: 'unknown' },
   { id: 'C-6', item: { answer: '$\\frac{3}{4}$' }, text: '3-4', locale: 'de', expect: 'unknown' },
   { id: 'C-6', item: { answer: '$\\frac{3}{4}$' }, text: '3:4', locale: 'de', expect: 'unknown' },
@@ -588,7 +589,9 @@ describe('algebra, decided by its value (#227 finding 5)', () => {
     // was the question ("Faktorisiere …", "Gib x an") is the tutor's call — decision D-3 — but
     // it may not call the value wrong (#227 finding 1).
     expect(check(item({ kind: 'formula', answer: '2x+6' }), '2(x+3)')).toBe('other_form');
-    expect(check(item({ kind: 'formula', answer: '2x+6' }), '6+2x')).toBe('other_form');
+    // "6+2x" was 'other_form' too until issue #235. It is not another form: the same summands in
+    // another order, which the syntax tree shows (`form.ts` `orderFree`) — right, without a model.
+    expect(check(item({ kind: 'formula', answer: '2x+6' }), '6+2x')).toBe('correct');
     expect(check(item({ answer: 'x = 5' }), '2x = 10')).toBe('other_form');
     expect(check(item({ answer: 'x = 5' }), '5')).toBe('other_form');
   });
@@ -603,8 +606,8 @@ describe('algebra, decided by its value (#227 finding 5)', () => {
     // No structure, no algebra: a lone number or word is for the numeric and written rules.
     expect(check(item({ answer: '-5' }), '5')).toBe('unknown');
     expect(check(item({ answer: 'Nenner' }), 'Zähler')).toBe('unknown');
-    // Inequalities are outside what `steps.ts` reads at all.
-    expect(check(item({ answer: 'x<3' }), 'x>3')).toBe('unknown');
+    // A non-linear inequality is outside what `steps.ts` reads (issue #263 reads linear ones).
+    expect(check(item({ answer: 'x^2<4' }), 'x^2>4')).toBe('unknown');
     // A key that is not solved for its variable states no value: "10" is not the answer to it.
     expect(check(item({ answer: '2x = 10' }), '10')).toBe('unknown');
   });
@@ -891,5 +894,106 @@ describe('property: rule check over generated numbers', () => {
       ),
       { numRuns: 300 },
     );
+  });
+});
+
+// ── The form, several values, nuclear equations (issues #235, #263, #227 A7/A9) ────────────
+// Every verdict below is reached by `ruleCheck` alone — a pure function with no model seam.
+
+describe('the form of a right value (#235)', () => {
+  const factorise = item({
+    kind: 'formula',
+    prompt: 'Faktorisiere $x^{2}+2x+1$.',
+    answer: '(x+1)^2',
+  });
+
+  it('calls the key’s form in another order right, and the other shape other_form', () => {
+    expect(check(factorise, '(x+1)(x+1)')).toBe('correct');
+    expect(check(factorise, '(1+x)^2')).toBe('correct');
+    expect(check(item({ kind: 'formula', answer: '(x+1)^2' }), 'x^2+2x+1')).toBe('other_form');
+  });
+
+  it('calls the task typed back a near miss, never right', () => {
+    // The acceptance of issue #235: "Faktorisiere x²+2x+1" answered with x²+2x+1.
+    expect(check(factorise, 'x²+2x+1')).toBe('not_transformed');
+    expect(check(factorise, '1 + 2x + x^2')).toBe('not_transformed');
+    expect(check(item({ prompt: 'Löse $2x + 3 = 7$.', answer: 'x = 2' }), '2x + 3 = 7')).toBe(
+      'not_transformed',
+    );
+  });
+
+  it('still says wrong to a wrong factorisation', () => {
+    expect(check(factorise, '(x-1)^2')).toBe('incorrect');
+    expect(check(factorise, '(x+1)(x+2)')).toBe('incorrect');
+    expect(check(factorise, 'x(x+2)')).toBe('incorrect');
+  });
+
+  it('decides derivatives and antiderivatives', () => {
+    const derivative = item({ kind: 'formula', answer: "f'(x) = 3x^2 - 4x" });
+    expect(check(derivative, '3x² - 4x')).toBe('correct');
+    expect(check(derivative, '-4x + 3x^2')).toBe('correct');
+    expect(check(derivative, 'x(3x - 4)')).toBe('other_form');
+    expect(check(derivative, '3x^2 - 4')).toBe('incorrect');
+    expect(check(derivative, '3x^2 + 4x')).toBe('incorrect');
+    const antiderivative = item({ kind: 'formula', answer: 'F(x) = x^4/4 + C' });
+    expect(check(antiderivative, 'x^4/4 + C')).toBe('correct');
+    expect(check(antiderivative, '0,25x^4 + C')).toBe('other_form');
+    expect(check(antiderivative, 'x^4/4')).toBe('other_form');
+    expect(check(antiderivative, 'x^4 + C')).toBe('incorrect');
+    expect(check(antiderivative, '3x^2 + C')).toBe('incorrect');
+  });
+});
+
+describe('several values (#263, #227 A7)', () => {
+  it('decides the solution of a system', () => {
+    const lgs = item({ answer: 'x = 3, y = 2' });
+    expect(check(lgs, 'y = 2; x = 3')).toBe('correct');
+    expect(check(lgs, 'x = 3\ny = 2')).toBe('correct');
+    expect(check(lgs, 'x = 2, y = 3')).toBe('incorrect');
+    expect(check(lgs, 'x = 6/2, y = 2')).toBe('other_form');
+  });
+
+  it('decides a point and a solution set', () => {
+    expect(check(item({ answer: '(2|3)' }), 'S(2|3)')).toBe('correct');
+    expect(check(item({ answer: '(2|3)' }), '(3|2)')).toBe('incorrect');
+    expect(check(item({ answer: 'L = {-2; 2}' }), 'L = {2; -2}')).toBe('correct');
+    expect(check(item({ answer: 'L = {-2; 2}' }), 'L = {2; 4}')).toBe('incorrect');
+  });
+
+  it('decides an inequality', () => {
+    expect(check(item({ answer: 'x < 2' }), '2 > x')).toBe('correct');
+    expect(check(item({ answer: 'x < 2' }), 'x > 2')).toBe('incorrect');
+    expect(check(item({ answer: 'x < 2' }), '-x > -2')).toBe('other_form');
+  });
+});
+
+describe('nuclear equations (#263)', () => {
+  const decay = item({ kind: 'formula', answer: '²³⁸₉₂U → ²³⁴₉₀Th + ⁴₂He' });
+
+  it('counts mass and atomic numbers', () => {
+    expect(check(decay, 'U-238 → α + Th-234')).toBe('correct');
+    expect(check(decay, 'U-238 → Th-234 + He-3')).toBe('unbalanced');
+    expect(check(decay, 'U-238 → Pa-234 + α')).toBe('unbalanced');
+  });
+});
+
+describe('a choice typed as its value or with its letter (#227 A9)', () => {
+  const half = item({
+    kind: 'multiple_choice',
+    answer: '$\\frac{1}{2}$',
+    choices: ['$\\frac{1}{2}$', '$\\frac{3}{4}$'],
+    correct_choice: 0,
+  });
+
+  it('reads "0,5" as the option ½ when no other option has that value', () => {
+    expect(check(half, '0,5')).toBe('correct');
+    expect(check(half, '0,75')).toBe('incorrect');
+    expect(check(half, '0,6')).toBe('unknown');
+  });
+
+  it('reads "a) 1/2" as option a, and leaves a letter pointing elsewhere open', () => {
+    expect(check(half, 'a) 1/2')).toBe('correct');
+    expect(check(half, 'b) 3/4')).toBe('incorrect');
+    expect(check(half, 'a) 3/4')).toBe('unknown');
   });
 });
