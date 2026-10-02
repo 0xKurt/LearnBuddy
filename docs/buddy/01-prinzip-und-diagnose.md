@@ -37,6 +37,31 @@ Kontaktperson; Anlass ist immer ein eigenes Ziel der lernenden Person (ihr Test,
 vorbereiteter Übungssatz), nie ein Rückstand. Die Abweichung („Buddy meldet sich selbst, auch per
 Push") ist in ADR 0004 festgehalten.
 
+### 1.1 Der USP als Prüfstein
+
+Neue Übungsformen, Ansichten und Einstellungen gibt es in jeder Lern-App. LearnBuddy bleibt nur
+dann etwas Eigenes, wenn jede Änderung einem dieser fünf Punkte dient (Owner, 02.10.2026,
+Issue #296):
+
+1. **Proaktiv.** Buddy kennt die Arbeit, plant rückwärts, bereitet vor und meldet sich zum
+   richtigen Moment – nur mit Erlaubnis, bei Kindern nur mit Eltern-PIN.
+2. **Ihr Material ist die Quelle.** Foto vom Blatt → genau ihre Übung, passend zu Lehrplan und
+   Bundesland.
+3. **Verlässliche Prüfung.** Code entscheidet, was mechanisch entscheidbar ist (Regel 0). Buddy
+   sagt nie „richtig", wenn es falsch ist.
+4. **Ein ruhiger Screen.** Buddy ist die Oberfläche. Keine Kataloge, Streaks, Zähler oder Menüs.
+5. **EU und für Kinder gebaut.** Kontaktregeln stehen im Code.
+
+**So wird geprüft.** Jede PR-Beschreibung nennt, welchem Punkt die Änderung dient
+(`.github/pull_request_template.md`, Zeile „Dient USP-Punkt"). Bei „keinem" braucht der PR eine
+Begründung – oder er entfällt. Punkt 4 ist zusätzlich Code: Jede Route der App steht mit
+Begründung, warum der Chat sie nicht tragen kann, in der Erlaubnisliste
+(`apps/mobile/lib/__tests__/minimalism.test.ts`); eine neue Route ohne Eintrag lässt die Gates
+rot werden. Übungsformen bekommen keine eigene Auswahl: Kein Screen und keine Komponente zählt
+zwei oder mehr Formen nebeneinander auf, und keine Anfrage an die API trägt eine Form
+(`packages/shared-types/src/contracts/__tests__/forms.test.ts`). Formen erscheinen nur in der
+bestehenden Übung, ausgewählt von Buddy oder Code.
+
 ---
 
 ## 2. Echte Bedürfnisse vs. gewachsene Komplexität
