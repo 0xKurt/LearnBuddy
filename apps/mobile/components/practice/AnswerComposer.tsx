@@ -18,23 +18,38 @@
 // Under the field a live preview shows typed math set properly ("3/4" as a
 // fraction), once there is math worth drawing (components/math/TypedMathPreview).
 //
-// A calculation may be written out line by line (issue #221): the ↵ key in the
-// math row starts the next line, and from the second line on the return key
-// adds one instead of sending, so a path cannot be cut off half-way. What is
-// allowed where, and what the return key does, is `lib/practice/pathEntry.ts`;
+// A calculation may be written out line by line (issue #221): where the math
+// keys show, their first key is "↵ Neue Zeile". The return key sends a one-line
+// answer as before; from the second line on it adds one instead of sending, so a
+// path cannot be cut off half-way, and "Prüfen" sends every line as typed. What
+// is allowed where, and what the return key does, is `lib/practice/pathEntry.ts`;
 // the server checks each step and names the first line that broke (issue #209).
 
 import type { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
+import {
+  Platform,
+  Text,
+  TextInput,
+  View,
+  type KeyboardTypeOptions,
+  type NativeSyntheticEvent,
+  type TextInputKeyPressEventData,
+} from 'react-native';
 
 import { hasMath } from '../../lib/math/parse.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { growsWithText } from '../../lib/growsWithText.js';
-import { hasPath, pathPossible, previewLine, returnKey } from '../../lib/practice/pathEntry.js';
+import {
+  hasPath,
+  lineCount,
+  pathPossible,
+  previewLine,
+  returnKey,
+} from '../../lib/practice/pathEntry.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -49,6 +64,27 @@ import { tapped } from '../../lib/perf.js';
 
 /** AnswerRequest.text allows at most 2000 characters. */
 const MAX_ANSWER_LENGTH = 2000;
+/** The web field's rows for a path: five lines of 22 fill the field's maxHeight of 150. */
+const PATH_ROWS = 5;
+
+/**
+ * Enter in the browser: sends a one-line answer, and leaves Shift+Enter, an input method
+ * still composing and every Enter in a path or a long answer to the field (a new line).
+ */
+function sendOnEnter(
+  e: NativeSyntheticEvent<TextInputKeyPressEventData>,
+  sends: boolean,
+  send: () => void,
+): void {
+  // On the web the event is the browser's keyboard event, which carries these two as well.
+  const key = e.nativeEvent as TextInputKeyPressEventData & {
+    shiftKey?: boolean;
+    isComposing?: boolean;
+  };
+  if (!sends || key.key !== 'Enter' || key.shiftKey === true || key.isComposing === true) return;
+  e.preventDefault();
+  send();
+}
 
 type Props = {
   /** 'speak' questions use their own recorder; here they fall back to a plain text answer. */
@@ -90,15 +126,21 @@ export function AnswerComposer({
   const selection = useRef<Selection | null>(null);
   const [forced, setForced] = useState<Selection | undefined>(undefined);
   const [focused, setFocused] = useState(false);
+  // The cursor's place for the preview, which draws the line she is on (null: not reported yet).
+  const [caret, setCaret] = useState<number | null>(null);
   // Keyboard accessory, not furniture (issue #16): the math row belongs above the keyboard
   // while she types. Without focus it only takes the room the question needs — on a small
   // phone with the keyboard open that is the difference between seeing the task and not.
-  const showKeys = (exact || (kind === 'short' && hasMath(prompt))) && focused;
+  const mathAnswer = exact || (kind === 'short' && hasMath(prompt));
+  const showKeys = mathAnswer && focused;
 
   const insert = (insertion: Insertion) => {
     const next = insertAtCursor(value, selection.current, insertion);
     if (next.value.length > MAX_ANSWER_LENGTH) return;
+    // A key is typing too: it ends the hands-free loop like the keyboard does.
+    useHandsFree.getState().disarm();
     selection.current = next.selection;
+    setCaret(next.selection.end);
     onChange(next.value);
     setForced(next.selection);
     inputRef.current?.focus();
@@ -113,14 +155,17 @@ export function AnswerComposer({
     context: prompt,
     onText: (said) => {
       // A long answer may be dictated in parts; a short one is replaced by what she said.
+      // In a written path what she says is the next line, and the path is checked with
+      // "Prüfen" once it is complete — not after the first line she spoke (issue #221).
+      const inPath = hasPath(kind, latest.current.value);
       const next = mergeTranscript(
         latest.current.value,
         said,
-        long ? 'append' : 'replace',
+        long ? 'append' : inPath ? 'line' : 'replace',
         MAX_ANSWER_LENGTH,
       );
       onChange(next);
-      if (useVoiceMode.getState().on && !latest.current.disabled) onCheck(next.trim());
+      if (useVoiceMode.getState().on && !latest.current.disabled && !inPath) onCheck(next.trim());
     },
     // Hands-free (voice mode): on the phone listening ends by itself when she pauses.
     untilPause: voiceMode,
@@ -171,6 +216,7 @@ export function AnswerComposer({
             selection={forced}
             onSelectionChange={(e) => {
               selection.current = e.nativeEvent.selection;
+              setCaret(e.nativeEvent.selection.end);
               if (forced) setForced(undefined);
             }}
             onFocus={() => setFocused(true)}
@@ -183,8 +229,11 @@ export function AnswerComposer({
             // Where the growing starts: the web's textarea is two rows tall by default,
             // which makes an empty answer field look like a box to fill in. The growing
             // itself is `growsWithText` in the style below — without it a long answer
-            // scrolled away inside one row in the browser (issue #188).
-            {...(Platform.OS === 'web' && !lines ? { numberOfLines: 1 } : {})}
+            // scrolled away inside one row in the browser (issue #188). A path asks for its
+            // lines, so a browser without `field-sizing` shows them too (issue #221).
+            {...(Platform.OS === 'web' && !long
+              ? { numberOfLines: Math.min(lineCount(value), PATH_ROWS) }
+              : {})}
             maxLength={MAX_ANSWER_LENGTH}
             autoCorrect={false}
             spellCheck={false}
@@ -198,6 +247,17 @@ export function AnswerComposer({
             onSubmitEditing={() => {
               if (sends && canCheck) onCheck(value.trim());
             }}
+            // The browser does not know `submitBehavior` (react-native-web reads only the
+            // deprecated `blurOnSubmit`), so a multiline field there turned every Enter into a
+            // new line. Same rule as on the phone; Shift+Enter is the browser's own new line.
+            onKeyPress={
+              Platform.OS === 'web'
+                ? (e) =>
+                    sendOnEnter(e, sends, () => {
+                      if (canCheck) onCheck(value.trim());
+                    })
+                : undefined
+            }
             textAlignVertical={lines ? 'top' : 'center'}
             style={[
               {
@@ -261,7 +321,8 @@ export function AnswerComposer({
         </View>
         {/* How her math will be read, on a thin line in the pill itself – not a row of its
             own under it. Long answers are texts; the preview would only repeat them. */}
-        {long ? null : <TypedMathPreview value={previewLine(kind, value)} compact />}
+        {/* In a path it draws the line with the cursor; the others stand in the field. */}
+        {long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
       </View>
       {voiceMode ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>

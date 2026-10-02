@@ -315,8 +315,6 @@
   "keys": {
     "row": "Mathe-Zeichen",
     "hint": "Fügt das Zeichen in deine Antwort ein",
-    "newline": "neue Zeile",
-    "newline_hint": "Beginnt die nächste Zeile deiner Rechnung",
     "fraction": "Bruchstrich",
     "squared": "hoch 2",
     "cubed": "hoch 3",
@@ -327,7 +325,10 @@
     "open": "Klammer auf",
     "close": "Klammer zu",
     "degree": "Grad",
-    "decimal": "Komma"
+    "decimal": "Komma",
+    "newline": "Neue Zeile",
+    "newline_shown": "↵ Neue Zeile",
+    "newline_hint": "Für deinen Rechenweg: beginnt die nächste Zeile. „Prüfen“ prüft dann alle Zeilen."
   },
   "blank": {
     "label": "Lücke",

@@ -2,11 +2,14 @@
 // stack; scripted answers in apps/api/src/testing/scenarios/learning-modes.ts):
 // "Erklär mir …", homework help with hints only, practice without a photo with
 // math and a figure, a practice test (no hints, results at the end) and
-// "die wackligen nochmal". Screenshots go to test-results/web/shots.
+// "die wackligen nochmal", and a written calculation path checked step by step.
+// Screenshots go to test-results/web/shots.
+
+import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { bottomStack, partHeight, shot } from './fit';
+import { bottomStack, partHeight, PHONES, settle, shot, SHOTS } from './fit';
 import { recordPerf } from './perf';
 
 /** The button inside the sheet that is open (the thread behind it may show the same words). */
@@ -207,11 +210,12 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(answer).toHaveValue('7·4\n28+1\n29');
   // The row stood through all four taps — it is what she types with.
   await expect(times).toBeVisible();
-  // What the return key does is NOT provable here: react-native-web (0.21.2) knows no
-  // `submitBehavior` and never routes Enter to `onSubmitEditing` on a multiline field, so in the
-  // browser Enter always adds a line — for every kind, before and after this change. The rule
-  // itself is pinned in `apps/mobile/lib/practice/pathEntry.ts`'s unit tests; that it reaches the
-  // phone's keyboard is unverified until a device run (issue #221).
+  // What the return key does on the PHONE is not provable here: react-native-web (0.21.2) knows no
+  // `submitBehavior` and never routes Enter to `onSubmitEditing` on a multiline field. In the
+  // browser the field applies the same rule through `onKeyPress` (the "Rechenweg" step further
+  // down sends a one-liner with Enter); the rule itself is pinned in
+  // `apps/mobile/lib/practice/pathEntry.ts`'s unit tests, and that it reaches the phone's keyboard
+  // is unverified until a device run (issue #221).
   await shot(page, '23b-worked-path');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   // Code names the first line that no longer follows — 7·4 holds, 28+1 does not follow from it —
@@ -553,4 +557,113 @@ test('learning modes: explain, homework help without the solution, practice with
   // What the app's own stopwatch measured on the way (issue #66): starting an offered
   // practice and checking an answer are the two taps the owner called slow.
   await recordPerf(page, 'modes');
+});
+
+/**
+ * The keyboard as close as the web gets: the window shrinks by its height, as Android does
+ * on its own (adjustResize, issue #46). An iPhone keyboard with its suggestion bar is about
+ * 336 pt; a small Android one about 300 dp.
+ */
+const KEYBOARD = { 390: 336, 360: 300 } as const;
+
+/**
+ * The path at both phone sizes, light and dark, without and with the keyboard up. The field
+ * gets the focus back for each pass (the contrast check in `shot` may move it): the keyboard
+ * and the math keys only show while she is typing.
+ */
+async function pathShots(page: Page, name: string): Promise<void> {
+  const field = page.getByLabel('Deine Antwort');
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await field.focus();
+    // Fit and contrast at the full size of both phones (fit.ts), then the keyboard state.
+    await shot(page, `${name}-${scheme}`);
+    for (const phone of PHONES) {
+      const room = { width: phone.width, height: phone.height - KEYBOARD[phone.width] };
+      await page.setViewportSize(room);
+      await field.focus();
+      await expect(page.getByRole('button', { name: 'Neue Zeile' })).toBeVisible();
+      await settle(page);
+      await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
+      // With the keyboard up the task still shows above the pinned bar.
+      await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
+      const stack = await bottomStack(page, `${name}-${scheme}-kb`);
+      expect(stack, `pinned bar with a three-line path ${stack}pt`).toBeLessThanOrEqual(
+        room.height / 2,
+      );
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+}
+
+test('a written path: three lines in, the first broken step named (issue #221)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich will Gleichungen mit Rechenweg üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(
+    page.getByText('Gleichungen mit Rechenweg vorbereitet', { exact: false }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Löse:', { exact: false }).first()).toBeVisible();
+
+  // The math keys come with the keyboard, and their first key starts a new line.
+  const field = page.getByLabel('Deine Antwort');
+  await field.click();
+  const newLine = page.getByRole('button', { name: 'Neue Zeile' });
+  await expect(newLine).toBeVisible();
+  await field.pressSequentially('2x + 3 = 7');
+  await newLine.click();
+  await expect(field).toBeFocused();
+  await field.pressSequentially('2x = 10');
+  // Inside a path the return key starts the next line instead of sending the first one.
+  await field.press('Enter');
+  await field.pressSequentially('x = 5');
+  await expect(field).toHaveValue('2x + 3 = 7\n2x = 10\nx = 5');
+  // The web field shows all three lines, not one row that scrolls.
+  const rows = await field.evaluate((el) => {
+    const s = getComputedStyle(el);
+    const inner = el.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom);
+    return Math.round(inner / parseFloat(s.lineHeight));
+  });
+  expect(rows, 'the field grows to the three lines').toBeGreaterThanOrEqual(3);
+  await pathShots(page, '37-path-typed');
+
+  // "Prüfen" sends every line, separated exactly as steps.ts splits them.
+  const sent = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  expect((await sent).postDataJSON()).toMatchObject({ text: '2x + 3 = 7\n2x = 10\nx = 5' });
+  // Code found the step: 2x + 3 = 7 → 2x = 10 is the first one that does not follow.
+  await expect(
+    page
+      .getByText('Bis Zeile 1 stimmt alles. Von dort zur nächsten Zeile geht etwas verloren', {
+        exact: false,
+      })
+      .last(),
+  ).toBeVisible();
+  await pathShots(page, '38-path-broke');
+
+  // She writes it again; a sound path is judged on the value it arrives at.
+  // pathShots ends by switching the colour scheme back, and a scheme change rebuilds the
+  // tree: a fill that lands during that rebuild is wiped, the pill shows the mic instead of
+  // "Prüfen", and the click waits until the test times out (CI, 02.10.2026). Fill until
+  // the field holds the path, then check.
+  const corrected = '2x + 3 = 7\n2x = 4\nx = 2';
+  await expect(async () => {
+    await field.fill(corrected);
+    await expect(field).toHaveValue(corrected, { timeout: 1000 });
+  }).toPass();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // A one-liner still goes out with the return key: the quick path stays quick.
+  await expect(page.getByText('Berechne', { exact: false }).first()).toBeVisible();
+  await field.fill('12');
+  const quick = page.waitForRequest((r) => r.url().endsWith('/answer') && r.method() === 'POST');
+  await field.press('Enter');
+  expect((await quick).postDataJSON()).toMatchObject({ text: '12' });
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
 });

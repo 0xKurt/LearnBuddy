@@ -19,6 +19,9 @@
 // The first line break therefore cannot come from the return key; it comes from the ↵ key in the
 // math row (`components/math/MathKeys.tsx`), which is the one control this adds.
 //
+// In the browser react-native-web knows no `submitBehavior`, so the component applies rule 2 there
+// through `onKeyPress` (Shift+Enter stays the browser's own new line).
+//
 // This lives here rather than inline in the component because the component layer renders
 // through react-native-web, where a TextInput's `submitBehavior` is not in the DOM and cannot be
 // asserted — the same reason `lib/theme/modeSwitch.ts` sits where it does.
@@ -36,9 +39,17 @@ export function pathPossible(kind: ItemKind): boolean {
   return PATH_KINDS.includes(kind);
 }
 
+/** The one separator the field writes and steps.ts splits at (a "\r\n" works there too). */
+export const LINE_BREAK = '\n';
+
+/** How many lines the field holds (an empty field is one line). */
+export function lineCount(value: string): number {
+  return value.split(LINE_BREAK).length;
+}
+
 /** Whether the answer in the field already spans more than one line. */
 export function hasPath(kind: ItemKind, value: string): boolean {
-  return pathPossible(kind) && value.includes('\n');
+  return pathPossible(kind) && value.includes(LINE_BREAK);
 }
 
 /**
@@ -52,12 +63,23 @@ export function returnKey(kind: ItemKind, value: string): 'send' | 'newline' {
 
 /**
  * The line the math preview should draw. With a path the whole text is not one expression, and
- * the line that matters is the one she is arriving at — the same line `lastLine` in `steps.ts`
- * reads for the result. Empty trailing lines are skipped, so the preview does not blank out the
- * moment she adds a line.
+ * drawing it would stack a second copy of the path under the field and push the question off a
+ * small phone. The line that matters is the one with the cursor in it; without a known cursor it
+ * is the one she is arriving at — the same line `lastLine` in `steps.ts` reads for the result.
+ * On a fresh, still empty line the preview keeps the nearest line above, so it does not blank out
+ * the moment she adds a line.
  */
-export function previewLine(kind: ItemKind, value: string): string {
+export function previewLine(kind: ItemKind, value: string, caret: number | null = null): string {
   if (!hasPath(kind, value)) return value;
-  const lines = value.split('\n').filter((l) => l.trim().length > 0);
-  return lines[lines.length - 1] ?? '';
+  const lines = value.split(LINE_BREAK);
+  let at = lines.length - 1;
+  if (caret !== null) {
+    const before = value.slice(0, Math.max(0, Math.min(caret, value.length)));
+    at = before.split(LINE_BREAK).length - 1;
+  }
+  for (let i = at; i >= 0; i--) {
+    const line = lines[i] ?? '';
+    if (line.trim() !== '') return line;
+  }
+  return '';
 }

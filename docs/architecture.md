@@ -1615,30 +1615,35 @@ halb zu verstehen ist schlimmer, als sie nicht zu verstehen.
 **Eingetippt wird er auch** (Issue #221). Die Prüfung gab es ein Issue lang, bevor das
 Antwortfeld sie erreichen konnte: Zeilenumbrüche erlaubte es nur bei einem Freitext, also
 schickte die Eingabetaste auf dem Handy die **erste** Zeile als ganze Antwort ab, und der Weg
-kam bei der Prüfung nie an. Zwei Regeln, in `apps/mobile/lib/practice/pathEntry.ts`, weil die
-Komponentenschicht über react-native-web rendert und eine `TextInput`-Eigenschaft dort nicht im
-DOM steht:
+kam bei der Prüfung nie an. Das Zeilentrennzeichen ist `\n` (`steps.ts` teilt an `\r?\n`); die
+App schickt ihre Zeilen genau so, wie sie im Feld stehen. Die Regeln stehen in
+`apps/mobile/lib/practice/pathEntry.ts`, weil die Komponentenschicht über react-native-web
+rendert und eine `TextInput`-Eigenschaft dort nicht im DOM steht:
 
 - Ein Weg ist genau dort möglich, wo `evaluate.ts` einen prüft (`numeric`, `formula`, `short`) —
   keine Art mehr. In einer Vokabel oder einer Auswahl bedeutet ein Umbruch nichts.
 - Die Eingabetaste **schickt**, solange die Antwort eine Zeile ist, und macht eine neue Zeile,
   sobald es mehr sind. Einzeiler bleiben schnell, und ein Weg kann nicht auf halber Strecke
-  abgeschickt werden. Den ersten Umbruch macht deshalb nicht die Eingabetaste, sondern die
-  **↵-Taste** in der Zeichenreihe (`components/math/MathKeys.tsx`) — die eine Taste, die kein
-  Zeichen einfügt, sondern etwas tut. Sie steht vorn, weil die Reihe seitlich scrollt: eine
-  Taste, zu der man scrollen muss, kennt niemand. Eine Tabellenzelle ist einzeilig, das Brett
-  (#228–#230) bietet sie deshalb nicht an.
+  abgeschickt werden; wer den Umbruch wieder löscht, hat wieder den schnellen Einzeiler. Den
+  ersten Umbruch macht deshalb nicht die Eingabetaste, sondern die Taste **„↵ Neue Zeile"** in
+  der Zeichenreihe (`components/math/MathKeys.tsx`) — die eine Taste, die kein Zeichen einfügt,
+  sondern etwas tut, und die deshalb ein Wort trägt statt nur des Zeichens. Sie steht vorn, weil
+  die Reihe seitlich scrollt: eine Taste, zu der man scrollen muss, kennt niemand. Eine
+  Tabellenzelle ist einzeilig, das Brett (#228–#230) bietet sie deshalb nicht an.
 
-Die Vorschau zeichnet bei einem Weg die Zeile, bei der sie gerade ankommt — dieselbe Zeile, die
-`lastLine` für das Ergebnis liest; alle Zeilen auf einmal sind kein Term.
+Die Vorschau zeichnet bei einem Weg die Zeile mit dem Cursor (ohne bekannten Cursor die, bei der
+sie gerade ankommt — dieselbe, die `lastLine` für das Ergebnis liest); alle Zeilen auf einmal
+sind kein Term. Das Feld wächst bis zu seiner `maxHeight`. Diktiertes wird in einem Weg zur
+nächsten Zeile und im Sprachmodus erst mit „Prüfen" geprüft.
 
-**Nicht belegt, und zwar an der entscheidenden Stelle:** was die Eingabetaste tut, ist im Browser
-nicht prüfbar. react-native-web (0.21.2) kennt kein `submitBehavior` und ruft `onSubmitEditing`
-auf einem mehrzeiligen Feld nie auf — im Browser macht Enter also immer eine Zeile, vor und nach
-dieser Änderung, bei jeder Art. Der Walkthrough belegt das Eintippen von drei Zeilen auf 360×740,
-das Abschicken über „Prüfen" und die genannte erste gebrochene Zeile; die Regel selbst hängt an
-den Unit-Tests. Dass sie die Tastatur des Handys erreicht, ist bis zu einem Gerätelauf
-unbelegt (Regel 5).
+Im Browser kennt react-native-web (0.21.2) `submitBehavior` nicht und ruft `onSubmitEditing` auf
+einem mehrzeiligen Feld nie auf — dort setzt `onKeyPress` dieselbe Regel um (Shift+Enter bleibt
+die Zeile des Browsers), und ein Druck auf eine Mathe-Taste nimmt dem Feld nicht mehr den Fokus
+(`lib/keepsFocus.ts`, #271). Belegt im Walkthrough (`tests/web/modes.spec.ts`): drei Zeilen auf
+360×740 eingetippt und über „Prüfen" geschickt, die erste gebrochene Zeile wird genannt, ein
+Einzeiler geht mit Enter raus. **Nicht belegt:** dass die Regel die Tastatur des Handys erreicht
+— bis zu einem Gerätelauf hängt sie dort an den Unit-Tests (Regel 5). Offen: das Foto vom Heft
+als Antwort (Vorschlag 3 in #221).
 
 **Was gezählt wird, zählt Code** (Issue #212). Eine Reaktionsgleichung wird nicht mehr als
 Zeichenkette mit dem Schlüssel verglichen, sondern gezählt: `modules/practice/chemistry.ts`

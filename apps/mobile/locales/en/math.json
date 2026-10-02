@@ -315,8 +315,6 @@
   "keys": {
     "row": "Math symbols",
     "hint": "Adds the symbol to your answer",
-    "newline": "new line",
-    "newline_hint": "Starts the next line of your working",
     "fraction": "fraction bar",
     "squared": "squared",
     "cubed": "cubed",
@@ -327,7 +325,10 @@
     "open": "open bracket",
     "close": "close bracket",
     "degree": "degrees",
-    "decimal": "decimal point"
+    "decimal": "decimal point",
+    "newline": "New line",
+    "newline_shown": "↵ New line",
+    "newline_hint": "For your working: starts the next line. “Check” then checks every line."
   },
   "blank": {
     "label": "Blank",

@@ -315,8 +315,6 @@
   "keys": {
     "row": "Símbolos matemáticos",
     "hint": "Añade el símbolo a tu respuesta",
-    "newline": "nueva línea",
-    "newline_hint": "Empieza la siguiente línea de tu cálculo",
     "fraction": "línea de fracción",
     "squared": "al cuadrado",
     "cubed": "al cubo",
@@ -327,7 +325,10 @@
     "open": "abre paréntesis",
     "close": "cierra paréntesis",
     "degree": "grados",
-    "decimal": "coma"
+    "decimal": "coma",
+    "newline": "Nueva línea",
+    "newline_shown": "↵ Línea",
+    "newline_hint": "Para tu procedimiento: empieza la línea siguiente. «Comprobar» revisa luego todas las líneas."
   },
   "blank": {
     "label": "Hueco",
