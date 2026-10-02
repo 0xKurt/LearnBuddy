@@ -146,6 +146,8 @@ export function describeAction(a: ActionSummary): string {
         what: i18n.t(`learn:${KIND_LABEL[a.kind]}`),
         text: a.text,
       });
+    case 'offer_drill':
+      return t('action.offer_drill', { text: a.title });
     case 'open_area':
       return t('action.open_area', { what: t(`area.${a.area}`) });
     case 'set_voice':

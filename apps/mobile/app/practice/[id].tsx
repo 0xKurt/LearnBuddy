@@ -53,6 +53,7 @@ import { toast } from '../../components/lb/Toast.js';
 import { useSpokenWords } from '../../components/math/useSpokenMath.js';
 import { AnswerComposer } from '../../components/practice/AnswerComposer.js';
 import { CardPass } from '../../components/practice/CardPass.js';
+import { DrillRound } from '../../components/practice/DrillRound.js';
 import { BottomBar } from '../../components/practice/BottomBar.js';
 import { ChoiceList, SpokenChoiceBar } from '../../components/practice/ChoiceList.js';
 import {
@@ -283,7 +284,9 @@ export default function PracticeScreen() {
   // for (issue #147). The card itself offers "Anhören" for the word, which is the control
   // that makes sense there.
   const toRead =
-    onScreen && onScreen.status === 'open' && !session?.card_pass ? onScreen.item : null;
+    onScreen && onScreen.status === 'open' && !session?.card_pass && !session?.drill
+      ? onScreen.item
+      : null;
   // Hands-free (lib/speech/handsFree.ts): once she started a mic here herself, reading
   // to the end lets the mic listen again, and a closed question moves on by itself.
   const readQuestion = (item: ItemView) =>
@@ -351,6 +354,8 @@ export default function PracticeScreen() {
     // generator, and ending the run here would throw away the questions still on their way — the
     // server refuses it too, this only saves the pointless call.
     !session.preparing &&
+    // A Kopfrechnen round is finished by the server with its last answer (issue #243).
+    !session.drill &&
     session.items.every((i) => i.status !== 'open');
 
   // Once no question is open, the session is finished – once, while the
@@ -675,6 +680,12 @@ export default function PracticeScreen() {
 
   if (session.card_pass) {
     return <CardPass session={session} title={title} onChange={store} onClose={close} />;
+  }
+
+  // ─────────────── a Kopfrechnen round (issue #243) ───────────────
+
+  if (session.drill) {
+    return <DrillRound session={session} title={title} onChange={store} onClose={close} />;
   }
 
   const shown = questionOnScreen(session, pinnedId);

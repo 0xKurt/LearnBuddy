@@ -9,4 +9,5 @@ export * from './bars.js';
 export * from './structured.js';
 export * from './rubric.js';
 export * from './listen.js';
+export * from './drill.js';
 export * from './learning.js';

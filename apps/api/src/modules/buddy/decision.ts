@@ -14,6 +14,9 @@
 
 import {
   DifficultyWish as DifficultyWishSchema,
+  DrillCarry,
+  DrillRange,
+  DrillRow,
   VocabDirection as VocabDirectionSchema,
   VOICE_NAMES,
 } from '@learnbuddy/shared-types/contracts';
@@ -684,6 +687,29 @@ const offerLearning = z.object({
   }),
 });
 
+const offerDrill = z.object({
+  tool: z.literal('offer_drill'),
+  args: z.object({
+    range: DrillRange.describe(
+      'plus_10 · plus_20 · minus_20 · plus_100 · minus_100 · times (the times tables) · divide (the tables backwards) · fractions (1/2 + 1/4, one family) · percent (25 % of 80)',
+    ),
+    rows: z
+      .array(DrillRow)
+      .min(1)
+      .max(10)
+      .nullable()
+      .default(null)
+      .describe(
+        'times/divide only: the rows she named (the 6 and 7 times tables → [6, 7]); null = all',
+      ),
+    carry: DrillCarry.nullable()
+      .default(null)
+      .describe(
+        'plus/minus within 20 or 100 only, and only when she said it: with = crossing the ten, without = not; null = mixed',
+      ),
+  }),
+});
+
 const openArea = z.object({
   tool: z.literal('open_area'),
   args: z.object({
@@ -716,6 +742,7 @@ export const ACT_SCHEMAS = {
   set_voice: setVoice,
   schedule_check: scheduleCheck,
   offer_learning: offerLearning,
+  offer_drill: offerDrill,
   open_area: openArea,
 } as const;
 

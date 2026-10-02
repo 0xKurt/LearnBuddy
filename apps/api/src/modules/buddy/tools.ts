@@ -14,6 +14,7 @@
 // shifted, never turned on or increased.
 
 import {
+  DrillSpec,
   VOICE_NAMES,
   VOICE_SPEED_MAX,
   VOICE_SPEED_MIN,
@@ -43,6 +44,7 @@ import {
   type HowMany,
   type PracticeWish,
 } from '../practice/selection.js';
+import { titleOf } from '../practice/drill.js';
 import { fromLearnerText } from '../practice/generate.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
@@ -1681,6 +1683,40 @@ async function runOfferLearning(
   };
 }
 
+/**
+ * A Kopfrechnen round (issue #243). Like `offer_learning` it changes nothing — she starts it
+ * with a tap — but everything it can carry is a value from a closed list, and code checks the
+ * combination the model is not able to see in the schema alone: rows only for the tables,
+ * carry only where crossing the ten exists. The title is the server's, in her language.
+ */
+async function runOfferDrill(
+  action: ActionOf<'offer_drill'>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const parsed = DrillSpec.safeParse(action.args);
+  if (!parsed.success) {
+    throw new ToolRejection(
+      `this range does not fit together (${parsed.error.issues.map((i) => i.message).join('; ')}) — rows only for times or divide, carry only for plus/minus within 20 or 100; leave the other null`,
+    );
+  }
+  const spec = parsed.data;
+  if (ctx.created.preparedStepId) {
+    throw new ToolRejection(
+      'you already prepared practice in this same answer — that is the one thing she taps. Leave this offer out.',
+    );
+  }
+  return {
+    summary: {
+      tool: 'offer_drill',
+      range: spec.range,
+      rows: spec.rows ? [...spec.rows].sort((a, b) => a - b) : null,
+      carry: spec.carry,
+      title: titleOf(spec, ctx.locale),
+    },
+    undo: null,
+  };
+}
+
 async function runScheduleCheck(
   action: ActionOf<'schedule_check'>,
   ctx: ToolContext,
@@ -1756,6 +1792,7 @@ export const ACT_HANDLERS: {
   set_contact: runSetContact,
   set_voice: runSetVoice,
   offer_learning: runOfferLearning,
+  offer_drill: runOfferDrill,
   open_area: runOpenArea,
   schedule_check: runScheduleCheck,
 };

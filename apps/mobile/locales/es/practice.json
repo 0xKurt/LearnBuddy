@@ -225,5 +225,29 @@
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
     "scroll": "Tabla, se desplaza hacia los lados"
+  },
+  "drill": {
+    "progress": "Cuenta {{current}} de {{total}}",
+    "end_hint": "Volver con Buddy. Lo que has calculado queda guardado.",
+    "typed": "Tu respuesta: {{value}}",
+    "delete": "Borrar",
+    "slash": "Barra de fracción",
+    "right": "Correcto: {{task}}",
+    "was": "Era: {{task}}",
+    "right_short": "Correcto:",
+    "was_short": "Era:",
+    "done_title": "¡Hecho!",
+    "again": "Otra ronda",
+    "line": {
+      "better_times": "La tabla del {{n}} ya te sale mejor.",
+      "better_divide": "Dividir entre {{n}} ya te sale mejor.",
+      "better_range": "{{what}}: ya te sale mejor.",
+      "solid_times": "La tabla del {{n}} ya te sale muy bien.",
+      "solid_divide": "Dividir entre {{n}} ya te sale muy bien.",
+      "solid_range": "{{what}}: ya te sale muy bien.",
+      "again_times": "Seguimos con la tabla del {{n}}.",
+      "again_divide": "Seguimos con dividir entre {{n}}.",
+      "again_range": "Seguimos con {{what}}."
+    }
   }
 }

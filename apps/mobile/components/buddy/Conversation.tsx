@@ -28,6 +28,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
+import { DrillOfferCard } from '../learn/DrillOfferCard.js';
 import { OfferCard } from '../learn/OfferCard.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { AreaCard } from './AreaCard.js';
@@ -69,6 +70,7 @@ function receiptOf(m: MessageView): MessageView['actions'] {
   return m.actions.filter(
     (a) =>
       a.summary.tool !== 'offer_learning' &&
+      a.summary.tool !== 'offer_drill' &&
       a.summary.tool !== 'open_area' &&
       a.summary.tool !== 'confirm_delete',
   );
@@ -342,6 +344,15 @@ export function Conversation({
                   style={{ width: '86%', marginTop: SPACE.xs }}
                 >
                   <OfferCard actionId={a.id} offer={a.summary} spoken={spokenMode} />
+                </Animated.View>
+              ) : a.summary.tool === 'offer_drill' ? (
+                // A Kopfrechnen round (issue #243): the same card, code writes the tasks.
+                <Animated.View
+                  key={a.id}
+                  entering={riseIn(1)}
+                  style={{ width: '86%', marginTop: SPACE.xs }}
+                >
+                  <DrillOfferCard actionId={a.id} offer={a.summary} />
                 </Animated.View>
               ) : a.summary.tool === 'open_area' ? (
                 <Animated.View

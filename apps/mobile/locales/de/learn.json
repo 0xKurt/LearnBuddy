@@ -64,5 +64,8 @@
     "preparing": "Buddy bereitet vor …",
     "preparing_hint": "Das dauert ein paar Sekunden.",
     "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema."
+  },
+  "drill": {
+    "label": "Kopfrechnen"
   }
 }

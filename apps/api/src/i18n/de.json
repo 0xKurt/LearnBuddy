@@ -247,5 +247,24 @@
   },
   "voice": {
     "sample": "Hallo, ich bin Buddy. So klinge ich, wenn ich dir etwas vorlese."
+  },
+  "drill": {
+    "and": "und",
+    "percent_of": "{{p}} % von {{n}}",
+    "carry_with": "mit Übergang",
+    "carry_without": "ohne Übergang",
+    "title": {
+      "times": "Einmaleins",
+      "times_rows": "Einmaleins mit {{rows}}",
+      "divide": "Geteilt-Aufgaben",
+      "divide_rows": "Geteilt durch {{rows}}",
+      "plus_10": "Plus bis 10",
+      "plus_20": "Plus bis 20",
+      "minus_20": "Minus bis 20",
+      "plus_100": "Plus bis 100",
+      "minus_100": "Minus bis 100",
+      "fractions": "Brüche addieren",
+      "percent": "Prozent von"
+    }
   }
 }

@@ -70,6 +70,8 @@ import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems, type PracticeRun } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
+import { DRILL_PASS } from './drill.js';
+import { drillViewOf } from './drillView.js';
 import { MAX_ACCEPTED } from './items.js';
 import {
   askedElements,
@@ -187,7 +189,12 @@ export type SessionRow = {
    * (issue #147, `cards.ts`). Deliberately not a fourth `mode` — a card pass IS practice, and
    * `mode` is read far outside this module, down to `NowCard.mode` in the app's contracts.
    */
-  pass: 'cards' | null;
+  pass: 'cards' | 'drill' | null;
+  /**
+   * The range of a Kopfrechnen round (migration 0082, issue #243) — set exactly when `pass` is
+   * 'drill'. Read through `drillViewOf`, never trusted as it stands.
+   */
+  drill: unknown;
   /**
    * Set while the rest of this run's questions is still being written (migration 0073,
    * issue #220); null for every run that was written in one go. Never compared in SQL — see
@@ -203,7 +210,7 @@ export type SessionRow = {
  */
 export const SESSION_COLS = `id, learner_id, step_id, goal_id,
        case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass,
-       items_pending_until`;
+       items_pending_until, drill`;
 
 /**
  * Is this run still waiting for the rest of its questions (issue #220)? The one place that
@@ -247,7 +254,9 @@ export type SessionOptions = {
   goalId: string | null;
   mode: SessionMode;
   /** 'cards' for a flashcard pass (issue #147); absent for an ordinary run of questions. */
-  pass?: 'cards' | null;
+  pass?: 'cards' | 'drill' | null;
+  /** The range of a Kopfrechnen round (issue #243); set exactly when `pass` is 'drill'. */
+  drill?: unknown;
   materialId?: string | null;
   title?: string | null;
   clientRequestId?: string | null;
@@ -267,8 +276,9 @@ export async function createSession(
 ): Promise<string> {
   const s = await db.one<{ id: string }>(
     `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
-                                    material_id, title, client_request_id, pass, items_pending_until)
-     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10) returning id`,
+                                    material_id, title, client_request_id, pass, items_pending_until,
+                                    drill)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10, $11) returning id`,
     [
       learnerId,
       opts.stepId,
@@ -280,6 +290,7 @@ export async function createSession(
       opts.clientRequestId ?? null,
       opts.pass ?? null,
       opts.itemsPendingUntil ?? null,
+      opts.drill ?? null,
     ],
   );
   for (const [position, itemId] of itemIds.entries()) {
@@ -904,6 +915,8 @@ export async function sessionView(
     // Whether this finished run has words to go through as cards. One rule, in cards.ts, so
     // the offer on the result screen and what the pass then holds can never disagree.
     card_pass_offered: offersCardPass(s, items),
+    // A Kopfrechnen round (issue #243): the range, the pad, the task just answered, the line.
+    drill: s.pass === DRILL_PASS ? await drillViewOf(db, s) : null,
   };
 }
 
@@ -1082,6 +1095,13 @@ export async function answerItem(
   if (session.pass === CARD_PASS) {
     throw new AppError('conflict', 'These are cards: you say yourself whether you knew it', {
       reason: 'use_cards',
+    });
+  }
+  // A Kopfrechnen round (issue #243) is answered through its own door, which checks by code
+  // and never reaches the tutor; this path would call the model on a second miss.
+  if (session.pass === DRILL_PASS) {
+    throw new AppError('conflict', 'A quick round is answered on its pad', {
+      reason: 'use_drill',
     });
   }
   const item = await deps.db.maybeOne<
@@ -1858,7 +1878,11 @@ export async function hintItem(
   if (replayed) return replayed;
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
-  if (!offersHintButton(session.mode) || session.pass === CARD_PASS) {
+  if (
+    !offersHintButton(session.mode) ||
+    session.pass === CARD_PASS ||
+    session.pass === DRILL_PASS
+  ) {
     throw new AppError('conflict', 'No hints in this mode', { reason: 'no_hints' });
   }
   try {
@@ -1977,6 +2001,12 @@ export async function revealItem(
     if (s.pass === CARD_PASS) {
       throw new AppError('conflict', 'A card shows its answer by itself', {
         reason: 'use_cards',
+      });
+    }
+    if (s.pass === DRILL_PASS) {
+      // One try per task; the key is on screen the moment she answered (issue #243).
+      throw new AppError('conflict', 'A quick round shows the key by itself', {
+        reason: 'use_drill',
       });
     }
     const si = await tx.maybeOne<
@@ -2103,6 +2133,12 @@ export async function flagItem(
       // Her own words, chosen by the run before this one: there is no unfit question to
       // take out here, and a card pass has no button for it.
       throw new AppError('conflict', 'Cards are not taken out', { reason: 'flag_not_allowed' });
+    }
+    if (s.pass === DRILL_PASS) {
+      // Code wrote every task of a round from a closed range: there is no unfit one.
+      throw new AppError('conflict', 'Quick-round tasks are not taken out', {
+        reason: 'flag_not_allowed',
+      });
     }
     if (si.origin !== 'material' && si.origin !== 'buddy') {
       throw new AppError('conflict', 'Only questions from a photo or from Buddy', {
@@ -2323,7 +2359,9 @@ async function finishLocked(db: Db, learnerId: string, s: SessionRow, now: Date)
       );
     }
   }
-  if (counts.answered > 0) {
+  // A Kopfrechnen round wakes nobody (issue #243): Buddy's follow-up is a model call, and a
+  // round is twenty seconds of practice with zero of them. Buddy still sees it in STATE.
+  if (counts.answered > 0 && s.pass !== DRILL_PASS) {
     await emitEvent(db, learnerId, { type: 'session_finished', sessionId: s.id }, now, counts);
   }
   await bumpContext(db, learnerId);

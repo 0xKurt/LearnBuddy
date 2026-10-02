@@ -802,3 +802,78 @@ test('zuordnen: pairs in two columns, things into groups (issue #229)', async ({
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
+
+// Kopfrechnen (issue #243): started from the chat, twenty tasks code wrote, a digit pad, the
+// next task without a pause, and no count of mistakes at the end. Its own test: it needs only a
+// learner and Buddy, and it answers twenty tasks.
+test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async ({ page }) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Einmaleins üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('eine schnelle Runde', { exact: false })).toBeVisible();
+  await expect(page.getByText('Einmaleins mit 6 und 7')).toBeVisible();
+  await shot(page, '39h-drill-offer');
+  // The offer card names the range in the server's words; the tap starts the round at once.
+  await offerStart(page, 'Einmaleins mit 6 und 7').click();
+  const taskCard = page.getByTestId('drill-task');
+  await expect(taskCard).toBeVisible();
+  await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
+  await shot(page, '40-drill-task');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '40b-drill-task-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  /** The task on the card, solved the way a child would: read it, multiply. */
+  async function solveShown(): Promise<{ task: string; value: number }> {
+    const text = (await taskCard.innerText()).replace(/\s+/g, ' ');
+    const m = /(\d+)\s*·\s*(\d+)/.exec(text);
+    expect(m, `a times task on the card, got "${text}"`).not.toBeNull();
+    return { task: m![0], value: Number(m![1]) * Number(m![2]) };
+  }
+  async function type(value: string): Promise<void> {
+    for (const d of value) await page.getByRole('button', { name: d, exact: true }).click();
+  }
+
+  for (let n = 0; n < 20; n++) {
+    const { task, value } = await solveShown();
+    // The second task is answered wrong on purpose: the right one shows under the next task.
+    const typed = n === 1 ? String(value + 1) : String(value);
+    await type(typed);
+    if (n === 0) {
+      await expect(page.getByLabel(`Deine Antwort: ${typed}`)).toBeVisible();
+      await shot(page, '41-drill-typed');
+    }
+    await check.click();
+    if (n === 1) {
+      await expect(page.getByTestId('drill-last')).toContainText('Das war:');
+      await expect(page.getByTestId('drill-last')).toContainText(`= ${value}`);
+      await shot(page, '42-drill-was');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await shot(page, '42b-drill-was-night');
+      await page.emulateMedia({ colorScheme: 'light' });
+    }
+    if (n === 2) await expect(page.getByTestId('drill-last')).toContainText('Richtig:');
+    if (n < 19) {
+      // No pause: the next task is on the card (or the same numbers the other way round
+      // never directly — the server keeps mirror tasks apart).
+      await expect(page.getByLabel('Deine Antwort: –')).toBeVisible();
+      await expect.poll(async () => (await solveShown()).task, { timeout: 5000 }).not.toBe(task);
+    }
+  }
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  const line = page.getByTestId('drill-line');
+  await expect(line).toBeVisible();
+  // One sentence about a row — never a number of mistakes (CLAUDE.md rule 6).
+  await expect(line).not.toContainText(/\d+\s*(von|Fehler|falsch)/);
+  await expect(line).toContainText(/(sitzt|sitzen|bleiben wir dran)/);
+  await shot(page, '43-drill-done');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '43b-drill-done-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  // "Noch eine Runde": the same range, new tasks, again without a model.
+  await page.getByRole('button', { name: 'Noch eine Runde' }).click();
+  await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
+  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});

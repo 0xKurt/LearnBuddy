@@ -247,5 +247,24 @@
   },
   "voice": {
     "sample": "Salut, je suis Buddy. Voilà comment je parle quand je te lis quelque chose."
+  },
+  "drill": {
+    "and": "et",
+    "percent_of": "{{p}} % de {{n}}",
+    "carry_with": "avec retenue",
+    "carry_without": "sans retenue",
+    "title": {
+      "times": "Tables de multiplication",
+      "times_rows": "Tables de {{rows}}",
+      "divide": "Divisions",
+      "divide_rows": "Diviser par {{rows}}",
+      "plus_10": "Additions jusqu’à 10",
+      "plus_20": "Additions jusqu’à 20",
+      "minus_20": "Soustractions jusqu’à 20",
+      "plus_100": "Additions jusqu’à 100",
+      "minus_100": "Soustractions jusqu’à 100",
+      "fractions": "Additionner des fractions",
+      "percent": "Pourcentages"
+    }
   }
 }

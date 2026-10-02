@@ -247,5 +247,24 @@
   },
   "voice": {
     "sample": "Hola, soy Buddy. Así sueno cuando te leo algo."
+  },
+  "drill": {
+    "and": "y",
+    "percent_of": "{{p}} % de {{n}}",
+    "carry_with": "llevando",
+    "carry_without": "sin llevar",
+    "title": {
+      "times": "Tablas de multiplicar",
+      "times_rows": "Tablas del {{rows}}",
+      "divide": "Divisiones",
+      "divide_rows": "Dividir entre {{rows}}",
+      "plus_10": "Sumas hasta 10",
+      "plus_20": "Sumas hasta 20",
+      "minus_20": "Restas hasta 20",
+      "plus_100": "Sumas hasta 100",
+      "minus_100": "Restas hasta 100",
+      "fractions": "Sumar fracciones",
+      "percent": "Porcentajes"
+    }
   }
 }

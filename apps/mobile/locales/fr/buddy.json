@@ -45,7 +45,8 @@
     "set_contact_days": "jamais ces jours-là : {{days}}",
     "request_material_undone": "Pas besoin de photo : {{title}}",
     "set_voice": "Ma voix : {{voice}}, {{speed}}",
-    "forget_all": "Tout ce que je savais sur toi est oublié ({{count}})"
+    "forget_all": "Tout ce que je savais sur toi est oublié ({{count}})",
+    "offer_drill": "Proposé : calcul mental – « {{text}} »"
   },
   "area": {
     "library": "Tes documents",

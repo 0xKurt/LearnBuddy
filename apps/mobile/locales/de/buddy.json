@@ -45,7 +45,8 @@
     "set_contact_days": "nie an diesen Tagen: {{days}}",
     "request_material_undone": "Kein Foto nötig: {{title}}",
     "set_voice": "Meine Stimme: {{voice}}, {{speed}}",
-    "forget_all": "Alles vergessen, was ich über dich wusste ({{count}})"
+    "forget_all": "Alles vergessen, was ich über dich wusste ({{count}})",
+    "offer_drill": "Angeboten: Kopfrechnen – „{{text}}“"
   },
   "area": {
     "library": "Dein Material",

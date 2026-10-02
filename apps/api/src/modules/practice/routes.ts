@@ -3,12 +3,14 @@
 import {
   AnswerRequest,
   CardRequest,
+  DrillAnswerRequest,
   HintRequest,
   ListenAudioRequest,
   ReexplainRequest,
   SpeakRequest,
   SpeakWordRequest,
   StartCardPassRequest,
+  StartDrillRequest,
   StartPracticeRequest,
   StartTopicRequest,
   Uuid,
@@ -28,6 +30,7 @@ import { check, readBody } from '../../http/validate.js';
 import { isAppError } from '../../lib/errors.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { recordCard, startCardPass } from './cardPass.js';
+import { answerDrill, startDrill } from './drillRound.js';
 import { startTopic } from './generate.js';
 import { prepareHints } from './hints.js';
 import { listenAudio } from './listen.js';
@@ -146,6 +149,29 @@ practiceRoutes.post('/sessions/:id/card', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, CardRequest);
   return c.json(await recordCard(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/**
+ * Kopfrechnen (issue #243): a round of tasks CODE wrote from the range Buddy offered. No model
+ * is asked — not to start it, not for any answer. Idempotent per `client_request_id` (the
+ * offer's id), so the same offer always opens the same round.
+ */
+practiceRoutes.post('/drills', async (c) => {
+  const input = await readBody(c, StartDrillRequest);
+  const deps = depsOf(c);
+  const learner = c.get('learner');
+  const id = await startDrill(deps, learner, input);
+  return c.json(await sessionView(deps.db, learner.id, id, deps.storage, deps.now()), 201);
+});
+
+/**
+ * One answer of a round, checked by code at once against the value computed from the task.
+ * One try; the next task follows. Idempotent per `client_turn_id`.
+ */
+practiceRoutes.post('/sessions/:id/drill', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, DrillAnswerRequest);
+  return c.json(await answerDrill(depsOf(c), c.get('learner'), sessionId, input));
 });
 
 /**

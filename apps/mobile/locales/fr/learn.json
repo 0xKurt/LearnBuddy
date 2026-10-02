@@ -64,5 +64,8 @@
     "preparing": "Buddy prépare …",
     "preparing_hint": "Ça prend quelques secondes.",
     "not_usable": "Je ne peux rien préparer avec ça, désolé – essaie un sujet d'école."
+  },
+  "drill": {
+    "label": "Calcul mental"
   }
 }

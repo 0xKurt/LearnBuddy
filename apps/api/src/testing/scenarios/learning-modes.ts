@@ -414,6 +414,13 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ]),
     },
     {
+      // Kopfrechnen (issue #243): Buddy only picks the range; code writes every task.
+      when: /einmaleins/i,
+      answer: says('Klar – eine schnelle Runde mit den 6ern und 7ern.', [
+        { tool: 'offer_drill', args: { range: 'times', rows: [6, 7], carry: null } },
+      ]),
+    },
+    {
       when: /mein stoff|materialien|arbeitsblätter/i,
       answer: says('Klar – hier ist dein Stoff.', [
         { tool: 'open_area', args: { area: 'library' } },

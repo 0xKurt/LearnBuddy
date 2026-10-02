@@ -125,6 +125,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
 | `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen: the recording of one question's spoken text (issue #210)                                                |
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
+| `POST /practice/drills`, `POST /practice/sessions/:id/drill`                                         | Kopfrechnen: a round of tasks code wrote, one answer checked by code (#243)                                           |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
 ## Buddy decisions
@@ -2339,6 +2340,61 @@ word list, so it stays a prompt rule.
   verdict out of nowhere. Cards never lead to cards. Screen: `components/practice/CardPass.tsx`
   on the same route, where both answers are the same soft pill — a primary "Wusste ich" would
   nudge her towards the claim the rating already has to discount.
+- **Kopfrechnen — a quick round code writes** (issue #243; `contracts/drill.ts`,
+  `practice/drill.ts`, `practice/drillRound.ts`, `practice/drillView.ts`, migration
+  `0082_drill_rounds.sql`). Einspluseins and Einmaleins have to become automatic, and a model
+  writing "noch 20 Aufgaben" was slow and cost a call per round although code can write and
+  check every one of them. #224 "Regel 0" in its strongest form: **the model never sees a task.**
+  _Buddy chooses, code computes._ "Lass uns Einmaleins üben" → the act tool `offer_drill`
+  (turn-only, changes nothing, no undo): one `range` from a closed list (`plus_10`, `plus_20`,
+  `minus_20`, `plus_100`, `minus_100`, `times`, `divide`, `fractions`, `percent`), for the tables
+  the `rows` she named, for plus/minus above ten `carry` (with/without crossing the ten). The
+  contract (`DrillSpec`) refuses rows outside the tables and carry where it means nothing, and
+  the tool rejects such a call back to the model. The card in the chat (`DrillOfferCard`) shows
+  the server's own name for the range ("Einmaleins mit 6 und 7"); her tap sends the offer's id
+  as `client_request_id` to `POST /practice/drills`, so the same offer opens the same round.
+  _A task is a fact with a key_ (`times:7x8`, `plus:37+48`, `frac:1/2+1/4`, `pct:25%80`,
+  `items.drill_fact`, unique per learner): text and key are computed from it, and the key makes
+  "7 · 8" the SAME question across rounds, with one FSRS state. A key no range can produce
+  (`factOf`) is not a task. The values the ranges keep: no negative result, no remainder, a
+  fraction family (halves/quarters/eighths, thirds/sixths, fifths/tenths) with the sum at most 1,
+  a whole-number percentage.
+  _The round_ (`pickRound`): at most `DRILL_ROUND` (20) tasks, each fact once, drawn by weight
+  from FSRS (missed last time > due > new > sitting, Efraimidis–Spirakis with a seed from the
+  request id, so a round is reproducible); a task never right after its mirror (7 · 8, 8 · 7) and
+  a round never opens with the task the last one ended with. A range with fewer facts is a
+  shorter round (`divide` with one row: 19), never a repeated task — `session_items` holds a
+  question once per session. It is an ordinary session (`pass = 'drill'`,
+  `practice_sessions.drill` = the spec), so the lock order, tenant isolation, export and deletion
+  are the ones every session has; its tasks are `numeric` items of origin `buddy`, and
+  `selectPracticeItems` leaves every one of them out of the practice the model prepares.
+  _Answering_ (`POST /practice/sessions/:id/drill`, idempotent per `client_turn_id`, a
+  concurrent duplicate reads the first one's answer): one try. `checkDrill` compares her value
+  with the value COMPUTED from the fact — never with `items.answer` — exactly, as fractions of
+  whole numbers; because code wrote the task, it asks for an amount, so 6/8 and 0,75 answer
+  ½ + ¼ (the bars' `form_free` licence, #162). Right → `correct`, FSRS `Good`; not right →
+  `missed`, `Again`, and the key stands under the next task. No reply text, no tutor, no hint,
+  no reveal: the generic answer, hint and reveal doors refuse a round (409 `use_drill`), because
+  the tutor door would call the model on a second miss. Text that is not a number is not an
+  answer (422 at the contract). **Zero model calls per round**, and the finished round emits no
+  `session_finished` event — Buddy's follow-up would be a model call after twenty seconds of
+  practice; he sees the round in STATE like any session (`drill.int.test.ts`: twenty tasks,
+  `llm_calls` unchanged after the chat turn).
+  _The end says one sentence, never a count_ (rule 6, `drillLine`): `better` when a task of a row
+  she had missed before (`session_items.state_before`, written by the review itself) is right
+  now — measured on the same question, not a feeling; `solid` when a row (or the whole round)
+  was all right; otherwise `again`, said as where to go on ("Bei den 7ern bleiben wir dran").
+  The app words it ("Die 7er sitzen jetzt besser."), and offers "Noch eine Runde" and the way
+  back. _Screen_ (`components/practice/DrillRound.tsx`, on the practice route): the task big,
+  the typed answer under it, a 3×4 digit pad (52 pt keys; "/" only for fractions), "Prüfen" in
+  the pinned bar. The next task stands there the moment she presses "Prüfen" — the answers go
+  out in order behind it, and what the server decided arrives in the line under the card
+  ("Richtig: 6 · 7 = 42" / "Das war: 7 · 8 = 56", words and not only colour). A keyboard types
+  on the same pad in the browser. No settings, no timer, no instructions (#224 Minimalismus).
+  **Not built**: a timer, mixing ranges in one round, a task asked twice in one round, starting
+  a round without Buddy (there is no tile — the chat is the way in), an offer that stands is not
+  yet in STATE's "Already waiting for her" (only `offer_learning` is), so a repeated
+  `offer_drill` is not refused by code.
 - **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak` with a
   ≤ 15 s recording, bodies up to 2 MB only on this route). The model listens to the audio itself:
   it writes the expected pronunciation and the sounds actually produced (IPA), then judges word

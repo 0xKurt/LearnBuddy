@@ -200,6 +200,14 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec<K> } = {
     does: 'offer a button that starts learning now (practice, test, vocab, speak, listen, help) — easier or harder, or one vocabulary direction, when she asks for that',
     run: ACT_HANDLERS.offer_learning,
   },
+  offer_drill: {
+    surfaces: TURN,
+    touches: ['nothing'],
+    needsQuote: false,
+    undoable: false,
+    does: 'offer a button that starts a quick mental-arithmetic round (Einmaleins, plus/minus, simple fractions or percentages): code writes every task from the range you pick, she types on a digit pad',
+    run: ACT_HANDLERS.offer_drill,
+  },
   open_area: {
     surfaces: TURN,
     touches: ['nothing'],
