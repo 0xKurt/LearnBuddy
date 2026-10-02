@@ -104,6 +104,10 @@
     "hint_placed": "Takes it back – and everything after it.",
     "check_waits": "Once every one has a place."
   },
+  "select": {
+    "several": "More than one answer is right",
+    "check_waits": "Once you've ticked at least one."
+  },
   "origin_buddy": "Question from Buddy",
   "progress": "Question {{current}} of {{total}}",
   "progress_more_coming": "Question {{current}} · I’m writing more",

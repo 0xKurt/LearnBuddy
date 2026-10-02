@@ -807,3 +807,84 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
+
+// Its own test, with its own learner (the 180 s budget of the others). Several right answers
+// (issue #240): the surface says "more than one" with square boxes and one quiet tag — no
+// instruction text — and the reply counts gently. Both cases are the LARGEST a select-all may
+// be (contracts/structured.ts): six short forms two by two, and four statements one under the
+// other below a two-line question; every `shot` fails if they would have to be scrolled, also with Buddy's reply above.
+test('mehrere richtige ankreuzen: square boxes, a gentle count, the set judged by code (issue #240)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize(PHONES[0]);
+  const both = async (name: string) => {
+    await shot(page, name);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await shot(page, `${name}-night`);
+    await page.emulateMedia({ colorScheme: 'light' });
+  };
+  const box = (name: string) => page.getByRole('checkbox', { name, exact: true });
+  const check = page.getByRole('button', { name: 'Prüfen' });
+
+  // ── six short forms, two by two ──
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns Fälle in Latein bestimmen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('kreuz an, was alles passt', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(page.getByText('Welche Formen kann „rosae“ sein?')).toBeVisible();
+  await expect(page.getByText('Mehrere Antworten richtig')).toBeVisible();
+  await expect(page.getByRole('checkbox')).toHaveCount(6);
+  await expect(check).toBeDisabled();
+  await both('41a-select-grid-start');
+  for (const form of ['Genitiv Sg.', 'Dativ Sg.', 'Akkusativ Sg.']) await box(form).click();
+  await expect(box('Genitiv Sg.')).toHaveAttribute('aria-checked', 'true');
+  // One more tap takes a tick back again.
+  await box('Akkusativ Sg.').click();
+  await expect(box('Akkusativ Sg.')).toHaveAttribute('aria-checked', 'false');
+  await box('Akkusativ Sg.').click();
+  await both('41b-select-grid-ticked');
+  // The theme switch rebuilt the tree; her ticks are still there (the draft).
+  await expect(box('Akkusativ Sg.')).toHaveAttribute('aria-checked', 'true');
+  await check.click();
+  const partial = '2 von 4 richtigen hast du schon. Eine passt aber nicht dazu.';
+  await expect(page.getByText(partial)).toBeVisible();
+  await expect(page.getByText(partial)).toBeInViewport();
+  await both('41c-select-grid-feedback');
+  // Her ticks stay; she fixes them.
+  await box('Akkusativ Sg.').click();
+  await box('Nominativ Pl.').click();
+  await box('Vokativ Pl.').click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+
+  // ── four statements, one under the other ──
+  await page.getByLabel('Schreib Buddy …').fill('Ich will für die Fahrradprüfung üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('wie in der Fahrradprüfung', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: "Los geht's" }).last().click();
+  await expect(
+    page.getByText('Was muss ein Fahrrad für die Straße', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByRole('checkbox')).toHaveCount(4);
+  await both('41d-select-list-start');
+  for (const thing of ['Zwei unabhängige Bremsen', 'Ein Gepäckträger mit Gurt']) {
+    await box(thing).click();
+  }
+  await both('41e-select-list-ticked');
+  await check.click();
+  const listPartial = '1 von 3 richtigen hast du schon. Eine passt aber nicht dazu.';
+  await expect(page.getByText(listPartial)).toBeInViewport();
+  await both('41f-select-list-feedback');
+  await box('Ein Gepäckträger mit Gurt').click();
+  await box('Ein weißer Scheinwerfer vorn').click();
+  await box('Rückstrahler an den Pedalen').click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});

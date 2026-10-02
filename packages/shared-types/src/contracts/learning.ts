@@ -304,6 +304,8 @@ export const ItemKind = z.enum([
   'match',
   /** Fill the gaps of a table (#230). */
   'table_fill',
+  /** Tick every right answer among several options (#240). */
+  'select_all',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 

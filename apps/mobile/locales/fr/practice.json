@@ -104,6 +104,10 @@
     "hint_placed": "Le retire – avec tout ce qui vient après.",
     "check_waits": "Seulement quand chacun a sa place."
   },
+  "select": {
+    "several": "Plusieurs réponses justes",
+    "check_waits": "Dès que tu en as coché au moins une."
+  },
   "origin_buddy": "Question de Buddy",
   "progress": "Question {{current}} sur {{total}}",
   "progress_more_coming": "Question {{current}} · j’en écris d’autres",

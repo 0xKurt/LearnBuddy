@@ -239,12 +239,16 @@ const LIST_WORD_MAX = Math.floor(LIST_TEXT_ROOM / (CHOICE_FONT * EM_PER_CHAR));
 export const GRID_CHARS_MAX = 14;
 
 /**
- * Do these options go two by two? Only up to four of them, each short enough as a whole AND
+ * Do these options go two by two? Only up to four of them (`max`), each short enough as a whole AND
  * with every word short enough for half a line — one word that cannot fit sends all of them
  * to the full width, because a grid with one three-line card is the very thing #203 is about.
  */
-export function twoColumnChoices(choices: readonly string[]): boolean {
-  return choices.length > 0 && choices.length <= 4 && choices.every((c) => fitsHalfLine(c));
+export function twoColumnChoices(
+  choices: readonly string[],
+  /** How many may stand two by two: four choices, six options to tick (three rows, #240). */
+  max: number = 4,
+): boolean {
+  return choices.length > 0 && choices.length <= max && choices.every((c) => fitsHalfLine(c));
 }
 
 /** One option: short as a whole, and no word in it longer than half a line holds. */
@@ -291,6 +295,24 @@ const WHOLE_WORDS: TextStyle | null =
   Platform.OS === 'web'
     ? ({ wordWrap: 'normal', overflowWrap: 'normal', wordBreak: 'normal' } as unknown as TextStyle)
     : null;
+
+/**
+ * The option cards' measures, for the select-all surface (issue #240): it sets its options on the
+ * same cards, so the two kinds of choice look alike and the grid arithmetic above holds for both.
+ */
+export const CHOICE = {
+  font: CHOICE_FONT,
+  weight: CHOICE_WEIGHT,
+  gap: CARD_GAP,
+  radius: CARD_RADIUS,
+  badgeGrid: BADGE_GRID,
+  badgeGapGrid: BADGE_GAP_GRID,
+} as const;
+
+/** Whole words only where the option's longest word fits its line (see `wholeWordsFit`). */
+export function wholeWordsStyle(choice: string, grid: boolean): TextStyle | null {
+  return wholeWordsFit(choice, grid) ? WHOLE_WORDS : null;
+}
 
 /** A, B, C … (after Z it simply goes on counting: 27, 28 …). */
 function letterFor(index: number): string {

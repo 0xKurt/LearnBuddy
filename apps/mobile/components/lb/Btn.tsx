@@ -54,6 +54,11 @@ type Props = {
   pill?: boolean;
   /** Set for one choice of several (Segmented): read out as a radio button and whether it is chosen. */
   selected?: boolean;
+  /**
+   * Set for one option of several she may tick together (select-all, issue #240): read out as a
+   * checkbox and whether it is ticked. Never together with `selected`.
+   */
+  checked?: boolean;
   /** Opens and closes something below it (a folding group): read out as expanded or collapsed. */
   expanded?: boolean;
   accessibilityLabel?: string;
@@ -133,6 +138,7 @@ export function Btn({
   onDisabledPress,
   busy = false,
   selected,
+  checked,
   expanded,
   tone,
   pill = false,
@@ -160,18 +166,22 @@ export function Btn({
     <Pressable
       onPress={onPress}
       disabled={off}
-      accessibilityRole={selected === undefined ? 'button' : 'radio'}
+      accessibilityRole={
+        checked !== undefined ? 'checkbox' : selected === undefined ? 'button' : 'radio'
+      }
       accessibilityLabel={accessibilityLabel ?? children}
       accessibilityHint={accessibilityHint}
       accessibilityState={{
         disabled: off,
         busy,
         ...(selected === undefined ? {} : { selected, checked: selected }),
+        ...(checked === undefined ? {} : { checked }),
         ...(expanded === undefined ? {} : { expanded }),
       }}
       // A radio must say whether it is chosen; on the web `accessibilityState.checked`
       // alone does not become `aria-checked` (axe: aria-required-attr, issue #73).
       {...(selected === undefined ? {} : { 'aria-checked': selected })}
+      {...(checked === undefined ? {} : { 'aria-checked': checked })}
       android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
       style={{
         ...(reveal

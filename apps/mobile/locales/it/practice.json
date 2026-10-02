@@ -104,6 +104,10 @@
     "hint_placed": "Lo toglie, insieme a tutto ciò che viene dopo.",
     "check_waits": "Solo quando ognuno ha il suo posto."
   },
+  "select": {
+    "several": "Più risposte giuste",
+    "check_waits": "Quando ne hai spuntata almeno una."
+  },
   "origin_buddy": "Domanda di Buddy",
   "progress": "Domanda {{current}} di {{total}}",
   "progress_more_coming": "Domanda {{current}} · ne sto scrivendo altre",

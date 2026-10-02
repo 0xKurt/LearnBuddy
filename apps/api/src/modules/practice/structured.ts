@@ -14,7 +14,7 @@
 // for display and records the key as a sequence of ids (CLAUDE.md rule 2). The stored task
 // (`items.task`) carries the key; the view (`ItemView.task_view`) never does.
 //
-// Adding a kind (#229 match, #230 table_fill, #232 cloze): its draft schema, a builder from
+// Adding a kind (#229 match, #230 table_fill, #240 select_all, #232 cloze): its draft schema, a builder from
 // draft to task, a `problem` check, a view, a checker and a reply — each one more `case` in
 // the switches below. The answer flow in `service.ts` only ever calls the exported functions.
 
@@ -38,6 +38,16 @@ import {
   ORDER_ELEMENT_MAX,
   ORDER_MAX,
   ORDER_MIN,
+  SELECT_LONG_MAX,
+  SELECT_MAX,
+  SELECT_MIN,
+  SELECT_OPTION_MAX,
+  SELECT_PROMPT_MAX,
+  SELECT_RIGHT_MIN,
+  SELECT_SHORT_CHARS,
+  SELECT_SHORT_WORD,
+  type SelectAllAnswer,
+  type SelectAllTask,
   StructuredTask,
   type OrderAnswer,
   type OrderTask,
@@ -168,6 +178,45 @@ const MatchDraftWithHelp = MatchDraftBase.extend({
   worked_solution: ItemDraft.shape.worked_solution,
 });
 
+// ─── select_all (#240): the model's draft ───
+
+/**
+ * What the generator and the photo reading are told about select-all items — exact, minimal and
+ * without an example sentence, like ORDER_RULES.
+ */
+export const SELECT_RULES = `Select-all tasks ("structured", type "select_all"): only for a question with SEVERAL right answers among given options ("tick all that apply"). ${SELECT_MIN}–${SELECT_MAX} options when every option is short (at most ${SELECT_SHORT_CHARS} characters, no word over ${SELECT_SHORT_WORD}), otherwise ${SELECT_MIN}–${SELECT_LONG_MAX}; an option is a word, a form or a short statement of at most ${SELECT_OPTION_MAX} characters; correct true for every right one. At least ${SELECT_RIGHT_MIN} right and at least one wrong; a question with exactly one right answer is an ordinary multiple_choice item, never this. No two options alike, none that is right or wrong only depending on how it is read, and no option about the other options ("all of them", "none of these"). The app shuffles them. prompt: the question, at most ${SELECT_PROMPT_MAX} characters; it never lists the options and never says how many are right.`;
+
+/** Parsed generously, like a match text: `selectDraftProblem` names an option that is too long. */
+const SelectText = z
+  .string()
+  .trim()
+  .min(1)
+  .max(SELECT_OPTION_MAX * 2);
+
+/** The model's select-all task: the options, each marked right or not — code builds the rest. */
+const SelectDraftBase = z.object({
+  type: z.literal('select_all'),
+  prompt: z
+    .string()
+    .trim()
+    .min(1)
+    .max(600)
+    .describe('The question; never the options themselves, never how many are right'),
+  options: z
+    .array(z.object({ text: SelectText, correct: z.boolean() }))
+    .max(SELECT_MAX * 2)
+    .describe(
+      `${SELECT_MIN}–${SELECT_MAX} options; at least ${SELECT_RIGHT_MIN} with correct true and at least one with correct false`,
+    ),
+  topic: ItemDraft.shape.topic,
+  difficulty: ItemDraft.shape.difficulty,
+  prompt_lang: ItemDraft.shape.prompt_lang,
+});
+export type SelectDraft = Pick<z.infer<typeof SelectDraftBase>, 'options'> & {
+  /** Checked when given: the question that stands above the options. */
+  prompt?: string;
+};
+
 /** A structured task as the model writes it, with prepared help (photo reading). */
 export const StructuredDraft = z.discriminatedUnion('type', [
   OrderDraftWithHelp,
@@ -176,6 +225,10 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     worked_solution: ItemDraft.shape.worked_solution,
   }),
   MatchDraftWithHelp,
+  SelectDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -184,6 +237,7 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
   OrderDraftBase.extend({ hints: ItemDraft.shape.hints }),
   TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
   MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  SelectDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -192,6 +246,7 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   OrderDraftBase,
   TableDraftBase,
   MatchDraftBase,
+  SelectDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -235,7 +290,10 @@ export type TaskProblem =
    * A text, a word or the prompt over its cap (MATCH_ELEMENT_MAX, MATCH_GROUP_TEXT_MAX,
    * MATCH_WORD_MAX, MATCH_PROMPT_MAX): it would not fit a 360×740 phone without scrolling.
    */
-  | 'too_long';
+  | 'too_long'
+  // select_all (#240):
+  /** Fewer than SELECT_RIGHT_MIN right options, or every option right: no select-all question. */
+  | 'right_count';
 
 /** An element as it is compared for sameness: markup, case and surrounding marks set aside. */
 function sameness(text: string): string {
@@ -303,6 +361,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return tableProblem(task);
     case 'match':
       return matchProblem(task);
+    case 'select_all':
+      return selectProblem(task);
   }
 }
 
@@ -387,6 +447,8 @@ export function solutionOf(task: StructuredTask): string {
       return tableSolution(task);
     case 'match':
       return matchText(task, task.key);
+    case 'select_all':
+      return selectText(task, task.key);
   }
 }
 
@@ -477,6 +539,39 @@ export function structuredItem(
         task,
         prompt,
         answer,
+        accepted_answers: [],
+        unit: null,
+        choices: null,
+        correct_choice: null,
+        topic: draft.topic,
+        difficulty: draft.difficulty,
+        prompt_lang: draft.prompt_lang,
+        lang: null,
+        figure: null,
+        tolerance: null,
+        spelling: null,
+        source_excerpt: null,
+        // No curriculum place (#214) and no rubric (#211): both belong to single answers.
+        curriculum_point: null,
+        rubric: null,
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
+    case 'select_all': {
+      // The prompt's cap too: the question card above the options may take three lines.
+      const task = selectDraftProblem(draft) === null ? selectTaskFrom(draft) : null;
+      if (!task) return null;
+      const prompt = dollarMathRuns(draft.prompt);
+      // Help never says of an option whether it is right: no hint may name one.
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !namesAnOption(h, task, prompt),
+      );
+      return {
+        kind: 'select_all',
+        task,
+        prompt,
+        answer: solutionOf(task),
         accepted_answers: [],
         unit: null,
         choices: null,
@@ -748,6 +843,143 @@ function namesALink(hint: string, task: MatchTask): boolean {
   });
 }
 
+// ─────────────── select_all (#240): Regel 0 and the stored task ───────────────
+
+/**
+ * Two options that say the same: the same text once case, spacing and math markup are set
+ * aside, or the same written number ("0,5" and "1/2"). Either would make the key a guess.
+ */
+function sameOption(a: string, b: string): boolean {
+  if (sameness(a) === sameness(b)) return true;
+  const x = numberOf(a);
+  const y = numberOf(b);
+  return (
+    x !== null &&
+    y !== null &&
+    x.unit === y.unit &&
+    !less(x.exact, y.exact) &&
+    !less(y.exact, x.exact)
+  );
+}
+
+/** An option that stands in half a line, two by two with the others (the app's grid, #203). */
+function shortOption(text: string): boolean {
+  const plain = plainMath(text).trim();
+  return (
+    plain.length <= SELECT_SHORT_CHARS &&
+    plain.split(/\s+/).every((w) => w.length <= SELECT_SHORT_WORD)
+  );
+}
+
+/** What is wrong with a list of options and their marks, or null. Shared by draft and task. */
+function optionsProblem(
+  options: ReadonlyArray<{ text: string; right: boolean }>,
+): TaskProblem | null {
+  if (options.some((o) => plainMath(o.text).trim().length > SELECT_OPTION_MAX)) return 'too_long';
+  // Six fit two by two; once one is a statement they stand one under the other, and four fit.
+  const max = options.every((o) => shortOption(o.text)) ? SELECT_MAX : SELECT_LONG_MAX;
+  if (options.length < SELECT_MIN || options.length > max) return 'count';
+  for (let i = 0; i < options.length; i++) {
+    if (sameness(options[i]!.text) === '') return 'duplicate';
+    for (let j = 0; j < i; j++) {
+      if (sameOption(options[i]!.text, options[j]!.text)) return 'duplicate';
+    }
+  }
+  const right = options.filter((o) => o.right).length;
+  if (right < SELECT_RIGHT_MIN || right === options.length) return 'right_count';
+  return null;
+}
+
+/** What is wrong with the model's select-all draft, or null. */
+export function selectDraftProblem(draft: SelectDraft): TaskProblem | null {
+  if (draft.prompt !== undefined && plainMath(draft.prompt).trim().length > SELECT_PROMPT_MAX) {
+    return 'too_long';
+  }
+  return optionsProblem(draft.options.map((o) => ({ text: o.text, right: o.correct })));
+}
+
+/** What is wrong with a select-all task (stored or built), or null. */
+export function selectProblem(task: SelectAllTask): TaskProblem | null {
+  const ids = new Set(task.options.map((o) => o.id));
+  if (ids.size !== task.options.length) return 'not_mapping';
+  if (new Set(task.key).size !== task.key.length || !task.key.every((id) => ids.has(id))) {
+    return 'not_mapping';
+  }
+  const key = new Set(task.key);
+  return optionsProblem(task.options.map((o) => ({ text: o.text, right: key.has(o.id) })));
+}
+
+/**
+ * The stored task for the model's marked options, or null when Regel 0 rejects it. The
+ * display never puts every right option first — the order the model wrote them in would
+ * otherwise often be the solution laid out.
+ */
+export function selectTaskFrom(draft: SelectDraft): SelectAllTask | null {
+  if (selectDraftProblem(draft) !== null) return null;
+  const options = draft.options.map((o) => ({
+    text: dollarMathRuns(o.text.trim()),
+    right: o.correct,
+  }));
+  const seed = ['select_all', ...options.map((o) => `${o.text}\u0001${o.right ? 1 : 0}`)].join(
+    '\u0000',
+  );
+  const rightCount = options.filter((o) => o.right).length;
+  const shown = shuffleWhere(options.length, seed, (idx) =>
+    // Some wrong option stands before some right one.
+    idx.slice(0, rightCount).some((i) => !options[i]!.right),
+  );
+  if (!shown) return null;
+  const task: SelectAllTask = {
+    type: 'select_all',
+    options: shown.map((oi, p) => ({ id: idAt(p), text: options[oi]!.text })),
+    key: shown.flatMap((oi, p) => (options[oi]!.right ? [idAt(p)] : [])),
+  };
+  const parsed = StructuredTask.safeParse(task);
+  if (!parsed.success || parsed.data.type !== 'select_all') return null;
+  return selectProblem(parsed.data) === null ? parsed.data : null;
+}
+
+/** The words of a text, compared like elements are (`sameness`), markup and marks set aside. */
+function wordsOf(text: string): Set<string> {
+  return new Set(
+    sameness(text)
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter(Boolean),
+  );
+}
+
+/**
+ * Does a hint name an option? Then it says something about whether that option is right, and
+ * a hint must never do that. Named means: the whole option (as for every prepared hint), or a
+ * word that belongs to this option alone — not to another option and not to the question —
+ * like "Klingel" for "Eine helltönende Klingel". A word every option shares ("Singular") says
+ * nothing about one of them, and a short one ("der") is no name at all.
+ */
+function namesAnOption(hint: string, task: SelectAllTask, prompt: string): boolean {
+  const said = wordsOf(hint);
+  const asked = wordsOf(prompt);
+  const words = task.options.map((o) => wordsOf(o.text));
+  return task.options.some((o, i) => {
+    if (mentionsSolution(hint, o.text, prompt)) return true;
+    return [...words[i]!].some(
+      (w) =>
+        w.length >= 4 &&
+        said.has(w) &&
+        !asked.has(w) &&
+        words.every((other, j) => j === i || !other.has(w)),
+    );
+  });
+}
+
+/** Options by id, in the order she sees them, as one line ("Akkusativ; Ablativ"). */
+function selectText(task: SelectAllTask, ids: readonly string[]): string {
+  const set = new Set(ids);
+  return task.options
+    .filter((o) => set.has(o.id))
+    .map((o) => o.text)
+    .join(MATCH_LIST_JOIN);
+}
+
 // ─────────────── the stored task, read back ───────────────
 
 /**
@@ -770,6 +1002,8 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       return tableView(task);
     case 'match':
       return { type: 'match', form: task.form, left: task.left, right: task.right };
+    case 'select_all':
+      return { type: 'select_all', options: task.options };
   }
 }
 
@@ -782,7 +1016,43 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = OrderCheck | TableCheck | MatchCheck;
+export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | SelectCheck;
+
+/** select_all (#240): how many right ones she found, and how many she ticked that are not. */
+export type SelectCheck = {
+  type: 'select_all';
+  correct: boolean;
+  /** Per option, in the order she sees them: ticked exactly when it is right? */
+  parts: PartResult[];
+  /** Right options she ticked. */
+  found: number;
+  /** Right options there are. */
+  total: number;
+  /** Options she ticked that are not right. */
+  extra: number;
+  /** The first option (as shown) she ticked and that is not right, or null. */
+  first_extra_text: string | null;
+};
+
+function checkSelect(task: SelectAllTask, answer: SelectAllAnswer): SelectCheck | null {
+  const ids = new Set(task.options.map((o) => o.id));
+  const chosen = new Set(answer.chosen);
+  // Each option at most once, and only options that are there (else: 400, not graded).
+  if (chosen.size !== answer.chosen.length || ![...chosen].every((id) => ids.has(id))) return null;
+  const key = new Set(task.key);
+  const parts = task.options.map((o) => ({ id: o.id, ok: chosen.has(o.id) === key.has(o.id) }));
+  const found = task.key.filter((id) => chosen.has(id)).length;
+  const extras = task.options.filter((o) => chosen.has(o.id) && !key.has(o.id));
+  return {
+    type: 'select_all',
+    correct: parts.every((p) => p.ok),
+    parts,
+    found,
+    total: key.size,
+    extra: extras.length,
+    first_extra_text: extras[0]?.text ?? null,
+  };
+}
 
 export type OrderCheck = {
   type: 'order';
@@ -866,6 +1136,8 @@ export function checkStructured(
       return answer.type === 'table_fill' ? checkTable(task, answer, ctx) : null;
     case 'match':
       return answer.type === 'match' ? checkMatch(task, answer) : null;
+    case 'select_all':
+      return answer.type === 'select_all' ? checkSelect(task, answer) : null;
   }
 }
 
@@ -881,6 +1153,8 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
       return answer.type === 'table_fill' ? tableAnswerText(task, answer) : '';
     case 'match':
       return answer.type === 'match' ? matchText(task, answer.links) : '';
+    case 'select_all':
+      return answer.type === 'select_all' ? selectText(task, answer.chosen) : '';
   }
 }
 
@@ -918,6 +1192,24 @@ export function structuredReply(
         ? `${base} ${t(locale, 'practice.match.look_at', { text: check.first_wrong_text })}`
         : base;
     }
+    case 'select_all': {
+      // Counted, never judged harshly: what she found first, then what does not belong. WHICH
+      // one does not belong only on the second miss — help, like a match (`structuredNamesPart`).
+      // A right one she missed is never named: that would be the answer.
+      const found =
+        check.found === 0
+          ? t(locale, 'practice.select.none')
+          : check.found === check.total
+            ? t(locale, 'practice.select.all_found')
+            : t(locale, 'practice.select.found_some', { count: check.found, total: check.total });
+      const extra =
+        check.extra === 0 || check.found === 0
+          ? ''
+          : ` ${t(locale, 'practice.select.extra', { count: check.extra })}`;
+      return structuredNamesPart(check, priorMisses) && check.first_extra_text !== null
+        ? `${found}${extra} ${t(locale, 'practice.select.look_at', { text: check.first_extra_text })}`
+        : `${found}${extra}`;
+    }
   }
 }
 
@@ -934,5 +1226,7 @@ export function structuredNamesPart(check: StructuredCheck, priorMisses: number)
       return false;
     case 'match':
       return !check.correct && priorMisses >= 1;
+    case 'select_all':
+      return !check.correct && priorMisses >= 1 && check.first_extra_text !== null;
   }
 }

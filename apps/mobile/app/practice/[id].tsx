@@ -1218,6 +1218,7 @@ export default function PracticeScreen() {
               view={item.task_view}
               draftKey={`session.${id}.${item.id}`}
               disabled={locked}
+              answered={itemTurns.some((turn) => turn.role === 'learner')}
               onSubmit={(parts, shownText) => void answer(item.id, { parts }, shownText)}
             />
           </View>

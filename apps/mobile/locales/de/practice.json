@@ -104,6 +104,10 @@
     "hint_placed": "Nimmt es zurück – und alles, was danach kommt.",
     "check_waits": "Erst wenn alle einen Platz haben."
   },
+  "select": {
+    "several": "Mehrere Antworten richtig",
+    "check_waits": "Erst wenn du mindestens eine angetippt hast."
+  },
   "origin_buddy": "Frage von Buddy",
   "progress": "Frage {{current}} von {{total}}",
   "progress_more_coming": "Frage {{current}} · ich schreibe noch mehr",

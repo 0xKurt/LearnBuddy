@@ -240,6 +240,15 @@
       "groups_some_one": "1 sur {{total}} est déjà dans le bon groupe.",
       "groups_none": "Aucun n'est encore dans le bon groupe – regarde encore une fois tranquillement.",
       "look_at": "Regarde encore « {{text}} »."
+    },
+    "select": {
+      "found_some": "Tu as déjà {{count}} des {{total}} bonnes réponses.",
+      "found_some_one": "Tu as déjà 1 des {{total}} bonnes réponses.",
+      "all_found": "Tu as déjà toutes les bonnes réponses.",
+      "none": "Aucune des bonnes réponses n'y est encore – regarde-les toutes encore une fois tranquillement.",
+      "extra": "Mais {{count}} n'en font pas partie.",
+      "extra_one": "Mais une n'en fait pas partie.",
+      "look_at": "Regarde encore « {{text}} »."
     }
   },
   "contact": {

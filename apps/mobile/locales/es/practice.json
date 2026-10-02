@@ -104,6 +104,10 @@
     "hint_placed": "Lo quita, y también todo lo que viene después.",
     "check_waits": "Solo cuando todos tengan su lugar."
   },
+  "select": {
+    "several": "Varias respuestas correctas",
+    "check_waits": "Cuando hayas marcado al menos una."
+  },
   "origin_buddy": "Pregunta de Buddy",
   "progress": "Pregunta {{current}} de {{total}}",
   "progress_more_coming": "Pregunta {{current}} · estoy escribiendo más",

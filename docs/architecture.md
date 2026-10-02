@@ -1821,10 +1821,11 @@ them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
 `practice/table.ts`, migration `0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, from the analysis #224). Some answers are not a
-sentence but an arrangement: an order, pairs, groups, table cells. They are their own item kinds
-(`order`, `match`, `table_fill`), and #224's "Regel 0" holds in both directions: code validates
-what the model wrote, and code judges what she answers — never a model.
+issues #228 order, #229 match, #230 table_fill, #240 select_all, from the analysis #224). Some
+answers are not a sentence but an arrangement: an order, pairs, groups, table cells, a set of
+ticked options. They are their own item kinds (`order`, `match`, `table_fill`, `select_all`), and
+#224's "Regel 0" holds in both directions: code validates what the model wrote, and code judges
+what she answers — never a model.
 
 _Two implementations existed for a day_ (#224, „Entscheidung: zwei Umsetzungen …“): `parts`
 (migration 0072, `items.parts_task`, `ItemView.board`) and this one. A neutral review ran and
@@ -2001,6 +2002,52 @@ sorted. On 360×740 both tallest moments end within about 8 pt of "Prüfen", so 
 (about 52 pt) or one more group row (about 56 pt) would not fit; 20-character things (one per
 row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A draft over a cap is
 rejected (`too_long` / `count`), never shortened.
+
+**Select all — several right answers** (`select_all`, issue #240, on the same foundation;
+migration `0089_select_all_items.sql`). "Kreuze alle richtigen an": the cycling test of year 4,
+Latin forms ("which cases can _rosae_ be?"), true statements in any subject. Before, a question
+with several right answers could only be bent into "which ONE is right?" or dropped, because
+`correct_choice` is one index. It is a structured kind and not a second meaning of
+`multiple_choice` on purpose: a single choice is tapped and judged at once, a set is collected and
+sent with "Prüfen" as `parts` — exactly the path the structured kinds have, with the key that never
+leaves the server and the reply part by part. The task holds the options (ids `a`, `b`, … by
+display position) and the key as a set of ids; the view only the options; the answer `chosen`,
+each option at most once, at least one (else 422 `parts_mismatch`).
+
+The model writes the options and marks each `correct` (`SELECT_RULES`, no example sentence). Code
+rejects — and stores nothing, repairs nothing — fewer than two right or every option right
+(`right_count`: one right answer is ordinary multiple choice, all right is no question), a count out
+of range (`count`), two options alike after normalising **or of the same value** ("0,5" and "1/2",
+`duplicate`), and an option or prompt over its cap (`too_long`); `selectProblem` re-checks a stored
+task (a key id twice or unknown → `not_mapping`). The display is shuffled deterministically and
+never puts every right option first. A prepared hint is dropped when it names an option: the whole
+option, or a word of at least four letters that stands in this option alone and not in the question
+("Klingel" for "Eine helltönende Klingel"; "Singular", shared by several, names none). Checking is
+set equality: the reply counts what she found and what does not belong, never which right one is
+missing ("2 von 4 richtigen hast du schon. Eine passt aber nicht dazu."); from the second miss on
+it names one option she ticked that does not belong (a rung of the hint ladder,
+`structuredNamesPart`), and the third miss explains the solution. Nothing tells her how many are
+right before she checks.
+
+App: `SelectAllAnswer.tsx`. The same calm cards as a single choice (`ChoiceList`, its measures are
+shared as `CHOICE`), but with a **square** box instead of the round letter — the questionnaire
+convention for "tick several" — and one quiet tag "Mehrere Antworten richtig" above the options;
+no instruction text. A tap ticks, a second tap unticks (undo over confirmation); a ticked card keeps
+its size and gets the tint, a border and the check mark (colour is never the only signal); every
+option is a `checkbox` with `aria-checked`. Short options stand two by two by the grid arithmetic
+of #203 (`twoColumnChoices`, up to six), and every tile of the grid is as tall as the tallest, so a
+wrapping form does not make its row ragged. After the first check Buddy's reply says "several" and
+the tag steps aside — never while she ticks, so nothing moves under her finger.
+
+**Its maxima are a measurement too** (`SELECT_*`, "mehrere richtige ankreuzen" in
+`tests/web/modes.spec.ts`). Six short options (≤ 14 characters, no word over 9 — the grid's own
+bound) fit in three rows on 360×740, also when they wrap to two lines and Buddy's reply stands
+above. One longer option sends them all full width, and then four is the most: four two-line
+statements under a two-line question overflowed by 126 pt after a check, so a full-width option is
+one line (`SELECT_OPTION_MAX` 28) and the question two (`SELECT_PROMPT_MAX` 60); at those caps the
+tallest moment fits. The constraint migration does not rewrite the list of kinds, it extends the
+one that is live (`pg_get_constraintdef`), so a parallel migration that allows another kind is
+not silently undone by the order they are applied in.
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration

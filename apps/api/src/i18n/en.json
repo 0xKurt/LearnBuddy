@@ -240,6 +240,15 @@
       "groups_some_one": "1 of {{total}} is already in the right group.",
       "groups_none": "None is in the right group yet – take another calm look.",
       "look_at": "Have another look at “{{text}}”."
+    },
+    "select": {
+      "found_some": "You've got {{count}} of the {{total}} right ones.",
+      "found_some_one": "You've got 1 of the {{total}} right ones.",
+      "all_found": "You've got all the right ones.",
+      "none": "None of the right ones is in there yet – take another calm look at all of them.",
+      "extra": "But {{count}} don't belong.",
+      "extra_one": "But one doesn't belong.",
+      "look_at": "Take another look at “{{text}}”."
     }
   },
   "contact": {

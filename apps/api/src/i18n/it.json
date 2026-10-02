@@ -240,6 +240,15 @@
       "groups_some_one": "1 su {{total}} è già nel gruppo giusto.",
       "groups_none": "Nessuno è ancora nel gruppo giusto – guarda di nuovo con calma.",
       "look_at": "Guarda di nuovo «{{text}}»."
+    },
+    "select": {
+      "found_some": "Hai già {{count}} delle {{total}} giuste.",
+      "found_some_one": "Hai già 1 delle {{total}} giuste.",
+      "all_found": "Hai già tutte quelle giuste.",
+      "none": "Non c'è ancora nessuna di quelle giuste – riguardale tutte con calma.",
+      "extra": "Però {{count}} non c'entrano.",
+      "extra_one": "Però una non c'entra.",
+      "look_at": "Riguarda «{{text}}»."
     }
   },
   "contact": {

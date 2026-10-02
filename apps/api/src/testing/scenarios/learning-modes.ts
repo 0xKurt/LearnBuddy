@@ -80,6 +80,63 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Several right answers (issue #240): the model writes the options and marks the right ones;
+  // the server checks the set (Regel 0: at least two right, one wrong, no two alike), shuffles,
+  // names and keeps the key. Two real cases, each its own request so the content fits together,
+  // each at the caps of contracts/structured.ts so the walkthrough measures the worst case on
+  // 360×740 (rule 16): the forms of a Latin word — six short options two by two, each as long as
+  // half a line holds, so they wrap to two lines — and the cycling test of year 4 — four
+  // statements near SELECT_OPTION_MAX characters under a two-line question.
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*Fälle in Latein/i,
+    answer: () => ({
+      usable: true,
+      title: 'a-Deklination',
+      subject: { name: 'Latein', kind: 'latin' },
+      items: [],
+      structured: [
+        {
+          type: 'select_all',
+          prompt: 'Welche Formen kann „rosae“ sein?',
+          options: [
+            { text: 'Genitiv Sg.', correct: true },
+            { text: 'Dativ Sg.', correct: true },
+            { text: 'Nominativ Pl.', correct: true },
+            { text: 'Vokativ Pl.', correct: true },
+            { text: 'Akkusativ Sg.', correct: false },
+            { text: 'Ablativ Pl.', correct: false },
+          ],
+          topic: 'a-Deklination',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*Fahrradprüfung/i,
+    answer: () => ({
+      usable: true,
+      title: 'Fahrradprüfung',
+      subject: { name: 'Sachunterricht', kind: 'other' },
+      items: [],
+      structured: [
+        {
+          type: 'select_all',
+          prompt: 'Was muss ein Fahrrad für die Straße unbedingt haben?',
+          options: [
+            { text: 'Zwei unabhängige Bremsen', correct: true },
+            { text: 'Ein weißer Scheinwerfer vorn', correct: true },
+            { text: 'Ein Gepäckträger mit Gurt', correct: false },
+            { text: 'Rückstrahler an den Pedalen', correct: true },
+          ],
+          topic: 'Verkehrssicheres Fahrrad',
+          difficulty: 1,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   // A written calculation path (issues #209, #221): an equation she solves line by line, then
   // a one-liner the return key sends. Registered first: a later learner's request may carry
   // older topics, and the first rule that matches wins. The model only supplies the items —
@@ -399,6 +456,18 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /vierfeldertafel/i,
       answer: says('Gern – eine Vierfeldertafel und danach eine Zahlenmauer.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Vierfeldertafel ausfüllen' } },
+      ]),
+    },
+    {
+      when: /fälle in latein/i,
+      answer: says('Gern – kreuz an, was alles passt.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Fälle in Latein bestimmen' } },
+      ]),
+    },
+    {
+      when: /fahrradprüfung/i,
+      answer: says('Klar – hier ist eine Frage wie in der Fahrradprüfung.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Fahrradprüfung üben' } },
       ]),
     },
     {
