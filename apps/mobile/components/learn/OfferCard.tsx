@@ -55,7 +55,12 @@ export function OfferCard({
           ? state.message
           : null,
   );
-  const label = t(`learn:${KIND_LABEL[offer.kind]}`);
+  // A test with time says so on its card, before she taps (issue #241) — never a surprise clock.
+  const kindLabel = t(`learn:${KIND_LABEL[offer.kind]}`);
+  const label =
+    offer.minutes !== null
+      ? `${kindLabel} · ${t('learn:topic.minutes', { count: offer.minutes })}`
+      : kindLabel;
 
   async function go(): Promise<void> {
     // Tap → the first question on screen (issue #66): the wait she complained about.
@@ -65,6 +70,8 @@ export function OfferCard({
       // What she asked for beyond the topic travels with the offer (issue #113).
       difficulty: offer.difficulty,
       direction: offer.direction,
+      // A test she asked to sit with time (issue #241): the minutes travel with the offer.
+      minutes: offer.minutes,
     });
     if (session) {
       if (spoken) useVoiceMode.getState().setOn(true);

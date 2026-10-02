@@ -37,6 +37,7 @@ import { Rise } from '../lb/Motion.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { summaryLines } from '../../lib/practice/summaryLine.js';
+import { timeUpLines } from '../../lib/practice/testClock.js';
 import { Icon } from '../lb/Icon.js';
 import { MathText } from '../math/MathText.js';
 
@@ -47,20 +48,35 @@ type Props = {
   review?: readonly SessionItemView[] | null;
   /** The session just ended on this screen (not reopened later): a success haptic. */
   celebrate?: boolean;
+  /**
+   * A test she sat with time, and the time ran out (issue #241): the result says how far she
+   * got, and the questions still open are "nicht beantwortet" — never wrong.
+   */
+  ranOut?: boolean;
 };
 
 /** When each part arrives (ms after the summary appears). */
 const AT = { title: 260, card: 460, line: 140, review: 900 } as const;
 
-export function SessionSummary({ summary, mode, review = null, celebrate = false }: Props) {
+export function SessionSummary({
+  summary,
+  mode,
+  review = null,
+  celebrate = false,
+  ranOut = false,
+}: Props) {
   const { palette } = useTheme();
   useEffect(() => {
     if (celebrate) haptic.success();
   }, [celebrate]);
   const { t } = useTranslation('practice');
   const homework = mode === 'help';
-  const lines = summaryLines(summary, mode).map((l) =>
-    l.count === undefined ? t(l.key) : t(l.key, { count: l.count }),
+  const lines = (
+    ranOut && review
+      ? timeUpLines(summary, review.length)
+      : summaryLines(summary, mode).map((l) => ({ ...l, answered: undefined }))
+  ).map((l) =>
+    l.count === undefined ? t(l.key) : t(l.key, { count: l.count, answered: l.answered }),
   );
   // Homework is about solving it herself, not about topics that "sit".
   const secure = homework ? [] : summary.secure_topics;
@@ -84,7 +100,7 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
             {homework
               ? t('summary_help.title')
               : review
-                ? t('summary_test.title')
+                ? t(ranOut ? 'summary_test.time_up_title' : 'summary_test.title')
                 : t('summary.title')}
           </Text>
         </Rise>
@@ -110,7 +126,7 @@ export function SessionSummary({ summary, mode, review = null, celebrate = false
           {review.map((r, n) => (
             // Only the first few are staggered; the rest are below the fold anyway.
             <Rise key={r.item.id} index={Math.min(n, 5)} delay={AT.review + 60}>
-              <ReviewRow number={n + 1} row={r} />
+              <ReviewRow number={n + 1} row={r} ranOut={ranOut} />
             </Rise>
           ))}
         </View>
@@ -176,7 +192,15 @@ function OrbArrival({ celebrate }: { celebrate: boolean }) {
   );
 }
 
-function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
+function ReviewRow({
+  number,
+  row,
+  ranOut,
+}: {
+  number: number;
+  row: SessionItemView;
+  ranOut: boolean;
+}) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const right = row.status === 'correct';
@@ -185,7 +209,8 @@ function ReviewRow({ number, row }: { number: number; row: SessionItemView }) {
     : row.status === 'skipped'
       ? t('summary_test.skipped')
       : row.status === 'open'
-        ? t('summary_test.untouched')
+        ? // Left open when the time ran out: not answered — said as exactly that (issue #241).
+          t(ranOut ? 'summary_test.unanswered' : 'summary_test.untouched')
         : t('summary_test.missed');
   const answer =
     row.answer === null

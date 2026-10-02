@@ -6,11 +6,12 @@
 //   for 14 days after her last activity, from the home card and from the sheet;
 // - every other session left alone for 3 days is abandoned, and the step it belonged to goes
 //   back to 'prepared' so Buddy can offer it again. A session with nothing open left (its
-//   finish was lost before this rule existed) is finished instead, with its evidence.
+//   finish was lost before this rule existed) is finished instead, with its evidence;
+// - a test she sat with time ends once its time is up (issue #241, service.ts settleTestClock).
 
 import type { Deps } from '../../deps.js';
 import { bumpContext } from '../buddy/plan.js';
-import { finishIfComplete } from './service.js';
+import { finishIfComplete, settleTestClock, TIME_UP_GRACE_MS } from './service.js';
 
 export const HELP_IDLE_MS = 14 * 86_400_000;
 export const PRACTICE_IDLE_MS = 3 * 86_400_000;
@@ -45,6 +46,19 @@ export function resumable(
  */
 export async function closeIdleSessions(deps: Deps, limit = 200): Promise<number> {
   const now = deps.now();
+  // A timed test whose time is up ends now, not three days later (issue #241): her result and
+  // Buddy's evidence should not wait until she happens to open the app again. The instant is
+  // the app clock's, passed in (rule 7); `settleTestClock` decides it again behind the lock.
+  const late = await deps.db.query<{ id: string; learner_id: string }>(
+    `select id, learner_id from practice_sessions
+      where status = 'active' and deadline_at is not null and deadline_at < $1
+      order by deadline_at limit $2`,
+    [new Date(now.getTime() - TIME_UP_GRACE_MS), limit],
+  );
+  let timedOut = 0;
+  for (const s of late) {
+    if ((await settleTestClock(deps.db, s.learner_id, s.id, now)) === 'time_up') timedOut++;
+  }
   const idle = await deps.db.query<{ id: string; learner_id: string }>(
     `select id, learner_id from practice_sessions
       where status = 'active'
@@ -91,5 +105,5 @@ export async function closeIdleSessions(deps: Deps, limit = 200): Promise<number
       closed++;
     });
   }
-  return closed;
+  return closed + timedOut;
 }

@@ -63,6 +63,8 @@
     "submit": "Los geht's",
     "preparing": "Buddy bereitet vor …",
     "preparing_hint": "Das dauert ein paar Sekunden.",
-    "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema."
+    "not_usable": "Damit kann ich leider nichts vorbereiten – probier ein Schulthema.",
+    "minutes_one": "mit {{count}} Minute",
+    "minutes_other": "mit {{count}} Minuten"
   }
 }

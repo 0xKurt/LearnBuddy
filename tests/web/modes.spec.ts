@@ -802,3 +802,79 @@ test('zuordnen: pairs in two columns, things into groups (issue #229)', async ({
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
+
+// A practice test with time, only because she asked for it in the chat (issue #241). The API
+// keeps the deadline; to see the last five minutes and the end without sitting them out, the
+// dev stack moves that deadline closer (testing/dev-app.ts) — the app's countdown, the quiet
+// hint, the hand-in and the "ran out" result all run their real paths from there.
+test('a test with time: a calm clock, a quiet hint, and how far she got (issue #241)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  const api = `http://localhost:${process.env.LB_API_PORT ?? '8787'}`;
+  const deadlineIn = async (ms: number) => {
+    const id = /\/practice\/([0-9a-f-]{36})/.exec(page.url())?.[1];
+    expect(id, 'on a practice screen').toBeTruthy();
+    const res = await page.request.post(`${api}/__dev/practice/${id}/deadline`, {
+      data: { in_ms: ms },
+    });
+    expect(res.status()).toBe(204);
+  };
+
+  await page
+    .getByLabel('Schreib Buddy …')
+    .fill('Mach einen Probetest zur Photosynthese mit Zeit, wie in der Arbeit');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('mit 10 Minuten, wie in der Arbeit', { exact: false })).toBeVisible();
+  // The card says the clock before she taps — it is never a surprise.
+  await expect(page.getByText('PROBETEST · MIT 10 MINUTEN')).toBeVisible();
+  await offerStart(page, 'Photosynthese').click();
+
+  // The time left stands where the test note stands: whole minutes, no red, no seconds.
+  await expect(
+    page.getByText('Noch 10 Minuten · eine Antwort pro Frage, keine Tipps.'),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
+  await shot(page, '40-test-clock');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '40b-test-clock-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Kohlenstoffdioxid', exact: true }).click();
+  await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // Five minutes left: one quiet sentence in the same place, nothing more.
+  await deadlineIn(5 * 60_000 - 2_000);
+  await page.reload();
+  await expect(
+    page.getByText('Noch 5 Minuten – schau in Ruhe, was du noch schaffst.'),
+  ).toBeVisible();
+  await shot(page, '41-test-clock-five');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '41b-test-clock-five-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'In den Chloroplasten', exact: true }).click();
+  await expect(page.getByText("Notiert – weiter geht's.")).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // The time runs out with the third question open: the test is handed in by itself, and what
+  // stayed open is "nicht beantwortet" — never wrong.
+  await deadlineIn(4_000);
+  await page.reload();
+  await expect(
+    page.getByText('Was entsteht bei der Photosynthese', { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText('Die Zeit ist um', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('In der Zeit hast du 2 von 3 Fragen beantwortet.')).toBeVisible();
+  await expect(
+    page.getByText('Was offen blieb, zählt als nicht beantwortet – nicht als falsch.'),
+  ).toBeVisible();
+  await expect(page.getByText('3 · Nicht beantwortet')).toBeVisible();
+  await expect(page.getByText('Lösung: Traubenzucker')).toBeVisible();
+  await shot(page, '42-test-time-up');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '42b-test-time-up-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+});

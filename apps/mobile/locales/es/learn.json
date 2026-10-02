@@ -63,6 +63,8 @@
     "submit": "¡Vamos!",
     "preparing": "Buddy lo está preparando …",
     "preparing_hint": "Tarda unos segundos.",
-    "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole."
+    "not_usable": "Con eso no puedo preparar nada, lo siento – prueba con un tema del cole.",
+    "minutes_one": "con {{count}} minuto",
+    "minutes_other": "con {{count}} minutos"
   }
 }

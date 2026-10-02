@@ -639,6 +639,13 @@ async function prepareTopic(
   learner: PracticeLearner,
   input: StartTopicRequest,
 ): Promise<string> {
+  // A clock belongs to a test (issue #241): refused before any model call, never quietly dropped.
+  if ((input.minutes ?? null) !== null && input.kind !== 'test') {
+    throw new AppError('invalid_input', 'A time limit belongs to a test', {
+      reason: 'time_only_for_tests',
+    });
+  }
+
   const existing = await deps.db.maybeOne<{ id: string }>(
     `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
     [learner.id, input.client_request_id],
@@ -817,6 +824,8 @@ async function store(
           title: set.title,
           clientRequestId: input.client_request_id,
           itemsPendingUntil: pendingUntil,
+          // Only a test carries one (the contract refuses it elsewhere), issue #241.
+          timeLimitMinutes: input.kind === 'test' ? (input.minutes ?? null) : null,
         },
         now,
       );

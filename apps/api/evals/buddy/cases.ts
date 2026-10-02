@@ -34,7 +34,12 @@ export type Outcome = {
    * Every button Buddy put in the chat (issue #196): what it offers to start, in his words.
    * `tools` only says that an offer happened — and the bug was in what it carried.
    */
-  offers: Array<{ kind: string; text: string }>;
+  offers: Array<{
+    kind: string;
+    text: string;
+    /** A test with time (issue #241): its minutes; null — no clock — unless she asked. */
+    minutes: number | null;
+  }>;
   /** What Buddy PROPOSED to delete and is waiting for her tap on (issue #151). */
   pending: Array<{
     operation: string;
@@ -776,6 +781,35 @@ export const CASES: Case[] = [
         'does not give the solution',
       ),
     ],
+  },
+  // Issue #241: a clock only on her wish. Prüfungsangst is the reason it is never the default,
+  // so the first case is the one that matters more — a plain request for a practice test gets
+  // a test WITHOUT minutes. The code holds the floor (her own words must ask for it,
+  // tools.ts runOfferLearning); this measures whether the model reaches for it unasked.
+  {
+    id: 'de_test_without_time_has_no_clock',
+    learner: { relation: 'child', birthDate: '2014-02-10' },
+    message: 'Mach mit mir einen Probetest zu Brüchen',
+    check: (o) => [
+      ...must(
+        o.offers.some((f) => f.kind === 'test'),
+        `offers a practice test: ${JSON.stringify(o.offers)}`,
+      ),
+      ...must(
+        o.offers.every((f) => f.minutes === null),
+        `put a clock on a test she did not ask to time: ${JSON.stringify(o.offers)}`,
+      ),
+    ],
+  },
+  {
+    id: 'de_test_with_time_has_its_minutes',
+    learner: { relation: 'child', birthDate: '2012-02-10' },
+    message: 'Mach einen Probetest zu Brüchen mit Zeit, wie in der Arbeit – 45 Minuten',
+    check: (o) =>
+      must(
+        o.offers.some((f) => f.kind === 'test' && f.minutes === 45),
+        `a test with the 45 minutes she named: ${JSON.stringify(o.offers)}`,
+      ),
   },
   {
     id: 'fr_vocab_typed_offer',

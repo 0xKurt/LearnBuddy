@@ -491,6 +491,7 @@ export function buildContext(
           : o.direction === 'recognise'
             ? 'she says what it means'
             : null,
+        o.minutes !== null ? `with ${o.minutes} minutes, as she asked` : null,
       ].filter((x): x is string => Boolean(x));
       standingBlock.push(
         `- your ${o.kind} offer "${o.text}"${wish.length ? ` (${wish.join(' · ')})` : ''}` +

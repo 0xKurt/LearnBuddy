@@ -204,7 +204,12 @@
     "missed": "Non ancora giusto",
     "skipped": "Saltata",
     "solution": "Soluzione: {{answer}}",
-    "untouched": "Non svolto"
+    "untouched": "Non svolto",
+    "time_up_title": "Il tempo è finito",
+    "time_up_line_one": "Nel tempo a disposizione hai risposto a {{answered}} domanda su {{count}}.",
+    "time_up_line_other": "Nel tempo a disposizione hai risposto a {{answered}} domande su {{count}}.",
+    "time_up_rest": "Quello che è rimasto aperto conta come senza risposta, non come sbagliato.",
+    "unanswered": "Senza risposta"
   },
   "test_note": "Verifica di prova – una risposta per domanda, niente suggerimenti. Vedrai il risultato alla fine.",
   "thread": {
@@ -225,5 +230,12 @@
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
+  },
+  "timer": {
+    "left_one": "Manca {{count}} minuto · una risposta per domanda, niente suggerimenti.",
+    "left_other": "Mancano {{count}} minuti · una risposta per domanda, niente suggerimenti.",
+    "soon_one": "Manca {{count}} minuto – guarda con calma cos’altro riesci a fare.",
+    "soon_other": "Mancano {{count}} minuti – guarda con calma cos’altro riesci a fare.",
+    "up": "Il tempo è finito – il tuo risultato sta arrivando."
   }
 }

@@ -333,6 +333,45 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // A practice test she asked to sit with time (issue #241): three questions, so one is still
+  // open when the time runs out and the result can say "nicht beantwortet".
+  scriptGenerations({
+    when: /Photosynthese/i,
+    answer: () => ({
+      usable: true,
+      title: 'Photosynthese – Probetest',
+      subject: { name: 'Biologie', kind: 'biology' },
+      items: [
+        {
+          ...base,
+          kind: 'multiple_choice',
+          prompt: 'Welches Gas nehmen Pflanzen bei der Photosynthese auf?',
+          answer: 'Kohlenstoffdioxid',
+          choices: ['Sauerstoff', 'Kohlenstoffdioxid', 'Stickstoff'],
+          correct_choice: 1,
+          topic: 'Photosynthese',
+        },
+        {
+          ...base,
+          kind: 'multiple_choice',
+          prompt: 'Wo in der Zelle findet die Photosynthese statt?',
+          answer: 'In den Chloroplasten',
+          choices: ['Im Zellkern', 'In den Chloroplasten', 'In der Zellwand'],
+          correct_choice: 1,
+          topic: 'Photosynthese',
+        },
+        {
+          ...base,
+          kind: 'multiple_choice',
+          prompt: 'Was entsteht bei der Photosynthese außer Sauerstoff?',
+          answer: 'Traubenzucker',
+          choices: ['Traubenzucker', 'Wasser', 'Stärke'],
+          correct_choice: 0,
+          topic: 'Photosynthese',
+        },
+      ],
+    }),
+  });
   // Practice test: no hints, results at the end.
   scriptGenerations({
     when: /Römer/i,
@@ -405,6 +444,20 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /balken/i,
       answer: says('Gern – ich hab dir Bruchbalken zum Ausprobieren vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Bruchbalken' } },
+      ]),
+    },
+    {
+      // Only because she asked for time does the offer carry minutes (issue #241).
+      when: /photosynthese mit zeit/i,
+      answer: says('Klar – ein Probetest zur Photosynthese mit 10 Minuten, wie in der Arbeit.', [
+        {
+          tool: 'offer_learning',
+          args: {
+            kind: 'test',
+            text: 'Photosynthese',
+            time_limit: { minutes: '10', quote: 'mit Zeit, wie in der Arbeit' },
+          },
+        },
       ]),
     },
     {

@@ -78,6 +78,7 @@ import { ProgressRow, QuestionCard } from '../../components/practice/Question.js
 import { Reexplain } from '../../components/practice/Reexplain.js';
 import { AgainButton } from '../../components/practice/AgainButton.js';
 import { SessionSummary } from '../../components/practice/SessionSummary.js';
+import { TestClock } from '../../components/practice/TestClock.js';
 import { SelfSolvedCard, SolutionCard } from '../../components/practice/SolutionCard.js';
 import {
   latestPronunciation,
@@ -250,6 +251,12 @@ export default function PracticeScreen() {
   const [busy, setBusy] = useState(false);
   const [finishFailed, setFinishFailed] = useState(false);
   const [closing, setClosing] = useState(false);
+  /**
+   * A test she sat with time has run out on this screen (issue #241). The questions go away at
+   * once and the test is handed in as soon as no answer is on its way — an answer she sent at
+   * the last second is still graded (the server allows for the network).
+   */
+  const [timeUp, setTimeUp] = useState(false);
   /** "Frage passt nicht": the confirm sheet, and the question it is about. */
   const [flagFor, setFlagFor] = useState<string | null>(null);
   const [flagOpen, setFlagOpen] = useState(false);
@@ -360,6 +367,15 @@ export default function PracticeScreen() {
     finishStarted.current = true;
     void finish();
   }, [nothingOpen]);
+
+  // Time is up (issue #241): hand the test in once nothing is on its way — never while her last
+  // answer is still travelling, or it would arrive at a test that has already ended.
+  useEffect(() => {
+    if (!timeUp || busy || session?.status !== 'active' || finishStarted.current) return;
+    finishStarted.current = true;
+    setPinnedId(null);
+    void finish();
+  }, [timeUp, busy, session?.status]);
 
   // Buddy's home shows this session (questions left, the result): refresh it on the way out.
   useEffect(
@@ -710,6 +726,8 @@ export default function PracticeScreen() {
               summary={session.summary}
               mode={session.mode}
               review={session.mode === 'test' ? session.items : null}
+              // The time ran out (issue #241): how far she got, open questions not answered.
+              ranOut={session.timer?.ran_out === true}
             />
           </ScrollView>
           <BottomBar>
@@ -790,6 +808,29 @@ export default function PracticeScreen() {
             }
           />
         </View>
+      </Screen>
+    );
+  }
+
+  // The time of a test with time is up (issue #241): no question stays on screen to be
+  // answered into the void; the result comes as soon as the test is handed in.
+  if (timeUp && session.status === 'active') {
+    return (
+      <Screen title={title}>
+        {finishFailed ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <EmptyState
+              title={t('practice:finish_failed')}
+              action={
+                <Btn center onPress={() => void finish()}>
+                  {t('common:actions.retry')}
+                </Btn>
+              }
+            />
+          </View>
+        ) : (
+          <LoadingState label={t('practice:timer.up')} />
+        )}
       </Screen>
     );
   }
@@ -1033,7 +1074,15 @@ export default function PracticeScreen() {
               preparing={session.preparing}
               right={flagButton ?? disputeButton}
             />
-            {session.mode === 'help' || testing ? (
+            {testing && session.timer ? (
+              // A test she asked to sit with time (issue #241): the time left, in the place
+              // of the note and in its quiet voice — the header does not grow for it.
+              <TestClock
+                timer={session.timer}
+                receivedAt={query.dataUpdatedAt}
+                onTimeUp={() => setTimeUp(true)}
+              />
+            ) : session.mode === 'help' || testing ? (
               <Text style={[TYPE.small, { color: palette.primaryDk, fontWeight: '500' }]}>
                 {t(testing ? 'practice:test_note' : 'practice:help_note')}
               </Text>

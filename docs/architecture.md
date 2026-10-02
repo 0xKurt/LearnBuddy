@@ -2304,6 +2304,30 @@ word list, so it stays a prompt rule.
   "Lösung zeigen", no answers in the view while it runs (`reveal_allowed = false`), no FSRS.
   At the end: every question with its solution, and one tap "Die wackligen nochmal üben"
   (kind `practice` on the shaky topics; also after ordinary practice).
+- **test with time — only on her wish** (issue #241, migration `0083_test_time_limit.sql`;
+  decided in #224: no switch, no setting — Prüfungsangst speaks against a clock as default).
+  When she asks in the chat ("mit Zeit, wie in der Arbeit", "45 Minuten"), `offer_learning`
+  carries `time_limit { minutes, quote }`: `minutes` is a value from a fixed list
+  (`TEST_MINUTES` = 10/20/30/45/60/90, the model picks one, never a free number or an instant —
+  rule 2), and `quote` must be her own words from this message (`requireQuote`), so a timer is
+  never Buddy's idea and a background check can never set one. Only `kind: 'test'` may carry it
+  (tool rejection; `POST /practice/topic` answers 422 for a value off the list or a limit on
+  another kind, before any model call; CHECK constraints hold the database to both). The offer
+  card says it ("PROBETEST · MIT 45 MINUTEN"). **The server keeps the clock** (rule 7,
+  `practice/service.ts` `settleTestClock`): `time_limit_minutes` is stored with the session,
+  `deadline_at` is set from `deps.now()` the first time she opens the test (`GET` or the tap on
+  `POST /practice/topic`) — not when Buddy prepared it while she read his reply (#48). An
+  answer or a skip that arrives after `deadline_at + TIME_UP_GRACE_MS` (20 s, an allowance for
+  the network, not extra time) is not graded (409 `time_up`, no rule, no model, no turn) and the
+  test ends in the same transaction; the scheduler's session sweep ends one she never came back
+  to (`lifecycle.ts`). `SessionView.timer` = `{ minutes, remaining_ms, ran_out }`; the app counts
+  down from the moment the view arrived (never its wall clock against a deadline), shows whole
+  minutes in the place of the test note — no red, no seconds — and at five minutes one quiet
+  sentence ("schau in Ruhe, was du noch schaffst"), announced once (`TestClock.tsx`,
+  `lib/practice/testClock.ts`). At zero it hands the test in once no answer is on its way.
+  `ran_out` (finished at or after the deadline) makes the result say how far she got ("In der
+  Zeit hast du 2 von 3 Fragen beantwortet") and that what stayed open counts as **nicht
+  beantwortet, not wrong**: open questions are not closed, so `summarize` never counts them.
 - **vocab** — pairs (`prompt_lang` → `lang`) from a photographed list or typed (kind `vocab`);
   each pair becomes two questions (both directions, own FSRS state). Rule check: exact after
   normalisation = right; only accents differ = `close` → partially right, the tutor names the

@@ -204,7 +204,12 @@
     "missed": "Not right yet",
     "skipped": "Skipped",
     "solution": "Answer: {{answer}}",
-    "untouched": "Not answered"
+    "untouched": "Not answered",
+    "time_up_title": "Time is up",
+    "time_up_line_one": "In the time you answered {{answered}} of {{count}} question.",
+    "time_up_line_other": "In the time you answered {{answered}} of {{count}} questions.",
+    "time_up_rest": "What stayed open counts as not answered – not as wrong.",
+    "unanswered": "Not answered"
   },
   "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
   "thread": {
@@ -225,5 +230,12 @@
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
+  },
+  "timer": {
+    "left_one": "{{count}} minute left · one answer per question, no hints.",
+    "left_other": "{{count}} minutes left · one answer per question, no hints.",
+    "soon_one": "{{count}} minute left – calmly see what else you can do.",
+    "soon_other": "{{count}} minutes left – calmly see what else you can do.",
+    "up": "Time is up – your result is on its way."
   }
 }

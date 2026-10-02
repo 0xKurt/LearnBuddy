@@ -518,6 +518,43 @@ export type PracticeSummary = z.infer<typeof PracticeSummary>;
 export const SessionMode = z.enum(['practice', 'test', 'help']);
 export type SessionMode = z.infer<typeof SessionMode>;
 
+/**
+ * How long a practice test with a time limit runs, in minutes (issue #241). A fixed list, never
+ * a free number: the model picks one of these when she asks for time, and the server refuses
+ * anything else (CLAUDE.md rule 2 — the model never writes durations or instants of its own).
+ */
+export const TEST_MINUTES = [10, 20, 30, 45, 60, 90] as const;
+export const TestMinutes = z.union([
+  z.literal(10),
+  z.literal(20),
+  z.literal(30),
+  z.literal(45),
+  z.literal(60),
+  z.literal(90),
+]);
+export type TestMinutes = z.infer<typeof TestMinutes>;
+
+/**
+ * The clock of a practice test she asked to sit with a time limit (issue #241). The server keeps
+ * the deadline; the app only counts down from what it is told here.
+ */
+export const TestTimer = z.object({
+  minutes: TestMinutes,
+  /**
+   * Milliseconds left at the moment the server answered (0 once it is up). The app counts down
+   * from the time it received the view — never from its own wall clock against a deadline, so a
+   * phone whose clock is wrong still shows the right time left.
+   */
+  remaining_ms: z.number().int().min(0),
+  /**
+   * The test ended because the time was up (not handed in earlier, not answered to the end).
+   * Then the result says how far she got; the questions still open are "nicht beantwortet",
+   * never wrong.
+   */
+  ran_out: z.boolean(),
+});
+export type TestTimer = z.infer<typeof TestTimer>;
+
 export const SessionView = z.object({
   id: Uuid,
   /** help: homework, hints only and the solution is never shown. */
@@ -559,6 +596,8 @@ export const SessionView = z.object({
    * run can never be left unfinishable.
    */
   preparing: z.boolean().default(false),
+  /** A test with a time limit she asked for (issue #241); null for every other run. */
+  timer: TestTimer.nullable().default(null),
   items: z.array(SessionItemView),
   turns: z.array(PracticeTurnView),
   current_item_id: Uuid.nullable(),
@@ -726,6 +765,12 @@ export const StartTopicRequest = z.object({
    * either way, so the other one can be practised later; null asks both, as before.
    */
   direction: VocabDirection.nullable().optional(),
+  /**
+   * test only: a time limit she asked for in the chat (issue #241), carried by Buddy's offer.
+   * One of `TEST_MINUTES` — anything else is refused here; on any other kind the server refuses
+   * it before a model is asked (`practice/generate.ts`).
+   */
+  minutes: TestMinutes.nullable().optional(),
 });
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 

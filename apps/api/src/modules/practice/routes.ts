@@ -41,6 +41,7 @@ import {
   hintItem,
   revealItem,
   sessionView,
+  settleTestClock,
   startManual,
 } from './service.js';
 import { speakItem, speakWord } from './speak.js';
@@ -68,6 +69,9 @@ practiceRoutes.post('/sessions', async (c) => {
 practiceRoutes.get('/sessions/:id', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const deps = depsOf(c);
+  // A timed test's clock starts the first time she opens it, and a test whose time is up is
+  // ended before it is shown (issue #241) — so she never sees a test as running that is over.
+  await settleTestClock(deps.db, c.get('learner').id, sessionId, deps.now());
   return c.json(
     await sessionView(deps.db, c.get('learner').id, sessionId, deps.storage, deps.now()),
   );
@@ -185,6 +189,8 @@ practiceRoutes.post('/topic', async (c) => {
   const deps = depsOf(c);
   const learner = c.get('learner');
   const id = await startTopic(deps, learner, input);
+  // Her tap opens it: a test she asked to sit with time starts its clock now (issue #241).
+  await settleTestClock(deps.db, learner.id, id, deps.now());
   // Hints for the new questions, while she reads the first one. Best effort: if this
   // never runs, the tutor model helps as before (hints.ts).
   if (input.kind === 'practice') {

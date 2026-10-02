@@ -19,6 +19,7 @@ import {
   type HintRequest,
   type PracticeTurnView,
   type SessionView,
+  type TestMinutes,
 } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -194,6 +195,11 @@ export type SessionRow = {
    * `stillPreparing`.
    */
   items_pending_until: Date | null;
+  /** A test she asked to sit with time: its minutes (migration 0083, issue #241). */
+  time_limit_minutes: TestMinutes | null;
+  /** When that time is up; set the first time she opens the test (`startTestClock`). */
+  deadline_at: Date | null;
+  finished_at: Date | null;
 };
 
 /**
@@ -203,7 +209,7 @@ export type SessionRow = {
  */
 export const SESSION_COLS = `id, learner_id, step_id, goal_id,
        case when mode = 'explain' then 'practice' else mode end as mode, status, title, pass,
-       items_pending_until`;
+       items_pending_until, time_limit_minutes, deadline_at, finished_at`;
 
 /**
  * Is this run still waiting for the rest of its questions (issue #220)? The one place that
@@ -216,6 +222,99 @@ export const SESSION_COLS = `id, learner_id, step_id, goal_id,
  */
 export function stillPreparing(s: Pick<SessionRow, 'items_pending_until'>, now: Date): boolean {
   return s.items_pending_until !== null && s.items_pending_until.getTime() > now.getTime();
+}
+
+// ─────────────── a test with time (issue #241) ───────────────
+
+/**
+ * How long after the deadline an answer still counts: what it may have spent on the network.
+ * Her tap on "Prüfen" at 0:01 left must not be lost to a slow connection; anything that arrives
+ * later than this was not given in time. Small on purpose — it is an allowance for the network,
+ * not extra time.
+ */
+export const TIME_UP_GRACE_MS = 20_000;
+
+/** The time of this test is up for good: past its deadline plus the network allowance. */
+export function timeIsUp(s: Pick<SessionRow, 'deadline_at'>, now: Date): boolean {
+  return s.deadline_at !== null && now.getTime() > s.deadline_at.getTime() + TIME_UP_GRACE_MS;
+}
+
+export type TestClock = 'none' | 'running' | 'time_up';
+
+/**
+ * The clock of a timed test, settled for this moment (issue #241). The one place it moves:
+ *
+ * - the first time she opens the test, its deadline is set — from the app clock (rule 7), not
+ *   when the test was written: Buddy prepares an offered test while she still reads his reply
+ *   (issue #48), and those seconds are not hers to lose;
+ * - once the time is up for good (`timeIsUp`), the test is ended in the same transaction, like a
+ *   test she handed in: what she answered stands, and every question still open is "nicht
+ *   beantwortet" — never wrong (`summarize` counts only closed questions).
+ *
+ * Every call that could act on a timed test goes through here first, so an answer, a skip and a
+ * look at the test all see the same clock. 404 for a session that is not hers.
+ */
+export async function settleTestClock(
+  db: Db,
+  learnerId: string,
+  sessionId: string,
+  now: Date,
+): Promise<TestClock> {
+  const seen = await loadSession(db, learnerId, sessionId);
+  if (seen.time_limit_minutes === null) return 'none';
+  // Nothing to write: running, or already over (the answer to it is the same every time).
+  if (seen.deadline_at !== null && (!timeIsUp(seen, now) || seen.status !== 'active')) {
+    return timeIsUp(seen, now) ? 'time_up' : 'running';
+  }
+  if (seen.deadline_at === null && seen.status !== 'active') return 'none';
+  return db.tx(async (tx) => {
+    const s = await tx.maybeOne<SessionRow>(
+      `select ${SESSION_COLS} from practice_sessions
+        where id = $1 and learner_id = $2 for update`,
+      [sessionId, learnerId],
+    );
+    if (!s) throw new AppError('not_found', 'Session not found');
+    if (s.time_limit_minutes === null) return 'none';
+    if (s.deadline_at === null) {
+      if (s.status !== 'active') return 'none';
+      await tx.query(
+        `update practice_sessions set deadline_at = $2, last_activity_at = $3 where id = $1`,
+        [s.id, new Date(now.getTime() + s.time_limit_minutes * 60_000), now],
+      );
+      return 'running';
+    }
+    if (!timeIsUp(s, now)) return 'running';
+    if (s.status === 'active') await finishLocked(tx, learnerId, s, now);
+    return 'time_up';
+  });
+}
+
+/** The answer to anything she sends after her time was up: not graded, and said why. */
+function timeUpError(): AppError {
+  return new AppError('conflict', 'The time for this test is up', { reason: 'time_up' });
+}
+
+/** What the app is told about the clock of a timed test; null for every other run. */
+function timerOf(s: SessionRow, now: Date): SessionView['timer'] {
+  if (s.time_limit_minutes === null) return null;
+  const limitMs = s.time_limit_minutes * 60_000;
+  const remaining =
+    s.status !== 'active'
+      ? 0
+      : s.deadline_at === null
+        ? limitMs
+        : Math.max(0, Math.min(limitMs, s.deadline_at.getTime() - now.getTime()));
+  return {
+    minutes: s.time_limit_minutes,
+    remaining_ms: Math.round(remaining),
+    // Ended at or after the deadline: the time ran out, it was not handed in early. Whether
+    // the app's own countdown, an answer that came too late or the scheduler ended it.
+    ran_out:
+      s.status === 'finished' &&
+      s.deadline_at !== null &&
+      s.finished_at !== null &&
+      s.finished_at.getTime() >= s.deadline_at.getTime(),
+  };
 }
 
 type SessionItemRow = {
@@ -256,6 +355,8 @@ export type SessionOptions = {
    * start sets it; every other run is complete when it is created.
    */
   itemsPendingUntil?: Date | null;
+  /** A test she asked to sit with time (issue #241); its clock starts when she opens it. */
+  timeLimitMinutes?: TestMinutes | null;
 };
 
 export async function createSession(
@@ -267,8 +368,9 @@ export async function createSession(
 ): Promise<string> {
   const s = await db.one<{ id: string }>(
     `insert into practice_sessions (learner_id, step_id, goal_id, mode, started_at, last_activity_at,
-                                    material_id, title, client_request_id, pass, items_pending_until)
-     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10) returning id`,
+                                    material_id, title, client_request_id, pass, items_pending_until,
+                                    time_limit_minutes)
+     values ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10, $11) returning id`,
     [
       learnerId,
       opts.stepId,
@@ -280,6 +382,7 @@ export async function createSession(
       opts.clientRequestId ?? null,
       opts.pass ?? null,
       opts.itemsPendingUntil ?? null,
+      opts.timeLimitMinutes ?? null,
     ],
   );
   for (const [position, itemId] of itemIds.entries()) {
@@ -822,6 +925,7 @@ export async function sessionView(
     // The rest of the questions is still being written (issue #220). The app shows no total
     // that would still change, and does not read "no open question" as "this run is over".
     preparing: active && stillPreparing(s, now),
+    timer: timerOf(s, now),
     title: title?.title ?? '',
     items: items.map((i) => ({
       item: {
@@ -1074,6 +1178,11 @@ export async function answerItem(
   );
   if (replayed) return replayed;
 
+  // A timed test (issue #241): an answer that arrives after the time is up is not graded — no
+  // rule, no model, no turn — and the test ends with what she had answered in time.
+  if ((await settleTestClock(deps.db, learner.id, sessionId, now)) === 'time_up') {
+    throw timeUpError();
+  }
   const session = await loadSession(deps.db, learner.id, sessionId);
   if (session.status !== 'active') throw new AppError('conflict', 'Session has ended');
   // One path per session (issue #147): a flashcard pass is turned over, never answered,
@@ -1972,6 +2081,10 @@ export async function revealItem(
   itemId: string,
 ): Promise<SessionView> {
   const now = deps.now();
+  // "Überspringen" after the time is up changes nothing: the question stays "nicht beantwortet".
+  if ((await settleTestClock(deps.db, learnerId, sessionId, now)) === 'time_up') {
+    throw timeUpError();
+  }
   await deps.db.tx(async (tx) => {
     const s = await lockActiveSession(tx, learnerId, sessionId);
     if (s.pass === CARD_PASS) {
