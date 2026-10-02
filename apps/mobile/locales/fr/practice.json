@@ -271,6 +271,11 @@
     "check_waits_cells": "Seulement quand une case est coloriée.",
     "check_waits_bars": "Seulement quand une barre a été tirée.",
     "cells_other": "{{count}} cases coloriées",
-    "check_waits_points_other": "Seulement quand les {{count}} points sont placés."
+    "check_waits_points_other": "Seulement quand les {{count}} points sont placés.",
+    "points_set_one": "1 point placé",
+    "points_set_other": "{{count}} points placés",
+    "square_point": "{{right}} vers la droite, {{up}} vers le haut",
+    "right": "Vers la droite",
+    "up": "Vers le haut"
   }
 }

@@ -271,6 +271,11 @@
     "check_waits_cells": "Erst wenn ein Kästchen gefärbt ist.",
     "check_waits_bars": "Erst wenn eine Säule gezogen ist.",
     "cells_other": "{{count}} Kästchen gefärbt",
-    "check_waits_points_other": "Erst wenn alle {{count}} Punkte gesetzt sind."
+    "check_waits_points_other": "Erst wenn alle {{count}} Punkte gesetzt sind.",
+    "points_set_one": "1 Punkt gesetzt",
+    "points_set_other": "{{count}} Punkte gesetzt",
+    "square_point": "{{right}} nach rechts, {{up}} nach oben",
+    "right": "Nach rechts",
+    "up": "Nach oben"
   }
 }

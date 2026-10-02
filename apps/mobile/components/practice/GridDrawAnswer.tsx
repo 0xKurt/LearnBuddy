@@ -32,6 +32,7 @@ import {
   planeFrame,
   pushDrawing,
   snapPoint,
+  squaresFrom,
   toggleCell,
   togglePoint,
   undoDrawing,
@@ -54,18 +55,31 @@ type Props = {
   onSubmit: (parts: StructuredAnswer, shown: string) => void;
 };
 
-/** Her drawing in words — under the grid, in the sheet, and in the conversation. */
-export function useDrawingWords(view: GridDrawTaskView): (d: Drawing) => string {
+/**
+ * Her drawing in words — under the grid, in the sheet, and in the conversation. Squared paper
+ * has no numbers to read a coordinate from, so there the line under the grid counts her points
+ * (the grid shows where they are) and `full` — the screen reader's label — says each one as
+ * squares from the bottom-left corner, the way the steppers in "Eingeben" count them.
+ */
+export function useDrawingWords(view: GridDrawTaskView): (d: Drawing, full?: boolean) => string {
   const { t } = useTranslation('practice');
+  const g = view.grid;
   const point = (p: { x: number; y: number }) =>
-    t('figure.point', { x: formatNumber(p.x), y: formatNumber(p.y) });
-  return (d) => {
+    g.axes
+      ? t('figure.point', { x: formatNumber(p.x), y: formatNumber(p.y) })
+      : t('draw.square_point', {
+          right: formatNumber(squaresFrom(g.x_min, p.x, g.step)),
+          up: formatNumber(squaresFrom(g.y_min, p.y, g.step)),
+        });
+  return (d, full = false) => {
     switch (view.tool) {
       case 'points':
       case 'line':
-        return d.points.length === 0
-          ? t(view.tool === 'line' ? 'draw.how_line' : 'draw.how_points')
-          : t('draw.points', { points: d.points.map(point).join(', ') });
+        if (d.points.length === 0)
+          return t(view.tool === 'line' ? 'draw.how_line' : 'draw.how_points');
+        return g.axes || full
+          ? t('draw.points', { points: d.points.map(point).join(g.axes ? ', ' : '; ') })
+          : t('draw.points_set', { count: d.points.length });
       case 'cells':
         return d.cells.length === 0
           ? t('draw.how_cells')
@@ -211,7 +225,7 @@ export function GridDrawAnswer({ view, draftKey, disabled, onSubmit }: Props) {
             <View
               accessible
               accessibilityRole="image"
-              accessibilityLabel={`${t('draw.canvas')}. ${words(d)}`}
+              accessibilityLabel={`${t('draw.canvas')}. ${words(d, true)}`}
               accessibilityHint={t('figure.exact_hint')}
               style={{ width: frame.width, height: frame.height }}
             >

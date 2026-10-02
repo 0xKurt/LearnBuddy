@@ -271,6 +271,11 @@
     "check_waits_cells": "Solo quando un quadretto è colorato.",
     "check_waits_bars": "Solo quando hai tirato una barra.",
     "cells_other": "{{count}} quadretti colorati",
-    "check_waits_points_other": "Solo quando tutti i {{count}} punti sono messi."
+    "check_waits_points_other": "Solo quando tutti i {{count}} punti sono messi.",
+    "points_set_one": "1 punto messo",
+    "points_set_other": "{{count}} punti messi",
+    "square_point": "{{right}} a destra, {{up}} in alto",
+    "right": "A destra",
+    "up": "In alto"
   }
 }
