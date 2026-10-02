@@ -61,8 +61,8 @@ describe('keysFor: what the question needs, chosen from the question', () => {
     expect(keysFor(ask({ prompt: 'Berechne $\\sqrt{2} \\cdot \\pi$.' }))).toEqual(
       expect.arrayContaining(['sqrt', 'pi']),
     );
-    // A measure is written with a decimal separator first.
-    expect(keysFor(ask({ unit: 'cm' })).slice(1, 3)).toEqual(['decimal', 'fraction']);
+    // A measure is computed and written with a decimal separator: those come first.
+    expect(keysFor(ask({ unit: 'cm²' })).slice(1, 4)).toEqual(['decimal', 'times', 'minus']);
   });
 
   it('gives a word answer and the other kinds no row at all', () => {

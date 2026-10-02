@@ -19,6 +19,13 @@ export const ENV = {
    * accepted; see below and docs/privacy.md §Processors.
    */
   SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+  /**
+   * A build that is handed around internally and never reaches a store (issue #130).
+   * Set ONLY in `eas.json` under `build.preview.env`, where `distribution` is `internal`.
+   * It buys exactly one thing: the app starts without the two legal URLs — and says so on
+   * the screen where they would have been. It buys nothing else, and `production` ignores it.
+   */
+  INTERNAL_BUILD: process.env.EXPO_PUBLIC_INTERNAL_BUILD === '1',
 };
 
 declare const __DEV__: boolean;
@@ -53,13 +60,31 @@ const missingLegal = (
 )
   .filter(([, value]) => !value)
   .map(([name]) => name);
-if (release && missingLegal.length > 0) {
+//
+// One exception, and it is narrow by construction: a build marked as INTERNAL may start
+// without them. The reason the rule exists is that the app must not reach a STORE without
+// its legal pages; an internal build (`distribution: internal` in eas.json) reaches no store.
+// Refusing to start there would mean the owner cannot test his own app until a website
+// exists — which is how a safety rule turns into a reason to switch it off entirely.
+//
+// What the exception does NOT do: hide the gap. `legalGap` below is true in exactly that
+// case, and the consent screen says it in plain words. The whole point of issue #130 was
+// that a missing link is INVISIBLE; an internal build that silently looked complete would
+// reintroduce the bug the rule was written against.
+if (release && !ENV.INTERNAL_BUILD && missingLegal.length > 0) {
   throw new Error(
     `Release build without ${missingLegal.join(', ')} — the consent screen would have no ` +
       `privacy link and settings no imprint (issue #130; set them in apps/mobile/eas.json ` +
-      `under build.production.env, or as EAS environment variables)`,
+      `under build.production.env, or as EAS environment variables). An internal test build ` +
+      `may set EXPO_PUBLIC_INTERNAL_BUILD=1 instead; it then says so on the consent screen.`,
   );
 }
+
+/**
+ * This build starts although its legal pages are missing (issue #130). The consent screen
+ * renders a visible notice for it — never silently, because invisibility was the original bug.
+ */
+export const legalGap = ENV.INTERNAL_BUILD && missingLegal.length > 0;
 // A production build must never send tokens over plain HTTP across a network
 // (http://localhost is only this machine: local walkthroughs).
 const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(ENV.API_URL);

@@ -34,7 +34,7 @@ import { curriculumBlock } from '../curriculum/state.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
-import { insertItems, samePrompt, usableItems } from '../practice/items.js';
+import { insertItems, samePrompt, storedFigure, usableItems } from '../practice/items.js';
 import { createSession, subjectKindOf } from '../practice/service.js';
 import {
   clarifiedRules,
@@ -1940,7 +1940,7 @@ export async function materialItems(
       lang: r.lang,
       prompt_lang: r.prompt_lang,
       subject_kind: subjectKindOf(r.subject_kind),
-      figure: r.figure,
+      figure: storedFigure(r.figure),
       // The concept image is shown where the question is shown full size (sessions);
       // the material list stays a list (issue #50).
       image: null,

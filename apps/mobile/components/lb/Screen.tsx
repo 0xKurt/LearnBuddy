@@ -43,10 +43,11 @@ export function Screen({ title, back = false, right, children }: Props) {
           )}
           {title ? (
             // minWidth 0: a title of one long word ("Reaktionsgleichungen") ends in "…" instead of
-            // pushing the button beside it off a 360 pt screen (issue #239, #287).
+            // pushing the button beside it off a 360 pt screen — and on ONE line, because a
+            // second line could only hold the word's last letters (issue #239, #287).
             <Text
               accessibilityRole="header"
-              numberOfLines={2}
+              numberOfLines={/\s/.test(title.trim()) ? 2 : 1}
               style={[TYPE.title, { flex: 1, minWidth: 0 }]}
             >
               {title}

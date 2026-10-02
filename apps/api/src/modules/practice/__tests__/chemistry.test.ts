@@ -265,3 +265,53 @@ describe('what the formula keys type, against a key in the app notation (#239)',
     ).toBe('correct');
   });
 });
+
+// ── Half-equations with electrons (issue #263, redox) ──────────────────────────────────────
+describe('a half-equation with electrons', () => {
+  it('counts the electrons as charge, however they are written', () => {
+    expect(checkEquation('Fe → Fe^{3+} + 3e^-', 'Fe → Fe³⁺ + 3e⁻')).toEqual({ verdict: 'correct' });
+    expect(checkEquation('Fe → Fe^{3+} + 3e^-', 'Fe → Fe3+ + 3 e-')).toEqual({
+      verdict: 'correct',
+    });
+    expect(checkEquation('Cu^{2+} + 2e^- → Cu', '2e- + Cu2+ → Cu')).toEqual({ verdict: 'correct' });
+  });
+
+  it('finds a wrong electron count — the acceptance of issue #263', () => {
+    expect(checkEquation('Fe → Fe^{3+} + 3e^-', 'Fe → Fe³⁺ + 2e⁻')).toEqual({
+      verdict: 'unbalanced',
+      imbalance: { kind: 'charge', left: 0, right: 1 },
+    });
+    expect(checkEquation('Cu^{2+} + 2e^- → Cu', 'Cu2+ + e- → Cu')).toEqual({
+      verdict: 'unbalanced',
+      imbalance: { kind: 'charge', left: 1, right: 0 },
+    });
+  });
+
+  it('balances a half-equation with water and protons', () => {
+    const permanganate = 'MnO4^- + 8 H^+ + 5 e^- → Mn^{2+} + 4 H2O';
+    expect(checkEquation(permanganate, 'MnO₄⁻ + 8H⁺ + 5e⁻ → Mn²⁺ + 4H₂O')).toEqual({
+      verdict: 'correct',
+    });
+    expect(checkEquation(permanganate, 'MnO4^- + 8H+ + 3e- → Mn2+ + 4H2O')).toMatchObject({
+      verdict: 'unbalanced',
+      imbalance: { kind: 'charge' },
+    });
+  });
+
+  it('refuses "NO3-": an index or a charge of 3−, the characters do not say', () => {
+    // It was read as NO with charge 3− — a confident, wrong count of nitrate.
+    expect(parseFormula('NO3-')).toBeNull();
+    expect(parseFormula('NO3^-')).toEqual({
+      atoms: new Map([
+        ['N', 1],
+        ['O', 3],
+      ]),
+      charge: -1,
+    });
+    expect(parseFormula('Fe3+')?.charge).toBe(3);
+  });
+
+  it('never reads a bare e as an electron', () => {
+    expect(parseEquation('Fe → Fe^{3+} + 3e')).toBeNull();
+  });
+});

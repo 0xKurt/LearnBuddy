@@ -97,13 +97,15 @@ export function keysFor(ctx: KeyContext): KeyId[] {
   const lead: KeyId[] = ctx.path ? ['newline'] : [];
   const shown = (re: RegExp, ids: KeyId[]): KeyId[] => (re.test(math) ? ids : []);
   if (kind === 'numeric') {
-    // A measure (a unit stands next to the field) is written with a decimal separator far more
-    // often than as a fraction; a bare number is the other way round.
-    const number: KeyId[] = ctx.unit ? ['decimal', 'fraction'] : ['fraction', 'decimal'];
+    // A measure (a unit stands next to the field — an area, a length) is computed ("7 · 4") and
+    // written with a decimal separator far more often than as a fraction; a bare number is the
+    // other way round.
+    const number: KeyId[] = ctx.unit
+      ? ['decimal', 'times', 'minus', 'fraction']
+      : ['fraction', 'decimal', 'minus'];
     return unique([
       ...lead,
       ...number,
-      'minus',
       ...shown(POWER, ['power']),
       ...shown(ROOT, ['sqrt']),
       ...shown(PI, ['pi']),

@@ -30,6 +30,18 @@ async function loadRelease(env: Record<string, string | undefined>): Promise<voi
   await import('../env.js');
 }
 
+/** The same, but returns the module so a test can read `legalGap`. */
+async function loadReleaseModule(
+  env: Record<string, string | undefined>,
+): Promise<{ legalGap: boolean }> {
+  vi.resetModules();
+  vi.stubGlobal('__DEV__', false);
+  for (const [k, v] of Object.entries(env)) vi.stubEnv(k, v ?? '');
+  return (await import('../env.js')) as unknown as { legalGap: boolean };
+}
+
+const INTERNAL = { EXPO_PUBLIC_INTERNAL_BUILD: '1' };
+
 describe('a release build without its configuration', () => {
   beforeEach(() => {
     for (const k of Object.keys(FULL)) vi.stubEnv(k, '');
@@ -84,5 +96,72 @@ describe('a release build without its configuration', () => {
     vi.stubGlobal('__DEV__', true);
     for (const k of Object.keys(FULL)) vi.stubEnv(k, '');
     await expect(import('../env.js')).resolves.toBeDefined();
+  });
+});
+
+// An internal build is handed around by hand and reaches no store, so the rule that protects
+// the STORE must not stop the owner from testing his own app before a website exists
+// (issue #130). The exception is narrow, and it buys exactly one thing — starting — at the
+// price of saying so. Everything else the rule guards stays guarded.
+describe('an internal test build without the legal pages', () => {
+  beforeEach(() => {
+    for (const k of Object.keys(FULL)) vi.stubEnv(k, '');
+    vi.stubEnv('EXPO_PUBLIC_SENTRY_DSN', '');
+    vi.stubEnv('EXPO_PUBLIC_INTERNAL_BUILD', '');
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('starts, where a store build would refuse', async () => {
+    const env = {
+      ...FULL,
+      ...INTERNAL,
+      EXPO_PUBLIC_PRIVACY_URL: undefined,
+      EXPO_PUBLIC_IMPRINT_URL: undefined,
+    };
+    await expect(loadRelease(env)).resolves.toBeUndefined();
+  });
+
+  it('says so — `legalGap` is what the consent screen renders its notice from', async () => {
+    const m = await loadReleaseModule({
+      ...FULL,
+      ...INTERNAL,
+      EXPO_PUBLIC_PRIVACY_URL: undefined,
+      EXPO_PUBLIC_IMPRINT_URL: undefined,
+    });
+    expect(m.legalGap).toBe(true);
+  });
+
+  it('says nothing when the pages ARE there: the notice is about the gap, not about the flag', async () => {
+    const m = await loadReleaseModule({ ...FULL, ...INTERNAL });
+    expect(m.legalGap).toBe(false);
+  });
+
+  it('buys nothing else — the API url is still required', async () => {
+    await expect(
+      loadRelease({ ...FULL, ...INTERNAL, EXPO_PUBLIC_API_URL: undefined }),
+    ).rejects.toThrow(/EXPO_PUBLIC_API_URL/);
+  });
+
+  it('buys nothing else — plain http across a network is still refused', async () => {
+    await expect(
+      loadRelease({ ...FULL, ...INTERNAL, EXPO_PUBLIC_API_URL: 'http://api.example.org' }),
+    ).rejects.toThrow(/https:\/\//);
+  });
+
+  it('only the exact value "1" counts, so a stray variable cannot switch the rule off', async () => {
+    for (const value of ['0', 'true', 'yes', '']) {
+      await expect(
+        loadRelease({
+          ...FULL,
+          EXPO_PUBLIC_INTERNAL_BUILD: value,
+          EXPO_PUBLIC_PRIVACY_URL: undefined,
+        }),
+        value,
+      ).rejects.toThrow(/EXPO_PUBLIC_PRIVACY_URL/);
+    }
   });
 });

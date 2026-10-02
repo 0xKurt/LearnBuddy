@@ -1608,10 +1608,22 @@ Die Prüfstellen sind fest und nie zufällig: ein Urteil über die Arbeit eines 
 von einem Würfel abhängen, und zwei Läufe müssen übereinstimmen. Ein durchgehend stimmiger Weg
 wird auf seiner **letzten Zeile** beurteilt, also zählt richtig gerechnet auch als richtig.
 
-Der erste Schnitt kann **eine** Variable, Terme und Gleichungen. Mehrere Variablen,
-Ungleichungen, Fallunterscheidungen, Beweise und jede Zeile, die nicht vollständig geparst
-wird, kommen als `unknown` zurück und gehen ans Modell — statt geraten zu werden. Eine Zeile
-halb zu verstehen ist schlimmer, als sie nicht zu verstehen.
+Der erste Schnitt konnte **eine** Variable, Terme und Gleichungen. Seit Issue #263 liest er auch
+**mehrere Variablen** (Formel umstellen: `v = s/t → v·t = s`) — dort darf ein Schritt mit einer
+Variablen multiplizieren, der Faktor ist also nicht mehr konstant, und verglichen werden die
+**Nullstellen**: wo eine Zeile in einer Variablen linear ist, wird ihre Nullstelle berechnet und
+in die andere eingesetzt, in beiden Richtungen. Mehrere Variablen werden nur an **positiven**
+Stellen geprüft (eine Formel handelt von positiven Größen; `v = √(2gh) → v² = 2gh` ist dort
+erlaubt) — der Preis steht im Modul: ein Schritt, der nur für positive Werte gilt, wird mit
+mehreren Variablen angenommen. Jede Variable ist ein einzelner Buchstabe; zwei Buchstaben am
+Stück („cm", „kN", „mal") lehnen die Zeile ab, statt eine Einheit zum Produkt zu machen.
+**Lineare Ungleichungen** in einer Variablen werden als Halbgerade berechnet (Grenze, Richtung,
+echt oder nicht); der Vorzeichenfehler beim Teilen durch eine negative Zahl wird an der Zeile
+gefunden, in der er passiert. Fallunterscheidungen, Beweise, Ketten wie `1 < x < 3`, `≠`,
+nichtlineare Ungleichungen, zwei Zeilen über verschiedene Variablen (das ist eine Liste von
+Werten, kein Schritt) und jede Zeile, die nicht vollständig geparst wird, kommen weiter als
+`unknown` zurück und gehen ans Modell — statt geraten zu werden. Eine Zeile halb zu verstehen
+ist schlimmer, als sie nicht zu verstehen.
 
 **Eingetippt wird er auch** (Issue #221). Die Prüfung gab es ein Issue lang, bevor das
 Antwortfeld sie erreichen konnte: Zeilenumbrüche erlaubte es nur bei einem Freitext, also
@@ -1693,6 +1705,21 @@ Verhältnis (Kreuzungsschema) wird gekürzt verglichen, aber **erst ab drei Teil
 „3:4" und „14:30" sind dieselben Zeichen, und welche Bedeutung gilt, steht nicht darin
 (Regel 3, Issue #175).
 
+**Redox und Kernreaktionen** (Issue #263). Eine Teilgleichung mit Elektronen (`e⁻`, `e^-`,
+`e^{-}`) wird mitgezählt: ein Elektron trägt eine negative Ladung und keine Atome, also findet
+die Ladungsbilanz eine falsche Elektronenzahl und nennt sie („die Ladungen stimmen noch nicht:
+links 0, rechts 1"). „NO3-" wird dabei **abgelehnt**, nicht gelesen: ob die 3 ein Index ist
+(Nitrat) oder die Ladung, steht nicht in den Zeichen — bis dahin wurde es als NO mit Ladung 3−
+gezählt. `NO₃⁻` und `NO3^-` sagen es. Eine Kernreaktion (`modules/practice/nuclear.ts`) wird
+über **Massen- und Ordnungszahl** bilanziert: `²³⁸₉₂U`, `^{238}_{92}U`, `U-238`, α, β⁻/β⁺, γ, n,
+p, e⁻/e⁺, ν; die Ordnungszahl kommt ohne Angabe aus dem Periodensystem (eine Faktentabelle, keine
+Wortliste). Beginnt sie mit den Kernen des Schlüssels, ist sie richtig, wenn ihre Produkte die des
+Schlüssels sind (γ und Neutrinos zählen dafür nicht), und sonst ein Beinahe-Treffer mit der
+Stelle („die Massenzahlen stimmen noch nicht: links 238, rechts 237"). Andere Produkte bei
+aufgehender Bilanz sind eine andere Reaktion — die Frage des Tutors. Nicht gebaut:
+Oxidationszahlen per Regeln (die Ausnahmen — Peroxide, Hydride, Fe₃O₄ — machen sie ohne
+Stoffwissen nicht sicher) und „Gesamtgleichung = Summe der Teilgleichungen".
+
 **Eine Schreibaufgabe: Rückmeldung je Element statt eines Urteils** (Issue #211, Schritt 2 aus
 #197; `modules/practice/rubric.ts`, `contracts/rubric.ts`, Migration `0075_writing_rubric.sql`).
 In Deutsch bestehen die Klassenarbeiten fast nur aus Schreibaufgaben, in den Fremdsprachen
@@ -1765,7 +1792,15 @@ dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): 
 audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
 sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is
 decided — a prompt that is nothing but a constant expression — because claiming to check a
-worded task would be the same mistake one level up (rule 5). The other half of that answer is
+worded task would be the same mistake one level up (rule 5). Since issues #235, #263 and #227
+(B4–B6, B10) the same holds for what the question PRINTS in its maths: a linear system is solved
+and compared with a key of named values (and a key claiming one solution for a system without
+exactly one is dropped); a single equation in one variable must be satisfied by the key's value
+(within its last decimal); a key labelled `f'(x) =` or `F(x) = … + C` must be the derivative or
+an antiderivative of the one `f(x)` the question defines (numerical slope, Richardson step, only
+where two step sizes agree); a reaction or nuclear key must balance; a number key's accepted
+answers must have its value and its unit must be the item's. Each check can only say "certainly
+not" — a worded task, a nonlinear system, two equations too many all prove nothing. The other half of that answer is
 **Bruchbalken** below: a question whose key is not checked but _computed_, from the same
 parameters its own text was written from (issue #162).
 
@@ -2179,6 +2214,31 @@ so the rules only say it when it is certain; everything else goes to the tutor (
   what finding 4 of the same issue was reverted for). A unit that happens to be a single letter
   is no variable ("1250 m" against "1350 m" stays undecided), and a free text is decided here
   never (#197).
+- _The form of a right value_ (issue #235, `form.ts`), read off the syntax tree, never off the
+  question's words. **The same summands and factors in another order** are the key's form and
+  `correct` without a model ("6+2x" for 2x+6, "(x+1)(x+1)" for (x+1)²; −4x, (−4)·x and −(4x) are
+  one term; a bracket after a minus stays a bracket). **The task's own term typed back** while
+  the key is a transformed one ("Faktorisiere x²+2x+1" → "x²+2x+1", "Löse 2x+3=7" → "2x+3=7") is
+  the near miss `not_transformed` with a fixed gentle reply, in every mode. A **real change of
+  form** (factored against expanded, an equation not solved for the key's variable, an
+  antiderivative without its `+ C`) stays `other_form`: whether the QUESTION asks for a form is
+  language, and a word list for "Faktorisiere" is what rule 3 forbids — so the tutor is told
+  the facts ("FORM CHECK: the key is factored, her answer is expanded") and decides only that.
+  Function labels (`f(x) =`, `f'(x) =`, `y =`) are notation; an antiderivative with `+ C` is
+  decided up to its constant (the difference to the key is one number at every probe point).
+  **`other_form` is held in code** (`enforceTutorInvariants`, `VALUE_CONFIRMED`): a model
+  "wrong" for a value code confirmed becomes "partly right", and its words for "wrong" are
+  replaced by the app's ("Der Wert stimmt – du hast es nur anders geschrieben …").
+  The same order-free reading guards the solution: a hint or reply that writes it with its
+  summands reordered gives it away (`mentionsSolution`, #227 B7), and the homework chat guard
+  (`buddy/turn.ts`) checks every key, not only the first.
+- _Several values_ (issue #263, #227 A7, `systems.ts`). Named values ("x = 2, y = 3", one per
+  line, ";" or ", " before the next name — "x = 2,5" stays one value), a point "(2|3)" and a
+  ";"-list compared value by value with the numeric rules: any value certainly different is
+  wrong, swapped values included. A set in braces is unordered; a bare list in another order is
+  `other_form` (the order may have been the question). "2, 5" is not a list — it is 2,5. A
+  linear **inequality** is compared by its solution set ("2 > x" for x < 2 is right, "x > 2"
+  and "x ≤ 2" are wrong).
 - _Words._ Correct only when equal after NFC and collapsing spaces — case, ß and punctuation
   count. A difference only there is, per item (`items.spelling`) or by default for vocabulary and
   language subjects (German, English, French, Spanish, Latin, other language), a near miss "Fast
@@ -2186,7 +2246,9 @@ so the rules only say it when it is certain; everything else goes to the tutor (
   elsewhere the tutor judges it gently (rule verdict `folded`).
 - _Choices._ An option is named by its text (however written; words fold case) or by its badge
   letter — but a letter that is also another option's text ("A" with the, a, an) and an option
-  followed by more words ("Richtig ist das nicht") go to the tutor.
+  followed by more words ("Richtig ist das nicht") go to the tutor. Since #227 A9 also by its
+  letter AND text together ("a) 1/2", only when both name the same option) and by its value in
+  another notation ("0,5" for ½), only when no other option has that value.
 - The value comparison is shared: `compareWithKeys` (answer and accepted answers, any form) for
   every caller that asks "does she state the right number?" — homework help included.
 - Proven by a truth table and property tests (fast-check) over generated values in de/fr/es/it/en:
@@ -2410,12 +2472,53 @@ word list, so it stays a prompt rule.
   only the math runs (`practice/dollarMath.ts`), a math field as a whole — and rule checks
   compare \\frac{3}{4} and 3/4 as equal. Function plots widen their left margin for the y labels
   when the y-axis runs along the edge (`lib/math/plotLayout.ts`). A question
-  may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table) as data
+  may carry a `figure` (fraction, number line, function plot, bar chart, geometry, table,
+  molecule) as data
   (`contracts/figure.ts`); the server drops figures it cannot draw (e.g. an expression that does
   not compile with `@learnbuddy/shared-math` `compileExpression`) without dropping the question.
   A figure is drawn to be READ. What she can work with is a `surface` — today the Bruchbalken
   (§Practice above, issue #162), whose question, picture and key are computed from one reviewed
   task instead of written by the model.
+- **Figures that state numbers (issues #253, #257)** — two figures carry measures, and code
+  checks them in both directions before a question is stored (`practice/figureCheck.ts`, called
+  from `usableItems`); a figure that contradicts its numbers or its key costs the QUESTION, not
+  just the drawing, because the question is built on it (rule 0: rejected, never repaired).
+  - `geometry` is drawn **to scale**. Next to points, segments, polygons and circles it has
+    `angles` (three point names, `deg` = the true size, an optional label), `lengths` (a side and
+    its value), `arrows` (vectors and forces with a value; `resultant` marks the sum),
+    `rays` (`ray`, `light`, or `light_in` — light that ends at a mirror or lens) and `lines`
+    (through two points, to the edge). Checked: every stated angle is that wide in the coordinates
+    (±2°); a polygon whose every angle is given adds up to (n−2)·180° exactly; every stated length
+    and every force fits one common scale (±3 %) — which is what makes Pythagoras and the
+    intercept theorem hold in the drawing; a resultant IS the vector sum of its forces (from one
+    point, or head to tail); a number in a label is the stated value. The one measure labelled
+    `?` is what the key answers, and the key must be what the drawing measures there; two `?`
+    leave the key open and a number question with them is dropped. Rays and lines run to the
+    figure's edge; a point that only marks an arrow's tip or a line's direction has no dot and no
+    name. The new arrays default to empty, and a stored figure is read back through the contract
+    (`storedFigure`), so figures written before #257 still show.
+  - `molecule` is a structural formula as data: atoms with aliases (`a1` …, the hydrogens counted
+    in `h`, a charge) and bonds (order 1–3), drawn as a Lewis formula (lone pairs as dots), a
+    Valenzstrich formula (bars) or a skeletal formula (zigzag, no C and H on carbon).
+    `packages/shared-math/src/molecule.ts` — dependency-free, imported by path in the app so the
+    app draws exactly what the server checked — computes the lone pairs from valence electrons,
+    bonds and charge; refuses an odd electron count, a shell that does not hold (octet, duet,
+    the expanded shells of P, S, Cl, Br, I, the empty shell of a metal ion), unknown elements,
+    dangling or doubled bonds, more than three particles, fused rings and a layout with
+    overlapping atoms; computes the formula (Hill order), the charge, the molar mass and the
+    functional groups by bond pattern (hydroxyl, ether, aldehyde, ketone, carboxyl, ester, amine,
+    amide, alkene, alkyne, halogen — no names). `mark` highlights one group and must be exactly
+    one detected group (its heteroatoms plus the carbons of C=O, C=C, C≡C). `ask` declares that
+    the key IS a computed value — `formula` (counted with `practice/chemistry.ts` `parseFormula`),
+    `lone_pairs` or `molar_mass` (±0.5 %, school tables round) — and a key that disagrees drops
+    the question. Layout: Lewis and Valenzstrich formulas run straight (90°) with every hydrogen,
+    a side branch on a longer bond when its hydrogens would sit on its neighbours'; skeletal
+    formulas zigzag (120°); rings are regular polygons with the second line of a double bond
+    inside. Naming a molecule is answered like any short answer; a "which structure is ethanol"
+    choice between four drawings waits for picture options (#231).
+    Both figures describe themselves in words for a screen reader (angles with sizes, sides,
+    forces, rays; every bond and the lone pairs). `figureCheck.test.ts`, `molecule.test.ts`,
+    `figures-to-scale.int.test.ts`, walkthrough `tests/web/figures.spec.ts`.
 
 ## Voice
 
@@ -2915,6 +3018,19 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
 - Locally: a Postgres 16 on `127.0.0.1:5432` (`LB_TEST_DATABASE_URL` to change). The pre-commit
   hook and CI set `LB_REQUIRE_TEST_DB=1`, so a missing database fails the gate; only a plain
   `pnpm test` outside them skips the database tests.
+- **The API's own database role is versioned and tested** (issue #107): it used to exist only
+  live, made by hand, while every test ran as superuser. `infra/supabase/templates/api-role.sql`
+  (psql, idempotent) creates it — login, DML on `public`, execute on its functions, default
+  privileges for later migrations, BYPASSRLS because every table has RLS without policies; no
+  superuser, no DDL, nothing in `auth`. `api-role.int.test.ts` applies it with psql exactly as the
+  operator does and runs a whole account through the API **as that role** (sign-up, material,
+  export, deletion by the tick, `/v1/health`); the harness option `connectAs` makes that possible
+  for any test. Not verified live: whether hosted Supabase lets `postgres` grant BYPASSRLS (the
+  template names the fallback). How a new Buddy app is set up from this repository:
+  [buddy-kit.md](buddy-kit.md).
+- **Export and deletion completeness** (`export-completeness.int.test.ts`, issue #32): read from
+  `information_schema`, every column naming a learner or account cascades from it, and every such
+  table is in `GET /account/export` — a new table without an export entry fails the gate.
 - The app keys (anon, authenticated) reach nothing in the database: the test shim grants what a
   hosted Supabase project grants by default, and `database-exposure.int.test.ts` fails for any
   public function they can execute or any table without row level security.
