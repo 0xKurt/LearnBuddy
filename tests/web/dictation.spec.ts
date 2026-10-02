@@ -144,8 +144,8 @@ test('Diktat: she hears the word, types it, the mic is off (issue #242)', async 
     for (let n = 0; n < 3; n++) {
       await field.fill(missed);
       await page.getByRole('button', { name: 'Prüfen' }).click();
-      // Sent: the field empties once the answer is on its way.
-      await expect(field).toHaveValue('');
+      // Sent: the field empties once the answer is on its way (the third closes the question).
+      if (n < 2) await expect(field).toHaveValue('');
     }
     await expect(
       page.getByText('Kein Problem – so schreibt man es.', { exact: false }),

@@ -250,7 +250,8 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   adult's job is declined in one friendly sentence that names what he can do instead. The line is
   drawn by **purpose, not topic** — every school subject is learning, also the delicate ones, and
   an unclear purpose is asked about, never refused. No word lists (rule 3); the boundary lives in
-  the prompt and is checked by `evals/buddy` (`de_scope_*`, `de_insult_stays_calm`), because no
+  the prompt and is checked by `evals/buddy` (`de_scope_*`, `de_insult_stays_calm` — 20 runs,
+  §Testing, issue #225), because no
   code can tell learning from not-learning. What code does carry: the account budgets
   (§Limits) cap how much anyone can use a stolen session for.
 - **Injected text** (issue #39). STATE, the conversation, lookup results and the text of
@@ -1869,8 +1870,13 @@ item → 422 `no_parts`; a stored task that no longer reads → 409 `task_unread
 `incorrect` with that code-written reply, and the question stays open; nothing is locked and
 nothing cleared, her arrangement stays in the draft. The rest is the ordinary flow: the third
 miss explains the solution, a test only notes the answer (one try, no verdict until the end),
-FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer stands in the
-thread in her order; the closing answer of an order or a match is recorded as `tapped`, which
+FSRS rates the closed item, turns are idempotent per `client_turn_id`. Her answer is stored as a
+turn in words, in her order (for the tutor's history, a dispute and the summary). While the
+question is open the screen does not echo it as a bubble (`ItemThread` `echoAnswers`; once it is
+closed the board is gone and the bubble with its verdict shows): her arrangement stands on the board,
+which is the state, and Buddy's reply says the verdict in words. Echoed, four pairs were a
+four-line bubble that the room above the board could only show as a cut-off strip under the
+question card (shot 39e). The closing answer of an order or a match is recorded as `tapped`, which
 for a structured kind still counts towards a topic in the summary (tapping is the only way to
 answer it, not recognition); a table's is `typed`.
 
@@ -1939,8 +1945,8 @@ that has the key's value but is written otherwise. The reply counts and names
 (`tableReply`): "2 von 3 Feldern stimmen. Schau nochmal bei „du“ / „Präteritum“." — a cell by
 its row label and heading, else by row and column numbers, a brick by row and place; three at
 most by name, the rest counted. When no cell is right but some are nearly right, it never says
-"none is right": it says they are almost there and names them (`table_almost`). Her cells stand
-in the thread in reading order ("6 · 8 · 20").
+"none is right": it says they are almost there and names them (`table_almost`). Her cells are stored as
+the turn in reading order ("6 · 8 · 20").
 
 App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
 each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
@@ -2951,6 +2957,14 @@ does not need rebuilding when the DSN arrives. Metro stamps the debug ids
   present in only one file are listed, not guessed about, so partial runs (`run.ts case-id …`)
   compare too. The comparison itself is pure and unit-tested
   (`evals/buddy/__tests__/compare.test.ts`); only producing the transcripts costs money.
+- **Repeated cases** (issue #225): a model decision is not deterministic, and a case that fails
+  one run in five is not checked by one run. A case can carry `repeat: { runs, maxFailures }`;
+  `evals/buddy/run.ts` then runs it that often, each on a fresh database, and fails it when more
+  than `maxFailures` runs fail (`evals/buddy/repeat.ts`, unit-tested in
+  `__tests__/repeat.test.ts`). `de_insult_stays_calm` runs 20 times with `maxFailures: 0` — the
+  issue's acceptance is that an insult never leads to the crisis number. Measured before this
+  (02.10.2026): about one run in five set `concern`, so this case is expected to **fail** until
+  the cause is fixed; twenty clean runs bound the rate to roughly 15 % or less, not to zero.
 - Integration against a real Postgres (`src/__tests__/*.int.test.ts`, harness in
   `src/testing/`): every test file gets its own database created from a template with the real
   migrations. Only the outside world is replaced: a scripted model (every call must be scripted;
