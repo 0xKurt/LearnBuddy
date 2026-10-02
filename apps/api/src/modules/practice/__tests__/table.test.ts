@@ -335,7 +335,10 @@ describe('table_fill: her answer, cell by cell', () => {
     const gap = terms.rows[0]![1]!;
     if (!('key' in gap)) throw new Error('gap expected');
     expect(cellVerdict(gap, '2x+6', CTX, false)).toBe('right');
-    expect(cellVerdict(gap, '6+2x', CTX, false)).toBe('near');
+    // The summands swapped is the same form (#235 reads the form from the syntax tree): right.
+    expect(cellVerdict(gap, '6+2x', CTX, false)).toBe('right');
+    // The same value not multiplied out is not what the column asks for: nearly right.
+    expect(cellVerdict(gap, '2(x+3)', CTX, false)).toBe('near');
     expect(cellVerdict(gap, '2x+3', CTX, false)).toBe('wrong');
   });
 

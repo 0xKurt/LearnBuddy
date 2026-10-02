@@ -90,12 +90,26 @@ describe('a broken step, at the right line', () => {
 });
 
 describe('what it refuses to judge', () => {
-  it('leaves more than one variable alone', () => {
-    expect(checkPath(path('2a + b = 7', '2a = 7 - b'))).toEqual({ kind: 'unknown' });
+  // Several variables and inequalities were refused here until issue #263; they are read now
+  // (see the blocks below). What stays refused is what still cannot be computed exactly.
+  it('leaves a non-linear inequality and a chain alone', () => {
+    expect(checkPath(path('x^2 < 4', 'x < 2'))).toEqual({ kind: 'unknown' });
+    expect(checkPath(path('1 < x + 1 < 3', '0 < x < 2'))).toEqual({ kind: 'unknown' });
+    expect(checkPath(path('x ≠ 2', 'x + 1 ≠ 3'))).toEqual({ kind: 'unknown' });
   });
 
-  it('leaves an inequality alone', () => {
-    expect(checkPath(path('2x + 3 < 7', '2x < 4'))).toEqual({ kind: 'unknown' });
+  it('leaves an inequality with several variables alone', () => {
+    expect(checkPath(path('x + y < 3', 'x < 3 - y'))).toEqual({ kind: 'unknown' });
+  });
+
+  it('leaves two lines about different variables alone — two values, not a step', () => {
+    expect(checkPath(path('x = 2', 'y = 3'))).toEqual({ kind: 'unknown' });
+    expect(checkPath(path('2x + y = 7', 'x = 2'))).toEqual({ kind: 'unknown' });
+  });
+
+  it('leaves a unit or a word inside a line alone', () => {
+    expect(checkPath(path('s = 12 cm', 's = 0,12 m'))).toEqual({ kind: 'unknown' });
+    expect(checkPath(path('x mal 3 = 6', 'x = 2'))).toEqual({ kind: 'unknown' });
   });
 
   it('leaves a line it cannot parse alone', () => {
@@ -152,9 +166,11 @@ describe('an answer against a key, read as algebra', () => {
     // ("1.000" may be one thousand or one) and the tolerances.
     expect(sameAlgebra('-5', '5')).toBeNull();
     expect(sameAlgebra('1000-0', '1.000-0')).toBeNull();
-    // Outside the first cut of this module: inequalities, words, a line that does not parse.
-    expect(sameAlgebra('x<3', 'x>3')).toBeNull();
+    // Outside what this module reads: words, a line that does not parse, a non-linear inequality.
     expect(sameAlgebra('2x = 4', 'dann teile ich durch zwei')).toBeNull();
+    expect(sameAlgebra('x^2 < 4', 'x^2 > 4')).toBeNull();
+    // Two letters glued together are a word or a unit, never a product (H-4).
+    expect(sameAlgebra('a^2+2ab+b^2', '(a+b)^2')).toBeNull();
   });
 
   it('is the same answer twice in a row here too', () => {
@@ -177,5 +193,72 @@ describe('the value a key states for its variable', () => {
     expect(solvedValue('a = 12 cm')).toBeNull();
     expect(solvedValue('5')).toBeNull();
     expect(solvedValue('x < 5')).toBeNull();
+  });
+});
+
+// ── Several variables and inequalities (issue #263) ────────────────────────────────────────
+
+describe('a formula rearranged step by step (several variables)', () => {
+  it('accepts multiplying by a variable, which no constant factor describes', () => {
+    expect(checkPath(path('v = s/t', 'v·t = s', 's = v·t'))).toEqual({ kind: 'sound', lines: 3 });
+    expect(checkPath(path('2a + b = 7', '2a = 7 - b', 'a = (7 - b)/2'))).toMatchObject({
+      kind: 'sound',
+    });
+    expect(checkPath(path('U = R·I', 'I = U/R'))).toMatchObject({ kind: 'sound' });
+  });
+
+  it('finds the step that divides where it should multiply', () => {
+    expect(checkPath(path('v = s/t', 'v·t = s', 's = v/t'))).toEqual({
+      kind: 'broke',
+      line: 2,
+      lines: 3,
+    });
+    expect(checkPath(path('x + y = 5', 'x = 5 + y'))).toEqual({ kind: 'broke', line: 1, lines: 2 });
+  });
+
+  it('accepts squaring a formula of positive quantities, and says so', () => {
+    // v = √(2gh) → v² = 2gh holds for the positive values a formula is about (see steps.ts).
+    expect(checkPath(path('v = sqrt(2·g·h)', 'v^2 = 2·g·h'))).toMatchObject({ kind: 'sound' });
+  });
+});
+
+describe('an inequality step by step', () => {
+  it('accepts a correct transformation, turning the sign where it must', () => {
+    expect(checkPath(path('2x + 3 < 7', '2x < 4', 'x < 2'))).toEqual({ kind: 'sound', lines: 3 });
+    expect(checkPath(path('-2x > 6', 'x < -3'))).toEqual({ kind: 'sound', lines: 2 });
+    expect(checkPath(path('5 - x ≥ 2', '-x ≥ -3', 'x ≤ 3'))).toMatchObject({ kind: 'sound' });
+  });
+
+  it('finds the sign not turned at the line it happened', () => {
+    // The acceptance of issue #263: dividing by −2 without turning "<" round.
+    expect(checkPath(path('3 - 2x < 7', '-2x < 4', 'x < -2'))).toEqual({
+      kind: 'broke',
+      line: 2,
+      lines: 3,
+    });
+    expect(checkPath(path('-2x > 6', 'x > -3'))).toEqual({ kind: 'broke', line: 1, lines: 2 });
+  });
+
+  it('finds a boundary that became included', () => {
+    expect(checkPath(path('2x < 4', 'x ≤ 2'))).toEqual({ kind: 'broke', line: 1, lines: 2 });
+  });
+
+  it('keeps a leading minus: it is a sign, not a bullet', () => {
+    expect(pathLines('-2x > 6\n- x < -3')).toEqual(['-2x > 6', 'x < -3']);
+    expect(pathLines('2.5x = 5\nx = 2')).toEqual(['2.5x = 5', 'x = 2']);
+  });
+});
+
+describe('an answer with several variables against a key', () => {
+  it('compares formulas', () => {
+    expect(sameAlgebra('s = v·t', 's = t·v')).toBe('same');
+    expect(sameAlgebra('v = s/t', 'v = t/s')).toBe('different');
+    expect(sameAlgebra('a^2 + 2a·b + b^2', '(a+b)^2')).toBe('same');
+    expect(sameAlgebra('a^2 + 2a·b + b^2', '(a-b)^2')).toBe('different');
+  });
+
+  it('never reads a unit as a product of variables', () => {
+    expect(sameAlgebra('a = 12 cm', 'a = 120 mm')).toBeNull();
+    expect(sameAlgebra('F = 20 N', 'F = 0,02 kN')).toBeNull();
   });
 });

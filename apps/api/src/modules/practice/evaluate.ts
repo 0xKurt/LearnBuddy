@@ -14,7 +14,12 @@
 //
 // Where comparing the CHARACTERS decides nothing, the VALUE still can (issue #227, findings 5
 // and 8): algebra against algebra (`steps.ts`), a date, a clock time and a year inside a
-// sentence (`dates.ts`) — see `byValue` at the bottom.
+// sentence (`dates.ts`) — see `byValue` at the bottom. And where the value is the key's, the
+// FORM is read off the syntax tree (issue #235, `form.ts`): the same summands in another order
+// are right, the task's own term typed back is a near miss, and only a real change of form —
+// factored against expanded — is left to the tutor. Several values (a system's solution, a
+// point, a list) are compared one by one (issue #263, `systems.ts`), a nuclear equation is
+// counted (`nuclear.ts`).
 
 import { isStructuredKind, type ItemKind } from '@learnbuddy/shared-types/contracts';
 
@@ -26,7 +31,10 @@ import {
   sameSubstance,
 } from './chemistry.js';
 import { isYear, sameClockTime, sameDate, yearIn } from './dates.js';
-import { checkPath, lastValue, sameAlgebra, solvedValue } from './steps.js';
+import { type FormNote, judgeAlgebra, typedBack } from './form.js';
+import { checkNuclear, looksNuclear, type NuclearImbalance } from './nuclear.js';
+import { checkPath, lastValue, solvedValue } from './steps.js';
+import { sameAssignments, sameList, samePoint } from './systems.js';
 import {
   canonicalMath,
   canonicalText,
@@ -56,6 +64,11 @@ export type ItemForCheck = {
   spelling: 'strict' | 'gentle' | null;
   /** subjects.kind of the item's subject, when it has one. */
   subject_kind: string | null;
+  /**
+   * The question as printed. Only read to see whether an answer is the task's own term typed
+   * back (issue #235, `form.ts` `typedBack`) — never to decide what the question asks.
+   */
+  prompt?: string;
   /**
    * The question asks for an AMOUNT, not a notation (issue #162): set only for a question
    * whose text, picture and key code computed from a reviewed task (`practice/bars.ts`), so
@@ -130,6 +143,12 @@ export type RuleVerdict =
   /** The same value, written another way: right in value, and the FORM is the question. */
   | 'other_form'
   /**
+   * The same value because it IS the task's own term or equation, typed back while the key is a
+   * transformed one ("Faktorisiere x²+2x+1" → "x²+2x+1", issue #235). Right in value, and the
+   * transformation the question is about has not happened yet.
+   */
+  | 'not_transformed'
+  /**
    * A note line she wrote where some of it holds and some does not (issue #226). It never comes
    * out of a per-key comparison — `staff.ts` compares note by note and sets it — so it is
    * deliberately absent from `STRENGTH` below, which only aggregates per-key verdicts.
@@ -155,6 +174,9 @@ export const NEAR_MISS = new Set<RuleVerdict>([
   // The way is hers and most of it holds; one step does not follow. Wrong would throw away
   // everything that was right, which is what the class test does NOT do (issue #209).
   'step_broke',
+  // The value is the key's because nothing was done to the task's term: not wrong, and not the
+  // answer either (issue #235). She is told what code saw and transforms it herself.
+  'not_transformed',
   // Three of four notes in a line she wrote: the same argument one form further (issue #226).
   // Partly right, so the question stays open and she fixes what does not hold — it is not a
   // score, and it is not a grade (see `staff.ts`).
@@ -307,13 +329,29 @@ function namesOption(option: string, text: string): boolean {
  */
 export function choiceNamed(text: string, choices: readonly string[]): number | null {
   const t = text.trim();
+  // The letter AND the option, the way a worksheet answer is written: "a) 1/2" (#227 A9). Only
+  // when both name the same option; a letter that points elsewhere leaves it to the tutor.
+  const both = /^([a-z])[.)]\s+(\S.*)$/i.exec(t);
+  if (both) {
+    const at = both[1]!.toLowerCase().charCodeAt(0) - 97;
+    const rest = choiceNamed(both[2]!, choices);
+    return at < choices.length && rest === at ? at : null;
+  }
   const named = choices.flatMap((c, i) => (namesOption(c, t) ? [i] : []));
   const letter = /^([a-z])[.)]?$/i.exec(t);
   const index = letter ? letter[1]!.toLowerCase().charCodeAt(0) - 97 : -1;
   const byLetter = index >= 0 && index < choices.length ? index : null;
   if (named.length > 1) return null;
   if (named.length === 1) return byLetter === null || byLetter === named[0] ? named[0]! : null;
-  return byLetter;
+  if (byLetter !== null) return byLetter;
+  // The value of exactly one option, written another way ("0,5" for ½, #227 A9). Choosing is
+  // the question, not the notation — but only when no other option has that value too.
+  const given = parseNumericInput(t);
+  if (given.value === null || given.form === 'expression') return null;
+  const byValue = choices.flatMap((c, i) =>
+    compareNumbers(given, parseCanonicalKey(c)) === 'equal' ? [i] : [],
+  );
+  return byValue.length === 1 ? byValue[0]! : null;
 }
 
 const STRENGTH: readonly RuleVerdict[] = [
@@ -384,7 +422,12 @@ function writtenAgainst(item: ItemForCheck, key: string, text: string): RuleVerd
   // Counted before compared (issue #212): a reaction equation written in another order is the
   // same equation, and no string comparison can see that. What is not countable — different
   // substances, a hydrate, a structural formula — falls through to everything below.
-  if (looksLikeEquation(key)) {
+  // A nuclear equation is counted by mass and atomic numbers (issue #263) — before chemistry,
+  // whose element counting cannot read a mass number.
+  if (looksNuclear(key)) {
+    const nuc = checkNuclear(key, text);
+    if (nuc.verdict !== 'unknown') return nuc.verdict;
+  } else if (looksLikeEquation(key)) {
     const eq = checkEquation(key, text);
     if (eq.verdict !== 'unknown') return eq.verdict;
   }
@@ -439,11 +482,21 @@ function numericVerdict(item: ItemForCheck, text: string): RuleVerdict {
  * (issue #212). Separate from `ruleCheck` so the verdict stays a plain enum and only the
  * reply needs the detail.
  */
+export type CountFault =
+  | EquationFault
+  /** A nuclear equation whose mass or atomic numbers do not add up (issue #263). */
+  | { verdict: 'unbalanced'; imbalance: NuclearImbalance };
+
 export function equationDetail(
   item: Pick<ItemForCheck, 'answer' | 'accepted_answers'>,
   text: string,
-): EquationFault | null {
+): CountFault | null {
   for (const key of [item.answer, ...item.accepted_answers]) {
+    if (looksNuclear(key)) {
+      const n = checkNuclear(key, text);
+      if (n.verdict === 'unbalanced') return n;
+      continue;
+    }
     if (!looksLikeEquation(key)) continue;
     const v = checkEquation(key, text);
     if (v.verdict === 'unbalanced' || v.verdict === 'not_lowest') return v;
@@ -453,17 +506,27 @@ export function equationDetail(
 
 /**
  * One key against the answer, by VALUE where comparing the characters said nothing: algebra
- * (issue #227, finding 5), a date, a clock time, a year inside a sentence (finding 8). 'same'
- * means the value is the key's and only the notation differs; 'different' means certainly
- * another value; null means undecidable, which is most of the world.
+ * (issue #227, finding 5), a date, a clock time, a year inside a sentence (finding 8), several
+ * values (issue #263). 'same_form' means the value is the key's and the form is the key's up to
+ * the order of its parts; 'same' the value with another notation; 'typed_back' the value because
+ * it is the task's own term (issue #235); 'different' certainly another value; null undecidable,
+ * which is most of the world.
  */
-function byValueAgainst(
-  item: ItemForCheck,
-  key: string,
-  text: string,
-): 'same' | 'different' | null {
-  const algebra = sameAlgebra(key, text);
-  if (algebra !== null) return algebra;
+type ByValue = 'same_form' | 'same' | 'typed_back' | 'different';
+
+function byValueAgainst(item: ItemForCheck, key: string, text: string): ByValue | null {
+  // Several values: a system's solution, a point, a list.
+  const several = sameAssignments(key, text) ?? samePoint(key, text) ?? sameList(key, text);
+  if (several !== null) {
+    return several === 'correct' ? 'same_form' : several === 'other_form' ? 'same' : 'different';
+  }
+  const algebra = judgeAlgebra(key, text);
+  if (algebra !== null) {
+    if (algebra.verdict === 'different') return 'different';
+    if (algebra.sameForm) return 'same_form';
+    if (item.prompt !== undefined && typedBack(item.prompt, key, text)) return 'typed_back';
+    return 'same';
+  }
   // The value a solved key states, written without naming the variable: "-5" for "x = 5" is a
   // different value, "5" is the same one in another notation. Compared with the numeric rules,
   // so the key's tolerance and unit keep deciding what they already decide (D-1).
@@ -499,7 +562,9 @@ function byValueAgainst(
  * What the characters could not decide, the value still can (issue #227, findings 5 and 8).
  * The verdicts are the ones decision D-3 already set: a different value is 'incorrect', the same
  * value in another notation is 'other_form' — right in value, with the form left to the tutor,
- * who may never call it wrong for the value (issue #227, finding 1).
+ * who may never call it wrong for the value (issue #227, finding 1, `enforceTutorInvariants`).
+ * The same value in the key's own form up to order is 'correct' (issue #235): "6+2x" for 2x+6
+ * is not another form, it is the same summands, and there is nothing left to judge.
  *
  * 'incorrect' needs EVERY key to be certainly different, the way the numeric rules do it: one
  * key this cannot read leaves the question open.
@@ -509,13 +574,27 @@ function byValue(item: ItemForCheck, text: string): RuleVerdict | null {
   // (issue #197, `noSingleSolution`).
   if (noSingleSolution(item)) return null;
   const keys = [item.answer, ...item.accepted_answers];
-  let allDifferent = keys.length > 0;
-  for (const key of keys) {
-    const c = byValueAgainst(item, key, text);
-    if (c === 'same') return 'other_form';
-    if (c !== 'different') allDifferent = false;
+  const found = keys.map((key) => byValueAgainst(item, key, text));
+  if (found.includes('same_form')) return 'correct';
+  if (found.includes('same')) return 'other_form';
+  if (found.includes('typed_back')) return 'not_transformed';
+  return keys.length > 0 && found.every((c) => c === 'different') ? 'incorrect' : null;
+}
+
+/**
+ * What code can say about the FORM of an answer whose value is right (issue #235), for the
+ * tutor: which shape the key and the answer have, a missing constant of integration, an
+ * equation not solved for the key's variable. Null when there is nothing to add.
+ */
+export function formNoteFor(
+  item: Pick<ItemForCheck, 'answer' | 'accepted_answers'>,
+  text: string,
+): FormNote | null {
+  for (const key of [item.answer, ...item.accepted_answers]) {
+    const j = judgeAlgebra(key, text);
+    if (j?.verdict === 'same' && j.note !== null) return j.note;
   }
-  return allDifferent ? 'incorrect' : null;
+  return null;
 }
 
 export function ruleCheck(
