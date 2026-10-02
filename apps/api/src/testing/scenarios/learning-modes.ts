@@ -31,9 +31,11 @@ function lastText(req: LlmRequest): string {
 export function scriptLearningModes(llm: ScriptedGateway): void {
   // Match items (issue #229): the model writes only the correct links — pairs, and things
   // sorted into groups. The server checks them (Regel 0), gives the ids, shuffles and keeps
-  // the key. Five long-worded pairs and twelve things in four groups: the tallest a match
-  // should get, measured on 360×740 (rule 16). Registered first, like the Rechenweg below:
-  // the first rule that matches wins.
+  // the key. Both are the LARGEST a match may be (contracts/structured.ts): the most pairs and
+  // the most things in the most groups, every text close to its cap, the longest words a column
+  // must hold and a prompt at MATCH_PROMPT_MAX — so the walkthrough measures the worst case on
+  // 360×740 (rule 16), not a comfortable one. Registered first, like the Rechenweg below: the
+  // first rule that matches wins.
   scriptGenerations({
     when: /Verfassungsorgan/i,
     answer: () => ({
@@ -46,11 +48,10 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
           type: 'match',
           prompt: 'Welches Verfassungsorgan hat welche Aufgabe?',
           pairs: [
-            { left: 'Bundestag', right: 'beschließt die Gesetze' },
-            { left: 'Bundesrat', right: 'vertritt die Länder' },
-            { left: 'Bundesregierung', right: 'führt die Gesetze aus' },
-            { left: 'Bundespräsident', right: 'unterschreibt die Gesetze' },
-            { left: 'Bundesverfassungsgericht', right: 'prüft die Gesetze am Grundgesetz' },
+            { left: 'Bundespräsident', right: 'unterschreibt die neuen Gesetze' },
+            { left: 'Bundesregierung', right: 'führt die Gesetze des Bundes aus' },
+            { left: 'Bundeskanzlerin', right: 'bestimmt die Richtlinien im Bund' },
+            { left: 'Landesregierung', right: 'führt die Gesetze des Landes aus' },
           ],
           groups: null,
           topic: 'Verfassungsorgane',
@@ -59,13 +60,18 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
         },
         {
           type: 'match',
-          prompt: 'Wer ist dafür zuständig?',
+          prompt: 'Wer ist denn zuständig: Stadt, Land, Bund?',
           pairs: null,
           groups: [
-            { name: 'Gemeinde', elements: ['Müllabfuhr', 'Friedhöfe', 'Straßenbeleuchtung'] },
-            { name: 'Land', elements: ['Schulen', 'Hochschulen', 'Landespolizei'] },
-            { name: 'Bund', elements: ['Bundeswehr', 'Außenpolitik', 'Autobahnen'] },
-            { name: 'EU', elements: ['Euro', 'Binnenmarkt', 'Roaming-Gebühren'] },
+            {
+              name: 'Stadtverwaltung',
+              elements: ['Laternen planen', 'Friedhof pflegen', 'Kitaplätze geben'],
+            },
+            {
+              name: 'Landesverwaltung',
+              elements: ['Polizei aufbauen', 'Unis finanzieren', 'Lehrpläne machen'],
+            },
+            { name: 'Bundesverwaltung', elements: ['Armee ausrüsten', 'Verträge machen'] },
           ],
           topic: 'Zuständigkeiten',
           difficulty: 2,

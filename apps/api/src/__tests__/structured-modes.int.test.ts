@@ -19,6 +19,7 @@ import type {
   MaterialView,
   SessionItemView,
   SessionView,
+  StaffTask,
 } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -230,5 +231,69 @@ describe.skipIf(!dbReady)('structured items in help mode and in a run that grows
     expect(env.llm.callsFor('explain')).toHaveLength(1);
     const res = await sendOrder(l, started.body.id, order.item.id, rightOrder(order));
     expect(res.body.verdict).toBe('correct');
+  });
+
+  // Issue #277: `addTheRest` appended only `items`, `structured` and `bars`, so the note lines of
+  // a run that started early never arrived. Two of the same kind on purpose: their prompts are
+  // written by code and read the same, and a dedup by prompt would keep only one.
+  it('adds the note lines of a run that started early with the rest (#277)', async () => {
+    env.llm.byDefault('hints', { json: { items: [] } });
+    let release = () => undefined as void;
+    const until = new Promise<void>((resolve) => {
+      release = () => resolve();
+    });
+    holding.push(release);
+    const notes: StaffTask[] = [
+      { task: 'name_note', clef: 'treble', pitch: { name: 'E', octave: 4 } },
+      { task: 'name_note', clef: 'treble', pitch: { name: 'G', octave: 4 } },
+    ];
+    const draft = (n: number) => ({
+      kind: 'short',
+      prompt: `Was bedeutet Zeichen ${n}?`,
+      answer: `Bedeutung ${n}`,
+      accepted_answers: [],
+      unit: null,
+      choices: null,
+      correct_choice: null,
+      topic: 'Notenlehre',
+      difficulty: 2,
+      prompt_lang: null,
+      lang: null,
+      figure: null,
+      source_excerpt: null,
+    });
+    env.llm.script('explain', {
+      json: {
+        usable: true,
+        title: 'Notenlehre',
+        subject: { name: 'Musik', kind: 'art_music' },
+        items: Array.from({ length: 4 }, (_, i) => draft(i + 1)),
+        bars: [],
+        staffs: notes,
+      },
+      pauseAfter: { key: 'items', n: FIRST_BATCH, until },
+    });
+    const started = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: randomUUID(),
+      kind: 'practice',
+      text: 'Üben wir Notenlehre',
+    });
+    expect(started.status).toBe(201);
+    expect(started.body.items).toHaveLength(FIRST_BATCH);
+    expect(started.body.preparing).toBe(true);
+
+    release();
+    await env.flushBackground();
+
+    const grown = await l.api.get<SessionView>(`/practice/sessions/${started.body.id}`);
+    expect(grown.body.preparing).toBe(false);
+    // The fourth ordinary question, then both note lines — none dropped.
+    expect(grown.body.items).toHaveLength(FIRST_BATCH + 1 + notes.length);
+    const rows = await env.db.query<{ staff_task: StaffTask | null }>(
+      `select i.staff_task from session_items si join items i on i.id = si.item_id
+        where si.session_id = $1 order by si.position`,
+      [started.body.id],
+    );
+    expect(rows.slice(FIRST_BATCH + 1).map((r) => r.staff_task)).toEqual(notes);
   });
 });
