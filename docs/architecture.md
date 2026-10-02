@@ -123,7 +123,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                                                   |
 | `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                                              |
 | `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
-| `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen: the recording of one question's spoken text (issue #210)                                                |
+| `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen and Diktat: the recording of one question's spoken text or key (issues #210, #242)                       |
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
@@ -2399,6 +2399,44 @@ word list, so it stays a prompt rule.
   same structured call) plus one synthesis per pass. Honestly: it is a synthetic voice reading
   prose, not a recording of several speakers, and it is never sold as "like in the exam".
   `listening.int.test.ts`, `practice/__tests__/listen.test.ts`.
+- **spelling_dictation** — **Diktat**: Buddy reads a word or a sentence aloud, she TYPES it
+  (issue #242; `contracts/dictation.ts`, `practice/dictation.ts`, migration
+  `0081_spelling_dictation.sql`). Spelling practised WITHOUT voice input. Internally never called
+  "dictation": in the app that word already means voice input (`lib/speech/dictation.ts`), which is
+  exactly what this question switches off. A new item kind, because it is graded differently from
+  everything else, but no new column and no second speech stack: the key is `items.answer`, and
+  the recording is the Hörverstehen chain above with `items.listen_task.text` = the key.
+  _Regel 0, in the database:_ `items_dictation_shape` refuses a Diktat row whose recording is not
+  its key character for character, or whose spelling is not `strict` — the voice is given the KEY,
+  never a text a model rephrased. The question's line ("Hör gut zu und schreib das Wort.") is
+  written by code (`practice.dictation.prompt_*`), so the word is never in the view while the
+  question is open; it arrives as `answer` once the question is closed (no `listen_transcript` —
+  it would only repeat it). No hint ladder, no prepared hints, `POST …/hint` is 409 `no_hints`: a
+  hint about a word she is to spell spells it. Like a listening question it is kept out of every
+  written run.
+  _The check is code alone_ (`checkDictation`): exact — case, ß/ss, umlauts and punctuation count;
+  only runs of spaces, the kind of apostrophe/quote/dash and Unicode composition are folded. A miss
+  names the PLACE (`wordSpot` via an optimal-string-alignment diff, word level first, then letters):
+  a missing or extra double consonant ("Doppel-m fehlt"), ie/i, ß/ss, capital/small, a missing,
+  extra, wrong or swapped letter (named by its position in HER word — the key is never spelled out
+  before the third miss or "Lösung zeigen"), a missing or extra word, two words that are one and
+  one that is two, and punctuation only once every word stands. 0 model calls per answer; one
+  synthesis per word and pass (cached 24 h like every spoken sentence).
+  _Where the words come from:_ a list she typed, a sheet she photographed (`offer_learning` with
+  `sheet: sh1` → `StartTopicRequest.material_id`, read from `materials.extracted_text`; another
+  learner's sheet is a 404), or Buddy's own words for a spelling topic ("ie-Wörter"). One model
+  call picks the entries (`DictationDraft`, `from: list|topic`); every entry claimed as hers — and
+  every entry of a sheet, whatever the model says — must stand in that list word for word and in
+  its own capitalisation (`standsIn`), or it is dropped, never corrected. Digits and markup are not
+  spelling and are dropped too. Her own list is `origin = 'typed'`, a topic's words `'buddy'`.
+  _The app:_ the ordinary question card with the "Hörtext abspielen / Langsam" pills
+  (`HearText`), the answer field without a microphone — in its place one line, "Das Mikro ist hier
+  aus – du übst das Schreiben." — and no automatic capitalisation by the keyboard. Without a voice
+  there is no Diktat (503 `speech_off` before any model call, the offer stops being a button).
+  Not yet: a Diktat word does not come back by spaced repetition on its own (like a listening
+  question, it is only ever asked in its own run). `dictation.int.test.ts`,
+  `practice/__tests__/dictation.test.ts`, walkthrough `tests/web/dictation.spec.ts` (needs
+  `LB_DEV_SPEECH=fake`, skips without it).
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in

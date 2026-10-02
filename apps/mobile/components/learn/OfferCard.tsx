@@ -65,6 +65,8 @@ export function OfferCard({
       // What she asked for beyond the topic travels with the offer (issue #113).
       difficulty: offer.difficulty,
       direction: offer.direction,
+      // A Diktat of her sheet takes its words from there (issue #242).
+      materialId: offer.material_id,
     });
     if (session) {
       if (spoken) useVoiceMode.getState().setOn(true);

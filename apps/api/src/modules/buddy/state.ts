@@ -275,6 +275,8 @@ export type StandingOffer = {
   /** What was offered, in the learner's own words, as the card says it. */
   text: string;
   goal_id: string | null;
+  /** A Diktat's sheet (issue #242); absent or null for every other offer. */
+  material_id?: string | null;
   difficulty: DifficultyWish | null;
   direction: VocabDirection | null;
   created_at: Date;
@@ -369,6 +371,7 @@ export async function loadStandingOffers(
       kind: OfferSummary['kind'];
       text: string;
       goal_id?: string | null;
+      material_id?: string | null;
       difficulty?: DifficultyWish | null;
       direction?: VocabDirection | null;
     };
@@ -398,6 +401,7 @@ export async function loadStandingOffers(
     kind: r.result.kind,
     text: r.result.text,
     goal_id: r.result.goal_id ?? null,
+    material_id: r.result.material_id ?? null,
     difficulty: r.result.difficulty ?? null,
     direction: r.result.direction ?? null,
     created_at: r.created_at,

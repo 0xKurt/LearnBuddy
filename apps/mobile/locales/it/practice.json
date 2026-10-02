@@ -6,6 +6,7 @@
     "harder_topic": "Ancora, un po’ più difficile: {{topics}}"
   },
   "answer": {
+    "mic_off": "Qui il microfono è spento: ti eserciti a scrivere.",
     "label": "La tua risposta",
     "placeholder": "La tua risposta…",
     "unit_hint": "Risposta in {{unit}}"

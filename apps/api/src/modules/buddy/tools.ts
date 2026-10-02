@@ -1627,6 +1627,9 @@ async function runOfferLearning(
       `"${a.text}" names a vocabulary list instead of being one, and questions are made from the pairs this text holds — so this button could not start anything. Either put the pairs themselves in "text" (one per line, "word – translation"), or, for a list on a sheet she photographed, use prepare_practice on that sheet with vocabulary_only.`,
     );
   }
+  // A Diktat of her sheet (issue #242): the sheet must be one of hers, and only a Diktat takes one —
+  // every other kind is about a topic or her text, and a sheet there would be silently ignored.
+  const sheet = a.kind === 'spelling_dictation' && a.sheet ? materialOf(ctx, a.sheet) : null;
   if (a.kind === 'help' && !fromLearnerText(a.text, (ctx.learnerWords ?? []).join('\n'))) {
     throw new ToolRejection(
       `a help offer works on the task the learner wrote, so "text" must be their own words from this message — "${a.text}" names it instead, and hints cannot be made from a name. Without the task in the message, ask her to type or photograph it (no offer).`,
@@ -1655,7 +1658,8 @@ async function runOfferLearning(
         normalizeForMatch(o.text) === wanted &&
         o.goal_id === (goal?.id ?? null) &&
         o.difficulty === (a.difficulty ?? null) &&
-        o.direction === (a.direction ?? null),
+        o.direction === (a.direction ?? null) &&
+        (o.material_id ?? null) === (sheet?.id ?? null),
     )
   ) {
     throw new ToolRejection(
@@ -1669,6 +1673,7 @@ async function runOfferLearning(
       kind: a.kind,
       text: a.text,
       goal_id: goal?.id ?? null,
+      material_id: sheet?.id ?? null,
       // What she asked for beyond the topic; the tap hands it to the generator (issue #113).
       // A direction only ever reaches vocabulary pairs — other questions have none.
       difficulty: a.difficulty ?? null,

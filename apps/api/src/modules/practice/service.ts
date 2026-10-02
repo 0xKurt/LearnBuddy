@@ -35,6 +35,7 @@ import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
 import { listenRefs, listenTaskOf } from './listen.js';
+import { checkDictation, dictationReply, nearlyRight, type DictationCheck } from './dictation.js';
 import {
   differentNumber,
   equationDetail,
@@ -886,7 +887,12 @@ export async function sessionView(
       // The words of a listening text, under exactly the condition the solution is sent under
       // (issue #210): she hears it, answers, and reads it afterwards. While the question is
       // open the text is the solution, so it stays here.
-      listen_transcript: solutionShown(i) ? (listenTaskOf(i.listen_task)?.text ?? null) : null,
+      // A Diktat's recording IS its key (issue #242): the solution above already says it, so it is
+      // not repeated as a "what you heard" text.
+      listen_transcript:
+        solutionShown(i) && i.kind !== 'spelling_dictation'
+          ? (listenTaskOf(i.listen_task)?.text ?? null)
+          : null,
     })),
     turns: turns.map((tr) => ({
       id: tr.id,
@@ -1103,6 +1109,11 @@ export async function answerItem(
       reason: 'use_speak',
     });
   }
+  // A Diktat has no written hint (issue #242): a hint about a word she is to spell would spell it,
+  // and writing one would be a model call. The help is hearing it again, slower — on the card.
+  if (hintRequest && item.kind === 'spelling_dictation') {
+    throw new AppError('conflict', 'The help here is hearing it again', { reason: 'no_hints' });
+  }
 
   // ── a STRUCTURED answer (issues #228–#230) ──
   //
@@ -1186,12 +1197,21 @@ export async function answerItem(
   // things below: that only the content is judged (never the spelling of a word she HEARD),
   // and that the tutor is given that text as the material it may judge against.
   const listenTask = listenTaskOf(item.listen_task);
+  // A Diktat (issue #242) is checked by code alone, exactly, against its key — and a miss is
+  // answered with the PLACE (`practice/dictation.ts`), never by the tutor. It is no listening
+  // task in the sense of #210: there the spelling of what she heard does NOT count, here it is the
+  // whole point. So `listening` below stays false for it.
+  const dictationCheck: DictationCheck | null =
+    !hintRequest && item.kind === 'spelling_dictation'
+      ? checkDictation(item.answer, input.text ?? '')
+      : null;
+  const listening = listenTask !== null && item.kind !== 'spelling_dictation';
   // A request for help is not an answer: nothing for the rules to check.
   // Two checks that code does ENTIRELY on its own and that therefore come before the key
   // comparison: every part of a structured answer (issues #228–#230), right or not yet right,
   // and a written note line (issue #226), which ends in `parts_left` when some of it holds.
   // Neither ever asks a model.
-  const byRules: RuleVerdict = hintRequest
+  const byOtherRules: RuleVerdict = hintRequest
     ? 'unknown'
     : partsCheck !== null
       ? partsCheck.correct
@@ -1206,9 +1226,12 @@ export async function answerItem(
         : ruleCheck(
             // A question code computed asks for an amount, so any form of it is right (#162);
             // a question she HEARD is judged on what she understood, not how she wrote it (#210).
-            { ...item, form_free: barTask !== null, listening: listenTask !== null },
+            { ...item, form_free: barTask !== null, listening },
             { text: input.text ?? null, choice: input.choice ?? null },
           );
+  // A Diktat is decided by its own exact check (issue #242), never by the key comparison above.
+  const byRules: RuleVerdict =
+    dictationCheck !== null ? (dictationCheck.correct ? 'correct' : 'incorrect') : byOtherRules;
   // A plain number with another value is a wrong answer for sure — except in homework,
   // where "12" may be a right step towards 11/12.
   const rule: RuleVerdict =
@@ -1379,6 +1402,17 @@ export async function answerItem(
       gaveHint: structuredNamesPart(partsCheck, item.attempts),
       revealed: false,
     };
+  } else if (dictationCheck !== null && !dictationCheck.correct && rule === 'incorrect') {
+    // A Diktat she did not get right yet (issue #242): code names the place — "Doppel-m fehlt",
+    // "groß schreiben" — at every try, never through a model (0 model calls per answer). Her word
+    // stays hers in the sentence; the key comes with the third miss above or "Lösung zeigen".
+    judged = {
+      verdict: nearlyRight(dictationCheck.spot) ? 'partially_correct' : 'incorrect',
+      evaluatedBy: 'rule',
+      reply: dictationReply(learner.locale, dictationCheck.spot),
+      gaveHint: false,
+      revealed: false,
+    };
   } else if (givesHints(session.mode) && rule === 'incorrect' && item.attempts === 0) {
     // The FIRST wrong try: kind feedback at once, no model. A slip deserves a quick "try
     // again" and not a lesson, and the hints stay for "Tipp" (live finding 1).
@@ -1419,7 +1453,7 @@ export async function answerItem(
           parts: [
             {
               text: tutorContext({
-                item: { ...item, listening: listenTask !== null },
+                item: { ...item, listening },
                 hintsGiven: item.hints_used,
                 preparedHints: givesHints(session.mode) ? item.hints : [],
                 preparedShown: item.prepared_hints_used,

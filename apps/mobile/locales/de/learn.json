@@ -5,7 +5,8 @@
     "test": "Probetest",
     "vocab": "Vokabeln abfragen",
     "speak": "Aussprache üben",
-    "listen": "Hörverstehen üben"
+    "listen": "Hörverstehen üben",
+    "spelling_dictation": "Diktat üben"
   },
   "homework": {
     "title": "Hilfe bei Hausaufgaben",
@@ -52,6 +53,11 @@
       "title": "Wozu willst du einen Hörtext?",
       "hint": "Ich lese dir einen kurzen Text vor und frage dich dazu.",
       "placeholder": "z. B. Englisch Unit 3, Ferien auf Französisch"
+    },
+    "spelling_dictation": {
+      "title": "Welche Wörter sollen ins Diktat?",
+      "hint": "Ich lese dir jedes Wort vor, du schreibst es.",
+      "placeholder": "z. B. deine Lernwörter oder ie-Wörter"
     },
     "help": {
       "title": "Welche Aufgabe? Schreib sie ab.",

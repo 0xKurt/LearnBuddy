@@ -304,6 +304,14 @@ export const ItemKind = z.enum([
   'match',
   /** Fill the gaps of a table (#230). */
   'table_fill',
+  /**
+   * Diktat (issue #242, contracts/dictation.ts): Buddy reads a word or sentence aloud, she types
+   * it. The word is never in the view while the question is open; `ItemView.listen` names the
+   * recording, `POST /practice/sessions/:id/listen` plays it. Not called "dictation" alone: in
+   * the app that word already means voice input (`lib/speech/dictation.ts`), which is exactly
+   * what this question must NOT offer.
+   */
+  'spelling_dictation',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 
@@ -702,10 +710,18 @@ export const StartTopicRequest = z.object({
    * (Hörverstehen, issue #210 — refused before any model call when there is no voice to
    * read it) · help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
-   * end). Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
+   * end) · spelling_dictation: a Diktat — words or sentences read aloud that she types
+   * (issue #242; refused before any model call when there is no voice, like listen).
+   * Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
    */
-  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test']),
+  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test', 'spelling_dictation']),
   text: z.string().trim().min(2).max(3000),
+  /**
+   * spelling_dictation only: the photographed sheet the words come from (a Lernwörter list,
+   * issue #242). The words are then taken from that sheet's text and every one must stand in it
+   * (`practice/dictation.ts`); any other kind ignores it. Another learner's sheet is a 404.
+   */
+  material_id: Uuid.nullable().optional(),
   subject: z.string().trim().max(60).nullable().optional(),
   /**
    * practice / test for a planned test (Buddy's offer names it): the questions stay within the

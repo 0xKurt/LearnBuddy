@@ -6,6 +6,7 @@
     "harder_topic": "More like this, a bit harder: {{topics}}"
   },
   "answer": {
+    "mic_off": "The mic is off here – you're practising spelling.",
     "label": "Your answer",
     "placeholder": "Your answer …",
     "unit_hint": "Answer in {{unit}}"

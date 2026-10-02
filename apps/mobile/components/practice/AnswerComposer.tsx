@@ -52,6 +52,7 @@ import {
 } from '../../lib/practice/pathEntry.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
@@ -116,6 +117,11 @@ export function AnswerComposer({
   const voiceMode = useVoiceMode((s) => s.on);
   const long = kind === 'long';
   const exact = kind === 'numeric' || kind === 'formula';
+  // A Diktat (issue #242) is spelling practice: voice input would write the word the way the
+  // recogniser spells it, so the mic is off here — not hidden without a word, but replaced by one
+  // short line that says why. The keyboard does not capitalise for her either: the capital letter
+  // is part of what she practises.
+  const micOff = kind === 'spelling_dictation';
   // A written path, and what the return key therefore does (issue #221).
   const path = hasPath(kind, value);
   const sends = returnKey(kind, value) === 'send';
@@ -170,7 +176,7 @@ export function AnswerComposer({
     // Hands-free (voice mode): on the phone listening ends by itself when she pauses.
     untilPause: voiceMode,
   });
-  useHandsFreeMic(voice, disabled, prompt);
+  useHandsFreeMic(voice, disabled || micOff, prompt);
   // iOS number pads lack minus, comma and letters (units); this one has them all.
   const keyboardType: KeyboardTypeOptions =
     kind === 'numeric' && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
@@ -238,7 +244,7 @@ export function AnswerComposer({
             autoCorrect={false}
             spellCheck={false}
             autoComplete="off"
-            autoCapitalize={exact ? 'none' : 'sentences'}
+            autoCapitalize={exact || micOff ? 'none' : 'sentences'}
             keyboardType={keyboardType}
             // A one-liner goes out with the return key, so a simple answer stays fast; prose and
             // a calculation path take the line instead (issue #221, lib/practice/pathEntry.ts).
@@ -309,7 +315,7 @@ export function AnswerComposer({
             >
               {t('check')}
             </Btn>
-          ) : voiceMode ? null : (
+          ) : voiceMode || micOff ? null : (
             <MicButton
               voice={voice}
               size="sm"
@@ -323,8 +329,13 @@ export function AnswerComposer({
             own under it. Long answers are texts; the preview would only repeat them. */}
         {/* In a path it draws the line with the cursor; the others stand in the field. */}
         {long ? null : <TypedMathPreview value={previewLine(kind, value, caret)} compact />}
+        {micOff ? (
+          <Text style={[TYPE.small, { color: palette.ink2, paddingBottom: SPACE.xs }]}>
+            {t('answer.mic_off')}
+          </Text>
+        ) : null}
       </View>
-      {voiceMode ? (
+      {voiceMode && !micOff ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>
           <MicButton voice={voice} size="lg" label={t('common:voice.answer')} disabled={disabled} />
         </View>
