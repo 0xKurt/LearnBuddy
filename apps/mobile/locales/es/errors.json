@@ -29,6 +29,7 @@
     "photos_never_arrived": "No llegaron todas las fotos de esta hoja. Lo mejor es volver a fotografiarla.",
     "photos_deleted": "Las fotos ya no están guardadas. Simplemente vuelve a fotografiar la hoja.",
     "storage_unavailable": "Ahora mismo no se pueden comprobar las fotos. Inténtalo de nuevo en un momento.",
+    "speech_off": "Ahora mismo no está disponible la lectura en voz alta, así que todavía no hay texto para escuchar.",
     "no_questions": "Ahora mismo no hay nada que practicar aquí. Mándame una foto de tus apuntes y te preparo preguntas.",
     "changed_since": "Esto ha cambiado desde entonces y ya no se puede deshacer automáticamente.",
     "retry_limit": "Ya se ha intentado muchas veces. Lo mejor es hacer una foto nueva.",

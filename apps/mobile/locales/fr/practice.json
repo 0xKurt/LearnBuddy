@@ -96,6 +96,15 @@
   "later": "Plus tard",
   "later_done": "D'accord – celui-là revient plus tard.",
   "later_hint": "L'exercice reste ouvert et revient après les autres.",
+  "listen": {
+    "play": "Écouter le texte",
+    "again": "Réécouter",
+    "stop": "Arrêter",
+    "loading": "Chargement …",
+    "hint": "Te lit le texte à voix haute – autant de fois que tu veux.",
+    "failed": "Impossible d’écouter le texte pour le moment.",
+    "transcript_title": "Voici le texte"
+  },
   "loading": "Je récupère tes questions…",
   "next": "Suivant",
   "origin_buddy": "Question de Buddy",

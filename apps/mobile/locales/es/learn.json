@@ -4,7 +4,8 @@
     "practice": "Practicar",
     "test": "Examen de prueba",
     "vocab": "Repasar vocabulario",
-    "speak": "Practicar pronunciación"
+    "speak": "Practicar pronunciación",
+    "listen": "Comprensión oral"
   },
   "homework": {
     "title": "Ayuda con los deberes",
@@ -46,6 +47,11 @@
       "placeholder": "p. ej. Unit 3 o tus propias frases",
       "ex_1": "Presentarme en inglés",
       "ex_2": "Preguntar el camino en francés"
+    },
+    "listen": {
+      "title": "¿De qué quieres el texto?",
+      "hint": "Te leo un texto corto y luego te pregunto.",
+      "placeholder": "p. ej. Unit 3 de inglés, las vacaciones en francés"
     },
     "help": {
       "title": "¿Qué ejercicio? Cópialo aquí.",

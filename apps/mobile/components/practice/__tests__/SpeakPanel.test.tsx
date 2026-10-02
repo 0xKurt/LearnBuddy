@@ -100,6 +100,7 @@ const ITEM: ItemView = {
   tap_choices: null,
   surface: null,
   board: null,
+  listen: null,
 };
 
 const RECORDING: Recorded = {

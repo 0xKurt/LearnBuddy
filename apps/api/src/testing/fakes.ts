@@ -481,6 +481,15 @@ export class FakePush implements PushTransport {
  * to say (so playback, progress and read-along can be exercised without Google). Records every
  * call; `failNext` makes the provider fail the way the real one can.
  */
+/** The main region of each language the fake reads, as `chirp3Locale` has it. */
+const MAIN_LOCALE: Record<string, string> = {
+  de: 'de-DE',
+  en: 'en-GB',
+  fr: 'fr-FR',
+  es: 'es-ES',
+  it: 'it-IT',
+};
+
 export class FakeSpeech implements SpeechGateway {
   readonly available = true;
   readonly calls: SpeechInput[] = [];
@@ -491,7 +500,11 @@ export class FakeSpeech implements SpeechGateway {
   }
 
   localeFor(locale: string): string | null {
-    return /^(de|en|fr|es|it)-[A-Z]{2}$/.test(locale) ? locale : null;
+    if (/^(de|en|fr|es|it)-[A-Z]{2}$/.test(locale)) return locale;
+    // A bare language code, like the real gateway maps it ("en" → "en-GB", `chirp3Locale`):
+    // that is what a listening text carries (issue #210), and a fake that answered null to it
+    // would make the exercise look impossible in tests and possible in production.
+    return MAIN_LOCALE[locale] ?? null;
   }
 
   failNext(...errors: SpeechError[]): this {

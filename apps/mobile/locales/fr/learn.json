@@ -4,7 +4,8 @@
     "practice": "S'entraîner",
     "test": "Test d'entraînement",
     "vocab": "Réviser le vocabulaire",
-    "speak": "Travailler la prononciation"
+    "speak": "Travailler la prononciation",
+    "listen": "Compréhension orale"
   },
   "homework": {
     "title": "Aide aux devoirs",
@@ -46,6 +47,11 @@
       "placeholder": "p. ex. Unit 3 ou tes propres phrases",
       "ex_1": "Me présenter en anglais",
       "ex_2": "Demander le chemin en allemand"
+    },
+    "listen": {
+      "title": "Le texte doit parler de quoi ?",
+      "hint": "Je te lis un petit texte, puis je te pose des questions.",
+      "placeholder": "p. ex. Unité 3, les vacances en anglais"
     },
     "help": {
       "title": "Quel exercice ? Recopie-le.",

@@ -69,6 +69,7 @@ import {
   viaFor,
   type BoardAnswer,
 } from '../../components/practice/PartsBoardAnswer.js';
+import { HearText, HeardTextCard } from '../../components/practice/HearText.js';
 import { HelpChips } from '../../components/practice/HelpChips.js';
 import { ItemThread } from '../../components/practice/ItemThread.js';
 import { ListenButton } from '../../components/practice/ListenButton.js';
@@ -238,6 +239,13 @@ export default function PracticeScreen() {
    * next to the question it belongs to.
    */
   const [arranged, setArranged] = useState<{ itemId: string; answer: BoardAnswer } | null>(null);
+  /**
+   * The listening texts she has already heard in this run, by their recording's alias (issue
+   * #210). Three questions about one text share it, so the second one offers "nochmal hören"
+   * instead of announcing a text that is not new. It lives here, above the question, because
+   * that is where the run is: a component keyed by the question would forget it every time.
+   */
+  const [heardTexts, setHeardTexts] = useState<ReadonlySet<string>>(() => new Set());
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -908,6 +916,23 @@ export default function PracticeScreen() {
     item.kind === 'vocab' && foreign(item.prompt_lang) ? (
       <ListenButton key="listen" text={item.prompt} lang={item.prompt_lang} />
     ) : null,
+    // Hörverstehen (issue #210): the text is heard, not read, so the way to hear it stands in
+    // the same row as every other "read this aloud" — and it stays after the question closes,
+    // next to the words of it, because listening again while reading is how it is reviewed.
+    item.listen ? (
+      <HearText
+        key="hear"
+        sessionId={session.id}
+        itemId={item.id}
+        heard={heardTexts.has(item.listen.ref)}
+        onHeard={() => {
+          const ref = item.listen?.ref;
+          if (ref !== undefined)
+            setHeardTexts((was) => (was.has(ref) ? was : new Set(was).add(ref)));
+        }}
+        disabled={locked}
+      />
+    ) : null,
   ].filter((node) => node !== null);
 
   // A judgement she has been given and may disagree with (issue #164). The rule and the copy
@@ -1073,6 +1098,13 @@ export default function PracticeScreen() {
                 ) : null}
                 {item.kind === 'vocab' && !open && shown.answer !== null && foreign(item.lang) ? (
                   <ListenButton text={shown.answer} lang={item.lang} />
+                ) : null}
+                {/* What the Hörtext said, once the question is closed (issue #210). The server
+                    sends it under exactly the condition it sends the solution under. */}
+                {shown.listen_transcript !== null ? (
+                  <Rise delay={180}>
+                    <HeardTextCard text={shown.listen_transcript} />
+                  </Rise>
                 ) : null}
                 {canExplainAgain ? (
                   <Reexplain

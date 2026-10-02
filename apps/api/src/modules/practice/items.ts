@@ -13,6 +13,7 @@ import {
   Figure,
   Rubric,
   type BarTask,
+  type ListenTask,
   type VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
 import { canonicalText, compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
@@ -524,18 +525,23 @@ export async function insertItems(
   /**
    * `bar_task` is never the model's (it has no such field, issue #162): it is set only by
    * `practice/bars.ts`, which computed this item's prompt, key and figure from it.
+   * `listen_task` is the spoken text this question is answered from (issue #210): set only by
+   * `practice/listen.ts`, which checked that the answer stands in that very text.
    */
-  items: ReadonlyArray<ItemDraft & { bar_task?: BarTask | null }>,
+  items: ReadonlyArray<ItemDraft & { bar_task?: BarTask | null; listen_task?: ListenTask | null }>,
   direction: VocabDirection | null = null,
 ): Promise<string[]> {
   const ids: string[] = [];
-  const insert = async (it: ItemDraft & { bar_task?: BarTask | null }, asked = true) => {
+  const insert = async (
+    it: ItemDraft & { bar_task?: BarTask | null; listen_task?: ListenTask | null },
+    asked = true,
+  ) => {
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
                           hints, worked_solution, tolerance, spelling, bar_task, parts_task,
-                          curriculum_point, rubric)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) returning id`,
+                          curriculum_point, rubric, listen_task)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) returning id`,
       [
         src.learnerId,
         src.materialId,
@@ -562,6 +568,7 @@ export async function insertItems(
         it.parts_task ? JSON.stringify(it.parts_task) : null,
         it.curriculum_point,
         it.rubric ? JSON.stringify(it.rubric) : null,
+        it.listen_task ? JSON.stringify(it.listen_task) : null,
       ],
     );
     if (asked) ids.push(row.id);

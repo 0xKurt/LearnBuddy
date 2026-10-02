@@ -73,7 +73,40 @@ export type ItemForCheck = {
    * "Kürze $\frac{6}{8}$" is not answered by 6/8.
    */
   form_free?: boolean;
+  /**
+   * The question is answered from HEARING a spoken text (issue #210): `items.listen_task` is
+   * set. Then only the CONTENT is judged — in a listening task the curriculum expressly does
+   * not mark language ("sprachliche Verstöße werden nicht gewertet", NRW Sek I;
+   * `docs/lehrplan-und-uebungsformen.md` §7.3, issue #197). A word she heard right and typed
+   * with a slip of the pen is right, and `contentOnly` below is where that is said once.
+   */
+  listening?: boolean;
 };
+
+/**
+ * Verdicts that are about the FORM of a written answer and not about what she understood:
+ * capitalisation, an accent, a dropped first word, a slip of the pen. Everywhere else they
+ * are a near miss she fixes herself — in a listening task they are the answer.
+ */
+const FORM_ONLY: ReadonlySet<RuleVerdict> = new Set([
+  'spelling',
+  'close',
+  'missing_word',
+  'typo',
+  'folded',
+]);
+
+/**
+ * The verdict for a question where only the content counts (issue #210). A form near miss
+ * becomes 'correct'; everything else is untouched — a wrong answer stays wrong, and something
+ * undecidable still goes to the tutor.
+ *
+ * This is the one place that licence lives, and it is read off the stored text, never off a
+ * subject or a guess: without a spoken text on the question nothing calls it.
+ */
+export function contentOnly(verdict: RuleVerdict): RuleVerdict {
+  return FORM_ONLY.has(verdict) ? 'correct' : verdict;
+}
 
 /**
  * Near misses on a written answer, decided without a model (the kind of check
@@ -200,9 +233,14 @@ export function noSingleSolution(item: { kind: string }): boolean {
 
 /** Decision D-2: set per item; by default strict for vocabulary and language subjects. */
 export function spellingOf(
-  item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind'>,
+  item: Pick<ItemForCheck, 'kind' | 'spelling' | 'subject_kind' | 'listening'>,
 ): 'strict' | 'gentle' {
   if (item.spelling) return item.spelling;
+  // Listening: how she spells a word she HEARD is not what the question asks, and marking it
+  // is what §7.3 of the curriculum report forbids (issue #210, #197). Before the per-item
+  // mark could be trusted here, because the default for a language subject — which every
+  // listening task is — goes the other way.
+  if (item.listening === true) return 'gentle';
   // A free text is never rebuked for its form: in a text of several sentences a comma is not
   // what is being asked, and in reading or listening comprehension marking language is
   // expressly forbidden (`docs/lehrplan-und-uebungsformen.md` §7, issue #197).
@@ -595,8 +633,14 @@ export function ruleCheck(
     writtenAgainst(item, k, text),
   );
   const strongest = STRENGTH.find((v) => verdicts.includes(v)) ?? 'unknown';
-  // Only where the characters decided nothing: what they could not say, the value still can.
-  return strongest === 'unknown' ? (byValue(item, text) ?? 'unknown') : strongest;
+  // Only where the characters decided nothing: what they could not say, the value still can
+  // (issue #227, findings 5 and 8).
+  const verdict: RuleVerdict =
+    strongest === 'unknown' ? (byValue(item, text) ?? 'unknown') : strongest;
+  // Listening (issue #210): she heard it, and what she understood is the whole question — so a
+  // slip of the pen is not a near miss to fix, it is the right answer. Last, because it softens
+  // whatever verdict the comparison arrived at, including one the value decided.
+  return item.listening === true ? contentOnly(verdict) : verdict;
 }
 
 /**

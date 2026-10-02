@@ -15,10 +15,10 @@ import { z } from 'zod';
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 import { RubricClaim, type AskedElement } from './rubric.js';
 
-// v5: zwei Dinge auf einmal — die Regel ihres Bundeslandes (#214) und die Pflichtelemente einer
-// Schreibaufgabe (#211). Zwei Agenten hatten unabhängig auf v4 erhöht; gemessen wird aber dieser
-// Prompt, und den gab es vorher nicht.
-export const TUTOR_PROMPT_VERSION = 'tutor.v5';
+// v6: drei Änderungen auf einmal — die Regel ihres Bundeslandes (#214), die Pflichtelemente einer
+// Schreibaufgabe (#211) und das Gehörte (#210). Drei Agenten hatten unabhängig voneinander erhöht
+// (v4, v4.0, v3.10); gemessen wird aber DIESER Prompt, und den gab es vorher nicht.
+export const TUTOR_PROMPT_VERSION = 'tutor.v6';
 
 export const TutorDecision = z.object({
   intent: z
@@ -73,6 +73,7 @@ Judge honestly — the judgement decides what the learner practises next; callin
 - Hints get more specific step by step and never repeat an earlier one. If PREPARED HINTS are given, your hint is the next one there, in your words. Only after at least 2 hints (see HINTS GIVEN) and the learner is still stuck may you reveal the answer kindly (revealed_answer = true). Never put the solution into an earlier hint.
 - FREE TEXT (kind long: an argument, a summary, a stance, an analysis): its quality is what is asked, and quality is not one string. SOLUTION is at most a sketch of what could be written — judge against the question, not against that text, and never present it as the answer. Judge WHAT SHE WROTE: name what carries and what is still missing. Never a verdict on the whole text as such; if anything carries, it is partially_correct. Do not mark spelling, capitalisation, punctuation or style here — that is not what the question asks. revealed_answer stays false: there is nothing to reveal.
 - REQUIRED ELEMENTS (only when that block is given): this writing task is judged element by element, never as a whole. Write one entry in "elements" for EVERY element listed there, named by its ref, and judge each one on its own — a weak element says nothing about the next one. "met" is true only when the element really is in her text. Then "quote" holds the words from HER text that carry it, copied out of it character for character: the server looks the quote up in her text and does not accept the element without it, so never paraphrase, never tidy it up, never write a quote you did not find there. A tense element takes no quote — list in "verbs" the verb forms from her text that are not in the required tense, copied out of it, and leave the list empty when the tense holds throughout. The server builds what she reads out of these elements, so your "reply" is only a short fallback: say nothing about how many elements hold, write no count and no grade, and never call the whole text wrong.
+- LISTENING (see QUESTION: listening): she HEARD the text in STUDY MATERIAL read aloud and has never seen it. Judge only whether she understood it — never her language: no mark on spelling, capitalisation, punctuation, grammar or word choice, not even in passing, and a right understanding written with a slip is correct. Her own words count as much as the text's. Never write the text out, and never quote the part that holds the answer: she can listen again, and that is the help here.
 - If a RULE CHECK says the answer is wrong, it is wrong.
 - CURRICULUM: in Germany the curriculum is a matter for the states, and at some places the expected answer differs from one Bundesland to the next. When a CURRICULUM line is given, it is her own state's curriculum: it decides what counts as a complete answer here, and you add nothing to it. When it says no state's rule applies, a wording another German curriculum uses is not an error — accept it, say what is missing rather than calling the answer wrong, and when you are not certain it is wrong, the verdict is partially_correct.
 - With CHOICES, a typed or spoken answer that names one of them (in other words, or with more words around it) is an answer choosing it (intent "answer"); judge it against SOLUTION — never ask her to tap instead.
@@ -88,6 +89,12 @@ Answer with the JSON object described by the schema.`;
 
 export type TutorItem = {
   kind: string;
+  /**
+   * The question is answered from HEARING a spoken text (issue #210). The text itself comes
+   * over as the material, so this only says WHAT KIND of question it is — which decides that
+   * her language is not marked (`docs/lehrplan-und-uebungsformen.md` §7.3).
+   */
+  listening?: boolean;
   prompt: string;
   answer: string;
   accepted_answers: string[];
@@ -157,7 +164,7 @@ export function tutorContext(input: {
     `MODE: ${input.mode === 'help' ? 'HOMEWORK (never give the answer)' : input.mode === 'test' ? 'TEST (judge only)' : 'PRACTICE'}`,
     `LEARNER: ${input.learnerAge} years, level ${input.learnerLevel}, language ${input.language}`,
     ...(input.preferences.length ? [`LEARNER PREFERENCES: ${input.preferences.join('; ')}`] : []),
-    `QUESTION (${i.kind}${i.topic ? `, topic ${i.topic}` : ''}${i.prompt_lang && i.lang ? `, ${i.prompt_lang} → ${i.lang}` : ''}): ${i.prompt}`,
+    `QUESTION (${i.kind}${i.listening === true ? ', listening: she heard the material, she never saw it' : ''}${i.topic ? `, topic ${i.topic}` : ''}${i.prompt_lang && i.lang ? `, ${i.prompt_lang} → ${i.lang}` : ''}): ${i.prompt}`,
     ...(i.choices ? [`CHOICES: ${i.choices.map((c, n) => `[${n}] ${c}`).join('  ')}`] : []),
     `SOLUTION: ${i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null ? `[${i.correct_choice}] ${i.choices[i.correct_choice]}` : i.answer}${i.unit ? ` ${i.unit}` : ''}`,
     ...(i.accepted_answers.length ? [`ALSO ACCEPTED: ${i.accepted_answers.join(' | ')}`] : []),

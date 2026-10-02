@@ -653,9 +653,9 @@ const offerLearning = z.object({
   tool: z.literal('offer_learning'),
   args: z.object({
     kind: z
-      .enum(['practice', 'vocab', 'speak', 'help', 'test'])
+      .enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test'])
       .describe(
-        'questions on a topic · a vocabulary list · speaking practice · homework help · a practice test (no hints, results at the end)',
+        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end)',
       ),
     text: z
       .string()

@@ -96,6 +96,15 @@
   "later": "Later",
   "later_done": "All right – that one comes back later.",
   "later_hint": "The task stays open and comes back after the others.",
+  "listen": {
+    "play": "Play the text",
+    "again": "Listen again",
+    "stop": "Stop",
+    "loading": "Loading …",
+    "hint": "Plays the text for you – as often as you like.",
+    "failed": "The text cannot be played right now.",
+    "transcript_title": "This was the text"
+  },
   "loading": "Getting your questions …",
   "next": "Next",
   "origin_buddy": "Question from Buddy",

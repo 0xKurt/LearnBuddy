@@ -1946,6 +1946,10 @@ export async function materialItems(
       // And the same for a board (issues #228–#230): the list says what the sheet asks, and
       // arranging it belongs to the session where the answer counts.
       board: null,
+      // A sheet holds no listening question: a spoken text comes from a listening run, never
+      // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
+      // recording belongs to a session, like the crop and the bar above.
+      listen: null,
       result: resultOf(r),
     })),
   };
