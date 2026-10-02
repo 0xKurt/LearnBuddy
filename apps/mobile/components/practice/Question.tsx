@@ -187,6 +187,8 @@ export function QuestionCard({
           <MathText
             text={prompt}
             blanks={{ filled }}
+            // A fraction in the question sits in its sentence (issue #288).
+            inlineFractions
             accessibilityRole="header"
             style={[TYPE.title, { fontSize: 21, lineHeight: 29, fontWeight: '500' }]}
           />

@@ -205,10 +205,19 @@ const PHONES = [
   { width: 360, height: 740 },
 ] as const;
 
-/** The words of #203. A, B, C, D — short enough for the grid; "the homework" is the one from the video. */
-const GRID_WORDS = ['the homework', 'the eraser', 'le cahier', 'la récré'];
-/** And the ones with a word too long for half a line: these have to go full width instead. */
-const FULL_WIDTH_WORDS = ['das Federmäppchen', 'der Stundenplan', 'the exercise book', 'das Heft'];
+/**
+ * Options that belong to the question they are shown under ("Wie heißt die Hauptstadt von
+ * Frankreich?" — issue #288, finding 7: vocabulary under a geography question is no way to judge a
+ * design). Each fits one line of half a screen, so they stand two by two.
+ */
+const GRID_WORDS = ['Paris', 'Lyon', 'Marseille', 'Nizza'];
+/** And longer ones that do not fit half a line: these go one under the other, full width. */
+const FULL_WIDTH_WORDS = [
+  'Paris an der Seine',
+  'Lyon an der Rhône',
+  'Marseille am Mittelmeer',
+  'Straßburg am Rhein',
+];
 
 type ChoiceBox = {
   label: string;
@@ -383,6 +392,12 @@ test('answer choices break only between words, and a row of them is one row', as
       expect(overflow, `${where}: no sideways scrolling`).toBeLessThanOrEqual(0);
 
       await page.screenshot({ path: join(SHOTS, `32-choices-${what}-${phone.width}.png`) });
+      // And at night: the tiles, their letters and the shadow have to hold on the dark palette.
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: join(SHOTS, `32-choices-${what}-${phone.width}-night.png`) });
+      await page.emulateMedia({ colorScheme: 'light' });
+      await page.waitForTimeout(300);
     }
   }
 });

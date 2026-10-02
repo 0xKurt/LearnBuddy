@@ -287,6 +287,10 @@ test('learning modes: explain, homework help without the solution, practice with
   // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
   const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
   expect(fig, `figure ${fig}pt`).toBeGreaterThan(150);
+  // The fraction tiles at night too (issue #288): large digits, the letter column, the shadow.
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '25b-practice-fractions-night');
+  await page.emulateMedia({ colorScheme: 'light' });
 
   // ── Voice mode: switched on in the practice header, still on at Buddy ──
   // (Recording can't run in headless Chromium; this checks the controls and the layout.)
@@ -843,6 +847,9 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
   await graphOption('A').click();
   await expect(page.getByText('Schon ausprobiert')).toBeVisible();
   await expect(graphOption('A')).toBeDisabled();
+  // Her tap is not echoed as a bubble while the question is open (issue #288): the tile says it,
+  // and the text behind a picture — its formula — never shows.
+  await expect(page.getByText('y =', { exact: false })).toHaveCount(0);
   await shot(page, '42-figure-choice-tried');
   await page.emulateMedia({ colorScheme: 'dark' });
   await shot(page, '42b-figure-choice-tried-night');

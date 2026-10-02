@@ -8,7 +8,7 @@
 // Wort als in die nächste Zeile zu gehen.
 //
 // Diese Schicht hält fest, was sie halten kann: die ENTSCHEIDUNG (welcher Satz Antworten
-// zwei Spalten bekommt) und die DEKLARIERTEN Werte (Buchstabenkreis, Abstände, Padding,
+// zwei Spalten bekommt) und die DEKLARIERTEN Werte (Buchstabenspalte, Abstände, Padding,
 // Wortumbruch). Geometrie sieht sie nicht — jsdom legt nichts aus (docs/testing-layers.md).
 // Dass auf 360 und 390 px wirklich keine Zeile mitten im Wort endet und die Karten einer
 // Reihe gleich hoch sind, misst `tests/web/layout.spec.ts` im Browser.
@@ -18,7 +18,7 @@ import { describe, expect, it } from 'vitest';
 
 import { TOUCH } from '../../../lib/theme/space.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
-import { ChoiceList, GRID_CHARS_MAX, GRID_WORD_MAX, twoColumnChoices } from '../ChoiceList.js';
+import { ChoiceList, GRID_CHARS_MAX, mathOnly, twoColumnChoices } from '../ChoiceList.js';
 
 const NOTHING_TRIED: ReadonlySet<string> = new Set();
 
@@ -36,51 +36,43 @@ function pill(name: string): { button: HTMLElement; inner: Element } {
   return { button, inner };
 }
 
-/** Der runde Buchstabenkreis vor einer Antwort (der Kasten um den Buchstaben). */
-function badge(letter: string): Element {
-  const text = screen.getByText(letter);
-  const box = text.parentElement;
-  if (!box) throw new Error(`der Buchstabe „${letter}“ steht in keinem Kreis`);
-  return box;
+/** Die Buchstabenmarke vor einer Antwort (eine Spalte, kein Kreis). */
+function letter(name: string): HTMLElement {
+  const marks = screen.getAllByTestId('choice-letter');
+  const mark = marks.find((m) => m.textContent === name);
+  if (!mark) throw new Error(`keine Buchstabenmarke „${name}“`);
+  return mark;
 }
 
 describe('welcher Satz Antworten zwei Spalten bekommt', () => {
   // Gemessen, nicht geraten: die Rechnung steht in ChoiceList.tsx. Wenn jemand Padding,
-  // Kreis oder Abstand ändert, wandert dieses Budget mit — und dieser Test sagt es.
-  it('rechnet neun Zeichen als längstes Wort aus, das eine halbe Zeile hält', () => {
-    expect(GRID_WORD_MAX).toBe(9);
-    expect(GRID_CHARS_MAX).toBe(14);
+  // Buchstabenspalte oder Abstand ändert, wandert dieses Budget mit — und dieser Test sagt es.
+  it('rechnet neun Zeichen als längste Antwort aus, die EINE Zeile einer halben Breite hält', () => {
+    expect(GRID_CHARS_MAX).toBe(9);
   });
 
-  it('nimmt kurze Vokabeln: „le cahier“, „la récré“ und Geschwister', () => {
+  it('nimmt kurze Antworten, die jede in eine Zeile passen', () => {
+    expect(twoColumnChoices(['Paris', 'Lyon', 'Marseille', 'Nizza'])).toBe(true);
     expect(twoColumnChoices(['le cahier', 'la récré', 'le stylo', 'la gomme'])).toBe(true);
   });
 
-  it('nimmt „the homework“: zwölf Zeichen, längstes Wort acht — beides passt', () => {
-    expect(twoColumnChoices(['the homework', 'the eraser', 'the ruler', 'the pencil'])).toBe(true);
+  it('nimmt „the homework“ nicht mehr: zwei Zeilen neben einer — die unruhige Reihe aus #288', () => {
+    expect(twoColumnChoices(['the homework', 'the eraser', 'the ruler', 'the pencil'])).toBe(false);
   });
 
-  it('nimmt Zahlen und Brüche', () => {
+  it('nimmt Zahlen und Brüche, auch groß gesetzt', () => {
     expect(twoColumnChoices(['2/3', '3/5'])).toBe(true);
     expect(twoColumnChoices(['$\\frac{2}{3}$', '$\\frac{3}{5}$'])).toBe(true);
+    expect(twoColumnChoices(['$\\frac{12}{25}$', '$\\frac{3}{5}$'])).toBe(true);
   });
 
-  it('lehnt „das Federmäppchen“ ab: dreizehn Buchstaben in einem Stück', () => {
+  it('lehnt „das Federmäppchen“ ab', () => {
     expect(twoColumnChoices(['das Federmäppchen', 'das Heft', 'der Füller', 'das Lineal'])).toBe(
       false,
     );
   });
 
-  it('lehnt „der Stundenplan“ ab — elf Buchstaben passen in keine halbe Zeile', () => {
-    expect(twoColumnChoices(['der Stundenplan', 'die Pause'])).toBe(false);
-  });
-
-  it('lehnt „the exercise book“ ab: als Ganzes zu lang', () => {
-    expect(twoColumnChoices(['the exercise book', 'the pen'])).toBe(false);
-  });
-
-  it('schickt den ganzen Satz in die volle Breite, sobald EIN Wort nicht passt', () => {
-    // „Hausaufgabe“ ist das eine zu lange Wort; die anderen drei wären Raster.
+  it('schickt den ganzen Satz in die volle Breite, sobald EINE Antwort nicht passt', () => {
     expect(twoColumnChoices(['die Hausaufgabe', 'das Heft', 'der Stift', 'die Mappe'])).toBe(false);
   });
 
@@ -93,10 +85,19 @@ describe('welcher Satz Antworten zwei Spalten bekommt', () => {
   });
 });
 
+describe('was als Mathe allein steht', () => {
+  it('erkennt einen Bruch oder Term ohne Worte drumherum', () => {
+    expect(mathOnly('$\\frac{2}{3}$')).toBe(true);
+    expect(mathOnly(' $x^{2}$ ')).toBe(true);
+    expect(mathOnly('etwa $\\frac{2}{3}$')).toBe(false);
+    expect(mathOnly('2/3')).toBe(false);
+  });
+});
+
 describe('wie das Raster gesetzt ist', () => {
   it('stellt kurze Antworten in eine umbrechende Reihe, je halbe Breite', () => {
-    show(['2/3', '3/5']);
-    const { button } = pill('2/3');
+    show(['Paris', 'Lyon']);
+    const { button } = pill('Paris');
     const card = button.parentElement!;
     const row = card.parentElement!;
     expect(styleOf(row).flexDirection).toBe('row');
@@ -105,46 +106,58 @@ describe('wie das Raster gesetzt ist', () => {
   });
 
   it('stellt lange Antworten untereinander, jede über die ganze Breite', () => {
-    show(['der Stundenplan', 'die Pause']);
-    const card = pill('der Stundenplan').button.parentElement!;
+    show(['Paris an der Seine', 'Lyon']);
+    const card = pill('Paris an der Seine').button.parentElement!;
     const column = card.parentElement!;
     // Keine Reihe: die Spalte ist die Vorgabe von View, also sagt sie gar nichts.
     expect(styleOf(column).flexDirection).not.toBe('row');
     expect(styleOf(card).flexBasis).not.toBe('45%');
   });
 
-  it('macht im Raster den Buchstabenkreis klein (26 statt 34) und das Padding eng (12 statt 22)', () => {
-    show(['2/3', '3/5']);
-    expect(styleOf(badge('A')).width).toBe('26px');
-    expect(styleOf(badge('A')).height).toBe('26px');
-    expect(styleOf(pill('2/3').inner).paddingLeft).toBe('12px');
-    expect(styleOf(pill('2/3').inner).paddingRight).toBe('12px');
+  it('setzt den Buchstaben als Marke in eine feste Spalte, nicht als Kreis', () => {
+    for (const set of [
+      ['Paris', 'Lyon'],
+      ['Paris an der Seine', 'Lyon'],
+    ]) {
+      const view = renderInApp(
+        <ChoiceList choices={set} tried={NOTHING_TRIED} disabled={false} onChoose={() => {}} />,
+      );
+      const mark = letter('A');
+      expect(styleOf(mark).width).toBe('16px');
+      // Kein Kreis: keine Fläche, kein Rund.
+      expect(['', 'transparent', 'rgba(0, 0, 0, 0)']).toContain(styleOf(mark).backgroundColor);
+      expect(['', '0px']).toContain(styleOf(mark).borderRadius);
+      // Dasselbe Padding im Raster und in der Liste: die Texte beginnen auf einer Linie.
+      expect(styleOf(pill(set[0]!).inner).paddingLeft).toBe('12px');
+      view.unmount();
+    }
   });
 
-  it('lässt der vollen Breite ihren großen Kreis und ihr Padding', () => {
-    show(['der Stundenplan', 'die Pause']);
-    expect(styleOf(badge('A')).width).toBe('34px');
-    expect(styleOf(pill('der Stundenplan').inner).paddingLeft).toBe('22px');
-  });
-
-  it('hält das Touch-Ziel auch im engen Raster bei mindestens 44 pt', () => {
+  it('hält das Touch-Ziel bei mindestens 44 pt', () => {
     show(['2/3', '3/5']);
     const minHeight = Number.parseFloat(styleOf(pill('2/3').inner).minHeight);
     expect(minHeight).toBeGreaterThanOrEqual(TOUCH);
   });
 
-  it('lässt die Karte im Raster von ihrem Knopf gefüllt werden (gleich hohe Karten einer Reihe)', () => {
+  it('lässt die Kachel von ihrem Knopf gefüllt werden (gleich hohe Kacheln einer Reihe)', () => {
     show(['2/3', '3/5']);
-    // `grow` auf dem Btn: der Knopf wächst mit der Karte, die ihrerseits auf die Höhe der
-    // Reihe gestreckt wird. Ohne das endet die tippbare Fläche über dem Kartenrand.
+    // `grow` auf dem Btn: der Knopf wächst mit der Kachel, die ihrerseits auf die Höhe der
+    // Reihe gestreckt wird. Ohne das endet die tippbare Fläche über dem Kachelrand.
     expect(styleOf(pill('2/3').button).flexGrow).toBe('1');
+  });
+
+  it('setzt einen Bruch allein groß und mittig', () => {
+    show(['$\\frac{2}{3}$', '$\\frac{3}{5}$']);
+    const mark = letter('A');
+    const content = mark.nextElementSibling!;
+    expect(styleOf(content).alignItems).toBe('center');
   });
 });
 
 describe('nie mitten im Wort', () => {
-  it('verlangt im Raster ganze Wörter: „the homework“ bricht am Leerzeichen oder nicht', () => {
-    show(['the homework', 'the eraser', 'the ruler', 'the pencil']);
-    const style = styleOf(screen.getByText('the homework'));
+  it('verlangt im Raster ganze Wörter', () => {
+    show(['Paris', 'Lyon', 'Marseille', 'Nizza']);
+    const style = styleOf(screen.getByText('Marseille'));
     expect(style.overflowWrap).toBe('normal');
     expect(style.wordBreak).toBe('normal');
   });

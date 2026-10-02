@@ -87,7 +87,12 @@ describe('Bilder als Antwortoptionen', () => {
     const a = screen.getByRole('button', { name: /^A:/ });
     expect(a.getAttribute('aria-disabled')).toBe('true');
     expect(screen.getByText('Schon ausprobiert')).toBeTruthy();
-    expect(screen.getByText('–')).toBeTruthy();
+    // The words stand where the letter stood; the other options keep their letters.
+    expect(screen.queryAllByTestId('choice-letter').map((m) => m.textContent)).toEqual([
+      'B',
+      'C',
+      'D',
+    ]);
     fireEvent.click(a);
     expect(onChoose).not.toHaveBeenCalled();
   });

@@ -1110,7 +1110,11 @@ export default function PracticeScreen() {
                   // While a structured question is open her answer stands on its board, not in a
                   // bubble (ItemThread). Once it is closed the board is gone, there is room, and
                   // the bubble with its verdict shows what she did, like any other answer.
-                  echoAnswers={!(structured && open)}
+                  // The same for tapped options (issue #288): a tried tile says "Schon
+                  // ausprobiert" itself, and a bubble repeating it was a duplicate — for a picture
+                  // option even the formula behind the drawing. In voice mode the bubble stays:
+                  // there it is the only place she sees what was heard.
+                  echoAnswers={!((structured || ((choices || tapChoices) && !voiceOn)) && open)}
                 />
                 {session.mode === 'help' && shown.status === 'correct' ? (
                   <Rise delay={180}>
@@ -1182,7 +1186,15 @@ export default function PracticeScreen() {
           </View>
         ) : null}
         {open && tapChoices ? (
-          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+          // Nothing stands under her words to tap: they keep the same room to the screen's edge
+          // as the options of a multiple choice — the grid was cut at the edge (issue #288).
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: bottomRoom(insets.bottom, SPACE.md),
+            }}
+          >
             <ChoiceList
               choices={tapChoices}
               tried={tried}

@@ -2454,8 +2454,8 @@ word list, so it stays a prompt rule.
   (`ItemView.choice_figures` is `.catch(null)`; an old build then shows the option texts). The
   texts stay what the option IS ("$y = x^{2} - 1$", "Quadrat") — the tutor, a spoken answer and
   the solution use them — but the app never shows or reads them for a picture option: the text
-  can be the very formula asked about. The card shows the drawing with its letter on the corner
-  (`ChoiceList` → `FigureChoices`); `FigureView bare` drops the legend and the frame, and the
+  can be the very formula asked about. The tile shows the drawing under a row with its letter
+  (`ChoiceList` → `FigureChoices`; a tried tile says "Schon ausprobiert" in that row); `FigureView bare` drops the legend and the frame, and the
   screen-reader label describes a graph by the whole-number points it passes, never by its
   formula ("C: Graph durch (−2 | 3), (−1 | 0) …"). A tap answers; holding a card opens the
   picture in the figure viewer (`Btn onLongPress` → `ZoomViewer`) — no extra button.
@@ -2476,6 +2476,16 @@ word list, so it stays a prompt rule.
   (`$f(x) = …$`), the key must be that function (a key named `f'` is held only against `f'`, so
   "which graph is the derivative" stays possible). Any failure drops the item, never repairs it.
   Not decided by code: whether a geometry option is symmetric, whether a word option is right.
+- **How options look** (issue #288). Every option is a white tile with its letter as a quiet mark
+  in a fixed column (no badge on the content); the texts of all options start on one line. Two by
+  two only when EVERY option fits one line of half a 360 pt screen (`twoColumnChoices`: 9
+  characters at 17 pt), otherwise one under the other — a grid where one tile wraps and its
+  neighbour does not looked restless. A fraction or term alone (`mathOnly`) is set at 24 pt and
+  centred; a fraction inside the question's sentence is set flat (`MathText inlineFractions`) so it
+  does not tear the line. The options keep `SPACE.md` above the screen's edge, tapped words too.
+  While a tapped question is open her answer is not echoed as a bubble (`ItemThread echoAnswers`,
+  as for structured items): the tried tile says it — except in voice mode, where the bubble is the
+  only place she sees what was heard.
 
 ## Voice
 
