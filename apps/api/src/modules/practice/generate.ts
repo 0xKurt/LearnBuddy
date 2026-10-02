@@ -3,6 +3,7 @@
 //   practice — questions on a topic (Buddy's own, marked as such)
 //   vocab    — a typed vocabulary list, asked in both directions
 //   speak    — words or sentences to say aloud
+//   listen   — a text she HEARS, with questions about it (Hörverstehen, issue #210)
 //   help     — a homework task they typed: hints only, never the solution
 // Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
 // One structured model call; items are validated like extracted ones.
@@ -10,6 +11,7 @@
 
 import {
   BarTask,
+  MAX_LISTEN_QUESTIONS,
   type DifficultyWish,
   type StartTopicRequest,
 } from '@learnbuddy/shared-types/contracts';
@@ -25,6 +27,13 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { ageOn } from '../identity/model.js';
 import { BAR_RULES, barItems, MAX_BAR_ITEMS } from './bars.js';
 import {
+  LISTEN_RULES,
+  ListenDraft,
+  ListenQuestion,
+  listenItems,
+  noVoiceToReadIt,
+} from './listen.js';
+import {
   FIGURE_RULES,
   ItemDraft,
   itemsOneByOne,
@@ -39,7 +48,7 @@ import {
 } from './items.js';
 import { createSession, type PracticeLearner } from './service.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.11';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.12';
 
 const SUBJECT_KINDS = [
   'math',
@@ -80,10 +89,22 @@ export const GeneratedSet = z.object({
    * computes (`practice/bars.ts`).
    */
   bars: z.array(BarTask).max(MAX_BAR_ITEMS).default([]),
+  /**
+   * The one listening task of a listening run (issue #210): the text that is READ ALOUD and
+   * the questions about it. A separate list for the same reason as `bars`: a listening
+   * question is not an ordinary item that happens to mention a text — its stimulus is the
+   * text, every answer has to stand IN that text (`practice/listen.ts`, Rule 0), and the
+   * questions become items only once code has checked that.
+   *
+   * It is in the schema the model sees ONLY for a listening run (`omit` below): a field that
+   * is there gets filled in, and a listening text in a maths practice is a text nobody asked
+   * to hear.
+   */
+  listen: ListenDraft.nullable().default(null),
 });
 export type GeneratedSet = z.infer<typeof GeneratedSet>;
 const DraftItem = ItemDraft.omit({ hints: true, worked_solution: true });
-const GENERATED_SCHEMA = toJsonSchema(GeneratedSet);
+const GENERATED_SCHEMA = toJsonSchema(GeneratedSet.omit({ listen: true }));
 
 /** How much of the sheets' text grounds a test built from them. */
 const SHEET_CHARS = 6000;
@@ -195,6 +216,7 @@ function atLevel(items: ItemDraft[], level: DifficultyWish | null | undefined): 
 const TASK: Record<StartTopicRequest['kind'], string> = {
   practice: `Write 6–10 PRACTICE questions on the topic the learner named, at their grade, easy to harder, mixing kinds sensibly.`,
   vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. If there are no pairs, usable = false.`,
+  listen: LISTEN_RULES,
   speak: `The learner wants to PRACTISE SPEAKING. If they typed words or sentences in a foreign language, make one "speak" item per sentence or word as typed; if they named a topic or unit, write 5–8 short, useful sentences for their level. lang = the language to speak. prompt = what to say (answer = the same). topic = 2–4 words.`,
   test: `Write a PRACTICE TEST of 8–12 questions on the topic the learner named, like a real class test at their grade: the important points, easy to harder, mixing kinds; answerable in one try (no multi-step long answers).`,
   help: `The learner TYPED A HOMEWORK TASK and wants help to solve it THEMSELVES. One item per task/sub-task, prompt = the task in the learner's own words (copy it), answer = the correct final answer, which the learner never sees — it guides hints. Never add tasks or intermediate questions of your own.`,
@@ -226,6 +248,9 @@ const MODE: Record<StartTopicRequest['kind'], 'practice' | 'help' | 'test'> = {
   practice: 'practice',
   vocab: 'practice',
   speak: 'practice',
+  // A listening run IS practice — the same hints rule, the same spaced repetition, the same
+  // card. Only what she gets the question from is different (issue #210).
+  listen: 'practice',
   help: 'help',
 };
 
@@ -234,6 +259,8 @@ const ORIGIN: Record<StartTopicRequest['kind'], 'buddy' | 'typed' | 'homework'> 
   practice: 'buddy',
   vocab: 'typed',
   speak: 'typed',
+  // Buddy wrote the text and the questions, so the card says so ("Frage von Buddy").
+  listen: 'buddy',
   help: 'homework',
 };
 
@@ -243,6 +270,10 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
   test: new Set(['short', 'numeric', 'multiple_choice', 'formula', 'vocab']),
   vocab: new Set(['vocab']),
   speak: new Set(['speak']),
+  // Nothing in `items` at all: the questions of a listening run come out of `listen`, where
+  // each of them is checked against the spoken text first (issue #210, `listen.ts` Rule 0).
+  // An ordinary question mixed in would be one she could answer without listening.
+  listen: new Set([]),
   help: new Set(['short', 'long', 'numeric', 'multiple_choice', 'formula']),
 };
 
@@ -297,6 +328,13 @@ async function prepareTopic(
   );
   if (existing) return existing.id;
 
+  // Hörverstehen without a voice is not an exercise (issue #210). Refused BEFORE the model is
+  // asked: a set of questions about a text nobody can hear would be worse than none, and the
+  // call would be spent on it. The offer in the chat stops being a button for the same reason
+  // (`practice/prepare.ts`), so nothing promises a listening task that cannot be heard.
+  const noVoice = input.kind === 'listen' ? noVoiceToReadIt(deps) : null;
+  if (noVoice) throw noVoice;
+
   const now = deps.now();
   const tz = await deps.db.one<{ timezone: string }>(
     `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
@@ -315,6 +353,14 @@ async function prepareTopic(
       })
     : DraftItem;
   const setSchema = GeneratedSet.extend({ items: z.array(itemSchema).max(25) });
+  // What the model is shown. A listening run gets the listening task and nothing else: no
+  // fraction bars (a bar is a maths surface, and this run is about hearing) and no ordinary
+  // `items` either — a question she could answer without listening is not the exercise, and a
+  // field that is there gets filled in.
+  const forModel =
+    input.kind === 'listen'
+      ? setSchema.omit({ bars: true, items: true })
+      : setSchema.omit({ listen: true });
   let set: GeneratedSet;
   try {
     const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
@@ -346,7 +392,7 @@ async function prepareTopic(
           ],
         },
       ],
-      schema: sheets ? toJsonSchema(setSchema) : GENERATED_SCHEMA,
+      schema: sheets || input.kind === 'listen' ? toJsonSchema(forModel) : GENERATED_SCHEMA,
       maxOutputTokens: 10_000,
       temperature: 0.4,
       timeoutMs: 60_000,
@@ -359,6 +405,15 @@ async function prepareTopic(
       items: itemsOneByOne(itemSchema, 25),
       // One unusable task costs its own question, never the whole set (audit H-14/H-15).
       bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
+      // The same for the listening questions: one that does not fit its schema costs itself,
+      // not the text. A listening task that does not fit at all is no listening task, and the
+      // run then has nothing — which the caller says plainly (`not_usable`).
+      listen: ListenDraft.extend({
+        questions: itemsOneByOne(ListenQuestion, MAX_LISTEN_QUESTIONS),
+      })
+        .nullable()
+        .default(null)
+        .catch(null),
     }).safeParse(res.json);
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
@@ -391,7 +446,11 @@ async function prepareTopic(
   // the bar away because she asked for something harder would remove the one thing that
   // makes a harder fraction task approachable.
   const bars = input.kind === 'practice' ? barItems(set.bars, learner.locale) : [];
-  if (!set.usable || items.length + bars.length === 0) {
+  // The listening questions, each one checked against the text that will be read aloud
+  // (issue #210): the answer has to stand in it, and the speech provider has to be able to
+  // read its language. Whatever fails that is not a question; a run left with none says so.
+  const listening = input.kind === 'listen' ? listenItems(set.listen, deps.speech) : [];
+  if (!set.usable || items.length + bars.length + listening.length === 0) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
   }
   try {
@@ -402,7 +461,7 @@ async function prepareTopic(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...items, ...bars],
+        [...items, ...bars, ...listening],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );

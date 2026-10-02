@@ -67,6 +67,15 @@
   "later": "Später",
   "later_done": "Alles klar – die kommt später nochmal dran.",
   "later_hint": "Die Aufgabe bleibt offen und kommt nach den anderen nochmal dran.",
+  "listen": {
+    "play": "Hörtext abspielen",
+    "again": "Nochmal hören",
+    "stop": "Anhalten",
+    "loading": "Lädt …",
+    "hint": "Spielt dir den Hörtext vor – so oft du magst.",
+    "failed": "Der Hörtext lässt sich gerade nicht abspielen.",
+    "transcript_title": "Das war der Hörtext"
+  },
   "loading": "Ich hole deine Fragen …",
   "next": "Weiter",
   "origin_buddy": "Frage von Buddy",

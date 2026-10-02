@@ -4,6 +4,7 @@ import {
   AnswerRequest,
   CardRequest,
   HintRequest,
+  ListenAudioRequest,
   ReexplainRequest,
   SpeakRequest,
   SpeakWordRequest,
@@ -29,6 +30,7 @@ import { runLearnerJobs } from '../buddy/check.js';
 import { recordCard, startCardPass } from './cardPass.js';
 import { startTopic } from './generate.js';
 import { prepareHints } from './hints.js';
+import { listenAudio } from './listen.js';
 import { reexplain } from './reexplain.js';
 import {
   answerItem,
@@ -142,6 +144,25 @@ practiceRoutes.post('/sessions/:id/card', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, CardRequest);
   return c.json(await recordCard(depsOf(c), c.get('learner'), sessionId, input));
+});
+
+/**
+ * Hörverstehen (issue #210): the recording of one question's listening text. The app names the
+ * question and gets audio — the words stay here until the question is closed. `slow` is the
+ * same recording read more slowly; asking again is the form, not an extra, and after the first
+ * time it is served from the cache every other spoken sentence uses.
+ */
+practiceRoutes.post('/sessions/:id/listen', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, ListenAudioRequest);
+  return c.json(
+    await listenAudio(
+      depsOf(c),
+      { accountId: c.get('account').id, learnerId: c.get('learner').id },
+      sessionId,
+      input,
+    ),
+  );
 });
 
 practiceRoutes.post('/sessions/:id/finish', async (c) => {

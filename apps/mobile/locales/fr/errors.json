@@ -29,6 +29,7 @@
     "photos_never_arrived": "Toutes les photos de cette feuille ne sont pas arrivées. Reprends-la en photo.",
     "photos_deleted": "Les photos ne sont plus enregistrées. Reprends simplement la feuille en photo.",
     "storage_unavailable": "Impossible de vérifier les photos pour le moment. Réessaie dans un instant.",
+    "speech_off": "La lecture à voix haute n’est pas disponible pour le moment – il n’y a donc pas encore de texte à écouter.",
     "no_questions": "Il n'y a rien à réviser ici pour l'instant. Envoie-moi une photo de tes cours et je te prépare des questions.",
     "changed_since": "Ça a changé depuis et ne peut plus être annulé automatiquement.",
     "retry_limit": "On a déjà essayé de nombreuses fois. Le mieux, c'est de prendre une nouvelle photo.",

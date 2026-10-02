@@ -10,6 +10,7 @@ import {
   DeletionResponse,
   LearnerView,
   LibraryView,
+  ListenAudioResponse,
   MaterialItemsView,
   MaterialView,
   MemoryList,
@@ -31,6 +32,7 @@ import {
   type CardRecall,
   type CreateLearnerRequest,
   type CreateMaterialRequest,
+  type ListenAudioRequest,
   type ReexplainWay,
   type SpeakWordRequest,
   SpeakStreamEvent,
@@ -307,6 +309,18 @@ export const speakWord = (sessionId: string, body: SpeakWordRequest) =>
   request('POST', `/practice/sessions/${sessionId}/speak-word`, {
     body,
     schema: SpeakWordResponse,
+  });
+
+/**
+ * The recording of a listening question's text (issue #210). The text itself never comes to
+ * the phone — it is where every answer comes from — so this asks for the AUDIO of a question
+ * and gets it back; `slow` is the same text read more slowly. Asking again is the exercise,
+ * not an extra: the server serves it from the same cache as every other spoken sentence.
+ */
+export const listenToItem = (sessionId: string, body: ListenAudioRequest) =>
+  request('POST', `/practice/sessions/${sessionId}/listen`, {
+    body,
+    schema: ListenAudioResponse,
   });
 
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */

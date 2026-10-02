@@ -29,6 +29,7 @@
     "photos_never_arrived": "Not all photos of this sheet arrived. Best take a new photo of it.",
     "photos_deleted": "The photos are no longer stored. Just take new photos of the sheet.",
     "storage_unavailable": "The photos can't be checked right now. Please try again in a moment.",
+    "speech_off": "Reading aloud is not set up right now – so there is no listening text yet.",
     "no_questions": "There is nothing to practise here right now. Send me a photo of your material and I'll make questions.",
     "changed_since": "That has changed since and can't be undone automatically any more.",
     "retry_limit": "This was tried many times. Best take a new photo.",

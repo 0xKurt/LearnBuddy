@@ -4,7 +4,8 @@
     "practice": "Practise",
     "test": "Practice test",
     "vocab": "Test my vocab",
-    "speak": "Practise speaking"
+    "speak": "Practise speaking",
+    "listen": "Practise listening"
   },
   "homework": {
     "title": "Homework help",
@@ -46,6 +47,11 @@
       "placeholder": "e.g. Unit 3 or your own sentences",
       "ex_1": "Introducing myself in French",
       "ex_2": "Asking the way in German"
+    },
+    "listen": {
+      "title": "What should the text be about?",
+      "hint": "I read you a short text and ask you about it.",
+      "placeholder": "e.g. English Unit 3, holidays in French"
     },
     "help": {
       "title": "Which task? Copy it here.",

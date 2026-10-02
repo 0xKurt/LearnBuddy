@@ -52,7 +52,14 @@ export function prepareOffered(
         // kept: the button stops being a button, and STATE stops calling it something waiting
         // for her. Every other failure (model down, timeout) says nothing about the offer —
         // her tap prepares it then, and says what went wrong there.
-        if (isAppError(err) && err.details?.reason === 'not_usable') {
+        // 'speech_off' is the same kind of answer for a listening offer (issue #210): there is
+        // no voice configured to read a text aloud, which her tap would hit just the same. Both
+        // are stable facts about this deployment, not an outage — so the button stops being a
+        // button instead of promising a text nobody can hear.
+        if (
+          isAppError(err) &&
+          (err.details?.reason === 'not_usable' || err.details?.reason === 'speech_off')
+        ) {
           await deps.db.query(
             `update buddy_actions set cannot_start_at = $3
               where id = $1 and learner_id = $2 and tool = 'offer_learning'

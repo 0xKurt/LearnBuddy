@@ -30,6 +30,7 @@ import { ageOn } from '../identity/model.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { pickAnswers, surfaceOf, taskOf, untriedPicks } from './bars.js';
+import { listenRefs, listenTaskOf } from './listen.js';
 import {
   differentNumber,
   equationDetail,
@@ -98,6 +99,12 @@ export type ItemRow = {
    * through `taskOf`, never trusted as it stands.
    */
   bar_task: unknown;
+  /**
+   * The spoken text this question is answered from (issue #210), or null for every question
+   * that is read. Read as a text through `listenTaskOf`, never trusted as it stands; it never
+   * reaches the app while the question is open — it is where the answer comes from.
+   */
+  listen_task: unknown;
 };
 
 export type SessionRow = {
@@ -579,7 +586,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.archived_at,
+            i.bar_task, i.listen_task, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -622,10 +629,20 @@ export async function sessionView(
   const vocabInSet = items
     .filter((i) => i.kind === 'vocab')
     .map((i) => ({ id: i.id, answer: i.answer, lang: i.lang }));
+  // Which recording each listening question is about ('h1', 'h2' …): questions about one text
+  // share the alias, which is all the app can be told about a text it must not see (issue #210).
+  const hearing = listenRefs(items);
   // Homework never shows the solution; a test shows the answers once it is finished.
   const revealAllowed = s.mode !== 'help' && !(s.mode === 'test' && active);
   // A finished test shows every solution, also of the questions she never got to (audit M-36).
   const testOver = s.mode === 'test' && s.status === 'finished';
+  /**
+   * Whether this question's solution may be sent — and with it, for a listening question, the
+   * words of the text it was heard from (issue #210). One condition for both, so a text can
+   * never arrive a moment before the answer it belongs to.
+   */
+  const solutionShown = (i: { status: string; kind: string }): boolean =>
+    cardPass || !((i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i));
   return {
     id: s.id,
     mode: s.mode,
@@ -653,6 +670,10 @@ export async function sessionView(
         // from (issue #162). Only while the question is open: once it is closed the bars
         // would be a control without a purpose, and the solution stands in the thread.
         surface: i.status === 'open' && active ? surfaceFor(i.bar_task) : null,
+        // The spoken stimulus, as the alias of its recording and nothing more (issue #210).
+        // It stays while the question is closed: hearing the text again next to the words of
+        // it is exactly what a listening task is reviewed with.
+        listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
       },
       status: i.status,
       attempts: i.attempts,
@@ -666,7 +687,11 @@ export async function sessionView(
         active &&
         !cardPass &&
         offersHintButton(s.mode) &&
-        i.kind !== 'speak',
+        i.kind !== 'speak' &&
+        // Listening: the help is hearing it again, and slower — which the card offers anyway
+        // (issue #210). A written hint about a text she is supposed to be listening to is a
+        // worse version of the replay, and it would be one more model call.
+        !hearing.has(i.id),
       reveal_available: i.status === 'open' && active && !cardPass && revealReady(s.mode, i),
       deferred: i.status === 'open' && s.mode === 'help' && Boolean(i.deferred_at),
       // Never leak the solution of an open question, nor ever in help mode (homework) — and
@@ -674,12 +699,15 @@ export async function sessionView(
       // model wrote, and the screen would label it "Lösung".
       // A card carries its back while it is still open: showing it IS the pass, and there is
       // nothing to grade that it could give away (issue #147). Everywhere else unchanged.
-      answer:
-        !cardPass && ((i.status === 'open' && !testOver) || !revealAllowed || noSingleSolution(i))
-          ? null
-          : i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null
-            ? (i.choices[i.correct_choice] ?? i.answer)
-            : `${i.answer}${i.unit ? ` ${i.unit}` : ''}`,
+      answer: !solutionShown(i)
+        ? null
+        : i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null
+          ? (i.choices[i.correct_choice] ?? i.answer)
+          : `${i.answer}${i.unit ? ` ${i.unit}` : ''}`,
+      // The words of a listening text, under exactly the condition the solution is sent under
+      // (issue #210): she hears it, answers, and reads it afterwards. While the question is
+      // open the text is the solution, so it stays here.
+      listen_transcript: solutionShown(i) ? (listenTaskOf(i.listen_task)?.text ?? null) : null,
     })),
     turns: turns.map((tr) => ({
       id: tr.id,
@@ -870,12 +898,17 @@ export async function answerItem(
   }
   // The reviewed task this question was computed from, if any (issue #162).
   const barTask = taskOf(item.bar_task);
+  // The spoken text this question was answered from, if any (issue #210). It decides two
+  // things below: that only the content is judged (never the spelling of a word she HEARD),
+  // and that the tutor is given that text as the material it may judge against.
+  const listenTask = listenTaskOf(item.listen_task);
   // A request for help is not an answer: nothing for the rules to check.
   const byRules: RuleVerdict = hintRequest
     ? 'unknown'
     : ruleCheck(
-        // A question code computed asks for an amount, so any form of it is right (#162).
-        { ...item, form_free: barTask !== null },
+        // A question code computed asks for an amount, so any form of it is right (#162);
+        // a question she HEARD is judged on what she understood, not on how she wrote it (#210).
+        { ...item, form_free: barTask !== null, listening: listenTask !== null },
         { text: input.text ?? null, choice: input.choice ?? null },
       );
   // A plain number with another value is a wrong answer for sure — except in homework,
@@ -1031,7 +1064,7 @@ export async function answerItem(
           parts: [
             {
               text: tutorContext({
-                item,
+                item: { ...item, listening: listenTask !== null },
                 hintsGiven: item.hints_used,
                 preparedHints: givesHints(session.mode) ? item.hints : [],
                 preparedShown: item.prepared_hints_used,
@@ -1044,7 +1077,13 @@ export async function answerItem(
                     : learner.level,
                 learnerAge: ageOn(learner.birth_date, now),
                 language: learner.locale,
-                material: item.extracted_text ? item.extracted_text.slice(0, MATERIAL_CHARS) : null,
+                // For a listening question the material IS the text she heard (issue #210):
+                // without it the tutor would judge an answer about a text it cannot read.
+                material: listenTask
+                  ? listenTask.text
+                  : item.extracted_text
+                    ? item.extracted_text.slice(0, MATERIAL_CHARS)
+                    : null,
                 preferences: preferences.map((p) => p.statement),
               }),
             },

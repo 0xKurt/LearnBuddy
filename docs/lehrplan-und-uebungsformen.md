@@ -1424,8 +1424,8 @@ Symbol und ist mit `grep` auffindbar.
 **Sieben Item-Arten** (`packages/shared-types/src/contracts/learning.ts:131`, `ItemKind`):
 `short` · `long` · `numeric` · `multiple_choice` · `formula` · `vocab` · `speak`.
 
-**Fünf Sitzungsarten**, die Buddy anbieten kann (`contracts/buddy.ts`, `offer_learning.kind`;
-`StartTopicRequest.kind`): `practice` · `vocab` · `speak` · `help` · `test`.
+**Sechs Sitzungsarten**, die Buddy anbieten kann (`contracts/buddy.ts`, `offer_learning.kind`;
+`StartTopicRequest.kind`): `practice` · `vocab` · `speak` · `listen` · `help` · `test`.
 
 **Drei Antwortwege** (`AnswerRequest.via`): `typed` · `tapped` · `spoken`.
 
@@ -1441,6 +1441,34 @@ Symbol und ist mit `grep` auffindbar.
 (`contracts/figure.ts`: `fraction`, `number_line`, `function_plot`, `bar_chart`, `geometry`,
 `table`) und `ItemImage` — ein **echter Ausschnitt** aus dem fotografierten Blatt
 (`modules/materials/images.ts`, Issue #50).
+
+**Hörverstehen** (Issue #210, `contracts/listen.ts`, `modules/practice/listen.ts`,
+Migration `0077_listening_tasks.sql`): keine neue Item-Art. Eine Hörfrage ist ein `multiple_choice`-
+oder `short`-Item mit einem **gesprochenen** Aufgabenstoff — `items.listen_task` trägt genau den
+Text, den die Sprachausgabe bekommt, und die App bekommt davon nur Audio
+(`POST /practice/sessions/:id/listen`), die Wörter erst nach dem Beantworten. Damit sind die drei
+Regeln aus §7.3, die den Code betrafen, für diese Form im Code und nicht im Prompt:
+
+- **Sprache wird nicht bewertet** (§7.3 Regel 1, §12.2 d): `ruleCheck` zählt bei einem Item mit
+  Hörtext jeden reinen Formfehler als richtig (`contentOnly` in `modules/practice/evaluate.ts`),
+  und `spellingOf` gibt dort `gentle` zurück — der Default für Sprachfächer ginge in die andere
+  Richtung. Für Lese­verstehen vom fotografierten Blatt gilt das **weiter nicht**: dort fehlt dem
+  Code jedes Merkmal, an dem er eine Verstehensaufgabe erkennen könnte (§12.2 d bleibt offen).
+- **Richtig/Falsch ist nicht geeignet** (§7.3 Regel 2): der Generator bekommt es verboten, und
+  Regel 0 (unten) macht es ohnehin unmöglich — „richtig" steht nicht im Hörtext.
+- **Regel 0** (Issue #210): jede Antwort muss **wörtlich im Hörtext vorkommen**, sonst entsteht die
+  Frage nicht (`answerIsInText`). Das ist kein Sprachverständnis und keine Wortliste, sondern ein
+  Vergleich zweier Zeichenketten, die dasselbe Modell geschrieben hat. Der Preis: eine Frage, deren
+  Antwort man selbst formulieren müsste — eine Folgerung, eine Zahl, die der Text ausschreibt, eine
+  Übersetzung ins Deutsche — gibt es nicht. Das deckt aus der §7.2-Liste `tick`, `complete`/`fill
+in` und `list`/`name` ab; `match` (Zuordnen, #229) und die gefüllte Tabelle (#230) kommen, wenn
+  diese Formen existieren.
+
+Ohne eingerichtete Stimme entsteht **keine** Hörübung: `startTopic` lehnt eine Hörverstehen-Anfrage
+vor dem Modellaufruf ab, und der Knopf im Chat hört auf, einer zu sein (`practice/prepare.ts`,
+Issue #196). Was damit **nicht** geht und als Lücke stehen bleibt: eine echte Aufnahme mit mehreren
+Sprechern (es ist eine Synthesestimme), Hörsehverstehen (Video) und `ear_training` (§12.3) —
+Intervalle und Rhythmen zu hören ist eine andere Aufgabe als einen Text zu verstehen.
 
 **Neu und gerade im Zulauf:** `AnswerSurface` (`contracts/bars.ts:107`, `modules/practice/bars.ts`)
 — die Bruchbalken aus Issue #162, bei denen das Modell **nur** eine geprüfte Aufgabe und ihre

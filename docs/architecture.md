@@ -121,6 +121,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                                                   |
 | `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                                              |
 | `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
+| `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen: the recording of one question's spoken text (issue #210)                                                |
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
 | `GET /health`, `POST /internal/tick` (`x-tick-secret`)                                               | operations                                                                                                            |
 
@@ -1919,6 +1920,38 @@ word list, so it stays a prompt rule.
   screen and no setting (rule 16). Homework keeps its own way: its tasks are `origin = 'homework'`,
   which no run selects, so such a sheet counts no sentence and every way back to it still ends in
   its help session (audit H-7). `speak-from-sheet.int.test.ts`.
+- **listen** — **Hörverstehen**: a text she HEARS, with questions about it (issue #210;
+  `contracts/listen.ts`, `practice/listen.ts`, migration `0077_listening_tasks.sql`). Listening is
+  its own competence in English, French and Spanish and has to appear in a written class test once
+  a year in NRW; the speech output for it has existed since ADR 0008 and was used for nothing but
+  reading text aloud. **It is not a second speech stack and not a new item kind**: a listening
+  question is an ordinary `multiple_choice` or `short` item whose stimulus is spoken. Same grading,
+  same spaced repetition, same card.
+  _The text is the solution._ It lives on the question (`items.listen_task`: the text and its
+  language, exactly what the speech gateway is given) and never goes to the app while the question
+  is open. The app asks for AUDIO of a question (`POST /practice/sessions/:id/listen`, `slow` for
+  the slower pass) and gets it from the same 24 h `speech_cache` as every other spoken sentence, so
+  every replay after the first costs nothing; the words follow as `SessionItemView.listen_transcript`
+  under exactly the condition the solution is sent under. `ItemView.listen` carries only the alias
+  of the recording (`h1`), shared by the questions about one text — enough for the app to say
+  "nochmal hören" and nothing about what was said. There is **no cap** on replays: a class test
+  plays a text twice, practice has no reason to refuse a third.
+  _What code enforces_ (`practice/listen.ts`): every answer must stand WORD FOR WORD in the spoken
+  text (`answerIsInText`, "Regel 0") — a question whose answer the model would have to phrase
+  itself is never created, and for a tapped question it is the option she can tap that is checked.
+  Only the content is judged: a slip of the pen on something she understood is right and her
+  spelling is never marked (`contentOnly` in `practice/evaluate.ts`, read off the stored text —
+  NRW: "sprachliche Verstöße werden nicht gewertet", `lehrplan-und-uebungsformen.md` §7.3, issue
+  #197). There is no hint ladder: the help is hearing it again, slower.
+  _Without a voice there is no exercise._ `startTopic` refuses a listening run before the model is
+  asked when no speech provider is configured (503 `speech_off`), and the offer in the chat stops
+  being a button (`practice/prepare.ts`, issue #196) instead of promising a text nobody can play.
+  A language the provider cannot read yields no questions either. `selectPracticeItems` keeps a
+  listening question out of every written run — there it would be a question about a text she never
+  heard. Cost: one model call for the whole exercise (the text and its questions come out of the
+  same structured call) plus one synthesis per pass. Honestly: it is a synthetic voice reading
+  prose, not a recording of several speakers, and it is never sold as "like in the exam".
+  `listening.int.test.ts`, `practice/__tests__/listen.test.ts`.
 - **Math and figures** — texts carry math between dollar signs in a small LaTeX subset (the app
   renders fractions, powers, roots, periods and segments (`\overline`), vectors, geometry and set
   symbols, and a fill-in blank inside math as a gap; `apps/mobile/components/math/`, parser in
@@ -1987,6 +2020,13 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   error) or is unreachable — never silence. `useBuddyVoice()` (`lib/speech/voiceState.ts`)
   exposes `idle | loading | speaking`, the sentences and the one being played with its progress:
   conversation mode highlights the sentence being read (no word timings from Chirp 3 HD).
+  **The same chain carries Hörverstehen** (issue #210, §Practice above): a listening question's
+  text is synthesised through `modules/voice/speech.ts` like any other sentence — same voice, same
+  speed, same "Langsam", same 24 h cache, same budget — but it is requested per QUESTION
+  (`POST /practice/sessions/:id/listen`), never as text, because the text is where the answers come
+  from. There is no device-voice fallback for it and there must not be one: the phone's voice would
+  need the words. Without a configured provider the exercise is refused instead
+  (`practice/listen.ts` `noVoiceToReadIt`).
   Dev stack: `LB_DEV_SPEECH=fake` answers with silent WAV audio of the sentence's length.
 - **Voice mode** (app): Buddy's replies, questions, an explanation and feedback are read aloud
   (natural voice above, else the device's voices); she answers with the mic — in the chat, in every

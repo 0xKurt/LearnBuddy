@@ -29,6 +29,7 @@
     "photos_never_arrived": "Von diesem Blatt sind nicht alle Fotos angekommen. Fotografier es am besten neu.",
     "photos_deleted": "Die Fotos sind nicht mehr gespeichert. Fotografier das Blatt einfach neu.",
     "storage_unavailable": "Die Fotos lassen sich gerade nicht prüfen. Versuch es gleich nochmal.",
+    "speech_off": "Vorlesen ist gerade nicht eingerichtet – deshalb gibt es noch keinen Hörtext.",
     "no_questions": "Hier gibt es gerade nichts zu üben. Schick mir ein Foto von deinem Stoff, dann mache ich dir Fragen.",
     "changed_since": "Das hat sich seitdem geändert und lässt sich nicht mehr automatisch zurücknehmen.",
     "retry_limit": "Das wurde schon oft versucht. Mach am besten ein neues Foto.",

@@ -135,6 +135,11 @@ export async function selectPracticeItems(
           -- inside a written run, and a run she asked to speak holds nothing else (issue #223
           -- point 2). One predicate, so the two can never both be true or both be false.
           and (i.kind = 'speak') = ($12::text = 'speak')
+          -- Hörverstehen needs sound (issue #210). A listening question inside a written run
+          -- would stand there as a question about a text she never heard — unanswerable, and
+          -- the one failure the form must not have. Its own run is the one that holds them,
+          -- and it is prepared with its text (practice/listen.ts), not selected.
+          and i.listen_task is null
           -- A free text is not a test question (issue #197).
           and ($12::text <> 'test' or i.kind <> 'long')
           and ($2::uuid is null or m.goal_id = $2)

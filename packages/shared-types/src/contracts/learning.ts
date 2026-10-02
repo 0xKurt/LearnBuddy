@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { Figure } from './figure.js';
+import { ListenRef } from './listen.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
 
@@ -344,6 +345,14 @@ export const ItemView = z.object({
    * fraction into the same answer field.
    */
   surface: AnswerSurface.nullable().default(null),
+  /**
+   * The question is answered from HEARING a spoken text (issue #210, `contracts/listen.ts`):
+   * the app plays it with `POST /practice/sessions/:id/listen` and may play it again as often
+   * as she taps. Only which recording is said here, never its words — the text is where every
+   * answer comes from, so it stays on the server until the question is closed
+   * (`SessionItemView.listen_transcript`). Questions about one text share the `ref`.
+   */
+  listen: ListenRef.nullable().default(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 
@@ -416,6 +425,13 @@ export const SessionItemView = z.object({
    * (issue #147).
    */
   answer: z.string().nullable(),
+  /**
+   * The words of a listening question's spoken text — only once the question is closed, under
+   * exactly the condition `answer` carries the solution (issue #210: she hears it, answers,
+   * and reads it afterwards). Null while it is open, null in homework help, null for every
+   * question that is not a listening one.
+   */
+  listen_transcript: z.string().nullable().default(null),
 });
 export type SessionItemView = z.infer<typeof SessionItemView>;
 
@@ -624,11 +640,13 @@ export const StartTopicRequest = z.object({
   client_request_id: Uuid,
   /**
    * practice: questions on a topic · vocab: a typed vocabulary list ·
-   * speak: sentences/words to say aloud · help: a homework task the learner typed ·
+   * speak: sentences/words to say aloud · listen: a spoken text with questions about it
+   * (Hörverstehen, issue #210 — refused before any model call when there is no voice to
+   * read it) · help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
    * end). Explaining is the chat's answer, never a mode (owner decision 28.09., issue #70).
    */
-  kind: z.enum(['practice', 'vocab', 'speak', 'help', 'test']),
+  kind: z.enum(['practice', 'vocab', 'speak', 'listen', 'help', 'test']),
   text: z.string().trim().min(2).max(3000),
   subject: z.string().trim().max(60).nullable().optional(),
   /**

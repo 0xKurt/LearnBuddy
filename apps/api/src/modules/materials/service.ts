@@ -1935,6 +1935,10 @@ export async function materialItems(
       // Same for the fraction bar (issue #162): a surface is something she works WITH on
       // an open question, not a control in a list of what the sheet holds.
       surface: null,
+      // A sheet holds no listening question: a spoken text comes from a listening run, never
+      // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
+      // recording belongs to a session, like the crop and the bar above.
+      listen: null,
       result: resultOf(r),
     })),
   };

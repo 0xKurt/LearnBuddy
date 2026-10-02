@@ -99,6 +99,7 @@ const ITEM: ItemView = {
   image: null,
   tap_choices: null,
   surface: null,
+  listen: null,
 };
 
 const RECORDING: Recorded = {

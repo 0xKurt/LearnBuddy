@@ -4,7 +4,8 @@
     "practice": "Üben",
     "test": "Probetest",
     "vocab": "Vokabeln abfragen",
-    "speak": "Aussprache üben"
+    "speak": "Aussprache üben",
+    "listen": "Hörverstehen üben"
   },
   "homework": {
     "title": "Hilfe bei Hausaufgaben",
@@ -46,6 +47,11 @@
       "placeholder": "z. B. Unité 3 oder eigene Sätze",
       "ex_1": "Mich auf Französisch vorstellen",
       "ex_2": "Auf Englisch nach dem Weg fragen"
+    },
+    "listen": {
+      "title": "Wozu willst du einen Hörtext?",
+      "hint": "Ich lese dir einen kurzen Text vor und frage dich dazu.",
+      "placeholder": "z. B. Englisch Unit 3, Ferien auf Französisch"
     },
     "help": {
       "title": "Welche Aufgabe? Schreib sie ab.",
