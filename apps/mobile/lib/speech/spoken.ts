@@ -78,18 +78,20 @@ export function transcriptLang(lang: string | null | undefined): string | null {
 
 /**
  * Puts a transcript into a field: 'replace' for a short answer, 'append' for
- * a message or a long answer that she may dictate in parts.
+ * a message or a long answer that she may dictate in parts, 'line' for the next
+ * line of a written calculation path (issue #221) — what she already wrote stays.
  */
 export function mergeTranscript(
   current: string,
   spoken: string,
-  mode: 'append' | 'replace',
+  mode: 'append' | 'replace' | 'line',
   maxLength: number,
 ): string {
   const said = spoken.trim();
   if (!said) return current;
   const before = current.trimEnd();
-  const next = mode === 'replace' || before.length === 0 ? said : `${before} ${said}`;
+  const glue = mode === 'line' ? '\n' : ' ';
+  const next = mode === 'replace' || before.length === 0 ? said : `${before}${glue}${said}`;
   return next.slice(0, maxLength);
 }
 

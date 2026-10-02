@@ -123,6 +123,14 @@ describe('mergeTranscript', () => {
     expect(mergeTranscript('', ' Hallo ', 'append', 2000)).toBe('Hallo');
   });
 
+  it('adds a dictated line under a written path (issue #221)', () => {
+    expect(mergeTranscript('2x + 3 = 7\n2x = 4', 'x = 2', 'line', 2000)).toBe(
+      '2x + 3 = 7\n2x = 4\nx = 2',
+    );
+    // She already started the next line with the key: no empty line in between.
+    expect(mergeTranscript('2x + 3 = 7\n', 'x = 2', 'line', 2000)).toBe('2x + 3 = 7\nx = 2');
+  });
+
   it('keeps the field when nothing was understood, and respects the limit', () => {
     expect(mergeTranscript('Hallo', '  ', 'append', 2000)).toBe('Hallo');
     expect(mergeTranscript('abc', 'defgh', 'append', 6)).toBe('abc de');

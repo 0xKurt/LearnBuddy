@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { hasPath, pathPossible, previewLine, returnKey } from '../practice/pathEntry.js';
+import { hasPath, lineCount, pathPossible, previewLine, returnKey } from '../practice/pathEntry.js';
 
 describe('where a worked path may be typed', () => {
   it('is offered exactly where the server checks one', () => {
@@ -59,5 +59,62 @@ describe('which line the math preview draws', () => {
 
   it('is empty for an empty path, without reaching past the end', () => {
     expect(previewLine('numeric', '\n')).toBe('');
+  });
+});
+
+describe('the return key, kind by kind', () => {
+  it('sends a one-line answer at once, for every kind but a long text', () => {
+    expect(returnKey('numeric', '2')).toBe('send');
+    expect(returnKey('formula', 'x^2 - 1')).toBe('send');
+    expect(returnKey('short', 'Paris')).toBe('send');
+    expect(returnKey('vocab', 'the dog')).toBe('send');
+    expect(returnKey('long', 'Ein Satz')).toBe('newline');
+  });
+
+  it('starts the next line once the answer is a path', () => {
+    expect(returnKey('numeric', '2x + 3 = 7\n')).toBe('newline');
+    expect(returnKey('formula', '2(x+3)\n2x + 6')).toBe('newline');
+    expect(returnKey('short', '7 · 4\n28')).toBe('newline');
+  });
+
+  it('sends again once the line break is deleted', () => {
+    const path = '2x = 4\n';
+    expect(returnKey('numeric', path)).toBe('newline');
+    expect(returnKey('numeric', path.slice(0, -1))).toBe('send');
+  });
+});
+
+describe('a path', () => {
+  it('is an answer with a line break, the separator steps.ts splits at', () => {
+    expect(hasPath('numeric', 'x = 2')).toBe(false);
+    expect(hasPath('numeric', '2x = 4\nx = 2')).toBe(true);
+    expect(lineCount('')).toBe(1);
+    expect(lineCount('2x + 3 = 7\n2x = 4\nx = 2')).toBe(3);
+    expect(lineCount('2x + 3 = 7\n')).toBe(2);
+  });
+});
+
+describe('the line the preview draws, with the cursor', () => {
+  const path = '2x + 3 = 7\n2x = 4\nx = 2';
+
+  it('is the one with the cursor in it', () => {
+    expect(previewLine('numeric', path, 0)).toBe('2x + 3 = 7');
+    expect(previewLine('numeric', path, 12)).toBe('2x = 4');
+    expect(previewLine('numeric', path, path.length)).toBe('x = 2');
+  });
+
+  it('is the last line without a known cursor', () => {
+    expect(previewLine('numeric', path, null)).toBe('x = 2');
+    expect(previewLine('numeric', '3/4', null)).toBe('3/4');
+  });
+
+  it('keeps the line above on a fresh, empty line, so it does not flicker away', () => {
+    expect(previewLine('numeric', '2x + 3 = 7\n', 11)).toBe('2x + 3 = 7');
+    expect(previewLine('numeric', '2x + 3 = 7\n\n', null)).toBe('2x + 3 = 7');
+  });
+
+  it('copes with a cursor the field reported for an older, longer text', () => {
+    expect(previewLine('numeric', 'x = 2', 40)).toBe('x = 2');
+    expect(previewLine('numeric', '', 3)).toBe('');
   });
 });

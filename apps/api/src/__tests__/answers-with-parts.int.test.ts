@@ -141,7 +141,12 @@ describe.skipIf(!dbReady)('answers with several parts', () => {
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     await env.flushBackground();
-    return res.body;
+    // Since #220 a run starts with its first FIRST_BATCH questions and the rest is written behind
+    // her; the response above is the run at its start. Read it again once the refill has landed,
+    // or a fourth question is there only when the refill happened to win the race.
+    const settled = await l.api.get<SessionView>(`/practice/sessions/${res.body.id}`);
+    expect(settled.status, JSON.stringify(settled.body)).toBe(200);
+    return settled.body;
   }
 
   async function answer(

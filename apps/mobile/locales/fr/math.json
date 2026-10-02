@@ -315,8 +315,6 @@
   "keys": {
     "row": "Symboles mathématiques",
     "hint": "Ajoute le symbole à ta réponse",
-    "newline": "nouvelle ligne",
-    "newline_hint": "Commence la ligne suivante de ton calcul",
     "fraction": "barre de fraction",
     "squared": "au carré",
     "cubed": "au cube",
@@ -327,7 +325,10 @@
     "open": "parenthèse ouvrante",
     "close": "parenthèse fermante",
     "degree": "degrés",
-    "decimal": "virgule"
+    "decimal": "virgule",
+    "newline": "Nouvelle ligne",
+    "newline_shown": "↵ Ligne",
+    "newline_hint": "Pour ton calcul : commence la ligne suivante. « Vérifier » vérifie ensuite toutes les lignes."
   },
   "blank": {
     "label": "Trou",

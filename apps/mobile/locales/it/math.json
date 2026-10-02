@@ -315,8 +315,6 @@
   "keys": {
     "row": "Simboli matematici",
     "hint": "Aggiunge il simbolo alla tua risposta",
-    "newline": "nuova riga",
-    "newline_hint": "Inizia la riga successiva del tuo calcolo",
     "fraction": "linea di frazione",
     "squared": "al quadrato",
     "cubed": "al cubo",
@@ -327,7 +325,10 @@
     "open": "parentesi aperta",
     "close": "parentesi chiusa",
     "degree": "gradi",
-    "decimal": "virgola"
+    "decimal": "virgola",
+    "newline": "Nuova riga",
+    "newline_shown": "↵ Riga",
+    "newline_hint": "Per il tuo procedimento: inizia la riga successiva. «Controlla» controlla poi tutte le righe."
   },
   "blank": {
     "label": "Spazio vuoto",
