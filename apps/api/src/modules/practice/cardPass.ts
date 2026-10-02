@@ -163,7 +163,7 @@ export async function recordCard(
 ): Promise<SessionView> {
   const now = deps.now();
   if (await alreadyRecorded(deps.db, sessionId, input.client_turn_id)) {
-    return sessionView(deps.db, learner.id, sessionId, deps.storage);
+    return sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
   }
   try {
     await deps.db.tx(async (tx) => {
@@ -226,9 +226,9 @@ export async function recordCard(
       isUniqueViolation(err) &&
       (await alreadyRecorded(deps.db, sessionId, input.client_turn_id))
     ) {
-      return sessionView(deps.db, learner.id, sessionId, deps.storage);
+      return sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
     }
     throw err;
   }
-  return sessionView(deps.db, learner.id, sessionId, deps.storage);
+  return sessionView(deps.db, learner.id, sessionId, deps.storage, deps.now());
 }

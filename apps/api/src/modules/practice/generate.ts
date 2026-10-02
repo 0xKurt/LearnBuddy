@@ -21,10 +21,12 @@ import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
+import { answerUpTo } from '../../llm/partial.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { ageOn } from '../identity/model.js';
 import { CURRICULUM_RULES, curriculumBlock, offCurriculum, pointOf } from '../curriculum/state.js';
 import { BAR_RULES, barItems, MAX_BAR_ITEMS } from './bars.js';
+import { prepareHints } from './hints.js';
 import {
   FIGURE_RULES,
   ItemDraft,
@@ -37,9 +39,15 @@ import {
   PARTS_RULES,
   SPELLING_RULES,
   insertItems,
+  samePrompt,
   usableItems,
 } from './items.js';
-import { createSession, type PracticeLearner } from './service.js';
+import {
+  addPreparedItems,
+  createSession,
+  givenUpOnPreparing,
+  type PracticeLearner,
+} from './service.js';
 
 export const GENERATE_PROMPT_VERSION = 'generate.v1.12';
 
@@ -194,6 +202,22 @@ function atLevel(items: ItemDraft[], level: DifficultyWish | null | undefined): 
   return fits.length >= LEVEL_MIN ? fits : items;
 }
 
+/**
+ * How many questions a practice run starts with, before the rest of the same answer arrives
+ * (issue #220). Measured 02.10. on the real model: a set is 1 432 written tokens and 6,42 s of
+ * pure writing time, so three questions stand there after roughly a third of that — and three
+ * questions are far more work than the remaining four seconds, so "wird noch vorbereitet" stays
+ * the rare case it is built for instead of the normal one.
+ */
+export const FIRST_BATCH = 3;
+
+/**
+ * The most a practice run may say "more is coming" (issue #220). It is the budget of the call
+ * writing the set, so a run can never still be waiting for an answer that can no longer arrive —
+ * and past it the run is complete with the questions it has, so she always gets her result.
+ */
+export const REST_WINDOW_MS = 25_000;
+
 const TASK: Record<StartTopicRequest['kind'], string> = {
   practice: `Write 6–10 PRACTICE questions on the topic the learner named, at their grade, easy to harder, mixing kinds sensibly.`,
   vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. If there are no pairs, usable = false.`,
@@ -313,27 +337,41 @@ export async function startTopic(
   }
 }
 
-async function prepareTopic(
+/**
+ * What a generator call needs besides the learner's request, read once: her level and zone, the
+ * sheets a run for a planned test must stay inside, and the questions she just worked on. Read in
+ * `prepareTopic`, because the run's goal comes out of the same reading.
+ */
+type Ground = {
+  level: string;
+  timezone: string;
+  sheets: Awaited<ReturnType<typeof sheetsOf>>;
+  pattern: Awaited<ReturnType<typeof patternOf>>;
+};
+
+/**
+ * One generator call, which may hand back its first questions before it is finished (issue #220).
+ *
+ * `onFirstItems` makes it a streamed call: as the answer grows, the first `FIRST_BATCH` finished
+ * questions are cut out of it (`llm/partial.ts`) and validated with the SAME schema as the whole,
+ * so a run can start on them while the rest is still being written. It is called at most once,
+ * and never with anything the schema did not accept — a prefix that does not validate is simply
+ * not ready, and the run then starts on the finished answer like every other kind.
+ *
+ * Deliberately ONE call, not two. A second call for the rest would have to be told what the first
+ * one wrote and told not to repeat it — the duplicate problem of issue #220's trap 3 — and would
+ * pay the whole system prompt again (measured: 5 102 input tokens). The same answer, read in two
+ * parts, cannot repeat itself and costs nothing extra.
+ */
+async function generateSet(
   deps: Deps,
   learner: PracticeLearner,
   input: StartTopicRequest,
-): Promise<string> {
-  const existing = await deps.db.maybeOne<{ id: string }>(
-    `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
-    [learner.id, input.client_request_id],
-  );
-  if (existing) return existing.id;
-
-  const now = deps.now();
-  const tz = await deps.db.one<{ timezone: string }>(
-    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
-    [learner.id],
-  );
-  const level =
-    learner.level === 'school' ? `school, grade ${learner.grade ?? 'unknown'}` : learner.level;
-  const sheets = await sheetsOf(deps, learner.id, input);
-  // More of the same: what she just did grounds the new questions (issue #58).
-  const pattern = sheets ? null : await patternOf(deps, learner.id, input.from_session_id);
+  ground: Ground,
+  now: Date,
+  opts: { onFirstItems?: (set: GeneratedSet) => void } = {},
+): Promise<GeneratedSet> {
+  const { level, timezone, sheets, pattern } = ground;
   // Built from her sheets: every question's topic is one of theirs — the schema offers only
   // those, and a question on anything else is dropped (live finding 6).
   const itemSchema = sheets
@@ -342,9 +380,28 @@ async function prepareTopic(
       })
     : DraftItem;
   const setSchema = GeneratedSet.extend({ items: z.array(itemSchema).max(25) });
-  let set: GeneratedSet;
+  const parseSet = GeneratedSet.extend({
+    items: itemsOneByOne(itemSchema, 25),
+    // One unusable task costs its own question, never the whole set (audit H-14/H-15).
+    bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
+  });
+  let handedOver = false;
+  const onPartial = opts.onFirstItems
+    ? (rawSoFar: string) => {
+        if (handedOver) return;
+        const prefix = answerUpTo(rawSoFar, 'items', FIRST_BATCH);
+        if (prefix === null) return;
+        const parsed = parseSet.safeParse(prefix);
+        // Fewer than asked for means a question was dropped as unusable: wait rather than start
+        // a run on two questions when three were written.
+        if (!parsed.success || !parsed.data.usable || parsed.data.items.length < FIRST_BATCH)
+          return;
+        handedOver = true;
+        opts.onFirstItems?.(parsed.data);
+      }
+    : undefined;
   try {
-    const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
+    const res = await callModel(deps, learner.id, localParts(now, timezone).date, {
       purpose: 'explain',
       tier: 'smart',
       promptVersion: GENERATE_PROMPT_VERSION,
@@ -380,30 +437,49 @@ async function prepareTopic(
       schema: sheets ? toJsonSchema(setSchema) : GENERATED_SCHEMA,
       maxOutputTokens: 10_000,
       temperature: 0.4,
-      timeoutMs: 60_000,
+      // A streamed run must be finished inside the window the run waits for it, or it would
+      // still be writing after the run stopped saying "more is coming" (issue #220).
+      timeoutMs: onPartial ? REST_WINDOW_MS : 60_000,
       // Prepared once, and everything later builds on it (keys, hints, worked
       // solutions): time to think. Measured on 3.6 Flash: about the same time and
       // cost, more careful content (docs/architecture.md §Speed).
       thinkingBudget: 2048,
+      onPartial,
     });
-    const parsed = GeneratedSet.extend({
-      items: itemsOneByOne(itemSchema, 25),
-      // One unusable task costs its own question, never the whole set (audit H-14/H-15).
-      bars: itemsOneByOne(BarTask, MAX_BAR_ITEMS),
-    }).safeParse(res.json);
+    const parsed = parseSet.safeParse(res.json);
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
-    set = parsed.data;
+    return parsed.data;
   } catch (err) {
     if (isAppError(err)) throw err;
     throw new AppError('model_unavailable', 'Could not prepare this right now');
   }
+}
 
-  const allowed = KINDS[input.kind];
+/** What a set becomes once code has had its say: the questions to store, and the bars. */
+type Prepared = { items: ItemDraft[]; bars: ItemDraft[] };
+
+/**
+ * The questions of a set that may be stored, in the order they will be asked. Every rule here
+ * was already in place before the set could arrive in two parts (issue #220); it is a function
+ * only so that both parts go through exactly the same ones.
+ */
+function preparedFrom(
+  set: GeneratedSet,
+  learner: PracticeLearner,
+  input: StartTopicRequest,
+  /**
+   * She photographed the material herself. Her teacher's sheet beats any curriculum plan, so the
+   * Bundesland rule below does not touch such a run (issue #214). Passed in rather than read
+   * here: the same set may be prepared twice — the first questions and then the rest (issue
+   * #220) — and both must be prepared by exactly the same rules.
+   */
+  ownSheets: boolean,
+): Prepared {
   let items = atLevel(
     usableItems(
       set.items
-        .filter((i) => allowed.has(i.kind))
+        .filter((i) => KINDS[input.kind].has(i.kind))
         .map((i) => ({ ...i, hints: [], worked_solution: null })),
     ),
     input.difficulty,
@@ -412,7 +488,7 @@ async function prepareTopic(
     // Homework is what the learner typed — tasks the model added are dropped.
     items = items.filter((i) => fromLearnerText(i.prompt, input.text));
   }
-  if (input.kind === 'test' && !sheets) {
+  if (input.kind === 'test' && !ownSheets) {
     // A practice test says what it is: questions like the test her class writes. A question on
     // material her Bundesland does not teach at her year cannot be on that test, however
     // correct it is in the subject — so it is dropped here, by code, not merely discouraged in
@@ -441,9 +517,127 @@ async function prepareTopic(
   // the bar away because she asked for something harder would remove the one thing that
   // makes a harder fraction task approachable.
   const bars = input.kind === 'practice' ? barItems(set.bars, learner.locale) : [];
-  if (!set.usable || items.length + bars.length === 0) {
+  return { items, bars };
+}
+
+async function prepareTopic(
+  deps: Deps,
+  learner: PracticeLearner,
+  input: StartTopicRequest,
+): Promise<string> {
+  const existing = await deps.db.maybeOne<{ id: string }>(
+    `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
+    [learner.id, input.client_request_id],
+  );
+  if (existing) return existing.id;
+
+  const now = deps.now();
+  const tz = await deps.db.one<{ timezone: string }>(
+    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
+    [learner.id],
+  );
+  const sheets = await sheetsOf(deps, learner.id, input);
+  const ground: Ground = {
+    level:
+      learner.level === 'school' ? `school, grade ${learner.grade ?? 'unknown'}` : learner.level,
+    timezone: tz.timezone,
+    sheets,
+    // More of the same: what she just did grounds the new questions (issue #58).
+    pattern: sheets ? null : await patternOf(deps, learner.id, input.from_session_id),
+  };
+  /**
+   * A practice run may start on its first questions while the rest of the answer is still being
+   * written (issue #220). Nothing else may: a test that grew while she sat it would not be a test,
+   * a vocabulary list she typed is already complete, and homework help is exactly the tasks she
+   * typed — in none of them does "more is coming" mean anything.
+   *
+   * And not when she asked for something harder or easier. `atLevel` is a decision about the WHOLE
+   * set — it drops the questions off her level, unless that would leave too few, and "too few" can
+   * only be counted once every question is there. Judged on the first three it does the opposite of
+   * what she asked for: three questions of which one carries her level are "too few to filter", so
+   * the run would start with exactly the questions she said were too easy. Six seconds are the
+   * cheaper price (proven by `practice-wishes.int.test.ts`, which caught this).
+   */
+  const early = input.kind === 'practice' && !input.difficulty;
+  /** The first questions, as soon as they stand there — resolves with null if that never happens. */
+  let handOver: (set: GeneratedSet | null) => void = () => undefined;
+  const firstItems = new Promise<GeneratedSet | null>((resolve) => {
+    handOver = resolve;
+  });
+  // Settled, never rejected: the whole answer is awaited either here or in the background, and a
+  // promise nobody is waiting on yet must not become an unhandled rejection in between.
+  const whole = generateSet(deps, learner, input, ground, now, {
+    onFirstItems: early ? (set) => handOver(set) : undefined,
+  }).then(
+    (set) => {
+      handOver(null);
+      return { set, err: null as unknown };
+    },
+    (err: unknown) => {
+      handOver(null);
+      return { set: null, err };
+    },
+  );
+
+  const head = await firstItems;
+  // The whole answer arrived before three questions could be cut out of it (a short set, a model
+  // that does not stream, a prefix that did not validate): this is the ordinary path, unchanged.
+  if (!head) {
+    const { set, err } = await whole;
+    if (!set) throw err;
+    return store(deps, learner, input, set, preparedFrom(set, learner, input, !!sheets), {
+      now,
+      goalId: sheets?.goalId ?? null,
+      pendingUntil: null,
+    });
+  }
+
+  // Three questions stand there and the rest is still being written. The run starts on them, and
+  // it says so from the moment it exists: there is no instant at which three look like all.
+  const first = preparedFrom(head, learner, input, !!sheets);
+  const sessionId = await store(
+    deps,
+    learner,
+    input,
+    head,
+    // Only the first questions start the run — never the bars, which belong last.
+    { items: first.items.slice(0, FIRST_BATCH), bars: [] },
+    { now, goalId: sheets?.goalId ?? null, pendingUntil: new Date(now.getTime() + REST_WINDOW_MS) },
+  );
+  deps.background(async () => {
+    // Whatever goes wrong behind her, the run stops saying "more is coming" instead of waiting out
+    // its window for questions that will never arrive (rule 5).
+    await addTheRest(deps, learner, input, sessionId, first.items, whole, !!sheets).catch(
+      async () => {
+        await givenUpOnPreparing(deps.db, learner.id, sessionId).catch(() => undefined);
+      },
+    );
+  });
+  return sessionId;
+}
+
+/**
+ * The run and its first (or only) questions, written in one transaction so that nothing ever sees
+ * a run without its questions or a run that is waiting without saying so (CLAUDE.md rule 4).
+ */
+async function store(
+  deps: Deps,
+  learner: PracticeLearner,
+  input: StartTopicRequest,
+  set: GeneratedSet,
+  prepared: Prepared,
+  opts: {
+    now: Date;
+    /** The planned test this run is for — only ever one whose sheets grounded it (issue #58). */
+    goalId: string | null;
+    /** Until when this run says more questions are coming (issue #220), or null. */
+    pendingUntil: Date | null;
+  },
+): Promise<string> {
+  if (!set.usable || prepared.items.length + prepared.bars.length === 0) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
   }
+  const { now, goalId, pendingUntil } = opts;
   try {
     return await deps.db.tx(async (tx) => {
       const subjectId = set.subject
@@ -452,7 +646,7 @@ async function prepareTopic(
       const itemIds = await insertItems(
         tx,
         { learnerId: learner.id, materialId: null, subjectId, origin: ORIGIN[input.kind] },
-        [...items, ...bars],
+        [...prepared.items, ...prepared.bars],
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
       );
@@ -463,9 +657,10 @@ async function prepareTopic(
         {
           mode: MODE[input.kind],
           stepId: null,
-          goalId: sheets?.goalId ?? null,
+          goalId,
           title: set.title,
           clientRequestId: input.client_request_id,
+          itemsPendingUntil: pendingUntil,
         },
         now,
       );
@@ -483,4 +678,77 @@ async function prepareTopic(
     }
     throw err;
   }
+}
+
+/**
+ * The questions of the same answer that were still being written when the run started
+ * (issue #220), appended once it is finished.
+ *
+ * It is the SAME answer, so nothing here has to guard against the set repeating itself — the
+ * questions already in the run are simply the ones before the cut. `samePrompt` runs anyway, as
+ * the one rule both places that add to something existing use (a sheet read again for the rest of
+ * its questions, issue #150): it costs nothing and it is the only thing standing between a
+ * surprise and a question she answers twice.
+ *
+ * Whatever happens, the run stops waiting: with the rest, or without it.
+ */
+async function addTheRest(
+  deps: Deps,
+  learner: PracticeLearner,
+  input: StartTopicRequest,
+  sessionId: string,
+  /** The questions the run already holds, as this process prepared them. */
+  head: ItemDraft[],
+  whole: Promise<{ set: GeneratedSet | null; err: unknown }>,
+  /** She brought the material herself — the same answer as for the first questions (#214). */
+  ownSheets: boolean,
+): Promise<void> {
+  const { set } = await whole;
+  if (!set) {
+    // The stream broke after the first questions. The run is the questions it has, and it says so
+    // instead of waiting out its window for an answer that is not coming (rule 5).
+    await givenUpOnPreparing(deps.db, learner.id, sessionId);
+    return;
+  }
+  const prepared = preparedFrom(set, learner, input, ownSheets);
+  const known = new Set(head.slice(0, FIRST_BATCH).map((i) => samePrompt(i.prompt)));
+  const rest: ItemDraft[] = [];
+  for (const it of [...prepared.items, ...prepared.bars]) {
+    const key = samePrompt(it.prompt);
+    if (known.has(key)) continue;
+    known.add(key);
+    rest.push(it);
+  }
+  if (rest.length === 0) {
+    await givenUpOnPreparing(deps.db, learner.id, sessionId);
+    return;
+  }
+  const now = deps.now();
+  const subject = await deps.db.maybeOne<{ subject_id: string | null }>(
+    `select i.subject_id from session_items si join items i on i.id = si.item_id
+      where si.session_id = $1 order by si.position limit 1`,
+    [sessionId],
+  );
+  const added = await deps.db.tx(async (tx) => {
+    const itemIds = await insertItems(
+      tx,
+      {
+        learnerId: learner.id,
+        materialId: null,
+        // The subject the run was filed under; the rest of the same answer never files a second.
+        subjectId: subject?.subject_id ?? null,
+        origin: ORIGIN[input.kind],
+      },
+      rest,
+      input.direction ?? null,
+    );
+    const n = await addPreparedItems(tx, learner.id, sessionId, itemIds, now);
+    // The run grew, so everything Buddy knows about it is a version behind (rule 4).
+    if (n > 0) await bumpContext(tx, learner.id);
+    return n;
+  });
+  // The questions that just arrived have no prepared ladder yet. `prepareHints` takes only the
+  // ones that have none, so this writes help for the rest of the set and never touches the first
+  // questions' (hints.ts). Best effort, like the call the route makes for the first ones.
+  if (added > 0) await prepareHints(deps, learner, sessionId).catch(() => 0);
 }

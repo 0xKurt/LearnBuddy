@@ -365,6 +365,19 @@ export function placeholderQuestion(it: Pick<ItemDraft, 'kind' | 'prompt'>): boo
 }
 
 /**
+ * Two prompts that mean the same question (issue #150). A second pass over the same thing must
+ * not hand back "le vélo" as new when "Le vélo " is already there: the model retypes, and its
+ * spacing and capitals are not what makes a question a different one.
+ *
+ * It lives here because both places that ask twice use it and must agree: a sheet read again for
+ * the rest of its questions (`materials/service.ts`), and a practice run whose remaining
+ * questions are written while she works on the first ones (issue #220, `generate.ts`).
+ */
+export function samePrompt(prompt: string): string {
+  return prompt.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+}
+
+/**
  * Keep only items whose shape is consistent; returns them normalised.
  *
  * `severalParts: false` drops the three kinds whose answer has several parts (issues

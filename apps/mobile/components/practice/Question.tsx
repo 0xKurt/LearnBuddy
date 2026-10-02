@@ -38,9 +38,16 @@ type ProgressProps = {
    * questions (issue #147) — same row, same bar, same place on the screen.
    */
   label?: string;
+  /**
+   * More questions for this run are still being written (issue #220). Then `total` is not the
+   * number it will be, so neither the count nor the bar is shown: "Frage 1 von 3" that turns into
+   * "Frage 1 von 9" is exactly the display that costs trust. The row says where she is and that
+   * more is coming, and the number arrives when it is true.
+   */
+  preparing?: boolean;
 };
 
-export function ProgressRow({ position, total, closed, right, label }: ProgressProps) {
+export function ProgressRow({ position, total, closed, right, label, preparing }: ProgressProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const share = total > 0 ? Math.max(0, Math.min(1, closed / total)) : 0;
@@ -56,24 +63,32 @@ export function ProgressRow({ position, total, closed, right, label }: ProgressP
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Text style={[TYPE.label, { color: palette.ink2, fontSize: 14 }]}>
-        {label ?? t('progress', { current: position, total })}
+        {label ??
+          (preparing
+            ? t('progress_more_coming', { current: position })
+            : t('progress', { current: position, total }))}
       </Text>
-      {/* The text above already says where we are; the bar is decoration. */}
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={{
-          flex: 1,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: palette.lavender,
-          overflow: 'hidden',
-        }}
-      >
-        <Animated.View
-          style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
-        />
-      </View>
+      {/* The text above already says where we are; the bar is decoration. While the set is still
+          growing there is nothing honest to fill it to, so only its place is kept. */}
+      {preparing ? (
+        <View style={{ flex: 1 }} />
+      ) : (
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            flex: 1,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: palette.lavender,
+            overflow: 'hidden',
+          }}
+        >
+          <Animated.View
+            style={[{ height: '100%', borderRadius: 4, backgroundColor: palette.primary }, fill]}
+          />
+        </View>
+      )}
       {right}
     </View>
   );

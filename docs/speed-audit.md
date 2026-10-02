@@ -295,3 +295,89 @@ Audit M-78). Ehrlich geht: der Tipp auf Buddy **oder** das Mikro unterbricht und
 sofort zu — ein Tipp statt zwei. `iosCategory: playAndRecord` existiert in
 expo-speech-recognition 3.1.3, ist aber ohne Gerätetest kein Versprechen; echtes Reinreden
 bräuchte einen Duplex-Audio-Stack (nicht gebaut, `docs/architecture.md` §Voice).
+
+## Ausgabe-Tokens sind die Wartezeit: die zwei gemessenen Hebel (02.10., Issues #219/#220)
+
+Methode: `apps/api/scripts/speed-audit.ts practice` (jetzt stufenweise aufrufbar, drei Läufe
+je Richtung) für die Zeit, `apps/api/evals/content` für den Inhalt — derselbe Lauf misst
+beides, weil sonst Qualität und Tempo in zwei verschiedenen Läufen gegen zwei verschiedene
+Blätter gemessen würden. Die Tabelle der Modellseite nennt jetzt auch **Denk-Tokens**: sie
+kosten dieselbe Zeit wie geschriebene und standen vorher in keiner Zeile.
+
+### #219 — die Reihenfolge der Abschrift: gemessen, und **nicht** eingebaut
+
+Die Annahme des Issues war, die Abschrift (bis 12 000 Zeichen, vor `items` im Schema) sei
+der Grund für die 14 s. Gemessen auf beiden Eval-Blättern:
+
+| Was                                    | math-fractions  | german-cases  |
+| -------------------------------------- | --------------- | ------------- |
+| Anteil Abschrift an der Antwort        | **5,0 %**       | **9,0 %**     |
+| Anteil Fragen an der Antwort           | 89,6 %          | 84,8 %        |
+| `extraction`-Latenz vorher / umgedreht | 10,90 → 10,53 s | 7,75 → 7,39 s |
+| Ausgabe-Tokens vorher / umgedreht      | 2 481 → 2 329   | 1 699 → 1 729 |
+| „vom Blatt" ohne Befund                | 14/14 → 14/14   | (dieselben)   |
+
+Die Umdrehung erreicht das Modell wirklich — die Feldreihenfolge der Antwort (aus
+`Object.keys` der geparsten Antwort, also die echte Schreibreihenfolge) wechselte von
+`… subject, extracted_text, items, …` zu `… subject, items, extracted_text, …`. Die Qualität
+blieb gleich. **Die Zeit auch**, und das ist kein Zufall, sondern Arithmetik: ein nicht
+gestreamter Aufruf gibt seine Antwort heraus, wenn das LETZTE Token geschrieben ist. Die
+Reihenfolge innerhalb einer vollständigen Antwort kann ihre Länge nicht ändern. −0,37 s und
+−0,36 s liegen im Rauschen (die Ausgabe-Tokens schwankten um ±6 %).
+
+Und selbst gestreamt wäre die Decke klein: die Abschrift ist 5–9 % der Antwort, die Fragen
+85–90 %. „Die erste Frage nach 2–4 s statt nach 11–16 s" ist über die Feldreihenfolge nicht
+erreichbar — 90 % der Schreibzeit SIND die Fragen. Dafür müsste man innerhalb der
+`items`-Liste streamen und das Blatt öffnen, während es noch wächst: genau die drei Fallen
+von #220, versetzt auf den Blatt-Pfad, wo zusätzlich die Suche an der Abschrift hängt
+(`modules/buddy/lookups.ts`).
+
+**Verdikt: #219 geht so nicht raus.** Die Umdrehung ist harmlos, bringt aber 0 s, kostet eine
+Prompt-Version und trägt ein Qualitätsrisiko, das diese Stichprobe nur grob begrenzt. Der
+Code ist zurückgedreht; was bleibt, ist diese Messung. Die zwei Blätter hier sind klein (245
+und 381 Zeichen Abschrift) — auf einer textlastigen Buchseite wäre der Anteil größer; das
+Argument „Reihenfolge ohne Streaming = 0 s" hängt davon nicht ab.
+
+**Nebenbefund für später:** `moreRules` lässt jede Folge-Lesung desselben Blattes die
+Abschrift komplett neu schreiben („extracted_text: the same faithful transcription as
+before"). Bei einer 50er-Vokabelliste sind das vier Abschriften statt einer — echte,
+messbare Verschwendung, und etwas anderes als das, was #219 vorschlägt.
+
+### #220 — Übung starten: 6,45 s → 3,90 s (median, am Endpoint)
+
+| Lauf                   | min        | median     | max        | Fragen in der Antwort |
+| ---------------------- | ---------- | ---------- | ---------- | --------------------- |
+| vorher (ein Stück)     | 6,27 s     | 6,45 s     | 7,03 s     | 10 / 8 / 8            |
+| nachher (erste Fragen) | **3,13 s** | **3,90 s** | **4,87 s** | 3 / 3 / 3             |
+
+Modellseite, vorher: `explain` 6,42 s median, **1 432 Ausgabe-Tokens, 0 Denk-Tokens** —
+reine Schreibzeit bei den dokumentierten 250–300 Tokens/s
+(`docs/decisions/prefix-cache-2026-10-01.md`). Nachher: derselbe **eine** Aufruf, 7,36 s
+median, 1 376 Tokens; sie wartet nur nicht mehr darauf.
+
+**Ein Aufruf, nicht zwei.** Der Satz wird gestreamt und nach den ersten drei fertigen Fragen
+aufgeschnitten (`apps/api/src/llm/partial.ts` `answerUpTo`), mit demselben zod-Schema
+geprüft wie die fertige Antwort. Zwei Aufrufe hätten den zweiten erzählen müssen, was der
+erste geschrieben hat, und den ganzen Systemprompt nochmal bezahlt (5 102 Eingabe-Tokens) —
+und hätten das Dubletten-Problem erst erzeugt, das #220 Falle 3 nennt. Die gemessenen Kosten
+des Inhalts-Evals bleiben entsprechend gleich: 5,01 ct vorher, 5,05 ct nachher.
+
+Ehrlich dazu: **die 1,5–2 s der Abnahme werden nicht erreicht.** Drei Fragen sind ~460 der
+1 376 Tokens, dazu der Sockel von ~1 s und die Felder vor den Fragen — ~3 s ist der Boden für
+drei. Unter 2 s käme man nur mit EINER ersten Frage, und dann wäre „wird noch vorbereitet"
+der Normalfall statt der Ausnahme. Zweites Nebenergebnis: der **ganze** Satz ist etwa 1 s
+später komplett als vorher (Streaming-Overhead) — sie fängt 2,5 s früher an, der Rest
+kommt ~1 s später an.
+
+Inhalt, `evals/content` (derselbe Richter, dieselben zwei Blätter, je ein Lauf):
+
+| Stufe               | vorher | nachher   |
+| ------------------- | ------ | --------- |
+| „mehr davon" (#220) | 14/17  | **17/17** |
+| „vom Blatt" (#219)  | 14/14  | 14/14     |
+
+Wall-Clock „Übung starten" im Eval-Lauf: 5,92 s / 6,45 s → **2,91 s / 2,99 s**. Die Sätze
+wuchsen von 3 auf 9 bzw. 8 Fragen, jede genau einmal.
+**Grenze der Zahl:** 17 geurteilte Fragen pro Lauf und ein Modell bei Temperatur 0,4 — im
+Baseline-Lauf waren es 14/17, im nächsten Lauf ohne jede Änderung am `explain`-Pfad 17/17.
+Die Stichprobe erkennt einen groben Einbruch, keine feine Verschlechterung.

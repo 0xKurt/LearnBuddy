@@ -60,13 +60,15 @@ practiceRoutes.post('/sessions', async (c) => {
     },
     input.mode,
   );
-  return c.json(await sessionView(deps.db, learnerId, id, deps.storage), 201);
+  return c.json(await sessionView(deps.db, learnerId, id, deps.storage, deps.now()), 201);
 });
 
 practiceRoutes.get('/sessions/:id', async (c) => {
   const sessionId = check(Uuid, c.req.param('id'));
   const deps = depsOf(c);
-  return c.json(await sessionView(deps.db, c.get('learner').id, sessionId, deps.storage));
+  return c.json(
+    await sessionView(deps.db, c.get('learner').id, sessionId, deps.storage, deps.now()),
+  );
 });
 
 practiceRoutes.post('/sessions/:id/answer', async (c) => {
@@ -130,7 +132,7 @@ practiceRoutes.post('/sessions/:id/cards', async (c) => {
   const deps = depsOf(c);
   const learnerId = c.get('learner').id;
   const id = await startCardPass(deps, learnerId, sessionId, input);
-  return c.json(await sessionView(deps.db, learnerId, id, deps.storage), 201);
+  return c.json(await sessionView(deps.db, learnerId, id, deps.storage, deps.now()), 201);
 });
 
 /**
@@ -169,7 +171,7 @@ practiceRoutes.post('/topic', async (c) => {
       await prepareHints(deps, learner, id).catch(() => 0);
     });
   }
-  return c.json(await sessionView(deps.db, learner.id, id, deps.storage), 201);
+  return c.json(await sessionView(deps.db, learner.id, id, deps.storage, deps.now()), 201);
 });
 
 /**

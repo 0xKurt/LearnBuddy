@@ -80,6 +80,7 @@
   "ended": "Esta práctica ya ha terminado.",
   "finish_failed": "No he podido cargar tu resultado ahora mismo.",
   "finishing": "Un momento: enseguida llega tu resultado.",
+  "more_coming": "Enseguida llegan las siguientes preguntas …",
   "flag": {
     "button": "La pregunta no encaja",
     "hint": "Quita esta pregunta; ya no volverá a salir.",
@@ -99,6 +100,7 @@
   "next": "Siguiente",
   "origin_buddy": "Pregunta de Buddy",
   "progress": "Pregunta {{current}} de {{total}}",
+  "progress_more_coming": "Pregunta {{current}} · estoy escribiendo más",
   "reexplain": {
     "label": "¿Te lo explico de otra forma?",
     "simpler": "Más fácil",

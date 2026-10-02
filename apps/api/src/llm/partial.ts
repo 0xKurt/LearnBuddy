@@ -1,6 +1,13 @@
 // Reading a JSON answer while it is still being written (streaming): the text
 // of one top-level string field so far, and whether it is finished. Only for
 // showing progress; decisions are made on the whole answer, parsed and validated.
+//
+// With one exception, and it is deliberate: `answerUpTo` cuts the answer after the n-th finished
+// element of one array and closes the brackets, so the prefix is itself a complete answer that the
+// SAME zod schema validates. A decision IS made on it — a practice run starts on the first
+// questions of a set that is still being written (issue #220) — but never on anything half
+// written: only text up to a closing brace is used, and what comes out is validated like any
+// finished answer.
 
 export type PartialString = { text: string; done: boolean };
 
@@ -123,6 +130,60 @@ export function partialArray(raw: string, key: string): unknown[] {
     }
   }
   return out;
+}
+
+/**
+ * The whole answer as it stands after the n-th **finished** element of `"key": [ … ]`, as a
+ * complete JSON value — or null while fewer than n are finished, or when what stands before the
+ * array does not parse on its own.
+ *
+ * Where `partialArray` hands back elements to SHOW, this hands back an answer to ACT on: fields
+ * before the array included, which is what makes it validatable with the finished answer's schema.
+ * The models write their fields in schema order (measured for `extraction`, 02.10.), so the prefix
+ * is the real answer rather than a reconstruction of one.
+ *
+ * It holds EXACTLY n elements even when more are already there: the caller asked for the first n,
+ * and everything after them belongs to the part that is still coming.
+ */
+export function answerUpTo(raw: string, key: string, n: number): unknown | null {
+  if (n < 1) return null;
+  const start = arrayStart(raw, key);
+  if (start < 0) return null;
+  let found = 0;
+  let depth = 0;
+  let from = -1;
+  for (let i = start; i < raw.length; i++) {
+    const c = raw[i]!;
+    if (c === '"') {
+      const end = stringEnd(raw, i);
+      if (end < 0) return null; // a string still being written: nothing after it is final
+      i = end;
+      continue;
+    }
+    if (c === '{' || c === '[') {
+      if (depth === 0) from = i;
+      depth++;
+      continue;
+    }
+    if (c === '}' || c === ']') {
+      depth--;
+      if (depth < 0) return null; // the array is closed and n elements were never reached
+      if (depth === 0 && from >= 0) {
+        from = -1;
+        found++;
+        if (found === n) {
+          try {
+            return JSON.parse(`${raw.slice(0, i + 1)}]}`);
+          } catch {
+            // What stands before the array is not valid JSON on its own. Nothing is guessed: the
+            // caller tries again with the next chunk, and otherwise gets the finished answer.
+            return null;
+          }
+        }
+      }
+    }
+  }
+  return null;
 }
 
 /** Index just after `"key": [` at the first level, or -1 while it has not been written. */

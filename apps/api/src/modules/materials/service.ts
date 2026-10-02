@@ -34,7 +34,7 @@ import { curriculumBlock } from '../curriculum/state.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
-import { insertItems, usableItems } from '../practice/items.js';
+import { insertItems, samePrompt, usableItems } from '../practice/items.js';
 import { createSession } from '../practice/service.js';
 import {
   clarifiedRules,
@@ -77,15 +77,6 @@ const MAX_EXTRACTION_ATTEMPTS = 3;
 const UNCLEAR_TTL_MS = 24 * 3_600_000;
 /** A clarified reading is one more look at the same photos: two tries, then it stays unwritten. */
 const MAX_CLARIFY_ATTEMPTS = 2;
-
-/**
- * Two prompts that mean the same question (issue #150). A continued reading must not hand
- * back "le vélo" as new when "Le vélo " is already there — the model retypes from the same
- * photo, and its spacing and capitals are not what makes a question a different one.
- */
-function samePrompt(prompt: string): string {
-  return prompt.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-}
 
 type MaterialRow = {
   id: string;

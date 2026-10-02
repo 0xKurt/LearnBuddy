@@ -129,8 +129,18 @@ export const useMaterialItems = (id: string) =>
         : false,
   });
 
+/**
+ * One practice run. It is normally not polled at all — every change comes back in the answer to
+ * what she just did — with one exception: while the server says more questions are still being
+ * written (issue #220, `SessionView.preparing`), nothing she does brings them, so the screen asks
+ * until they are there. The same second-and-a-half rhythm the sheet reading uses.
+ */
 export const usePracticeSession = (id: string) =>
-  useQuery({ queryKey: keys.session(id), queryFn: () => getSession(id) });
+  useQuery({
+    queryKey: keys.session(id),
+    queryFn: () => getSession(id),
+    refetchInterval: (q) => (q.state.data?.preparing ? 1500 : false),
+  });
 
 /** A session the server just started (and returned): its first question shows at once. */
 export function seedSession(view: SessionView): void {

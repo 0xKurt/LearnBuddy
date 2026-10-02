@@ -911,6 +911,18 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
   twice as fast, no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **Output tokens ARE the wait, and thinking tokens count as output** (issues #219/#220, measured
+  02.10., `docs/speed-audit.md` §Ausgabe-Tokens): roughly a 1 s floor plus 250–300 written tokens a
+  second. So the only way to shorten a wait is to need fewer tokens before the learner can start —
+  and the only way to reach them earlier without writing fewer is to **stream and cut**
+  (`llm/partial.ts` `answerUpTo`: the answer after the n-th finished array element, closed up and
+  validated by the finished answer's own schema; a practice run starts on that, §Practice).
+  Reordering the fields of a schema does **nothing** for a call that is not streamed — it returns
+  when the last token is written, so the order inside a complete answer cannot change its length.
+  That was measured, not reasoned: turning `extraction`'s transcript behind its questions moved the
+  model's real write order (10,90 → 10,53 s and 7,75 → 7,39 s, i.e. nothing) and the transcript
+  turned out to be 5–9 % of the answer while the questions are 85–90 %. Issue #219 was therefore
+  not shipped; the numbers are on the issue and in the speed audit.
 - **The prompt is layered for the provider's prefix cache, and what that is worth is measured,
   not assumed** (issue #25). Gemini discounts the stable _beginning_ of consecutive requests
   (implicit caching, from 4 096 tokens up) and reports what it reused; that number is now stored
@@ -1547,6 +1559,43 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 
 ## Practice
 
+**Eine Übung darf anfangen, bevor alle ihre Fragen geschrieben sind** (Issue #220, Migration
+0073). Gemessen 02.10.: „üben wir Brüche" kostete 6,45 s am Endpoint, davon 6,42 s der
+`explain`-Aufruf für 1 432 geschriebene und 0 gedachte Tokens — reine Schreibzeit. Neun Fragen
+werden geschrieben, bevor sie die erste sieht, obwohl drei zum Anfangen reichen.
+
+Darum wird der Aufruf **gestreamt** und nach den ersten `FIRST_BATCH` (3) fertigen Fragen
+aufgeschnitten: `llm/partial.ts` `answerUpTo` schneidet die Antwort hinter der n-ten fertigen
+Frage ab und schließt die Klammern, sodass das Stück dasselbe zod-Schema durchläuft wie die
+fertige Antwort. Es bleibt **ein** Modellaufruf — ein zweiter für den Rest müsste erzählt
+bekommen, was der erste geschrieben hat, den Systemprompt nochmal bezahlen (5 102 Tokens) und
+könnte sich wiederholen; dieselbe Antwort in zwei Teilen kann das nicht. Ergebnis am Endpoint:
+**3,13–4,87 s statt 6,27–7,03 s** (`docs/speed-audit.md` §Ausgabe-Tokens).
+
+Damit hält eine Übung für ein paar Sekunden weniger Fragen, als sie halten wird, und daran
+hängen drei Regeln im Code:
+
+- **„Nichts offen" heißt nicht „vorbei".** `practice_sessions.items_pending_until` (ein Instant,
+  kein Flag) sperrt `finishIfComplete`, und `POST /practice/sessions/:id/finish` **pausiert**
+  statt abzuschließen — das ist der Aufruf, den der Bildschirm von selbst macht, sobald keine
+  Frage mehr offen ist. Sonst wäre eine Übung nach drei Fragen „fertig", Buddys Schritt hätte
+  seinen Beleg, und die noch geschriebenen Fragen fielen in einen Durchgang mit Ergebnis.
+- **Keine Zahl, die sich noch ändert.** `SessionView.preparing` sagt es, und die App zeigt
+  Position ohne Gesamtzahl und ohne Balken, bis es falsch ist („Frage 1 von 3" → „Frage 1 von 9"
+  ist die Anzeige, die Vertrauen kostet). Solange `preparing` gilt, fragt der Bildschirm alle
+  1,5 s nach — nur dann, denn sonst bringt jede Antwort ihren Stand selbst mit.
+- **Die Sperre löst sich von allein.** Der Instant ist eine Frist (`REST_WINDOW_MS`, 25 s, auch
+  das Budget des Aufrufs): bricht der Stream ab, ist die Übung die Fragen, die sie hat — sie
+  bekommt ihr Ergebnis, nie eine Übung, die nicht enden kann. Gegen `deps.now()` verglichen,
+  nie in SQL (Regel 7).
+
+Nur `kind: 'practice'` wächst, und auch das nicht, wenn sie **leichter oder schwerer** verlangt
+hat: `atLevel` entscheidet über den GANZEN Satz, und auf drei Fragen angewandt gäbe es ihr genau
+die Fragen zurück, die sie zu leicht fand. Eine Probe, eine getippte Vokabelliste und
+Hausaufgabenhilfe wachsen nie. `src/__tests__/practice-still-coming.int.test.ts` hält das Rennen
+fest (alle ersten Fragen beantwortet, während der Rest noch kommt); der gescriptete Stream lässt
+sich dafür anhalten (`ScriptedAnswer.pauseAfter`, derselbe `answerUpTo` wie in Produktion).
+
 **Der Weg, Schritt für Schritt** (Issue #209). In einer Klassenarbeit wird der Weg
 bewertet, nicht nur das Ergebnis (IQB-Operator „berechnen": „ausgehend von einem Ansatz
 darzustellen"). `modules/practice/steps.ts` prüft jeden Übergang Zeile n → n+1 auf
@@ -1836,6 +1885,10 @@ nothing stays open forever:
   is a no-op. Every writer locks the session row first, so an answer to a session that ended
   meanwhile is refused (409) behind the same lock. Buddy's follow-up check is queued by the
   `session_finished` event and runs on the next scheduler tick.
+  **Except while more questions are still being written** (issue #220, `items_pending_until`):
+  then "nothing open" means she was faster than the generator, and both `finishIfComplete` and
+  `POST …/finish` leave the run alone — see §Practice for the deadline that keeps that from
+  lasting.
 - _"Beenden"._ In a test it hands the test in (the review shows questions she never got to as
   "nicht bearbeitet", with their solution). Everywhere else it is a pause: the app goes back to
   Buddy without finishing; `POST …/finish` on homework help with open tasks only touches its

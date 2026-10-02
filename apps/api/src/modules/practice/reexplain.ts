@@ -127,7 +127,14 @@ export async function reexplain(
   input: ReexplainRequest,
 ): Promise<AnswerResponse> {
   const now = deps.now();
-  const replayed = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
+  const replayed = await replay(
+    deps.db,
+    learner.id,
+    sessionId,
+    input.client_turn_id,
+    deps.storage,
+    deps.now(),
+  );
   if (replayed) return replayed;
 
   const session = await loadSession(deps.db, learner.id, sessionId);
@@ -305,12 +312,26 @@ export async function reexplain(
   } catch (err) {
     // A concurrent duplicate of the same tap won: return its result.
     if (isUniqueViolation(err)) {
-      const r = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
+      const r = await replay(
+        deps.db,
+        learner.id,
+        sessionId,
+        input.client_turn_id,
+        deps.storage,
+        deps.now(),
+      );
       if (r) return r;
     }
     throw err;
   }
-  const done = await replay(deps.db, learner.id, sessionId, input.client_turn_id, deps.storage);
+  const done = await replay(
+    deps.db,
+    learner.id,
+    sessionId,
+    input.client_turn_id,
+    deps.storage,
+    deps.now(),
+  );
   if (!done) throw new AppError('internal', 'explanation missing');
   return done;
 }

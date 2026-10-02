@@ -80,6 +80,7 @@
   "ended": "This practice has already ended.",
   "finish_failed": "I couldn't load your result just now.",
   "finishing": "One moment – your result is on its way.",
+  "more_coming": "The next questions are on their way …",
   "flag": {
     "button": "Question doesn't fit",
     "hint": "Takes this question out; it won't come up again.",
@@ -99,6 +100,7 @@
   "next": "Next",
   "origin_buddy": "Question from Buddy",
   "progress": "Question {{current}} of {{total}}",
+  "progress_more_coming": "Question {{current}} · I’m writing more",
   "reexplain": {
     "label": "Explain it differently?",
     "simpler": "Simpler, please",
