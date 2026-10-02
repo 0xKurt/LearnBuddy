@@ -47,6 +47,7 @@ import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
+import { MAX_ACCEPTED } from './items.js';
 import {
   TUTOR_PROMPT_VERSION,
   TUTOR_SYSTEM,
@@ -1247,18 +1248,31 @@ export async function answerItem(
       );
       // The key learns: an answer the model judged right that the rules did not know
       // is accepted by the rules next time — at once and without a model.
+      //
+      // Two limits, because this is the one place where a MODEL judgement becomes a RULE and
+      // then outlives everything (issue #227, finding 3):
+      //
+      //   - never in a test. There the model judges with less context, its reply is thrown
+      //     away and replaced, and nobody reads what it decided — the worst possible moment
+      //     to make one of its judgements permanent.
+      //   - never past MAX_ACCEPTED, the same ceiling the reading prompts name. Without it the
+      //     list grows without end, every entry widens what counts as right, and a key that
+      //     accepts everything accepts a wrong answer too. Postgres does the counting, so two
+      //     answers arriving at once cannot both slip past a check done in code.
       if (
         judged.evaluatedBy === 'model' &&
         judged.verdict === 'correct' &&
         rule === 'unknown' &&
         (item.kind === 'vocab' || item.kind === 'short') &&
         session.mode !== 'help' &&
+        session.mode !== 'test' &&
         text.trim().length <= 80
       ) {
         await tx.query(
           `update items set accepted_answers = array_append(accepted_answers, $3)
-            where id = $1 and learner_id = $2 and not ($3 = any(accepted_answers))`,
-          [item.id, learner.id, text.trim()],
+            where id = $1 and learner_id = $2 and not ($3 = any(accepted_answers))
+              and coalesce(array_length(accepted_answers, 1), 0) < $4`,
+          [item.id, learner.id, text.trim(), MAX_ACCEPTED],
         );
       }
       const attempted = judged.verdict !== null && judged.verdict !== 'not_an_attempt';

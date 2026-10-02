@@ -82,6 +82,8 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
   typo: 'close: a small spelling slip',
   folded:
     'differs from the solution only in capitalisation, ß/ss or punctuation — judge gently whether that matters for this question',
+  other_form:
+    'the VALUE is right — it is the same amount, written another way. Only the form differs from the key: decide whether the form is what this question asks for, and never call it wrong for the value',
   step_broke:
     'her written path stops following itself at one line; code found which one (checked, not judged)',
   unbalanced:

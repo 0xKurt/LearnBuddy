@@ -75,6 +75,8 @@ export type RuleVerdict =
   | 'folded'
   /** A written path whose steps stop following each other (issue #209). */
   | 'step_broke'
+  /** The same value, written another way: right in value, and the FORM is the question. */
+  | 'other_form'
   /** A reaction equation whose atoms or charge do not add up (issue #212). */
   | 'unbalanced'
   /** Balanced, but every coefficient divisible by the same number: right, not yet reduced. */
@@ -257,6 +259,7 @@ const STRENGTH: readonly RuleVerdict[] = [
   'not_lowest',
   'unbalanced',
   'step_broke',
+  'other_form',
   'folded',
   'unknown',
 ];
@@ -356,7 +359,11 @@ function numericVerdict(item: ItemForCheck, text: string): RuleVerdict {
     }
     if (c !== 'different') allDifferent = false;
   }
-  if (equalInOtherForm) return 'unknown'; // decision D-3: another form is for the tutor
+  // Decision D-3 stands: whether the FORM matters ("4/8" for "1/2" may still be unreduced) is
+  // the tutor's call, not the rules'. But it used to be handed over as "not decidable", and the
+  // tutor is allowed to say WRONG to that — about an answer whose value code had just confirmed
+  // (issue #227, finding 1). It now goes over as what it is: right in value, the form open.
+  if (equalInOtherForm) return 'other_form';
   return allDifferent ? 'incorrect' : 'unknown';
 }
 
