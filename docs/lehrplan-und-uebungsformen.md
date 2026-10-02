@@ -1,6 +1,6 @@
 # Lehrplan und Übungsformen — was am Gymnasium wirklich geübt wird, und was Buddy davon kann
 
-**Stand:** 01.10.2026 · **Auftrag:** Issue #193 (Owner, 01.10.2026) · **Quellenstand:** alle Webquellen
+**Stand:** 01.10.2026, §13.4 korrigiert am 02.10.2026 · **Auftrag:** Issue #193 (Owner, 01.10.2026) · **Quellenstand:** alle Webquellen
 am 01.10.2026 abgerufen; „Stand" bei einem Dokument ist dessen Eigendatum.
 
 > **Wozu dieses Dokument da ist.** Buddy kann heute vier Dinge: eine Frage getippt beantworten,
@@ -298,7 +298,8 @@ Abitur 2023" ist damit **wortgleich** (per Diff geprüft).
 > (1) **„Kurvendiskussion", „vollständige Induktion", „Nebenbedingung" und „Krümmung" kommen in
 > den KMK-Standards 2012 nicht ein einziges Mal vor.** Die Kurvendiskussion als geschlossene
 > Prozedur ist didaktische Tradition. Vollständige Induktion fehlt in KMK AHR, BW und Bayern
-> komplett.
+> komplett. _(Korrektur 02.10.2026: als Aufgabenform gibt es beide — Funktionsuntersuchung,
+> Extremwertaufgabe mit Nebenbedingung, vollständige Induktion als Pflicht in Hessen; §13.4.)_
 > (2) **„bewerten" existiert in Mathematik nicht.** Es gibt nur _beurteilen_ — _„Das zu fällende
 > Urteil ist zu begründen."_ Ein Werturteil-Operator fehlt dem Fach vollständig.
 
@@ -499,7 +500,8 @@ Stellenzahl"_, Brandenburg bei _„sinnvolle Genauigkeit"_.
 0 Treffer** · **„Freikörperbild" 0 Treffer** — die deutsche Fachsprache sagt _Kräfteaddition
 (grafisch)_, _resultierende Kraft_, _Kräftezerlegung_, _Kräftepfeile_ · **„Linearisieren" 0
 Treffer** · **kein bundesweites Protokollschema**, und **„Fehlerbetrachtung" ist nirgends
-Protokollelement** · **NRW verlangt im Kernlehrplan SI Physik weder Messunsicherheit noch
+Protokollelement** · _(Korrektur 02.10.2026: Fermi-Aufgabe und Kräftezerlegung sind Aufgabenformen
+und kein Ausschlussgrund, §13.4)_ · **NRW verlangt im Kernlehrplan SI Physik weder Messunsicherheit noch
 Mittelwert, Ausgleichsgerade, Steigungsbestimmung noch Zehnerpotenzen** (0 Treffer für alle) —
 substanzieller Unterschied zu Niedersachsen, BW, Brandenburg, Hamburg. Eine App, die diese
 Begriffe als Aufgabenformen führt, führt etwas ein, das kein Lehrplan verlangt.
@@ -561,7 +563,8 @@ interpretieren, analysieren, angeben überhaupt nicht.**
 funktionellen Gruppen"_ plus die drei Prinzipien. **Fehling** und **Tollens** nur
 Berlin/Brandenburg; **BW nennt stattdessen Benedict-, Biuret-, Ninhydrin-Reaktion und GOD-Test —
 „Fehling" kommt im BW-Plan nicht vor**; **Flammenfärbung** nur Berlin/Brandenburg; **„VSEPR" kommt
-in keinem deutschen Dokument vor** (es heißt „EPA-Modell", und **in BW nicht einmal das**). Und:
+in keinem deutschen Dokument vor** (es heißt „EPA-Modell", und **in BW nicht einmal das**) — die
+Aufgabenform gibt es also unter deutschem Namen (Korrektur 02.10.2026, §13.4). Und:
 **der BW-Bildungsplan 2016 enthält in der gesamten Kursstufe keinen Standard zu
 Reaktionsmechanismen und keine Nernst-Gleichung**, beides steht in KMK AHR 2020.
 
@@ -624,7 +627,8 @@ Parallelansätze, Wiederholungen"_) · **„Mendel"/„Kreuzungsschema"** nur Br
 2004 — **nicht** in NRW, Niedersachsen, KMK AHR 2020 oder Bayern Jg. 9 · **„beschriften" und
 „mikroskopieren" sind in keiner Operatorenliste Operatoren**; die Beschriftungsaufgabe läuft unter
 _benennen_ oder als Adjektiv in der Aufgabenstellung (_„Zeichnen Sie ein **beschriftetes**
-Schema"_).
+Schema"_). _(Korrektur 02.10.2026: Kreuzungsschema, Kontrollansatz und Selektionsformen sind
+Aufgabenformen; „0 Treffer" für einen Fachbegriff ist kein Ausschluss — §13.4.)_
 
 ---
 
@@ -795,7 +799,8 @@ drei Ländern richtige Antworten als falsch.
    Produktentscheidung, nicht Norm — und muss als solche gekennzeichnet werden.**
 2. **„W-Fragen" und „Präteritum" beim Bericht stehen in keinem der fünf geprüften Lehrpläne** —
    Schulbuchkonvention. Amtlich ist das Tempus nur für die **Inhaltsangabe** (Präsens).
-3. **„Exzerpt" kommt in keiner geprüften Primärquelle vor.**
+3. **„Exzerpt" kommt in keiner geprüften Primärquelle vor.** _(Korrektur 02.10.2026: Exzerpieren
+   und der Bericht mit W-Fragen sind Aufgabenformen, §13.4.)_
 
 ### 6.4 Sek II — die sechs Aufgabenarten
 
@@ -1901,17 +1906,63 @@ welche Länder in Deutsch eine Präsentationsprüfung anbieten. 26. **Kunst/Musi
 Karvonen-Formel im Sport. **Dass BW keinen Operatorenkatalog Bildende Kunst hat, ist
 wahrscheinlich, aber nur durch Verzeichnis-Enumeration gestützt.**
 
-### 13.4 Geprüfte Negativbefunde — nicht verwechseln mit Lücken
+### 13.4 Negativbefunde — korrigiert am 02.10.2026, **keine Ausschlussliste**
 
-Diese Begriffe kommen in **keiner** Primärquelle vor und sollten **nicht** als Aufgabenformen ins
-Produkt wandern: Fermi-Abschätzung · Freikörperbild · Linearisieren · Michaelis-Menten / Km / Vmax ·
-Oszilloskop · Selektionstyp · molekulare Uhr · Ethogramm · Punnett · Kontrollansatz · VSEPR ·
-Born-Haber-Kreisprozess · Iod-Stärke-Reaktion · IEEE-754 · Oktal-/Hexadezimalumrechnung ·
-RSA-Rechnen · vollständige Induktion (in KMK AHR 2012, BW, Bayern) · Kurvendiskussion /
-Nebenbedingung / Krümmung (in KMK AHR 2012) · Exzerpt · Gesprächsprotokoll Deutsch · „W-Fragen" und
-Präteritum beim Bericht · „beschriften" und „mikroskopieren" als Operatoren · Heftführung als
-Bewertungsgrundlage · Ittens sieben Kontraste als vorgeschriebene Liste · die freie Erörterung ohne
-Textvorlage als Abitur-Aufgabenart.
+> **Korrektur (Issue #193, Kommentar vom 02.10.2026).** In der ersten Fassung stand hier, die
+> 25 Begriffe unten kämen in **keiner** Primärquelle vor und sollten **nicht** als Aufgabenformen
+> ins Produkt wandern. Das war für **13 von 25** falsch. Die Suche lief über Fachjargon und
+> englische Begriffe („Punnett", „VSEPR", „Freikörperbild") und wertete „kein Treffer" als Beweis —
+> dieselbe Aufgabenform steht in den Lehrplänen unter ihrem deutschen Schulnamen
+> (Kreuzungsschema, Elektronenpaarabstoßungsmodell, Kräftezerlegung). Mehrere davon nennt dieser
+> Bericht an anderer Stelle sogar selbst als Aufgabenform (§3, §4.1, §4.3).
+>
+> **Regel für die Nutzung:** Kein Eintrag dieses Abschnitts ist ein Grund, eine Aufgabenform aus
+> dem Produkt herauszuhalten. Wo eine Form nicht gebaut wird, entscheidet das #224 nach
+> Machbarkeit und Kosten, nicht ein Nulltreffer.
+>
+> **Belegstand, offen gesagt.** Die amtlichen Seiten (kmk.org, lehrplanplus.bayern.de,
+> bildungsplaene-bw.de, schulentwicklung.nrw.de) waren aus der Arbeitsumgebung **gesperrt** — bei
+> der Neurecherche am 02.10. und bei der Überprüfung dieser Korrektur. Die Lehrplan-Aussagen der
+> Spalte „Beleg" stützen sich deshalb auf (a) diesen Bericht selbst, (b) den Kommentar in #193
+> vom 02.10. (Suchauszüge der amtlichen Seiten, nicht die geöffneten PDFs) und (c) die
+> Fachtabellen in #224 (ebenfalls Suchauszüge; 77 der 347 Zeilen dort sind nur Erfahrungswissen
+> und als solche markiert). Der Kommentar nennt sieben der dreizehn ausdrücklich; die übrigen
+> sechs sind hier aus (a) und (c) zugeordnet. **Die Spalte „Buddy" ist dagegen gegen den Code
+> geprüft** (`origin/main` a0d18ab, 02.10.2026).
+
+**A — revidiert: die Aufgabenform steht im Lehrplan (13)**
+
+| Alter Eintrag                                | Wie sie in der Schule heißt                                 | Beleg                                                                                                               | Buddy heute (Code)                                                                                                                                                                                                                                           | Geplant                                                     |
+| -------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Fermi-Abschätzung                            | Fermi-Aufgabe (Zahl + Annahmenkette)                        | §3 dieses Berichts; #193 (02.10.); #224 Mathe GS3–4                                                                 | Kein eigener Prüfer. Eine Annahmenkette hat keinen festen Schlüssel; die Endzahl ist nur mit Schlüssel prüfbar (`modules/practice/evaluate.ts`)                                                                                                              | #224 ordnet sie #211 zu (Rubrik, gebaut: `rubric.ts`)       |
+| Freikörperbild                               | Kräftezerlegung, Kräfteaddition, Kraftpfeile                | §4.1 dieses Berichts (nennt die deutschen Begriffe selbst); #193 (02.10.); #224 Physik                              | Zeichnen wird ehrlich als nicht übbar benannt („force arrows" in `NOT_PRACTICABLE_RULES`, `modules/materials/extract.ts`, #198); Komponenten berechnen geht als Zahl (`evaluate.ts`)                                                                         | #257 (Kraftpfeile), #249 (Zeichnen auf Raster)              |
+| Punnett                                      | Kreuzungsschema, Spaltungsverhältnis, Kombinationsquadrat   | §4.3 Tabelle „Genetik-Kreuzungsschema" (Brandenburg 9/10, BW 9/10); #193 (02.10.); #212                             | Verhältnis gekürzt im Code verglichen, **ab drei Teilen** (`sameRatio`, `modules/practice/chemistry.ts`; „9:3:3:1" ja, „3:1" geht noch an den Tutor, weil es auch Uhrzeit oder Division sein kann, #175); Kombinationsquadrat als Tabelle (`parts.ts`, #230) | Zweiteiliges Verhältnis braucht die Markierung aus #157     |
+| VSEPR                                        | Elektronenpaarabstoßungsmodell (EPA-Modell)                 | §4.2 dieses Berichts (nennt „EPA-Modell" selbst); #193 (02.10.)                                                     | Molekülgeometrie benennen geht als Kurzantwort/MC (`evaluate.ts`); Strukturformel zeichnen ist als nicht übbar benannt („structural formula", `extract.ts`)                                                                                                  | #253 (Strukturformeln), #239 (Formelzeichen)                |
+| vollständige Induktion                       | vollständige Induktion                                      | #193 (02.10.): Pflicht in Hessen; §3 Tabelle dieses Berichts. Der alte Befund galt nur für KMK AHR 2012, BW, Bayern | Kein Prüfer: `modules/practice/steps.ts` lehnt Beweise ausdrücklich ab und gibt sie an das Modell                                                                                                                                                            | #224: #211 (Rubrik), #228 (Reihenfolge, gebaut: `parts.ts`) |
+| Kurvendiskussion / Nebenbedingung / Krümmung | Funktionsuntersuchung; Extremwertaufgabe mit Nebenbedingung | §3 Tabelle dieses Berichts (beide als Aufgabenform); #193 (02.10.); #224 Mathe O                                    | Teilergebnisse als Zahl/Term (`evaluate.ts`); Rechenweg Zeile für Zeile, eine Variable (`steps.ts`, #209); Graph zeichnen ist als nicht übbar benannt                                                                                                        | #249 (Graph auf Raster), #263 (Prüfer erweitern)            |
+| Exzerpt                                      | Exzerpieren                                                 | #193 (02.10.); #224 Deutsch („Protokoll, Exzerpt, Mitschrift")                                                      | Freier Text, Rückmeldung je Element, wenn die Extraktion eine Rubrik schreibt (`rubric.ts`, #211)                                                                                                                                                            | —                                                           |
+| Kontrollansatz                               | Kontrollansatz, Variablenkontrolle, Blindprobe              | §4.3 Tabelle „Kontrollansatz identifizieren" (C); #224 Biologie                                                     | Identifizieren geht als MC/Kurzantwort (`evaluate.ts`); Experiment planen als Schreibaufgabe mit Rubrik (`rubric.ts`)                                                                                                                                        | —                                                           |
+| Selektionstyp                                | Selektionsformen                                            | #224 Biologie O (Suchauszug, nicht selbst geöffnet)                                                                 | Benennen geht als Kurzantwort/MC (`evaluate.ts`)                                                                                                                                                                                                             | #245 (Diagramme), #256 (Stammbaum)                          |
+| Oktal-/Hexadezimalumrechnung                 | Zahlensysteme: binär, dezimal, hexadezimal                  | #224 Informatik M (Suchauszug)                                                                                      | Geht als Kurzantwort mit exaktem Schlüssel (`evaluate.ts`)                                                                                                                                                                                                   | —                                                           |
+| RSA-Rechnen                                  | Verschlüsselung: Caesar, Vigenère, RSA                      | #224 Informatik M–O (Suchauszug)                                                                                    | Geht als Zahl/Kurzantwort (`evaluate.ts`)                                                                                                                                                                                                                    | —                                                           |
+| „W-Fragen" beim Bericht                      | Bericht (Unfall, Zeitungsbericht) mit W-Fragen              | #224 Deutsch U (Suchauszug). **Präteritum** als Vorgabe ist damit nicht belegt                                      | Schreibaufgabe mit Rubrik; `rubric.ts` zählt Pflichtangaben (`mentions`) und prüft die Zeitform (`tense`) gegen ihren Text                                                                                                                                   | —                                                           |
+| Gesprächsprotokoll Deutsch                   | Protokoll (Versuchs-, Gesprächs-)                           | §2 dieses Berichts (Leistungsnachweis „Protokoll"); #224 Deutsch                                                    | Schreibaufgabe mit Rubrik (`rubric.ts`)                                                                                                                                                                                                                      | —                                                           |
+
+**B — der Begriff fehlt, die Aufgabe gibt es; Buddy übt sie (noch) nicht (4)**
+
+| Eintrag                                                      | Was stimmt, was nicht                                                                                                          | Buddy heute (Code)                                                                                        | Geplant                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Ethogramm                                                    | Der Begriff fehlt; die Form „Verhaltensbeobachtung dokumentieren" steht in §4.3                                                | Beobachten ist als nicht übbar benannt („experiment", `extract.ts`)                                       | #224: bewusst nicht (Beobachtung)                    |
+| „beschriften" und „mikroskopieren" als Operatoren            | Als **Operatoren** weiterhin nicht belegt; **Beschriftungsaufgaben** sind dagegen häufig (§4.3, #224 Biologie/Chemie/Erdkunde) | „a labelled schema" und „microscopy" sind als nicht übbar benannt (`extract.ts`)                          | #252 (Schema-Bibliothek, Beschriften durch Antippen) |
+| Ittens sieben Kontraste als vorgeschriebene Liste            | Die geschlossene Liste bleibt unbelegt (§10); Farbkreis nach Itten und Farbkontraste sind Aufgaben (#224 Kunst)                | Benennen als Kurzantwort/MC; farbige Fotoausschnitte seit #223                                            | #261 (Farbkreis als Figur)                           |
+| die freie Erörterung ohne Textvorlage als Abitur-Aufgabenart | Für das **Abitur** belegt (§6.4, NRW-Zitat). In der Sek I ist die Erörterung Standard (#224 Deutsch M)                         | Langer Text ist als nicht übbar benannt („long_text", `extract.ts`); kurze Texte mit Rubrik (`rubric.ts`) | #258 (lange Texte, Rückmeldung je Kernpunkt)         |
+
+**C — nicht erneut geprüft (8).** Linearisieren · Michaelis-Menten / Km / Vmax · Oszilloskop ·
+molekulare Uhr · Born-Haber-Kreisprozess · Iod-Stärke-Reaktion · IEEE-754 · Heftführung als
+Bewertungsgrundlage. Für diese acht liegt weder ein Gegenbeleg noch ein neuer Beleg vor. Die
+Suche, die sie gefunden hat, ist dieselbe, die bei den dreizehn oben falsch lag — sie sind daher
+**offene Punkte wie §13.3, keine Negativbefunde**. Michaelis-Menten etwa ist englischer
+Fachjargon; „Enzymaktivität auswerten" steht als Diagrammaufgabe in #224 (→ #245).
 
 ---
 
