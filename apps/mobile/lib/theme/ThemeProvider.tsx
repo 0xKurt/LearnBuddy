@@ -227,9 +227,24 @@ function ThemeScope({ children }: { children: ReactNode }) {
 }
 
 /**
+ * The frame ABOVE the provider (app/_layout.tsx) — the window the whole app is drawn on,
+ * and the background every pushed screen starts from.
+ *
+ * It cannot use `useTheme()`: outside the provider that reads the applied palette once,
+ * per render, and the root frame has no reason to render again when she picks a colour in
+ * the settings. The frame then kept the old background until the next navigation happened
+ * to re-render it — visible behind a modal and for the length of a push animation (audit
+ * 30.09., #133 position 16). Subscribed, it follows the same instant everything else does.
+ */
+export function useAppliedPalette(): Palette {
+  return paletteOf(useSyncExternalStore(onPaletteApplied, activeTheme, activeTheme));
+}
+
+/**
  * The colours to paint with. Above the provider (the root frame in app/_layout.tsx) there is
  * no context yet: the palette that is applied answers instead — the one an earlier choice
  * restored, not the default, so nothing outside the provider shows another theme's colours.
+ * A frame that lives up there and has to FOLLOW a change takes `useAppliedPalette()`.
  */
 export function useTheme(): ThemeContext {
   const ctx = useContext(Ctx);

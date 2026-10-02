@@ -41,12 +41,18 @@ export function aboutLinks({
   if (WEB.test(imprint)) out.push({ kind: 'imprint', href: imprint, detail: null });
   if (EMAIL.test(support)) {
     // `mailto:` query, not the address: an address with a "?" in it would otherwise eat
-    // the body. The subject stays empty so her own words are the subject line.
-    const body = diagnostics
-      ? `?body=${encodeURIComponent(
-          `\n\n---\nLearnBuddy ${diagnostics.app}\n${diagnostics.os}\n${diagnostics.device}`,
-        )}`
-      : '';
+    // the body. The subject stays empty so her own words are the subject line. A line the
+    // build could not answer (no model name on the web) is left out rather than written
+    // as a dash — a block of placeholders tells the reader nothing.
+    const lines = diagnostics
+      ? [
+          diagnostics.app.trim() && `LearnBuddy ${diagnostics.app.trim()}`,
+          diagnostics.os.trim(),
+          diagnostics.device.trim(),
+        ].filter((line) => line.length > 0)
+      : [];
+    const body =
+      lines.length > 0 ? `?body=${encodeURIComponent(`\n\n---\n${lines.join('\n')}`)}` : '';
     out.push({ kind: 'support', href: `mailto:${encodeURI(support)}${body}`, detail: support });
   }
   return out;

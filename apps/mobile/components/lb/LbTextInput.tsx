@@ -126,7 +126,16 @@ export const LbTextInput = forwardRef<TextInput, Props>(function LbTextInput(
               justifyContent: 'center',
             }}
           >
-            <Icon name={shown ? 'eye-off' : 'eye'} size={20} color={palette.ink2} />
+            {/* It answers the finger like the × beside it does (audit 30.09., #133
+                position 6). Without it the only sign a press landed was the password
+                appearing — and on a mistyped tap, nothing at all. */}
+            {({ pressed }) => (
+              <Icon
+                name={shown ? 'eye-off' : 'eye'}
+                size={20}
+                color={pressed ? palette.ink : palette.ink2}
+              />
+            )}
           </Pressable>
         )}
       </View>

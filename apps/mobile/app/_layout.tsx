@@ -28,7 +28,12 @@ import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i
 import { startCrashReports } from '../lib/observability/sentry.js';
 import { barStyleFor } from '../lib/theme/luminance.js';
 import { watchReducedMotion } from '../lib/theme/motion.js';
-import { restoreTheme, ThemeProvider, useTheme } from '../lib/theme/ThemeProvider.js';
+import {
+  restoreTheme,
+  ThemeProvider,
+  useAppliedPalette,
+  useTheme,
+} from '../lib/theme/ThemeProvider.js';
 import { learnerLocaleOf } from '../lib/i18n/follow.js';
 import { ShareIntake } from '../components/capture/ShareIntake.js';
 import { clearIncoming, hasIncoming } from '../lib/capture/incoming.js';
@@ -106,7 +111,9 @@ export const unstable_settings = { initialRouteName: 'index' };
 const OPEN_ROUTES = new Set(['/', '/welcome', '/reset-password', '/update']);
 
 export default function RootLayout() {
-  const { palette } = useTheme();
+  // Subscribed, not read once: this frame sits above the provider, and the palette she
+  // picks in the settings has to reach it too (audit 30.09., #133 position 16).
+  const palette = useAppliedPalette();
   const [ready, setReady] = useState(false);
   const readyRef = useRef(false);
   // Where a notification button or a signed-out deep link asked to go.
