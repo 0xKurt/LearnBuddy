@@ -3,10 +3,15 @@
 -- Zwei Umsetzungen derselben drei Formen lagen nebeneinander: `items.parts_task` (Migration 0072,
 -- auf main und in Produktion angewendet) und die des Merge-Trains (`items.task`). Ein neutraler
 -- Prüfer hat beide ausgeführt und angegriffen; entschieden in #224 („Entscheidung: zwei
--- Umsetzungen …“): diese hier bleibt, `parts_task` geht (Migration 0080). Gründe, belegt: bei
+-- Umsetzungen …“): diese hier bleibt, `parts_task` geht. Gründe, belegt: bei
 -- `parts_task` waren die Kürzel nach der RICHTIGEN Position vergeben — eine Reihenfolge und eine
 -- Paarung ließen sich allein aus der API-Antwort lösen —, beim zweiten ganz falschen Versuch wurde
 -- ein Modell gefragt, und Zahlenmauer und Vierfeldertafel wurden nicht nachgerechnet.
+--
+-- `items.parts_task` bleibt ab hier als tote Spalte stehen: kein Code liest oder schreibt sie mehr.
+-- Gelöscht wird sie erst im nächsten Release, wenn kein ausgelieferter Code sie mehr liest
+-- (docs/architecture.md §Testing, „erst nicht mehr schreiben, im nächsten Release löschen“) —
+-- mit der dann nächsten freien Nummer.
 --
 -- `task` ist die EINE geprüfte Definition der Aufgabe, MIT Schlüssel (`StructuredTask`,
 -- packages/shared-types/src/contracts/structured.ts). Für `order`: die Elemente in der gemischten
@@ -60,8 +65,8 @@ comment on column items.task is
 
 -- Die Prüfregel aus 0072, nach der jede `order`-, `match`- und `table_fill`-Zeile ein `parts_task`
 -- tragen muss, verbietet genau die Zeilen, die ab jetzt geschrieben werden. Sie geht hier, nicht
--- erst mit der Spalte (0080): eine Prüfregel zu entfernen erweitert nur, was erlaubt ist, und so
--- braucht der neue Code nichts als diese Datei.
+-- erst mit der Spalte im nächsten Release: eine Prüfregel zu entfernen erweitert nur, was erlaubt
+-- ist, und so braucht der neue Code nichts als diese Datei.
 alter table items drop constraint if exists items_parts_shape;
 
 alter table items drop constraint items_kind_check;

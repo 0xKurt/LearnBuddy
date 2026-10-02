@@ -2,7 +2,7 @@
 // model writes only the correct links; code checks them before anything is stored (Regel 0
 // of #224 — rejected, never repaired), gives the ids, shuffles the display and keeps the key
 // in `items.task`. Her answer is compared with that key link by link — never a model for the
-// verdict, and the reply counts ("4 von 5 Paaren stimmen"). docs/architecture.md §Practice
+// verdict, and the reply counts ("2 von 4 Paaren stimmen"). docs/architecture.md §Practice
 // ("Structured items").
 // requires live verification in Claude Code session (needs a running Postgres)
 
@@ -22,13 +22,12 @@ import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/h
 
 const dbReady = await testDatabaseAvailable();
 
-/** Five organs and their tasks — what the model writes: the correct pairs. */
+/** Four organs and their tasks (MATCH_PAIRS_MAX) — what the model writes: the correct pairs. */
 const ORGANE: Record<string, string> = {
   Bundestag: 'beschließt die Gesetze',
   Bundesrat: 'vertritt die Länder',
   Bundeskanzler: 'bestimmt die Richtlinien',
   Bundespräsident: 'unterschreibt die Gesetze',
-  Verfassungsgericht: 'prüft die Gesetze',
 };
 
 const WORTARTEN: Record<string, string[]> = {
@@ -153,8 +152,8 @@ describe.skipIf(!dbReady)('match items', () => {
     expect(si.item.kind).toBe('match');
     const view = viewOf(si);
     expect(view.form).toBe('pairs');
-    expect(view.left.map((e) => e.id)).toEqual(['a', 'b', 'c', 'd', 'e']);
-    expect(view.right.map((e) => e.id)).toEqual(['r1', 'r2', 'r3', 'r4', 'r5']);
+    expect(view.left.map((e) => e.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(view.right.map((e) => e.id)).toEqual(['r1', 'r2', 'r3', 'r4']);
     expect(view.left.map((e) => e.text).sort()).toEqual(Object.keys(ORGANE).sort());
     expect(view.right.map((e) => e.text).sort()).toEqual(Object.values(ORGANE).sort());
     expect(si.answer).toBeNull();
@@ -163,7 +162,7 @@ describe.skipIf(!dbReady)('match items', () => {
       task: { key: Array<{ left: string; right: string }> };
       answer: string;
     }>(`select task, answer from items where id = $1`, [si.item.id]);
-    expect(row.task.key).toHaveLength(5);
+    expect(row.task.key).toHaveLength(4);
     for (const [left, right] of Object.entries(ORGANE)) {
       expect(row.answer).toContain(`${left}${MATCH_PAIR_JOIN}${right}`);
     }
@@ -248,7 +247,7 @@ describe.skipIf(!dbReady)('match items', () => {
     };
     const a = await answer(session, si.item.id, linksFor(si, swapped), turn);
     const b = await answer(session, si.item.id, linksFor(si, swapped), turn);
-    expect(a.body.reply.text).toBe('3 von 5 Paaren stimmen schon.');
+    expect(a.body.reply.text).toBe('2 von 4 Paaren stimmen schon.');
     expect(b.status).toBe(200);
     expect(b.body.reply.id).toBe(a.body.reply.id);
     const turns = await env.db.one<{ n: number }>(
@@ -274,10 +273,10 @@ describe.skipIf(!dbReady)('match items', () => {
     expect(JSON.stringify(asText.body)).toContain('use_parts');
     const ok = linksFor(si, ORGANE);
     const bad = [
-      ok.slice(0, 4),
-      [...ok.slice(0, 4), ok[0]!],
-      [...ok.slice(0, 4), { left: ok[4]!.left, right: 'r9' }],
-      [...ok.slice(0, 4), { left: 'x', right: ok[4]!.right }],
+      ok.slice(0, 3),
+      [...ok.slice(0, 3), ok[0]!],
+      [...ok.slice(0, 3), { left: ok[3]!.left, right: 'r9' }],
+      [...ok.slice(0, 3), { left: 'x', right: ok[3]!.right }],
       // Two organs to one task: a pairing that is not one.
       ok.map((k) => ({ ...k, right: ok[0]!.right })),
     ];
