@@ -304,6 +304,10 @@ export const ItemKind = z.enum([
   'match',
   /** Fill the gaps of a table (#230). */
   'table_fill',
+  /** Tap the place in a figure: a point, a spot on a number line, a bar, a time (#248). */
+  'figure_tap',
+  /** Draw on a grid: points, a line through two, filled squares, bars (#249). */
+  'grid_draw',
 ]);
 export type ItemKind = z.infer<typeof ItemKind>;
 

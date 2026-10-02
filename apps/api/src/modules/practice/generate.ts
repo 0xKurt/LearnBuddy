@@ -67,9 +67,11 @@ import {
   structuredItems,
   type StructuredItem,
 } from './structured.js';
+import { FIGURE_TAP_RULES } from './figureTap.js';
+import { GRID_DRAW_RULES } from './gridDraw.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.15';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
 
 const SUBJECT_KINDS = [
   'math',
@@ -277,7 +279,7 @@ export const GENERATE_SYSTEM = `You prepare learning in the LearnBuddy app for t
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
 - Only well-established knowledge at their level (school topics for a school student; study or professional topics for a university or adult learner); if unsure about a fact, leave it out. If the request is not about learning something (for example a request to chat, to write something for them, or nothing to learn), set usable = false and items = [].
-- Everything is answered in the app by typing, choosing, tapping things into an order or into groups, or filling a table (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
+- Everything is answered in the app by typing, choosing, tapping things into an order or into groups, filling a table, tapping one place in a figure or drawing on a grid (or speaking for speak items): no freehand drawing, nothing to build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
 - ${NUMERIC_KEY_RULES}
@@ -290,6 +292,8 @@ Rules:
 - ${ORDER_RULES}
 - ${TABLE_RULES}
 - ${MATCH_RULES}
+- ${FIGURE_TAP_RULES}
+- ${GRID_DRAW_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
 - ${LANGUAGE_RULES}
@@ -339,8 +343,8 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
  * run (its questions come out of the text she hears).
  */
 const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
-  practice: new Set(['order', 'table_fill', 'match']),
-  test: new Set(['order', 'table_fill', 'match']),
+  practice: new Set(['order', 'table_fill', 'match', 'figure_tap', 'grid_draw']),
+  test: new Set(['order', 'table_fill', 'match', 'figure_tap', 'grid_draw']),
   vocab: new Set(),
   speak: new Set(),
   listen: new Set(),
@@ -622,9 +626,12 @@ function preparedFrom(
   // Orders, tables and links to make (issues #228–#230), each checked by code before it is
   // stored: one that fails costs only itself. Built from her sheets, their topic must be one of
   // the sheets' too, like every other question.
-  const structured = structuredItems(set.structured, STRUCTURED[input.kind]).filter(
-    (it) => sheetTopics === null || (it.topic !== null && sheetTopics.includes(it.topic)),
-  );
+  const structured = structuredItems(
+    set.structured,
+    STRUCTURED[input.kind],
+    MAX_STRUCTURED_ITEMS,
+    learner.locale,
+  ).filter((it) => sheetTopics === null || (it.topic !== null && sheetTopics.includes(it.topic)));
   return {
     items,
     bars,

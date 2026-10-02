@@ -251,6 +251,151 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Interactive figures (issues #248, #249): the model writes each figure and its key as VALUES —
+  // never an id, never a mirror image (code computes that). The server checks that every key lies
+  // on a place she can tap or draw, keeps it, and judges her answer without a model. The plane is
+  // fine on purpose (12 × 10 steps): on 360×740 a step is under 44 pt there, so the walkthrough
+  // goes through the magnifying first tap.
+  scriptGenerations({
+    when: /Koordinaten antippen/i,
+    answer: () => ({
+      usable: true,
+      title: 'Antippen',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [],
+      structured: [
+        {
+          type: 'figure_tap',
+          prompt: 'Tippe den Punkt P(2 | −1) an.',
+          plane: {
+            x_min: -6,
+            x_max: 6,
+            y_min: -5,
+            y_max: 5,
+            step: 1,
+            marks: [],
+            key: { x: 2, y: -1 },
+          },
+          number_line: null,
+          bars: null,
+          clock: null,
+          topic: 'Koordinaten',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'figure_tap',
+          prompt: 'Wo liegt $\\frac{3}{4}$ auf dem Zahlenstrahl?',
+          plane: null,
+          number_line: { min: -2, max: 2, step: 1, snap: 0.25, marks: [], key: 0.75 },
+          bars: null,
+          clock: null,
+          topic: 'Zahlenstrahl',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'figure_tap',
+          prompt: 'In welchem Monat hat es am meisten geregnet?',
+          plane: null,
+          number_line: null,
+          bars: {
+            bars: [
+              { label: 'Mai', value: 60 },
+              { label: 'Juni', value: 85 },
+              { label: 'Juli', value: 95 },
+              { label: 'Aug', value: 70 },
+            ],
+            unit: 'mm',
+            key: 'Juli',
+            extreme: 'max',
+          },
+          clock: null,
+          topic: 'Diagramme',
+          difficulty: 1,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'figure_tap',
+          prompt: 'Stell die Uhr auf Viertel nach drei.',
+          plane: null,
+          number_line: null,
+          bars: null,
+          clock: { snap: 5, key: { h: 3, m: 15 } },
+          topic: 'Uhrzeit',
+          difficulty: 1,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
+  scriptGenerations({
+    when: /Auf dem Raster zeichnen/i,
+    answer: () => ({
+      usable: true,
+      title: 'Zeichnen',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [],
+      structured: [
+        {
+          type: 'grid_draw',
+          prompt: 'Zeichne die Gerade $y = 2x - 1$.',
+          grid: { x_min: -4, x_max: 4, y_min: -4, y_max: 4, step: 1, axes: true },
+          task: 'line',
+          points: null,
+          closed: false,
+          cells: null,
+          mirror: null,
+          fn: '2*x-1',
+          count: null,
+          bars: null,
+          topic: 'Geraden',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'grid_draw',
+          prompt: 'Spiegle das Dreieck an der gestrichelten Linie.',
+          grid: { x_min: 0, x_max: 10, y_min: 0, y_max: 6, step: 1, axes: false },
+          task: 'mirror_points',
+          points: [
+            { x: 1, y: 1, label: 'A' },
+            { x: 4, y: 1, label: 'B' },
+            { x: 3, y: 4, label: 'C' },
+          ],
+          closed: true,
+          cells: null,
+          mirror: { direction: 'vertical', at: 5 },
+          fn: null,
+          count: null,
+          bars: null,
+          topic: 'Achsensymmetrie',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'grid_draw',
+          prompt: 'Zeichne das Säulendiagramm: Mo 4, Di 7, Mi 2 Stunden Sonne.',
+          grid: { x_min: 0, x_max: 3, y_min: 0, y_max: 8, step: 1, axes: true },
+          task: 'bars',
+          points: null,
+          closed: false,
+          cells: null,
+          mirror: null,
+          fn: null,
+          count: null,
+          bars: [
+            { label: 'Mo', value: 4 },
+            { label: 'Di', value: 7 },
+            { label: 'Mi', value: 2 },
+          ],
+          topic: 'Diagramme',
+          difficulty: 1,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   // Order items (issue #228): the model writes the elements in the RIGHT order and nothing
   // about a key — the server checks them (Regel 0), shuffles them and keeps the key. The
   // second set is the tallest an order may be: eight elements, the bound of rule 16 on
@@ -387,6 +532,18 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /mit rechenweg üben/i,
       answer: says('Gern – ich hab dir Gleichungen mit Rechenweg vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Gleichungen mit Rechenweg' } },
+      ]),
+    },
+    {
+      when: /koordinaten antippen/i,
+      answer: says('Gern – tipp mal in ein paar Figuren.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Koordinaten antippen' } },
+      ]),
+    },
+    {
+      when: /raster zeichnen/i,
+      answer: says('Klar – ein paar Zeichnungen auf dem Raster.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Auf dem Raster zeichnen' } },
       ]),
     },
     {

@@ -145,6 +145,19 @@ type SentAnswer = {
  */
 const STRUCTURED_REPLY_ROOM = 140;
 
+/**
+ * Above a figure she works with, Buddy's whole reply stays readable: four lines and the help row
+ * under it (measured on 360×740, shot 52 — at STRUCTURED_REPLY_ROOM the first line was cut off
+ * under the question card). The figure gives that room: it draws itself smaller, and a grid too
+ * fine for a finger is magnified on the first tap anyway.
+ */
+const FIGURE_REPLY_ROOM = 200;
+
+/** A figure she works with (issues #248, #249): it sizes itself to the room it is given. */
+function isFigureView(view: { type: string }): boolean {
+  return view.type === 'figure_tap' || view.type === 'grid_draw';
+}
+
 /** A language other than the app's: worth hearing read aloud (vocab prompts and answers). */
 function foreign(lang: string | null): lang is string {
   const base = baseLanguage(lang);
@@ -1006,7 +1019,12 @@ export default function PracticeScreen() {
               ? {
                   minHeight:
                     questionContentHeight +
-                    (turns.length > 0 ? Math.min(threadNeed, STRUCTURED_REPLY_ROOM) : 0),
+                    (turns.length > 0
+                      ? Math.min(
+                          threadNeed,
+                          isFigureView(item.task_view) ? FIGURE_REPLY_ROOM : STRUCTURED_REPLY_ROOM,
+                        )
+                      : 0),
                 }
               : {}),
           }}
@@ -1212,7 +1230,17 @@ export default function PracticeScreen() {
             own "Prüfen" in the pinned bar and its arrangement in a draft, so a theme switch
             (a remount) keeps it. Keyed by the question, so a new one starts empty. */}
         {open && item.task_view ? (
-          <View testID="answer-surface" style={{ flexShrink: 1, minHeight: 0 }}>
+          <View
+            testID="answer-surface"
+            style={
+              // A figure she taps or draws on (issues #248, #249) takes ALL the room the
+              // question and the reply leave, and draws itself for it (`FigureSurface`): a grid
+              // is worth every point. The parts of the other kinds take what they need.
+              isFigureView(item.task_view)
+                ? { flexGrow: 100, flexShrink: 1, flexBasis: 0, minHeight: 0 }
+                : { flexShrink: 1, minHeight: 0 }
+            }
+          >
             <StructuredAnswer
               key={item.id}
               view={item.task_view}

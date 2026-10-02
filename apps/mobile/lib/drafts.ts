@@ -13,6 +13,17 @@ const PREFIX = 'lb.draft.';
 const INDEX_KEY = 'lb.draft.index';
 const SAVE_AFTER_MS = 400;
 
+/**
+ * The newest text of every draft in this process, written synchronously on every change.
+ *
+ * Storage is asynchronous, and a theme switch unmounts and mounts the same field within one
+ * frame (ThemeProvider rebuilds the tree): the new field read storage before the old one's
+ * unmount write had landed, and came back with the text from before the last debounce — a
+ * point set and the theme switched at once showed the PREVIOUS point (walkthrough of #248).
+ * Storage stays what survives the process; this is what survives a remount.
+ */
+const live = new Map<string, string>();
+
 async function remember(key: string): Promise<void> {
   const kept = (await readItem(INDEX_KEY)) ?? '';
   const all = new Set(kept ? kept.split('\n') : []);
@@ -23,6 +34,7 @@ async function remember(key: string): Promise<void> {
 
 /** Deletes every kept draft (sign-out, another learner signs in). */
 export async function clearDrafts(): Promise<void> {
+  live.clear();
   const kept = (await readItem(INDEX_KEY)) ?? '';
   await Promise.all(kept.split('\n').map((key) => (key ? writeItem(key, null) : undefined)));
   await writeItem(INDEX_KEY, null);
@@ -39,17 +51,21 @@ export function useDraft(name: string): {
   clear: () => void;
 } {
   const key = PREFIX + name;
-  const [text, setValue] = useState('');
-  const latest = useRef('');
+  // The first frame already shows what this process has (a remount after a theme switch).
+  const [text, setValue] = useState(() => live.get(key) ?? '');
+  const latest = useRef(live.get(key) ?? '');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let alive = true;
     // A new key is a new field: the previous one's text must not stay on screen
     // (a session's answer draft in the next session, review 28.09.).
-    latest.current = '';
-    setValue('');
+    const fresh = live.get(key);
+    latest.current = fresh ?? '';
+    setValue(fresh ?? '');
     void readItem(key).then((kept) => {
+      // A remount within this process already has the newest text; storage may lag behind it.
+      if (fresh !== undefined) return;
       // Whatever she typed before the read finished wins over the old draft.
       if (alive && kept && latest.current.length === 0) {
         latest.current = kept;
@@ -72,6 +88,7 @@ export function useDraft(name: string): {
   const setText = (value: string | ((current: string) => string)) => {
     const next = typeof value === 'function' ? value(latest.current) : value;
     latest.current = next;
+    live.set(key, next);
     setValue(next);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
@@ -81,6 +98,7 @@ export function useDraft(name: string): {
   };
 
   const clear = () => {
+    live.delete(key);
     latest.current = '';
     setValue('');
     if (timer.current) clearTimeout(timer.current);

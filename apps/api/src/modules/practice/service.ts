@@ -1163,7 +1163,7 @@ export async function answerItem(
     structured && input.parts && partsCheck
       ? // Her arrangement in one line, so the thread, the tutor history and a disputed judgement
         // all see what she actually did.
-        answerTextOf(structured, input.parts)
+        answerTextOf(structured, input.parts, learner.locale)
       : (staffWritten ??
         input.text ??
         (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));

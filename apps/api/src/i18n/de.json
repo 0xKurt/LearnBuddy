@@ -240,6 +240,42 @@
       "groups_some_one": "1 von {{total}} ist schon richtig einsortiert.",
       "groups_none": "Noch ist keins richtig einsortiert – schau nochmal in Ruhe hin.",
       "look_at": "Schau dir „{{text}}“ nochmal an."
+    },
+    "figure": {
+      "point": "({{x}} | {{y}})",
+      "x_right": "Die x-Koordinate stimmt schon – schau nochmal, wie weit es nach oben oder unten geht.",
+      "y_right": "Die y-Koordinate stimmt schon – schau nochmal, wie weit es nach rechts oder links geht.",
+      "swapped": "Fast – du hast x und y vertauscht. Erst geht es nach rechts oder links, dann nach oben oder unten.",
+      "point_wrong": "Noch nicht der richtige Punkt – geh erst nach rechts oder links, dann nach oben oder unten.",
+      "place_wrong": "Noch nicht die richtige Stelle – zähl die Schritte zwischen den Strichen nochmal.",
+      "further_right": "Die gesuchte Stelle liegt weiter rechts.",
+      "further_left": "Die gesuchte Stelle liegt weiter links.",
+      "bar_wrong": "Noch nicht diese Säule – vergleich die Höhen nochmal in Ruhe.",
+      "hour_right": "Die Stunde stimmt schon – schau nochmal auf den großen Zeiger.",
+      "minute_right": "Die Minuten stimmen schon – schau nochmal auf den kleinen Zeiger.",
+      "time_wrong": "Noch nicht die richtige Uhrzeit – stell erst den kleinen Zeiger, dann den großen."
+    },
+    "draw": {
+      "cells_words": "{{count}} Kästchen: {{cells}}",
+      "cells_words_one": "1 Kästchen: {{cells}}",
+      "line_solution": "Die Gerade y = {{fn}}, zum Beispiel durch {{points}}",
+      "graph_solution": "Punkte auf y = {{fn}}, zum Beispiel {{points}}",
+      "point_wrong": "Schau dir den Punkt {{point}} nochmal an.",
+      "points_missing": "Es fehlen noch {{count}} Punkte.",
+      "points_missing_one": "Es fehlt noch ein Punkt.",
+      "line_slope_right": "Die Steigung stimmt schon – die Gerade schneidet die y-Achse aber noch an der falschen Stelle.",
+      "line_intercept_right": "Die Gerade schneidet die y-Achse schon an der richtigen Stelle – die Steigung passt noch nicht.",
+      "line_point_off": "Der Punkt {{point}} liegt noch nicht auf der Geraden.",
+      "line_needs_two": "Für eine Gerade brauchst du zwei Punkte.",
+      "line_vertical": "Deine zwei Punkte liegen genau übereinander – nimm zwei Stellen nebeneinander.",
+      "same_x": "Zwei deiner Punkte haben dieselbe x-Koordinate – nimm verschiedene Stellen.",
+      "graph_point_off": "Der Punkt {{point}} liegt noch nicht auf dem Graphen.",
+      "cells_missing": "Fast – es fehlen noch {{count}} Kästchen.",
+      "cells_missing_one": "Fast – es fehlt noch ein Kästchen.",
+      "cells_extra": "Fast – {{count}} Kästchen sind zu viel gefärbt.",
+      "cells_extra_one": "Fast – ein Kästchen ist zu viel gefärbt.",
+      "cells_both": "Noch nicht ganz – es fehlen Kästchen ({{missing}}), und einige sind zu viel gefärbt ({{extra}}).",
+      "bar_wrong": "Die Säule „{{label}}“ hat noch nicht die richtige Höhe."
     }
   },
   "contact": {

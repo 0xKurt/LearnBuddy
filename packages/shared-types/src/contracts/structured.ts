@@ -5,6 +5,8 @@
 //   order       — put 3–8 elements into the right order (#228)
 //   match       — pair or group elements (#229)
 //   table_fill  — fill the gaps of a table (#230)
+//   figure_tap  — tap the place in a figure (#248)      } contracts/figureTask.ts
+//   grid_draw   — draw on a grid (#249)                 }
 // The next one (#232, a text with several gaps) is a fourth member of every union below; the
 // database already allows its kind (migration 0079), so it needs no constraint migration.
 //
@@ -29,8 +31,24 @@
 
 import { z } from 'zod';
 
+import { PartId } from './common.js';
+import {
+  FigureTapAnswer,
+  FigureTapTask,
+  FigureTapTaskView,
+  GridDrawAnswer,
+  GridDrawTask,
+  GridDrawTaskView,
+} from './figureTask.js';
+
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
-export const STRUCTURED_KINDS = ['order', 'match', 'table_fill'] as const;
+export const STRUCTURED_KINDS = [
+  'order',
+  'match',
+  'table_fill',
+  'figure_tap',
+  'grid_draw',
+] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
 
@@ -39,12 +57,9 @@ export function isStructuredKind(kind: string): kind is StructuredKind {
   return (STRUCTURED_KINDS as readonly string[]).includes(kind);
 }
 
-/**
- * A part's id: short, lower-case, given by the server. It names a part of the task (an
- * element, a cell, a gap), never its place in the solution.
- */
-export const PartId = z.string().regex(/^[a-z0-9_]{1,12}$/);
-export type PartId = z.infer<typeof PartId>;
+// A part's id (`PartId`) lives in common.ts: the interactive figures (figureTask.ts) name
+// their bars with it too, and they are members of the unions below.
+export { PartId } from './common.js';
 
 // ─────────────── order (#228) ───────────────
 
@@ -258,7 +273,13 @@ export type MatchAnswer = z.infer<typeof MatchAnswer>;
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
-export const StructuredTask = z.discriminatedUnion('type', [OrderTask, TableFillTask, MatchTask]);
+export const StructuredTask = z.discriminatedUnion('type', [
+  OrderTask,
+  TableFillTask,
+  MatchTask,
+  FigureTapTask,
+  GridDrawTask,
+]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
 /** What the app shows (`ItemView.task_view`): the task without its key. */
@@ -266,6 +287,8 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   OrderTaskView,
   TableFillTaskView,
   MatchTaskView,
+  FigureTapTaskView,
+  GridDrawTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -274,5 +297,7 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   OrderAnswer,
   TableFillAnswer,
   MatchAnswer,
+  FigureTapAnswer,
+  GridDrawAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;

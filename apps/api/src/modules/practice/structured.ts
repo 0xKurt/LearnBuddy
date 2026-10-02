@@ -51,6 +51,31 @@ import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
 import { dollarMathRuns } from './dollarMath.js';
+import {
+  checkFigureTap,
+  FigureTapDraftBase,
+  figureTapNamesPart,
+  figureTapProblem,
+  figureTapReply,
+  figureTapSolution,
+  figureTapTaskFrom,
+  figureTapView,
+  tapWords,
+  type FigureProblem,
+  type FigureTapCheck,
+} from './figureTap.js';
+import {
+  checkGridDraw,
+  gridDrawAnswerText,
+  GridDrawDraftBase,
+  gridDrawProblem,
+  gridDrawReply,
+  gridDrawSolution,
+  gridDrawTaskFrom,
+  gridDrawView,
+  type DrawProblem,
+  type GridDrawCheck,
+} from './gridDraw.js';
 import { ItemDraft } from './items.js';
 import {
   checkTable,
@@ -168,6 +193,13 @@ const MatchDraftWithHelp = MatchDraftBase.extend({
   worked_solution: ItemDraft.shape.worked_solution,
 });
 
+/** What every structured draft carries besides its task (the figure drafts live in their files). */
+const FigureMeta = z.object({
+  topic: ItemDraft.shape.topic,
+  difficulty: ItemDraft.shape.difficulty,
+  prompt_lang: ItemDraft.shape.prompt_lang,
+});
+
 /** A structured task as the model writes it, with prepared help (photo reading). */
 export const StructuredDraft = z.discriminatedUnion('type', [
   OrderDraftWithHelp,
@@ -176,6 +208,14 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     worked_solution: ItemDraft.shape.worked_solution,
   }),
   MatchDraftWithHelp,
+  FigureTapDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }).merge(FigureMeta),
+  GridDrawDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }).merge(FigureMeta),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -184,6 +224,8 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
   OrderDraftBase.extend({ hints: ItemDraft.shape.hints }),
   TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
   MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  FigureTapDraftBase.extend({ hints: ItemDraft.shape.hints }).merge(FigureMeta),
+  GridDrawDraftBase.extend({ hints: ItemDraft.shape.hints }).merge(FigureMeta),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -192,6 +234,8 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   OrderDraftBase,
   TableDraftBase,
   MatchDraftBase,
+  FigureTapDraftBase.merge(FigureMeta),
+  GridDrawDraftBase.merge(FigureMeta),
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -235,7 +279,10 @@ export type TaskProblem =
    * A text, a word or the prompt over its cap (MATCH_ELEMENT_MAX, MATCH_GROUP_TEXT_MAX,
    * MATCH_WORD_MAX, MATCH_PROMPT_MAX): it would not fit a 360×740 phone without scrolling.
    */
-  | 'too_long';
+  | 'too_long'
+  /** figure_tap (#248), grid_draw (#249): see `figureTap.ts`, `gridDraw.ts`. */
+  | FigureProblem
+  | DrawProblem;
 
 /** An element as it is compared for sameness: markup, case and surrounding marks set aside. */
 function sameness(text: string): string {
@@ -303,6 +350,10 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return tableProblem(task);
     case 'match':
       return matchProblem(task);
+    case 'figure_tap':
+      return figureTapProblem(task);
+    case 'grid_draw':
+      return gridDrawProblem(task);
   }
 }
 
@@ -376,8 +427,8 @@ export function orderTaskFrom(
   return taskProblem(parsed.data) === null ? parsed.data : null;
 }
 
-/** The solution as she reads it: the elements in the right order. */
-export function solutionOf(task: StructuredTask): string {
+/** The solution as she reads it: the elements in the right order, the point, the drawing. */
+export function solutionOf(task: StructuredTask, locale: string = 'de'): string {
   switch (task.type) {
     case 'order': {
       const byId = new Map(task.elements.map((e) => [e.id, e.text]));
@@ -387,14 +438,54 @@ export function solutionOf(task: StructuredTask): string {
       return tableSolution(task);
     case 'match':
       return matchText(task, task.key);
+    case 'figure_tap':
+      return figureTapSolution(locale, task);
+    case 'grid_draw':
+      return gridDrawSolution(locale, task);
   }
 }
 
 /** A draft from the model as a question, or null when it fails Regel 0. */
 export function structuredItem(
   draft: StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp,
+  /** The learner's language, for a solution that is code's words (a point, a drawing). */
+  locale: string = 'de',
 ): StructuredItem | null {
   switch (draft.type) {
+    case 'figure_tap':
+    case 'grid_draw': {
+      const task = draft.type === 'figure_tap' ? figureTapTaskFrom(draft) : gridDrawTaskFrom(draft);
+      if (typeof task === 'string') return null;
+      const prompt = dollarMathRuns(draft.prompt);
+      const answer = solutionOf(task, locale);
+      // Help never gives the place or the drawing away (the same check as every prepared hint).
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !mentionsSolution(h, answer, prompt),
+      );
+      return {
+        kind: draft.type,
+        task,
+        prompt,
+        answer,
+        accepted_answers: [],
+        unit: null,
+        choices: null,
+        correct_choice: null,
+        topic: draft.topic,
+        difficulty: draft.difficulty,
+        prompt_lang: draft.prompt_lang,
+        lang: null,
+        figure: null,
+        tolerance: null,
+        spelling: null,
+        source_excerpt: null,
+        // No curriculum place (#214) and no rubric (#211): both belong to single answers.
+        curriculum_point: null,
+        rubric: null,
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
     case 'order': {
       const task = orderTaskFrom(draft.elements, draft.numeric);
       if (!task) return null;
@@ -504,11 +595,12 @@ export function structuredItems(
   drafts: ReadonlyArray<StructuredDraft | StructuredDraftHomework | StructuredDraftNoHelp>,
   allowed: ReadonlySet<string>,
   max: number = MAX_STRUCTURED_ITEMS,
+  locale: string = 'de',
 ): StructuredItem[] {
   return drafts
     .filter((d) => allowed.has(d.type))
     .flatMap((d) => {
-      const item = structuredItem(d);
+      const item = structuredItem(d, locale);
       return item ? [item] : [];
     })
     .slice(0, max);
@@ -770,6 +862,10 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       return tableView(task);
     case 'match':
       return { type: 'match', form: task.form, left: task.left, right: task.right };
+    case 'figure_tap':
+      return figureTapView(task);
+    case 'grid_draw':
+      return gridDrawView(task);
   }
 }
 
@@ -782,7 +878,7 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = OrderCheck | TableCheck | MatchCheck;
+export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | FigureTapCheck | GridDrawCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -866,11 +962,19 @@ export function checkStructured(
       return answer.type === 'table_fill' ? checkTable(task, answer, ctx) : null;
     case 'match':
       return answer.type === 'match' ? checkMatch(task, answer) : null;
+    case 'figure_tap':
+      return answer.type === 'figure_tap' ? checkFigureTap(task, answer) : null;
+    case 'grid_draw':
+      return answer.type === 'grid_draw' ? checkGridDraw(task, answer) : null;
   }
 }
 
 /** Her answer as it stands in the conversation ("B → A → C"). */
-export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): string {
+export function answerTextOf(
+  task: StructuredTask,
+  answer: StructuredAnswer,
+  locale: string = 'de',
+): string {
   switch (task.type) {
     case 'order': {
       if (answer.type !== 'order') return '';
@@ -881,6 +985,10 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
       return answer.type === 'table_fill' ? tableAnswerText(task, answer) : '';
     case 'match':
       return answer.type === 'match' ? matchText(task, answer.links) : '';
+    case 'figure_tap':
+      return answer.type === 'figure_tap' ? tapWords(locale, task.figure, answer.value) : '';
+    case 'grid_draw':
+      return answer.type === 'grid_draw' ? gridDrawAnswerText(locale, task, answer) : '';
   }
 }
 
@@ -918,6 +1026,10 @@ export function structuredReply(
         ? `${base} ${t(locale, 'practice.match.look_at', { text: check.first_wrong_text })}`
         : base;
     }
+    case 'figure_tap':
+      return figureTapReply(locale, check, priorMisses);
+    case 'grid_draw':
+      return gridDrawReply(locale, check);
   }
 }
 
@@ -934,5 +1046,12 @@ export function structuredNamesPart(check: StructuredCheck, priorMisses: number)
       return false;
     case 'match':
       return !check.correct && priorMisses >= 1;
+    // A tap names what is already right every time (feedback); where on a number line the
+    // place lies comes on the second miss and is help (#248). A drawing names its wrong point
+    // or bar every time, like a table its cells (#249).
+    case 'figure_tap':
+      return figureTapNamesPart(check, priorMisses);
+    case 'grid_draw':
+      return false;
   }
 }

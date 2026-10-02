@@ -6,6 +6,7 @@ export * from './buddy.js';
 export * from './staff.js';
 export * from './figure.js';
 export * from './bars.js';
+export * from './figureTask.js';
 export * from './structured.js';
 export * from './rubric.js';
 export * from './listen.js';

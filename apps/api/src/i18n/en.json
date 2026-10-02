@@ -240,6 +240,42 @@
       "groups_some_one": "1 of {{total}} is already in the right group.",
       "groups_none": "None is in the right group yet – take another calm look.",
       "look_at": "Have another look at “{{text}}”."
+    },
+    "figure": {
+      "point": "({{x}}, {{y}})",
+      "x_right": "The x-coordinate is right already – look again at how far up or down it goes.",
+      "y_right": "The y-coordinate is right already – look again at how far right or left it goes.",
+      "swapped": "Nearly – you swapped x and y. First go right or left, then up or down.",
+      "point_wrong": "Not the right point yet – go right or left first, then up or down.",
+      "place_wrong": "Not the right spot yet – count the steps between the marks again.",
+      "further_right": "The spot you are looking for is further to the right.",
+      "further_left": "The spot you are looking for is further to the left.",
+      "bar_wrong": "Not this bar yet – compare the heights again calmly.",
+      "hour_right": "The hour is right already – look again at the long hand.",
+      "minute_right": "The minutes are right already – look again at the short hand.",
+      "time_wrong": "Not the right time yet – set the short hand first, then the long one."
+    },
+    "draw": {
+      "cells_words": "{{count}} squares: {{cells}}",
+      "cells_words_one": "1 square: {{cells}}",
+      "line_solution": "The line y = {{fn}}, for example through {{points}}",
+      "graph_solution": "Points on y = {{fn}}, for example {{points}}",
+      "point_wrong": "Take another look at the point {{point}}.",
+      "points_missing": "{{count}} points are still missing.",
+      "points_missing_one": "One point is still missing.",
+      "line_slope_right": "The slope is right already – but the line crosses the y-axis at the wrong place.",
+      "line_intercept_right": "The line already crosses the y-axis at the right place – the slope is not right yet.",
+      "line_point_off": "The point {{point}} is not on the line yet.",
+      "line_needs_two": "A line needs two points.",
+      "line_vertical": "Your two points are exactly above each other – take two places side by side.",
+      "same_x": "Two of your points have the same x-coordinate – take different places.",
+      "graph_point_off": "The point {{point}} is not on the graph yet.",
+      "cells_missing": "Nearly – {{count}} squares are still missing.",
+      "cells_missing_one": "Nearly – one square is still missing.",
+      "cells_extra": "Nearly – {{count}} squares too many are coloured.",
+      "cells_extra_one": "Nearly – one square too many is coloured.",
+      "cells_both": "Not quite yet – squares are missing ({{missing}}) and some are coloured too many ({{extra}}).",
+      "bar_wrong": "The bar “{{label}}” is not at the right height yet."
     }
   },
   "contact": {

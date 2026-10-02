@@ -22,9 +22,11 @@ import {
   StructuredDraft,
   StructuredDraftHomework,
 } from '../practice/structured.js';
+import { FIGURE_TAP_RULES } from '../practice/figureTap.js';
+import { GRID_DRAW_RULES } from '../practice/gridDraw.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7.1';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7.2';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -293,7 +295,7 @@ She is holding the sheet; take her reading as the fact and write the question(s)
  * a state the app shows and a retry the API refuses (CLAUDE.md rule 1).
  */
 export const NOT_PRACTICABLE_RULES = `Decide for EVERY task on the sheet whether its exercise form is one of the forms below. For such a task write no question at all — not a reworded one, and not a knowledge question about the text it belongs to — and name it in not_practicable instead: the task as printed (its instruction, at most 120 characters) and its form.
-   - drawing: what the learner has to produce is a drawn thing — a construction with compasses and ruler, a function graph, a circuit, force arrows, a structural formula, a reaction mechanism with arrows, a labelled schema, a curve plotted from values, a tree or branching diagram, a cross-section, a map sketch, a flow chart, a formal diagram of a program or a data model, musical notation.
+   - drawing: what the learner has to produce is a drawn thing — a construction with compasses and ruler, a function graph, a circuit, force arrows, a structural formula, a reaction mechanism with arrows, a labelled schema, a curve plotted from values, a tree or branching diagram, a cross-section, a map sketch, a flow chart, a formal diagram of a program or a data model, musical notation. Not a drawing: what fits a drawing task on a grid (points to plot, a straight line, points of a graph, a shape to mirror on squared paper, squares to colour, a bar chart to draw) — that becomes a grid_draw task in "structured".
    - spoken_dialogue: free speaking with a partner who answers back — a speaking exam with role cards, a tandem conversation, a debate, a discussion to be held.
    - experiment: something carried out in the physical world — an experiment to perform, a specimen to prepare, a dissection, microscopy, measuring or mapping outdoors.
    - long_text: one continuous written text longer than roughly 300 words — the answer field holds 2000 characters, so it cannot be written here at all.
@@ -333,6 +335,8 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${ORDER_RULES} A task on the sheet that asks to put given things in order becomes one such task in "structured", never a question in items.
    - ${TABLE_RULES} A table on the sheet whose cells are to be filled in becomes one such task in "structured" (its cells as printed, the empty ones as gaps), never one question per cell in items.
    - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
+   - ${FIGURE_TAP_RULES} A task on the sheet that asks to mark one point, number, bar or time in a printed figure becomes one such task in "structured".
+   - ${GRID_DRAW_RULES} A task on the sheet that asks to plot, mirror, colour or draw bars on a grid becomes one such task in "structured".
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
@@ -364,6 +368,8 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${ORDER_RULES} A task that asks to put given things in order goes into "structured" instead of items (its prompt as printed).
    - ${TABLE_RULES} A table whose cells are to be filled in goes into "structured" instead of items (its prompt as printed).
    - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
+   - ${FIGURE_TAP_RULES} A task that asks to mark one place in a figure goes into "structured" instead of items (its prompt as printed).
+   - ${GRID_DRAW_RULES} A task that asks to plot, mirror, colour or draw bars on a grid goes into "structured" instead of items (its prompt as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}
