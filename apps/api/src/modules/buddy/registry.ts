@@ -307,8 +307,11 @@ export const TurnDecisionForModel = z.object({
   options: TurnDecision.shape.options,
   asks_permission: z
     .boolean()
+    // A German sample question stood in here until issue #213 — in the response schema, which
+    // reaches the model in the same request as the prompt, so it is the same material that
+    // put German into an English reply (#200). What the bit MEANS needs no sample sentence.
     .describe(
-      'true if your reply asks the learner whether you should do something ("Soll ich …?"). Then that thing must not be in actions — it happens in a later answer, after they said yes.',
+      'true if your reply asks the learner whether you should do something instead of doing it. Then that thing must not be in actions — it happens in a later answer, after they said yes.',
     ),
 });
 

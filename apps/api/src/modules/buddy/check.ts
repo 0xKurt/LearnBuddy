@@ -51,7 +51,10 @@ const CHECK_SCHEMA = toJsonSchema(CheckDecision);
 /** A step that may still ask for lookups first (ADR 0005 §The agent loop). */
 // Lookups first, as in a turn: the model chooses what to read before it writes a decision
 // (p2-check-step-schema-lookups-last).
-const CHECK_STEP_SCHEMA = toJsonSchema(
+// Exported only so the prompt test can scan the exact bytes this module sends (issue #213):
+// `CheckDecision` and `lookupsField` are each scanned on their own, but the COMPOSITION is what
+// goes out, and a description can only hide in what no test holds.
+export const CHECK_STEP_SCHEMA = toJsonSchema(
   z.object({ lookups: lookupsField }).extend(CheckDecision.shape),
 );
 const LEASE_SECONDS = 150;

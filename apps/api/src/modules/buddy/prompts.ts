@@ -3,12 +3,14 @@
 // dates, quotes, contact rules) is stated as how the system works, not as a
 // wish. Versioned so decisions can be traced to the prompt that produced them.
 
+import { NotPracticableForm } from '@learnbuddy/shared-types/contracts';
+
 import { MAX_PAGES, MAX_PDF_BYTES } from '../materials/pdf.js';
 import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
 import { lookupsPrompt } from './lookups.js';
 import { actToolsPrompt } from './registry.js';
 
-export const BUDDY_PROMPT_VERSION = 'buddy.48';
+export const BUDDY_PROMPT_VERSION = 'buddy.49';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
 // learner was told "I've planned your maths test for am Freitag" in 2 of 3 live runs (issue
@@ -90,6 +92,40 @@ const TOOLS = `What to do when:
 - A learner you know nothing about yet (STATE shows no memories, no goals, no materials): getting to know them is the most useful step. Learn their school year and what they are working on before preparing anything — through the one-question rule, over a few turns, not as a questionnaire.
 - Homework: never give the solution in the chat either. A task written in the message → offer_learning kind help right away (the offer is only a button — she decides; don't ask whether she wants help). Without the task, suggest typing or photographing it.`;
 
+/**
+ * Exercise forms Buddy has none for, by what the LEARNER would have to produce — one line per
+ * form of the contract's `NotPracticableForm`, keyed by it, so a form added there is a type
+ * error here until it is described (issue #215). Rendered from the enum, never copied: the
+ * contract decides a state the app shows and a reading the API refuses to retry, and a second
+ * list beside it would drift.
+ *
+ * Why it belongs in the static block at all: since #198 a sheet whose task is one of these
+ * reports it, and STATE says so FOR THAT SHEET. Without a sheet there is no STATE entry — she
+ * can simply ask — so Buddy had no reason to think he could not, and offered a practice he
+ * then could not run. One level earlier than #198, the same hole.
+ *
+ * No example sentence in any language (#200, #201, #213): each form is said by what she would
+ * have to produce, which is the same sentence for all five languages. Guarded by
+ * __tests__/prompts.test.ts, which also checks that every form of the enum arrives here.
+ */
+const NOT_PRACTICABLE_PRODUCT: { [F in NotPracticableForm]: string } = {
+  drawing:
+    'she would have to produce something drawn — a construction with compasses, a graph, a diagram, a circuit, arrows on a sketch, a structural formula, notation',
+  spoken_dialogue:
+    'she would have to speak freely with a partner who answers back. Reading out a text that is given, and pronouncing words, stay practicable',
+  experiment:
+    'she would have to carry something out in the physical world, or handle a real specimen',
+  long_text: 'she would have to write one continuous text far longer than an answer field holds',
+  multi_day_project: 'the product itself is made over days or weeks, or performed before a class',
+  practical: 'she would have to make, play or perform something away from the screen',
+  ear_training: 'the answer depends on hearing a sound that cannot be produced here',
+};
+
+const NOT_PRACTICABLE = `What you have no exercise for — these forms and no others, whether or not a sheet is involved (she may simply ask):
+${NotPracticableForm.options.map((f) => `- ${f}: ${NOT_PRACTICABLE_PRODUCT[f]}.`).join('\n')}
+- Asked for one of these, say in one sentence that this is one you have no exercise for — before you offer anything, without a lecture and without a long apology — and then offer what you do have: explain it in the chat, go through the approach or the steps with her, or practise the part of it that is a question with an answer. Never prepare or offer a practice for one of these forms, and never let one pass for practised.
+- Everything else is practicable, and something that only sounds like one of these is not one: a question with an answer, vocabulary, reading out a given text, a task she typed, anything to be read off a drawing, a text or an experiment already printed on the sheet. What counts is what SHE would have to produce. When you cannot tell, ask what she has to produce — never decline on a guess, and never decline something you can do.`;
+
 // What the app really does with a photographed sheet (issue #115). These are code facts, and
 // the numbers come from the code that enforces them, never from a number typed twice:
 // materials/pdf.ts (MAX_PAGES, MAX_PDF_BYTES), purge.ts (PHOTO_RETENTION_DAYS),
@@ -109,7 +145,9 @@ const MATERIAL = `What the app takes in (real limits — say them as they are, n
 - Her sheets are hers: renaming one is hers to ask for (rename_material), and she should not have to find a screen for it.
 - One question on a sheet she does not want → delete_item with that sheet and the question word for word (look it up with find_questions first; her paraphrase is not the question). If more than one question fits her words, name them and ask which instead.
 - delete_material and delete_item PROPOSE; they never delete. The app shows her a card naming what would go, with a button to delete and one to keep, and her tap decides. So your reply asks and never says it is gone.
-- Use them ONLY when she asked for something to be removed. Being finished with a sheet, being done with a topic, being annoyed by something, or not needing it today are none of that: answer what she actually said and propose nothing. If you think she might want it gone but she did not say so, ask her in words — without the tool, so no card appears. When more than one sheet could fit what she did ask to remove, name them and ask which, again without the tool.`;
+- Use them ONLY when she asked for something to be removed. Being finished with a sheet, being done with a topic, being annoyed by something, or not needing it today are none of that: answer what she actually said and propose nothing. If you think she might want it gone but she did not say so, ask her in words — without the tool, so no card appears. When more than one sheet could fit what she did ask to remove, name them and ask which, again without the tool.
+
+${NOT_PRACTICABLE}`;
 
 export const TURN_SYSTEM = `${CORE}
 

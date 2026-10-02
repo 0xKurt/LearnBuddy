@@ -222,8 +222,12 @@ const remember = z.object({
       .trim()
       .min(3)
       .max(200)
+      // The example that stood here showed the rewritten FORM — in German, with the
+      // handball literal of issue #201 — on a surface that reaches the model in the same
+      // request as the prompt (issue #213). The principle is the whole rule; `text.ts`
+      // enforces it, and the prompt says it once in words.
       .describe(
-        'Short third-person statement in the learner\'s language with only what her quote says — no day, time, place or detail she did not say (she said "hab gleich Handballtraining" → "Hat Handballtraining", never "Hat sonntags Handballtraining")',
+        "Short third-person statement in the learner's language with only what her quote says — no day, time, place or detail she did not say, and nothing that only places it in the moment she is writing in",
       ),
     quote: Quote,
     until: UntilSpecSchema.nullable().describe('Required for kind=constraint, otherwise null'),
@@ -358,7 +362,11 @@ const setLevel = z.object({
       ),
     grade: year(1, 13)
       .nullable()
-      .describe('Only when school_year cannot be given: the German Klasse number; else null'),
+      // Named the German school year until issue #213. The six systems above are named
+      // together on purpose; this fallback named exactly one of them, to every learner.
+      .describe(
+        'Only when school_year cannot be given: the school year as a plain number, counted from the first year of school; else null',
+      ),
     quote: Quote,
   }),
 });
@@ -366,7 +374,9 @@ const setLevel = z.object({
 const planExam = z.object({
   tool: z.literal('plan_exam'),
   args: z.object({
-    title: Title.describe('e.g. "Mathearbeit Brüche"'),
+    // An example title in one language is an example for all five (issues #200, #213): what
+    // the field is says it, and the language is the learner's, not the example's.
+    title: Title.describe("The test's title, in the learner's language"),
     subject: z.string().trim().min(1).max(40).describe("Subject name in the learner's language"),
     subject_kind: z.enum(SUBJECT_KINDS),
     day: DaySpecSchema,
@@ -480,8 +490,10 @@ const planStep = z.object({
       .min(1)
       .max(1440)
       .nullable()
+      // The German span that stood here as an example is restated by what her words DO
+      // (issues #201, #213): a length of time from now instead of a point on the clock.
       .describe(
-        'minutes from now, when she said it relative to now ("in einer Stunde" → 60). The server computes day and time; leave day unknown and time null then',
+        'minutes from now, when she named a span from now instead of a clock time. The server computes day and time; leave day unknown and time null then',
       ),
 
     agreed: z
@@ -489,8 +501,10 @@ const planStep = z.object({
       .describe('true only if the learner asked for / agreed to this time (a reminder)'),
     /** Needs agreed=true and a time: Buddy's own idea is a suggestion, never a standing rule. */
     repeat: RepeatSchema.nullable(),
+    // Same as in_minutes: the end she named can be a date or an event, and UntilSpec carries
+    // both — so the field says that it is an end she named, not how an end sounds (#213).
     repeat_until: UntilSpecSchema.nullable().describe(
-      'only with repeat: the last day it should still come ("bis zu den Ferien"); null = until she ends it',
+      'only with repeat: the last day it should still come, when she named an end of her own; null = until she ends it',
     ),
     quote: Quote.nullable().describe('Required when agreed=true'),
     // Optional in parsing (older scripted answers have neither); the model sees both.
@@ -529,7 +543,9 @@ const requestMaterial = z.object({
   tool: z.literal('request_material'),
   args: z.object({
     goal: GoalTarget.nullable(),
-    title: Title.describe('What to photograph, e.g. "Arbeitsblatt Brüche"'),
+    // What it is for stays (the field name alone does not say it); the German example of what
+    // a sheet is called does not (#213) — the app shows this title to the learner.
+    title: Title.describe("What to photograph, in the learner's language"),
     /**
      * A page that belongs to a sheet she already sent — the forgotten back, a page left out
      * (issue #118). Without it the page becomes a second sheet of its own.

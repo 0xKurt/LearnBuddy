@@ -1350,4 +1350,104 @@ export const CASES: Case[] = [
       ];
     },
   },
+  // Issue #215, both directions of the same line. Since #198 a sheet whose task is an exercise
+  // form Buddy has none for says so in STATE, for that sheet. Without a sheet there was no such
+  // line — she can simply ask — so he had no reason to think he could not, and the answer was a
+  // button that found nothing to run. The static block now names the forms (rendered from
+  // `NotPracticableForm`), and these two cases measure the two ways that can go wrong.
+  //
+  // The refusing direction first. She has a level, and a speaking exam with its topic stands in
+  // STATE, so every other reason to hold back is gone: a concrete topic in her own words, a
+  // planned test to hang it on. What she asks for is free speaking with a partner who answers
+  // back, and nothing in the app does that — she has no sheets and no questions either, so any
+  // button here is either a practice over invented written questions about debating (the quiet
+  // substitution of #198) or a tap that comes back empty (#196).
+  {
+    id: 'de_spoken_exam_without_a_sheet_is_not_offered',
+    setup: async (env, l) => {
+      await env.db.query(`update learners set level = 'school', grade = 7 where id = $1`, [
+        l.learnerId,
+      ]);
+      await env.db.query(
+        `with s as (insert into subjects (learner_id, name, kind) values ($1, 'Englisch', 'english')
+                    returning id)
+         insert into buddy_goals (learner_id, kind, title, subject_id, due_date, topics)
+         select $1, 'exam', 'Mündliche Englischprüfung', s.id, '2026-10-05', $2 from s`,
+        [l.learnerId, ['Streitgespräch']],
+      );
+    },
+    message: 'Üben wir das Streitgespräch für die mündliche Englischprüfung?',
+    check: (o) => [
+      ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+      ...must(
+        !o.tools.includes('prepare_practice') && !o.tools.includes('offer_learning'),
+        `promises a practice of a form he has none for (${o.tools.join(', ') || 'none'}); offers: ${JSON.stringify(o.offers)}`,
+      ),
+      // That he says what he CAN do instead is in his words, and the wording is his business
+      // (every other case here measures the stored outcome, not the sentence). What is measured
+      // is that he answered her at all: a bare "no" with nothing beside it would be shorter
+      // than this, and over-refusal is the failure the second case is for.
+      ...must(
+        (o.reply ?? '').length >= 40,
+        `nothing said in place of the practice: ${JSON.stringify(o.reply)}`,
+      ),
+    ],
+  },
+  // And the direction that matters more: a Buddy who declines what he CAN do is worse than the
+  // state before #215. Reading out a text that is GIVEN is exactly what his speak mode does —
+  // the contract draws that line itself (`spoken_dialogue`: "Buddy's speak is reading a GIVEN
+  // text aloud"). It is also the nearest thing to the form he must decline, in the same subject
+  // and with the same words around it, so if the new block makes him over-refuse anywhere, it
+  // is here. She has the sheet, the text and questions from it: something to start must come
+  // back. How many buttons it is, and which, is issue #196's measurement, not this one.
+  {
+    id: 'de_reading_aloud_is_not_refused',
+    setup: async (env, l) => {
+      await env.db.query(`update learners set level = 'school', grade = 7 where id = $1`, [
+        l.learnerId,
+      ]);
+      const subject = await env.db.one<{ id: string }>(
+        `insert into subjects (learner_id, name, kind) values ($1, 'Englisch', 'english')
+         returning id`,
+        [l.learnerId],
+      );
+      const sheet = await env.db.one<{ id: string }>(
+        `insert into materials (learner_id, client_request_id, subject_id, status, photo_count,
+                                title, extracted_text, ready_at, created_at)
+         values ($1, gen_random_uuid(), $2, 'ready', 1, 'Reading: A Day in London', $3, $4, $4)
+         returning id`,
+        [
+          l.learnerId,
+          subject.id,
+          'A Day in London\n\nOn Saturday morning we took the bus to the market. ' +
+            'My sister bought apples and I looked at the old books. In the afternoon it ' +
+            'started to rain, so we went into a small cafe near the river.',
+          env.clock.now(),
+        ],
+      );
+      for (const [prompt, answer] of [
+        ['Where did they go in the morning?', 'to the market'],
+        ['What did the sister buy?', 'apples'],
+        ['Why did they go into the cafe?', 'because it started to rain'],
+      ]) {
+        await env.db.query(
+          `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, topic,
+                              difficulty, origin)
+           values ($1, $2, $3, 'short', $4, $5, 'Reading', 2, 'material')`,
+          [l.learnerId, sheet.id, subject.id, prompt, answer],
+        );
+      }
+    },
+    message: 'Können wir das Vorlesen von dem englischen Text auf meinem Blatt üben?',
+    check: (o) => {
+      const taps = o.tools.filter((t) => t === 'offer_learning' || t === 'prepare_practice').length;
+      return [
+        ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+        ...must(
+          taps >= 1,
+          `declined something he can do (${o.tools.join(', ') || 'none'}): ${JSON.stringify(o.reply)}`,
+        ),
+      ];
+    },
+  },
 ];

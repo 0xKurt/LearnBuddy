@@ -298,6 +298,21 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
   (`7. Klasse, 4e, 2º ESO, terza media, Year 8`), which exist precisely so the prompt does not
   drift towards German. `__tests__/prompts.test.ts` scans both exported prompts and fails on a
   German function word, a day word of any of the five languages, or an umlaut.
+- **The response schema is the same surface** (issue #213). It is not the system prompt, but it
+  travels in the same request, ahead of the conversation, and it is the larger of the two static
+  blocks (at buddy.49: 32 384 serialised characters against 25 383 for the prompt; the same
+  comparison stands in `docs/decisions/prefix-cache-2026-10-01.md` §Befund 3 for buddy.45/46)
+  — so a German example in a zod `.describe()` is exactly the material that put German into an
+  English reply. Four such examples stood in `decision.ts` after #201 and one in `registry.ts`,
+  cleaned with the same question per place as above. The guard is structural, not four lines:
+  `prompts.test.ts` runs the same scan over the SERIALISED schemas (`toJsonSchema` output as
+  `vertex.ts` sends it), so the class cannot come back through a schema either. Two passages are
+  deliberate and asserted present — the six school-year options, each saying how that system's own
+  label becomes the fields of the object (the schema twin of the five school systems above), and
+  the weekday numbering of `weekday`, `end_of_week` and `quiet_days`, which is the unit of an
+  integer field: the model writes the number, the server resolves the day, and it cannot tell a
+  number counted from Monday from one counted from Sunday, so dropping the anchor would not remove
+  a risk but add a wrong day.
 - **Buddy names no button.** The provable half of #201: the removal rule said the card carries
   "Rückgängig" while an English learner's card says "Undo" — the label is rendered in the app from
   her locale (`apps/mobile/locales/<lang>/buddy.json` → `done.undo`), so Buddy could send an
@@ -1098,6 +1113,19 @@ instead. A sheet where nothing was practicable fails with `form_not_practicable`
 so nothing blames her photo; `retryMaterial` refuses a second reading (it would find the same
 tasks) and the photos keep the normal 7-day retention, because the sheet is valid material she may
 want to look at.
+
+**And when she simply asks** (issue #215). Until then Buddy knew a form was out of his reach only
+per sheet, from STATE — so a learner with no photo got an offer whose tap found nothing to run, the
+same substitution one level earlier. The static block in `prompts.ts` now names the forms, rendered
+from `NotPracticableForm` and keyed by it (a form added to the contract is a type error in
+`prompts.ts` until it is described, so the two cannot drift), each said by what the LEARNER would
+have to produce — no example sentence, in any language (#200, #201). Rule 5 means "do not claim",
+not "stay silent": the block also says what he may offer instead (explain it in the chat, go
+through the approach or the steps, practise the part that is a question with an answer), and that
+something which only sounds like one of these forms is not one — a Buddy who declines what he can
+do is worse than the hole. Both directions are eval cases
+(`de_spoken_exam_without_a_sheet_is_not_offered`, `de_reading_aloud_is_not_refused`), the second
+being the one that matters more.
 
 **Photo check on the phone** (`apps/mobile/lib/photo/quality.ts`, `check.ts`; the old app's most
 common failure was an unreadable photo): right after a photo is taken or picked, a small copy is
