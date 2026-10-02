@@ -38,6 +38,7 @@ import { toast } from '../components/lb/Toast.js';
 import { WaitHint } from '../components/lb/WaitHint.js';
 import { VoicePicker } from '../components/voice/VoicePicker.js';
 import { useAnnounce } from '../lib/announce.js';
+import { handoverContactKey } from '../lib/contact/state.js';
 import { ApiError } from '../lib/api/client.js';
 import { createLearner, getMe } from '../lib/api/endpoints.js';
 import { keys, queryClient, useSettings } from '../lib/api/queries.js';
@@ -255,7 +256,14 @@ export default function Profile() {
   }
 
   if (step === 'handover') {
-    return <Handover name={name.trim()} busy={busy} onDone={() => setStep('voice')} />;
+    return (
+      <Handover
+        name={name.trim()}
+        contactEnabled={contactOk}
+        busy={busy}
+        onDone={() => setStep('voice')}
+      />
+    );
   }
   if (step === 'voice') {
     return <VoiceStep busy={busy} onDone={() => void finish()} />;
@@ -601,17 +609,28 @@ function FieldLabel({ children }: { children: string }) {
 
 /**
  * The hand-over after the parents' setup: what is set now, and that the child is next
- * (user feedback #10). Everything listed is what was just saved: consent and PIN in the
- * same request, and messages to the phone start off (contact is opt-in, CLAUDE.md rule 6).
+ * (user feedback #10). Everything listed is what was just saved — including the contact box,
+ * which this screen used to report as "off" whatever the parents had ticked (issue #205).
+ * The line comes from `handoverContactKey`, the same reading the settings section uses.
  */
-function Handover({ name, busy, onDone }: { name: string; busy: boolean; onDone: () => void }) {
+function Handover({
+  name,
+  contactEnabled,
+  busy,
+  onDone,
+}: {
+  name: string;
+  contactEnabled: boolean;
+  busy: boolean;
+  onDone: () => void;
+}) {
   const { palette } = useTheme();
   const { t } = useTranslation('auth');
   const insets = useSafeAreaInsets();
   const points = [
     t('profile.handover_consent'),
     t('profile.handover_pin'),
-    t('profile.handover_contact', { name }),
+    t(handoverContactKey(contactEnabled), { name }),
   ];
   return (
     <Screen>

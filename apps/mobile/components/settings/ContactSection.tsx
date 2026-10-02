@@ -21,6 +21,7 @@ import { Linking, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
+import { contactState } from '../../lib/contact/state.js';
 import { ApiError } from '../../lib/api/client.js';
 import { updateSettings } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
@@ -191,18 +192,22 @@ export function ContactSection({ settings, isMinor, pinSet, push }: Props) {
 
   // The first line of the opened card: the answer, said once — never the heading's
   // question again ("Ja. Buddy darf dir auch aufs Handy schreiben." repeated it, #95).
-  const answer = !settings.contact_enabled
-    ? t('contact.answer_off')
-    : pausedUntil
-      ? t('contact.answer_paused', { date: formatLastDay(pausedUntil, lang) })
-      : t('contact.state_on', { quiet: settings.quiet_start });
+  // One reading for both screens (issue #205): the hand-over used to hardwire "off" here.
+  const state = contactState({ enabled: settings.contact_enabled, pausedUntil });
+  const answer =
+    state === 'off'
+      ? t('contact.answer_off')
+      : state === 'paused'
+        ? t('contact.answer_paused', { date: formatLastDay(pausedUntil!, lang) })
+        : t('contact.state_on', { quiet: settings.quiet_start });
   // Closed, one line says the state — permission and quiet time, or how long the
   // pause runs — not the question a third time (issue #95; Group clamps it to one line).
-  const stateLine = !settings.contact_enabled
-    ? t('contact.state_off')
-    : pausedUntil
-      ? t('contact.pause_until', { date: formatLastDay(pausedUntil, lang) })
-      : t('contact.state_on', { quiet: settings.quiet_start });
+  const stateLine =
+    state === 'off'
+      ? t('contact.state_off')
+      : state === 'paused'
+        ? t('contact.pause_until', { date: formatLastDay(pausedUntil!, lang) })
+        : t('contact.state_on', { quiet: settings.quiet_start });
   const preferred =
     WINDOWS.find((w) => w.start === settings.preferred_start && w.end === settings.preferred_end) ??
     null;
