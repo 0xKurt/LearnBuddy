@@ -8,6 +8,7 @@
 // dropped, an item that already has hints is never overwritten, and a failure
 // only means the tutor model helps as before.
 
+import { isStructuredKind } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -17,9 +18,10 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { ItemDraft, LANGUAGE_RULES } from './items.js';
 import type { PracticeLearner } from './service.js';
+import { secretsOf, structuredTaskOf } from './structured.js';
 import { mentionsSolution } from './tutor.js';
 
-export const HINTS_PROMPT_VERSION = 'hints.v3';
+export const HINTS_PROMPT_VERSION = 'hints.v4';
 
 const HintSet = z.object({
   items: z
@@ -53,12 +55,26 @@ type Row = {
   choices: string[] | null;
   correct_choice: number | null;
   unit: string | null;
+  /** A structured item's task with its key (`structured.ts`), else null. */
+  task: unknown;
 };
 
-const shown = (r: Row) =>
-  r.kind === 'multiple_choice' && r.choices && r.correct_choice !== null
+/**
+ * What a hint for this question must not state, and the text she can read anyway (a hint
+ * may repeat that). A structured item's secrets come from its task: for a cloze every key
+ * of every gap (issue #232), which the whole-text solution alone would not catch.
+ */
+function secretsFor(r: Row): { secrets: string[]; visible: string } {
+  const task = isStructuredKind(r.kind) ? structuredTaskOf(r.task, r.kind) : null;
+  if (task) return secretsOf(task, r.prompt);
+  return { secrets: [shown(r), ...r.accepted_answers], visible: r.prompt };
+}
+
+function shown(r: Row): string {
+  return r.kind === 'multiple_choice' && r.choices && r.correct_choice !== null
     ? (r.choices[r.correct_choice] ?? r.answer)
     : `${r.answer}${r.unit ? ` ${r.unit}` : ''}`;
+}
 
 /** Writes hints for the session's questions that have none (practice). */
 export async function prepareHints(
@@ -67,7 +83,8 @@ export async function prepareHints(
   sessionId: string,
 ): Promise<number> {
   const rows = await deps.db.query<Row>(
-    `select i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.choices, i.correct_choice, i.unit
+    `select i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.choices, i.correct_choice, i.unit,
+            i.task
        from session_items si
        join items i on i.id = si.item_id
        join practice_sessions ps on ps.id = si.session_id
@@ -87,7 +104,7 @@ export async function prepareHints(
   const list = rows
     .map(
       (r, n) =>
-        `${n + 1}. [${r.kind}] QUESTION: ${r.prompt}${r.choices ? `\n   CHOICES: ${r.choices.join(' | ')}` : ''}\n   SOLUTION: ${shown(r)}`,
+        `${n + 1}. [${r.kind}] QUESTION: ${secretsFor(r).visible}${r.choices ? `\n   CHOICES: ${r.choices.join(' | ')}` : ''}\n   SOLUTION: ${shown(r)}`,
     )
     .join('\n');
   const res = await callModel(deps, learner.id, localParts(now, tz.timezone).date, {
@@ -118,9 +135,9 @@ export async function prepareHints(
   for (const h of parsed.data.items) {
     const r = rows[h.n - 1];
     if (!r) continue;
+    const { secrets, visible } = secretsFor(r);
     const hints = h.hints.filter(
-      (text) =>
-        ![shown(r), ...r.accepted_answers].some((sol) => mentionsSolution(text, sol, r.prompt)),
+      (text) => !secrets.some((sol) => mentionsSolution(text, sol, visible)),
     );
     if (hints.length === 0 && !h.worked_solution) continue;
     const updated = await deps.db.query(

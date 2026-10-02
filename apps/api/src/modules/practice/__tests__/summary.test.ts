@@ -94,6 +94,21 @@ describe('what one practice may claim', () => {
     expect(withHelp.shaky_topics).toEqual(['Brüche']);
   });
 
+  it('a cloze filled from its word bank is recognition; typed into its gaps it counts (#232)', () => {
+    const banked = summarize(
+      Array.from({ length: ENOUGH_FOR_A_TOPIC }, () =>
+        row({ kind: 'cloze', answered_by: 'tapped' }),
+      ),
+    );
+    expect(banked.secure_topics).toEqual([]);
+    const typed = summarize(
+      Array.from({ length: ENOUGH_FOR_A_TOPIC }, () =>
+        row({ kind: 'cloze', answered_by: 'typed' }),
+      ),
+    );
+    expect(typed.secure_topics).toEqual(['Brüche']);
+  });
+
   it('counts a topic once however it is written', () => {
     const s = summarize([row({ topic: 'Brüche' }), row({ topic: ' brüche ' })]);
     expect(s.secure_topics).toEqual(['Brüche']);

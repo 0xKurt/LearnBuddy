@@ -1,12 +1,11 @@
-// Structured items: questions whose answer is a SHAPE, not a sentence (issues #228–#230).
+// Structured items: questions whose answer is a SHAPE, not a sentence (issues #228–#232).
 // docs/architecture.md §Practice ("Structured items").
 //
-// Three kinds share one foundation:
+// Four kinds share one foundation:
 //   order       — put 3–8 elements into the right order (#228)
 //   match       — pair or group elements (#229)
 //   table_fill  — fill the gaps of a table (#230)
-// The next one (#232, a text with several gaps) is a fourth member of every union below; the
-// database already allows its kind (migration 0079), so it needs no constraint migration.
+//   cloze       — fill several gaps in one text (#232); its kind is allowed since migration 0079
 //
 // Three shapes per kind, and the difference between them is the whole design:
 //
@@ -30,7 +29,7 @@
 import { z } from 'zod';
 
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
-export const STRUCTURED_KINDS = ['order', 'match', 'table_fill'] as const;
+export const STRUCTURED_KINDS = ['order', 'match', 'table_fill', 'cloze'] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
 
@@ -185,6 +184,81 @@ export const TableFillAnswer = z.object({
 });
 export type TableFillAnswer = z.infer<typeof TableFillAnswer>;
 
+// ─────────────── cloze (#232) ───────────────
+
+/** Fewer than two gaps is a short answer; more than eight no longer reads as one text. */
+export const CLOZE_MIN_GAPS = 2;
+export const CLOZE_MAX_GAPS = 8;
+/**
+ * The visible text without its gaps, and the instruction above it: what fits a 360×740
+ * phone without scrolling (CLAUDE.md rule 16), measured with the longest case — 8 gaps,
+ * filled, under an instruction of three lines. At 360×740 the text has 418 pt; 8 gaps
+ * there took 380 pt at 256–262 characters, 407 pt at 279–301 and 434 pt (too tall) at 350.
+ * 260 keeps one line of air for long typed words; the walkthrough shows that case
+ * (`tests/web/modes.spec.ts`, shot 44-cloze-eight).
+ */
+export const CLOZE_TEXT_MAX = 260;
+export const CLOZE_PROMPT_MAX = 80;
+/** One gap holds a word or a short group of words — a small field in the line. */
+export const CLOZE_GAP_MAX = 40;
+/** What she may put into one gap before it is no longer an answer to a gap. */
+export const CLOZE_ANSWER_MAX = 80;
+/** Other spellings a teacher would accept for one gap. */
+export const CLOZE_ACCEPTED_MAX = 4;
+/** The word bank: every key once, plus a few distractors. */
+export const CLOZE_BANK_MAX = 12;
+
+export const ClozeGap = z.object({
+  id: PartId,
+  /** What belongs in the gap. Never in the visible text (Regel 0, `practice/structured.ts`). */
+  key: z.string().trim().min(1).max(CLOZE_GAP_MAX),
+  /** Other answers that count as right for THIS gap. */
+  accepted: z.array(z.string().trim().min(1).max(CLOZE_GAP_MAX)).max(CLOZE_ACCEPTED_MAX),
+});
+export type ClozeGap = z.infer<typeof ClozeGap>;
+
+/**
+ * The text around the gaps: `segments[i]` stands before gap i, the last one after the last
+ * gap — so there is always one segment more than there are gaps. Plain text, math between
+ * dollar signs.
+ */
+const ClozeSegments = z
+  .array(z.string().max(CLOZE_TEXT_MAX))
+  .min(CLOZE_MIN_GAPS + 1)
+  .max(CLOZE_MAX_GAPS + 1);
+
+export const ClozeTask = z.object({
+  type: z.literal('cloze'),
+  segments: ClozeSegments,
+  gaps: z.array(ClozeGap).min(CLOZE_MIN_GAPS).max(CLOZE_MAX_GAPS),
+  /**
+   * The words to tap, in the order she sees them (shuffled once by the server), or null:
+   * then she types every gap. Holds every key exactly once.
+   */
+  bank: z.array(z.string().trim().min(1).max(CLOZE_GAP_MAX)).max(CLOZE_BANK_MAX).nullable(),
+});
+export type ClozeTask = z.infer<typeof ClozeTask>;
+
+export const ClozeTaskView = z.object({
+  type: z.literal('cloze'),
+  segments: ClozeSegments,
+  /** The gaps' ids in reading order. Nothing about what belongs in them. */
+  gaps: z.array(PartId).min(CLOZE_MIN_GAPS).max(CLOZE_MAX_GAPS),
+  /** The words to tap, or null when she types. Which word is a key is not said. */
+  bank: z.array(z.string()).max(CLOZE_BANK_MAX).nullable(),
+});
+export type ClozeTaskView = z.infer<typeof ClozeTaskView>;
+
+export const ClozeAnswer = z.object({
+  type: z.literal('cloze'),
+  /** Every gap once, with what she put in it (typed, or a word of the bank). */
+  gaps: z
+    .array(z.object({ id: PartId, text: z.string().trim().min(1).max(CLOZE_ANSWER_MAX) }))
+    .min(CLOZE_MIN_GAPS)
+    .max(CLOZE_MAX_GAPS),
+});
+export type ClozeAnswer = z.infer<typeof ClozeAnswer>;
+
 // ─────────────── match (#229) ───────────────
 //
 // Two forms, one shape: she takes an element on the LEFT and puts it to one on the RIGHT.
@@ -245,7 +319,12 @@ export type MatchAnswer = z.infer<typeof MatchAnswer>;
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
-export const StructuredTask = z.discriminatedUnion('type', [OrderTask, TableFillTask, MatchTask]);
+export const StructuredTask = z.discriminatedUnion('type', [
+  OrderTask,
+  TableFillTask,
+  MatchTask,
+  ClozeTask,
+]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
 /** What the app shows (`ItemView.task_view`): the task without its key. */
@@ -253,6 +332,7 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   OrderTaskView,
   TableFillTaskView,
   MatchTaskView,
+  ClozeTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -261,5 +341,6 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   OrderAnswer,
   TableFillAnswer,
   MatchAnswer,
+  ClozeAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;

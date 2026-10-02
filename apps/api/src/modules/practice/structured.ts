@@ -1,5 +1,5 @@
 // Structured items: questions whose answer is a SHAPE — an order, pairs, table cells, gaps
-// (issues #228–#230). docs/architecture.md §Practice ("Structured items").
+// (issues #228–#232). docs/architecture.md §Practice ("Structured items").
 //
 // Both directions of #224's "Regel 0" live here, and both are code:
 //
@@ -47,6 +47,21 @@ import { parseNumericInput, plainMath } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
+import {
+  checkCloze,
+  clozeAnswerText,
+  clozeDecidedBy,
+  ClozeDraftBase,
+  clozeProblem,
+  clozeReply,
+  clozeSecrets,
+  clozeSolution,
+  clozeTaskFrom,
+  clozeVerdict,
+  visibleOf,
+  type ClozeCheck,
+  type ClozeProblem,
+} from './cloze.js';
 import { dollarMathRuns } from './dollarMath.js';
 import { ItemDraft } from './items.js';
 import {
@@ -165,6 +180,10 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     worked_solution: ItemDraft.shape.worked_solution,
   }),
   MatchDraftWithHelp,
+  ClozeDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
 
@@ -173,6 +192,7 @@ export const StructuredDraftHomework = z.discriminatedUnion('type', [
   OrderDraftBase.extend({ hints: ItemDraft.shape.hints }),
   TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
   MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  ClozeDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -181,6 +201,7 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   OrderDraftBase,
   TableDraftBase,
   MatchDraftBase,
+  ClozeDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -219,7 +240,9 @@ export type TaskProblem =
   /** A group nothing belongs to. */
   | 'empty_group'
   /** The key misses a left element, names one twice or names an id that is not there. */
-  | 'not_mapping';
+  | 'not_mapping'
+  /** A cloze text that fails Regel 0 (#232, `cloze.ts`). */
+  | ClozeProblem;
 
 /** An element as it is compared for sameness: markup, case and surrounding marks set aside. */
 function sameness(text: string): string {
@@ -287,6 +310,8 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return tableProblem(task);
     case 'match':
       return matchProblem(task);
+    case 'cloze':
+      return clozeProblem(task);
   }
 }
 
@@ -371,6 +396,8 @@ export function solutionOf(task: StructuredTask): string {
       return tableSolution(task);
     case 'match':
       return matchText(task, task.key);
+    case 'cloze':
+      return clozeSolution(task);
   }
 }
 
@@ -472,6 +499,42 @@ export function structuredItem(
         figure: null,
         tolerance: null,
         spelling: null,
+        source_excerpt: null,
+        // No curriculum place (#214) and no rubric (#211): both belong to single answers.
+        curriculum_point: null,
+        rubric: null,
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
+    case 'cloze': {
+      const prompt = dollarMathRuns(draft.prompt);
+      const built = clozeTaskFrom({ ...draft, prompt });
+      if (!('task' in built)) return null;
+      const { task } = built;
+      // Help never names what belongs in a gap — no key, no accepted form (the same check as
+      // every prepared hint, against everything she can read).
+      const visible = visibleOf(task, prompt);
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !clozeSecrets(task).some((s) => mentionsSolution(h, s, visible)),
+      );
+      return {
+        kind: 'cloze',
+        task,
+        prompt,
+        answer: clozeSolution(task),
+        accepted_answers: [],
+        unit: null,
+        choices: null,
+        correct_choice: null,
+        topic: draft.topic,
+        difficulty: draft.difficulty,
+        prompt_lang: draft.prompt_lang,
+        lang: null,
+        figure: null,
+        tolerance: null,
+        // Each gap is checked with the item's spelling rule (strict in language subjects).
+        spelling: draft.spelling,
         source_excerpt: null,
         // No curriculum place (#214) and no rubric (#211): both belong to single answers.
         curriculum_point: null,
@@ -727,6 +790,33 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       return tableView(task);
     case 'match':
       return { type: 'match', form: task.form, left: task.left, right: task.right };
+    case 'cloze':
+      return {
+        type: 'cloze',
+        segments: task.segments,
+        gaps: task.gaps.map((g) => g.id),
+        bank: task.bank,
+      };
+  }
+}
+
+/**
+ * What a prepared hint for this task must not say (`hints.ts`), and what she can read of it
+ * — a hint may repeat what is visible. For an order or a match the whole solution is the
+ * secret; for a table every key of a gap; for a cloze every key and accepted form.
+ */
+export function secretsOf(
+  task: StructuredTask,
+  prompt: string,
+): { secrets: string[]; visible: string } {
+  switch (task.type) {
+    case 'order':
+    case 'match':
+      return { secrets: [solutionOf(task)], visible: prompt };
+    case 'table_fill':
+      return { secrets: tableKeys(task), visible: `${prompt} ${tableShownText(task)}` };
+    case 'cloze':
+      return { secrets: clozeSecrets(task), visible: visibleOf(task, prompt) };
   }
 }
 
@@ -739,7 +829,7 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = OrderCheck | TableCheck | MatchCheck;
+export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | ClozeCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -823,6 +913,55 @@ export function checkStructured(
       return answer.type === 'table_fill' ? checkTable(task, answer, ctx) : null;
     case 'match':
       return answer.type === 'match' ? checkMatch(task, answer) : null;
+    case 'cloze':
+      return answer.type === 'cloze' ? checkCloze(task, answer, ctx) : null;
+  }
+}
+
+/**
+ * The verdict a structured check stands for: right, wrong, a near miss (a cloze whose gaps
+ * are only off by spelling), or null while a part nobody could judge is left — then nothing
+ * is claimed (CLAUDE.md rule 5).
+ */
+export function structuredVerdict(
+  check: StructuredCheck,
+): 'correct' | 'partially_correct' | 'incorrect' | null {
+  switch (check.type) {
+    case 'order':
+    case 'table_fill':
+    case 'match':
+      return check.correct ? 'correct' : 'incorrect';
+    case 'cloze':
+      return clozeVerdict(check);
+  }
+}
+
+/**
+ * How parts are given when the app does not say (issue #163): arranged by tapping — except
+ * the cells of a table (#230), every one typed, and a cloze without a word bank, whose gaps
+ * can only be typed (#232).
+ */
+export function partsVia(task: StructuredTask): 'tapped' | 'typed' {
+  switch (task.type) {
+    case 'order':
+    case 'match':
+      return 'tapped';
+    case 'table_fill':
+      return 'typed';
+    case 'cloze':
+      return task.bank === null ? 'typed' : 'tapped';
+  }
+}
+
+/** Who decided: code, unless the model judged a part no rule could (a cloze gap). */
+export function structuredDecidedBy(check: StructuredCheck): 'rule' | 'model' {
+  switch (check.type) {
+    case 'order':
+    case 'table_fill':
+    case 'match':
+      return 'rule';
+    case 'cloze':
+      return clozeDecidedBy(check);
   }
 }
 
@@ -838,6 +977,8 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
       return answer.type === 'table_fill' ? tableAnswerText(task, answer) : '';
     case 'match':
       return answer.type === 'match' ? matchText(task, answer.links) : '';
+    case 'cloze':
+      return answer.type === 'cloze' ? clozeAnswerText(task, answer) : '';
   }
 }
 
@@ -875,6 +1016,8 @@ export function structuredReply(
         ? `${base} ${t(locale, 'practice.match.look_at', { text: check.first_wrong_text })}`
         : base;
     }
+    case 'cloze':
+      return clozeReply(locale, check);
   }
 }
 
@@ -888,6 +1031,7 @@ export function structuredNamesPart(check: StructuredCheck, priorMisses: number)
   switch (check.type) {
     case 'order':
     case 'table_fill':
+    case 'cloze':
       return false;
     case 'match':
       return !check.correct && priorMisses >= 1;

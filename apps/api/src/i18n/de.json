@@ -240,6 +240,14 @@
       "groups_some_one": "1 von {{total}} ist schon richtig einsortiert.",
       "groups_none": "Noch ist keins richtig einsortiert – schau nochmal in Ruhe hin.",
       "look_at": "Schau dir „{{text}}“ nochmal an."
+    },
+    "cloze": {
+      "quote": "„{{word}}“",
+      "none_yet": "Noch nicht ganz – schau dir die Lücken nochmal an.",
+      "right_of": "{{count}} von {{total}} Lücken stimmen schon.",
+      "right_of_one": "1 von {{total}} Lücken stimmt schon.",
+      "wrong": "Bei {{words}} passt es noch nicht.",
+      "near": "Bei {{words}} fehlt nur noch eine Kleinigkeit in der Schreibweise."
     }
   },
   "contact": {

@@ -96,6 +96,13 @@
     "check_waits": "Solo quando tutto è abbinato."
   },
   "next": "Avanti",
+  "cloze": {
+    "gap": "Spazio {{n}} di {{total}}",
+    "gap_filled": "Spazio {{n}} di {{total}}: {{word}}",
+    "gap_clear": "Svuota di nuovo lo spazio.",
+    "word_used": "{{word}}, già inserita",
+    "check_waits": "Solo quando ogni spazio ha qualcosa."
+  },
   "order": {
     "how": "Toccali in ordine.",
     "element_open": "{{text}}, ancora senza posto",

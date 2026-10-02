@@ -96,6 +96,13 @@
     "check_waits": "Erst wenn alles zugeordnet ist."
   },
   "next": "Weiter",
+  "cloze": {
+    "gap": "Lücke {{n}} von {{total}}",
+    "gap_filled": "Lücke {{n}} von {{total}}: {{word}}",
+    "gap_clear": "Leert die Lücke wieder.",
+    "word_used": "{{word}}, schon eingesetzt",
+    "check_waits": "Erst wenn jede Lücke etwas hat."
+  },
   "order": {
     "how": "Tippe sie der Reihe nach an.",
     "element_open": "{{text}}, noch ohne Platz",

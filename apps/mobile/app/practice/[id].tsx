@@ -1214,7 +1214,9 @@ export default function PracticeScreen() {
               view={item.task_view}
               draftKey={`session.${id}.${item.id}`}
               disabled={locked}
-              onSubmit={(parts, shownText) => void answer(item.id, { parts }, shownText)}
+              onSubmit={(parts, shownText, via) =>
+                void answer(item.id, via ? { parts, via } : { parts }, shownText)
+              }
             />
           </View>
         ) : null}
