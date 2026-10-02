@@ -382,5 +382,7 @@ function figureText(f: ModelFigure): string {
       return f.points.map((p) => p.name).join(' ');
     case 'fraction':
       return f.fractions.map((x) => `${x.filled}/${x.parts}`).join(' ');
+    case 'molecule':
+      return f.atoms.map((a) => a.el).join(' ');
   }
 }

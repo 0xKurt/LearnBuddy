@@ -17,11 +17,16 @@
 //   - every marked point lies inside the window (a point outside it would simply not be drawn,
 //     and the sentence that refers to it would point at nothing);
 //   - number lines, fractions, tables, geometry and bar charts: their own bounds, every
-//     reference resolves, nothing is left over to drop.
+//     reference resolves, nothing is left over to drop;
+//   - geometry to scale and molecules: the SAME check a question's figure gets
+//     (`figureCheck.ts` `figureHolds`, issues #253/#257) — a stated angle is that wide, lengths
+//     share one scale, every shell holds. Not a second check (#296).
 
 import type { ModelFigure } from '@learnbuddy/shared-types/contracts';
 import { ModelFigure as ModelFigureSchema } from '@learnbuddy/shared-types/contracts';
 import { compileExpression } from '@learnbuddy/shared-math';
+
+import { figureHolds } from './figureCheck.js';
 
 /** Sample points across the drawn x-range for a curve. */
 const SAMPLES = 41;
@@ -44,7 +49,8 @@ export type FigureRejection =
   | 'ticks'
   | 'fraction'
   | 'reference'
-  | 'table';
+  | 'table'
+  | 'not_to_scale';
 
 /**
  * The figure as written, or the reason it is rejected. Never a corrected copy: a figure that
@@ -104,8 +110,16 @@ export function checkExplainFigure(
         f.segments.every((s) => known(s.from) && known(s.to)) &&
         f.polygons.every((poly) => poly.every(known)) &&
         f.circles.every((c) => known(c.center));
-      return resolves ? { ok: true, figure: f } : { ok: false, reason: 'reference' };
+      if (!resolves) return { ok: false, reason: 'reference' };
+      // No key goes with an explanation: what is checked is that the drawing holds in itself.
+      return figureHolds(f, '', false)
+        ? { ok: true, figure: f }
+        : { ok: false, reason: 'not_to_scale' };
     }
+    case 'molecule':
+      return figureHolds(f, '', false)
+        ? { ok: true, figure: f }
+        : { ok: false, reason: 'not_to_scale' };
     case 'table':
       return f.rows.every((r) => r.length === f.header.length)
         ? { ok: true, figure: f }
@@ -125,4 +139,4 @@ export function explainFigure(raw: unknown): ModelFigure | null {
 }
 
 /** What the prompt tells the model about figures in an explanation. */
-export const EXPLAIN_FIGURE_RULES = `figure (optional, usually null): only when a picture explains it better than words — a function graph (e.g. how y = a·x^2 changes with a: up to 3 curves with labels), a number line, a fraction, a bar chart, a geometric figure or a small table. Data only, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"); choose x_min/x_max/y_min/y_max so the curves and every point lie inside the window. The server checks every value and drops a figure that does not hold — then the explanation goes without it. Otherwise null.`;
+export const EXPLAIN_FIGURE_RULES = `figure (optional, usually null): only when a picture explains it better than words — a function graph (e.g. how y = a·x^2 changes with a: up to 3 curves with labels), a number line, a fraction, a bar chart, a geometric figure, a molecule or a small table. Data only, the app draws it. function_plot expressions use x, numbers, + - * / ^, sqrt, abs, sin, cos, tan, ln, log, exp, pi (e.g. "0.5*x^2-2"); choose x_min/x_max/y_min/y_max so the curves and every point lie inside the window. The server checks every value and drops a figure that does not hold — then the explanation goes without it. Otherwise null.`;

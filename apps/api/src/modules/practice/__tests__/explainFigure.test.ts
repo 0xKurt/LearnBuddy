@@ -97,4 +97,32 @@ describe('checkExplainFigure', () => {
     expect(explainFigure(null)).toBeNull();
     expect(explainFigure('a parabola')).toBeNull();
   });
+
+  it('holds geometry and molecules to the same check a question’s figure gets (figureCheck.ts)', () => {
+    // A right angle drawn as one: kept.
+    const square = {
+      type: 'geometry',
+      points: [
+        { name: 'A', x: 0, y: 0 },
+        { name: 'B', x: 4, y: 0 },
+        { name: 'C', x: 4, y: 3 },
+      ],
+      segments: [
+        { from: 'A', to: 'B' },
+        { from: 'B', to: 'C' },
+        { from: 'C', to: 'A' },
+      ],
+      polygons: [],
+      circles: [],
+    };
+    expect(checkExplainFigure(square).ok).toBe(true);
+    // Water with a carbon's worth of hydrogens on the oxygen: the shell does not hold.
+    const broken = {
+      type: 'molecule',
+      style: 'structural',
+      atoms: [{ id: 'a1', el: 'O', h: 4, charge: 0 }],
+      bonds: [],
+    };
+    expect(checkExplainFigure(broken)).toMatchObject({ ok: false });
+  });
 });

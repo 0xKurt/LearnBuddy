@@ -70,7 +70,7 @@ import { summarize } from './summary.js';
 import { questionCountFor, selectPracticeItems, type PracticeRun } from './selection.js';
 import { tapChoicesFor } from './tapChoices.js';
 import { CARD_PASS, offersCardPass } from './cards.js';
-import { MAX_ACCEPTED } from './items.js';
+import { MAX_ACCEPTED, storedFigure } from './items.js';
 import {
   askedElements,
   checkRubric,
@@ -879,7 +879,7 @@ export async function sessionView(
         origin: i.origin,
         lang: i.lang,
         prompt_lang: i.prompt_lang,
-        figure: i.figure,
+        figure: storedFigure(i.figure),
         image: imageOf(i, imageUrls),
         // A test asks her to produce, so nothing is offered to tap there — and a card has
         // nothing to tap at all: it turns over (issue #147).
