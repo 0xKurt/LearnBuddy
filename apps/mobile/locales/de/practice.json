@@ -10,6 +10,7 @@
     "placeholder": "Deine Antwort …",
     "unit_hint": "Antwort in {{unit}}"
   },
+  "back_to_buddy": "Zurück zu Buddy",
   "bar": {
     "shade_how": "Tippe auf die Teile des Balkens.",
     "shaded": "{{filled}} von {{total}} Teilen gefärbt",
@@ -17,7 +18,23 @@
     "pick_how": "Tippe den Balken an, der mehr ist.",
     "pick_option": "{{fraction}} wählen"
   },
-  "back_to_buddy": "Zurück zu Buddy",
+  "cards": {
+    "progress": "Karte {{current}} von {{total}}",
+    "note": "Lernkarten – du sagst selbst, ob du es wusstest.",
+    "turn": "Umdrehen",
+    "turn_hint": "Zeigt die Lösung. Danach sagst du selbst, ob du sie wusstest.",
+    "back_label": "Lösung",
+    "knew": "Wusste ich",
+    "knew_hint": "Merkt sich, dass du es konntest. Das Wort kommt später nochmal.",
+    "not_yet": "Noch nicht",
+    "not_yet_hint": "Merkt sich, dass du es nochmal brauchst. Das Wort kommt bald wieder.",
+    "end_label": "Lernkarten beenden",
+    "end_hint": "Zurück zu Buddy. Die Karten, die du schon hattest, bleiben erledigt.",
+    "done_title": "Durch!",
+    "done_body": "Du bist deine Wörter durchgegangen. Die, die noch nicht saßen, kommen wieder.",
+    "offer": "Die Wörter als Karten durchgehen",
+    "offer_hint": "Zeigt dir die Wörter, die noch nicht saßen, einzeln – mit Lösung zum Umdrehen."
+  },
   "check": "Prüfen",
   "choice_tried": "Schon ausprobiert",
   "dispute": {

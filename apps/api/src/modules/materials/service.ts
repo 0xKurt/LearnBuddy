@@ -10,6 +10,7 @@
 // exists for it.
 
 import type {
+  ClarifyUnclearRequest,
   CreateMaterialRequest,
   Figure,
   ItemResult,
@@ -25,7 +26,7 @@ import type { Db } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { callModel } from '../../llm/call.js';
-import { LlmError, type LlmPart } from '../../llm/gateway.js';
+import { LlmError, type LlmPart, type LlmResult } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
@@ -34,13 +35,16 @@ import { StorageError } from '../../storage/gateway.js';
 import { insertItems, usableItems } from '../practice/items.js';
 import { createSession } from '../practice/service.js';
 import {
+  clarifiedRules,
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SYSTEM,
   ExtractionParse,
   MOST_READINGS,
+  MOST_UNCLEAR_SPOTS,
   moreRules,
   ExtractionResult,
   type PageReport,
+  type UnclearReport,
   HOMEWORK_SYSTEM,
   HomeworkExtraction,
   LEAN_RULES,
@@ -62,6 +66,15 @@ const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
 const ABANDON_UPLOAD_MS = 24 * 3_600_000;
 const MAX_EXTRACTION_ATTEMPTS = 3;
+/**
+ * How long an unsettled spot is asked about (issue #164 point 1): the same day-long window the
+ * page notice uses, because it rests on the same fact — the sheet is still at hand. After it the
+ * ask is gone and the sheet is exactly what it was: a question that was never written, and a page
+ * report she can still act on. Nothing nags and nothing is counted (CLAUDE.md rule 6).
+ */
+const UNCLEAR_TTL_MS = 24 * 3_600_000;
+/** A clarified reading is one more look at the same photos: two tries, then it stays unwritten. */
+const MAX_CLARIFY_ATTEMPTS = 2;
 
 /**
  * Two prompts that mean the same question (issue #150). A continued reading must not hand
@@ -535,11 +548,15 @@ export async function retryMaterial(
     }
     // Runs refused for the daily budget or lost to a provider/Storage outage were not
     // her sheet's fault and do not count (budget-refusals-consume-retry-runs).
+    // A reading the learner's own answer asked for is not one of her three readings of the
+    // sheet (issue #164): it reads one task she settled, and it must never be the reason
+    // "Nochmal lesen" is refused.
     const runs = await tx.one<{ n: number; counted: number }>(
       `select count(*)::int as n,
               count(*) filter (where coalesce((result ->> 'uncounted')::boolean, false) = false)::int
                 as counted
-         from jobs where kind = 'extract_material' and payload ->> 'material_id' = $1`,
+         from jobs where kind = 'extract_material' and payload ->> 'material_id' = $1
+           and payload ->> 'unclear_spot_id' is null`,
       [materialId],
     );
     if (runs.counted >= MAX_EXTRACTION_ATTEMPTS)
@@ -672,8 +689,131 @@ async function retryTransient(
   return fail(deps, job, materialId, 'model_error', { uncounted: true });
 }
 
+type PhotoRow = {
+  position: number;
+  storage_path: string;
+  mime: 'image/jpeg' | 'image/png' | 'application/pdf';
+  page_count: number | null;
+};
+
+async function photosOf(db: Db, materialId: string): Promise<PhotoRow[]> {
+  return db.query<PhotoRow>(
+    `select position, storage_path, mime, page_count from material_photos
+      where material_id = $1 order by position`,
+    [materialId],
+  );
+}
+
+/**
+ * The photos of one material as a reading request sees them. Each is labelled, so a page number
+ * in the answer names this photo and not the model's count of unlabelled images
+ * (p2-model-page-numbers-unlabeled-images); a PDF brings its pages in one file, and its label
+ * says which page numbers they are.
+ *
+ * `missing` is the position of the first photo Storage does not have — nothing can be read then.
+ * A Storage OUTAGE is not a missing photo and is thrown as such (`StorageError`), so a caller
+ * never reports "photos missing" for a provider that was simply unreachable.
+ */
+async function photoPartsOf(
+  deps: Deps,
+  photos: PhotoRow[],
+): Promise<{ parts: LlmPart[]; missing: number | null }> {
+  const ranges = pageRanges(photos);
+  const pageTotal = ranges.at(-1)?.last ?? 0;
+  const parts: LlmPart[] = [];
+  for (const [i, p] of photos.entries()) {
+    const bytes = await deps.storage.download(p.storage_path);
+    if (!bytes) return { parts, missing: p.position };
+    const range = ranges[i]!;
+    parts.push({
+      text:
+        p.mime === PDF_MIME
+          ? `PDF with pages ${range.first}–${range.last} of ${pageTotal} (one page report per PDF page):`
+          : `Photo ${range.first} of ${pageTotal}:`,
+    });
+    parts.push({ inlineData: { mimeType: p.mime, data: Buffer.from(bytes).toString('base64') } });
+  }
+  return { parts, missing: null };
+}
+
+type ReadingLearner = {
+  id: string;
+  locale: string;
+  level: string;
+  grade: number | null;
+  birth_date: string;
+};
+
+/** One reading of the photos already loaded. `extra` is what THIS reading is told on top. */
+type Reader = (lean: boolean, extra: string) => Promise<LlmResult>;
+
+/**
+ * Everything a reading of a sheet needs besides its photos: the learner it is pitched at, her
+ * zone, and the model call itself. One place, because every reading of a sheet is the same call
+ * with one more paragraph: nothing for the first, `moreRules` for a continued one (issue #150),
+ * `clarifiedRules` for one the learner has settled a spot for (issue #164).
+ */
+async function sheetReader(
+  deps: Deps,
+  learnerId: string,
+  opts: { homework: boolean; parts: LlmPart[]; now: Date },
+): Promise<{ learner: ReadingLearner; timezone: string; read: Reader }> {
+  const learner = await deps.db.one<ReadingLearner>(
+    `select id, locale, level, grade, birth_date from learners where id = $1`,
+    [learnerId],
+  );
+  const tz = await deps.db.one<{ timezone: string }>(
+    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
+    [learnerId],
+  );
+  const level =
+    learner.level === 'school'
+      ? `school, grade ${learner.grade ?? 'unknown'}`
+      : learner.level === 'unknown'
+        ? 'unknown'
+        : learner.level;
+  const read: Reader = (lean, extra) =>
+    callModel(deps, learner.id, localParts(opts.now, tz.timezone).date, {
+      purpose: 'extraction',
+      tier: 'smart',
+      promptVersion: EXTRACT_PROMPT_VERSION,
+      system: `${opts.homework ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM}${
+        lean ? `\n\n${LEAN_RULES}` : ''
+      }${extra ? `\n\n${extra}` : ''}`,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: `LEARNER: ${ageOn(learner.birth_date, opts.now)} years, level ${level}, app language ${learner.locale}`,
+            },
+            ...opts.parts,
+          ],
+        },
+      ],
+      schema: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+      // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
+      // reading that runs on is cut off after seconds, not after 40 (live finding 2).
+      maxOutputTokens: opts.homework ? 8_000 : 12_000,
+      temperature: 0.3,
+      timeoutMs: 120_000,
+      // Read once in the background: time to think (see generate.ts).
+      thinkingBudget: 2048,
+    });
+  return { learner, timezone: tz.timezone, read };
+}
+
 /** The extraction job. Idempotent: a re-run after a crash starts over for the same material. */
 export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
+  // A reading the learner's own answer asked for (issue #164 point 1): the same job kind and the
+  // same photos, told one fact the photo could not give. It never touches the sheet's status —
+  // the sheet has been `ready` and usable since its first reading.
+  const spotId = job.payload.unclear_spot_id;
+  if (typeof spotId === 'string') return runClarifiedReading(deps, job, spotId);
+  return runFirstReading(deps, job);
+}
+
+async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   const materialId = String(job.payload.material_id ?? '');
   const m = await deps.db.maybeOne<MaterialRow>(`select * from materials where id = $1`, [
     materialId,
@@ -693,60 +833,28 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     [materialId, job.id, job.lease_token, deps.now()],
   );
   if (started.length === 0) return; // the lease went to another run
-  const learner = await deps.db.one<{
-    id: string;
-    locale: string;
-    level: string;
-    grade: number | null;
-    birth_date: string;
-  }>(`select id, locale, level, grade, birth_date from learners where id = $1`, [m.learner_id]);
 
-  const photos = await deps.db.query<{
-    position: number;
-    storage_path: string;
-    mime: 'image/jpeg' | 'image/png' | 'application/pdf';
-    page_count: number | null;
-  }>(
-    `select position, storage_path, mime, page_count from material_photos
-      where material_id = $1 order by position`,
-    [materialId],
-  );
-  const ranges = pageRanges(photos);
-  const pageTotal = ranges.at(-1)?.last ?? 0;
-  const parts: LlmPart[] = [];
-  for (const [i, p] of photos.entries()) {
-    let bytes: Uint8Array | null;
-    try {
-      bytes = await deps.storage.download(p.storage_path);
-    } catch (err) {
-      // An outage is not a missing photo (storage-errors-reported-as-missing-photos).
-      if (err instanceof StorageError) return retryTransient(deps, job, materialId, 'storage');
-      throw err;
-    }
-    if (!bytes) return fail(deps, job, materialId, 'photos_missing');
-    // Each photo is labelled, so a page number in the report names this photo, not the
-    // model's count of unlabelled images (p2-model-page-numbers-unlabeled-images).
-    // A PDF brings its pages in one file: the label says which page numbers they are.
-    const range = ranges[i]!;
-    parts.push({
-      text:
-        p.mime === PDF_MIME
-          ? `PDF with pages ${range.first}–${range.last} of ${pageTotal} (one page report per PDF page):`
-          : `Photo ${range.first} of ${pageTotal}:`,
-    });
-    parts.push({ inlineData: { mimeType: p.mime, data: Buffer.from(bytes).toString('base64') } });
+  const photos = await photosOf(deps.db, materialId);
+  let loaded;
+  try {
+    loaded = await photoPartsOf(deps, photos);
+  } catch (err) {
+    // An outage is not a missing photo (storage-errors-reported-as-missing-photos).
+    if (err instanceof StorageError) return retryTransient(deps, job, materialId, 'storage');
+    throw err;
   }
+  if (loaded.missing !== null) return fail(deps, job, materialId, 'photos_missing');
   const now = deps.now();
-  const tz = await deps.db.one<{ timezone: string }>(
-    `select coalesce((select timezone from buddy_settings where learner_id = $1), 'Europe/Berlin') as timezone`,
-    [learner.id],
-  );
-  const level =
-    learner.level === 'school'
-      ? `school, grade ${learner.grade ?? 'unknown'}`
-      : learner.level === 'unknown'
-        ? 'unknown'
-        : learner.level;
+  const homework = m.purpose === 'homework';
+  const {
+    learner,
+    timezone,
+    read: readOnce,
+  } = await sheetReader(deps, m.learner_id, {
+    homework,
+    parts: loaded.parts,
+    now,
+  });
 
   // Without a model nothing can read the photos: say so at once, not after minutes of futile
   // retries (p2-uf-llm-disabled-capture-dead-end). Not her sheet's fault: the run is uncounted.
@@ -758,35 +866,8 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
         and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')`,
     [materialId, job.id, job.lease_token, deps.now()],
   );
-  const homework = m.purpose === 'homework';
   const read = (lean: boolean, alreadyRead: readonly string[] = []) =>
-    callModel(deps, learner.id, localParts(now, tz.timezone).date, {
-      purpose: 'extraction',
-      tier: 'smart',
-      promptVersion: EXTRACT_PROMPT_VERSION,
-      system: `${homework ? HOMEWORK_SYSTEM : EXTRACT_SYSTEM}${lean ? `\n\n${LEAN_RULES}` : ''}${
-        alreadyRead.length > 0 ? `\n\n${moreRules(alreadyRead)}` : ''
-      }`,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: `LEARNER: ${ageOn(learner.birth_date, now)} years, level ${level}, app language ${learner.locale}`,
-            },
-            ...parts,
-          ],
-        },
-      ],
-      schema: homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
-      // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
-      // reading that runs on is cut off after seconds, not after 40 (live finding 2).
-      maxOutputTokens: homework ? 8_000 : 12_000,
-      temperature: 0.3,
-      timeoutMs: 120_000,
-      // Read once in the background: time to think (see generate.ts).
-      thinkingBudget: 2048,
-    });
+    readOnce(lean, alreadyRead.length > 0 ? moreRules(alreadyRead) : '');
   let result;
   try {
     // A run after one that was cut off starts lean at once.
@@ -826,9 +907,10 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
           result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
           break;
         }
-        // A continued reading sees the same photos, so it names the same refused tasks:
-        // only ones it has not named yet are added (issue #198).
+        // A continued reading sees the same photos, so it names the same refused tasks and the
+        // same unsettled spots: only ones it has not named yet are added (issues #198, #164).
         const named = new Set(result.data.not_practicable.map((n) => samePrompt(n.task)));
+        const unsettled = new Set(result.data.unclear.map((u) => samePrompt(u.task)));
         result = {
           success: true,
           data: {
@@ -839,6 +921,10 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
               ...result.data.not_practicable,
               ...parsed.data.not_practicable.filter((n) => !named.has(samePrompt(n.task))),
             ].slice(0, 20),
+            unclear: [
+              ...result.data.unclear,
+              ...parsed.data.unclear.filter((u) => !unsettled.has(samePrompt(u.task))),
+            ].slice(0, MOST_UNCLEAR_SPOTS),
           },
         } as typeof result;
       }
@@ -903,14 +989,14 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
     await indexMaterialPassages(deps, {
       materialId: sheetForImages,
       learnerId: learner.id,
-      timezone: tz.timezone,
+      timezone,
     });
     await attachConceptImages(deps, {
       materialId,
       sheetId: sheetForImages,
       learnerId: learner.id,
       locale: learner.locale,
-      timezone: tz.timezone,
+      timezone,
     });
   }
 
@@ -1033,45 +1119,28 @@ export async function runExtraction(deps: Deps, job: JobRow): Promise<void> {
       );
     }
     if (homework) {
-      // Homework goes straight into a help session: hints only, never the solution. The
-      // tasks of a later page join the sheet's session while it is still open.
-      const open = target
-        ? await tx.maybeOne<{ id: string; next: number }>(
-            `select ps.id, coalesce(max(si.position) + 1, 0)::int as next
-               from practice_sessions ps left join session_items si on si.session_id = ps.id
-              where ps.material_id = $1 and ps.status = 'active'
-              group by ps.id order by ps.started_at desc, ps.seq desc limit 1`,
-            [target.id],
-          )
-        : null;
-      if (open) {
-        for (const [i, itemId] of itemIds.entries()) {
-          await tx.query(
-            `insert into session_items (session_id, item_id, position) values ($1, $2, $3)`,
-            [open.id, itemId, open.next + i],
-          );
-        }
-        await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
-          open.id,
-          now,
-        ]);
-      } else {
-        await createSession(
-          tx,
-          current.learner_id,
-          itemIds,
-          {
-            mode: 'help',
-            stepId: null,
-            goalId: home.goal_id,
-            materialId: home.id,
-            title: target?.title ?? x.title,
-            clientRequestId: null,
-          },
-          now,
-        );
-      }
+      await intoHelpSession(tx, {
+        learnerId: current.learner_id,
+        sheetId: home.id,
+        goalId: home.goal_id,
+        title: target?.title ?? x.title,
+        itemIds,
+        now,
+        // A first reading has no session to join; only a page added to a sheet does.
+        joinOpen: target !== null,
+      });
     }
+    // Spots this reading could not settle, so the smallest clarification can be asked instead
+    // of "photograph the page again" (issue #164 point 1). Like the tasks above they travel
+    // with the sheet the learner sees; the questions for them do not exist until she answers.
+    await insertUnclearSpots(tx, {
+      learnerId: current.learner_id,
+      materialId,
+      sheetId: home.id,
+      spots: x.unclear,
+      photoCount: current.photo_count,
+      now,
+    });
     // The capture step Buddy asked for (or, without one, the goal's open
     // capture step) is now done — with evidence. A page added to an earlier sheet completes
     // only a step it was sent for: a later request is about other material (p2-J-01).
@@ -1142,6 +1211,411 @@ export function pageProblemsOf(pages: PageReport[], photoCount: number): PagePro
     out.set(p.page, { page: p.page, read: p.read, problem: p.problem });
   }
   return [...out.values()].sort((a, b) => a.page - b.page);
+}
+
+/**
+ * New questions of a homework sheet belong in the help session she is working in (hints only,
+ * never the solution). `joinOpen`: pages added to a sheet, and a task she settled afterwards
+ * (issue #164), join the session that is still open — a question nobody can reach would be no
+ * answer at all. A first reading has nothing to join and starts the session.
+ */
+async function intoHelpSession(
+  tx: Db,
+  o: {
+    learnerId: string;
+    sheetId: string;
+    goalId: string | null;
+    title: string | null;
+    itemIds: string[];
+    now: Date;
+    joinOpen: boolean;
+  },
+): Promise<void> {
+  if (o.itemIds.length === 0) return;
+  const open = o.joinOpen
+    ? await tx.maybeOne<{ id: string; next: number }>(
+        `select ps.id, coalesce(max(si.position) + 1, 0)::int as next
+           from practice_sessions ps left join session_items si on si.session_id = ps.id
+          where ps.material_id = $1 and ps.status = 'active'
+          group by ps.id order by ps.started_at desc, ps.seq desc limit 1`,
+        [o.sheetId],
+      )
+    : null;
+  if (open) {
+    for (const [i, itemId] of o.itemIds.entries()) {
+      await tx.query(
+        `insert into session_items (session_id, item_id, position) values ($1, $2, $3)`,
+        [open.id, itemId, open.next + i],
+      );
+    }
+    await tx.query(`update practice_sessions set last_activity_at = $2 where id = $1`, [
+      open.id,
+      o.now,
+    ]);
+    return;
+  }
+  await createSession(
+    tx,
+    o.learnerId,
+    o.itemIds,
+    {
+      mode: 'help',
+      stepId: null,
+      goalId: o.goalId,
+      materialId: o.sheetId,
+      title: o.title,
+      clientRequestId: null,
+    },
+    o.now,
+  );
+}
+
+// ─────────────── the smallest clarification a sheet needs (issue #164 point 1) ───────────────
+
+type UnclearSpotRow = {
+  id: string;
+  learner_id: string;
+  material_id: string;
+  sheet_id: string;
+  ref: string;
+  page: number;
+  task: string;
+  about: string;
+  readings: string[];
+  status: 'open' | 'answered' | 'read' | 'dismissed' | 'expired';
+  answer: string | null;
+  items_added: number;
+  asked_at: Date;
+  expires_at: Date;
+};
+
+/**
+ * The spots a reading could not settle, kept so the learner can be asked the SMALLEST question
+ * (migration 0070). Before this, one unreadable digit made the whole page "partly read" and the
+ * task's question was never written; she was told to photograph the page again without ever
+ * learning where it stuck.
+ *
+ * Three things are enforced here, not in the prompt (CLAUDE.md rule 1): the alias she answers
+ * with is issued by the server, a page the model invented is dropped (it would point her at
+ * another page of her own sheet), and the same spot is never asked about twice — a continued
+ * reading sees the same photos and names it again, exactly as it does with `not_practicable`.
+ */
+async function insertUnclearSpots(
+  tx: Db,
+  o: {
+    learnerId: string;
+    materialId: string;
+    sheetId: string;
+    spots: readonly UnclearReport[];
+    photoCount: number;
+    now: Date;
+  },
+): Promise<void> {
+  if (o.spots.length === 0) return;
+  const known = await tx.query<{ ref: string; task: string }>(
+    `select ref, task from material_unclear_spots where sheet_id = $1`,
+    [o.sheetId],
+  );
+  const asked = new Set(known.map((k) => samePrompt(k.task)));
+  const expires = new Date(o.now.getTime() + UNCLEAR_TTL_MS);
+  let next = known.length + 1;
+  for (const s of o.spots) {
+    // A sheet asks about at most as many spots as one reading may name: more unsettled than
+    // that is a page that was not read, and the page report is the honest step for it.
+    if (next > MOST_UNCLEAR_SPOTS) break;
+    if (s.page > o.photoCount || asked.has(samePrompt(s.task))) continue;
+    await tx.query(
+      `insert into material_unclear_spots
+         (learner_id, material_id, sheet_id, ref, page, task, about, readings, asked_at, expires_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10)
+       on conflict (sheet_id, ref) do nothing`,
+      [
+        o.learnerId,
+        o.materialId,
+        o.sheetId,
+        `u${next}`,
+        s.page,
+        s.task,
+        s.about,
+        JSON.stringify(s.readings),
+        o.now,
+        expires,
+      ],
+    );
+    asked.add(samePrompt(s.task));
+    next++;
+  }
+}
+
+/**
+ * Her answer to one spot: the reading she confirmed, or "weiß ich nicht" (`reading: null`).
+ *
+ * Nothing the model wrote decides anything here. Both aliases were issued by the server and are
+ * resolved by it (rule 2); the confirmed reading is copied out of the row, so the question that
+ * follows can only ever be built on a reading the app itself offered her. An ask that is no
+ * longer open — answered before, let go, or past its day — says so instead of being answered
+ * twice, and an ignored one has cost the sheet nothing.
+ */
+export async function clarifyUnclearSpot(
+  deps: Deps,
+  learnerId: string,
+  materialId: string,
+  input: ClarifyUnclearRequest,
+): Promise<{ view: MaterialView; jobId: string | null }> {
+  const now = deps.now();
+  // Another learner's sheet (and a deleted one) is not found here, before anything else.
+  await materialView(deps.db, learnerId, materialId);
+  const jobId = await deps.db.tx(async (tx) => {
+    const spot = await tx.maybeOne<UnclearSpotRow>(
+      `select s.* from material_unclear_spots s
+         join materials m on m.id = s.sheet_id and m.learner_id = s.learner_id
+        where s.sheet_id = $1 and s.learner_id = $2 and s.ref = $3 and m.archived_at is null
+        for update of s`,
+      [materialId, learnerId, input.spot],
+    );
+    if (!spot) throw new AppError('not_found', 'Unclear spot not found');
+    if (spot.status === 'open' && spot.expires_at <= now) {
+      await tx.query(`update material_unclear_spots set status = 'expired' where id = $1`, [
+        spot.id,
+      ]);
+      throw new AppError('conflict', 'This question is no longer open', {
+        reason: 'no_longer_open',
+      });
+    }
+    if (spot.status !== 'open')
+      throw new AppError('conflict', 'This question is no longer open', {
+        reason: 'no_longer_open',
+      });
+    if (input.reading === null) {
+      // "Weiß ich nicht": the ask closes and no question is written for that task. The page
+      // report is still there for her, and nothing comes back asking again.
+      await tx.query(
+        `update material_unclear_spots set status = 'dismissed', answered_at = $2 where id = $1`,
+        [spot.id, now],
+      );
+      await bumpContext(tx, learnerId);
+      return null;
+    }
+    const at = Number(input.reading.slice(1)) - 1;
+    const answer = spot.readings[at];
+    if (answer === undefined)
+      throw new AppError('invalid_input', 'That is not one of the readings', {
+        reason: 'unknown_reading',
+      });
+    await tx.query(
+      `update material_unclear_spots set status = 'answered', answer = $2, answered_at = $3
+        where id = $1`,
+      [spot.id, answer, now],
+    );
+    // The reading of the rest of this sheet is long done, so this is one more look at the same
+    // photos — the continued-reading machinery of issue #150 with one fact added, not a second
+    // mechanism. Its own dedupe key, so answering twice can never read twice.
+    const jobId = await enqueueJob(tx, {
+      learnerId,
+      kind: 'extract_material',
+      runAt: now,
+      dedupeKey: `clarify:${spot.id}`,
+      payload: { material_id: spot.material_id, unclear_spot_id: spot.id },
+      maxAttempts: MAX_CLARIFY_ATTEMPTS,
+    });
+    await bumpContext(tx, learnerId);
+    return jobId;
+  });
+  return { view: await materialView(deps.db, learnerId, materialId), jobId };
+}
+
+/**
+ * One more reading of the same photos, now that SHE has settled the spot (issue #164 point 1).
+ *
+ * The sheet never leaves `ready` for this: everything else on it has been practicable since its
+ * first reading, and a clarification may not take that away. What comes back is merged exactly
+ * as a continued reading's questions are — dropped when a question with that prompt already
+ * exists (`samePrompt`), so a reading that retypes the whole sheet adds only the one task.
+ *
+ * `items_added` is the honest end of it: 0 means the question still could not be written, and
+ * Buddy says so rather than letting her answer disappear (rule 5).
+ */
+async function runClarifiedReading(deps: Deps, job: JobRow, spotId: string): Promise<void> {
+  const spot = await deps.db.maybeOne<
+    UnclearSpotRow & {
+      purpose: 'study' | 'homework';
+      sheet_status: MaterialRow['status'];
+      sheet_archived: Date | null;
+      sheet_title: string | null;
+      sheet_subject_id: string | null;
+      sheet_goal_id: string | null;
+      photos_deleted_at: Date | null;
+    }
+  >(
+    `select s.*, m.purpose, m.status as sheet_status, m.archived_at as sheet_archived,
+            m.title as sheet_title, m.subject_id as sheet_subject_id, m.goal_id as sheet_goal_id,
+            p.photos_deleted_at
+       from material_unclear_spots s
+       join materials m on m.id = s.sheet_id
+       join materials p on p.id = s.material_id
+      where s.id = $1`,
+    [spotId],
+  );
+  const stop = async (outcome: string) => {
+    await finishJob(deps.db, job, deps.now(), { status: 'done', result: { outcome } });
+  };
+  // Answered and nothing else: a spot let go, read before, or a sheet that is gone has nothing
+  // to read for.
+  if (!spot || spot.status !== 'answered' || spot.answer === null) return stop('nothing_to_do');
+  if (spot.sheet_archived || spot.sheet_status !== 'ready') return stop('nothing_to_do');
+  if (spot.photos_deleted_at) {
+    // The photos are gone (retention or deletion): her answer cannot be turned into a question
+    // any more. Said, not swallowed — `items_added` stays 0.
+    await deps.db.tx(async (tx) => {
+      if (!(await holdsLease(tx, job))) return;
+      await closeSpot(tx, spot.id, spot.learner_id, 0, deps.now());
+      await finishJob(tx, job, deps.now(), {
+        status: 'done',
+        result: { outcome: 'photos_deleted' },
+      });
+    });
+    return;
+  }
+
+  const photos = await photosOf(deps.db, spot.material_id);
+  let loaded;
+  try {
+    loaded = await photoPartsOf(deps, photos);
+  } catch (err) {
+    if (err instanceof StorageError) return retryClarification(deps, job, spot, 'storage');
+    throw err;
+  }
+  if (loaded.missing !== null || loaded.parts.length === 0)
+    return retryClarification(deps, job, spot, 'photos_missing');
+  if (!deps.llm.available) return retryClarification(deps, job, spot, 'model_unavailable');
+
+  const now = deps.now();
+  const homework = spot.purpose === 'homework';
+  const { read } = await sheetReader(deps, spot.learner_id, {
+    homework,
+    parts: loaded.parts,
+    now,
+  });
+  // Everything the sheet already asks, so the reading adds the one task and repeats nothing.
+  const existing = await deps.db.query<{ prompt: string }>(
+    `select prompt from items where material_id = $1 and learner_id = $2 and archived_at is null
+      order by seq`,
+    [spot.sheet_id, spot.learner_id],
+  );
+  const known = new Set(existing.map((e) => samePrompt(e.prompt)));
+  let parsed;
+  try {
+    const res = await read(
+      false,
+      `${moreRules(existing.map((e) => e.prompt))}\n\n${clarifiedRules({
+        task: spot.task,
+        about: spot.about,
+        answer: spot.answer,
+      })}`,
+    );
+    parsed = ExtractionParse.safeParse(res.json);
+  } catch (err) {
+    // An outage, a budget that is used up for today, an answer cut off: try again while this
+    // job has a run left. After that the question stays unwritten and says so.
+    if (isAppError(err) && err.code === 'budget_exhausted')
+      return retryClarification(deps, job, spot, 'budget_exhausted');
+    if (err instanceof LlmError) return retryClarification(deps, job, spot, err.kind);
+    throw err;
+  }
+  const fresh = parsed.success
+    ? usableItems(parsed.data.items).filter((it) => !known.has(samePrompt(it.prompt)))
+    : [];
+
+  await deps.db.tx(async (tx) => {
+    // A run past its lease writes nothing (extraction-status-writes-unfenced).
+    if (!(await holdsLease(tx, job))) return;
+    // Still hers, still there, still answered: the sheet could have been deleted while the
+    // model was reading.
+    const current = await tx.maybeOne<{ status: UnclearSpotRow['status'] }>(
+      `select s.status from material_unclear_spots s join materials m on m.id = s.sheet_id
+        where s.id = $1 and m.archived_at is null and m.status = 'ready' for update of s`,
+      [spot.id],
+    );
+    if (!current || current.status !== 'answered') {
+      await finishJob(tx, job, deps.now(), {
+        status: 'done',
+        result: { outcome: 'nothing_to_do' },
+      });
+      return;
+    }
+    const itemIds = await insertItems(
+      tx,
+      {
+        learnerId: spot.learner_id,
+        materialId: spot.sheet_id,
+        subjectId: spot.sheet_subject_id,
+        origin: homework ? 'homework' : 'material',
+      },
+      fresh,
+    );
+    if (homework) {
+      await intoHelpSession(tx, {
+        learnerId: spot.learner_id,
+        sheetId: spot.sheet_id,
+        goalId: spot.sheet_goal_id,
+        title: spot.sheet_title,
+        itemIds,
+        now: deps.now(),
+        joinOpen: true,
+      });
+    }
+    await closeSpot(tx, spot.id, spot.learner_id, itemIds.length, deps.now());
+    await finishJob(tx, job, deps.now(), {
+      status: 'done',
+      result: { outcome: 'clarified', items: itemIds.length },
+    });
+  });
+}
+
+/** The spot is done with: what came of her answer, and Buddy's picture of the sheet changed. */
+async function closeSpot(
+  tx: Db,
+  spotId: string,
+  learnerId: string,
+  itemsAdded: number,
+  now: Date,
+): Promise<void> {
+  await tx.query(
+    `update material_unclear_spots set status = 'read', items_added = $2, read_at = $3
+      where id = $1`,
+    [spotId, itemsAdded, now],
+  );
+  await bumpContext(tx, learnerId);
+}
+
+/**
+ * The clarified reading could not run (an outage, no model, the daily budget): try again while
+ * this job has a run left. After the last one her answer still stands and the question stays
+ * unwritten — `items_added` 0, which Buddy says out loud instead of going quiet.
+ */
+async function retryClarification(
+  deps: Deps,
+  job: JobRow,
+  spot: UnclearSpotRow,
+  error: string,
+): Promise<void> {
+  const now = deps.now();
+  if (job.attempts < job.max_attempts) {
+    await deps.db.tx(async (tx) => {
+      await retryJob(tx, job, {
+        runAt: new Date(now.getTime() + 60_000 * 2 ** Math.max(0, job.attempts - 1)),
+        error,
+        countAttempt: true,
+        now,
+      });
+    });
+    return;
+  }
+  await deps.db.tx(async (tx) => {
+    if (!(await holdsLease(tx, job))) return;
+    await closeSpot(tx, spot.id, spot.learner_id, 0, now);
+    await finishJob(tx, job, now, { status: 'done', result: { outcome: 'not_written', error } });
+  });
 }
 
 /**

@@ -1,6 +1,7 @@
 // Material HTTP surface. docs/architecture.md §Material.
 
 import {
+  ClarifyUnclearRequest,
   CreateMaterialRequest,
   RenameMaterialRequest,
   Uuid,
@@ -21,6 +22,7 @@ import {
   acceptMissingPages,
   archiveMaterial,
   archiveMaterialItem,
+  clarifyUnclearSpot,
   createMaterial,
   libraryView,
   materialItems,
@@ -100,6 +102,22 @@ materialRoutes.post('/:id/pages-ok', async (c) => {
   const learnerId = c.get('learner').id;
   await acceptMissingPages(deps, learnerId, materialId);
   return c.json(await materialView(deps.db, learnerId, materialId));
+});
+
+/**
+ * Her answer to one spot the reading could not settle (issue #164 point 1): the reading she
+ * confirms, or "weiß ich nicht". The question for that task is written from HER reading — one
+ * more look at the same photos, started right away like a submit, so she is not left waiting on
+ * the next scheduler run.
+ */
+materialRoutes.post('/:id/unclear', async (c) => {
+  const materialId = check(Uuid, c.req.param('id'));
+  const input = await readBody(c, ClarifyUnclearRequest);
+  const deps = depsOf(c);
+  const learnerId = c.get('learner').id;
+  const { view, jobId } = await clarifyUnclearSpot(deps, learnerId, materialId, input);
+  if (jobId) deps.background(() => runQueuedExtraction(deps, learnerId));
+  return c.json(view, 202);
 });
 
 materialRoutes.delete('/:id', async (c) => {

@@ -327,8 +327,15 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
       extracted_text: string | null;
       title: string | null;
       content_purged_at: Date | null;
-    }>(`select extracted_text, title, content_purged_at from materials where id = $1`, [m.id]);
+      not_practicable: unknown[];
+    }>(
+      `select extracted_text, title, content_purged_at, not_practicable from materials where id = $1`,
+      [m.id],
+    );
     expect(row).toMatchObject({ extracted_text: null, title: null });
+    // Her tasks as printed go with the sheet, like the transcript (issues #198, #237): this
+    // column held them and survived the purge.
+    expect(row.not_practicable).toEqual([]);
     expect(row.content_purged_at).not.toBeNull();
     const left = await env.db.one<{ items: number; turns: number }>(
       `select (select count(*) from items where material_id = $1)::int as items,

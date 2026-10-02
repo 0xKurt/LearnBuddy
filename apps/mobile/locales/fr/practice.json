@@ -10,6 +10,7 @@
     "placeholder": "Ta réponse…",
     "unit_hint": "Réponse en {{unit}}"
   },
+  "back_to_buddy": "Retour à Buddy",
   "bar": {
     "shade_how": "Touche les parts de la barre.",
     "shaded": "{{filled}} parts sur {{total}} coloriées",
@@ -17,7 +18,23 @@
     "pick_how": "Touche la barre qui est la plus grande.",
     "pick_option": "Choisir {{fraction}}"
   },
-  "back_to_buddy": "Retour à Buddy",
+  "cards": {
+    "progress": "Carte {{current}} sur {{total}}",
+    "note": "Cartes – c'est toi qui dis si tu le savais.",
+    "turn": "Retourner",
+    "turn_hint": "Montre la réponse. Ensuite, tu dis toi-même si tu la savais.",
+    "back_label": "Réponse",
+    "knew": "Je le savais",
+    "knew_hint": "Note que tu le savais. Le mot reviendra plus tard.",
+    "not_yet": "Pas encore",
+    "not_yet_hint": "Note qu'il te faut encore ce mot. Il reviendra bientôt.",
+    "end_label": "Terminer les cartes",
+    "end_hint": "Retour à Buddy. Les cartes déjà faites restent faites.",
+    "done_title": "Terminé !",
+    "done_body": "Tu as parcouru tes mots. Ceux qui n'étaient pas encore là reviendront.",
+    "offer": "Revoir les mots avec des cartes",
+    "offer_hint": "Te montre un par un les mots qui n'étaient pas encore là – retourne la carte pour la réponse."
+  },
   "check": "Vérifier",
   "choice_tried": "Déjà essayé",
   "dispute": {

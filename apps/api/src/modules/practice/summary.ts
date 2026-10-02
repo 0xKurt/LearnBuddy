@@ -13,7 +13,7 @@ export type SummaryRow = {
   first_try_correct: boolean | null;
   flagged_at?: Date | null;
   /** How the closing answer was given (issue #163); absent in rows written before it. */
-  answered_by?: 'typed' | 'tapped' | 'spoken' | null;
+  answered_by?: 'typed' | 'tapped' | 'spoken' | 'self_rated' | null;
   /** What kind of question it was: a free text says nothing about a topic (issue #197). */
   kind?: string | null;
 };
@@ -52,6 +52,13 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
     // counts like any other question.
     const measured = i.status === 'correct' || !noSingleSolution({ kind: i.kind ?? '' });
     if (!measured) continue;
+    // A flashcard she judged herself measured NOTHING about the topic — in either direction
+    // (issue #147). Calling it settled would claim a certainty nobody checked; calling it
+    // shaky would be the same mistake pointing the other way, which is exactly what #197
+    // was about. So the cards count as work she did (`answered` below) and say nothing here.
+    // What they DO say reaches the one place it belongs: the repetition schedule, at the
+    // reduced weight `fsrs.ts` RATING argues for.
+    if (i.answered_by === 'self_rated') continue;
     const key = name.toLocaleLowerCase();
     const t = byTopic.get(key) ?? { name, shaky: false, shown: 0 };
     if (!(i.status === 'correct' && i.first_try_correct)) t.shaky = true;

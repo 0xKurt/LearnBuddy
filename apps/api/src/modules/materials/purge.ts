@@ -147,9 +147,19 @@ export async function purgeContent(deps: Deps, job: JobRow): Promise<void> {
       images.map((i) => i.storage_path),
       now,
     );
+    // An unsettled spot quotes her task as printed (issue #164): it is content of the sheet and
+    // goes with it, like the transcript and the crops.
+    await tx.query(
+      `delete from material_unclear_spots
+        where material_id = any($1::uuid[]) or sheet_id = any($1::uuid[])`,
+      [ids],
+    );
+    // `not_practicable` holds her tasks AS PRINTED (issue #198) — the same kind of content as
+    // the transcript, and it survived this purge until issue #237. A deleted sheet keeps ids,
+    // dates and counts; it keeps nothing she wrote or photographed.
     await tx.query(
       `update materials set extracted_text = null, title = null, page_problems = '[]'::jsonb,
-                            content_purged_at = $2
+                            not_practicable = '[]'::jsonb, content_purged_at = $2
         where id = any($1::uuid[])`,
       [ids, now],
     );

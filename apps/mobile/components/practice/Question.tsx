@@ -33,9 +33,14 @@ type ProgressProps = {
   closed: number;
   /** A quiet action at the end of the row ("Frage passt nicht"). */
   right?: ReactNode;
+  /**
+   * What the row says instead of "Frage x von y". A flashcard pass counts cards, not
+   * questions (issue #147) — same row, same bar, same place on the screen.
+   */
+  label?: string;
 };
 
-export function ProgressRow({ position, total, closed, right }: ProgressProps) {
+export function ProgressRow({ position, total, closed, right, label }: ProgressProps) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const share = total > 0 ? Math.max(0, Math.min(1, closed / total)) : 0;
@@ -51,7 +56,7 @@ export function ProgressRow({ position, total, closed, right }: ProgressProps) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Text style={[TYPE.label, { color: palette.ink2, fontSize: 14 }]}>
-        {t('progress', { current: position, total })}
+        {label ?? t('progress', { current: position, total })}
       </Text>
       {/* The text above already says where we are; the bar is decoration. */}
       <View

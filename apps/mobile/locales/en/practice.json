@@ -10,6 +10,7 @@
     "placeholder": "Your answer …",
     "unit_hint": "Answer in {{unit}}"
   },
+  "back_to_buddy": "Back to Buddy",
   "bar": {
     "shade_how": "Tap the parts of the bar.",
     "shaded": "{{filled}} of {{total}} parts shaded",
@@ -17,7 +18,23 @@
     "pick_how": "Tap the bar that is more.",
     "pick_option": "Choose {{fraction}}"
   },
-  "back_to_buddy": "Back to Buddy",
+  "cards": {
+    "progress": "Card {{current}} of {{total}}",
+    "note": "Flashcards – you say yourself whether you knew it.",
+    "turn": "Turn over",
+    "turn_hint": "Shows the answer. Then you say yourself whether you knew it.",
+    "back_label": "Answer",
+    "knew": "I knew it",
+    "knew_hint": "Notes that you had it. The word will come round again later.",
+    "not_yet": "Not yet",
+    "not_yet_hint": "Notes that you need it again. The word will come back soon.",
+    "end_label": "End the flashcards",
+    "end_hint": "Back to Buddy. The cards you have done stay done.",
+    "done_title": "All through!",
+    "done_body": "You went through your words. The ones that were not there yet will come back.",
+    "offer": "Go through the words as cards",
+    "offer_hint": "Shows you the words that were not there yet, one by one – turn each over for the answer."
+  },
   "check": "Check",
   "choice_tried": "Already tried",
   "dispute": {

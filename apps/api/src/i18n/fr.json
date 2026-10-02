@@ -60,6 +60,8 @@
       "worked_add": "Les deux fractions sont partagées en {{parts}} parts égales. Ensemble, {{answer}} est colorié."
     },
     "cannot_check": "Je ne peux pas vérifier ça pour le moment. Tu peux regarder la solution et comparer toi-même.",
+    "card_knew": "Je le savais",
+    "card_not_yet": "Pas encore",
     "correct": "C'est juste – bravo !",
     "had_enough": "D’accord — ça suffit pour aujourd’hui si tu veux. Tu peux arrêter l’exercice, ou on fait un petit exemple ensemble. Dis-moi ce que tu préfères.",
     "heard_retry": "Je ne t'ai pas bien entendu. Réessaie un peu plus fort et plus près du téléphone.",
