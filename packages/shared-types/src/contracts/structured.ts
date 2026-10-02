@@ -262,18 +262,31 @@ export type ClozeAnswer = z.infer<typeof ClozeAnswer>;
 // ─────────────── match (#229) ───────────────
 //
 // Two forms, one shape: she takes an element on the LEFT and puts it to one on the RIGHT.
-//   pairs  — left 3–6, right as many: every left has exactly one right, every right one left.
-//   groups — left 4–12 elements, right 2–4 groups: every element belongs to exactly one
-//            group, every group gets at least one element.
+//   pairs  — left 3–MATCH_PAIRS_MAX, right as many: every left has exactly one right, every
+//            right one left.
+//   groups — left MATCH_GROUPED_MIN–MATCH_GROUPED_MAX elements, right 2–MATCH_GROUPS_MAX groups:
+//            every element belongs to exactly one group, every group gets at least one element.
+//
+// The maxima are not a guess at what a task needs but what a 360×740 phone holds without the
+// parts scrolling (CLAUDE.md rule 16) — measured in the walkthrough with every text at its cap
+// (tests/web/modes.spec.ts, "zuordnen at its largest"): the largest grouping before she has
+// sorted anything, and the largest pairing after a check, with Buddy's reply above it. A task
+// over them is rejected when it is written, never shrunk (`matchDraftProblem`).
 
 export const MATCH_PAIRS_MIN = 3;
-export const MATCH_PAIRS_MAX = 6;
+export const MATCH_PAIRS_MAX = 4;
 export const MATCH_GROUPS_MIN = 2;
-export const MATCH_GROUPS_MAX = 4;
+export const MATCH_GROUPS_MAX = 3;
 export const MATCH_GROUPED_MIN = 4;
-export const MATCH_GROUPED_MAX = 12;
-/** An element, a pair's side or a group's name: a word or a short line. */
-export const MATCH_ELEMENT_MAX = 80;
+export const MATCH_GROUPED_MAX = 8;
+/** A pair's side: a word or a short line (it wraps in its column, at word boundaries). */
+export const MATCH_ELEMENT_MAX = 32;
+/** A thing to sort or a group's name: two of them must share a row of a 360-pt phone. */
+export const MATCH_GROUP_TEXT_MAX = 16;
+/** The longest single word anywhere in a match: a word cannot wrap, so it must fit a column. */
+export const MATCH_WORD_MAX = 16;
+/** The instruction of a match: the question card above the parts may take at most two lines. */
+export const MATCH_PROMPT_MAX = 44;
 
 export const MatchForm = z.enum(['pairs', 'groups']);
 export type MatchForm = z.infer<typeof MatchForm>;

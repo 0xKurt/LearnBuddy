@@ -20,12 +20,15 @@
 
 import {
   MATCH_ELEMENT_MAX,
+  MATCH_GROUP_TEXT_MAX,
   MATCH_GROUPED_MAX,
   MATCH_GROUPED_MIN,
   MATCH_GROUPS_MAX,
   MATCH_GROUPS_MIN,
   MATCH_PAIRS_MAX,
   MATCH_PAIRS_MIN,
+  MATCH_PROMPT_MAX,
+  MATCH_WORD_MAX,
   type MatchAnswer,
   type MatchElement,
   type MatchForm,
@@ -127,9 +130,14 @@ const OrderDraftWithHelp = OrderDraftBase.extend({
  * What the generator and the photo reading are told about match items — exact, minimal and
  * without an example sentence, like ORDER_RULES.
  */
-export const MATCH_RULES = `Match tasks ("structured", type "match"): only when the learner has to link given things — each thing to its one partner (pairs) or each thing to its one category (groups). Fill exactly one of pairs and groups, the other null. pairs: ${MATCH_PAIRS_MIN}–${MATCH_PAIRS_MAX} correct pairs {left, right}; every left has exactly one right and every right exactly one left. groups: ${MATCH_GROUPS_MIN}–${MATCH_GROUPS_MAX} groups {name, elements}, ${MATCH_GROUPED_MIN}–${MATCH_GROUPED_MAX} elements in all, every element in exactly one group, no group empty. Every element and name is a word or a short line, and no two of them are alike. Write only the correct links; the app shuffles them. prompt: the instruction, saying what goes with what; it never lists the elements. If anything could belong to two places, write no match task.`;
+export const MATCH_RULES = `Match tasks ("structured", type "match"): only when the learner has to link given things — each thing to its one partner (pairs) or each thing to its one category (groups). Fill exactly one of pairs and groups, the other null. pairs: ${MATCH_PAIRS_MIN}–${MATCH_PAIRS_MAX} correct pairs {left, right}; every left has exactly one right and every right exactly one left. groups: ${MATCH_GROUPS_MIN}–${MATCH_GROUPS_MAX} groups {name, elements}, ${MATCH_GROUPED_MIN}–${MATCH_GROUPED_MAX} elements in all, every element in exactly one group, no group empty. A pair's side has at most ${MATCH_ELEMENT_MAX} characters, a thing to sort and a group's name at most ${MATCH_GROUP_TEXT_MAX}, and no single word more than ${MATCH_WORD_MAX}; no two of them are alike. The prompt has at most ${MATCH_PROMPT_MAX} characters. Write only the correct links; the app shuffles them. prompt: the instruction, saying what goes with what; it never lists the elements. If anything could belong to two places, write no match task.`;
 
-const MatchText = z.string().trim().min(1).max(MATCH_ELEMENT_MAX);
+/**
+ * Parsed generously on purpose: a text over the caps is not a broken draft but one that does not
+ * fit the phone, and `matchDraftProblem` says so by name (`too_long`) instead of the parse
+ * silently dropping it.
+ */
+const MatchText = z.string().trim().min(1).max(80);
 
 /** The model's match task: the correct links, nothing else — code builds key and display. */
 const MatchDraftBase = z.object({
@@ -165,7 +173,10 @@ const MatchDraftBase = z.object({
   difficulty: ItemDraft.shape.difficulty,
   prompt_lang: ItemDraft.shape.prompt_lang,
 });
-export type MatchDraft = Pick<z.infer<typeof MatchDraftBase>, 'pairs' | 'groups'>;
+export type MatchDraft = Pick<z.infer<typeof MatchDraftBase>, 'pairs' | 'groups'> & {
+  /** Checked when given: the instruction that stands above the parts. */
+  prompt?: string;
+};
 
 const MatchDraftWithHelp = MatchDraftBase.extend({
   hints: ItemDraft.shape.hints,
@@ -241,6 +252,11 @@ export type TaskProblem =
   | 'empty_group'
   /** The key misses a left element, names one twice or names an id that is not there. */
   | 'not_mapping'
+  /**
+   * A text, a word or the prompt over its cap (MATCH_ELEMENT_MAX, MATCH_GROUP_TEXT_MAX,
+   * MATCH_WORD_MAX, MATCH_PROMPT_MAX): it would not fit a 360×740 phone without scrolling.
+   */
+  | 'too_long'
   /** A cloze text that fails Regel 0 (#232, `cloze.ts`). */
   | ClozeProblem;
 
@@ -577,6 +593,8 @@ export function matchProblem(task: MatchTask): TaskProblem | null {
     if (right.length < MATCH_GROUPS_MIN || right.length > MATCH_GROUPS_MAX) return 'count';
     if (left.length < MATCH_GROUPED_MIN || left.length > MATCH_GROUPED_MAX) return 'count';
   }
+  const textMax = task.form === 'pairs' ? MATCH_ELEMENT_MAX : MATCH_GROUP_TEXT_MAX;
+  if ([...left, ...right].some((e) => !fitsText(e.text, textMax))) return 'too_long';
   // Every text once — across both sides: a thing named like its group or its partner is
   // no task to solve.
   const seen = new Set<string>();
@@ -609,9 +627,34 @@ export function matchProblem(task: MatchTask): TaskProblem | null {
  * where an ambiguity can still be SEEN (the same thing written to two places); once ids are
  * given it would read as a mere duplicate.
  */
+/** Whether a text fits its cap, and no word in it is longer than a column holds. */
+function fitsText(text: string, max: number): boolean {
+  const plain = plainMath(text).trim();
+  return plain.length <= max && plain.split(/\s+/).every((w) => w.length <= MATCH_WORD_MAX);
+}
+
 export function matchDraftProblem(draft: MatchDraft): TaskProblem | null {
   const { pairs, groups } = draft;
   if ((pairs === null) === (groups === null)) return 'form';
+  if (draft.prompt !== undefined && draft.prompt.trim().length > MATCH_PROMPT_MAX) {
+    return 'too_long';
+  }
+  if (
+    pairs !== null &&
+    pairs.some((p) => !fitsText(p.left, MATCH_ELEMENT_MAX) || !fitsText(p.right, MATCH_ELEMENT_MAX))
+  ) {
+    return 'too_long';
+  }
+  if (
+    groups !== null &&
+    groups.some(
+      (g) =>
+        !fitsText(g.name, MATCH_GROUP_TEXT_MAX) ||
+        g.elements.some((e) => !fitsText(e, MATCH_GROUP_TEXT_MAX)),
+    )
+  ) {
+    return 'too_long';
+  }
   if (pairs !== null) {
     if (pairs.length < MATCH_PAIRS_MIN || pairs.length > MATCH_PAIRS_MAX) return 'count';
     const partnerOf = new Map<string, string>();

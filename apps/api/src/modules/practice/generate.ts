@@ -70,7 +70,7 @@ import {
 } from './structured.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.15';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
 
 const SUBJECT_KINDS = [
   'math',
@@ -873,14 +873,20 @@ async function addTheRest(
   const prepared = preparedFrom(set, learner, input, ownSheets, sheetTopics, deps.speech);
   const known = new Set(head.slice(0, FIRST_BATCH).map((i) => samePrompt(i.prompt)));
   const rest: StoredItem[] = [];
-  // The structured items stand in their own list of the answer, after `items`, so they are never
-  // among the first questions: they arrive here, with the rest (issues #220, #228–#230).
-  for (const it of [...prepared.items, ...prepared.structured, ...prepared.bars]) {
+  // The first questions are always ordinary `items`, so only those can repeat one of them.
+  for (const it of prepared.items) {
     const key = samePrompt(it.prompt);
     if (known.has(key)) continue;
     known.add(key);
     rest.push(it);
   }
+  // Everything else of the answer arrives here, with the rest — the same lists, in the same order,
+  // as a run that started on the whole set (`store`). They stand in their own lists of the answer,
+  // after `items`, so they are never among the first questions. Not deduplicated by prompt: a
+  // note-line or bar prompt is written by code and may be the same words for two questions that
+  // differ in their figure (issue #277: the note lines and listening questions of a run that
+  // started early were dropped here altogether).
+  rest.push(...prepared.structured, ...prepared.bars, ...prepared.listening, ...prepared.staffs);
   if (rest.length === 0) {
     await givenUpOnPreparing(deps.db, learner.id, sessionId);
     return;

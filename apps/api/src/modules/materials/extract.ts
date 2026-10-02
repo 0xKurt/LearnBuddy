@@ -25,7 +25,7 @@ import {
 import { CLOZE_RULES } from '../practice/cloze.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7.1';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7.2';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
