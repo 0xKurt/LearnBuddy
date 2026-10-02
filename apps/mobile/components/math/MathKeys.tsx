@@ -4,6 +4,13 @@
 // them at the cursor. The characters are ones the answer check reads
 // (packages/shared-math typographicToAscii).
 //
+// With `newline` the row opens with one key that is not a character but an
+// action: ↵ starts the next line of a written calculation path (issue #221).
+// It stands first because the row scrolls sideways — a key she has to scroll
+// to find is a key she does not know exists — and the symbols beside it are
+// ones she is already looking for. A cell of a table takes one line, so the
+// board does not offer it (components/practice/PartsBoardAnswer.tsx).
+//
 // The keys are soft and round (white on a soft shadow, the "Pastell Soft"
 // look of the composer below them), at least 44 × 44 pt.
 
@@ -19,9 +26,10 @@ export { insertAtCursor, type Insertion, type Selection };
 
 type Key = { id: string; shown: string; insert: Insertion };
 
-function mathKeys(): Key[] {
+function mathKeys(newline: boolean): Key[] {
   const decimal = currentLocale() === 'en' ? '.' : ',';
   return [
+    ...(newline ? [{ id: 'newline', shown: '↵', insert: { text: '\n' } }] : []),
     { id: 'fraction', shown: '/', insert: { text: '/' } },
     { id: 'squared', shown: 'x²', insert: { text: '²' } },
     { id: 'cubed', shown: 'x³', insert: { text: '³' } },
@@ -41,9 +49,11 @@ function mathKeys(): Key[] {
 type Props = {
   onInsert: (insertion: Insertion) => void;
   disabled?: boolean;
+  /** Offer the ↵ key: this answer may carry a worked path (issue #221). */
+  newline?: boolean;
 };
 
-export function MathKeys({ onInsert, disabled = false }: Props) {
+export function MathKeys({ onInsert, disabled = false, newline = false }: Props) {
   const { t } = useTranslation('math');
   return (
     <ScrollView
@@ -56,12 +66,14 @@ export function MathKeys({ onInsert, disabled = false }: Props) {
       // Room around the keys, so their soft shadow is not cut off by the scroll view.
       contentContainerStyle={{ gap: 8, paddingVertical: 6, paddingHorizontal: 4 }}
     >
-      {mathKeys().map((k) => (
+      {mathKeys(newline).map((k) => (
         <MathKey
           key={k.id}
           disabled={disabled}
           accessibilityLabel={t(`keys.${k.id}`)}
-          accessibilityHint={t('keys.hint')}
+          // ↵ does something else than the others, so it says something else: the hint is where
+          // a screen reader learns that this is how a calculation path gets its next line.
+          accessibilityHint={t(k.id === 'newline' ? 'keys.newline_hint' : 'keys.hint')}
           onPress={() => onInsert(k.insert)}
         >
           {k.shown}

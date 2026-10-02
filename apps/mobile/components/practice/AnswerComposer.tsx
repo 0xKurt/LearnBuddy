@@ -17,6 +17,12 @@
 //
 // Under the field a live preview shows typed math set properly ("3/4" as a
 // fraction), once there is math worth drawing (components/math/TypedMathPreview).
+//
+// A calculation may be written out line by line (issue #221): the ↵ key in the
+// math row starts the next line, and from the second line on the return key
+// adds one instead of sending, so a path cannot be cut off half-way. What is
+// allowed where, and what the return key does, is `lib/practice/pathEntry.ts`;
+// the server checks each step and names the first line that broke (issue #209).
 
 import type { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
@@ -28,6 +34,7 @@ import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useHandsFree } from '../../lib/speech/handsFree.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { growsWithText } from '../../lib/growsWithText.js';
+import { hasPath, pathPossible, previewLine, returnKey } from '../../lib/practice/pathEntry.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -73,6 +80,11 @@ export function AnswerComposer({
   const voiceMode = useVoiceMode((s) => s.on);
   const long = kind === 'long';
   const exact = kind === 'numeric' || kind === 'formula';
+  // A written path, and what the return key therefore does (issue #221).
+  const path = hasPath(kind, value);
+  const sends = returnKey(kind, value) === 'send';
+  // Several lines want their text at the top and the field already grown, like a long answer.
+  const lines = long || path;
   const inputRef = useRef<TextInput>(null);
   // Where the cursor is (reported by the field); set `forced` once after an insert to move it.
   const selection = useRef<Selection | null>(null);
@@ -121,7 +133,9 @@ export function AnswerComposer({
   return (
     <BottomBar>
       <MicStatus voice={voice} />
-      {showKeys ? <MathKeys onInsert={insert} disabled={disabled} /> : null}
+      {showKeys ? (
+        <MathKeys onInsert={insert} disabled={disabled} newline={pathPossible(kind)} />
+      ) : null}
       {/* One floating white pill, exactly like the composer on Buddy's home (issue #16): the
           field, the unit, and at its end the mic while it is empty – "Prüfen" once there is an
           answer. Nothing else is pinned down here. */}
@@ -130,7 +144,7 @@ export function AnswerComposer({
           {
             gap: 2,
             backgroundColor: palette.paper,
-            borderRadius: long ? 26 : 30,
+            borderRadius: lines ? 26 : 30,
             paddingVertical: 6,
             paddingLeft: 16,
             paddingRight: 6,
@@ -170,25 +184,29 @@ export function AnswerComposer({
             // which makes an empty answer field look like a box to fill in. The growing
             // itself is `growsWithText` in the style below — without it a long answer
             // scrolled away inside one row in the browser (issue #188).
-            {...(Platform.OS === 'web' && !long ? { numberOfLines: 1 } : {})}
+            {...(Platform.OS === 'web' && !lines ? { numberOfLines: 1 } : {})}
             maxLength={MAX_ANSWER_LENGTH}
             autoCorrect={false}
             spellCheck={false}
             autoComplete="off"
             autoCapitalize={exact ? 'none' : 'sentences'}
             keyboardType={keyboardType}
-            // Short answers go out with the return key; long ones need new lines.
-            submitBehavior={long ? 'newline' : 'submit'}
-            returnKeyType={long ? 'default' : 'send'}
+            // A one-liner goes out with the return key, so a simple answer stays fast; prose and
+            // a calculation path take the line instead (issue #221, lib/practice/pathEntry.ts).
+            submitBehavior={sends ? 'submit' : 'newline'}
+            returnKeyType={sends ? 'send' : 'default'}
             onSubmitEditing={() => {
-              if (!long && canCheck) onCheck(value.trim());
+              if (sends && canCheck) onCheck(value.trim());
             }}
-            textAlignVertical={long ? 'top' : 'center'}
+            textAlignVertical={lines ? 'top' : 'center'}
             style={[
               {
                 flex: 1,
                 minWidth: 0,
                 minHeight: long ? 88 : 48,
+                // A path grows with its lines (growsWithText below) and may then scroll inside
+                // the field; the cap keeps the bar from pushing the question off a 360×740
+                // screen, which rule 16 does not allow.
                 maxHeight: 150,
                 alignSelf: 'center',
                 backgroundColor: 'transparent',
@@ -243,7 +261,7 @@ export function AnswerComposer({
         </View>
         {/* How her math will be read, on a thin line in the pill itself – not a row of its
             own under it. Long answers are texts; the preview would only repeat them. */}
-        {long ? null : <TypedMathPreview value={value} compact />}
+        {long ? null : <TypedMathPreview value={previewLine(kind, value)} compact />}
       </View>
       {voiceMode ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>

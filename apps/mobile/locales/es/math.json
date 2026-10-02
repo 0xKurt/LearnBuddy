@@ -263,6 +263,8 @@
   "keys": {
     "row": "Símbolos matemáticos",
     "hint": "Añade el símbolo a tu respuesta",
+    "newline": "nueva línea",
+    "newline_hint": "Empieza la siguiente línea de tu cálculo",
     "fraction": "línea de fracción",
     "squared": "al cuadrado",
     "cubed": "al cubo",

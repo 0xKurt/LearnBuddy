@@ -1562,6 +1562,34 @@ Ungleichungen, Fallunterscheidungen, Beweise und jede Zeile, die nicht vollstän
 wird, kommen als `unknown` zurück und gehen ans Modell — statt geraten zu werden. Eine Zeile
 halb zu verstehen ist schlimmer, als sie nicht zu verstehen.
 
+**Eingetippt wird er auch** (Issue #221). Die Prüfung gab es ein Issue lang, bevor das
+Antwortfeld sie erreichen konnte: Zeilenumbrüche erlaubte es nur bei einem Freitext, also
+schickte die Eingabetaste auf dem Handy die **erste** Zeile als ganze Antwort ab, und der Weg
+kam bei der Prüfung nie an. Zwei Regeln, in `apps/mobile/lib/practice/pathEntry.ts`, weil die
+Komponentenschicht über react-native-web rendert und eine `TextInput`-Eigenschaft dort nicht im
+DOM steht:
+
+- Ein Weg ist genau dort möglich, wo `evaluate.ts` einen prüft (`numeric`, `formula`, `short`) —
+  keine Art mehr. In einer Vokabel oder einer Auswahl bedeutet ein Umbruch nichts.
+- Die Eingabetaste **schickt**, solange die Antwort eine Zeile ist, und macht eine neue Zeile,
+  sobald es mehr sind. Einzeiler bleiben schnell, und ein Weg kann nicht auf halber Strecke
+  abgeschickt werden. Den ersten Umbruch macht deshalb nicht die Eingabetaste, sondern die
+  **↵-Taste** in der Zeichenreihe (`components/math/MathKeys.tsx`) — die eine Taste, die kein
+  Zeichen einfügt, sondern etwas tut. Sie steht vorn, weil die Reihe seitlich scrollt: eine
+  Taste, zu der man scrollen muss, kennt niemand. Eine Tabellenzelle ist einzeilig, das Brett
+  (#228–#230) bietet sie deshalb nicht an.
+
+Die Vorschau zeichnet bei einem Weg die Zeile, bei der sie gerade ankommt — dieselbe Zeile, die
+`lastLine` für das Ergebnis liest; alle Zeilen auf einmal sind kein Term.
+
+**Nicht belegt, und zwar an der entscheidenden Stelle:** was die Eingabetaste tut, ist im Browser
+nicht prüfbar. react-native-web (0.21.2) kennt kein `submitBehavior` und ruft `onSubmitEditing`
+auf einem mehrzeiligen Feld nie auf — im Browser macht Enter also immer eine Zeile, vor und nach
+dieser Änderung, bei jeder Art. Der Walkthrough belegt das Eintippen von drei Zeilen auf 360×740,
+das Abschicken über „Prüfen" und die genannte erste gebrochene Zeile; die Regel selbst hängt an
+den Unit-Tests. Dass sie die Tastatur des Handys erreicht, ist bis zu einem Gerätelauf
+unbelegt (Regel 5).
+
 **Was gezählt wird, zählt Code** (Issue #212). Eine Reaktionsgleichung wird nicht mehr als
 Zeichenkette mit dem Schlüssel verglichen, sondern gezählt: `modules/practice/chemistry.ts`
 liest Summenformeln (Indizes, Klammern, Ladungen, tiefgestellte Ziffern, Aggregatzustände) und

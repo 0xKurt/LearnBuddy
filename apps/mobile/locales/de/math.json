@@ -263,6 +263,8 @@
   "keys": {
     "row": "Mathe-Zeichen",
     "hint": "Fügt das Zeichen in deine Antwort ein",
+    "newline": "neue Zeile",
+    "newline_hint": "Beginnt die nächste Zeile deiner Rechnung",
     "fraction": "Bruchstrich",
     "squared": "hoch 2",
     "cubed": "hoch 3",

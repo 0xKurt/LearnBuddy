@@ -263,6 +263,8 @@
   "keys": {
     "row": "Math symbols",
     "hint": "Adds the symbol to your answer",
+    "newline": "new line",
+    "newline_hint": "Starts the next line of your working",
     "fraction": "fraction bar",
     "squared": "squared",
     "cubed": "cubed",
