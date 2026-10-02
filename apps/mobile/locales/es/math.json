@@ -273,7 +273,10 @@
     "open": "abre paréntesis",
     "close": "cierra paréntesis",
     "degree": "grados",
-    "decimal": "coma"
+    "decimal": "coma",
+    "newline": "Nueva línea",
+    "newline_shown": "↵ Línea",
+    "newline_hint": "Para tu procedimiento: empieza la línea siguiente. «Comprobar» revisa luego todas las líneas."
   },
   "blank": {
     "label": "Hueco",

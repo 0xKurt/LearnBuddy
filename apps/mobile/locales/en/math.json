@@ -273,7 +273,10 @@
     "open": "open bracket",
     "close": "close bracket",
     "degree": "degrees",
-    "decimal": "decimal point"
+    "decimal": "decimal point",
+    "newline": "New line",
+    "newline_shown": "↵ New line",
+    "newline_hint": "For your working: starts the next line. “Check” then checks every line."
   },
   "blank": {
     "label": "Blank",

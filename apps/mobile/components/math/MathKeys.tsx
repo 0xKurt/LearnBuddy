@@ -6,9 +6,14 @@
 //
 // The keys are soft and round (white on a soft shadow, the "Pastell Soft"
 // look of the composer below them), at least 44 × 44 pt.
+//
+// `newline` puts "↵ Neue Zeile" first in the row (issue #221): the way to write a
+// calculation path line by line, which the API checks step by step (issue #209). It is
+// first because the row scrolls sideways and the last keys are off a small phone, and it
+// carries a word, not only the glyph — "↵" alone is a symbol a child has to know.
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, View, type ViewProps } from 'react-native';
 
 import { currentLocale } from '../../lib/i18n/index.js';
 import { insertAtCursor, type Insertion, type Selection } from '../../lib/math/insert.js';
@@ -38,36 +43,68 @@ function mathKeys(): Key[] {
   ];
 }
 
+/**
+ * In the browser a press on a key first takes the focus from the answer field — the field
+ * reports a blur, the row (which only shows while the field has focus) goes away under the
+ * pointer, and the press lands on nothing (issue #221; on the phone `keyboardShouldPersistTaps`
+ * keeps the focus). Declining the mousedown keeps the focus where she types; the press itself
+ * still arrives. React Native's types do not know the web-only handler.
+ */
+const KEEP_FOCUS: ViewProps =
+  Platform.OS === 'web'
+    ? ({
+        onMouseDown: (e: { preventDefault: () => void }) => e.preventDefault(),
+      } as unknown as ViewProps)
+    : {};
+
+/** What the "neue Zeile" key inserts: the line break steps.ts splits a path at. */
+const NEW_LINE: Insertion = { text: '\n' };
+
 type Props = {
   onInsert: (insertion: Insertion) => void;
   disabled?: boolean;
+  /** Offer the "neue Zeile" key: the answer may be a written path. */
+  newline?: boolean;
 };
 
-export function MathKeys({ onInsert, disabled = false }: Props) {
+export function MathKeys({ onInsert, disabled = false, newline = false }: Props) {
   const { t } = useTranslation('math');
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      // A tap on a key must not close the keyboard first.
-      keyboardShouldPersistTaps="always"
-      accessibilityRole="toolbar"
-      accessibilityLabel={t('keys.row')}
-      // Room around the keys, so their soft shadow is not cut off by the scroll view.
-      contentContainerStyle={{ gap: 8, paddingVertical: 6, paddingHorizontal: 4 }}
-    >
-      {mathKeys().map((k) => (
-        <MathKey
-          key={k.id}
-          disabled={disabled}
-          accessibilityLabel={t(`keys.${k.id}`)}
-          accessibilityHint={t('keys.hint')}
-          onPress={() => onInsert(k.insert)}
-        >
-          {k.shown}
-        </MathKey>
-      ))}
-    </ScrollView>
+    <View {...KEEP_FOCUS}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        // A tap on a key must not close the keyboard first.
+        keyboardShouldPersistTaps="always"
+        accessibilityRole="toolbar"
+        accessibilityLabel={t('keys.row')}
+        // Room around the keys, so their soft shadow is not cut off by the scroll view.
+        contentContainerStyle={{ gap: 8, paddingVertical: 6, paddingHorizontal: 4 }}
+      >
+        {newline ? (
+          <MathKey
+            disabled={disabled}
+            accessibilityLabel={t('keys.newline')}
+            accessibilityHint={t('keys.newline_hint')}
+            onPress={() => onInsert(NEW_LINE)}
+            word
+          >
+            {t('keys.newline_shown')}
+          </MathKey>
+        ) : null}
+        {mathKeys().map((k) => (
+          <MathKey
+            key={k.id}
+            disabled={disabled}
+            accessibilityLabel={t(`keys.${k.id}`)}
+            accessibilityHint={t('keys.hint')}
+            onPress={() => onInsert(k.insert)}
+          >
+            {k.shown}
+          </MathKey>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -83,8 +120,11 @@ function MathKey({
   accessibilityHint,
   onPress,
   disabled,
+  word = false,
 }: {
   children: string;
+  /** A key that says a word ("↵ Neue Zeile") is set at body size, not at the glyphs' size. */
+  word?: boolean;
   /** What a screen reader says ("hoch 2"), never just the glyph. */
   accessibilityLabel: string;
   accessibilityHint: string;
@@ -122,7 +162,12 @@ function MathKey({
             }}
           >
             <Text
-              style={{ color: palette.primaryDk, fontSize: 19, lineHeight: 24, fontWeight: '600' }}
+              style={{
+                color: palette.primaryDk,
+                fontSize: word ? 15 : 19,
+                lineHeight: word ? 20 : 24,
+                fontWeight: '600',
+              }}
             >
               {children}
             </Text>

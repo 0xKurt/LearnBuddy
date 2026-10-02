@@ -1470,6 +1470,23 @@ Ungleichungen, Fallunterscheidungen, Beweise und jede Zeile, die nicht vollstän
 wird, kommen als `unknown` zurück und gehen ans Modell — statt geraten zu werden. Eine Zeile
 halb zu verstehen ist schlimmer, als sie nicht zu verstehen.
 
+**Den Weg eintippen** (Issue #221). Das Zeilentrennzeichen ist `\n` (`steps.ts` teilt an
+`\r?\n`); die App schickt ihre Zeilen genau so, wie sie im Feld stehen. Im Antwortfeld
+(`components/practice/AnswerComposer.tsx`, Regeln in `lib/answerLines.ts`) ist die erste
+Mathe-Taste „↵ Neue Zeile" (`components/math/MathKeys.tsx`) — überall dort, wo die
+Mathe-Tasten erscheinen (`numeric`, `formula`, `short` mit Mathe in der Frage). Die Taste
+steht vorn, weil die Reihe seitlich scrollt, und trägt ein Wort statt nur des Zeichens. Die
+Eingabetaste schickt eine **einzeilige** Antwort weiterhin sofort ab; sobald die Antwort eine
+zweite Zeile hat, beginnt sie die nächste Zeile, und „Prüfen" schickt den ganzen Weg. Wer den
+Umbruch wieder löscht, hat wieder den schnellen Einzeiler. Im Browser kennt react-native-web
+`submitBehavior` nicht — dort setzt `onKeyPress` dieselbe Regel um (Shift+Enter bleibt die
+Zeile des Browsers), und ein Druck auf eine Mathe-Taste nimmt dem Feld nicht mehr den Fokus
+(vorher verschwand die Reihe unter dem Zeiger). Das Feld wächst bis zu seiner `maxHeight`; die
+Vorschau zeichnet die Zeile mit dem Cursor, nicht den ganzen Weg ein zweites Mal. Diktiertes
+wird in einem Weg zur nächsten Zeile und im Sprachmodus erst mit „Prüfen" geprüft. Belegt im
+Walkthrough (`tests/web/modes.spec.ts`: drei Zeilen, die erste gebrochene wird genannt, ein
+Einzeiler geht mit Enter raus). Offen: das Foto vom Heft als Antwort (Vorschlag 3 in #221).
+
 **Was gezählt wird, zählt Code** (Issue #212). Eine Reaktionsgleichung wird nicht mehr als
 Zeichenkette mit dem Schlüssel verglichen, sondern gezählt: `modules/practice/chemistry.ts`
 liest Summenformeln (Indizes, Klammern, Ladungen, tiefgestellte Ziffern, Aggregatzustände) und

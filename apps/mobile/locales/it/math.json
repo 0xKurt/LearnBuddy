@@ -273,7 +273,10 @@
     "open": "parentesi aperta",
     "close": "parentesi chiusa",
     "degree": "gradi",
-    "decimal": "virgola"
+    "decimal": "virgola",
+    "newline": "Nuova riga",
+    "newline_shown": "↵ Riga",
+    "newline_hint": "Per il tuo procedimento: inizia la riga successiva. «Controlla» controlla poi tutte le righe."
   },
   "blank": {
     "label": "Spazio vuoto",

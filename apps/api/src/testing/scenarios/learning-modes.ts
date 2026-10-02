@@ -29,6 +29,34 @@ function lastText(req: LlmRequest): string {
 }
 
 export function scriptLearningModes(llm: ScriptedGateway): void {
+  // A written calculation path (issues #209, #221): an equation she solves line by line, then
+  // a one-liner the return key sends. Registered first: a later learner's request may carry
+  // older topics, and the first rule that matches wins. The model only supplies the items —
+  // which line broke is decided by code (steps.ts), and no tutor is scripted for it.
+  scriptGenerations({
+    when: /Rechenweg/i,
+    answer: () => ({
+      usable: true,
+      title: 'Gleichungen mit Rechenweg',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [
+        {
+          ...base,
+          kind: 'numeric',
+          prompt: 'Löse: $2x + 3 = 7$',
+          answer: '2',
+          topic: 'Gleichungen',
+        },
+        {
+          ...base,
+          kind: 'numeric',
+          prompt: 'Berechne $3 \\cdot 4$.',
+          answer: '12',
+          topic: 'Gleichungen',
+        },
+      ],
+    }),
+  });
   // "Erklär mir den Dativ" — since buddy.22 the explanation is the chat answer itself
   // (owner decision 28.09.); what can be started afterwards is practice on it.
   scriptGenerations({
@@ -216,6 +244,12 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /brüche vergleichen üben/i,
       answer: says('Gute Idee – ich hab dir ein paar Fragen zu Brüchen vorbereitet.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Brüche vergleichen' } },
+      ]),
+    },
+    {
+      when: /mit rechenweg üben/i,
+      answer: says('Gern – ich hab dir Gleichungen mit Rechenweg vorbereitet.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Gleichungen mit Rechenweg' } },
       ]),
     },
     {

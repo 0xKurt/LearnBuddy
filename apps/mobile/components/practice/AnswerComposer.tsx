@@ -17,12 +17,26 @@
 //
 // Under the field a live preview shows typed math set properly ("3/4" as a
 // fraction), once there is math worth drawing (components/math/TypedMathPreview).
+//
+// A calculation path (issue #221): where the math keys show, their first key is
+// "↵ Neue Zeile". The return key sends a one-line answer as before; once the answer has a
+// second line it starts the next one instead, and "Prüfen" sends every line as typed — the
+// API checks them step by step (steps.ts, issue #209). lib/answerLines.ts holds the rules.
 
 import type { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
+import {
+  Platform,
+  Text,
+  TextInput,
+  View,
+  type KeyboardTypeOptions,
+  type NativeSyntheticEvent,
+  type TextInputKeyPressEventData,
+} from 'react-native';
 
+import { lineCount, previewLine, returnSubmits } from '../../lib/answerLines.js';
 import { hasMath } from '../../lib/math/parse.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { useHandsFree } from '../../lib/speech/handsFree.js';
@@ -42,6 +56,27 @@ import { tapped } from '../../lib/perf.js';
 
 /** AnswerRequest.text allows at most 2000 characters. */
 const MAX_ANSWER_LENGTH = 2000;
+/** The web field's rows for a path: five lines of 22 fill the field's maxHeight of 150. */
+const PATH_ROWS = 5;
+
+/**
+ * Enter in the browser: sends a one-line answer, and leaves Shift+Enter, an input method
+ * still composing and every Enter in a path or a long answer to the field (a new line).
+ */
+function sendOnEnter(
+  e: NativeSyntheticEvent<TextInputKeyPressEventData>,
+  sends: boolean,
+  send: () => void,
+): void {
+  // On the web the event is the browser's keyboard event, which carries these two as well.
+  const key = e.nativeEvent as TextInputKeyPressEventData & {
+    shiftKey?: boolean;
+    isComposing?: boolean;
+  };
+  if (!sends || key.key !== 'Enter' || key.shiftKey === true || key.isComposing === true) return;
+  e.preventDefault();
+  send();
+}
 
 type Props = {
   /** 'speak' questions use their own recorder; here they fall back to a plain text answer. */
@@ -78,15 +113,24 @@ export function AnswerComposer({
   const selection = useRef<Selection | null>(null);
   const [forced, setForced] = useState<Selection | undefined>(undefined);
   const [focused, setFocused] = useState(false);
+  // The cursor's place for the preview, which draws the line she is on (null: not reported yet).
+  const [caret, setCaret] = useState<number | null>(null);
   // Keyboard accessory, not furniture (issue #16): the math row belongs above the keyboard
   // while she types. Without focus it only takes the room the question needs — on a small
   // phone with the keyboard open that is the difference between seeing the task and not.
-  const showKeys = (exact || (kind === 'short' && hasMath(prompt))) && focused;
+  const mathAnswer = exact || (kind === 'short' && hasMath(prompt));
+  const showKeys = mathAnswer && focused;
+  // One line: the return key sends it. A path: the return key starts the next line.
+  const sends = returnSubmits(kind, value);
+  const path = !long && !sends;
 
   const insert = (insertion: Insertion) => {
     const next = insertAtCursor(value, selection.current, insertion);
     if (next.value.length > MAX_ANSWER_LENGTH) return;
+    // A key is typing too: it ends the hands-free loop like the keyboard does.
+    useHandsFree.getState().disarm();
     selection.current = next.selection;
+    setCaret(next.selection.end);
     onChange(next.value);
     setForced(next.selection);
     inputRef.current?.focus();
@@ -101,14 +145,17 @@ export function AnswerComposer({
     context: prompt,
     onText: (said) => {
       // A long answer may be dictated in parts; a short one is replaced by what she said.
+      // In a written path what she says is the next line, and the path is checked with
+      // "Prüfen" once it is complete — not after the first line she spoke (issue #221).
+      const inPath = !long && !returnSubmits(kind, latest.current.value);
       const next = mergeTranscript(
         latest.current.value,
         said,
-        long ? 'append' : 'replace',
+        long ? 'append' : inPath ? 'line' : 'replace',
         MAX_ANSWER_LENGTH,
       );
       onChange(next);
-      if (useVoiceMode.getState().on && !latest.current.disabled) onCheck(next.trim());
+      if (useVoiceMode.getState().on && !latest.current.disabled && !inPath) onCheck(next.trim());
     },
     // Hands-free (voice mode): on the phone listening ends by itself when she pauses.
     untilPause: voiceMode,
@@ -121,7 +168,7 @@ export function AnswerComposer({
   return (
     <BottomBar>
       <MicStatus voice={voice} />
-      {showKeys ? <MathKeys onInsert={insert} disabled={disabled} /> : null}
+      {showKeys ? <MathKeys onInsert={insert} disabled={disabled} newline /> : null}
       {/* One floating white pill, exactly like the composer on Buddy's home (issue #16): the
           field, the unit, and at its end the mic while it is empty – "Prüfen" once there is an
           answer. Nothing else is pinned down here. */}
@@ -130,7 +177,7 @@ export function AnswerComposer({
           {
             gap: 2,
             backgroundColor: palette.paper,
-            borderRadius: long ? 26 : 30,
+            borderRadius: long || path ? 26 : 30,
             paddingVertical: 6,
             paddingLeft: 16,
             paddingRight: 6,
@@ -157,6 +204,7 @@ export function AnswerComposer({
             selection={forced}
             onSelectionChange={(e) => {
               selection.current = e.nativeEvent.selection;
+              setCaret(e.nativeEvent.selection.end);
               if (forced) setForced(undefined);
             }}
             onFocus={() => setFocused(true)}
@@ -169,21 +217,36 @@ export function AnswerComposer({
             // Where the growing starts: the web's textarea is two rows tall by default,
             // which makes an empty answer field look like a box to fill in. The growing
             // itself is `growsWithText` in the style below — without it a long answer
-            // scrolled away inside one row in the browser (issue #188).
-            {...(Platform.OS === 'web' && !long ? { numberOfLines: 1 } : {})}
+            // scrolled away inside one row in the browser (issue #188). A path asks for its
+            // lines, so a browser without `field-sizing` shows them too (issue #221).
+            {...(Platform.OS === 'web' && !long
+              ? { numberOfLines: Math.min(lineCount(value), PATH_ROWS) }
+              : {})}
             maxLength={MAX_ANSWER_LENGTH}
             autoCorrect={false}
             spellCheck={false}
             autoComplete="off"
             autoCapitalize={exact ? 'none' : 'sentences'}
             keyboardType={keyboardType}
-            // Short answers go out with the return key; long ones need new lines.
-            submitBehavior={long ? 'newline' : 'submit'}
-            returnKeyType={long ? 'default' : 'send'}
+            // A one-line answer goes out with the return key; a long answer and a written
+            // path need new lines (issue #221).
+            submitBehavior={sends ? 'submit' : 'newline'}
+            returnKeyType={sends ? 'send' : 'default'}
             onSubmitEditing={() => {
-              if (!long && canCheck) onCheck(value.trim());
+              if (sends && canCheck) onCheck(value.trim());
             }}
-            textAlignVertical={long ? 'top' : 'center'}
+            // The browser does not know `submitBehavior` (react-native-web reads only the
+            // deprecated `blurOnSubmit`), so a multiline field there turned every Enter into a
+            // new line. Same rule as on the phone; Shift+Enter is the browser's own new line.
+            onKeyPress={
+              Platform.OS === 'web'
+                ? (e) =>
+                    sendOnEnter(e, sends, () => {
+                      if (canCheck) onCheck(value.trim());
+                    })
+                : undefined
+            }
+            textAlignVertical={long || path ? 'top' : 'center'}
             style={[
               {
                 flex: 1,
@@ -243,7 +306,8 @@ export function AnswerComposer({
         </View>
         {/* How her math will be read, on a thin line in the pill itself – not a row of its
             own under it. Long answers are texts; the preview would only repeat them. */}
-        {long ? null : <TypedMathPreview value={value} compact />}
+        {/* In a path it draws the line with the cursor; the others stand in the field. */}
+        {long ? null : <TypedMathPreview value={previewLine(value, caret)} compact />}
       </View>
       {voiceMode ? (
         <View style={{ alignItems: 'center', paddingVertical: 2 }}>
