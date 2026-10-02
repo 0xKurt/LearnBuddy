@@ -13,6 +13,8 @@ import type {
   StructuredTaskView,
 } from '@learnbuddy/shared-types/contracts';
 
+import { FigureTapAnswer } from './FigureTapAnswer.js';
+import { GridDrawAnswer } from './GridDrawAnswer.js';
 import { MatchAnswer } from './MatchAnswer.js';
 import { OrderAnswer } from './OrderAnswer.js';
 import { TableAnswer } from './TableAnswer.js';
@@ -38,6 +40,15 @@ export function StructuredAnswer({ view, draftKey, disabled, onSubmit }: Props) 
     case 'match':
       return (
         <MatchAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
+      );
+    // Figures she works with (issues #248, #249): they take the room the screen gives them.
+    case 'figure_tap':
+      return (
+        <FigureTapAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
+      );
+    case 'grid_draw':
+      return (
+        <GridDrawAnswer view={view} draftKey={draftKey} disabled={disabled} onSubmit={onSubmit} />
       );
   }
 }

@@ -290,7 +290,7 @@ describe('table_fill: her answer, cell by cell', () => {
     const task = built(VERBS);
     const check = checkStructured(task, answer({ r0c2: 'ging', r1c1: 'gehst', r1c2: 'gehtest' }));
     expect(check?.correct).toBe(false);
-    expect(check?.parts).toEqual([
+    expect(check?.type === 'table_fill' && check.parts).toEqual([
       { id: 'r0c2', ok: true },
       { id: 'r1c1', ok: true },
       { id: 'r1c2', ok: false },

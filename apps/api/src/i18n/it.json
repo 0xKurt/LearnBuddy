@@ -360,6 +360,42 @@
       "again_net": "Non ancora – ripiega ancora una volta i quadrati nella tua testa.",
       "again_point": "Non ancora – segui il percorso tratteggiato: prima x, poi y, poi z.",
       "again_vector": "Non ancora – calcola punto finale meno punto iniziale."
+    },
+    "figure": {
+      "point": "({{x}}; {{y}})",
+      "x_right": "La coordinata x è già giusta – guarda di nuovo quanto bisogna salire o scendere.",
+      "y_right": "La coordinata y è già giusta – guarda di nuovo quanto bisogna andare a destra o a sinistra.",
+      "swapped": "Quasi – hai scambiato x e y. Prima a destra o a sinistra, poi su o giù.",
+      "point_wrong": "Non ancora il punto giusto – vai prima a destra o a sinistra, poi su o giù.",
+      "place_wrong": "Non ancora il posto giusto – conta di nuovo i passi tra le tacche.",
+      "further_right": "Il posto che cerchi è più a destra.",
+      "further_left": "Il posto che cerchi è più a sinistra.",
+      "bar_wrong": "Non ancora questa barra – confronta di nuovo le altezze con calma.",
+      "hour_right": "L'ora è già giusta – guarda di nuovo la lancetta lunga.",
+      "minute_right": "I minuti sono già giusti – guarda di nuovo la lancetta corta.",
+      "time_wrong": "Non ancora l'ora giusta – imposta prima la lancetta corta, poi quella lunga."
+    },
+    "draw": {
+      "cells_words": "{{count}} quadretti: {{cells}}",
+      "cells_words_one": "1 quadretto: {{cells}}",
+      "line_solution": "La retta y = {{fn}}, per esempio per {{points}}",
+      "graph_solution": "Punti su y = {{fn}}, per esempio {{points}}",
+      "point_wrong": "Guarda di nuovo il punto {{point}}.",
+      "points_missing": "Mancano ancora {{count}} punti.",
+      "points_missing_one": "Manca ancora un punto.",
+      "line_slope_right": "La pendenza è già giusta – ma la retta taglia l'asse y nel posto sbagliato.",
+      "line_intercept_right": "La retta taglia già l'asse y nel posto giusto – la pendenza non ancora.",
+      "line_point_off": "Il punto {{point}} non è ancora sulla retta.",
+      "line_needs_two": "Per una retta ti servono due punti.",
+      "line_vertical": "I tuoi due punti sono esattamente uno sopra l'altro – prendi due posti uno accanto all'altro.",
+      "same_x": "Due dei tuoi punti hanno la stessa coordinata x – prendi posti diversi.",
+      "graph_point_off": "Il punto {{point}} non è ancora sul grafico.",
+      "cells_missing": "Quasi – mancano ancora {{count}} quadretti.",
+      "cells_missing_one": "Quasi – manca ancora un quadretto.",
+      "cells_extra": "Quasi – ci sono {{count}} quadretti colorati di troppo.",
+      "cells_extra_one": "Quasi – c’è un quadretto colorato di troppo.",
+      "cells_both": "Non ancora del tutto – mancano quadretti ({{missing}}) e alcuni sono colorati di troppo ({{extra}}).",
+      "bar_wrong": "La barra «{{label}}» non ha ancora l’altezza giusta."
     }
   },
   "contact": {

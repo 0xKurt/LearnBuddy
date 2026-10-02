@@ -66,7 +66,13 @@ import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
 /** The structured kinds a sheet may give (#228 an order, #230 a table, #229 links to make). */
-const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match']);
+const SHEET_STRUCTURED: ReadonlySet<string> = new Set([
+  'order',
+  'table_fill',
+  'match',
+  'figure_tap',
+  'grid_draw',
+]);
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
@@ -976,7 +982,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // an order, a table or links to make, each checked by code before it is stored.
   const items = [
     ...usableItems(x.items),
-    ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
+    ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length, learner.locale),
   ];
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
   // "Not readable" with questions and a page that was read: one bad page must not

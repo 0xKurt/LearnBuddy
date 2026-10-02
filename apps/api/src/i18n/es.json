@@ -360,6 +360,42 @@
       "again_net": "Todavía no – vuelve a doblar los cuadrados mentalmente.",
       "again_point": "Todavía no – sigue el camino discontinuo: primero x, luego y, luego z.",
       "again_vector": "Todavía no – calcula punto final menos punto inicial."
+    },
+    "figure": {
+      "point": "({{x}}, {{y}})",
+      "x_right": "La coordenada x ya está bien – mira otra vez cuánto hay que subir o bajar.",
+      "y_right": "La coordenada y ya está bien – mira otra vez cuánto hay que ir a la derecha o a la izquierda.",
+      "swapped": "Casi – has intercambiado x e y. Primero a la derecha o a la izquierda, luego arriba o abajo.",
+      "point_wrong": "Todavía no es el punto correcto – ve primero a la derecha o a la izquierda, luego arriba o abajo.",
+      "place_wrong": "Todavía no es el sitio correcto – cuenta otra vez los pasos entre las marcas.",
+      "further_right": "El sitio que buscas está más a la derecha.",
+      "further_left": "El sitio que buscas está más a la izquierda.",
+      "bar_wrong": "Todavía no es esta barra – compara las alturas otra vez con calma.",
+      "hour_right": "La hora ya está bien – mira otra vez la aguja larga.",
+      "minute_right": "Los minutos ya están bien – mira otra vez la aguja corta.",
+      "time_wrong": "Todavía no es la hora correcta – pon primero la aguja corta y luego la larga."
+    },
+    "draw": {
+      "cells_words": "{{count}} casillas: {{cells}}",
+      "cells_words_one": "1 casilla: {{cells}}",
+      "line_solution": "La recta y = {{fn}}, por ejemplo por {{points}}",
+      "graph_solution": "Puntos sobre y = {{fn}}, por ejemplo {{points}}",
+      "point_wrong": "Mira otra vez el punto {{point}}.",
+      "points_missing": "Todavía faltan {{count}} puntos.",
+      "points_missing_one": "Todavía falta un punto.",
+      "line_slope_right": "La pendiente ya está bien – pero la recta corta el eje y en el sitio equivocado.",
+      "line_intercept_right": "La recta ya corta el eje y en el sitio correcto – la pendiente todavía no.",
+      "line_point_off": "El punto {{point}} todavía no está sobre la recta.",
+      "line_needs_two": "Para una recta necesitas dos puntos.",
+      "line_vertical": "Tus dos puntos están justo uno encima del otro – toma dos sitios uno al lado del otro.",
+      "same_x": "Dos de tus puntos tienen la misma coordenada x – toma sitios distintos.",
+      "graph_point_off": "El punto {{point}} todavía no está sobre la gráfica.",
+      "cells_missing": "Casi – todavía faltan {{count}} casillas.",
+      "cells_missing_one": "Casi – todavía falta una casilla.",
+      "cells_extra": "Casi – hay {{count}} casillas de más coloreadas.",
+      "cells_extra_one": "Casi – hay una casilla de más coloreada.",
+      "cells_both": "Todavía no del todo – faltan casillas ({{missing}}) y sobran algunas coloreadas ({{extra}}).",
+      "bar_wrong": "La barra «{{label}}» todavía no tiene la altura correcta."
     }
   },
   "contact": {

@@ -237,7 +237,12 @@ describe('order: her answer (Regel 0)', () => {
     const check = checkStructured(task, answerFor(task, swapped));
     expect(check?.correct).toBe(false);
     expect(check?.type === 'order' && check.first_wrong).toBe(3);
-    expect(check?.parts.map((p) => p.ok)).toEqual([true, true, false, false]);
+    expect(check?.type === 'order' && check.parts.map((p) => p.ok)).toEqual([
+      true,
+      true,
+      false,
+      false,
+    ]);
     expect(structuredReply('de', check!)).toBe(
       "Bis Schritt 2 stimmt's! Ab Schritt 3 passt die Reihenfolge noch nicht ganz.",
     );

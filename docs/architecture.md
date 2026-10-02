@@ -1860,7 +1860,7 @@ the test review and the summary run unchanged. The database holds the two togeth
 `task->>'type' = kind`); a stored task is read through `structuredTaskOf`, which re-checks it.
 The kind check already allows `cloze` (#232, a text with several gaps) — decided in 0079 so the
 next structured kind needs no constraint migration; no code writes it until #232 is built, and
-`STRUCTURED_KINDS` in the contract lists only the three that exist.
+`STRUCTURED_KINDS` in the contract lists only the kinds that exist (since 0094 also `figure_tap` and `grid_draw`, see "Interactive figures" below).
 
 Answering (`answerItem`): a structured item takes only `parts` (text → 422 `use_parts`; a
 foreign shape, a missing, doubled or unknown id → 422 `parts_mismatch`; `parts` for any other
@@ -2001,6 +2001,66 @@ sorted. On 360×740 both tallest moments end within about 8 pt of "Prüfen", so 
 (about 52 pt) or one more group row (about 56 pt) would not fit; 20-character things (one per
 row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A draft over a cap is
 rejected (`too_long` / `count`), never shortened.
+
+**Interactive figures — tap in a figure, draw on a grid** (`contracts/figureTask.ts`,
+`practice/figureTap.ts`, `practice/gridDraw.ts`, `packages/shared-math/src/grid.ts`,
+`lib/math/gridFrame.ts`, migration `0094_interactive_figures.sql`; issues #248, #249 from the
+analysis #224). Until here every figure was only READ (`FigureView`); the fraction bar (#162) was
+the one exception. Two more structured kinds make figures something she works with, on the same
+foundation as order, match and table (task with key in `items.task`, view without it, `parts`):
+
+| kind         | figure / tool                                       | key (server only)           | checked by code                                                          |
+| ------------ | --------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------ |
+| `figure_tap` | `plane` (coordinate grid)                           | a grid point                | same point; the reply says whether x or y is right, or that they swapped |
+|              | `number_line` (ticks `step`, taps land on `snap`)   | a snap mark                 | same value; from the 2nd miss "weiter rechts/links" (counts as help)     |
+|              | `bars` (2–6 bars)                                   | a bar (server id)           | same bar; `extreme: max/min` is recomputed before storing                |
+|              | `clock` (hands on 5, 15 or 30 minutes)              | h 1–12, m                   | same time; the reply says which hand is right already                    |
+| `grid_draw`  | `points`                                            | the points (any order)      | same set; names her first wrong point and how many are missing           |
+|              | `points` from `mirror_points`                       | the image, COMPUTED by code | same set (the model writes only the shape and the mirror line)           |
+|              | `line` (two points, the line through them is drawn) | `fn`, a straight line       | slope and y-intercept of her two points against `fn`'s                   |
+|              | `points` from `on_graph`                            | `fn`, `count`               | `count` points with different x, each on the graph (`expression.ts`)     |
+|              | `cells` (also `mirror_cells`, image computed)       | the squares                 | same set; counts missing and extra squares                               |
+|              | `bars` (pull to height)                             | each bar's value            | every bar at its height; names the first wrong bar                       |
+
+_Exact, with one explicit tolerance._ Every value she can give lies ON the grid: a tap snaps to the
+nearest grid point, a key between grid points is no key (the draft is rejected with `off_grid`),
+and an answer between grid points is no answer (422 `parts_mismatch`, not counted). The only
+slack is floating point: `GRID_EPSILON` (10⁻⁶ of a step) for grid values and `GRAPH_EPSILON` for
+f(x) = y. Regel 0 on the model's side: a grid of 2–20 steps per axis with its lines at the
+multiples of the step; a key on a tappable place and not the only drawn mark (`given_away`); a bar
+key that names exactly one bar, and "the highest" only if it is; a mirror line on a grid line or
+halfway, an image inside the grid that is not the shape itself; a `line` whose `fn` is straight
+and passes through at least two grid points in range; an `on_graph` with at least `count` grid
+points on the graph (`unsolvable` otherwise). The model writes values and names, never an id or a
+mirror image (CLAUDE.md rule 2); bars get server ids by position. The solution text (`items.answer`,
+"(2 | −1)", "Die Gerade y = 2x − 1, zum Beispiel durch …") is written by code in her language.
+Generation (`generate.v1.16`: practice and practice test) and both photo readings (`extract.v7.2`)
+may write them; a printed "plot / mirror / colour / draw bars on the grid" task is no longer a
+`drawing` the app cannot practise. Freehand and compass constructions stay `drawing` (#224: only a
+grid is exactly checkable).
+
+_44 pt, always._ A grid point's target is the whole square around it (`pitch` × `pitch`). When the
+grid is too fine for that on the phone in hand, the first tap MAGNIFIES the part she aims at (the
+same plane with a smaller window, `zoomWindow`: steps of at least `ZOOM_PITCH` = 56 pt) and the
+second one sets; "Ganze Figur" goes back. A number line does the same with whole ticks. Bars are
+at most six (a column ≥ 44 pt on 360 pt), the clock's 12 positions are 30° sectors. Tested for the
+largest grid the contract allows (`gridFrame.test.ts`).
+
+_The accessible way._ Next to every figure, "Eingeben" opens a sheet (`ExactSheet.tsx`) with
+steppers (`components/lb/Stepper.tsx`: − and + of 44 pt, and an adjustable value a screen reader
+moves with a swipe) — x and y, the number, the bar, hour and minutes; for drawing a cursor with
+"Punkt setzen / entfernen", "Kästchen färben / leeren", one stepper per bar. It writes into the
+same draft as a tap. What is set always stands in words under the figure ("Dein Punkt: (2 | −1)",
+"Punkte: (0 | −1), (1 | 1)", "Mo 4 · Di 7"), and the figure carries it as its accessible label.
+
+_Kept._ The tap or the drawing (with its "Rückgängig" history, 30 steps) is the item's draft
+(`lib/drafts.ts`). A theme switch remounts the tree within a frame, faster than storage writes:
+`useDraft` now keeps the newest text of every draft in memory too, so the remounted surface shows
+what was there (it showed the PREVIOUS point in the first walkthrough run). Room: a figure takes
+all the height the question and Buddy's reply leave (`FIGURE_REPLY_ROOM` = 200 in
+`app/practice/[id].tsx`, so a four-line reply is never cut under the question card) and draws itself
+for that box (`FigureSurface.tsx`), top-aligned under the question. Walkthrough:
+`tests/web/figures.spec.ts`, shots 50–68 at 390×844 and 360×740, light and dark.
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration

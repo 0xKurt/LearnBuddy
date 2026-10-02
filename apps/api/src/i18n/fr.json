@@ -360,6 +360,42 @@
       "again_net": "Pas tout à fait – replie encore une fois les carrés dans ta tête.",
       "again_point": "Pas tout à fait – suis le chemin en pointillés : d'abord x, puis y, puis z.",
       "again_vector": "Pas tout à fait – calcule point d'arrivée moins point de départ."
+    },
+    "figure": {
+      "point": "({{x}} ; {{y}})",
+      "x_right": "L'abscisse est déjà juste – regarde encore jusqu'où il faut monter ou descendre.",
+      "y_right": "L'ordonnée est déjà juste – regarde encore jusqu'où il faut aller à droite ou à gauche.",
+      "swapped": "Presque – tu as inversé x et y. D'abord à droite ou à gauche, puis en haut ou en bas.",
+      "point_wrong": "Pas encore le bon point – va d'abord à droite ou à gauche, puis en haut ou en bas.",
+      "place_wrong": "Pas encore le bon endroit – recompte les pas entre les traits.",
+      "further_right": "L'endroit cherché est plus à droite.",
+      "further_left": "L'endroit cherché est plus à gauche.",
+      "bar_wrong": "Pas encore cette barre – compare les hauteurs encore une fois, tranquillement.",
+      "hour_right": "L'heure est déjà juste – regarde encore la grande aiguille.",
+      "minute_right": "Les minutes sont déjà justes – regarde encore la petite aiguille.",
+      "time_wrong": "Pas encore la bonne heure – règle d'abord la petite aiguille, puis la grande."
+    },
+    "draw": {
+      "cells_words": "{{count}} cases : {{cells}}",
+      "cells_words_one": "1 case : {{cells}}",
+      "line_solution": "La droite y = {{fn}}, par exemple par {{points}}",
+      "graph_solution": "Des points sur y = {{fn}}, par exemple {{points}}",
+      "point_wrong": "Regarde encore le point {{point}}.",
+      "points_missing": "Il manque encore {{count}} points.",
+      "points_missing_one": "Il manque encore un point.",
+      "line_slope_right": "La pente est déjà juste – mais la droite coupe l'axe des y au mauvais endroit.",
+      "line_intercept_right": "La droite coupe déjà l'axe des y au bon endroit – la pente n'est pas encore juste.",
+      "line_point_off": "Le point {{point}} n'est pas encore sur la droite.",
+      "line_needs_two": "Pour une droite, il te faut deux points.",
+      "line_vertical": "Tes deux points sont exactement l'un au-dessus de l'autre – prends deux endroits côte à côte.",
+      "same_x": "Deux de tes points ont la même abscisse – prends des endroits différents.",
+      "graph_point_off": "Le point {{point}} n'est pas encore sur la courbe.",
+      "cells_missing": "Presque – il manque encore {{count}} cases.",
+      "cells_missing_one": "Presque – il manque encore une case.",
+      "cells_extra": "Presque – {{count}} cases de trop sont coloriées.",
+      "cells_extra_one": "Presque – une case de trop est coloriée.",
+      "cells_both": "Pas tout à fait – il manque des cases ({{missing}}) et certaines sont coloriées en trop ({{extra}}).",
+      "bar_wrong": "La barre « {{label}} » n'a pas encore la bonne hauteur."
     }
   },
   "contact": {

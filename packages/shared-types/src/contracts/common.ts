@@ -89,3 +89,10 @@ export const SubjectKind = z.enum([
   'other',
 ]);
 export type SubjectKind = z.infer<typeof SubjectKind>;
+
+/**
+ * A part's id: short, lower-case, given by the server. It names a part of a structured task (an
+ * element, a cell, a gap, a bar), never its place in the solution (contracts/structured.ts).
+ */
+export const PartId = z.string().regex(/^[a-z0-9_]{1,12}$/);
+export type PartId = z.infer<typeof PartId>;
