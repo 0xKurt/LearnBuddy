@@ -391,6 +391,13 @@ export const ItemView = z.object({
    * (`SessionItemView.listen_transcript`). Questions about one text share the `ref`.
    */
   listen: ListenRef.nullable().default(null),
+  /**
+   * Which kind of rubric the question is answered against, never its elements (issues #236,
+   * #258): `explain` — she explains in her own words, and the app opens the empty conversation
+   * with Buddy's invitation to explain; `text` — a writing task up to an essay, which she
+   * revises in place: her text stays in the field while the question is open. null otherwise.
+   */
+  rubric: z.enum(['text', 'explain']).nullable().default(null),
 });
 export type ItemView = z.infer<typeof ItemView>;
 

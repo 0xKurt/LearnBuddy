@@ -184,13 +184,14 @@ describe('the rubric of a writing task (#211)', () => {
     expect(usableItems([essay()])[0]?.rubric).toEqual({
       kind: 'text',
       ...RUBRIC,
-      elements: RUBRIC.elements.map((e) => ({ ...e, ask: null })),
+      elements: RUBRIC.elements.map((e) => ({ ...e, ask: null, point: null })),
     });
   });
 
   it('drops a key point rubric whose follow-up gives away the sample explanation (#236)', () => {
-    const point = (name: string, ask: string) => ({
+    const point = (name: string, ask: string, says: string) => ({
       name,
+      point: says,
       missing: 'Schau nochmal hin.',
       ask,
       check: { by: 'judged' },
@@ -203,9 +204,9 @@ describe('the rubric of a writing task (#211)', () => {
           kind: 'explain',
           form: 'Erklärung',
           elements: [
-            point('Sonnenlicht', 'Was braucht es dafür am Himmel?'),
-            point('Regentropfen', 'Woran passiert es?'),
-            point('Brechung', ask),
+            point('Was es braucht', 'Was braucht es dafür am Himmel?', 'Sonne hinter ihr'),
+            point('Woran', 'Woran passiert es?', 'An Regentropfen'),
+            point('Was passiert', ask, 'Das Licht wird gebrochen'),
           ],
         },
       });

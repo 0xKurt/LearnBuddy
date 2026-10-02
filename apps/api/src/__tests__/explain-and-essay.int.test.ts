@@ -27,8 +27,10 @@ const dbReady = await testDatabaseAvailable();
 
 const PROMPT = 'Erkläre, wie die Fotosynthese funktioniert.';
 
-const point = (name: string, ask: string, exact: string[][] = []) => ({
+/** A key point: the aspect she sees, and what it says (for the judge only). */
+const point = (name: string, ask: string, says: string, exact: string[][] = []) => ({
   name,
+  point: says,
   missing: `${name} fehlt noch.`,
   ask,
   check: { by: 'judged', exact },
@@ -38,11 +40,18 @@ const KEY_POINTS = {
   kind: 'explain',
   form: 'Erklärung',
   elements: [
-    point('Licht als Energiequelle', 'Woher bekommt die Pflanze die Energie dafür?'),
-    point('CO₂ und Wasser werden Zucker', 'Woraus baut die Pflanze den Zucker?', [
-      ['CO2', 'Kohlenstoffdioxid', 'Kohlendioxid'],
-    ]),
-    point('Ort: Chloroplast', 'Und wo in der Zelle passiert das?'),
+    point(
+      'Energiequelle',
+      'Woher bekommt die Pflanze die Energie dafür?',
+      'Licht liefert die Energie',
+    ),
+    point(
+      'Ausgangsstoffe',
+      'Woraus baut die Pflanze den Zucker?',
+      'Aus CO₂ und Wasser wird Zucker',
+      [['CO2', 'Kohlenstoffdioxid', 'Kohlendioxid']],
+    ),
+    point('Ort in der Zelle', 'Und wo in der Zelle passiert das?', 'Findet im Chloroplasten statt'),
   ],
 };
 
@@ -133,13 +142,30 @@ describe.skipIf(!dbReady)('"Erklär mal": an oral quiz checked point by point (#
         prompt: 'Erkläre den Wasserkreislauf.',
         rubric: {
           ...KEY_POINTS,
-          elements: [point('Erkläre den Wasserkreislauf', 'Wie?'), ...KEY_POINTS.elements.slice(1)],
+          elements: [
+            point('Erkläre den Wasserkreislauf', 'Wie?', 'Wasser verdunstet'),
+            ...KEY_POINTS.elements.slice(1),
+          ],
+        },
+      }),
+      // A key point whose name gives its content away, right under the follow-up: dropped.
+      draft({
+        prompt: 'Erkläre, wie ein Regenbogen entsteht.',
+        rubric: {
+          ...KEY_POINTS,
+          elements: [
+            ...KEY_POINTS.elements.slice(0, 2),
+            point('Brechung', 'Was passiert im Tropfen?', 'Brechung des Lichts im Tropfen'),
+          ],
         },
       }),
       // Not something to explain: not in an oral quiz.
       draft({ kind: 'numeric', prompt: 'Wie viel ist 7 · 8?', answer: '56', rubric: null }),
     ]);
     expect(s.items.map((i) => i.item.prompt)).toEqual([PROMPT]);
+    // The app learns that it is a question to explain — never its key points.
+    expect(s.items[0]!.item.rubric).toBe('explain');
+    expect(JSON.stringify(s)).not.toContain('Chloroplasten statt');
     expect(s.mode).toBe('practice');
     // The generator was told what an oral quiz is, and saw no surface it could fill instead.
     const asked = ScriptedGateway.textOf(env.llm.callsFor('explain').at(-1)!);
@@ -162,11 +188,15 @@ describe.skipIf(!dbReady)('"Erklär mal": an oral quiz checked point by point (#
     // One model call for the answer, and it was asked about the key points.
     expect(env.llm.callsFor('tutor')).toHaveLength(1);
     expect(ScriptedGateway.textOf(env.llm.callsFor('tutor')[0]!)).toContain('KEY POINTS');
+    // The judge is told what each point SAYS; she only ever sees its aspect.
+    expect(ScriptedGateway.textOf(env.llm.callsFor('tutor')[0]!)).toContain(
+      'r3 "Findet im Chloroplasten statt"',
+    );
 
     expect(points(res)).toEqual([
-      'Licht als Energiequelle: drin',
-      'CO₂ und Wasser werden Zucker: drin',
-      'Ort: Chloroplast: fehlt',
+      'Energiequelle: drin',
+      'Ausgangsstoffe: drin',
+      'Ort in der Zelle: fehlt',
     ]);
     // ONE follow-up, the third point's own — not the model's prose, not a list.
     expect(res.body.reply.text).toBe('Das trägt schon. Und wo in der Zelle passiert das?');
@@ -224,7 +254,7 @@ describe.skipIf(!dbReady)('"Erklär mal": an oral quiz checked point by point (#
       ]),
     );
     const res = await answer(l, s, id, 'Mit Licht, und aus CO2 und Wasser wird Zucker.');
-    expect(points(res)).toContain('Ort: Chloroplast: fehlt');
+    expect(points(res)).toContain('Ort in der Zelle: fehlt');
     expect(res.body.verdict).toBe('partially_correct');
     expect(res.body.reply.text).toContain('Und wo in der Zelle passiert das?');
   });
@@ -247,7 +277,7 @@ describe.skipIf(!dbReady)('"Erklär mal": an oral quiz checked point by point (#
       id,
       'Im Chloroplasten wird mit Licht aus Gasen und Wasser Zucker.',
     );
-    expect(points(res)).toContain('CO₂ und Wasser werden Zucker: fehlt');
+    expect(points(res)).toContain('Ausgangsstoffe: fehlt');
     expect(res.body.reply.text).toBe('Das trägt schon. Woraus baut die Pflanze den Zucker?');
   });
 
@@ -293,6 +323,9 @@ describe.skipIf(!dbReady)('"Erklär mal": an oral quiz checked point by point (#
     // Nobody judged it: no verdict, no list, no follow-up pretending to know what is missing.
     expect(res.body.verdict).toBeNull();
     expect(res.body.reply.rubric).toBeNull();
+    // …and no "solution" to look at: a free text has none (#197, #236).
+    expect(res.body.reply.text).not.toContain('Lösung');
+    expect(res.body.reply.text).toContain('schick sie gleich nochmal');
   });
 });
 
@@ -389,6 +422,9 @@ describe.skipIf(!dbReady)('a long text gets feedback per element, never a grade 
       }),
     ]);
     const essay = s.items.find((i) => i.item.kind === 'long')!.item.id;
+    // The app learns that it is a writing task with a rubric — never the rubric itself.
+    expect(s.items.map((i) => i.item.rubric)).toEqual(['text', null]);
+    expect(JSON.stringify(s)).not.toContain('Teile deinen Text');
     const short = s.items.find((i) => i.item.kind === 'short')!.item.id;
     const text = longEssay();
     expect(text.split(/\s+/).length).toBeGreaterThan(1400);
@@ -447,6 +483,22 @@ describe.skipIf(!dbReady)('a long text gets feedback per element, never a grade 
       [essay],
     );
     expect(stored.map((r) => r.n)).toEqual([text.length]);
+  });
+
+  it("drops a grade in Buddy's own words when everything holds", async () => {
+    const s = await startPractice(env, l, [essayItem()]);
+    const id = s.items[0]!.item.id;
+    env.llm.script('tutor', {
+      json: {
+        ...judges([{ element: 'r3', met: true, quote: 'Deshalb bin ich für Schuluniformen' }]).json,
+        // Everything holds, so his sentence would stand — but it carries a grade.
+        reply: 'Super Erörterung, das wäre eine glatte 1-!',
+      },
+    });
+    const res = await answer(l, s, id, longEssay());
+    expect(res.body.verdict).toBe('correct');
+    expect(res.body.reply.text).toBe('Das trägt – alles drin.');
+    expect(res.body.reply.text).not.toMatch(/\d/);
   });
 
   it('names the missing structure as the one next step', async () => {

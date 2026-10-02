@@ -63,8 +63,8 @@ describe('the thread under a question', () => {
       rubric: {
         kind: 'explain',
         points: [
-          { name: 'Licht als Energiequelle', met: true },
-          { name: 'Ort: Chloroplast', met: false },
+          { name: 'Energiequelle', met: true },
+          { name: 'Ort in der Zelle', met: false },
         ],
         spots: [],
       },
@@ -72,9 +72,19 @@ describe('the thread under a question', () => {
     renderInApp(<ItemThread turns={[said, reply]} pending={null} />);
     expect(screen.queryByText('Fast')).toBeNull();
     // The state in words on every row, not in colour alone.
-    expect(screen.getByLabelText('Licht als Energiequelle: drin')).toBeDefined();
-    expect(screen.getByLabelText('Ort: Chloroplast: fehlt noch')).toBeDefined();
+    expect(screen.getByLabelText('Energiequelle: drin')).toBeDefined();
+    expect(screen.getByLabelText('Ort in der Zelle: fehlt noch')).toBeDefined();
     expect(screen.getByText(reply.text)).toBeDefined();
+  });
+
+  it("opens a question to explain with Buddy's invitation, and keeps it first (#236)", () => {
+    const invite = 'Erklär’s mir in deinen Worten, wie in der Klasse.';
+    const { unmount } = renderInApp(<ItemThread turns={[]} pending={null} invite={invite} />);
+    expect(screen.getByText(invite)).toBeDefined();
+    unmount();
+    renderInApp(<ItemThread turns={[ANSWER]} pending={null} invite={invite} />);
+    expect(screen.getByText(invite)).toBeDefined();
+    expect(screen.getByText(ANSWER.text)).toBeDefined();
   });
 
   it('shows an essay its places to improve as her own quotes (#258)', () => {

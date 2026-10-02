@@ -210,7 +210,8 @@
   "thread": {
     "you": "Tu",
     "buddy": "Buddy",
-    "thinking": "Buddy sta guardando la tua risposta…"
+    "thinking": "Buddy sta guardando la tua risposta…",
+    "explain_invite": "Spiegamelo con parole tue, come in classe. Poi ti dico cosa c’è già."
   },
   "title_fallback": "Esercizi",
   "verdict": {

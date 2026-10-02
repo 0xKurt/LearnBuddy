@@ -172,6 +172,16 @@ export const RubricElement = z.object({
       "ONE short sentence saying what to look for when this element is not there yet, in the learner's language. It is what she reads as her next step, so write it to her, never about her, and never give away a content she is supposed to produce.",
     ),
   check: RubricCheck,
+  point: z
+    .string()
+    .trim()
+    .min(1)
+    .max(160)
+    .nullable()
+    .default(null)
+    .describe(
+      'Only for kind "explain": what the key point SAYS, in full ("findet im Chloroplasten statt") — given to the judge, never shown to her. Then "name" is only the ASPECT she sees in her list ("Ort", "Woher die Energie kommt"): it must not give the point away, because the list stands right under the follow-up question asking for it. null for kind "text".',
+    ),
   ask: z
     .string()
     .trim()

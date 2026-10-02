@@ -39,7 +39,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Keyboard, Platform, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn } from '../../components/lb/Btn.js';
@@ -212,6 +212,9 @@ function questionOnScreen(session: SessionView, pinnedId: string | null): Sessio
   return shown;
 }
 
+/** The thread's padding above and below (SPACE.md): where its first bubble begins. */
+const THREAD_PAD = 12;
+
 export default function PracticeScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
@@ -269,6 +272,24 @@ export default function PracticeScreen() {
   const lastSent = useRef<SentAnswer | null>(null);
   const finishStarted = useRef(false);
   const scroll = useRef<ScrollView>(null);
+  /** Where Buddy's newest reply starts in the thread, and how tall the thread's room is (#258). */
+  const replyAt = useRef<number | null>(null);
+  const threadRoom = useRef(0);
+  const threadHeight = useRef(0);
+  /**
+   * The newest part of the conversation in view — and when Buddy's newest reply with its list is
+   * taller than the room (an essay's feedback, issue #258), the START of that reply: his sentence
+   * is the next step, the rest of the list is a scroll below it. THREAD_PAD is where it begins.
+   */
+  const keepReplyInView = (animated = true) => {
+    const at = replyAt.current;
+    if (at !== null && threadHeight.current - (THREAD_PAD + at) > threadRoom.current) {
+      // The padding's worth of room above his bubble, clear of the thread's top fade.
+      scroll.current?.scrollTo({ y: Math.max(0, at - THREAD_PAD), animated });
+    } else {
+      scroll.current?.scrollToEnd({ animated });
+    }
+  };
 
   const session = query.data;
   // The session ran here while the screen was open: its end is a moment (SessionSummary).
@@ -460,7 +481,13 @@ export default function PracticeScreen() {
       await store(res.session);
       // Tap on "Prüfen" → the verdict on screen (issue #66).
       reacted('check');
-      if (answerText !== null) setText((current) => (current.trim() === answerText ? '' : current));
+      // An essay that is still open stays in the field (issue #258): the list says what to
+      // improve, and she does that in her own text, not by writing it again.
+      const after = res.session.items.find((i) => i.item.id === itemId);
+      const revising = after?.status === 'open' && after.item.rubric === 'text';
+      if (answerText !== null && !revising) {
+        setText((current) => (current.trim() === answerText ? '' : current));
+      }
       if (res.session.items.find((i) => i.item.id === itemId)?.status !== 'open')
         Keyboard.dismiss();
       readFeedback(res, itemId);
@@ -897,6 +924,8 @@ export default function PracticeScreen() {
   );
   // Once there is a conversation (or the solution), keep its newest part in view.
   const followEnd = itemTurns.length > 0 || pendingText !== null || !open;
+  // A question without a reply yet has no reply to keep in view (and not the last question's).
+  if (!itemTurns.some((turn) => turn.role === 'tutor')) replyAt.current = null;
   // Only a question from a photo or from Buddy; never homework, never during a test.
   const flaggable =
     open &&
@@ -1075,20 +1104,26 @@ export default function PracticeScreen() {
             <ScrollView
               ref={scroll}
               testID="scroll-thread"
+              // A thread that holds an essay (issue #258) really scrolls, and a keyboard user
+              // must be able to reach it (axe: scrollable-region-focusable). Web only: on a phone
+              // the finger scrolls it, and a focusable view would be one more stop for TalkBack.
+              focusable={Platform.OS === 'web'}
               style={[{ flex: 1 }, topEdgeMask]}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{
                 flexGrow: 1,
                 justifyContent: 'flex-end',
                 paddingHorizontal: 16,
-                paddingVertical: 12,
+                paddingVertical: THREAD_PAD,
               }}
-              onContentSizeChange={() => {
-                if (followEnd) scroll.current?.scrollToEnd({ animated: true });
+              onContentSizeChange={(_w, h) => {
+                threadHeight.current = h;
+                if (followEnd) keepReplyInView();
               }}
-              onLayout={() => {
+              onLayout={(e) => {
+                threadRoom.current = e.nativeEvent.layout.height;
                 // The keyboard shrinks this view; keep the latest reply visible above it.
-                if (followEnd) scroll.current?.scrollToEnd({ animated: false });
+                if (followEnd) keepReplyInView(false);
               }}
             >
               {/* One measured column: what the conversation truly holds (plus the 12 pt
@@ -1107,7 +1142,15 @@ export default function PracticeScreen() {
                   // While a structured question is open her answer stands on its board, not in a
                   // bubble (ItemThread). Once it is closed the board is gone, there is room, and
                   // the bubble with its verdict shows what she did, like any other answer.
-                  echoAnswers={!(structured && open)}
+                  // The same for an essay (issue #258): while it is open her text stands in the
+                  // field, where she revises it — echoed, 1500 words would fill the thread twice.
+                  echoAnswers={!((structured || item.rubric === 'text') && open)}
+                  invite={item.rubric === 'explain' ? t('thread.explain_invite') : null}
+                  onLatestReplyAt={(y) => {
+                    // The reply's place can arrive after the content's size: decide again.
+                    replyAt.current = y;
+                    if (followEnd) keepReplyInView();
+                  }}
                 />
                 {session.mode === 'help' && shown.status === 'correct' ? (
                   <Rise delay={180}>

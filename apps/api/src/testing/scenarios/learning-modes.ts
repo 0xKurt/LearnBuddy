@@ -7,6 +7,7 @@
 
 import type { LlmRequest } from '../../llm/gateway.js';
 import { ScriptedGateway } from '../fakes.js';
+import { judgeRubric, scriptExplainAndEssay, transcribeExplain } from './explain-essay.js';
 import { scriptGenerations } from './generations.js';
 import { says, scriptTurns } from './turns.js';
 
@@ -437,11 +438,19 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       answer: says('Diese Woche steht noch nichts an – magst du etwas üben?'),
     },
   );
-  llm.byDefault('transcribe', {
-    json: { heard_speech: true, text: 'Was steht diese Woche an?' },
-  });
+  // The oral quiz (issue #236) is answered by voice: the fake microphone "says" her
+  // explanation there, and the chat's question everywhere else.
+  scriptExplainAndEssay();
+  llm.byDefault(
+    'transcribe',
+    (req: LlmRequest) =>
+      transcribeExplain(req) ?? { heard_speech: true, text: 'Was steht diese Woche an?' },
+  );
   // Tutor: hints for homework (never the solution).
   const hint = (req: LlmRequest) => {
+    // A question with key points or required elements (issues #236, #258) is judged per point.
+    const perPoint = judgeRubric(req);
+    if (perPoint !== null) return perPoint;
     const text = lastText(req).toLowerCase();
     if (text.includes('28')) {
       return {

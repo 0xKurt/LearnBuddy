@@ -1965,6 +1965,9 @@ export async function materialItems(
       // from a photo (issue #210, `practice/listen.ts`). Nothing to play here either way — the
       // recording belongs to a session, like the crop and the bar above.
       listen: null,
+      // How a question is answered belongs to the session too (issues #236, #258): the list
+      // shows what the sheet asks, not an invitation to explain or a field to revise in.
+      rubric: null,
       result: resultOf(r),
     })),
   };

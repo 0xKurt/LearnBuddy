@@ -807,3 +807,144 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
+
+// ── "Frag mich ab" (issue #236): an open question, answered by voice, checked per key point ──
+// Scripted in apps/api/src/testing/scenarios/explain-essay.ts: the fake microphone "says" an
+// explanation with two of three key points; the judge quotes only her own words.
+test('an oral quiz: explained by voice, one follow-up to the missing point (issue #236)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Frag mich Fotosynthese ab');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await offerStart(page, 'Ich frag dich ab').click();
+  await expect(page.getByText('Erkläre, wie die Fotosynthese funktioniert.')).toBeVisible();
+  // Buddy opens the conversation as a teacher would: explain it, in your own words.
+  await expect(page.getByText('Erklär’s mir in deinen Worten', { exact: false })).toBeVisible();
+  await shot(page, '50-oral-question');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '50b-oral-question-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  // Voice mode, as in a real oral quiz: she taps the mic once, explains, taps again.
+  const voiceSwitch = page.getByRole('switch', { name: 'Sprachmodus' }).last();
+  await voiceSwitch.click();
+  await expect(voiceSwitch).toHaveAttribute('aria-checked', 'true');
+  // The one-time note on how voice mode works goes by itself.
+  await expect(
+    page.getByText('Ich lese dir vor. Tipp einmal aufs Mikro', { exact: false }),
+  ).toBeHidden({
+    timeout: 8000,
+  });
+  await page.getByRole('button', { name: 'Antwort sagen' }).click();
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
+  // Spoken, written down, checked hands-free: two points carry, the third gets ONE question.
+  await expect(page.getByText('Und wo in der Zelle passiert das?')).toBeVisible();
+  const list = page.getByTestId('rubric-note').last();
+  await expect(list).toContainText('Energiequelle');
+  await expect(list).toContainText('Ort in der Zelle');
+  // The list names the aspect, never the point itself: it stands right under the question.
+  await expect(list).not.toContainText('Chloroplast');
+  // Never a right/wrong chip and never a count on an explanation.
+  await expect(page.getByText('Noch nicht ganz', { exact: true })).toHaveCount(0);
+  await expect(list).not.toContainText(/\d\s*(von|\/)\s*\d/);
+  await shot(page, '51-oral-follow-up');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '51b-oral-follow-up-night');
+  // Still at night: once every point holds the question closes, and a change of palette
+  // remounts the screen onto the summary (ThemeProvider) — so the closed state is shot in one.
+
+  // She answers the follow-up typed: it adds to her first explanation instead of replacing it.
+  await page.getByLabel('Deine Antwort').fill('Das passiert in den Chloroplasten.');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.getByTestId('rubric-note').last()).not.toContainText('fehlt');
+  // One list, under the newest reply: it holds everything she said by now.
+  await expect(page.getByTestId('rubric-note')).toHaveCount(1);
+  await shot(page, '52b-oral-complete-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+});
+
+/** One paragraph of the essay she pastes; the scripted judge quotes two of its sentences. */
+const ESSAY_PARAGRAPH = [
+  'Viele sagen das Handy stört im Unterricht, weil Nachrichten ablenken und niemand mehr zuhört.',
+  'Das ist halt so, wenn es auf dem Tisch liegt und dauernd leuchtet.',
+  'Andererseits hilft das Handy beim Lernen, zum Beispiel mit einem Wörterbuch oder einem Lernvideo,',
+  'und in einem Notfall erreichen Eltern ihr Kind sofort.',
+].join(' ');
+
+/** About 1500 words: an introduction and thirty paragraphs, apart by empty lines — no conclusion yet. */
+function essayText(): string {
+  return [
+    'Soll es an Schulen ein Handyverbot geben? Darüber wird an unserer Schule gerade gestritten.',
+    ...Array.from({ length: 30 }, () => ESSAY_PARAGRAPH),
+  ].join('\n\n');
+}
+
+/** The conclusion she adds once Buddy said it is missing. */
+const CONCLUSION =
+  'Ich finde deshalb, dass ein Verbot im Unterricht sinnvoll ist, in der Pause aber nicht.';
+
+// ── A long text (issue #258): 1500 words, kept as a draft over a restart, checked per element ──
+test('an essay of 1500 words survives a restart and comes back point by point (issue #258)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await page.getByLabel('Schreib Buddy …').fill('Ich will eine Erörterung üben');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await offerStart(page, 'schreib deine Erörterung').click();
+  await expect(page.getByText('Soll es an Schulen ein Handyverbot geben?').first()).toBeVisible();
+  const field = page.getByLabel('Deine Antwort');
+  const essay = essayText();
+  expect(essay.split(/\s+/).length).toBeGreaterThanOrEqual(1500);
+  await field.fill(essay);
+  await expect(field).toHaveValue(essay);
+  await shot(page, '53-essay-written');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '53b-essay-written-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  // The app is closed and opened again: the 1500 words are still there (lib/drafts.ts).
+  await page.waitForTimeout(800);
+  await page.reload();
+  await expect(page.getByLabel('Deine Antwort')).toHaveValue(essay, { timeout: 30_000 });
+
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  const note = page.getByTestId('rubric-note');
+  // ONE next step, from the app's words: the conclusion is still missing.
+  await expect(
+    page.getByText('Schau nochmal, ob Schluss mit eigener Position schon drinsteht', {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await expect(note).toContainText('Gegenargument');
+  await expect(note).toContainText('fehlt noch');
+  // Places from HER text, at most three — the one the model invented is dropped.
+  await expect(note).toContainText('Viele sagen das');
+  await expect(note).not.toContainText('nie geschrieben');
+  // No grade, no score, no right/wrong.
+  await expect(page.getByText('Richtig', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Noch nicht ganz', { exact: true })).toHaveCount(0);
+  await expect(note).not.toContainText(/\d|Note|Punkte/);
+  // She revises in place: her text is still in the field, and not a second time in the thread.
+  await expect(page.getByLabel('Deine Antwort')).toHaveValue(essay);
+  await expect(
+    page.getByTestId('scroll-thread').getByText('wenn es auf dem Tisch liegt', { exact: false }),
+  ).toHaveCount(0);
+  await shot(page, '54-essay-feedback');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shot(page, '54b-essay-feedback-night');
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  // She adds the conclusion to her own text and sends it again: everything holds.
+  // The palette change remounted the screen (ThemeProvider), and it brings her draft back
+  // from the device: wait for that before typing, as she would see it.
+  await expect(page.getByLabel('Deine Antwort')).toHaveValue(essay);
+  await page.waitForTimeout(500);
+  await page.getByLabel('Deine Antwort').fill(`${essay}\n\n${CONCLUSION}`);
+  await expect(page.getByLabel('Deine Antwort')).toHaveValue(`${essay}\n\n${CONCLUSION}`);
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(note).not.toContainText('fehlt noch');
+  await expect(note).toHaveCount(1);
+  await shot(page, '55-essay-complete');
+});

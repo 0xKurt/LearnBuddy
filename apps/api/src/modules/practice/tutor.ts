@@ -18,7 +18,7 @@ import { RubricClaim, RubricSpot, type AskedElement } from './rubric.js';
 // v6: drei Änderungen auf einmal — die Regel ihres Bundeslandes (#214), die Pflichtelemente einer
 // Schreibaufgabe (#211) und das Gehörte (#210). Drei Agenten hatten unabhängig voneinander erhöht
 // (v4, v4.0, v3.10); gemessen wird aber DIESER Prompt, und den gab es vorher nicht.
-export const TUTOR_PROMPT_VERSION = 'tutor.v7';
+export const TUTOR_PROMPT_VERSION = 'tutor.v7.1';
 
 export const TutorDecision = z.object({
   intent: z
@@ -210,7 +210,7 @@ export function tutorContext(input: {
       rubric.kind === 'explain'
         ? `KEY POINTS of a complete explanation — one entry in "elements" for each, named by its ref, judged against everything she said about this question:`
         : `REQUIRED ELEMENTS of this ${rubric.form} — one entry in "elements" for each, named by its ref:`,
-      ...rubric.asked.map((e) => `${e.ref} "${e.name}" — ${askedFor(e)}`),
+      ...rubric.asked.map((e) => `${e.ref} "${e.point ?? e.name}" — ${askedFor(e)}`),
     );
   }
   if (rubric && rubric.spots) {

@@ -60,6 +60,7 @@
       "worked_add": "Both fractions are divided into {{parts}} equal parts. Together {{answer}} is shaded."
     },
     "cannot_check": "I can't check that right now. You can look at the solution and compare yourself.",
+    "cannot_check_text": "I can’t check that right now. Your answer stays here – send it again in a moment.",
     "card_knew": "I knew it",
     "card_not_yet": "Not yet",
     "correct": "That's right – well done!",
@@ -86,7 +87,8 @@
       "next_judged": "That part holds. Have another look at whether {{name}} is in there: {{missing}}",
       "next_line": "That part holds. The line in “{{cite}}” isn’t in the text – have another look: {{missing}}",
       "next_verb": "That part holds. Only at “{{verb}}” the tense isn’t right yet: {{missing}}",
-      "start": "Let’s start with {{name}}: {{missing}}"
+      "start": "Let’s start with {{name}}: {{missing}}",
+      "done": "That holds up – it’s all there."
     },
     "solution_is": "The answer is: {{answer}}",
     "speak_almost": "Almost! Look at the marked words.",

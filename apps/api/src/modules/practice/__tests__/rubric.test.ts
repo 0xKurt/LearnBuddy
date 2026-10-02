@@ -27,7 +27,13 @@ import {
 } from '../rubric.js';
 
 const element = (over: Partial<RubricElement> & { check: RubricElement['check'] }): RubricElement =>
-  ({ name: 'Element', missing: 'Schau nochmal hin.', ask: null, ...over }) as RubricElement;
+  ({
+    name: 'Element',
+    missing: 'Schau nochmal hin.',
+    ask: null,
+    point: null,
+    ...over,
+  }) as RubricElement;
 
 const opener = element({
   name: 'Einleitungssatz',
@@ -120,8 +126,8 @@ describe('what the model is asked about', () => {
     // A length and a required mention are counted and compared — the model does not even learn
     // that they are part of the rubric, so it cannot contradict them (CLAUDE.md rule 1).
     expect(askedElements(rubric([opener, length, tense, judged]))).toEqual([
-      { ref: 'r3', name: 'Präsens', check: { by: 'tense', tense: 'present' } },
-      { ref: 'r4', name: 'eigenes Urteil', check: { by: 'judged', exact: [] } },
+      { ref: 'r3', name: 'Präsens', point: null, check: { by: 'tense', tense: 'present' } },
+      { ref: 'r4', name: 'eigenes Urteil', point: null, check: { by: 'judged', exact: [] } },
     ]);
     expect(askedElements(rubric([opener, length]))).toEqual([]);
   });
@@ -283,6 +289,9 @@ describe('what Buddy says', () => {
       claim({ element: 'r2', met: true, quote: 'was ich sehr bedrückend finde' }),
     ]);
     expect(rubricReply('de', o, 'Das liest sich rund.')).toBe('Das liest sich rund.');
+    // …but never a grade in them (#258): a sentence with a digit is dropped for the app's own.
+    expect(rubricReply('de', o, 'Das ist eine glatte 2+!')).toBe('Das trägt – alles drin.');
+    expect(rubricReply('de', o, '2 von 2 – super!')).toBe('Das trägt – alles drin.');
     expect(rubricFeedback(o).points).toEqual([
       { name: 'Länge', met: true },
       { name: 'eigenes Urteil', met: true },
@@ -303,18 +312,32 @@ describe('what Buddy says', () => {
 
 // ─────────────── die Erklärfrage (#236) ───────────────
 
-const point = (name: string, ask: string, exact: string[][] = []): RubricElement =>
-  element({ name, missing: `${name} fehlt noch.`, ask, check: { by: 'judged', exact } });
+/** A key point: the aspect she sees (`name`) and what it says, for the judge only (`says`). */
+const point = (name: string, ask: string, says: string, exact: string[][] = []): RubricElement =>
+  element({
+    name,
+    point: says,
+    missing: `${name} fehlt noch.`,
+    ask,
+    check: { by: 'judged', exact },
+  });
 
 const PHOTO: Rubric = {
   kind: 'explain',
   form: 'Erklärung',
   elements: [
-    point('Licht als Energiequelle', 'Woher bekommt die Pflanze die Energie dafür?'),
-    point('CO₂ und Wasser werden zu Glucose', 'Woraus baut die Pflanze den Zucker?', [
-      ['CO2', 'Kohlenstoffdioxid', 'Kohlendioxid'],
-    ]),
-    point('Ort: Chloroplast', 'Und wo in der Zelle passiert das?'),
+    point(
+      'Energiequelle',
+      'Woher bekommt die Pflanze die Energie dafür?',
+      'Licht liefert die Energie',
+    ),
+    point(
+      'Ausgangsstoffe',
+      'Woraus baut die Pflanze den Zucker?',
+      'Aus CO₂ und Wasser wird Glucose',
+      [['CO2', 'Kohlenstoffdioxid', 'Kohlendioxid']],
+    ),
+    point('Ort in der Zelle', 'Und wo in der Zelle passiert das?', 'Findet im Chloroplasten statt'),
   ],
 };
 const PHOTO_Q = 'Erkläre, wie die Fotosynthese funktioniert.';
@@ -338,28 +361,59 @@ describe('an explanation question (issue #236)', () => {
   });
 
   it('drops a rubric whose follow-up gives the value away', () => {
-    const giveaway = point('CO₂ als Ausgangsstoff', 'Nimmt die Pflanze CO2 auf?', [['CO2']]);
+    const giveaway = point('Ausgangsstoff', 'Nimmt die Pflanze CO2 auf?', 'Sie nimmt CO₂ auf', [
+      ['CO2'],
+    ]);
     expect(
       usableRubric({ ...PHOTO, elements: [giveaway, ...PHOTO.elements.slice(1)] }, 'long'),
     ).toBeNull();
   });
 
+  it('drops a key point whose name gives its content away (#236)', () => {
+    // The list stands right under "Und wo in der Zelle passiert das?": "Chloroplast" there would
+    // be the answer — also when the point says it inflected.
+    const told = point(
+      'Ort: Chloroplast',
+      'Und wo in der Zelle passiert das?',
+      'Findet im Chloroplasten statt',
+    );
+    const rest = PHOTO.elements.slice(0, 2);
+    expect(usableRubric({ ...PHOTO, elements: [...rest, told] }, 'long', PHOTO_Q)).toBeNull();
+    // A word the question or the follow-up already uses gives nothing away.
+    const aspect = point(
+      'Ort in der Zelle',
+      'Und wo in der Zelle passiert das?',
+      'In der Zelle: im Chloroplasten',
+    );
+    expect(usableRubric({ ...PHOTO, elements: [...rest, aspect] }, 'long', PHOTO_Q)).not.toBeNull();
+    // And what a key point says is required: without it the judge would judge the aspect.
+    const bare = { ...PHOTO.elements[2]!, point: null };
+    expect(usableRubric({ ...PHOTO, elements: [...rest, bare] }, 'long', PHOTO_Q)).toBeNull();
+  });
+
   it('drops a key point that just repeats the question', () => {
-    const echo = point(PHOTO_Q, 'Wie geht das?');
+    const echo = point(PHOTO_Q, 'Wie geht das?', 'Licht wird zu Zucker');
     expect(
       usableRubric({ ...PHOTO, elements: [echo, ...PHOTO.elements.slice(1)] }, 'long', PHOTO_Q),
     ).toBeNull();
   });
 
   it('leaves no number in a key point to a judgement', () => {
-    // "1914" in the name and no exact value for it: a number code can check would be judged.
-    const year = point('Kriegsbeginn 1914', 'Wann begann der Krieg?');
+    // "1914" in the point and no exact value for it: a number code can check would be judged.
+    const year = point('Kriegsbeginn', 'Wann begann der Krieg?', 'Der Krieg beginnt 1914');
     const rest = PHOTO.elements.slice(1);
     expect(usableRubric({ ...PHOTO, elements: [year, ...rest] }, 'long')).toBeNull();
-    const checked = point('Kriegsbeginn 1914', 'Wann begann der Krieg?', [['1914']]);
+    const checked = point('Kriegsbeginn', 'Wann begann der Krieg?', 'Der Krieg beginnt 1914', [
+      ['1914'],
+    ]);
     expect(usableRubric({ ...PHOTO, elements: [checked, ...rest] }, 'long')).not.toBeNull();
+    // A number in what she SEES would give it away, checked or not.
+    const shown = point('Beginn 1914', 'Wann begann der Krieg?', 'Der Krieg beginnt 1914', [
+      ['1914'],
+    ]);
+    expect(usableRubric({ ...PHOTO, elements: [shown, ...rest] }, 'long')).toBeNull();
     // An "exact" value without any digit is a word that could be paraphrased — not its field.
-    const word = point('Licht', 'Woher?', [['Sonne']]);
+    const word = point('Quelle', 'Woher?', 'Die Sonne', [['Sonne']]);
     expect(usableRubric({ ...PHOTO, elements: [word, ...rest] }, 'long')).toBeNull();
   });
 

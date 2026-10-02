@@ -228,6 +228,9 @@ export function AnswerComposer({
             placeholder={t('answer.placeholder')}
             placeholderTextColor={palette.ink3}
             accessibilityLabel={t('answer.label')}
+            // An essay of 1500 words (issue #258) scrolls inside its own field: it is her text
+            // being read back, like the thread, and the one scroll `tests/web/fit.ts` allows here.
+            {...(long ? { testID: 'scroll-essay' } : {})}
             accessibilityHint={unit ? t('answer.unit_hint', { unit }) : undefined}
             multiline
             // Where the growing starts: the web's textarea is two rows tall by default,

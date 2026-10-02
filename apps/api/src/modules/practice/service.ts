@@ -768,7 +768,7 @@ export async function sessionView(
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
             i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
-            i.bar_task, i.task, i.listen_task, i.staff_task, i.archived_at,
+            i.bar_task, i.task, i.listen_task, i.staff_task, i.rubric, i.archived_at,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
             mi.label as image_label
        from session_items si join items i on i.id = si.item_id
@@ -865,6 +865,8 @@ export async function sessionView(
         // It stays while the question is closed: hearing the text again next to the words of
         // it is exactly what a listening task is reviewed with.
         listen: hearing.has(i.id) ? { ref: hearing.get(i.id)! } : null,
+        // Which kind of rubric, never its elements or key points (issues #236, #258).
+        rubric: rubricOf(i.rubric)?.kind ?? null,
       },
       status: i.status,
       attempts: i.attempts,
@@ -1653,7 +1655,12 @@ export async function answerItem(
             : {
                 verdict: null,
                 evaluatedBy: null,
-                reply: t(learner.locale, 'practice.cannot_check'),
+                // A free text has no solution to look at (issue #197; "keine Lösung", #236/#258):
+                // the general sentence would point her at one that is not there.
+                reply: t(
+                  learner.locale,
+                  item.kind === 'long' ? 'practice.cannot_check_text' : 'practice.cannot_check',
+                ),
                 gaveHint: false,
                 revealed: false,
               };

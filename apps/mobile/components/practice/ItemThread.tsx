@@ -58,6 +58,18 @@ type Props = {
    * cut-off strip under the question card (#229, shot 39e).
    */
   echoAnswers?: boolean;
+  /**
+   * Buddy's opening words, standing first in the conversation (issue #236): a question she
+   * answers by explaining starts with his invitation to explain, as in class — so the empty
+   * thread says what kind of answer is wanted, and the record reads as a conversation.
+   */
+  invite?: string | null;
+  /**
+   * Where Buddy's newest reply starts, from the top of the thread. A reply with a long list
+   * under it (an essay's feedback, issue #258) can be taller than the room: the screen then
+   * keeps his sentence — the next step — in view instead of only the list's end.
+   */
+  onLatestReplyAt?: (y: number) => void;
 };
 
 export function ItemThread({
@@ -67,13 +79,15 @@ export function ItemThread({
   thinkingLabel,
   pronunciation = false,
   echoAnswers = true,
+  invite = null,
+  onLatestReplyAt,
 }: Props) {
   const { t } = useTranslation('practice');
   // What was there when the screen opened stands still; what arrives now moves.
   const initial = useRef<ReadonlySet<string> | null>(null);
   if (initial.current === null) initial.current = new Set(turns.map((turn) => turn.id));
   const known = initial.current;
-  if (turns.length === 0 && pending === null) return null;
+  if (turns.length === 0 && pending === null && invite === null) return null;
 
   let latestAnswerId: string | null = null;
   let latestReplyId: string | null = null;
@@ -84,6 +98,17 @@ export function ItemThread({
 
   return (
     <View style={{ gap: 12 }}>
+      {invite !== null ? (
+        <View style={{ alignItems: 'flex-start' }}>
+          <Bubble
+            mine={false}
+            text={invite}
+            speaker={t('thread.buddy')}
+            orb={moonForReply({ fresh: false, afterCorrect: false })}
+            alive={turns.length === 0 && pending === null}
+          />
+        </View>
+      ) : null}
       {turns.map((turn, index) => {
         const mine = turn.role === 'learner';
         // Not echoed: neither the bubble nor its tag — the reply below says it in words.
@@ -117,6 +142,11 @@ export function ItemThread({
             // rises in.
             animate={fresh && !mine}
             delay={60}
+            onLayout={
+              turn.id === latestReplyId && onLatestReplyAt
+                ? (e) => onLatestReplyAt(e.nativeEvent.layout.y)
+                : undefined
+            }
             style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}
           >
             {mine ? (
@@ -132,7 +162,11 @@ export function ItemThread({
             {pronunciation && !mine && turn.pronunciation ? (
               <PronunciationNote feedback={turn.pronunciation} />
             ) : null}
-            {!mine && turn.rubric && !hideVerdicts ? <RubricNote feedback={turn.rubric} /> : null}
+            {/* Only under the newest reply: it holds everything she has said by now (an
+                explanation is judged on all of it), so an older list would only repeat it. */}
+            {!mine && turn.rubric && !hideVerdicts && turn.id === latestReplyId ? (
+              <RubricNote feedback={turn.rubric} />
+            ) : null}
           </Rise>
         );
       })}

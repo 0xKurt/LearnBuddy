@@ -185,26 +185,60 @@ export function usableRubric(
       if (!group.some((x) => DIGIT.test(normalizeShortAnswer(x)))) return null;
     }
     if (!explain) {
-      if (e.ask !== null) return null;
+      if (e.ask !== null || e.point !== null) return null;
       continue;
     }
     if (e.check.by !== 'judged') return null;
     if (e.ask === null || !e.ask.trim().endsWith('?')) return null;
     if (exact.some((group) => group.some((x) => says(e.ask ?? '', x)))) return null;
     if (question !== '' && padded(e.name).includes(question)) return null;
-    // Jede Ziffer im Namen gehört einem exakten Wert: der Name „Ablauf 1914" ohne `exact`
-    // ["1914"] hätte die Jahreszahl einem Urteil überlassen.
-    const numbered = key.split(' ').filter((w) => DIGIT.test(w));
+    // Was der Kernpunkt sagt, steht in `point` (für das Urteil); sie sieht nur `name`, den
+    // ASPEKT — und der steht direkt unter der Nachfrage, die nach genau diesem Punkt fragt.
+    // „Ort: Chloroplast" unter „Und wo in der Zelle passiert das?" hätte die Antwort verraten.
+    // Also: kein Wort des Punktes im Namen, das nicht schon in der Frage oder der Nachfrage
+    // steht, und keine Ziffer.
+    if (e.point === null) return null;
+    if (DIGIT.test(key) || leaks(e.name, e.point, `${prompt} ${e.ask}`)) return null;
+    // Jede Ziffer im Punkt gehört einem exakten Wert: „Beginn 1914" ohne `exact` ["1914"]
+    // hätte die Jahreszahl einem Urteil überlassen.
+    const numbered = normalizeShortAnswer(e.point)
+      .split(' ')
+      .filter((w) => DIGIT.test(w));
     const values = exact.flat().map((x) => padded(x));
     if (numbered.some((w) => !values.some((v) => v.includes(` ${w} `)))) return null;
   }
   return rubric;
 }
 
+/**
+ * Ob der Name eines Kernpunkts seinen Inhalt verrät. Inhalt sind die Wörter des Punktes (ab vier
+ * Zeichen, also ohne Artikel und kurze Füllwörter; gefaltet), die weder in der Frage noch in der
+ * Nachfrage stehen — was dort steht („Fotosynthese", „Zelle"), liest sie ohnehin. Verglichen wird
+ * über den Wortanfang, damit eine Beugung nichts durchlässt: „Chloroplast" im Namen verrät
+ * „im Chloroplasten". Was der Wortanfang nicht sieht („Brechung" / „gebrochen"), sieht diese
+ * Prüfung nicht — dafür sagt der Generator-Prompt dasselbe in Worten; gemessen ist nur das hier.
+ */
+function leaks(name: string, point: string, shownAnyway: string): boolean {
+  const words = (x: string) =>
+    normalizeShortAnswer(x)
+      .split(' ')
+      .filter((w) => w.length >= 4);
+  const related = (a: string, b: string) => a.startsWith(b) || b.startsWith(a);
+  const known = words(shownAnyway);
+  const content = words(point).filter((w) => !known.some((k) => related(w, k)));
+  return words(name).some((w) => content.some((c) => related(w, c)));
+}
+
 // ─────────────── was das Modell gefragt wird (und was nicht) ───────────────
 
 /** Ein Element, über das nur das Modell etwas sagen kann — mit dem Kürzel, das der Server vergibt. */
-export type AskedElement = { ref: string; name: string; check: RubricElement['check'] };
+export type AskedElement = {
+  ref: string;
+  name: string;
+  /** What a key point says (issue #236): what the judge looks for — never shown to her. */
+  point: string | null;
+  check: RubricElement['check'];
+};
 
 /**
  * Die Elemente, über die das Modell befragt wird: `tense` und `judged`. Und nur die.
@@ -219,7 +253,7 @@ export type AskedElement = { ref: string; name: string; check: RubricElement['ch
  */
 export function askedElements(rubric: Rubric): AskedElement[] {
   return rubric.elements
-    .map((e, i) => ({ ref: refOf(i), name: e.name, check: e.check }))
+    .map((e, i) => ({ ref: refOf(i), name: e.name, point: e.point, check: e.check }))
     .filter((e) => e.check.by === 'tense' || e.check.by === 'judged');
 }
 
@@ -597,7 +631,10 @@ export function rubricFeedback(o: RubricOutcome, spots: RubricSpotView[] = []): 
  */
 export function rubricReply(locale: string, o: RubricOutcome, fallback: string): string {
   const step = o.step;
-  if (step === null) return fallback;
+  // Buddys eigener Satz bleibt nur, solange er keine Ziffer trägt — dieselbe mechanische Form von
+  // „keine Note, keine Punktzahl" wie bei einer Stelle (`spotsIn`): ein „Das ist eine 2+" oder
+  // „6 von 6" wird verworfen, nicht repariert, und die App sagt ihren eigenen Satz (#258).
+  if (step === null) return DIGIT.test(fallback) ? t(locale, 'practice.rubric.done') : fallback;
   if (step.ask !== null) {
     return t(locale, o.some ? 'practice.rubric.ask_next' : 'practice.rubric.ask_start', {
       ask: step.ask,

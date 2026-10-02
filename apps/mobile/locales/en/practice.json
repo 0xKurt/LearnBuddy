@@ -210,7 +210,8 @@
   "thread": {
     "you": "You",
     "buddy": "Buddy",
-    "thinking": "Buddy is looking at your answer …"
+    "thinking": "Buddy is looking at your answer …",
+    "explain_invite": "Explain it to me in your own words, like in class. Then I’ll tell you what’s already there."
   },
   "title_fallback": "Practice",
   "verdict": {

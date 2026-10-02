@@ -1718,6 +1718,64 @@ ist die Bauweise: ein falsches Modellurteil kann hier kein Element bestätigen, 
 ist, keine gezählte Angabe überstimmen, keine Note und keine FSRS-Bewertung erzeugen und keinen
 Text für falsch erklären, solange irgendetwas trägt.
 
+**„Erklär mal" und der lange Text: dieselbe Rubrik, zwei Formen** (Issues #236, #258;
+`contracts/rubric.ts` `Rubric.kind`, `modules/practice/rubric.ts`, Migration `0091_rubric_feedback.sql`).
+Seit #236/#258 hat eine Rubrik eine Form: `text` (eine Schreibaufgabe einer Textsorte, bis zum
+Aufsatz) oder `explain` (eine offene Frage, die sie mündlich oder schriftlich erklärt). Beides ist
+derselbe Mechanismus und derselbe eine Tutor-Aufruf pro Antwort — gemessen in
+`explain-and-essay.int.test.ts`, das genau einen Aufruf skriptet.
+
+- **Erklärfrage** („Frag mich ab", `offer_learning` kind `oral`, im Chat gestartet — kein neuer
+  Bildschirm): 3–6 **Kernpunkte**, jeder `judged` und mit **einer** Nachfrage (`ask`). Ein
+  Kernpunkt hat zwei Texte: `point` sagt, was er enthält („findet im Chloroplasten statt") und geht
+  nur an das Urteil; `name` ist der **Aspekt**, den sie in ihrer Liste sieht („Ort in der Zelle").
+  Die Liste steht direkt unter der Nachfrage — „Ort: Chloroplast" unter „Und wo in der Zelle
+  passiert das?" hätte die Antwort verraten. Erzeugung nach Regel 0: keine Dubletten, keiner nennt
+  die Frage wörtlich, jede Nachfrage endet auf „?" und nennt den erfragten Wert nicht, kein Name
+  trägt eine Ziffer oder ein Wort seines Punktes, das nicht schon in Frage oder Nachfrage steht
+  (über den Wortanfang verglichen, damit „Chloroplast"/„Chloroplasten" nicht durchgeht; eine
+  Beugung mit anderem Stamm wie „Brechung"/„gebrochen" sieht die Prüfung nicht), jede Ziffer im
+  Punkt gehört einem exakten Wert (`exact`). Eine Abfrage ohne Kernpunkte wird verworfen, nicht als
+  Kurzantwort behalten. Die App erfährt nur die Art der Rubrik (`ItemView.rubric`: `explain` /
+  `text`), nie ihre Punkte, und eröffnet das leere Gespräch mit Buddys Einladung („Erklär's mir in
+  deinen Worten, wie in der Klasse …"). Antwort: das Modell
+  urteilt je Punkt mit Zitat; Code sucht das Zitat in **allem, was sie zu der Frage gesagt hat**
+  (die Antwort auf die Nachfrage ergänzt die erste), prüft Zahlen und Formeln exakt (ein „erfüllt"
+  des Modells kauft sie nicht) und **wählt die eine Nachfrage** zum ersten offenen Punkt — keine
+  zweimal, solange ein anderer Punkt noch keine bekam. Im Sprachmodus läuft das freihändig wie
+  jede andere Frage (§Voice).
+- **Aufsatz** (#258): das Antwortfeld fasst bei `long` bis `ESSAY_CHARS_MAX` = 15 000 Zeichen
+  (≈ 1800 Wörter; der Server hält jede andere Antwort bei 2000), der Text bleibt als Entwurf auf
+  dem Gerät (`lib/drafts.ts`, `session.<id>`) und übersteht einen Neustart. Neu von Code gezählt:
+  **Absätze** (`paragraphs`) und **Zeilenangaben** (`line_refs` — die zitierte Zeile muss es im
+  Material geben). Dazu bis zu **drei Stellen** aus ihrem Text zum Verbessern: jede ein Zitat, das
+  Code in ihrem Text findet (`spotsIn`, sonst verworfen), und ein Satz ohne Ziffer. Solange der
+  Aufsatz offen ist, **überarbeitet sie ihn an Ort und Stelle**: ihr Text bleibt nach dem Senden
+  im Feld und steht nicht noch einmal als Blase im Gespräch (wie bei den strukturierten Aufgaben);
+  das Feld scrollt in sich (`scroll-essay`, die einzige weitere Ausnahme in `tests/web/fit.ts`).
+- **Was sie sieht**: Buddys Satz ist der eine nächste Schritt (bei der Erklärung die Nachfrage) und
+  wird vorgelesen; daneben steht die Liste als Struktur (`PracticeTurnView.rubric`,
+  `practice_turns.rubric_feedback`, `components/practice/RubricNote.tsx`): jeder Punkt mit „drin"
+  oder „fehlt noch" in Worten und einer Form (Haken im Kreis / leerer Ring), nie nur Farbe. Kein
+  Richtig/Falsch-Chip unter einer solchen Antwort, **keine Zahl, kein Anteil, keine Note**, und
+  ein Element, über das niemand etwas gemessen hat (`unknown`), steht gar nicht drin (Regel 5).
+  Die Liste steht nur unter Buddys **neuester** Antwort (sie enthält alles, was sie bis dahin
+  gesagt hat); ist Antwort plus Liste höher als der Platz, bleibt der **Anfang** seiner Antwort im
+  Blick — sein Satz ist der nächste Schritt. Auch Buddys eigener Satz (wenn alles hält) wird
+  verworfen, sobald er eine Ziffer trägt („das wäre eine 1-") — die App sagt dann ihren eigenen.
+  Ist das Modell nicht erreichbar, sagt Buddy bei einem freien Text nicht „schau dir die Lösung
+  an" (es gibt keine), sondern dass ihre Antwort stehen bleibt und sie sie gleich nochmal schickt.
+- **Belegt im Walkthrough** (`tests/web/modes.spec.ts`, Szenario `testing/scenarios/explain-essay.ts`):
+  „Frag mich Fotosynthese ab" im Chat → im Sprachmodus per (Fake-)Mikro erklärt → zwei von drei
+  Punkten, genau eine Nachfrage, die Liste nennt den Ort nicht → getippte Ergänzung, alles drin;
+  und ein Aufsatz mit 1500 Wörtern, der einen Neustart als Entwurf übersteht, eine Stelle, die das
+  Modell erfunden hat, nicht zeigt, und nach der Überarbeitung im Feld vollständig ist.
+
+**Offen wie bei #211**: der Eval-Satz mit ≥ 20 echten Erklärungen je Fach und ≥ 20 Texten je
+Textsorte gegen eine Lehrkraft fehlt — es gibt keinen Korpus. Die gezählten und die exakt
+geprüften Teile sind gemessen, die beurteilten Kernpunkte nicht; ein falsches Urteil kann aber
+keinen Punkt ohne ihr Zitat bestätigen und keine Note erzeugen.
+
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics; one sheet or vocabulary only when she asked for that, issue #144). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing

@@ -60,6 +60,7 @@
       "worked_add": "Beide Brüche sind in {{parts}} gleich große Teile geteilt. Zusammen sind {{answer}} gefärbt."
     },
     "cannot_check": "Das kann ich gerade nicht prüfen. Du kannst dir die Lösung ansehen und selbst vergleichen.",
+    "cannot_check_text": "Das kann ich gerade nicht prüfen. Deine Antwort bleibt hier stehen – schick sie gleich nochmal.",
     "card_knew": "Wusste ich",
     "card_not_yet": "Noch nicht",
     "correct": "Stimmt – gut gemacht!",
@@ -86,7 +87,8 @@
       "next_judged": "Das trägt schon. Schau nochmal, ob {{name}} schon drinsteht: {{missing}}",
       "next_line": "Das trägt schon. Die Zeile bei „{{cite}}“ gibt es im Text nicht – schau nochmal nach: {{missing}}",
       "next_verb": "Das trägt schon. Nur bei „{{verb}}“ stimmt die Zeitform noch nicht: {{missing}}",
-      "start": "Lass uns bei {{name}} anfangen: {{missing}}"
+      "start": "Lass uns bei {{name}} anfangen: {{missing}}",
+      "done": "Das trägt – alles drin."
     },
     "solution_is": "Die Lösung ist: {{answer}}",
     "speak_almost": "Fast! Schau dir die markierten Wörter an.",

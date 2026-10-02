@@ -60,6 +60,7 @@
       "worked_add": "Las dos fracciones están divididas en {{parts}} partes iguales. Juntas hay {{answer}} coloreado."
     },
     "cannot_check": "Ahora mismo no puedo comprobarlo. Puedes ver la solución y compararla tú.",
+    "cannot_check_text": "Ahora mismo no puedo revisarlo. Tu respuesta se queda aquí: envíala otra vez en un momento.",
     "card_knew": "Lo sabía",
     "card_not_yet": "Todavía no",
     "correct": "¡Correcto, muy bien!",
@@ -86,7 +87,8 @@
       "next_judged": "Eso ya se sostiene. Mira otra vez si {{name}} está ahí: {{missing}}",
       "next_line": "Eso ya se sostiene. La línea de «{{cite}}» no está en el texto – mira otra vez: {{missing}}",
       "next_verb": "Eso ya se sostiene. Solo en «{{verb}}» el tiempo verbal aún no encaja: {{missing}}",
-      "start": "Empecemos por {{name}}: {{missing}}"
+      "start": "Empecemos por {{name}}: {{missing}}",
+      "done": "Se sostiene: está todo."
     },
     "solution_is": "La respuesta es: {{answer}}",
     "speak_almost": "¡Casi! Mira las palabras marcadas.",

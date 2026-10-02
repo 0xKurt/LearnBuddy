@@ -32,6 +32,7 @@ export function RubricNote({ feedback }: { feedback: RubricFeedback }) {
   if (feedback.points.length === 0 && feedback.spots.length === 0) return null;
   return (
     <View
+      testID="rubric-note"
       style={[
         {
           marginLeft: BUBBLE_INDENT,
@@ -40,21 +41,24 @@ export function RubricNote({ feedback }: { feedback: RubricFeedback }) {
           backgroundColor: palette.paper,
           borderRadius: 18,
           paddingHorizontal: SPACE.lg,
-          paddingVertical: SPACE.md,
-          gap: SPACE.md,
+          // Tighter than a bubble: it is a list under one, and on a 360×740 phone the reply
+          // above it has to stay in view with it (issue #258).
+          paddingVertical: SPACE.sm,
+          gap: SPACE.sm,
         },
         SHADOW.soft,
       ]}
     >
       {feedback.points.length > 0 ? (
         <View
-          accessibilityRole="list"
+          role="list"
           accessibilityLabel={t(feedback.kind === 'explain' ? 'rubric.points' : 'rubric.elements')}
-          style={{ gap: SPACE.sm }}
+          style={{ gap: SPACE.xs }}
         >
           {feedback.points.map((p) => (
             <View
               key={p.name}
+              role="listitem"
               accessible
               accessibilityLabel={t(p.met ? 'rubric.met_a11y' : 'rubric.open_a11y', {
                 name: p.name,
@@ -79,17 +83,27 @@ export function RubricNote({ feedback }: { feedback: RubricFeedback }) {
               </View>
               <Text style={[TYPE.body, { flex: 1, color: p.met ? palette.ink : palette.ink2 }]}>
                 {p.name}
-                <Text style={[TYPE.caption, { color: p.met ? palette.successText : palette.ink2 }]}>
-                  {'  '}
-                  {t(p.met ? 'rubric.met' : 'rubric.open')}
-                </Text>
+              </Text>
+              {/* Its own column, on the first line: the state lines up row under row instead
+                  of trailing each name wherever it happens to wrap. */}
+              <Text
+                style={[
+                  TYPE.caption,
+                  {
+                    flexShrink: 0,
+                    marginTop: 2,
+                    color: p.met ? palette.successText : palette.ink2,
+                  },
+                ]}
+              >
+                {t(p.met ? 'rubric.met' : 'rubric.open')}
               </Text>
             </View>
           ))}
         </View>
       ) : null}
       {feedback.spots.length > 0 ? (
-        <View style={{ gap: SPACE.md }}>
+        <View style={{ gap: SPACE.sm }}>
           {feedback.points.length > 0 ? (
             <View style={{ height: 1, backgroundColor: palette.hairline }} />
           ) : null}

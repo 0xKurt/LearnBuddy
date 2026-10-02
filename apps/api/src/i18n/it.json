@@ -60,6 +60,7 @@
       "worked_add": "Le due frazioni sono divise in {{parts}} parti uguali. In tutto sono colorate {{answer}}."
     },
     "cannot_check": "Ora non riesco a controllarlo. Puoi guardare la soluzione e confrontarla tu.",
+    "cannot_check_text": "Ora non riesco a controllarlo. La tua risposta resta qui: rimandala tra poco.",
     "card_knew": "Lo sapevo",
     "card_not_yet": "Non ancora",
     "correct": "Esatto – ottimo lavoro!",
@@ -86,7 +87,8 @@
       "next_judged": "Questo regge già. Guarda di nuovo se {{name}} c'è: {{missing}}",
       "next_line": "Questo regge già. La riga di «{{cite}}» non c’è nel testo – guarda di nuovo: {{missing}}",
       "next_verb": "Questo regge già. Solo in «{{verb}}» il tempo verbale non torna ancora: {{missing}}",
-      "start": "Iniziamo da {{name}}: {{missing}}"
+      "start": "Iniziamo da {{name}}: {{missing}}",
+      "done": "Regge: c’è tutto."
     },
     "solution_is": "La risposta è: {{answer}}",
     "speak_almost": "Quasi! Guarda le parole segnate.",

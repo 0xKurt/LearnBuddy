@@ -98,7 +98,13 @@ export async function overflows(page: Page): Promise<Overflow[]> {
       out.push({
         label: id || (el.innerText ?? '').replace(/\s+/g, ' ').slice(0, 40),
         overflow,
-        allowed: id === 'scroll-thread' || id === 'scroll-talk' || id === 'scroll-list',
+        // `scroll-essay`: an essay of up to 1800 words scrolls inside its own answer field
+        // (issue #258) — the screen around it must still fit.
+        allowed:
+          id === 'scroll-thread' ||
+          id === 'scroll-talk' ||
+          id === 'scroll-list' ||
+          id === 'scroll-essay',
       });
     }
     return out;
