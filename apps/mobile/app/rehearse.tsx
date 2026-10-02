@@ -18,7 +18,7 @@ import {
   type RehearsalBrief,
   type RehearsalView,
 } from '@learnbuddy/shared-types/contracts';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -86,7 +86,19 @@ function Rehearse({ brief }: { brief: RehearsalBrief }) {
   const talk = brief.kind === 'talk';
   const [sent, setSent] = useState<Sent | null>(null);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<RehearsalView | null>(null);
+  // Kept in the query cache, not only in this component: a theme switch remounts the screen,
+  // and what was measured must not vanish with it.
+  const cache = useQueryClient();
+  const [result, setResultState] = useState<RehearsalView | null>(
+    () => cache.getQueryData<RehearsalView>(['rehearsal-result', brief.action_id]) ?? null,
+  );
+  const setResult = useCallback(
+    (r: RehearsalView | null) => {
+      cache.setQueryData(['rehearsal-result', brief.action_id], r);
+      setResultState(r);
+    },
+    [cache, brief.action_id],
+  );
   const [problem, setProblem] = useState<Problem | null>(null);
   const live = useRef(true);
   useEffect(() => {
@@ -121,7 +133,7 @@ function Rehearse({ brief }: { brief: RehearsalBrief }) {
         if (live.current) setSending(false);
       }
     },
-    [brief.action_id],
+    [brief.action_id, setResult],
   );
 
   const rec = useRecording({
@@ -196,7 +208,15 @@ function Rehearse({ brief }: { brief: RehearsalBrief }) {
       </View>
 
       {/* The text to read is the one thing that may scroll here: she reads from it. */}
-      <View style={{ flex: 1, paddingHorizontal: SPACE.lg, paddingTop: SPACE.lg }}>
+      <View
+        style={{
+          // The passage takes the room it needs to be read from; the talk's short card does
+          // not, and the mic then sits in the middle of what is left — no dead band (#264).
+          flex: brief.text ? 1 : 0,
+          paddingHorizontal: SPACE.lg,
+          paddingTop: SPACE.lg,
+        }}
+      >
         {brief.text ? (
           <Card padding={0} radius={20}>
             {/* She reads FROM this text, like a list she browses: the one area that may
@@ -230,6 +250,8 @@ function Rehearse({ brief }: { brief: RehearsalBrief }) {
 
       <View
         style={{
+          flex: brief.text ? 0 : 1,
+          justifyContent: 'center',
           alignItems: 'center',
           gap: SPACE.md,
           paddingTop: SPACE.lg + MIC_RING_ROOM,
@@ -396,12 +418,14 @@ function Result({ result, onAgain }: { result: RehearsalView; onAgain: () => voi
         }}
       >
         <View style={{ flex: 1 }}>
-          <Btn variant="outline" onPress={onAgain}>
+          <Btn full variant="outline" onPress={onAgain}>
             {t('learn:rehearse.again')}
           </Btn>
         </View>
         <View style={{ flex: 1 }}>
-          <Btn onPress={() => router.dismissTo('/buddy')}>{t('learn:rehearse.finish')}</Btn>
+          <Btn full onPress={() => router.dismissTo('/buddy')}>
+            {t('learn:rehearse.finish')}
+          </Btn>
         </View>
       </View>
     </View>
