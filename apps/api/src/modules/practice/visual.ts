@@ -154,8 +154,8 @@ const ASPECT_MAX = 8;
 export function usableVisualTask(task: VisualTask): VisualTask | null {
   switch (task.task) {
     case 'clock':
-      // An empty clock is set in 5-minute steps (issue #254): a time between them cannot be set.
-      return task.set && task.minute % 5 !== 0 ? null : task;
+      // Any minute can be read off 60 marks. Setting a clock is #248's `figure_tap`.
+      return task;
     case 'money': {
       const cents = centsOf(task.pieces);
       // The model's own sum, in euros, must be whole cents and the sum of its pieces.
@@ -221,9 +221,11 @@ function offerFor(cents: number): Denomination[] {
   return DENOMINATIONS.filter((d) => d < NOTE_FROM || d <= cents);
 }
 
-/** What she touches: the empty clock or the coins to lay — null for every other picture. */
+/**
+ * What she touches: the coins to lay — null for every other picture. (A clock she SETS is a
+ * `figure_tap` question of #248, one mechanism for tapping in a figure, not a surface here.)
+ */
 export function visualSurfaceOf(task: VisualTask): AnswerSurface | null {
-  if (task.task === 'clock' && task.set) return { mode: 'clock' };
   if (task.task === 'money' && task.set) {
     return { mode: 'coins', offer: offerFor(centsOf(task.pieces)) };
   }
@@ -262,17 +264,14 @@ export function visualItem(raw: VisualTask, locale: string): VisualItem | null {
       return {
         ...common,
         kind: 'short',
-        prompt: task.set
-          ? text(locale, 'clock_set_prompt', { time: timeWord(locale, task.hour, task.minute) })
-          : text(locale, 'clock_read_prompt'),
+        prompt: text(locale, 'clock_read_prompt'),
         answer: key,
         // The afternoon reading of the same dial (issue #254: 7:30 and 19:30 are the same
         // position of the hands, and the question never asks for the 24-hour count).
         accepted_answers: [clockKey({ hour: task.hour + 12, minute: task.minute })],
         topic: text(locale, 'topic_clock'),
         difficulty: task.minute === 0 ? 1 : quarter ? 2 : task.minute % 5 === 0 ? 3 : 4,
-        // A clock to set shows no clock above it: the one she sets IS the picture.
-        figure: task.set ? null : { type: 'clock', hour: task.hour, minute: task.minute },
+        figure: { type: 'clock', hour: task.hour, minute: task.minute },
         hints: [text(locale, 'hint_clock_hands'), text(locale, 'hint_clock_five')],
         worked_solution: text(locale, task.minute === 0 ? 'worked_clock_full' : 'worked_clock', {
           hour: task.hour,

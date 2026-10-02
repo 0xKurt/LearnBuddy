@@ -34,6 +34,7 @@ import {
 } from '../../lib/math/solid.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { ClockSvg } from '../practice/figure/TapFigures.js';
 import { FAMILY } from './svgFont.js';
 
 type T = (key: string, values?: Record<string, string | number>) => string;
@@ -42,127 +43,13 @@ const num = (n: number) => localDecimal(String(Math.round(n * 1000) / 1000), cur
 
 // ─────────────── the clock ───────────────
 
-/** Where a hand points, in radians clockwise from 12. */
-export function handAngles(hour: number, minute: number): { hour: number; minute: number } {
-  return {
-    hour: (((hour % 12) + minute / 60) / 12) * 2 * Math.PI,
-    minute: (minute / 60) * 2 * Math.PI,
-  };
-}
-
 /**
- * A clock face. The figure above a question and the clock she sets (`ClockAnswer`) are the SAME
- * drawing, so a hand she sets lands exactly where a drawn one would stand.
+ * A clock to read. The same face as the clock she SETS in a `figure_tap` question (#248,
+ * `components/practice/figure/TapFigures.tsx`): one drawing of a clock in the app, so a hand she
+ * sets stands exactly where a drawn one would.
  */
-export function ClockFace({
-  hour,
-  minute,
-  size,
-  chosen = null,
-}: {
-  hour: number;
-  minute: number;
-  size: number;
-  /** The hand she is moving: drawn with a soft halo (the toggle below also says it in words). */
-  chosen?: 'hour' | 'minute' | null;
-}) {
-  const { figure: ink } = useTheme();
-  const r = size / 2 - 3;
-  const c = size / 2;
-  const at = (angle: number, len: number): V2 => [
-    c + len * Math.sin(angle),
-    c - len * Math.cos(angle),
-  ];
-  const a = handAngles(hour, minute);
-  const hourTip = at(a.hour, r * 0.5);
-  const minuteTip = at(a.minute, r * 0.8);
-  const fontSize = Math.max(12, Math.round(r * 0.17));
-  return (
-    <Svg width={size} height={size}>
-      <Circle cx={c} cy={c} r={r} fill={ink.paper} stroke={ink.stroke} strokeWidth={2} />
-      {Array.from({ length: 60 }, (_, i) => {
-        const big = i % 5 === 0;
-        const [x1, y1] = at((i / 60) * 2 * Math.PI, r - (big ? 9 : 4));
-        const [x2, y2] = at((i / 60) * 2 * Math.PI, r - 1);
-        return (
-          <Line
-            key={i}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke={big ? ink.stroke : ink.label}
-            strokeWidth={big ? 2 : 1}
-            strokeLinecap="round"
-          />
-        );
-      })}
-      {Array.from({ length: 12 }, (_, i) => {
-        const [x, y] = at(((i + 1) / 12) * 2 * Math.PI, r * 0.7);
-        return (
-          <SvgText
-            key={i}
-            fontFamily={FAMILY}
-            x={x}
-            y={y + fontSize * 0.36}
-            fontSize={fontSize}
-            fontWeight="600"
-            fill={ink.stroke}
-            textAnchor="middle"
-          >
-            {i + 1}
-          </SvgText>
-        );
-      })}
-      {chosen === 'hour' ? (
-        <Line
-          x1={c}
-          y1={c}
-          x2={hourTip[0]}
-          y2={hourTip[1]}
-          stroke={ink.fill}
-          strokeWidth={12}
-          strokeLinecap="round"
-          opacity={0.4}
-        />
-      ) : null}
-      {chosen === 'minute' ? (
-        <Line
-          x1={c}
-          y1={c}
-          x2={minuteTip[0]}
-          y2={minuteTip[1]}
-          stroke={ink.fill}
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.4}
-        />
-      ) : null}
-      <Line
-        x1={c}
-        y1={c}
-        x2={hourTip[0]}
-        y2={hourTip[1]}
-        stroke={ink.stroke}
-        strokeWidth={Math.max(5, r * 0.06)}
-        strokeLinecap="round"
-      />
-      <Line
-        x1={c}
-        y1={c}
-        x2={minuteTip[0]}
-        y2={minuteTip[1]}
-        stroke={ink.point}
-        strokeWidth={Math.max(3, r * 0.035)}
-        strokeLinecap="round"
-      />
-      <Circle cx={c} cy={c} r={Math.max(4, r * 0.05)} fill={ink.point} />
-    </Svg>
-  );
-}
-
 function ClockPicture({ fig, width }: { fig: ClockFigure; width: number }) {
-  return <ClockFace hour={fig.hour} minute={fig.minute} size={Math.min(width, 260)} />;
+  return <ClockSvg size={Math.min(width, 260)} h={fig.hour} m={fig.minute} set active={null} />;
 }
 
 // ─────────────── money ───────────────

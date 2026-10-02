@@ -74,7 +74,6 @@ import {
   type StaffAnswerState,
 } from '../../components/practice/StaffAnswer.js';
 import { StructuredAnswer } from '../../components/practice/StructuredAnswer.js';
-import { ClockAnswer, clockOf } from '../../components/practice/ClockAnswer.js';
 import { CoinAnswer, laidWords, laidOf } from '../../components/practice/CoinAnswer.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMask } from '../../components/lb/EdgeFade.js';
 import { ProgressRow, QuestionCard } from '../../components/practice/Question.js';
@@ -476,12 +475,10 @@ export default function PracticeScreen() {
       await store(res.session);
       // Tap on "Prüfen" → the verdict on screen (issue #66).
       reacted('check');
-      // A clock she set or coins she laid stay where she put them while the question is open
-      // (issue #254): she corrects one hand or one coin, like an order she rearranges.
+      // Coins she laid stay where she put them while the question is open (issue #254): she
+      // corrects one coin, like an order she rearranges.
       const after = res.session.items.find((i) => i.item.id === itemId);
-      const keeps =
-        after?.status === 'open' &&
-        (after.item.surface?.mode === 'clock' || after.item.surface?.mode === 'coins');
+      const keeps = after?.status === 'open' && after.item.surface?.mode === 'coins';
       if (answerText !== null && !keeps)
         setText((current) => (current.trim() === answerText ? '' : current));
       if (after?.status !== 'open') Keyboard.dismiss();
@@ -908,25 +905,20 @@ export default function PracticeScreen() {
   const staff = open && item.surface?.mode === 'notes' ? item.surface : null;
   const barSurface =
     open && (item.surface?.mode === 'shade' || item.surface?.mode === 'pick') ? item.surface : null;
-  // Die Uhr, die sie stellt, und die Münzen, die sie legt (issue #254): wie die Notenzeile der
-  // GANZE Weg zu antworten, mit einem „Prüfen" darunter. Die Uhrzeit oder die Stücke schreibt sie
-  // nicht, sie stellt und legt sie.
-  const clockSurface = open && item.surface?.mode === 'clock' ? item.surface : null;
+  // Die Münzen, die sie legt (issue #254): wie die Notenzeile der GANZE Weg zu antworten, mit
+  // einem „Prüfen" darunter. Die Stücke schreibt sie nicht, sie legt sie. (Eine Uhr stellt sie mit
+  // `figure_tap`, #248 — dort, wo jede Antippaufgabe steht.)
   const coinSurface = open && item.surface?.mode === 'coins' ? item.surface : null;
-  // What she set or laid travels in the answer draft, like a shaded bar: a theme switch remounts
-  // the screen, and the hands she set must still stand where she put them. Only a value the
-  // surface itself writes counts — a typed leftover is no clock and no coins.
-  const handledText =
-    (clockSurface && clockOf(text) !== null) || (coinSurface && parseCoins(text) !== null)
-      ? text
-      : '';
+  // What she laid travels in the answer draft, like a shaded bar: a theme switch remounts the
+  // screen, and her coins must still lie where she put them. Only a value the surface itself
+  // writes counts — a typed leftover is no coins.
+  const handledText = coinSurface && parseCoins(text) !== null ? text : '';
   const typed =
     open &&
     choices === null &&
     tapChoices === null &&
     !structured &&
     staff === null &&
-    clockSurface === null &&
     coinSurface === null &&
     !speaking;
   /** Ihre Notenzeile zu DIESER Frage; eine andere Frage beginnt mit einer leeren Zeile. */
@@ -1325,7 +1317,7 @@ export default function PracticeScreen() {
             </Btn>
           </BottomBar>
         ) : null}
-        {clockSurface || coinSurface ? (
+        {coinSurface ? (
           <View
             testID="answer-surface"
             style={{ flexShrink: 1, minHeight: 0, paddingTop: SPACE.sm }}
@@ -1336,41 +1328,28 @@ export default function PracticeScreen() {
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{ paddingHorizontal: SPACE.lg }}
             >
-              {clockSurface ? (
-                <ClockAnswer
-                  key={item.id}
-                  // The dial takes the room a taller phone has, instead of leaving it empty
-                  // between the question and the clock (215 pt on 360×740, 245 on 390×844).
-                  size={Math.max(210, Math.min(270, Math.round(windowHeight * 0.29)))}
-                  value={handledText}
-                  disabled={locked}
-                  onChange={setText}
-                />
-              ) : (
-                <CoinAnswer
-                  key={item.id}
-                  offer={coinSurface?.offer ?? []}
-                  value={handledText}
-                  disabled={locked}
-                  onChange={setText}
-                />
-              )}
+              <CoinAnswer
+                key={item.id}
+                offer={coinSurface.offer}
+                value={handledText}
+                disabled={locked}
+                onChange={setText}
+              />
             </ScrollView>
           </View>
         ) : null}
-        {clockSurface || coinSurface ? (
+        {coinSurface ? (
           <BottomBar>
             <Btn
               size="lg"
               pill
               full
-              // Nothing to check before she has set a hand or laid a piece.
+              // Nothing to check before she has laid a piece.
               disabled={locked || handledText === ''}
               onPress={() => {
                 tapped('check');
                 // The thread shows her coins in words at once; the server writes the same.
-                const shown = coinSurface ? laidWords(laidOf(handledText)) : handledText;
-                void answer(item.id, { text: handledText }, shown);
+                void answer(item.id, { text: handledText }, laidWords(laidOf(handledText)));
               }}
             >
               {t('practice:check')}

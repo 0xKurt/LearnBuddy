@@ -261,7 +261,6 @@
         "sphere": "sfera"
       },
       "clock_read_prompt": "Che ore sono?",
-      "clock_set_prompt": "Metti l'orologio sulle {{time}}.",
       "topic_clock": "Leggere l'ora",
       "hint_clock_hands": "La lancetta corta indica l'ora, quella lunga i minuti.",
       "hint_clock_five": "Da un numero al successivo passano 5 minuti.",

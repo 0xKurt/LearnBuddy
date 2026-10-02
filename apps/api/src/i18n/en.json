@@ -261,7 +261,6 @@
         "sphere": "sphere"
       },
       "clock_read_prompt": "What time is it?",
-      "clock_set_prompt": "Set the clock to {{time}}.",
       "topic_clock": "Telling the time",
       "hint_clock_hands": "The short hand shows the hour, the long hand the minutes.",
       "hint_clock_five": "From one number to the next is 5 minutes.",

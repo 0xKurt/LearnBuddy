@@ -2154,8 +2154,7 @@ Probetest, nicht in der Hausaufgabenhilfe.
 Raum** (`contracts/visual.ts`, `practice/visual.ts` + `visualMath.ts`, migration
 `0102_visual_tasks.sql`; issues #254, #255). Dieselbe Bauweise wie die Notenzeile, aus demselben
 Grund: der Schlüssel wird **von der Zeichnung abgelesen**. Das Modell wählt eine `VisualTask` aus
-sieben kompakten Zweigen (kein nullable Feld, Maße als kurze Liste — #281): `clock` (lesen oder
-stellen), `money` (zählen oder legen, Stücke in Cent aus den echten Euro-Stückelungen 1 ct … 50 €),
+sieben kompakten Zweigen (kein nullable Feld, Maße als kurze Liste — #281): `clock` (lesen), `money` (zählen oder legen, Stücke in Cent aus den echten Euro-Stückelungen 1 ct … 50 €),
 `quantity` (Zwanzigerfeld, Hunderterfeld, Mehrsystemblöcke, Stellenwerttafel mit Plättchen),
 `solid` (Ecken/Kanten/Flächen oder Volumen/Oberfläche), `cube_net`, `point3d`, `vector3d`. Frage,
 Figur, Schlüssel, Tipps und Musterlösung rechnet Code; die Figuren (`clock`, `money`, `dot_field`,
@@ -2168,7 +2167,9 @@ neben einer selbst geschriebenen Frage kommt nicht durch den Vertrag.
   zählt jedes Schulbuch anders); Volumen/Oberfläche aus genau den Maßen des Körpers (±0,5 %, damit
   π = 3,14 trägt); ein Würfelnetz wird **gefaltet** (jedes Quadrat trägt den Rahmen der Würfelseite,
   auf der es landet — gültig genau bei sechs verschiedenen Seiten; der Unit-Test zählt über alle 35
-  Hexominos genau 11 Netze); eine zu stellende Uhr nur in 5-Minuten-Schritten.
+  Hexominos genau 11 Netze); ein Punkt im Raum, der in der Zeichnung auf einer fremden Achse läge
+  (x₁ geht je Einheit eine halbe nach unten, x₃ eine nach oben — (2|3|1) säße auf der x₂-Achse),
+  ergibt keine Frage.
 - _Regel 0 bei der Antwort._ `checkVisual` liest mit einer geschlossenen Grammatik: eine Uhrzeit
   (Ziffern in jeder Sprache, dazu „halb acht", „viertel vor acht", „dreiviertel acht", „fünf nach
   halb acht" und „half past seven", „quarter to eight") — 7:30, 19:30 und „halb acht" sind dieselbe
@@ -2179,14 +2180,13 @@ neben einer selbst geschriebenen Frage kommt nicht durch den Vertrag.
   Nachkommastelle") und nimmt das Ergebnis mit π = 3,14 als zweiten Schlüssel.
 - _Eine falsche Antwort_ bekommt bei jedem Versuch eine feste Zeile von Code (`visualAgain`: „Schau
   zuerst auf den kurzen Zeiger …") — der Tutor sieht das Bild nicht (Regel 5), wie bei der Notenzeile.
-- _Antippen._ Zwei Flächen (`ItemView.surface`): `clock` — zwölf benannte Knöpfe auf dem Zifferblatt
-  und die Wahl Stunden/Minuten; der Minutenzeiger geht auf die getippte Zahl (5-Minuten-Schritte),
-  der Stundenzeiger dorthin, wo er bei diesen Minuten der getippten Zahl am nächsten steht (bei :45
-  heißt die 8 also 7:45). Keine Digitalanzeige daneben. `coins` — der Geldbeutel unten, das Gelegte
-  oben, ein Tipp legt, ein Tipp nimmt zurück, **keine laufende Summe** (das Zusammenzählen ist die
-  Übung). Beide sind wie die Notenzeile der ganze Weg zu antworten, mit einem „Prüfen". Der
-  Mechanismus aus #248 (Antippen in einer Figur) lag bei der Umsetzung nicht auf `origin` vor; die
-  Uhr ist deshalb eine eigene Fläche nach dem Muster von Bruchbalken und Notenzeile.
+- _Antippen._ **Eine Uhr stellt sie mit `figure_tap`** (#248, „Interactive figures") — ein
+  Mechanismus für das Antippen in einer Figur, kein zweiter; `VisualTask.clock` ist deshalb nur zum
+  Lesen, und beide Uhren zeichnet dieselbe `ClockSvg`. Eigene Fläche bleibt nur `coins`
+  (`ItemView.surface`): der Geldbeutel unten, das Gelegte oben, ein Tipp legt, ein Tipp nimmt
+  zurück, **keine laufende Summe** (das Zusammenzählen ist die Übung). Viele Tipps, deren Summe
+  zählt, sind keine Stelle in einer Figur. Wie die Notenzeile ist sie der ganze Weg zu antworten,
+  mit einem „Prüfen"; nach einem falschen Versuch bleibt das Gelegte liegen.
 - _Zeichnung_ (`components/math/VisualFigures.tsx`, Geometrie in `lib/math/solid.ts`): Geld
   schematisch (Scheibe/Rechteck mit Wert, Farbtöne als Token `figure.money`, nie ein Abbild echter
   Münzen oder Scheine); Körper als Schrägbild in Kavalierperspektive (Tiefe 45°, halbiert),

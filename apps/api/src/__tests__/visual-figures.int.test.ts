@@ -30,8 +30,7 @@ const dbReady = await testDatabaseAvailable();
 /** Buddy plans what comes next when a run finishes; he has nothing to say about this one. */
 const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
 
-const CLOCK: VisualTask = { task: 'clock', hour: 7, minute: 30, set: false };
-const SET_CLOCK: VisualTask = { task: 'clock', hour: 7, minute: 45, set: true };
+const CLOCK: VisualTask = { task: 'clock', hour: 7, minute: 30 };
 const COUNT: VisualTask = { task: 'money', pieces: [200, 100, 20, 20, 5], total: 3.45, set: false };
 const LAY: VisualTask = { task: 'money', pieces: [200, 50, 20, 10], total: 2.8, set: true };
 const FIELD: VisualTask = { task: 'quantity', look: 'twenty_field', number: 13 };
@@ -56,7 +55,7 @@ const NET: VisualTask = {
   is_net: true,
 };
 const POINT: VisualTask = { task: 'point3d', p: { x: 2, y: 3, z: 2 } };
-const ALL = [CLOCK, SET_CLOCK, COUNT, LAY, FIELD, EDGES];
+const ALL = [CLOCK, COUNT, LAY, FIELD, EDGES];
 
 describe.skipIf(!dbReady)('pictures whose key is read off them', () => {
   let env: TestEnv;
@@ -126,9 +125,8 @@ describe.skipIf(!dbReady)('pictures whose key is read off them', () => {
       expect(si.answer).toBeNull();
       expect(JSON.stringify(si.item.figure)).not.toContain('"answer"');
     }
-    // The clock to set and the coins to lay come with their surface — never with the solution.
-    expect(session.items[1]?.item.surface).toEqual({ mode: 'clock' });
-    expect(session.items[3]?.item.surface).toEqual({
+    // The coins to lay come with their surface — never with the solution.
+    expect(session.items[2]?.item.surface).toEqual({
       mode: 'coins',
       offer: [1, 2, 5, 10, 20, 50, 100, 200],
     });
@@ -151,7 +149,8 @@ describe.skipIf(!dbReady)('pictures whose key is read off them', () => {
       { ...COUNT, total: 3.4 },
       { ...EDGES, claim: 12 },
       { ...NET, is_net: false },
-      { task: 'clock', hour: 7, minute: 43, set: true },
+      // Not a minute of a clock.
+      { task: 'clock', hour: 7, minute: 60 },
       // Not a euro coin.
       { task: 'money', pieces: [300], total: 3, set: false },
       POINT,

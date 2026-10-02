@@ -254,11 +254,8 @@ export const VisualTask = z.discriminatedUnion('task', [
       task: z.literal('clock'),
       hour: z.number().int().min(1).max(12),
       minute: z.number().int().min(0).max(59),
-      set: z
-        .boolean()
-        .describe('false: read the drawn clock; true: set an empty clock (minute a multiple of 5)'),
     })
-    .describe('A clock with hands. Read it or set it.'),
+    .describe('A clock with hands to read. To have one SET, write a figure_tap clock instead.'),
   z
     .object({
       task: z.literal('money'),
@@ -318,14 +315,11 @@ export const VisualTask = z.discriminatedUnion('task', [
 export type VisualTask = z.infer<typeof VisualTask>;
 export type VisualTaskName = VisualTask['task'];
 
-// ─────────────── die Flächen (was sie ANTIPPT) ───────────────
-
-/**
- * Eine leere Uhr, deren Zeiger sie stellt: tippen setzt den gewählten Zeiger, Minuten in
- * 5er-Schritten. Sie verrät nichts — die Uhrzeit steht in der Frage.
- */
-export const ClockSurface = z.object({ mode: z.literal('clock') });
-export type ClockSurface = z.infer<typeof ClockSurface>;
+// ─────────────── die Fläche (was sie ANTIPPT) ───────────────
+//
+// Eine Uhr STELLT sie mit `figure_tap` (issue #248, `contracts/figureTask.ts`): ein Mechanismus
+// für das Antippen in einer Figur, kein zweiter. Hier bleibt nur das Legen von Münzen — viele
+// Tipps, deren Summe zählt, und das ist keine Stelle in einer Figur.
 
 /** Die Stücke, die sie zum Legen bekommt (alle Münzen, Scheine nur, wenn der Betrag ≥ 5 € ist). */
 export const CoinSurface = z.object({

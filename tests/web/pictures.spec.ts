@@ -70,30 +70,35 @@ async function next(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
 }
 
-test('Uhr und Geld: set the clock by tapping, read it, lay and count money (issue #254)', async ({
+test('Uhr und Geld: set the clock by tapping (#248), read it, lay and count money (issue #254)', async ({
   page,
 }) => {
   await onboardChild(page);
-  await start(page, 'Lass uns Uhr und Geld üben', 'erst die Uhr', 'Stell die Uhr auf 7:45 Uhr.');
+  await start(
+    page,
+    'Lass uns Uhr und Geld üben',
+    'erst die Uhr',
+    'Stell die Uhr auf Viertel vor acht.',
+  );
 
-  // ── Uhr stellen per Tipp ──
+  // ── Uhr stellen per Tipp: #248's tap task, the one mechanism for tapping in a figure ──
   const check = page.getByRole('button', { name: 'Prüfen' });
-  // Nothing set yet: nothing to check.
-  await expect(check).toBeDisabled();
-  await both(page, '80-clock-set-empty');
-  // The classic slip first: the hour hand ON the 8 and the minute hand on the 9 is 8:45.
-  await page.getByRole('button', { name: 'Stundenzeiger zur 8' }).click();
-  await page.getByRole('radio', { name: 'Minuten' }).click();
-  await page.getByRole('button', { name: 'Minutenzeiger auf die 9' }).click();
-  await check.click();
-  // Code says where to look — the tutor never sees the clock.
-  await expect(
-    page.getByText('Noch nicht ganz. Schau zuerst auf den kurzen Zeiger, dann auf den langen.'),
-  ).toBeVisible();
-  await both(page, '81-clock-set-feedback');
-  // The hour hand once more toward the 8: at 45 minutes it lands just before it — 7:45.
-  await page.getByRole('radio', { name: 'Stunden' }).click();
-  await page.getByRole('button', { name: 'Stundenzeiger zur 8' }).click();
+  await shot(page, '80-clock-set');
+  const face = await page.getByTestId('figure-touch').boundingBox();
+  if (!face) throw new Error('no clock face');
+  const at = (n: number) => {
+    const angle = (n / 12) * 2 * Math.PI;
+    const r = face.width * 0.3;
+    return {
+      x: face.x + face.width / 2 + r * Math.sin(angle),
+      y: face.y + face.height / 2 - r * Math.cos(angle),
+    };
+  };
+  // The short hand toward the 7, then the long one to the 9.
+  await page.mouse.click(at(7).x, at(7).y);
+  await page.mouse.click(at(9).x, at(9).y);
+  await expect(page.getByText('Deine Uhrzeit: 7:45 Uhr')).toBeVisible();
+  await both(page, '81-clock-set-done');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await next(page);

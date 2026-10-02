@@ -226,13 +226,6 @@
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
   },
-  "clock": {
-    "how": "Choose a hand and tap a number.",
-    "to_hour": "Hour hand to {{n}}",
-    "to_minute": "Minute hand to {{n}}",
-    "hour": "Hours",
-    "minute": "Minutes"
-  },
   "coins": {
     "table": "Money laid out",
     "empty": "Your money goes here.",

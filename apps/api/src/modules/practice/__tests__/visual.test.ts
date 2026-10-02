@@ -67,7 +67,7 @@ describe('clock', () => {
     expect(at('halb acht', 'en')).toBeNull();
   });
 
-  const read: VisualTask = { task: 'clock', hour: 7, minute: 30, set: false };
+  const read: VisualTask = { task: 'clock', hour: 7, minute: 30 };
   it('halb acht, 7:30 and 19:30 are the same position of the hands', () => {
     expect(checkVisual(read, 'halb acht', 'de')).toBe('correct');
     expect(checkVisual(read, '7:30', 'de')).toBe('correct');
@@ -78,21 +78,17 @@ describe('clock', () => {
   });
 
   it('draws the time it asks for and keys it', () => {
-    const item = visualItem({ task: 'clock', hour: 7, minute: 45, set: false }, 'de');
+    const item = visualItem({ task: 'clock', hour: 7, minute: 45 }, 'de');
     expect(item?.figure).toEqual({ type: 'clock', hour: 7, minute: 45 });
     expect(item?.answer).toBe('7:45');
     expect(item?.accepted_answers).toEqual(['19:45']);
   });
 
-  it('a clock to set is set in five-minute steps, on its own surface, without a picture', () => {
-    expect(usableVisualTask({ task: 'clock', hour: 7, minute: 43, set: true })).toBeNull();
-    const set: VisualTask = { task: 'clock', hour: 7, minute: 45, set: true };
-    const item = visualItem(set, 'de');
-    expect(item?.prompt).toBe('Stell die Uhr auf 7:45 Uhr.');
-    expect(item?.figure).toBeNull();
-    expect(visualSurfaceOf(set)).toEqual({ mode: 'clock' });
-    expect(checkVisual(set, '7:45', 'de')).toBe('correct');
-    expect(checkVisual(set, '8:45', 'de')).toBe('incorrect');
+  it('reads any minute off its sixty marks, and is never a surface (setting is #248)', () => {
+    const odd: VisualTask = { task: 'clock', hour: 7, minute: 43 };
+    expect(usableVisualTask(odd)).not.toBeNull();
+    expect(visualSurfaceOf(odd)).toBeNull();
+    expect(checkVisual(odd, 'siebzehn vor acht', 'de')).toBe('correct');
   });
 });
 

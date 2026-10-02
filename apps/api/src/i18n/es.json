@@ -261,7 +261,6 @@
         "sphere": "esfera"
       },
       "clock_read_prompt": "¿Qué hora es?",
-      "clock_set_prompt": "Pon el reloj a las {{time}}.",
       "topic_clock": "La hora",
       "hint_clock_hands": "La aguja corta marca la hora y la larga los minutos.",
       "hint_clock_five": "De un número al siguiente hay 5 minutos.",

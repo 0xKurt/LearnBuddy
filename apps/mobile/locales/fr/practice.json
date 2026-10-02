@@ -226,13 +226,6 @@
     "check_waits": "Seulement quand toutes les cases sont remplies.",
     "scroll": "Tableau, défile sur le côté"
   },
-  "clock": {
-    "how": "Choisis une aiguille et touche un nombre.",
-    "to_hour": "Petite aiguille vers le {{n}}",
-    "to_minute": "Grande aiguille sur le {{n}}",
-    "hour": "Heures",
-    "minute": "Minutes"
-  },
   "coins": {
     "table": "Argent posé",
     "empty": "Ton argent se pose ici.",

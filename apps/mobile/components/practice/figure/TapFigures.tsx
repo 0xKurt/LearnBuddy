@@ -2,7 +2,6 @@
 // a clock face. Each draws what she has chosen so far and lies under a `TouchLayer`; the
 // arithmetic of where a tap lands is in `lib/math/gridFrame.ts` and shared-math `grid.ts`.
 
-import { Platform } from 'react-native';
 import Svg, { Circle, G, Line, Rect, Text as SvgText } from 'react-native-svg';
 
 import type { TapFigure } from '@learnbuddy/shared-types/contracts';
@@ -11,11 +10,7 @@ import { gridValue } from '../../../../../packages/shared-math/src/grid.js';
 import { lineX, type LineFrame } from '../../../lib/math/gridFrame.js';
 import { useTheme } from '../../../lib/theme/ThemeProvider.js';
 import { formatNumber } from '../../math/FigureView.js';
-
-const FAMILY = Platform.select({
-  web: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  default: undefined,
-});
+import { FAMILY } from '../../math/svgFont.js';
 
 type LineFig = Extract<TapFigure, { kind: 'number_line' }>;
 type BarsFig = Extract<TapFigure, { kind: 'bars' }>;
@@ -230,8 +225,8 @@ export function ClockSvg({
   m: number;
   /** Faint hands at twelve until she has set one. */
   set: boolean;
-  /** The hand a tap moves now — drawn on top and thicker. */
-  active: 'hour' | 'minute';
+  /** The hand a tap moves now — drawn on top and thicker; null for a clock she only reads. */
+  active: 'hour' | 'minute' | null;
 }) {
   const { figure: ink, palette } = useTheme();
   const c = size / 2;

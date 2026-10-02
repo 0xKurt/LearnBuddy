@@ -261,7 +261,6 @@
         "sphere": "boule"
       },
       "clock_read_prompt": "Quelle heure est-il ?",
-      "clock_set_prompt": "Règle l'horloge sur {{time}}.",
       "topic_clock": "Lire l'heure",
       "hint_clock_hands": "La petite aiguille montre l'heure, la grande les minutes.",
       "hint_clock_five": "D'un nombre au suivant, il y a 5 minutes.",

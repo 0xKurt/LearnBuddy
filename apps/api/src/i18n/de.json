@@ -261,7 +261,6 @@
         "sphere": "Kugel"
       },
       "clock_read_prompt": "Wie spät ist es?",
-      "clock_set_prompt": "Stell die Uhr auf {{time}}.",
       "topic_clock": "Uhrzeit",
       "hint_clock_hands": "Der kurze Zeiger zeigt die Stunde, der lange die Minuten.",
       "hint_clock_five": "Von einer Zahl zur nächsten sind es 5 Minuten.",

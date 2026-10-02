@@ -1,5 +1,6 @@
 // Scripted model answers for the browser walkthrough of the pictures whose key is read off them
-// (tests/web/pictures.spec.ts, issues #254 and #255): a clock to read and one to set, money to
+// (tests/web/pictures.spec.ts, issues #254 and #255): a clock to read and one to set (#248's
+// figure_tap), money to
 // count and to lay, the twenty field, base-ten blocks — and a solid to count, a cylinder to
 // measure, a cube net and a point in space. The model chooses tasks only; the server writes the
 // questions, draws the pictures and computes the keys (`practice/visual.ts`).
@@ -18,9 +19,22 @@ export function scriptPictures(): void {
         title: 'Uhr und Geld',
         subject: { name: 'Mathe', kind: 'math' },
         items: [],
+        // Setting a clock is #248's tap task — the one mechanism for tapping in a figure.
+        structured: [
+          {
+            type: 'figure_tap',
+            prompt: 'Stell die Uhr auf Viertel vor acht.',
+            plane: null,
+            number_line: null,
+            bars: null,
+            clock: { snap: 5, key: { h: 7, m: 45 } },
+            topic: 'Uhrzeit',
+            difficulty: 2,
+            prompt_lang: 'de',
+          },
+        ],
         visuals: [
-          { task: 'clock', hour: 7, minute: 45, set: true },
-          { task: 'clock', hour: 7, minute: 30, set: false },
+          { task: 'clock', hour: 7, minute: 30 },
           { task: 'money', pieces: [200, 50, 20, 10], total: 2.8, set: true },
           { task: 'money', pieces: [500, 200, 100, 50, 20, 5, 2], total: 8.77, set: false },
           { task: 'quantity', look: 'twenty_field', number: 13 },

@@ -226,13 +226,6 @@
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
     "scroll": "Tabelle, seitlich verschiebbar"
   },
-  "clock": {
-    "how": "Wähle einen Zeiger und tippe auf eine Zahl.",
-    "to_hour": "Stundenzeiger zur {{n}}",
-    "to_minute": "Minutenzeiger auf die {{n}}",
-    "hour": "Stunden",
-    "minute": "Minuten"
-  },
   "coins": {
     "table": "Gelegtes Geld",
     "empty": "Hier liegt dein Geld.",
