@@ -225,5 +225,39 @@
     "brick": "Reihe {{row}}, Stein {{n}}",
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
     "scroll": "Tabelle, seitlich verschiebbar"
+  },
+  "find_error": {
+    "how": "Tippe die Zeile an, in der der Fehler steckt.",
+    "task_line": "Aufgabe: {{text}}",
+    "line": "Zeile {{n}}: {{text}}",
+    "hint_open": "Markiert diese Zeile als Fehler.",
+    "fix_label": "Zeile {{n}} richtig",
+    "check_waits": "Erst wenn eine Zeile markiert und verbessert ist.",
+    "shown": "Zeile {{n}}: {{line}}",
+    "fix_hint": "Schreib die Zeile so, wie sie richtig wäre.",
+    "let_go": "Zeile {{n}} nicht mehr markieren"
+  },
+  "written": {
+    "how": "Tippe ein Kästchen an, dann die Ziffer. Nochmal tippen leert es.",
+    "place": {
+      "p0": "Einer",
+      "p1": "Zehner",
+      "p2": "Hunderter",
+      "p3": "Tausender",
+      "p4": "Zehntausender",
+      "p5": "Hunderttausender",
+      "p6": "Millionen"
+    },
+    "row_carry": "Übertrag",
+    "row_result": "Ergebnis",
+    "row_partial": "{{n}}. Teilprodukt",
+    "box": "{{row}}, {{place}}, {{value}}",
+    "empty": "leer",
+    "times": "mal",
+    "minus": "minus",
+    "plus": "plus",
+    "pad": "Ziffern",
+    "check_waits": "Erst wenn im Ergebnis eine Ziffer steht.",
+    "hint_clear": "Leert das Kästchen."
   }
 }

@@ -225,5 +225,39 @@
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
     "scroll": "Table, scrolls sideways"
+  },
+  "find_error": {
+    "how": "Tap the line with the mistake.",
+    "task_line": "Task: {{text}}",
+    "line": "Line {{n}}: {{text}}",
+    "hint_open": "Marks this line as the mistake.",
+    "fix_label": "Line {{n}} corrected",
+    "check_waits": "Only once a line is marked and corrected.",
+    "shown": "Line {{n}}: {{line}}",
+    "fix_hint": "Write the line the way it should be.",
+    "let_go": "Unmark line {{n}}"
+  },
+  "written": {
+    "how": "Tap a box, then the digit. Tap it again to empty it.",
+    "place": {
+      "p0": "ones",
+      "p1": "tens",
+      "p2": "hundreds",
+      "p3": "thousands",
+      "p4": "ten thousands",
+      "p5": "hundred thousands",
+      "p6": "millions"
+    },
+    "row_carry": "carry",
+    "row_result": "result",
+    "row_partial": "partial product {{n}}",
+    "box": "{{row}}, {{place}}, {{value}}",
+    "empty": "empty",
+    "times": "times",
+    "minus": "minus",
+    "plus": "plus",
+    "pad": "Digits",
+    "check_waits": "Only once the result has a digit.",
+    "hint_clear": "Empties the box."
   }
 }

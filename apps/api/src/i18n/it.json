@@ -240,6 +240,32 @@
       "groups_some_one": "1 su {{total}} è già nel gruppo giusto.",
       "groups_none": "Nessuno è ancora nel gruppo giusto – guarda di nuovo con calma.",
       "look_at": "Guarda di nuovo «{{text}}»."
+    },
+    "find_error": {
+      "line_fine": "La riga {{n}} va bene: segue correttamente da quella prima. Continua a cercare!",
+      "copied": "Sì, l'errore è nella riga {{n}}! Ma hai solo ricopiato la riga prima: come si continua correttamente?",
+      "fix_wrong": "Sì, l'errore è nella riga {{n}}! La tua correzione non si accorda ancora con la riga {{above}}.",
+      "solution": "Riga {{n}}: {{line}}",
+      "answer": "Riga {{n}}: {{line}}"
+    },
+    "written": {
+      "prompt": "Calcola in colonna: {{term}}",
+      "at": {
+        "p0": "nelle unità",
+        "p1": "nelle decine",
+        "p2": "nelle centinaia",
+        "p3": "nelle migliaia",
+        "p4": "nelle decine di migliaia",
+        "p5": "nelle centinaia di migliaia",
+        "p6": "nei milioni"
+      },
+      "in_first": " del primo prodotto parziale",
+      "in_second": " del secondo prodotto parziale",
+      "digit": "Quasi: {{at}}{{row}} la cifra non è ancora giusta.",
+      "empty": "Quasi: {{at}}{{row}} manca ancora una cifra.",
+      "carry_missing": "Quasi: {{at}} manca il riporto.",
+      "carry_wrong": "Quasi: il riporto {{at}} non è ancora giusto.",
+      "look_again": "Quasi: guarda ancora una volta il calcolo con calma."
     }
   },
   "contact": {

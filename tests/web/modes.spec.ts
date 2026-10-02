@@ -807,3 +807,108 @@ test('zuordnen at its largest: pairs in two columns, things into groups (issue #
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
+
+// Its own test, with its own learner (the learning-modes walk is near its time budget). The
+// scripted sets hold the LARGEST of each kind (learning-modes.ts): a four-digit number times a
+// two-digit one — seven columns, five rows — and a worked solution of five lines near their cap.
+// Every `shot` fails if anything would have to be scrolled (rule 16, issue #260 acceptance:
+// "Walkthrough auf 360×740").
+test('schriftlich rechnen and the Fehlerdetektiv: digit by digit, the wrong line tapped (issue #260)', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  /** Both colour schemes of the same moment; the switch rebuilds the tree, the draft keeps it. */
+  const both = async (name: string) => {
+    await shot(page, name);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await shot(page, `${name}-night`);
+    await page.emulateMedia({ colorScheme: 'light' });
+  };
+  const check = page.getByRole('button', { name: 'Prüfen' });
+  const digit = (d: string) => page.getByRole('button', { name: d, exact: true });
+  const type = async (digits: string) => {
+    for (const d of digits) await digit(d).click();
+  };
+
+  // ── Schriftlich rechnen: the grid and every key are code's; the model wrote two numbers ──
+  await page.getByLabel('Schreib Buddy …').fill('Lass uns schriftlich rechnen');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(page.getByText('rechne mal schriftlich', { exact: false })).toBeVisible();
+  await offerStart(page, 'rechne mal schriftlich').click();
+  await expect(page.getByText('Rechne schriftlich: 476 + 358')).toBeVisible();
+  await expect(check).toBeDisabled();
+  // The Einer are chosen from the start; each digit moves one place left. The carry into the
+  // tens is forgotten: 7 + 5 written as 2.
+  await type('428');
+  await both('63-written-filled');
+  await check.click();
+  await expect(page.getByText('Fast – bei den Zehnern fehlt der Übertrag.')).toBeVisible();
+  await both('64-written-feedback');
+  // Her digits stay; she writes the carry (optional) and fixes the one digit.
+  await page.getByRole('button', { name: 'Übertrag, Zehner, leer' }).click();
+  await digit('1').click();
+  // After a carry the result of its column is chosen: the 2 becomes a 3.
+  await digit('3').click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // The largest grid: 3826 · 47 — two partial products, carries, a six-digit result.
+  await expect(page.getByText('Rechne schriftlich: 3826 · 47')).toBeVisible();
+  // 3826 · 4 = 15304 (under the 4), 3826 · 7 = 26782, then the sum 179822 — no carries written.
+  await type('40351');
+  await type('28762');
+  await both('65-written-multiply');
+  // 4 + 8 = 12 in the tens: the carry into the hundreds is forgotten (7 instead of 8). The
+  // tallest moment of the grid: five rows and Buddy's reply above them.
+  await type('227971');
+  await check.click();
+  await expect(page.getByText('Fast – bei den Hundertern fehlt der Übertrag.')).toBeVisible();
+  await both('65b-written-multiply-feedback');
+  await page.getByRole('button', { name: 'Ergebnis, Hunderter, 7' }).click();
+  await digit('8').click();
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+
+  // ── Fehlerdetektiv: code found the wrong line; she taps it and corrects it ──
+  await page.getByLabel('Schreib Buddy …').fill('Spielen wir Fehlerdetektiv');
+  await page.getByRole('button', { name: 'Senden' }).click();
+  await expect(
+    page.getByText('finde den Fehler in den Rechnungen', { exact: false }),
+  ).toBeVisible();
+  await offerStart(page, 'finde den Fehler in den Rechnungen').click();
+  await expect(page.getByText('Tim hat die Gleichung gelöst', { exact: false })).toBeVisible();
+  await expect(page.getByText('Tippe die Zeile an, in der der Fehler steckt.')).toBeVisible();
+  await both('66-detective-open');
+  // A line that is fine: she hears so, and nothing else is given away.
+  await page.getByRole('button', { name: /^Zeile 3:/ }).click();
+  await check.click();
+  await expect(
+    page.getByText('Zeile 3 stimmt – sie folgt richtig aus der Zeile davor. Such weiter!'),
+  ).toBeVisible();
+  await both('67-detective-line-fine');
+  // The wrong line: its text is in the field, she changes only what is wrong.
+  await page.getByRole('button', { name: /^Zeile 4:/ }).click();
+  const fix = page.getByLabel('Zeile 4 richtig');
+  await expect(fix).toHaveValue('3x = 2x + 7');
+  await fix.fill('3x = 2x + 11');
+  await both('68-detective-fix');
+  await check.click();
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+
+  // A term chain (halbschriftlich): "=" in front of every step.
+  await expect(
+    page.getByText('Lena hat halbschriftlich gerechnet', { exact: false }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /^Zeile 3:/ }).click();
+  await page.getByLabel('Zeile 3 richtig').fill('80 + 12');
+  await both('69-detective-terms');
+  await check.click();
+  await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.getByText('Geschafft!')).toBeVisible();
+});

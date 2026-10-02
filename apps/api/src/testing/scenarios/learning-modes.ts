@@ -108,6 +108,77 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       ],
     }),
   });
+  // Schriftlich rechnen and the Fehlerdetektiv (issue #260). The model writes only the numbers
+  // of a written calculation — code writes the instruction, lays out the columns and computes
+  // every digit and carry — and a worked solution with one mistake, which code finds itself.
+  // Each set holds the LARGEST of its kind (rule 16): a four-digit number times a two-digit one
+  // (seven columns, five rows), and five lines near their cap under a two-line prompt — so the walkthrough measures the
+  // worst case on 360×740. Matched on her own request only.
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*Schriftlich rechnen/i,
+    answer: () => ({
+      usable: true,
+      title: 'Schriftlich rechnen',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [],
+      structured: [
+        {
+          type: 'written_calc',
+          op: 'add',
+          operands: [476, 358],
+          topic: 'Schriftlich addieren',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'written_calc',
+          op: 'mul',
+          operands: [3826, 47],
+          topic: 'Schriftlich multiplizieren',
+          difficulty: 3,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*Fehlerdetektiv/i,
+    answer: () => ({
+      usable: true,
+      title: 'Fehlerdetektiv',
+      subject: { name: 'Mathe', kind: 'math' },
+      items: [],
+      structured: [
+        {
+          type: 'find_error',
+          prompt: 'Tim hat die Gleichung gelöst. Wo ist sein Fehler?',
+          // The sign slip in line 4 (−2 moved across without turning into +2), carried on.
+          lines: [
+            '3(x - 2) + 4 = 2(x + 5) - 1',
+            '3x - 6 + 4 = 2x + 10 - 1',
+            '3x - 2 = 2x + 9',
+            '3x = 2x + 7',
+            'x = 7',
+          ],
+          wrong_line: 4,
+          fixed_line: '3x = 2x + 11',
+          topic: 'Gleichungen',
+          difficulty: 3,
+          prompt_lang: 'de',
+        },
+        {
+          type: 'find_error',
+          prompt: 'Lena hat halbschriftlich gerechnet. Wo ist der Fehler?',
+          lines: ['23 · 4', '20 · 4 + 3 · 4', '80 + 21', '101'],
+          wrong_line: 3,
+          fixed_line: '80 + 12',
+          topic: 'Halbschriftlich multiplizieren',
+          difficulty: 2,
+          prompt_lang: 'de',
+        },
+      ],
+    }),
+  });
   // Tables to fill in (issue #230): the model writes every value and marks the gaps; the
   // server recomputes the totals and the wall (Regel 0), names the gaps and keeps the keys.
   // Matched on her own request only, so an older topic in a later request never picks it.
@@ -393,6 +464,18 @@ export function scriptLearningModes(llm: ScriptedGateway): void {
       when: /keimung/i,
       answer: says('Klar – ordne mal die Keimung, Schritt für Schritt.', [
         { tool: 'offer_learning', args: { kind: 'practice', text: 'Keimung ordnen' } },
+      ]),
+    },
+    {
+      when: /schriftlich rechnen/i,
+      answer: says('Gern – rechne mal schriftlich, Ziffer für Ziffer.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Schriftlich rechnen' } },
+      ]),
+    },
+    {
+      when: /fehlerdetektiv/i,
+      answer: says('Klar – finde den Fehler in den Rechnungen.', [
+        { tool: 'offer_learning', args: { kind: 'practice', text: 'Fehlerdetektiv' } },
       ]),
     },
     {

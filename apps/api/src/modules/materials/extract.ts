@@ -16,15 +16,17 @@ import {
   NUMERIC_KEY_RULES,
   SPELLING_RULES,
 } from '../practice/items.js';
+import { FIND_ERROR_RULES } from '../practice/findError.js';
 import {
   MATCH_RULES,
   ORDER_RULES,
   StructuredDraft,
   StructuredDraftHomework,
+  WRITTEN_RULES,
 } from '../practice/structured.js';
 import { TABLE_RULES } from '../practice/table.js';
 
-export const EXTRACT_PROMPT_VERSION = 'extract.v7.1';
+export const EXTRACT_PROMPT_VERSION = 'extract.v7.2';
 
 /**
  * The most questions ONE reading may return (issue #150). Not a cap on the sheet: a sheet
@@ -333,6 +335,8 @@ export const EXTRACT_SYSTEM = `You read photos (or PDFs) of a learner's study ma
    - ${ORDER_RULES} A task on the sheet that asks to put given things in order becomes one such task in "structured", never a question in items.
    - ${TABLE_RULES} A table on the sheet whose cells are to be filled in becomes one such task in "structured" (its cells as printed, the empty ones as gaps), never one question per cell in items.
    - ${MATCH_RULES} A task on the sheet that asks to link given things to each other or sort them into given groups becomes one such task in "structured", never questions in items.
+   - ${WRITTEN_RULES} A calculation on the sheet to be done in columns ("schriftlich") becomes one such task per calculation in "structured", never a question in items.
+   - ${FIND_ERROR_RULES} A worked solution on the sheet with a mistake to find becomes one such task in "structured" (its lines as printed), never a question in items.
    - Otherwise 8–15 questions — and none at all for a sheet whose every task went into not_practicable. Prefer short answers and numbers; multiple_choice only when choices make sense (2–6 choices, correct_choice = index).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
@@ -364,6 +368,8 @@ export const HOMEWORK_SYSTEM = `You read photos (or PDFs) of a learner's homewor
    - ${ORDER_RULES} A task that asks to put given things in order goes into "structured" instead of items (its prompt as printed).
    - ${TABLE_RULES} A table whose cells are to be filled in goes into "structured" instead of items (its prompt as printed).
    - ${MATCH_RULES} A task that asks to link given things or sort them into groups goes into "structured" instead of items (its prompt as printed).
+   - ${WRITTEN_RULES} A calculation to be done in columns ("schriftlich") goes into "structured" instead of items, one per calculation.
+   - ${FIND_ERROR_RULES} A worked solution with a mistake to find goes into "structured" instead of items (its lines as printed).
    - ${NUMERIC_KEY_RULES}
    - ${SPELLING_RULES}
    - ${MATH_RULES}

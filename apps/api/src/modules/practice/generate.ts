@@ -62,14 +62,16 @@ import { MAX_STAFF_ITEMS, STAFF_RULES, staffItems } from './staff.js';
 import {
   MAX_STRUCTURED_ITEMS,
   MATCH_RULES,
+  WRITTEN_RULES,
   ORDER_RULES,
   StructuredDraftNoHelp,
   structuredItems,
   type StructuredItem,
 } from './structured.js';
+import { FIND_ERROR_RULES } from './findError.js';
 import { TABLE_RULES } from './table.js';
 
-export const GENERATE_PROMPT_VERSION = 'generate.v1.15';
+export const GENERATE_PROMPT_VERSION = 'generate.v1.16';
 
 const SUBJECT_KINDS = [
   'math',
@@ -277,7 +279,7 @@ export const GENERATE_SYSTEM = `You prepare learning in the LearnBuddy app for t
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
 - Only well-established knowledge at their level (school topics for a school student; study or professional topics for a university or adult learner); if unsure about a fact, leave it out. If the request is not about learning something (for example a request to chat, to write something for them, or nothing to learn), set usable = false and items = [].
-- Everything is answered in the app by typing, choosing, tapping things into an order or into groups, or filling a table (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
+- Everything is answered in the app by typing, choosing, tapping things into an order or into groups, filling a table, writing digits into a written calculation or tapping and correcting the wrong line of a worked solution (or speaking for speak items): no tasks to draw, build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).
 - ${NUMERIC_KEY_RULES}
@@ -290,6 +292,8 @@ Rules:
 - ${ORDER_RULES}
 - ${TABLE_RULES}
 - ${MATCH_RULES}
+- ${WRITTEN_RULES}
+- ${FIND_ERROR_RULES}
 - accepted_answers: other correct formulations (synonyms, spelling variants).
 - ${CURRICULUM_RULES}
 - ${LANGUAGE_RULES}
@@ -339,8 +343,8 @@ const KINDS: Record<StartTopicRequest['kind'], ReadonlySet<ItemDraft['kind']>> =
  * run (its questions come out of the text she hears).
  */
 const STRUCTURED: Record<StartTopicRequest['kind'], ReadonlySet<string>> = {
-  practice: new Set(['order', 'table_fill', 'match']),
-  test: new Set(['order', 'table_fill', 'match']),
+  practice: new Set(['order', 'table_fill', 'match', 'find_error', 'written_calc']),
+  test: new Set(['order', 'table_fill', 'match', 'find_error', 'written_calc']),
   vocab: new Set(),
   speak: new Set(),
   listen: new Set(),

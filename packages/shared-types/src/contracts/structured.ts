@@ -5,6 +5,8 @@
 //   order       — put 3–8 elements into the right order (#228)
 //   match       — pair or group elements (#229)
 //   table_fill  — fill the gaps of a table (#230)
+//   find_error  — tap the wrong line of a worked solution and correct it (#260)
+//   written_calc — add, subtract or multiply in columns, digit by digit, with carries (#260)
 // The next one (#232, a text with several gaps) is a fourth member of every union below; the
 // database already allows its kind (migration 0079), so it needs no constraint migration.
 //
@@ -30,7 +32,13 @@
 import { z } from 'zod';
 
 /** The item kinds whose answer is structured. Each has a task, a view and an answer shape. */
-export const STRUCTURED_KINDS = ['order', 'match', 'table_fill'] as const;
+export const STRUCTURED_KINDS = [
+  'order',
+  'match',
+  'table_fill',
+  'find_error',
+  'written_calc',
+] as const;
 export const StructuredKind = z.enum(STRUCTURED_KINDS);
 export type StructuredKind = z.infer<typeof StructuredKind>;
 
@@ -255,10 +263,154 @@ export const MatchAnswer = z.object({
 });
 export type MatchAnswer = z.infer<typeof MatchAnswer>;
 
+// ─────────────── find_error (#260): the Fehlerdetektiv ───────────────
+//
+// A worked solution, line under line, with exactly ONE line that does not follow from the line
+// above it; every line after it follows from it (the mistake carried on, as on paper). She taps
+// the wrong line and writes it as it should be. Which line is wrong is decided by code
+// (`practice/steps.ts`), never taken from the model, and so is whether her correction follows.
+
+/** A task line, then at least one step, then the line the error can carry into. */
+export const FIND_ERROR_LINES_MIN = 3;
+/**
+ * Measured, not chosen: on 360×740 with a two-line question, a chosen line and Buddy's reply on
+ * screen, six lines had to scroll (walkthrough, #260); five fit (rule 16).
+ */
+export const FIND_ERROR_LINES_MAX = 5;
+/** One line of maths: it must stand on one line of a 360-pt phone at the reading size. */
+export const FIND_ERROR_LINE_MAX = 28;
+/** What she may type as the corrected line. */
+export const FIND_ERROR_FIX_MAX = 60;
+
+/**
+ * How the lines hang together, set by code from the lines: `equation` — every line is an
+ * equation equivalent to the one before (2x + 3 = 7, 2x = 4, x = 2); `term` — every line is a
+ * term with the value of the one before, and the app writes "=" in front of each line after the
+ * first (23 · 4, = 20 · 4 + 3 · 4, = 80 + 12, = 92).
+ */
+export const FindErrorChain = z.enum(['equation', 'term']);
+export type FindErrorChain = z.infer<typeof FindErrorChain>;
+
+export const FindErrorLine = z.object({
+  id: PartId,
+  /** Plain maths as the line checker reads it ("2x + 3 = 7", "20 · 4 + 3 · 4"), no "=" prefix. */
+  text: z.string().trim().min(1).max(FIND_ERROR_LINE_MAX),
+});
+export type FindErrorLine = z.infer<typeof FindErrorLine>;
+
+export const FindErrorTask = z.object({
+  type: z.literal('find_error'),
+  chain: FindErrorChain,
+  /** In the order they are written; the first is the task and is never the wrong one. */
+  lines: z.array(FindErrorLine).min(FIND_ERROR_LINES_MIN).max(FIND_ERROR_LINES_MAX),
+  /** The id of the wrong line — the one code found to break. */
+  wrong: PartId,
+  /** The wrong line as it should have been (the model's, checked to follow from the line above). */
+  fixed: z.string().trim().min(1).max(FIND_ERROR_LINE_MAX),
+});
+export type FindErrorTask = z.infer<typeof FindErrorTask>;
+
+export const FindErrorTaskView = z.object({
+  type: z.literal('find_error'),
+  chain: FindErrorChain,
+  lines: z.array(FindErrorLine).min(FIND_ERROR_LINES_MIN).max(FIND_ERROR_LINES_MAX),
+});
+export type FindErrorTaskView = z.infer<typeof FindErrorTaskView>;
+
+export const FindErrorAnswer = z.object({
+  type: z.literal('find_error'),
+  /** The line she tapped. */
+  line: PartId,
+  /** That line as she corrected it. */
+  fix: z.string().max(FIND_ERROR_FIX_MAX),
+});
+export type FindErrorAnswer = z.infer<typeof FindErrorAnswer>;
+
+// ─────────────── written_calc (#260): schriftlich rechnen ───────────────
+//
+// The numbers stand in columns as in the exercise book, one digit per box; she fills the result
+// (and, for a multiplication by a two-digit number, the partial products) digit by digit, and
+// may write the carries in the small row above the line. There is no stored key at all: the
+// task is the operation and its numbers, and code computes the procedure column by column every
+// time it is shown or checked (`practice/written.ts`).
+
+/** add — 2–3 numbers; sub — minuend minus subtrahend, never below zero; mul — times 1–2 digits. */
+export const WrittenOp = z.enum(['add', 'sub', 'mul']);
+export type WrittenOp = z.infer<typeof WrittenOp>;
+
+/**
+ * The widest grid a 360-pt phone holds with boxes of 44 pt: one column for the operator and six
+ * digit columns. Every task is built inside it or not at all (`writtenProblem`).
+ */
+export const WRITTEN_COLS_MAX = 7;
+/** At most three numbers to add: five rows with the carries and the result still fit. */
+export const WRITTEN_ADD_MAX = 3;
+/** The second factor has at most two digits (Klasse 4: "mit zweistelligen Zahlen"). */
+export const WRITTEN_MUL_DIGITS_MAX = 2;
+
+/** A whole number as its digits, no sign, no leading zero ("0" itself is no task number). */
+export const WrittenNumber = z.string().regex(/^[1-9][0-9]{0,5}$/);
+
+export const WrittenCalcTask = z.object({
+  type: z.literal('written_calc'),
+  op: WrittenOp,
+  /** In the order they are written: the summands, minuend then subtrahend, the two factors. */
+  operands: z.array(WrittenNumber).min(2).max(WRITTEN_ADD_MAX),
+});
+export type WrittenCalcTask = z.infer<typeof WrittenCalcTask>;
+
+/** A box she fills: its id and its place value (0 = Einer, 1 = Zehner …), for its name. */
+export const WrittenBox = z.object({ id: PartId, place: z.number().int().min(0).max(6) });
+export type WrittenBox = z.infer<typeof WrittenBox>;
+
+/** One column of a row: nothing, a printed digit or sign, or a box to fill. */
+export const WrittenCell = z.union([WrittenBox, z.object({ text: z.string().max(1) }), z.null()]);
+export type WrittenCell = z.infer<typeof WrittenCell>;
+
+/**
+ * given — a number of the task (with its operator in the first column); partial — a partial
+ * product to fill; carry — the small boxes for the carries (never required); result — the
+ * result. A `line` row is the rule drawn above the result.
+ */
+export const WrittenRowRole = z.enum(['given', 'partial', 'carry', 'result']);
+export type WrittenRowRole = z.infer<typeof WrittenRowRole>;
+
+export const WrittenRow = z.object({
+  role: WrittenRowRole,
+  /** Exactly `cols` cells, left to right; column 0 holds the operator. */
+  cells: z.array(WrittenCell).min(2).max(WRITTEN_COLS_MAX),
+  /** A rule is drawn above this row (the line under the numbers, under the partial products). */
+  rule_above: z.boolean(),
+});
+export type WrittenRow = z.infer<typeof WrittenRow>;
+
+export const WrittenCalcTaskView = z.object({
+  type: z.literal('written_calc'),
+  op: WrittenOp,
+  cols: z.number().int().min(2).max(WRITTEN_COLS_MAX),
+  rows: z.array(WrittenRow).min(3).max(6),
+});
+export type WrittenCalcTaskView = z.infer<typeof WrittenCalcTaskView>;
+
+export const WrittenCalcAnswer = z.object({
+  type: z.literal('written_calc'),
+  /** Every box she wrote in, with its digit; an empty box may be left out or sent as "". */
+  boxes: z
+    .array(z.object({ id: PartId, digit: z.string().regex(/^[0-9]?$/) }))
+    .max(WRITTEN_COLS_MAX * 6),
+});
+export type WrittenCalcAnswer = z.infer<typeof WrittenCalcAnswer>;
+
 // ─────────────── the unions (one member per kind that exists) ───────────────
 
 /** The stored definition including the key (`items.task`). Server only. */
-export const StructuredTask = z.discriminatedUnion('type', [OrderTask, TableFillTask, MatchTask]);
+export const StructuredTask = z.discriminatedUnion('type', [
+  OrderTask,
+  TableFillTask,
+  MatchTask,
+  FindErrorTask,
+  WrittenCalcTask,
+]);
 export type StructuredTask = z.infer<typeof StructuredTask>;
 
 /** What the app shows (`ItemView.task_view`): the task without its key. */
@@ -266,6 +418,8 @@ export const StructuredTaskView = z.discriminatedUnion('type', [
   OrderTaskView,
   TableFillTaskView,
   MatchTaskView,
+  FindErrorTaskView,
+  WrittenCalcTaskView,
 ]);
 export type StructuredTaskView = z.infer<typeof StructuredTaskView>;
 
@@ -274,5 +428,7 @@ export const StructuredAnswer = z.discriminatedUnion('type', [
   OrderAnswer,
   TableFillAnswer,
   MatchAnswer,
+  FindErrorAnswer,
+  WrittenCalcAnswer,
 ]);
 export type StructuredAnswer = z.infer<typeof StructuredAnswer>;

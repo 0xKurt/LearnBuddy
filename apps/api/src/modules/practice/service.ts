@@ -1163,7 +1163,7 @@ export async function answerItem(
     structured && input.parts && partsCheck
       ? // Her arrangement in one line, so the thread, the tutor history and a disputed judgement
         // all see what she actually did.
-        answerTextOf(structured, input.parts)
+        answerTextOf(structured, input.parts, learner.locale)
       : (staffWritten ??
         input.text ??
         (input.choice != null && item.choices ? (item.choices[input.choice] ?? null) : null));
@@ -1778,8 +1778,12 @@ export async function answerItem(
           now,
           prepared,
           // Arranging parts is tapping (issue #163), unless the app says otherwise — but the
-          // cells of a table (#230) are typed, every one of them.
-          input.via ?? (partsCheck && partsCheck.type !== 'table_fill' ? 'tapped' : 'typed'),
+          // cells of a table (#230), a corrected line and the digits of a written calculation
+          // (#260) are typed, every one of them.
+          input.via ??
+            (partsCheck && (partsCheck.type === 'order' || partsCheck.type === 'match')
+              ? 'tapped'
+              : 'typed'),
         ],
       );
       // A free text she did not get right produces NO review: `Again` is a statement about

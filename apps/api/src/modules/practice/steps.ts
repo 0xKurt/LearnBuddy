@@ -46,10 +46,15 @@ function close(a: number, b: number): boolean {
  * more than one, which this module does not handle.
  */
 function oneVariable(src: string): string | null {
-  const names = new Set((src.toLowerCase().match(/[a-z]+/g) ?? []).filter((n) => !RESERVED.has(n)));
+  // `x` counts as a name here: it is reserved only so that it is never renamed, and "x + y"
+  // has two variables, not one called x (found with the Fehlerdetektiv, #260 — before, the y
+  // was renamed to x and "x + y = 5" read as "2x = 5").
+  const names = new Set(
+    (src.toLowerCase().match(/[a-z]+/g) ?? []).filter((n) => n === 'x' || !RESERVED.has(n)),
+  );
   if (names.size > 1) return null;
   const name = [...names][0];
-  if (name === undefined) return src; // a pure number line is fine
+  if (name === undefined || name === 'x') return src; // a pure number line is fine
   if (name.length > 1) return null; // a word, not a variable: not ours
   return src.replace(new RegExp(name, 'gi'), 'x');
 }
@@ -256,4 +261,39 @@ export function solvedValue(key: string): string | null {
   if (m === null) return null;
   const value = (m[2] ?? '').trim();
   return /[A-Za-z]/.test(value) ? null : value;
+}
+
+// ── One line against the line above it (issue #260, the Fehlerdetektiv).
+//
+// The same machinery once more: whether a line of a worked solution follows from the line above
+// it is exactly a step of `checkPath`. These two give that one step to `findError.ts`, which
+// must decide WHICH line of a written path is the wrong one and whether her correction follows.
+// A line here is ONE line, taken as it stands: `pathLines` would read a leading minus as a
+// bullet ("-2x = 4"), and a line of a printed solution has no bullets.
+
+/** One line as the parser reads it: no math markup, no line break; null when empty. */
+function oneLine(text: string): Line | null {
+  const raw = plainMath(text).replace(/[$]/g, '').trim();
+  if (raw === '' || /[\r\n]/.test(raw)) return null;
+  return parseLine(raw);
+}
+
+/** What a line is: an equation, a term, or null when it does not parse completely. */
+export function lineShape(text: string): 'equation' | 'term' | null {
+  const line = oneLine(text);
+  if (line === null) return null;
+  return line.right === null ? 'term' : 'equation';
+}
+
+/**
+ * Does `next` follow from `prev` as one step of a path: the same term, or an equivalent
+ * equation? Null when this cannot be decided (a line that does not parse, a term against an
+ * equation, too few usable probe points) — never a guess.
+ */
+export function followsFrom(prev: string, next: string): 'same' | 'different' | null {
+  const a = oneLine(prev);
+  const b = oneLine(next);
+  if (a === null || b === null) return null;
+  const verdict = sameStep(a, b);
+  return verdict === 'unsure' ? null : verdict;
 }

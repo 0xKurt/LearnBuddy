@@ -225,5 +225,39 @@
     "brick": "rangée {{row}}, brique {{n}}",
     "check_waits": "Seulement quand toutes les cases sont remplies.",
     "scroll": "Tableau, défile sur le côté"
+  },
+  "find_error": {
+    "how": "Touche la ligne où se trouve l'erreur.",
+    "task_line": "Énoncé : {{text}}",
+    "line": "Ligne {{n}} : {{text}}",
+    "hint_open": "Marque cette ligne comme erreur.",
+    "fix_label": "Ligne {{n}} corrigée",
+    "check_waits": "Seulement quand une ligne est marquée et corrigée.",
+    "shown": "Ligne {{n}} : {{line}}",
+    "fix_hint": "Écris la ligne comme elle devrait être.",
+    "let_go": "Ne plus marquer la ligne {{n}}"
+  },
+  "written": {
+    "how": "Touche une case, puis le chiffre. Touche-la encore pour la vider.",
+    "place": {
+      "p0": "unités",
+      "p1": "dizaines",
+      "p2": "centaines",
+      "p3": "milliers",
+      "p4": "dizaines de mille",
+      "p5": "centaines de mille",
+      "p6": "millions"
+    },
+    "row_carry": "retenue",
+    "row_result": "résultat",
+    "row_partial": "produit partiel {{n}}",
+    "box": "{{row}}, {{place}}, {{value}}",
+    "empty": "vide",
+    "times": "fois",
+    "minus": "moins",
+    "plus": "plus",
+    "pad": "Chiffres",
+    "check_waits": "Seulement quand le résultat a un chiffre.",
+    "hint_clear": "Vide la case."
   }
 }

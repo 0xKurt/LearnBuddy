@@ -240,6 +240,32 @@
       "groups_some_one": "1 of {{total}} is already in the right group.",
       "groups_none": "None is in the right group yet – take another calm look.",
       "look_at": "Have another look at “{{text}}”."
+    },
+    "find_error": {
+      "line_fine": "Line {{n}} is fine – it follows correctly from the line above. Keep looking!",
+      "copied": "Yes, the mistake is in line {{n}}! But you've only copied the line above – how does it go on correctly?",
+      "fix_wrong": "Yes, the mistake is in line {{n}}! Your correction doesn't fit line {{above}} yet.",
+      "solution": "Line {{n}}: {{line}}",
+      "answer": "Line {{n}}: {{line}}"
+    },
+    "written": {
+      "prompt": "Work it out in columns: {{term}}",
+      "at": {
+        "p0": "in the ones",
+        "p1": "in the tens",
+        "p2": "in the hundreds",
+        "p3": "in the thousands",
+        "p4": "in the ten thousands",
+        "p5": "in the hundred thousands",
+        "p6": "in the millions"
+      },
+      "in_first": " of the first partial product",
+      "in_second": " of the second partial product",
+      "digit": "Almost – the digit {{at}}{{row}} isn't right yet.",
+      "empty": "Almost – a digit is still missing {{at}}{{row}}.",
+      "carry_missing": "Almost – the carry is missing {{at}}.",
+      "carry_wrong": "Almost – the carry {{at}} isn't right yet.",
+      "look_again": "Almost – take another calm look at the calculation."
     }
   },
   "contact": {

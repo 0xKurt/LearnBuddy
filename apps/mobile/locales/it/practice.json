@@ -225,5 +225,39 @@
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
     "scroll": "Tabella, scorre di lato"
+  },
+  "find_error": {
+    "how": "Tocca la riga in cui c'è l'errore.",
+    "task_line": "Consegna: {{text}}",
+    "line": "Riga {{n}}: {{text}}",
+    "hint_open": "Segna questa riga come errore.",
+    "fix_label": "Riga {{n}} corretta",
+    "check_waits": "Solo quando una riga è segnata e corretta.",
+    "shown": "Riga {{n}}: {{line}}",
+    "fix_hint": "Scrivi la riga come dovrebbe essere.",
+    "let_go": "Non segnare più la riga {{n}}"
+  },
+  "written": {
+    "how": "Tocca una casella, poi la cifra. Toccala di nuovo per svuotarla.",
+    "place": {
+      "p0": "unità",
+      "p1": "decine",
+      "p2": "centinaia",
+      "p3": "migliaia",
+      "p4": "decine di migliaia",
+      "p5": "centinaia di migliaia",
+      "p6": "milioni"
+    },
+    "row_carry": "riporto",
+    "row_result": "risultato",
+    "row_partial": "prodotto parziale {{n}}",
+    "box": "{{row}}, {{place}}, {{value}}",
+    "empty": "vuota",
+    "times": "per",
+    "minus": "meno",
+    "plus": "più",
+    "pad": "Cifre",
+    "check_waits": "Solo quando il risultato ha una cifra.",
+    "hint_clear": "Svuota la casella."
   }
 }

@@ -225,5 +225,39 @@
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
     "scroll": "Tabla, se desplaza hacia los lados"
+  },
+  "find_error": {
+    "how": "Toca la línea donde está el error.",
+    "task_line": "Enunciado: {{text}}",
+    "line": "Línea {{n}}: {{text}}",
+    "hint_open": "Marca esta línea como error.",
+    "fix_label": "Línea {{n}} corregida",
+    "check_waits": "Solo cuando una línea esté marcada y corregida.",
+    "shown": "Línea {{n}}: {{line}}",
+    "fix_hint": "Escribe la línea como debería ser.",
+    "let_go": "Desmarcar la línea {{n}}"
+  },
+  "written": {
+    "how": "Toca una casilla y luego la cifra. Tócala otra vez para vaciarla.",
+    "place": {
+      "p0": "unidades",
+      "p1": "decenas",
+      "p2": "centenas",
+      "p3": "unidades de millar",
+      "p4": "decenas de millar",
+      "p5": "centenas de millar",
+      "p6": "millones"
+    },
+    "row_carry": "llevada",
+    "row_result": "resultado",
+    "row_partial": "producto parcial {{n}}",
+    "box": "{{row}}, {{place}}, {{value}}",
+    "empty": "vacía",
+    "times": "por",
+    "minus": "menos",
+    "plus": "más",
+    "pad": "Cifras",
+    "check_waits": "Solo cuando el resultado tenga una cifra.",
+    "hint_clear": "Vacía la casilla."
   }
 }

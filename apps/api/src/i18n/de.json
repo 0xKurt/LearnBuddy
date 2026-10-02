@@ -240,6 +240,32 @@
       "groups_some_one": "1 von {{total}} ist schon richtig einsortiert.",
       "groups_none": "Noch ist keins richtig einsortiert – schau nochmal in Ruhe hin.",
       "look_at": "Schau dir „{{text}}“ nochmal an."
+    },
+    "find_error": {
+      "line_fine": "Zeile {{n}} stimmt – sie folgt richtig aus der Zeile davor. Such weiter!",
+      "copied": "Richtig, in Zeile {{n}} steckt der Fehler! Du hast aber nur die Zeile davor abgeschrieben – wie geht es richtig weiter?",
+      "fix_wrong": "Richtig, in Zeile {{n}} steckt der Fehler! Deine Verbesserung passt aber noch nicht zu Zeile {{above}}.",
+      "solution": "Zeile {{n}}: {{line}}",
+      "answer": "Zeile {{n}}: {{line}}"
+    },
+    "written": {
+      "prompt": "Rechne schriftlich: {{term}}",
+      "at": {
+        "p0": "bei den Einern",
+        "p1": "bei den Zehnern",
+        "p2": "bei den Hundertern",
+        "p3": "bei den Tausendern",
+        "p4": "bei den Zehntausendern",
+        "p5": "bei den Hunderttausendern",
+        "p6": "bei den Millionen"
+      },
+      "in_first": " im ersten Teilprodukt",
+      "in_second": " im zweiten Teilprodukt",
+      "digit": "Fast – {{at}}{{row}} stimmt die Ziffer noch nicht.",
+      "empty": "Fast – {{at}}{{row}} fehlt noch eine Ziffer.",
+      "carry_missing": "Fast – {{at}} fehlt der Übertrag.",
+      "carry_wrong": "Fast – der Übertrag {{at}} stimmt noch nicht.",
+      "look_again": "Fast – schau dir die Rechnung nochmal in Ruhe an."
     }
   },
   "contact": {

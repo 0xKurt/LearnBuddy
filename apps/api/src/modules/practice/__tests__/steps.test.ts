@@ -92,6 +92,9 @@ describe('a broken step, at the right line', () => {
 describe('what it refuses to judge', () => {
   it('leaves more than one variable alone', () => {
     expect(checkPath(path('2a + b = 7', '2a = 7 - b'))).toEqual({ kind: 'unknown' });
+    // x and another letter are two variables too: the y is not renamed to x (#260).
+    expect(checkPath(path('x + y = 5', 'x = 5 - y'))).toEqual({ kind: 'unknown' });
+    expect(checkPath(path('x + y = 5', '2x = 5'))).toEqual({ kind: 'unknown' });
   });
 
   it('leaves an inequality alone', () => {

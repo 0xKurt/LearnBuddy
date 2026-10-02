@@ -35,7 +35,7 @@ import { bumpContext, findOrCreateSubject } from '../buddy/plan.js';
 import { enqueueJob, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
 import { StorageError } from '../../storage/gateway.js';
 import { insertItems, samePrompt, usableItems } from '../practice/items.js';
-import { structuredItems } from '../practice/structured.js';
+import { draftIdentity, structuredItems } from '../practice/structured.js';
 import { createSession } from '../practice/service.js';
 import {
   clarifiedRules,
@@ -65,8 +65,17 @@ import { attachConceptImages } from './images.js';
 import { indexMaterialPassages } from './passages.js';
 import { enqueueContentPurge, PHOTO_RETENTION_DAYS, UPLOAD_URL_TTL_MS } from './purge.js';
 
-/** The structured kinds a sheet may give (#228 an order, #230 a table, #229 links to make). */
-const SHEET_STRUCTURED: ReadonlySet<string> = new Set(['order', 'table_fill', 'match']);
+/**
+ * The structured kinds a sheet may give (#228 an order, #230 a table, #229 links to make, #260 a
+ * worked solution with a mistake and a written calculation).
+ */
+const SHEET_STRUCTURED: ReadonlySet<string> = new Set([
+  'order',
+  'table_fill',
+  'match',
+  'find_error',
+  'written_calc',
+]);
 
 const EXTRACTION_SCHEMA = toJsonSchema(ExtractionResult);
 const HOMEWORK_SCHEMA = toJsonSchema(HomeworkExtraction);
@@ -911,7 +920,10 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     // continued; a reading that had to go lean is already at the model's limit.
     if (!homework && result.success) {
       for (let pass = 1; pass < MOST_READINGS && result.data.more_items; pass++) {
-        const seen = [...result.data.items, ...result.data.structured].map((it) => it.prompt);
+        const seen = [
+          ...result.data.items.map((it) => it.prompt),
+          ...result.data.structured.map(draftIdentity),
+        ];
         let next;
         try {
           next = await read(lean, seen);
@@ -926,7 +938,7 @@ async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
         const known = new Set(seen.map(samePrompt));
         const fresh = parsed.data.items.filter((it) => !known.has(samePrompt(it.prompt)));
         const freshStructured = parsed.data.structured.filter(
-          (it) => !known.has(samePrompt(it.prompt)),
+          (it) => !known.has(samePrompt(draftIdentity(it))),
         );
         // No progress: stop rather than ask a fourth time for the same nothing.
         if (fresh.length === 0 && freshStructured.length === 0) {

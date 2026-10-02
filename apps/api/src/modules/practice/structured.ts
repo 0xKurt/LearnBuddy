@@ -45,12 +45,26 @@ import {
   type StructuredAnswer,
   type StructuredKind,
   type StructuredTaskView,
+  type WrittenCalcTask,
+  WRITTEN_ADD_MAX,
+  WrittenOp,
 } from '@learnbuddy/shared-types/contracts';
 import { parseNumericInput, plainMath } from '@learnbuddy/shared-math';
 import { z } from 'zod';
 
 import { t } from '../../i18n/index.js';
 import { dollarMathRuns } from './dollarMath.js';
+import {
+  checkFindError,
+  findErrorAnswerText,
+  FindErrorDraftBase,
+  findErrorProblem,
+  findErrorReply,
+  findErrorSolution,
+  findErrorTaskFrom,
+  type FindErrorCheck,
+  type FindErrorProblem,
+} from './findError.js';
 import { ItemDraft } from './items.js';
 import {
   checkTable,
@@ -68,6 +82,18 @@ import {
   type TableProblem,
 } from './table.js';
 import { mentionsSolution } from './tutor.js';
+import {
+  checkWritten,
+  writtenAnswerText,
+  writtenProblem,
+  writtenReply,
+  writtenResult,
+  writtenSolution,
+  writtenTerm,
+  writtenView,
+  type WrittenCheck,
+  type WrittenProblem,
+} from './written.js';
 
 /** At most this many structured questions in one prepared set (a set is not a puzzle book). */
 export const MAX_STRUCTURED_ITEMS = 4;
@@ -168,6 +194,30 @@ const MatchDraftWithHelp = MatchDraftBase.extend({
   worked_solution: ItemDraft.shape.worked_solution,
 });
 
+// ─── written_calc (#260): the model's draft is only the operation and its numbers ───
+
+/**
+ * What the generator and the photo reading are told about written calculations. The model
+ * chooses the numbers; code writes the instruction, lays out the columns and computes every
+ * digit and carry (`written.ts`).
+ */
+export const WRITTEN_RULES = `Written-calculation tasks ("structured", type "written_calc"): only to practise the written column procedure (schriftliches Rechnen, primary school grades 3–4). op "add": 2–${WRITTEN_ADD_MAX} whole numbers; op "sub": two whole numbers, the first larger; op "mul": a number with 2–5 digits times a number with 1–2 digits that contains no 0. Whole positive numbers, at least one with two or more digits, the result at most 6 digits. Write only op and operands (in the order they are written); the app writes the instruction, lays out the columns and computes every digit and carry. Choose numbers that need carries.`;
+
+const WrittenDraftBase = z.object({
+  type: z.literal('written_calc'),
+  op: WrittenOp,
+  operands: z
+    .array(z.number().int().min(1).max(999_999))
+    .min(2)
+    .max(WRITTEN_ADD_MAX)
+    .describe(
+      'The numbers, in the order they are written: summands, minuend then subtrahend, factors',
+    ),
+  topic: ItemDraft.shape.topic,
+  difficulty: ItemDraft.shape.difficulty,
+  prompt_lang: ItemDraft.shape.prompt_lang,
+});
+
 /** A structured task as the model writes it, with prepared help (photo reading). */
 export const StructuredDraft = z.discriminatedUnion('type', [
   OrderDraftWithHelp,
@@ -176,14 +226,34 @@ export const StructuredDraft = z.discriminatedUnion('type', [
     worked_solution: ItemDraft.shape.worked_solution,
   }),
   MatchDraftWithHelp,
+  FindErrorDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
+  WrittenDraftBase.extend({
+    hints: ItemDraft.shape.hints,
+    worked_solution: ItemDraft.shape.worked_solution,
+  }),
 ]);
 export type StructuredDraft = z.infer<typeof StructuredDraft>;
+
+/**
+ * What tells one structured draft from another when a sheet is read in several passes: its
+ * prompt, or — for a written calculation, whose instruction code writes — the calculation.
+ */
+export function draftIdentity(
+  draft: { type: string } & ({ prompt: string } | { op: string; operands: readonly number[] }),
+): string {
+  return 'prompt' in draft ? draft.prompt : `${draft.op} ${draft.operands.join(' ')}`;
+}
 
 /** Homework: hints, but no worked solution (she never sees one there; fewer tokens). */
 export const StructuredDraftHomework = z.discriminatedUnion('type', [
   OrderDraftBase.extend({ hints: ItemDraft.shape.hints }),
   TableDraftBase.extend({ hints: ItemDraft.shape.hints }),
   MatchDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  FindErrorDraftBase.extend({ hints: ItemDraft.shape.hints }),
+  WrittenDraftBase.extend({ hints: ItemDraft.shape.hints }),
 ]);
 export type StructuredDraftHomework = z.infer<typeof StructuredDraftHomework>;
 
@@ -192,6 +262,8 @@ export const StructuredDraftNoHelp = z.discriminatedUnion('type', [
   OrderDraftBase,
   TableDraftBase,
   MatchDraftBase,
+  FindErrorDraftBase,
+  WrittenDraftBase,
 ]);
 export type StructuredDraftNoHelp = z.infer<typeof StructuredDraftNoHelp>;
 
@@ -235,7 +307,11 @@ export type TaskProblem =
    * A text, a word or the prompt over its cap (MATCH_ELEMENT_MAX, MATCH_GROUP_TEXT_MAX,
    * MATCH_WORD_MAX, MATCH_PROMPT_MAX): it would not fit a 360×740 phone without scrolling.
    */
-  | 'too_long';
+  | 'too_long'
+  /** find_error (#260): see `findError.ts`. */
+  | FindErrorProblem
+  /** written_calc (#260): see `written.ts`. */
+  | WrittenProblem;
 
 /** An element as it is compared for sameness: markup, case and surrounding marks set aside. */
 function sameness(text: string): string {
@@ -303,6 +379,10 @@ export function taskProblem(task: StructuredTask): TaskProblem | null {
       return tableProblem(task);
     case 'match':
       return matchProblem(task);
+    case 'find_error':
+      return findErrorProblem(task);
+    case 'written_calc':
+      return writtenProblem(task);
   }
 }
 
@@ -377,7 +457,7 @@ export function orderTaskFrom(
 }
 
 /** The solution as she reads it: the elements in the right order. */
-export function solutionOf(task: StructuredTask): string {
+export function solutionOf(task: StructuredTask, locale: string = 'de'): string {
   switch (task.type) {
     case 'order': {
       const byId = new Map(task.elements.map((e) => [e.id, e.text]));
@@ -387,6 +467,10 @@ export function solutionOf(task: StructuredTask): string {
       return tableSolution(task);
     case 'match':
       return matchText(task, task.key);
+    case 'find_error':
+      return findErrorSolution(task, locale);
+    case 'written_calc':
+      return writtenSolution(task);
   }
 }
 
@@ -496,7 +580,78 @@ export function structuredItem(
         worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
       };
     }
+    case 'find_error': {
+      const task = findErrorTaskFrom(draft);
+      if (!task) return null;
+      const prompt = dollarMathRuns(draft.prompt);
+      // The solution in the language of the task: the reader of "Lösung zeigen" is hers.
+      const answer = solutionOf(task, draft.prompt_lang ?? 'de');
+      // Help never gives the corrected line away, nor names the wrong line by its text.
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !mentionsSolution(h, task.fixed, prompt),
+      );
+      return {
+        ...structuredBase(draft),
+        kind: 'find_error',
+        task,
+        prompt,
+        answer,
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
+    case 'written_calc': {
+      const task: WrittenCalcTask = {
+        type: 'written_calc',
+        op: draft.op,
+        operands: draft.operands.map((n) => String(n)),
+      };
+      const parsed = StructuredTask.safeParse(task);
+      if (!parsed.success || parsed.data.type !== 'written_calc') return null;
+      if (writtenProblem(parsed.data) !== null) return null;
+      // The instruction is code's, not the model's: it states the very numbers the grid shows,
+      // so the two can never disagree.
+      const prompt = t(draft.prompt_lang ?? 'de', 'practice.written.prompt', {
+        term: writtenTerm(parsed.data),
+      });
+      const result = writtenResult(parsed.data).toString();
+      const hints = ('hints' in draft ? draft.hints : []).filter(
+        (h) => !mentionsSolution(h, result, prompt),
+      );
+      return {
+        ...structuredBase(draft),
+        kind: 'written_calc',
+        task: parsed.data,
+        prompt,
+        answer: solutionOf(parsed.data),
+        hints,
+        worked_solution: 'worked_solution' in draft ? draft.worked_solution : null,
+      };
+    }
   }
+}
+
+/** The fields every structured question has the same way: none of the single-answer ones. */
+function structuredBase(
+  draft: Pick<ItemDraft, 'topic' | 'difficulty' | 'prompt_lang'>,
+): Omit<StructuredItem, 'kind' | 'task' | 'prompt' | 'answer' | 'hints' | 'worked_solution'> {
+  return {
+    accepted_answers: [],
+    unit: null,
+    choices: null,
+    correct_choice: null,
+    topic: draft.topic,
+    difficulty: draft.difficulty,
+    prompt_lang: draft.prompt_lang,
+    lang: null,
+    figure: null,
+    tolerance: null,
+    spelling: null,
+    source_excerpt: null,
+    // No curriculum place (#214) and no rubric (#211): both belong to single answers.
+    curriculum_point: null,
+    rubric: null,
+  };
 }
 
 /** The drafts of one model answer as questions; one that fails costs only itself. */
@@ -770,6 +925,15 @@ export function viewOf(task: StructuredTask): StructuredTaskView {
       return tableView(task);
     case 'match':
       return { type: 'match', form: task.form, left: task.left, right: task.right };
+    case 'find_error':
+      return { type: 'find_error', chain: task.chain, lines: task.lines };
+    case 'written_calc': {
+      // Never null here: a stored task is read through `structuredTaskOf`, which has already
+      // rejected one that makes no layout.
+      const view = writtenView(task);
+      if (view === null) throw new Error('written_calc task without a layout');
+      return view;
+    }
   }
 }
 
@@ -782,7 +946,7 @@ export type PartResult = { id: PartId; ok: boolean };
  * The verdict on a structured answer, with what is right part by part. Kinds add their own
  * detail beside `parts` (order: the first place that is wrong, 1-based).
  */
-export type StructuredCheck = OrderCheck | TableCheck | MatchCheck;
+export type StructuredCheck = OrderCheck | TableCheck | MatchCheck | FindErrorCheck | WrittenCheck;
 
 export type OrderCheck = {
   type: 'order';
@@ -866,11 +1030,19 @@ export function checkStructured(
       return answer.type === 'table_fill' ? checkTable(task, answer, ctx) : null;
     case 'match':
       return answer.type === 'match' ? checkMatch(task, answer) : null;
+    case 'find_error':
+      return answer.type === 'find_error' ? checkFindError(task, answer) : null;
+    case 'written_calc':
+      return answer.type === 'written_calc' ? checkWritten(task, answer) : null;
   }
 }
 
 /** Her answer as it stands in the conversation ("B → A → C"). */
-export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): string {
+export function answerTextOf(
+  task: StructuredTask,
+  answer: StructuredAnswer,
+  locale: string = 'de',
+): string {
   switch (task.type) {
     case 'order': {
       if (answer.type !== 'order') return '';
@@ -881,6 +1053,10 @@ export function answerTextOf(task: StructuredTask, answer: StructuredAnswer): st
       return answer.type === 'table_fill' ? tableAnswerText(task, answer) : '';
     case 'match':
       return answer.type === 'match' ? matchText(task, answer.links) : '';
+    case 'find_error':
+      return answer.type === 'find_error' ? findErrorAnswerText(task, answer, locale) : '';
+    case 'written_calc':
+      return answer.type === 'written_calc' ? writtenAnswerText(task, answer) : '';
   }
 }
 
@@ -918,6 +1094,10 @@ export function structuredReply(
         ? `${base} ${t(locale, 'practice.match.look_at', { text: check.first_wrong_text })}`
         : base;
     }
+    case 'find_error':
+      return findErrorReply(locale, check);
+    case 'written_calc':
+      return writtenReply(locale, check);
   }
 }
 
@@ -929,8 +1109,13 @@ export function structuredReply(
  */
 export function structuredNamesPart(check: StructuredCheck, priorMisses: number): boolean {
   switch (check.type) {
+    // A Fehlerdetektiv says whether the tapped line is the wrong one: that IS the task's
+    // feedback, as an order's place is. A written calculation names its column every time,
+    // as a table names its cells (#260).
     case 'order':
     case 'table_fill':
+    case 'find_error':
+    case 'written_calc':
       return false;
     case 'match':
       return !check.correct && priorMisses >= 1;

@@ -240,6 +240,32 @@
       "groups_some_one": "1 de {{total}} ya está en el grupo correcto.",
       "groups_none": "Todavía ninguno está en el grupo correcto: míralo otra vez con calma.",
       "look_at": "Mira otra vez «{{text}}»."
+    },
+    "find_error": {
+      "line_fine": "La línea {{n}} está bien: se sigue correctamente de la anterior. ¡Sigue buscando!",
+      "copied": "¡Sí, el error está en la línea {{n}}! Pero solo has copiado la línea anterior: ¿cómo sigue correctamente?",
+      "fix_wrong": "¡Sí, el error está en la línea {{n}}! Tu corrección todavía no encaja con la línea {{above}}.",
+      "solution": "Línea {{n}}: {{line}}",
+      "answer": "Línea {{n}}: {{line}}"
+    },
+    "written": {
+      "prompt": "Resuelve en columna: {{term}}",
+      "at": {
+        "p0": "en las unidades",
+        "p1": "en las decenas",
+        "p2": "en las centenas",
+        "p3": "en las unidades de millar",
+        "p4": "en las decenas de millar",
+        "p5": "en las centenas de millar",
+        "p6": "en los millones"
+      },
+      "in_first": " del primer producto parcial",
+      "in_second": " del segundo producto parcial",
+      "digit": "Casi: {{at}}{{row}} la cifra todavía no es correcta.",
+      "empty": "Casi: {{at}}{{row}} todavía falta una cifra.",
+      "carry_missing": "Casi: {{at}} falta la llevada.",
+      "carry_wrong": "Casi: la llevada {{at}} todavía no es correcta.",
+      "look_again": "Casi: mira otra vez la cuenta con calma."
     }
   },
   "contact": {

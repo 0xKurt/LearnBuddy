@@ -1820,11 +1820,13 @@ representation), and bar tasks from a photographed sheet — the extraction prom
 them yet, so today they come from a topic she named.
 
 **Structured items — answers with a shape** (`contracts/structured.ts`, `practice/structured.ts`,
-`practice/table.ts`, migration `0079_structured_items.sql`;
-issues #228 order, #229 match, #230 table_fill, from the analysis #224). Some answers are not a
-sentence but an arrangement: an order, pairs, groups, table cells. They are their own item kinds
-(`order`, `match`, `table_fill`), and #224's "Regel 0" holds in both directions: code validates
-what the model wrote, and code judges what she answers — never a model.
+`practice/table.ts`, `practice/findError.ts`, `practice/written.ts`, migrations
+`0079_structured_items.sql` and `0097_find_error_written_calc.sql`;
+issues #228 order, #229 match, #230 table_fill, #260 find_error and written_calc, from the analysis
+#224). Some answers are not a sentence but an arrangement: an order, pairs, groups, table cells, a
+tapped line with its correction, the digits of a written calculation. They are their own item kinds
+(`order`, `match`, `table_fill`, `find_error`, `written_calc`), and #224's "Regel 0" holds in both
+directions: code validates what the model wrote, and code judges what she answers — never a model.
 
 _Two implementations existed for a day_ (#224, „Entscheidung: zwei Umsetzungen …“): `parts`
 (migration 0072, `items.parts_task`, `ItemView.board`) and this one. A neutral review ran and
@@ -1878,11 +1880,12 @@ which is the state, and Buddy's reply says the verdict in words. Echoed, four pa
 four-line bubble that the room above the board could only show as a cut-off strip under the
 question card (shot 39e). The closing answer of an order or a match is recorded as `tapped`, which
 for a structured kind still counts towards a topic in the summary (tapping is the only way to
-answer it, not recognition); a table's is `typed`.
+answer it, not recognition); a table's, a Fehlerdetektiv's and a written calculation's is `typed`.
 
 Where they come from: a topic's practice and practice test (`generate.ts` `STRUCTURED`; not typed
 homework, vocabulary, speaking or listening), and both photo readings — a printed task that asks
-to order, link or sort given things, or to fill a table, keeps that form and goes into
+to order, link or sort given things, to fill a table, to calculate in columns or to find the
+mistake in a worked solution keeps that form and goes into
 `structured`, never into knowledge questions about its own content. Homework help from a photo
 takes them too, with hints and without a worked solution (`StructuredDraftHomework`). At most
 `MAX_STRUCTURED_ITEMS` (4) per prepared set. A practice run that starts on its first questions
@@ -2001,6 +2004,89 @@ sorted. On 360×740 both tallest moments end within about 8 pt of "Prüfen", so 
 (about 52 pt) or one more group row (about 56 pt) would not fit; 20-character things (one per
 row) did not fit by 87 pt, and a 56-character prompt broke onto three lines. A draft over a cap is
 rejected (`too_long` / `count`), never shortened.
+
+**Fehlerdetektiv** (`find_error`, issue #260, `practice/findError.ts`). A worked solution of 3–5
+lines with exactly ONE line that does not follow from the line above it; she taps that line and
+writes it as it should be. The model writes the lines WITH the mistake carried on to the end (as on
+paper), says which line it built the mistake into (`wrong_line`) and writes the corrected line
+(`fixed_line`). Code then decides everything with the path checker of #209 (`steps.ts`,
+`followsFrom`/`lineShape`: equivalent equations by proportional side differences, terms by their
+value at fixed probe points) and rejects — never repairs — a path that is not exactly what it
+claims (`findErrorDraftProblem`, every case a unit test): a line it cannot read completely
+(`unreadable`, also any second variable), equations and terms mixed (`mixed`), no broken step
+(`no_error`), a first broken step that is not the stated line (`not_where_said`, also line 1, which
+is the task), a later step that breaks too (`two_errors` — so there is exactly one wrong line), a
+correction that does not follow from the line above or repeats the wrong line (`fix_wrong`), and
+lines over 28 characters or a prompt over 56 (`too_long`: one line of a 360-pt phone, two lines
+of the question card). Five lines are measured, not chosen: on 360×740 with the prompt at two
+lines, a chosen line and Buddy's reply, six lines had to scroll.
+The issue's plan said "code builds the error in"; the orchestration of #260 chose the model's
+draft, checked — the guarantee is the same (exactly one line breaks, verified by code), and a
+mistake a teacher would make up reads better than a mutated constant. The chain is `equation`
+(every line an equation in one variable) or `term` (every line a term of the same value; the app
+writes "=" in front of each line after the first — the halbschriftlich form, `23 · 4 = 20 · 4 + 3 ·
+4 = …`). Stored: the lines with ids `l1 …` (by position, which she sees anyway), the chain, the
+wrong line's id and the fix; the view drops the last two. Her answer `{line, fix}`: a line that is
+not there or line 1 → 422; the line right and the correction following from the line above (an
+equivalent line, not the model's characters: "x = 2" is as right as "2x = 4") → correct; the line
+above copied → not right ("du hast nur die Zeile davor abgeschrieben"). The reply says which half
+is missing: "Zeile 3 stimmt – sie folgt richtig aus der Zeile davor. Such weiter!" or "Richtig, in
+Zeile 2 steckt der Fehler! Deine Verbesserung passt aber noch nicht zu Zeile 1." — that is the
+task's feedback, not a hint. A prepared hint that states the correction is dropped. Fixed on the
+way: `steps.ts` `oneVariable` treated `x` as reserved, so in "x + y = 5" the y was renamed to x and
+the line read as "2x = 5"; two variables now give `unknown` as #209 intended.
+
+App: `FindErrorAnswer.tsx`. The lines stand as in the exercise book, numbered; line 1 (the task) is
+read, not tapped. A tap on a step turns that very line into a field with its own text in it — it
+is corrected in place, as on paper, changing only what is wrong (a second field under the line
+cost the row that, on 360×740, Buddy's reply needed). Its × takes the choice back; tapping another
+line chooses that one. No math-key row: a corrected line needs digits, a letter and + − = ( ),
+which every keyboard has ("\*" and ":" are read as times and divided by), and the row cost exactly
+the room Buddy's reply needs on 360×740. Her choice and her text are kept in the draft.
+
+**Schriftlich rechnen** (`written_calc`, issue #260, `practice/written.ts`). Add (2–3 numbers),
+subtract (minuend > subtrahend) and multiply (by a one- or two-digit number without a 0 digit) in
+columns, one digit per box. The model writes only `op` and `operands`; code writes the instruction
+("Rechne schriftlich: 476 + 358"), lays out the grid and computes every digit and every carry,
+column by column — nothing but the operation and its numbers is stored (`items.task`), so no stored
+key can disagree with the grid. Rejected (`writtenProblem`): the wrong number of numbers, a times
+table (no number with two digits, `too_small`), a subtraction not above zero, a second factor with
+three digits or a 0 (`factor`), and anything wider than 7 columns (`too_wide`: the operator column
+and six digits of 44 pt fill a 360-pt phone). The procedures as primary school teaches them:
+addition right-aligned with the carries in a small row above the line; subtraction in the
+Ergänzungsverfahren with carries (the same carry the Abziehverfahren with Borgen writes; whoever
+learns Entbündeln leaves the carry row empty — the result digits are the same in every method, so
+#223's Bundesland setting changes nothing here); multiplication from the highest digit of the
+second factor, each partial product ending under its digit, then the sum with carries — by a
+one-digit number the small row holds the carries of the times row. Division is not built: its
+layout (a growing chain of subtract-and-bring-down rows) is a surface of its own; the issue lists it
+and it stays open there.
+
+Checking (`checkWritten`): every box against the computed key — a result or partial-product box
+must hold its digit (a leading zero changes no value and is allowed; an empty box where a digit
+belongs is wrong), a carry box may stay empty (carries are optional, owner, #260) but a carry she
+wrote must be right. The first slip in the order the procedure is done (partial products first,
+then the sum from the Einer up, a column's carry before its digit) is named by its column: "Fast –
+bei den Zehnern fehlt der Übertrag." when the digit is off by exactly the carry that belonged
+there (one short in an addition or a product, one over in a subtraction), else "… stimmt die Ziffer
+noch nicht" / "… fehlt noch eine Ziffer", and "im ersten Teilprodukt" for a partial product. The
+columns keep their names in every row: the first partial product of 352 · 24 is 7040, its 0 stands
+in the hundreds. 0 model calls.
+
+App: `WrittenCalcAnswer.tsx`. The grid on a card like a page of the Rechenheft, the line above the
+result drawn in ink; rows of the task are as tall as their digits (32 pt), rows she fills are touch
+targets (44 pt), the carry row 36 pt with small boxes. Its own digit pad instead of the phone
+keyboard, which would take half the height and cover the grid: a calculator's layout, 1–6 / 7–0
+and "Prüfen" in the last two of twelve equal slots (its "="), every key ≥ 44 pt. That is one row
+less than a pad plus a pinned "Prüfen" — the row the five-row multiplication needs on 360×740 with
+Buddy's reply above it (measured: at 48 pt per row and a separate "Prüfen" the addition alone had
+to scroll by 36 pt). There is no erase key: a digit replaces the one in a box, and a second tap
+on the chosen box empties it. The Einer of the
+first row to fill are chosen from the start; a digit moves one place left, from a carry to the
+result of its column, and from the end of a row to the next row's Einer. After a remount (a theme
+change) the choice goes on at the first empty box, never back to the start where the next digit
+would overwrite one she wrote (found in the walkthrough). Every box is named in words ("Ergebnis, Zehner, leer"), every number of
+the task read as a number ("plus 358").
 
 **Die Notenzeile — lesen, selbst schreiben, anhören** (`contracts/staff.ts`,
 `practice/staff.ts`, `components/math/StaffLine.tsx`, `lib/music/`, Migration

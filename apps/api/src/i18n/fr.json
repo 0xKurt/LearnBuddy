@@ -240,6 +240,32 @@
       "groups_some_one": "1 sur {{total}} est déjà dans le bon groupe.",
       "groups_none": "Aucun n'est encore dans le bon groupe – regarde encore une fois tranquillement.",
       "look_at": "Regarde encore « {{text}} »."
+    },
+    "find_error": {
+      "line_fine": "La ligne {{n}} est juste – elle découle bien de la ligne d'avant. Continue à chercher !",
+      "copied": "Oui, l'erreur est à la ligne {{n}} ! Mais tu as seulement recopié la ligne d'avant – comment ça continue correctement ?",
+      "fix_wrong": "Oui, l'erreur est à la ligne {{n}} ! Ta correction ne va pas encore avec la ligne {{above}}.",
+      "solution": "Ligne {{n}} : {{line}}",
+      "answer": "Ligne {{n}} : {{line}}"
+    },
+    "written": {
+      "prompt": "Pose et calcule : {{term}}",
+      "at": {
+        "p0": "aux unités",
+        "p1": "aux dizaines",
+        "p2": "aux centaines",
+        "p3": "aux milliers",
+        "p4": "aux dizaines de mille",
+        "p5": "aux centaines de mille",
+        "p6": "aux millions"
+      },
+      "in_first": " du premier produit partiel",
+      "in_second": " du deuxième produit partiel",
+      "digit": "Presque – {{at}}{{row}}, le chiffre n'est pas encore juste.",
+      "empty": "Presque – {{at}}{{row}}, il manque encore un chiffre.",
+      "carry_missing": "Presque – {{at}}, il manque la retenue.",
+      "carry_wrong": "Presque – la retenue {{at}} n'est pas encore juste.",
+      "look_again": "Presque – regarde encore une fois le calcul tranquillement."
     }
   },
   "contact": {
