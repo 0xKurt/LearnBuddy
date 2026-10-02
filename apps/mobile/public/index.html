@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>LearnBuddy</title>
+    <script>(function(){try{
+var grounds={"pastell":"#faf7fd","pastellDark":"#191627","forest":"#f6fbf8","forestDark":"#121e18","ocean":"#f6f9fe","oceanDark":"#121a26","sunset":"#fdf8f4","sunsetDark":"#241a14"};
+var families=["pastell","forest","ocean","sunset"];
+var family=localStorage.getItem('lb.theme');
+var mode=localStorage.getItem('lb.themeMode');
+if(family==='night'){family='pastell';mode='dark';}
+if(families.indexOf(family)<0)family='pastell';
+if(mode!=='light'&&mode!=='dark')mode="system";
+var dark=mode==='dark'||(mode==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+document.documentElement.style.backgroundColor=grounds[dark?family+'Dark':family]||grounds.pastell;
+}catch(e){}})();</script>
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+        background: transparent;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

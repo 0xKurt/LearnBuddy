@@ -43,6 +43,7 @@ import {
   type HowMany,
   type PracticeWish,
 } from '../practice/selection.js';
+import { fromLearnerText } from '../practice/generate.js';
 import { enqueueJob } from '../scheduler/jobs.js';
 import type { Aliases } from './context.js';
 import { bumpContext, rollRepeatingStep } from './plan.js';
@@ -61,7 +62,7 @@ import {
   type StepRow,
 } from './state.js';
 import { loosens } from './policy.js';
-import { normalizeForMatch, quoteOccursIn, unsupportedSpecifics } from './text.js';
+import { holdsWordPairs, normalizeForMatch, quoteOccursIn, unsupportedSpecifics } from './text.js';
 
 export class ToolRejection extends Error {
   constructor(message: string) {
@@ -87,7 +88,17 @@ export type ToolContext = {
   /** Learner's app language, for titles the server writes itself. */
   locale: string;
   /** Shared by all actions of one decision: what earlier actions created. */
-  created: { goalId: string | null; stepId: string | null };
+  created: {
+    goalId: string | null;
+    stepId: string | null;
+    /**
+     * The practice an earlier action of this decision PREPARED — the card she can tap right
+     * now. Kept apart from `stepId`, which any step claims for the "new" alias: a `plan_step`
+     * reminder for later is nothing to tap, so it must not count as the answer's one button
+     * (issue #196).
+     */
+    preparedStepId: string | null;
+  };
 };
 
 export type UndoSpec =
@@ -870,6 +881,9 @@ async function runPreparePractice(
     ],
   );
   ctx.created.stepId = step.id;
+  // The answer's one thing to tap (issue #196): an offer beside it would be a second button
+  // for the same wish.
+  ctx.created.preparedStepId = step.id;
   // What she is working on now (issue #160): written from what this tool was told, so the
   // next turn does not have to read it back out of the chat — which is where it went wrong.
   await rememberFocus(ctx, {
@@ -1592,6 +1606,42 @@ async function runOfferLearning(
     );
     goal = named.length === 1 ? named[0]! : null;
   }
+  // Two of the five kinds are a button over CONTENT, not over a topic, and the generator says so
+  // itself: `vocab` makes one question per pair the text holds and sets usable = false when it
+  // holds none; `help` keeps only tasks whose words are in the text it was given
+  // (practice/generate.ts: TASK.vocab, TASK.help, fromLearnerText). So an offer of those kinds
+  // whose text NAMES the content instead of being it can never start. It still reaches the chat,
+  // she taps it, and the card replaces "Let's go" with "I can't prepare anything from that,
+  // sorry" under a reply that says the practice is ready (issue #196). Reproduced on every live
+  // run: the text was the sheet's own title, "French vocabulary Unité 3", and the tap came back
+  // 422 not_usable.
+  //
+  // So the floor is each generator's own precondition, enforced one step earlier where the model
+  // can still be told — never something stricter than the thing it protects:
+  //   vocab — the text has to BE a list of pairs (text.ts holdsWordPairs: structure, no language
+  //           in it). Where the pairs come from is not the question: she may have typed them, or
+  //           Buddy may have copied them off her sheet to ask them in one direction (#113).
+  //   help  — the task has to be in her own words, which is exactly what the generator keeps.
+  if (a.kind === 'vocab' && !holdsWordPairs(a.text)) {
+    throw new ToolRejection(
+      `"${a.text}" names a vocabulary list instead of being one, and questions are made from the pairs this text holds — so this button could not start anything. Either put the pairs themselves in "text" (one per line, "word – translation"), or, for a list on a sheet she photographed, use prepare_practice on that sheet with vocabulary_only.`,
+    );
+  }
+  if (a.kind === 'help' && !fromLearnerText(a.text, (ctx.learnerWords ?? []).join('\n'))) {
+    throw new ToolRejection(
+      `a help offer works on the task the learner wrote, so "text" must be their own words from this message — "${a.text}" names it instead, and hints cannot be made from a name. Without the task in the message, ask her to type or photograph it (no offer).`,
+    );
+  }
+  // One answer, one thing to tap. `prepare_practice` earlier in this same decision already made
+  // the card she asked for; an offer beside it is a second button for the same wish — at best
+  // redundant, and in the live run of 01.10. it was a refused one sitting under a reply that
+  // said the practice was ready (issue #196; left open as a known gap when #184 landed). The
+  // model gets the reason and answers again pointing at what it just prepared.
+  if (ctx.created.preparedStepId) {
+    throw new ToolRejection(
+      'you already prepared practice in this same answer — that is the one thing she taps. Leave this offer out and say in your reply where the practice you prepared is.',
+    );
+  }
   // The same offer twice is not a second thing she can tap — the first button is still there,
   // unstarted (issue #184). STATE says what stands, so this is the floor under the prompt, not
   // the rule itself: only an offer identical in every field it carries is refused, with the
@@ -1623,6 +1673,9 @@ async function runOfferLearning(
       // A direction only ever reaches vocabulary pairs — other questions have none.
       difficulty: a.difficulty ?? null,
       direction: a.direction ?? null,
+      // Nothing proves otherwise yet. The preparation that runs right after this (issue #48)
+      // is what can take it back, by stamping `cannot_start_at` (issue #196).
+      startable: true,
     },
     undo: null,
   };

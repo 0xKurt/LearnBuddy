@@ -39,11 +39,17 @@ export function OfferCard({
   const { t } = useTranslation(['learn', 'common']);
   const { state, start } = useStartTopic();
   const preparing = state.status === 'preparing';
+  // The server already knows this one cannot start: writing its questions was refused while
+  // she was still reading Buddy's reply (issue #196). Then there is no button to offer — she
+  // reads the same line she used to get only after tapping and waiting for it.
+  const dead = offer.startable === false || state.status === 'not_usable';
   // iOS has no live regions: what happened says itself (lib/announce.ts), as StartStatus did.
+  // A card that arrives already unable to start says so like the tapped one does — never
+  // silently (issue #196).
   useAnnounce(
     preparing
       ? t('learn:topic.preparing')
-      : state.status === 'not_usable'
+      : dead
         ? t('learn:topic.not_usable')
         : state.status === 'failed'
           ? state.message
@@ -82,7 +88,7 @@ export function OfferCard({
         <Text style={TYPE.body} numberOfLines={2}>
           {offer.text}
         </Text>
-        {state.status === 'not_usable' ? (
+        {dead ? (
           // Nothing to learn from this text: one quiet line where the button was.
           <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
             {t('learn:topic.not_usable')}

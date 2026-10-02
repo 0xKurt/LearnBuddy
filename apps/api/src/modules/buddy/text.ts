@@ -51,6 +51,43 @@ export function quoteOccursIn(quote: string, source: string | readonly string[])
   return messages.some((m) => atWordBoundaries(m, q));
 }
 
+// ─────────────── a vocabulary list, or a name for one ───────────────
+
+/** Between the two sides of a pair: the app's own hint writes "la chambre – the bedroom". */
+const SIDES = /[-=:\t]/;
+/** Between one pair and the next: a line, a comma, a semicolon, a slash. */
+const BETWEEN = /[\n;,/]+/;
+
+/**
+ * Whether this text IS a vocabulary list rather than a NAME for one — "la chambre – the bedroom,
+ * le lit – the bed" versus "French vocabulary Unité 3" (issue #196).
+ *
+ * The vocabulary generator makes one question per pair the text holds and refuses the whole set
+ * when it holds none (`practice/generate.ts`, TASK.vocab). So an `offer_learning` of kind
+ * `vocab` whose text is a title is a button that can never start, and this is the one thing code
+ * can check before it reaches the chat.
+ *
+ * Structure only, no language in it (CLAUDE.md rule 3): a list has either a separator between
+ * the two sides of a pair — the shape the app's own placeholder teaches her — or at least two
+ * parts separated the way items in a list are. A name has neither. Nothing here knows a word, a
+ * language or a subject, and nothing is case- or accent-sensitive.
+ */
+export function holdsWordPairs(text: string): boolean {
+  // Every dash reads as one dash (the app's hint uses an en dash, a phone keyboard a hyphen);
+  // line breaks stay, because they are what separates one pair from the next.
+  const parts = text
+    .normalize('NFKC')
+    .replace(DASHES, '-')
+    .split(BETWEEN)
+    .map((p) => p.trim())
+    .filter((p) => WORD_CHAR.test(p));
+  if (parts.length >= 2) return true;
+  const one = parts[0] ?? '';
+  const at = one.search(SIDES);
+  // A separator with something on both sides of it: one pair, typed on one line.
+  return at > 0 && WORD_CHAR.test(one.slice(0, at)) && WORD_CHAR.test(one.slice(at + 1));
+}
+
 // ─────────────── specifics a memory may only repeat ───────────────
 
 type CalendarTerms = { prefixes: string[]; exact: string[] };

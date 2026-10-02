@@ -263,6 +263,12 @@ with a claim token. The turn builds the context (STATE + dialogue), asks the mod
 - **Naming days** (live finding 9: "in 4 Tagen" for Thursday): every date in STATE carries the
   words for it in her language, rendered by code (`say "Donnerstag"` within a week — `dayLabel` —,
   later weekday and date via Intl), and the prompt says to use them, never "in N days".
+  The prompt itself names no day in any language (issue #200: an English learner read "for am
+  Freitag" in 2 of 3 live runs, because the rule carried "am Donnerstag" as its example while
+  STATE correctly said `say "Friday"`). One static prompt serves all five languages — it is the
+  cached prefix and cannot be locale-switched — so an example day word in it is German for
+  every learner who is not German. The rule states the principle and the ban; the word comes
+  from `dayLabel`, and the model only fits it into its own sentence's grammar.
 
 ## Tools
 
@@ -341,6 +347,40 @@ summary plus undo data. Enforced here, not in the prompt:
   repair round answers without it (`runOfferLearning`, `standing-offer.int.test.ts`); judging
   whether a differently worded offer is the same thing is left to the model, which now has the
   facts to judge it with;
+- **an offer is a promise that one tap starts something, so a turn may not make one it cannot
+  keep** (issue #196, `runOfferLearning`, `offer-can-start.int.test.ts`). Measured 01.10. during
+  the product video and reproduced on every live run: after photographing her French vocabulary
+  list she asked "Can you quiz me on these French words now?" and got `offer_learning
+{ kind: 'vocab', text: 'French vocabulary Unité 3' }` — the sheet's own title. The reply said
+  the quiz was ready and the tap came back `422 not_usable`, so the card replaced "Let's go"
+  with "I can't prepare anything from that, sorry"; in the owner's run a successful
+  `prepare_practice` stood beside it, and the screen carried ✓ "Prepared: French – 12 questions"
+  with that refusal right under it. Three floors, all in code:
+  - **two of the five kinds are a button over CONTENT, not over a topic.** `vocab` makes one
+    question per pair the text holds and sets `usable = false` when it holds none; `help` keeps
+    only tasks whose words are in the text it was given (`practice/generate.ts`: `TASK.vocab`,
+    `TASK.help`, `fromLearnerText`). An offer of those kinds whose text NAMES the content instead
+    of being it can never start, so each is refused by its own generator's precondition — never
+    something stricter than the thing it protects. `vocab`: the text has to BE a list of pairs
+    (`holdsWordPairs` in `modules/buddy/text.ts` — separators only, no word, language or subject
+    in it, the shape the app's own placeholder teaches her). Where the pairs come from is not the
+    question: she may have typed them, or Buddy may have copied them off her sheet to ask them in
+    one direction (#113, `practice-wishes.int.test.ts`). `help`: the task has to be in her own
+    words, which is exactly what the generator keeps. `practice`, `test` and `speak` are written
+    FROM a topic and need none of this;
+  - **one answer, one thing to tap**: `prepare_practice` earlier in the same decision already
+    made the card she asked for (`ToolContext.created.preparedStepId`), so an offer beside it is
+    refused. This is the gap #184 knowingly left open ("sie kann kurz zwei Knöpfe für dasselbe
+    Blatt haben"). `preparedStepId` is kept apart from `created.stepId`, which any step claims for
+    the `"new"` alias: a `plan_step` reminder for later is nothing to tap, so an offer may stand
+    beside one;
+  - **a refused preparation takes the button away.** What Buddy offers is prepared seconds later
+    in the background (issue #48), which until now swallowed the answer. A refusal as
+    `not_usable` is not an outage — it is the generator saying this offer can never start — so it
+    is kept (`buddy_actions.cannot_start_at`, migration 0066). The offer then stops standing in
+    STATE (Buddy cannot point her at a dead card) and the thread serves it as
+    `startable: false`, so `OfferCard.tsx` shows the quiet line straight away instead of letting
+    her tap and wait for it. Every other failure says nothing about the offer and is left alone;
 - a sheet the SEARCH found is reachable in the same turn (issue #153). STATE carries the ten
   newest and their aliases; everything older was findable and then unreachable, so Buddy could
   name a sheet he had just found and have nothing to point at. A `search_material` hit now
@@ -1784,6 +1824,14 @@ caused),
 A result carries the prepared practice that is next (`next`), so a short round never hides
 the practice for a test (user feedback #2; the app shows `next` as the bar on top and the
 result in the conversation).
+With more than one prepared practice, **the one she asked for comes first, newest first**;
+everything Buddy prepared on his own keeps the earliest test first (`preparedOf` and
+`askedForSteps`, issue #196 point 3). Which ones are hers is read off the action that made them,
+in a `turn` rather than in a background check — the same join `prepare_practice` already uses to
+leave her own practice alone (audit M-55), so nothing new is stored for it. Sorting only by the
+test's date put the French vocabulary she had just asked for behind maths practice a check had
+prepared for tomorrow's test: the bar on top is "the thing to act on now", and the thing she
+wanted was not reachable from it at all.
 **decision** (how did the test go › enable contact — with the stored rules it would allow,
 `rules`: at most n a day, never after the quiet hour, so the card and the parents' PIN screen
 say exactly that), **done** (Buddy's actions of the last 72 h
@@ -1941,6 +1989,42 @@ the model writes from the last topic, is still an open owner decision).
 Coming back from the background is neither: the greeting would otherwise come with every glance
 at the phone. Decided once when the screen first sees the thread, kept in a ref, so nothing
 jumps while she is in the app.
+
+**What it says knows what she just did** (`sessionGreeting`, issue #195). The owner, on his own
+app in the promo footage: „Das ist auch doof — Hi Lienne! / Done. — Was für ne tolle
+conversation". She had just worked through six questions; Buddy greeted her as if nothing had
+happened and a card under it stated the fact in the flattest possible way. Both were correct and
+together they were not a conversation.
+
+The ordering was never a race — it is the layout: the greeting is anchored under the **last
+stored message**, and everything Buddy _tells_ (`notices`) stands after the thread, so a result
+card is always below the greeting. The fix is therefore not in the order but in who speaks: a
+finished practice in `h.now` (the server reports `practice_result` for 30 minutes,
+`nowCardOf`) becomes the greeting's own sentence — „Hey Lienne – 6 Fragen hast du gerade
+geschafft." — and `homeLayout` is told which session the greeting already named, so no card
+repeats it (`greetingTells`; the "Ansehen" rides with the bubble, `Conversation` prop
+`sessionStart.action`). With nothing following the greeting any more, that opening also gets the
+empty page back.
+
+**The one beat it has to wait.** On a cold start the first home the screen sees is not the
+server's but the copy kept on the device for the instant start (`lib/api/persist.ts`), and
+`settledHome` strips everything that claims "now" on purpose — rule 5: nothing cached is shown as
+confirmed-new. So the greeting composed on that first render _cannot_ know about the practice:
+measured in the walkthrough, four renders with `now: null` before the server's first home arrived.
+The sentence is therefore written instantly from the kept copy (the greeting is never late, and
+offline it simply stays a hello) and **refined once** when a server-confirmed home arrives
+(`openGreeting` / `refineGreeting`, both pure): same bubble, same place, and then settled — only
+forwards, never back to a bare hello, and never over a message she has sent since. The card is
+suppressed in the same render, so she never sees both.
+
+**It still costs nothing**: the result is in the payload the home already loaded, so there is no
+second request and no model call — opening the app stays instant and works offline. (Variant B
+of #104, a greeting the model writes, remains the open owner decision; this is not it.) What may
+be said is what the summary may say (`lib/practice/summaryLine.ts`, rule 5): the number she
+answered is a fact about her own work; „alles gleich beim ersten Mal" only when that holds for
+the whole round, never after a test, and six questions with four wrong get the plain sentence.
+One wording per shape (practice · whole round at once · homework) rather than one per part of
+the day: #129's boredom was about a greeting read every day, this one belongs to a single event.
 
 **Where the eye lands.** While nothing stands after the greeting, its block is given the height
 of the conversation's view (`greetingRoom`, `Conversation` prop `sessionRoom`): the thread sits

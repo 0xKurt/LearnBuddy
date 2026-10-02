@@ -13,9 +13,11 @@
 
 import type { ActionView, MessageView } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { commonBox, renderInApp, styleOf } from '../../../testing/render.js';
+import { Btn } from '../../lb/Btn.js';
 import { Conversation } from '../Conversation.js';
 
 /** The real sentence from the owner's phone, 01.10. */
@@ -124,3 +126,74 @@ describe('the way back works (UX-PRINCIPLES: undo over confirmation)', () => {
 function* ancestors(el: Element): Generator<Element> {
   for (let up: Element | null = el; up; up = up.parentElement) yield up;
 }
+
+// ── The greeting a visit opens on (issues #104, #195) ───────────────────────────────────
+//
+// The owner, on his own app in the promo footage: „Das ist auch doof — Hi Lienne! / Done. —
+// Was für ne tolle conversation". She had just worked through six questions; Buddy said hello
+// as if nothing had happened and a card under it stated the fact flatly.
+//
+// What the greeting SAYS is decided in lib/buddy/sessionAnchor.ts and lib/homeLayout.ts (both
+// pure, both tested there). What is visible here: the sentence stands in Buddy's own bubble,
+// and where it tells about something she can look at, the way in rides WITH that bubble
+// instead of in a second card under it.
+
+/** The sentence the anchor composes after a round she got all right at once, in German. */
+const AFTER_PRACTICE = 'Hey Mia – 6 Fragen, alles gleich beim ersten Mal.';
+
+function renderGreeting(action?: ReactNode) {
+  return renderInApp(
+    <Conversation
+      messages={[buddySaid([])]}
+      pending={null}
+      busy={false}
+      sessionStart={{
+        afterMessageId: '33333333-3333-4333-8333-333333333333',
+        text: AFTER_PRACTICE,
+        action,
+      }}
+    />,
+  );
+}
+
+describe('the greeting opens on what just happened (issue #195)', () => {
+  it('says it in Buddy’s own bubble, as him, once', () => {
+    renderGreeting();
+    expect(screen.getByText(AFTER_PRACTICE)).toBeTruthy();
+    // A screen reader hears who is talking, like any of his messages.
+    expect(screen.getByLabelText(`Buddy: ${AFTER_PRACTICE}`)).toBeTruthy();
+  });
+
+  it('carries the way into the full view itself, in the same block as the sentence', () => {
+    renderGreeting(
+      <Btn size="sm" onPress={() => undefined}>
+        Ansehen
+      </Btn>,
+    );
+    const sentence = screen.getByText(AFTER_PRACTICE);
+    const view = screen.getByRole('button', { name: 'Ansehen' });
+    const block = commonBox(sentence, view);
+    // The block that holds both is the greeting's own, not the whole conversation: a button
+    // in a notice at the end of the thread would only meet the greeting above Buddy's
+    // earlier message — which is exactly the two-voices reading the owner saw.
+    expect(
+      block.contains(screen.getByText('Alles klar, ich habe die Arbeit eingetragen.')),
+      'the button belongs to the greeting, not to a card at the end of the conversation',
+    ).toBe(false);
+    // And they stand one under the other, not side by side in one row.
+    expect(styleOf(block).flexDirection, 'the greeting and its button are a column').not.toBe(
+      'row',
+    );
+  });
+
+  it('is just a greeting when there is nothing to look at', () => {
+    renderGreeting();
+    expect(screen.queryByRole('button', { name: 'Ansehen' })).toBeNull();
+  });
+
+  it('stands under the message it was anchored to, not over the conversation', () => {
+    renderGreeting();
+    // Everything older stays: nothing is cleared or hidden for the fresh page (issue #104).
+    expect(screen.getByText('Alles klar, ich habe die Arbeit eingetragen.')).toBeTruthy();
+  });
+});

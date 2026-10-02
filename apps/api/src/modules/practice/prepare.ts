@@ -14,6 +14,7 @@
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
+import { isAppError } from '../../lib/errors.js';
 import { startTopic } from './generate.js';
 import type { PracticeLearner } from './service.js';
 
@@ -45,9 +46,20 @@ export function prepareOffered(
           difficulty: offer.difficulty,
           direction: offer.direction,
         });
-      } catch {
-        // Her tap prepares it then, and says what went wrong there. A failed preparation
-        // is never shown by itself: she did not ask for it yet.
+      } catch (err) {
+        // "Nothing to learn from this" is not an outage — it is the generator saying this
+        // offer can never start, and it would say the same to her tap (issue #196). So it is
+        // kept: the button stops being a button, and STATE stops calling it something waiting
+        // for her. Every other failure (model down, timeout) says nothing about the offer —
+        // her tap prepares it then, and says what went wrong there.
+        if (isAppError(err) && err.details?.reason === 'not_usable') {
+          await deps.db.query(
+            `update buddy_actions set cannot_start_at = $3
+              where id = $1 and learner_id = $2 and tool = 'offer_learning'
+                and cannot_start_at is null`,
+            [action.id, learnerId, deps.now()],
+          );
+        }
       }
     });
   }

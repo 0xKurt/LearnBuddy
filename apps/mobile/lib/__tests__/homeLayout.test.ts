@@ -34,9 +34,10 @@ const prepared = {
   focus_topics: [],
   goal: null,
 };
+const RESULT_SESSION = '00000000-0000-4000-8000-000000000006';
 const result: NonNullable<BuddyHome['now']> = {
   type: 'practice_result',
-  session_id: '00000000-0000-4000-8000-000000000006',
+  session_id: RESULT_SESSION,
   mode: 'practice',
   result: { answered: 4, first_try: 4, secure_topics: [], shaky_topics: [] },
   next: null,
@@ -103,6 +104,37 @@ describe('home layout (user feedback #6, issue #17)', () => {
       working: null,
     });
     expect(withNext).toMatchObject({ bar: 'next', result: true });
+  });
+
+  it('says a finished practice once: not again under Buddy’s own greeting (issue #195)', () => {
+    // The owner's promo footage: „Hi Lienne! / Done." — „Was für ne tolle conversation".
+    // The greeting names the session now, so no card repeats it.
+    expect(
+      homeLayout({ now: result, decision: null, working: null }, null, RESULT_SESSION),
+    ).toMatchObject({ result: false });
+    // What is prepared next still gets its bar: that is something to act on, not a repetition.
+    expect(
+      homeLayout(
+        { now: { ...result, next: prepared }, decision: null, working: null },
+        null,
+        RESULT_SESSION,
+      ),
+    ).toMatchObject({ bar: 'next', result: false });
+  });
+
+  it('keeps the card for a practice the greeting did not tell about', () => {
+    // She finished another round after the greeting was written, or there is no greeting:
+    // that result is news, so it stands in the conversation.
+    expect(
+      homeLayout(
+        { now: result, decision: null, working: null },
+        null,
+        '00000000-0000-4000-8000-00000000dead',
+      ),
+    ).toMatchObject({ result: true });
+    expect(homeLayout({ now: result, decision: null, working: null }, null, null)).toMatchObject({
+      result: true,
+    });
   });
 
   it('asks for the photo once: the bar carries it, else the receipt in the chat (issue #94)', () => {

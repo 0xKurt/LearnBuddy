@@ -320,6 +320,20 @@ test('core loop: a parent sets up, the student plans a test → photo → prepar
   await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeVisible();
   await expect(card).toHaveCount(0);
 
+  // ── Opening the app again right after a practice: the greeting knows about it (#195) ──
+  // A reload IS the app's own start, so this is the owner's screenshot from the promo
+  // footage: „Das ist auch doof — Hi Lienne! / Done. — Was für ne tolle conversation". Buddy
+  // said hello as if nothing had happened, and a flat „Geschafft! Du hast 4 Fragen
+  // beantwortet." card stood under it. One sentence now, composed on the phone from the
+  // home's own payload — no model call, no second request.
+  await expect(page.getByText('Hey Mia – 4 Fragen, alles gleich beim ersten Mal.')).toBeVisible();
+  // And said ONCE: nothing repeats it as a card below.
+  await expect(page.getByText('Geschafft!')).toHaveCount(0);
+  await expect(page.getByText('Du hast 4 Fragen beantwortet.')).toHaveCount(0);
+  // The full view stays one tap away — now from the greeting itself.
+  await expect(page.getByRole('button', { name: 'Ansehen' })).toHaveCount(1);
+  await shot(page, '12c-buddy-greeting-after-practice');
+
   // ── Secondary, but one tap away: what Buddy knows, the sheets, the settings ──
   const openMenu = async (item: string) => {
     await page.getByRole('button', { name: 'Mehr' }).click();

@@ -136,6 +136,14 @@ export const ActionSummary = z.discriminatedUnion('tool', [
      */
     difficulty: DifficultyWish.nullable().default(null),
     direction: VocabDirection.nullable().default(null),
+    /**
+     * Whether its button can still start anything (issue #196). False once preparing this
+     * offer was refused as unusable — the app then shows the quiet line instead of a button
+     * she would tap and wait on for nothing. Decided by the preparation, never by the model;
+     * true until something proves otherwise (CLAUDE.md rule 5), hence the default for every
+     * record written before this existed.
+     */
+    startable: z.boolean().default(true),
   }),
   /** Buddy points to a part of the app (said, not searched for); the app shows a button to open it. */
   z.object({

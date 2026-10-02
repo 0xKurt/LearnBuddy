@@ -4,7 +4,9 @@
 // applies — there is no separate list of it on the home. Where a new day starts
 // a quiet line names it (never how many days passed). Where a new session starts
 // Buddy greets her in a bubble of his own (issue #104) and, with the room the screen
-// gives it, that greeting is what the view opens on.
+// gives it, that greeting is what the view opens on. Where the greeting tells about something
+// she can look at — the practice she just finished — its button rides with that bubble
+// (`sessionStart.action`, issue #195), not in a second card repeating it.
 // Motion: what arrives fades in with a small rise (the bubble first, then its
 // cards and chips, subtly staggered); what was already there when the screen
 // opened stands still, and the list glides when something is added. A long
@@ -73,8 +75,12 @@ type Props = {
    * A fresh page when she comes back (issues #34, #104): Buddy's greeting goes after this
    * message, so everything older sits above it and the new turn starts below.
    * Null = the conversation just goes on.
+   *
+   * `action`: what the greeting itself offers, where it tells about something she can look at
+   * — the practice she just finished (issue #195). It rides with the bubble instead of
+   * standing in a second card that says the same thing.
    */
-  sessionStart?: { afterMessageId: string; text: string } | null;
+  sessionStart?: { afterMessageId: string; text: string; action?: ReactNode } | null;
   /**
    * How much room the greeting's block gets (issue #104): the thread stands at its end, so a
    * block as tall as the view puts the greeting at the top and leaves the rest free — the
@@ -394,7 +400,13 @@ export function Conversation({
                 ))}
               </View>
             ) : null}
-            {opensHere ? <SessionGreeting text={sessionStart!.text} room={sessionRoom} /> : null}
+            {opensHere ? (
+              <SessionGreeting
+                text={sessionStart!.text}
+                room={sessionRoom}
+                action={sessionStart!.action}
+              />
+            ) : null}
           </Animated.View>
         );
       })}
@@ -466,8 +478,18 @@ export function Conversation({
  * `room`: the height the block takes so the greeting stands at the top of the view and the
  * rest of it is free (the screen passes it while nothing follows the greeting). Everything
  * older is then one swipe above — hidden from neither eye nor screen reader.
+ * `action`: a button the greeting itself carries — "Ansehen" for the practice it just named
+ * (issue #195). Flush with the bubble's left edge, the same place a notice puts its answers.
  */
-function SessionGreeting({ text, room = 0 }: { text: string; room?: number }) {
+function SessionGreeting({
+  text,
+  room = 0,
+  action = null,
+}: {
+  text: string;
+  room?: number;
+  action?: ReactNode;
+}) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   return (
@@ -475,7 +497,8 @@ function SessionGreeting({ text, room = 0 }: { text: string; room?: number }) {
       // Stretch: the block above aligns to her side when she spoke last; the greeting is
       // Buddy's and starts at the left whatever came before it.
       // Block gap xs + this xs = sm, the same air as between two turns.
-      style={{ alignSelf: 'stretch', marginTop: SPACE.xs, minHeight: room }}
+      // sm again between the bubble and its button, like a notice (NoticeBubble).
+      style={{ alignSelf: 'stretch', marginTop: SPACE.xs, minHeight: room, gap: SPACE.sm }}
     >
       <View
         style={{
@@ -502,6 +525,10 @@ function SessionGreeting({ text, room = 0 }: { text: string; room?: number }) {
           <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
         </View>
       </View>
+      {action ? (
+        // Flush with the bubble's left edge — like the cards and chips under a message.
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>{action}</View>
+      ) : null}
     </View>
   );
 }

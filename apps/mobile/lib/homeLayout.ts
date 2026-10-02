@@ -6,6 +6,8 @@
 // - everything that is told rather than acted on stands at the end of the conversation:
 //   the sheet that could not be read, the finished practice (its full view one tap away),
 //   the open decision (messages to the phone, how the test went), "Buddy is working";
+// - and it is told ONCE: a finished practice Buddy's own greeting already names gets no card
+//   under it (issue #195 — „Hi, Lienne!" followed by „Done! You answered 6 questions.");
 // - one violet button: the bar on top has it, everything in the conversation is quieter;
 // - "Buddy is working" is said once: inside the reading bar when it says the same thing,
 //   otherwise as a line at the end of the conversation;
@@ -31,7 +33,12 @@ export type HomeLayout = {
   bar: 'resume' | 'ready' | 'capture' | 'reading' | 'next' | null;
   /** A sheet could not be read: told at the end of the conversation, never on top. */
   failed: boolean;
-  /** A practice just finished: its result stands at the end of the conversation. */
+  /**
+   * A practice just finished and nothing has said so yet: its result stands at the end of the
+   * conversation. False once Buddy's own greeting already tells about this session (issue
+   * #195) — "Hi, Lienne!" with a flat „Done! You answered 6 questions." under it was two
+   * voices saying one thing.
+   */
   result: boolean;
   /** The open decision is asked at the end of the conversation (never a card on top). */
   decisionInline: boolean;
@@ -78,6 +85,13 @@ export function homeLayout(
   h: Pick<BuddyHome, 'now' | 'decision' | 'working'> & TopParts,
   /** The topKey she closed on this phone, if any. */
   closed: string | null = null,
+  /**
+   * The finished practice Buddy's greeting already tells about, by session id
+   * (`lib/buddy/sessionAnchor.ts` `sessionGreeting`, issue #195), while that greeting is on
+   * screen. Its result then gets no card of its own: the greeting carries the sentence and
+   * the way into the full view. Null (the default) = the greeting says nothing about it.
+   */
+  greetingTells: string | null = null,
 ): HomeLayout {
   const key = topKey(h);
   const hidden = key !== null && key === closed;
@@ -101,7 +115,9 @@ export function homeLayout(
   return {
     bar,
     failed: now?.type === 'material_failed',
-    result: now?.type === 'practice_result',
+    // Keyed on the session, not on "a greeting exists": a practice she finished AFTER the
+    // greeting was written still gets its own card.
+    result: now?.type === 'practice_result' && now.session_id !== greetingTells,
     decisionInline: h.decision !== null,
     working: h.working === null ? null : inBar ? 'bar' : 'thread',
     photoAsk: bar === 'capture' ? 'bar' : 'thread',

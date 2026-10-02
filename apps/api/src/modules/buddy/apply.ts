@@ -105,7 +105,11 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
       if (settings.context_version !== input.contextVersion) throw new StaleDecision();
 
       const outcomes: Array<{ action: AnyAction; outcome: ToolOutcome }> = [];
-      const created = { goalId: null as string | null, stepId: null as string | null };
+      const created = {
+        goalId: null as string | null,
+        stepId: null as string | null,
+        preparedStepId: null as string | null,
+      };
       for (const [i, action] of input.actions.entries()) {
         try {
           // Settings may be changed by an earlier action of the same decision.

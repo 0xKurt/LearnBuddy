@@ -250,6 +250,14 @@
       "0": "¡Hola {{name}}! ¿Todavía sin dormir?",
       "1": "¡Ey, {{name}}!",
       "2": "¿Trasnochando, {{name}}?"
+    },
+    "after": {
+      "practice_one": "¡Hola {{name}}! Acabas de hacer {{count}} pregunta.",
+      "practice_other": "¡Hola {{name}}! Acabas de hacer {{count}} preguntas.",
+      "all_first_one": "¡Hola {{name}}! {{count}} pregunta, bien a la primera.",
+      "all_first_other": "¡Hola {{name}}! {{count}} preguntas, todo bien a la primera.",
+      "help_one": "¡Hola {{name}}! Acabas de resolver {{count}} ejercicio por tu cuenta.",
+      "help_other": "¡Hola {{name}}! Acabas de resolver {{count}} ejercicios por tu cuenta."
     }
   },
   "suggest": {

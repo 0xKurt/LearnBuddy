@@ -250,6 +250,14 @@
       "0": "Ciao {{name}} – ancora in piedi?",
       "1": "Ehi, {{name}}!",
       "2": "Fai tardi, {{name}}?"
+    },
+    "after": {
+      "practice_one": "Ciao {{name}} – hai appena fatto {{count}} domanda.",
+      "practice_other": "Ciao {{name}} – hai appena fatto {{count}} domande.",
+      "all_first_one": "Ciao {{name}} – {{count}} domanda, giusta al primo colpo.",
+      "all_first_other": "Ciao {{name}} – {{count}} domande, tutte giuste al primo colpo.",
+      "help_one": "Ciao {{name}} – hai appena risolto {{count}} esercizio da te.",
+      "help_other": "Ciao {{name}} – hai appena risolto {{count}} esercizi da te."
     }
   },
   "suggest": {

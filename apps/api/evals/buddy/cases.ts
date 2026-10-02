@@ -4,6 +4,7 @@
 // actually applied — not the wording of the reply.
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
+import { holdsWordPairs } from '../../src/modules/buddy/text.js';
 import type { TestEnv, Learner } from '../../src/testing/harness.js';
 
 export type Outcome = {
@@ -29,6 +30,11 @@ export type Outcome = {
    * made of them still feel like being interrogated.
    */
   turns: Array<{ asks: boolean; tools: string[]; reply: string }>;
+  /**
+   * Every button Buddy put in the chat (issue #196): what it offers to start, in his words.
+   * `tools` only says that an offer happened — and the bug was in what it carried.
+   */
+  offers: Array<{ kind: string; text: string }>;
   /** What Buddy PROPOSED to delete and is waiting for her tap on (issue #151). */
   pending: Array<{
     operation: string;
@@ -78,6 +84,51 @@ export type Case = {
 };
 
 const must = (cond: boolean, msg: string): string[] => (cond ? [] : [msg]);
+
+/**
+ * The day words of each language, for the check that a reply names a day only in the learner's
+ * own ones (issue #200). The German list carries "Heute"/"Morgen" as well: German is the
+ * direction the leak ran — one static prompt serves all five languages, so a day word shown in
+ * it was German for everyone — and those two are unmistakable inside an English, French,
+ * Spanish or Italian sentence. No word here occurs inside a word of another language (the
+ * accents keep "sabato" apart from "sábado", "lundi" from "lunedì"), so a hit is a day named in
+ * the wrong language. Only for the day cases below, whose subject is fractions: a vocabulary
+ * test ON weekdays would of course put the other language's words in the reply by right.
+ */
+const DAY_WORDS: Record<'de' | 'en' | 'fr' | 'es' | 'it', readonly string[]> = {
+  de: [
+    'Montag',
+    'Dienstag',
+    'Mittwoch',
+    'Donnerstag',
+    'Freitag',
+    'Samstag',
+    'Sonnabend',
+    'Sonntag',
+    'Heute',
+    'Morgen',
+  ],
+  en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  fr: ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'],
+  es: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'],
+  it: ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'],
+};
+
+/**
+ * A day word from a language that is not hers, as it stands in the reply — '' when there is
+ * none. The boundary is a Unicode letter lookaround, not `\b`: `\b` is ASCII, so `\bvenerdì\b`
+ * never matches "venerdì " at all and the check would silently pass everything.
+ */
+function foreignDayWord(reply: string, locale: keyof typeof DAY_WORDS): string {
+  for (const [lang, words] of Object.entries(DAY_WORDS)) {
+    if (lang === locale) continue;
+    for (const word of words) {
+      const hit = new RegExp(`(?<!\\p{L})${word}(?!\\p{L})`, 'iu').exec(reply);
+      if (hit) return `${hit[0]} (${lang})`;
+    }
+  }
+  return '';
+}
 
 async function exam(
   env: TestEnv,
@@ -688,6 +739,46 @@ export const CASES: Case[] = [
       ],
     }),
   ),
+  // A day Buddy NAMES is the word code rendered for it in her language (live finding 9), and
+  // the prompt no longer shows him one in any language (issue #200). Live, 2 of 3 English runs
+  // read "I've planned your maths test on fractions for am Freitag!": STATE was right
+  // ('say "Friday"'), the day rule in the prompt carried "am Donnerstag" as its example, and he
+  // copied the example. One static prompt serves all five languages — it is the cached prefix —
+  // so the leak reached every learner who is not German. All five are measured, German included:
+  // it is the default, and it must still read naturally now that the example is gone.
+  //
+  // What is checked is the rule, in both directions: a day word in the reply must be hers. NOT
+  // that a day is named at all — no rule asks for that, and demanding it was wrong. Measured
+  // 02.10., 1 of 5 French runs: "Pas de panique, on va préparer ça ensemble ! Tu peux me prendre
+  // en photo ta feuille de cours …" — the test correctly on Friday, no German anywhere, and the
+  // day simply not repeated after she had just said it herself. A correct answer, and the first
+  // version of this case called it red.
+  ...(
+    [
+      ['de', 'Europe/Berlin', 'Ich schreibe am Freitag eine Mathearbeit über Brüche 😬'],
+      ['en', 'Europe/London', 'I have a maths test on fractions on Friday 😬'],
+      ['fr', 'Europe/Paris', "J'ai un contrôle de maths sur les fractions vendredi 😬"],
+      ['es', 'Europe/Madrid', 'Tengo un examen de mates sobre fracciones el viernes 😬'],
+      ['it', 'Europe/Rome', 'Ho una verifica di mate sulle frazioni venerdì 😬'],
+    ] as const
+  ).map(
+    ([locale, timezone, message]): Case => ({
+      id: `${locale}_exam_day_in_learner_language`,
+      learner: { locale, timezone, relation: 'child', birthDate: '2014-02-10' },
+      message,
+      check: (o) => {
+        const foreign = foreignDayWord(o.reply ?? '', locale);
+        return [
+          ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
+          ...must(
+            o.goals.some((g) => g.kind === 'exam' && g.due_date === '2026-10-02'),
+            'exam on Friday 2026-10-02',
+          ),
+          ...must(foreign === '', `day named in a language that is not hers: ${foreign}`),
+        ];
+      },
+    }),
+  ),
   // Learning-only scope (issue #38): Buddy declines work that is not this
   // learner's learning — briefly, and without turning into a rule lecture —
   // while a school topic that sounds off-topic is never refused.
@@ -928,6 +1019,119 @@ export const CASES: Case[] = [
         ...must(
           offers <= 1,
           `offers the same practice in ${offers} turns — the first one is still standing`,
+        ),
+      ];
+    },
+  },
+  // One answer, ONE thing to tap, and it has to work (issue #196). Measured 01.10. during the
+  // product video, English, and reproduced twice live: she had photographed her French
+  // vocabulary list, said "Can you quiz me on these French words now?", and got
+  // `offer_learning { kind: 'vocab', text: 'French vocabulary Unité 3' }` — the sheet's own
+  // title. The reply said the quiz was ready; the tap came back 422 not_usable, because the
+  // vocabulary generator writes questions from pairs the learner TYPED and a title holds none.
+  // In the owner's run a successful `prepare_practice` stood beside it, so the screen carried a
+  // ✓ "Prepared: French – 12 questions" and, right under it, "I can't prepare anything from
+  // that, sorry" with no button.
+  //
+  // What is checked is the shape of the answer, not its wording: exactly one thing she can tap,
+  // and no button that names its content instead of carrying it. Whether it got there by
+  // preparing from her sheet (the right tool here) or by an offer carrying her own words is the
+  // model's business.
+  {
+    id: 'en_quiz_these_words_leaves_one_working_button',
+    at: '2026-10-01T15:00:00Z',
+    learner: {
+      locale: 'en',
+      timezone: 'Europe/London',
+      relation: 'child',
+      birthDate: '2014-02-10',
+    },
+    setup: async (env, l) => {
+      // The maths test she is also preparing for, with practice already standing for it: the
+      // older card that kept the top of the screen (issue #196, point 3).
+      await exam(env, l, 'Maths test on fractions', '2026-10-02');
+      const goal = await env.db.one<{ id: string }>(
+        `select id from buddy_goals where learner_id = $1`,
+        [l.learnerId],
+      );
+      const mathItems: string[] = [];
+      for (const prompt of ['Simplify 6/8.', 'Work out 3/4 + 1/8.']) {
+        const row = await env.db.one<{ id: string }>(
+          `insert into items (learner_id, kind, prompt, answer, topic, difficulty, origin)
+           values ($1, 'short', $2, '3/4', 'Fractions', 2, 'buddy') returning id`,
+          [l.learnerId, prompt],
+        );
+        mathItems.push(row.id);
+      }
+      await env.db.query(
+        `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, payload,
+                                  prepared_at)
+         values ($1, $2, 'practice', 'Maths test on fractions', 'prepared', '2026-10-01', $3, $4)`,
+        [
+          l.learnerId,
+          goal.id,
+          { item_ids: mathItems, est_minutes: 10, focus_topics: ['Fractions'], subject_id: null },
+          env.clock.now(),
+        ],
+      );
+      // And the French list she photographed, read, with its pairs — nothing prepared from it
+      // yet (the background check decided to wait, her maths test being tomorrow).
+      const sheet = await env.db.one<{ id: string }>(
+        `insert into materials (learner_id, client_request_id, status, photo_count, title,
+                                extracted_text, ready_at, created_at)
+         values ($1, gen_random_uuid(), 'ready', 1, 'French vocabulary Unité 3', $2, $3, $3)
+         returning id`,
+        [
+          l.learnerId,
+          'la chambre – the bedroom\nle lit – the bed\nla fenêtre – the window',
+          env.clock.now(),
+        ],
+      );
+      const subject = await env.db.one<{ id: string }>(
+        `insert into subjects (learner_id, name, kind) values ($1, 'French', 'french') returning id`,
+        [l.learnerId],
+      );
+      for (const [fr, en] of [
+        ['la chambre', 'the bedroom'],
+        ['le lit', 'the bed'],
+        ['la fenêtre', 'the window'],
+        ['la porte', 'the door'],
+        ['le mur', 'the wall'],
+        ["l'escalier", 'the stairs'],
+      ]) {
+        await env.db.query(
+          `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, topic,
+                              prompt_lang, lang, origin)
+           values ($1, $2, $3, 'vocab', $4, $5, 'Unité 3', 'fr', 'en', 'material')`,
+          [l.learnerId, sheet.id, subject.id, fr, en],
+        );
+      }
+    },
+    message: 'Can you quiz me on these French words now? 🇫🇷',
+    check: (o) => {
+      const taps = o.tools.filter((t) => t === 'prepare_practice' || t === 'offer_learning').length;
+      const prepared = o.steps.filter((s) => s.kind === 'practice' && s.state === 'prepared');
+      return [
+        // Exactly one. Two buttons for one wish is at best redundant, and in the owner's run
+        // the second one was a refusal sitting under a reply that said it was ready.
+        ...must(
+          taps === 1,
+          `${taps} things to tap in one answer (${o.tools.join(', ') || 'none'}); offers: ${JSON.stringify(o.offers)}`,
+        ),
+        // And it is a button that WORKS. A `vocab` offer is a button over the pairs its text
+        // holds, so one carrying a name for them ("French vocabulary Unité 3", the sheet's own
+        // title — what every live run produced before the floor) can only end in "I can't
+        // prepare anything from that". Carrying the pairs themselves is fine, wherever Buddy
+        // read them.
+        ...must(
+          o.offers.every((f) => f.kind !== 'vocab' || holdsWordPairs(f.text)),
+          `offers a vocabulary quiz over a name for the words, which cannot start: ${JSON.stringify(o.offers)}`,
+        ),
+        // Her vocabulary is reachable with one tap: either the practice Buddy prepared from her
+        // sheet, or an offer. The maths practice that was already standing is not it.
+        ...must(
+          prepared.length > 1 || o.offers.length === 1,
+          `nothing new she can start: steps ${JSON.stringify(prepared)}, offers ${JSON.stringify(o.offers)}`,
         ),
       ];
     },

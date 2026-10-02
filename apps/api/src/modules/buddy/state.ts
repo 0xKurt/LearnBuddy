@@ -335,6 +335,10 @@ export async function loadStandingOffers(
     `select a.id, a.result, a.created_at
        from buddy_actions a
       where a.learner_id = $1 and a.tool = 'offer_learning' and a.status = 'applied'
+        -- A button whose questions could not be written is nothing waiting for her, however
+        -- untouched it looks (issue #196). Saying otherwise sent Buddy on to point at a card
+        -- that cannot start — rule 5 inside the state he reads.
+        and a.cannot_start_at is null
         and a.created_at > $2
         and not exists (
           select 1 from practice_sessions ps

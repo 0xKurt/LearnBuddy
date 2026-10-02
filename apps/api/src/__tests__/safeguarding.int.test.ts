@@ -67,8 +67,11 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     expect(reply.role).toBe('buddy');
     expect(reply.text).toContain('116 111');
     // The block is on record with its finish reason, and her allowance is untouched.
+    // Only the turn's own call: the same message also produces an `embedding` call for
+    // the passages Buddy may quote (issue #26), and counting that one here made this
+    // assertion fail for a reason that has nothing to do with safeguarding.
     const calls = await env.db.query<{ error_code: string }>(
-      `select error_code from llm_calls where learner_id = $1`,
+      `select error_code from llm_calls where learner_id = $1 and purpose = 'buddy_turn'`,
       [l.learnerId],
     );
     expect(calls.map((c) => c.error_code)).toEqual(['blocked:SAFETY']);

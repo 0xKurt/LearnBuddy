@@ -15,7 +15,9 @@
 // A visit that begins a session — the app was started, or the break was long enough
 // (lib/buddy/sessionAnchor.ts, lib/buddy/appStart.ts, issue #104) — ends the conversation with
 // a greeting of Buddy's and opens on it: the greeting stands on top, everything earlier one
-// swipe above. Client-side only; no model is asked and nothing is stored for it.
+// swipe above. Client-side only; no model is asked and nothing is stored for it. That greeting
+// names the practice she just finished when there is one, and then carries its "Ansehen"
+// itself instead of a card under it repeating the same thing (issue #195).
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
@@ -84,7 +86,11 @@ import {
   dayPart,
   greetingRoom,
   greetingVariant,
+  openGreeting,
+  refineGreeting,
   startsNewSession,
+  type Greeting,
+  type GreetingState,
 } from '../lib/buddy/sessionAnchor.js';
 import { drafts } from '../lib/capture/draftStorage.js';
 import { attachedInChat, useLiveAttachments } from '../lib/capture/live.js';
@@ -271,10 +277,19 @@ export default function BuddyScreen() {
    * Buddy's greeting goes under the last message she had, so the new turn starts on a fresh
    * page with everything older right above. Kept in a ref: it must not move while she is in
    * the app.
+   *
+   * `tells`: the finished practice the greeting's own sentence already names (issue #195), so
+   * nothing repeats it as a card. Decided with the text and kept with it — the sentence was
+   * true when she opened the app and must not change under her. `pending` marks the one
+   * exception: on a cold start the sentence is composed from the copy kept on the device,
+   * which carries no `now` at all, so it is refined once when the server's first home arrives
+   * (`part` and `variant` are kept for exactly that, so no clock is read twice).
    */
-  const sessionStart = useRef<{ afterMessageId: string; text: string } | null | undefined>(
-    undefined,
-  );
+  const sessionStart = useRef<
+    (GreetingState & { afterMessageId: string; text: string }) | null | undefined
+  >(undefined);
+  /** When this visit opened: tells a home from the server apart from the kept copy (#195). */
+  const openedAt = useRef(Date.now()).current;
   /** How tall the conversation's view is: the room the greeting needs to stand on top. */
   const [threadView, setThreadView] = useState(0);
   useEffect(() => {
@@ -571,7 +586,69 @@ export default function BuddyScreen() {
   }
 
   const h = home.data;
-  const layout = homeLayout(h, closedCard);
+  /** The greeting's sentence from what `sessionGreeting` chose (issue #195). */
+  const greetingText = (g: Greeting): string =>
+    t(
+      `buddy:${g.key}`,
+      g.count === undefined ? { name: h.learner.name } : { name: h.learner.name, count: g.count },
+    );
+  /**
+   * Whether this home came from the server since the screen opened, as opposed to the copy
+   * kept on the device for the instant start — that copy carries **no** `now` on purpose
+   * (lib/api/deviceCache.ts `settledHome`, CLAUDE.md rule 5: nothing cached is shown as
+   * confirmed-new). Its `dataUpdatedAt` is deliberately backdated by `restoreCache`.
+   */
+  const homeConfirmed = home.dataUpdatedAt > openedAt;
+  // Decided once per visit (see the ref above); `undefined` means "not looked at yet".
+  if (sessionStart.current === undefined) {
+    const lastMessage = h.thread[h.thread.length - 1] ?? null;
+    const now = new Date();
+    // The app's own start begins a session whatever the clock says (issue #104). Taken here
+    // and not below the `&&`: it is claimed once per process either way, so a home that
+    // opened on an empty conversation does not leave the start lying around for later.
+    const coldStart = takeColdStart();
+    if (
+      lastMessage &&
+      startsNewSession({ lastMessageAt: new Date(lastMessage.created_at), now, coldStart })
+    ) {
+      // What Buddy says knows what she just did: the practice she finished is in the home's
+      // own payload (`h.now`), so this still asks no model and makes no second request
+      // (issue #195, lib/buddy/sessionAnchor.ts).
+      const g = openGreeting(
+        dayPart(now.getHours()),
+        greetingVariant(now.getHours() * 60 + now.getMinutes()),
+        h.now,
+        homeConfirmed,
+      );
+      sessionStart.current = { ...g, afterMessageId: lastMessage.id, text: greetingText(g) };
+    } else sessionStart.current = null;
+  } else if (sessionStart.current?.pending && homeConfirmed) {
+    // The one refinement the greeting ever gets (`refineGreeting`): the sentence is written
+    // instantly from the kept home so that opening the app costs nothing — and that copy says
+    // nothing about "now", so a practice she finished minutes ago was invisible to it. The
+    // server's first home brings it and the greeting takes it up, in the same bubble.
+    const g = refineGreeting(
+      sessionStart.current,
+      h.now,
+      sessionStart.current.afterMessageId === h.thread[h.thread.length - 1]?.id,
+    );
+    sessionStart.current = {
+      ...g,
+      afterMessageId: sessionStart.current.afterMessageId,
+      text: g.tells === sessionStart.current.tells ? sessionStart.current.text : greetingText(g),
+    };
+  }
+  // The greeting is drawn under its message, so it only stands where that message is still in
+  // the part of the conversation the screen shows. Once it has scrolled out of that window the
+  // result it told about needs its card back.
+  const greetingShown =
+    sessionStart.current !== null &&
+    h.thread.slice(-VISIBLE_MESSAGES).some((m) => m.id === sessionStart.current?.afterMessageId);
+  const layout = homeLayout(
+    h,
+    closedCard,
+    greetingShown ? (sessionStart.current?.tells ?? null) : null,
+  );
   const decisionCard = h.decision ? (
     <DecisionCard
       key="decision"
@@ -595,6 +672,14 @@ export default function BuddyScreen() {
   // issue #17): the sheet that could not be read, and the finished practice.
   const failedNow = layout.failed && h.now?.type === 'material_failed' ? h.now : null;
   const resultNow = layout.result && h.now?.type === 'practice_result' ? h.now : null;
+  // …unless Buddy's greeting already said it (issue #195): then the way into the full view
+  // rides with that sentence instead of standing in a card repeating it.
+  const greetingResult =
+    greetingShown &&
+    h.now?.type === 'practice_result' &&
+    h.now.session_id === sessionStart.current?.tells
+      ? h.now
+      : null;
   const notices = [
     shownDraft ? (
       <NoticeBubble
@@ -809,28 +894,6 @@ export default function BuddyScreen() {
     .map((m) =>
       m.actions.some(asksInBar) ? { ...m, actions: m.actions.filter((a) => !asksInBar(a)) } : m,
     );
-  // Decided once per visit (see the ref above); `undefined` means "not looked at yet".
-  if (sessionStart.current === undefined) {
-    const lastMessage = h.thread[h.thread.length - 1] ?? null;
-    const now = new Date();
-    // The app's own start begins a session whatever the clock says (issue #104). Taken here
-    // and not below the `&&`: it is claimed once per process either way, so a home that
-    // opened on an empty conversation does not leave the start lying around for later.
-    const coldStart = takeColdStart();
-    sessionStart.current =
-      lastMessage &&
-      startsNewSession({ lastMessageAt: new Date(lastMessage.created_at), now, coldStart })
-        ? {
-            afterMessageId: lastMessage.id,
-            text: t(
-              `buddy:session.${dayPart(now.getHours())}.${greetingVariant(now.getHours() * 60 + now.getMinutes())}`,
-              {
-                name: h.learner.name,
-              },
-            ),
-          }
-        : null;
-  }
   // Hide the optimistic bubble once the server has the message.
   const shownPending =
     pending && !h.thread.some((m) => m.client_message_id === pending.id)
@@ -1136,7 +1199,23 @@ export default function BuddyScreen() {
                   notices={notices}
                   live={live}
                   busy={busy || pending !== null}
-                  sessionStart={sessionStart.current}
+                  sessionStart={
+                    sessionStart.current && {
+                      afterMessageId: sessionStart.current.afterMessageId,
+                      text: sessionStart.current.text,
+                      // What the greeting itself offers: the practice it just named, in full.
+                      action: greetingResult ? (
+                        <Btn
+                          size="sm"
+                          variant={quiet}
+                          disabled={busy}
+                          onPress={() => router.push(`/practice/${greetingResult.session_id}`)}
+                        >
+                          {t('buddy:now.result_view')}
+                        </Btn>
+                      ) : null,
+                    }
+                  }
                   sessionRoom={sessionRoom}
                   showActions
                   onUndo={(id) => void act(() => undoAction(id))}

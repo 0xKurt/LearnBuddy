@@ -250,6 +250,14 @@
       "0": "Hey {{name}} – still up?",
       "1": "Hi, {{name}}!",
       "2": "Up late, {{name}}?"
+    },
+    "after": {
+      "practice_one": "Hey {{name}} – you just got through {{count}} question.",
+      "practice_other": "Hey {{name}} – you just got through {{count}} questions.",
+      "all_first_one": "Hey {{name}} – {{count}} question, right the first time.",
+      "all_first_other": "Hey {{name}} – {{count}} questions, all right the first time.",
+      "help_one": "Hey {{name}} – you just solved {{count}} task yourself.",
+      "help_other": "Hey {{name}} – you just solved {{count}} tasks yourself."
     }
   },
   "suggest": {

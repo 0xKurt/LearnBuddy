@@ -164,8 +164,26 @@ function noticeOf(state: BuddyState): HomeNotice | null {
 
 type StepRow = BuddyState['steps'][number];
 
-/** Prepared practice for today ("Heute nicht" moved it away), the earliest test first. */
-function preparedOf(state: BuddyState, today: string): StepRow | undefined {
+/**
+ * Prepared practice for today ("Heute nicht" moved it away).
+ *
+ * The one she ASKED FOR comes first, newest first; everything Buddy prepared by himself keeps
+ * the earliest test first. Sorting only by the test's date put the French vocabulary she had
+ * just asked for behind maths practice a check had prepared for tomorrow's test — so the card
+ * on top pointed at the older thing and the one she wanted was not reachable from there at all
+ * (issue #196, point 3; it has no test, so its date sorted last). The bar on top is "the thing
+ * to act on now" (lib/homeLayout.ts), and what she just asked for is the best evidence of now.
+ */
+function preparedOf(
+  state: BuddyState,
+  today: string,
+  /** Steps she asked for in the chat, newest first (`askedForSteps`). */
+  asked: readonly string[] = [],
+): StepRow | undefined {
+  const rank = (s: StepRow): number => {
+    const at = asked.indexOf(s.id);
+    return at < 0 ? asked.length : at;
+  };
   return state.steps
     .filter(
       (s) =>
@@ -176,10 +194,32 @@ function preparedOf(state: BuddyState, today: string): StepRow | undefined {
         (!s.planned_date || daysBetween(today, s.planned_date) <= 0),
     )
     .sort((a, b) => {
+      const ra = rank(a);
+      const rb = rank(b);
+      if (ra !== rb) return ra - rb;
       const ga = state.goals.find((g) => g.id === a.goal_id)?.due_date ?? '9999-12-31';
       const gb = state.goals.find((g) => g.id === b.goal_id)?.due_date ?? '9999-12-31';
       return ga < gb ? -1 : ga > gb ? 1 : 0;
     })[0];
+}
+
+/**
+ * Which prepared practice the learner asked for herself, newest first — read off the action
+ * that made it, in a turn (her message) rather than in a background check. The same join
+ * `prepare_practice` already uses to leave her own practice alone (tools.ts, audit M-55);
+ * nothing new is stored for it.
+ */
+async function askedForSteps(deps: Deps, learnerId: string): Promise<string[]> {
+  const rows = await deps.db.query<{ step_id: string }>(
+    `select a.result ->> 'step_id' as step_id
+       from buddy_actions a join buddy_decisions d on d.id = a.decision_id
+      where a.learner_id = $1 and a.tool = 'prepare_practice' and a.status = 'applied'
+        and d.mode = 'turn'
+      order by a.seq desc
+      limit 20`,
+    [learnerId],
+  );
+  return rows.map((r) => r.step_id).filter((id): id is string => id !== null);
 }
 
 function preparedBrief(state: BuddyState, step: StepRow, today: string): PreparedPractice {
@@ -292,7 +332,7 @@ async function nowCardOf(
   );
   // Today's prepared practice (the earliest test first). What was just finished is not it
   // (its step is no longer 'prepared').
-  const prepared = preparedOf(state, today);
+  const prepared = preparedOf(state, today, await askedForSteps(deps, learnerId));
   if (justFinished) {
     return {
       type: 'practice_result',
@@ -462,9 +502,16 @@ function focusLine(state: BuddyState): { text: string; material_id: string | nul
 function servedSummary(
   s: ActionSummary,
   pending: ReadonlyMap<string, PendingStatus>,
+  /** Offers whose preparation was refused: their button cannot start anything (issue #196). */
+  cannotStart: ReadonlySet<string> = new Set(),
+  actionId = '',
 ): ActionSummary {
   if (s.tool === 'offer_learning' && (s.kind as string) === 'explain')
     return { ...s, kind: 'practice' };
+  // Not a button any more. The refusal is the generator's own, learnt while she was still
+  // reading the reply (practice/prepare.ts): she sees the quiet line straight away instead of
+  // tapping and waiting for it (issue #196).
+  if (s.tool === 'offer_learning' && cannotStart.has(actionId)) return { ...s, startable: false };
   // The card must say where the proposal stands, not where it stood when it was written
   // (issue #151): she may have answered it on another device, or the app was closed in
   // between. A row that is gone was deleted with the sheet — the question is moot.
@@ -639,9 +686,11 @@ async function threadOf(
         status: 'applied' | 'undone';
         result: ActionSummary;
         undo: UndoSpec | null;
+        cannot_start_at: Date | null;
         created_at: Date;
       }>(
-        `select id, decision_id, status, result, undo, created_at from buddy_actions
+        `select id, decision_id, status, result, undo, cannot_start_at, created_at
+           from buddy_actions
           where learner_id = $1 and decision_id = any($2::uuid[]) order by seq`,
         [learnerId, decisionIds],
       )
@@ -691,6 +740,7 @@ async function threadOf(
     actions.map((a) => a.result),
     now,
   );
+  const cannotStart = new Set(actions.filter((a) => a.cannot_start_at !== null).map((a) => a.id));
   const messages: MessageView[] = page.map((m) => {
     const o = m.outreach_id ? outreach.find((x) => x.id === m.outreach_id) : undefined;
     return {
@@ -724,7 +774,7 @@ async function threadOf(
           id: a.id,
           status: a.status,
           undoable: undoWorks.has(a.id) && !adultOnly.has(a.id),
-          summary: servedSummary(a.result, pending),
+          summary: servedSummary(a.result, pending, cannotStart, a.id),
           created_at: a.created_at.toISOString(),
         })),
       created_at: m.created_at.toISOString(),

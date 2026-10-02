@@ -250,6 +250,14 @@
       "0": "Hey {{name}} – noch wach?",
       "1": "Hi, {{name}}!",
       "2": "Spät dran, {{name}}?"
+    },
+    "after": {
+      "practice_one": "Hey {{name}} – {{count}} Frage hast du gerade geschafft.",
+      "practice_other": "Hey {{name}} – {{count}} Fragen hast du gerade geschafft.",
+      "all_first_one": "Hey {{name}} – {{count}} Frage, gleich beim ersten Mal richtig.",
+      "all_first_other": "Hey {{name}} – {{count}} Fragen, alles gleich beim ersten Mal.",
+      "help_one": "Hey {{name}} – {{count}} Aufgabe hast du gerade selbst gelöst.",
+      "help_other": "Hey {{name}} – {{count}} Aufgaben hast du gerade selbst gelöst."
     }
   },
   "suggest": {
